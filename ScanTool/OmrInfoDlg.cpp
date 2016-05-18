@@ -25,11 +25,18 @@ void COmrInfoDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_PIC_OMR, m_picOmrShow);
+	DDX_Control(pDX, IDC_RADIO_TH_H, m_radioTH_H);
+	DDX_Control(pDX, IDC_RADIO_TH_V, m_radioTH_V);
+	DDX_Control(pDX, IDC_RADIO_XX_H, m_radioXX_H);
+	DDX_Control(pDX, IDC_RADIO_XX_V, m_radioXX_V);
+	DDX_Control(pDX, IDC_RADIO_Direct_ZX, m_radioDirectZX);
+	DDX_Control(pDX, IDC_RADIO_Direct_FX, m_radioDirectFX);
 }
 
 
 BEGIN_MESSAGE_MAP(COmrInfoDlg, CDialog)
 	ON_WM_SIZE()
+	ON_NOTIFY(NM_THEMECHANGED, IDC_RADIO_TH_H, &COmrInfoDlg::OnNMThemeChangedRadioThH)
 END_MESSAGE_MAP()
 
 BOOL COmrInfoDlg::OnInitDialog()
@@ -120,4 +127,13 @@ void COmrInfoDlg::InitCtrlPosition()
 	{
 		GetDlgItem(IDC_PIC_OMR)->MoveWindow(nLeftGap, nTopGap, nPicOmrWidth, nPicOmrHeight);
 	}
+}
+
+
+void COmrInfoDlg::OnNMThemeChangedRadioThH(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	// 该功能要求使用 Windows XP 或更高版本。
+	// 符号 _WIN32_WINNT 必须 >= 0x0501。
+	// TODO:  在此添加控件通知处理程序代码
+	*pResult = 0;
 }
