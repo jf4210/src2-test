@@ -24,6 +24,7 @@ COmrInfoDlg::~COmrInfoDlg()
 void COmrInfoDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_PIC_OMR, m_picOmrShow);
 }
 
 
@@ -38,6 +39,12 @@ BOOL COmrInfoDlg::OnInitDialog()
 	UpdateData(FALSE);
 	InitCtrlPosition();
 
+	m_picOmrShow.OnInit(0, false);
+	CString strPicPath = g_strCurrentPath;
+	strPicPath.Append(_T("竖直横向1.png"));
+
+	m_src_img = cv::imread((std::string)(CT2CA)strPicPath);
+	m_picOmrShow.ShowImage(m_src_img, 0);
 	return TRUE;
 }
 
@@ -56,7 +63,7 @@ void COmrInfoDlg::InitCtrlPosition()
 	CRect rcClient;
 	GetClientRect(&rcClient);
 
-	int nGap = 5;	//控件的间隔
+	int nGap = 2;	//控件的间隔
 	int nTopGap = 2;	//距离上边边缘的间隔
 	int nBottomGap = 2;	//距离下边边缘的间隔
 	int nLeftGap = 2;	//距离左边边缘的间隔
@@ -64,7 +71,7 @@ void COmrInfoDlg::InitCtrlPosition()
 
 	int nCurrentTop = 0;
 	int nGroupWidth = rcClient.Width() - nLeftGap - nRightGap;
-	int nStaticHeight = 20;		//校验点类型Static控件高度
+	int nStaticHeight = 15;		//校验点类型Static控件高度
 	int nStaticWidth = (rcClient.Width() - nLeftGap - nRightGap - 2 * nGap) / 3;
 	int nRadioWidth = nStaticWidth;
 
@@ -105,5 +112,12 @@ void COmrInfoDlg::InitCtrlPosition()
 	if (GetDlgItem(IDC_RADIO_Direct_FX)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_RADIO_Direct_FX)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap, nTopGap, nRadioWidth, nStaticHeight);
+	}
+	nTopGap = nTopGap + nStaticHeight + nGap;
+	int nPicOmrWidth = rcClient.Width() - nLeftGap - nRightGap;
+	int nPicOmrHeight = rcClient.Height() - nTopGap;
+	if (GetDlgItem(IDC_PIC_OMR)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_PIC_OMR)->MoveWindow(nLeftGap, nTopGap, nPicOmrWidth, nPicOmrHeight);
 	}
 }

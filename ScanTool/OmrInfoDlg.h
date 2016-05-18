@@ -1,6 +1,6 @@
 #pragma once
-
-
+#include "CV_picture.h"
+#include "global.h"
 // COmrInfoDlg 对话框
 
 class COmrInfoDlg : public CDialog
@@ -13,7 +13,9 @@ public:
 
 // 对话框数据
 	enum { IDD = IDD_OMRINFODLG };
-
+public:
+	CV_picture  m_picOmrShow;	//效果图像区
+	cv::Mat		m_src_img;
 private:
 	void		InitCtrlPosition();
 protected:

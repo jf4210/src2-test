@@ -331,11 +331,11 @@ void CMakeModelDlg::InitUI()
 
 	m_pRecogInfoDlg = new CRecogInfoDlg;
 	m_pRecogInfoDlg->Create(CRecogInfoDlg::IDD, this);
-	m_pRecogInfoDlg->ShowWindow(SW_SHOW);	//SW_SHOW
+	m_pRecogInfoDlg->ShowWindow(SW_HIDE);	//SW_SHOW
 
 	m_pOmrInfoDlg = new COmrInfoDlg;
 	m_pOmrInfoDlg->Create(COmrInfoDlg::IDD, this);
-	m_pOmrInfoDlg->ShowWindow(SW_HIDE);	//SW_HIDE
+	m_pOmrInfoDlg->ShowWindow(SW_SHOW);	//SW_HIDE
 
 	int sx = MAX_DLG_WIDTH;
 	int sy = MAX_DLG_HEIGHT;
