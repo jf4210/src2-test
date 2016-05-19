@@ -67,6 +67,12 @@
     <Filter Include="扫描模板制作窗口\OMR选项设置">
       <UniqueIdentifier>{683cc0ab-0015-48f9-adba-f720375c5d52}</UniqueIdentifier>
     </Filter>
+    <Filter Include="扫描模板制作窗口\OMR选项设置\OMR图片">
+      <UniqueIdentifier>{e0dd8ce9-fd89-4600-afa8-1f9fc61c231c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描模板制作窗口\OMR题号设置窗口">
+      <UniqueIdentifier>{8a883f38-b88f-4cde-b8b4-ab19cac51f22}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -168,6 +174,9 @@
     <ClInclude Include="OmrInfoDlg.h">
       <Filter>扫描模板制作窗口\OMR选项设置</Filter>
     </ClInclude>
+    <ClInclude Include="THSetDlg.h">
+      <Filter>扫描模板制作窗口\OMR题号设置窗口</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
@@ -251,6 +260,9 @@
     <ClCompile Include="OmrInfoDlg.cpp">
       <Filter>扫描模板制作窗口\OMR选项设置</Filter>
     </ClCompile>
+    <ClCompile Include="THSetDlg.cpp">
+      <Filter>扫描模板制作窗口\OMR题号设置窗口</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ScanTool.rc">
@@ -265,6 +277,30 @@
   <ItemGroup>
     <Image Include="res\ScanTool.ico">
       <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="横向1.png">
+      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+    </Image>
+    <Image Include="横向2.png">
+      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+    </Image>
+    <Image Include="横向3.png">
+      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+    </Image>
+    <Image Include="横向4.png">
+      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+    </Image>
+    <Image Include="竖直1.png">
+      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+    </Image>
+    <Image Include="竖直2.png">
+      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+    </Image>
+    <Image Include="竖直3.png">
+      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+    </Image>
+    <Image Include="竖直4.png">
+      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
     </Image>
   </ItemGroup>
 </Project>

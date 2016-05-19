@@ -152,12 +152,35 @@ void CRecogInfoDlg::ShowDetailRectInfo(pRECTINFO pCurRectInfo)
 	case QK_CP:		m_strCPTypeName	= _T("缺考点"); break;
 	case GRAY_CP:	m_strCPTypeName	= _T("灰度校验点"); break;
 	case WHITE_CP:	m_strCPTypeName	= _T("空白校验点"); break;
+	case OMR:
+	{
+		if(m_pCurRectInfo->nSingle == 0) m_strCPTypeName = _T("单选题");
+		else m_strCPTypeName = _T("多选题");
+		break;
+	}
 	default:
 		m_strCPTypeName = _T(""); break;
 	}
 	m_nThresholdVal			= pCurRectInfo->nThresholdValue;
 	m_fThresholdValPercent	= pCurRectInfo->fStandardValuePercent * 100;
 	UpdateData(FALSE);
+}
+
+BOOL CRecogInfoDlg::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		if (pMsg->wParam == VK_ESCAPE)
+		{
+			return TRUE;
+		}
+		if (pMsg->wParam == VK_RETURN)
+		{
+			return TRUE;
+		}
+		return TRUE;
+	}
+	return CDialog::PreTranslateMessage(pMsg);
 }
 
 

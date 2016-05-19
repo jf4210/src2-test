@@ -142,6 +142,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Thread.h" />
+    <ClInclude Include="THSetDlg.h" />
     <ClInclude Include="twain.h" />
     <ClInclude Include="TwainCpp.h" />
   </ItemGroup>
@@ -177,6 +178,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Thread.cpp" />
+    <ClCompile Include="THSetDlg.cpp" />
     <ClCompile Include="TwainCpp.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -187,6 +189,14 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\ScanTool.ico" />
+    <Image Include="横向1.png" />
+    <Image Include="横向2.png" />
+    <Image Include="横向3.png" />
+    <Image Include="横向4.png" />
+    <Image Include="竖直1.png" />
+    <Image Include="竖直2.png" />
+    <Image Include="竖直3.png" />
+    <Image Include="竖直4.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

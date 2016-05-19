@@ -71,7 +71,8 @@ typedef enum CPType
 	COURSE,			//科目
 	QK_CP,			//缺考
 	GRAY_CP,		//灰度校验
-	WHITE_CP		//白校验
+	WHITE_CP,		//白校验
+	OMR				//选择题设置
 };
 
 typedef struct _RectInfo_
@@ -84,6 +85,9 @@ typedef struct _RectInfo_
 	float		fRealValuePercent;				//此矩形实际的值(灰度值)
 	int			nHItem;							//第几个水平同步头
 	int			nVItem;							//第几个垂直同步头
+	int			nTH;							//题号
+	int			nAnswer;						//答案循序，属于第几个答案，如1-A,2-B,3-C,4-D,5-E,6-F...
+	int			nSingle;						//0-单选，1-多选
 //	cv::Point	ptFix;
 	cv::Rect	rt;
 //	cv::Rect	rtFix;
@@ -92,6 +96,9 @@ typedef struct _RectInfo_
 		eCPType = UNKNOWN;
 		nHItem = -1;
 		nVItem = -1;
+		nTH = -1;
+		nAnswer = -1;
+		nSingle = 0;
 		nThresholdValue = 0;
 		fRealValuePercent = 0.0;
 		fStandardValuePercent = 0.0;
@@ -103,6 +110,17 @@ typedef struct _RectInfo_
 
 typedef std::list<RECTINFO> RECTLIST;			//矩形位置列表
 
+typedef struct _OmrQuestion_			//题目
+{
+	int nTH;
+	RECTLIST	lSelAnswer;				//选项列表
+	_OmrQuestion_()
+	{
+		nTH = -1;
+	}
+}OMR_QUESTION, *pOMR_QUESTION;
+typedef std::list<OMR_QUESTION> OMRLIST;
+
 typedef struct _PaperModel_
 {
 	int			nPaper;					//标识此模板属于第几张试卷
@@ -112,6 +130,7 @@ typedef struct _PaperModel_
 	RECTLIST	lSelFixRoi;				//选择的ROI的矩形列表
 	RECTLIST	lCheckPoint;			//校验点矩形位置列表
 	RECTLIST	lOMR;					//OMR识别的矩形位置列表
+	OMRLIST		lOMR2;
 	RECTLIST	lFix;					//定点列表
 	RECTLIST	lH_Head;				//水平校验点列表
 	RECTLIST	lV_Head;				//垂直同步头列表

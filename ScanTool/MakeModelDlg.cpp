@@ -8,6 +8,7 @@
 #include "ModelSaveDlg.h"
 #include <afxinet.h>
 #include "ModelInfoDlg.h"
+#include "THSetDlg.h"
 
 using namespace std;
 using namespace cv;
@@ -19,10 +20,10 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	: CDialog(CMakeModelDlg::IDD, pParent)
 	, m_pModelPicShow(NULL), m_nGaussKernel(5), m_nSharpKernel(5), m_nThresholdKernel(150), m_nCannyKernel(90), m_nDelateKernel(6), m_nErodeKernel(2)
 	, m_pModel(pModel), m_bNewModelFlag(false), m_nModelPicNums(2), m_nCurrTabSel(0), m_bSavedModelFlag(false), m_ncomboCurrentSel(0), m_eCurCPType(UNKNOWN)
-	, m_nCurListCtrlSel(0)
-	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nGrayVal(150), m_nFixVal(150)
+	, m_nCurListCtrlSel(0), m_nStartTH(0)
+	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(150)
 	, m_fHeadThresholdPercent(0.75), m_fABModelThresholdPercent(0.75), m_fCourseThresholdPercent(0.75), m_fQK_CPThresholdPercent(0.75), m_fFixThresholdPercent(0.80)
-	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75)
+	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75), m_fOMRThresholdPercent(0.75)
 	, m_pCurRectInfo(NULL), m_ptFixCP(0,0)
 	, m_bFistHTracker(true), m_bFistVTracker(true)
 	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL)
@@ -144,10 +145,15 @@ BOOL CMakeModelDlg::OnInitDialog()
 			{
 				pPaperModel->vecRtRecognition.push_back(*itCP);
 			}
-			RECTLIST::iterator itOmr = m_pModel->vecPaperModel[i].lOMR.begin();
-			for (; itOmr != m_pModel->vecPaperModel[i].lOMR.end(); itOmr++)
+// 			RECTLIST::iterator itOmr = m_pModel->vecPaperModel[i].lOMR.begin();
+// 			for (; itOmr != m_pModel->vecPaperModel[i].lOMR.end(); itOmr++)
+// 			{
+// 				pPaperModel->vecOmr.push_back(*itOmr);
+// 			}
+			OMRLIST::iterator itOmr2 = m_pModel->vecPaperModel[i].lOMR2.begin();
+			for (; itOmr2 != m_pModel->vecPaperModel[i].lOMR2.end(); itOmr2++)
 			{
-				pPaperModel->vecOmr.push_back(*itOmr);
+				pPaperModel->vecOmr2.push_back(*itOmr2);
 			}
 			RECTLIST::iterator itFix = m_pModel->vecPaperModel[i].lFix.begin();
 			for (; itFix != m_pModel->vecPaperModel[i].lFix.end(); itFix++)
@@ -358,11 +364,11 @@ void CMakeModelDlg::InitCtrlPosition()
 	int nLeftGap = 2;	//距离左边边缘的间隔
 	int nRightGap = 2;	//距离右边边缘的间隔
 	int nBtnHeigh = 50;
-	int	nBtnWidth = 70;
+	int	nBtnWidth = 50;
 	int nLeftCtrlWidth = 170;	//左边控件栏的宽度
 	int nStaticHeight = 20;		//校验点类型Static控件高度
 	int nCommoboxHeight = 25;	//校验点combox的高度
-	int nCPListCtrlHeight = 300;//校验点list控件的高度
+	int nCPListCtrlHeight = 280;//校验点list控件的高度
 	int nCurrentTop = nTopGap;
 	if (GetDlgItem(IDC_STATIC_CPType)->GetSafeHwnd())
 	{
@@ -384,7 +390,7 @@ void CMakeModelDlg::InitCtrlPosition()
 		m_cpListCtrl.MoveWindow(nLeftGap, nCurrentTop, nLeftCtrlWidth, nCPListCtrlHeight);
 		nCurrentTop = nCurrentTop + nCPListCtrlHeight + nGap;
 	}
-	int nGroupHeight = 150;
+	int nGroupHeight = 170;
 	int nGroupStaticHeight = 15;	//group文字的高度
 	int nTopInGroup = nCurrentTop;
 #if 1
@@ -494,6 +500,7 @@ void CMakeModelDlg::InitConf()
 			m_comboCheckPointType.AddString(_T("缺考校验点"));
 			m_comboCheckPointType.AddString(_T("灰度校验点"));
 			m_comboCheckPointType.AddString(_T("空白校验点"));
+			m_comboCheckPointType.AddString(_T("选择题"));
 		}
 		else if (m_pModel->nABModel&&!m_pModel->nHasHead)
 		{
@@ -505,6 +512,7 @@ void CMakeModelDlg::InitConf()
 			m_comboCheckPointType.AddString(_T("缺考校验点"));
 			m_comboCheckPointType.AddString(_T("灰度校验点"));
 			m_comboCheckPointType.AddString(_T("空白校验点"));
+			m_comboCheckPointType.AddString(_T("选择题"));
 		}
 		else if (!m_pModel->nABModel&&m_pModel->nHasHead)
 		{
@@ -517,6 +525,7 @@ void CMakeModelDlg::InitConf()
 			m_comboCheckPointType.AddString(_T("缺考校验点"));
 			m_comboCheckPointType.AddString(_T("灰度校验点"));
 			m_comboCheckPointType.AddString(_T("空白校验点"));
+			m_comboCheckPointType.AddString(_T("选择题"));
 		}
 		else
 		{
@@ -527,6 +536,7 @@ void CMakeModelDlg::InitConf()
 			m_comboCheckPointType.AddString(_T("缺考校验点"));
 			m_comboCheckPointType.AddString(_T("灰度校验点"));
 			m_comboCheckPointType.AddString(_T("空白校验点"));
+			m_comboCheckPointType.AddString(_T("选择题"));
 		}
 	}
 	m_comboCheckPointType.SetCurSel(0);
@@ -552,16 +562,6 @@ LRESULT CMakeModelDlg::RoiRBtnUp(WPARAM wParam, LPARAM lParam)
 			GetCursorPos(&myPoint); //鼠标位置  
 			return pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, myPoint.x, myPoint.y, this);
 		}
-// 		else if (rtVTracker.contains(pt))
-// 		{
-// 			CMenu menu, *pPopup;
-// 			menu.LoadMenu(IDR_MENU_RecogTracker);
-// 			pPopup = menu.GetSubMenu(0);
-// 			CPoint myPoint;
-// 			ClientToScreen(&myPoint);
-// 			GetCursorPos(&myPoint); //鼠标位置  
-// 			return pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, myPoint.x, myPoint.y, this);
-// 		}
 	}
 	else
 	{
@@ -739,9 +739,9 @@ void CMakeModelDlg::OnBnClickedBtnReset()
 			if (m_pModel && m_pModel->vecPaperModel.size()) m_pModel->vecPaperModel[m_nCurrTabSel].lWhite.clear();
 		}
 	}
-//	m_vecPaperModelInfo[m_nCurrTabSel]->vecRtSel.clear();
 	m_vecPaperModelInfo[m_nCurrTabSel]->vecRtRecognition.clear();
-	m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr.clear();
+//	m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr.clear();
+	m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.clear();
 
 
 	if (m_pModel)
@@ -749,7 +749,6 @@ void CMakeModelDlg::OnBnClickedBtnReset()
 		if (m_pModel->vecPaperModel.size() > 0)
 		{
 			m_pModel->vecPaperModel[m_nCurrTabSel].lCheckPoint.clear();
-//			m_pModel->vecPaperModel[m_nCurrTabSel].lSelROI.clear();
 			m_pModel->vecPaperModel[m_nCurrTabSel].lOMR.clear();
 		}
 	}
@@ -1240,9 +1239,77 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 
 				m_vecTmp.push_back(rc);
 			}
+			else if (m_eCurCPType == OMR)
+			{
+				rc.nThresholdValue = m_nOMR;
+				rc.fStandardValuePercent = m_fOMRThresholdPercent;
+
+				switch (m_pOmrInfoDlg->m_nCurrentOmrVal)
+				{
+				case 42:
+					rc.nTH = j;
+					rc.nAnswer = i;
+					break;
+				case 41:
+					rc.nTH = nPosH_E - nPosH_B + 1 - j;
+					rc.nAnswer = i;
+					break;
+				case 38:
+					rc.nTH = j;
+					rc.nAnswer = nPosV_E - nPosV_B + 1 - i;
+					break;
+				case 37:
+					rc.nTH = nPosH_E - nPosH_B + 1 - j;
+					rc.nAnswer = nPosV_E - nPosV_B + 1 - i;
+					break;
+				case 26:
+					rc.nTH = i;
+					rc.nAnswer = j;
+					break;
+				case 25:
+					rc.nTH = nPosV_E - nPosV_B + 1 - i;
+					rc.nAnswer = j;
+					break;
+				case 22:
+					rc.nTH = i;
+					rc.nAnswer = nPosH_E - nPosH_B + 1 - j;
+					break;
+				case 21:
+					rc.nTH = nPosV_E - nPosV_B + 1 - i;
+					rc.nAnswer = nPosH_E - nPosH_B + 1 - j;
+					break;
+				}
+				if (m_pOmrInfoDlg->m_bSingle)
+					rc.nSingle = 0;
+				else
+					rc.nSingle = 1;
+
+				Rect rtTmp = arr[i][j];
+				Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+				RecogGrayValue(matSrcModel, rc);
+
+				m_vecTmp.push_back(rc);
+			}
 #endif
 		}
 	}
+// 	switch (m_pOmrInfoDlg->m_nCurrentOmrVal)
+// 	{
+// 	case 42:
+// 	case 41:
+// 	case 38:
+// 	case 37:
+// 		m_nStartTH += nPosH_E - nPosH_B + 1;
+// 		break;
+// 	case 26:
+// 	case 25:
+// 	case 22:
+// 	case 21:
+// 		m_nStartTH += nPosV_E - nPosV_B + 1;
+// 		break;
+// 	default:
+//		break;
+// 	}
 
 	ShowTmpRect();
 	for (int i = 0; i < nPosV_E - nPosV_B + 1; i++)
@@ -1327,8 +1394,10 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 			paperModel.lFix.push_back(m_vecPaperModelInfo[i]->vecRtFix[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecRtRecognition.size(); j++)
 			paperModel.lCheckPoint.push_back(m_vecPaperModelInfo[i]->vecRtRecognition[j]);
-		for (int j = 0; j < m_vecPaperModelInfo[i]->vecOmr.size(); j++)
-			paperModel.lOMR.push_back(m_vecPaperModelInfo[i]->vecOmr[j]);
+// 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecOmr.size(); j++)
+// 			paperModel.lOMR.push_back(m_vecPaperModelInfo[i]->vecOmr[j]);
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecOmr2.size(); j++)
+			paperModel.lOMR2.push_back(m_vecPaperModelInfo[i]->vecOmr2[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecH_Head.size(); j++)
 			paperModel.lH_Head.push_back(m_vecPaperModelInfo[i]->vecH_Head[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecV_Head.size(); j++)
@@ -1798,6 +1867,51 @@ void CMakeModelDlg::ShowRectByPoint(cv::Point pt)
 				}
 			}
 		}
+	case OMR:
+		if (eType == OMR || eType == UNKNOWN)
+		{
+			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.size(); i++)
+			{
+				RECTLIST::iterator itAnswer = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].lSelAnswer.begin();
+				for (int j = 0; itAnswer != m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].lSelAnswer.end(); itAnswer++, j++)
+				{
+					if (m_pCurRectInfo != &(*itAnswer))
+					{
+						RECTINFO rc = *itAnswer;
+						cv::Rect rt = rc.rt;
+						char szAnswerVal[5] = { 0 };
+						sprintf_s(szAnswerVal, "%c", rc.nAnswer + 65);
+						if (rc.nSingle == 0)
+						{
+							putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
+							rectangle(tmp2, rt, CV_RGB(50, 255, 100), -1);
+						}
+						else
+						{
+							putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 100, 0));
+							rectangle(tmp2, rt, CV_RGB(150, 150, 255), -1);
+						}
+					}
+				}
+// 				if (i != nFind || m_pCurRectInfo->eCPType != m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr[i].eCPType)
+// 				{
+// 					RECTINFO rc = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr[i];
+// 					cv::Rect rt = rc.rt;
+// 					char szAnswerVal[5] = { 0 };
+// 					sprintf_s(szAnswerVal, "%c", rc.nAnswer + 65);
+// 					if (rc.nSingle == 0)
+// 					{
+// 						putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
+// 						rectangle(tmp2, rt, CV_RGB(50, 255, 100), -1);
+// 					}
+// 					else
+// 					{
+// 						putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 100, 0));
+// 						rectangle(tmp2, rt, CV_RGB(150, 150, 255), -1);
+// 					}
+// 				}
+			}
+		}
 	}
 #else
 	Rect rt = m_pCurRectInfo->rt;
@@ -1867,12 +1981,39 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 		rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite[nItem].rt;
 		m_pCurRectInfo = &m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite[nItem];
 		break;
+	case OMR:
+		int nOmrCount = 0;
+		bool bFind = false;
+		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.size(); i++)
+		{
+			nOmrCount = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].lSelAnswer.size();
+			if (nItem < nOmrCount)
+			{
+				RECTLIST::iterator itAnswer = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].lSelAnswer.begin();
+				for (int j = 0; itAnswer != m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].lSelAnswer.end(); itAnswer++, j++)
+				{
+					if (j == nItem)
+					{
+						bFind = true;
+						rt = itAnswer->rt;
+						m_pCurRectInfo = &(*itAnswer);
+						break;
+					}
+				}
+				if (bFind)
+					break;
+			}
+			else
+			{
+				nItem -= nOmrCount;
+			}
+		}
+// 		if (m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr.size() < nItem)
+// 			return;
+// 		rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr[nItem].rt;
+// 		m_pCurRectInfo = &m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr[nItem];
+		break;
 	default: return;
-	}
-	if (m_eCurCPType != Fix_CP)
-	{
-// 		rt.x = rt.x + m_ptFixCP.x;
-// 		rt.y = rt.y + m_ptFixCP.y;
 	}
 	if(m_pRecogInfoDlg)	m_pRecogInfoDlg->ShowDetailRectInfo(m_pCurRectInfo);
 
@@ -1898,7 +2039,17 @@ void CMakeModelDlg::ShowTmpRect()
 	{
 		rt = m_vecTmp[i].rt;
 		rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
-		rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+//		rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+		if (m_vecTmp[i].eCPType == OMR)
+		{
+			char szAnswerVal[5] = { 0 };
+			sprintf_s(szAnswerVal, "%c", m_vecTmp[i].nAnswer + 65);
+			putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
+			rectangle(tmp2, rt, CV_RGB(50, 255, 100), -1);
+		}
+		else 
+			rectangle(tmp2, rt, CV_RGB(150, 100, 255), -1);
+		
 	}
 	cv::addWeighted(tmp, 0.5, tmp2, 0.5, 0, tmp);
 	m_pModelPicShow->ShowPic(tmp);
@@ -1937,8 +2088,6 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.size(); i++)
 			{
 				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head[i].rt;
-// 				rt.x = rt.x + ptFix.x;
-// 				rt.y = rt.y + ptFix.y;
 				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
@@ -1949,8 +2098,6 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.size(); i++)
 			{
 				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head[i].rt;
-// 				rt.x = rt.x + ptFix.x;
-// 				rt.y = rt.y + ptFix.y;
 				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
@@ -1961,8 +2108,6 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel.size(); i++)
 			{
 				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel[i].rt;
-// 				rt.x = rt.x + ptFix.x;
-// 				rt.y = rt.y + ptFix.y;
 				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
@@ -1973,8 +2118,6 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecCourse.size(); i++)
 			{
 				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecCourse[i].rt;
-// 				rt.x = rt.x + ptFix.x;
-// 				rt.y = rt.y + ptFix.y;
 				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
@@ -1985,8 +2128,6 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.size(); i++)
 			{
 				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP[i].rt;
-// 				rt.x = rt.x + ptFix.x;
-// 				rt.y = rt.y + ptFix.y;
 				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
@@ -1997,8 +2138,6 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecGray.size(); i++)
 			{
 				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecGray[i].rt;
-// 				rt.x = rt.x + ptFix.x;
-// 				rt.y = rt.y + ptFix.y;
 				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
@@ -2009,10 +2148,32 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.size(); i++)
 			{
 				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite[i].rt;
-// 				rt.x = rt.x + ptFix.x;
-// 				rt.y = rt.y + ptFix.y;
 				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+			}
+		}
+	case OMR:
+		if (eType == OMR || eType == UNKNOWN)
+		{
+			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr.size(); i++)
+			{
+				RECTINFO rc = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr[i];
+				rt = rc.rt;
+
+				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+
+				char szAnswerVal[5] = { 0 };
+				sprintf_s(szAnswerVal, "%d%c", rc.nTH, rc.nAnswer + 65);
+				if (rc.nSingle == 0)
+				{
+					putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
+					rectangle(tmp2, rt, CV_RGB(50, 255, 100), -1);
+				}
+				else
+				{
+					putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 100, 0));
+					rectangle(tmp2, rt, CV_RGB(150, 150, 255), -1);
+				}
 			}
 		}
 		break;
@@ -2045,6 +2206,8 @@ CPType CMakeModelDlg::GetComboSelCpType()
 		eType = GRAY_CP;
 	else if (strCheckPoint == "空白校验点")
 		eType = WHITE_CP;
+	else if (strCheckPoint == "选择题")
+		eType = OMR;
 	return eType;
 }
 
@@ -2058,7 +2221,16 @@ void CMakeModelDlg::OnCbnSelchangeComboCptype()
 	UpdataCPList();
 	ShowRectByCPType(m_eCurCPType);
 
-//	ShowRectTracker();
+	if (m_eCurCPType == OMR)
+	{
+		m_pOmrInfoDlg->ShowWindow(SW_SHOW);
+		m_pRecogInfoDlg->ShowWindow(SW_HIDE);
+	}
+	else
+	{
+		m_pOmrInfoDlg->ShowWindow(SW_HIDE);
+		m_pRecogInfoDlg->ShowWindow(SW_SHOW);
+	}
 }
 
 void CMakeModelDlg::UpdataCPList()
@@ -2224,6 +2396,42 @@ void CMakeModelDlg::UpdataCPList()
 		if (m_eCurCPType == UNKNOWN)
 			nCount += m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.size();
 	}
+	if (m_eCurCPType == OMR || m_eCurCPType == UNKNOWN)
+	{
+		int nOmrCount = 0;
+		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.size(); i++)
+		{
+			RECTLIST::iterator itAnswer = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].lSelAnswer.begin();
+			for (int j = nOmrCount; itAnswer != m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].lSelAnswer.end(); itAnswer++, j++)
+			{
+				RECTINFO rcInfo = *itAnswer;
+				char szPosition[50] = { 0 };
+				sprintf_s(szPosition, "(%d,%d,%d,%d)", rcInfo.rt.x, rcInfo.rt.y, rcInfo.rt.width, rcInfo.rt.height);
+				char szCount[10] = { 0 };
+				sprintf_s(szCount, "%d", j + nCount + 1);
+				m_cpListCtrl.InsertItem(j + nCount, NULL);
+				m_cpListCtrl.SetItemText(j + nCount, 0, (LPCTSTR)A2T(szCount));
+				m_cpListCtrl.SetItemText(j + nCount, 1, (LPCTSTR)A2T(szPosition));
+			}
+			nOmrCount += m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].lSelAnswer.size();
+		}
+		if (m_eCurCPType == UNKNOWN)
+			nCount += nOmrCount;
+
+// 		for (int i = nCount; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr.size() + nCount; i++)
+// 		{
+// 			RECTINFO rcInfo = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr[i - nCount];
+// 			char szPosition[50] = { 0 };
+// 			sprintf_s(szPosition, "(%d,%d,%d,%d)", rcInfo.rt.x, rcInfo.rt.y, rcInfo.rt.width, rcInfo.rt.height);
+// 			char szCount[10] = { 0 };
+// 			sprintf_s(szCount, "%d", i + 1);
+// 			m_cpListCtrl.InsertItem(i, NULL);
+// 			m_cpListCtrl.SetItemText(i, 0, (LPCTSTR)A2T(szCount));
+// 			m_cpListCtrl.SetItemText(i, 1, (LPCTSTR)A2T(szPosition));
+// 		}
+// 		if (m_eCurCPType == UNKNOWN)
+// 			nCount += m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr.size();
+	}
 }
 
 void CMakeModelDlg::OnNMRClickListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult)
@@ -2252,6 +2460,15 @@ void CMakeModelDlg::AddRecogRectToList()
 	if (m_vecPaperModelInfo.size() <= 0 || m_vecPaperModelInfo.size() <= m_nCurrTabSel)
 		return;
 
+	if (m_eCurCPType == OMR)
+	{
+		CTHSetDlg dlg(m_nStartTH);
+		if (dlg.DoModal() != IDOK)
+			return;
+
+		m_nStartTH = dlg.m_nStartTH;
+	}
+
 	for (int i = 0; i < m_vecTmp.size(); i++)
 	{
 		if (m_eCurCPType == ABMODEL)
@@ -2273,6 +2490,11 @@ void CMakeModelDlg::AddRecogRectToList()
 		else if (m_eCurCPType == WHITE_CP)
 		{
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.push_back(m_vecTmp[i]);
+		}
+		else if (m_eCurCPType == OMR)
+		{
+			m_vecTmp[i].nTH += m_nStartTH;
+			m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr.push_back(m_vecTmp[i]);
 		}
 	}
 	m_vecTmp.clear();
@@ -2531,8 +2753,6 @@ inline int CMakeModelDlg::GetRectInfoByPoint(cv::Point pt, CPType eType, RECTINF
 			}
 		}
 	case H_HEAD:
-// 		pt.x = pt.x - m_ptFixCP.x;
-// 		pt.y = pt.y - m_ptFixCP.y;
 		if (eType == H_HEAD || eType == UNKNOWN)
 		{
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.size(); i++)
@@ -2639,6 +2859,36 @@ inline int CMakeModelDlg::GetRectInfoByPoint(cv::Point pt, CPType eType, RECTINF
 						break;
 					}
 				}
+			}
+		}
+	case OMR:
+		if (eType == OMR || eType == UNKNOWN)
+		{
+			if (nFind < 0)
+			{
+				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.size(); i++)
+				{
+					RECTLIST::iterator itAnswer = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].lSelAnswer.begin();
+					for (int j = 0; itAnswer != m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].lSelAnswer.end(); itAnswer++, j++)
+					{
+						if (itAnswer->rt.contains(pt))
+						{
+							nFind = i;
+							pRc = &(*itAnswer);
+							break;
+						}
+					}
+					if (nFind >= 0) break;
+				}
+// 				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr.size(); i++)
+// 				{
+// 					if (m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr[i].rt.contains(pt))
+// 					{
+// 						nFind = i;
+// 						pRc = &m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr[i];
+// 						break;
+// 					}
+// 				}
 			}
 		}
 	}
@@ -2788,4 +3038,9 @@ LRESULT CMakeModelDlg::VTrackerChange(WPARAM wParam, LPARAM lParam)
 	m_ptVTracker2 = m_pModelPicShow->m_picShow.m_ptVTracker2;
 	ShowRectTracker();
 	return true;
+}
+
+void CMakeModelDlg::SetOmrDetailVal(RECTINFO& rc)
+{
+
 }

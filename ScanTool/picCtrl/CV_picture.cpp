@@ -670,6 +670,8 @@ void CV_picture::OnMouseMove(UINT nFlags, CPoint point)
 //当前控件必须获得焦点，才能捕捉鼠标滚轮消息
 BOOL CV_picture::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
+	if (!m_bEnableBtnDown)
+		return CStatic::OnMouseWheel(nFlags, zDelta, pt);
 	try
 	{
 		//更新图片控件的坐标
@@ -705,30 +707,6 @@ BOOL CV_picture::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 			}
 		}
 
-// 		if (m_bShowRectTracker_H)
-// 		{
-// 			int nX1 = (int)((float)(m_ptHTracker1.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
-// 			int nY1 = (int)((float)(m_ptHTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
-// 			int nX2 = (int)((float)(m_ptHTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
-// 			int nY2 = (int)((float)(m_ptHTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
-// 			m_RectTrackerH.m_rect.left = nX1;
-// 			m_RectTrackerH.m_rect.top = nY1;
-// 			m_RectTrackerH.m_rect.right = nX2;
-// 			m_RectTrackerH.m_rect.bottom = nY2;
-// 			TRACE("橡皮筋滚动pt1 = (%d, %d), pt2 = (%d, %d)\n", nX1, nY1, nX2, nY2);
-// 		}
-// 		else if (m_bShowRectTracker_V)
-// 		{
-// 			int nX1 = (int)((float)(m_ptVTracker1.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
-// 			int nY1 = (int)((float)(m_ptVTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
-// 			int nX2 = (int)((float)(m_ptVTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
-// 			int nY2 = (int)((float)(m_ptVTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
-// 			m_RectTrackerV.m_rect.left = nX1;
-// 			m_RectTrackerV.m_rect.top = nY1;
-// 			m_RectTrackerV.m_rect.right = nX2;
-// 			m_RectTrackerV.m_rect.bottom = nY2;
-// 		}
-
 		ShowImage_roi(m_dst_img, m_iDrawingMethod);
 //		TRACE("滚动后显示的图像矩形:(%d,%d,%d,%d), 中心(%d,%d)\n", m_rect_roi.tl().x, m_rect_roi.tl().y, m_rect_roi.width, m_rect_roi.height, m_rect_roi_center.x, m_rect_roi_center.y);
 
@@ -753,6 +731,9 @@ BOOL CV_picture::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 
 void CV_picture::OnMButtonDown(UINT nFlags, CPoint point)
 {
+	if (!m_bEnableBtnDown)
+		return CStatic::OnMButtonDown(nFlags, point);
+
 	SetCapture();
 	//更新图片控件的坐标
 	this->GetClientRect(&m_rect);
@@ -776,6 +757,9 @@ void CV_picture::OnMButtonDown(UINT nFlags, CPoint point)
 
 void CV_picture::OnMButtonUp(UINT nFlags, CPoint point)
 {
+	if (!m_bEnableBtnDown)
+		return CStatic::OnMButtonUp(nFlags, point);
+
 	ReleaseCapture();
 
 	m_iDragFlag=0;
