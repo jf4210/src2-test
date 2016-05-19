@@ -16,6 +16,15 @@ public:
 public:
 	CV_picture  m_picOmrShow;	//Ð§¹ûÍ¼ÏñÇø
 	cv::Mat		m_src_img;
+
+	CButton		m_radioTH_H;
+	CButton		m_radioTH_V;
+
+	CButton		m_radioXX_H;
+	CButton		m_radioXX_V;
+
+	CButton		m_radioDirectZX;
+	CButton		m_radioDirectFX;
 private:
 	void		InitCtrlPosition();
 protected:
@@ -25,4 +34,5 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnNMThemeChangedRadioThH(NMHDR *pNMHDR, LRESULT *pResult);
 };
