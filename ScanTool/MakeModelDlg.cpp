@@ -2155,26 +2155,50 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 	case OMR:
 		if (eType == OMR || eType == UNKNOWN)
 		{
-			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr.size(); i++)
+			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.size(); i++)
 			{
-				RECTINFO rc = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr[i];
-				rt = rc.rt;
-
-				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
-
-				char szAnswerVal[5] = { 0 };
-				sprintf_s(szAnswerVal, "%d%c", rc.nTH, rc.nAnswer + 65);
-				if (rc.nSingle == 0)
+				RECTLIST::iterator itAnswer = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].lSelAnswer.begin();
+				for (; itAnswer != m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].lSelAnswer.end(); itAnswer++)
 				{
-					putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
-					rectangle(tmp2, rt, CV_RGB(50, 255, 100), -1);
-				}
-				else
-				{
-					putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 100, 0));
-					rectangle(tmp2, rt, CV_RGB(150, 150, 255), -1);
+					RECTINFO rc = *itAnswer;
+					rt = rc.rt;
+
+					rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+
+					char szAnswerVal[5] = { 0 };
+					sprintf_s(szAnswerVal, "%d%c", rc.nTH, rc.nAnswer + 65);
+					if (rc.nSingle == 0)
+					{
+						putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
+						rectangle(tmp2, rt, CV_RGB(50, 255, 100), -1);
+					}
+					else
+					{
+						putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 100, 0));
+						rectangle(tmp2, rt, CV_RGB(150, 150, 255), -1);
+					}
 				}
 			}
+// 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr.size(); i++)
+// 			{
+// 				RECTINFO rc = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr[i];
+// 				rt = rc.rt;
+// 
+// 				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+// 
+// 				char szAnswerVal[5] = { 0 };
+// 				sprintf_s(szAnswerVal, "%d%c", rc.nTH, rc.nAnswer + 65);
+// 				if (rc.nSingle == 0)
+// 				{
+// 					putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
+// 					rectangle(tmp2, rt, CV_RGB(50, 255, 100), -1);
+// 				}
+// 				else
+// 				{
+// 					putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 100, 0));
+// 					rectangle(tmp2, rt, CV_RGB(150, 150, 255), -1);
+// 				}
+// 			}
 		}
 		break;
 	default: return;
