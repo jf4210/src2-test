@@ -20,6 +20,7 @@ typedef struct
 	std::vector<RECTINFO> vecRtFix;				//存储定点矩形
 	std::vector<RECTINFO> vecRtRecognition;		//存储识别出来的校验点矩形
 	std::vector<RECTINFO> vecOmr;				//存储识别出来的答案矩形
+	std::vector<OMR_QUESTION> vecOmr2;
 	std::vector<RECTINFO>	vecH_Head;				//水平校验点列表
 	std::vector<RECTINFO>	vecV_Head;				//垂直同步头列表
 	std::vector<RECTINFO>	vecABModel;				//卷型校验点
@@ -61,6 +62,7 @@ public:
 	const int	m_nQK_CPVal;
 	const int	m_nGrayVal;
 	const int	m_nWhiteVal;
+	const int   m_nOMR;
 	const float m_fFixThresholdPercent;
 	const float m_fHeadThresholdPercent;	//同步头达到阀值的比例
 	const float m_fABModelThresholdPercent;
@@ -68,6 +70,7 @@ public:
 	const float m_fQK_CPThresholdPercent;
 	const float m_fGrayThresholdPercent;
 	const float m_fWhiteThresholdPercent;
+	const float m_fOMRThresholdPercent;
 
 	std::vector<CPicShow*>	m_vecPicShow;	//存储图片显示窗口指针，有多个模板图片时，对应到不同的tab控件页面
 	int						m_nCurrTabSel;	//当前Tab控件选择的页面
@@ -101,6 +104,8 @@ public:
 	cv::Point	m_ptFixCP;			//定点的坐标
 	std::vector<std::vector<cv::Point> > m_vecContours;
 	std::vector<RECTINFO>	m_vecTmp;	//有同步头时，保存选择的矩形用于显示
+
+	int			m_nStartTH;			//添加OMR时的起始题号
 public:
 	bool RecogNewGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc);							//在修改阀值后重新计算矩形区的灰度值
 
@@ -142,6 +147,7 @@ private:
 	BOOL DeleteRectInfo(CPType eType, int nItem);				//删除选中的识别点
 	void RecognizeRectTracker();				//识别橡皮筋区域
 	void AddRecogRectToList();					//添加识别出来的区域到对应的列表中，针对有同步头的情况
+	void SetOmrDetailVal(RECTINFO& rc);			//设置OMR区选择题的具体题号和答案值
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog(); 
