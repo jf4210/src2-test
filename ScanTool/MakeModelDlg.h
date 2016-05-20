@@ -124,7 +124,7 @@ private:
 	void PaintRecognisedRect();					//画出所有已经识别出来的矩形
 	void sharpenImage1(const cv::Mat &image, cv::Mat &result);		//锐化
 
-	void GetOmrArry(std::vector<Rect>& rcList);	//黑白卡时获取框选的OMR排列数组
+	void GetOmrArry(std::vector<cv::Rect>& rcList);	//黑白卡时获取框选的OMR排列数组
 
 	inline void GetThreshold(cv::Mat& matSrc, cv::Mat& matDst);			//二值化计算
 //	inline void ShowDetailRectInfo();

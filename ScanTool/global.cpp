@@ -27,6 +27,48 @@ bool SortByPositionY(RECTINFO& rc1, RECTINFO& rc2)
 	}
 	return bResult;
 }
+
+bool SortByPositionX2(cv::Rect& rt1, cv::Rect& rt2)
+{
+	bool bResult = true;
+	bResult = rt1.x < rt2.x ? true : false;
+	if (!bResult)
+	{
+		if (rt1.x == rt2.x)
+			bResult = rt1.y < rt2.y ? true : false;
+	}
+	return bResult;
+}
+
+bool SortByPositionY2(cv::Rect& rt1, cv::Rect& rt2)
+{
+	bool bResult = true;
+	bResult = rt1.y < rt2.y ? true : false;
+	if (!bResult)
+	{
+		if (rt1.y == rt2.y)
+			bResult = rt1.x < rt2.x ? true : false;
+	}
+	return bResult;
+}
+
+bool SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2)
+{
+	bool bResult = true;
+
+	if (abs(rt1.y - rt2.y) > 5)
+	{
+		return rt1.y < rt2.y ? true : false;
+	}
+	else
+	{
+		bResult = rt1.x < rt2.x ? true : false;
+		if (!bResult)
+			bResult = rt1.y < rt2.y ? true : false;
+	}
+	return bResult;
+}
+
 bool ZipFile(CString strSrcPath, CString strDstPath)
 {
 	USES_CONVERSION;

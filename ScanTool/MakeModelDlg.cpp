@@ -950,6 +950,10 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 
 		bResult = true;
 	}
+	if(m_eCurCPType == OMR)
+	{
+		GetOmrArry(RectCompList);
+	}
 #else
 	m_vecContours.clear();
 	cv::findContours(imgResult.clone(), m_vecContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);	//hsvRe.clone()		//CV_RETR_EXTERNAL	//CV_CHAIN_APPROX_SIMPLE
@@ -1084,7 +1088,8 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 	}
 	end = clock();
 //	PaintRecognisedRect();
-	ShowRectByCPType(m_eCurCPType);
+	if (m_eCurCPType != OMR)
+		ShowRectByCPType(m_eCurCPType);
 
 //	end = clock();
 	char szLog[200] = { 0 };
@@ -2056,7 +2061,8 @@ void CMakeModelDlg::ShowTmpRect()
 		if (m_vecTmp[i].eCPType == OMR)
 		{
 			char szAnswerVal[10] = { 0 };
-			sprintf_s(szAnswerVal, "%c", m_vecTmp[i].nAnswer + 65);
+//			sprintf_s(szAnswerVal, "%c", m_vecTmp[i].nAnswer + 65);
+			sprintf_s(szAnswerVal, "%d%c", m_vecTmp[i].nTH, m_vecTmp[i].nAnswer + 65);
 			putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
 			rectangle(tmp2, rt, CV_RGB(50, 255, 100), -1);
 		}
@@ -3107,42 +3113,143 @@ void CMakeModelDlg::SetOmrDetailVal(RECTINFO& rc)
 
 }
 
-void CMakeModelDlg::GetOmrArry(std::vector<Rect>& rcList)
+void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 {
 	if (rcList.size() <= 0)
 		return;
 	int nMaxRow		= 1;
 	int nMaxCols	= 1;
 
+	m_vecTmp.clear();
 	std::vector<Rect> rcList_X = rcList;
-	std::sort(rcList_X.begin(), rcList_X.end(), SortByPositionX);
+	std::vector<Rect> rcList_XY = rcList;
+	std::sort(rcList_X.begin(), rcList_X.end(), SortByPositionX2);
+	std::sort(rcList.begin(), rcList.end(), SortByPositionY2);
+
+	for (int i = 0; i < rcList.size(); i++)
+	{
+		TRACE("omr1 rt%d: (%d,%d,%d,%d)\n", i + 1, rcList[i].x, rcList[i].y, rcList[i].width, rcList[i].height);
+	}
+	TRACE("-----------------\n");
+	for (int i = 0; i < rcList_X.size(); i++)
+	{
+		TRACE("omr2 rt%d: (%d,%d,%d,%d)\n", i + 1, rcList_X[i].x, rcList_X[i].y, rcList_X[i].width, rcList_X[i].height);
+	}
+
+	int nW = rcList[0].width;				//矩形框平均宽度
+	int nH = rcList[0].height;				//矩形框平均高度
+	int nWInterval = 0;						//矩形间的X轴平均间隔
+	int nHInterval = 0;						//矩形间的Y轴平均间隔
 
 	int nX = rcList[0].width * 0.2 + 0.5;		//判断属于同一列的X轴偏差
 	int nY = rcList[0].height * 0.3 + 0.5;		//判断属于同一行的Y轴偏差
 
+
+
+	TRACE("-----------------\n");
+	std::sort(rcList_XY.begin(), rcList_XY.end(), SortByPositionXYInterval);
+	for (int i = 0; i < rcList_XY.size(); i++)
+	{
+		TRACE("omr2 rt%d: (%d,%d,%d,%d)\n", i + 1, rcList_XY[i].x, rcList_XY[i].y, rcList_XY[i].width, rcList_XY[i].height);
+	}
+
+
 	for (int i = 1; i < rcList.size(); i++)
 	{
-		if (rcList[i].y - rcList[i - 1].y > nY)
+		int nTmp = rcList[i].y - rcList[i - 1].y;
+		if (abs(rcList[i].y - rcList[i - 1].y) > nY)
+		{
 			nMaxRow++;
+			nHInterval += abs(rcList[i].y - rcList[i - 1].y - rcList[i - 1].height);
+		}
+
+		nW += rcList[i].width;
+		nH += rcList[i].height;
 	}
 	for (int i = 1; i < rcList_X.size(); i++)
 	{
-		if (rcList_X[i].x - rcList_X[i - 1].x > nX)
+		int nTmp = rcList_X[i].x - rcList_X[i - 1].x;
+		if (abs(rcList_X[i].x - rcList_X[i - 1].x) > nX)
+		{
 			nMaxCols++;
+			nWInterval += abs(rcList_X[i].x - rcList_X[i - 1].x - rcList_X[i - 1].width);
+		}
 	}
+
+	nW = nW / rcList.size() + 0.5;
+	nH = nH / rcList.size() + 0.5;
+	nWInterval = nWInterval / (nMaxCols - 1) + 0.5;
+	nHInterval = nHInterval / (nMaxRow - 1) + 0.5;
 
 	TRACE("检测到框选了%d * %d的矩形区\n", nMaxRow, nMaxCols);
 	cv::Rect** arr;
 	arr = new cv::Rect*[nMaxRow];
+	int nItem = 0;
 	for (int i = 0; i < nMaxRow; i++)
 	{
 		arr[i] = new cv::Rect[nMaxCols];
-		for (int j = 0; j < nMaxCols; j++)
-		{
-
-		}
 	}
 
+	for (int i = 0; i < rcList.size(); i++)
+	{
+		int x = (rcList[i].x - rcList[0].x) / (nW + nWInterval) + 0.5;
+		int y = (rcList[i].y - rcList[0].y) / (nH + nHInterval) + 0.5;
+
+		TRACE("第几行几列: %d行%d列, 差值: x-%d, y-%d\n", x, y, rcList[i].x - rcList[0].x, rcList[i].y - rcList[0].y);
+
+		RECTINFO rc;
+		rc.rt = rcList[i];
+		rc.eCPType = m_eCurCPType;
+		rc.nThresholdValue = m_nOMR;
+		rc.fStandardValuePercent = m_fOMRThresholdPercent;
+
+		switch (m_pOmrInfoDlg->m_nCurrentOmrVal)
+		{
+		case 42:
+			rc.nTH = y;
+			rc.nAnswer = x;
+			break;
+		case 41:
+			rc.nTH = nMaxRow - y;
+			rc.nAnswer = x;
+			break;
+		case 38:
+			rc.nTH = y;
+			rc.nAnswer = nMaxCols - x;
+			break;
+		case 37:
+			rc.nTH = nMaxRow - y;
+			rc.nAnswer = nMaxCols - x;
+			break;
+		case 26:
+			rc.nTH = x;
+			rc.nAnswer = y;
+			break;
+		case 25:
+			rc.nTH = nMaxCols - x;
+			rc.nAnswer = y;
+			break;
+		case 22:
+			rc.nTH = x;
+			rc.nAnswer = nMaxRow - y;
+			break;
+		case 21:
+			rc.nTH = nMaxCols - x;
+			rc.nAnswer = nMaxRow - y;
+			break;
+		}
+		if (m_pOmrInfoDlg->m_bSingle)
+			rc.nSingle = 0;
+		else
+			rc.nSingle = 1;
+		Rect rtTmp = rcList[i];
+		Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+		RecogGrayValue(matSrcModel, rc);
+
+		m_vecTmp.push_back(rc);
+	}
+
+	ShowTmpRect();
 	for (int i = 0; i < nMaxRow; i++)
 	{
 		SAFE_RELEASE(arr[i]);

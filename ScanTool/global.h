@@ -292,4 +292,7 @@ pMODEL	LoadModelFile(CString strModelPath);		//加载模板文件
 bool	SortByArea(cv::Rect& rt1, cv::Rect& rt2);		//按面积排序
 bool	SortByPositionX(RECTINFO& rc1, RECTINFO& rc2);
 bool	SortByPositionY(RECTINFO& rc1, RECTINFO& rc2);
+bool	SortByPositionX2(cv::Rect& rt1, cv::Rect& rt2);
+bool	SortByPositionY2(cv::Rect& rt1, cv::Rect& rt2);
+bool	SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2);
 bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 0, int nPicH = 0);
