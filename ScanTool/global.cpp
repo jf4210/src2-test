@@ -321,19 +321,47 @@ pMODEL LoadModelFile(CString strModelPath)
 			for (int i = 0; i < arrayOmr->size(); i++)
 			{
 				Poco::JSON::Object::Ptr jsnRectInfoObj = arrayOmr->getObject(i);
-				RECTINFO rc;
-				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
-				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
-				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
-				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
-				rc.nHItem		= jsnRectInfoObj->get("hHeadItem").convert<int>();
-				rc.nVItem		= jsnRectInfoObj->get("vHeadItem").convert<int>();
-				rc.rt.x			= jsnRectInfoObj->get("left").convert<int>();
-				rc.rt.y			= jsnRectInfoObj->get("top").convert<int>();
-				rc.rt.width		= jsnRectInfoObj->get("width").convert<int>();
-				rc.rt.height	= jsnRectInfoObj->get("height").convert<int>();
-				paperModelInfo.lOMR.push_back(rc);
+				OMR_QUESTION objOmr;
+				objOmr.nTH = jsnRectInfoObj->get("nTH").convert<int>();
+				Poco::JSON::Array::Ptr omrList = jsnRectInfoObj->getArray("omrlist");
+				int n = omrList->size();
+				for (int j = 0; j < omrList->size(); j++)
+				{
+					Poco::JSON::Object::Ptr jsnOmrObj = omrList->getObject(j);
+					RECTINFO rc;
+					rc.eCPType		= (CPType)jsnOmrObj->get("eType").convert<int>();
+					rc.fStandardValuePercent = jsnOmrObj->get("standardValPercent").convert<float>();
+					rc.fStandardValue		= jsnOmrObj->get("standardVal").convert<float>();
+					rc.nThresholdValue		= jsnOmrObj->get("thresholdValue").convert<int>();
+					rc.nHItem		= jsnOmrObj->get("hHeadItem").convert<int>();
+					rc.nVItem		= jsnOmrObj->get("vHeadItem").convert<int>();
+					rc.nTH			= jsnOmrObj->get("nTH").convert<int>();
+					rc.nAnswer		= jsnOmrObj->get("nAnswer").convert<int>();
+					rc.nSingle		= jsnOmrObj->get("nSingle").convert<int>();
+					rc.rt.x			= jsnOmrObj->get("left").convert<int>();
+					rc.rt.y			= jsnOmrObj->get("top").convert<int>();
+					rc.rt.width		= jsnOmrObj->get("width").convert<int>();
+					rc.rt.height	= jsnOmrObj->get("height").convert<int>();
+					objOmr.lSelAnswer.push_back(rc);
+				}
+				paperModelInfo.lOMR2.push_back(objOmr);
 			}
+// 			for (int i = 0; i < arrayOmr->size(); i++)
+// 			{
+// 				Poco::JSON::Object::Ptr jsnRectInfoObj = arrayOmr->getObject(i);
+// 				RECTINFO rc;
+// 				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
+// 				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
+// 				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+// 				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
+// 				rc.nHItem		= jsnRectInfoObj->get("hHeadItem").convert<int>();
+// 				rc.nVItem		= jsnRectInfoObj->get("vHeadItem").convert<int>();
+// 				rc.rt.x			= jsnRectInfoObj->get("left").convert<int>();
+// 				rc.rt.y			= jsnRectInfoObj->get("top").convert<int>();
+// 				rc.rt.width		= jsnRectInfoObj->get("width").convert<int>();
+// 				rc.rt.height	= jsnRectInfoObj->get("height").convert<int>();
+// 				paperModelInfo.lOMR.push_back(rc);
+// 			}
 
 			std::vector<PAPERMODEL>::iterator itBegin = pModel->vecPaperModel.begin();
 			for (; itBegin != pModel->vecPaperModel.end();)

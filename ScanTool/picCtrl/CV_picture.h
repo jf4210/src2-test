@@ -34,6 +34,8 @@
 #define WM_CV_RBTNUP	(WM_USER + 0x005)		//鼠标右键抬起事件
 #define WM_CV_HTrackerChange	(WM_USER + 0x006)	//橡皮筋类改变事件
 #define WM_CV_VTrackerChange	(WM_USER + 0x007)	//橡皮筋类改变事件
+#define WM_CV_MBtnDown			(WM_USER + 0x008)	//中间滚轮按下事件
+#define WM_CV_MBtnUp			(WM_USER + 0x009)	//中间滚轮按下事件
 
 class CV_picture : public CStatic
 {

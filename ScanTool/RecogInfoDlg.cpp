@@ -178,7 +178,6 @@ BOOL CRecogInfoDlg::PreTranslateMessage(MSG* pMsg)
 		{
 			return TRUE;
 		}
-		return TRUE;
 	}
 	return CDialog::PreTranslateMessage(pMsg);
 }

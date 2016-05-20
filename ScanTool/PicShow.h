@@ -42,6 +42,8 @@ public:
 	LRESULT RoiLbtnDown(WPARAM wParam, LPARAM lParam);
 	LRESULT RoiRbtnUp(WPARAM wParam, LPARAM lParam);
 	LRESULT MBtnWheel(WPARAM wParam, LPARAM lParam);	
+	LRESULT MBtnDown(WPARAM wParam, LPARAM lParam);
+	LRESULT MBtnUp(WPARAM wParam, LPARAM lParam);
 	LRESULT HTrackerChange(WPARAM wParam, LPARAM lParam);
 	LRESULT VTrackerChange(WPARAM wParam, LPARAM lParam);
 protected:

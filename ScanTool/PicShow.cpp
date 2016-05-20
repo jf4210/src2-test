@@ -47,6 +47,8 @@ BEGIN_MESSAGE_MAP(CPicShow, CDialog)
 	ON_MESSAGE(WM_CV_RBTNUP, &CPicShow::RoiRbtnUp)
 	ON_MESSAGE(WM_CV_HTrackerChange, &CPicShow::HTrackerChange)
 	ON_MESSAGE(WM_CV_VTrackerChange, &CPicShow::VTrackerChange)
+	ON_MESSAGE(WM_CV_MBtnDown, &CPicShow::MBtnDown)
+	ON_MESSAGE(WM_CV_MBtnUp, &CPicShow::MBtnUp)
 END_MESSAGE_MAP()
 
 BOOL CPicShow::OnInitDialog()
@@ -393,6 +395,22 @@ LRESULT CPicShow::HTrackerChange(WPARAM wParam, LPARAM lParam)
 LRESULT CPicShow::VTrackerChange(WPARAM wParam, LPARAM lParam)
 {
 	::SendMessageA(this->GetParent()->GetParent()->m_hWnd, WM_CV_VTrackerChange, wParam, lParam);
+	return TRUE;
+}
+
+LRESULT CPicShow::MBtnDown(WPARAM wParam, LPARAM lParam)
+{
+	cv::Point2f pt = *(cv::Point2f*)(wParam);
+	m_iX = pt.x;
+	m_iY = pt.y;
+	return TRUE;
+}
+
+LRESULT CPicShow::MBtnUp(WPARAM wParam, LPARAM lParam)
+{
+	cv::Point2f pt = *(cv::Point2f*)(wParam);
+	m_iX = pt.x;
+	m_iY = pt.y;
 	return TRUE;
 }
 

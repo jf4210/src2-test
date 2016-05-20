@@ -747,6 +747,8 @@ void CV_picture::OnMButtonDown(UINT nFlags, CPoint point)
 		m_ptBeforeMove=m_rect_roi.tl();
 		//使当前控件获得焦点，这样改控件才能捕捉鼠标滚轮消息
 		this->SetFocus();
+//		::SendMessage(this->GetParent()->m_hWnd, WM_CV_MBtnDown, WPARAM(&m_ptBeforeMove), NULL);
+
 	}
 	TRACE("OnMButtonDown\n");
 	//////////// TODO: 在此添加控件额外的处理程序代码/////////////////////////////
@@ -765,6 +767,8 @@ void CV_picture::OnMButtonUp(UINT nFlags, CPoint point)
 	m_iDragFlag=0;
 	m_ptMButtonDown=0;
 	m_ptBeforeMove=m_rect_roi.tl();
+
+	::SendMessage(this->GetParent()->m_hWnd, WM_CV_MBtnUp, WPARAM(&m_ptBeforeMove), NULL);
 	//////////// TODO: 在此添加控件额外的处理程序代码/////////////////////////////
 	TRACE("OnMButtonUp\n");
 	CStatic::OnMButtonUp(nFlags, point);
