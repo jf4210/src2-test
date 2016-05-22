@@ -21,6 +21,7 @@ LIST_SEND_HTTP			g_lHttpSend;			//发送HTTP任务列表
 Poco::FastMutex			g_fmScanReq;
 LIST_SCAN_REQ			g_lScanReq;		//扫描端请求任务列表
 
+Poco::FastMutex			_mapUserLock_;
 MAP_USER				_mapUser_;					//用户映射
 
 class DCS : public Poco::Util::ServerApplication

@@ -16,6 +16,7 @@ extern int	g_nExitFlag;
 
 
 typedef std::map<std::string, CNetUser*>	MAP_USER;
+extern Poco::FastMutex	_mapUserLock_;
 extern MAP_USER		_mapUser_;					//用户映射
 
 
@@ -124,12 +125,15 @@ extern LIST_SEND_HTTP		g_lHttpSend;		//发送HTTP任务列表
 
 typedef struct _ScanReqTask_
 {
+	void*		pUser;
 	std::string strRequest;
 	std::string strUri;
 	std::string strMsg;
 	std::string strEzs;
-	std::string strUserName;
-	std::string strPwd;
+	_ScanReqTask_()
+	{
+		pUser = NULL;
+	}
 }SCAN_REQ_TASK, *pSCAN_REQ_TASK;
 typedef std::list<pSCAN_REQ_TASK> LIST_SCAN_REQ;
 

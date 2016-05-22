@@ -84,11 +84,13 @@ void CNetUser::OnClose(void)
 // 		CMissionFactory::GetInstance()->AddMission(pMission);
 // 	}
 
+	_mapUserLock_.lock();
 	MAP_USER::iterator itFind = _mapUser_.find(m_Name);
 	if (itFind != _mapUser_.end())
 	{
 		itFind->second = NULL;
 	}
+	_mapUserLock_.unlock();
 
 	CListUser::GetInstance()->RemoveUser(this);
 //	CListUser::GetFreeInstance()->AddUser(this);
