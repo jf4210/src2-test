@@ -118,7 +118,7 @@ void CScanResquestHandler::HandleTask(pSCAN_REQ_TASK pTask)
 				strResultStatus = outStringStream.str();
 			}
 
-			if (ParseResult(strResultStatus))
+			if (ParseResult(strResultStatus, pTask))
 			{
 				//解析返回的处理结果
 			}
@@ -144,7 +144,7 @@ void CScanResquestHandler::HandleTask(pSCAN_REQ_TASK pTask)
 	}
 }
 
-bool CScanResquestHandler::ParseResult(std::string& strInput)
+bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTask)
 {
 	bool bResult = false;
 	Poco::JSON::Parser parser;
@@ -164,6 +164,21 @@ bool CScanResquestHandler::ParseResult(std::string& strInput)
 		g_fmScanReq.lock();
 		g_lScanReq.push_back(pTask);
 		g_fmScanReq.unlock();
+
+
+
+// 		MAP_USER::iterator itFind = _mapUser_.find(LoginInfo.szUserNo);
+// 		if (itFind == _mapUser_.end())
+// 		{
+// 			_mapUserLock_.lock();
+// 			_mapUser_.insert(MAP_USER::value_type(LoginInfo.szUserNo, pTask->pUser));
+// 			_mapUserLock_.unlock();
+// 		}
+// 		else
+// 		{
+// 			//重复登录提醒，
+// 			itFind->second = pUser;
+// 		}
 
 	}
 	catch (Poco::JSON::JSONException& jsone)

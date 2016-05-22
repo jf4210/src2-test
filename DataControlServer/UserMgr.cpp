@@ -42,18 +42,18 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			g_lScanReq.push_back(pTask);
 			g_fmScanReq.unlock();
 			
-			MAP_USER::iterator itFind = _mapUser_.find(LoginInfo.szUserNo);
-			if (itFind == _mapUser_.end())
-			{
-				_mapUserLock_.lock();
-				_mapUser_.insert(MAP_USER::value_type(LoginInfo.szUserNo, pUser));
-				_mapUserLock_.unlock();
-			}
-			else
-			{
-				//重复登录提醒，
-				itFind->second = pUser;
-			}
+// 			MAP_USER::iterator itFind = _mapUser_.find(LoginInfo.szUserNo);
+// 			if (itFind == _mapUser_.end())
+// 			{
+// 				_mapUserLock_.lock();
+// 				_mapUser_.insert(MAP_USER::value_type(LoginInfo.szUserNo, pUser));
+// 				_mapUserLock_.unlock();
+// 			}
+// 			else
+// 			{
+// 				//重复登录提醒，
+// 				itFind->second = pUser;
+// 			}
 			
 #else
 			//++	应该在scanResquestHandler收到结果后再调用此过程返回结果

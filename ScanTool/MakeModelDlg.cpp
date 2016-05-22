@@ -37,6 +37,9 @@ CMakeModelDlg::~CMakeModelDlg()
 	if (m_pOmrInfoDlg)
 		SAFE_RELEASE(m_pOmrInfoDlg);
 
+// 	if (m_bNewModelFlag && m_pModel != NULL)
+// 		SAFE_RELEASE(m_pModel);
+
 	std::vector<CPicShow*>::iterator itPic = m_vecPicShow.begin();
 	for (; itPic != m_vecPicShow.end();)
 	{
@@ -626,11 +629,11 @@ LRESULT CMakeModelDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
 void CMakeModelDlg::OnBnClickedBtnNew()
 {
 	USES_CONVERSION;
-	m_vecPaperModelInfo.clear();
-
 	CModelInfoDlg dlg;
 	if (dlg.DoModal() != IDOK)
 		return;
+
+	m_vecPaperModelInfo.clear();
 
 	GetDlgItem(IDC_BTN_New)->EnableWindow(FALSE);
 	m_nModelPicNums = atoi(T2A(dlg.m_strPaperNum));
