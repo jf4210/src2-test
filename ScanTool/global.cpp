@@ -64,7 +64,7 @@ bool SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2)
 	{
 		bResult = rt1.x < rt2.x ? true : false;
 		if (!bResult)
-			bResult = rt1.y < rt2.y ? true : false;
+			bResult = rt1.x == rt2.x?  rt1.y < rt2.y : false;
 	}
 	return bResult;
 }

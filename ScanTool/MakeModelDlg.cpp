@@ -3124,47 +3124,46 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 	std::vector<Rect> rcList_X = rcList;
 	std::vector<Rect> rcList_XY = rcList;
 	std::sort(rcList_X.begin(), rcList_X.end(), SortByPositionX2);
-	std::sort(rcList.begin(), rcList.end(), SortByPositionY2);
+//	std::sort(rcList.begin(), rcList.end(), SortByPositionY2);
 
-	for (int i = 0; i < rcList.size(); i++)
-	{
-		TRACE("omr1 rt%d: (%d,%d,%d,%d)\n", i + 1, rcList[i].x, rcList[i].y, rcList[i].width, rcList[i].height);
-	}
-	TRACE("-----------------\n");
-	for (int i = 0; i < rcList_X.size(); i++)
-	{
-		TRACE("omr2 rt%d: (%d,%d,%d,%d)\n", i + 1, rcList_X[i].x, rcList_X[i].y, rcList_X[i].width, rcList_X[i].height);
-	}
+// 	for (int i = 0; i < rcList.size(); i++)
+// 	{
+// 		TRACE("omr1 rt%d: (%d,%d,%d,%d)\n", i + 1, rcList[i].x, rcList[i].y, rcList[i].width, rcList[i].height);
+// 	}
+// 	TRACE("-----------------\n");
+// 	for (int i = 0; i < rcList_X.size(); i++)
+// 	{
+// 		TRACE("omr2 rt%d: (%d,%d,%d,%d)\n", i + 1, rcList_X[i].x, rcList_X[i].y, rcList_X[i].width, rcList_X[i].height);
+// 	}
 
-	int nW = rcList[0].width;				//矩形框平均宽度
-	int nH = rcList[0].height;				//矩形框平均高度
+	int nW = rcList_X[0].width;				//矩形框平均宽度
+	int nH = rcList_X[0].height;			//矩形框平均高度
 	int nWInterval = 0;						//矩形间的X轴平均间隔
 	int nHInterval = 0;						//矩形间的Y轴平均间隔
 
-	int nX = rcList[0].width * 0.2 + 0.5;		//判断属于同一列的X轴偏差
-	int nY = rcList[0].height * 0.3 + 0.5;		//判断属于同一行的Y轴偏差
+	int nX = rcList_X[0].width * 0.2 + 0.5;		//判断属于同一列的X轴偏差
+	int nY = rcList_X[0].height * 0.3 + 0.5;	//判断属于同一行的Y轴偏差
 
 
 
-	TRACE("-----------------\n");
+//	TRACE("-----------------\n");
 	std::sort(rcList_XY.begin(), rcList_XY.end(), SortByPositionXYInterval);
-	for (int i = 0; i < rcList_XY.size(); i++)
-	{
-		TRACE("omr2 rt%d: (%d,%d,%d,%d)\n", i + 1, rcList_XY[i].x, rcList_XY[i].y, rcList_XY[i].width, rcList_XY[i].height);
-	}
+// 	for (int i = 0; i < rcList_XY.size(); i++)
+// 	{
+// 		TRACE("omr2 rt%d: (%d,%d,%d,%d)\n", i + 1, rcList_XY[i].x, rcList_XY[i].y, rcList_XY[i].width, rcList_XY[i].height);
+// 	}
 
-
-	for (int i = 1; i < rcList.size(); i++)
+	for (int i = 1; i < rcList_XY.size(); i++)
 	{
-		int nTmp = rcList[i].y - rcList[i - 1].y;
-		if (abs(rcList[i].y - rcList[i - 1].y) > nY)
+		int nTmp = rcList_XY[i].y - rcList_XY[i - 1].y;
+		if (abs(rcList_XY[i].y - rcList_XY[i - 1].y) > nY)
 		{
 			nMaxRow++;
-			nHInterval += abs(rcList[i].y - rcList[i - 1].y - rcList[i - 1].height);
+			nHInterval += abs(rcList_XY[i].y - rcList_XY[i - 1].y - rcList_XY[i - 1].height);
 		}
 
-		nW += rcList[i].width;
-		nH += rcList[i].height;
+		nW += rcList_XY[i].width;
+		nH += rcList_XY[i].height;
 	}
 	for (int i = 1; i < rcList_X.size(); i++)
 	{
@@ -3176,29 +3175,24 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 		}
 	}
 
-	nW = nW / rcList.size() + 0.5;
-	nH = nH / rcList.size() + 0.5;
-	nWInterval = nWInterval / (nMaxCols - 1) + 0.5;
-	nHInterval = nHInterval / (nMaxRow - 1) + 0.5;
+	nW = nW / rcList_XY.size() + 0.5;
+	nH = nH / rcList_XY.size() + 0.5;
+	if (nMaxCols > 1)
+		nWInterval = nWInterval / (nMaxCols - 1) + 0.5;
+	if (nMaxRow > 1)
+		nHInterval = nHInterval / (nMaxRow - 1) + 0.5;
 
 	TRACE("检测到框选了%d * %d的矩形区\n", nMaxRow, nMaxCols);
-	cv::Rect** arr;
-	arr = new cv::Rect*[nMaxRow];
-	int nItem = 0;
-	for (int i = 0; i < nMaxRow; i++)
-	{
-		arr[i] = new cv::Rect[nMaxCols];
-	}
 
-	for (int i = 0; i < rcList.size(); i++)
+	for (int i = 0; i < rcList_XY.size(); i++)
 	{
-		int x = (rcList[i].x - rcList[0].x) / (nW + nWInterval) + 0.5;
-		int y = (rcList[i].y - rcList[0].y) / (nH + nHInterval) + 0.5;
+		int x = (float)(rcList_XY[i].x - rcList_XY[0].x) / (nW + nWInterval) + 0.5;
+		int y = (float)(rcList_XY[i].y - rcList_XY[0].y) / (nH + nHInterval) + 0.5;
 
-		TRACE("第几行几列: %d行%d列, 差值: x-%d, y-%d\n", x, y, rcList[i].x - rcList[0].x, rcList[i].y - rcList[0].y);
+		TRACE("第几行几列: %d行%d列, 差值: x-%d, y-%d\n", x, y, rcList_XY[i].x - rcList_XY[0].x, rcList_XY[i].y - rcList_XY[0].y);
 
 		RECTINFO rc;
-		rc.rt = rcList[i];
+		rc.rt = rcList_XY[i];
 		rc.eCPType = m_eCurCPType;
 		rc.nThresholdValue = m_nOMR;
 		rc.fStandardValuePercent = m_fOMRThresholdPercent;
@@ -3206,36 +3200,36 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 		switch (m_pOmrInfoDlg->m_nCurrentOmrVal)
 		{
 		case 42:
-			rc.nTH = y;
-			rc.nAnswer = x;
+			rc.nTH = x;
+			rc.nAnswer = y;
 			break;
 		case 41:
-			rc.nTH = nMaxRow - y;
-			rc.nAnswer = x;
+			rc.nTH = nMaxRow - x - 1;
+			rc.nAnswer = y;
 			break;
 		case 38:
-			rc.nTH = y;
-			rc.nAnswer = nMaxCols - x;
+			rc.nTH = x;
+			rc.nAnswer = nMaxCols - y - 1;
 			break;
 		case 37:
-			rc.nTH = nMaxRow - y;
-			rc.nAnswer = nMaxCols - x;
+			rc.nTH = nMaxRow - x - 1;
+			rc.nAnswer = nMaxCols - y - 1;
 			break;
 		case 26:
-			rc.nTH = x;
-			rc.nAnswer = y;
+			rc.nTH = y;
+			rc.nAnswer = x;
 			break;
 		case 25:
-			rc.nTH = nMaxCols - x;
-			rc.nAnswer = y;
+			rc.nTH = nMaxCols - y - 1;
+			rc.nAnswer = x;
 			break;
 		case 22:
-			rc.nTH = x;
-			rc.nAnswer = nMaxRow - y;
+			rc.nTH = y;
+			rc.nAnswer = nMaxRow - x - 1;
 			break;
 		case 21:
-			rc.nTH = nMaxCols - x;
-			rc.nAnswer = nMaxRow - y;
+			rc.nTH = nMaxCols - y - 1;
+			rc.nAnswer = nMaxRow - x - 1;
 			break;
 		}
 		if (m_pOmrInfoDlg->m_bSingle)
@@ -3250,9 +3244,4 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 	}
 
 	ShowTmpRect();
-	for (int i = 0; i < nMaxRow; i++)
-	{
-		SAFE_RELEASE(arr[i]);
-	}
-	SAFE_RELEASE(arr);
 }
