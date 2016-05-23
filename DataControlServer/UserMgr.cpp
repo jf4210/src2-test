@@ -35,6 +35,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 //			pTask->strRequest = jsnString.str();
 			pTask->strUri	  = SysSet.m_strScanReqUri;
 			pTask->pUser	  = pUser;
+			pTask->strMsg	  = "login";
 			char szTmp[200] = { 0 };
 			sprintf(szTmp, "username=%s&password=%s", LoginInfo.szUserNo, LoginInfo.szPWD);
 			pTask->strRequest = szTmp;

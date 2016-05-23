@@ -61,7 +61,9 @@ void CLoginDlg::OnBnClickedBtnLogin()
 	Poco::Net::SocketAddress sa(T2A(m_strServerIP), m_nServerPort);
 	try
 	{
+		Poco::Timespan ts(10, 0);
 		m_ss.connect(sa);
+		m_ss.setReceiveTimeout(ts);
 
 		ST_CMD_HEADER stHead;
 		stHead.usCmd = USER_LOGIN;

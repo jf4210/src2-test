@@ -45,7 +45,7 @@ protected:
 	{
 		std::string strCurrentPath = config().getString("application.dir");
 		std::string strLogPath = strCurrentPath + "DCS.Log";
-		std::string strDllLogPath = strCurrentPath + "DCS_Dll.Log";
+		std::string strDllLogPath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath) + "DCS_Dll.Log";
 		std::string strConfigPath = strCurrentPath + "DCS-config.ini";
 		
 		g_Log.SetFileName(strLogPath);

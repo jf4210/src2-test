@@ -6,22 +6,24 @@ CNetIoBuffer::CNetIoBuffer(void)
 : m_nUsed(0)
 {
 	ZeroMemory(m_buf,MAX_TCPBUF_LEN);
-	InitializeCriticalSection(&m_Lock);
+//	InitializeCriticalSection(&m_Lock);
 }
 
 CNetIoBuffer::~CNetIoBuffer(void)
 {
-	DeleteCriticalSection(&m_Lock);
+//	DeleteCriticalSection(&m_Lock);
 }
 
 void CNetIoBuffer::Lock(void)
 {
-	EnterCriticalSection(&m_Lock);
+//	EnterCriticalSection(&m_Lock);
+	m_fmLock.lock();
 }
 
 void CNetIoBuffer::UnLock(void)
 {
-	LeaveCriticalSection(&m_Lock);
+//	LeaveCriticalSection(&m_Lock);
+	m_fmLock.unlock();
 }
 
 //网络接收到数据后直接更改指针

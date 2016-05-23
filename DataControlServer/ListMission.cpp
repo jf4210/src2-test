@@ -5,23 +5,25 @@
 
 CListMission::CListMission(void)
 {
-	InitializeCriticalSection(&m_ListLock);
+//	InitializeCriticalSection(&m_ListLock);
 }
 
 CListMission::~CListMission(void)
 {
-	DeleteCriticalSection(&m_ListLock);
+//	DeleteCriticalSection(&m_ListLock);
 }
 
 
 void CListMission::Lock(void)
 {
-	EnterCriticalSection(&m_ListLock);
+//	EnterCriticalSection(&m_ListLock);
+	m_fmListLock.lock();
 }
 
 void CListMission::UnLock(void)
 {
-	LeaveCriticalSection(&m_ListLock);
+//	LeaveCriticalSection(&m_ListLock);
+	m_fmListLock.unlock();
 }
 
 BOOL CListMission::AddMission(CMission* pMission)

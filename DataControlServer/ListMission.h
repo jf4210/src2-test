@@ -15,7 +15,8 @@ public:
 
 	list<CMission*>		m_listMission;
 
-	CRITICAL_SECTION	 m_ListLock;
+//	CRITICAL_SECTION	 m_ListLock;
+	Poco::FastMutex		m_fmListLock;
 	void Lock(void);
 	void UnLock(void);
 

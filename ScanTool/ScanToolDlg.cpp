@@ -141,7 +141,6 @@ BOOL CScanToolDlg::OnInitDialog()
 
 	InitUI();
 	InitConfig();
-
 // 	Poco::LocalDateTime now;
 // 	char szTime[50] = { 0 };
 // 	sprintf_s(szTime, "%d-%02d-%02d %02d:%02d:%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
@@ -169,7 +168,6 @@ BOOL CScanToolDlg::OnInitDialog()
 			m_nModelPicNums = m_pModel->nPicNum;
 		InitTab();
 	}
-
 	// 调用TWAIN 初始化扫描设置
 	ReleaseTwain();
 	m_bTwainInit = FALSE;
@@ -190,7 +188,6 @@ BOOL CScanToolDlg::OnInitDialog()
 
 			ScanSrcInit();
 	}
-
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -332,7 +329,7 @@ void CScanToolDlg::InitConfig()
 	
 	USES_CONVERSION;
 
-	std::string strLogPath = T2A(g_strCurrentPath + _T("ScanTool.log"));
+	std::string strLogPath = CMyCodeConvert::Gb2312ToUtf8(T2A(g_strCurrentPath + _T("ScanTool.log")));
 	Poco::AutoPtr<Poco::PatternFormatter> pFormatter(new Poco::PatternFormatter("%L%Y-%m-%d %H:%M:%S.%F %q:%t"));
 	Poco::AutoPtr<Poco::FormattingChannel> pFCFile(new Poco::FormattingChannel(pFormatter));
 	Poco::AutoPtr<Poco::FileChannel> pFileChannel(new Poco::FileChannel(strLogPath));
@@ -345,12 +342,14 @@ void CScanToolDlg::InitConfig()
 	Poco::Logger& appLogger = Poco::Logger::create("ScanTool", pFCFile, Poco::Message::PRIO_INFORMATION);
 	g_pLogger = &appLogger;
 
-	g_strPaperSavePath = T2A(g_strCurrentPath + _T("Paper\\"));	//存放扫描试卷的路径
+	g_strPaperSavePath = CMyCodeConvert::Gb2312ToUtf8(T2A(g_strCurrentPath + _T("Paper\\")));	//存放扫描试卷的路径
 	Poco::File filePaperPath(g_strPaperSavePath);
 	filePaperPath.createDirectories();
 
+
 	strFile.Append(_T("config.ini"));
-	Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(T2A(strFile)));
+	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(T2A(strFile));
+	Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strUtf8Path));
 	int nRecogThreads = pConf->getInt("Recog.threads", 2);
 	std::string strFileServerIP	= pConf->getString("Server.fileIP");
 	int			nFileServerPort	= pConf->getInt("Server.filePort", 19980);
@@ -812,12 +811,13 @@ void CScanToolDlg::SearchModel()
 {
 	USES_CONVERSION;
 	std::string strModelPath = T2A(g_strCurrentPath + _T("Model"));
-	g_strModelSavePath = strModelPath;
+	g_strModelSavePath = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
 
 	std::string strLog;
 	try
 	{
-		Poco::DirectoryIterator it(strModelPath);
+		std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
+		Poco::DirectoryIterator it(strUtf8Path);
 		Poco::DirectoryIterator end;
 		while (it != end)
 		{

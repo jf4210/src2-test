@@ -21,7 +21,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
-    <UseOfMfc>Static</UseOfMfc>
+    <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -90,6 +90,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\include;.\picCtrl;..\..\common</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -162,9 +163,13 @@
     <ClCompile Include="OmrInfoDlg.cpp" />
     <ClCompile Include="PaperInputDlg.cpp" />
     <ClCompile Include="PapersInfoSaveDlg.cpp" />
-    <ClCompile Include="picCtrl\CvvImage.cpp" />
+    <ClCompile Include="picCtrl\CvvImage.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="picCtrl\CV_picture.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="PicShow.cpp" />
     <ClCompile Include="RecogInfoDlg.cpp" />
@@ -189,6 +194,14 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\ScanTool.ico" />
+    <Image Include="res\横向1.png" />
+    <Image Include="res\横向2.png" />
+    <Image Include="res\横向3.png" />
+    <Image Include="res\横向4.png" />
+    <Image Include="res\竖直1.png" />
+    <Image Include="res\竖直2.png" />
+    <Image Include="res\竖直3.png" />
+    <Image Include="res\竖直4.png" />
     <Image Include="横向1.png" />
     <Image Include="横向2.png" />
     <Image Include="横向3.png" />

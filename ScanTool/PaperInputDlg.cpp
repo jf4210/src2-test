@@ -641,7 +641,8 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				char szNewFullPath[MAX_PATH] = { 0 };
 				sprintf_s(szNewFullPath, "%s\\%s", szSubPaperPath, strNewName.c_str());
 				pPic->strPicName = strNewName;
-				pPic->strPicPath = szNewFullPath;	// strNewFilePath;
+				pPic->strPicPath = CMyCodeConvert::Utf8ToGb2312(strNewFilePath);	// strNewFilePath;
+				pPic->pPaper = pPaper;
 				i++;
 			}
 
@@ -668,12 +669,13 @@ void CPaperInputDlg::SeachModel()
 {
 	USES_CONVERSION;
 	std::string strModelPath = T2A(g_strCurrentPath + _T("Model"));
-	g_strModelSavePath = strModelPath;
+	g_strModelSavePath = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
 
 	std::string strLog;
 	try
 	{
-		Poco::DirectoryIterator it(strModelPath);
+		std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
+		Poco::DirectoryIterator it(strUtf8Path);
 		Poco::DirectoryIterator end;
 		while (it != end)
 		{

@@ -14,7 +14,8 @@ public:
 private:
 	char				m_buf[MAX_TCPBUF_LEN];
 	int					m_nUsed;
-	CRITICAL_SECTION	m_Lock;
+//	CRITICAL_SECTION	m_Lock;
+	Poco::FastMutex		m_fmLock;
 public:
 	void	Lock(void);
 	void	UnLock(void);

@@ -279,27 +279,51 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="横向1.png">
-      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+      <Filter>资源文件</Filter>
     </Image>
     <Image Include="横向2.png">
-      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+      <Filter>资源文件</Filter>
     </Image>
     <Image Include="横向3.png">
-      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+      <Filter>资源文件</Filter>
     </Image>
     <Image Include="横向4.png">
-      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+      <Filter>资源文件</Filter>
     </Image>
     <Image Include="竖直1.png">
-      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+      <Filter>资源文件</Filter>
     </Image>
     <Image Include="竖直2.png">
-      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+      <Filter>资源文件</Filter>
     </Image>
     <Image Include="竖直3.png">
-      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+      <Filter>资源文件</Filter>
     </Image>
     <Image Include="竖直4.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\横向1.png">
+      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+    </Image>
+    <Image Include="res\横向2.png">
+      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+    </Image>
+    <Image Include="res\横向3.png">
+      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+    </Image>
+    <Image Include="res\横向4.png">
+      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+    </Image>
+    <Image Include="res\竖直1.png">
+      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+    </Image>
+    <Image Include="res\竖直2.png">
+      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+    </Image>
+    <Image Include="res\竖直3.png">
+      <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
+    </Image>
+    <Image Include="res\竖直4.png">
       <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
     </Image>
   </ItemGroup>

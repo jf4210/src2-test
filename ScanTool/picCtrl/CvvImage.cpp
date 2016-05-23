@@ -1,9 +1,10 @@
-#include "stdafx.h"//加到工程后这个就要添上
+#include "../stdafx.h"//加到工程后这个就要添上
 #include "CvvImage.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
+using namespace cv;
 
 CV_INLINE RECT NormalizeRect( RECT r );
 CV_INLINE RECT NormalizeRect( RECT r )
@@ -88,13 +89,19 @@ void FillBitmapInfo( BITMAPINFO* bmi, int width, int height, int bpp, int origin
 
 CvvImage::CvvImage()
 {
-	m_img = NULL;
+	m_img = 0;
 }
 
 void CvvImage::Destroy()
 {
-	if (m_img != NULL)
-		cvReleaseImage( &m_img );
+	if (m_img == nullptr)
+		return;
+
+	if (m_img)
+	{
+		cvReleaseImage(&m_img);
+		m_img = 0;
+	}
 }
 
 CvvImage::~CvvImage()

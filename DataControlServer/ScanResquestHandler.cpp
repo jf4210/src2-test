@@ -153,7 +153,8 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 	{
 		result = parser.parse(strInput);
 		Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
-		std::string strTmp = object->get("message").convert<std::string>();
+		bool bResult = object->get("sucess").convert<bool>();
+		std::string strTmp = object->get("result").convert<std::string>();
 		strTmp = CMyCodeConvert::Utf8ToGb2312(strTmp);
 		std::string strEzs = object->get("ezs").convert<std::string>();
 

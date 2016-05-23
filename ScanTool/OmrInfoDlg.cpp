@@ -276,12 +276,12 @@ void COmrInfoDlg::ShowOmrPic()
 		{
 			if (m_nDirectSel == 0)
 			{
-				strPicPath = _T("横向1.png");
+				strPicPath = _T(".\\res\\横向1.png");
 				m_nCurrentOmrVal = 42;			//101010
 			}
 			else
 			{
-				strPicPath = _T("竖直2.png");
+				strPicPath = _T(".\\res\\竖直2.png");
 				m_nCurrentOmrVal = 41;			//101001
 			}
 		}
@@ -289,12 +289,12 @@ void COmrInfoDlg::ShowOmrPic()
 		{
 			if (m_nDirectSel == 0)
 			{
-				strPicPath = _T("竖直4.png");
+				strPicPath = _T(".\\res\\竖直4.png");
 				m_nCurrentOmrVal = 38;			//100110
 			}
 			else
 			{
-				strPicPath = _T("横向3.png");
+				strPicPath = _T(".\\res\\横向3.png");
 				m_nCurrentOmrVal = 37;			//100101
 			}
 		}
@@ -305,12 +305,12 @@ void COmrInfoDlg::ShowOmrPic()
 		{
 			if (m_nDirectSel == 0)
 			{
-				strPicPath = _T("竖直1.png");
+				strPicPath = _T(".\\res\\竖直1.png");
 				m_nCurrentOmrVal = 26;			//011010
 			}
 			else
 			{
-				strPicPath = _T("横向4.png");
+				strPicPath = _T(".\\res\\横向4.png");
 				m_nCurrentOmrVal = 25;			//011001
 			}
 		}
@@ -318,12 +318,12 @@ void COmrInfoDlg::ShowOmrPic()
 		{
 			if (m_nDirectSel == 0)
 			{
-				strPicPath = _T("横向2.png");
+				strPicPath = _T(".\\res\\横向2.png");
 				m_nCurrentOmrVal = 22;			//010110
 			}
 			else
 			{
-				strPicPath = _T("竖直3.png");
+				strPicPath = _T(".\\res\\竖直3.png");
 				m_nCurrentOmrVal = 21;			//010101
 			}
 		}
