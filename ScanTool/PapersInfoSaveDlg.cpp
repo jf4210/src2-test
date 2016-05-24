@@ -49,9 +49,9 @@ BOOL CPapersInfoSaveDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	USES_CONVERSION;
-// 	m_nPaperCount = m_pPapers->nPaperCount;
-// 	m_strPapersDetail = m_pPapers->strPapersDesc.c_str();
-// 	m_strPapersName = m_pPapers->strPapersName.c_str();
+	m_nPaperCount = m_pPapers->nPaperCount;
+	m_strPapersDetail = m_pPapers->strPapersDesc.c_str();
+	m_strPapersName = m_pPapers->strPapersName.c_str();
 
 
 	EXAM_LIST::iterator itExam = g_lExamList.begin();

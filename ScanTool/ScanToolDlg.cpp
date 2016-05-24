@@ -461,7 +461,7 @@ void CScanToolDlg::InitUI()
 
 // 	int sx = GetSystemMetrics(SM_CXFULLSCREEN);
 // 	int sy = GetSystemMetrics(SM_CYFULLSCREEN);
-#if 1
+#if 0
 	CRect rc;
 	::SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
 	int sx = rc.Width();
@@ -1529,8 +1529,8 @@ LRESULT CScanToolDlg::MsgRecogErr(WPARAM wParam, LPARAM lParam)
 
 void CScanToolDlg::OnBnClickedBtnUploadpapers()
 {
-// 	if (!m_pPapersInfo)
-// 		return;
+	if (!m_pPapersInfo)
+		return;
 
 	if (!m_bLogin)
 	{
@@ -1545,8 +1545,27 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	clock_t start, end;
 	start = clock();
 
-	//ÊÔ¾í´üÑ¹Ëõ
+
 	USES_CONVERSION;
+	//Ð´ÊÔ¾í´üÐÅÏ¢µ½ÎÄ¼þ
+	Poco::JSON::Object jsnFileData;
+	jsnFileData.set("examId", dlg.m_nExamID);
+	jsnFileData.set("subjectId", dlg.m_SubjectID);
+	jsnFileData.set("uploader", T2A(m_strUserName));
+
+	std::stringstream jsnString;
+	jsnFileData.stringify(jsnString, 0);
+
+	char szExamInfoPath[MAX_PATH] = { 0 };
+	sprintf_s(szExamInfoPath, "%s\\papersInfo.dat", m_strCurrPicSavePath.c_str());
+// 	std::string strJsnFile = T2A(modelPath);
+// 	strJsnFile += "\\papersInfo.dat";
+	ofstream out(szExamInfoPath);
+	out << jsnString.str().c_str();
+	out.close();
+	//
+
+	//ÊÔ¾í´üÑ¹Ëõ
 	char szPapersSavePath[MAX_PATH] = { 0 };
 	char szZipName[50] = { 0 };
 	if (m_bLogin)
