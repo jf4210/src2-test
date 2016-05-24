@@ -44,7 +44,7 @@ public:
 	int SetSendData(char* pData, int nDataLen);
 
 	BOOL SendResult(WORD dwCmd, int nResultCode);
-	BOOL SendResponesInfo(WORD dwCmd, char* pInfoData, DWORD dwInfoSize);
+	BOOL SendResponesInfo(WORD dwCmd, int nResultCode, char* pInfoData, DWORD dwInfoSize);
 
 	void LockSend(void);
 	void LockRecv(void);

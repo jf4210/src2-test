@@ -248,9 +248,8 @@ BOOL CNetUser::SendResult(WORD dwCmd, int nResultCode)
 }
 
 // 发送反馈信息
-BOOL CNetUser::SendResponesInfo(WORD dwCmd, char* pInfoData, DWORD dwInfoSize)
+BOOL CNetUser::SendResponesInfo(WORD dwCmd, int nResultCode, char* pInfoData, DWORD dwInfoSize)
 {
-
 	if (m_bNoUse)
 	{
 		return FALSE;
@@ -259,7 +258,7 @@ BOOL CNetUser::SendResponesInfo(WORD dwCmd, char* pInfoData, DWORD dwInfoSize)
 	resultCmd.usVerifyCode = VERIFYCODE;
 	resultCmd.usCmd = dwCmd;
 	resultCmd.uPackSize = dwInfoSize;
-	resultCmd.usResult = RESULT_SUCCESS;
+	resultCmd.usResult = nResultCode;	//RESULT_SUCCESS;
 
 	if (!m_pNetSendBuffer->AddData((char*)&resultCmd, HEAD_SIZE))
 	{

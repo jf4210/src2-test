@@ -284,6 +284,27 @@ typedef std::list<pSENDTASK> SENDTASKLIST;	//识别任务列表
 extern Poco::FastMutex		g_fmSendLock;
 extern SENDTASKLIST			g_lSendTask;
 
+typedef struct _ExamSubjects_
+{
+	int			nSubjID;		//考试科目ID
+	std::string strSubjName;	//考试科目名称
+	int			nSubjCode;		//考试科目代码
+}EXAM_SUBJECT, *pEXAM_SUBJECT;
+typedef std::list<EXAM_SUBJECT> SUBJECT_LIST;
+
+typedef struct _examInfo_
+{
+	int			nExamID;			//考试ID
+	int			nExamGrade;			//年级
+	int			nExamState;			//考试状态
+	std::string strExamName;		//考试名称
+	std::string strExamTypeName;	//考试类型名称
+	std::string strGradeName;		//年级名称
+	SUBJECT_LIST lSubjects;			//科目列表
+}EXAMINFO, *pEXAMINFO;
+typedef std::list<EXAMINFO> EXAM_LIST;
+
+extern EXAM_LIST	g_lExamList;
 
 int		GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, RECTINFO*& pRc);
 bool	ZipFile(CString strSrcPath, CString strDstPath);

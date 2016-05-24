@@ -147,40 +147,56 @@ void CScanResquestHandler::HandleTask(pSCAN_REQ_TASK pTask)
 bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTask)
 {
 	bool bResult = false;
+	int ret = 0;
+	std::string strSendData;
+
 	Poco::JSON::Parser parser;
 	Poco::Dynamic::Var result;
 	try
 	{
 		result = parser.parse(strInput);
 		Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
-		bool bResult = object->get("sucess").convert<bool>();
-		std::string strTmp = object->get("result").convert<std::string>();
-		strTmp = CMyCodeConvert::Utf8ToGb2312(strTmp);
-		std::string strEzs = object->get("ezs").convert<std::string>();
+		if (pTask->strMsg == "login")
+		{
+			bool bResult = object->get("success").convert<bool>();
+			std::string strResult = object->get("result").convert<std::string>();
+			strResult = CMyCodeConvert::Utf8ToGb2312(strResult);
 
-		pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
-		pTask->strUri = SysSet.m_strScanReqUri;
-		pTask->strEzs = "ezs=" + strEzs;
-		pTask->strMsg = "ezs";
-		g_fmScanReq.lock();
-		g_lScanReq.push_back(pTask);
-		g_fmScanReq.unlock();
+			if (bResult)
+			{
+				ret = RESULT_SUCCESS;
+				std::string strEzs = object->get("ezs").convert<std::string>();
 
+				strSendData = strEzs;
+				_mapUserLock_.lock();
+				MAP_USER::iterator itFind = _mapUser_.find(pTask->strUser);
+				if (itFind == _mapUser_.end())
+				{
+					_mapUser_.insert(MAP_USER::value_type(pTask->strUser, pTask->pUser));
+				}
+				else
+				{
+					//÷ÿ∏¥µ«¬ºÃ·–—£¨
+					itFind->second = pTask->pUser;
+				}
+				_mapUserLock_.unlock();
+			}
+			else
+			{
+				ret = RESULT_LOGIN_FAIL;
+				strSendData = strResult;
+			}
 
-
-// 		MAP_USER::iterator itFind = _mapUser_.find(LoginInfo.szUserNo);
-// 		if (itFind == _mapUser_.end())
-// 		{
-// 			_mapUserLock_.lock();
-// 			_mapUser_.insert(MAP_USER::value_type(LoginInfo.szUserNo, pTask->pUser));
-// 			_mapUserLock_.unlock();
-// 		}
-// 		else
-// 		{
-// 			//÷ÿ∏¥µ«¬ºÃ·–—£¨
-// 			itFind->second = pUser;
-// 		}
-
+			if (ret == RESULT_SUCCESS)
+			{
+				pTask->pUser->UpdateLogonInfo((char*)pTask->strUser.c_str(), (char*)pTask->strPwd.c_str());
+			}
+		}
+		else if (pTask->strMsg == "ezs")
+		{
+			ret = RESULT_EXAMINFO_SUCCESS;
+			strSendData = strInput;
+		}
 	}
 	catch (Poco::JSON::JSONException& jsone)
 	{
@@ -188,8 +204,8 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 		strErrInfo.append("Error when parse json: ");
 		strErrInfo.append(jsone.message() + "\tData:" + strInput);
 		g_Log.LogOutError(strErrInfo);
+		strSendData = "“Ï≥£ ß∞‹";
 		std::cout << strErrInfo << std::endl;
-		return false;
 	}
 	catch (Poco::Exception& exc)
 	{
@@ -197,17 +213,24 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 		strErrInfo.append("Error: ");
 		strErrInfo.append(exc.message() + "\tData:" + strInput);
 		g_Log.LogOutError(strErrInfo);
+		strSendData = "“Ï≥£ ß∞‹";
 		std::cout << strErrInfo << std::endl;
-		return false;
 	}
 	catch (...)
 	{
 		std::string strErrInfo;
 		strErrInfo.append("Unknown error.\tData:" + strInput);
 		g_Log.LogOutError(strErrInfo);
+		strSendData = "“Ï≥£ ß∞‹";
 		std::cout << strErrInfo << std::endl;
-		return false;
 	}
 
+	int nCmd = 0;
+	if (pTask->strMsg == "login")
+		nCmd = USER_RESPONSE_LOGIN;
+	else if (pTask->strMsg == "ezs")
+		nCmd = USER_RESPONSE_EXAMINFO;
+
+	pTask->pUser->SendResponesInfo(nCmd, ret, (char*)strSendData.c_str(), strSendData.length());
 	return bResult;
 }

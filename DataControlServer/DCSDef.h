@@ -125,11 +125,13 @@ extern LIST_SEND_HTTP		g_lHttpSend;		//发送HTTP任务列表
 
 typedef struct _ScanReqTask_
 {
-	void*		pUser;
+	CNetUser*		pUser;
 	std::string strRequest;
 	std::string strUri;
 	std::string strMsg;
 	std::string strEzs;
+	std::string strUser;
+	std::string strPwd;
 	_ScanReqTask_()
 	{
 		pUser = NULL;

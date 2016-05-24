@@ -18,6 +18,14 @@ public:
 	CString		m_strPapersName;
 	int			m_nPaperCount;
 	CString		m_strPapersDetail;
+
+	CComboBox	m_comboExamName;
+	CComboBox	m_comboSubject;
+
+	int			m_nExamID;
+	CString		m_strExamTypeName;
+	CString		m_strGradeName;
+	int			m_SubjectID;
 private:
 	pPAPERSINFO m_pPapers;
 protected:
@@ -27,4 +35,6 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedOk();
+	afx_msg void OnCbnSelchangeComboExamname();
+	afx_msg void OnCbnSelchangeComboSubjectname();
 };

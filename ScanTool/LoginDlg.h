@@ -17,14 +17,16 @@ public:
 public:
 	CString		m_strUserName;
 	CString		m_strPwd;
+	CString		m_strEzs;
 
-
+	bool		m_bLogin;
 	int			m_nRecvLen;
 	int			m_nWantLen;
-	char		m_szRecvBuff[2048];
+	char		m_szRecvBuff[1024 * 10];
 	Poco::Net::StreamSocket m_ss;
 
-	int			RecvData();
+	int		RecvData(CString& strResultInfo);
+	int		GetExamInfo();
 
 private:
 	CString		m_strServerIP;

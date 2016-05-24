@@ -29,6 +29,8 @@ PAPERS_LIST			g_lPapers;		//所有的试卷袋信息
 
 Poco::FastMutex		g_fmSendLock;	//上传文件列表的锁
 SENDTASKLIST		g_lSendTask;	//上传文件任务列表
+
+EXAM_LIST			g_lExamList;	//当前账号对应的考试列表
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
 class CAboutDlg : public CDialogEx
@@ -168,6 +170,7 @@ BOOL CScanToolDlg::OnInitDialog()
 			m_nModelPicNums = m_pModel->nPicNum;
 		InitTab();
 	}
+
 	// 调用TWAIN 初始化扫描设置
 	ReleaseTwain();
 	m_bTwainInit = FALSE;
@@ -244,6 +247,7 @@ void CScanToolDlg::OnDestroy()
 {
 	CDialogEx::OnDestroy();
 
+	g_lExamList.clear();
 	g_nExitFlag = 1;
 	ReleaseTwain();
 
@@ -664,6 +668,7 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 		CLoginDlg dlg(A2T(m_strCmdServerIP.c_str()), m_nCmdPort);
 		if (dlg.DoModal() != IDOK)
 		{
+			g_lExamList.clear();
 			m_bLogin = FALSE;
 			m_strUserName = _T("");
 			m_strPwd = _T("");
@@ -679,6 +684,7 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 	}
 	else
 	{
+		g_lExamList.clear();
 		m_bLogin = FALSE;
 		m_strUserName = _T("");
 		m_strPwd = _T("");
@@ -711,7 +717,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	rnd.seed();
 	USES_CONVERSION;
 	char szPicTmpPath[MAX_PATH] = { 0 };
-#if 1
+
 	if (m_nScanStatus == 2)		//扫描异常结束后，删除前一份的试卷袋信息
 	{
 		SAFE_RELEASE(m_pPapersInfo);
@@ -722,30 +728,19 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		m_lcPicture.DeleteAllItems();
 		GetDlgItem(IDC_STATIC_SCANCOUNT)->SetWindowText(_T(""));
 
-		Poco::File tmpPath(szPicTmpPath);
+		std::string strUtfPath = CMyCodeConvert::Gb2312ToUtf8(szPicTmpPath);
+		Poco::File tmpPath(strUtfPath);
 		if (tmpPath.exists())
 			tmpPath.remove(true);
 
-		Poco::File tmpPath1(szPicTmpPath);
+		Poco::File tmpPath1(strUtfPath);
 		tmpPath1.createDirectories();
 
-		m_strCurrPicSavePath = szPicTmpPath;
+		m_strCurrPicSavePath = strUtfPath;
 		m_pPapersInfo = new PAPERSINFO();
 		m_nScanCount = 0;					//已扫描数量清0
 	}
 	m_nScanStatus = 1;
-#else
-	sprintf_s(szPicTmpPath, "%sPaper\\Tmp%05d", T2A(g_strCurrentPath), rnd.next(99999));
-
-	Poco::File tmpPath(szPicTmpPath);
-	tmpPath.createDirectories();
-
-	m_strCurrPicSavePath = szPicTmpPath;
-	m_pPapersInfo = new PAPERSINFO();
-// 	g_fmPapers.lock();
-// 	g_lPapers.push_back(m_pPapersInfo);
-// 	g_fmPapers.unlock();
-#endif
 
 	m_Source = m_scanSourceArry.GetAt(dlg.m_nCurrScanSrc);
 	int nDuplex = dlg.m_nCurrDuplex;		//单双面,0-单面,1-双面
@@ -969,6 +964,8 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 	clock_t start, end;
 	start = clock();
 
+	g_pLogger->information("0");
+
 	CDIB dib;
 	dib.CreateFromHandle(hBitmap, bits);
 
@@ -1016,6 +1013,8 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 
 	m_nScanCount++;
 
+	g_pLogger->information("1");
+
 	cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
 
 	m_pCurrentPicShow->ShowPic(matTest2);
@@ -1025,6 +1024,10 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 	imwrite(strPicName, matTest2);
 
 	cvReleaseImage(&pIpl2);
+
+
+	std::string strLog = "Get image: " + strPicName;
+	g_pLogger->information(strLog);
 
 	pST_PicInfo pPic = new ST_PicInfo;
 	pPic->strPicName = szPicName;
@@ -1071,6 +1074,9 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 	CString strMsg = _T("");
 	strMsg.Format(_T("已扫描%d张"), m_nScanCount);
 	GetDlgItem(IDC_STATIC_SCANCOUNT)->SetWindowText(strMsg);
+
+	g_pLogger->information("2");
+
 }
 
 void CScanToolDlg::ScanDone(int nStatus)
@@ -1523,8 +1529,8 @@ LRESULT CScanToolDlg::MsgRecogErr(WPARAM wParam, LPARAM lParam)
 
 void CScanToolDlg::OnBnClickedBtnUploadpapers()
 {
-	if (!m_pPapersInfo)
-		return;
+// 	if (!m_pPapersInfo)
+// 		return;
 
 	if (!m_bLogin)
 	{
