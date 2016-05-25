@@ -172,7 +172,8 @@ void CPicShow::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	cv::Point pt(m_iX * 1, m_iY * 1);
 //	TRACE("OnVScroll, pt(%d, %d), 缩放后:(%d,%d)\n", m_iX, m_iY, m_iX * m_fScale, m_iY * m_fScale);
 
-	m_picShow.ShowImage_rect(m_src_img, pt);
+//	m_picShow.ShowImage_rect(m_src_img, pt);
+	m_picShow.ShowImage_Rect_roi(m_src_img, pt);
 }
 
 void CPicShow::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
@@ -223,7 +224,8 @@ void CPicShow::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	cv::Point pt(m_iX * 1, m_iY * 1);
 //	TRACE("OnHScroll, pt(%d, %d), 缩放后:(%d,%d), m_fScale = %f.\n", m_iX, m_iY, m_iX * m_fScale, m_iY * m_fScale, m_fScale);
 
-	m_picShow.ShowImage_rect(m_src_img, pt);
+//	m_picShow.ShowImage_rect(m_src_img, pt);
+	m_picShow.ShowImage_Rect_roi(m_src_img, pt);
 }
 
 void CPicShow::ShowPic(cv::Mat& imgMat, cv::Point pt /*= cv::Point(0,0)*/)

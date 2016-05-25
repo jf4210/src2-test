@@ -320,7 +320,88 @@ void CV_picture::ShowImage_roi(cv::Mat &src,int method)
 		TRACE(szLog);
 	}
 }
+void CV_picture::ShowImage_Rect_roi(cv::Mat &src, cv::Point pt, int method)
+{
+	try
+	{
+		this->GetClientRect(&m_rect);
+		this->GetWindowRect(&m_rect_win);
 
+		int nRoiW = m_rect.Width() * m_fRoi_scale;
+		int nRoiH = m_rect.Height() * m_fRoi_scale;
+
+		if (pt.x + nRoiW > m_dst_img.cols)
+			pt.x = m_dst_img.cols - nRoiW;
+		if (pt.y + nRoiH > m_dst_img.rows)
+			pt.y = m_dst_img.rows - nRoiH;
+
+		if (pt.x < 0)
+		{
+			pt.x = 0;
+			if (pt.x + nRoiW > m_dst_img.cols)
+				nRoiW = m_dst_img.cols - pt.x;
+		}
+		if (pt.y < 0)
+		{
+			pt.y = 0;
+			if (pt.y + nRoiH > m_dst_img.rows)
+				nRoiH = m_dst_img.rows - pt.y;
+		}
+
+		//	m_rect_roi = Rect(pt.x, pt.y, m_rect.Width(), m_rect.Height());
+		m_rect_roi = Rect(pt.x, pt.y, nRoiW, nRoiH);
+		m_rect_roi_center.x = pt.x + (float)m_rect_roi.width / 2.0f + 0.5f;
+		m_rect_roi_center.y = pt.y + (float)m_rect_roi.height / 2.0f + 0.5f;
+		m_dst_roi = src(m_rect_roi);
+
+		//图片大小相同，则直接跳过ResizeImage，将img原样复制到m_drawing减少计算量
+		if (m_dst_roi.size != m_drawing.size)
+		{
+			ResizeImage(m_dst_roi, m_rect, m_drawing, method);
+		}
+		else
+		{
+			m_drawing = m_dst_roi + 0;
+		}
+
+		if (m_bShowRectTracker_H)
+		{
+			int nX1 = (int)((float)(m_ptHTracker1.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
+			int nY1 = (int)((float)(m_ptHTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+			int nX2 = (int)((float)(m_ptHTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
+			int nY2 = (int)((float)(m_ptHTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+			m_RectTrackerH.m_rect.left = nX1;
+			m_RectTrackerH.m_rect.top = nY1;
+			m_RectTrackerH.m_rect.right = nX2;
+			m_RectTrackerH.m_rect.bottom = nY2;
+		}
+		else if (m_bShowRectTracker_V)
+		{
+			int nX1 = (int)((float)(m_ptVTracker1.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
+			int nY1 = (int)((float)(m_ptVTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+			int nX2 = (int)((float)(m_ptVTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
+			int nY2 = (int)((float)(m_ptVTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+			m_RectTrackerV.m_rect.left = nX1;
+			m_RectTrackerV.m_rect.top = nY1;
+			m_RectTrackerV.m_rect.right = nX2;
+			m_RectTrackerV.m_rect.bottom = nY2;
+		}
+
+		OnPaint();
+	}
+	catch (cv::Exception &exc)
+	{
+		char szLog[300] = { 0 };
+		sprintf_s(szLog, "CV_picture::ShowImage_roi error. detail: %s\n", exc.msg);
+		TRACE(szLog);
+	}
+	catch (...)
+	{
+		char szLog[300] = { 0 };
+		sprintf_s(szLog, "CV_picture::ShowImage_roi error2. Unknown error.\n");
+		TRACE(szLog);
+	}
+}
 //显示图像的指定区域，对大图像，图片控件不足以显示完全，用此函数显示指定起点的区域
 void CV_picture::ShowImage_rect(cv::Mat &src, cv::Point pt)
 {
@@ -1122,6 +1203,8 @@ void CV_picture::OnPaint()
 		Cvvimg.CopyOf(drawing_ipl);
 		// 将图片绘制到显示控件的指定区域内
 		Cvvimg.DrawToHDC(hDC, &m_rect);
+
+//		Cvvimg.Destroy();
 
 		if (m_bShowRectTracker_H)
 		{

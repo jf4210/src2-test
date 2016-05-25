@@ -82,7 +82,8 @@ void CLoginDlg::OnBnClickedBtnLogin()
 		CString strResult = _T("");
 		if (RecvData(strResult))
 		{
-			GetExamInfo();
+			if (!GetExamInfo())
+				AfxMessageBox(_T("登录成功，获取考试信息失败"));
 			OnOK();
 		}
 		else
@@ -213,6 +214,7 @@ int CLoginDlg::RecvData(CString& strResultInfo)
 							subjectInfo.nSubjID = objSubject->get("id").convert<int>();
 							subjectInfo.nSubjCode = objSubject->get("code").convert<int>();
 							subjectInfo.strSubjName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("name").convert<std::string>());
+//							subjectInfo.strModelName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("scanTemplateName").convert<std::string>());
 							examInfo.lSubjects.push_back(subjectInfo);
 						}
 						g_lExamList.push_back(examInfo);

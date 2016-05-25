@@ -92,7 +92,7 @@ public:
 
 	//显示图像的指定区域，对大图像，图片控件不足以显示完全，用此函数显示指定起点的区域
 	void ShowImage_rect(cv::Mat &src, cv::Point pt);
-
+	void ShowImage_Rect_roi(cv::Mat &src, cv::Point pt, int method = 0);
 private:
 	//设置m_dst_img的roi区域，因此使用前应先用LoadImage或ShowImage加载过一个图像
 	//调用该方法前需先用ShowImage对该类内的m_dst_img和roi初始化一次，否则会出错

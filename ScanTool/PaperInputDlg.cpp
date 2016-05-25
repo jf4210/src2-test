@@ -556,8 +556,12 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				if (itSub->isFile())
 				{
 					std::string strOldFileName = pSubFile.getFileName();
+					
 #if 1
-					lFileName.push_back(strOldFileName);
+					if (strOldFileName.find("papersInfo.dat") == std::string::npos)
+					{
+						lFileName.push_back(strOldFileName);
+					}
 #else
 					char szNewName[100] = { 0 };
 					sprintf_s(szNewName, "S%d_", i + 1);
@@ -1079,6 +1083,9 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	UpdateData(TRUE);
 	USES_CONVERSION;
 	pPAPERSINFO pPapers = (pPAPERSINFO)m_lPapersCtrl.GetItemData(m_nCurrItemPapers);
+	if (!pPapers)
+		return;
+
 	pPapers->strPapersDesc = T2A(m_strPapersDesc);
 	pPapers->strPapersName = T2A(m_strPapersName);
 
@@ -1088,6 +1095,27 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	start = clock();
 
 	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+
+	CPapersInfoSaveDlg dlg(pPapers);
+	if (dlg.DoModal() != IDOK)
+		return;
+	//Ð´ÊÔ¾í´üÐÅÏ¢µ½ÎÄ¼þ
+	std::string strUploader = CMyCodeConvert::Gb2312ToUtf8(T2A(pDlg->m_strUserName));
+	std::string strEzs = T2A(pDlg->m_strEzs);
+	Poco::JSON::Object jsnFileData;
+	jsnFileData.set("examId", dlg.m_nExamID);
+	jsnFileData.set("subjectId", dlg.m_SubjectID);
+	jsnFileData.set("uploader", strUploader);
+	jsnFileData.set("ezs", strEzs);
+	std::stringstream jsnString;
+	jsnFileData.stringify(jsnString, 0);
+
+	char szExamInfoPath[MAX_PATH] = { 0 };
+	sprintf_s(szExamInfoPath, "%s\\%s\\papersInfo.dat", T2A(m_strPapersPath), pPapers->strPapersName.c_str());
+	ofstream out(szExamInfoPath);
+	out << jsnString.str().c_str();
+	out.close();
+	//
 
 	//ÊÔ¾í´üÑ¹Ëõ
 	char szPapersSrcPath[MAX_PATH] = { 0 };

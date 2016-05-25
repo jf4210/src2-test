@@ -287,8 +287,9 @@ extern SENDTASKLIST			g_lSendTask;
 typedef struct _ExamSubjects_
 {
 	int			nSubjID;		//考试科目ID
-	std::string strSubjName;	//考试科目名称
 	int			nSubjCode;		//考试科目代码
+	std::string strSubjName;	//考试科目名称
+	std::string strModelName;	//扫描所用模板名称
 }EXAM_SUBJECT, *pEXAM_SUBJECT;
 typedef std::list<EXAM_SUBJECT> SUBJECT_LIST;
 

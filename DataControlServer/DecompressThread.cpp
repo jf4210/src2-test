@@ -176,7 +176,10 @@ public:
 	{
 		std::string strLog = "Decompress OK: " + info.second.toString(Poco::Path::PATH_UNIX);
 		g_Log.LogOut(strLog);
-		std::cout << strLog << std::endl;
+//		std::cout << strLog << std::endl;
+
+		if (info.second.toString().find("papersInfo.dat") != std::string::npos)
+			return;
 
 		pPIC_DETAIL pPic = new PIC_DETAIL;
 		pPic->strFileName = info.second.toString();
@@ -204,14 +207,14 @@ public:
 		}
 		_pPapers->nTotalPics++;						//图片数增加一张
 
-		pSEND_HTTP_TASK pHttpTask = new SEND_HTTP_TASK;
-		pHttpTask->nTaskType	= 1;
-		pHttpTask->pPic			= pPic;
-		pHttpTask->pPapers		= _pPapers;
-		pHttpTask->strUri		= SysSet.m_strUpLoadHttpUri;
-		g_fmHttpSend.lock();
-		g_lHttpSend.push_back(pHttpTask);
-		g_fmHttpSend.unlock();
+// 		pSEND_HTTP_TASK pHttpTask = new SEND_HTTP_TASK;
+// 		pHttpTask->nTaskType	= 1;
+// 		pHttpTask->pPic			= pPic;
+// 		pHttpTask->pPapers		= _pPapers;
+// 		pHttpTask->strUri		= SysSet.m_strUpLoadHttpUri;
+// 		g_fmHttpSend.lock();
+// 		g_lHttpSend.push_back(pHttpTask);
+// 		g_fmHttpSend.unlock();
 	}
 	pPAPERS_DETAIL _pPapers;
 };
@@ -263,7 +266,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	pPAPERS_DETAIL pPapers = new PAPERS_DETAIL;
 	pPapers->strPapersName = pTask->strFileName;
 	pPapers->strPapersPath = CMyCodeConvert::Utf8ToGb2312(strOutDir);
-
+	
 	Poco::Zip::Decompress dec(inp, strOutDir);
 	DecompressHandler handler(pPapers);
 	dec.EError += Poco::Delegate<DecompressHandler, std::pair<const Poco::Zip::ZipLocalFileHeader, const std::string> >(&handler, &DecompressHandler::onError);
@@ -274,9 +277,76 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	//解压完成
 	pPapers->lPaper.sort(SortByPaper);
 
-	//还需要读取试卷袋文件夹里面的文件获取试卷袋信息
+	//读取试卷袋文件夹里面的文件获取试卷袋信息
+	std::string strPapersFilePath = strOutDir + "\\papersInfo.dat";
+	GetFileData(strPapersFilePath, pPapers);
 
+	LIST_PAPER_INFO::iterator itPaper = pPapers->lPaper.begin();
+	for (; itPaper != pPapers->lPaper.end(); itPaper++)
+	{
+		pPAPER_INFO pPaper = *itPaper;
+		LIST_PIC_DETAIL::iterator itPic = pPaper->lPic.begin();
+		for (; itPic != pPaper->lPic.end(); itPic++)
+		{
+			pPIC_DETAIL pPic = *itPic;
+
+			pSEND_HTTP_TASK pHttpTask = new SEND_HTTP_TASK;
+			pHttpTask->nTaskType = 1;
+			pHttpTask->pPic = pPic;
+			pHttpTask->pPapers = pPapers;
+			pHttpTask->strUri = SysSet.m_strUpLoadHttpUri;
+			g_fmHttpSend.lock();
+			g_lHttpSend.push_back(pHttpTask);
+			g_fmHttpSend.unlock();
+		}
+	}
+	
 	g_fmPapers.lock();
 	g_lPapers.push_back(pPapers);
 	g_fmPapers.unlock();
+}
+
+void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPapers)
+{
+	std::string strJsnData;
+	std::ifstream in(strFilePath);
+	std::string strJsnLine;
+	while (!in.eof())
+	{
+		getline(in, strJsnLine);
+		strJsnData.append(strJsnLine);
+	}
+	in.close();
+
+	Poco::JSON::Parser parser;
+	Poco::Dynamic::Var result;
+	try
+	{
+		result = parser.parse(strJsnData);		//strJsnData
+		Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
+
+		int nExamId = objData->get("examId").convert<int>();
+		int nSubjectId = objData->get("subjectId").convert<int>();
+		std::string strUploader = objData->get("uploader").convert<std::string>();
+		std::string strEzs = objData->get("ezs").convert<std::string>();
+		pPapers->nExamID = nExamId;
+		pPapers->nSubjectID = nSubjectId;
+		pPapers->strUploader = strUploader;
+		pPapers->strEzs = "ezs=" + strEzs;
+	}
+	catch (Poco::JSON::JSONException& jsone)
+	{
+		std::string strErrInfo;
+		strErrInfo.append("解析试卷袋文件夹中文件失败: ");
+		strErrInfo.append(jsone.message());
+		g_Log.LogOutError(strErrInfo);
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strErrInfo;
+		strErrInfo.append("解析试卷袋文件夹中文件失败2: ");
+		strErrInfo.append(exc.message());
+		g_Log.LogOutError(strErrInfo);
+	}
+
 }

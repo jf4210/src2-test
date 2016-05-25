@@ -671,6 +671,7 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 			g_lExamList.clear();
 			m_bLogin = FALSE;
 			m_strUserName = _T("");
+			m_strEzs = _T("");
 			m_strPwd = _T("");
 			GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("登录"));
 		}
@@ -679,6 +680,7 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 			m_bLogin = TRUE;
 			m_strUserName = dlg.m_strUserName;
 			m_strPwd = dlg.m_strPwd;
+			m_strEzs = dlg.m_strEzs;
 			GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("退出"));
 		}
 	}
@@ -688,6 +690,7 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 		m_bLogin = FALSE;
 		m_strUserName = _T("");
 		m_strPwd = _T("");
+		m_strEzs = _T("");
 		GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("登录"));
 	}	
 }
@@ -1016,15 +1019,18 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 	g_pLogger->information("1");
 
 	cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
+	cv::Mat matTest3 = matTest2.clone();
 
-	m_pCurrentPicShow->ShowPic(matTest2);
-	m_pCurrentShowPaper = m_pPaper;
+// 	m_pCurrentPicShow->ShowPic(matTest2);
+// 	m_pCurrentShowPaper = m_pPaper;
 
 	std::string strPicName = szPicPath;
 	imwrite(strPicName, matTest2);
 
 	cvReleaseImage(&pIpl2);
 
+	m_pCurrentPicShow->ShowPic(matTest3);
+	m_pCurrentShowPaper = m_pPaper;
 
 	std::string strLog = "Get image: " + strPicName;
 	g_pLogger->information(strLog);
@@ -1548,18 +1554,18 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 
 	USES_CONVERSION;
 	//写试卷袋信息到文件
+	std::string strUploader = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strUserName));
+	std::string strEzs = T2A(m_strEzs);
 	Poco::JSON::Object jsnFileData;
 	jsnFileData.set("examId", dlg.m_nExamID);
 	jsnFileData.set("subjectId", dlg.m_SubjectID);
-	jsnFileData.set("uploader", T2A(m_strUserName));
-
+	jsnFileData.set("uploader", strUploader);
+	jsnFileData.set("ezs", strEzs);
 	std::stringstream jsnString;
 	jsnFileData.stringify(jsnString, 0);
 
 	char szExamInfoPath[MAX_PATH] = { 0 };
 	sprintf_s(szExamInfoPath, "%s\\papersInfo.dat", m_strCurrPicSavePath.c_str());
-// 	std::string strJsnFile = T2A(modelPath);
-// 	strJsnFile += "\\papersInfo.dat";
 	ofstream out(szExamInfoPath);
 	out << jsnString.str().c_str();
 	out.close();

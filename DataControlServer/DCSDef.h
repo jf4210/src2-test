@@ -71,6 +71,10 @@ typedef struct _Papers_
 	int			nUpLoadFail;
 	int			nTotalPaper;		//总学生数量，从试卷袋文件夹读取
 	int			nQk;				//缺考学生数量，从试卷袋文件夹读取
+	int			nExamID;			//考试ID
+	int			nSubjectID;			//科目ID
+	std::string	strUploader;		//上传者
+	std::string strEzs;				//上传给后端服务器用，--cookie
 	std::string strDesc;			//从试卷袋文件夹读取
 	std::string strPapersName;
 	std::string strPapersPath;
@@ -110,6 +114,7 @@ typedef struct _SendHttpTask_
 	pPAPERS_DETAIL pPapers;
 	std::string strUri;
 	std::string strResult;			//发送考场信息给后端服务器，当nTaskType = 2时有用
+	std::string strEzs;				//当nTaskType = 2时有用
 	_SendHttpTask_()
 	{
 		nTaskType = 0;

@@ -13,5 +13,6 @@ public:
 	bool doRequest(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::URI& uri, pSEND_HTTP_TASK pTask);
 	
 	bool GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK pTask);
+	std::string calcMd5(std::string& strInfo);
 };
 

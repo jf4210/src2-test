@@ -67,6 +67,7 @@ public:
 	BOOL			m_bLogin;
 	CString			m_strUserName;
 	CString			m_strPwd;
+	CString			m_strEzs;
 public:
 	void	InitUI();
 	void	InitTab();
