@@ -24,6 +24,9 @@ LIST_SCAN_REQ			g_lScanReq;		//扫描端请求任务列表
 Poco::FastMutex			_mapUserLock_;
 MAP_USER				_mapUser_;					//用户映射
 
+Poco::FastMutex	_mapModelLock_;
+MAP_MODEL	_mapModel_;				//模板信息
+
 class DCS : public Poco::Util::ServerApplication
 {
 protected:

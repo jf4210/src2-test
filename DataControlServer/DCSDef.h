@@ -19,6 +19,23 @@ typedef std::map<std::string, CNetUser*>	MAP_USER;
 extern Poco::FastMutex	_mapUserLock_;
 extern MAP_USER		_mapUser_;					//”√ªß”≥…‰
 
+typedef struct _ModelInfo_
+{
+	int		nExamID;
+	int		nSubjectID;
+	std::string strMd5;
+	std::string strName;
+	std::string strPath;
+	_ModelInfo_()
+	{
+		nExamID = 0;
+		nSubjectID = 0;
+	}
+}MODELINFO,*pMODELINFO;
+
+typedef std::map<std::string, pMODELINFO> MAP_MODEL;
+extern	Poco::FastMutex	_mapModelLock_;
+extern	MAP_MODEL	_mapModel_;
 
 typedef struct _DecompressTask_
 {

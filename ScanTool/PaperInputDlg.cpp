@@ -952,9 +952,9 @@ void CPaperInputDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		RECTLIST::iterator itNormalRect = (*itPic)->lNormalRect.begin();
 		for (int j = 0; itNormalRect != (*itPic)->lNormalRect.end(); itNormalRect++, j++)
 		{
-			char szCP[20] = { 0 };
-			sprintf_s(szCP, "CP%d", j);
-			putText(tmp, szCP, Point((*itNormalRect).rt.x, (*itNormalRect).rt.y + (*itNormalRect).rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
+//			char szCP[20] = { 0 };
+// 			sprintf_s(szCP, "CP%d", j);
+// 			putText(tmp, szCP, Point((*itNormalRect).rt.x, (*itNormalRect).rt.y + (*itNormalRect).rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
 			rectangle(tmp, (*itNormalRect).rt, CV_RGB(255, 0, 0), 2);
 			rectangle(tmp2, (*itNormalRect).rt, CV_RGB(255, 233, 10), -1);
 		}

@@ -3,12 +3,15 @@
 
 #include "stdafx.h"
 #include "ScanTool.h"
+#include "ScanToolDlg.h"
 #include "MakeModelDlg.h"
 #include "afxdialogex.h"
 #include "ModelSaveDlg.h"
 #include <afxinet.h>
 #include "ModelInfoDlg.h"
 #include "THSetDlg.h"
+
+#include "Net_Cmd_Protocol.h"
 
 using namespace std;
 using namespace cv;
@@ -3247,4 +3250,92 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 	}
 
 	ShowTmpRect();
+}
+
+void CMakeModelDlg::setUploadModelInfo(CString& strModelPath, int nExamId, int nSubjectId)
+{
+	USES_CONVERSION;
+	std::string strPath = T2A(strModelPath);
+	std::string strMd5;
+	try
+	{
+		Poco::MD5Engine md5;
+		Poco::DigestOutputStream dos(md5);
+
+		std::ifstream istr(strPath, std::ios::binary);
+		if (!istr)
+		{
+			std::string strLog = "calc MD5 failed 1: ";
+			strLog.append(strPath);
+			g_pLogger->information(strLog);
+			std::cout << strLog << std::endl;
+			return ;
+		}
+		Poco::StreamCopier::copyStream(istr, dos);
+		dos.close();
+
+		strMd5 = Poco::DigestEngine::digestToHex(md5.digest());
+		
+	}
+	catch (...)
+	{
+		std::string strLog = "calc MD5 failed 3: ";
+		strLog.append(strPath);
+		g_pLogger->information(strLog);
+		std::cout << strLog << std::endl;
+		return ;
+	}
+
+	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+	Poco::Net::StreamSocket m_ss;
+
+	Poco::Net::SocketAddress sa(pDlg->m_strCmdServerIP, pDlg->m_nCmdPort);
+	try
+	{
+		Poco::Timespan ts(10, 0);
+		m_ss.connect(sa);
+		m_ss.setReceiveTimeout(ts);
+
+		ST_CMD_HEADER stHead;
+		stHead.usCmd = USER_SETMODELINFO;
+		stHead.uPackSize = sizeof(ST_MODELINFO);
+		ST_MODELINFO stModelInfo;
+		ZeroMemory(&stModelInfo, sizeof(ST_MODELINFO));
+		stModelInfo.nExamID = nExamId;
+		stModelInfo.nSubjectID = nSubjectId;
+		sprintf_s(stModelInfo.szUserNo, "%s", T2A(pDlg->m_strUserName));
+		strncpy(stModelInfo.szMD5, strMd5.c_str(), strMd5.length);
+
+
+		char szSendBuf[1024] = { 0 };
+		memcpy(szSendBuf, (char*)&stHead, HEAD_SIZE);
+		memcpy(szSendBuf + HEAD_SIZE, (char*)&stModelInfo, sizeof(ST_MODELINFO));
+		m_ss.sendBytes(szSendBuf, HEAD_SIZE + stHead.uPackSize);
+
+// 		CString strResult = _T("");
+// 		if (RecvData(strResult))
+// 		{
+// 			if (!GetExamInfo())
+// 				AfxMessageBox(_T("µÇÂ¼³É¹¦£¬»ñÈ¡¿¼ÊÔÐÅÏ¢Ê§°Ü"));
+// 			OnOK();
+// 		}
+// 		else
+// 		{
+// 			if (strResult != _T(""))
+// 				AfxMessageBox(_T("µÇÂ¼Ê§°Ü: ") + strResult);
+// 			else
+// 				AfxMessageBox(_T("µÇÂ¼Ê§°Ü"));
+// 			OnCancel();
+// 		}
+
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strLog = "Á¬½Ó·þÎñÆ÷Ê§°Ü£¬Detail: " + exc.displayText();
+		g_pLogger->information(strLog);
+		TRACE(strLog.c_str());
+		AfxMessageBox(_T("µÇÂ¼Ê§°Ü"));
+		OnCancel();
+	}
+
 }

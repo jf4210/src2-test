@@ -124,4 +124,5 @@ public:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnBnClickedBtnUploadpapers();
 	afx_msg void OnBnClickedBtnLogin();
+	afx_msg void OnBnClickedBtnGetmodel();
 };

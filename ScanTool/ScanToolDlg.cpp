@@ -7,6 +7,7 @@
 #include "ScanToolDlg.h"
 #include "afxdialogex.h"
 #include "LoginDlg.h"
+#include "GetModelDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -102,6 +103,7 @@ BEGIN_MESSAGE_MAP(CScanToolDlg, CDialogEx)
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BTN_UpLoadPapers, &CScanToolDlg::OnBnClickedBtnUploadpapers)
 	ON_BN_CLICKED(IDC_BTN_Login, &CScanToolDlg::OnBnClickedBtnLogin)
+	ON_BN_CLICKED(IDC_BTN_GetModel, &CScanToolDlg::OnBnClickedBtnGetmodel)
 END_MESSAGE_MAP()
 
 
@@ -614,6 +616,11 @@ void CScanToolDlg::InitCtrlPosition()
 		GetDlgItem(IDC_BTN_ScanModule)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
+	if (GetDlgItem(IDC_BTN_GetModel)->GetSafeHwnd)
+	{
+		GetDlgItem(IDC_BTN_GetModel)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
+		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
+	}
 	if (GetDlgItem(IDC_BTN_InputPaper)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_InputPaper)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
@@ -967,8 +974,6 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 	clock_t start, end;
 	start = clock();
 
-	g_pLogger->information("0");
-
 	CDIB dib;
 	dib.CreateFromHandle(hBitmap, bits);
 
@@ -1016,20 +1021,17 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 
 	m_nScanCount++;
 
-	g_pLogger->information("1");
-
 	cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
 	cv::Mat matTest3 = matTest2.clone();
-
-// 	m_pCurrentPicShow->ShowPic(matTest2);
-// 	m_pCurrentShowPaper = m_pPaper;
 
 	std::string strPicName = szPicPath;
 	imwrite(strPicName, matTest2);
 
 	cvReleaseImage(&pIpl2);
 
+#if 0
 	m_pCurrentPicShow->ShowPic(matTest3);
+#endif
 	m_pCurrentShowPaper = m_pPaper;
 
 	std::string strLog = "Get image: " + strPicName;
@@ -1080,9 +1082,6 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 	CString strMsg = _T("");
 	strMsg.Format(_T("已扫描%d张"), m_nScanCount);
 	GetDlgItem(IDC_STATIC_SCANCOUNT)->SetWindowText(strMsg);
-
-	g_pLogger->information("2");
-
 }
 
 void CScanToolDlg::ScanDone(int nStatus)
@@ -1694,5 +1693,18 @@ int CScanToolDlg::GetRectInfoByPoint(cv::Point pt, pST_PicInfo pPic, RECTINFO*& 
 	return nFind;
 }
 
+void CScanToolDlg::OnBnClickedBtnGetmodel()
+{
+	if (!m_bLogin)
+	{
+		AfxMessageBox(_T("请先登录"));
+		return;
+	}
 
+	CGetModelDlg dlg;
+	if (dlg.DoModal() != IDOK)
+		return;
 
+	//先查本地列表，如果没有则请求，如果有，计算crc，和服务器不同则下载
+
+}

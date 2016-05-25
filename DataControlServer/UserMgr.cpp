@@ -52,6 +52,30 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			g_fmScanReq.unlock();
 		}
 		break;
+	case USER_SETMODELINFO:
+		{
+			ST_MODELINFO stExamInfo = *(pST_MODELINFO)(pMission->m_pMissionData + HEAD_SIZE);
+			bool bNeedSend = false;
+			char szIndex[50] = { 0 };
+			sprintf(szIndex, "%d_%d", stExamInfo.nExamID, stExamInfo.nSubjectID);
+			MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
+			if (itFind == _mapModel_.end())
+			{
+				bNeedSend = true;
+			}
+			else
+			{
+				pMODELINFO pModelInfo = itFind->second;
+				if (pModelInfo->strMd5 != stExamInfo.szMD5)		//文件未修改，不需要重新发送
+					bNeedSend = true;
+			}
+
+			if (bNeedSend)
+				pUser->SendResult(USER_RESPONSE_MODELINFO, RESULT_SETMODELINFO_SEND);
+			else
+				pUser->SendResult(USER_RESPONSE_MODELINFO, RESULT_SETMODELINFO_NO);
+		}
+		break;
 	default:
 		bFind = FALSE;
 		break;
