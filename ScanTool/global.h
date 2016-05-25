@@ -273,6 +273,17 @@ extern Poco::FastMutex		g_fmPapers;		//操作试卷袋列表的任务锁
 extern PAPERS_LIST			g_lPapers;		//所有的试卷袋信息
 
 
+//TCP命令任务
+typedef struct _TcpTask_
+{
+	unsigned short usCmd;
+
+}TCP_TASK, *pTCP_TASK;
+typedef std::list<pTCP_TASK> TCP_TASKLIST;
+
+extern Poco::FastMutex		g_fmTcpTaskLock;
+extern TCP_TASKLIST			g_lTcpTask;
+
 //文件上传任务
 typedef struct _SendTask_
 {

@@ -31,6 +31,9 @@ PAPERS_LIST			g_lPapers;		//所有的试卷袋信息
 Poco::FastMutex		g_fmSendLock;	//上传文件列表的锁
 SENDTASKLIST		g_lSendTask;	//上传文件任务列表
 
+Poco::FastMutex		g_fmTcpTaskLock;
+TCP_TASKLIST		g_lTcpTask;		//tcp任务列表
+
 EXAM_LIST			g_lExamList;	//当前账号对应的考试列表
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -72,7 +75,7 @@ CScanToolDlg::CScanToolDlg(CWnd* pParent /*=NULL*/)
 	, m_pModel(NULL), m_ncomboCurrentSel(0), m_pRecogThread(NULL), m_pCurrentPicShow(NULL), m_nModelPicNums(1)
 	, m_bTwainInit(FALSE), m_nCurrTabSel(0), m_nScanCount(0), m_nScanStatus(0)
 	, m_pPapersInfo(NULL), m_pPaper(NULL), m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL)
-	, m_pSendFileObj(NULL), m_SendFileThread(NULL), m_bLogin(FALSE)
+	, m_pSendFileObj(NULL), m_SendFileThread(NULL), m_bLogin(FALSE), m_pTcpCmdObj(NULL)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -303,6 +306,19 @@ void CScanToolDlg::OnDestroy()
 	m_SendFileThread->join();
 	SAFE_RELEASE(m_pSendFileObj);
 	SAFE_RELEASE(m_SendFileThread);
+
+	g_fmTcpTaskLock.lock();
+	TCP_TASKLIST::iterator itCmd = g_lTcpTask.begin();
+	for (; itCmd != g_lTcpTask.end(); itCmd++)
+	{
+		pTCP_TASK pTask = *itCmd;
+		itCmd = g_lTcpTask.erase(itCmd);
+		SAFE_RELEASE(pTask);
+	}
+	g_fmTcpTaskLock.unlock();
+	m_TcpCmdThread->join();
+	SAFE_RELEASE(m_pTcpCmdObj);
+	SAFE_RELEASE(m_TcpCmdThread);
 	
 
 	g_fmPapers.lock();			//释放试卷袋列表
@@ -373,6 +389,10 @@ void CScanToolDlg::InitConfig()
 	m_SendFileThread = new Poco::Thread;
 	m_pSendFileObj = new CSendFileThread(strFileServerIP, nFileServerPort);
 	m_SendFileThread->start(*m_pSendFileObj);
+	m_TcpCmdThread = new Poco::Thread;
+	m_pTcpCmdObj = new CTcpClient(m_strCmdServerIP, m_nCmdPort);
+	m_TcpCmdThread->start(*m_pTcpCmdObj);
+
 }
 
 void CScanToolDlg::InitTab()
@@ -616,7 +636,7 @@ void CScanToolDlg::InitCtrlPosition()
 		GetDlgItem(IDC_BTN_ScanModule)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
-	if (GetDlgItem(IDC_BTN_GetModel)->GetSafeHwnd)
+	if (GetDlgItem(IDC_BTN_GetModel)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_GetModel)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;

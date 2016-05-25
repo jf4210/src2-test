@@ -3304,7 +3304,7 @@ void CMakeModelDlg::setUploadModelInfo(CString& strModelPath, int nExamId, int n
 		stModelInfo.nExamID = nExamId;
 		stModelInfo.nSubjectID = nSubjectId;
 		sprintf_s(stModelInfo.szUserNo, "%s", T2A(pDlg->m_strUserName));
-		strncpy(stModelInfo.szMD5, strMd5.c_str(), strMd5.length);
+		strncpy(stModelInfo.szMD5, strMd5.c_str(), strMd5.length());
 
 
 		char szSendBuf[1024] = { 0 };
