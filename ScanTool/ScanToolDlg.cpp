@@ -1716,11 +1716,11 @@ int CScanToolDlg::GetRectInfoByPoint(cv::Point pt, pST_PicInfo pPic, RECTINFO*& 
 
 void CScanToolDlg::OnBnClickedBtnGetmodel()
 {
-	if (!m_bLogin)
-	{
-		AfxMessageBox(_T("ÇëÏÈµÇÂ¼"));
-		return;
-	}
+// 	if (!m_bLogin)
+// 	{
+// 		AfxMessageBox(_T("ÇëÏÈµÇÂ¼"));
+// 		return;
+// 	}
 
 	USES_CONVERSION;
 	CGetModelDlg dlg(A2T(m_strCmdServerIP.c_str()), m_nCmdPort);

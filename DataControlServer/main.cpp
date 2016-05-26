@@ -92,8 +92,31 @@ protected:
 				if (it->isFile() && p.getExtension() == "mod")
 				{
 					std::string strName = p.getFileName();
-
+					std::string strPath = p.toString();
 					//在_mapModel_中把本地文件信息插入
+
+					std::string strModelName = strName;
+					int nPos = 0;
+					int nOldPos = 0;
+					nPos = strModelName.find("_");
+					std::string strExamID = strModelName.substr(0, nPos);
+					nOldPos = nPos;
+					nPos = strModelName.find(".", nPos + 1);
+					std::string strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+
+					char szIndex[50] = { 0 };
+					sprintf(szIndex, "%s_%s", strExamID.c_str(), strSubjectID.c_str());
+
+					pMODELINFO pModelInfo = new MODELINFO;
+					pModelInfo->nExamID = atoi(strExamID.c_str());
+					pModelInfo->nSubjectID = atoi(strSubjectID.c_str());
+					pModelInfo->strName = strName;
+					pModelInfo->strPath = strPath;
+					pModelInfo->strMd5 = calcFileMd5(strPath);
+
+					_mapModelLock_.lock();
+					_mapModel_.insert(MAP_MODEL::value_type(szIndex, pModelInfo));
+					_mapModelLock_.unlock();
 				}
 				++it;
 			}
@@ -126,6 +149,8 @@ protected:
 		Poco::File decompressDir(SysSet.m_strDecompressPath);
 		if (!decompressDir.exists())
 			decompressDir.createDirectories();
+
+		InitModelInfo();
 
 		std::vector<CDecompressThread*> vecDecompressThreadObj;
 		Poco::Thread* pDecompressThread = new Poco::Thread[SysSet.m_nDecompressThreads];
@@ -161,22 +186,23 @@ protected:
 			g_Log.LogOut("StartCmdChannel fail.");
 
 
-		//test
-// 		pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
-// 		pTask->strUri = SysSet.m_strScanReqUri;
-// 		pTask->strUserName = "123";
-// 		pTask->strPwd = "123";
-// 		pTask->strMsg = "login";
-// 		pTask->strRequest = "username=123&password=123";
-// 		g_fmScanReq.lock();
-// 		g_lScanReq.push_back(pTask);
-// 		g_fmScanReq.unlock();
-		//--
 		waitForTerminationRequest();
 		g_nExitFlag = 1;
 		examServerMgr.StopFileChannel();
 		examServerMgr.StopCmdChannel();
 
+		//释放模板映射信息
+		_mapModelLock_.lock();
+		MAP_MODEL::iterator itModel = _mapModel_.begin();
+		for (; itModel != _mapModel_.end();)
+		{
+			pMODELINFO pModel = itModel->second;
+			itModel = _mapModel_.erase(itModel);
+			SAFE_RELEASE(pModel);
+		}
+		_mapModelLock_.unlock();
+
+		//释放扫描端请求命令列表
 		g_fmScanReq.lock();
 		LIST_SCAN_REQ::iterator itScanReq = g_lScanReq.begin();
 		for (; itScanReq != g_lScanReq.end();)
@@ -187,6 +213,7 @@ protected:
 		}
 		g_fmScanReq.unlock();
 
+		//释放试卷袋信息列表
 		g_fmPapers.lock();
 		LIST_PAPERS_DETAIL::iterator itPapers = g_lPapers.begin();
 		for (; itPapers != g_lPapers.end();)
@@ -197,6 +224,7 @@ protected:
 		}
 		g_fmPapers.unlock();
 
+		//释放文件解压列表
 		g_fmDecompressLock.lock();
 		DECOMPRESSTASKLIST::iterator itDecomp = g_lDecompressTask.begin();
 		for (; itDecomp != g_lDecompressTask.end();)
@@ -207,6 +235,7 @@ protected:
 		}
 		g_fmDecompressLock.unlock();
 
+		//释放http请求列表
 		g_fmHttpSend.lock();
 		LIST_SEND_HTTP::iterator itHttp = g_lHttpSend.begin();
 		for (; itHttp != g_lHttpSend.end();)

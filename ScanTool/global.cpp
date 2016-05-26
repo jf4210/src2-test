@@ -135,6 +135,9 @@ pMODEL LoadModelFile(CString strModelPath)
 
 	std::string strJsnData;
 	std::ifstream in(strJsnModel);
+	if (!in)
+		return NULL;
+
 	std::string strJsnLine;
 	while (!in.eof())
 	{	

@@ -161,7 +161,7 @@ void CGetModelDlg::OnBnClickedBtnDown()
 
 	try
 	{
-		Poco::Timespan ts(6, 0);
+		Poco::Timespan ts(5, 0);
 		m_ss.connect(sa);
 		m_ss.setReceiveTimeout(ts);
 
@@ -172,6 +172,12 @@ void CGetModelDlg::OnBnClickedBtnDown()
 		CString modelPath = g_strCurrentPath + _T("Model");
 		modelPath = modelPath + _T("\\") + m_strScanModelName;
 		std::string strModelPath = T2A(modelPath);
+
+#if 1	//test data
+		m_nExamID = 11;
+		m_SubjectID = 12;
+		m_strScanModelName = _T("11_12.mod");
+#endif
 
 		ST_DOWN_MODEL stModelInfo;
 		ZeroMemory(&stModelInfo, sizeof(ST_DOWN_MODEL));
@@ -221,6 +227,8 @@ void CGetModelDlg::OnBnClickedBtnDown()
 			m_ss.sendBytes(szSendBuf, HEAD_SIZE + stHead2.uPackSize);
 
 			int nRecvResult = RecvFile(&stModelInfo);
+			if (nRecvResult)
+				AfxMessageBox(_T("下载成功"));
 		}
 
 	}
@@ -312,6 +320,8 @@ int CGetModelDlg::RecvData()
 
 int CGetModelDlg::RecvFile(pST_DOWN_MODEL pModelInfo)
 {
+	Poco::Timespan ts(60, 0);
+	m_ss.setReceiveTimeout(ts);
 	memset(m_szRecvBuff, 0, sizeof(m_szRecvBuff));
 	m_nRecvLen = 0;
 	m_nWantLen = 0;
@@ -372,6 +382,10 @@ int CGetModelDlg::RecvFile(pST_DOWN_MODEL pModelInfo)
 			{
 				nResult = 1;
 
+// 				char	*szFileBuff = new char[pstHead->uPackSize];
+// 				strncpy(szFileBuff, m_szRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+// 				std::string strData = m_szRecvBuff + HEAD_SIZE;
+
 				//覆盖本地文件
 				std::string strModelPath = T2A(g_strCurrentPath);
 				strModelPath.append("Model\\");
@@ -381,8 +395,13 @@ int CGetModelDlg::RecvFile(pST_DOWN_MODEL pModelInfo)
 					fileModel.remove();
 
 				ofstream out(strModelPath);
-				out << m_szRecvBuff + HEAD_SIZE;
+				std::stringstream buffer;
+				buffer.write(m_szRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+				int n = buffer.str().length();
+				out << buffer.str();
 				out.close();
+
+//				SAFE_RELEASE(szFileBuff);
 			}
 			break;
 		}
