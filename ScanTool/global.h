@@ -277,7 +277,8 @@ extern PAPERS_LIST			g_lPapers;		//所有的试卷袋信息
 typedef struct _TcpTask_
 {
 	unsigned short usCmd;
-
+	int		nPkgLen;
+	char	szSendBuf[1024];
 }TCP_TASK, *pTCP_TASK;
 typedef std::list<pTCP_TASK> TCP_TASKLIST;
 
@@ -319,7 +320,7 @@ typedef std::list<EXAMINFO> EXAM_LIST;
 extern EXAM_LIST	g_lExamList;
 
 int		GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, RECTINFO*& pRc);
-bool	ZipFile(CString strSrcPath, CString strDstPath);
+bool	ZipFile(CString strSrcPath, CString strDstPath, CString strExtName = _T(".zip"));
 bool	UnZipFile(CString strZipPath);
 pMODEL	LoadModelFile(CString strModelPath);		//加载模板文件
 bool	SortByArea(cv::Rect& rt1, cv::Rect& rt2);		//按面积排序
@@ -329,3 +330,4 @@ bool	SortByPositionX2(cv::Rect& rt1, cv::Rect& rt2);
 bool	SortByPositionY2(cv::Rect& rt1, cv::Rect& rt2);
 bool	SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2);
 bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 0, int nPicH = 0);
+std::string calcFileMd5(std::string strPath);

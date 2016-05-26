@@ -49,6 +49,8 @@ BOOL CModelSaveDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	USES_CONVERSION;
+	if (g_lExamList.size() == 0)
+		return TRUE;
 
 	EXAM_LIST::iterator itExam = g_lExamList.begin();
 	for (; itExam != g_lExamList.end(); itExam++)

@@ -101,6 +101,7 @@ BEGIN_MESSAGE_MAP(CMakeModelDlg, CDialog)
 //	ON_BN_CLICKED(IDC_BTN_SaveRecogInfo, &CMakeModelDlg::OnBnClickedBtnSaverecoginfo)
 	ON_MESSAGE(WM_CV_HTrackerChange, &CMakeModelDlg::HTrackerChange)
 	ON_MESSAGE(WM_CV_VTrackerChange, &CMakeModelDlg::VTrackerChange)
+	ON_BN_CLICKED(IDC_BTN_uploadModel, &CMakeModelDlg::OnBnClickedBtnuploadmodel)
 END_MESSAGE_MAP()
 
 // CMakeModelDlg 消息处理程序
@@ -399,7 +400,7 @@ void CMakeModelDlg::InitCtrlPosition()
 	int nGroupHeight = 170;
 	int nGroupStaticHeight = 15;	//group文字的高度
 	int nTopInGroup = nCurrentTop;
-#if 1
+
 	if (m_pRecogInfoDlg && m_pRecogInfoDlg->GetSafeHwnd())
 	{
 		m_pRecogInfoDlg->MoveWindow(nLeftGap, nTopInGroup, nLeftCtrlWidth, nGroupHeight);
@@ -408,48 +409,7 @@ void CMakeModelDlg::InitCtrlPosition()
 	{
 		m_pOmrInfoDlg->MoveWindow(nLeftGap, nTopInGroup, nLeftCtrlWidth, nGroupHeight);
 	}
-#else
-	if (GetDlgItem(IDC_STATIC_Group)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_STATIC_Group)->MoveWindow(nLeftGap, nTopInGroup, nLeftCtrlWidth, nGroupHeight);
-		nTopInGroup = nTopInGroup + nGroupStaticHeight + nGap;		//加上一个group文字的高度
-	}
-	int nStaticWidthInGrop = (nLeftCtrlWidth - 3 * nGap) / 3;
-	if (GetDlgItem(IDC_STATIC_CPTypeInGroup)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_STATIC_CPTypeInGroup)->MoveWindow(nLeftGap + nGap, nTopInGroup, nStaticWidthInGrop, nStaticHeight);
-	}
-	if (GetDlgItem(IDC_EDIT_CPType)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_EDIT_CPType)->MoveWindow(nLeftGap + nStaticWidthInGrop + nGap * 2, nTopInGroup, nStaticWidthInGrop * 2, nStaticHeight);
-		nTopInGroup = nTopInGroup + nStaticHeight + nGap;
-	}
-	if (GetDlgItem(IDC_STATIC_Threshold)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_STATIC_Threshold)->MoveWindow(nLeftGap + nGap, nTopInGroup, nStaticWidthInGrop, nStaticHeight);
-	}
-	if (GetDlgItem(IDC_EDIT_Threshold)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_EDIT_Threshold)->MoveWindow(nLeftGap + nStaticWidthInGrop + nGap * 2, nTopInGroup, nStaticWidthInGrop, nStaticHeight);
-		nTopInGroup = nTopInGroup + nStaticHeight + nGap;
-	}
-	if (GetDlgItem(IDC_STATIC_ThresholdPercent)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_STATIC_ThresholdPercent)->MoveWindow(nLeftGap + nGap, nTopInGroup, nStaticWidthInGrop, nStaticHeight);
-	}
-	if (GetDlgItem(IDC_EDIT_ThresholdPercent)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_EDIT_ThresholdPercent)->MoveWindow(nLeftGap + nStaticWidthInGrop + nGap * 2, nTopInGroup, nStaticWidthInGrop, nStaticHeight);
-	}
-	int nBtnInGroup_L = nLeftGap + nStaticWidthInGrop + nGap * 2 + nStaticWidthInGrop + nGap;
-	int nBtnInGroup_W = nLeftCtrlWidth - nBtnInGroup_L - nGap;
-	int nBtnInGroup_H = nStaticHeight * 2 + nGap;
-	if (GetDlgItem(IDC_BTN_SaveRecogInfo)->GetSafeHwnd())
-	{
-		nTopInGroup = nCurrentTop + nGroupStaticHeight + nGap + nStaticHeight + nGap;
-		GetDlgItem(IDC_BTN_SaveRecogInfo)->MoveWindow(nBtnInGroup_L, nTopInGroup, nBtnInGroup_W, nBtnInGroup_H);
-	}
-#endif
+
 	nCurrentTop = nCurrentTop + nGroupHeight + nGap;
 	if (GetDlgItem(IDC_BTN_New)->GetSafeHwnd())
 	{
@@ -471,10 +431,16 @@ void CMakeModelDlg::InitCtrlPosition()
 		GetDlgItem(IDC_BTN_SAVE)->MoveWindow(nLeftGap, nCurrentTop, nBtnWidth, nBtnHeigh);
 //		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
 	}
+	if (GetDlgItem(IDC_BTN_uploadModel)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_uploadModel)->MoveWindow(nLeftGap + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeigh);
+		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
+	}
 	if (GetDlgItem(IDC_BTN_ExitModelDlg)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_BTN_ExitModelDlg)->MoveWindow(nLeftGap + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeigh);
-		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
+		GetDlgItem(IDC_BTN_ExitModelDlg)->MoveWindow(nLeftGap, nCurrentTop, nBtnWidth, nBtnHeigh);
+// 		GetDlgItem(IDC_BTN_ExitModelDlg)->MoveWindow(nLeftGap + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeigh);
+// 		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
 	}
 	if (m_tabModelPicCtrl.GetSafeHwnd())
 	{
@@ -1352,6 +1318,8 @@ void CMakeModelDlg::PaintRecognisedRect()
 
 void CMakeModelDlg::OnBnClickedBtnSave()
 {
+	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+
 	if (!m_pModel || m_bNewModelFlag)
 	{
 		CModelSaveDlg dlg;
@@ -1360,8 +1328,15 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 
 		if (!m_bNewModelFlag)
 			m_pModel = new MODEL;
-
-		m_pModel->strModelName = dlg.m_strModelName;
+		
+		if (!pDlg->m_bLogin)
+			m_pModel->strModelName = dlg.m_strModelName;
+		else
+		{
+			char szModelName[30] = { 0 };
+			sprintf_s(szModelName, "%d_%d", dlg.m_nExamID, dlg.m_SubjectID);
+			m_pModel->strModelName = szModelName;
+		}
 
 		m_bSavedModelFlag = true;
 		CString strTitle = _T("");
@@ -1389,8 +1364,6 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 			paperModel.lFix.push_back(m_vecPaperModelInfo[i]->vecRtFix[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecRtRecognition.size(); j++)
 			paperModel.lCheckPoint.push_back(m_vecPaperModelInfo[i]->vecRtRecognition[j]);
-// 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecOmr.size(); j++)
-// 			paperModel.lOMR.push_back(m_vecPaperModelInfo[i]->vecOmr[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecOmr2.size(); j++)
 			paperModel.lOMR2.push_back(m_vecPaperModelInfo[i]->vecOmr2[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecH_Head.size(); j++)
@@ -1414,7 +1387,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	CString modelPath = g_strCurrentPath + _T("Model");
 	modelPath = modelPath + _T("\\") + m_pModel->strModelName;
 	SaveModelFile(m_pModel);
-	ZipFile(modelPath, modelPath);
+	ZipFile(modelPath, modelPath, _T(".mod"));
 	AfxMessageBox(_T("保存完成!"));
 }
 
@@ -1650,22 +1623,6 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("standardVal", itCP->fStandardValue);
 			jsnSelCPArry.add(jsnObj);
 		}
-// 		RECTLIST::iterator itOmr = pModel->vecPaperModel[i].lOMR.begin();
-// 		for (; itOmr != pModel->vecPaperModel[i].lOMR.end(); itOmr++)
-// 		{
-// 			Poco::JSON::Object jsnObj;
-// 			jsnObj.set("eType", (int)itOmr->eCPType);
-// 			jsnObj.set("left", itOmr->rt.x);
-// 			jsnObj.set("top", itOmr->rt.y);
-// 			jsnObj.set("width", itOmr->rt.width);
-// 			jsnObj.set("height", itOmr->rt.height);
-// 			jsnObj.set("hHeadItem", itOmr->nHItem);
-// 			jsnObj.set("vHeadItem", itOmr->nVItem);
-// 			jsnObj.set("thresholdValue", itOmr->nThresholdValue);
-// 			jsnObj.set("standardValPercent", itOmr->fStandardValuePercent);
-// 			jsnObj.set("standardVal", itOmr->fStandardValue);
-// 			jsnOMRArry.add(jsnObj);
-// 		}
 		OMRLIST::iterator itOmr = pModel->vecPaperModel[i].lOMR2.begin();
 		for (; itOmr != pModel->vecPaperModel[i].lOMR2.end(); itOmr++)
 		{
@@ -3252,11 +3209,14 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 	ShowTmpRect();
 }
 
-void CMakeModelDlg::setUploadModelInfo(CString& strModelPath, int nExamId, int nSubjectId)
+void CMakeModelDlg::setUploadModelInfo(CString& strName, CString& strModelPath, int nExamId, int nSubjectId)
 {
 	USES_CONVERSION;
 	std::string strPath = T2A(strModelPath);
 	std::string strMd5;
+#if 1
+	strMd5 = calcFileMd5(strPath);
+#else
 	try
 	{
 		Poco::MD5Engine md5;
@@ -3285,57 +3245,53 @@ void CMakeModelDlg::setUploadModelInfo(CString& strModelPath, int nExamId, int n
 		std::cout << strLog << std::endl;
 		return ;
 	}
+#endif
+	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+
+	ST_MODELINFO stModelInfo;
+	ZeroMemory(&stModelInfo, sizeof(ST_MODELINFO));
+	stModelInfo.nExamID = nExamId;
+	stModelInfo.nSubjectID = nSubjectId;
+	sprintf_s(stModelInfo.szUserNo, "%s", T2A(pDlg->m_strUserName));
+	sprintf_s(stModelInfo.szModelName, "%s.mod", T2A(strName));
+	sprintf_s(stModelInfo.szEzs, "%s", T2A(pDlg->m_strEzs));
+	strncpy(stModelInfo.szMD5, strMd5.c_str(), strMd5.length());
+
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_SETMODELINFO;
+	pTcpTask->nPkgLen = sizeof(ST_MODELINFO);
+	memcpy(pTcpTask->szSendBuf, (char*)&stModelInfo, sizeof(ST_MODELINFO));
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
+}
+
+
+void CMakeModelDlg::OnBnClickedBtnuploadmodel()
+{
+	if (!m_pModel)
+		return;
 
 	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
-	Poco::Net::StreamSocket m_ss;
-
-	Poco::Net::SocketAddress sa(pDlg->m_strCmdServerIP, pDlg->m_nCmdPort);
-	try
+	if (!pDlg->m_bLogin)
 	{
-		Poco::Timespan ts(10, 0);
-		m_ss.connect(sa);
-		m_ss.setReceiveTimeout(ts);
-
-		ST_CMD_HEADER stHead;
-		stHead.usCmd = USER_SETMODELINFO;
-		stHead.uPackSize = sizeof(ST_MODELINFO);
-		ST_MODELINFO stModelInfo;
-		ZeroMemory(&stModelInfo, sizeof(ST_MODELINFO));
-		stModelInfo.nExamID = nExamId;
-		stModelInfo.nSubjectID = nSubjectId;
-		sprintf_s(stModelInfo.szUserNo, "%s", T2A(pDlg->m_strUserName));
-		strncpy(stModelInfo.szMD5, strMd5.c_str(), strMd5.length());
-
-
-		char szSendBuf[1024] = { 0 };
-		memcpy(szSendBuf, (char*)&stHead, HEAD_SIZE);
-		memcpy(szSendBuf + HEAD_SIZE, (char*)&stModelInfo, sizeof(ST_MODELINFO));
-		m_ss.sendBytes(szSendBuf, HEAD_SIZE + stHead.uPackSize);
-
-// 		CString strResult = _T("");
-// 		if (RecvData(strResult))
-// 		{
-// 			if (!GetExamInfo())
-// 				AfxMessageBox(_T("登录成功，获取考试信息失败"));
-// 			OnOK();
-// 		}
-// 		else
-// 		{
-// 			if (strResult != _T(""))
-// 				AfxMessageBox(_T("登录失败: ") + strResult);
-// 			else
-// 				AfxMessageBox(_T("登录失败"));
-// 			OnCancel();
-// 		}
-
-	}
-	catch (Poco::Exception& exc)
-	{
-		std::string strLog = "连接服务器失败，Detail: " + exc.displayText();
-		g_pLogger->information(strLog);
-		TRACE(strLog.c_str());
-		AfxMessageBox(_T("登录失败"));
-		OnCancel();
+		AfxMessageBox(_T("请先登录！"));
+		return;
 	}
 
+	USES_CONVERSION;
+	std::string strModelName = T2A(m_pModel->strModelName);
+	strModelName.append(".mod");
+
+	int nPos = 0;
+	int nOldPos = 0;
+	nPos = strModelName.find("_");
+	std::string strExamID = strModelName.substr(0, nPos);
+	nOldPos = nPos;
+	nPos = strModelName.find(".", nPos + 1);
+	std::string strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+
+	CString modelPath = g_strCurrentPath + _T("Model");
+	modelPath = modelPath + _T("\\") + m_pModel->strModelName + _T(".mod");
+	setUploadModelInfo(m_pModel->strModelName, modelPath, atoi(strExamID.c_str()), atoi(strSubjectID.c_str()));
 }

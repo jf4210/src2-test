@@ -684,7 +684,7 @@ void CPaperInputDlg::SeachModel()
 		while (it != end)
 		{
 			Poco::Path p(it->path());
-			if (it->isFile() && p.getExtension() == "zip")
+			if (it->isFile() && p.getExtension() == "mod")
 			{
 //				std::string strModelName = p.getBaseName();
 				std::string strModelName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
@@ -705,137 +705,6 @@ void CPaperInputDlg::SeachModel()
 	g_pLogger->information(strLog);
 }
 
-// bool CPaperInputDlg::UnZipModel(CString strZipPath)
-// {
-// 	USES_CONVERSION;
-// 	CString strPath = strZipPath.Left(strZipPath.GetLength() - 4);		//.zip
-// 
-// 	Poco::File p(T2A(strPath));
-// 	if (p.exists())
-// 		p.remove(true);
-// 
-// 	HZIP hz = OpenZip(strZipPath, 0);
-// 	ZIPENTRY ze;
-// 	GetZipItem(hz, -1, &ze);
-// 	int numitems = ze.index;
-// 	SetUnzipBaseDir(hz, strPath);
-// 	for (int i = 0; i < numitems; i++)
-// 	{
-// 		GetZipItem(hz, i, &ze);
-// 		UnzipItem(hz, i, ze.name);
-// 	}
-// 	CloseZip(hz);
-// 	return true;
-// }
-#if 0
-pMODEL CPaperInputDlg::LoadModelFile(CString strModelPath)
-{
-	USES_CONVERSION;
-	std::string strJsnModel = T2A(strModelPath + _T("\\model.dat"));
-
-	std::string strJsnData;
-	std::ifstream in(strJsnModel);
-	in >> strJsnData;
-	in.close();
-
-	pMODEL pModel = NULL;
-	Poco::JSON::Parser parser;
-	Poco::Dynamic::Var result;
-	try
-	{
-		result = parser.parse(strJsnData);
-		Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
-
-		pModel = new MODEL;
-		pModel->strModelName = A2T(CMyCodeConvert::Utf8ToGb2312(objData->get("modelName").convert<std::string>()).c_str());
-		pModel->nPicNum = objData->get("paperModelCount").convert<int>();
-		pModel->nEnableModify = objData->get("enableModify").convert<int>();
-
-		Poco::JSON::Array::Ptr arrayPapers = objData->getArray("paperInfo");
-		for (int i = 0; i < arrayPapers->size(); i++)
-		{
-			Poco::JSON::Object::Ptr jsnPaperObj = arrayPapers->getObject(i);
-			PAPERMODEL paperModelInfo;
-			paperModelInfo.nPaper = jsnPaperObj->get("paperNum").convert<int>();
-			paperModelInfo.strModelPicName = A2T(CMyCodeConvert::Utf8ToGb2312(jsnPaperObj->get("modelPicName").convert<std::string>()).c_str());
-
-			Poco::JSON::Array::Ptr arraySelRoi = jsnPaperObj->getArray("selRoiRect");
-			Poco::JSON::Array::Ptr arrayCP = jsnPaperObj->getArray("selCPRect");
-			Poco::JSON::Array::Ptr arrayOmr = jsnPaperObj->getArray("selOmrRect");
-			for (int i = 0; i < arraySelRoi->size(); i++)
-			{
-				Poco::JSON::Object::Ptr jsnSelRoiObj = arraySelRoi->getObject(i);
-				cv::Rect rt;
-				rt.x = jsnSelRoiObj->get("left").convert<int>();
-				rt.y = jsnSelRoiObj->get("top").convert<int>();
-				rt.width = jsnSelRoiObj->get("width").convert<int>();
-				rt.height = jsnSelRoiObj->get("height").convert<int>();
-				paperModelInfo.lSelROI.push_back(rt);
-			}
-			for (int i = 0; i < arrayCP->size(); i++)
-			{
-				Poco::JSON::Object::Ptr jsnCPObj = arrayCP->getObject(i);
-				cv::Rect rt;
-				rt.x = jsnCPObj->get("left").convert<int>();
-				rt.y = jsnCPObj->get("top").convert<int>();
-				rt.width = jsnCPObj->get("width").convert<int>();
-				rt.height = jsnCPObj->get("height").convert<int>();
-				paperModelInfo.lCheckPoint.push_back(rt);
-			}
-			for (int i = 0; i < arrayOmr->size(); i++)
-			{
-				Poco::JSON::Object::Ptr jsnOmrObj = arrayOmr->getObject(i);
-				cv::Rect rt;
-				rt.x = jsnOmrObj->get("left").convert<int>();
-				rt.y = jsnOmrObj->get("top").convert<int>();
-				rt.width = jsnOmrObj->get("width").convert<int>();
-				rt.height = jsnOmrObj->get("height").convert<int>();
-				paperModelInfo.lOMR.push_back(rt);
-			}
-
-			std::vector<PAPERMODEL>::iterator itBegin = pModel->vecPaperModel.begin();
-			for (; itBegin != pModel->vecPaperModel.end();)
-			{
-				if (paperModelInfo.nPaper < (*itBegin).nPaper)
-				{
-					pModel->vecPaperModel.insert(itBegin, paperModelInfo);
-					break;
-				}
-				else
-					itBegin++;
-			}
-			if (itBegin == pModel->vecPaperModel.end())
-				pModel->vecPaperModel.push_back(paperModelInfo);
-		}
-	}
-	catch (Poco::JSON::JSONException& jsone)
-	{
-		if (pModel)
-		{
-			delete pModel;
-			pModel = NULL;
-		}
-		std::string strErrInfo;
-		strErrInfo.append("加载模板文件解析json失败: ");
-		strErrInfo.append(jsone.message());
-		g_pLogger->information(strErrInfo);
-	}
-	catch (Poco::Exception& exc)
-	{
-		if (pModel)
-		{
-			delete pModel;
-			pModel = NULL;
-		}
-		std::string strErrInfo;
-		strErrInfo.append("加载模板文件解析json失败2: ");
-		strErrInfo.append(exc.message());
-		g_pLogger->information(strErrInfo);
-	}
-
-	return pModel;
-}
-#endif
 void CPaperInputDlg::OnCbnSelchangeComboModellist()
 {
 	if (m_ncomboCurrentSel == m_comboModel.GetCurSel())
@@ -844,7 +713,7 @@ void CPaperInputDlg::OnCbnSelchangeComboModellist()
 	CString strModelName;
 	m_comboModel.GetLBText(m_comboModel.GetCurSel(), strModelName);
 	CString strModelPath = g_strCurrentPath + _T("Model\\") + strModelName;
-	CString strModelFullPath = strModelPath + _T(".zip");
+	CString strModelFullPath = strModelPath + _T(".mod");
 	UnZipFile(strModelFullPath);		//UnZipModel(strModelFullPath);
 	if (m_pModel && m_pModel != m_pOldModel)
 	{

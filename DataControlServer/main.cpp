@@ -44,6 +44,72 @@ protected:
 		ServerApplication::uninitialize();
 	}
 
+	std::string calcFileMd5(std::string strPath)
+	{
+		std::string strResult;
+		try
+		{
+			Poco::MD5Engine md5;
+			Poco::DigestOutputStream dos(md5);
+
+			std::ifstream istr(strPath, std::ios::binary);
+			if (!istr)
+			{
+				string strLog = "calc MD5 failed 1: ";
+				strLog.append(strPath);
+				g_Log.LogOutError(strLog);
+				std::cout << strLog << std::endl;
+				return false;
+			}
+			Poco::StreamCopier::copyStream(istr, dos);
+			dos.close();
+
+			strResult = Poco::DigestEngine::digestToHex(md5.digest());
+			
+		}
+		catch (...)
+		{
+			string strLog = "calc MD5 failed 3: ";
+			strLog.append(strPath);
+			g_Log.LogOutError(strLog);
+			std::cout << strLog << std::endl;
+			return strResult;
+		}
+		return strResult;
+	}
+
+	void  InitModelInfo()
+	{
+		std::string strModelPath = SysSet.m_strModelSavePath;
+
+		try
+		{
+			Poco::DirectoryIterator it(strModelPath);
+			Poco::DirectoryIterator end;
+			while (it != end)
+			{
+				Poco::Path p(it->path());
+				if (it->isFile() && p.getExtension() == "mod")
+				{
+					std::string strName = p.getFileName();
+
+					//在_mapModel_中把本地文件信息插入
+				}
+				++it;
+			}
+		}
+		catch (Poco::FileException& exc)
+		{
+			std::cerr << exc.displayText() << std::endl;
+			return ;
+		}
+		catch (Poco::Exception& exc)
+		{
+			std::cerr << exc.displayText() << std::endl;
+			return ;
+		}
+	}
+
 	int main(const std::vector < std::string > & args) 
 	{
 		std::string strCurrentPath = config().getString("application.dir");

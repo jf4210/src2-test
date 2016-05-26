@@ -53,6 +53,11 @@ BOOL CPapersInfoSaveDlg::OnInitDialog()
 	m_strPapersDetail = m_pPapers->strPapersDesc.c_str();
 	m_strPapersName = m_pPapers->strPapersName.c_str();
 
+	if (g_lExamList.size() == 0)
+	{
+		UpdateData(FALSE);
+		return FALSE;
+	}
 
 	EXAM_LIST::iterator itExam = g_lExamList.begin();
 	for (; itExam != g_lExamList.end(); itExam++)

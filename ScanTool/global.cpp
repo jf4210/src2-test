@@ -69,11 +69,11 @@ bool SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2)
 	return bResult;
 }
 
-bool ZipFile(CString strSrcPath, CString strDstPath)
+bool ZipFile(CString strSrcPath, CString strDstPath, CString strExtName /*= _T(".zip")*/)
 {
 	USES_CONVERSION;
 //	CString modelName = strSrcPath.Right(strSrcPath.GetLength() - strSrcPath.ReverseFind('\\') - 1);
-	CString zipName = strDstPath + _T(".zip");
+	CString zipName = strDstPath + strExtName;
 	std::string strUtf8ZipName = CMyCodeConvert::Gb2312ToUtf8(T2A(zipName));
 
 	Poco::File p(strUtf8ZipName);	//T2A(zipName)
@@ -808,4 +808,37 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW, i
 		TRACE("定点1(%d, %d), 定点2(%d, %d),新的C点(%d, %d), C点(%d, %d), 原定点1(%d, %d), 定点2(%d, %d)\n", ptA.x, ptA.y, ptB.x, ptB.y, ptC.x, ptC.y, ptC0.x, ptC0.y, ptA0.x, ptA0.y, ptB0.x, ptB0.y);
 	}
 	return true;
+}
+
+std::string calcFileMd5(std::string strPath)
+{
+	std::string strResult;
+	try
+	{
+		Poco::MD5Engine md5;
+		Poco::DigestOutputStream dos(md5);
+
+		std::ifstream istr(strPath, std::ios::binary);
+		if (!istr)
+		{
+			std::string strLog = "calc MD5 failed 1: ";
+			strLog.append(strPath);
+			g_pLogger->information(strLog);
+			std::cout << strLog << std::endl;
+			return strResult;
+		}
+		Poco::StreamCopier::copyStream(istr, dos);
+		dos.close();
+
+		strResult = Poco::DigestEngine::digestToHex(md5.digest());
+
+	}
+	catch (...)
+	{
+		std::string strLog = "calc MD5 failed 2: ";
+		strLog.append(strPath);
+		g_pLogger->information(strLog);
+		std::cout << strLog << std::endl;
+	}
+	return strResult;
 }

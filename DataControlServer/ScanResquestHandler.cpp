@@ -61,23 +61,9 @@ void CScanResquestHandler::HandleTask(pSCAN_REQ_TASK pTask)
 
 		request.set("User-Agent", "Go-http-client/1.1");
 		request.set("Accept-Encoding", "gzip");	//gzip	//text/html
-#if 0
-		Poco::Net::HTMLForm form;
-		form.setEncoding(Poco::Net::HTMLForm::ENCODING_MULTIPART);
 
-		form.set("username", pTask->strUserName);
-		form.set("password", pTask->strPwd);
-		form.prepareSubmit(request);
-
-//		session.setTimeout(Poco::Timespan(60, 0));
-		request.set("EZ-Scanning-Program", "yes");	//gzip	//text/html
-		request.setContentLength(form.calculateContentLength());
-//		request.setChunkedTransferEncoding(false);
-		form.write(session.sendRequest(request));
-#else
 		std::string strBody;
 		strBody = pTask->strRequest;
-//		strBody = "username=" + pTask->strUserName + "&password=" + pTask->strPwd;
 		if (pTask->strMsg == "login")
 		{
 			request.setContentType("application/x-www-form-urlencoded");
@@ -93,7 +79,7 @@ void CScanResquestHandler::HandleTask(pSCAN_REQ_TASK pTask)
 
 		std::ostream& ostr = session.sendRequest(request);
 		ostr << strBody;
-#endif
+
 
 		std::istream& iStr = session.receiveResponse(response);
 		if (response.getStatus() == Poco::Net::HTTPResponse::HTTP_OK)

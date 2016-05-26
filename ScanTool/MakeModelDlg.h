@@ -143,7 +143,7 @@ private:
 	LRESULT VTrackerChange(WPARAM wParam, LPARAM lParam);
 	
 	bool SaveModelFile(pMODEL pModel);			//保存模板到文件
-	void setUploadModelInfo(CString& strModelPath, int nExamId, int nSubjectId);					//设置上传模板的信息
+	void setUploadModelInfo(CString& strName, CString& strModelPath, int nExamId, int nSubjectId);					//设置上传模板的信息
 
 	void DelRectInfoOnPic();					//删除图像控件上的选中识别点
 	void DeleteRectInfoOnList();				//删除List列表选中的识别点
@@ -169,4 +169,5 @@ public:
 	afx_msg void OnNMDblclkListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnLvnKeydownListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult);
 //	afx_msg void OnBnClickedBtnSaverecoginfo();
+	afx_msg void OnBnClickedBtnuploadmodel();
 };

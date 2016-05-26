@@ -22,6 +22,7 @@ bool CSysSet::Load(std::string& strConfPath)
 	m_nPaperUpLoadPort	= pConf->getInt("Net.FilePort", 19980);
 	m_nCmdPort			= pConf->getInt("Net.CmdPort", 19981);
 	m_strUpLoadPath		= pConf->getString("Sys.upLoadPath");
+	m_strModelSavePath	= pConf->getString("Sys.modelSavePath");
 	m_nDecompressThreads = pConf->getInt("Sys.decompressThreads", 2);
 
 	m_nSendHttpThreads	= pConf->getInt("UpHttp.sendThreads", 2);

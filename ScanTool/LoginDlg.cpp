@@ -62,7 +62,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 	Poco::Net::SocketAddress sa(T2A(m_strServerIP), m_nServerPort);
 	try
 	{
-		Poco::Timespan ts(10, 0);
+		Poco::Timespan ts(6, 0);
 		m_ss.connect(sa);
 		m_ss.setReceiveTimeout(ts);
 
@@ -82,8 +82,8 @@ void CLoginDlg::OnBnClickedBtnLogin()
 		CString strResult = _T("");
 		if (RecvData(strResult))
 		{
-			if (!GetExamInfo())
-				AfxMessageBox(_T("登录成功，获取考试信息失败"));
+			GetExamInfo();
+			AfxMessageBox(_T("登录成功"));	//登录成功，获取考试信息失败
 			OnOK();
 		}
 		else
@@ -268,6 +268,15 @@ int CLoginDlg::GetExamInfo()
 	ZeroMemory(&stExamInfo, sizeof(ST_EXAM_INFO));
 	strcpy(stExamInfo.szEzs, T2A(m_strEzs));
 
+#if 1
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_GETEXAMINFO;
+	pTcpTask->nPkgLen = sizeof(ST_EXAM_INFO);
+	memcpy(pTcpTask->szSendBuf, (char*)&stExamInfo, sizeof(ST_EXAM_INFO));
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
+#else
 	char szSendBuf[1024] = { 0 };
 	memcpy(szSendBuf, (char*)&stHead, HEAD_SIZE);
 	memcpy(szSendBuf + HEAD_SIZE, (char*)&stExamInfo, sizeof(ST_EXAM_INFO));
@@ -278,6 +287,6 @@ int CLoginDlg::GetExamInfo()
 	{
 		nResult = 1;
 	}
-
+#endif
 	return nResult;
 }

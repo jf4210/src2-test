@@ -93,13 +93,84 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 						g_Log.LogOut(szLog);
 						std::cout << szLog << std::endl;
 
-						pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
-						pDecompressTask->strFilePath = m_szFilePath;
-						pDecompressTask->strFileName = m_szFileName;
-						pDecompressTask->strFileName = pDecompressTask->strFileName.substr(0, pDecompressTask->strFileName.length() - 4);
-						g_fmDecompressLock.lock();
-						g_lDecompressTask.push_back(pDecompressTask);
-						g_fmDecompressLock.unlock();
+						//接收到模板，移动到指定目录
+						if (strcmp(m_szFileName, ".mod") != 0)
+						{
+							Poco::File filePath(SysSet.m_strModelSavePath);
+							filePath.createDirectories();
+
+							std::string strModelNewPath = SysSet.m_strModelSavePath + "\\";
+							strModelNewPath.append(m_szFileName);
+
+							try
+							{
+								std::string strUtf8OldPath = CMyCodeConvert::Gb2312ToUtf8(m_szFilePath);
+								std::string strUtf8ModelPath = CMyCodeConvert::Gb2312ToUtf8(strModelNewPath);
+
+								Poco::File modelPicPath(strUtf8OldPath);
+								modelPicPath.moveTo(strUtf8ModelPath);
+
+								std::string strModelName = m_szFileName;
+								int nPos = 0;
+								int nOldPos = 0;
+								nPos = strModelName.find("_");
+								std::string strExamID = strModelName.substr(0, nPos);
+								nOldPos = nPos;
+								nPos = strModelName.find(".", nPos + 1);
+								std::string strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+
+								std::string strLog;
+
+								char szIndex[50] = { 0 };
+								sprintf(szIndex, "%s_%s", strExamID.c_str(), strSubjectID.c_str());
+								MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
+								if (itFind == _mapModel_.end())
+								{
+									pMODELINFO pModelInfo = new MODELINFO;
+									pModelInfo->nExamID = atoi(strExamID.c_str());
+									pModelInfo->nSubjectID = atoi(strSubjectID.c_str());
+									pModelInfo->strName = m_szFileName;
+									pModelInfo->strPath = strModelNewPath;
+									pModelInfo->strMd5 = m_szAnswerMd5;
+
+									_mapModelLock_.lock();
+									_mapModel_.insert(MAP_MODEL::value_type(szIndex, pModelInfo));
+									_mapModelLock_.unlock();
+
+									strLog = "get a new modelinfo. modelName = ";
+									strLog.append(m_szFileName);
+								}
+								else
+								{
+									pMODELINFO pModelInfo = itFind->second;
+									pModelInfo->strName = m_szFileName;
+									pModelInfo->strPath = strModelNewPath;
+									pModelInfo->strMd5 = m_szAnswerMd5;
+
+									strLog = "modify modelinfo. modelName = ";
+									strLog.append(m_szFileName);
+								}
+								g_Log.LogOut(strLog);
+								std::cout << strLog << std::endl;
+							}
+							catch (Poco::Exception &exc)
+							{
+								std::string strLog;
+								strLog.append("model move error: " + exc.displayText() + "\tmodelPath: ");
+								strLog.append(m_szFilePath);
+								g_Log.LogOutError(strLog);
+							}
+						}
+						else
+						{
+							pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+							pDecompressTask->strFilePath = m_szFilePath;
+							pDecompressTask->strFileName = m_szFileName;
+							pDecompressTask->strFileName = pDecompressTask->strFileName.substr(0, pDecompressTask->strFileName.length() - 4);
+							g_fmDecompressLock.lock();
+							g_lDecompressTask.push_back(pDecompressTask);
+							g_fmDecompressLock.unlock();
+						}						
 					}
 					else
 					{

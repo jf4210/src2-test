@@ -30,6 +30,7 @@ public:
 	string m_strCurrentDir;
 	string m_strUpLoadPath;
 	string m_strDecompressPath;
+	string m_strModelSavePath;
 	string m_strUpLoadHttpUri;
 	string m_strBackUri;
 	string m_strScanReqUri;
