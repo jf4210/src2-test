@@ -72,6 +72,7 @@ typedef enum CPType
 	QK_CP,			//缺考
 	GRAY_CP,		//灰度校验
 	WHITE_CP,		//白校验
+	SN,				//考号区
 	OMR				//选择题设置
 };
 
@@ -128,8 +129,6 @@ typedef struct _PaperModel_
 	RECTLIST	lSelHTracker;			//选择的水平同步头区域
 	RECTLIST	lSelVTracker;			//选择的垂直同步头区域
 	RECTLIST	lSelFixRoi;				//选择的ROI的矩形列表
-	RECTLIST	lCheckPoint;			//校验点矩形位置列表
-	RECTLIST	lOMR;					//OMR识别的矩形位置列表
 	OMRLIST		lOMR2;
 	RECTLIST	lFix;					//定点列表
 	RECTLIST	lH_Head;				//水平校验点列表
@@ -331,3 +330,4 @@ bool	SortByPositionY2(cv::Rect& rt1, cv::Rect& rt2);
 bool	SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2);
 bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 0, int nPicH = 0);
 std::string calcFileMd5(std::string strPath);
+void CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int height);

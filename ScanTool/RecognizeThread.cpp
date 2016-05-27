@@ -116,16 +116,13 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 	{
 		clock_t start_pic, end_pic;
 		start_pic = clock();
-#if 1
+
 		int nCount = pModelInfo->pModel->vecPaperModel[i].lH_Head.size() + pModelInfo->pModel->vecPaperModel[i].lV_Head.size() + pModelInfo->pModel->vecPaperModel[i].lABModel.size()
 			+ pModelInfo->pModel->vecPaperModel[i].lCourse.size() + pModelInfo->pModel->vecPaperModel[i].lQK_CP.size() + pModelInfo->pModel->vecPaperModel[i].lGray.size()
 			+ pModelInfo->pModel->vecPaperModel[i].lWhite.size();
 		if (!nCount)	//如果当前模板试卷没有校验点就不需要进行试卷打开操作，直接下一张试卷
 			continue;
-#else
-		if (!pModelInfo->pModel->vecPaperModel[i].lCheckPoint.size())	//如果当前模板试卷没有校验点就不需要进行试卷打开操作，直接下一张试卷
-			continue;
-#endif
+
 		std::string strPicFileName = (*itPic)->strPicName;
 		Mat matCompPic = imread((*itPic)->strPicPath);			//imread((*itPic)->strPicPath);
 

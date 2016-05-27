@@ -104,6 +104,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			bool bNeedDown = true;
 			char szIndex[50] = { 0 };
 			sprintf(szIndex, "%d_%d", stModelInfo.nExamID, stModelInfo.nSubjectID);
+			pMODELINFO pModelInfo = NULL;
 			MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
 			if (itFind == _mapModel_.end())
 			{
@@ -112,12 +113,14 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			}
 			else
 			{
-				pMODELINFO pModelInfo = itFind->second;
+				pModelInfo = itFind->second;
 				if (pModelInfo->strMd5 == stModelInfo.szMD5)		//文件未修改，不需要重新下载
 					bNeedDown = false;
 			}
 			if (bNeedDown)
 			{
+				Poco::File fileModel(pModelInfo->strPath);
+				stModelInfo.nModelSize = fileModel.getSize();
 				pUser->SendResponesInfo(USER_RESPONSE_NEEDDOWN, RESULT_DOWNMODEL_OK, (char*)&stModelInfo, sizeof(stModelInfo));
 			}
 			else
@@ -142,14 +145,6 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				
 
  				std::string strFileData;
-// 				std::ifstream in(pModelInfo->strPath, std::ios::in | std::ios::binary);
-// 				std::string strLine;
-// 				while (!in.eof())
-// 				{
-// 					getline(in, strLine);
-// 					strFileData.append(strLine);
-// 				}
-// 				in.close();
 
 				std::ifstream fin(pModelInfo->strPath, std::ifstream::binary);
 				if (!fin)	return false;
@@ -160,6 +155,15 @@ int CUserMgr::HandleHeader(CMission* pMission)
 
 				int nLen = strFileData.length();
 				std::cout << "模板长度: " << nLen << std::endl;
+				
+
+// 				ofstream out("1.mod", std::ios::binary);
+// 				std::stringstream buffer2;
+// 				buffer2.write(strFileData.c_str(), strFileData.length());
+// 				int n = buffer2.str().length();
+// 				out << buffer2.str();
+// 				out.close();
+
 				pUser->SendResponesInfo(USER_RESPONSE_DOWNMODEL, RESULT_DOWNMODEL_RECV, (char*)strFileData.c_str(), strFileData.length());
 			}
 		}

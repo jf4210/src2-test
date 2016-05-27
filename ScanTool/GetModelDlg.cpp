@@ -45,6 +45,7 @@ BEGIN_MESSAGE_MAP(CGetModelDlg, CDialog)
 	ON_CBN_SELCHANGE(IDC_COMBO_ExamName, &CGetModelDlg::OnCbnSelchangeComboExamname)
 	ON_CBN_SELCHANGE(IDC_COMBO_SubjectName, &CGetModelDlg::OnCbnSelchangeComboSubjectname)
 	ON_BN_CLICKED(IDC_BTN_DOWN, &CGetModelDlg::OnBnClickedBtnDown)
+	ON_BN_CLICKED(IDC_BTN_Exit, &CGetModelDlg::OnBnClickedBtnExit)
 END_MESSAGE_MAP()
 
 BOOL CGetModelDlg::OnInitDialog()
@@ -121,6 +122,7 @@ void CGetModelDlg::OnCbnSelchangeComboExamname()
 		if (i == 0)
 		{
 			m_SubjectID = itSub->nSubjID;
+			m_strScanModelName = A2T(itSub->strModelName.c_str());
 		}
 	}
 	m_comboSubject.SetCurSel(0);
@@ -136,6 +138,7 @@ void CGetModelDlg::OnCbnSelchangeComboSubjectname()
 {
 	int n2 = m_comboSubject.GetCurSel();
 
+	USES_CONVERSION;
 	int n = m_comboExamName.GetCurSel();
 	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemData(n);
 	if (!pExamInfo)
@@ -147,6 +150,7 @@ void CGetModelDlg::OnCbnSelchangeComboSubjectname()
 		if (i == n2)
 		{
 			m_SubjectID = itSub->nSubjID;
+			m_strScanModelName = A2T(itSub->strModelName.c_str());
 		}
 	}
 
@@ -155,10 +159,12 @@ void CGetModelDlg::OnCbnSelchangeComboSubjectname()
 
 void CGetModelDlg::OnBnClickedBtnDown()
 {
+	m_progress.SetPos(0);
 	USES_CONVERSION;
 	Poco::Net::SocketAddress sa(T2A(m_strServerIP), m_nServerPort);
 	m_ss.close();
 
+	GetDlgItem(IDC_BTN_DOWN)->EnableWindow(FALSE);
 	try
 	{
 		Poco::Timespan ts(5, 0);
@@ -172,12 +178,6 @@ void CGetModelDlg::OnBnClickedBtnDown()
 		CString modelPath = g_strCurrentPath + _T("Model");
 		modelPath = modelPath + _T("\\") + m_strScanModelName;
 		std::string strModelPath = T2A(modelPath);
-
-#if 1	//test data
-		m_nExamID = 11;
-		m_SubjectID = 12;
-		m_strScanModelName = _T("11_12.mod");
-#endif
 
 		ST_DOWN_MODEL stModelInfo;
 		ZeroMemory(&stModelInfo, sizeof(ST_DOWN_MODEL));
@@ -198,7 +198,6 @@ void CGetModelDlg::OnBnClickedBtnDown()
 		stHead.usCmd = USER_NEED_DOWN_MODEL;
 		stHead.uPackSize = sizeof(ST_DOWN_MODEL);
 		
-
 		char szSendBuf[1024] = { 0 };
 		memcpy(szSendBuf, (char*)&stHead, HEAD_SIZE);
 		memcpy(szSendBuf + HEAD_SIZE, (char*)&stModelInfo, sizeof(ST_DOWN_MODEL));
@@ -238,12 +237,17 @@ void CGetModelDlg::OnBnClickedBtnDown()
 		g_pLogger->information(strLog);
 		TRACE(strLog.c_str());
 		AfxMessageBox(_T("登录失败"));
-		OnCancel();
 	}
+
+	GetDlgItem(IDC_BTN_DOWN)->EnableWindow(TRUE);
 }
 
 int CGetModelDlg::RecvData()
 {
+	memset(m_szRecvBuff, 0, sizeof(m_szRecvBuff));
+	m_nRecvLen = 0;
+	m_nWantLen = 0;
+
 	int nCount = 0;
 	int nBaseLen = HEAD_SIZE;
 	try
@@ -299,6 +303,10 @@ int CGetModelDlg::RecvData()
 			{
 				pST_DOWN_MODEL pstModelInfo = (pST_DOWN_MODEL)(m_szRecvBuff + HEAD_SIZE);
 				nResult = 1;
+
+				//进度条控制
+				m_progress.SetRange(0, pstModelInfo->nModelSize);
+				m_progress.SetPos(0);
 			}
 			break;
 		case RESULT_DOWNMODEL_FAIL:
@@ -341,6 +349,8 @@ int CGetModelDlg::RecvFile(pST_DOWN_MODEL pModelInfo)
 				{
 					m_nRecvLen += nLen;
 					TRACE("get len: %d\n", nLen);
+					int nRecvLen = m_nRecvLen - HEAD_SIZE;
+					m_progress.SetPos(nRecvLen);
 					if (m_nRecvLen == nBaseLen)
 					{
 						if (nCount == 0)
@@ -371,6 +381,8 @@ int CGetModelDlg::RecvFile(pST_DOWN_MODEL pModelInfo)
 		return 0;
 	}
 
+	TRACE("接收文件长度: %d\n", m_nRecvLen - HEAD_SIZE);
+
 	USES_CONVERSION;
 	int nResult = 0;
 	ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_szRecvBuff;
@@ -382,10 +394,6 @@ int CGetModelDlg::RecvFile(pST_DOWN_MODEL pModelInfo)
 			{
 				nResult = 1;
 
-// 				char	*szFileBuff = new char[pstHead->uPackSize];
-// 				strncpy(szFileBuff, m_szRecvBuff + HEAD_SIZE, pstHead->uPackSize);
-// 				std::string strData = m_szRecvBuff + HEAD_SIZE;
-
 				//覆盖本地文件
 				std::string strModelPath = T2A(g_strCurrentPath);
 				strModelPath.append("Model\\");
@@ -394,17 +402,21 @@ int CGetModelDlg::RecvFile(pST_DOWN_MODEL pModelInfo)
 				if (fileModel.exists())
 					fileModel.remove();
 
-				ofstream out(strModelPath);
+				ofstream out(strModelPath, std::ios::binary);
 				std::stringstream buffer;
 				buffer.write(m_szRecvBuff + HEAD_SIZE, pstHead->uPackSize);
 				int n = buffer.str().length();
 				out << buffer.str();
 				out.close();
-
-//				SAFE_RELEASE(szFileBuff);
 			}
 			break;
 		}
 	}
 	return nResult;
+}
+
+
+void CGetModelDlg::OnBnClickedBtnExit()
+{
+	OnOK();
 }

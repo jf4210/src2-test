@@ -48,11 +48,12 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 {
 	USES_CONVERSION;
 	
-	Poco::File fileSrcPath(pTask->strPath);
+	std::string strUtf8 = CMyCodeConvert::Gb2312ToUtf8(pTask->strPath);
+	Poco::File fileSrcPath(strUtf8);
 	if (!fileSrcPath.exists())
 	{
 		char szLog[300] = { 0 };
-		sprintf_s(szLog, "发送文件(%s)失败,路径不存在: %s", pTask->strFileName, pTask->strPath);
+		sprintf_s(szLog, "发送文件(%s)失败,路径不存在: %s", pTask->strFileName.c_str(), pTask->strPath.c_str());
 		g_pLogger->information(szLog);
 		TRACE(szLog);
 		return;

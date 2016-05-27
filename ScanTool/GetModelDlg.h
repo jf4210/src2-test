@@ -45,4 +45,5 @@ public:
 	afx_msg void OnCbnSelchangeComboExamname();
 	afx_msg void OnCbnSelchangeComboSubjectname();
 	afx_msg void OnBnClickedBtnDown();
+	afx_msg void OnBnClickedBtnExit();
 };

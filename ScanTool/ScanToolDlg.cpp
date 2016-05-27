@@ -265,11 +265,8 @@ void CScanToolDlg::OnDestroy()
 		itPic = m_vecPicShow.erase(itPic);
 	}
 
-	if (m_pModel)
-	{
-		delete m_pModel;
-		m_pModel = NULL;
-	}
+	SAFE_RELEASE(m_pModel);
+
 	MODELLIST::iterator it = m_lModel.begin();
 	for (; it != m_lModel.end();)
 	{
@@ -615,6 +612,8 @@ void CScanToolDlg::InitCtrlPosition()
 		int nTabHead_H = 25;		//tab控件头的高度
 		CRect rtPic = rtTab;
 		rtPic.top = rtPic.top + nTabHead_H;
+		rtPic.right -= 2;
+		rtPic.bottom -= 2;
 		for (int i = 0; i < m_vecPicShow.size(); i++)
 			m_vecPicShow[i]->MoveWindow(&rtPic);
 	}
@@ -804,8 +803,7 @@ void CScanToolDlg::OnBnClickedBtnScanmodule()
 		m_pModel = NULL;
 
 	CMakeModelDlg dlg(m_pModel);
-	if (dlg.DoModal() != IDOK)
-		return;
+	dlg.DoModal();
 
 	if (!m_pModel)	//如果模板不为空，说明之前已经有模板了，不需要使用新模板
 		m_pModel = dlg.m_pModel;
@@ -879,11 +877,8 @@ void CScanToolDlg::OnCbnSelchangeComboModel()
 	CString strModelPath = g_strCurrentPath + _T("Model\\") + strModelName;
 	CString strModelFullPath = strModelPath + _T(".mod");
 	UnZipFile(strModelFullPath);
-	if (m_pModel)
-	{
-		delete m_pModel;
-		m_pModel = NULL;
-	}
+
+	SAFE_RELEASE(m_pModel);
 	m_pModel = LoadModelFile(strModelPath);
 	if (!m_pModel)
 		return;
@@ -905,26 +900,26 @@ void CScanToolDlg::OnBnClickedBtnInputpaper()
 		return;
 }
 
-
-void CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int height) 
-{
-	char * p = dest;
-	if (!isConvert) 
-	{
-		memcpy(dest, src, dataByteSize);
-		return;
-	}
-	if (height <= 0) return;
-	//int height = dataByteSize/rowByteSize;
-	int rowByteSize = dataByteSize / height;
-	src = src + dataByteSize - rowByteSize;
-	for (int i = 0; i < height; i++) 
-	{
-		memcpy(dest, src, rowByteSize);
-		dest += rowByteSize;
-		src -= rowByteSize;
-	}
-}
+// 
+// void CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int height) 
+// {
+// 	char * p = dest;
+// 	if (!isConvert) 
+// 	{
+// 		memcpy(dest, src, dataByteSize);
+// 		return;
+// 	}
+// 	if (height <= 0) return;
+// 	//int height = dataByteSize/rowByteSize;
+// 	int rowByteSize = dataByteSize / height;
+// 	src = src + dataByteSize - rowByteSize;
+// 	for (int i = 0; i < height; i++) 
+// 	{
+// 		memcpy(dest, src, rowByteSize);
+// 		dest += rowByteSize;
+// 		src -= rowByteSize;
+// 	}
+// }
 
 IplImage* CBitmap2IplImage(CBitmap* pBitmap)
 {
@@ -1050,7 +1045,7 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 
 	cvReleaseImage(&pIpl2);
 
-#if 0
+#if 1
 	m_pCurrentPicShow->ShowPic(matTest3);
 #endif
 	m_pCurrentShowPaper = m_pPaper;
@@ -1197,9 +1192,9 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 	for (int i = 0; itPic != pPaper->lPic.end(); itPic++, i++)
 	{
 		Mat matSrc = imread((*itPic)->strPicPath);
-		Mat tmp = matSrc.clone();
+		Mat tmp = matSrc;	// matSrc.clone();
 		Mat tmp2 = matSrc.clone();
-#if 1
+
 		RECTLIST::iterator itHTracker = pPaper->pModel->vecPaperModel[i].lSelHTracker.begin();
 		for (int j = 0; itHTracker != pPaper->pModel->vecPaperModel[i].lSelHTracker.end(); itHTracker++, j++)
 		{
@@ -1348,27 +1343,7 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 // 			rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 // 			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 // 		}
-#else
-		RECTLIST::iterator itCPRect = pPaper->pModel->vecPaperModel[i].lCheckPoint.begin();
-		for (int j = 0; itCPRect != pPaper->pModel->vecPaperModel[i].lCheckPoint.end(); itCPRect++, j++)
-		{
-			cv::Rect rt = (*itCPRect).rt;
-			rt.x = rt.x + (*itPic)->ptFix.x;
-			rt.y = rt.y + (*itPic)->ptFix.y;
 
-			char szCP[20] = { 0 };
-			sprintf_s(szCP, "CP%d", j);
-#if 1
-			putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
-			rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
-			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-#else
-			putText(tmp, szCP, Point((*itCPRect).rt.x, (*itCPRect).rt.y + (*itCPRect).rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
-			rectangle(tmp, (*itCPRect).rt, CV_RGB(255, 0, 0), 2);
-			rectangle(tmp2, (*itCPRect).rt, CV_RGB(255, 233, 10), -1);
-#endif
-		}
-#endif
 		addWeighted(tmp, 0.5, tmp2, 0.5, 0, tmp);
 		m_vecPicShow[i]->ShowPic(tmp);
 	}
@@ -1384,7 +1359,7 @@ int CScanToolDlg::PaintIssueRect(pST_PaperInfo pPaper)
 		{
 			Point pt(0, 0);
 			Mat matSrc = imread((*itPic)->strPicPath);
-			Mat tmp = matSrc.clone();
+			Mat tmp = matSrc;	// matSrc.clone();
 			Mat tmp2 = matSrc.clone();
 
 			RECTLIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[i].lSelFixRoi.begin();													//显示识别定点的选择区
@@ -1716,44 +1691,32 @@ int CScanToolDlg::GetRectInfoByPoint(cv::Point pt, pST_PicInfo pPic, RECTINFO*& 
 
 void CScanToolDlg::OnBnClickedBtnGetmodel()
 {
-// 	if (!m_bLogin)
-// 	{
-// 		AfxMessageBox(_T("请先登录"));
-// 		return;
-// 	}
+	if (!m_bLogin)
+	{
+		AfxMessageBox(_T("请先登录"));
+		return;
+	}
 
 	USES_CONVERSION;
 	CGetModelDlg dlg(A2T(m_strCmdServerIP.c_str()), m_nCmdPort);
 	if (dlg.DoModal() != IDOK)
 		return;
 
-#if 0
-	//先查本地列表，如果没有则请求，如果有，计算crc，和服务器不同则下载
-	USES_CONVERSION;
-	CString modelPath = g_strCurrentPath + _T("Model");
-	modelPath = modelPath + _T("\\") + dlg.m_strScanModelName;
-	std::string strModelPath = T2A(modelPath);
-
-	ST_DOWN_MODEL stModelInfo;
-	ZeroMemory(&stModelInfo, sizeof(ST_MODELINFO));
-	stModelInfo.nExamID = dlg.m_nExamID;
-	stModelInfo.nSubjectID = dlg.m_SubjectID;
-	sprintf_s(stModelInfo.szUserNo, "%s", T2A(m_strUserName));
-	sprintf_s(stModelInfo.szModelName, "%s", dlg.m_strScanModelName);
-
-	Poco::File fileModel(strModelPath);
-	if (fileModel.exists())
+	m_comboModel.ResetContent();
+	SearchModel();
+	m_comboModel.SetCurSel(0);
+	if (m_comboModel.GetCount())
 	{
-		std::string strMd5 = calcFileMd5(strModelPath);
-		strncpy(stModelInfo.szMD5, strMd5.c_str(), strMd5.length());
-	}
+		m_ncomboCurrentSel = m_comboModel.GetCurSel();
+		CString strModelName;
+		m_comboModel.GetLBText(m_comboModel.GetCurSel(), strModelName);
+		CString strModelPath = g_strCurrentPath + _T("Model\\") + strModelName;
+		CString strModelFullPath = strModelPath + _T(".mod");
+		UnZipFile(strModelFullPath);
+		m_pModel = LoadModelFile(strModelPath);
 
-	pTCP_TASK pTcpTask = new TCP_TASK;
-	pTcpTask->usCmd = USER_NEED_DOWN_MODEL;
-	pTcpTask->nPkgLen = sizeof(ST_DOWN_MODEL);
-	memcpy(pTcpTask->szSendBuf, (char*)&stModelInfo, sizeof(ST_DOWN_MODEL));
-	g_fmTcpTaskLock.lock();
-	g_lTcpTask.push_back(pTcpTask);
-	g_fmTcpTaskLock.unlock();
-#endif
+		if (m_pModel != NULL)
+			m_nModelPicNums = m_pModel->nPicNum;
+		InitTab();
+	}
 }

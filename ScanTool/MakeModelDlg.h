@@ -4,6 +4,7 @@
 #include "MyCodeConvert.h"
 #include "RecogInfoDlg.h"
 #include "OmrInfoDlg.h"
+#include "TwainCpp.h"
 // CMakeModelDlg 对话框
 
 
@@ -18,7 +19,6 @@ typedef struct
 	std::vector<RECTINFO> vecVTracker;	//垂直橡皮筋区域
 	std::vector<RECTINFO> vecRtSel;				//存储选择的矩形,框的大矩形，用来框定点
 	std::vector<RECTINFO> vecRtFix;				//存储定点矩形
-	std::vector<RECTINFO> vecRtRecognition;		//存储识别出来的校验点矩形
 	std::vector<RECTINFO> vecOmr;				//存储识别出来的答案矩形
 	std::vector<OMR_QUESTION> vecOmr2;
 	std::vector<RECTINFO>	vecH_Head;				//水平校验点列表
@@ -30,7 +30,7 @@ typedef struct
 	std::vector<RECTINFO>	vecWhite;				//空白校验点
 }PaperModelInfo, *pPaperModelInfo;
 
-class CMakeModelDlg : public CDialog
+class CMakeModelDlg : public CDialog, public CTwain
 {
 	DECLARE_DYNAMIC(CMakeModelDlg)
 
@@ -51,6 +51,7 @@ public:
 	CListCtrl	m_cpListCtrl;			//校验点列表控件
 	CRecogInfoDlg*	m_pRecogInfoDlg;	//矩形识别信息的窗口
 	COmrInfoDlg*	m_pOmrInfoDlg;		//OMR选项信息设置窗口
+
 
 // 	CString		m_strCPTypeName;		//校验点的类型名
 // 	int			m_nThresholdVal;		//校验点的识别阀值
@@ -106,6 +107,16 @@ public:
 	std::vector<RECTINFO>	m_vecTmp;	//有同步头时，保存选择的矩形用于显示
 
 	int			m_nStartTH;			//添加OMR时的起始题号
+
+	//扫描
+	BOOL m_bTwainInit;
+	CString		m_strScanSavePath;
+	CArray<TW_IDENTITY, TW_IDENTITY> m_scanSourceArry;
+	bool	ScanSrcInit();
+
+	void CopyImage(HANDLE hBitmap, TW_IMAGEINFO& info);
+	void SetImage(HANDLE hBitmap, int bits);
+	void ScanDone(int nStatus);
 public:
 	bool RecogNewGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc);							//在修改阀值后重新计算矩形区的灰度值
 
@@ -121,7 +132,6 @@ private:
 	inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc);						//识别灰度值
 	
 	bool PicRotate();							//图像偏移操作
-	void PaintRecognisedRect();					//画出所有已经识别出来的矩形
 	void sharpenImage1(const cv::Mat &image, cv::Mat &result);		//锐化
 
 	void GetOmrArry(std::vector<cv::Rect>& rcList);	//黑白卡时获取框选的OMR排列数组
@@ -150,7 +160,6 @@ private:
 	BOOL DeleteRectInfo(CPType eType, int nItem);				//删除选中的识别点
 	void RecognizeRectTracker();				//识别橡皮筋区域
 	void AddRecogRectToList();					//添加识别出来的区域到对应的列表中，针对有同步头的情况
-	void SetOmrDetailVal(RECTINFO& rc);			//设置OMR区选择题的具体题号和答案值
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog(); 
@@ -170,4 +179,5 @@ public:
 	afx_msg void OnLvnKeydownListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult);
 //	afx_msg void OnBnClickedBtnSaverecoginfo();
 	afx_msg void OnBnClickedBtnuploadmodel();
+	afx_msg void OnBnClickedBtnScanmodel();
 };

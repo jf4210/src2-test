@@ -89,7 +89,7 @@ public:
 	void	PaintRecognisedRect(pST_PaperInfo pPaper);
 	int		PaintIssueRect(pST_PaperInfo pPaper);
 
-	int GetRectInfoByPoint(cv::Point pt, pST_PicInfo pPic, RECTINFO*& pRc);
+	int		GetRectInfoByPoint(cv::Point pt, pST_PicInfo pPic, RECTINFO*& pRc);
 
 	bool	ScanSrcInit();
 // 	BOOL	InitTwain(HWND hWnd);
