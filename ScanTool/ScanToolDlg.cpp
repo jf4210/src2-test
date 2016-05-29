@@ -808,6 +808,11 @@ void CScanToolDlg::OnBnClickedBtnScanmodule()
 	if (!m_pModel)	//如果模板不为空，说明之前已经有模板了，不需要使用新模板
 		m_pModel = dlg.m_pModel;
 
+	if (m_pModel != dlg.m_pModel)
+	{
+		SAFE_RELEASE(dlg.m_pModel);
+	}
+
 	if (m_pModel)
 	{
 		m_comboModel.ResetContent();
@@ -1691,11 +1696,11 @@ int CScanToolDlg::GetRectInfoByPoint(cv::Point pt, pST_PicInfo pPic, RECTINFO*& 
 
 void CScanToolDlg::OnBnClickedBtnGetmodel()
 {
-	if (!m_bLogin)
-	{
-		AfxMessageBox(_T("请先登录"));
-		return;
-	}
+// 	if (!m_bLogin)
+// 	{
+// 		AfxMessageBox(_T("请先登录"));
+// 		return;
+// 	}
 
 	USES_CONVERSION;
 	CGetModelDlg dlg(A2T(m_strCmdServerIP.c_str()), m_nCmdPort);

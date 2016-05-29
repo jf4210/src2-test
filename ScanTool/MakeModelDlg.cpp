@@ -633,6 +633,8 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 	if (dlg.DoModal() != IDOK)
 		return;
 
+	GetDlgItem(IDC_BTN_ScanModel)->EnableWindow(FALSE);
+
 	m_Source = m_scanSourceArry.GetAt(dlg.m_nCurrScanSrc);
 	int nDuplex = dlg.m_nCurrDuplex;		//单双面,0-单面,1-双面
 	int nSize = 1;							//1-A4
@@ -650,6 +652,7 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 	{
 		TRACE("扫描失败\n");
 	}
+	GetDlgItem(IDC_BTN_ScanModel)->EnableWindow(TRUE);
 }
 
 void CMakeModelDlg::OnBnClickedBtnNew()
@@ -3267,6 +3270,7 @@ void CMakeModelDlg::SetImage(HANDLE hBitmap, int bits)
 void CMakeModelDlg::ScanDone(int nStatus)
 {
 	TRACE("扫描完成\n");
+	AfxMessageBox(_T("扫描完成"));
 }
 
 bool CMakeModelDlg::ScanSrcInit()

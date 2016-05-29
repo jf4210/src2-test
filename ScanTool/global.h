@@ -53,6 +53,7 @@
 #define MAX_DLG_HEIGHT	768
 
 #define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}
+#define SAFE_RELEASE_ARRY(pObj) if(pObj) {delete[] pObj; pObj = NULL;}
 
 extern CString				g_strCurrentPath;
 extern std::string			g_strPaperSavePath;

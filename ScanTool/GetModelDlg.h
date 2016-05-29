@@ -3,6 +3,8 @@
 #include "Net_Cmd_Protocol.h"
 // CGetModelDlg 对话框
 
+#define DEFAULT_RECVBUFF	1024*1024*2
+
 class CGetModelDlg : public CDialog
 {
 	DECLARE_DYNAMIC(CGetModelDlg)
@@ -35,7 +37,8 @@ private:
 
 	int			m_nRecvLen;
 	int			m_nWantLen; 
-	char		m_szRecvBuff[1024 * 1024 * 5];
+	char		m_szRecvBuff[1024];
+	char*		m_pFileRecv;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

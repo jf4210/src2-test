@@ -19,12 +19,14 @@ CGetModelDlg::CGetModelDlg(CString strIP, int nPort, CWnd* pParent /*=NULL*/)
 , m_nServerPort(nPort)
 , m_nRecvLen(0)
 , m_nWantLen(0)
+, m_pFileRecv(NULL)
 {
 
 }
 
 CGetModelDlg::~CGetModelDlg()
 {
+	SAFE_RELEASE_ARRY(m_pFileRecv);
 }
 
 void CGetModelDlg::DoDataExchange(CDataExchange* pDX)
@@ -179,6 +181,12 @@ void CGetModelDlg::OnBnClickedBtnDown()
 		modelPath = modelPath + _T("\\") + m_strScanModelName;
 		std::string strModelPath = T2A(modelPath);
 
+#if 1	//test data
+		m_nExamID = 11;
+		m_SubjectID = 12;
+		m_strScanModelName = _T("11_12.mod");
+#endif
+
 		ST_DOWN_MODEL stModelInfo;
 		ZeroMemory(&stModelInfo, sizeof(ST_DOWN_MODEL));
 		stModelInfo.nExamID = m_nExamID;
@@ -330,10 +338,73 @@ int CGetModelDlg::RecvFile(pST_DOWN_MODEL pModelInfo)
 {
 	Poco::Timespan ts(60, 0);
 	m_ss.setReceiveTimeout(ts);
-	memset(m_szRecvBuff, 0, sizeof(m_szRecvBuff));
-	m_nRecvLen = 0;
-	m_nWantLen = 0;
 
+	SAFE_RELEASE_ARRY(m_pFileRecv);
+	m_pFileRecv = new char[DEFAULT_RECVBUFF + HEAD_SIZE];
+	if (!m_pFileRecv)
+	{
+		TRACE("内存不足\n");
+		return 0;
+	}
+
+#if 1
+	int nCount = 0;
+	int nBaseLen = HEAD_SIZE;
+	int nWantlen = 0;
+	int nRecvLen = 0;
+	try
+	{
+		while (!g_nExitFlag)
+		{
+			int nLen;
+			if (nRecvLen < nBaseLen)
+			{
+				nWantlen = nBaseLen - nRecvLen;
+				nLen = m_ss.receiveBytes(m_pFileRecv + nRecvLen, nWantlen);
+				if (nLen > 0)
+				{
+					nRecvLen += nLen;
+					TRACE("get len: %d\n", nLen);
+					m_progress.SetPos(nRecvLen - HEAD_SIZE);
+					if (nRecvLen == nBaseLen)
+					{
+						if (nCount == 0)
+						{
+							ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_pFileRecv;
+							nBaseLen += pstHead->uPackSize;
+							if (pstHead->uPackSize > DEFAULT_RECVBUFF)
+							{
+								char* pOld = m_pFileRecv;
+								m_pFileRecv = new char[pstHead->uPackSize + HEAD_SIZE];
+								memcpy(m_pFileRecv, pOld, nRecvLen);
+								SAFE_RELEASE_ARRY(pOld);
+							}
+							ST_CMD_HEADER* pstHead2 = (ST_CMD_HEADER*)m_pFileRecv;
+							int n = pstHead2->uPackSize;
+						}
+						nCount++;
+					}
+				}
+				else if (nLen == 0)
+				{
+					TRACE("the peer has closed.\n");
+					return 0;
+				}
+				else
+					Poco::Thread::sleep(1);
+			}
+			else
+				break;
+		}
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strLog = "接收模板文件异常 ==> " + exc.displayText();
+		TRACE(strLog.c_str());
+		g_pLogger->information(strLog);
+		return 0;
+	}
+#else
 	int nCount = 0;
 	int nBaseLen = HEAD_SIZE;
 	try
@@ -380,12 +451,12 @@ int CGetModelDlg::RecvFile(pST_DOWN_MODEL pModelInfo)
 		g_pLogger->information(strLog);
 		return 0;
 	}
-
-	TRACE("接收文件长度: %d\n", m_nRecvLen - HEAD_SIZE);
+#endif
+	TRACE("接收文件长度: %d\n", nRecvLen - HEAD_SIZE);
 
 	USES_CONVERSION;
 	int nResult = 0;
-	ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_szRecvBuff;
+	ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_pFileRecv;
 	if (pstHead->usCmd == USER_RESPONSE_DOWNMODEL)
 	{
 		switch (pstHead->usResult)
@@ -404,7 +475,7 @@ int CGetModelDlg::RecvFile(pST_DOWN_MODEL pModelInfo)
 
 				ofstream out(strModelPath, std::ios::binary);
 				std::stringstream buffer;
-				buffer.write(m_szRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+				buffer.write(m_pFileRecv + HEAD_SIZE, pstHead->uPackSize);
 				int n = buffer.str().length();
 				out << buffer.str();
 				out.close();
