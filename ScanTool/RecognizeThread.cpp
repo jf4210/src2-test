@@ -20,6 +20,8 @@ void CRecognizeThread::run()
 {
 	g_pLogger->information("RecognizeThread start...");
 	TRACE("RecognizeThread start...\n");
+	eExit.reset();
+
 	while (!g_nExitFlag)
 	{
 		pRECOGTASK pTask = NULL;
@@ -56,7 +58,7 @@ void CRecognizeThread::run()
 		}
 		it = _mapModel.erase(it);
 	}
-
+	eExit.set();
 	TRACE("RecognizeThread exit 0\n");
 }
 

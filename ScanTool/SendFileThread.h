@@ -17,6 +17,8 @@ public:
 
 	CFileUpLoad		m_upLoad;
 
+	Poco::Event		eExit;
+
 	std::string _strIp;
 	int		_nPort;
 };

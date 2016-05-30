@@ -14,6 +14,9 @@ public:
 
 	void	HandleCmd();
 	void HandleTask(pTCP_TASK pTask);
+
+public:
+	Poco::Event	eExit;
 private:
 	std::string _strIP;
 	int		_nPort;

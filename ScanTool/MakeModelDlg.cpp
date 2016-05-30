@@ -591,18 +591,19 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 	{
 		LPITEMIDLIST pidRoot = NULL;
 		SHGetSpecialFolderLocation(m_hWnd, CSIDL_DRIVES, &pidRoot);
-
+		CString modelPath = g_strCurrentPath + _T("Model\\");
+		
 		USES_CONVERSION;
 		TCHAR Dir[MAX_PATH] = { 0 };
 		BROWSEINFO bi;
 		ITEMIDLIST *pidl;
 		bi.hwndOwner = GetSafeHwnd();
-		bi.pidlRoot = pidRoot;
+		bi.pidlRoot = pidRoot;				//pidRoot;
 		bi.pszDisplayName = Dir;
 		bi.lpszTitle = _T("请选择保存路径");
-		bi.ulFlags = BIF_RETURNONLYFSDIRS;
+		bi.ulFlags = BIF_RETURNONLYFSDIRS;	//BIF_EDITBOX;	//BIF_RETURNONLYFSDIRS;
 		bi.lpfn = NULL;
-		bi.lParam = 0;
+		bi.lParam = (LPARAM)modelPath.GetBuffer();
 		bi.iImage = 0;
 		pidl = SHBrowseForFolder(&bi);
 		if (pidl == NULL)
@@ -3253,16 +3254,19 @@ void CMakeModelDlg::SetImage(HANDLE hBitmap, int bits)
 	
 	static int nModelScan = 1;
 	char szPicPath[MAX_PATH] = { 0 };
-	sprintf_s(szPicPath, "%s\\model%d.tif", T2A(m_strScanSavePath), nModelScan);
+	sprintf_s(szPicPath, "%s\\model%d.jpg", T2A(m_strScanSavePath), nModelScan);
 	nModelScan++;
 
 
 	cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
-	cv::Mat matTest3 = matTest2.clone();
+//	cv::Mat matTest3 = matTest2.clone();
 
 
 	std::string strPicName = szPicPath;
 	imwrite(strPicName, matTest2);
+
+	std::string strLog = "Get model pic: " + strPicName;
+	g_pLogger->information(strLog);
 
 	cvReleaseImage(&pIpl2);
 }
@@ -3271,6 +3275,9 @@ void CMakeModelDlg::ScanDone(int nStatus)
 {
 	TRACE("扫描完成\n");
 	AfxMessageBox(_T("扫描完成"));
+	CString strSelect = _T("/root,");
+	strSelect.Append(m_strScanSavePath);
+	ShellExecute(NULL, _T("open"), _T("explorer.exe"), strSelect, NULL, SW_SHOWNORMAL);
 }
 
 bool CMakeModelDlg::ScanSrcInit()

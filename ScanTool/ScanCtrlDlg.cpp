@@ -69,8 +69,8 @@ bool CScanCtrlDlg::InitUI()
 	USES_CONVERSION;
 	m_comboScanSrc.SetCurSel(0);
 
-	m_comboDuplex.AddString(_T("单面打印"));
-	m_comboDuplex.AddString(_T("双面打印"));
+	m_comboDuplex.AddString(_T("单面扫描"));
+	m_comboDuplex.AddString(_T("双面扫描"));
 	m_comboDuplex.SetCurSel(1);
 	m_nCurrDuplex = 1;
 

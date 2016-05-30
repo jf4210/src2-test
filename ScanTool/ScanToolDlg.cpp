@@ -287,6 +287,7 @@ void CScanToolDlg::OnDestroy()
 
 	for (int i = 0; i < m_vecRecogThreadObj.size(); i++)
 	{
+		m_vecRecogThreadObj[i]->eExit.wait();
 		m_pRecogThread[i].join();
 	}
 	std::vector<CRecognizeThread*>::iterator itRecogObj = m_vecRecogThreadObj.begin();
@@ -301,6 +302,7 @@ void CScanToolDlg::OnDestroy()
 		delete[] m_pRecogThread;
 		m_pRecogThread = NULL;
 	}
+	m_pSendFileObj->eExit.wait();
 	m_SendFileThread->join();
 	SAFE_RELEASE(m_pSendFileObj);
 	SAFE_RELEASE(m_SendFileThread);
@@ -314,6 +316,7 @@ void CScanToolDlg::OnDestroy()
 		SAFE_RELEASE(pTask);
 	}
 	g_fmTcpTaskLock.unlock();
+	m_pTcpCmdObj->eExit.wait();
 	m_TcpCmdThread->join();
 	SAFE_RELEASE(m_pTcpCmdObj);
 	SAFE_RELEASE(m_TcpCmdThread);
@@ -1696,11 +1699,11 @@ int CScanToolDlg::GetRectInfoByPoint(cv::Point pt, pST_PicInfo pPic, RECTINFO*& 
 
 void CScanToolDlg::OnBnClickedBtnGetmodel()
 {
-// 	if (!m_bLogin)
-// 	{
-// 		AfxMessageBox(_T("ÇëÏÈµÇÂ¼"));
-// 		return;
-// 	}
+	if (!m_bLogin)
+	{
+		AfxMessageBox(_T("ÇëÏÈµÇÂ¼"));
+		return;
+	}
 
 	USES_CONVERSION;
 	CGetModelDlg dlg(A2T(m_strCmdServerIP.c_str()), m_nCmdPort);

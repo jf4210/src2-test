@@ -8,6 +8,8 @@
 #include "Net_Cmd_Protocol.h"
 #include "NetUser.h"
 
+#define SOFT_VERSION "DataControlServer V1.0"
+
 //#define HEAD_SIZE	sizeof(ST_CMD_HEADER)
 #define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}
 

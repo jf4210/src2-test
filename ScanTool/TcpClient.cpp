@@ -12,10 +12,12 @@ CTcpClient::CTcpClient(std::string strIp, int nPort)
 
 CTcpClient::~CTcpClient()
 {
+	TRACE("CTcpClientÍË³ö\n");
 }
 
 void CTcpClient::run()
 {
+	eExit.reset();
 	while (!g_nExitFlag)
 	{
 		if (!_bConnect)
@@ -53,6 +55,7 @@ void CTcpClient::run()
 
 		SAFE_RELEASE(pTask);
 	}
+	eExit.set();
 }
 
 bool CTcpClient::connectServer()

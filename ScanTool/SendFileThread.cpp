@@ -16,6 +16,7 @@ CSendFileThread::~CSendFileThread()
 
 void CSendFileThread::run()
 {
+	eExit.reset();
 	USES_CONVERSION;
 	m_upLoad.InitUpLoadTcp(A2T(_strIp.c_str()), _nPort);
 
@@ -42,6 +43,7 @@ void CSendFileThread::run()
 		delete pTask;
 		pTask = NULL;
 	}
+	eExit.set();
 }
 
 void CSendFileThread::HandleTask(pSENDTASK pTask)

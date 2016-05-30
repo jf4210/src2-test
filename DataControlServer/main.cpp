@@ -52,7 +52,9 @@ protected:
 			Poco::MD5Engine md5;
 			Poco::DigestOutputStream dos(md5);
 
-			std::ifstream istr(strPath, std::ios::binary);
+			std::string strgb = CMyCodeConvert::Utf8ToGb2312(strPath);
+
+			std::ifstream istr(strgb, std::ios::binary);
 			if (!istr)
 			{
 				string strLog = "calc MD5 failed 1: ";
@@ -140,6 +142,14 @@ protected:
 		std::string strDllLogPath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath) + "DCS_Dll.Log";
 		std::string strConfigPath = strCurrentPath + "DCS-config.ini";
 		
+#ifdef POCO_OS_FAMILY_WINDOWS
+		char szTitle[50] = { 0 };
+		sprintf(szTitle, "%s", SOFT_VERSION);
+		std::wstring wstrTitle;
+		Poco::UnicodeConverter::toUTF16(szTitle, wstrTitle);
+		SetConsoleTitle(wstrTitle.c_str());
+#endif
+
 		g_Log.SetFileName(strLogPath);
 		SetLogFileName((char*)strDllLogPath.c_str());
 		SysSet.Load(strConfigPath);
@@ -149,6 +159,14 @@ protected:
 		Poco::File decompressDir(SysSet.m_strDecompressPath);
 		if (!decompressDir.exists())
 			decompressDir.createDirectories();
+
+		Poco::File fileRecvDir(SysSet.m_strUpLoadPath);
+		if (!fileRecvDir.exists())
+			fileRecvDir.createDirectories();
+
+		Poco::File modelSaveDir(SysSet.m_strModelSavePath);
+		if (!modelSaveDir.exists())
+			modelSaveDir.createDirectories();
 
 		InitModelInfo();
 

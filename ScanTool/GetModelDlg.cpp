@@ -181,7 +181,7 @@ void CGetModelDlg::OnBnClickedBtnDown()
 		modelPath = modelPath + _T("\\") + m_strScanModelName;
 		std::string strModelPath = T2A(modelPath);
 
-#if 1	//test data
+#if 0	//test data
 		m_nExamID = 11;
 		m_SubjectID = 12;
 		m_strScanModelName = _T("11_12.mod");
