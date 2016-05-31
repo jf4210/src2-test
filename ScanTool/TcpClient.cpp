@@ -234,7 +234,7 @@ void CTcpClient::HandleCmd()
 				{
 					std::string strErrInfo;
 					strErrInfo.append("Error: ");
-					strErrInfo.append(exc.message() + "\tData:");
+					strErrInfo.append(exc.message() + "\tData:" + strExamData);
 					g_pLogger->information(strErrInfo);
 					TRACE(_T("%s\n"), strErrInfo.c_str());
 				}

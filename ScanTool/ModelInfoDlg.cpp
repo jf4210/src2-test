@@ -138,16 +138,30 @@ void CModelInfoDlg::OnBnClickedBtnAdd()
 		AfxMessageBox(_T("模板图片路径添加达到最大值"));
 		return;
 	}
-	CFileDialog dlg(true, _T("*.bmp"), NULL, OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY,
-		_T("image file(*.bmp;*.png;*.tif;*.tiff;*.jpg)|*.bmp;*.png;*.tif;*.tiff;*.jpg|All Files(*.*)|*.*|"), NULL);
-	dlg.m_ofn.lpstrTitle = _T("选择模板图像");
+// 	CFileDialog dlg(true, NULL, NULL, OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY,
+// 		_T("image file(*.bmp;*.png;*.tif;*.tiff;*.jpg)|*.bmp;*.png;*.tif;*.tiff;*.jpg|All Files(*.*)|*.*;)||"), NULL);
+//	dlg.m_ofn.lpstrTitle = _T("选择模板图像");
+
+// 	static char szFilter[] = "All File(*.*)|*.*||";
+// 	CFileDialog dlg(TRUE, _T("*.*"), NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, szFilter, NULL);
+
+	CFileDialog dlg(TRUE,
+		NULL,
+		NULL,
+		OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
+		_T("All Files (*.*)|*.*;)||"),
+		NULL);
 	if (dlg.DoModal() != IDOK)
 		return;
+
+	TRACE("*************1\n\n");
 
 	MODELPATH st;
 	st.strName = dlg.GetFileName();
 	st.strPath = dlg.GetPathName();
 	m_vecPath.push_back(st);
+
+	TRACE("*************2\n\n");
 
 	USES_CONVERSION;
 	int nItem = m_vecPath.size() - 1;

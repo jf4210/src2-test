@@ -28,7 +28,7 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_fHeadThresholdPercent(0.75), m_fABModelThresholdPercent(0.75), m_fCourseThresholdPercent(0.75), m_fQK_CPThresholdPercent(0.75), m_fFixThresholdPercent(0.80)
 	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75), m_fOMRThresholdPercent(0.75)
 	, m_pCurRectInfo(NULL), m_ptFixCP(0,0)
-	, m_bFistHTracker(true), m_bFistVTracker(true)
+	, m_bFistHTracker(true), m_bFistVTracker(true), m_bFistSNTracker(true)
 	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL)
 {
 }
@@ -96,11 +96,13 @@ BEGIN_MESSAGE_MAP(CMakeModelDlg, CDialog)
 	ON_COMMAND(ID_DelPicRectRecog, &CMakeModelDlg::DelRectInfoOnPic)
 	ON_COMMAND(ID_TrackerRecognize, &CMakeModelDlg::RecognizeRectTracker)
 	ON_COMMAND(ID_AddRecog, &CMakeModelDlg::AddRecogRectToList)
+	ON_COMMAND(ID_RecogSN, &CMakeModelDlg::AddRecogSN)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_CheckPoint, &CMakeModelDlg::OnNMDblclkListCheckpoint)
 	ON_NOTIFY(LVN_KEYDOWN, IDC_LIST_CheckPoint, &CMakeModelDlg::OnLvnKeydownListCheckpoint)
 //	ON_BN_CLICKED(IDC_BTN_SaveRecogInfo, &CMakeModelDlg::OnBnClickedBtnSaverecoginfo)
 	ON_MESSAGE(WM_CV_HTrackerChange, &CMakeModelDlg::HTrackerChange)
 	ON_MESSAGE(WM_CV_VTrackerChange, &CMakeModelDlg::VTrackerChange)
+	ON_MESSAGE(WM_CV_SNTrackerChange, &CMakeModelDlg::SNTrackerChange)
 	ON_BN_CLICKED(IDC_BTN_uploadModel, &CMakeModelDlg::OnBnClickedBtnuploadmodel)
 	ON_BN_CLICKED(IDC_BTN_ScanModel, &CMakeModelDlg::OnBnClickedBtnScanmodel)
 END_MESSAGE_MAP()
@@ -133,6 +135,10 @@ BOOL CMakeModelDlg::OnInitDialog()
 			src_img = m_vecPaperModelInfo[i]->matDstImg;
 			m_vecPicShow[i]->ShowPic(src_img);
 			
+			pPaperModel->rtHTracker = m_pModel->vecPaperModel[i].rtHTracker;
+			pPaperModel->rtVTracker = m_pModel->vecPaperModel[i].rtVTracker;
+			pPaperModel->rtSNTracker = m_pModel->vecPaperModel[i].rtSNTracker;
+
 			RECTLIST::iterator itSelHTracker = m_pModel->vecPaperModel[i].lSelHTracker.begin();
 			for (; itSelHTracker != m_pModel->vecPaperModel[i].lSelHTracker.end(); itSelHTracker++)
 			{
@@ -518,6 +524,20 @@ LRESULT CMakeModelDlg::RoiRBtnUp(WPARAM wParam, LPARAM lParam)
 		{
 			CMenu menu, *pPopup;
 			menu.LoadMenu(IDR_MENU_RecogTracker);
+			pPopup = menu.GetSubMenu(0);
+			CPoint myPoint;
+			ClientToScreen(&myPoint);
+			GetCursorPos(&myPoint); //鼠标位置  
+			return pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, myPoint.x, myPoint.y, this);
+		}
+	}
+	else if (m_eCurCPType == SN)
+	{
+		cv::Rect rtSNTracker = cv::Rect(m_pModelPicShow->m_picShow.m_ptSNTracker1, m_pModelPicShow->m_picShow.m_ptSNTracker2);
+		if (rtSNTracker.contains(pt))
+		{
+			CMenu menu, *pPopup;
+			menu.LoadMenu(IDR_MENU_RecogSN);
 			pPopup = menu.GetSubMenu(0);
 			CPoint myPoint;
 			ClientToScreen(&myPoint);
@@ -1041,6 +1061,10 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.push_back(rc);
 		}
+		else if (m_eCurCPType == SN)
+		{
+			TRACE("SN - rt(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+		}
 		else if (m_eCurCPType == OMR)
 		{
 			TRACE("OMR - rt(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
@@ -1048,7 +1072,7 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 
 		bResult = true;
 	}
-	if(m_eCurCPType == OMR)
+	if(m_eCurCPType == OMR || m_eCurCPType == SN)
 	{
 		GetOmrArry(RectCompList);
 	}
@@ -1186,7 +1210,7 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 	}
 	end = clock();
 //	PaintRecognisedRect();
-	if (m_eCurCPType != OMR)
+	if (m_eCurCPType != OMR && m_eCurCPType != SN)
 		ShowRectByCPType(m_eCurCPType);
 
 //	end = clock();
@@ -1435,7 +1459,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 		return;
 	}
 
-	if (m_bNewModelFlag)
+	if (m_bNewModelFlag && !m_bSavedModelFlag)
 	{
 		CModelSaveDlg dlg;
 		if (dlg.DoModal() != IDOK)
@@ -1487,6 +1511,10 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 			paperModel.lGray.push_back(m_vecPaperModelInfo[i]->vecGray[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecWhite.size(); j++)
 			paperModel.lWhite.push_back(m_vecPaperModelInfo[i]->vecWhite[j]);
+
+		paperModel.rtHTracker = m_vecPaperModelInfo[i]->rtHTracker;
+		paperModel.rtVTracker = m_vecPaperModelInfo[i]->rtVTracker;
+		paperModel.rtSNTracker = m_vecPaperModelInfo[i]->rtSNTracker;
 
 		m_pModel->vecPaperModel.push_back(paperModel);
 	}
@@ -1761,6 +1789,20 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		jsnPaperObj.set("hTrackerRect", jsnSelHTrackerArry);
 		jsnPaperObj.set("vTrackerRect", jsnSelVTrackerArry);
 		jsnPaperObj.set("selOmrRect", jsnOMRArry);
+
+		jsnPaperObj.set("rtHTracker.x", m_vecPaperModelInfo[i]->rtHTracker.x);
+		jsnPaperObj.set("rtHTracker.y", m_vecPaperModelInfo[i]->rtHTracker.y);
+		jsnPaperObj.set("rtHTracker.width", m_vecPaperModelInfo[i]->rtHTracker.width);
+		jsnPaperObj.set("rtHTracker.height", m_vecPaperModelInfo[i]->rtHTracker.height);
+		jsnPaperObj.set("rtVTracker.x", m_vecPaperModelInfo[i]->rtVTracker.x);
+		jsnPaperObj.set("rtVTracker.y", m_vecPaperModelInfo[i]->rtVTracker.y);
+		jsnPaperObj.set("rtVTracker.width", m_vecPaperModelInfo[i]->rtVTracker.width);
+		jsnPaperObj.set("rtVTracker.height", m_vecPaperModelInfo[i]->rtVTracker.height);
+		jsnPaperObj.set("rtSNTracker.x", m_vecPaperModelInfo[i]->rtSNTracker.x);
+		jsnPaperObj.set("rtSNTracker.y", m_vecPaperModelInfo[i]->rtSNTracker.y);
+		jsnPaperObj.set("rtSNTracker.width", m_vecPaperModelInfo[i]->rtSNTracker.width);
+		jsnPaperObj.set("rtSNTracker.height", m_vecPaperModelInfo[i]->rtSNTracker.height);
+		
 		jsnPicModel.add(jsnPaperObj);
 	}
 	
@@ -1811,6 +1853,12 @@ void CMakeModelDlg::ShowRectTracker()
 	{
 		cv::Point pt1 = m_pModelPicShow->m_picShow.m_ptVTracker1;
 		cv::Point pt2 = m_pModelPicShow->m_picShow.m_ptVTracker2;
+		rt = cv::Rect(pt1, pt2);
+	}
+	else if (m_eCurCPType == SN)
+	{
+		cv::Point pt1 = m_pModelPicShow->m_picShow.m_ptSNTracker1;
+		cv::Point pt2 = m_pModelPicShow->m_picShow.m_ptSNTracker2;
 		rt = cv::Rect(pt1, pt2);
 	}
 
@@ -2295,6 +2343,14 @@ void CMakeModelDlg::OnCbnSelchangeComboCptype()
 	UpdataCPList();
 	ShowRectByCPType(m_eCurCPType);
 
+	switch (m_eCurCPType)
+	{
+	case SN:
+	{
+		m_nDelateKernel = 4;
+	}
+	}
+
 	if (m_eCurCPType == OMR)
 	{
 		m_pOmrInfoDlg->ShowWindow(SW_SHOW);
@@ -2317,29 +2373,62 @@ void CMakeModelDlg::UpdataCPList()
 	m_cpListCtrl.DeleteAllItems();
 	if (m_eCurCPType == H_HEAD)
 	{
-		m_pModelPicShow->SetShowTracker(true, false);
-		if (m_bFistHTracker)
+		m_pModelPicShow->SetShowTracker(true, false, false);
+		if (m_bFistHTracker && m_bNewModelFlag)
 		{
 			m_ptHTracker1 = cv::Point(0, 0);
 			m_ptHTracker2 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols, 90);
 			m_bFistHTracker = false;
+
+			m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.x = m_ptHTracker1.x;
+			m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.y = m_ptHTracker1.y;
+			m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.width = m_ptHTracker2.x - m_ptHTracker1.x;
+			m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.height = m_ptHTracker2.y - m_ptHTracker1.y;
 		}
+		else
+		{
+			m_ptHTracker1 = m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.tl();
+			m_ptHTracker2 = m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.br();
+		}		
 		m_pModelPicShow->m_picShow.setHTrackerPosition(m_ptHTracker1, m_ptHTracker2);
 	}
 	else if (m_eCurCPType == V_HEAD)
 	{
-		m_pModelPicShow->SetShowTracker(false, true);
-		if (m_bFistVTracker)
+		m_pModelPicShow->SetShowTracker(false, true, false);
+		if (m_bFistVTracker && m_bNewModelFlag)
 		{
 			m_ptVTracker1 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols - 90, 0);
 			m_ptVTracker2 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols, m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.rows);
 			m_bFistVTracker = false;
+
+			m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.x = m_ptVTracker1.x;
+			m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.y = m_ptVTracker1.y;
+			m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.width = m_ptVTracker2.x - m_ptVTracker1.x;
+			m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.height = m_ptVTracker2.y - m_ptVTracker1.y;
 		}
+		else
+		{
+			m_ptVTracker1 = m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.tl();
+			m_ptVTracker2 = m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.br();
+		}		
 		m_pModelPicShow->m_picShow.setVTrackerPosition(m_ptVTracker1, m_ptVTracker2);
+	}
+	else if (m_eCurCPType == SN)
+	{
+		m_pModelPicShow->SetShowTracker(false, false, true);
+// 		if (m_bFistSNTracker)
+// 		{
+// 			m_ptSNTracker1 = cv::Point(0, 0);
+// 			m_ptSNTracker2 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols, 90);
+// 			m_bFistSNTracker = false;
+// 		}
+		m_ptSNTracker1 = m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.tl();
+		m_ptSNTracker2 = m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.br();
+		m_pModelPicShow->m_picShow.setSNTrackerPosition(m_ptSNTracker1, m_ptSNTracker2);
 	}
 	else
 	{
-		m_pModelPicShow->SetShowTracker(false, false);
+		m_pModelPicShow->SetShowTracker(false, false, false);
 	}
 
 	if (m_eCurCPType == Fix_CP || m_eCurCPType == UNKNOWN)			//当当前类型为UNKNOWN时，显示所有的校验点
@@ -2515,6 +2604,13 @@ void CMakeModelDlg::OnNMRClickListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult)
 	pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, myPoint.x, myPoint.y, this);//GetParent()
 }
 
+void CMakeModelDlg::AddRecogSN()
+{
+	if (m_vecPaperModelInfo.size() <= 0 || m_vecPaperModelInfo.size() <= m_nCurrTabSel)
+		return;
+	RecognizeRectTracker();
+}
+
 void CMakeModelDlg::AddRecogRectToList()
 {
 	if (m_vecPaperModelInfo.size() <= 0 || m_vecPaperModelInfo.size() <= m_nCurrTabSel)
@@ -2631,6 +2727,19 @@ void CMakeModelDlg::RecognizeRectTracker()
 		rcVTrackerSel.eCPType = m_eCurCPType;
 		rcVTrackerSel.rt = rt;
 		m_vecPaperModelInfo[m_nCurrTabSel]->vecVTracker.push_back(rcVTrackerSel);
+	}
+	else if (m_eCurCPType == SN)
+	{
+		cv::Rect rt = cv::Rect(m_ptSNTracker1, m_ptSNTracker2);
+		if (rt.x < 0)
+			rt.x = 0;
+		if (rt.y < 0)
+			rt.y = 0;
+		if (rt.br().x > m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.cols)
+			rt.width = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.cols - rt.x;
+		if (rt.br().y > m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.rows)
+			rt.height = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.rows - rt.y;
+		Recognise(rt);
 	}
 	
 	SortRect();
@@ -3002,6 +3111,13 @@ LRESULT CMakeModelDlg::HTrackerChange(WPARAM wParam, LPARAM lParam)
 	m_ptHTracker1 = m_pModelPicShow->m_picShow.m_ptHTracker1;
 	m_ptHTracker2 = m_pModelPicShow->m_picShow.m_ptHTracker2;
 	ShowRectTracker();
+
+	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
+		return true;
+	m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.x = m_ptHTracker1.x;
+	m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.y = m_ptHTracker1.y;
+	m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.width = m_ptHTracker2.x - m_ptHTracker1.x;
+	m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.height = m_ptHTracker2.y - m_ptHTracker1.y;
 	return true;
 }
 
@@ -3010,6 +3126,28 @@ LRESULT CMakeModelDlg::VTrackerChange(WPARAM wParam, LPARAM lParam)
 	m_ptVTracker1 = m_pModelPicShow->m_picShow.m_ptVTracker1;
 	m_ptVTracker2 = m_pModelPicShow->m_picShow.m_ptVTracker2;
 	ShowRectTracker();
+
+	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
+		return true;
+	m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.x = m_ptVTracker1.x;
+	m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.y = m_ptVTracker1.y;
+	m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.width = m_ptVTracker2.x - m_ptVTracker1.x;
+	m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.height = m_ptVTracker2.y - m_ptVTracker1.y;
+	return true;
+}
+
+LRESULT CMakeModelDlg::SNTrackerChange(WPARAM wParam, LPARAM lParam)
+{
+	m_ptSNTracker1 = m_pModelPicShow->m_picShow.m_ptSNTracker1;
+	m_ptSNTracker2 = m_pModelPicShow->m_picShow.m_ptSNTracker2;
+	ShowRectTracker();
+
+	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
+		return true;
+	m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.x = m_ptSNTracker1.x;
+	m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.y = m_ptSNTracker1.y;
+	m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.width = m_ptSNTracker2.x - m_ptSNTracker1.x;
+	m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.height = m_ptSNTracker2.y - m_ptSNTracker1.y;
 	return true;
 }
 
@@ -3300,4 +3438,5 @@ bool CMakeModelDlg::ScanSrcInit()
 	}
 	return m_bSourceSelected;
 }
+
 

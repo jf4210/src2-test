@@ -123,10 +123,30 @@ typedef struct _OmrQuestion_			//题目
 }OMR_QUESTION, *pOMR_QUESTION;
 typedef std::list<OMR_QUESTION> OMRLIST;
 
+// typedef struct _SNDetail_
+// {
+// 	int nVal;
+// 	RECTINFO rc
+// };
+
+typedef struct _SN_
+{
+	int nItem;			//第几位数
+	RECTLIST	lSN;
+	_SN_()
+	{
+		nItem = -1;
+	}
+}SN_ITEM, *pSN_ITEM;
+typedef std::list<SN_ITEM> SNLIST;
+
 typedef struct _PaperModel_
 {
 	int			nPaper;					//标识此模板属于第几张试卷
 	CString		strModelPicName;		//模板图片名称
+	cv::Rect	rtHTracker;
+	cv::Rect	rtVTracker;
+	cv::Rect	rtSNTracker;
 	RECTLIST	lSelHTracker;			//选择的水平同步头区域
 	RECTLIST	lSelVTracker;			//选择的垂直同步头区域
 	RECTLIST	lSelFixRoi;				//选择的ROI的矩形列表

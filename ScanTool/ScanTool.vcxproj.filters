@@ -79,6 +79,9 @@
     <Filter Include="与服务器通信线程">
       <UniqueIdentifier>{8341413f-712b-41aa-a409-494f7fbc3e6d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="扫描模板制作窗口\考号信息设置窗口">
+      <UniqueIdentifier>{f5a93192-21a1-475b-88da-77896c6eab7f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -189,6 +192,9 @@
     <ClInclude Include="TcpClient.h">
       <Filter>与服务器通信线程</Filter>
     </ClInclude>
+    <ClInclude Include="SNInfoSetDlg.h">
+      <Filter>扫描模板制作窗口\考号信息设置窗口</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
@@ -280,6 +286,9 @@
     </ClCompile>
     <ClCompile Include="TcpClient.cpp">
       <Filter>与服务器通信线程</Filter>
+    </ClCompile>
+    <ClCompile Include="SNInfoSetDlg.cpp">
+      <Filter>扫描模板制作窗口\考号信息设置窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

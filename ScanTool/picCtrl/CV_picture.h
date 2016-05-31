@@ -36,6 +36,7 @@
 #define WM_CV_VTrackerChange	(WM_USER + 0x007)	//橡皮筋类改变事件
 #define WM_CV_MBtnDown			(WM_USER + 0x008)	//中间滚轮按下事件
 #define WM_CV_MBtnUp			(WM_USER + 0x009)	//中间滚轮按下事件
+#define WM_CV_SNTrackerChange	(WM_USER + 0x010)	//橡皮筋类改变事件
 
 class CV_picture : public CStatic
 {
@@ -67,9 +68,11 @@ public:
 
 	bool	m_bShowRectTracker_H;
 	bool	m_bShowRectTracker_V;
+	bool	m_bShowRectTracker_SN;
 	CRectTracker m_RectTrackerH;
 	CRectTracker m_RectTrackerV;
-	void SetShowRectTracker(bool bShowH, bool bShowV);
+	CRectTracker m_RectTrackerSN;
+	void SetShowRectTracker(bool bShowH, bool bShowV, bool bShowSN);
 protected:
 	int m_iDragFlag;
 	BOOL m_bLButtonDown;
@@ -154,8 +157,11 @@ public:
 	cv::Point m_ptHTracker2;	//水平橡皮筋按下时br的实际坐标
 	cv::Point m_ptVTracker1;	//垂直橡皮筋按下时tl的实际坐标
 	cv::Point m_ptVTracker2;	//垂直橡皮筋按下时br的实际坐标
+	cv::Point m_ptSNTracker1;	//考号区橡皮筋按下的tl实际坐标
+	cv::Point m_ptSNTracker2;	//考号区橡皮筋按下的br实际坐标
 	void setHTrackerPosition(cv::Point pt1, cv::Point pt2);
 	void setVTrackerPosition(cv::Point pt1, cv::Point pt2);
+	void setSNTrackerPosition(cv::Point pt1, cv::Point pt2);
 	//--
 protected:
 	//画在画板上的Mat图,任何情况下都不应该直接修改m_drawing里的内容

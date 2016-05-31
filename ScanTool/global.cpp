@@ -194,6 +194,19 @@ pMODEL LoadModelFile(CString strModelPath)
 			paperModelInfo.nPaper = jsnPaperObj->get("paperNum").convert<int>();
 			paperModelInfo.strModelPicName = A2T(CMyCodeConvert::Utf8ToGb2312(jsnPaperObj->get("modelPicName").convert<std::string>()).c_str());
 
+			paperModelInfo.rtHTracker.x = jsnPaperObj->get("rtHTracker.x").convert<int>();
+			paperModelInfo.rtHTracker.y = jsnPaperObj->get("rtHTracker.y").convert<int>();
+			paperModelInfo.rtHTracker.width = jsnPaperObj->get("rtHTracker.width").convert<int>();
+			paperModelInfo.rtHTracker.height = jsnPaperObj->get("rtHTracker.height").convert<int>();
+			paperModelInfo.rtVTracker.x = jsnPaperObj->get("rtVTracker.x").convert<int>();
+			paperModelInfo.rtVTracker.y = jsnPaperObj->get("rtVTracker.y").convert<int>();
+			paperModelInfo.rtVTracker.width = jsnPaperObj->get("rtVTracker.width").convert<int>();
+			paperModelInfo.rtVTracker.height = jsnPaperObj->get("rtVTracker.height").convert<int>();
+			paperModelInfo.rtSNTracker.x = jsnPaperObj->get("rtSNTracker.x").convert<int>();
+			paperModelInfo.rtSNTracker.y = jsnPaperObj->get("rtSNTracker.y").convert<int>();
+			paperModelInfo.rtSNTracker.width = jsnPaperObj->get("rtSNTracker.width").convert<int>();
+			paperModelInfo.rtSNTracker.height = jsnPaperObj->get("rtSNTracker.height").convert<int>();
+
 			Poco::JSON::Array::Ptr arraySelHTracker = jsnPaperObj->getArray("hTrackerRect");
 			Poco::JSON::Array::Ptr arraySelVTracker = jsnPaperObj->getArray("vTrackerRect");
 			Poco::JSON::Array::Ptr arraySelFixRoi	= jsnPaperObj->getArray("selRoiRect");

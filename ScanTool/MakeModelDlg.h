@@ -15,11 +15,14 @@ typedef struct
 	CString		strModelPicPath;	//模板图片路径
 	cv::Mat		matSrcImg;			//原始图像的Mat
 	cv::Mat		matDstImg;			//显示图像的Mat
+	cv::Rect	rtHTracker;
+	cv::Rect	rtVTracker;
+	cv::Rect	rtSNTracker;
+	SNLIST		lSN;
 	std::vector<RECTINFO> vecHTracker;	//水平橡皮筋区域
 	std::vector<RECTINFO> vecVTracker;	//垂直橡皮筋区域
 	std::vector<RECTINFO> vecRtSel;				//存储选择的矩形,框的大矩形，用来框定点
 	std::vector<RECTINFO> vecRtFix;				//存储定点矩形
-	std::vector<RECTINFO> vecOmr;				//存储识别出来的答案矩形
 	std::vector<OMR_QUESTION> vecOmr2;
 	std::vector<RECTINFO>	vecH_Head;				//水平校验点列表
 	std::vector<RECTINFO>	vecV_Head;				//垂直同步头列表
@@ -93,8 +96,11 @@ public:
 	cv::Point	m_ptHTracker2;		//水平橡皮筋的终点br坐标
 	cv::Point	m_ptVTracker1;		//垂直橡皮筋的起点tl坐标
 	cv::Point	m_ptVTracker2;		//垂直橡皮筋的终点br坐标
+	cv::Point	m_ptSNTracker1;		//考号区橡皮筋按下的tl实际坐标
+	cv::Point	m_ptSNTracker2;		//考号区橡皮筋按下的br实际坐标
 	bool		m_bFistHTracker;	//第一次生成水平橡皮筋
 	bool		m_bFistVTracker;	//第一次生成垂直橡皮筋
+	bool		m_bFistSNTracker;	//第一次生成SN橡皮筋
 
 	bool		m_bNewModelFlag;	//是否是新创建的模板标识
 	bool		m_bSavedModelFlag;	//是否新模板是否已经保存
@@ -151,6 +157,7 @@ private:
 	LRESULT RoiRBtnUp(WPARAM wParam, LPARAM lParam);
 	LRESULT HTrackerChange(WPARAM wParam, LPARAM lParam);
 	LRESULT VTrackerChange(WPARAM wParam, LPARAM lParam);
+	LRESULT SNTrackerChange(WPARAM wParam, LPARAM lParam);
 	
 	bool SaveModelFile(pMODEL pModel);			//保存模板到文件
 	void setUploadModelInfo(CString& strName, CString& strModelPath, int nExamId, int nSubjectId);					//设置上传模板的信息
@@ -160,6 +167,7 @@ private:
 	BOOL DeleteRectInfo(CPType eType, int nItem);				//删除选中的识别点
 	void RecognizeRectTracker();				//识别橡皮筋区域
 	void AddRecogRectToList();					//添加识别出来的区域到对应的列表中，针对有同步头的情况
+	void AddRecogSN();							//添加考号识别区域
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog(); 

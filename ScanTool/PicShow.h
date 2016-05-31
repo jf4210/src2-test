@@ -35,7 +35,7 @@ public:
 	int m_iY;    //图较大时要显示的Y坐标
 	float m_fScale;		//当前图像的缩放比
 
-	void SetShowTracker(bool bShowH, bool bShowV);		//显示橡皮筋类
+	void SetShowTracker(bool bShowH, bool bShowV, bool bShowSN);		//显示橡皮筋类
 	void ShowPic(cv::Mat& imgMat, cv::Point pt = cv::Point(0,0));
 	LRESULT CvPaint(WPARAM wParam, LPARAM lParam);
 	LRESULT RoiLbtnUp(WPARAM wParam, LPARAM lParam);
@@ -46,6 +46,7 @@ public:
 	LRESULT MBtnUp(WPARAM wParam, LPARAM lParam);
 	LRESULT HTrackerChange(WPARAM wParam, LPARAM lParam);
 	LRESULT VTrackerChange(WPARAM wParam, LPARAM lParam);
+	LRESULT SNTrackerChange(WPARAM wParam, LPARAM lParam);
 protected:
 	virtual BOOL OnInitDialog();
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持

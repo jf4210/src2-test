@@ -154,11 +154,6 @@ BOOL CScanToolDlg::OnInitDialog()
 // 	sprintf_s(szTime, "%d-%02d-%02d %02d:%02d:%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
 // 	TRACE(szTime);
 
-// 	CLoginDlg dlg(A2T(m_strCmdServerIP.c_str()), m_nCmdPort);
-// 	if (dlg.DoModal() != IDOK)
-// 		m_bLogin = FALSE;
-// 	else 
-// 		m_bLogin = TRUE;
 
 	SearchModel();         
 	m_comboModel.SetCurSel(0);

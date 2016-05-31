@@ -11,7 +11,7 @@ using namespace std;
 IMPLEMENT_DYNAMIC(CV_picture, CStatic)
 
 CV_picture::CV_picture()
-: m_nShowType(0), m_nX(0), m_nY(0), m_bShowRectTracker_H(FALSE), m_bShowRectTracker_V(FALSE)
+: m_nShowType(0), m_nX(0), m_nY(0), m_bShowRectTracker_H(FALSE), m_bShowRectTracker_V(FALSE), m_bShowRectTracker_SN(FALSE)
 {
 }
 //由于关联自定义类时，无法带参数初始化该对象，因而独立一个初始化函数出来
@@ -56,6 +56,9 @@ void CV_picture::OnInit(int nShowType /*= 0*/, bool bBtnDown /*= true*/)
 	m_RectTrackerV.m_nStyle = CRectTracker::resizeInside | CRectTracker::solidLine;//设置RectTracker样式	CRectTracker::resizeInside
 	m_RectTrackerV.m_nHandleSize = 5; //控制柄的像素大小
 //	m_RectTrackerV.m_rect.SetRect(0, 0, 150, 150); //初始化m_rect的值
+
+	m_RectTrackerSN.m_nStyle = CRectTracker::resizeInside | CRectTracker::solidLine;//设置RectTracker样式	CRectTracker::resizeInside
+	m_RectTrackerSN.m_nHandleSize = 5; //控制柄的像素大小
 	///////////////在这里添加额外的初始化代码////////////////
 
 	m_bMouseMoveinfoEnable=0;
@@ -304,6 +307,17 @@ void CV_picture::ShowImage_roi(cv::Mat &src,int method)
 			m_RectTrackerV.m_rect.right = nX2;
 			m_RectTrackerV.m_rect.bottom = nY2;
 		}
+		else if (m_bShowRectTracker_SN)
+		{
+			int nX1 = (int)((float)(m_ptSNTracker1.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
+			int nY1 = (int)((float)(m_ptSNTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+			int nX2 = (int)((float)(m_ptSNTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
+			int nY2 = (int)((float)(m_ptSNTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+			m_RectTrackerSN.m_rect.left = nX1;
+			m_RectTrackerSN.m_rect.top = nY1;
+			m_RectTrackerSN.m_rect.right = nX2;
+			m_RectTrackerSN.m_rect.bottom = nY2;
+		}
 
 		OnPaint();
 	}
@@ -386,6 +400,17 @@ void CV_picture::ShowImage_Rect_roi(cv::Mat &src, cv::Point pt, int method)
 			m_RectTrackerV.m_rect.right = nX2;
 			m_RectTrackerV.m_rect.bottom = nY2;
 		}
+		else if (m_bShowRectTracker_SN)
+		{
+			int nX1 = (int)((float)(m_ptSNTracker1.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
+			int nY1 = (int)((float)(m_ptSNTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+			int nX2 = (int)((float)(m_ptSNTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
+			int nY2 = (int)((float)(m_ptSNTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+			m_RectTrackerSN.m_rect.left = nX1;
+			m_RectTrackerSN.m_rect.top = nY1;
+			m_RectTrackerSN.m_rect.right = nX2;
+			m_RectTrackerSN.m_rect.bottom = nY2;
+		}
 
 		OnPaint();
 	}
@@ -467,9 +492,18 @@ void CV_picture::ShowImage_rect(cv::Mat &src, cv::Point pt)
 			m_RectTrackerV.m_rect.top = nY1;
 			m_RectTrackerV.m_rect.right = nX2;
 			m_RectTrackerV.m_rect.bottom = nY2;
-
-
 //			TRACE("橡皮筋显示pt1 = (%d, %d), pt2 = (%d, %d)\n", nX1, nY1, nX2, nY2);
+		}
+		else if (m_bShowRectTracker_SN)
+		{
+			int nX1 = (int)((float)(m_ptSNTracker1.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
+			int nY1 = (int)((float)(m_ptSNTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+			int nX2 = (int)((float)(m_ptSNTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
+			int nY2 = (int)((float)(m_ptSNTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+			m_RectTrackerSN.m_rect.left = nX1;
+			m_RectTrackerSN.m_rect.top = nY1;
+			m_RectTrackerSN.m_rect.right = nX2;
+			m_RectTrackerSN.m_rect.bottom = nY2;
 		}
 
 		OnPaint();
@@ -883,7 +917,7 @@ void CV_picture::OnLButtonDown(UINT nFlags, CPoint point)
 			m_ptHTracker1.y = nY;
 			m_ptHTracker2.x = nX2;
 			m_ptHTracker2.y = nY2;
-			TRACE("橡皮筋左键按下pt1 = (%d, %d), pt2 = (%d, %d)\n", m_ptHTracker1.x, m_ptHTracker1.y, m_ptHTracker2.x, m_ptHTracker2.y);
+//			TRACE("橡皮筋左键按下pt1 = (%d, %d), pt2 = (%d, %d)\n", m_ptHTracker1.x, m_ptHTracker1.y, m_ptHTracker2.x, m_ptHTracker2.y);
 
 			::SendMessage(this->GetParent()->m_hWnd, WM_CV_HTrackerChange, NULL, NULL);
 		}
@@ -913,6 +947,34 @@ void CV_picture::OnLButtonDown(UINT nFlags, CPoint point)
 
 			::SendMessage(this->GetParent()->m_hWnd, WM_CV_VTrackerChange, NULL, NULL);
 		}
+		Invalidate();
+	}
+	else if (m_bShowRectTracker_SN)
+	{
+		if (m_RectTrackerSN.HitTest(point) < 0)     //如果未击中矩形选择框,重新画选择框
+		{
+			m_RectTrackerSN.TrackRubberBand(this, point, TRUE);
+			m_RectTrackerSN.m_rect.NormalizeRect();   //正规化矩形（关于正规化矩形下面有介绍）
+		}
+		else           //如果击中矩形选择框
+		{
+			m_RectTrackerSN.Track(this, point, TRUE);
+			m_RectTrackerSN.m_rect.NormalizeRect();   //正规化矩形
+		}
+
+			int nX = (float)m_RectTrackerSN.m_rect.left / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x;
+			int nY = (float)m_RectTrackerSN.m_rect.top / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y;
+			int nX2 = (float)m_RectTrackerSN.m_rect.right / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x;
+			int nY2 = (float)m_RectTrackerSN.m_rect.bottom / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y;
+
+			m_ptSNTracker1.x = nX;
+			m_ptSNTracker1.y = nY;
+			m_ptSNTracker2.x = nX2;
+			m_ptSNTracker2.y = nY2;
+			TRACE("橡皮筋左键按下pt1 = (%d, %d), pt2 = (%d, %d)\n", m_ptSNTracker1.x, m_ptSNTracker1.y, m_ptSNTracker2.x, m_ptSNTracker2.y);
+
+			::SendMessage(this->GetParent()->m_hWnd, WM_CV_SNTrackerChange, NULL, NULL);
+		
 		Invalidate();
 	}
 	else
@@ -1214,6 +1276,10 @@ void CV_picture::OnPaint()
 		{
 			m_RectTrackerV.Draw(pDC);
 		}
+		if(m_bShowRectTracker_SN)
+		{
+			m_RectTrackerSN.Draw(pDC);
+		}
 		ReleaseDC(pDC);		//一个GetDC必须对应一个ReleaseDC，否则造成严重的内存泄露
 #else
 		this->GetClientRect(&m_rect);
@@ -1336,10 +1402,11 @@ void CV_picture::OnRButtonUp(UINT nFlags, CPoint point)
 	CStatic::OnRButtonUp(nFlags, point);
 }
 
-void CV_picture::SetShowRectTracker(bool bShowH, bool bShowV)
+void CV_picture::SetShowRectTracker(bool bShowH, bool bShowV, bool bShowSN)
 {
 	m_bShowRectTracker_H = bShowH;
 	m_bShowRectTracker_V = bShowV;
+	m_bShowRectTracker_SN = bShowSN;
 }
 
 BOOL CV_picture::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
@@ -1376,4 +1443,13 @@ void CV_picture::setVTrackerPosition(cv::Point pt1, cv::Point pt2)
 	m_ptVTracker2.y = pt2.y;
 //	TRACE("垂直点pt1(%d,%d), pt2(%d,%d).\n", m_ptVTracker1.x, m_ptVTracker1.y, m_ptVTracker2.x, m_ptVTracker2.y);
 	m_RectTrackerV.m_rect.SetRect(m_ptVTracker1.x, m_ptVTracker1.y, m_ptVTracker2.x, m_ptVTracker2.y);
+}
+
+void CV_picture::setSNTrackerPosition(cv::Point pt1, cv::Point pt2)
+{
+	m_ptSNTracker1.x = pt1.x;
+	m_ptSNTracker1.y = pt1.y;
+	m_ptSNTracker2.x = pt2.x;
+	m_ptSNTracker2.y = pt2.y;
+	m_RectTrackerV.m_rect.SetRect(m_ptSNTracker1.x, m_ptSNTracker1.y, m_ptSNTracker1.x, m_ptSNTracker1.y);
 }
