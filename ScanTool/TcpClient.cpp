@@ -12,7 +12,6 @@ CTcpClient::CTcpClient(std::string strIp, int nPort)
 
 CTcpClient::~CTcpClient()
 {
-	m_ss.close();
 	SAFE_RELEASE_ARRY(m_pRecvBuff);
 	TRACE("CTcpClientÍË³ö\n");	
 }
@@ -57,6 +56,7 @@ void CTcpClient::run()
 
 		SAFE_RELEASE(pTask);
 	}
+	m_ss.close();
 	eExit.set();
 }
 
