@@ -21,12 +21,14 @@ CLoginDlg::CLoginDlg(CString strIP, int nPort, CWnd* pParent /*=NULL*/)
 	, m_nRecvLen(0)
 	, m_nWantLen(0)
 	, m_bLogin(false)
+	, m_pRecvBuff(NULL)
 {
 	ZeroMemory(m_szRecvBuff, 2048);
 }
 
 CLoginDlg::~CLoginDlg()
 {
+	SAFE_RELEASE_ARRY(m_pRecvBuff);
 }
 
 void CLoginDlg::DoDataExchange(CDataExchange* pDX)
@@ -165,87 +167,6 @@ int CLoginDlg::RecvData(CString& strResultInfo)
 	}
 	else if (pstHead->usCmd == USER_RESPONSE_EXAMINFO)
 	{
-		switch (pstHead->usResult)
-		{
-			case RESULT_EXAMINFO_SUCCESS:
-			{
-				nResult = 1;
-				char szExamData[1024 * 10] = { 0 };
-				strncpy(szExamData, m_szRecvBuff + HEAD_SIZE, pstHead->uPackSize);
-				std::string strExamData = szExamData;
-
-				Poco::JSON::Parser parser;
-				Poco::Dynamic::Var result;
-				try
-				{
-					result = parser.parse(szExamData);
-					Poco::JSON::Object::Ptr examObj = result.extract<Poco::JSON::Object::Ptr>();
-
-					Poco::JSON::Array::Ptr arryObj = examObj->getArray("exams");
-
-					for (int i = 0; i < arryObj->size(); i++)
-					{
-						Poco::JSON::Object::Ptr objExamInfo = arryObj->getObject(i);
-						EXAMINFO examInfo;
-						examInfo.nExamID = objExamInfo->get("id").convert<int>();
-						examInfo.strExamName = CMyCodeConvert::Utf8ToGb2312(objExamInfo->get("name").convert<std::string>());
-
-						if (!objExamInfo->isNull("examType"))
-						{
-							Poco::JSON::Object::Ptr objExamType = objExamInfo->getObject("examType");
-							if (objExamType->has("name"))
-								examInfo.strExamTypeName = CMyCodeConvert::Utf8ToGb2312(objExamType->get("name").convert<std::string>());
-						}
-						if (!objExamInfo->isNull("grade"))
-						{
-							Poco::JSON::Object::Ptr objGrade = objExamInfo->getObject("grade");
-							if (objGrade->has("id"))
-								examInfo.nExamGrade = objGrade->get("id").convert<int>();
-							if (objGrade->has("name"))
-								examInfo.strGradeName = CMyCodeConvert::Utf8ToGb2312(objGrade->get("name").convert<std::string>());
-						}
-						examInfo.nExamState = objExamInfo->get("state").convert<int>();
-
-						Poco::JSON::Array::Ptr arrySubjects = objExamInfo->getArray("examSubjects");
-						for (int j = 0; j < arrySubjects->size(); j++)
-						{
-							Poco::JSON::Object::Ptr objSubject = arrySubjects->getObject(j);
-							EXAM_SUBJECT subjectInfo;
-							subjectInfo.nSubjID = objSubject->get("id").convert<int>();
-							subjectInfo.nSubjCode = objSubject->get("code").convert<int>();
-							subjectInfo.strSubjName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("name").convert<std::string>());
-//							subjectInfo.strModelName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("scanTemplateName").convert<std::string>());
-							examInfo.lSubjects.push_back(subjectInfo);
-						}
-						g_lExamList.push_back(examInfo);
-					}
-				}
-				catch (Poco::JSON::JSONException& jsone)
-				{
-					std::string strErrInfo;
-					strErrInfo.append("Error when parse json: ");
-					strErrInfo.append(jsone.message() + "\tData:" + strExamData);
-					g_pLogger->information(strErrInfo);
-					TRACE(_T("%s\n"), strErrInfo.c_str());
-				}
-				catch (Poco::Exception& exc)
-				{
-					std::string strErrInfo;
-					strErrInfo.append("Error: ");
-					strErrInfo.append(exc.message() + "\tData:");
-					g_pLogger->information(strErrInfo);
-					TRACE(_T("%s\n"), strErrInfo.c_str());
-				}
-				catch (...)
-				{
-					std::string strErrInfo;
-					strErrInfo.append("Unknown error.\tData:" + strExamData);
-					g_pLogger->information(strErrInfo);
-					TRACE(_T("%s\n"), strErrInfo.c_str());
-				}
-			}
-			break;
-		}
 	}
 	return nResult;
 }

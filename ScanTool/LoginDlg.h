@@ -22,7 +22,9 @@ public:
 	bool		m_bLogin;
 	int			m_nRecvLen;
 	int			m_nWantLen;
-	char		m_szRecvBuff[1024 * 10];
+	char		m_szRecvBuff[1024];
+
+	char*		m_pRecvBuff;
 	Poco::Net::StreamSocket m_ss;
 
 	int		RecvData(CString& strResultInfo);

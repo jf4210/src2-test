@@ -251,6 +251,7 @@ void CScanToolDlg::OnDestroy()
 	g_lExamList.clear();
 	g_nExitFlag = 1;
 	ReleaseTwain();
+	g_pLogger->information("ReleaseTwain() complete.");
 
 	std::vector<CPicShow*>::iterator itPic = m_vecPicShow.begin();
 	for (; itPic != m_vecPicShow.end();)
@@ -269,6 +270,8 @@ void CScanToolDlg::OnDestroy()
 		SAFE_RELEASE(pModel);
 		it = m_lModel.erase(it);
 	}
+
+	g_pLogger->information("模板列表释放完毕.");
 
 	g_fmRecog.lock();			//释放未处理完的识别任务列表
 	RECOGTASKLIST::iterator itRecog = g_lRecogTask.begin();
@@ -297,10 +300,13 @@ void CScanToolDlg::OnDestroy()
 		delete[] m_pRecogThread;
 		m_pRecogThread = NULL;
 	}
+	g_pLogger->information("识别线程释放完毕.");
+
 	m_pSendFileObj->eExit.wait();
 	m_SendFileThread->join();
 	SAFE_RELEASE(m_pSendFileObj);
 	SAFE_RELEASE(m_SendFileThread);
+	g_pLogger->information("发送文件线程释放完毕.");
 
 	g_fmTcpTaskLock.lock();
 	TCP_TASKLIST::iterator itCmd = g_lTcpTask.begin();
@@ -315,6 +321,7 @@ void CScanToolDlg::OnDestroy()
 	m_TcpCmdThread->join();
 	SAFE_RELEASE(m_pTcpCmdObj);
 	SAFE_RELEASE(m_TcpCmdThread);
+	g_pLogger->information("tcp命令处理线程释放完毕.");
 	
 
 	g_fmPapers.lock();			//释放试卷袋列表
@@ -328,6 +335,7 @@ void CScanToolDlg::OnDestroy()
 	g_fmPapers.unlock();
 
 	SAFE_RELEASE(m_pPapersInfo);
+	g_pLogger->information("试卷袋列表释放完毕.");
 }
 
 void CScanToolDlg::InitConfig()

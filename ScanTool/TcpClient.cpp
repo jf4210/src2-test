@@ -5,14 +5,16 @@
 //extern Poco::Net::StreamSocket *pSs;
 
 CTcpClient::CTcpClient(std::string strIp, int nPort)
-	: _strIP(strIp), _nPort(nPort), _bConnect(false), _nRecvLen(0), _nWantLen(0)
+: _strIP(strIp), _nPort(nPort), _bConnect(false), _nRecvLen(0), _nWantLen(0), m_pRecvBuff(NULL)
 {
 }
 
 
 CTcpClient::~CTcpClient()
 {
-	TRACE("CTcpClient退出\n");
+	m_ss.close();
+	SAFE_RELEASE_ARRY(m_pRecvBuff);
+	TRACE("CTcpClient退出\n");	
 }
 
 void CTcpClient::run()
@@ -91,6 +93,85 @@ bool CTcpClient::receiveData()
 	bool bGetCmd = false;
 	int nCount = 0;
 	int nBaseLen = HEAD_SIZE;
+#if 1
+	if (!m_pRecvBuff)
+	{
+		m_pRecvBuff = new char[1024 + HEAD_SIZE];
+	}
+	try
+	{
+		int nLen;
+		if (_nRecvLen < nBaseLen)
+		{
+			_nWantLen = nBaseLen - _nRecvLen;
+			nLen = m_ss.receiveBytes(m_pRecvBuff + _nRecvLen, _nWantLen);
+			if (nLen > 0)
+			{
+				_nRecvLen += nLen;
+				if (_nRecvLen == nBaseLen)
+				{
+					ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_pRecvBuff;
+					if (pstHead->uPackSize == 0)
+					{
+						bGetCmd = true;
+					}
+					else
+					{
+						if (pstHead->uPackSize > 1024)
+						{
+							char* pOld = m_pRecvBuff;
+							m_pRecvBuff = new char[pstHead->uPackSize + HEAD_SIZE];
+							memcpy(m_pRecvBuff, pOld, _nRecvLen);
+							SAFE_RELEASE_ARRY(pOld);
+						}
+					}
+				}
+			}
+			else if (nLen == 0)
+			{
+				TRACE("the peer has closed.\n");
+				return false;
+			}
+		}
+		else
+		{
+			ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_pRecvBuff;
+			nBaseLen += pstHead->uPackSize;
+			_nWantLen = nBaseLen - _nRecvLen;
+			nLen = m_ss.receiveBytes(m_pRecvBuff + _nRecvLen, _nWantLen);
+			if (nLen > 0)
+			{
+				_nRecvLen += nLen;
+				if (_nRecvLen == nBaseLen)
+				{
+					//完整命令接收完成
+					bGetCmd = true;
+				}
+			}
+			else if (nLen == 0)
+			{
+				TRACE("the peer has closed.\n");
+				return false;
+			}
+		}
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strLog = "接收数据异常 ==> " + exc.displayText();
+		TRACE(strLog.c_str());
+		g_pLogger->information(strLog);
+		_bConnect = false;
+		return false;
+	}
+
+	if (bGetCmd)
+	{
+		HandleCmd();
+		memmove(m_pRecvBuff, m_pRecvBuff + _nRecvLen, _nRecvLen);
+		_nRecvLen = 0;
+		_nWantLen = 0;
+	}
+#else
 	try
 	{
 		int nLen;
@@ -153,15 +234,14 @@ bool CTcpClient::receiveData()
 		memmove(m_szRecvBuff, m_szRecvBuff + _nRecvLen, _nRecvLen);
 		_nRecvLen = 0;
 		_nWantLen = 0;
-//		memset(m_szRecvBuff, 0, sizeof(m_szRecvBuff));
 	}
-
+#endif
 	return true;
 }
 
 void CTcpClient::HandleCmd()
 {
-	ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_szRecvBuff;
+	ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_pRecvBuff;
 	if (pstHead->usCmd == USER_RESPONSE_LOGIN)
 	{
 	}
@@ -171,16 +251,23 @@ void CTcpClient::HandleCmd()
 		{
 		case RESULT_EXAMINFO_SUCCESS:
 			{
+#if 1
+				char* pBuff = new char[pstHead->uPackSize];
+				strncpy(pBuff, m_pRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+				std::string strExamData = pBuff;
+				std::string strUtf = CMyCodeConvert::Utf8ToGb2312(pBuff);
+#else
 				char szExamData[1024 * 10] = { 0 };
-				strncpy(szExamData, m_szRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+				strncpy(szExamData, m_pRecvBuff + HEAD_SIZE, pstHead->uPackSize);
 				std::string strExamData = szExamData;
 				std::string strUtf = CMyCodeConvert::Utf8ToGb2312(szExamData);
-
+#endif
 				Poco::JSON::Parser parser;
 				Poco::Dynamic::Var result;
 				try
 				{
-					result = parser.parse(szExamData);
+//					result = parser.parse(szExamData);
+					result = parser.parse(pBuff);
 					Poco::JSON::Object::Ptr examObj = result.extract<Poco::JSON::Object::Ptr>();
 
 					Poco::JSON::Array::Ptr arryObj = examObj->getArray("exams");
@@ -216,7 +303,9 @@ void CTcpClient::HandleCmd()
 							subjectInfo.nSubjID = objSubject->get("id").convert<int>();
 							subjectInfo.nSubjCode = objSubject->get("code").convert<int>();
 							subjectInfo.strSubjName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("name").convert<std::string>());
-							subjectInfo.strModelName = objSubject->get("scanTemplateName").convert<std::string>();
+							if (!objSubject->isNull("scanTemplateName"))
+								subjectInfo.strModelName = objSubject->get("scanTemplateName").convert<std::string>();
+
 							examInfo.lSubjects.push_back(subjectInfo);
 						}
 						g_lExamList.push_back(examInfo);
@@ -245,6 +334,7 @@ void CTcpClient::HandleCmd()
 					g_pLogger->information(strErrInfo);
 					TRACE(_T("%s\n"), strErrInfo.c_str());
 				}
+				SAFE_RELEASE_ARRY(pBuff);
 			}
 			break;
 		}
@@ -255,7 +345,8 @@ void CTcpClient::HandleCmd()
 		{
 		    case RESULT_SETMODELINFO_SEND:
 		       {
-				   pST_MODELINFO pstModelInfo = (pST_MODELINFO)(m_szRecvBuff + HEAD_SIZE);
+//				   pST_MODELINFO pstModelInfo = (pST_MODELINFO)(m_szRecvBuff + HEAD_SIZE);
+				   pST_MODELINFO pstModelInfo = (pST_MODELINFO)(m_pRecvBuff + HEAD_SIZE);
 				   USES_CONVERSION;
 				   std::string strModelPath = T2A(g_strCurrentPath);
 				   strModelPath.append("Model\\");

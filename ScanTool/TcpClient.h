@@ -24,6 +24,7 @@ private:
 	int		_nRecvLen;
 	int		_nWantLen;
 	Poco::Net::StreamSocket m_ss;
-	char	m_szRecvBuff[1024 * 10];
+	char	m_szRecvBuff[1024];
+	char*	m_pRecvBuff;
 };
 

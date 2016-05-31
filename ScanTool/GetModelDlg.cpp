@@ -379,8 +379,6 @@ int CGetModelDlg::RecvFile(pST_DOWN_MODEL pModelInfo)
 								memcpy(m_pFileRecv, pOld, nRecvLen);
 								SAFE_RELEASE_ARRY(pOld);
 							}
-							ST_CMD_HEADER* pstHead2 = (ST_CMD_HEADER*)m_pFileRecv;
-							int n = pstHead2->uPackSize;
 						}
 						nCount++;
 					}

@@ -111,7 +111,7 @@ END_MESSAGE_MAP()
 BOOL CMakeModelDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
-	
+
 	InitUI();
 	InitConf();
 	if (m_pModel)
@@ -203,6 +203,7 @@ BOOL CMakeModelDlg::OnInitDialog()
 			ShowRectByCPType(m_eCurCPType);
 			UpdataCPList();
 		}
+
 		CString strTitle = _T("");
 		strTitle.Format(_T("Ä£°åÃû³Æ: %s"), m_pModel->strModelName);
 		SetWindowText(strTitle);
