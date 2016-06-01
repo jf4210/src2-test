@@ -87,6 +87,7 @@ typedef struct _RectInfo_
 	float		fRealValuePercent;				//此矩形实际的值(灰度值)
 	int			nHItem;							//第几个水平同步头
 	int			nVItem;							//第几个垂直同步头
+	int			nSnVal;							//标识准考证的数字 0-9
 	int			nTH;							//题号
 	int			nAnswer;						//答案循序，属于第几个答案，如1-A,2-B,3-C,4-D,5-E,6-F...
 	int			nSingle;						//0-单选，1-多选
@@ -96,6 +97,7 @@ typedef struct _RectInfo_
 	_RectInfo_()
 	{
 		eCPType = UNKNOWN;
+		nSnVal = -1;
 		nHItem = -1;
 		nVItem = -1;
 		nTH = -1;
@@ -134,23 +136,24 @@ typedef struct _SN_
 {
 	int nItem;			//第几位数
 	int nRecogVal;		//识别的结果
-	lSNDETAIL	lSN;
+//	lSNDETAIL	lSN;
+	RECTLIST	lSN;
 	_SN_()
 	{
 		nItem = -1;
 	}
-	~_SN_()
-	{
-		lSNDETAIL::iterator itSN = lSN.begin();
-		for (; itSN != lSN.end();)
-		{
-			pSN_DETAIL pSN = *itSN;
-			itSN = lSN.erase(itSN);
-			SAFE_RELEASE(pSN);
-		}
-	}
+// 	~_SN_()
+// 	{
+// 		lSNDETAIL::iterator itSN = lSN.begin();
+// 		for (; itSN != lSN.end();)
+// 		{
+// 			pSN_DETAIL pSN = *itSN;
+// 			itSN = lSN.erase(itSN);
+// 			SAFE_RELEASE(pSN);
+// 		}
+// 	}
 }SN_ITEM, *pSN_ITEM;
-typedef std::list<SN_ITEM> SNLIST;
+typedef std::list<pSN_ITEM> SNLIST;
 
 typedef struct _PaperModel_
 {
@@ -172,6 +175,16 @@ typedef struct _PaperModel_
 	RECTLIST	lQK_CP;					//缺考校验点
 	RECTLIST	lGray;					//灰度校验点
 	RECTLIST	lWhite;					//空白校验点
+	~_PaperModel_()
+	{
+		SNLIST::iterator itSn = lSNInfo.begin();
+		for (; itSn != lSNInfo.end();)
+		{
+			pSN_ITEM pSNItem = *itSn;
+			itSn = lSNInfo.erase(itSn);
+			SAFE_RELEASE(pSNItem);
+		}
+	}
 }PAPERMODEL,*pPAPERMODEL;
 
 typedef struct _Model_

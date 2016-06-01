@@ -207,6 +207,7 @@ pMODEL LoadModelFile(CString strModelPath)
 			paperModelInfo.rtSNTracker.width = jsnPaperObj->get("rtSNTracker.width").convert<int>();
 			paperModelInfo.rtSNTracker.height = jsnPaperObj->get("rtSNTracker.height").convert<int>();
 
+			Poco::JSON::Array::Ptr arraySn		= jsnPaperObj->getArray("snList");
 			Poco::JSON::Array::Ptr arraySelHTracker = jsnPaperObj->getArray("hTrackerRect");
 			Poco::JSON::Array::Ptr arraySelVTracker = jsnPaperObj->getArray("vTrackerRect");
 			Poco::JSON::Array::Ptr arraySelFixRoi	= jsnPaperObj->getArray("selRoiRect");
@@ -389,7 +390,6 @@ pMODEL LoadModelFile(CString strModelPath)
 				OMR_QUESTION objOmr;
 				objOmr.nTH = jsnRectInfoObj->get("nTH").convert<int>();
 				Poco::JSON::Array::Ptr omrList = jsnRectInfoObj->getArray("omrlist");
-				int n = omrList->size();
 				for (int j = 0; j < omrList->size(); j++)
 				{
 					Poco::JSON::Object::Ptr jsnOmrObj = omrList->getObject(j);
@@ -410,6 +410,34 @@ pMODEL LoadModelFile(CString strModelPath)
 					objOmr.lSelAnswer.push_back(rc);
 				}
 				paperModelInfo.lOMR2.push_back(objOmr);
+			}
+			for (int i = 0; i < arraySn->size(); i++)
+			{
+				Poco::JSON::Object::Ptr jsnRectInfoObj = arraySn->getObject(i);
+				pSN_ITEM pSnItem = new SN_ITEM;
+				pSnItem->nItem = jsnRectInfoObj->get("nItem").convert<int>();
+				pSnItem->nRecogVal = jsnRectInfoObj->get("nRecogVal").convert<int>();
+				Poco::JSON::Array::Ptr snList = jsnRectInfoObj->getArray("snList");
+				for (int j = 0; j < snList->size(); j++)
+				{
+					Poco::JSON::Object::Ptr jsnSnObj = snList->getObject(j);
+					RECTINFO rc;
+					rc.eCPType = (CPType)jsnSnObj->get("eType").convert<int>();
+					rc.fStandardValuePercent = jsnSnObj->get("standardValPercent").convert<float>();
+					rc.fStandardValue = jsnSnObj->get("standardVal").convert<float>();
+					rc.nThresholdValue = jsnSnObj->get("thresholdValue").convert<int>();
+					rc.nHItem = jsnSnObj->get("hHeadItem").convert<int>();
+					rc.nVItem = jsnSnObj->get("vHeadItem").convert<int>();
+					rc.nTH = jsnSnObj->get("nTH").convert<int>();
+					rc.nAnswer = jsnSnObj->get("nAnswer").convert<int>();
+					rc.nSingle = jsnSnObj->get("nSingle").convert<int>();
+					rc.rt.x = jsnSnObj->get("left").convert<int>();
+					rc.rt.y = jsnSnObj->get("top").convert<int>();
+					rc.rt.width = jsnSnObj->get("width").convert<int>();
+					rc.rt.height = jsnSnObj->get("height").convert<int>();
+					pSnItem->lSN.push_back(rc);
+				}
+				paperModelInfo.lSNInfo.push_back(pSnItem);
 			}
 
 			std::vector<PAPERMODEL>::iterator itBegin = pModel->vecPaperModel.begin();

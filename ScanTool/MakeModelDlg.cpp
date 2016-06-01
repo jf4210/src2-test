@@ -199,6 +199,8 @@ BOOL CMakeModelDlg::OnInitDialog()
 				pPaperModel->vecWhite.push_back(*itWhite);
 			}
 
+			AfxMessageBox(_T("ÐèÒª¼ÓÔØsn"));
+
 			ShowRectByCPType(m_eCurCPType);
 			UpdataCPList();
 		}
@@ -1523,6 +1525,13 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 			paperModel.lGray.push_back(m_vecPaperModelInfo[i]->vecGray[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecWhite.size(); j++)
 			paperModel.lWhite.push_back(m_vecPaperModelInfo[i]->vecWhite[j]);
+		SNLIST::iterator itSn = m_vecPaperModelInfo[i]->lSN.begin();
+		for (; itSn != m_vecPaperModelInfo[i]->lSN.end();)
+		{
+			pSN_ITEM pSnItem = *itSn;
+			itSn = m_vecPaperModelInfo[i]->lSN.erase(itSn);
+			paperModel.lSNInfo.push_back(pSnItem);
+		}
 
 		paperModel.rtHTracker = m_vecPaperModelInfo[i]->rtHTracker;
 		paperModel.rtVTracker = m_vecPaperModelInfo[i]->rtVTracker;
@@ -1583,6 +1592,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 
 		CString strPicName = pModel->vecPaperModel[i].strModelPicName;
 
+		Poco::JSON::Array jsnSNArry;
 		Poco::JSON::Array jsnSelHTrackerArry;
 		Poco::JSON::Array jsnSelVTrackerArry;
 		Poco::JSON::Array jsnSelRoiArry;
@@ -1787,6 +1797,35 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnTHObj.set("omrlist", jsnArry);
 			jsnOMRArry.add(jsnTHObj);
 		}
+		SNLIST::iterator itSn = pModel->vecPaperModel[i].lSNInfo.begin();
+		for (; itSn != pModel->vecPaperModel[i].lSNInfo.end(); itSn++)
+		{
+			Poco::JSON::Object jsnSNObj;
+			Poco::JSON::Array  jsnArry;
+			RECTLIST::iterator itSnDetail = (*itSn)->lSN.begin();
+			for (; itSnDetail != (*itSn)->lSN.end();)
+			{
+				Poco::JSON::Object jsnObj;
+				jsnObj.set("eType", (int)itSnDetail->eCPType);
+				jsnObj.set("nTH", itSnDetail->nTH);
+				jsnObj.set("nAnswer", itSnDetail->nAnswer);
+				jsnObj.set("nSingle", itSnDetail->nSingle);
+				jsnObj.set("left", itSnDetail->rt.x);
+				jsnObj.set("top", itSnDetail->rt.y);
+				jsnObj.set("width", itSnDetail->rt.width);
+				jsnObj.set("height", itSnDetail->rt.height);
+				jsnObj.set("hHeadItem", itSnDetail->nHItem);
+				jsnObj.set("vHeadItem", itSnDetail->nVItem);
+				jsnObj.set("thresholdValue", itSnDetail->nThresholdValue);
+				jsnObj.set("standardValPercent", itSnDetail->fStandardValuePercent);
+				jsnObj.set("standardVal", itSnDetail->fStandardValue);
+				jsnArry.add(jsnObj);
+			}
+			jsnSNObj.set("nItem", (*itSn)->nItem);
+			jsnSNObj.set("nRecogVal", (*itSn)->nRecogVal);
+			jsnSNObj.set("snList", jsnArry);
+			jsnSNArry.add(jsnSNObj);
+		}
 		jsnPaperObj.set("paperNum", i);
 		jsnPaperObj.set("modelPicName", CMyCodeConvert::Gb2312ToUtf8(T2A(strPicName)));		//CMyCodeConvert::Gb2312ToUtf8(T2A(strPicName))
 		jsnPaperObj.set("FixCP", jsnFixCPArry);
@@ -1801,6 +1840,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		jsnPaperObj.set("hTrackerRect", jsnSelHTrackerArry);
 		jsnPaperObj.set("vTrackerRect", jsnSelVTrackerArry);
 		jsnPaperObj.set("selOmrRect", jsnOMRArry);
+		jsnPaperObj.set("snList", jsnSNArry);
 
 		jsnPaperObj.set("rtHTracker.x", m_vecPaperModelInfo[i]->rtHTracker.x);
 		jsnPaperObj.set("rtHTracker.y", m_vecPaperModelInfo[i]->rtHTracker.y);
@@ -2178,7 +2218,7 @@ void CMakeModelDlg::ShowTmpRect()
 		else if (m_vecTmp[i].eCPType == SN)
 		{
 			char szAnswerVal[10] = { 0 };
-			sprintf_s(szAnswerVal, "%d_%d", m_vecTmp[i].nTH, m_vecTmp[i].nAnswer);
+			sprintf_s(szAnswerVal, "%d_%d", m_vecTmp[i].nTH, m_vecTmp[i].nSnVal);
 			putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
 			rectangle(tmp2, rt, CV_RGB(50, 255, 100), -1);
 		}
@@ -2608,6 +2648,29 @@ void CMakeModelDlg::UpdataCPList()
 		if (m_eCurCPType == UNKNOWN)
 			nCount += nOmrCount;
 	}
+	if (m_eCurCPType == SN || m_eCurCPType == UNKNOWN)
+	{
+		int nSNCount = 0;
+		SNLIST::iterator itSN = m_vecPaperModelInfo[m_nCurrTabSel]->lSN.begin();
+		for (; itSN != m_vecPaperModelInfo[m_nCurrTabSel]->lSN.end(); itSN++)
+		{
+			RECTLIST::iterator itSnDetail = (*itSN)->lSN.begin();
+			for (int j = nSNCount; itSnDetail != (*itSN)->lSN.end(); itSnDetail++, j++)
+			{
+				RECTINFO rcInfo = *itSnDetail;
+				char szPosition[50] = { 0 };
+				sprintf_s(szPosition, "(%d,%d,%d,%d)", rcInfo.rt.x, rcInfo.rt.y, rcInfo.rt.width, rcInfo.rt.height);
+				char szCount[10] = { 0 };
+				sprintf_s(szCount, "%d", j + nCount + 1);
+				m_cpListCtrl.InsertItem(j + nCount, NULL);
+				m_cpListCtrl.SetItemText(j + nCount, 0, (LPCTSTR)A2T(szCount));
+				m_cpListCtrl.SetItemText(j + nCount, 1, (LPCTSTR)A2T(szPosition));
+			}
+			nSNCount += (*itSN)->lSN.size();
+		}
+		if (m_eCurCPType == UNKNOWN)
+			nCount += nSNCount;
+	}
 }
 
 void CMakeModelDlg::OnNMRClickListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult)
@@ -2677,6 +2740,7 @@ void CMakeModelDlg::AddRecogRectToList()
 		}
 		else if (m_eCurCPType == SN)
 		{
+#if 0
 			bool bFind = false;
 			SNLIST::iterator itSNItem = m_vecPaperModelInfo[m_nCurrTabSel]->lSN.begin();
 			for (; itSNItem != m_vecPaperModelInfo[m_nCurrTabSel]->lSN.end(); itSNItem++)
@@ -2684,9 +2748,24 @@ void CMakeModelDlg::AddRecogRectToList()
 				if ((*itSNItem).nItem == m_vecTmp[i].nTH)
 				{
 					bFind = true;
+					pSN_DETAIL pSnDetail = new SN_DETAIL;
+					pSnDetail->nVal = m_vecTmp[i].nAnswer;
+					pSnDetail->rcSN.rt = m_vecTmp[i].rt;
+					itSNItem->lSN.push_back(pSnDetail);
+					break;
 				}
 			}
-
+			if (!bFind)
+			{
+				SN_ITEM snItem;
+				snItem.nItem = m_vecTmp[i].nTH;
+				pSN_DETAIL pSnDetail = new SN_DETAIL;
+				pSnDetail->nVal = m_vecTmp[i].nAnswer;
+				pSnDetail->rcSN.rt = m_vecTmp[i].rt;
+				snItem.lSN.push_back(pSnDetail);
+				m_vecPaperModelInfo[m_nCurrTabSel]->lSN.push_back(snItem);
+			}
+#endif
 		}
 		else if (m_eCurCPType == OMR)
 		{
@@ -2781,7 +2860,33 @@ void CMakeModelDlg::RecognizeRectTracker()
 			rt.height = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.rows - rt.y;
 		Recognise(rt);
 
-
+		for (int i = 0; i < m_vecTmp.size(); i++)
+		{
+			bool bFind = false;
+			SNLIST::iterator itSNItem = m_vecPaperModelInfo[m_nCurrTabSel]->lSN.begin();
+			for (; itSNItem != m_vecPaperModelInfo[m_nCurrTabSel]->lSN.end(); itSNItem++)
+			{
+				if ((*itSNItem)->nItem == m_vecTmp[i].nTH)
+				{
+					bFind = true;
+// 					pSN_DETAIL pSnDetail = new SN_DETAIL;
+// 					pSnDetail->nVal = m_vecTmp[i].nAnswer;
+// 					pSnDetail->rcSN.rt = m_vecTmp[i].rt;
+					(*itSNItem)->lSN.push_back(m_vecTmp[i]);
+					break;
+				}
+			}
+			if (!bFind)
+			{
+				pSN_ITEM pSnItem = new SN_ITEM;
+				pSnItem->nItem = m_vecTmp[i].nTH;
+// 				pSN_DETAIL pSnDetail = new SN_DETAIL;
+// 				pSnDetail->nVal = m_vecTmp[i].nAnswer;
+// 				pSnDetail->rcSN.rt = m_vecTmp[i].rt;
+				pSnItem->lSN.push_back(m_vecTmp[i]);
+				m_vecPaperModelInfo[m_nCurrTabSel]->lSN.push_back(pSnItem);
+			}
+		}
 	}
 	
 	SortRect();
@@ -3290,19 +3395,19 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 		{
 		case 10:
 			rc.nTH = x;
-			rc.nAnswer = y;
+			rc.nSnVal = y;
 			break;
 		case 9:
 			rc.nTH = nMaxCols - x - 1;
-			rc.nAnswer = nMaxRow - y - 1;
+			rc.nSnVal = nMaxRow - y - 1;
 			break;
 		case 6:
 			rc.nTH = nMaxRow - y - 1;
-			rc.nAnswer = x;
+			rc.nSnVal = x;
 			break;
 		case 5:
 			rc.nTH = y;
-			rc.nAnswer = nMaxCols - x - 1;
+			rc.nSnVal = nMaxCols - x - 1;
 			break;
 		}
 		

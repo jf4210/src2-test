@@ -9,7 +9,7 @@
 // CMakeModelDlg 对话框
 
 
-typedef struct 
+typedef struct _PaperModelInfo_
 {
 	int nPaper;			//第几张试卷
 	CString		strModelPicName;	//模板图片的名称
@@ -32,6 +32,16 @@ typedef struct
 	std::vector<RECTINFO>	vecQK_CP;				//缺考校验点
 	std::vector<RECTINFO>	vecGray;				//灰度校验点
 	std::vector<RECTINFO>	vecWhite;				//空白校验点
+	~_PaperModelInfo_()
+	{
+		SNLIST::iterator itSn = lSN.begin();
+		for (; itSn != lSN.end();)
+		{
+			pSN_ITEM pSNItem = *itSn;
+			itSn = lSN.erase(itSn);
+			SAFE_RELEASE(pSNItem);
+		}
+	}
 }PaperModelInfo, *pPaperModelInfo;
 
 class CMakeModelDlg : public CDialog, public CTwain
