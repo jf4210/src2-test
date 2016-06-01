@@ -123,19 +123,31 @@ typedef struct _OmrQuestion_			//题目
 }OMR_QUESTION, *pOMR_QUESTION;
 typedef std::list<OMR_QUESTION> OMRLIST;
 
-// typedef struct _SNDetail_
-// {
-// 	int nVal;
-// 	RECTINFO rc
-// };
+typedef struct _SNDetail_
+{
+	int nVal;					//标识这个矩形块是什么值，0-9
+	RECTINFO rcSN;
+}SN_DETAIL,*pSN_DETAIL;
+typedef std::list<pSN_DETAIL> lSNDETAIL;
 
 typedef struct _SN_
 {
 	int nItem;			//第几位数
-	RECTLIST	lSN;
+	int nRecogVal;		//识别的结果
+	lSNDETAIL	lSN;
 	_SN_()
 	{
 		nItem = -1;
+	}
+	~_SN_()
+	{
+		lSNDETAIL::iterator itSN = lSN.begin();
+		for (; itSN != lSN.end();)
+		{
+			pSN_DETAIL pSN = *itSN;
+			itSN = lSN.erase(itSN);
+			SAFE_RELEASE(pSN);
+		}
 	}
 }SN_ITEM, *pSN_ITEM;
 typedef std::list<SN_ITEM> SNLIST;
@@ -147,6 +159,7 @@ typedef struct _PaperModel_
 	cv::Rect	rtHTracker;
 	cv::Rect	rtVTracker;
 	cv::Rect	rtSNTracker;
+	SNLIST		lSNInfo;				//SN信息
 	RECTLIST	lSelHTracker;			//选择的水平同步头区域
 	RECTLIST	lSelVTracker;			//选择的垂直同步头区域
 	RECTLIST	lSelFixRoi;				//选择的ROI的矩形列表

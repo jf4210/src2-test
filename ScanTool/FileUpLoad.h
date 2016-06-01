@@ -6,7 +6,7 @@
 #include "NetCtrl.h"
 #include "md5.h"
 
-#define FILE_BUFF	1024*10
+#define FILE_BUFF	1024
 
 //文件上传结构体
 typedef struct ST_UPLOAD_ANS
@@ -61,4 +61,5 @@ public:
 	BOOL		m_bReadyOK;
 	DWORD       staticTimer; //计时
 	CSendFileThread& m_rNotify;
+	BOOL		m_bStop;
 };

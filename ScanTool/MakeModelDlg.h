@@ -5,6 +5,7 @@
 #include "RecogInfoDlg.h"
 #include "OmrInfoDlg.h"
 #include "TwainCpp.h"
+#include "SNInfoSetDlg.h"
 // CMakeModelDlg 对话框
 
 
@@ -54,7 +55,7 @@ public:
 	CListCtrl	m_cpListCtrl;			//校验点列表控件
 	CRecogInfoDlg*	m_pRecogInfoDlg;	//矩形识别信息的窗口
 	COmrInfoDlg*	m_pOmrInfoDlg;		//OMR选项信息设置窗口
-
+	CSNInfoSetDlg*	m_pSNInfoDlg;		//SN信息设置窗口
 
 // 	CString		m_strCPTypeName;		//校验点的类型名
 // 	int			m_nThresholdVal;		//校验点的识别阀值
@@ -67,6 +68,7 @@ public:
 	const int	m_nGrayVal;
 	const int	m_nWhiteVal;
 	const int   m_nOMR;
+	const int	m_nSN;
 	const float m_fFixThresholdPercent;
 	const float m_fHeadThresholdPercent;	//同步头达到阀值的比例
 	const float m_fABModelThresholdPercent;
@@ -75,6 +77,7 @@ public:
 	const float m_fGrayThresholdPercent;
 	const float m_fWhiteThresholdPercent;
 	const float m_fOMRThresholdPercent;
+	const float m_fSNThresholdPercent;
 
 	std::vector<CPicShow*>	m_vecPicShow;	//存储图片显示窗口指针，有多个模板图片时，对应到不同的tab控件页面
 	int						m_nCurrTabSel;	//当前Tab控件选择的页面
@@ -141,6 +144,7 @@ private:
 	void sharpenImage1(const cv::Mat &image, cv::Mat &result);		//锐化
 
 	void GetOmrArry(std::vector<cv::Rect>& rcList);	//黑白卡时获取框选的OMR排列数组
+	void GetSNArry(std::vector<cv::Rect>& rcList);	//黑白卡时获取框选的考号排列数组
 
 	inline void GetThreshold(cv::Mat& matSrc, cv::Mat& matDst);			//二值化计算
 //	inline void ShowDetailRectInfo();

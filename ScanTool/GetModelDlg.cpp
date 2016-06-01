@@ -63,13 +63,14 @@ BOOL CGetModelDlg::OnInitDialog()
 	for (; itExam != g_lExamList.end(); itExam++)
 	{
 		CString strName = A2T(itExam->strExamName.c_str());
-		m_comboExamName.AddString(strName);
+
 		int nCount = m_comboExamName.GetCount();
-		m_comboExamName.SetItemData(nCount - 1, (DWORD_PTR)&(*itExam));
+		m_comboExamName.AddString(strName);
+		m_comboExamName.SetItemDataPtr(nCount, (void*)&(*itExam));
 	}
 	m_comboExamName.SetCurSel(0);
 
-	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemData(0);
+	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemDataPtr(0);
 	if (pExamInfo)
 	{
 		m_comboSubject.ResetContent();
@@ -78,9 +79,10 @@ BOOL CGetModelDlg::OnInitDialog()
 		{
 			EXAM_SUBJECT* pSubject = &(*itSub);
 			CString strSubjectName = A2T(itSub->strSubjName.c_str());
-			m_comboSubject.AddString(strSubjectName);
+
 			int nCount = m_comboSubject.GetCount();
-			m_comboSubject.SetItemData(nCount - 1, (DWORD_PTR)pSubject);
+			m_comboSubject.AddString(strSubjectName);
+			m_comboSubject.SetItemDataPtr(nCount, pSubject);
 
 			if (i == 0)
 			{
@@ -106,7 +108,7 @@ BOOL CGetModelDlg::OnInitDialog()
 void CGetModelDlg::OnCbnSelchangeComboExamname()
 {
 	int n = m_comboExamName.GetCurSel();
-	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemData(n);
+	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemDataPtr(n);
 	if (!pExamInfo)
 		return;
 
@@ -119,7 +121,7 @@ void CGetModelDlg::OnCbnSelchangeComboExamname()
 		CString strSubjectName = A2T(itSub->strSubjName.c_str());
 		m_comboSubject.AddString(strSubjectName);
 		int nCount = m_comboSubject.GetCount();
-		m_comboSubject.SetItemData(nCount - 1, (DWORD_PTR)pSubject);
+		m_comboSubject.SetItemDataPtr(nCount - 1, pSubject);
 
 		if (i == 0)
 		{
@@ -142,7 +144,7 @@ void CGetModelDlg::OnCbnSelchangeComboSubjectname()
 
 	USES_CONVERSION;
 	int n = m_comboExamName.GetCurSel();
-	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemData(n);
+	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemDataPtr(n);
 	if (!pExamInfo)
 		return;
 

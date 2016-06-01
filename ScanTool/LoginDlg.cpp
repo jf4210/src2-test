@@ -23,7 +23,7 @@ CLoginDlg::CLoginDlg(CString strIP, int nPort, CWnd* pParent /*=NULL*/)
 	, m_bLogin(false)
 	, m_pRecvBuff(NULL)
 {
-	ZeroMemory(m_szRecvBuff, 2048);
+	ZeroMemory(m_szRecvBuff, 1024);
 }
 
 CLoginDlg::~CLoginDlg()

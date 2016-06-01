@@ -11,6 +11,7 @@ CFileUpLoad::CFileUpLoad(CSendFileThread& rNotify)
 ,m_bSendOK(FALSE)
 ,m_bReadyOK(FALSE)
 , m_rNotify(rNotify)
+, m_bStop(FALSE)
 {
 	ZeroMemory(m_szSendBuf, FILE_BUFF);
 	m_hAddAnsEvent=CreateEventW(NULL,TRUE,FALSE,NULL);
@@ -22,8 +23,11 @@ CFileUpLoad::CFileUpLoad(CSendFileThread& rNotify)
 CFileUpLoad::~CFileUpLoad(void)
 {
 	UnInit();
+	std::string strLog = "CFileUpLoad exit.";
+	g_pLogger->information(strLog);
+	TRACE(strLog.c_str());
 }
-#if 1
+
 void CFileUpLoad::OnTcpClientNotifyReceivedData( const char* pData,int nLen )
 {
 	//接受到文件服务器的答案上传成功指令
@@ -73,6 +77,9 @@ RESTART:
 	{
 		while(m_bConnect == FALSE)
 		{
+			if (m_bStop)
+				return;
+
 			DWORD dwTimeLatest=0;
 			DWORD dwTimeWait=0;
 			dwTimeLatest = GetTickCount();
@@ -100,7 +107,6 @@ RESTART:
 	}
 	else if (m_uThreadType == 2)
 	{
-
 #if 1
 		while (m_bUpLoad)
 		{
@@ -109,6 +115,9 @@ RESTART:
 			std::list<stUpLoadAns*>::iterator it = m_listFile.begin();
 			for (; it != m_listFile.end(); it++)
 			{
+				if (m_bStop)
+					return;
+
 				stUpLoadAns* pTask = *it;
 
 				if (pTask->bUpload == FALSE)
@@ -291,6 +300,13 @@ void CFileUpLoad::UnInit()
 		m_pITcpClient->ReleaseConnections();
 		m_pITcpClient=NULL;
 	}
+	std::list<stUpLoadAns*>::iterator it1 = m_listFile.begin();
+	for (; it1 != m_listFile.end(); it1++)
+	{
+		stUpLoadAns* itUp = *it1;
+		it1 = m_listFile.erase(it1);
+		SAFE_RELEASE(itUp);
+	}
 	// 	m_VecAns.clear();
 	std::vector<stUpLoadAns*>::iterator it = m_VecAns.begin();
 	for (;it!=m_VecAns.end();it++)
@@ -303,4 +319,3 @@ void CFileUpLoad::UnInit()
 
 	}
 }
-#endif

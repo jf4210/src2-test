@@ -24,21 +24,20 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_pModelPicShow(NULL), m_nGaussKernel(5), m_nSharpKernel(5), m_nThresholdKernel(150), m_nCannyKernel(90), m_nDelateKernel(6), m_nErodeKernel(2)
 	, m_pModel(pModel), m_bNewModelFlag(false), m_nModelPicNums(2), m_nCurrTabSel(0), m_bSavedModelFlag(false), m_ncomboCurrentSel(0), m_eCurCPType(UNKNOWN)
 	, m_nCurListCtrlSel(0), m_nStartTH(0)
-	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(150)
+	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(150), m_nSN(150)
 	, m_fHeadThresholdPercent(0.75), m_fABModelThresholdPercent(0.75), m_fCourseThresholdPercent(0.75), m_fQK_CPThresholdPercent(0.75), m_fFixThresholdPercent(0.80)
-	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75), m_fOMRThresholdPercent(0.75)
+	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75), m_fOMRThresholdPercent(0.75), m_fSNThresholdPercent(0.75)
 	, m_pCurRectInfo(NULL), m_ptFixCP(0,0)
 	, m_bFistHTracker(true), m_bFistVTracker(true), m_bFistSNTracker(true)
-	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL)
+	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL), m_pSNInfoDlg(NULL)
 {
 }
 
 CMakeModelDlg::~CMakeModelDlg()
 {
-	if (m_pRecogInfoDlg)
-		SAFE_RELEASE(m_pRecogInfoDlg);
-	if (m_pOmrInfoDlg)
-		SAFE_RELEASE(m_pOmrInfoDlg);
+	SAFE_RELEASE(m_pRecogInfoDlg);
+	SAFE_RELEASE(m_pOmrInfoDlg);
+	SAFE_RELEASE(m_pSNInfoDlg);
 
 	if (m_bNewModelFlag && !m_bSavedModelFlag && m_pModel != NULL)
 		SAFE_RELEASE(m_pModel);
@@ -332,6 +331,10 @@ void CMakeModelDlg::InitUI()
 	m_pOmrInfoDlg->Create(COmrInfoDlg::IDD, this);
 	m_pOmrInfoDlg->ShowWindow(SW_HIDE);	//SW_HIDE
 
+	m_pSNInfoDlg = new CSNInfoSetDlg;
+	m_pSNInfoDlg->Create(CSNInfoSetDlg::IDD, this);
+	m_pSNInfoDlg->ShowWindow(SW_HIDE);
+
 	CRect rc;
 	::SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
 	int sx = rc.Width();
@@ -396,6 +399,10 @@ void CMakeModelDlg::InitCtrlPosition()
 	if (m_pOmrInfoDlg && m_pOmrInfoDlg->GetSafeHwnd())
 	{
 		m_pOmrInfoDlg->MoveWindow(nLeftGap, nTopInGroup, nLeftCtrlWidth, nGroupHeight);
+	}
+	if (m_pSNInfoDlg && m_pSNInfoDlg->GetSafeHwnd())
+	{
+		m_pSNInfoDlg->MoveWindow(nLeftGap, nTopInGroup, nLeftCtrlWidth, nGroupHeight);
 	}
 
 	nCurrentTop = nCurrentTop + nGroupHeight + nGap;
@@ -1073,7 +1080,11 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 
 		bResult = true;
 	}
-	if(m_eCurCPType == OMR || m_eCurCPType == SN)
+	if (m_eCurCPType == SN)
+	{
+		GetSNArry(RectCompList);
+	}
+	if(m_eCurCPType == OMR)
 	{
 		GetOmrArry(RectCompList);
 	}
@@ -2164,6 +2175,13 @@ void CMakeModelDlg::ShowTmpRect()
 			putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
 			rectangle(tmp2, rt, CV_RGB(50, 255, 100), -1);
 		}
+		else if (m_vecTmp[i].eCPType == SN)
+		{
+			char szAnswerVal[10] = { 0 };
+			sprintf_s(szAnswerVal, "%d_%d", m_vecTmp[i].nTH, m_vecTmp[i].nAnswer);
+			putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
+			rectangle(tmp2, rt, CV_RGB(50, 255, 100), -1);
+		}
 		else 
 			rectangle(tmp2, rt, CV_RGB(150, 100, 255), -1);
 		
@@ -2356,11 +2374,19 @@ void CMakeModelDlg::OnCbnSelchangeComboCptype()
 	{
 		m_pOmrInfoDlg->ShowWindow(SW_SHOW);
 		m_pRecogInfoDlg->ShowWindow(SW_HIDE);
+		m_pSNInfoDlg->ShowWindow(SW_HIDE);
+	}
+	else if (m_eCurCPType == SN)
+	{
+		m_pOmrInfoDlg->ShowWindow(SW_HIDE);
+		m_pRecogInfoDlg->ShowWindow(SW_HIDE);
+		m_pSNInfoDlg->ShowWindow(SW_SHOW);
 	}
 	else
 	{
 		m_pOmrInfoDlg->ShowWindow(SW_HIDE);
 		m_pRecogInfoDlg->ShowWindow(SW_SHOW);
+		m_pSNInfoDlg->ShowWindow(SW_HIDE);
 	}
 }
 
@@ -3152,6 +3178,129 @@ LRESULT CMakeModelDlg::SNTrackerChange(WPARAM wParam, LPARAM lParam)
 	return true;
 }
 
+void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
+{
+	if (rcList.size() <= 0)
+		return;
+	int nMaxRow = 1;
+	int nMaxCols = 1;
+
+	m_vecTmp.clear();
+	std::vector<Rect> rcList_X = rcList;
+	std::vector<Rect> rcList_XY = rcList;
+	std::sort(rcList_X.begin(), rcList_X.end(), SortByPositionX2);
+
+
+	int nW = rcList_X[0].width;				//矩形框平均宽度
+	int nH = rcList_X[0].height;			//矩形框平均高度
+	int nWInterval = 0;						//矩形间的X轴平均间隔
+	int nHInterval = 0;						//矩形间的Y轴平均间隔
+
+	int nX = rcList_X[0].width * 0.2 + 0.5;		//判断属于同一列的X轴偏差
+	int nY = rcList_X[0].height * 0.3 + 0.5;	//判断属于同一行的Y轴偏差
+
+
+	std::sort(rcList_XY.begin(), rcList_XY.end(), SortByPositionXYInterval);
+
+	for (int i = 1; i < rcList_XY.size(); i++)
+	{
+		int nTmp = rcList_XY[i].y - rcList_XY[i - 1].y;
+		if (abs(rcList_XY[i].y - rcList_XY[i - 1].y) > nY)
+		{
+			nMaxRow++;
+			nHInterval += abs(rcList_XY[i].y - rcList_XY[i - 1].y - rcList_XY[i - 1].height);
+		}
+
+		nW += rcList_XY[i].width;
+		nH += rcList_XY[i].height;
+	}
+	for (int i = 1; i < rcList_X.size(); i++)
+	{
+		int nTmp = rcList_X[i].x - rcList_X[i - 1].x;
+		if (abs(rcList_X[i].x - rcList_X[i - 1].x) > nX)
+		{
+			nMaxCols++;
+			nWInterval += abs(rcList_X[i].x - rcList_X[i - 1].x - rcList_X[i - 1].width);
+		}
+	}
+
+	nW = nW / rcList_XY.size() + 0.5;
+	nH = nH / rcList_XY.size() + 0.5;
+	if (nMaxCols > 1)
+		nWInterval = nWInterval / (nMaxCols - 1) + 0.5;
+	if (nMaxRow > 1)
+		nHInterval = nHInterval / (nMaxRow - 1) + 0.5;
+
+	TRACE("检测到框选了%d * %d的矩形区\n", nMaxRow, nMaxCols);
+
+	for (int i = 0; i < rcList_XY.size(); i++)
+	{
+		TRACE("omr2 rt%d: (%d,%d,%d,%d)\n", i + 1, rcList_XY[i].x, rcList_XY[i].y, rcList_XY[i].width, rcList_XY[i].height);
+	}
+
+	int x = 0, y = 0;	//x-列，y-行
+	for (int i = 0; i < rcList_XY.size(); i++)
+	{
+#if 1
+		int dx, dy;
+		if(i == 0)
+			dy = 0;
+		else
+		{
+			dy = rcList_XY[i].y - rcList_XY[i - 1].y;
+
+			if (dy > 6)
+			{
+				y++;
+				x = 0;
+			}
+			else
+				x++;
+		}
+#else
+		int x = (float)(rcList_XY[i].x - rcList_XY[0].x) / (nW + nWInterval) + 0.5;	//列
+		int y = (float)(rcList_XY[i].y - rcList_XY[0].y) / (nH + nHInterval) + 0.5;	//行
+#endif
+		TRACE("第几行几列: %d行%d列, 差值: x-%d, y-%d, (nW + nWInterval) = %d, (nH + nHInterval) = %d\n", y, x, rcList_XY[i].x - rcList_XY[0].x, rcList_XY[i].y - rcList_XY[0].y, nW + nWInterval, nH + nHInterval);
+
+		RECTINFO rc;
+		rc.rt = rcList_XY[i];
+		rc.eCPType = m_eCurCPType;
+		rc.nThresholdValue = m_nSN;
+		rc.fStandardValuePercent = m_fSNThresholdPercent;
+
+		SN_DETAIL snItem;
+
+		switch (m_pSNInfoDlg->m_nCurrentSNVal)
+		{
+		case 10:
+			rc.nTH = x;
+			rc.nAnswer = y;
+			break;
+		case 9:
+			rc.nTH = nMaxCols - x - 1;
+			rc.nAnswer = nMaxRow - y - 1;
+			break;
+		case 6:
+			rc.nTH = nMaxRow - y - 1;
+			rc.nAnswer = x;
+			break;
+		case 5:
+			rc.nTH = y;
+			rc.nAnswer = nMaxCols - x - 1;
+			break;
+		}
+		
+		Rect rtTmp = rcList[i];
+		Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+		RecogGrayValue(matSrcModel, rc);
+
+		m_vecTmp.push_back(rc);
+	}
+
+	ShowTmpRect();
+}
+
 void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 {
 	if (rcList.size() <= 0)
@@ -3223,10 +3372,29 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 
 	TRACE("检测到框选了%d * %d的矩形区\n", nMaxRow, nMaxCols);
 
+	int x = 0, y = 0;	//x-列，y-行
 	for (int i = 0; i < rcList_XY.size(); i++)
 	{
-		int x = (float)(rcList_XY[i].x - rcList_XY[0].x) / (nW + nWInterval) + 0.5;
-		int y = (float)(rcList_XY[i].y - rcList_XY[0].y) / (nH + nHInterval) + 0.5;
+#if 1
+		int dx, dy;
+		if (i == 0)
+			dy = 0;
+		else
+		{
+			dy = rcList_XY[i].y - rcList_XY[i - 1].y;
+
+			if (dy > 6)
+			{
+				y++;
+				x = 0;
+			}
+			else
+				x++;
+		}
+#else
+		int x = (float)(rcList_XY[i].x - rcList_XY[0].x) / (nW + nWInterval) + 0.5;	//列
+		int y = (float)(rcList_XY[i].y - rcList_XY[0].y) / (nH + nHInterval) + 0.5;	//行
+#endif
 
 		TRACE("第几行几列: %d行%d列, 差值: x-%d, y-%d\n", x, y, rcList_XY[i].x - rcList_XY[0].x, rcList_XY[i].y - rcList_XY[0].y);
 

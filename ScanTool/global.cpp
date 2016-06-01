@@ -78,7 +78,7 @@ bool SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2)
 {
 	bool bResult = true;
 
-	if (abs(rt1.y - rt2.y) > 5)
+	if (abs(rt1.y - rt2.y) > 6)
 	{
 		return rt1.y < rt2.y ? true : false;
 	}

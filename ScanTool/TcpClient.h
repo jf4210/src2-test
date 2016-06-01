@@ -13,7 +13,7 @@ public:
 	bool	receiveData();			//接收数据
 
 	void	HandleCmd();
-	void HandleTask(pTCP_TASK pTask);
+	void	HandleTask(pTCP_TASK pTask);
 
 public:
 	Poco::Event	eExit;

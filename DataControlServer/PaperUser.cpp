@@ -94,7 +94,8 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 						std::cout << szLog << std::endl;
 
 						//接收到模板，移动到指定目录
-						if (strcmp(m_szFileName, ".mod") != 0)
+						std::string strName = m_szFileName;
+						if (strName.find(".mod") != std::string::npos)
 						{
 							Poco::File filePath(SysSet.m_strModelSavePath);
 							filePath.createDirectories();

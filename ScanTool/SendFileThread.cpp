@@ -43,6 +43,7 @@ void CSendFileThread::run()
 		delete pTask;
 		pTask = NULL;
 	}
+	m_upLoad.m_bStop = TRUE;
 	eExit.set();
 }
 

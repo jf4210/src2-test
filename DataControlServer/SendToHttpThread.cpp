@@ -353,8 +353,8 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 	jsnPapers.set("papersDesc", CMyCodeConvert::Gb2312ToUtf8(pPapers->strDesc));
 	jsnPapers.set("totalNum", pPapers->nTotalPaper);
 	jsnPapers.set("qkNum", pPapers->nQk);
-	jsnPapers.set("examID", pPapers->nExamID);
-	jsnPapers.set("subjectID", pPapers->nSubjectID);
+	jsnPapers.set("examId", pPapers->nExamID);
+	jsnPapers.set("subjectId", pPapers->nSubjectID);
 	Poco::JSON::Array  paperArry;
 
 	LIST_PAPER_INFO::iterator it2 = pPapers->lPaper.begin();
