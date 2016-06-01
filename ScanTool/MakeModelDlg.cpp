@@ -2675,6 +2675,19 @@ void CMakeModelDlg::AddRecogRectToList()
 		{
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.push_back(m_vecTmp[i]);
 		}
+		else if (m_eCurCPType == SN)
+		{
+			bool bFind = false;
+			SNLIST::iterator itSNItem = m_vecPaperModelInfo[m_nCurrTabSel]->lSN.begin();
+			for (; itSNItem != m_vecPaperModelInfo[m_nCurrTabSel]->lSN.end(); itSNItem++)
+			{
+				if ((*itSNItem).nItem == m_vecTmp[i].nTH)
+				{
+					bFind = true;
+				}
+			}
+
+		}
 		else if (m_eCurCPType == OMR)
 		{
 			bool bFind = false;
@@ -2767,6 +2780,8 @@ void CMakeModelDlg::RecognizeRectTracker()
 		if (rt.br().y > m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.rows)
 			rt.height = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.rows - rt.y;
 		Recognise(rt);
+
+
 	}
 	
 	SortRect();
