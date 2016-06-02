@@ -18,6 +18,7 @@ public:
 	CString		m_strUserName;
 	CString		m_strPwd;
 	CString		m_strEzs;
+	int			m_nTeacherId;
 
 	bool		m_bLogin;
 	int			m_nRecvLen;
@@ -35,7 +36,8 @@ private:
 	int			m_nServerPort;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
-	virtual BOOL OnInitDialog();
+	virtual BOOL OnInitDialog(); 
+	virtual void OnOK();
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedBtnLogin();

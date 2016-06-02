@@ -846,8 +846,8 @@ void CPaperInputDlg::PaintIssueRect(pST_PaperInfo pPaper)
 			Mat tmp2 = matSrc.clone();
 
 			//-----------------------
-			RECTLIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[i].lSelFixRoi.begin();													//显示识别定点的选择区
-			for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i].lSelFixRoi.end(); itSelRoi++, j++)
+			RECTLIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[i]->lSelFixRoi.begin();													//显示识别定点的选择区
+			for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i]->lSelFixRoi.end(); itSelRoi++, j++)
 			{
 				cv::Rect rt = (*itSelRoi).rt;
 //				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
@@ -869,11 +869,11 @@ void CPaperInputDlg::PaintIssueRect(pST_PaperInfo pPaper)
 				rectangle(tmp, rt, CV_RGB(0, 255, 0), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
-			RECTLIST::iterator itFixRect = pPaper->pModel->vecPaperModel[i].lFix.begin();							//显示模板上的定点对应到此试卷上的新定点
-			for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[i].lFix.end(); itFixRect++, j++)
+			RECTLIST::iterator itFixRect = pPaper->pModel->vecPaperModel[i]->lFix.begin();							//显示模板上的定点对应到此试卷上的新定点
+			for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[i]->lFix.end(); itFixRect++, j++)
 			{
 				cv::Rect rt = (*itFixRect).rt;
-				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
+				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				TRACE("模板定点矩形区: (%d, %d, %d, %d)\n", (*itFixRect).rt.x, (*itFixRect).rt.y, (*itFixRect).rt.width, (*itFixRect).rt.height);
 

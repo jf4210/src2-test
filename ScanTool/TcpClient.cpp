@@ -26,16 +26,16 @@ void CTcpClient::run()
 		{
 			connectServer();
 		}
-
-		if (!receiveData())
-		{
-			connectServer();
-		}
-
+		
 		if (!_bConnect)
 		{
 			Poco::Thread::sleep(3000);
 			continue;
+		}
+
+		if (!receiveData())
+		{
+			connectServer();
 		}
 
 		pTCP_TASK pTask = NULL;
@@ -62,6 +62,7 @@ void CTcpClient::run()
 	{
 		if (_bConnect) m_ss.shutdown();
 		m_ss.close();
+		TRACE("Poco::Net::StreamSocket close.\n");
 	}
 	catch (Poco::Exception& exc)
 	{
@@ -276,6 +277,18 @@ void CTcpClient::HandleCmd()
 			{
 				result = parser.parse(pBuff);
 				Poco::JSON::Object::Ptr examObj = result.extract<Poco::JSON::Object::Ptr>();
+				Poco::JSON::Object::Ptr statusObj = examObj->getObject("status");
+				bool bSuccess = statusObj->get("success").convert<bool>();
+				if (!bSuccess)
+				{
+					std::string strMsg = CMyCodeConvert::Utf8ToGb2312(statusObj->get("msg").convert<std::string>());
+					std::string strLog = "获取考试信息失败: " + strMsg;
+					g_pLogger->information(strLog);
+					USES_CONVERSION;
+					AfxMessageBox(A2T(strLog.c_str()));
+					break;
+				}
+
 
 				Poco::JSON::Array::Ptr arryObj = examObj->getArray("exams");
 

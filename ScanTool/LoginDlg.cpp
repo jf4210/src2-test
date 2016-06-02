@@ -86,7 +86,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 		{
 			GetExamInfo();
 			AfxMessageBox(_T("µÇÂ¼³É¹¦"));	//µÇÂ¼³É¹¦£¬»ñÈ¡¿¼ÊÔÐÅÏ¢Ê§°Ü
-			OnOK();
+			CDialog::OnOK();
 		}
 		else
 		{
@@ -94,7 +94,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 				AfxMessageBox(_T("µÇÂ¼Ê§°Ü: ") + strResult);
 			else
 				AfxMessageBox(_T("µÇÂ¼Ê§°Ü"));
-			OnCancel();
+			CDialog::OnCancel();
 		}
 
 	}
@@ -148,20 +148,28 @@ int CLoginDlg::RecvData(CString& strResultInfo)
 	ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_szRecvBuff;
 	if (pstHead->usCmd == USER_RESPONSE_LOGIN)
 	{
-		char szData[300] = { 0 };
+		char szData[1024] = { 0 };
 		switch (pstHead->usResult)
 		{
 		case RESULT_SUCCESS:
-			m_bLogin = true;
-			nResult = 1;
-			strncpy(szData, m_szRecvBuff + HEAD_SIZE, pstHead->uPackSize);
-			m_strEzs = szData;
+			{
+				m_bLogin = true;
+				nResult = 1;
+				strncpy(szData, m_szRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+				pST_LOGIN_RESULT pstResult = (pST_LOGIN_RESULT)szData;
+
+
+				m_strEzs = pstResult->szEzs;
+				m_nTeacherId = pstResult->nTeacherId;
+			}
 			break;
 		case RESULT_LOGIN_FAIL:
-			m_bLogin = false;
-			nResult = 0;
-			strncpy(szData, m_szRecvBuff + HEAD_SIZE, pstHead->uPackSize);
-			strResultInfo = szData;
+			{
+				m_bLogin = false;
+				nResult = 0;
+				strncpy(szData, m_szRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+				strResultInfo = szData;
+			}
 			break;
 		}
 	}
@@ -210,4 +218,9 @@ int CLoginDlg::GetExamInfo()
 	}
 #endif
 	return nResult;
+}
+
+void CLoginDlg::OnOK()
+{
+	OnBnClickedBtnLogin();
 }

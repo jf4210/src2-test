@@ -77,6 +77,7 @@ CScanToolDlg::CScanToolDlg(CWnd* pParent /*=NULL*/)
 	, m_bTwainInit(FALSE), m_nCurrTabSel(0), m_nScanCount(0), m_nScanStatus(0)
 	, m_pPapersInfo(NULL), m_pPaper(NULL), m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL)
 	, m_pSendFileObj(NULL), m_SendFileThread(NULL), m_bLogin(FALSE), m_pTcpCmdObj(NULL)
+	, m_nTeacherId(-1)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -706,6 +707,7 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 			m_strUserName = _T("");
 			m_strEzs = _T("");
 			m_strPwd = _T("");
+			m_nTeacherId = -1;
 			GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("登录"));
 		}
 		else
@@ -714,6 +716,7 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 			m_strUserName = dlg.m_strUserName;
 			m_strPwd = dlg.m_strPwd;
 			m_strEzs = dlg.m_strEzs;
+			m_nTeacherId = dlg.m_nTeacherId;
 			GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("退出"));
 		}
 	}
@@ -724,6 +727,7 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 		m_strUserName = _T("");
 		m_strPwd = _T("");
 		m_strEzs = _T("");
+		m_nTeacherId = -1;
 		GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("登录"));
 	}	
 }
@@ -1206,20 +1210,20 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		Mat tmp = matSrc;	// matSrc.clone();
 		Mat tmp2 = matSrc.clone();
 
-		RECTLIST::iterator itHTracker = pPaper->pModel->vecPaperModel[i].lSelHTracker.begin();
-		for (int j = 0; itHTracker != pPaper->pModel->vecPaperModel[i].lSelHTracker.end(); itHTracker++, j++)
+		RECTLIST::iterator itHTracker = pPaper->pModel->vecPaperModel[i]->lSelHTracker.begin();
+		for (int j = 0; itHTracker != pPaper->pModel->vecPaperModel[i]->lSelHTracker.end(); itHTracker++, j++)
 		{
 			cv::Rect rt = (*itHTracker).rt;
-			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
+			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 			rectangle(tmp, rt, CV_RGB(25, 200, 20), 2);
 			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 		}
-		RECTLIST::iterator itVTracker = pPaper->pModel->vecPaperModel[i].lSelVTracker.begin();
-		for (int j = 0; itVTracker != pPaper->pModel->vecPaperModel[i].lSelVTracker.end(); itVTracker++, j++)
+		RECTLIST::iterator itVTracker = pPaper->pModel->vecPaperModel[i]->lSelVTracker.begin();
+		for (int j = 0; itVTracker != pPaper->pModel->vecPaperModel[i]->lSelVTracker.end(); itVTracker++, j++)
 		{
 			cv::Rect rt = (*itVTracker).rt;
-			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
+			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 			rectangle(tmp, rt, CV_RGB(25, 200, 20), 2);
 			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
@@ -1373,8 +1377,8 @@ int CScanToolDlg::PaintIssueRect(pST_PaperInfo pPaper)
 			Mat tmp = matSrc;	// matSrc.clone();
 			Mat tmp2 = matSrc.clone();
 
-			RECTLIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[i].lSelFixRoi.begin();													//显示识别定点的选择区
-			for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i].lSelFixRoi.end(); itSelRoi++, j++)
+			RECTLIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[i]->lSelFixRoi.begin();													//显示识别定点的选择区
+			for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i]->lSelFixRoi.end(); itSelRoi++, j++)
 			{
 				cv::Rect rt = (*itSelRoi).rt;
 //				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
@@ -1398,11 +1402,11 @@ int CScanToolDlg::PaintIssueRect(pST_PaperInfo pPaper)
 				rectangle(tmp, rt, CV_RGB(0, 255, 0), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
-			RECTLIST::iterator itFixRect = pPaper->pModel->vecPaperModel[i].lFix.begin();							//显示模板上的定点对应到此试卷上的新定点
-			for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[i].lFix.end(); itFixRect++, j++)
+			RECTLIST::iterator itFixRect = pPaper->pModel->vecPaperModel[i]->lFix.begin();							//显示模板上的定点对应到此试卷上的新定点
+			for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[i]->lFix.end(); itFixRect++, j++)
 			{
 				cv::Rect rt = (*itFixRect).rt;
-				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
+				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				char szCP[20] = { 0 };
 				sprintf_s(szCP, "FIX%d", j);
@@ -1436,20 +1440,20 @@ int CScanToolDlg::PaintIssueRect(pST_PaperInfo pPaper)
 // 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 // 			}
 
-			RECTLIST::iterator itHTracker = pPaper->pModel->vecPaperModel[i].lSelHTracker.begin();
-			for (int j = 0; itHTracker != pPaper->pModel->vecPaperModel[i].lSelHTracker.end(); itHTracker++, j++)
+			RECTLIST::iterator itHTracker = pPaper->pModel->vecPaperModel[i]->lSelHTracker.begin();
+			for (int j = 0; itHTracker != pPaper->pModel->vecPaperModel[i]->lSelHTracker.end(); itHTracker++, j++)
 			{
 				cv::Rect rt = (*itHTracker).rt;
-				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
+				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				rectangle(tmp, rt, CV_RGB(25, 200, 20), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
-			RECTLIST::iterator itVTracker = pPaper->pModel->vecPaperModel[i].lSelVTracker.begin();
-			for (int j = 0; itVTracker != pPaper->pModel->vecPaperModel[i].lSelVTracker.end(); itVTracker++, j++)
+			RECTLIST::iterator itVTracker = pPaper->pModel->vecPaperModel[i]->lSelVTracker.begin();
+			for (int j = 0; itVTracker != pPaper->pModel->vecPaperModel[i]->lSelVTracker.end(); itVTracker++, j++)
 			{
 				cv::Rect rt = (*itVTracker).rt;
-				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
+				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				rectangle(tmp, rt, CV_RGB(25, 200, 20), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);

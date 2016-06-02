@@ -65,10 +65,12 @@ BOOL CGetModelDlg::OnInitDialog()
 		CString strName = A2T(itExam->strExamName.c_str());
 
 		int nCount = m_comboExamName.GetCount();
-		m_comboExamName.AddString(strName);
+		m_comboExamName.InsertString(nCount, strName);
+		
 		m_comboExamName.SetItemDataPtr(nCount, (void*)&(*itExam));
 	}
 	m_comboExamName.SetCurSel(0);
+
 
 	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemDataPtr(0);
 	if (pExamInfo)
@@ -81,7 +83,7 @@ BOOL CGetModelDlg::OnInitDialog()
 			CString strSubjectName = A2T(itSub->strSubjName.c_str());
 
 			int nCount = m_comboSubject.GetCount();
-			m_comboSubject.AddString(strSubjectName);
+			m_comboSubject.InsertString(nCount, strSubjectName);
 			m_comboSubject.SetItemDataPtr(nCount, pSubject);
 
 			if (i == 0)
@@ -119,9 +121,9 @@ void CGetModelDlg::OnCbnSelchangeComboExamname()
 	{
 		EXAM_SUBJECT* pSubject = &(*itSub);
 		CString strSubjectName = A2T(itSub->strSubjName.c_str());
-		m_comboSubject.AddString(strSubjectName);
 		int nCount = m_comboSubject.GetCount();
-		m_comboSubject.SetItemDataPtr(nCount - 1, pSubject);
+		m_comboSubject.InsertString(nCount, strSubjectName);
+		m_comboSubject.SetItemDataPtr(nCount, pSubject);
 
 		if (i == 0)
 		{

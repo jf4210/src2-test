@@ -195,12 +195,22 @@ typedef struct _Model_
 	int			nHasHead;				//是否有水平和垂直同步头
 	CString		strModelName;			//模板名称
 
-	std::vector<PAPERMODEL> vecPaperModel;	//存储每一页试卷的模板信息
+	std::vector<pPAPERMODEL> vecPaperModel;	//存储每一页试卷的模板信息
 	_Model_()
 	{
 		nPicNum = 0;
 		nABModel = 0;
 		nHasHead = 1;
+	}
+	~_Model_()
+	{
+		std::vector<pPAPERMODEL>::iterator itModel = vecPaperModel.begin();
+		for (; itModel != vecPaperModel.end();)
+		{
+			pPAPERMODEL pModel = *itModel;
+			itModel = vecPaperModel.erase(itModel);
+			SAFE_RELEASE(pModel);
+		}
 	}
 }MODEL, *pMODEL;
 typedef std::list<pMODEL> MODELLIST;	//模板列表

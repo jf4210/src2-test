@@ -103,7 +103,7 @@ bool CRecognizeThread::LoadModel(pMODELINFO pModelInfo)
 	USES_CONVERSION;
 	for (int i = 0; i < pModelInfo->pModel->nPicNum; i++)
 	{
-		std::string strModelPicPath = g_strModelSavePath + "\\" + T2A(pModelInfo->pModel->strModelName + _T("\\") + pModelInfo->pModel->vecPaperModel[i].strModelPicName);
+		std::string strModelPicPath = g_strModelSavePath + "\\" + T2A(pModelInfo->pModel->strModelName + _T("\\") + pModelInfo->pModel->vecPaperModel[i]->strModelPicName);
 
 		cv::Mat matSrc = cv::imread(strModelPicPath);
 		pModelInfo->vecMatSrc.push_back(matSrc);
@@ -119,9 +119,9 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		clock_t start_pic, end_pic;
 		start_pic = clock();
 
-		int nCount = pModelInfo->pModel->vecPaperModel[i].lH_Head.size() + pModelInfo->pModel->vecPaperModel[i].lV_Head.size() + pModelInfo->pModel->vecPaperModel[i].lABModel.size()
-			+ pModelInfo->pModel->vecPaperModel[i].lCourse.size() + pModelInfo->pModel->vecPaperModel[i].lQK_CP.size() + pModelInfo->pModel->vecPaperModel[i].lGray.size()
-			+ pModelInfo->pModel->vecPaperModel[i].lWhite.size();
+		int nCount = pModelInfo->pModel->vecPaperModel[i]->lH_Head.size() + pModelInfo->pModel->vecPaperModel[i]->lV_Head.size() + pModelInfo->pModel->vecPaperModel[i]->lABModel.size()
+			+ pModelInfo->pModel->vecPaperModel[i]->lCourse.size() + pModelInfo->pModel->vecPaperModel[i]->lQK_CP.size() + pModelInfo->pModel->vecPaperModel[i]->lGray.size()
+			+ pModelInfo->pModel->vecPaperModel[i]->lWhite.size();
 		if (!nCount)	//如果当前模板试卷没有校验点就不需要进行试卷打开操作，直接下一张试卷
 			continue;
 
@@ -263,8 +263,8 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 	if (pModelInfo->pModel->nHasHead != 0)	//有同步头的，不需要进行定点识别
 		return bResult;
 
-	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic].lSelFixRoi.begin();
-	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic].lSelFixRoi.end(); itCP++)
+	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.begin();
+	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.end(); itCP++)
 	{
 		RECTINFO rc = *itCP;
 
@@ -395,8 +395,8 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		return true;
 
 	m_vecH_Head.clear();
-	RECTLIST::iterator itRoi = pModelInfo->pModel->vecPaperModel[nPic].lSelHTracker.begin();
-	for (; itRoi != pModelInfo->pModel->vecPaperModel[nPic].lSelHTracker.end(); itRoi++)
+	RECTLIST::iterator itRoi = pModelInfo->pModel->vecPaperModel[nPic]->lSelHTracker.begin();
+	for (; itRoi != pModelInfo->pModel->vecPaperModel[nPic]->lSelHTracker.end(); itRoi++)
 	{
 		RECTINFO rc = *itRoi;
 #if 1
@@ -481,8 +481,8 @@ int CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 		return true;
 
 	m_vecV_Head.clear();
-	RECTLIST::iterator itRoi = pModelInfo->pModel->vecPaperModel[nPic].lSelVTracker.begin();
-	for (; itRoi != pModelInfo->pModel->vecPaperModel[nPic].lSelVTracker.end(); itRoi++)
+	RECTLIST::iterator itRoi = pModelInfo->pModel->vecPaperModel[nPic]->lSelVTracker.begin();
+	for (; itRoi != pModelInfo->pModel->vecPaperModel[nPic]->lSelVTracker.end(); itRoi++)
 	{
 		RECTINFO rc = *itRoi;
 #if 1
@@ -562,8 +562,8 @@ int CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 int CRecognizeThread::RecogABModel(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bResult = true;
-	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic].lABModel.begin();
-	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic].lABModel.end(); itCP++)
+	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lABModel.begin();
+	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lABModel.end(); itCP++)
 	{
 		RECTINFO rc = *itCP;
 
@@ -582,7 +582,7 @@ int CRecognizeThread::RecogABModel(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
 		}
 		else
-			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic].lFix, rc.rt);
+			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
 		bool bFindRect = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
 		if (bFindRect)
 		{
@@ -606,8 +606,8 @@ int CRecognizeThread::RecogABModel(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 int CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bResult = true;
-	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic].lCourse.begin();
-	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic].lCourse.end(); itCP++)
+	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lCourse.begin();
+	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lCourse.end(); itCP++)
 	{
 		RECTINFO rc = *itCP;
 
@@ -626,7 +626,7 @@ int CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
 		}
 		else
-			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic].lFix, rc.rt);
+			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
 		bool bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
 		if (bResult_Recog)
 		{
@@ -670,8 +670,8 @@ int CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 int CRecognizeThread::RecogQKCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bResult = true;
-	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic].lQK_CP.begin();
-	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic].lQK_CP.end(); itCP++)
+	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lQK_CP.begin();
+	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lQK_CP.end(); itCP++)
 	{
 		RECTINFO rc = *itCP;
 
@@ -690,7 +690,7 @@ int CRecognizeThread::RecogQKCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
 		}
 		else
-			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic].lFix, rc.rt);
+			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
 		bool bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
 		if (bResult_Recog)
 		{
@@ -728,8 +728,8 @@ int CRecognizeThread::RecogQKCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 int CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bResult = true;
-	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic].lGray.begin();
-	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic].lGray.end(); itCP++)
+	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lGray.begin();
+	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lGray.end(); itCP++)
 	{
 		RECTINFO rc = *itCP;
 
@@ -748,7 +748,7 @@ int CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
 		}
 		else
-			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic].lFix, rc.rt);
+			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
 		bool bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
 		if (bResult_Recog)
 		{
@@ -792,8 +792,8 @@ int CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 int CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bResult = true;
-	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic].lWhite.begin();
-	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic].lWhite.end(); itCP++)
+	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lWhite.begin();
+	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lWhite.end(); itCP++)
 	{
 		RECTINFO rc = *itCP;
 
@@ -812,7 +812,7 @@ int CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
 		}
 		else
-			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic].lFix, rc.rt);
+			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
 		bool bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
 		if (bResult_Recog)
 		{

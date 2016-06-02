@@ -142,20 +142,20 @@ protected:
 		std::string strDllLogPath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath) + "DCS_Dll.Log";
 		std::string strConfigPath = strCurrentPath + "DCS-config.ini";
 		
-#ifdef POCO_OS_FAMILY_WINDOWS
-		char szTitle[50] = { 0 };
-		sprintf(szTitle, "%s", SOFT_VERSION);
-		std::wstring wstrTitle;
-		Poco::UnicodeConverter::toUTF16(szTitle, wstrTitle);
-		SetConsoleTitle(wstrTitle.c_str());
-#endif
-
 		g_Log.SetFileName(strLogPath);
 		SetLogFileName((char*)strDllLogPath.c_str());
 		SysSet.Load(strConfigPath);
 		SysSet.m_strCurrentDir = strCurrentPath;
 		SysSet.m_strDecompressPath = strCurrentPath + "DecompressDir";
 		
+#ifdef POCO_OS_FAMILY_WINDOWS
+		char szTitle[50] = { 0 };
+		sprintf(szTitle, "%s <%s:%d - %d>", SOFT_VERSION, SysSet.m_sLocalIP.c_str(), SysSet.m_nCmdPort, SysSet.m_nPaperUpLoadPort);
+		std::wstring wstrTitle;
+		Poco::UnicodeConverter::toUTF16(szTitle, wstrTitle);
+		SetConsoleTitle(wstrTitle.c_str());
+#endif
+
 		Poco::File decompressDir(SysSet.m_strDecompressPath);
 		if (!decompressDir.exists())
 			decompressDir.createDirectories();

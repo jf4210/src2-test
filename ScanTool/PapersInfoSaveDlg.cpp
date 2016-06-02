@@ -63,13 +63,16 @@ BOOL CPapersInfoSaveDlg::OnInitDialog()
 	for (; itExam != g_lExamList.end(); itExam++)
 	{
 		CString strName = A2T(itExam->strExamName.c_str());
-		m_comboExamName.AddString(strName);
+
 		int nCount = m_comboExamName.GetCount();
-		m_comboExamName.SetItemData(nCount - 1, (DWORD_PTR)&(*itExam));
+		m_comboExamName.InsertString(nCount, strName);
+
+		m_comboExamName.SetItemDataPtr(nCount, (void*)&(*itExam));
 	}
 	m_comboExamName.SetCurSel(0);
 
-	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemData(0);
+
+	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemDataPtr(0);
 	if (pExamInfo)
 	{
 		m_comboSubject.ResetContent();
@@ -78,9 +81,10 @@ BOOL CPapersInfoSaveDlg::OnInitDialog()
 		{
 			EXAM_SUBJECT* pSubject = &(*itSub);
 			CString strSubjectName = A2T(itSub->strSubjName.c_str());
-			m_comboSubject.AddString(strSubjectName);
+
 			int nCount = m_comboSubject.GetCount();
-			m_comboSubject.SetItemData(nCount - 1, (DWORD_PTR)pSubject);
+			m_comboSubject.InsertString(nCount, strSubjectName);
+			m_comboSubject.SetItemDataPtr(nCount, pSubject);
 
 			if (i == 0)
 			{
@@ -88,11 +92,6 @@ BOOL CPapersInfoSaveDlg::OnInitDialog()
 			}
 		}
 		m_comboSubject.SetCurSel(0);
-// 		EXAM_SUBJECT* pSubject = (EXAM_SUBJECT*)m_comboSubject.GetItemData(0);
-// 		if (pSubject)
-// 		{
-// 			m_SubjectID = pSubject->nSubjID;
-// 		}
 
 		m_nExamID = pExamInfo->nExamID;
 		m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
@@ -123,7 +122,7 @@ void CPapersInfoSaveDlg::OnBnClickedOk()
 void CPapersInfoSaveDlg::OnCbnSelchangeComboExamname()
 {
 	int n = m_comboExamName.GetCurSel();
-	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemData(n);
+	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemDataPtr(n);
 	if (!pExamInfo)
 		return;
 
@@ -134,9 +133,9 @@ void CPapersInfoSaveDlg::OnCbnSelchangeComboExamname()
 	{
 		EXAM_SUBJECT* pSubject = &(*itSub);
 		CString strSubjectName = A2T(itSub->strSubjName.c_str());
-		m_comboSubject.AddString(strSubjectName);
 		int nCount = m_comboSubject.GetCount();
-		m_comboSubject.SetItemData(nCount - 1, (DWORD_PTR)pSubject);
+		m_comboSubject.InsertString(nCount, strSubjectName);
+		m_comboSubject.SetItemDataPtr(nCount, pSubject);
 
 		if (i == 0)
 		{
@@ -146,8 +145,8 @@ void CPapersInfoSaveDlg::OnCbnSelchangeComboExamname()
 	m_comboSubject.SetCurSel(0);
 
 	m_nExamID = pExamInfo->nExamID;
-	m_strExamTypeName	= pExamInfo->strExamTypeName.c_str();
-	m_strGradeName		= pExamInfo->strGradeName.c_str();
+	m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
+	m_strGradeName = pExamInfo->strGradeName.c_str();
 	UpdateData(FALSE);
 }
 
@@ -156,8 +155,9 @@ void CPapersInfoSaveDlg::OnCbnSelchangeComboSubjectname()
 {
 	int n2 = m_comboSubject.GetCurSel();
 
+	USES_CONVERSION;
 	int n = m_comboExamName.GetCurSel();
-	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemData(n);
+	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemDataPtr(n);
 	if (!pExamInfo)
 		return;
 

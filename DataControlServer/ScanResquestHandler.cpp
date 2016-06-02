@@ -110,6 +110,11 @@ void CScanResquestHandler::HandleTask(pSCAN_REQ_TASK pTask)
 			}
 
 		}
+		else
+		{
+			std::string strLog = "发送数据:" + pTask->strRequest + "\t\t后端数据返回错误,不是200 OK";
+			g_Log.LogOut(strLog);
+		}
 	}
 	catch (Poco::Exception& exc)
 	{
@@ -135,6 +140,9 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 	bool bResult = false;
 	int ret = 0;
 	std::string strSendData;
+	std::string strUtf8 = CMyCodeConvert::Utf8ToGb2312(strInput);
+	std::string strLog = "收到后端数据: " + strUtf8;
+	g_Log.LogOut(strLog);
 
 	Poco::JSON::Parser parser;
 	Poco::Dynamic::Var result;
@@ -152,8 +160,21 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 			{
 				ret = RESULT_SUCCESS;
 				std::string strEzs = object->get("ezs").convert<std::string>();
+				std::string strUserInfo = object->get("user").convert<std::string>();
+				int nTeacher = object->get("teacherId").convert<int>();
 
-				strSendData = strEzs;
+
+				ST_LOGIN_RESULT stResult;
+				stResult.nTeacherId = nTeacher;
+				strncpy(stResult.szEzs, strEzs.c_str(), strEzs.length());
+				strncpy(stResult.szUserInfo, strUserInfo.c_str(), strUserInfo.length());
+
+				int n = sizeof(stResult);
+
+				char szLoginResult[1024] = { 0 };
+				memcpy(szLoginResult, (char*)&stResult, sizeof(stResult));
+
+				strSendData = szLoginResult;
 				_mapUserLock_.lock();
 				MAP_USER::iterator itFind = _mapUser_.find(pTask->strUser);
 				if (itFind == _mapUser_.end())
@@ -166,6 +187,10 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 					itFind->second = pTask->pUser;
 				}
 				_mapUserLock_.unlock();
+
+
+				pTask->pUser->SendResponesInfo(USER_RESPONSE_LOGIN, ret, szLoginResult, sizeof(stResult));
+				return bResult;
 			}
 			else
 			{
@@ -188,7 +213,7 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 	{
 		std::string strErrInfo;
 		strErrInfo.append("Error when parse json: ");
-		strErrInfo.append(jsone.message() + "\tData:" + strInput);
+		strErrInfo.append(jsone.message() + "\tData:" + strUtf8);
 		g_Log.LogOutError(strErrInfo);
 		strSendData = "异常失败";
 		std::cout << strErrInfo << std::endl;
@@ -197,7 +222,7 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 	{
 		std::string strErrInfo;
 		strErrInfo.append("Error: ");
-		strErrInfo.append(exc.message() + "\tData:" + strInput);
+		strErrInfo.append(exc.message() + "\tData:" + strUtf8);
 		g_Log.LogOutError(strErrInfo);
 		strSendData = "异常失败";
 		std::cout << strErrInfo << std::endl;
@@ -205,7 +230,7 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 	catch (...)
 	{
 		std::string strErrInfo;
-		strErrInfo.append("Unknown error.\tData:" + strInput);
+		strErrInfo.append("Unknown error.\tData:" + strUtf8);
 		g_Log.LogOutError(strErrInfo);
 		strSendData = "异常失败";
 		std::cout << strErrInfo << std::endl;

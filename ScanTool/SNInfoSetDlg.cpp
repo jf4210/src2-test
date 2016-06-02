@@ -91,8 +91,8 @@ void CSNInfoSetDlg::InitCtrlPosition()
 	int nCurrentTop = 0;
 	int nGroupWidth = rcClient.Width() - nLeftGap - nRightGap;
 	int nStaticHeight = 15;		//校验点类型Static控件高度
-	int nStaticWidth = (rcClient.Width() - nLeftGap - nRightGap - 2 * nGap) / 3;
-	int nRadioWidth = nStaticWidth;
+	int nStaticWidth = (rcClient.Width() - nLeftGap - nRightGap - 2 * nGap) / 5;
+	int nRadioWidth = nStaticWidth * 2;
 
 	if (GetDlgItem(IDC_STATIC_SN))
 	{

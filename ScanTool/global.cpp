@@ -190,6 +190,272 @@ pMODEL LoadModelFile(CString strModelPath)
 		for (int i = 0; i < arrayPapers->size(); i++)
 		{
 			Poco::JSON::Object::Ptr jsnPaperObj = arrayPapers->getObject(i);
+#if 1
+			pPAPERMODEL paperModelInfo = new PAPERMODEL;
+			paperModelInfo->nPaper = jsnPaperObj->get("paperNum").convert<int>();
+			paperModelInfo->strModelPicName = A2T(CMyCodeConvert::Utf8ToGb2312(jsnPaperObj->get("modelPicName").convert<std::string>()).c_str());
+
+			paperModelInfo->rtHTracker.x = jsnPaperObj->get("rtHTracker.x").convert<int>();
+			paperModelInfo->rtHTracker.y = jsnPaperObj->get("rtHTracker.y").convert<int>();
+			paperModelInfo->rtHTracker.width = jsnPaperObj->get("rtHTracker.width").convert<int>();
+			paperModelInfo->rtHTracker.height = jsnPaperObj->get("rtHTracker.height").convert<int>();
+			paperModelInfo->rtVTracker.x = jsnPaperObj->get("rtVTracker.x").convert<int>();
+			paperModelInfo->rtVTracker.y = jsnPaperObj->get("rtVTracker.y").convert<int>();
+			paperModelInfo->rtVTracker.width = jsnPaperObj->get("rtVTracker.width").convert<int>();
+			paperModelInfo->rtVTracker.height = jsnPaperObj->get("rtVTracker.height").convert<int>();
+			paperModelInfo->rtSNTracker.x = jsnPaperObj->get("rtSNTracker.x").convert<int>();
+			paperModelInfo->rtSNTracker.y = jsnPaperObj->get("rtSNTracker.y").convert<int>();
+			paperModelInfo->rtSNTracker.width = jsnPaperObj->get("rtSNTracker.width").convert<int>();
+			paperModelInfo->rtSNTracker.height = jsnPaperObj->get("rtSNTracker.height").convert<int>();
+
+			Poco::JSON::Array::Ptr arraySn = jsnPaperObj->getArray("snList");
+			Poco::JSON::Array::Ptr arraySelHTracker = jsnPaperObj->getArray("hTrackerRect");
+			Poco::JSON::Array::Ptr arraySelVTracker = jsnPaperObj->getArray("vTrackerRect");
+			Poco::JSON::Array::Ptr arraySelFixRoi = jsnPaperObj->getArray("selRoiRect");
+			Poco::JSON::Array::Ptr arrayOmr = jsnPaperObj->getArray("selOmrRect");
+			Poco::JSON::Array::Ptr arrayFixCP = jsnPaperObj->getArray("FixCP");
+			Poco::JSON::Array::Ptr arrayHHead = jsnPaperObj->getArray("H_Head");
+			Poco::JSON::Array::Ptr arrayVHead = jsnPaperObj->getArray("V_Head");
+			Poco::JSON::Array::Ptr arrayABModel = jsnPaperObj->getArray("ABModel");
+			Poco::JSON::Array::Ptr arrayCourse = jsnPaperObj->getArray("Course");
+			Poco::JSON::Array::Ptr arrayQKCP = jsnPaperObj->getArray("QKCP");
+			Poco::JSON::Array::Ptr arrayGrayCP = jsnPaperObj->getArray("GrayCP");
+			Poco::JSON::Array::Ptr arrayWhiteCP = jsnPaperObj->getArray("WhiteCP");
+			for (int i = 0; i < arrayFixCP->size(); i++)
+			{
+				Poco::JSON::Object::Ptr jsnRectInfoObj = arrayFixCP->getObject(i);
+				RECTINFO rc;
+				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
+				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
+				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
+				rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
+				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
+				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
+				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+				paperModelInfo->lFix.push_back(rc);
+			}
+			for (int i = 0; i < arrayHHead->size(); i++)
+			{
+				Poco::JSON::Object::Ptr jsnRectInfoObj = arrayHHead->getObject(i);
+				RECTINFO rc;
+				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
+				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
+				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
+				rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
+				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
+				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
+				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+				paperModelInfo->lH_Head.push_back(rc);
+			}
+			for (int i = 0; i < arrayVHead->size(); i++)
+			{
+				Poco::JSON::Object::Ptr jsnRectInfoObj = arrayVHead->getObject(i);
+				RECTINFO rc;
+				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
+				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
+				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
+				rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
+				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
+				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
+				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+				paperModelInfo->lV_Head.push_back(rc);
+			}
+			for (int i = 0; i < arrayABModel->size(); i++)
+			{
+				Poco::JSON::Object::Ptr jsnRectInfoObj = arrayABModel->getObject(i);
+				RECTINFO rc;
+				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
+				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
+				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
+				rc.nHItem = jsnRectInfoObj->get("hHeadItem").convert<int>();
+				rc.nVItem = jsnRectInfoObj->get("vHeadItem").convert<int>();
+				rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
+				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
+				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
+				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+				paperModelInfo->lABModel.push_back(rc);
+			}
+			for (int i = 0; i < arrayCourse->size(); i++)
+			{
+				Poco::JSON::Object::Ptr jsnRectInfoObj = arrayCourse->getObject(i);
+				RECTINFO rc;
+				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
+				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
+				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
+				rc.nHItem = jsnRectInfoObj->get("hHeadItem").convert<int>();
+				rc.nVItem = jsnRectInfoObj->get("vHeadItem").convert<int>();
+				rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
+				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
+				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
+				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+				paperModelInfo->lCourse.push_back(rc);
+			}
+			for (int i = 0; i < arrayQKCP->size(); i++)
+			{
+				Poco::JSON::Object::Ptr jsnRectInfoObj = arrayQKCP->getObject(i);
+				RECTINFO rc;
+				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
+				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
+				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
+				rc.nHItem = jsnRectInfoObj->get("hHeadItem").convert<int>();
+				rc.nVItem = jsnRectInfoObj->get("vHeadItem").convert<int>();
+				rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
+				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
+				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
+				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+				paperModelInfo->lQK_CP.push_back(rc);
+			}
+			for (int i = 0; i < arrayGrayCP->size(); i++)
+			{
+				Poco::JSON::Object::Ptr jsnRectInfoObj = arrayGrayCP->getObject(i);
+				RECTINFO rc;
+				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
+				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
+				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
+				rc.nHItem = jsnRectInfoObj->get("hHeadItem").convert<int>();
+				rc.nVItem = jsnRectInfoObj->get("vHeadItem").convert<int>();
+				rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
+				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
+				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
+				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+				paperModelInfo->lGray.push_back(rc);
+			}
+			for (int i = 0; i < arrayWhiteCP->size(); i++)
+			{
+				Poco::JSON::Object::Ptr jsnRectInfoObj = arrayWhiteCP->getObject(i);
+				RECTINFO rc;
+				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
+				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
+				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
+				rc.nHItem = jsnRectInfoObj->get("hHeadItem").convert<int>();
+				rc.nVItem = jsnRectInfoObj->get("vHeadItem").convert<int>();
+				rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
+				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
+				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
+				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+				paperModelInfo->lWhite.push_back(rc);
+			}
+			for (int i = 0; i < arraySelFixRoi->size(); i++)
+			{
+				Poco::JSON::Object::Ptr jsnRectInfoObj = arraySelFixRoi->getObject(i);
+				RECTINFO rc;
+				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
+				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
+				//				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
+				rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
+				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
+				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
+				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+				paperModelInfo->lSelFixRoi.push_back(rc);
+			}
+			for (int i = 0; i < arraySelHTracker->size(); i++)
+			{
+				Poco::JSON::Object::Ptr jsnRectInfoObj = arraySelHTracker->getObject(i);
+				RECTINFO rc;
+				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
+				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
+				//				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
+				rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
+				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
+				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
+				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+				paperModelInfo->lSelHTracker.push_back(rc);
+			}
+			for (int i = 0; i < arraySelVTracker->size(); i++)
+			{
+				Poco::JSON::Object::Ptr jsnRectInfoObj = arraySelVTracker->getObject(i);
+				RECTINFO rc;
+				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
+				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
+				//				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
+				rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
+				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
+				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
+				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+				paperModelInfo->lSelVTracker.push_back(rc);
+			}
+			for (int i = 0; i < arrayOmr->size(); i++)
+			{
+				Poco::JSON::Object::Ptr jsnRectInfoObj = arrayOmr->getObject(i);
+				OMR_QUESTION objOmr;
+				objOmr.nTH = jsnRectInfoObj->get("nTH").convert<int>();
+				Poco::JSON::Array::Ptr omrList = jsnRectInfoObj->getArray("omrlist");
+				for (int j = 0; j < omrList->size(); j++)
+				{
+					Poco::JSON::Object::Ptr jsnOmrObj = omrList->getObject(j);
+					RECTINFO rc;
+					rc.eCPType = (CPType)jsnOmrObj->get("eType").convert<int>();
+					rc.fStandardValuePercent = jsnOmrObj->get("standardValPercent").convert<float>();
+					rc.fStandardValue = jsnOmrObj->get("standardVal").convert<float>();
+					rc.nThresholdValue = jsnOmrObj->get("thresholdValue").convert<int>();
+					rc.nHItem = jsnOmrObj->get("hHeadItem").convert<int>();
+					rc.nVItem = jsnOmrObj->get("vHeadItem").convert<int>();
+					rc.nTH = jsnOmrObj->get("nTH").convert<int>();
+					rc.nAnswer = jsnOmrObj->get("nAnswer").convert<int>();
+					rc.nSingle = jsnOmrObj->get("nSingle").convert<int>();
+					rc.rt.x = jsnOmrObj->get("left").convert<int>();
+					rc.rt.y = jsnOmrObj->get("top").convert<int>();
+					rc.rt.width = jsnOmrObj->get("width").convert<int>();
+					rc.rt.height = jsnOmrObj->get("height").convert<int>();
+					objOmr.lSelAnswer.push_back(rc);
+				}
+				paperModelInfo->lOMR2.push_back(objOmr);
+			}
+			for (int i = 0; i < arraySn->size(); i++)
+			{
+				Poco::JSON::Object::Ptr jsnRectInfoObj = arraySn->getObject(i);
+				pSN_ITEM pSnItem = new SN_ITEM;
+				pSnItem->nItem = jsnRectInfoObj->get("nItem").convert<int>();
+				pSnItem->nRecogVal = jsnRectInfoObj->get("nRecogVal").convert<int>();
+				Poco::JSON::Array::Ptr snList = jsnRectInfoObj->getArray("snList");
+				for (int j = 0; j < snList->size(); j++)
+				{
+					Poco::JSON::Object::Ptr jsnSnObj = snList->getObject(j);
+					RECTINFO rc;
+					rc.eCPType = (CPType)jsnSnObj->get("eType").convert<int>();
+					rc.fStandardValuePercent = jsnSnObj->get("standardValPercent").convert<float>();
+					rc.fStandardValue = jsnSnObj->get("standardVal").convert<float>();
+					rc.nThresholdValue = jsnSnObj->get("thresholdValue").convert<int>();
+					rc.nHItem = jsnSnObj->get("hHeadItem").convert<int>();
+					rc.nVItem = jsnSnObj->get("vHeadItem").convert<int>();
+					rc.nTH = jsnSnObj->get("nTH").convert<int>();
+					rc.nSnVal = jsnSnObj->get("nSnVal").convert<int>();
+					rc.nAnswer = jsnSnObj->get("nAnswer").convert<int>();
+					rc.nSingle = jsnSnObj->get("nSingle").convert<int>();
+					rc.rt.x = jsnSnObj->get("left").convert<int>();
+					rc.rt.y = jsnSnObj->get("top").convert<int>();
+					rc.rt.width = jsnSnObj->get("width").convert<int>();
+					rc.rt.height = jsnSnObj->get("height").convert<int>();
+					pSnItem->lSN.push_back(rc);
+				}
+				paperModelInfo->lSNInfo.push_back(pSnItem);
+			}
+
+			std::vector<pPAPERMODEL>::iterator itBegin = pModel->vecPaperModel.begin();
+			for (; itBegin != pModel->vecPaperModel.end();)
+			{
+				if (paperModelInfo->nPaper < (*itBegin)->nPaper)
+				{
+					pModel->vecPaperModel.insert(itBegin, paperModelInfo);
+					break;
+				}
+				else
+					itBegin++;
+			}
+			if (itBegin == pModel->vecPaperModel.end())
+				pModel->vecPaperModel.push_back(paperModelInfo);
+#else
 			PAPERMODEL paperModelInfo;
 			paperModelInfo.nPaper = jsnPaperObj->get("paperNum").convert<int>();
 			paperModelInfo.strModelPicName = A2T(CMyCodeConvert::Utf8ToGb2312(jsnPaperObj->get("modelPicName").convert<std::string>()).c_str());
@@ -453,6 +719,7 @@ pMODEL LoadModelFile(CString strModelPath)
 			}
 			if (itBegin == pModel->vecPaperModel.end())
 				pModel->vecPaperModel.push_back(paperModelInfo);
+#endif
 		}
 	}
 	catch (Poco::JSON::JSONException& jsone)
