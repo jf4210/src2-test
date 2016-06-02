@@ -14,12 +14,12 @@ CTcpClient::~CTcpClient()
 {
 	SAFE_RELEASE_ARRY(m_pRecvBuff);
 	g_pLogger->information("CTcpClient exit.");
-	TRACE("CTcpClient退出\n");	
+	TRACE("CTcpClient退出\n");
+	g_eTcpThreadExit.set();
 }
 
 void CTcpClient::run()
 {
-	eExit.reset();
 	while (!g_nExitFlag)
 	{
 		if (!_bConnect)
@@ -69,8 +69,7 @@ void CTcpClient::run()
 		std::string strLog = "CTcpClient socket exception: " + exc.displayText();
 		g_pLogger->information(strLog);
 		TRACE(strLog.c_str());
-	}	
-	eExit.set();
+	}
 }
 
 bool CTcpClient::connectServer()
@@ -106,7 +105,7 @@ bool CTcpClient::receiveData()
 	bool bGetCmd = false;
 	int nCount = 0;
 	int nBaseLen = HEAD_SIZE;
-#if 1
+
 	if (!m_pRecvBuff)
 	{
 		m_pRecvBuff = new char[1024 + HEAD_SIZE];
@@ -184,71 +183,7 @@ bool CTcpClient::receiveData()
 		_nRecvLen = 0;
 		_nWantLen = 0;
 	}
-#else
-	try
-	{
-		int nLen;
-		if (_nRecvLen < nBaseLen)
-		{
-			_nWantLen = nBaseLen - _nRecvLen;
-			nLen = m_ss.receiveBytes(m_szRecvBuff + _nRecvLen, _nWantLen);
-			if (nLen > 0)
-			{
-				_nRecvLen += nLen;
-				if (_nRecvLen == nBaseLen)
-				{
-					ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_szRecvBuff;
-					if (pstHead->uPackSize == 0)
-					{
-						bGetCmd = true;
-					}
-				}
-			}
-			else if (nLen == 0)
-			{
-				TRACE("the peer has closed.\n");
-				return false;
-			}
-		}
-		else
-		{
-			ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_szRecvBuff;
-			nBaseLen += pstHead->uPackSize;
-			_nWantLen = nBaseLen - _nRecvLen;
-			nLen = m_ss.receiveBytes(m_szRecvBuff + _nRecvLen, _nWantLen);
-			if (nLen > 0)
-			{
-				_nRecvLen += nLen;
-				if (_nRecvLen == nBaseLen)
-				{
-					//完整命令接收完成
-					bGetCmd = true;
-				}
-			}
-			else if (nLen == 0)
-			{
-				TRACE("the peer has closed.\n");
-				return false;
-			}
-		}
-	}
-	catch (Poco::Exception& exc)
-	{
-		std::string strLog = "接收数据异常 ==> " + exc.displayText();
-		TRACE(strLog.c_str());
-		g_pLogger->information(strLog);
-		_bConnect = false;
-		return false;
-	}
 
-	if (bGetCmd)
-	{
-		HandleCmd();
-		memmove(m_szRecvBuff, m_szRecvBuff + _nRecvLen, _nRecvLen);
-		_nRecvLen = 0;
-		_nWantLen = 0;
-	}
-#endif
 	return true;
 }
 

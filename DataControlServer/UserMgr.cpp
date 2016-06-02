@@ -23,6 +23,26 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			ST_LOGIN_INFO  LoginInfo = *(pStLoginInfo)(pMission->m_pMissionData + HEAD_SIZE);
 			std::cout << "login info: " << LoginInfo.szUserNo << ", pwd: " << LoginInfo.szPWD << std::endl;
 
+#if 0	//test data
+			std::string strEzs = "sdkfjskfaskdflkasjdfkjsadfjsjf";
+			std::string strUserInfo = "1234567890abcdefghijklmnopqrstuvwxyz";
+
+			ST_LOGIN_RESULT stResult;
+			ZeroMemory(&stResult, sizeof(ST_LOGIN_RESULT));
+			stResult.nTeacherId = 150;
+			strncpy(stResult.szEzs, strEzs.c_str(), strEzs.length());
+			strncpy(stResult.szUserInfo, strUserInfo.c_str(), strUserInfo.length());
+
+			int n = sizeof(stResult);
+
+			char szLoginResult[1024] = { 0 };
+			memcpy(szLoginResult, (char*)&stResult, sizeof(stResult));
+			std::string strSendData = szLoginResult;
+
+			pUser->SendResponesInfo(USER_RESPONSE_LOGIN, RESULT_SUCCESS, szLoginResult, sizeof(ST_LOGIN_RESULT));
+#endif
+
+#if 1
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
 			pTask->strUri	  = SysSet.m_strScanReqUri + "/login";
 			pTask->pUser	  = pUser;
@@ -35,6 +55,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			g_fmScanReq.lock();
 			g_lScanReq.push_back(pTask);
 			g_fmScanReq.unlock();
+#endif
 		}
 		break;
 	case USER_GETEXAMINFO:

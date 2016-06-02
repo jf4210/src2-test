@@ -19,7 +19,7 @@ using namespace cv;
 
 float				g_fSamePercent = 0.75;		//判断校验区域是否填图百分比
 int					g_nExitFlag = 0;
-CString g_strCurrentPath;
+CString				g_strCurrentPath;
 std::string			g_strPaperSavePath;	//试卷扫描后保存的总路径
 std::string			g_strModelSavePath;
 Poco::Logger*		g_pLogger;
@@ -36,6 +36,9 @@ Poco::FastMutex		g_fmTcpTaskLock;
 TCP_TASKLIST		g_lTcpTask;		//tcp任务列表
 
 EXAM_LIST			g_lExamList;	//当前账号对应的考试列表
+
+Poco::Event			g_eTcpThreadExit;
+Poco::Event			g_eSendFileThreadExit;
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
 class CAboutDlg : public CDialogEx
@@ -76,7 +79,7 @@ CScanToolDlg::CScanToolDlg(CWnd* pParent /*=NULL*/)
 	, m_pModel(NULL), m_ncomboCurrentSel(0), m_pRecogThread(NULL), m_pCurrentPicShow(NULL), m_nModelPicNums(1)
 	, m_bTwainInit(FALSE), m_nCurrTabSel(0), m_nScanCount(0), m_nScanStatus(0)
 	, m_pPapersInfo(NULL), m_pPaper(NULL), m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL)
-	, m_pSendFileObj(NULL), m_SendFileThread(NULL), m_bLogin(FALSE), m_pTcpCmdObj(NULL)
+	, m_pSendFileObj(NULL), m_SendFileThread(NULL), m_bLogin(FALSE), m_pTcpCmdObj(NULL), m_TcpCmdThread(NULL)
 	, m_nTeacherId(-1)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -303,9 +306,9 @@ void CScanToolDlg::OnDestroy()
 	}
 	g_pLogger->information("识别线程释放完毕.");
 
-	m_pSendFileObj->eExit.wait();
 	m_SendFileThread->join();
 	SAFE_RELEASE(m_pSendFileObj);
+	g_eSendFileThreadExit.wait();
 	SAFE_RELEASE(m_SendFileThread);
 	g_pLogger->information("发送文件线程释放完毕.");
 
@@ -318,9 +321,9 @@ void CScanToolDlg::OnDestroy()
 		SAFE_RELEASE(pTask);
 	}
 	g_fmTcpTaskLock.unlock();
-	m_pTcpCmdObj->eExit.wait();
 	m_TcpCmdThread->join();
 	SAFE_RELEASE(m_pTcpCmdObj);
+	g_eTcpThreadExit.wait();
 	SAFE_RELEASE(m_TcpCmdThread);
 	g_pLogger->information("tcp命令处理线程释放完毕.");
 	
@@ -485,6 +488,7 @@ void CScanToolDlg::InitUI()
 	m_vecPicShow[0]->ShowWindow(SW_SHOW);
 	m_pCurrentPicShow = m_vecPicShow[0];
 	m_nCurrTabSel = 0;
+
 
 // 	int sx = GetSystemMetrics(SM_CXFULLSCREEN);
 // 	int sy = GetSystemMetrics(SM_CYFULLSCREEN);

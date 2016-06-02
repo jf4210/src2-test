@@ -155,7 +155,7 @@ int CLoginDlg::RecvData(CString& strResultInfo)
 			{
 				m_bLogin = true;
 				nResult = 1;
-				strncpy(szData, m_szRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+				memcpy(szData, m_szRecvBuff + HEAD_SIZE, pstHead->uPackSize);
 				pST_LOGIN_RESULT pstResult = (pST_LOGIN_RESULT)szData;
 
 
@@ -167,7 +167,7 @@ int CLoginDlg::RecvData(CString& strResultInfo)
 			{
 				m_bLogin = false;
 				nResult = 0;
-				strncpy(szData, m_szRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+				memcpy(szData, m_szRecvBuff + HEAD_SIZE, pstHead->uPackSize);
 				strResultInfo = szData;
 			}
 			break;

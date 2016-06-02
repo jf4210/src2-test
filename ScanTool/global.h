@@ -375,6 +375,11 @@ typedef std::list<EXAMINFO> EXAM_LIST;
 
 extern EXAM_LIST	g_lExamList;
 
+
+extern Poco::Event			g_eTcpThreadExit;
+extern Poco::Event			g_eSendFileThreadExit;
+
+
 int		GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, RECTINFO*& pRc);
 bool	ZipFile(CString strSrcPath, CString strDstPath, CString strExtName = _T(".zip"));
 bool	UnZipFile(CString strZipPath);

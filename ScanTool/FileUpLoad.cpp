@@ -3,6 +3,8 @@
 #include "Net_Cmd_Protocol.h"
 #include "SendFileThread.h"
 
+CMutex	mutexObj(FALSE, _T("mutex1"));
+
 CFileUpLoad::CFileUpLoad(CSendFileThread& rNotify)
  :m_pITcpClient(NULL)
 ,m_uThreadType(0)
@@ -59,7 +61,9 @@ BOOL CFileUpLoad::SendAnsFile(CString strFilePath, CString strFileName)
 	stAns->strPath = strFilePath;
 	stAns->bUpload = FALSE;
 #if 1
+	mutexObj.Lock();
 	m_listFile.push_back(stAns);
+	mutexObj.Unlock();
 #else
 	m_VecAns.push_back(stAns);
 #endif
@@ -88,7 +92,7 @@ RESTART:
 			{
 				staticTimer = dwTimeLatest;
 				USES_CONVERSION;
-				m_pITcpClient = CreateTcpClient(*this,T2A(m_strAddr),m_usPort);
+				m_pITcpClient = CreateTcpClient(*this, T2A(m_strAddr), m_usPort);
 				if (m_pITcpClient == NULL)
 				{
 					TRACE0("\nconect to File Server failed!\n");
@@ -98,11 +102,13 @@ RESTART:
 				else
 				{
 					TRACE0("\nconect to File Server Success!\n");
-					m_bConnect=TRUE;
-					m_uThreadType=2;
+					m_bConnect = TRUE;
+					m_uThreadType = 2;
 					goto RESTART;
 				}
 			}
+			else
+				Sleep(300);
 		}
 	}
 	else if (m_uThreadType == 2)
@@ -300,6 +306,7 @@ void CFileUpLoad::UnInit()
 		m_pITcpClient->ReleaseConnections();
 		m_pITcpClient=NULL;
 	}
+	mutexObj.Lock();
 	std::list<stUpLoadAns*>::iterator it1 = m_listFile.begin();
 	for (; it1 != m_listFile.end(); it1++)
 	{
@@ -307,6 +314,7 @@ void CFileUpLoad::UnInit()
 		it1 = m_listFile.erase(it1);
 		SAFE_RELEASE(itUp);
 	}
+	mutexObj.Unlock();
 	// 	m_VecAns.clear();
 	std::vector<stUpLoadAns*>::iterator it = m_VecAns.begin();
 	for (;it!=m_VecAns.end();it++)

@@ -168,13 +168,11 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 				stResult.nTeacherId = nTeacher;
 				strncpy(stResult.szEzs, strEzs.c_str(), strEzs.length());
 				strncpy(stResult.szUserInfo, strUserInfo.c_str(), strUserInfo.length());
-
-				int n = sizeof(stResult);
-
+				
 				char szLoginResult[1024] = { 0 };
 				memcpy(szLoginResult, (char*)&stResult, sizeof(stResult));
 
-				strSendData = szLoginResult;
+//				strSendData = szLoginResult;
 				_mapUserLock_.lock();
 				MAP_USER::iterator itFind = _mapUser_.find(pTask->strUser);
 				if (itFind == _mapUser_.end())
@@ -187,7 +185,6 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 					itFind->second = pTask->pUser;
 				}
 				_mapUserLock_.unlock();
-
 
 				pTask->pUser->SendResponesInfo(USER_RESPONSE_LOGIN, ret, szLoginResult, sizeof(stResult));
 				return bResult;

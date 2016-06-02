@@ -12,11 +12,11 @@ CSendFileThread::~CSendFileThread()
 {
 	g_pLogger->information("CSendFileThread exit.");
 	TRACE("CSendFileThread exit.\n");
+	g_eSendFileThreadExit.set();
 }
 
 void CSendFileThread::run()
 {
-	eExit.reset();
 	USES_CONVERSION;
 	m_upLoad.InitUpLoadTcp(A2T(_strIp.c_str()), _nPort);
 
@@ -44,7 +44,6 @@ void CSendFileThread::run()
 		pTask = NULL;
 	}
 	m_upLoad.m_bStop = TRUE;
-	eExit.set();
 }
 
 void CSendFileThread::HandleTask(pSENDTASK pTask)
