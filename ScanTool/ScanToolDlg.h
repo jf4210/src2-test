@@ -72,6 +72,7 @@ public:
 	CString			m_strPwd;
 	CString			m_strEzs;
 	int				m_nTeacherId;
+	int				m_nUserId;
 public:
 	void	InitUI();
 	void	InitTab();

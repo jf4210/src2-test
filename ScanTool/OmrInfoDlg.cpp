@@ -57,46 +57,7 @@ BOOL COmrInfoDlg::OnInitDialog()
 	InitCtrlPosition();
 
 	m_picOmrShow.OnInit(0, false);
-	if (m_bSingle)
-	{
-		m_radioTX_S.SetCheck(1);
-		m_radioTX_M.SetCheck(0);
-	}
-	else
-	{
-		m_radioTX_S.SetCheck(0);
-		m_radioTX_M.SetCheck(1);
-	}
-	if (m_nTHSel == 0)
-	{
-		m_radioTH_H.SetCheck(1);
-		m_radioTH_V.SetCheck(0);
-	}
-	else
-	{
-		m_radioTH_H.SetCheck(0);
-		m_radioTH_V.SetCheck(1);
-	}
-	if (m_nXXSel == 0)
-	{
-		m_radioXX_H.SetCheck(1);
-		m_radioXX_V.SetCheck(0);
-	}
-	else
-	{
-		m_radioXX_H.SetCheck(0);
-		m_radioXX_V.SetCheck(1);
-	}
-	if (m_nDirectSel == 0)
-	{
-		m_radioDirectZX.SetCheck(1);
-		m_radioDirectFX.SetCheck(0);
-	}
-	else
-	{
-		m_radioDirectZX.SetCheck(0);
-		m_radioDirectFX.SetCheck(1);
-	}
+	InitUI();
 	ShowOmrPic();
 	return TRUE;
 }
@@ -347,6 +308,104 @@ BOOL COmrInfoDlg::PreTranslateMessage(MSG* pMsg)
 		return TRUE;
 	}
 	return CDialog::PreTranslateMessage(pMsg);
+}
+
+void COmrInfoDlg::ShowUI(int nOmrVal, int nSingleFlag)
+{
+	if (nSingleFlag == 0)	m_bSingle = TRUE;
+	else	m_bSingle = FALSE;
+
+	m_nCurrentOmrVal = nOmrVal;
+	
+	switch (nOmrVal)
+	{
+		case 42:
+			m_nTHSel = 0;
+			m_nXXSel = 0;
+			m_nDirectSel = 0;
+			break;
+		case 41:
+			m_nTHSel = 0;
+			m_nXXSel = 0;
+			m_nDirectSel = 1;
+			break;
+		case 38:
+			m_nTHSel = 0;
+			m_nXXSel = 1;
+			m_nDirectSel = 0;
+			break;
+		case 37:
+			m_nTHSel = 0;
+			m_nXXSel = 1;
+			m_nDirectSel = 1;
+			break;
+		case 26:
+			m_nTHSel = 1;
+			m_nXXSel = 0;
+			m_nDirectSel = 0;
+			break;
+		case 25:
+			m_nTHSel = 1;
+			m_nXXSel = 0;
+			m_nDirectSel = 1;
+			break;
+		case 22:
+			m_nTHSel = 1;
+			m_nXXSel = 1;
+			m_nDirectSel = 0;
+			break;
+		case 21:
+			m_nTHSel = 1;
+			m_nXXSel = 1;
+			m_nDirectSel = 1;
+			break;
+	}
+	InitUI();
+	ShowOmrPic();
+}
+
+void COmrInfoDlg::InitUI()
+{
+	if (m_bSingle)
+	{
+		m_radioTX_S.SetCheck(1);
+		m_radioTX_M.SetCheck(0);
+	}
+	else
+	{
+		m_radioTX_S.SetCheck(0);
+		m_radioTX_M.SetCheck(1);
+	}
+	if (m_nTHSel == 0)
+	{
+		m_radioTH_H.SetCheck(1);
+		m_radioTH_V.SetCheck(0);
+	}
+	else
+	{
+		m_radioTH_H.SetCheck(0);
+		m_radioTH_V.SetCheck(1);
+	}
+	if (m_nXXSel == 0)
+	{
+		m_radioXX_H.SetCheck(1);
+		m_radioXX_V.SetCheck(0);
+	}
+	else
+	{
+		m_radioXX_H.SetCheck(0);
+		m_radioXX_V.SetCheck(1);
+	}
+	if (m_nDirectSel == 0)
+	{
+		m_radioDirectZX.SetCheck(1);
+		m_radioDirectFX.SetCheck(0);
+	}
+	else
+	{
+		m_radioDirectZX.SetCheck(0);
+		m_radioDirectFX.SetCheck(1);
+	}
 }
 
 

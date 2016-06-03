@@ -80,7 +80,7 @@ CScanToolDlg::CScanToolDlg(CWnd* pParent /*=NULL*/)
 	, m_bTwainInit(FALSE), m_nCurrTabSel(0), m_nScanCount(0), m_nScanStatus(0)
 	, m_pPapersInfo(NULL), m_pPaper(NULL), m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL)
 	, m_pSendFileObj(NULL), m_SendFileThread(NULL), m_bLogin(FALSE), m_pTcpCmdObj(NULL), m_TcpCmdThread(NULL)
-	, m_nTeacherId(-1)
+	, m_nTeacherId(-1), m_nUserId(-1)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -712,6 +712,7 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 			m_strEzs = _T("");
 			m_strPwd = _T("");
 			m_nTeacherId = -1;
+			m_nUserId = -1;
 			GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("µÇÂ¼"));
 		}
 		else
@@ -721,6 +722,7 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 			m_strPwd = dlg.m_strPwd;
 			m_strEzs = dlg.m_strEzs;
 			m_nTeacherId = dlg.m_nTeacherId;
+			m_nUserId = dlg.m_nUserId;
 			GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("ÍË³ö"));
 		}
 	}
@@ -732,6 +734,7 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 		m_strPwd = _T("");
 		m_strEzs = _T("");
 		m_nTeacherId = -1;
+		m_nUserId = -1;
 		GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("µÇÂ¼"));
 	}	
 }
@@ -1575,6 +1578,8 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	jsnFileData.set("subjectId", dlg.m_SubjectID);
 	jsnFileData.set("uploader", strUploader);
 	jsnFileData.set("ezs", strEzs);
+	jsnFileData.set("nTeacherId", m_nTeacherId);
+	jsnFileData.set("nUserId", m_nUserId);
 	std::stringstream jsnString;
 	jsnFileData.stringify(jsnString, 0);
 

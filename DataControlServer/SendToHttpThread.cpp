@@ -121,10 +121,10 @@ void CSendToHttpThread::run()
 //					std::cout << strResultStatus << std::endl;
 				}
 
-				if (pTask->nTaskType == 1)
-				{
-					if (!ParseResult(strResultStatus, pTask))
-					{		//返回的数据解析失败
+				if (!ParseResult(strResultStatus, pTask))
+				{		//返回的数据解析失败
+					if (pTask->nTaskType == 1)
+					{
 						pTask->pPic->bUpLoadFlag = false;
 						pTask->pPapers->fmNum.lock();
 						pTask->pPapers->nUpLoadFail++;
@@ -133,18 +133,31 @@ void CSendToHttpThread::run()
 					}
 					else
 					{
+					}
+					pTask->nSendFlag++;
+					pTask->sTime.update();
+					//发送失败，再放入队列
+					g_fmHttpSend.lock();
+					g_lHttpSend.push_back(pTask);
+					g_fmHttpSend.unlock();
+					continue;
+				}
+				else
+				{
+					if (pTask->nTaskType == 1)
+					{
 						pTask->pPic->bUpLoadFlag = true;
 						pTask->pPapers->fmNum.lock();
 						pTask->pPapers->nUpLoadSuccess++;
 						GenerateResult(pTask->pPapers, pTask);
 						pTask->pPapers->fmNum.unlock();
 					}
-				}
-				else if (pTask->nTaskType == 2)		//提交给后端
-				{
-					std::string strLog = "post papers result info success, papersName: " + pTask->pPapers->strPapersName + "\tdetail: " + pTask->strResult;
-					g_Log.LogOut(strLog);
-					std::cout << "post papers result info success, papersName: " << pTask->pPapers->strPapersName << std::endl;
+					else
+					{
+						std::string strLog = "发送试卷袋图片信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: " + pTask->strResult;
+						g_Log.LogOut(strLog);
+						std::cout << "post papers result info success, papersName: " << pTask->pPapers->strPapersName << std::endl;
+					}
 				}
 			}
 			else
@@ -169,6 +182,13 @@ void CSendToHttpThread::run()
 					g_Log.LogOutError(strLog);
 					std::cout << strLog << std::endl;
 				}
+				pTask->nSendFlag++;
+				pTask->sTime.update();
+				//发送失败，再放入队列
+				g_fmHttpSend.lock();
+				g_lHttpSend.push_back(pTask);
+				g_fmHttpSend.unlock();
+				continue;
 			}
 			delete pTask;
 			pTask = NULL;
@@ -283,39 +303,64 @@ bool CSendToHttpThread::doRequest(Poco::Net::HTTPClientSession& session, Poco::N
 bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask)
 {
 	bool bResult = false;
+	std::string strUtf8 = CMyCodeConvert::Utf8ToGb2312(strInput);
+
 	Poco::JSON::Parser parser;
 	Poco::Dynamic::Var result;
 	try
 	{
 		result = parser.parse(strInput);
 		Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
-
-		bResult = object->get("ret").convert<bool>();
-		if (bResult)
+		
+		if (pTask->nTaskType == 1)
 		{
-			Poco::JSON::Object::Ptr objData = object->getObject("info");
-			std::string strMd5 = objData->get("md5").convert<std::string>();
-			int nSize = objData->get("size").convert<int>();
-			pTask->pPic->strHashVal = strMd5;
+			bResult = object->get("ret").convert<bool>();
+			if (bResult)
+			{
+				Poco::JSON::Object::Ptr objData = object->getObject("info");
+				std::string strMd5 = objData->get("md5").convert<std::string>();
+				int nSize = objData->get("size").convert<int>();
+				pTask->pPic->strHashVal = strMd5;
+			}
+			else
+			{
+				Poco::JSON::Object::Ptr objData = object->getObject("error");
+
+				std::stringstream jsnString;
+				objData->stringify(jsnString, 0);
+
+				std::string strErrInfo;
+				strErrInfo.append("Error when upload file: " + pTask->pPic->strFileName + "\tDetail: " + jsnString.str());
+				g_Log.LogOutError(strErrInfo);
+				std::cout << strErrInfo << std::endl;
+			}
 		}
 		else
 		{
-			Poco::JSON::Object::Ptr objData = object->getObject("error");
-
-			std::stringstream jsnString;
-			objData->stringify(jsnString, 0);
-
-			std::string strErrInfo;
-			strErrInfo.append("Error when upload file: " + pTask->pPic->strFileName + "\tDetail: " + jsnString.str());
-			g_Log.LogOutError(strErrInfo);
-			std::cout << strErrInfo << std::endl;
+			Poco::JSON::Object::Ptr objResult = object->getObject("status");
+			bResult = objResult->get("success").convert<bool>();
+			if (!bResult)
+			{
+				std::string strMsg;
+				if (!objResult->isNull("msg"))
+				{
+					strMsg = CMyCodeConvert::Utf8ToGb2312(objResult->get("msg").convert<std::string>());
+				}
+				char szCount[5] = { 0 };
+				sprintf(szCount, "%d", pTask->nSendFlag);
+				std::string strLog = "发送试卷袋图片信息给后端失败，失败原因: " + strMsg;
+				strLog.append("\t发送失败次数: ");
+				strLog.append(szCount);
+				g_Log.LogOutError(strLog);
+				std::cout << strLog << std::endl;
+			}
 		}
 	}
 	catch (Poco::JSON::JSONException& jsone)
 	{
 		std::string strErrInfo;
 		strErrInfo.append("Error when parse json: ");
-		strErrInfo.append(jsone.message() + "\tData:" + strInput);
+		strErrInfo.append(jsone.message() + "\tData:" + strUtf8);
 		g_Log.LogOutError(strErrInfo);
 		std::cout << strErrInfo << std::endl;
 		return false;
@@ -324,7 +369,7 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 	{
 		std::string strErrInfo;
 		strErrInfo.append("Error: ");
-		strErrInfo.append(exc.message() + "\tData:" + strInput);
+		strErrInfo.append(exc.message() + "\tData:" + strUtf8);
 		g_Log.LogOutError(strErrInfo);
 		std::cout << strErrInfo << std::endl;
 		return false;
@@ -332,7 +377,7 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 	catch (...)
 	{
 		std::string strErrInfo;
-		strErrInfo.append("Unknown error.\tData:" + strInput);
+		strErrInfo.append("Unknown error.\tData:" + strUtf8);
 		g_Log.LogOutError(strErrInfo);
 		std::cout << strErrInfo << std::endl;
 		return false;
@@ -355,6 +400,8 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 	jsnPapers.set("qkNum", pPapers->nQk);
 	jsnPapers.set("examId", pPapers->nExamID);
 	jsnPapers.set("subjectId", pPapers->nSubjectID);
+	jsnPapers.set("teacherId", pPapers->nTeacherId);
+	jsnPapers.set("userId", pPapers->nUserId);
 	Poco::JSON::Array  paperArry;
 
 	LIST_PAPER_INFO::iterator it2 = pPapers->lPaper.begin();

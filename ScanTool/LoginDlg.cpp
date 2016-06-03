@@ -22,6 +22,9 @@ CLoginDlg::CLoginDlg(CString strIP, int nPort, CWnd* pParent /*=NULL*/)
 	, m_nWantLen(0)
 	, m_bLogin(false)
 	, m_pRecvBuff(NULL)
+	, m_strEzs(_T(""))
+	, m_nTeacherId(-1)
+	, m_nUserId(-1)
 {
 	ZeroMemory(m_szRecvBuff, 1024);
 }
@@ -161,6 +164,7 @@ int CLoginDlg::RecvData(CString& strResultInfo)
 
 				m_strEzs = pstResult->szEzs;
 				m_nTeacherId = pstResult->nTeacherId;
+				m_nUserId = pstResult->nUserId;
 			}
 			break;
 		case RESULT_LOGIN_FAIL:
@@ -197,7 +201,6 @@ int CLoginDlg::GetExamInfo()
 	ZeroMemory(&stExamInfo, sizeof(ST_EXAM_INFO));
 	strcpy(stExamInfo.szEzs, T2A(m_strEzs));
 
-#if 1
 	pTCP_TASK pTcpTask = new TCP_TASK;
 	pTcpTask->usCmd = USER_GETEXAMINFO;
 	pTcpTask->nPkgLen = sizeof(ST_EXAM_INFO);
@@ -205,18 +208,7 @@ int CLoginDlg::GetExamInfo()
 	g_fmTcpTaskLock.lock();
 	g_lTcpTask.push_back(pTcpTask);
 	g_fmTcpTaskLock.unlock();
-#else
-	char szSendBuf[1024] = { 0 };
-	memcpy(szSendBuf, (char*)&stHead, HEAD_SIZE);
-	memcpy(szSendBuf + HEAD_SIZE, (char*)&stExamInfo, sizeof(ST_EXAM_INFO));
-	m_ss.sendBytes(szSendBuf, HEAD_SIZE + stHead.uPackSize);
 
-	CString strResult2 = _T("");
-	if (RecvData(strResult2))
-	{
-		nResult = 1;
-	}
-#endif
 	return nResult;
 }
 

@@ -73,14 +73,14 @@
     <Filter Include="扫描模板制作窗口\OMR题号设置窗口">
       <UniqueIdentifier>{8a883f38-b88f-4cde-b8b4-ab19cac51f22}</UniqueIdentifier>
     </Filter>
-    <Filter Include="获取扫描模板窗口">
-      <UniqueIdentifier>{e302b5d5-8d9b-48ff-8469-8a05d7e6ff86}</UniqueIdentifier>
-    </Filter>
     <Filter Include="与服务器通信线程">
       <UniqueIdentifier>{8341413f-712b-41aa-a409-494f7fbc3e6d}</UniqueIdentifier>
     </Filter>
     <Filter Include="扫描模板制作窗口\考号信息设置窗口">
       <UniqueIdentifier>{f5a93192-21a1-475b-88da-77896c6eab7f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="下载扫描模板窗口">
+      <UniqueIdentifier>{e302b5d5-8d9b-48ff-8469-8a05d7e6ff86}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -187,7 +187,7 @@
       <Filter>扫描模板制作窗口\OMR题号设置窗口</Filter>
     </ClInclude>
     <ClInclude Include="GetModelDlg.h">
-      <Filter>获取扫描模板窗口</Filter>
+      <Filter>下载扫描模板窗口</Filter>
     </ClInclude>
     <ClInclude Include="TcpClient.h">
       <Filter>与服务器通信线程</Filter>
@@ -282,7 +282,7 @@
       <Filter>扫描模板制作窗口\OMR题号设置窗口</Filter>
     </ClCompile>
     <ClCompile Include="GetModelDlg.cpp">
-      <Filter>获取扫描模板窗口</Filter>
+      <Filter>下载扫描模板窗口</Filter>
     </ClCompile>
     <ClCompile Include="TcpClient.cpp">
       <Filter>与服务器通信线程</Filter>

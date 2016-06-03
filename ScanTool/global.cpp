@@ -404,6 +404,7 @@ pMODEL LoadModelFile(CString strModelPath)
 					rc.nTH = jsnOmrObj->get("nTH").convert<int>();
 					rc.nAnswer = jsnOmrObj->get("nAnswer").convert<int>();
 					rc.nSingle = jsnOmrObj->get("nSingle").convert<int>();
+					rc.nRecogFlag = jsnOmrObj->get("nOmrRecogFlag").convert<int>();
 					rc.rt.x = jsnOmrObj->get("left").convert<int>();
 					rc.rt.y = jsnOmrObj->get("top").convert<int>();
 					rc.rt.width = jsnOmrObj->get("width").convert<int>();
@@ -433,6 +434,7 @@ pMODEL LoadModelFile(CString strModelPath)
 					rc.nSnVal = jsnSnObj->get("nSnVal").convert<int>();
 					rc.nAnswer = jsnSnObj->get("nAnswer").convert<int>();
 					rc.nSingle = jsnSnObj->get("nSingle").convert<int>();
+					rc.nRecogFlag = jsnSnObj->get("nSnRecogFlag").convert<int>();
 					rc.rt.x = jsnSnObj->get("left").convert<int>();
 					rc.rt.y = jsnSnObj->get("top").convert<int>();
 					rc.rt.width = jsnSnObj->get("width").convert<int>();

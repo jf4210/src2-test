@@ -2,7 +2,7 @@
 #include "SendFileThread.h"
 
 CSendFileThread::CSendFileThread(std::string& strIP, int nPort)
-: _strIp(strIP), _nPort(nPort), m_upLoad(*this)
+	: _strIp(strIP), _nPort(nPort), m_pUpLoad(NULL)		//,m_upLoad(*this)
 {
 	g_pLogger->information("CSendFileThread start.");
 	TRACE("CSendFileThread start.\n");
@@ -10,6 +10,8 @@ CSendFileThread::CSendFileThread(std::string& strIP, int nPort)
 
 CSendFileThread::~CSendFileThread()
 {
+	SAFE_RELEASE(m_pUpLoad);
+	g_eFileUpLoadThreadExit.wait();
 	g_pLogger->information("CSendFileThread exit.");
 	TRACE("CSendFileThread exit.\n");
 	g_eSendFileThreadExit.set();
@@ -18,7 +20,9 @@ CSendFileThread::~CSendFileThread()
 void CSendFileThread::run()
 {
 	USES_CONVERSION;
-	m_upLoad.InitUpLoadTcp(A2T(_strIp.c_str()), _nPort);
+//	m_upLoad.InitUpLoadTcp(A2T(_strIp.c_str()), _nPort);
+	m_pUpLoad = new CFileUpLoad(*this);
+	m_pUpLoad->InitUpLoadTcp(A2T(_strIp.c_str()), _nPort);
 
 	while (!g_nExitFlag)
 	{
@@ -43,7 +47,8 @@ void CSendFileThread::run()
 		delete pTask;
 		pTask = NULL;
 	}
-	m_upLoad.m_bStop = TRUE;
+//	m_upLoad.UnInit();
+//	m_upLoad.m_bStop = TRUE;
 }
 
 void CSendFileThread::HandleTask(pSENDTASK pTask)
@@ -61,8 +66,8 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 		return;
 	}
 
-	m_upLoad.SendAnsFile(A2T(pTask->strPath.c_str()), A2T(pTask->strFileName.c_str()));
-
+//	m_upLoad.SendAnsFile(A2T(pTask->strPath.c_str()), A2T(pTask->strFileName.c_str()));
+	m_pUpLoad->SendAnsFile(A2T(pTask->strPath.c_str()), A2T(pTask->strFileName.c_str()));
 }
 
 void CSendFileThread::SendFileComplete(char* pName, char* pSrcPath)

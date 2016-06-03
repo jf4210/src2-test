@@ -31,6 +31,7 @@ public:
 	
 	BOOL		m_bSingle;		//题型，是否单选题
 	int			m_nCurrentOmrVal;	//根据题号、选项、方向组合构成的6位二进制的值，标识8中情况
+	void		ShowUI(int nOmrVal, int nSingleFlag);
 private:
 	int			m_nTHSel;		//题号选择	0-横向，1-纵向
 	int			m_nXXSel;		//选项选择	0-正序，1-逆序
@@ -40,6 +41,7 @@ private:
 
 	void		InitCtrlPosition();
 	void		ShowOmrPic();
+	void		InitUI();
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 

@@ -24,6 +24,7 @@ public:
 	CButton		m_radioADD_Z;
 	CButton		m_radioADD_F;
 	int			m_nCurrentSNVal;	//根据选项、方向组合构成的4位二进制的值，标识4中情况
+	void		ShowUI(int nSnVal);
 private:
 	int			m_nSNSel;		//SN选择	0-横向，1-纵向
 	int			m_nOptionSel;	//题号方向选择	0-从左到右，1-从右到左
@@ -32,6 +33,7 @@ private:
 
 	void		InitCtrlPosition();
 	void		ShowSNPic();
+	void		InitUI();
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

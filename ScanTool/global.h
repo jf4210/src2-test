@@ -91,6 +91,7 @@ typedef struct _RectInfo_
 	int			nTH;							//题号
 	int			nAnswer;						//答案循序，属于第几个答案，如1-A,2-B,3-C,4-D,5-E,6-F...
 	int			nSingle;						//0-单选，1-多选
+	int			nRecogFlag;						//识别标识：识别SN时--识别考号顺序与选项方向的考号窗口标识值；识别OMR时--识别题号顺序与选项方向的OMR设置窗口的标识值
 //	cv::Point	ptFix;
 	cv::Rect	rt;
 //	cv::Rect	rtFix;
@@ -102,6 +103,7 @@ typedef struct _RectInfo_
 		nVItem = -1;
 		nTH = -1;
 		nAnswer = -1;
+		nRecogFlag = 0;
 		nSingle = 0;
 		nThresholdValue = 0;
 		fRealValuePercent = 0.0;
@@ -378,7 +380,7 @@ extern EXAM_LIST	g_lExamList;
 
 extern Poco::Event			g_eTcpThreadExit;
 extern Poco::Event			g_eSendFileThreadExit;
-
+extern Poco::Event			g_eFileUpLoadThreadExit;
 
 int		GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, RECTINFO*& pRc);
 bool	ZipFile(CString strSrcPath, CString strDstPath, CString strExtName = _T(".zip"));

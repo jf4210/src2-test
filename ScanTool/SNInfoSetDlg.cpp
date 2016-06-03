@@ -47,32 +47,8 @@ BOOL CSNInfoSetDlg::OnInitDialog()
 	InitCtrlPosition();
 
 	m_picSNShow.OnInit(0, false);
-
-	if (m_nSNSel == 0)
-	{
-		m_radioSN_H.SetCheck(1);
-		m_radioSN_V.SetCheck(0);
-		m_radioADD_Z.SetWindowTextW(_T("从上到下"));
-		m_radioADD_F.SetWindowTextW(_T("从下到上"));
-	}
-	else
-	{
-		m_radioSN_H.SetCheck(0);
-		m_radioSN_V.SetCheck(1);
-		m_radioADD_Z.SetWindowTextW(_T("从左到右"));
-		m_radioADD_F.SetWindowTextW(_T("从右到左"));
-	}
-
-	if (m_nOptionSel == 0)
-	{
-		m_radioADD_Z.SetCheck(1);
-		m_radioADD_F.SetCheck(0);
-	}
-	else
-	{
-		m_radioADD_Z.SetCheck(0);
-		m_radioADD_F.SetCheck(1);
-	}
+	InitUI();
+	
 	ShowSNPic();
 	return TRUE;
 }
@@ -214,5 +190,60 @@ void CSNInfoSetDlg::OnBnClickedRadioOption2()
 	{
 		m_nOptionSel = 1;
 		ShowSNPic();
+	}
+}
+
+void CSNInfoSetDlg::ShowUI(int nSnVal)
+{
+	m_nCurrentSNVal = nSnVal;
+	switch (nSnVal)
+	{
+		case 10:
+			m_nSNSel = 0;
+			m_nOptionSel = 0;
+			break;
+		case 9:
+			m_nSNSel = 0;
+			m_nOptionSel = 1;
+			break;
+		case 6:
+			m_nSNSel = 1;
+			m_nOptionSel = 0;
+			break;
+		case 5:
+			m_nSNSel = 1;
+			m_nOptionSel = 1;
+			break;
+	}
+	InitUI();
+	ShowSNPic();
+}
+
+void CSNInfoSetDlg::InitUI()
+{
+	if (m_nSNSel == 0)
+	{
+		m_radioSN_H.SetCheck(1);
+		m_radioSN_V.SetCheck(0);
+		m_radioADD_Z.SetWindowTextW(_T("从上到下"));
+		m_radioADD_F.SetWindowTextW(_T("从下到上"));
+	}
+	else
+	{
+		m_radioSN_H.SetCheck(0);
+		m_radioSN_V.SetCheck(1);
+		m_radioADD_Z.SetWindowTextW(_T("从左到右"));
+		m_radioADD_F.SetWindowTextW(_T("从右到左"));
+	}
+
+	if (m_nOptionSel == 0)
+	{
+		m_radioADD_Z.SetCheck(1);
+		m_radioADD_F.SetCheck(0);
+	}
+	else
+	{
+		m_radioADD_Z.SetCheck(0);
+		m_radioADD_F.SetCheck(1);
 	}
 }

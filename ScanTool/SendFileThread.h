@@ -15,7 +15,8 @@ public:
 	void HandleTask(pSENDTASK pTask);
 	void SendFileComplete(char* pName, char* pSrcPath);
 
-	CFileUpLoad		m_upLoad;
+//	CFileUpLoad		m_upLoad;
+	CFileUpLoad*	m_pUpLoad;
 
 
 	std::string _strIp;

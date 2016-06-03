@@ -1,8 +1,10 @@
 #include "stdafx.h"
+#include "global.h"
 #include "FileUpLoad.h"
 #include "Net_Cmd_Protocol.h"
 #include "SendFileThread.h"
 
+Poco::Event		g_eFileUpLoadThreadExit;
 CMutex	mutexObj(FALSE, _T("mutex1"));
 
 CFileUpLoad::CFileUpLoad(CSendFileThread& rNotify)
@@ -28,6 +30,7 @@ CFileUpLoad::~CFileUpLoad(void)
 	std::string strLog = "CFileUpLoad exit.";
 	g_pLogger->information(strLog);
 	TRACE(strLog.c_str());
+	g_eFileUpLoadThreadExit.set();
 }
 
 void CFileUpLoad::OnTcpClientNotifyReceivedData( const char* pData,int nLen )
@@ -113,7 +116,6 @@ RESTART:
 	}
 	else if (m_uThreadType == 2)
 	{
-#if 1
 		while (m_bUpLoad)
 		{
 			if (!m_bConnect) goto RESTART;
@@ -174,64 +176,6 @@ RESTART:
 			}
 			if (!bFindTask)	Sleep(1000);
 		}
-#else
-		while(m_bUpLoad)
-		{
-			WaitForSingleObject(m_hAddAnsEvent,INFINITE);
-			std::vector<stUpLoadAns*>::iterator it = m_VecAns.begin();
-			for (;it!=m_VecAns.end();it++)
-			{
-				if ((*it)->bUpload == FALSE)
-				{
-					stUpLoadAns* pTask = *it;
-
-					CFile MyFileSend(pTask->strPath, CFile::modeRead);
-					DWORD Length = MyFileSend.GetLength();
-					char	*szFileBuff = new char[Length];
-					MyFileSend.Seek(0,CFile::begin);
-					MyFileSend.Read(szFileBuff,Length);
-					MyFileSend.Close();
-
-					TRACE0("start send ans file\n");
-					//上传文件
-					ST_CMD_HEADER stHead;
-					stHead.usCmd = REQUEST_UPLOADANS;
-					stHead.uPackSize = sizeof(ST_FILE_INFO)+Length;
-					ST_FILE_INFO stAnsInfo;
-					USES_CONVERSION;
-					strcpy(stAnsInfo.szFileName, T2A(pTask->strAnsName));
-
-					char *pMd5 = MD5File(T2A(pTask->strPath));
-					memcpy(stAnsInfo.szMD5,pMd5,LEN_MD5);
-					stAnsInfo.dwFileLen = Length;
-					memcpy(m_szSendBuf, &stHead, HEAD_SIZE);
-					memcpy(m_szSendBuf + HEAD_SIZE, &stAnsInfo, sizeof(ST_FILE_INFO));
-				RESENDHEAD:
-					sendData(m_szSendBuf, HEAD_SIZE + sizeof(ST_FILE_INFO));
-					WaitForSingleObject(m_hSendReadyEvent,INFINITE);
-					ResetEvent(m_hSendReadyEvent);
-					if (m_bReadyOK==FALSE)
-					{
-						goto RESENDHEAD;
-					}
-					sendData(szFileBuff,Length);
-					WaitForSingleObject(m_hSendDoneEvent,INFINITE);
-					ResetEvent(m_hSendDoneEvent);
-					if (m_bSendOK==FALSE)
-					{
-						goto RESENDHEAD;
-					}
-					pTask->bUpload = TRUE;
-					delete szFileBuff;
-					delete pMd5;
-					TRACE0("end send ans file\n");
-					m_rNotify.SendFileComplete(stAnsInfo.szFileName, T2A(pTask->strPath));
-				}
-			}
-			ResetEvent(m_hAddAnsEvent);
-		}
-#endif
-
 	}
 }
 
@@ -297,8 +241,9 @@ void CFileUpLoad::ProcessUpLoadDone( BOOL bFlag )
 
 void CFileUpLoad::UnInit()
 {
-	m_bConnect=TRUE;
-	
+	m_bStop = TRUE;
+	m_bConnect=FALSE;
+		
 	m_bUpLoad = FALSE;
 
 	if (m_pITcpClient)
@@ -306,14 +251,16 @@ void CFileUpLoad::UnInit()
 		m_pITcpClient->ReleaseConnections();
 		m_pITcpClient=NULL;
 	}
+
 	mutexObj.Lock();
 	std::list<stUpLoadAns*>::iterator it1 = m_listFile.begin();
-	for (; it1 != m_listFile.end(); it1++)
+	for (; it1 != m_listFile.end(); )
 	{
 		stUpLoadAns* itUp = *it1;
 		it1 = m_listFile.erase(it1);
 		SAFE_RELEASE(itUp);
 	}
+	m_listFile.clear();
 	mutexObj.Unlock();
 	// 	m_VecAns.clear();
 	std::vector<stUpLoadAns*>::iterator it = m_VecAns.begin();

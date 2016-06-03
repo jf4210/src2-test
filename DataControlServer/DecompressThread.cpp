@@ -325,14 +325,18 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 		result = parser.parse(strJsnData);		//strJsnData
 		Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
 
-		int nExamId = objData->get("examId").convert<int>();
-		int nSubjectId = objData->get("subjectId").convert<int>();
+		int nExamId		= objData->get("examId").convert<int>();
+		int nSubjectId	= objData->get("subjectId").convert<int>();
+		int nTeacherId	= objData->get("nTeacherId").convert<int>();
+		int nUserId		= objData->get("nUserId").convert<int>();
 		std::string strUploader = objData->get("uploader").convert<std::string>();
-		std::string strEzs = objData->get("ezs").convert<std::string>();
-		pPapers->nExamID = nExamId;
+		std::string strEzs	= objData->get("ezs").convert<std::string>();
+		pPapers->nExamID	= nExamId;
 		pPapers->nSubjectID = nSubjectId;
+		pPapers->nTeacherId = nTeacherId;
+		pPapers->nUserId	= nUserId;
 		pPapers->strUploader = strUploader;
-		pPapers->strEzs = "ezs=" + strEzs;
+		pPapers->strEzs		= "ezs=" + strEzs;
 	}
 	catch (Poco::JSON::JSONException& jsone)
 	{

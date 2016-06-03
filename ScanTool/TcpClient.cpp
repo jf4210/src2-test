@@ -189,7 +189,6 @@ bool CTcpClient::receiveData()
 
 void CTcpClient::HandleCmd()
 {
-#if 1
 	ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_pRecvBuff;	//m_pRecvBuff
 	if (pstHead->usCmd == USER_RESPONSE_LOGIN)
 	{
@@ -270,7 +269,7 @@ void CTcpClient::HandleCmd()
 			{
 				std::string strErrInfo;
 				strErrInfo.append("Error when parse json: ");
-				strErrInfo.append(jsone.message() + "\tData:" + strExamData);
+				strErrInfo.append(jsone.message() + "\tData:" + strUtf);
 				g_pLogger->information(strErrInfo);
 				TRACE(_T("%s\n"), strErrInfo.c_str());
 			}
@@ -278,14 +277,14 @@ void CTcpClient::HandleCmd()
 			{
 				std::string strErrInfo;
 				strErrInfo.append("Error: ");
-				strErrInfo.append(exc.message() + "\tData:" + strExamData);
+				strErrInfo.append(exc.message() + "\tData:" + strUtf);
 				g_pLogger->information(strErrInfo);
 				TRACE(_T("%s\n"), strErrInfo.c_str());
 			}
 			catch (...)
 			{
 				std::string strErrInfo;
-				strErrInfo.append("Unknown error.\tData:" + strExamData);
+				strErrInfo.append("Unknown error.\tData:" + strUtf);
 				g_pLogger->information(strErrInfo);
 				TRACE(_T("%s\n"), strErrInfo.c_str());
 			}
@@ -300,7 +299,7 @@ void CTcpClient::HandleCmd()
 		{
 		case RESULT_SETMODELINFO_SEND:
 		{
-			pST_MODELINFO pstModelInfo = (pST_MODELINFO)(m_szRecvBuff + HEAD_SIZE);
+			pST_MODELINFO pstModelInfo = (pST_MODELINFO)(m_pRecvBuff + HEAD_SIZE);
 			//				   pST_MODELINFO pstModelInfo = (pST_MODELINFO)(m_pRecvBuff + HEAD_SIZE);
 			USES_CONVERSION;
 			std::string strModelPath = T2A(g_strCurrentPath);
@@ -328,133 +327,6 @@ void CTcpClient::HandleCmd()
 		break;
 		}
 	}
-#else
-	ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_szRecvBuff;	//m_pRecvBuff
-	if (pstHead->usCmd == USER_RESPONSE_LOGIN)
-	{
-	}
-	else if (pstHead->usCmd == USER_RESPONSE_EXAMINFO)
-	{
-		switch (pstHead->usResult)
-		{
-		case RESULT_EXAMINFO_SUCCESS:
-			{
-				char szExamData[1024 * 10] = { 0 };
-				strncpy(szExamData, m_szRecvBuff + HEAD_SIZE, pstHead->uPackSize);
-				std::string strExamData = szExamData;
-				std::string strUtf = CMyCodeConvert::Utf8ToGb2312(szExamData);
-
-				Poco::JSON::Parser parser;
-				Poco::Dynamic::Var result;
-				try
-				{
-					result = parser.parse(szExamData);
-
-					Poco::JSON::Object::Ptr examObj = result.extract<Poco::JSON::Object::Ptr>();
-
-					Poco::JSON::Array::Ptr arryObj = examObj->getArray("exams");
-
-					for (int i = 0; i < arryObj->size(); i++)
-					{
-						Poco::JSON::Object::Ptr objExamInfo = arryObj->getObject(i);
-						EXAMINFO examInfo;
-						examInfo.nExamID = objExamInfo->get("id").convert<int>();
-						examInfo.strExamName = CMyCodeConvert::Utf8ToGb2312(objExamInfo->get("name").convert<std::string>());
-
-						if (!objExamInfo->isNull("examType"))
-						{
-							Poco::JSON::Object::Ptr objExamType = objExamInfo->getObject("examType");
-							if (objExamType->has("name"))
-								examInfo.strExamTypeName = CMyCodeConvert::Utf8ToGb2312(objExamType->get("name").convert<std::string>());
-						}
-						if (!objExamInfo->isNull("grade"))
-						{
-							Poco::JSON::Object::Ptr objGrade = objExamInfo->getObject("grade");
-							if (objGrade->has("id"))
-								examInfo.nExamGrade = objGrade->get("id").convert<int>();
-							if (objGrade->has("name"))
-								examInfo.strGradeName = CMyCodeConvert::Utf8ToGb2312(objGrade->get("name").convert<std::string>());
-						}
-						examInfo.nExamState = objExamInfo->get("state").convert<int>();
-
-						Poco::JSON::Array::Ptr arrySubjects = objExamInfo->getArray("examSubjects");
-						for (int j = 0; j < arrySubjects->size(); j++)
-						{
-							Poco::JSON::Object::Ptr objSubject = arrySubjects->getObject(j);
-							EXAM_SUBJECT subjectInfo;
-							subjectInfo.nSubjID = objSubject->get("id").convert<int>();
-							subjectInfo.nSubjCode = objSubject->get("code").convert<int>();
-							subjectInfo.strSubjName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("name").convert<std::string>());
-							if (!objSubject->isNull("scanTemplateName"))
-								subjectInfo.strModelName = objSubject->get("scanTemplateName").convert<std::string>();
-
-							examInfo.lSubjects.push_back(subjectInfo);
-						}
-						g_lExamList.push_back(examInfo);
-					}
-				}
-				catch (Poco::JSON::JSONException& jsone)
-				{
-					std::string strErrInfo;
-					strErrInfo.append("Error when parse json: ");
-					strErrInfo.append(jsone.message() + "\tData:" + strExamData);
-					g_pLogger->information(strErrInfo);
-					TRACE(_T("%s\n"), strErrInfo.c_str());
-				}
-				catch (Poco::Exception& exc)
-				{
-					std::string strErrInfo;
-					strErrInfo.append("Error: ");
-					strErrInfo.append(exc.message() + "\tData:" + strExamData);
-					g_pLogger->information(strErrInfo);
-					TRACE(_T("%s\n"), strErrInfo.c_str());
-				}
-				catch (...)
-				{
-					std::string strErrInfo;
-					strErrInfo.append("Unknown error.\tData:" + strExamData);
-					g_pLogger->information(strErrInfo);
-					TRACE(_T("%s\n"), strErrInfo.c_str());
-				}
-			}
-			break;
-		}
-	}
-	else if (pstHead->usCmd == USER_RESPONSE_MODELINFO)
-	{
-		switch (pstHead->usResult)
-		{
-		    case RESULT_SETMODELINFO_SEND:
-		       {
-				   pST_MODELINFO pstModelInfo = (pST_MODELINFO)(m_szRecvBuff + HEAD_SIZE);
-//				   pST_MODELINFO pstModelInfo = (pST_MODELINFO)(m_pRecvBuff + HEAD_SIZE);
-				   USES_CONVERSION;
-				   std::string strModelPath = T2A(g_strCurrentPath);
-				   strModelPath.append("Model\\");
-				   strModelPath.append(pstModelInfo->szModelName);
-
-				   pSENDTASK pTask = new SENDTASK;
-				   pTask->strFileName = pstModelInfo->szModelName;
-				   pTask->strPath = strModelPath;
-				   g_fmSendLock.lock();
-				   g_lSendTask.push_back(pTask);
-				   g_fmSendLock.unlock();
-
-				   std::string strLog = "需要重新发送模板文件: " + strModelPath;
-				   TRACE(strLog.c_str());
-				   g_pLogger->information(strLog);
-		       }
-		       break;
-			case RESULT_SETMODELINFO_NO:
-			  {
-				  std::string strLog = "不需要重新发送模板文件";
-				  TRACE(strLog.c_str());
-				  g_pLogger->information(strLog);
-			  }
-			  break;
-		}
-	}
-#endif
 }
 
 void CTcpClient::HandleTask(pTCP_TASK pTask)

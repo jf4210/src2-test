@@ -166,6 +166,7 @@ private:
 	void ShowTmpRect();
 	void SortRect();							//将识别出来的矩形进行坐标排序
 	void ShowRectTracker();						//显示橡皮筋类矩形
+	void	InitShowSnOmrDlg(CPType eType);		//点击SN或OMR时，显示对于窗口
 	LRESULT RoiLBtnUp(WPARAM wParam, LPARAM lParam);
 	LRESULT RoiLBtnDown(WPARAM wParam, LPARAM lParam);
 	LRESULT RoiRBtnUp(WPARAM wParam, LPARAM lParam);
@@ -202,4 +203,5 @@ public:
 //	afx_msg void OnBnClickedBtnSaverecoginfo();
 	afx_msg void OnBnClickedBtnuploadmodel();
 	afx_msg void OnBnClickedBtnScanmodel();
+	afx_msg void OnDestroy();
 };

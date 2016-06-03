@@ -19,6 +19,7 @@ public:
 	CString		m_strPwd;
 	CString		m_strEzs;
 	int			m_nTeacherId;
+	int			m_nUserId;
 
 	bool		m_bLogin;
 	int			m_nRecvLen;
