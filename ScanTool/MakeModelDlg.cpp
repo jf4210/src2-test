@@ -1673,11 +1673,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		{
 			std::string strUtf8OldPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strOldPath));
 			std::string strUtf8ModelPath = CMyCodeConvert::Gb2312ToUtf8(T2A(modelPath));
-
-			Poco::File modeNewPic(strUtf8ModelPath);
-			if (modeNewPic.exists())
-				modeNewPic.remove(true);
-
+			
 			Poco::File modelPicPath(strUtf8OldPath);	//T2A(strOldPath)
 			modelPicPath.copyTo(strUtf8ModelPath);	//T2A(modelPath)
 		}
