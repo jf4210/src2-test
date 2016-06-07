@@ -1580,6 +1580,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	jsnFileData.set("ezs", strEzs);
 	jsnFileData.set("nTeacherId", m_nTeacherId);
 	jsnFileData.set("nUserId", m_nUserId);
+	jsnFileData.set("scanNum", m_pPapersInfo->nPaperCount);		//扫描的学生数量
 	std::stringstream jsnString;
 	jsnFileData.stringify(jsnString, 0);
 

@@ -329,12 +329,14 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 		int nSubjectId	= objData->get("subjectId").convert<int>();
 		int nTeacherId	= objData->get("nTeacherId").convert<int>();
 		int nUserId		= objData->get("nUserId").convert<int>();
+		int nStudentNum = objData->get("scanNum").convert<int>();
 		std::string strUploader = objData->get("uploader").convert<std::string>();
 		std::string strEzs	= objData->get("ezs").convert<std::string>();
 		pPapers->nExamID	= nExamId;
 		pPapers->nSubjectID = nSubjectId;
 		pPapers->nTeacherId = nTeacherId;
 		pPapers->nUserId	= nUserId;
+		pPapers->nTotalPaper = nStudentNum;
 		pPapers->strUploader = strUploader;
 		pPapers->strEzs		= "ezs=" + strEzs;
 	}
