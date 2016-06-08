@@ -11,6 +11,8 @@
 
 typedef struct _PaperModelInfo_
 {
+	bool bFirstH;		//第一次展示水平同步头
+	bool bFirstV;		//第一次展示垂直同步头
 	int nPaper;			//第几张试卷
 	CString		strModelPicName;	//模板图片的名称
 	CString		strModelPicPath;	//模板图片路径
@@ -32,6 +34,12 @@ typedef struct _PaperModelInfo_
 	std::vector<RECTINFO>	vecQK_CP;				//缺考校验点
 	std::vector<RECTINFO>	vecGray;				//灰度校验点
 	std::vector<RECTINFO>	vecWhite;				//空白校验点
+	_PaperModelInfo_()
+	{
+		bFirstH = true;
+		bFirstV = true;
+		nPaper = 0;
+	}
 	~_PaperModelInfo_()
 	{
 		SNLIST::iterator itSn = lSN.begin();

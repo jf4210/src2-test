@@ -2610,11 +2610,11 @@ void CMakeModelDlg::UpdataCPList()
 	if (m_eCurCPType == H_HEAD)
 	{
 		m_pModelPicShow->SetShowTracker(true, false, false);
-		if (m_bFistHTracker && m_bNewModelFlag)
+		if (m_vecPaperModelInfo[m_nCurrTabSel]->bFirstH && m_bNewModelFlag)
 		{
 			m_ptHTracker1 = cv::Point(0, 0);
 			m_ptHTracker2 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols, 90);
-			m_bFistHTracker = false;
+			m_vecPaperModelInfo[m_nCurrTabSel]->bFirstH = false;
 
 			m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.x = m_ptHTracker1.x;
 			m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.y = m_ptHTracker1.y;
@@ -2631,11 +2631,11 @@ void CMakeModelDlg::UpdataCPList()
 	else if (m_eCurCPType == V_HEAD)
 	{
 		m_pModelPicShow->SetShowTracker(false, true, false);
-		if (m_bFistVTracker && m_bNewModelFlag)
+		if (m_vecPaperModelInfo[m_nCurrTabSel]->bFirstV && m_bNewModelFlag)
 		{
 			m_ptVTracker1 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols - 90, 0);
 			m_ptVTracker2 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols, m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.rows);
-			m_bFistVTracker = false;
+			m_vecPaperModelInfo[m_nCurrTabSel]->bFirstV = false;
 
 			m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.x = m_ptVTracker1.x;
 			m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.y = m_ptVTracker1.y;
