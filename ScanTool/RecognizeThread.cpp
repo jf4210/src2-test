@@ -106,7 +106,19 @@ bool CRecognizeThread::LoadModel(pMODELINFO pModelInfo)
 		std::string strModelPicPath = g_strModelSavePath + "\\" + T2A(pModelInfo->pModel->strModelName + _T("\\") + pModelInfo->pModel->vecPaperModel[i]->strModelPicName);
 
 		cv::Mat matSrc = cv::imread(strModelPicPath);
-		pModelInfo->vecMatSrc.push_back(matSrc);
+#ifdef PIC_RECTIFY_TEST
+		Mat dst;
+		Mat rotMat;
+		PicRectify(matSrc, dst, rotMat);
+		Mat matImg;
+		if (dst.channels() == 1)
+			cvtColor(dst, matImg, CV_GRAY2BGR);
+		else
+			matImg = dst;
+#else
+		Mat matImg = matSrc;
+#endif
+		pModelInfo->vecMatSrc.push_back(matImg);
 	}
 	return true;
 }
@@ -121,12 +133,24 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 
 		int nCount = pModelInfo->pModel->vecPaperModel[i]->lH_Head.size() + pModelInfo->pModel->vecPaperModel[i]->lV_Head.size() + pModelInfo->pModel->vecPaperModel[i]->lABModel.size()
 			+ pModelInfo->pModel->vecPaperModel[i]->lCourse.size() + pModelInfo->pModel->vecPaperModel[i]->lQK_CP.size() + pModelInfo->pModel->vecPaperModel[i]->lGray.size()
-			+ pModelInfo->pModel->vecPaperModel[i]->lWhite.size();
+			+ pModelInfo->pModel->vecPaperModel[i]->lWhite.size() + pModelInfo->pModel->vecPaperModel[i]->lSNInfo.size();
 		if (!nCount)	//如果当前模板试卷没有校验点就不需要进行试卷打开操作，直接下一张试卷
 			continue;
 
 		std::string strPicFileName = (*itPic)->strPicName;
-		Mat matCompPic = imread((*itPic)->strPicPath);			//imread((*itPic)->strPicPath);
+		Mat matCompSrcPic = imread((*itPic)->strPicPath);			//imread((*itPic)->strPicPath);
+#ifdef PIC_RECTIFY_TEST	//图像旋转纠正测试
+		Mat matDst;
+		Mat matCompPic;
+		Mat rotMat;
+		PicRectify(matCompSrcPic, matDst, rotMat);
+		if (matDst.channels() == 1)
+			cvtColor(matDst, matCompPic, CV_GRAY2BGR);
+		else
+			matCompPic = matDst;
+#else
+		Mat matCompPic = matCompSrcPic;
+#endif
 
 		clock_t end1_pic = clock();
 

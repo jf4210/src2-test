@@ -158,6 +158,7 @@ private:
 	bool Recognise(cv::Rect rtOri);				//识别操作
 	inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc);						//识别灰度值
 	
+	bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat);						//图片纠偏
 	bool PicRotate();							//图像偏移操作
 	void sharpenImage1(const cv::Mat &image, cv::Mat &result);		//锐化
 

@@ -814,10 +814,20 @@ void CPaperInputDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 	for (int i = 0; itPic != pPaper->lPic.end(); itPic++, i++)
 	{
 		Mat matSrc = imread((*itPic)->strPicPath);
-		Mat tmp = matSrc.clone();
-		Mat tmp2 = matSrc.clone();
-// 		Mat tmp = (*itPic)->matDest.clone();
-// 		Mat tmp2 = (*itPic)->matDest.clone();
+#ifdef PIC_RECTIFY_TEST
+		Mat dst;
+		Mat rotMat;
+		PicRectify(matSrc, dst, rotMat);
+		Mat matImg;
+		if (dst.channels() == 1)
+			cvtColor(dst, matImg, CV_GRAY2BGR);
+		else
+			matImg = dst;
+#else
+		Mat matImg = matSrc;
+#endif
+		Mat tmp = matImg.clone();
+		Mat tmp2 = matImg.clone();
 		RECTLIST::iterator itNormalRect = (*itPic)->lNormalRect.begin();
 		for (int j = 0; itNormalRect != (*itPic)->lNormalRect.end(); itNormalRect++, j++)
 		{
@@ -842,8 +852,20 @@ void CPaperInputDlg::PaintIssueRect(pST_PaperInfo pPaper)
 		{
 			Point pt(0, 0);
 			Mat matSrc = imread((*itPic)->strPicPath);
-			Mat tmp = matSrc.clone();
-			Mat tmp2 = matSrc.clone();
+#ifdef PIC_RECTIFY_TEST
+			Mat dst;
+			Mat rotMat;
+			PicRectify(matSrc, dst, rotMat);
+			Mat matImg;
+			if (dst.channels() == 1)
+				cvtColor(dst, matImg, CV_GRAY2BGR);
+			else
+				matImg = dst;
+#else
+			Mat matImg = matSrc;
+#endif
+			Mat tmp = matImg.clone();
+			Mat tmp2 = matImg.clone();
 
 			//-----------------------
 			RECTLIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[i]->lSelFixRoi.begin();													//显示识别定点的选择区

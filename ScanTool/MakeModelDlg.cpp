@@ -149,8 +149,23 @@ BOOL CMakeModelDlg::OnInitDialog()
 			pPaperModel->strModelPicPath = strPicPath;
 			pPaperModel->strModelPicName = m_pModel->vecPaperModel[i]->strModelPicName;
 
+#ifdef PIC_RECTIFY_TEST
+			Mat matSrc = imread((std::string)(CT2CA)strPicPath);
+			Mat dst;
+			Mat rotMat;
+			PicRectify(matSrc, dst, rotMat);
+			Mat matImg;
+			if (dst.channels() == 1)
+				cvtColor(dst, matImg, CV_GRAY2BGR);
+			else
+				matImg = dst;
+
+			pPaperModel->matSrcImg = matImg;
+			pPaperModel->matDstImg = pPaperModel->matSrcImg;
+#else
 			pPaperModel->matSrcImg = imread((std::string)(CT2CA)strPicPath);
 			pPaperModel->matDstImg = pPaperModel->matSrcImg;
+#endif
 
 			Mat src_img;
 			src_img = m_vecPaperModelInfo[i]->matDstImg;
@@ -757,12 +772,24 @@ void CMakeModelDlg::OnBnClickedBtnNew()
 		paperMode->strModelPicName = dlg.m_vecPath[i].strName;
 		paperMode->strModelPicPath = dlg.m_vecPath[i].strPath;
 
+		
+#ifdef PIC_RECTIFY_TEST
 		Mat src_img = imread((std::string)(CT2CA)dlg.m_vecPath[i].strPath);	//(std::string)(CT2CA)paperMode->strModelPicPath
-
-		paperMode->matSrcImg = src_img;
+		Mat dst;
+		Mat rotMat;
+		PicRectify(src_img, dst, rotMat);
+		Mat matImg;
+		if (dst.channels() == 1)
+			cvtColor(dst, matImg, CV_GRAY2BGR);
+		else
+			matImg = dst;
+#else
+		Mat matImg = imread((std::string)(CT2CA)dlg.m_vecPath[i].strPath);	//(std::string)(CT2CA)paperMode->strModelPicPath
+#endif
+		paperMode->matSrcImg = matImg;
 		paperMode->matDstImg = paperMode->matSrcImg;
 		if (i == 0)
-			m_pModelPicShow->ShowPic(src_img);
+			m_pModelPicShow->ShowPic(matImg);
 	}
 }
 
@@ -785,37 +812,17 @@ void CMakeModelDlg::OnBnClickedBtnSelpic()
 		return;
 
 	pPaperModelInfo paperMode = NULL;
-#if 1
 	paperMode = m_vecPaperModelInfo[m_nCurrTabSel];
-#else
-	if (m_nCurrTabSel < m_vecPaperModelInfo.size())
-	{
-		paperMode = m_vecPaperModelInfo[m_nCurrTabSel];
-	}
-	else
-	{
-		paperMode = new PaperModelInfo;
-		m_vecPaperModelInfo.push_back(paperMode);
-	}
-#endif
 
 	paperMode->strModelPicName = dlg.GetFileName();
 	paperMode->strModelPicPath = dlg.GetPathName();
 
 	USES_CONVERSION;
-#if 1
 	Mat src_img = imread((std::string)(CT2CA)paperMode->strModelPicPath);	//(std::string)(CT2CA)paperMode->strModelPicPath
 
 	paperMode->matSrcImg = src_img;
 	paperMode->matDstImg = paperMode->matSrcImg;
 	m_pModelPicShow->ShowPic(src_img);
-#else
-	Mat src_img;
-	paperMode->matSrcImg = imread((std::string)(CT2CA)paperMode->strModelPicPath);	//(std::string)(CT2CA)paperMode->strModelPicPath
-	paperMode->matDstImg = paperMode->matSrcImg;
-	src_img = paperMode->matDstImg;
-	m_pModelPicShow->ShowPic(src_img);
-#endif
 
 	//重新选择图片后，需要重置本页面的所有点信息
 	if (m_vecPaperModelInfo.size() <= 0 || m_vecPaperModelInfo.size() <= m_nCurrTabSel)
@@ -2238,6 +2245,8 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 		return;
 
 	bool bFindOmr = false;
+	bool bFindSN = false;
+	int nSNCount = 0;
 	int nOmrCount = 0;
 	cv::Rect rt;
 	switch (m_eCurCPType)
@@ -2291,7 +2300,32 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 		m_pCurRectInfo = &m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite[nItem];
 		break;
 	case SN:
+	{
+		SNLIST::iterator itSNItem = m_vecPaperModelInfo[m_nCurrTabSel]->lSN.begin();
+		for (int i = 0; itSNItem != m_vecPaperModelInfo[m_nCurrTabSel]->lSN.end(); itSNItem++, i++)
+		{
+			nSNCount = (*itSNItem)->lSN.size();
+			if (nItem < nSNCount)
+			{
+				RECTLIST::iterator itSNRect = (*itSNItem)->lSN.begin();
+				for (int j = 0; itSNRect != (*itSNItem)->lSN.end(); itSNRect++, j++)
+				{
+					if (j == nItem)
+					{
+						RECTINFO rc = *itSNRect;
+						cv::Rect rt = rc.rt;
+						m_pCurRectInfo = &(*itSNRect);
+						break;
+					}
+				}
+			}
+			else
+			{
+				nItem -= nSNCount;
+			}
+		}
 		break;
+	}
 	case OMR:
 		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.size(); i++)
 		{
@@ -3455,6 +3489,177 @@ inline int CMakeModelDlg::GetRectInfoByPoint(cv::Point pt, CPType eType, RECTINF
 	}
 
 	return nFind;
+}
+
+bool CMakeModelDlg::PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
+{
+	clock_t start, end;
+	start = clock();
+
+	Rect rt;
+	rt.width = src.cols;
+	rt.height = src.rows / 4;
+
+	Mat matSrc = src(rt);
+	Mat hsv;
+	cvtColor(matSrc, hsv, CV_BGR2GRAY);
+	Mat srcImg = hsv;
+
+	Point center(src.cols / 2, src.rows / 2);
+
+	//Expand image to an optimal size, for faster processing speed
+	//Set widths of borders in four directions
+	//If borderType==BORDER_CONSTANT, fill the borders with (0,0,0)
+	Mat padded;
+	int opWidth = getOptimalDFTSize(srcImg.rows);
+	int opHeight = getOptimalDFTSize(srcImg.cols);
+	copyMakeBorder(srcImg, padded, 0, opWidth - srcImg.rows, 0, opHeight - srcImg.cols, BORDER_CONSTANT, Scalar::all(0));
+
+
+	char szTmpLog[200] = { 0 };
+	end = clock();
+	sprintf_s(szTmpLog, "时间1: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	Mat planes[] = { Mat_<float>(padded), Mat::zeros(padded.size(), CV_32F) };
+	Mat comImg;
+	//Merge into a double-channel image
+	merge(planes, 2, comImg);
+
+
+	end = clock();
+	sprintf_s(szTmpLog, "时间2-0: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	//Use the same image as input and output,
+	//so that the results can fit in Mat well
+	dft(comImg, comImg);
+
+
+	end = clock();
+	sprintf_s(szTmpLog, "时间2-1: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	//Compute the magnitude
+	//planes[0]=Re(DFT(I)), planes[1]=Im(DFT(I))
+	//magnitude=sqrt(Re^2+Im^2)
+	split(comImg, planes);
+	magnitude(planes[0], planes[1], planes[0]);
+
+	end = clock();
+	sprintf_s(szTmpLog, "时间2-2: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	//Switch to logarithmic scale, for better visual results
+	//M2=log(1+M1)
+	Mat magMat = planes[0];
+	magMat += Scalar::all(1);
+	log(magMat, magMat);
+
+	end = clock();
+	sprintf_s(szTmpLog, "时间3: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	//Crop the spectrum
+	//Width and height of magMat should be even, so that they can be divided by 2
+	//-2 is 11111110 in binary system, operator & make sure width and height are always even
+	magMat = magMat(Rect(0, 0, magMat.cols & -2, magMat.rows & -2));
+
+	//Rearrange the quadrants of Fourier image,
+	//so that the origin is at the center of image,
+	//and move the high frequency to the corners
+	int cx = magMat.cols / 2;
+	int cy = magMat.rows / 2;
+
+	Mat q0(magMat, Rect(0, 0, cx, cy));
+	Mat q1(magMat, Rect(0, cy, cx, cy));
+	Mat q2(magMat, Rect(cx, cy, cx, cy));
+	Mat q3(magMat, Rect(cx, 0, cx, cy));
+
+	Mat tmp;
+	q0.copyTo(tmp);
+	q2.copyTo(q0);
+	tmp.copyTo(q2);
+
+	q1.copyTo(tmp);
+	q3.copyTo(q1);
+	tmp.copyTo(q3);
+
+	end = clock();
+	sprintf_s(szTmpLog, "时间4: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	//Normalize the magnitude to [0,1], then to[0,255]
+	normalize(magMat, magMat, 0, 1, CV_MINMAX);
+	Mat magImg(magMat.size(), CV_8UC1);
+	magMat.convertTo(magImg, CV_8UC1, 255, 0);
+	//	imshow("magnitude", magImg);
+	//imwrite("imageText_mag.jpg",magImg);
+
+	//Turn into binary image
+	threshold(magImg, magImg, 150, 255, CV_THRESH_BINARY);
+	//	imshow("mag_binary", magImg);
+	//imwrite("imageText_bin.jpg",magImg);
+
+	end = clock();
+	sprintf_s(szTmpLog, "时间5: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	//Find lines with Hough Transformation
+	std::vector<cv::Vec2f> lines;
+	float pi180 = (float)CV_PI / 180;
+	Mat linImg(magImg.size(), CV_8UC3);
+	HoughLines(magImg, lines, 1, pi180, 100, 0, 0);
+
+
+	end = clock();
+	sprintf_s(szTmpLog, "时间6-0: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	int numLines = lines.size();
+
+	//Find the proper angel from the three found angels
+	float angel = 0;
+	float piThresh = (float)CV_PI / 90;
+	float pi2 = CV_PI / 2;
+	for (int l = 0; l < numLines; l++)
+	{
+		float theta = lines[l][1];
+		if (abs(theta) < piThresh || abs(theta - pi2) < piThresh)
+			continue;
+		else{
+			angel = theta;
+			break;
+		}
+	}
+
+	//Calculate the rotation angel
+	//The image has to be square,
+	//so that the rotation angel can be calculate right
+	angel = angel < pi2 ? angel : angel - CV_PI;
+	if (angel != pi2){
+		float angelT = srcImg.rows*tan(angel) / srcImg.cols;
+		angel = atan(angelT);
+	}
+	float angelD = angel * 180 / (float)CV_PI;
+
+	sprintf_s(szTmpLog, "the rotation angel to be applied: %f\n", angelD);
+	TRACE(szTmpLog);
+
+	end = clock();
+	sprintf_s(szTmpLog, "时间7: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	//Rotate the image to recover
+	rotMat = getRotationMatrix2D(center, angelD, 1.0);
+	dst = Mat::ones(src.size(), CV_8UC3);
+	warpAffine(src, dst, rotMat, src.size(), INTER_LINEAR, 0, Scalar(255, 255, 255));
+
+	end = clock();
+	sprintf_s(szTmpLog, "总时间: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	return true;
 }
 
 bool CMakeModelDlg::PicRotate()

@@ -1146,3 +1146,172 @@ std::string calcFileMd5(std::string strPath)
 	}
 	return strResult;
 }
+
+bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
+{
+	clock_t start, end;
+	start = clock();
+
+	cv::Rect rt;
+	rt.width = src.cols;
+	rt.height = src.rows / 3;
+
+	cv::Mat matSrc = src(rt);
+	cv::Mat hsv;
+	cv::cvtColor(matSrc, hsv, CV_BGR2GRAY);
+	cv::Mat srcImg = hsv;
+
+	cv::Point center(src.cols / 2, src.rows / 2);
+
+	//Expand image to an optimal size, for faster processing speed
+	//Set widths of borders in four directions
+	//If borderType==BORDER_CONSTANT, fill the borders with (0,0,0)
+	cv::Mat padded;
+	int opWidth = cv::getOptimalDFTSize(srcImg.rows);
+	int opHeight = cv::getOptimalDFTSize(srcImg.cols);
+	cv::copyMakeBorder(srcImg, padded, 0, opWidth - srcImg.rows, 0, opHeight - srcImg.cols, cv::BORDER_CONSTANT, cv::Scalar::all(0));
+
+
+	char szTmpLog[200] = { 0 };
+	end = clock();
+	sprintf_s(szTmpLog, "时间1: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	cv::Mat planes[] = { cv::Mat_<float>(padded), cv::Mat::zeros(padded.size(), CV_32F) };
+	cv::Mat comImg;
+	//Merge into a double-channel image
+	cv::merge(planes, 2, comImg);
+
+
+	end = clock();
+	sprintf_s(szTmpLog, "时间2-0: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	//Use the same image as input and output,
+	//so that the results can fit in Mat well
+	cv::dft(comImg, comImg);
+
+
+	end = clock();
+	sprintf_s(szTmpLog, "时间2-1: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	//Compute the magnitude
+	//planes[0]=Re(DFT(I)), planes[1]=Im(DFT(I))
+	//magnitude=sqrt(Re^2+Im^2)
+	split(comImg, planes);
+	cv::magnitude(planes[0], planes[1], planes[0]);
+
+	end = clock();
+	sprintf_s(szTmpLog, "时间2-2: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	//Switch to logarithmic scale, for better visual results
+	//M2=log(1+M1)
+	cv::Mat magMat = planes[0];
+	magMat += cv::Scalar::all(1);
+	cv::log(magMat, magMat);
+
+	end = clock();
+	sprintf_s(szTmpLog, "时间3: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	//Crop the spectrum
+	//Width and height of magMat should be even, so that they can be divided by 2
+	//-2 is 11111110 in binary system, operator & make sure width and height are always even
+	magMat = magMat(cv::Rect(0, 0, magMat.cols & -2, magMat.rows & -2));
+
+	//Rearrange the quadrants of Fourier image,
+	//so that the origin is at the center of image,
+	//and move the high frequency to the corners
+	int cx = magMat.cols / 2;
+	int cy = magMat.rows / 2;
+
+	cv::Mat q0(magMat, cv::Rect(0, 0, cx, cy));
+	cv::Mat q1(magMat, cv::Rect(0, cy, cx, cy));
+	cv::Mat q2(magMat, cv::Rect(cx, cy, cx, cy));
+	cv::Mat q3(magMat, cv::Rect(cx, 0, cx, cy));
+
+	cv::Mat tmp;
+	q0.copyTo(tmp);
+	q2.copyTo(q0);
+	tmp.copyTo(q2);
+
+	q1.copyTo(tmp);
+	q3.copyTo(q1);
+	tmp.copyTo(q3);
+
+	end = clock();
+	sprintf_s(szTmpLog, "时间4: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	//Normalize the magnitude to [0,1], then to[0,255]
+	cv::normalize(magMat, magMat, 0, 1, CV_MINMAX);
+	cv::Mat magImg(magMat.size(), CV_8UC1);
+	magMat.convertTo(magImg, CV_8UC1, 255, 0);
+	//	imshow("magnitude", magImg);
+
+	//Turn into binary image
+	cv::threshold(magImg, magImg, 150, 255, CV_THRESH_BINARY);
+	//	imshow("mag_binary", magImg);
+
+	end = clock();
+	sprintf_s(szTmpLog, "时间5: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	//Find lines with Hough Transformation
+	std::vector<cv::Vec2f> lines;
+	float pi180 = (float)CV_PI / 180;
+	cv::Mat linImg(magImg.size(), CV_8UC3);
+	cv::HoughLines(magImg, lines, 1, pi180, 100, 0, 0);
+
+
+	end = clock();
+	sprintf_s(szTmpLog, "时间6-0: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	int numLines = lines.size();
+
+	//Find the proper angel from the three found angels
+	float angel = 0;
+	float piThresh = (float)CV_PI / 90;
+	float pi2 = CV_PI / 2;
+	for (int l = 0; l < numLines; l++)
+	{
+		float theta = lines[l][1];
+		if (abs(theta) < piThresh || abs(theta - pi2) < piThresh)
+			continue;
+		else{
+			angel = theta;
+			break;
+		}
+	}
+
+	//Calculate the rotation angel
+	//The image has to be square,
+	//so that the rotation angel can be calculate right
+	angel = angel < pi2 ? angel : angel - CV_PI;
+	if (angel != pi2){
+		float angelT = srcImg.rows*tan(angel) / srcImg.cols;
+		angel = atan(angelT);
+	}
+	float angelD = angel * 180 / (float)CV_PI;
+
+	sprintf_s(szTmpLog, "the rotation angel to be applied: %f\n", angelD);
+	TRACE(szTmpLog);
+
+	end = clock();
+	sprintf_s(szTmpLog, "时间7: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	//Rotate the image to recover
+	rotMat = cv::getRotationMatrix2D(center, angelD, 1.0);
+	dst = cv::Mat::ones(src.size(), CV_8UC3);
+	warpAffine(src, dst, rotMat, src.size(), cv::INTER_LINEAR, 0, cv::Scalar(255, 255, 255));
+
+	end = clock();
+	sprintf_s(szTmpLog, "总时间: %d\n", end - start);
+	TRACE(szTmpLog);
+
+	return true;
+}

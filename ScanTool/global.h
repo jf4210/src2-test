@@ -46,6 +46,8 @@
 #include "unzip.h"
 #include "MyCodeConvert.h"
 
+#define PIC_RECTIFY_TEST	//图像旋转纠正测试
+
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 
 #define SOFT_VERSION	_T("1.0")
@@ -167,7 +169,7 @@ typedef struct _PaperModel_
 	SNLIST		lSNInfo;				//SN信息
 	RECTLIST	lSelHTracker;			//选择的水平同步头区域
 	RECTLIST	lSelVTracker;			//选择的垂直同步头区域
-	RECTLIST	lSelFixRoi;				//选择的ROI的矩形列表
+	RECTLIST	lSelFixRoi;				//选择定点的ROI的矩形列表，框选定点的大矩形框
 	OMRLIST		lOMR2;
 	RECTLIST	lFix;					//定点列表
 	RECTLIST	lH_Head;				//水平校验点列表
@@ -394,4 +396,5 @@ bool	SortByPositionY2(cv::Rect& rt1, cv::Rect& rt2);
 bool	SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2);
 bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 0, int nPicH = 0);
 std::string calcFileMd5(std::string strPath);
-void CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int height);
+void	CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int height);
+bool	PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat);

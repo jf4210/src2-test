@@ -1214,8 +1214,20 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 	for (int i = 0; itPic != pPaper->lPic.end(); itPic++, i++)
 	{
 		Mat matSrc = imread((*itPic)->strPicPath);
-		Mat tmp = matSrc;	// matSrc.clone();
-		Mat tmp2 = matSrc.clone();
+#ifdef PIC_RECTIFY_TEST
+		Mat dst;
+		Mat rotMat;
+		PicRectify(matSrc, dst, rotMat);
+		Mat matImg;
+		if (dst.channels() == 1)
+			cvtColor(dst, matImg, CV_GRAY2BGR);
+		else
+			matImg = dst;
+#else
+		Mat matImg = matSrc;
+#endif
+		Mat tmp = matImg;	// matSrc.clone();
+		Mat tmp2 = matImg.clone();
 
 		RECTLIST::iterator itHTracker = pPaper->pModel->vecPaperModel[i]->lSelHTracker.begin();
 		for (int j = 0; itHTracker != pPaper->pModel->vecPaperModel[i]->lSelHTracker.end(); itHTracker++, j++)
@@ -1381,8 +1393,20 @@ int CScanToolDlg::PaintIssueRect(pST_PaperInfo pPaper)
 		{
 			Point pt(0, 0);
 			Mat matSrc = imread((*itPic)->strPicPath);
-			Mat tmp = matSrc;	// matSrc.clone();
-			Mat tmp2 = matSrc.clone();
+#ifdef PIC_RECTIFY_TEST
+			Mat dst;
+			Mat rotMat;
+			PicRectify(matSrc, dst, rotMat);
+			Mat matImg;
+			if (dst.channels() == 1)
+				cvtColor(dst, matImg, CV_GRAY2BGR);
+			else
+				matImg = dst;
+#else
+			Mat matImg = matSrc;
+#endif
+			Mat tmp = matImg;	// matSrc.clone();
+			Mat tmp2 = matImg.clone();
 
 			RECTLIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[i]->lSelFixRoi.begin();													//显示识别定点的选择区
 			for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i]->lSelFixRoi.end(); itSelRoi++, j++)

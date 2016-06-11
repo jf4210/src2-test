@@ -323,8 +323,9 @@ void CV_picture::ShowImage_roi(cv::Mat &src,int method)
 	}
 	catch (cv::Exception &exc)
 	{
-		char szLog[300] = { 0 };
-		sprintf_s(szLog, "CV_picture::ShowImage_roi error. detail: %s\n", exc.msg);
+		char szLog[500] = { 0 };
+//		sprintf_s(szLog, "CV_picture::ShowImage_roi error. detail: %s\n", exc.msg);
+		sprintf_s(szLog, "CV_picture::ShowImage_roi error. m_rect_roi(%d,%d,%d,%d), m_fRoi_scale = %f, detail: %s\n", m_rect_roi.x, m_rect_roi.y, m_rect_roi.width, m_rect_roi.height, m_fRoi_scale, exc.msg);
 		TRACE(szLog);
 	}
 	catch (...)
@@ -416,14 +417,14 @@ void CV_picture::ShowImage_Rect_roi(cv::Mat &src, cv::Point pt, int method)
 	}
 	catch (cv::Exception &exc)
 	{
-		char szLog[300] = { 0 };
-		sprintf_s(szLog, "CV_picture::ShowImage_roi error. detail: %s\n", exc.msg);
+		char szLog[500] = { 0 };
+		sprintf_s(szLog, "CV_picture::ShowImage_Rect_roi error. m_rect_roi(%d,%d,%d,%d), m_fRoi_scale = %f, detail: %s\n", m_rect_roi.x, m_rect_roi.y, m_rect_roi.width, m_rect_roi.height, m_fRoi_scale, exc.msg);
 		TRACE(szLog);
 	}
 	catch (...)
 	{
 		char szLog[300] = { 0 };
-		sprintf_s(szLog, "CV_picture::ShowImage_roi error2. Unknown error.\n");
+		sprintf_s(szLog, "CV_picture::ShowImage_Rect_roi error2. Unknown error.\n");
 		TRACE(szLog);
 	}
 }
@@ -510,8 +511,9 @@ void CV_picture::ShowImage_rect(cv::Mat &src, cv::Point pt)
 	}
 	catch (cv::Exception &exc)
 	{
-		char szLog[300] = { 0 };
-		sprintf_s(szLog, "CV_picture::OnPaint error. detail: %s\n", exc.msg);
+		char szLog[500] = { 0 };
+//		sprintf_s(szLog, "CV_picture::OnPaint error. detail: %s\n", exc.msg);
+		sprintf_s(szLog, "CV_picture::ShowImage_rect error. m_rect_roi(%d,%d,%d,%d), m_fRoi_scale = %f, detail: %s\n", m_rect_roi.x, m_rect_roi.y, m_rect_roi.width, m_rect_roi.height, m_fRoi_scale, exc.msg);
 		TRACE(szLog);
 	}
 	catch (...)
@@ -797,6 +799,12 @@ BOOL CV_picture::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 		{
 			//计算现在src_roi相对于src的缩放比
 			m_fRoi_scale = m_fRoi_scale + m_fRoi_scale*0.2f*(float)zDelta / 120.0f;
+			if (m_fRoi_scale < 0)
+			{
+				char szLog[200] = { 0 };
+				sprintf_s(szLog, "缩放比例小于0，m_fRoi_scale = %f, zDelta = %d\n", m_fRoi_scale, zDelta);
+				TRACE(szLog);
+			}
 			//计算当前鼠标相对画板中心的偏移
 			CPoint src_draw_tl = m_rect_win.TopLeft();
 			Point pt_in_draw = Point((pt.x - src_draw_tl.x), (pt.y - src_draw_tl.y));
