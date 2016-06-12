@@ -690,6 +690,7 @@ void CScanToolDlg::OnTcnSelchangeTabPicshow(NMHDR *pNMHDR, LRESULT *pResult)
 
 	int nIndex = m_tabPicShowCtrl.GetCurSel();
 	m_nCurrTabSel = nIndex;
+
 	m_pCurrentPicShow = m_vecPicShow[nIndex];
 	m_pCurrentPicShow->ShowWindow(SW_SHOW);
 	for (int i = 0; i < m_vecPicShow.size(); i++)
@@ -1198,6 +1199,8 @@ void CScanToolDlg::OnNMDblclkListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 	else
 		PaintRecognisedRect(pPaper);
 
+	m_nCurrTabSel = 0;
+
 	m_tabPicShowCtrl.SetCurSel(0);
 	m_pCurrentPicShow = m_vecPicShow[0];
 	m_pCurrentPicShow->ShowWindow(SW_SHOW);
@@ -1223,6 +1226,9 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			cvtColor(dst, matImg, CV_GRAY2BGR);
 		else
 			matImg = dst;
+#ifdef WarpAffine_TEST
+		PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix);
+#endif
 #else
 		Mat matImg = matSrc;
 #endif
@@ -1233,7 +1239,7 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		for (int j = 0; itHTracker != pPaper->pModel->vecPaperModel[i]->lSelHTracker.end(); itHTracker++, j++)
 		{
 			cv::Rect rt = (*itHTracker).rt;
-			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 			rectangle(tmp, rt, CV_RGB(25, 200, 20), 2);
 			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
@@ -1242,7 +1248,7 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		for (int j = 0; itVTracker != pPaper->pModel->vecPaperModel[i]->lSelVTracker.end(); itVTracker++, j++)
 		{
 			cv::Rect rt = (*itVTracker).rt;
-			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 			rectangle(tmp, rt, CV_RGB(25, 200, 20), 2);
 			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
@@ -1256,43 +1262,43 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			rectangle(tmp, rt, CV_RGB(50, 255, 55), 2);
 			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 		}
-// 		RECTLIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[i].lSelFixRoi.begin();													//显示识别定点的选择区
-// 		for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i].lSelFixRoi.end(); itSelRoi++, j++)
-// 		{
-// 			cv::Rect rt = (*itSelRoi).rt;
-// 			//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
-// 
-// 			char szCP[20] = { 0 };
-// 			// 				sprintf_s(szCP, "FIX%d", j);
-// 			// 				putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));	//CV_FONT_HERSHEY_COMPLEX
-// 			rectangle(tmp, rt, CV_RGB(0, 0, 255), 2);
-// 			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-// 		}
-// 
-// 		RECTLIST::iterator itPicFix = (*itPic)->lFix.begin();														//显示识别出来的定点
-// 		for (int j = 0; itPicFix != (*itPic)->lFix.end(); itPicFix++, j++)
-// 		{
-// 			cv::Rect rt = (*itPicFix).rt;
-// //			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
-// 
-// 			char szCP[20] = { 0 };
-// 			sprintf_s(szCP, "FIX%d", j);
-// 			putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));	//CV_FONT_HERSHEY_COMPLEX
-// 			rectangle(tmp, rt, CV_RGB(0, 255, 0), 2);
-// 			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-// 		}
-// 		RECTLIST::iterator itFixRect = pPaper->pModel->vecPaperModel[i].lFix.begin();								//显示模板上的定点对应到此试卷上的新定点
-// 		for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[i].lFix.end(); itFixRect++, j++)
-// 		{
-// 			cv::Rect rt = (*itFixRect).rt;
-// 			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
-// 
-// 			char szCP[20] = { 0 };
-// 			sprintf_s(szCP, "FIX%d", j);
-// 			putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
-// 			rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
-// 			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-// 		}
+		RECTLIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[i]->lSelFixRoi.begin();													//显示识别定点的选择区
+		for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i]->lSelFixRoi.end(); itSelRoi++, j++)
+		{
+			cv::Rect rt = (*itSelRoi).rt;
+			//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
+
+			char szCP[20] = { 0 };
+			// 				sprintf_s(szCP, "FIX%d", j);
+			// 				putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));	//CV_FONT_HERSHEY_COMPLEX
+			rectangle(tmp, rt, CV_RGB(0, 0, 255), 2);
+			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+		}
+
+		RECTLIST::iterator itPicFix = (*itPic)->lFix.begin();														//显示识别出来的定点
+		for (int j = 0; itPicFix != (*itPic)->lFix.end(); itPicFix++, j++)
+		{
+			cv::Rect rt = (*itPicFix).rt;
+//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
+
+			char szCP[20] = { 0 };
+			sprintf_s(szCP, "FIX%d", j);
+			putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));	//CV_FONT_HERSHEY_COMPLEX
+			rectangle(tmp, rt, CV_RGB(0, 255, 0), 2);
+			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+		}
+		RECTLIST::iterator itFixRect = pPaper->pModel->vecPaperModel[i]->lFix.begin();								//显示模板上的定点对应到此试卷上的新定点
+		for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[i]->lFix.end(); itFixRect++, j++)
+		{
+			cv::Rect rt = (*itFixRect).rt;
+			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+
+			char szCP[20] = { 0 };
+			sprintf_s(szCP, "FIX%d", j);
+			putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
+			rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+		}
 // 		RECTLIST::iterator itHRect = pPaper->pModel->vecPaperModel[i].lH_Head.begin();
 // 		for (int j = 0; itHRect != pPaper->pModel->vecPaperModel[i].lH_Head.end(); itHRect++, j++)
 // 		{
@@ -1402,6 +1408,9 @@ int CScanToolDlg::PaintIssueRect(pST_PaperInfo pPaper)
 				cvtColor(dst, matImg, CV_GRAY2BGR);
 			else
 				matImg = dst;
+#ifdef WarpAffine_TEST
+			PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix);
+#endif
 #else
 			Mat matImg = matSrc;
 #endif
@@ -1437,7 +1446,7 @@ int CScanToolDlg::PaintIssueRect(pST_PaperInfo pPaper)
 			for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[i]->lFix.end(); itFixRect++, j++)
 			{
 				cv::Rect rt = (*itFixRect).rt;
-				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				char szCP[20] = { 0 };
 				sprintf_s(szCP, "FIX%d", j);
@@ -1475,7 +1484,7 @@ int CScanToolDlg::PaintIssueRect(pST_PaperInfo pPaper)
 			for (int j = 0; itHTracker != pPaper->pModel->vecPaperModel[i]->lSelHTracker.end(); itHTracker++, j++)
 			{
 				cv::Rect rt = (*itHTracker).rt;
-				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				rectangle(tmp, rt, CV_RGB(25, 200, 20), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
@@ -1484,7 +1493,7 @@ int CScanToolDlg::PaintIssueRect(pST_PaperInfo pPaper)
 			for (int j = 0; itVTracker != pPaper->pModel->vecPaperModel[i]->lSelVTracker.end(); itVTracker++, j++)
 			{
 				cv::Rect rt = (*itVTracker).rt;
-				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				rectangle(tmp, rt, CV_RGB(25, 200, 20), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
@@ -1556,6 +1565,8 @@ LRESULT CScanToolDlg::MsgRecogErr(WPARAM wParam, LPARAM lParam)
 	}
 	if (nIssuePaper < 0)
 		return FALSE;
+
+	m_nCurrTabSel = nIssuePaper;
 
 	m_tabPicShowCtrl.SetCurSel(nIssuePaper);
 	m_pCurrentPicShow = m_vecPicShow[nIssuePaper];

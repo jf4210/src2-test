@@ -158,7 +158,7 @@ private:
 	bool Recognise(cv::Rect rtOri);				//Ê¶±ð²Ù×÷
 	inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc);						//Ê¶±ð»Ò¶ÈÖµ
 	
-	bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat);						//Í¼Æ¬¾ÀÆ«
+//	bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat);						//Í¼Æ¬¾ÀÆ«
 	bool PicRotate();							//Í¼ÏñÆ«ÒÆ²Ù×÷
 	void sharpenImage1(const cv::Mat &image, cv::Mat &result);		//Èñ»¯
 

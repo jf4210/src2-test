@@ -53,6 +53,19 @@ private:
 
 	void	PaintRecognisedRect(pST_PaperInfo pPaper);		//画已识别的矩形
 	void	PaintIssueRect(pST_PaperInfo pPaper);			//画出已识别出来的问题矩形位置
+
+
+	int				m_nStatusSize;			//状态栏字体大小
+	CFont			m_fontStatus;			//状态栏字体
+	COLORREF		m_colorStatus;			//状态栏字体颜色
+	pST_PaperInfo	m_pCurrentShowPaper;
+
+	void	ShowRectByPoint(cv::Point pt, pST_PaperInfo pPaper);
+	LRESULT RoiLBtnDown(WPARAM wParam, LPARAM lParam);		//鼠标左键按下的通知
+	int		GetRectInfoByPoint(cv::Point pt, pST_PicInfo pPic, RECTINFO*& pRc);
+
+	void	SetFontSize(int nSize);
+	void	SetStatusShowInfo(CString strMsg, BOOL bWarn = FALSE);	//设置状态栏显示的消息
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();
@@ -67,4 +80,5 @@ public:
 	afx_msg void OnTcnSelchangeTabPicshow(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMDblclkListIssuepaper(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedBtnSave();
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

@@ -1092,7 +1092,7 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW, i
 		}
 		ptC0.x = rt.x;
 		ptC0.y = rt.y;
-
+		
 #else
 		ptA0.x = rcModelA.rt.x + rcModelA.rt.width / 2 + 0.5;
 		ptA0.y = rcModelA.rt.y + rcModelA.rt.height / 2 + 0.5;
@@ -1109,7 +1109,16 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW, i
 		ptC = TriangleCoordinate(ptA0, ptB0, ptC0, ptA, ptB);
 		rt.x = ptC.x;
 		rt.y = ptC.y;
-		TRACE("定点1(%d, %d), 定点2(%d, %d),新的C点(%d, %d), C点(%d, %d), 原定点1(%d, %d), 定点2(%d, %d)\n", ptA.x, ptA.y, ptB.x, ptB.y, ptC.x, ptC.y, ptC0.x, ptC0.y, ptA0.x, ptA0.y, ptB0.x, ptB0.y);
+
+		//右下的点也计算
+// 		cv::Point ptC1;
+// 		ptC1.x = ptC0.x + rt.width;
+// 		ptC1.y = ptC0.y + rt.height;
+// 		ptC = TriangleCoordinate(ptA0, ptB0, ptC1, ptA, ptB);
+// 		rt.width = ptC1.x - rt.x;
+// 		rt.height = ptC1.y - rt.y;
+
+//		TRACE("定点1(%d, %d), 定点2(%d, %d),新的C点(%d, %d), C点(%d, %d), 原定点1(%d, %d), 定点2(%d, %d)\n", ptA.x, ptA.y, ptB.x, ptB.y, ptC.x, ptC.y, ptC0.x, ptC0.y, ptA0.x, ptA0.y, ptB0.x, ptB0.y);
 	}
 	return true;
 }
@@ -1151,10 +1160,18 @@ bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 {
 	clock_t start, end;
 	start = clock();
+	char szTmpLog[200] = { 0 };
 
 	cv::Rect rt;
+#if 0
+	rt.x = src.cols * 0.05;
+	rt.y = src.rows * 0.05;
+	rt.width = src.cols * 0.9;
+	rt.height = src.rows / 4;
+#else
 	rt.width = src.cols;
-	rt.height = src.rows / 3;
+	rt.height = src.rows / 4;
+#endif
 
 	cv::Mat matSrc = src(rt);
 	cv::Mat hsv;
@@ -1171,11 +1188,9 @@ bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 	int opHeight = cv::getOptimalDFTSize(srcImg.cols);
 	cv::copyMakeBorder(srcImg, padded, 0, opWidth - srcImg.rows, 0, opHeight - srcImg.cols, cv::BORDER_CONSTANT, cv::Scalar::all(0));
 
-
-	char szTmpLog[200] = { 0 };
-	end = clock();
-	sprintf_s(szTmpLog, "时间1: %d\n", end - start);
-	TRACE(szTmpLog);
+// 	end = clock();
+// 	sprintf_s(szTmpLog, "时间1: %d\n", end - start);
+// 	TRACE(szTmpLog);
 
 	cv::Mat planes[] = { cv::Mat_<float>(padded), cv::Mat::zeros(padded.size(), CV_32F) };
 	cv::Mat comImg;
@@ -1183,18 +1198,18 @@ bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 	cv::merge(planes, 2, comImg);
 
 
-	end = clock();
-	sprintf_s(szTmpLog, "时间2-0: %d\n", end - start);
-	TRACE(szTmpLog);
+// 	end = clock();
+// 	sprintf_s(szTmpLog, "时间2-0: %d\n", end - start);
+// 	TRACE(szTmpLog);
 
 	//Use the same image as input and output,
 	//so that the results can fit in Mat well
 	cv::dft(comImg, comImg);
 
 
-	end = clock();
-	sprintf_s(szTmpLog, "时间2-1: %d\n", end - start);
-	TRACE(szTmpLog);
+// 	end = clock();
+// 	sprintf_s(szTmpLog, "时间2-1: %d\n", end - start);
+// 	TRACE(szTmpLog);
 
 	//Compute the magnitude
 	//planes[0]=Re(DFT(I)), planes[1]=Im(DFT(I))
@@ -1202,9 +1217,9 @@ bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 	split(comImg, planes);
 	cv::magnitude(planes[0], planes[1], planes[0]);
 
-	end = clock();
-	sprintf_s(szTmpLog, "时间2-2: %d\n", end - start);
-	TRACE(szTmpLog);
+// 	end = clock();
+// 	sprintf_s(szTmpLog, "时间2-2: %d\n", end - start);
+// 	TRACE(szTmpLog);
 
 	//Switch to logarithmic scale, for better visual results
 	//M2=log(1+M1)
@@ -1212,9 +1227,9 @@ bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 	magMat += cv::Scalar::all(1);
 	cv::log(magMat, magMat);
 
-	end = clock();
-	sprintf_s(szTmpLog, "时间3: %d\n", end - start);
-	TRACE(szTmpLog);
+// 	end = clock();
+// 	sprintf_s(szTmpLog, "时间3: %d\n", end - start);
+// 	TRACE(szTmpLog);
 
 	//Crop the spectrum
 	//Width and height of magMat should be even, so that they can be divided by 2
@@ -1241,9 +1256,9 @@ bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 	q3.copyTo(q1);
 	tmp.copyTo(q3);
 
-	end = clock();
-	sprintf_s(szTmpLog, "时间4: %d\n", end - start);
-	TRACE(szTmpLog);
+// 	end = clock();
+// 	sprintf_s(szTmpLog, "时间4: %d\n", end - start);
+// 	TRACE(szTmpLog);
 
 	//Normalize the magnitude to [0,1], then to[0,255]
 	cv::normalize(magMat, magMat, 0, 1, CV_MINMAX);
@@ -1255,9 +1270,9 @@ bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 	cv::threshold(magImg, magImg, 150, 255, CV_THRESH_BINARY);
 	//	imshow("mag_binary", magImg);
 
-	end = clock();
-	sprintf_s(szTmpLog, "时间5: %d\n", end - start);
-	TRACE(szTmpLog);
+// 	end = clock();
+// 	sprintf_s(szTmpLog, "时间5: %d\n", end - start);
+// 	TRACE(szTmpLog);
 
 	//Find lines with Hough Transformation
 	std::vector<cv::Vec2f> lines;
@@ -1266,9 +1281,9 @@ bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 	cv::HoughLines(magImg, lines, 1, pi180, 100, 0, 0);
 
 
-	end = clock();
-	sprintf_s(szTmpLog, "时间6-0: %d\n", end - start);
-	TRACE(szTmpLog);
+// 	end = clock();
+// 	sprintf_s(szTmpLog, "时间6-0: %d\n", end - start);
+// 	TRACE(szTmpLog);
 
 	int numLines = lines.size();
 
@@ -1297,12 +1312,13 @@ bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 	}
 	float angelD = angel * 180 / (float)CV_PI;
 
-	sprintf_s(szTmpLog, "the rotation angel to be applied: %f\n", angelD);
-	TRACE(szTmpLog);
+// 	sprintf_s(szTmpLog, "the rotation angel to be applied: %f\n", angelD);
+// 	g_pLogger->information(szTmpLog);
+// 	TRACE(szTmpLog);
 
-	end = clock();
-	sprintf_s(szTmpLog, "时间7: %d\n", end - start);
-	TRACE(szTmpLog);
+// 	end = clock();
+// 	sprintf_s(szTmpLog, "时间7: %d\n", end - start);
+// 	TRACE(szTmpLog);
 
 	//Rotate the image to recover
 	rotMat = cv::getRotationMatrix2D(center, angelD, 1.0);
@@ -1310,8 +1326,134 @@ bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 	warpAffine(src, dst, rotMat, src.size(), cv::INTER_LINEAR, 0, cv::Scalar(255, 255, 255));
 
 	end = clock();
-	sprintf_s(szTmpLog, "总时间: %d\n", end - start);
+	sprintf_s(szTmpLog, "图像纠偏总时间: %d, angelD = %f\n", end - start, angelD);
+	g_pLogger->information(szTmpLog);
 	TRACE(szTmpLog);
 
 	return true;
+}
+
+int FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix)
+{
+	if (lFix.size() < 3)
+		return 1;
+
+	clock_t start, end;
+	start = clock();
+	char szTmpLog[400] = { 0 };
+
+	std::vector<cv::Point2f> vecFixPt;
+	RECTLIST::iterator itCP = lModelFix.begin();
+	for (; itCP != lModelFix.end(); itCP++)
+	{
+		cv::Point2f pt;
+		pt.x = itCP->rt.x + itCP->rt.width / 2;
+		pt.y = itCP->rt.y + itCP->rt.height / 2;
+		vecFixPt.push_back(pt);
+	}
+	std::vector<cv::Point2f> vecFixNewPt;
+	RECTLIST::iterator itCP2 = lFix.begin();
+	for (; itCP2 != lFix.end(); itCP2++)
+	{
+		cv::Point2f pt;
+		pt.x = itCP2->rt.x + itCP2->rt.width / 2;
+		pt.y = itCP2->rt.y + itCP2->rt.height / 2;
+		vecFixNewPt.push_back(pt);
+	}
+
+	cv::Point2f srcTri[3];
+	cv::Point2f dstTri[3];
+	cv::Mat warp_mat(2, 3, CV_32FC1);
+	cv::Mat warp_dst, warp_rotate_dst;
+	for (int i = 0; i < vecFixPt.size(); i++)
+	{
+		srcTri[i] = vecFixNewPt[i];
+		dstTri[i] = vecFixPt[i];
+	}
+
+	//	warp_dst = Mat::zeros(matCompPic.rows, matCompPic.cols, matCompPic.type());
+	warp_mat = cv::getAffineTransform(srcTri, dstTri);
+	cv::warpAffine(matCompPic, matCompPic, warp_mat, matCompPic.size(), 1, 0, cv::Scalar(255, 255, 255));
+
+
+// 	RECTLIST::iterator itCP3 = lFix.begin();
+// 	for (; itCP3 != lFix.end(); itCP3++)
+// 	{
+// 		cv::Point2f pt;
+// 
+// 		pt.x = warp_mat.ptr<double>(0)[0] * itCP3->rt.x + warp_mat.ptr<double>(0)[1] * itCP3->rt.y + warp_mat.ptr<double>(0)[2];
+// 		pt.y = warp_mat.ptr<double>(1)[0] * itCP3->rt.x + warp_mat.ptr<double>(1)[1] * itCP3->rt.y + warp_mat.ptr<double>(1)[2];
+// 		itCP3->rt.x = pt.x;
+// 		itCP3->rt.y = pt.y;
+// 	}
+
+	end = clock();
+	sprintf_s(szTmpLog, "图像变换时间: %d, ptMod1(%f,%f), ptMod2(%f,%f), ptMod3(%f,%f), pt1(%f,%f), pt2(%f,%f), pt3(%f,%f)\n", end - start,\
+		vecFixPt[0].x, vecFixPt[0].y, vecFixPt[1].x, vecFixPt[1].y, vecFixPt[2].x, vecFixPt[2].y, vecFixNewPt[0].x, vecFixNewPt[0].y, vecFixNewPt[1].x, vecFixNewPt[1].y, vecFixNewPt[2].x, vecFixNewPt[2].y);
+	g_pLogger->information(szTmpLog);
+	TRACE(szTmpLog);
+
+	return 1;
+}
+
+int FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix)
+{
+	if (lFix.size() < 4)
+		return 1;
+
+	clock_t start, end;
+	start = clock();
+	char szTmpLog[400] = { 0 };
+
+	std::vector<cv::Point2f> vecFixPt;
+	RECTLIST::iterator itCP = lModelFix.begin();
+	for (; itCP != lModelFix.end(); itCP++)
+	{
+		cv::Point2f pt;
+		pt.x = itCP->rt.x + itCP->rt.width / 2;
+		pt.y = itCP->rt.y + itCP->rt.height / 2;
+		vecFixPt.push_back(pt);
+	}
+	std::vector<cv::Point2f> vecFixNewPt;
+	RECTLIST::iterator itCP2 = lFix.begin();
+	for (; itCP2 != lFix.end(); itCP2++)
+	{
+		cv::Point2f pt;
+		pt.x = itCP2->rt.x + itCP2->rt.width / 2;
+		pt.y = itCP2->rt.y + itCP2->rt.height / 2;
+		vecFixNewPt.push_back(pt);
+	}
+
+	cv::Point2f srcTri[4];
+	cv::Point2f dstTri[4];
+	cv::Mat warp_mat(2, 3, CV_32FC1);
+	cv::Mat warp_dst, warp_rotate_dst;
+	for (int i = 0; i < vecFixPt.size(); i++)
+	{
+		srcTri[i] = vecFixNewPt[i];
+		dstTri[i] = vecFixPt[i];
+	}
+
+	//	warp_dst = Mat::zeros(matCompPic.rows, matCompPic.cols, matCompPic.type());
+	warp_mat = cv::getPerspectiveTransform(srcTri, dstTri);
+	cv::warpPerspective(matCompPic, matCompPic, warp_mat, matCompPic.size(), 1, 0, cv::Scalar(255, 255, 255));
+
+	end = clock();
+	sprintf_s(szTmpLog, "图像变换时间: %d, ptMod1(%f,%f), ptMod2(%f,%f), ptMod3(%f,%f), ptMod4(%f,%f), pt1(%f,%f), pt2(%f,%f), pt3(%f,%f), pt4(%f,%f)\n", end - start, \
+		vecFixPt[0].x, vecFixPt[0].y, vecFixPt[1].x, vecFixPt[1].y, vecFixPt[2].x, vecFixPt[2].y, vecFixPt[3].x, vecFixPt[3].y,\
+		vecFixNewPt[0].x, vecFixNewPt[0].y, vecFixNewPt[1].x, vecFixNewPt[1].y, vecFixNewPt[2].x, vecFixNewPt[2].y, vecFixNewPt[3].x, vecFixNewPt[3].y);
+	g_pLogger->information(szTmpLog);
+	TRACE(szTmpLog);
+
+	return 1;
+}
+
+int PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix)
+{
+	if (lFix.size() == 3)
+		return FixWarpAffine(nPic, matCompPic, lFix, lModelFix);
+	else if (lFix.size() == 4)
+		return FixwarpPerspective(nPic, matCompPic, lFix, lModelFix);
+
+	return 1;
 }

@@ -159,6 +159,9 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 
 		m_ptFixCP = Point(0, 0);
 		bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo);
+#ifdef WarpAffine_TEST
+		if (bResult) bResult = PicTransfer(nPic, matCompPic, (*itPic)->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix);
+#endif
 		if(bResult) bResult = RecogHHead(nPic, matCompPic, *itPic, pModelInfo);
 		if(bResult) bResult = RecogVHead(nPic, matCompPic, *itPic, pModelInfo);
 		if(bResult) bResult = RecogABModel(nPic, matCompPic, *itPic, pModelInfo);
@@ -280,7 +283,49 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 	
 	return bResult;
 }
+#if 0
+int CRecognizeThread::FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix)
+{
+	if (lFix.size() < 3)
+		return 1;
 
+	std::vector<cv::Point2f> vecFixPt;
+	RECTLIST::iterator itCP = lModelFix.begin();
+	for (; itCP != lModelFix.end(); itCP++)
+	{
+		cv::Point2f pt;
+		pt.x = itCP->rt.x + itCP->rt.width / 2;
+		pt.y = itCP->rt.y + itCP->rt.height / 2;
+		vecFixPt.push_back(pt);
+	}
+	std::vector<cv::Point2f> vecFixNewPt;
+	RECTLIST::iterator itCP2 = lFix.begin();
+	for (; itCP2 != lFix.end(); itCP2++)
+	{
+		cv::Point2f pt;
+		pt.x = itCP2->rt.x + itCP2->rt.width / 2;
+		pt.y = itCP2->rt.y + itCP2->rt.height / 2;
+		vecFixNewPt.push_back(pt);
+	}
+
+	Point2f srcTri[3];
+	Point2f dstTri[3];
+	Mat rot_mat(2, 3, CV_32FC1);
+	Mat warp_mat(2, 3, CV_32FC1);
+	Mat warp_dst, warp_rotate_dst;
+	for (int i = 0; i < vecFixPt.size(); i++)
+	{
+		srcTri[i] = vecFixNewPt[i];
+		dstTri[i] = vecFixPt[i];
+	}
+
+//	warp_dst = Mat::zeros(matCompPic.rows, matCompPic.cols, matCompPic.type());
+	warp_mat = getAffineTransform(srcTri, dstTri);
+	warpAffine(matCompPic, matCompPic, warp_mat, matCompPic.size(), 1, 0, Scalar(255, 255, 255));
+
+	return 1;
+}
+#endif
 bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bResult = true;
@@ -474,6 +519,10 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			}
 			std::sort(m_vecH_Head.begin(), m_vecH_Head.end(), SortByPositionX);
 		}
+		if(m_vecH_Head.size() != pModelInfo->pModel->vecPaperModel[nPic]->lH_Head.size())
+		{
+			bResult = false;
+		}
 #else
 		GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic].lFix, rc.rt);
 		bool bFindRect = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
@@ -559,6 +608,10 @@ int CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 				//--
 			}
 			std::sort(m_vecV_Head.begin(), m_vecV_Head.end(), SortByPositionY);
+		}
+		if(m_vecV_Head.size() != pModelInfo->pModel->vecPaperModel[nPic]->lV_Head.size())
+		{
+			bResult = false;
 		}
 #else
 		GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic].lFix, rc.rt);
@@ -876,3 +929,5 @@ int CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 	}
 	return bResult;
 }
+
+

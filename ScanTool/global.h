@@ -47,6 +47,7 @@
 #include "MyCodeConvert.h"
 
 #define PIC_RECTIFY_TEST	//图像旋转纠正测试
+#define WarpAffine_TEST		//仿射变换测试
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 
@@ -398,3 +399,6 @@ bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 
 std::string calcFileMd5(std::string strPath);
 void	CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int height);
 bool	PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat);
+int		FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);		//定点进行仿射变换
+int		FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);	//定点透视变换
+int		PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);

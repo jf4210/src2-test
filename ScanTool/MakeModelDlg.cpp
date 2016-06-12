@@ -3490,7 +3490,7 @@ inline int CMakeModelDlg::GetRectInfoByPoint(cv::Point pt, CPType eType, RECTINF
 
 	return nFind;
 }
-
+#if 0
 bool CMakeModelDlg::PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 {
 	clock_t start, end;
@@ -3498,7 +3498,7 @@ bool CMakeModelDlg::PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 
 	Rect rt;
 	rt.width = src.cols;
-	rt.height = src.rows / 4;
+	rt.height = src.rows / 5;
 
 	Mat matSrc = src(rt);
 	Mat hsv;
@@ -3661,7 +3661,7 @@ bool CMakeModelDlg::PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 
 	return true;
 }
-
+#endif
 bool CMakeModelDlg::PicRotate()
 {
 	if (m_vecPaperModelInfo.size() < m_nCurrTabSel)

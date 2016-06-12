@@ -18,7 +18,8 @@ IMPLEMENT_DYNAMIC(CPaperInputDlg, CDialog)
 CPaperInputDlg::CPaperInputDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	: CDialog(CPaperInputDlg::IDD, pParent)
 	, m_strPapersPath(_T("")), m_nModelPicNums(1), m_nCurrTabSel(0), m_pCurrentPicShow(NULL), m_pModel(pModel), m_pOldModel(pModel)
-	, m_strModelName(_T("")), m_strPapersName(_T("")), m_strPapersDesc(_T("")), m_nCurrItemPapers(0), m_nCurrItemPaper(0)
+	, m_strModelName(_T("")), m_strPapersName(_T("")), m_strPapersDesc(_T("")), m_nCurrItemPapers(0), m_nCurrItemPaper(-1)
+	, m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL)
 {
 
 }
@@ -65,7 +66,9 @@ BEGIN_MESSAGE_MAP(CPaperInputDlg, CDialog)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_Paper, &CPaperInputDlg::OnNMDblclkListPaper)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB_PicShow, &CPaperInputDlg::OnTcnSelchangeTabPicshow)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_IssuePaper, &CPaperInputDlg::OnNMDblclkListIssuepaper)
+	ON_MESSAGE(WM_CV_LBTNDOWN, &CPaperInputDlg::RoiLBtnDown)
 	ON_BN_CLICKED(IDC_BTN_SAVE, &CPaperInputDlg::OnBnClickedBtnSave)
+	ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
 BOOL CPaperInputDlg::OnInitDialog()
@@ -132,6 +135,8 @@ void CPaperInputDlg::InitUI()
 	m_lIssuePaperCtrl.SetExtendedStyle(m_lIssuePaperCtrl.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lIssuePaperCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36);
 	m_lIssuePaperCtrl.InsertColumn(1, _T("试卷名"), LVCFMT_CENTER, 80);
+
+	SetFontSize(m_nStatusSize);
 
 	int sx = MAX_DLG_WIDTH;
 	int sy = MAX_DLG_HEIGHT;
@@ -272,8 +277,9 @@ void CPaperInputDlg::InitCtrlPosition()
 
 	int nBtnWidth = 70;
 	int nBtnHeight = 40;
+	int	nTipsHeight = 30;
 
-	int nPaperDescHeight = rcClient.Height() - nCurrentTop - nGap - nBtnHeight - nBottomGap;		//试卷描述信息控件的高度
+	int nPaperDescHeight = rcClient.Height() - nCurrentTop - nGap - nBtnHeight - nGap - nTipsHeight - nBottomGap;		//试卷描述信息控件的高度
 	if (GetDlgItem(IDC_EDIT_PapersDesc)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_EDIT_PapersDesc)->MoveWindow(nTabLeftPos, nCurrentTop, nTabCtrlWidth, nPaperDescHeight);
@@ -287,6 +293,11 @@ void CPaperInputDlg::InitCtrlPosition()
 	if (GetDlgItem(IDC_BTN_SAVE))
 	{
 		GetDlgItem(IDC_BTN_SAVE)->MoveWindow(nTabLeftPos + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeight);
+		nCurrentTop = nCurrentTop + nBtnHeight + nGap;
+	}
+	if (GetDlgItem(IDC_STATIC_TIPS)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_TIPS)->MoveWindow(nTabLeftPos, nCurrentTop, nTabCtrlWidth, nTipsHeight);
 	}
 }
 
@@ -780,8 +791,11 @@ void CPaperInputDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lPaperCtrl.GetItemData(pNMItemActivate->iItem);
 	m_nCurrItemPaper = pNMItemActivate->iItem;
+	m_pCurrentShowPaper = pPaper;
 
 	PaintRecognisedRect(pPaper);
+
+	m_nCurrTabSel = 0;
 
 	m_tabPicShow.SetCurSel(0);
 	m_pCurrentPicShow = m_vecPicShow[0];
@@ -823,6 +837,9 @@ void CPaperInputDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			cvtColor(dst, matImg, CV_GRAY2BGR);
 		else
 			matImg = dst;
+#ifdef WarpAffine_TEST
+		PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix);
+#endif
 #else
 		Mat matImg = matSrc;
 #endif
@@ -861,6 +878,9 @@ void CPaperInputDlg::PaintIssueRect(pST_PaperInfo pPaper)
 				cvtColor(dst, matImg, CV_GRAY2BGR);
 			else
 				matImg = dst;
+#ifdef WarpAffine_TEST
+			PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix);
+#endif
 #else
 			Mat matImg = matSrc;
 #endif
@@ -910,7 +930,7 @@ void CPaperInputDlg::PaintIssueRect(pST_PaperInfo pPaper)
 			for (int j = 0; itNormal != (*itPic)->lNormalRect.end(); itNormal++, j++)
 			{
 				cv::Rect rt = (*itNormal).rt;
-//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
+//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				char szCP[20] = { 0 };
 				rectangle(tmp, rt, CV_RGB(0, 255, 255), 2);
@@ -946,6 +966,7 @@ void CPaperInputDlg::OnNMDblclkListIssuepaper(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 0;
 
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lIssuePaperCtrl.GetItemData(pNMItemActivate->iItem);
+	m_pCurrentShowPaper = pPaper;
 
 	int nIssuePaper = 0;
 	PIC_LIST::iterator itPic = pPaper->lPic.begin();
@@ -954,6 +975,7 @@ void CPaperInputDlg::OnNMDblclkListIssuepaper(NMHDR *pNMHDR, LRESULT *pResult)
 		if ((*itPic)->bFindIssue)
 		{
 			nIssuePaper = i;
+			m_nCurrTabSel = i;
 			break;
 		}
 	}
@@ -972,6 +994,12 @@ void CPaperInputDlg::OnNMDblclkListIssuepaper(NMHDR *pNMHDR, LRESULT *pResult)
 void CPaperInputDlg::OnBnClickedBtnSave()
 {
 	UpdateData(TRUE);
+	if (m_nCurrItemPapers < 0)
+	{
+		AfxMessageBox(_T("请先选中试卷袋"));
+		return;
+	}
+
 	USES_CONVERSION;
 	pPAPERSINFO pPapers = (pPAPERSINFO)m_lPapersCtrl.GetItemData(m_nCurrItemPapers);
 	if (!pPapers)
@@ -1054,4 +1082,120 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	g_fmSendLock.lock();
 	g_lSendTask.push_back(pTask);
 	g_fmSendLock.unlock();
+}
+
+LRESULT CPaperInputDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
+{
+	cv::Point pt = *(cv::Point*)(wParam);
+	ShowRectByPoint(pt, m_pCurrentShowPaper);
+	return TRUE;
+}
+
+void CPaperInputDlg::ShowRectByPoint(cv::Point pt, pST_PaperInfo pPaper)
+{
+	if (!pPaper || !pPaper->pModel || pPaper->pModel->vecPaperModel.size() < m_nCurrTabSel)
+		return;
+
+	// 	if (!pPaper->bIssuePaper)		//当前卷面没有问题点，不进行显示
+	// 		return;
+
+	int nFind = -1;
+	RECTINFO* pRc = NULL;
+	PIC_LIST::iterator itPic = pPaper->lPic.begin();
+	for (int i = 0; itPic != pPaper->lPic.end(); itPic++, i++)
+	{
+		if (i == m_nCurrTabSel)
+			break;
+	}
+
+	cv::Rect rt;
+	rt.x = pt.x;
+	rt.y = pt.y;
+	//	GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[m_nCurrTabSel].lFix, rt);
+	// 	GetPosition(pPaper->pModel->vecPaperModel[m_nCurrTabSel].lFix, (*itPic)->lFix, rt);
+	// 	pt.x = rt.x;
+	// 	pt.y = rt.y;
+	nFind = GetRectInfoByPoint(pt, *itPic, pRc);
+	if (nFind < 0)
+		return;
+
+	if (!pRc)
+		return;
+
+	CString strInfo;
+	strInfo.Format(_T("阀值: %d, 要求比例: %f, 实际: %f"), pRc->nThresholdValue, pRc->fStandardValuePercent, pRc->fRealValuePercent);
+	if (pPaper->bIssuePaper)
+		SetStatusShowInfo(strInfo, TRUE);
+	else
+		SetStatusShowInfo(strInfo);
+}
+
+int CPaperInputDlg::GetRectInfoByPoint(cv::Point pt, pST_PicInfo pPic, RECTINFO*& pRc)
+{
+	int  nFind = -1;
+	RECTLIST::iterator itRectInfo = pPic->lNormalRect.begin();
+	for (int i = 0; itRectInfo != pPic->lNormalRect.end(); itRectInfo++, i++)
+	{
+		if (itRectInfo->rt.contains(pt))
+		{
+			nFind = i;
+			pRc = &(*itRectInfo);
+			break;
+		}
+	}
+	if (nFind < 0)
+	{
+		RECTLIST::iterator itIssueRectInfo = pPic->lIssueRect.begin();
+		for (int i = 0; itIssueRectInfo != pPic->lIssueRect.end(); itIssueRectInfo++, i++)
+		{
+			if (itIssueRectInfo->rt.contains(pt))
+			{
+				nFind = i;
+				pRc = &(*itIssueRectInfo);
+				break;
+			}
+		}
+	}
+	return nFind;
+}
+
+void CPaperInputDlg::SetStatusShowInfo(CString strMsg, BOOL bWarn /*= FALSE*/)
+{
+	if (bWarn)
+		m_colorStatus = RGB(255, 0, 0);
+	else
+		m_colorStatus = RGB(0, 0, 255);
+	GetDlgItem(IDC_STATIC_TIPS)->SetWindowText(strMsg);
+	TRACE("\n----------------\n");
+	TRACE(strMsg);
+	TRACE("\n----------------\n");
+}
+
+void CPaperInputDlg::SetFontSize(int nSize)
+{
+	m_fontStatus.DeleteObject();
+	m_fontStatus.CreateFont(nSize, 0, 0, 0,
+		FW_BOLD, FALSE, FALSE, 0,
+		DEFAULT_CHARSET,
+		OUT_DEFAULT_PRECIS,
+		CLIP_DEFAULT_PRECIS,
+		DEFAULT_QUALITY,
+		DEFAULT_PITCH | FF_SWISS,
+		_T("Arial"));
+	GetDlgItem(IDC_STATIC_TIPS)->SetFont(&m_fontStatus);
+}
+
+HBRUSH CPaperInputDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+
+	UINT CurID = pWnd->GetDlgCtrlID();
+
+	if (IDC_STATIC_TIPS == CurID)
+	{
+		pDC->SetTextColor(m_colorStatus);
+
+		return hbr;	// hbrsh;
+	}
+	return hbr;
 }

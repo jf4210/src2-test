@@ -85,7 +85,7 @@ RESTART:
 		while(m_bConnect == FALSE)
 		{
 			if (m_bStop)
-				return;
+				goto END;
 
 			DWORD dwTimeLatest=0;
 			DWORD dwTimeWait=0;
@@ -124,7 +124,7 @@ RESTART:
 			for (; it != m_listFile.end(); it++)
 			{
 				if (m_bStop)
-					return;
+					goto END;
 
 				stUpLoadAns* pTask = *it;
 
@@ -177,6 +177,8 @@ RESTART:
 			if (!bFindTask)	Sleep(1000);
 		}
 	}
+END:
+	return;
 }
 
 BOOL CFileUpLoad::InitUpLoadTcp(CString strAddr,USHORT usPort)
@@ -245,6 +247,10 @@ void CFileUpLoad::UnInit()
 	m_bConnect=FALSE;
 		
 	m_bUpLoad = FALSE;
+
+	g_pLogger->information("CFileUpLoad UnInit==>WaitForStop().");
+	WaitForStop();
+	g_pLogger->information("CFileUpLoad UnInit==>WaitForStop() completed.");
 
 	if (m_pITcpClient)
 	{
