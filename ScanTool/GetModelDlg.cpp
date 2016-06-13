@@ -205,6 +205,9 @@ void CGetModelDlg::OnBnClickedBtnDown()
 			strncpy(stModelInfo.szMD5, strMd5.c_str(), strMd5.length());
 		}
 
+		std::string strLog = "请求下载模板: ";
+		strLog.append(stModelInfo.szModelName);
+		g_pLogger->information(strLog);
 
 		ST_CMD_HEADER stHead;
 		stHead.usCmd = USER_NEED_DOWN_MODEL;
@@ -218,6 +221,8 @@ void CGetModelDlg::OnBnClickedBtnDown()
 		int nResult = RecvData();
 		if (nResult == 0)
 		{
+			std::string strLog = "接收模板数据失败";
+			g_pLogger->information(strLog);
 			AfxMessageBox(_T("接收模板数据失败"));
 			memset(m_szRecvBuff, 0, sizeof(m_szRecvBuff));
 			m_nRecvLen = 0;
@@ -239,7 +244,12 @@ void CGetModelDlg::OnBnClickedBtnDown()
 
 			int nRecvResult = RecvFile(&stModelInfo);
 			if (nRecvResult)
+			{
+				std::string strLog = "下载模板成功: ";
+				strLog.append(stModelInfo.szModelName);
+				g_pLogger->information(strLog);
 				AfxMessageBox(_T("下载成功"));
+			}
 		}
 
 	}
@@ -323,12 +333,16 @@ int CGetModelDlg::RecvData()
 			break;
 		case RESULT_DOWNMODEL_FAIL:
 			{
+				std::string strLog = "服务器此科目模板不存在";
+				g_pLogger->information(strLog);
 				AfxMessageBox(_T("服务器此科目模板不存在"));
 				nResult = 2;
 			}
 			break;
 		case RESULT_DOWNMODEL_NONEED:
 			{
+				std::string strLog = "本地存在此文件，不需要下载";
+				g_pLogger->information(strLog);
 				AfxMessageBox(_T("本地存在此文件，不需要下载"));
 				nResult = 3;
 			}
@@ -348,6 +362,8 @@ int CGetModelDlg::RecvFile(pST_DOWN_MODEL pModelInfo)
 	if (!m_pFileRecv)
 	{
 		TRACE("内存不足\n");
+		std::string strLog = "内存不足";
+		g_pLogger->information(strLog);
 		return 0;
 	}
 

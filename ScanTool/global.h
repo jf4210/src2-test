@@ -255,6 +255,7 @@ typedef struct _PaperInfo_
 	void*		pPapers;			//所属的试卷袋信息
 	void*		pSrcDlg;			//来源，来自哪个窗口，扫描or导入试卷窗口
 	std::string strStudentInfo;		//学生信息	
+	std::string strSN;
 	
 	PIC_LIST	lPic;
 	_PaperInfo_()

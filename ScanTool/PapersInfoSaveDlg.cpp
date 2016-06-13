@@ -121,6 +121,7 @@ void CPapersInfoSaveDlg::OnBnClickedOk()
 
 void CPapersInfoSaveDlg::OnCbnSelchangeComboExamname()
 {
+	UpdateData(TRUE);
 	int n = m_comboExamName.GetCurSel();
 	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemDataPtr(n);
 	if (!pExamInfo)
@@ -153,6 +154,7 @@ void CPapersInfoSaveDlg::OnCbnSelchangeComboExamname()
 
 void CPapersInfoSaveDlg::OnCbnSelchangeComboSubjectname()
 {
+	UpdateData(TRUE);
 	int n2 = m_comboSubject.GetCurSel();
 
 	USES_CONVERSION;

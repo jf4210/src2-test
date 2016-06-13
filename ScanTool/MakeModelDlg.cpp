@@ -643,7 +643,10 @@ LRESULT CMakeModelDlg::RoiLBtnUp(WPARAM wParam, LPARAM lParam)
 	Mat*  pShowMat = (Mat*)(lParam);
 
 	if (m_eCurCPType == UNKNOWN)
+	{
+		AfxMessageBox(_T("请先选中校验点类型"));
 		return FALSE;
+	}
 
 	if (m_eCurCPType != H_HEAD && m_eCurCPType != V_HEAD && m_pModel->nHasHead == 0)
 	{
@@ -1688,8 +1691,9 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		{
 			std::string strLog;
 			strLog.append("file cope error: " + exc.displayText());
-			g_pLogger->information(strLog);
-			TRACE("file cope error: %s\n", exc.displayText().c_str());
+			std::string strGBLog = CMyCodeConvert::Utf8ToGb2312(strLog);
+			g_pLogger->information(strGBLog);
+			TRACE(strGBLog.c_str());
 		}
 
 		CString strPicName = pModel->vecPaperModel[i]->strModelPicName;
@@ -4176,6 +4180,8 @@ bool CMakeModelDlg::ScanSrcInit()
 void CMakeModelDlg::OnDestroy()
 {
 	__super::OnDestroy();
+	
+	ReleaseTwain();
 
 	SAFE_RELEASE(m_pRecogInfoDlg);
 	SAFE_RELEASE(m_pOmrInfoDlg);

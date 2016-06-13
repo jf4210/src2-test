@@ -310,6 +310,10 @@ BOOL CTwain::ProcessMessage(MSG msg)
 #endif
 
 	}
+	else
+	{
+//		TRACE("********** ProcessMessage SourceEnabled = false ************\n");
+	}
 	return FALSE;
 }
 
@@ -516,9 +520,11 @@ BOOL CTwain::Acquire(int numImages,TW_UINT16 duplex,TW_UINT16 size,TW_UINT16 pix
 	{
 		_bTwainContinue = TRUE;
 //		BOOL ret_value=SetCapability(CAP_DUPLEXENABLED,duplex,TRUE);
-		if (duplex == 1)				//双面扫描
-			duplex = TWTY_BOOL;
-		BOOL ret_value = SetOneValueCapability(CAP_DUPLEXENABLED, duplex, TRUE);	//单双面扫描控制
+		if (duplex == 1)
+			duplex = TRUE;
+		else
+			duplex = FALSE;
+		BOOL ret_value = SetOneValueCapability(CAP_DUPLEXENABLED, TWTY_BOOL, duplex);	//单双面扫描控制	//duplex, TRUE
 
 		ret_value=SetCapability(ICAP_SUPPORTEDSIZES,size,TRUE);
 		ret_value=SetCapability(ICAP_PIXELTYPE,pixel,TRUE);

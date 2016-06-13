@@ -186,12 +186,12 @@ void CModelInfoDlg::OnBnClickedBtnDel()
 	m_listPath.DeleteAllItems();
 	for (int i = 0; i < m_vecPath.size(); i++)
 	{
-		int nItem = m_vecPath.size() - 1;
+//		int nItem = m_vecPath.size() - 1;
 		char szItem[5] = { 0 };
-		sprintf_s(szItem, "%d", nItem + 1);
-		m_listPath.InsertItem(nItem, NULL);
-		m_listPath.SetItemText(nItem, 0, (LPCTSTR)A2T(szItem));
-		m_listPath.SetItemText(nItem, 1, (LPCTSTR)m_vecPath[i].strPath);
+		sprintf_s(szItem, "%d", i + 1);
+		m_listPath.InsertItem(i, NULL);
+		m_listPath.SetItemText(i, 0, (LPCTSTR)A2T(szItem));
+		m_listPath.SetItemText(i, 1, (LPCTSTR)m_vecPath[i].strPath);
 	}
 }
 

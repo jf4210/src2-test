@@ -1003,7 +1003,10 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	USES_CONVERSION;
 	pPAPERSINFO pPapers = (pPAPERSINFO)m_lPapersCtrl.GetItemData(m_nCurrItemPapers);
 	if (!pPapers)
+	{
+		AfxMessageBox(_T("没有试卷袋信息"));
 		return;
+	}
 
 	pPapers->strPapersDesc = T2A(m_strPapersDesc);
 	pPapers->strPapersName = T2A(m_strPapersName);
@@ -1058,7 +1061,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	}
 	CString strInfo;
 	bool bWarn = false;
-	strInfo.Format(_T("正则保存%s..."), A2T(szZipName));
+	strInfo.Format(_T("正在保存%s..."), A2T(szZipName));
 //	SetStatusShowInfo(strInfo, bWarn);
 	if (!ZipFile(A2T(szPapersSrcPath), A2T(szPapersSavePath)))
 	{

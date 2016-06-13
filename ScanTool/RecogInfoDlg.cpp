@@ -133,6 +133,7 @@ void CRecogInfoDlg::OnBnClickedBtnSaverecoginfo()
 		cv::Mat imgResult = ((CMakeModelDlg*)GetParent())->m_vecPaperModelInfo[((CMakeModelDlg*)GetParent())->m_nCurrTabSel]->matDstImg(rm);
 		((CMakeModelDlg*)GetParent())->RecogNewGrayValue(imgResult, *m_pCurRectInfo);
 	}
+	AfxMessageBox(_T("ÐÞ¸Ä³É¹¦"));
 }
 
 void CRecogInfoDlg::ShowDetailRectInfo(pRECTINFO pCurRectInfo)

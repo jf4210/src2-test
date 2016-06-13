@@ -742,7 +742,18 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 void CScanToolDlg::OnBnClickedBtnScan()
 {
 	if (!m_bTwainInit)
-		return;
+	{
+		if (!m_bTwainInit)
+		{
+			m_bTwainInit = InitTwain(m_hWnd);
+			if (!IsValidDriver())
+			{
+				AfxMessageBox(_T("Unable to load Twain Driver."));
+			}
+			m_scanSourceArry.RemoveAll();
+			ScanSrcInit();
+		}
+	}
 	if (!m_pModel)
 	{
 		AfxMessageBox(_T("模板解析错误"));
@@ -759,6 +770,8 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	GetDlgItem(IDC_BTN_Scan)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTN_ScanModule)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTN_InputPaper)->EnableWindow(FALSE);
+	GetDlgItem(IDC_BTN_GetModel)->EnableWindow(FALSE);
+	GetDlgItem(IDC_BTN_UpLoadPapers)->EnableWindow(FALSE);
 	GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(_T(""));
 
 	Poco::Random rnd;
@@ -809,6 +822,8 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		GetDlgItem(IDC_BTN_Scan)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_ScanModule)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_InputPaper)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BTN_GetModel)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BTN_UpLoadPapers)->EnableWindow(TRUE);
 		GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(_T(""));
 		m_nScanStatus = 2;
 	}
@@ -819,6 +834,9 @@ void CScanToolDlg::OnBnClickedBtnScanmodule()
 	int nCoutn = m_comboModel.GetCount();
 	if (nCoutn == 0)
 		m_pModel = NULL;
+
+	ReleaseTwain();
+	m_bTwainInit = FALSE;
 
 	CMakeModelDlg dlg(m_pModel);
 	dlg.DoModal();
@@ -877,6 +895,7 @@ void CScanToolDlg::SearchModel()
 			}
 			it++;
 		}
+		strLog = "搜索模板完成";
 //		m_comboModel.SetCurSel(0);
 	}
 	catch (Poco::FileException& exc)
@@ -1134,6 +1153,8 @@ void CScanToolDlg::ScanDone(int nStatus)
 	GetDlgItem(IDC_BTN_Scan)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTN_ScanModule)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTN_InputPaper)->EnableWindow(TRUE);
+	GetDlgItem(IDC_BTN_GetModel)->EnableWindow(TRUE);
+	GetDlgItem(IDC_BTN_UpLoadPapers)->EnableWindow(TRUE);
 
 	bool bWarn = false;
 	if (nStatus != 1)
@@ -1588,7 +1609,10 @@ LRESULT CScanToolDlg::MsgRecogErr(WPARAM wParam, LPARAM lParam)
 void CScanToolDlg::OnBnClickedBtnUploadpapers()
 {
 	if (!m_pPapersInfo)
+	{
+		AfxMessageBox(_T("没有试卷袋信息"));
 		return;
+	}
 
 	if (!m_bLogin)
 	{
@@ -1645,7 +1669,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	}
 	CString strInfo;
 	bool bWarn = false;
-	strInfo.Format(_T("正则保存%s..."), A2T(szZipName));
+	strInfo.Format(_T("正在保存%s..."), A2T(szZipName));
 	SetStatusShowInfo(strInfo, bWarn);
 	if (!ZipFile(A2T(m_strCurrPicSavePath.c_str()), A2T(szPapersSavePath)))
 	{

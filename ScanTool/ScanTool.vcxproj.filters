@@ -55,9 +55,6 @@
     <Filter Include="文件上传">
       <UniqueIdentifier>{fc4984e4-e9e5-456d-a617-8d12928e96b5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="http模块">
-      <UniqueIdentifier>{dc0be124-3baf-4aa7-ab48-2040c81e9906}</UniqueIdentifier>
-    </Filter>
     <Filter Include="登录">
       <UniqueIdentifier>{47d6fe8f-ddb1-4e95-a27f-ed8c72e64688}</UniqueIdentifier>
     </Filter>
