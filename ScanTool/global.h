@@ -122,26 +122,34 @@ typedef std::list<RECTINFO> RECTLIST;			//矩形位置列表
 typedef struct _OmrQuestion_			//题目
 {
 	int nTH;
+	int nSingle;						//0-单选，1-多选
+	std::string strRecogVal;			//识别结果：A、B、C...
 	RECTLIST	lSelAnswer;				//选项列表
 	_OmrQuestion_()
 	{
 		nTH = -1;
+		nSingle = 0;
 	}
 }OMR_QUESTION, *pOMR_QUESTION;
 typedef std::list<OMR_QUESTION> OMRLIST;
 
-typedef struct _SNDetail_
+typedef struct _OmrResult_
 {
-	int nVal;					//标识这个矩形块是什么值，0-9
-	RECTINFO rcSN;
-}SN_DETAIL,*pSN_DETAIL;
-typedef std::list<pSN_DETAIL> lSNDETAIL;
+	int		nTH;				//题号
+	int		nSingle;			//0-单选，1-多选
+	std::string strRecogVal;	//识别结果：A、B、C...
+	_OmrResult_()
+	{
+		nTH = -1;
+		nSingle = 0;
+	}
+}OMR_RESULT, *pOMR_RESULT;
+typedef std::list<OMR_RESULT> OMRRESULTLIST;
 
 typedef struct _SN_
 {
 	int nItem;			//第几位数
 	int nRecogVal;		//识别的结果
-//	lSNDETAIL	lSN;
 	RECTLIST	lSN;
 	_SN_()
 	{
@@ -223,6 +231,7 @@ typedef std::list<pMODEL> MODELLIST;	//模板列表
 
 typedef struct _PicInfo_				//图片信息
 {
+	bool			bRecoged;		//是否已经识别过
 	bool			bFindIssue;		//是否找到问题点
 //	bool			bImgOpen;		//试卷图片是否已经打开，打开了就不需要再次打开
 //	cv::Point		ptModelFix;		//模板的定点
@@ -238,6 +247,7 @@ typedef struct _PicInfo_				//图片信息
 // 	cv::Mat			matDest;
 	_PicInfo_()
 	{
+		bRecoged = false;
 		bFindIssue = false;
 		pPaper = NULL;
 //		ptFix = cv::Point(0, 0);
@@ -257,6 +267,7 @@ typedef struct _PaperInfo_
 	std::string strStudentInfo;		//学生信息	
 	std::string strSN;
 	
+	OMRRESULTLIST lOmrResult;
 	PIC_LIST	lPic;
 	_PaperInfo_()
 	{

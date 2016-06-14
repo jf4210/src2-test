@@ -1021,6 +1021,46 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	CPapersInfoSaveDlg dlg(pPapers);
 	if (dlg.DoModal() != IDOK)
 		return;
+
+	Poco::JSON::Array jsnPaperArry;
+	PAPER_LIST::iterator itNomarlPaper = pPapers->lPaper.begin();
+	for (; itNomarlPaper != pPapers->lPaper.end(); itNomarlPaper++)
+	{
+		Poco::JSON::Object jsnPaper;
+		jsnPaper.set("sn", (*itNomarlPaper)->strSN);
+
+		Poco::JSON::Array jsnOmrArry;
+		OMRRESULTLIST::iterator itOmr = (*itNomarlPaper)->lOmrResult.begin();
+		for (; itOmr != (*itNomarlPaper)->lOmrResult.end(); itOmr++)
+		{
+			Poco::JSON::Object jsnOmr;
+			jsnOmr.set("th", itOmr->nTH);
+			jsnOmr.set("nSingle", itOmr->nSingle);
+			jsnOmr.set("omrResult", itOmr->strRecogVal);
+			jsnOmrArry.add(jsnOmr);
+		}
+		jsnPaper.set("omr", jsnOmrArry);
+		jsnPaperArry.add(jsnPaper);
+	}
+	PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
+	for (; itIssuePaper != pPapers->lIssue.end(); itIssuePaper++)
+	{
+		Poco::JSON::Object jsnPaper;
+		jsnPaper.set("sn", (*itIssuePaper)->strSN);
+
+		Poco::JSON::Array jsnOmrArry;
+		OMRRESULTLIST::iterator itOmr = (*itIssuePaper)->lOmrResult.begin();
+		for (; itOmr != (*itIssuePaper)->lOmrResult.end(); itOmr++)
+		{
+			Poco::JSON::Object jsnOmr;
+			jsnOmr.set("th", itOmr->nTH);
+			jsnOmr.set("nSingle", itOmr->nSingle);
+			jsnOmr.set("omrResult", itOmr->strRecogVal);
+			jsnOmrArry.add(jsnOmr);
+		}
+		jsnPaper.set("omr", jsnOmrArry);
+		jsnPaperArry.add(jsnPaper);
+	}
 	//写试卷袋信息到文件
 	std::string strUploader = CMyCodeConvert::Gb2312ToUtf8(T2A(pDlg->m_strUserName));
 	std::string strEzs = T2A(pDlg->m_strEzs);
@@ -1029,6 +1069,10 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	jsnFileData.set("subjectId", dlg.m_SubjectID);
 	jsnFileData.set("uploader", strUploader);
 	jsnFileData.set("ezs", strEzs);
+	jsnFileData.set("nTeacherId", pDlg->m_nTeacherId);
+	jsnFileData.set("nUserId", pDlg->m_nUserId);
+	jsnFileData.set("scanNum", pPapers->nPaperCount);		//扫描的学生数量
+	jsnFileData.set("detail", jsnPaperArry);
 	std::stringstream jsnString;
 	jsnFileData.stringify(jsnString, 0);
 

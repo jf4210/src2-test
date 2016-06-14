@@ -709,7 +709,7 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 		{
 			AfxMessageBox(_T("Unable to load Twain Driver."));
 		}
-
+		m_scanSourceArry.RemoveAll();
 		ScanSrcInit();
 	}
 
@@ -1039,6 +1039,7 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 
 		if (rm.width < 10 || rm.height < 7 || rm.width > 70 || rm.height > 50 || rm.area() < 70)
 		{
+			TRACE("¹ýÂË¾ØÐÎ:(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
 			continue;
 		}
 
@@ -1901,6 +1902,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 				jsnArry.add(jsnObj);
 			}
 			jsnTHObj.set("nTH", itOmr->nTH);
+			jsnTHObj.set("nSingle", itOmr->nSingle);
 			jsnTHObj.set("omrlist", jsnArry);
 			jsnOMRArry.add(jsnTHObj);
 		}
@@ -3037,6 +3039,7 @@ void CMakeModelDlg::AddRecogRectToList()
 			{
 				OMR_QUESTION objOmr;
 				objOmr.nTH = m_vecTmp[i].nTH + m_nStartTH;
+				objOmr.nSingle = m_vecTmp[i].nSingle;
 				m_vecTmp[i].nTH += m_nStartTH;
 				objOmr.lSelAnswer.push_back(m_vecTmp[i]);
 				m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.push_back(objOmr);

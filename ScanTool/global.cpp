@@ -390,6 +390,7 @@ pMODEL LoadModelFile(CString strModelPath)
 				Poco::JSON::Object::Ptr jsnRectInfoObj = arrayOmr->getObject(i);
 				OMR_QUESTION objOmr;
 				objOmr.nTH = jsnRectInfoObj->get("nTH").convert<int>();
+				objOmr.nSingle = jsnRectInfoObj->get("nSingle").convert<int>();
 				Poco::JSON::Array::Ptr omrList = jsnRectInfoObj->getArray("omrlist");
 				for (int j = 0; j < omrList->size(); j++)
 				{
@@ -905,7 +906,7 @@ bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 	rt.height = src.rows / 4;
 #else
 	rt.width = src.cols;
-	rt.height = src.rows / 4;
+	rt.height = src.rows * 0.25;		//4
 #endif
 
 	cv::Mat matSrc = src(rt);
@@ -1133,7 +1134,7 @@ int FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lMode
 // 	}
 
 	end = clock();
-	sprintf_s(szTmpLog, "图像变换时间: %d, ptMod1(%f,%f), ptMod2(%f,%f), ptMod3(%f,%f), pt1(%f,%f), pt2(%f,%f), pt3(%f,%f)\n", end - start,\
+	sprintf_s(szTmpLog, "图像变换时间: %d, ptMod1(%.2f,%.2f), ptMod2(%.2f,%.2f), ptMod3(%.2f,%.2f), pt1(%.2f,%.2f), pt2(%.2f,%.2f), pt3(%.2f,%.2f)\n", end - start,\
 		vecFixPt[0].x, vecFixPt[0].y, vecFixPt[1].x, vecFixPt[1].y, vecFixPt[2].x, vecFixPt[2].y, vecFixNewPt[0].x, vecFixNewPt[0].y, vecFixNewPt[1].x, vecFixNewPt[1].y, vecFixNewPt[2].x, vecFixNewPt[2].y);
 	g_pLogger->information(szTmpLog);
 	TRACE(szTmpLog);
@@ -1184,7 +1185,7 @@ int FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& 
 	cv::warpPerspective(matCompPic, matCompPic, warp_mat, matCompPic.size(), 1, 0, cv::Scalar(255, 255, 255));
 
 	end = clock();
-	sprintf_s(szTmpLog, "图像变换时间: %d, ptMod1(%f,%f), ptMod2(%f,%f), ptMod3(%f,%f), ptMod4(%f,%f), pt1(%f,%f), pt2(%f,%f), pt3(%f,%f), pt4(%f,%f)\n", end - start, \
+	sprintf_s(szTmpLog, "图像变换时间: %d, ptMod1(%.2f,%.2f), ptMod2(%.2f,%.2f), ptMod3(%.2f,%.2f), ptMod4(%.2f,%.2f), pt1(%.2f,%.2f), pt2(%.2f,%.2f), pt3(%.2f,%.2f), pt4(%.2f,%.2f)\n", end - start, \
 		vecFixPt[0].x, vecFixPt[0].y, vecFixPt[1].x, vecFixPt[1].y, vecFixPt[2].x, vecFixPt[2].y, vecFixPt[3].x, vecFixPt[3].y,\
 		vecFixNewPt[0].x, vecFixNewPt[0].y, vecFixNewPt[1].x, vecFixNewPt[1].y, vecFixNewPt[2].x, vecFixNewPt[2].y, vecFixNewPt[3].x, vecFixNewPt[3].y);
 	g_pLogger->information(szTmpLog);

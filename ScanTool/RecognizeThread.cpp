@@ -131,6 +131,11 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		clock_t start_pic, end_pic;
 		start_pic = clock();
 
+		if ((*itPic)->bRecoged)		//已经识别过，不再识别
+			continue;
+
+		(*itPic)->bRecoged = true;
+
 		int nCount = pModelInfo->pModel->vecPaperModel[i]->lH_Head.size() + pModelInfo->pModel->vecPaperModel[i]->lV_Head.size() + pModelInfo->pModel->vecPaperModel[i]->lABModel.size()
 			+ pModelInfo->pModel->vecPaperModel[i]->lCourse.size() + pModelInfo->pModel->vecPaperModel[i]->lQK_CP.size() + pModelInfo->pModel->vecPaperModel[i]->lGray.size()
 			+ pModelInfo->pModel->vecPaperModel[i]->lWhite.size() + pModelInfo->pModel->vecPaperModel[i]->lSNInfo.size();
@@ -170,6 +175,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		if(bResult) bResult = RecogGrayCP(nPic, matCompPic, *itPic, pModelInfo);
 		if(bResult) bResult = RecogWhiteCP(nPic, matCompPic, *itPic, pModelInfo);
 		if (bResult) bResult = RecogSN(nPic, matCompPic, *itPic, pModelInfo);
+		if (bResult) bResult = RecogOMR(nPic, matCompPic, *itPic, pModelInfo);
 		if(!bResult) bFind = true;
 		if (bFind)
 		{
@@ -205,6 +211,27 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		sprintf_s(szLog, "试卷 %s 打开时间: %d, 识别总时间: %d\n", strPicFileName.c_str(), end1_pic - start_pic, end_pic - start_pic);
 		g_pLogger->information(szLog);
 	}
+
+#if 1	//test log
+	char szPaperLog[500] = { 0 };
+	sprintf_s(szPaperLog, "试卷(%s)识别结果: ", pPaper->strStudentInfo.c_str());
+	char szSN[30] = { 0 };
+	sprintf_s(szSN, "SN(%s), ", pPaper->strSN.c_str());
+	strcat_s(szPaperLog, szSN);
+	OMRRESULTLIST::iterator itOmr = pPaper->lOmrResult.begin();
+	for (; itOmr != pPaper->lOmrResult.end(); itOmr++)
+	{
+		char szSingle[10] = { 0 };
+		if (itOmr->nSingle == 0)
+			strcpy_s(szSingle, "单");
+		else
+			strcpy_s(szSingle, "多");
+		char szOmrItem[60] = { 0 };
+		sprintf_s(szOmrItem, "%d(%s):%s ", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str());
+		strcat_s(szPaperLog, szOmrItem);
+	}
+	g_pLogger->information(szPaperLog);
+#endif
 }
 
 inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
@@ -278,7 +305,7 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 	catch (cv::Exception &exc)
 	{
 		char szLog[300] = { 0 };
-		sprintf_s(szLog, "CRecognizeThread::Recog error. detail: %s\n\n", exc.msg);
+		sprintf_s(szLog, "CRecognizeThread::Recog error. detail: %s\n", exc.msg);
 		g_pLogger->information(szLog);
 		TRACE(szLog);
 	}
@@ -947,7 +974,7 @@ int CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, p
 		for (; itSnItem != pSnItem->lSN.end(); itSnItem++)
 		{
 			RECTINFO rc = *itSnItem;
-
+			
 			if (pModelInfo->pModel->nHasHead)
 			{
 				if (rc.nHItem >= m_vecH_Head.size() || rc.nVItem >= m_vecV_Head.size())
@@ -972,7 +999,7 @@ int CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, p
 		}
 		if (vecItemVal.size() == 1)
 		{
-			pSnItem->nRecogVal = vecItemVal[0];
+//			pSnItem->nRecogVal = vecItemVal[0];
 			vecSN.push_back(vecItemVal[0]);
 		}
 		else
@@ -1016,7 +1043,73 @@ int CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, p
 
 int CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
-	return 1;
+	bool bRecogAll = true;
+	bool bResult = true;
+	std::vector<int> vecOmr;
+	OMRLIST::iterator itOmr = pModelInfo->pModel->vecPaperModel[nPic]->lOMR2.begin();
+	for (; itOmr != pModelInfo->pModel->vecPaperModel[nPic]->lOMR2.end(); itOmr++)
+	{
+		pOMR_QUESTION pOmrQuestion = &(*itOmr);
+
+		std::vector<int> vecItemVal;
+		RECTLIST::iterator itOmrItem = pOmrQuestion->lSelAnswer.begin();
+		for (; itOmrItem != pOmrQuestion->lSelAnswer.end(); itOmrItem++)
+		{
+			RECTINFO rc = *itOmrItem;
+
+			if (pModelInfo->pModel->nHasHead)
+			{
+				if (rc.nHItem >= m_vecH_Head.size() || rc.nVItem >= m_vecV_Head.size())
+				{
+					bResult = false;
+					pPic->bFindIssue = true;
+					pPic->lIssueRect.push_back(rc);
+					break;
+				}
+				rc.rt.x = m_vecH_Head[rc.nHItem].rt.tl().x;
+				rc.rt.y = m_vecV_Head[rc.nVItem].rt.tl().y;
+				rc.rt.width = m_vecH_Head[rc.nHItem].rt.width;
+				rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
+			}
+			else
+				GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
+			bool bResult_Recog = RecogVal(nPic, rc, matCompPic, pPic, pModelInfo);
+			if (bResult_Recog)
+			{
+				vecItemVal.push_back(rc.nAnswer);
+			}
+		}
+		std::string strRecogAnswer;
+		for (int i = 0; i < vecItemVal.size(); i++)
+		{
+			char szVal[5] = { 0 };
+			sprintf_s(szVal, "%c", vecItemVal[i] + 65);
+			strRecogAnswer.append(szVal);	
+		}
+		OMR_RESULT omrResult;
+		omrResult.nTH = pOmrQuestion->nTH;
+		omrResult.nSingle = pOmrQuestion->nSingle;
+		omrResult.strRecogVal = strRecogAnswer;
+		((pST_PaperInfo)(pPic->pPaper))->lOmrResult.push_back(omrResult);
+
+// 		char szSingle[10] = { 0 };
+// 		if (pOmrQuestion->nSingle == 0)
+// 			strcpy_s(szSingle, "单选题");
+// 		else
+// 			strcpy_s(szSingle, "多选题");
+// 		char szLog[MAX_PATH] = { 0 };
+// 		sprintf_s(szLog, "识别OMR第%d题(%s),识别结果(%s), 图片名: %s\n", pOmrQuestion->nTH, szSingle, strRecogAnswer.c_str(), pPic->strPicName.c_str());
+// 		g_pLogger->information(szLog);
+// 		TRACE(szLog);
+	}
+	if (!bResult)
+	{
+		char szLog[MAX_PATH] = { 0 };
+		sprintf_s(szLog, "识别OMR失败, 图片名: %s\n", pPic->strPicName.c_str());
+		g_pLogger->information(szLog);
+		TRACE(szLog);
+	}
+	return bResult;
 }
 
 bool CRecognizeThread::RecogVal(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
@@ -1032,15 +1125,31 @@ bool CRecognizeThread::RecogVal(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST
 		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 		//图片二值化
-		threshold(matCompRoi, matCompRoi, 200, 255, THRESH_BINARY_INV);
+		threshold(matCompRoi, matCompRoi, 185, 255, THRESH_BINARY_INV);				//200, 255
+#if 1
+		//确定腐蚀和膨胀核的大小
+		Mat element = getStructuringElement(MORPH_RECT, Size(4, 4));	//Size(4, 4)
+		//膨胀操作
+		dilate(matCompRoi, matCompRoi, element);
 
+		Mat element2 = getStructuringElement(MORPH_RECT, Size(15, 15));	//Size(4, 4)
+		//腐蚀操作1
+		erode(matCompRoi, matCompRoi, element2);
+
+// 		Mat element3 = getStructuringElement(MORPH_RECT, Size(4, 4));	//Size(4, 4)
+// 		//腐蚀操作2
+// 		erode(matCompRoi, matCompRoi, element3);
+
+		Mat element4 = getStructuringElement(MORPH_RECT, Size(5, 5));	//Size(4, 4)
+		dilate(matCompRoi, matCompRoi, element4);
+#else
 		//确定腐蚀和膨胀核的大小
 		Mat element = getStructuringElement(MORPH_RECT, Size(5, 5));	//Size(4, 4)
 		//腐蚀操作1
 		erode(matCompRoi, matCompRoi, element);
 
 		//确定腐蚀和膨胀核的大小
-		Mat element2 = getStructuringElement(MORPH_RECT, Size(2, 2));	//Size(4, 4)
+		Mat element2 = getStructuringElement(MORPH_RECT, Size(3, 3));	//Size(4, 4)
 		//腐蚀操作2
 		erode(matCompRoi, matCompRoi, element2);
 
@@ -1048,7 +1157,7 @@ bool CRecognizeThread::RecogVal(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST
 		dilate(matCompRoi, matCompRoi, element2);
 		//膨胀操作
 		dilate(matCompRoi, matCompRoi, element);
-
+#endif
 		IplImage ipl_img(matCompRoi);
 
 		//the parm. for cvFindContours  
@@ -1058,23 +1167,33 @@ bool CRecognizeThread::RecogVal(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST
 		//提取轮廓  
 		cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-//		bool bResult = false;
 		std::vector<Rect>RectCompList;
 		for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++)
 		{
 			CvRect aRect = cvBoundingRect(contour, 0);
 			Rect rm = aRect;
 			RectCompList.push_back(rm);
+
+// 			cv::Rect rtTmp = rm;
+// 			rtTmp.x += rt.x;
+// 			rtTmp.y += rt.y;
+// 			rectangle(matCompPic, rtTmp, CV_RGB(255, 0, 0));
 		}
 		if (RectCompList.size() == 0)
 			bResult = false;
 		else
 			bResult = true;
+
+// 		if (RectCompList.size() > 0 && rc.nSnVal == 7)
+// 		{
+// 			namedWindow("5轮廓化resultImage", 1);
+// 			cv::imshow("5轮廓化resultImage", matShow);
+// 		}
 	}
 	catch (cv::Exception &exc)
 	{
 		char szLog[300] = { 0 };
-		sprintf_s(szLog, "CRecognizeThread::RecogVal error. detail: %s\n\n", exc.msg);
+		sprintf_s(szLog, "CRecognizeThread::RecogVal error. detail: %s\n", exc.msg);
 		g_pLogger->information(szLog);
 		TRACE(szLog);
 	}

@@ -1123,19 +1123,27 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(szStudentName));
 		m_lcPicture.SetItemData(nCount, (DWORD_PTR)m_pPaper);
 
-		//添加到识别任务列表
-		if (m_pModel)
-		{
-			pRECOGTASK pTask = new RECOGTASK;
-			pTask->pPaper = m_pPaper;
-			g_lRecogTask.push_back(pTask);
-		}
+// 		//添加到识别任务列表
+// 		if (m_pModel)
+// 		{
+// 			pRECOGTASK pTask = new RECOGTASK;
+// 			pTask->pPaper = m_pPaper;
+// 			g_lRecogTask.push_back(pTask);
+// 		}
 	}
 	else
 	{
 		m_pPaper->lPic.push_back(pPic);
 	}
 	pPic->pPaper = m_pPaper;
+
+	//添加到识别任务列表
+	if (m_pModel)
+	{
+		pRECOGTASK pTask = new RECOGTASK;
+		pTask->pPaper = m_pPaper;
+		g_lRecogTask.push_back(pTask);
+	}
 
 	CString strMsg = _T("");
 	strMsg.Format(_T("已扫描%d张"), m_nScanCount);
@@ -1627,8 +1635,46 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	clock_t start, end;
 	start = clock();
 
-
 	USES_CONVERSION;
+	Poco::JSON::Array jsnPaperArry;
+	PAPER_LIST::iterator itNomarlPaper = m_pPapersInfo->lPaper.begin();
+	for (; itNomarlPaper != m_pPapersInfo->lPaper.end(); itNomarlPaper++)
+	{
+		Poco::JSON::Object jsnPaper;
+		jsnPaper.set("sn", (*itNomarlPaper)->strSN);
+
+		Poco::JSON::Array jsnOmrArry;
+		OMRRESULTLIST::iterator itOmr = (*itNomarlPaper)->lOmrResult.begin();
+		for (; itOmr != (*itNomarlPaper)->lOmrResult.end(); itOmr++)
+		{
+			Poco::JSON::Object jsnOmr;
+			jsnOmr.set("th", itOmr->nTH);
+			jsnOmr.set("nSingle", itOmr->nSingle);
+			jsnOmr.set("omrResult", itOmr->strRecogVal);
+			jsnOmrArry.add(jsnOmr);
+		}
+		jsnPaper.set("omr", jsnOmrArry);
+		jsnPaperArry.add(jsnPaper);
+	}
+	PAPER_LIST::iterator itIssuePaper = m_pPapersInfo->lIssue.begin();
+	for (; itIssuePaper != m_pPapersInfo->lIssue.end(); itIssuePaper++)
+	{
+		Poco::JSON::Object jsnPaper;
+		jsnPaper.set("sn", (*itIssuePaper)->strSN);
+
+		Poco::JSON::Array jsnOmrArry;
+		OMRRESULTLIST::iterator itOmr = (*itIssuePaper)->lOmrResult.begin();
+		for (; itOmr != (*itIssuePaper)->lOmrResult.end(); itOmr++)
+		{
+			Poco::JSON::Object jsnOmr;
+			jsnOmr.set("th", itOmr->nTH);
+			jsnOmr.set("nSingle", itOmr->nSingle);
+			jsnOmr.set("omrResult", itOmr->strRecogVal);
+			jsnOmrArry.add(jsnOmr);
+		}
+		jsnPaper.set("omr", jsnOmrArry);
+		jsnPaperArry.add(jsnPaper);
+	}
 	//写试卷袋信息到文件
 	std::string strUploader = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strUserName));
 	std::string strEzs = T2A(m_strEzs);
@@ -1640,6 +1686,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	jsnFileData.set("nTeacherId", m_nTeacherId);
 	jsnFileData.set("nUserId", m_nUserId);
 	jsnFileData.set("scanNum", m_pPapersInfo->nPaperCount);		//扫描的学生数量
+	jsnFileData.set("detail", jsnPaperArry);
 	std::stringstream jsnString;
 	jsnFileData.stringify(jsnString, 0);
 
