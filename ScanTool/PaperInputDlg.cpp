@@ -704,6 +704,7 @@ void CPaperInputDlg::SeachModel()
 			it++;
 		}
 		//		m_comboModel.SetCurSel(0);
+		strLog = "搜索模板完成";
 	}
 	catch (Poco::FileException& exc)
 	{
@@ -854,6 +855,31 @@ void CPaperInputDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			rectangle(tmp, (*itNormalRect).rt, CV_RGB(255, 0, 0), 2);
 			rectangle(tmp2, (*itNormalRect).rt, CV_RGB(255, 233, 10), -1);
 		}
+
+		//打印OMR、SN位置
+		SNLIST::iterator itSN = pPaper->pModel->vecPaperModel[i]->lSNInfo.begin();
+		for (; itSN != pPaper->pModel->vecPaperModel[i]->lSNInfo.end(); itSN++)
+		{
+			pSN_ITEM pSnItem = *itSN;
+			RECTLIST::iterator itSnItem = pSnItem->lSN.begin();
+			for (; itSnItem != pSnItem->lSN.end(); itSnItem++)
+			{
+				rectangle(tmp, (*itSnItem).rt, CV_RGB(255, 0, 0), 2);
+				rectangle(tmp2, (*itSnItem).rt, CV_RGB(255, 233, 10), -1);
+			}
+		}
+		OMRLIST::iterator itOmr = pPaper->pModel->vecPaperModel[i]->lOMR2.begin();
+		for (; itOmr != pPaper->pModel->vecPaperModel[i]->lOMR2.end(); itOmr++)
+		{
+			pOMR_QUESTION pOmrQuestion = &(*itOmr);
+			RECTLIST::iterator itOmrItem = pOmrQuestion->lSelAnswer.begin();
+			for (; itOmrItem != pOmrQuestion->lSelAnswer.end(); itOmrItem++)
+			{
+				rectangle(tmp, (*itOmrItem).rt, CV_RGB(255, 0, 0), 2);
+				rectangle(tmp2, (*itOmrItem).rt, CV_RGB(255, 233, 10), -1);
+			}
+		}
+
 		addWeighted(tmp, 0.5, tmp2, 0.5, 0, tmp);
 		m_vecPicShow[i]->ShowPic(tmp);
 	}

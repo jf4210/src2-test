@@ -213,11 +213,16 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 	}
 
 #if 1	//test log
-	char szPaperLog[500] = { 0 };
-	sprintf_s(szPaperLog, "试卷(%s)识别结果: ", pPaper->strStudentInfo.c_str());
+// 	char szPaperLog[1000] = { 0 };
+// 	sprintf_s(szPaperLog, "试卷(%s)识别结果: ", pPaper->strStudentInfo.c_str());
+	std::string strPaperLog = "试卷(";
+	strPaperLog.append(pPaper->strStudentInfo);
+	strPaperLog.append(")识别结果: ");
+
 	char szSN[30] = { 0 };
 	sprintf_s(szSN, "SN(%s), ", pPaper->strSN.c_str());
-	strcat_s(szPaperLog, szSN);
+//	strcat_s(szPaperLog, szSN);
+	strPaperLog.append(szSN);
 	OMRRESULTLIST::iterator itOmr = pPaper->lOmrResult.begin();
 	for (; itOmr != pPaper->lOmrResult.end(); itOmr++)
 	{
@@ -226,11 +231,32 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			strcpy_s(szSingle, "单");
 		else
 			strcpy_s(szSingle, "多");
-		char szOmrItem[60] = { 0 };
-		sprintf_s(szOmrItem, "%d(%s):%s ", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str());
-		strcat_s(szPaperLog, szOmrItem);
+		
+		char szItemInfo[600] = { 0 };
+		if (itOmr->nDoubt)
+		{
+			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
+			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
+			{
+				// 			if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
+				// 			{
+				char szTmp[100] = { 0 };
+				sprintf_s(szTmp, "选项=%c, 识别实际比例=%.3f, val=%.2f, 识别标准val=%.2f, 是否成功:%d\t", itRect->nAnswer + 65, \
+					itRect->fRealValuePercent, itRect->fRealValue, itRect->fStandardValue, itRect->fRealValuePercent > itRect->fStandardValuePercent);
+				strcat_s(szItemInfo, szTmp);
+				//			}
+			}
+		}
+		
+		char szOmrItem[660] = { 0 };
+		if (itOmr->nDoubt)
+			sprintf_s(szOmrItem, "%d(%s):%s ---%s Doubt(%d)\t==>%s\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal2.c_str(), itOmr->nDoubt, szItemInfo);
+		else
+			sprintf_s(szOmrItem, "%d(%s):%s ---%s Doubt(%d)\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal2.c_str(), itOmr->nDoubt);
+		//		strcat_s(szPaperLog, szOmrItem);
+		strPaperLog.append(szOmrItem);
 	}
-	g_pLogger->information(szPaperLog);
+	g_pLogger->information(strPaperLog);
 #endif
 }
 
@@ -250,10 +276,16 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 		const float* ranges[1];
 		const int histSize[1] = { 1 };
 		float hranges[2];
-		if (rc.eCPType != WHITE_CP)
+		if (rc.eCPType != WHITE_CP && rc.eCPType != OMR)
 		{
 			hranges[0] = 0;
 			hranges[1] = rc.nThresholdValue;
+			ranges[0] = hranges;
+		}
+		else if (rc.eCPType == OMR)
+		{
+			hranges[0] = 0;
+			hranges[1] = 235;
 			ranges[0] = hranges;
 		}
 		else
@@ -991,11 +1023,24 @@ int CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, p
 			}
 			else
 				GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
+#if 0
+			bool bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
+			if (bResult_Recog)
+			{
+				if (rc.fRealValuePercent > rc.fStandardValuePercent)
+					vecItemVal.push_back(rc.nSnVal);
+			}
+			char szTmp[300] = {0};
+			sprintf_s(szTmp, "图片名: %s, SN: 第%d位, 选项=%d, 识别实际比例=%.3f, val=%.2f, 识别标准=%.3f, val=%.2f, 是否成功:%d\n", pPic->strPicName.c_str(),\
+				pSnItem->nItem, rc.nSnVal, rc.fRealValuePercent, rc.fRealValue, rc.fStandardValuePercent, rc.fStandardValue, rc.fRealValuePercent > rc.fStandardValuePercent);
+			TRACE(szTmp);
+#else
 			bool bResult_Recog = RecogVal(nPic, rc, matCompPic, pPic, pModelInfo);
 			if (bResult_Recog)
 			{
 				vecItemVal.push_back(rc.nSnVal);
 			}
+#endif
 		}
 		if (vecItemVal.size() == 1)
 		{
@@ -1051,7 +1096,9 @@ int CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, 
 	{
 		pOMR_QUESTION pOmrQuestion = &(*itOmr);
 
-		std::vector<int> vecItemVal;
+		OMR_RESULT omrResult;
+		std::vector<int> vecVal_calcHist;		//直方图灰度计算的识别结果
+		std::vector<int> vecVal_threshold;		//二值化计算的识别结果
 		RECTLIST::iterator itOmrItem = pOmrQuestion->lSelAnswer.begin();
 		for (; itOmrItem != pOmrQuestion->lSelAnswer.end(); itOmrItem++)
 		{
@@ -1073,23 +1120,56 @@ int CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, 
 			}
 			else
 				GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
-			bool bResult_Recog = RecogVal(nPic, rc, matCompPic, pPic, pModelInfo);
+#if 1
+			bool bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
 			if (bResult_Recog)
 			{
-				vecItemVal.push_back(rc.nAnswer);
+				if (rc.fRealValuePercent > rc.fStandardValuePercent)
+				{
+					vecVal_calcHist.push_back(rc.nAnswer);
+//					omrResult.lSelAnswer.push_back(rc);
+				}
 			}
+			char szTmp[300] = {0};
+			sprintf_s(szTmp, "图片名: %s, OMR: 题号=%d, 选项=%c, 识别实际比例=%.3f, val=%.2f, 识别标准=%.3f, val=%.2f, 是否成功:%d\n", pPic->strPicName.c_str(),\
+				pOmrQuestion->nTH, rc.nAnswer + 65, rc.fRealValuePercent, rc.fRealValue, rc.fStandardValuePercent, rc.fStandardValue, rc.fRealValuePercent > rc.fStandardValuePercent);
+			TRACE(szTmp);
+
+			bool bResult_Recog2 = RecogVal(nPic, rc, matCompPic, pPic, pModelInfo);
+			if (bResult_Recog2)
+			{
+				vecVal_threshold.push_back(rc.nAnswer);
+			}
+			omrResult.lSelAnswer.push_back(rc);
+#endif
 		}
-		std::string strRecogAnswer;
-		for (int i = 0; i < vecItemVal.size(); i++)
+		std::string strRecogAnswer1;
+		for (int i = 0; i < vecVal_calcHist.size(); i++)
 		{
 			char szVal[5] = { 0 };
-			sprintf_s(szVal, "%c", vecItemVal[i] + 65);
-			strRecogAnswer.append(szVal);	
+			sprintf_s(szVal, "%c", vecVal_calcHist[i] + 65);
+			strRecogAnswer1.append(szVal);	
 		}
-		OMR_RESULT omrResult;
-		omrResult.nTH = pOmrQuestion->nTH;
-		omrResult.nSingle = pOmrQuestion->nSingle;
-		omrResult.strRecogVal = strRecogAnswer;
+		std::string strRecogAnswer2;
+		for (int i = 0; i < vecVal_threshold.size(); i++)
+		{
+			char szVal[5] = { 0 };
+			sprintf_s(szVal, "%c", vecVal_threshold[i] + 65);
+			strRecogAnswer2.append(szVal);
+		}
+
+		int nDoubt = 0;
+		if (strRecogAnswer1 == strRecogAnswer2)
+			nDoubt = 0;
+		else
+			nDoubt = 1;
+
+//		OMR_RESULT omrResult;
+		omrResult.nTH			= pOmrQuestion->nTH;
+		omrResult.nSingle		= pOmrQuestion->nSingle;
+		omrResult.nDoubt		= nDoubt;
+		omrResult.strRecogVal	= strRecogAnswer1;
+		omrResult.strRecogVal2	= strRecogAnswer2;
 		((pST_PaperInfo)(pPic->pPaper))->lOmrResult.push_back(omrResult);
 
 // 		char szSingle[10] = { 0 };
@@ -1125,23 +1205,56 @@ bool CRecognizeThread::RecogVal(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST
 		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 		//图片二值化
-		threshold(matCompRoi, matCompRoi, 185, 255, THRESH_BINARY_INV);				//200, 255
+		threshold(matCompRoi, matCompRoi, 240, 255, THRESH_BINARY_INV);				//200, 255
 #if 1
+// 		if (rc.nTH == 26)
+// 		{
+// 			namedWindow("threshold", 1);
+// 			imshow("threshold", matCompRoi);
+// 		}
+
 		//确定腐蚀和膨胀核的大小
 		Mat element = getStructuringElement(MORPH_RECT, Size(4, 4));	//Size(4, 4)
 		//膨胀操作
 		dilate(matCompRoi, matCompRoi, element);
 
+// 		if (rc.nTH == 26)
+// 		{
+// 			namedWindow("dilate", 1);
+// 			imshow("dilate", matCompRoi);
+// 		}
+
 		Mat element2 = getStructuringElement(MORPH_RECT, Size(15, 15));	//Size(4, 4)
 		//腐蚀操作1
 		erode(matCompRoi, matCompRoi, element2);
 
-// 		Mat element3 = getStructuringElement(MORPH_RECT, Size(4, 4));	//Size(4, 4)
-// 		//腐蚀操作2
-// 		erode(matCompRoi, matCompRoi, element3);
+// 		if (rc.nTH == 26)
+// 		{
+// 			namedWindow("erode", 1);
+// 			imshow("erode", matCompRoi);
+// 		}
+
+		Mat element3 = getStructuringElement(MORPH_RECT, Size(4, 4));	//Size(4, 4)
+		//腐蚀操作2
+		erode(matCompRoi, matCompRoi, element3);
+
+// 		if (rc.nTH == 26)
+// 		{
+// 			namedWindow("erode2", 1);
+// 			imshow("erode2", matCompRoi);
+// 		}
+
 
 		Mat element4 = getStructuringElement(MORPH_RECT, Size(5, 5));	//Size(4, 4)
 		dilate(matCompRoi, matCompRoi, element4);
+
+// 		if(rc.nTH == 26)
+// 		{
+// 			namedWindow("dilate2", 1);
+// 			imshow("dilate2", matCompRoi);
+// 			waitKey(0);
+// 		}
+
 #else
 		//确定腐蚀和膨胀核的大小
 		Mat element = getStructuringElement(MORPH_RECT, Size(5, 5));	//Size(4, 4)

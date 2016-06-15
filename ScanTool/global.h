@@ -137,9 +137,13 @@ typedef struct _OmrResult_
 {
 	int		nTH;				//题号
 	int		nSingle;			//0-单选，1-多选
+	int		nDoubt;				//0-无怀疑, 1-有怀疑
 	std::string strRecogVal;	//识别结果：A、B、C...
+	std::string strRecogVal2;
+	RECTLIST	lSelAnswer;				//选项列表
 	_OmrResult_()
 	{
+		nDoubt = 0;
 		nTH = -1;
 		nSingle = 0;
 	}
@@ -267,7 +271,7 @@ typedef struct _PaperInfo_
 	std::string strStudentInfo;		//学生信息	
 	std::string strSN;
 	
-	OMRRESULTLIST lOmrResult;
+	OMRRESULTLIST		lOmrResult;			//OMRRESULTLIST
 	PIC_LIST	lPic;
 	_PaperInfo_()
 	{

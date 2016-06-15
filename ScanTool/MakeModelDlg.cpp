@@ -24,9 +24,9 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_pModelPicShow(NULL), m_nGaussKernel(5), m_nSharpKernel(5), m_nThresholdKernel(150), m_nCannyKernel(90), m_nDelateKernel(6), m_nErodeKernel(2)
 	, m_pModel(pModel), m_bNewModelFlag(false), m_nModelPicNums(2), m_nCurrTabSel(0), m_bSavedModelFlag(false), m_ncomboCurrentSel(0), m_eCurCPType(UNKNOWN)
 	, m_nCurListCtrlSel(0), m_nStartTH(0)
-	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(150), m_nSN(150)
+	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200)
 	, m_fHeadThresholdPercent(0.75), m_fABModelThresholdPercent(0.75), m_fCourseThresholdPercent(0.75), m_fQK_CPThresholdPercent(0.75), m_fFixThresholdPercent(0.80)
-	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75), m_fOMRThresholdPercent(0.75), m_fSNThresholdPercent(0.75)
+	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75), m_fOMRThresholdPercent(1.5), m_fSNThresholdPercent(1.5)
 	, m_pCurRectInfo(NULL), m_ptFixCP(0,0)
 	, m_bFistHTracker(true), m_bFistVTracker(true), m_bFistSNTracker(true)
 	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL), m_pSNInfoDlg(NULL)
@@ -1134,10 +1134,22 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 		else if (m_eCurCPType == SN)
 		{
 			TRACE("SN - rt(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+// 			rc.nThresholdValue = m_nWhiteVal;
+// 			rc.fStandardValuePercent = m_fSNThresholdPercent;
+// 
+// 			Rect rtTmp = rm;
+// 			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+// 			RecogGrayValue(matSrcModel, rc);
 		}
 		else if (m_eCurCPType == OMR)
 		{
 			TRACE("OMR - rt(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+// 			rc.nThresholdValue = m_nWhiteVal;
+// 			rc.fStandardValuePercent = m_fOMRThresholdPercent;
+// 
+// 			Rect rtTmp = rm;
+// 			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+// 			RecogGrayValue(matSrcModel, rc);
 		}
 
 		bResult = true;
