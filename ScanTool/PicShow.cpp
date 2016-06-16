@@ -410,16 +410,16 @@ LRESULT CPicShow::SNTrackerChange(WPARAM wParam, LPARAM lParam)
 LRESULT CPicShow::MBtnDown(WPARAM wParam, LPARAM lParam)
 {
 	cv::Point2f pt = *(cv::Point2f*)(wParam);
-	m_iX = pt.x;
-	m_iY = pt.y;
+	m_iX = static_cast<int>(pt.x);
+	m_iY = static_cast<int>(pt.y);
 	return TRUE;
 }
 
 LRESULT CPicShow::MBtnUp(WPARAM wParam, LPARAM lParam)
 {
 	cv::Point2f pt = *(cv::Point2f*)(wParam);
-	m_iX = pt.x;
-	m_iY = pt.y;
+	m_iX = static_cast<int>(pt.x);
+	m_iY = static_cast<int>(pt.y);
 	return TRUE;
 }
 

@@ -180,7 +180,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		if (bFind)
 		{
 			pPaper->bIssuePaper = true;				//标识此学生试卷属于问题试卷
-			pPAPERSINFO pPapers = (pPAPERSINFO)pPaper->pPapers;
+			pPAPERSINFO pPapers = static_cast<pPAPERSINFO>(pPaper->pPapers);
 
 			pPapers->fmlPaper.lock();
 			PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
@@ -201,7 +201,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			pPapers->nRecogErrCount++;
 			pPapers->fmlIssue.unlock();
 
-			((CDialog*)pPaper->pSrcDlg)->PostMessageW(MSG_ERR_RECOG, (WPARAM)pPaper, (LPARAM)pPapers);
+			(static_cast<CDialog*>(pPaper->pSrcDlg))->PostMessageW(MSG_ERR_RECOG, (WPARAM)pPaper, (LPARAM)pPapers);
 			break;									//找到这张试卷有问题点，不进行下一张试卷的检测
 		}	
 
@@ -279,7 +279,7 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 		if (rc.eCPType != WHITE_CP && rc.eCPType != OMR)
 		{
 			hranges[0] = 0;
-			hranges[1] = rc.nThresholdValue;
+			hranges[1] = static_cast<float>(rc.nThresholdValue);
 			ranges[0] = hranges;
 		}
 		else if (rc.eCPType == OMR)
@@ -290,7 +290,7 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 		}
 		else
 		{
-			hranges[0] = rc.nThresholdValue;
+			hranges[0] = static_cast<float>(rc.nThresholdValue);
 			hranges[1] = 255;
 			ranges[0] = hranges;
 		}
@@ -398,86 +398,98 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 	{
 		RECTINFO rc = *itCP;
 
-		Mat matCompRoi;
-		matCompRoi = matCompPic(rc.rt);
+		std::vector<Rect>RectCompList;
+		try
+		{
+			Mat matCompRoi;
+			matCompRoi = matCompPic(rc.rt);
 
-		cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
-		GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
-		sharpenImage1(matCompRoi, matCompRoi);
+			GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
+			sharpenImage1(matCompRoi, matCompRoi);
 
-		threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
-		cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
-		Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(6, 6)	普通空白框可识别
-		dilate(matCompRoi, matCompRoi, element);
+			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
+			cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
+			Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(6, 6)	普通空白框可识别
+			dilate(matCompRoi, matCompRoi, element);
 
 #if 1
-//		std::vector<std::vector<cv::Point> > vecContours;		//轮廓信息存储
-//		m_vecContours.clear();
-//		std::vector<cv::Mat> vecContours;
-//		cv::findContours(matCompRoi.clone(), vecContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);	//hsvRe.clone()		//CV_RETR_EXTERNAL	//CV_CHAIN_APPROX_SIMPLE
-		
-// 		vector<Mat> vecContours;
-// 		Mat hierarchy;
-// 		findContours(matCompRoi, vecContours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-// 
-// 		std::vector<Rect>RectCompList;
-// 		for (int i = 0; i < vecContours.size(); i++)
-// 		{
-// 			cv::Mat matTmp = cv::Mat(vecContours[i]);
-// 			Rect rm = cv::boundingRect(matTmp);
-// 
-// 			// 			Rect rm = cv::boundingRect(vecContours[i]);
-// 			// 			vecContours[i].release();
-// 
-// 			RectCompList.push_back(rm);
-// 			matTmp.release();
-// 		}
+			//		std::vector<std::vector<cv::Point> > vecContours;		//轮廓信息存储
+			//		m_vecContours.clear();
+			//		std::vector<cv::Mat> vecContours;
+			//		cv::findContours(matCompRoi.clone(), vecContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);	//hsvRe.clone()		//CV_RETR_EXTERNAL	//CV_CHAIN_APPROX_SIMPLE
 
+			// 		vector<Mat> vecContours;
+			// 		Mat hierarchy;
+			// 		findContours(matCompRoi, vecContours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+			// 
+			// 		std::vector<Rect>RectCompList;
+			// 		for (int i = 0; i < vecContours.size(); i++)
+			// 		{
+			// 			cv::Mat matTmp = cv::Mat(vecContours[i]);
+			// 			Rect rm = cv::boundingRect(matTmp);
+			// 
+			// 			// 			Rect rm = cv::boundingRect(vecContours[i]);
+			// 			// 			vecContours[i].release();
+			// 
+			// 			RectCompList.push_back(rm);
+			// 			matTmp.release();
+			// 		}
 
+			IplImage ipl_img(matCompRoi);
 
-		IplImage ipl_img(matCompRoi);
+			//the parm. for cvFindContours  
+			CvMemStorage* storage = cvCreateMemStorage(0);
+			CvSeq* contour = 0;
 
-		//the parm. for cvFindContours  
-		CvMemStorage* storage = cvCreateMemStorage(0);
-		CvSeq* contour = 0;
+			//提取轮廓  
+			cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-		//提取轮廓  
-		cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-
-		std::vector<Rect>RectCompList;
-		for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
-		{
-			CvRect aRect = cvBoundingRect(contour, 0);
-			Rect rm = aRect;
-			RectCompList.push_back(rm);
-		}
+			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
+			{
+				CvRect aRect = cvBoundingRect(contour, 0);
+				Rect rm = aRect;
+				RectCompList.push_back(rm);
+			}
 #else
-//		std::vector<std::vector<cv::Point> > vecContours;		//轮廓信息存储
-		m_vecContours.clear();
-//		std::vector<cv::Mat> vecContours;
-		cv::findContours(matCompRoi.clone(), m_vecContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);	//hsvRe.clone()		//CV_RETR_EXTERNAL	//CV_CHAIN_APPROX_SIMPLE
+			//		std::vector<std::vector<cv::Point> > vecContours;		//轮廓信息存储
+			m_vecContours.clear();
+			//		std::vector<cv::Mat> vecContours;
+			cv::findContours(matCompRoi.clone(), m_vecContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);	//hsvRe.clone()		//CV_RETR_EXTERNAL	//CV_CHAIN_APPROX_SIMPLE
 
-//		bool bResult = false;
-		std::vector<Rect>RectCompList;
-		for (int i = 0; i < m_vecContours.size(); i++)
-		{
-			Rect rm = cv::boundingRect(cv::Mat(m_vecContours[i]));
-//			Rect rm = cv::boundingRect(cv::Mat(vecContours[i]));
+			//		bool bResult = false;
+			std::vector<Rect>RectCompList;
+			for (int i = 0; i < m_vecContours.size(); i++)
+			{
+				Rect rm = cv::boundingRect(cv::Mat(m_vecContours[i]));
+				//			Rect rm = cv::boundingRect(cv::Mat(vecContours[i]));
 
-// 			std::vector<cv::Point> v;
-// 			m_vecContours[i].swap(v);
-// 			if (rm.width < 10 || rm.height < 7 || rm.width > 70 || rm.height > 50 || rm.area() < 70)
-// 			{
-// 				TRACE("抛弃不符合条件的矩形块,(%d, %d, %d, %d)\n", rm.x, rm.y, rm.width, rm.height);
-// 				continue;
-// 			}
-			RectCompList.push_back(rm);
-			
-//			m_vecContours[i].clear();
-//			bResult = true;
-		}
+				// 			std::vector<cv::Point> v;
+				// 			m_vecContours[i].swap(v);
+				// 			if (rm.width < 10 || rm.height < 7 || rm.width > 70 || rm.height > 50 || rm.area() < 70)
+				// 			{
+				// 				TRACE("抛弃不符合条件的矩形块,(%d, %d, %d, %d)\n", rm.x, rm.y, rm.width, rm.height);
+				// 				continue;
+				// 			}
+				RectCompList.push_back(rm);
+
+				//			m_vecContours[i].clear();
+				//			bResult = true;
+			}
 #endif
+		}
+		catch (cv::Exception& exc)
+		{
+			std::string strLog = "识别定点异常: " + exc.msg;
+			g_pLogger->information(strLog);
+			TRACE(strLog.c_str());
+
+			bResult = false;						//找到问题点
+			pPic->bFindIssue = true;
+			pPic->lIssueRect.push_back(rc);
+			break;
+		}
 		bool bFindRect = false;
 		if(RectCompList.size() == 0)
 			bFindRect = true;
@@ -485,8 +497,8 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		{
 			std::sort(RectCompList.begin(), RectCompList.end(), SortByArea);
 			Rect& rtFix = RectCompList[0];
-			m_ptFixCP.x = rtFix.x + rtFix.width / 2 + 0.5 + rc.rt.x;
-			m_ptFixCP.y = rtFix.y + rtFix.height / 2 + 0.5 + rc.rt.y;
+			m_ptFixCP.x = static_cast<int>(rtFix.x + rtFix.width / 2 + 0.5 + rc.rt.x);
+			m_ptFixCP.y = static_cast<int>(rtFix.y + rtFix.height / 2 + 0.5 + rc.rt.y);
 
 			rtFix.x = rtFix.x + rc.rt.x;
 			rtFix.y = rtFix.y + rc.rt.y;
@@ -495,11 +507,6 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			rcFixInfo.rt = rtFix;
 			pPic->lFix.push_back(rcFixInfo);
 			TRACE("定点矩形: (%d,%d,%d,%d)\n", rtFix.x, rtFix.y, rtFix.width, rtFix.height);
-// 			pPic->ptFix = m_ptFixCP;
-// 			pPic->rtFix.x = rcFix.x + rc.rt.x;
-// 			pPic->rtFix.y = rcFix.y + rc.rt.y;
-// 			pPic->rtFix.width = rcFix.width;
-// 			pPic->rtFix.height = rcFix.height;
 		}
 		if (bFindRect)
 		{
@@ -530,39 +537,51 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 	{
 		RECTINFO rc = *itRoi;
 #if 1
-		Mat matCompRoi;
-		matCompRoi = matCompPic(rc.rt);
-
-		cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
-
-		GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
-		sharpenImage1(matCompRoi, matCompRoi);
-
-		threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
-		cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
-		Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(6, 6)	普通空白框可识别
-		dilate(matCompRoi, matCompRoi, element);
-		IplImage ipl_img(matCompRoi);
-
-		//the parm. for cvFindContours  
-		CvMemStorage* storage = cvCreateMemStorage(0);
-		CvSeq* contour = 0;
-
-		//提取轮廓  
-		cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-
 		std::vector<Rect>RectCompList;
-		for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
+		try
 		{
-			CvRect aRect = cvBoundingRect(contour, 0);
-			Rect rm = aRect;
-			rm.x = rm.x + rc.rt.x;
-			rm.y = rm.y + rc.rt.y;
-			if (rm.width < 10 || rm.height < 7 || rm.width > 70 || rm.height > 50 || rm.area() < 70)
+			Mat matCompRoi;
+			matCompRoi = matCompPic(rc.rt);
+
+			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+			GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
+			sharpenImage1(matCompRoi, matCompRoi);
+
+			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
+			cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
+			Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(6, 6)	普通空白框可识别
+			dilate(matCompRoi, matCompRoi, element);
+			IplImage ipl_img(matCompRoi);
+
+			//the parm. for cvFindContours  
+			CvMemStorage* storage = cvCreateMemStorage(0);
+			CvSeq* contour = 0;
+
+			//提取轮廓  
+			cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
 			{
-				continue;
+				CvRect aRect = cvBoundingRect(contour, 0);
+				Rect rm = aRect;
+				rm.x = rm.x + rc.rt.x;
+				rm.y = rm.y + rc.rt.y;
+				if (rm.width < 10 || rm.height < 7 || rm.width > 70 || rm.height > 50 || rm.area() < 70)
+				{
+					continue;
+				}
+				RectCompList.push_back(rm);
 			}
-			RectCompList.push_back(rm);
+		}
+		catch (cv::Exception& exc)
+		{
+			std::string strLog = "识别水平同步头异常: " + exc.msg;
+			g_pLogger->information(strLog);
+			TRACE(strLog.c_str());
+
+			bResult = false;
+			break;
 		}
 		if (RectCompList.size() == 0)
 			bResult = false;
@@ -608,7 +627,7 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 	return bResult;
 }
 
-int CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bResult = true;
 	if (pModelInfo->pModel->nHasHead == 0)
@@ -620,39 +639,51 @@ int CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 	{
 		RECTINFO rc = *itRoi;
 #if 1
-		Mat matCompRoi;
-		matCompRoi = matCompPic(rc.rt);
-
-		cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
-
-		GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
-		sharpenImage1(matCompRoi, matCompRoi);
-
-		threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
-		cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
-		Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(6, 6)	普通空白框可识别
-		dilate(matCompRoi, matCompRoi, element);
-		IplImage ipl_img(matCompRoi);
-
-		//the parm. for cvFindContours  
-		CvMemStorage* storage = cvCreateMemStorage(0);
-		CvSeq* contour = 0;
-
-		//提取轮廓  
-		cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-
 		std::vector<Rect>RectCompList;
-		for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
+		try
 		{
-			CvRect aRect = cvBoundingRect(contour, 0);
-			Rect rm = aRect;
-			rm.x = rm.x + rc.rt.x;
-			rm.y = rm.y + rc.rt.y;
-			if (rm.width < 10 || rm.height < 7 || rm.width > 70 || rm.height > 50 || rm.area() < 70)
+			Mat matCompRoi;
+			matCompRoi = matCompPic(rc.rt);
+
+			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+			GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
+			sharpenImage1(matCompRoi, matCompRoi);
+
+			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
+			cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
+			Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(6, 6)	普通空白框可识别
+			dilate(matCompRoi, matCompRoi, element);
+			IplImage ipl_img(matCompRoi);
+
+			//the parm. for cvFindContours  
+			CvMemStorage* storage = cvCreateMemStorage(0);
+			CvSeq* contour = 0;
+
+			//提取轮廓  
+			cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
 			{
-				continue;
+				CvRect aRect = cvBoundingRect(contour, 0);
+				Rect rm = aRect;
+				rm.x = rm.x + rc.rt.x;
+				rm.y = rm.y + rc.rt.y;
+				if (rm.width < 10 || rm.height < 7 || rm.width > 70 || rm.height > 50 || rm.area() < 70)
+				{
+					continue;
+				}
+				RectCompList.push_back(rm);
 			}
-			RectCompList.push_back(rm);
+		}
+		catch (cv::Exception& exc)
+		{
+			std::string strLog = "识别垂直同步头异常: " + exc.msg;
+			g_pLogger->information(strLog);
+			TRACE(strLog.c_str());
+
+			bResult = false;
+			break;
 		}
 		if (RectCompList.size() == 0)
 			bResult = false;
@@ -697,7 +728,7 @@ int CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 	return bResult;
 }
 
-int CRecognizeThread::RecogABModel(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+bool CRecognizeThread::RecogABModel(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bResult = true;
 	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lABModel.begin();
@@ -741,7 +772,7 @@ int CRecognizeThread::RecogABModel(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 	return bResult;
 }
 
-int CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+bool CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bResult = true;
 	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lCourse.begin();
@@ -805,7 +836,7 @@ int CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 	return bResult;
 }
 
-int CRecognizeThread::RecogQKCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+bool CRecognizeThread::RecogQKCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bResult = true;
 	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lQK_CP.begin();
@@ -863,7 +894,7 @@ int CRecognizeThread::RecogQKCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	return bResult;
 }
 
-int CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+bool CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bResult = true;
 	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lGray.begin();
@@ -927,7 +958,7 @@ int CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 	return bResult;
 }
 
-int CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+bool CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bResult = true;
 	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lWhite.begin();
@@ -991,7 +1022,7 @@ int CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 	return bResult;
 }
 
-int CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+bool CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bRecogAll = true;
 	bool bResult = true;
@@ -1000,6 +1031,10 @@ int CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, p
 	for (; itSN != pModelInfo->pModel->vecPaperModel[nPic]->lSNInfo.end(); itSN++)
 	{
 		pSN_ITEM pSnItem = *itSN;
+
+		pSN_ITEM pSn = new SN_ITEM;
+		pSn->nItem = pSnItem->nItem;
+		(static_cast<pST_PaperInfo>(pPic->pPaper))->lSnResult.push_back(pSn);
 
 		std::vector<int> vecItemVal;
 		RECTLIST::iterator itSnItem = pSnItem->lSN.begin();
@@ -1041,10 +1076,11 @@ int CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, p
 				vecItemVal.push_back(rc.nSnVal);
 			}
 #endif
+			pSn->lSN.push_back(rc);
 		}
 		if (vecItemVal.size() == 1)
 		{
-//			pSnItem->nRecogVal = vecItemVal[0];
+			pSn->nRecogVal = vecItemVal[0];
 			vecSN.push_back(vecItemVal[0]);
 		}
 		else
@@ -1069,10 +1105,10 @@ int CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, p
 		{
 			char szTmp[5] = { 0 };
 			itoa(vecSN[i], szTmp, 10);
-			((pST_PaperInfo)(pPic->pPaper))->strSN.append(szTmp);
+			(static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.append(szTmp);
 		}
 		char szLog[MAX_PATH] = { 0 };
-		sprintf_s(szLog, "识别准考证号完成(%s), 图片名: %s\n", ((pST_PaperInfo)(pPic->pPaper))->strSN.c_str(), pPic->strPicName.c_str());
+		sprintf_s(szLog, "识别准考证号完成(%s), 图片名: %s\n", (static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.c_str(), pPic->strPicName.c_str());
 		g_pLogger->information(szLog);
 		TRACE(szLog);
 	}
@@ -1086,7 +1122,7 @@ int CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, p
 	return bResult;
 }
 
-int CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bRecogAll = true;
 	bool bResult = true;
@@ -1170,7 +1206,7 @@ int CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, 
 		omrResult.nDoubt		= nDoubt;
 		omrResult.strRecogVal	= strRecogAnswer1;
 		omrResult.strRecogVal2	= strRecogAnswer2;
-		((pST_PaperInfo)(pPic->pPaper))->lOmrResult.push_back(omrResult);
+		(static_cast<pST_PaperInfo>(pPic->pPaper))->lOmrResult.push_back(omrResult);
 
 // 		char szSingle[10] = { 0 };
 // 		if (pOmrQuestion->nSingle == 0)

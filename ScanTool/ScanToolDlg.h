@@ -93,7 +93,7 @@ public:
 
 	int		GetRectInfoByPoint(cv::Point pt, pST_PicInfo pPic, RECTINFO*& pRc);
 
-	bool	ScanSrcInit();
+	BOOL	ScanSrcInit();
 // 	BOOL	InitTwain(HWND hWnd);
 // 
 // 	HWND	m_hMessageWnd;

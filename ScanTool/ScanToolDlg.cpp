@@ -663,7 +663,7 @@ void CScanToolDlg::InitCtrlPosition()
 	}
 }
 
-bool CScanToolDlg::ScanSrcInit()
+BOOL CScanToolDlg::ScanSrcInit()
 {
 	USES_CONVERSION;
 	if (CallTwainProc(&m_AppId, NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETFIRST, &m_Source))
@@ -1029,8 +1029,8 @@ void CScanToolDlg::CopyImage(HANDLE hBitmap, TW_IMAGEINFO& info)
 
 void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 {
-	clock_t start, end;
-	start = clock();
+// 	clock_t start, end;
+// 	start = clock();
 
 	CDIB dib;
 	dib.CreateFromHandle(hBitmap, bits);
@@ -1413,6 +1413,32 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 // 			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 // 		}
 
+		//´òÓ¡OMR¡¢SNÎ»ÖÃ
+#ifdef PaintOmrSnRect
+		SNLIST::iterator itSN = pPaper->pModel->vecPaperModel[i]->lSNInfo.begin();
+		for (; itSN != pPaper->pModel->vecPaperModel[i]->lSNInfo.end(); itSN++)
+		{
+			pSN_ITEM pSnItem = *itSN;
+			RECTLIST::iterator itSnItem = pSnItem->lSN.begin();
+			for (; itSnItem != pSnItem->lSN.end(); itSnItem++)
+			{
+				rectangle(tmp, (*itSnItem).rt, CV_RGB(255, 0, 0), 2);
+				rectangle(tmp2, (*itSnItem).rt, CV_RGB(255, 233, 10), -1);
+			}
+		}
+
+		OMRLIST::iterator itOmr = pPaper->pModel->vecPaperModel[i]->lOMR2.begin();
+		for (; itOmr != pPaper->pModel->vecPaperModel[i]->lOMR2.end(); itOmr++)
+		{
+			pOMR_QUESTION pOmrQuestion = &(*itOmr);
+			RECTLIST::iterator itOmrItem = pOmrQuestion->lSelAnswer.begin();
+			for (; itOmrItem != pOmrQuestion->lSelAnswer.end(); itOmrItem++)
+			{
+				rectangle(tmp, (*itOmrItem).rt, CV_RGB(255, 0, 0), 2);
+				rectangle(tmp2, (*itOmrItem).rt, CV_RGB(255, 233, 10), -1);
+			}
+		}
+#endif
 		addWeighted(tmp, 0.5, tmp2, 0.5, 0, tmp);
 		m_vecPicShow[i]->ShowPic(tmp);
 	}
@@ -1641,7 +1667,34 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	for (; itNomarlPaper != m_pPapersInfo->lPaper.end(); itNomarlPaper++)
 	{
 		Poco::JSON::Object jsnPaper;
-		jsnPaper.set("sn", (*itNomarlPaper)->strSN);
+		jsnPaper.set("name", (*itNomarlPaper)->strStudentInfo);
+		jsnPaper.set("zkzh", (*itNomarlPaper)->strSN);
+
+		Poco::JSON::Array jsnSnDetailArry;
+		SNLIST::iterator itSn = (*itNomarlPaper)->lSnResult.begin();
+		for (; itSn != (*itNomarlPaper)->lSnResult.end(); itSn++)
+		{
+			Poco::JSON::Object jsnSnItem;
+			jsnSnItem.set("sn", (*itSn)->nItem);
+			jsnSnItem.set("val", (*itSn)->nRecogVal);
+
+			Poco::JSON::Object jsnSnPosition;
+			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
+			for (; itRect != (*itSn)->lSN.end(); itRect++)
+			{
+				if ((*itSn)->nRecogVal == itRect->nSnVal)
+				{
+					jsnSnPosition.set("x", itRect->rt.x);
+					jsnSnPosition.set("y", itRect->rt.y);
+					jsnSnPosition.set("w", itRect->rt.width);
+					jsnSnPosition.set("h", itRect->rt.height);
+					break;
+				}
+			}
+			jsnSnItem.set("position", jsnSnPosition);
+			jsnSnDetailArry.add(jsnSnItem);
+		}
+		jsnPaper.set("snDetail", jsnSnDetailArry);
 
 		Poco::JSON::Array jsnOmrArry;
 		OMRRESULTLIST::iterator itOmr = (*itNomarlPaper)->lOmrResult.begin();
@@ -1649,8 +1702,24 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		{
 			Poco::JSON::Object jsnOmr;
 			jsnOmr.set("th", itOmr->nTH);
-			jsnOmr.set("nSingle", itOmr->nSingle);
-			jsnOmr.set("omrResult", itOmr->strRecogVal);
+			jsnOmr.set("type", itOmr->nSingle);
+			jsnOmr.set("value", itOmr->strRecogVal);
+			jsnOmr.set("doubt", itOmr->nDoubt);
+			Poco::JSON::Array jsnPositionArry;
+			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
+			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
+			{
+				if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
+				{
+					Poco::JSON::Object jsnItem;
+					jsnItem.set("x", itRect->rt.x);
+					jsnItem.set("y", itRect->rt.y);
+					jsnItem.set("w", itRect->rt.width);
+					jsnItem.set("h", itRect->rt.height);
+					jsnPositionArry.add(jsnItem);
+				}
+			}
+			jsnOmr.set("position", jsnPositionArry);
 			jsnOmrArry.add(jsnOmr);
 		}
 		jsnPaper.set("omr", jsnOmrArry);
@@ -1660,7 +1729,34 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	for (; itIssuePaper != m_pPapersInfo->lIssue.end(); itIssuePaper++)
 	{
 		Poco::JSON::Object jsnPaper;
-		jsnPaper.set("sn", (*itIssuePaper)->strSN);
+		jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
+		jsnPaper.set("zkzh", (*itIssuePaper)->strSN);
+
+		Poco::JSON::Array jsnSnDetailArry;
+		SNLIST::iterator itSn = (*itIssuePaper)->lSnResult.begin();
+		for (; itSn != (*itIssuePaper)->lSnResult.end(); itSn++)
+		{
+			Poco::JSON::Object jsnSnItem;
+			jsnSnItem.set("sn", (*itSn)->nItem);
+			jsnSnItem.set("val", (*itSn)->nRecogVal);
+
+			Poco::JSON::Object jsnSnPosition;
+			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
+			for (; itRect != (*itSn)->lSN.end(); itRect++)
+			{
+				if ((*itSn)->nRecogVal == itRect->nSnVal)
+				{
+					jsnSnPosition.set("x", itRect->rt.x);
+					jsnSnPosition.set("y", itRect->rt.y);
+					jsnSnPosition.set("w", itRect->rt.width);
+					jsnSnPosition.set("h", itRect->rt.height);
+					break;
+				}
+			}
+			jsnSnItem.set("position", jsnSnPosition);
+			jsnSnDetailArry.add(jsnSnItem);
+		}
+		jsnPaper.set("snDetail", jsnSnDetailArry);
 
 		Poco::JSON::Array jsnOmrArry;
 		OMRRESULTLIST::iterator itOmr = (*itIssuePaper)->lOmrResult.begin();
@@ -1668,8 +1764,24 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		{
 			Poco::JSON::Object jsnOmr;
 			jsnOmr.set("th", itOmr->nTH);
-			jsnOmr.set("nSingle", itOmr->nSingle);
-			jsnOmr.set("omrResult", itOmr->strRecogVal);
+			jsnOmr.set("type", itOmr->nSingle);
+			jsnOmr.set("value", itOmr->strRecogVal);
+			jsnOmr.set("doubt", itOmr->nDoubt);
+			Poco::JSON::Array jsnPositionArry;
+			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
+			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
+			{
+				if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
+				{
+					Poco::JSON::Object jsnItem;
+					jsnItem.set("x", itRect->rt.x);
+					jsnItem.set("y", itRect->rt.y);
+					jsnItem.set("w", itRect->rt.width);
+					jsnItem.set("h", itRect->rt.height);
+					jsnPositionArry.add(jsnItem);
+				}
+			}
+			jsnOmr.set("position", jsnPositionArry);
 			jsnOmrArry.add(jsnOmr);
 		}
 		jsnPaper.set("omr", jsnOmrArry);

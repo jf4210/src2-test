@@ -956,12 +956,12 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	if (rc.eCPType != WHITE_CP)
 	{
 		hranges[0] = 0;
-		hranges[1] = rc.nThresholdValue;
+		hranges[1] = static_cast<float>(rc.nThresholdValue);
 		ranges[0] = hranges;
 	}
 	else
 	{
-		hranges[0] = rc.nThresholdValue;
+		hranges[0] = static_cast<float>(rc.nThresholdValue);
 		hranges[1] = 255;
 		ranges[0] = hranges;
 	}
@@ -1290,8 +1290,15 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 			rcFixRt.fStandardValuePercent = m_fFixThresholdPercent;
 			RecogGrayValue(matSrcModel, rcFixRt);
 
-			m_vecPaperModelInfo[m_nCurrTabSel]->vecRtSel.push_back(rcFixSel);
-			m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.push_back(rcFixRt);
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.size() <= 4)
+			{
+				m_vecPaperModelInfo[m_nCurrTabSel]->vecRtSel.push_back(rcFixSel);
+				m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.push_back(rcFixRt);
+			}
+			else
+			{
+				AfxMessageBox(_T("定点最多可设置4个"));
+			}			
 		}
 	}
 	end = clock();
@@ -1565,6 +1572,51 @@ void CMakeModelDlg::sharpenImage1(const cv::Mat &image, cv::Mat &result)
 	cv::filter2D(image, result, image.depth(), kernel);
 }
 
+bool CMakeModelDlg::checkValidity()
+{
+	bool bResult = true;
+
+	USES_CONVERSION;
+	if (m_pModel->nHasHead == 0)
+	{
+		for (int i = 0; i < m_pModel->vecPaperModel.size(); i++)
+		{
+			if (m_vecPaperModelInfo[i]->vecRtFix.size() < 2)
+			{
+				char szTmp[50] = { 0 };
+				sprintf_s(szTmp, "第 %d 页定点设置数量太少，要求至少2个，建议设置4个", i + 1);
+				AfxMessageBox(A2T(szTmp));
+				bResult = false;
+				break;
+			}
+		}
+	}
+	else
+	{
+// 		for (int i = 0; i < m_pModel->vecPaperModel.size(); i++)
+// 		{
+// 			if (m_vecPaperModelInfo[i]->vecH_Head.size() <= 0)
+// 			{
+// 				char szTmp[50] = { 0 };
+// 				sprintf_s(szTmp, "第 %d 页未设置水平同步头", i + 1);
+// 				AfxMessageBox(A2T(szTmp));
+// 				bResult = false;
+// 				break;
+// 			}
+// 			if (m_vecPaperModelInfo[i]->vecV_Head.size() <= 0)
+// 			{
+// 				char szTmp[50] = { 0 };
+// 				sprintf_s(szTmp, "第 %d 页未设置垂直同步头", i + 1);
+// 				AfxMessageBox(A2T(szTmp));
+// 				bResult = false;
+// 				break;
+// 			}
+// 		}
+	}
+
+	return bResult;
+}
+
 void CMakeModelDlg::OnBnClickedBtnSave()
 {
 	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
@@ -1574,6 +1626,8 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 		AfxMessageBox(_T("请先创建模板"));
 		return;
 	}
+	
+	checkValidity();
 
 	if (m_bNewModelFlag && !m_bSavedModelFlag)
 	{
@@ -4168,7 +4222,7 @@ void CMakeModelDlg::ScanDone(int nStatus)
 	ShellExecute(NULL, _T("open"), _T("explorer.exe"), strSelect, NULL, SW_SHOWNORMAL);
 }
 
-bool CMakeModelDlg::ScanSrcInit()
+BOOL CMakeModelDlg::ScanSrcInit()
 {
 	USES_CONVERSION;
 	if (CallTwainProc(&m_AppId, NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETFIRST, &m_Source))
@@ -4188,9 +4242,6 @@ bool CMakeModelDlg::ScanSrcInit()
 	}
 	return m_bSourceSelected;
 }
-
-
-
 
 void CMakeModelDlg::OnDestroy()
 {

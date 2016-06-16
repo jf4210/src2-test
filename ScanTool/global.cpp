@@ -617,7 +617,7 @@ int GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, RECT
 	return nFind;
 }
 
-inline cv::Point TriangleCoordinate(cv::Point ptA, cv::Point ptB, cv::Point ptC, cv::Point ptNewA, cv::Point ptNewB)
+inline cv::Point2d TriangleCoordinate(cv::Point ptA, cv::Point ptB, cv::Point ptC, cv::Point ptNewA, cv::Point ptNewB)
 {
 	clock_t start, end;
 	start = clock();
@@ -650,7 +650,6 @@ inline cv::Point TriangleCoordinate(cv::Point ptA, cv::Point ptB, cv::Point ptC,
 		dFlag = ptC.x - ptA.x;
 	}
 
-
 	long double dTmp1 = (ptNewA.x - ptNewB.x) * sqrt(2 * b2 * (a2 + c2) - pow(a2 - c2, 2) - pow(b2, 2)) / (2 * c2);
 	long double dTmp2 = (pow(m, 2) * (a02 - b02) * (ptNewB.y - ptNewA.y) - (ptNewA.y + ptNewB.y) * c2) / (2 * c2);
 
@@ -675,39 +674,39 @@ inline cv::Point TriangleCoordinate(cv::Point ptA, cv::Point ptB, cv::Point ptC,
 	long double k_newAB = (double)(ptNewB.y - ptNewA.y) / (ptNewB.x - ptNewA.x);
 	long double dNewFlag = k_newAB*(dXc1 - ptNewA.x) + ptNewA.y - dYc1;
 	long double dNewFlag2 = k_newAB*(dXc2 - ptNewA.x) + ptNewA.y - dYc2;
-	cv::Point ptNewC;
+	cv::Point2d ptNewC;
 	if (dFlag >= 0)
 	{
 		if (dNewFlag >= 0)		//xy坐标要调换，不明白
 		{
-			ptNewC.x = dXc1 + 0.5;
-			ptNewC.y = dYc1 + 0.5;
+			ptNewC.x = dXc1;
+			ptNewC.y = dYc1;
 		}
 		else if (dNewFlag < 0)
 		{
-			ptNewC.x = dXc2 + 0.5;
-			ptNewC.y = dYc2 + 0.5;
+			ptNewC.x = dXc2;
+			ptNewC.y = dYc2;
 		}
 	}
 	else if (dFlag < 0)
 	{
 		if (dNewFlag >= 0)
 		{
-			ptNewC.x = dXc2 + 0.5;
-			ptNewC.y = dYc2 + 0.5;
+			ptNewC.x = dXc2;
+			ptNewC.y = dYc2;
 		}
 		else if (dNewFlag < 0)
 		{
-			ptNewC.x = dXc1 + 0.5;
-			ptNewC.y = dYc1 + 0.5;
+			ptNewC.x = dXc1;
+			ptNewC.y = dYc1;
 		}
 	}
 	end = clock();
 //	TRACE("原C点的垂直点D(%f,%f), 新的C点坐标(%f, %f)或者(%f, %f),确定后为(%d,%d)耗时: %d\n", dDx, dDy, dXc1, dYc1, dXc2, dYc2, ptNewC.x, ptNewC.y, end - start);
-	TRACE("新的C点坐标(%f, %f)或者(%f, %f),确定后为(%d,%d)耗时: %d\n", dXc1, dYc1, dXc2, dYc2, ptNewC.x, ptNewC.y, end - start);
+	TRACE("新的C点坐标(%f, %f)或者(%f, %f),确定后为(%f,%f)耗时: %d\n", dXc1, dYc1, dXc2, dYc2, ptNewC.x, ptNewC.y, end - start);
 	return ptNewC;
 }
-bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW, int nPicH)
+bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*= 0*/, int nPicH /*= 0*/)
 {
 	if (lModelFix.size() == 1)
 	{
@@ -738,7 +737,8 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW, i
 		RECTINFO rcModelA = *itModel++;
 		RECTINFO rcModelB = *itModel;
 
-		cv::Point ptA, ptB, ptC, ptA0, ptB0, ptC0;
+		cv::Point ptA, ptB, ptA0, ptB0, ptC0;
+		cv::Point2d ptC;
 #if 1
 		if (nPicW != 0 && nPicH != 0)
 		{
@@ -906,7 +906,7 @@ bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 	rt.height = src.rows / 4;
 #else
 	rt.width = src.cols;
-	rt.height = src.rows * 0.25;		//4
+	rt.height = src.rows * 0.5;		//4
 #endif
 
 	cv::Mat matSrc = src(rt);
@@ -1026,7 +1026,7 @@ bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 	//Find the proper angel from the three found angels
 	float angel = 0;
 	float piThresh = (float)CV_PI / 90;
-	float pi2 = CV_PI / 2;
+	float pi2 = (float)CV_PI / 2;
 	for (int l = 0; l < numLines; l++)
 	{
 		float theta = lines[l][1];
@@ -1069,10 +1069,10 @@ bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 	return true;
 }
 
-int FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix)
+bool FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix)
 {
 	if (lFix.size() < 3)
-		return 1;
+		return false;
 
 	clock_t start, end;
 	start = clock();
@@ -1139,13 +1139,13 @@ int FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lMode
 	g_pLogger->information(szTmpLog);
 	TRACE(szTmpLog);
 
-	return 1;
+	return true;
 }
 
-int FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix)
+bool FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix)
 {
 	if (lFix.size() < 4)
-		return 1;
+		return false;
 
 	clock_t start, end;
 	start = clock();
@@ -1191,15 +1191,15 @@ int FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& 
 	g_pLogger->information(szTmpLog);
 	TRACE(szTmpLog);
 
-	return 1;
+	return true;
 }
 
-int PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix)
+bool PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix)
 {
 	if (lFix.size() == 3)
-		return FixWarpAffine(nPic, matCompPic, lFix, lModelFix);
+		FixWarpAffine(nPic, matCompPic, lFix, lModelFix);
 	else if (lFix.size() == 4)
-		return FixwarpPerspective(nPic, matCompPic, lFix, lModelFix);
+		FixwarpPerspective(nPic, matCompPic, lFix, lModelFix);
 
-	return 1;
+	return true;
 }

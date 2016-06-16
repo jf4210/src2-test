@@ -71,7 +71,7 @@ BOOL CFileUpLoad::SendAnsFile(CString strFilePath, CString strFileName)
 	m_VecAns.push_back(stAns);
 #endif
 
-	TRACE0("add ans file %s\n", strFileName);
+	TRACE("add ans file %s\n", strFileName);
 	SetEvent(m_hAddAnsEvent);
 	return TRUE;
 	

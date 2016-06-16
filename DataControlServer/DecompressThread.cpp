@@ -259,8 +259,16 @@ void CDecompressThread::run()
 
 void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 {
-	std::ifstream inp(pTask->strFilePath.c_str(), std::ios::binary);
+	std::string strLog = "获得试卷包解压任务: " + pTask->strFilePath;
+	g_Log.LogOut(strLog);
 
+	std::ifstream inp(pTask->strFilePath.c_str(), std::ios::binary);
+	if (!inp)
+	{
+		strLog = "打开试卷包文件失败";
+		g_Log.LogOutError(strLog);
+		return;
+	}
 	std::string strOutDir = SysSet.m_strDecompressPath + "\\" + CMyCodeConvert::Gb2312ToUtf8(pTask->strFileName);
 
 	pPAPERS_DETAIL pPapers = new PAPERS_DETAIL;
@@ -332,6 +340,59 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 		int nStudentNum = objData->get("scanNum").convert<int>();
 		std::string strUploader = objData->get("uploader").convert<std::string>();
 		std::string strEzs	= objData->get("ezs").convert<std::string>();
+
+		Poco::JSON::Array::Ptr jsnDetailArry = objData->getArray("detail");
+		for (int i = 0; i < jsnDetailArry->size(); i++)
+		{
+			Poco::JSON::Object::Ptr jsnPaperObj = jsnDetailArry->getObject(i);
+			std::string strStudentInfo = jsnPaperObj->get("name").convert<std::string>();
+
+			pPAPER_INFO pPaper = NULL;
+			LIST_PAPER_INFO::iterator itPaper = pPapers->lPaper.begin();
+			for (int j = 0; itPaper != pPapers->lPaper.end(); itPaper++)
+			{
+				if ((*itPaper)->strName == strStudentInfo)
+				{
+					pPaper = *itPaper;
+					break;
+				}
+			}
+			if (pPaper)
+			{
+				pPaper->strZkzh = jsnPaperObj->get("zkzh").convert<std::string>();
+
+ 				Poco::JSON::Array::Ptr jsnSnArry = jsnPaperObj->getArray("snDetail");
+
+				std::stringstream jsnSnString;
+				jsnSnArry->stringify(jsnSnString, 0);
+				pPaper->strSnDetail = jsnSnString.str();
+// 				for (int i = 0; i < jsnSnArry->size(); i++)
+// 				{
+// 					Poco::JSON::Object::Ptr jsnSnItem = jsnSnArry->getObject(i);
+// 					Poco::JSON::Object::Ptr jsnSnPosition = jsnSnItem->getObject("position");
+// 
+// 					SN_ITEM snItem;
+// 					snItem.nItem		= jsnSnItem->get("sn").convert<int>();
+// 					snItem.nRecogVal	= jsnSnItem->get("val").convert<int>();
+// 					snItem.rt.x			= jsnSnPosition->get("x").convert<int>();
+// 					snItem.rt.y			= jsnSnPosition->get("y").convert<int>();
+// 					snItem.rt.width		= jsnSnPosition->get("w").convert<int>();
+// 					snItem.rt.height	= jsnSnPosition->get("h").convert<int>();
+// 					pPaper->lSnResult.push_back(snItem);
+// 				}
+				Poco::JSON::Array::Ptr jsnOmrArry = jsnPaperObj->getArray("omr");
+				std::stringstream jsnOmrString;
+				jsnOmrArry->stringify(jsnOmrString, 0);
+				pPaper->strOmrDetail = jsnOmrString.str();
+			}
+			else
+			{
+				std::string strLog;
+				strLog = "出现OMR和SN号信息与学生试卷不一致的情况，详情: studentName = " + strStudentInfo;
+				g_Log.LogOutError(strLog);
+			}
+		}
+
 		pPapers->nExamID	= nExamId;
 		pPapers->nSubjectID = nSubjectId;
 		pPapers->nTeacherId = nTeacherId;

@@ -48,6 +48,7 @@
 
 #define PIC_RECTIFY_TEST	//图像旋转纠正测试
 #define WarpAffine_TEST		//仿射变换测试
+#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 
@@ -96,7 +97,7 @@ typedef struct _RectInfo_
 	int			nSingle;						//0-单选，1-多选
 	int			nRecogFlag;						//识别标识：识别SN时--识别考号顺序与选项方向的考号窗口标识值；识别OMR时--识别题号顺序与选项方向的OMR设置窗口的标识值
 //	cv::Point	ptFix;
-	cv::Rect	rt;
+	cv::Rect	rt;				//cv::Rect
 //	cv::Rect	rtFix;
 	_RectInfo_()
 	{
@@ -159,16 +160,6 @@ typedef struct _SN_
 	{
 		nItem = -1;
 	}
-// 	~_SN_()
-// 	{
-// 		lSNDETAIL::iterator itSN = lSN.begin();
-// 		for (; itSN != lSN.end();)
-// 		{
-// 			pSN_DETAIL pSN = *itSN;
-// 			itSN = lSN.erase(itSN);
-// 			SAFE_RELEASE(pSN);
-// 		}
-// 	}
 }SN_ITEM, *pSN_ITEM;
 typedef std::list<pSN_ITEM> SNLIST;
 
@@ -271,6 +262,7 @@ typedef struct _PaperInfo_
 	std::string strStudentInfo;		//学生信息	
 	std::string strSN;
 	
+	SNLIST				lSnResult;
 	OMRRESULTLIST		lOmrResult;			//OMRRESULTLIST
 	PIC_LIST	lPic;
 	_PaperInfo_()
@@ -283,6 +275,14 @@ typedef struct _PaperInfo_
 	}
 	~_PaperInfo_()
 	{
+		SNLIST::iterator itSn = lSnResult.begin();
+		for (; itSn != lSnResult.end();)
+		{
+			pSN_ITEM pSNItem = *itSn;
+			itSn = lSnResult.erase(itSn);
+			SAFE_RELEASE(pSNItem);
+		}
+
 		PIC_LIST::iterator itPic = lPic.begin();
 		for (; itPic != lPic.end();)
 		{
@@ -415,6 +415,6 @@ bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 
 std::string calcFileMd5(std::string strPath);
 void	CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int height);
 bool	PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat);
-int		FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);		//定点进行仿射变换
-int		FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);	//定点透视变换
-int		PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);
+bool FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);		//定点进行仿射变换
+bool FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);	//定点透视变换
+bool PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);

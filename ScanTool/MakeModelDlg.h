@@ -139,7 +139,7 @@ public:
 	BOOL m_bTwainInit;
 	CString		m_strScanSavePath;
 	CArray<TW_IDENTITY, TW_IDENTITY> m_scanSourceArry;
-	bool	ScanSrcInit();
+	BOOL ScanSrcInit();
 
 	void CopyImage(HANDLE hBitmap, TW_IMAGEINFO& info);
 	void SetImage(HANDLE hBitmap, int bits);
@@ -183,6 +183,7 @@ private:
 	LRESULT VTrackerChange(WPARAM wParam, LPARAM lParam);
 	LRESULT SNTrackerChange(WPARAM wParam, LPARAM lParam);
 	
+	bool checkValidity();						//保存模板前合法性检查
 	bool SaveModelFile(pMODEL pModel);			//保存模板到文件
 	void setUploadModelInfo(CString& strName, CString& strModelPath, int nExamId, int nSubjectId);					//设置上传模板的信息
 

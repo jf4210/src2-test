@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 
+//#include <opencv2\opencv.hpp>
 
 #include "Poco/Runnable.h"
 #include "Poco/Exception.h"

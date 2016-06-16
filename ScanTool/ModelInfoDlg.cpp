@@ -78,8 +78,8 @@ void CModelInfoDlg::OnBnClickedBtnOk()
 		return;
 	}
 
-	m_bABPaperModel = ((CButton*)GetDlgItem(IDC_RADIO_ABPaper))->GetCheck();
-	m_bHasHead = ((CButton*)GetDlgItem(IDC_RADIO_HasHead))->GetCheck();
+	m_bABPaperModel = static_cast<bool>(((CButton*)GetDlgItem(IDC_RADIO_ABPaper))->GetCheck());
+	m_bHasHead = static_cast<bool>(((CButton*)GetDlgItem(IDC_RADIO_HasHead))->GetCheck());
 	OnOK();
 }
 

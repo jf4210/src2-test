@@ -121,7 +121,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			if (bNeedDown)
 			{
 				Poco::File fileModel(pModelInfo->strPath);
-				stModelInfo.nModelSize = fileModel.getSize();
+				stModelInfo.nModelSize = static_cast<int>(fileModel.getSize());
 				pUser->SendResponesInfo(USER_RESPONSE_NEEDDOWN, RESULT_DOWNMODEL_OK, (char*)&stModelInfo, sizeof(stModelInfo));
 			}
 			else

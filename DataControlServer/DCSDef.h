@@ -49,6 +49,43 @@ typedef std::list<pDECOMPRESSTASK> DECOMPRESSTASKLIST;	//识别任务列表
 extern Poco::FastMutex			g_fmDecompressLock;		//解压文件列表锁
 extern DECOMPRESSTASKLIST		g_lDecompressTask;		//解压文件列表
 
+#if 0
+typedef struct _RectInfo_
+{
+	cv::Rect	rt;
+}RECTINFO,*pRECTINFO;
+typedef std::list<RECTINFO> RECTLIST;
+
+typedef struct _SN_
+{
+	int nItem;			//第几位数
+	int nRecogVal;		//识别的结果
+	cv::Rect rt;
+	_SN_()
+	{
+		nItem = -1;
+		nRecogVal = -1;
+	}
+}SN_ITEM, *pSN_ITEM;
+typedef std::list<SN_ITEM> SNLIST;
+
+typedef struct _OmrResult_
+{
+	int		nTH;				//题号
+	int		nSingle;			//0-单选，1-多选
+	int		nDoubt;				//0-无怀疑, 1-有怀疑
+	std::string strRecogVal;	//识别结果：A、B、C...
+	std::string strRecogVal2;
+	RECTLIST	lSelAnswer;				//选项列表
+	_OmrResult_()
+	{
+		nDoubt = 0;
+		nTH = -1;
+		nSingle = 0;
+	}
+}OMR_RESULT, *pOMR_RESULT;
+typedef std::list<OMR_RESULT> OMRRESULTLIST;
+#endif
 
 //图片文件
 typedef struct _Pic_
@@ -67,9 +104,16 @@ typedef std::list<pPIC_DETAIL> LIST_PIC_DETAIL;
 //试卷,针对考生
 typedef struct _Paper_
 {
-	std::string strName;	//识别出来的考生序列号、准考证号
+	std::string strName;	//识别出来的考生名称S1、S2、。。。
+	std::string strMd5Key;	//给后端的MD5--密号
+	std::string strZkzh;	//识别出来的考生序列号、准考证号
+	std::string strSnDetail;	//zkzh的详细识别情况，从文件读取
+	std::string strOmrDetail;	//同上
+
 	LIST_PIC_DETAIL lPic;
 
+// 	SNLIST				lSnResult;
+// 	OMRRESULTLIST		lOmrResult;
 	~_Paper_()
 	{
 		LIST_PIC_DETAIL::iterator it = lPic.begin();
@@ -130,7 +174,7 @@ extern LIST_PAPERS_DETAIL	g_lPapers;		//试卷袋列表
 
 typedef struct _SendHttpTask_
 {
-	int			nTaskType;			//任务类型: 1-给img服务器提交图片，2-给后端提交数据
+	int			nTaskType;			//任务类型: 1-给img服务器提交图片，2-给后端提交图片数据
 	int			nSendFlag;			//发送标示，1：发送失败1次，2：发送失败2次...
 	Poco::Timestamp sTime;			//创建任务时间，用于发送失败时延时发送
 	pPIC_DETAIL pPic;

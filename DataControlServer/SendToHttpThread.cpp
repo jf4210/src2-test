@@ -152,7 +152,7 @@ void CSendToHttpThread::run()
 						GenerateResult(pTask->pPapers, pTask);
 						pTask->pPapers->fmNum.unlock();
 					}
-					else
+					else if (pTask->nTaskType == 2)
 					{
 						std::string strLog = "发送试卷袋图片信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: " + pTask->strResult;
 						g_Log.LogOut(strLog);
@@ -391,7 +391,10 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 	if (pPapers->nUpLoadSuccess + pPapers->nUpLoadFail != pPapers->nTotalPics)
 		return false;
 
-	std::cout << "上传成功 + 失败数量 = " << pPapers->nUpLoadSuccess + pPapers->nUpLoadFail << std::endl;
+//	std::cout << "上传成功 + 失败数量 = " << pPapers->nUpLoadSuccess + pPapers->nUpLoadFail << std::endl;
+	std::string strLog = "试卷袋(" + pPapers->strPapersName +")图片上传服务器完成，开始提交后端。";
+	g_Log.LogOut(strLog);
+	std::cout << strLog << std::endl;
 
 	Poco::JSON::Object jsnPapers;
 	jsnPapers.set("papers", CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersName));
@@ -410,11 +413,12 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 		pPAPER_INFO pPaper = *it2;
 
 		std::string strStudentInfo = pPapers->strPapersName + "_" + pPaper->strName;
-		std::string strStudentKet = calcMd5(strStudentInfo);
+		std::string strStudentKey = calcMd5(strStudentInfo);
+		pPaper->strMd5Key = strStudentKey;
 
 		Poco::JSON::Object jsnPaper;
 		jsnPaper.set("paperName", pPaper->strName);
-		jsnPaper.set("studentKey", strStudentKet);			//考试唯一MD5
+		jsnPaper.set("studentKey", strStudentKey);			//考试唯一MD5
 		Poco::JSON::Array  picArry;
 
 		std::cout << "---- " << pPaper->strName << " ----" << std::endl;
