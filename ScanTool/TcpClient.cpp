@@ -90,7 +90,7 @@ bool CTcpClient::connectServer()
 	catch (Poco::Exception& exc)
 	{
 		std::string strLog = "连接服务器失败 ==> " + exc.displayText();
-		TRACE(strLog.c_str());
+//		TRACE(strLog.c_str());
 		g_pLogger->information(strLog);
 		_bConnect = false;
 	}

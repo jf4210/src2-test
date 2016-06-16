@@ -797,6 +797,9 @@ BOOL CV_picture::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 
 		if ((m_rect_win.PtInRect(pt)) && (1 == m_bActive))
 		{
+			if (zDelta > 120) zDelta = 120;
+			else if (zDelta < -120) zDelta = -120;
+
 			//计算现在src_roi相对于src的缩放比
 			m_fRoi_scale = m_fRoi_scale + m_fRoi_scale*0.2f*(float)zDelta / 120.0f;
 			if (m_fRoi_scale < 0)
@@ -805,6 +808,7 @@ BOOL CV_picture::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 				sprintf_s(szLog, "缩放比例小于0，m_fRoi_scale = %f, zDelta = %d\n", m_fRoi_scale, zDelta);
 				TRACE(szLog);
 			}
+
 			//计算当前鼠标相对画板中心的偏移
 			CPoint src_draw_tl = m_rect_win.TopLeft();
 			Point pt_in_draw = Point((pt.x - src_draw_tl.x), (pt.y - src_draw_tl.y));

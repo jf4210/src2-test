@@ -98,7 +98,7 @@ RESTART:
 				m_pITcpClient = CreateTcpClient(*this, T2A(m_strAddr), m_usPort);
 				if (m_pITcpClient == NULL)
 				{
-					TRACE0("\nconect to File Server failed!\n");
+//					TRACE0("\nconect to File Server failed!\n");
 					Sleep(100);
 					continue;
 				}

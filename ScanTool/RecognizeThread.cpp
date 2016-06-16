@@ -1166,10 +1166,10 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 //					omrResult.lSelAnswer.push_back(rc);
 				}
 			}
-			char szTmp[300] = {0};
-			sprintf_s(szTmp, "图片名: %s, OMR: 题号=%d, 选项=%c, 识别实际比例=%.3f, val=%.2f, 识别标准=%.3f, val=%.2f, 是否成功:%d\n", pPic->strPicName.c_str(),\
-				pOmrQuestion->nTH, rc.nAnswer + 65, rc.fRealValuePercent, rc.fRealValue, rc.fStandardValuePercent, rc.fStandardValue, rc.fRealValuePercent > rc.fStandardValuePercent);
-			TRACE(szTmp);
+// 			char szTmp[300] = {0};
+// 			sprintf_s(szTmp, "图片名: %s, OMR: 题号=%d, 选项=%c, 识别实际比例=%.3f, val=%.2f, 识别标准=%.3f, val=%.2f, 是否成功:%d\n", pPic->strPicName.c_str(),\
+// 				pOmrQuestion->nTH, rc.nAnswer + 65, rc.fRealValuePercent, rc.fRealValue, rc.fStandardValuePercent, rc.fStandardValue, rc.fRealValuePercent > rc.fStandardValuePercent);
+// 			TRACE(szTmp);
 
 			bool bResult_Recog2 = RecogVal(nPic, rc, matCompPic, pPic, pModelInfo);
 			if (bResult_Recog2)
