@@ -617,6 +617,38 @@ int GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, RECT
 	return nFind;
 }
 
+//三边质心算法
+inline cv::Point2d TriangleCentroid(cv::Point ptChk, cv::Point2f ptA, cv::Point2f ptB, cv::Point2f ptC, cv::Point2f ptNewA, cv::Point2f ptNewB, cv::Point2f ptNewC)
+{
+	long double rc2 = pow((ptChk.x - ptC.x), 2) + pow((ptChk.y - ptC.y), 2);
+	long double rb2 = pow((ptChk.x - ptB.x), 2) + pow((ptChk.y - ptB.y), 2);
+	long double ra2 = pow((ptChk.x - ptA.x), 2) + pow((ptChk.y - ptA.y), 2);
+
+	cv::Point2d ptNewChk;
+#if 1
+	long double v1 = rb2 - rc2 - pow(ptNewB.x, 2) + pow(ptNewC.x, 2) - pow(ptNewB.y, 2) + pow(ptNewC.y, 2) - ((ptNewC.y - ptNewB.y)*(ra2 - rb2 - pow(ptNewA.x, 2) + pow(ptNewB.x, 2) - pow(ptNewA.y, 2) + pow(ptNewB.y, 2)) / (ptNewB.y - ptNewA.y));
+	long double v2 = 2*(ptNewC.x - ptNewB.x) - 2*(ptNewC.y - ptNewB.y)*(ptNewB.x - ptNewA.x)/(ptNewB.y - ptNewA.y);
+	ptNewChk.x = v1 / v2;
+#else
+	long double v1 = (ptNewA.y - ptNewB.y)*(rc2 - pow(ptNewC.x, 2) - pow(ptNewC.y, 2)) - (ptNewA.y - ptNewC.y)*(rb2 - pow(ptNewB.x, 2) - pow(ptNewB.y, 2)) + (ptNewB.y - ptNewC.y)*(ra2 - pow(ptNewA.x, 2) - pow(ptNewA.y, 2));
+	long double v2 = 2 * (ptNewC.x * (ptNewB.y - ptNewA.y) - ptNewC.y * (ptNewB.x - ptNewA.x));
+	ptNewChk.x = v1 / v2;
+#endif
+	ptNewChk.y = (ra2 - rb2 - pow(ptNewA.x, 2) + pow(ptNewB.x, 2) - pow(ptNewA.y, 2) + pow(ptNewB.y, 2)) / (2 * (ptNewB.y - ptNewA.y)) - ((ptNewB.x - ptNewA.x) / (ptNewB.y - ptNewA.y)) * ptNewChk.x;
+
+	//++check
+	long double d1 = 2 * (ptNewB.x - ptNewA.x)*ptNewChk.x + 2 * (ptNewB.y - ptNewA.y)*ptNewChk.y;
+	long double d2 = ra2 - rb2 - pow(ptNewA.x, 2) + pow(ptNewB.x, 2) - pow(ptNewA.y, 2) + pow(ptNewB.y, 2);
+	long double d3 = d1 - d2;
+// 	long double d1 = 2 * (ptNewC.x - ptNewA.x)*ptNewChk.x + 2 * (ptNewC.y - ptNewA.y)*ptNewChk.y;
+// 	long double d2 = ra2 - rc2 - pow(ptNewA.x, 2) + pow(ptNewC.x, 2) - pow(ptNewA.y, 2) + pow(ptNewC.y, 2);
+// 	long double d3 = d1 - d2;
+	TRACE("三边质心算法 结果检查 d3 = %f\n", d3);
+	//--
+
+	return ptNewChk;
+}
+
 inline cv::Point2d TriangleCoordinate(cv::Point ptA, cv::Point ptB, cv::Point ptC, cv::Point ptNewA, cv::Point ptNewB)
 {
 	clock_t start, end;
@@ -856,6 +888,47 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 
 //		TRACE("定点1(%d, %d), 定点2(%d, %d),新的C点(%d, %d), C点(%d, %d), 原定点1(%d, %d), 定点2(%d, %d)\n", ptA.x, ptA.y, ptB.x, ptB.y, ptC.x, ptC.y, ptC0.x, ptC0.y, ptA0.x, ptA0.y, ptB0.x, ptB0.y);
 	}
+	else if (lModelFix.size() == 3)
+	{
+		if (lFix.size() < 3)
+			return false;
+#ifdef WarpAffine_TEST
+		return true;
+#else
+		RECTLIST::iterator it = lFix.begin();
+		RECTINFO rcA = *it++;
+		RECTINFO rcB = *it++;
+		RECTINFO rcC = *it;
+		RECTLIST::iterator itModel = lModelFix.begin();
+		RECTINFO rcModelA = *itModel++;
+		RECTINFO rcModelB = *itModel++;
+		RECTINFO rcModelC = *itModel;
+
+		cv::Point2f ptA, ptB, ptC, ptA0, ptB0, ptC0;
+		cv::Point2f ptChk;
+
+		ptA0.x = rcModelA.rt.x + rcModelA.rt.width / 2;
+		ptA0.y = rcModelA.rt.y + rcModelA.rt.height / 2;
+		ptB0.x = rcModelB.rt.x + rcModelB.rt.width / 2;
+		ptB0.y = rcModelB.rt.y + rcModelB.rt.height / 2;
+		ptC0.x = rcModelC.rt.x + rcModelC.rt.width / 2;
+		ptC0.y = rcModelC.rt.y + rcModelC.rt.height / 2;
+
+		ptA.x = rcA.rt.x + rcA.rt.width / 2;
+		ptA.y = rcA.rt.y + rcA.rt.height / 2;
+		ptB.x = rcB.rt.x + rcB.rt.width / 2;
+		ptB.y = rcB.rt.y + rcB.rt.height / 2;
+		ptC.x = rcC.rt.x + rcC.rt.width / 2;
+		ptC.y = rcC.rt.y + rcC.rt.height / 2;
+
+		ptChk.x = rt.x;
+		ptChk.y = rt.y;
+		cv::Point2d ptResult;
+		ptResult = TriangleCentroid(ptChk, ptA0, ptB0, ptC0, ptA, ptB, ptC);
+		rt.x = ptResult.x;
+		rt.y = ptResult.y;
+#endif
+	}
 	return true;
 }
 
@@ -906,7 +979,7 @@ bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 	rt.height = src.rows / 4;
 #else
 	rt.width = src.cols;
-	rt.height = src.rows * 0.5;		//4
+	rt.height = src.rows * 0.4;		//4
 #endif
 
 	cv::Mat matSrc = src(rt);

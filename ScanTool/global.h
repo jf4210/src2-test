@@ -47,7 +47,7 @@
 #include "MyCodeConvert.h"
 
 #define PIC_RECTIFY_TEST	//图像旋转纠正测试
-#define WarpAffine_TEST		//仿射变换测试
+//#define WarpAffine_TEST		//仿射变换测试
 #define PaintOmrSnRect		//是否打印识别出来的OMR矩形
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)
