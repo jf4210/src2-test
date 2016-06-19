@@ -1627,7 +1627,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 		return;
 	}
 	
-	checkValidity();
+	if (!checkValidity()) return;
 
 	if (m_bNewModelFlag && !m_bSavedModelFlag)
 	{

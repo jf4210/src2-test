@@ -849,11 +849,13 @@ void CPaperInputDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		RECTLIST::iterator itNormalRect = (*itPic)->lNormalRect.begin();
 		for (int j = 0; itNormalRect != (*itPic)->lNormalRect.end(); itNormalRect++, j++)
 		{
+			cv::Rect rt = (*itNormalRect).rt;
+			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 //			char szCP[20] = { 0 };
 // 			sprintf_s(szCP, "CP%d", j);
 // 			putText(tmp, szCP, Point((*itNormalRect).rt.x, (*itNormalRect).rt.y + (*itNormalRect).rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
-			rectangle(tmp, (*itNormalRect).rt, CV_RGB(255, 0, 0), 2);
-			rectangle(tmp2, (*itNormalRect).rt, CV_RGB(255, 233, 10), -1);
+			rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 		}
 
 		//打印OMR、SN位置
@@ -865,8 +867,11 @@ void CPaperInputDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			RECTLIST::iterator itSnItem = pSnItem->lSN.begin();
 			for (; itSnItem != pSnItem->lSN.end(); itSnItem++)
 			{
-				rectangle(tmp, (*itSnItem).rt, CV_RGB(255, 0, 0), 2);
-				rectangle(tmp2, (*itSnItem).rt, CV_RGB(255, 233, 10), -1);
+				cv::Rect rt = (*itSnItem).rt;
+				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+
+				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
 		}
 
@@ -877,8 +882,11 @@ void CPaperInputDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			RECTLIST::iterator itOmrItem = pOmrQuestion->lSelAnswer.begin();
 			for (; itOmrItem != pOmrQuestion->lSelAnswer.end(); itOmrItem++)
 			{
-				rectangle(tmp, (*itOmrItem).rt, CV_RGB(255, 0, 0), 2);
-				rectangle(tmp2, (*itOmrItem).rt, CV_RGB(255, 233, 10), -1);
+				cv::Rect rt = (*itOmrItem).rt;
+				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+
+				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
 		}
 #endif
@@ -920,7 +928,7 @@ void CPaperInputDlg::PaintIssueRect(pST_PaperInfo pPaper)
 			for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i]->lSelFixRoi.end(); itSelRoi++, j++)
 			{
 				cv::Rect rt = (*itSelRoi).rt;
-//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
+//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				char szCP[20] = { 0 };
 				rectangle(tmp, rt, CV_RGB(0, 0, 255), 2);
@@ -931,7 +939,7 @@ void CPaperInputDlg::PaintIssueRect(pST_PaperInfo pPaper)
 			for (int j = 0; itPicFix != (*itPic)->lFix.end(); itPicFix++, j++)
 			{
 				cv::Rect rt = (*itPicFix).rt;
-//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
+//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				char szCP[20] = { 0 };
 				sprintf_s(szCP, "F%d", j);
@@ -943,7 +951,7 @@ void CPaperInputDlg::PaintIssueRect(pST_PaperInfo pPaper)
 			for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[i]->lFix.end(); itFixRect++, j++)
 			{
 				cv::Rect rt = (*itFixRect).rt;
-				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				TRACE("模板定点矩形区: (%d, %d, %d, %d)\n", (*itFixRect).rt.x, (*itFixRect).rt.y, (*itFixRect).rt.width, (*itFixRect).rt.height);
 
@@ -954,11 +962,11 @@ void CPaperInputDlg::PaintIssueRect(pST_PaperInfo pPaper)
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
 
-			RECTLIST::iterator itNormal = (*itPic)->lNormalRect.begin();													//显示识别定点的选择区
+			RECTLIST::iterator itNormal = (*itPic)->lNormalRect.begin();													//显示所有识别正常的点
 			for (int j = 0; itNormal != (*itPic)->lNormalRect.end(); itNormal++, j++)
 			{
 				cv::Rect rt = (*itNormal).rt;
-//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				char szCP[20] = { 0 };
 				rectangle(tmp, rt, CV_RGB(0, 255, 255), 2);
@@ -969,9 +977,11 @@ void CPaperInputDlg::PaintIssueRect(pST_PaperInfo pPaper)
 			RECTLIST::iterator itIssueRect = (*itPic)->lIssueRect.begin();
 			for (int j = 0; itIssueRect != (*itPic)->lIssueRect.end(); itIssueRect++, j++)
 			{
+				cv::Rect rt = (*itIssueRect).rt;
+				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 				if (j == 0)
 				{
-					pt = (*itIssueRect).rt.tl();
+					pt = rt.tl();
 					pt.x = pt.x - 100;
 					pt.y = pt.y - 100;
 				}

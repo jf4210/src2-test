@@ -1282,10 +1282,11 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			rectangle(tmp, rt, CV_RGB(25, 200, 20), 2);
 			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 		}
-		RECTLIST::iterator itNormal = (*itPic)->lNormalRect.begin();													//显示识别定点的选择区
+		RECTLIST::iterator itNormal = (*itPic)->lNormalRect.begin();													//显示识别正常的点
 		for (int j = 0; itNormal != (*itPic)->lNormalRect.end(); itNormal++, j++)
 		{
 			cv::Rect rt = (*itNormal).rt;
+			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 			char szCP[20] = { 0 };
 			rectangle(tmp, rt, CV_RGB(50, 255, 55), 2);
@@ -1295,7 +1296,7 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i]->lSelFixRoi.end(); itSelRoi++, j++)
 		{
 			cv::Rect rt = (*itSelRoi).rt;
-			//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
+//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 			char szCP[20] = { 0 };
 			// 				sprintf_s(szCP, "FIX%d", j);
@@ -1308,7 +1309,7 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		for (int j = 0; itPicFix != (*itPic)->lFix.end(); itPicFix++, j++)
 		{
 			cv::Rect rt = (*itPicFix).rt;
-//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
+//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 			char szCP[20] = { 0 };
 			sprintf_s(szCP, "FIX%d", j);
@@ -1320,7 +1321,7 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[i]->lFix.end(); itFixRect++, j++)
 		{
 			cv::Rect rt = (*itFixRect).rt;
-			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 			char szCP[20] = { 0 };
 			sprintf_s(szCP, "FIX%d", j);
@@ -1422,8 +1423,11 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			RECTLIST::iterator itSnItem = pSnItem->lSN.begin();
 			for (; itSnItem != pSnItem->lSN.end(); itSnItem++)
 			{
-				rectangle(tmp, (*itSnItem).rt, CV_RGB(255, 0, 0), 2);
-				rectangle(tmp2, (*itSnItem).rt, CV_RGB(255, 233, 10), -1);
+				cv::Rect rt = (*itSnItem).rt;
+				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+
+				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
 		}
 
@@ -1434,8 +1438,11 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			RECTLIST::iterator itOmrItem = pOmrQuestion->lSelAnswer.begin();
 			for (; itOmrItem != pOmrQuestion->lSelAnswer.end(); itOmrItem++)
 			{
-				rectangle(tmp, (*itOmrItem).rt, CV_RGB(255, 0, 0), 2);
-				rectangle(tmp2, (*itOmrItem).rt, CV_RGB(255, 233, 10), -1);
+				cv::Rect rt = (*itOmrItem).rt;
+				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+
+				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
 		}
 #endif

@@ -617,7 +617,7 @@ int GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, RECT
 	return nFind;
 }
 
-//三边质心算法
+//三边定位算法
 inline cv::Point2d TriangleCentroid(cv::Point ptChk, cv::Point2f ptA, cv::Point2f ptB, cv::Point2f ptC, cv::Point2f ptNewA, cv::Point2f ptNewB, cv::Point2f ptNewC)
 {
 	long double rc2 = pow((ptChk.x - ptC.x), 2) + pow((ptChk.y - ptC.y), 2);
@@ -625,25 +625,32 @@ inline cv::Point2d TriangleCentroid(cv::Point ptChk, cv::Point2f ptA, cv::Point2
 	long double ra2 = pow((ptChk.x - ptA.x), 2) + pow((ptChk.y - ptA.y), 2);
 
 	cv::Point2d ptNewChk;
-#if 1
+	if(ptNewB.y == ptNewA.y)
+	{
+		long double x = (ra2 - rb2 - pow(ptNewA.x,2) + pow(ptNewB.x,2) - pow(ptNewA.y,2) + pow(ptNewB.y,2)) / (2*(ptNewB.x - ptNewA.x));
+		long double y = (rb2 - rc2 - pow(ptNewB.x,2) + pow(ptNewC.x,2) - pow(ptNewB.y,2) + pow(ptNewC.y,2) - 2*(ptNewC.x - ptNewB.x)*x) / (2*(ptNewC.y - ptNewB.y));
+		ptNewChk.x = x;
+		ptNewChk.y = y;
+		return ptNewChk;
+	}
+
+#if 0
 	long double v1 = rb2 - rc2 - pow(ptNewB.x, 2) + pow(ptNewC.x, 2) - pow(ptNewB.y, 2) + pow(ptNewC.y, 2) - ((ptNewC.y - ptNewB.y)*(ra2 - rb2 - pow(ptNewA.x, 2) + pow(ptNewB.x, 2) - pow(ptNewA.y, 2) + pow(ptNewB.y, 2)) / (ptNewB.y - ptNewA.y));
 	long double v2 = 2*(ptNewC.x - ptNewB.x) - 2*(ptNewC.y - ptNewB.y)*(ptNewB.x - ptNewA.x)/(ptNewB.y - ptNewA.y);
 	ptNewChk.x = v1 / v2;
 #else
-	long double v1 = (ptNewA.y - ptNewB.y)*(rc2 - pow(ptNewC.x, 2) - pow(ptNewC.y, 2)) - (ptNewA.y - ptNewC.y)*(rb2 - pow(ptNewB.x, 2) - pow(ptNewB.y, 2)) + (ptNewB.y - ptNewC.y)*(ra2 - pow(ptNewA.x, 2) - pow(ptNewA.y, 2));
-	long double v2 = 2 * (ptNewC.x * (ptNewB.y - ptNewA.y) - ptNewC.y * (ptNewB.x - ptNewA.x));
-	ptNewChk.x = v1 / v2;
+	long double v3 = (ptNewA.y - ptNewB.y)*(rc2 - pow(ptNewC.x, 2) - pow(ptNewC.y, 2)) - (ptNewA.y - ptNewC.y)*(rb2 - pow(ptNewB.x, 2) - pow(ptNewB.y, 2)) + (ptNewB.y - ptNewC.y)*(ra2 - pow(ptNewA.x, 2) - pow(ptNewA.y, 2));
+	long double v4 = 2 * ((ptNewC.x - ptNewB.x) * (ptNewB.y - ptNewA.y) - (ptNewC.y - ptNewB.y) * (ptNewB.x - ptNewA.x));
+	ptNewChk.x = v3 / v4;
 #endif
 	ptNewChk.y = (ra2 - rb2 - pow(ptNewA.x, 2) + pow(ptNewB.x, 2) - pow(ptNewA.y, 2) + pow(ptNewB.y, 2)) / (2 * (ptNewB.y - ptNewA.y)) - ((ptNewB.x - ptNewA.x) / (ptNewB.y - ptNewA.y)) * ptNewChk.x;
 
 	//++check
-	long double d1 = 2 * (ptNewB.x - ptNewA.x)*ptNewChk.x + 2 * (ptNewB.y - ptNewA.y)*ptNewChk.y;
-	long double d2 = ra2 - rb2 - pow(ptNewA.x, 2) + pow(ptNewB.x, 2) - pow(ptNewA.y, 2) + pow(ptNewB.y, 2);
-	long double d3 = d1 - d2;
-// 	long double d1 = 2 * (ptNewC.x - ptNewA.x)*ptNewChk.x + 2 * (ptNewC.y - ptNewA.y)*ptNewChk.y;
-// 	long double d2 = ra2 - rc2 - pow(ptNewA.x, 2) + pow(ptNewC.x, 2) - pow(ptNewA.y, 2) + pow(ptNewC.y, 2);
-// 	long double d3 = d1 - d2;
-	TRACE("三边质心算法 结果检查 d3 = %f\n", d3);
+	long double v1 = ra2 - rc2 - pow(ptNewA.x, 2) + pow(ptNewC.x, 2) - pow(ptNewA.y, 2) + pow(ptNewC.y, 2) - ((ptNewC.y - ptNewA.y)*(ra2 - rb2 - pow(ptNewA.x, 2) + pow(ptNewB.x, 2) - pow(ptNewA.y, 2) + pow(ptNewB.y, 2)) / (ptNewB.y - ptNewA.y));
+	long double v2 = 2 * (ptNewC.x - ptNewA.x) - (ptNewC.y - ptNewA.y)*(ptNewB.x - ptNewA.x) / (ptNewB.y - ptNewA.y);
+	long double x1 = v1 / v2;
+	long double y1 = (ra2 - rb2 - pow(ptNewA.x, 2) + pow(ptNewB.x, 2) - pow(ptNewA.y, 2) + pow(ptNewB.y, 2)) / (2 * (ptNewB.y - ptNewA.y)) - ((ptNewB.x - ptNewA.x) / (ptNewB.y - ptNewA.y)) * x1;
+	TRACE("点1(%f,%f),点2(%f,%f)\n", ptNewChk.x, ptNewChk.y, x1, y1);
 	//--
 
 	return ptNewChk;
@@ -925,6 +932,13 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 		ptChk.y = rt.y;
 		cv::Point2d ptResult;
 		ptResult = TriangleCentroid(ptChk, ptA0, ptB0, ptC0, ptA, ptB, ptC);
+		cv::Point2d ptResult2;
+		ptResult2 = TriangleCentroid(ptChk, ptA0, ptB0, ptC0, ptA, ptC, ptB);
+		cv::Point2d ptResult3;
+		ptResult3 = TriangleCentroid(ptChk, ptA0, ptB0, ptC0, ptB, ptC, ptA);
+		TRACE("ptResult= (%f,%f),ptResult2= (%f,%f),ptResult3=(%f,%f)\n", ptResult.x, ptResult.y,\
+			  ptResult2.x, ptResult2.y, ptResult3.x, ptResult3.y);
+
 		rt.x = ptResult.x;
 		rt.y = ptResult.y;
 #endif
