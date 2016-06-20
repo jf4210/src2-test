@@ -50,6 +50,13 @@
 //#define WarpAffine_TEST		//仿射变换测试
 #define PaintOmrSnRect		//是否打印识别出来的OMR矩形
 
+#ifndef WarpAffine_TEST
+//	#define TriangleSide_TEST		//三边定位算法
+	#ifndef TriangleSide_TEST
+		#define TriangleCentroid_TEST	//三边质心算法
+	#endif
+#endif
+
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 
 #define SOFT_VERSION	_T("1.0")

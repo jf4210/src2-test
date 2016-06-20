@@ -1286,7 +1286,7 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		for (int j = 0; itNormal != (*itPic)->lNormalRect.end(); itNormal++, j++)
 		{
 			cv::Rect rt = (*itNormal).rt;
-			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 			char szCP[20] = { 0 };
 			rectangle(tmp, rt, CV_RGB(50, 255, 55), 2);

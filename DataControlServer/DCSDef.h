@@ -174,7 +174,7 @@ extern LIST_PAPERS_DETAIL	g_lPapers;		//试卷袋列表
 
 typedef struct _SendHttpTask_
 {
-	int			nTaskType;			//任务类型: 1-给img服务器提交图片，2-给后端提交图片数据
+	int			nTaskType;			//任务类型: 1-给img服务器提交图片，2-给后端提交图片数据, 3-提交OMR，4-提交ZKZH
 	int			nSendFlag;			//发送标示，1：发送失败1次，2：发送失败2次...
 	Poco::Timestamp sTime;			//创建任务时间，用于发送失败时延时发送
 	pPIC_DETAIL pPic;
