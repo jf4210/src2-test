@@ -66,6 +66,10 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 		return;
 	}
 
+	char szLog[300] = { 0 };
+	sprintf_s(szLog, "添加发送文件任务: %s, path: %s", pTask->strFileName.c_str(), pTask->strPath.c_str());
+	g_pLogger->information(szLog);
+
 //	m_upLoad.SendAnsFile(A2T(pTask->strPath.c_str()), A2T(pTask->strFileName.c_str()));
 	m_pUpLoad->SendAnsFile(A2T(pTask->strPath.c_str()), A2T(pTask->strFileName.c_str()));
 }

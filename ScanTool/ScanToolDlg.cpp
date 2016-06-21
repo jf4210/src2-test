@@ -1676,6 +1676,11 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		Poco::JSON::Object jsnPaper;
 		jsnPaper.set("name", (*itNomarlPaper)->strStudentInfo);
 		jsnPaper.set("zkzh", (*itNomarlPaper)->strSN);
+// 		if ((*itNomarlPaper)->strSN != "")
+// 			jsnPaper.set("doubt", 0);
+// 		else
+// 			jsnPaper.set("doubt", 1);
+
 
 		Poco::JSON::Array jsnSnDetailArry;
 		SNLIST::iterator itSn = (*itNomarlPaper)->lSnResult.begin();
@@ -1689,14 +1694,14 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
 			for (; itRect != (*itSn)->lSN.end(); itRect++)
 			{
-				if ((*itSn)->nRecogVal == itRect->nSnVal)
-				{
+// 				if ((*itSn)->nRecogVal == itRect->nSnVal)
+// 				{
 					jsnSnPosition.set("x", itRect->rt.x);
 					jsnSnPosition.set("y", itRect->rt.y);
 					jsnSnPosition.set("w", itRect->rt.width);
 					jsnSnPosition.set("h", itRect->rt.height);
-					break;
-				}
+// 					break;
+// 				}
 			}
 			jsnSnItem.set("position", jsnSnPosition);
 			jsnSnDetailArry.add(jsnSnItem);
@@ -1716,15 +1721,15 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
 			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
 			{
-				if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
-				{
+// 				if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
+// 				{
 					Poco::JSON::Object jsnItem;
 					jsnItem.set("x", itRect->rt.x);
 					jsnItem.set("y", itRect->rt.y);
 					jsnItem.set("w", itRect->rt.width);
 					jsnItem.set("h", itRect->rt.height);
 					jsnPositionArry.add(jsnItem);
-				}
+//				}
 			}
 			jsnOmr.set("position", jsnPositionArry);
 			jsnOmrArry.add(jsnOmr);
@@ -1851,6 +1856,9 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		m_pCurrentShowPaper = NULL;
 	}
 	SetStatusShowInfo(strInfo, bWarn);
+
+	if (!bWarn)
+		return;
 
 	//添加上传列表，	******************		需要进行鉴权操作	***************	
 	char szFileFullPath[300] = { 0 };

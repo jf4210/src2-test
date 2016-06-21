@@ -1290,7 +1290,7 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 			rcFixRt.fStandardValuePercent = m_fFixThresholdPercent;
 			RecogGrayValue(matSrcModel, rcFixRt);
 
-			if (m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.size() <= 4)
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.size() < 4)
 			{
 				m_vecPaperModelInfo[m_nCurrTabSel]->vecRtSel.push_back(rcFixSel);
 				m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.push_back(rcFixRt);
@@ -1579,7 +1579,7 @@ bool CMakeModelDlg::checkValidity()
 	USES_CONVERSION;
 	if (m_pModel->nHasHead == 0)
 	{
-		for (int i = 0; i < m_pModel->vecPaperModel.size(); i++)
+		for (int i = 0; i < m_vecPaperModelInfo.size(); i++)
 		{
 			if (m_vecPaperModelInfo[i]->vecRtFix.size() < 2)
 			{

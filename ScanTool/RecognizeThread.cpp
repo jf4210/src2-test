@@ -1195,10 +1195,17 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		}
 
 		int nDoubt = 0;
-		if (strRecogAnswer1 == strRecogAnswer2)
-			nDoubt = 0;
+		if (strRecogAnswer1 == "")
+		{
+			nDoubt = 2;
+		}
 		else
-			nDoubt = 1;
+		{
+			if (strRecogAnswer1 == strRecogAnswer2)
+				nDoubt = 0;
+			else
+				nDoubt = 1;
+		}		
 
 //		OMR_RESULT omrResult;
 		omrResult.nTH			= pOmrQuestion->nTH;

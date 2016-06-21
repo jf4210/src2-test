@@ -889,11 +889,7 @@ void CPaperInputDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		for (int j = 0; itNormalRect != (*itPic)->lNormalRect.end(); itNormalRect++, j++)
 		{
 			cv::Rect rt = (*itNormalRect).rt;
-//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
-//			char szCP[20] = { 0 };
-// 			sprintf_s(szCP, "CP%d", j);
-// 			putText(tmp, szCP, Point((*itNormalRect).rt.x, (*itNormalRect).rt.y + (*itNormalRect).rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
-			rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+			rectangle(tmp, rt, CV_RGB(250, 150, 20), 2);
 			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 		}
 
@@ -1028,7 +1024,7 @@ void CPaperInputDlg::PaintIssueRect(pST_PaperInfo pPaper)
 				char szCP[20] = { 0 };
 				sprintf_s(szCP, "Err%d", j);
 				putText(tmp, szCP, Point((*itIssueRect).rt.x, (*itIssueRect).rt.y + (*itIssueRect).rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
-				rectangle(tmp, (*itIssueRect).rt, CV_RGB(255, 0, 0), 2);
+				rectangle(tmp, (*itIssueRect).rt, CV_RGB(255, 20, 30), 2);
 				rectangle(tmp2, (*itIssueRect).rt, CV_RGB(255, 200, 100), -1);
 			}
 			addWeighted(tmp, 0.5, tmp2, 0.5, 0, tmp);
@@ -1119,14 +1115,14 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
 			for (; itRect != (*itSn)->lSN.end(); itRect++)
 			{
-				if ((*itSn)->nRecogVal == itRect->nSnVal)
-				{
+// 				if ((*itSn)->nRecogVal == itRect->nSnVal)
+// 				{
 					jsnSnPosition.set("x", itRect->rt.x);
 					jsnSnPosition.set("y", itRect->rt.y);
 					jsnSnPosition.set("w", itRect->rt.width);
 					jsnSnPosition.set("h", itRect->rt.height);
-					break;
-				}
+// 					break;
+// 				}
 			}
 			jsnSnItem.set("position", jsnSnPosition);
 			jsnSnDetailArry.add(jsnSnItem);
@@ -1146,15 +1142,15 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
 			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
 			{
-				if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
-				{
+// 				if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
+// 				{
 					Poco::JSON::Object jsnItem;
 					jsnItem.set("x", itRect->rt.x);
 					jsnItem.set("y", itRect->rt.y);
 					jsnItem.set("w", itRect->rt.width);
 					jsnItem.set("h", itRect->rt.height);
 					jsnPositionArry.add(jsnItem);
-				}
+//				}
 			}
 			jsnOmr.set("position", jsnPositionArry);
 			jsnOmrArry.add(jsnOmr);

@@ -37,7 +37,7 @@ public:
 	BOOL		InitUpLoadTcp(CString strAddr,USHORT usPort);
 	void		UnInit();
 	BOOL		SendAnsFile(CString strFilePath, CString strFileName);
-	void		sendData(char * szBuff, DWORD nLen);
+	bool sendData(char * szBuff, DWORD nLen);
 	
 	void		ProcessUpLoadResponse(BOOL bFlag);
 	void		ProcessUpLoadDone(BOOL bFlag);

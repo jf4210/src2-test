@@ -46,7 +46,7 @@
 #include "unzip.h"
 #include "MyCodeConvert.h"
 
-#define PIC_RECTIFY_TEST	//图像旋转纠正测试
+//#define PIC_RECTIFY_TEST	//图像旋转纠正测试
 //#define WarpAffine_TEST		//仿射变换测试
 #define PaintOmrSnRect		//是否打印识别出来的OMR矩形
 
@@ -145,7 +145,7 @@ typedef struct _OmrResult_
 {
 	int		nTH;				//题号
 	int		nSingle;			//0-单选，1-多选
-	int		nDoubt;				//0-无怀疑, 1-有怀疑
+	int		nDoubt;				//0-无怀疑, 1-有怀疑, 2-空值
 	std::string strRecogVal;	//识别结果：A、B、C...
 	std::string strRecogVal2;
 	RECTLIST	lSelAnswer;				//选项列表

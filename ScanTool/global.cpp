@@ -695,13 +695,15 @@ inline cv::Point2d TriangleSide(cv::Point ptChk, cv::Point2f ptA, cv::Point2f pt
 #if 0
 	long double v1 = rb2 - rc2 - pow(ptNewB.x, 2) + pow(ptNewC.x, 2) - pow(ptNewB.y, 2) + pow(ptNewC.y, 2) - ((ptNewC.y - ptNewB.y)*(ra2 - rb2 - pow(ptNewA.x, 2) + pow(ptNewB.x, 2) - pow(ptNewA.y, 2) + pow(ptNewB.y, 2)) / (ptNewB.y - ptNewA.y));
 	long double v2 = 2*(ptNewC.x - ptNewB.x) - 2*(ptNewC.y - ptNewB.y)*(ptNewB.x - ptNewA.x)/(ptNewB.y - ptNewA.y);
-	ptNewChk.x = v1 / v2;
+	long double x = v1 / v2;
+	ptNewChk.x = x;
 #else
 	long double v3 = (ptNewA.y - ptNewB.y)*(rc2 - pow(ptNewC.x, 2) - pow(ptNewC.y, 2)) - (ptNewA.y - ptNewC.y)*(rb2 - pow(ptNewB.x, 2) - pow(ptNewB.y, 2)) + (ptNewB.y - ptNewC.y)*(ra2 - pow(ptNewA.x, 2) - pow(ptNewA.y, 2));
 	long double v4 = 2 * ((ptNewC.x - ptNewB.x) * (ptNewB.y - ptNewA.y) - (ptNewC.y - ptNewB.y) * (ptNewB.x - ptNewA.x));
-	ptNewChk.x = v3 / v4;
+	long double x = v3 / v4;
+	ptNewChk.x = x;
 #endif
-	ptNewChk.y = (ra2 - rb2 - pow(ptNewA.x, 2) + pow(ptNewB.x, 2) - pow(ptNewA.y, 2) + pow(ptNewB.y, 2)) / (2 * (ptNewB.y - ptNewA.y)) - ((ptNewB.x - ptNewA.x) / (ptNewB.y - ptNewA.y)) * ptNewChk.x;
+	ptNewChk.y = (ra2 - rb2 - pow(ptNewA.x, 2) + pow(ptNewB.x, 2) - pow(ptNewA.y, 2) + pow(ptNewB.y, 2)) / (2 * (ptNewB.y - ptNewA.y)) - ((ptNewB.x - ptNewA.x) / (ptNewB.y - ptNewA.y)) * x;
 
 	//++check
 	long double v1 = ra2 - rc2 - pow(ptNewA.x, 2) + pow(ptNewC.x, 2) - pow(ptNewA.y, 2) + pow(ptNewC.y, 2) - ((ptNewC.y - ptNewA.y)*(ra2 - rb2 - pow(ptNewA.x, 2) + pow(ptNewB.x, 2) - pow(ptNewA.y, 2) + pow(ptNewB.y, 2)) / (ptNewB.y - ptNewA.y));
@@ -992,6 +994,7 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 	#ifdef TriangleSide_TEST
 		ptResult = TriangleSide(ptChk, ptA0, ptB0, ptC0, ptA, ptB, ptC);
 	#else
+		long double dMax_X = 0, dMax_Y = 0, dMin_X = 0, dMin_Y = 0;
 		long double dSumX = 0;
 		long double dSumY = 0;
 		int nCount = 0;
@@ -1001,6 +1004,13 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 			dSumX += ptResult1.x;
 			dSumY += ptResult1.y;
 			nCount++;
+
+			dMin_X = ptResult1.x;
+			dMin_Y = ptResult1.y;
+			if (dMax_X < ptResult1.x) dMax_X = ptResult1.x;
+			if (dMax_Y < ptResult1.y) dMax_Y = ptResult1.y;
+			if (dMin_X > ptResult1.x) dMin_X = ptResult1.x;
+			if (dMin_Y > ptResult1.y) dMin_Y = ptResult1.y;
 		}
 		cv::Point2d ptResult2 = TriangleCentroid(ptChk, ptA0, ptC0, ptA, ptC);
 		if (ptResult2.x != 0 && ptResult2.y != 0)
@@ -1008,6 +1018,13 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 			dSumX += ptResult2.x;
 			dSumY += ptResult2.y;
 			nCount++;
+
+			if (dMin_X == 0) dMin_X = ptResult2.x;
+			if (dMin_Y == 0) dMin_Y = ptResult2.y;
+			if (dMax_X < ptResult2.x) dMax_X = ptResult2.x;
+			if (dMax_Y < ptResult2.y) dMax_Y = ptResult2.y;
+			if (dMin_X > ptResult2.x) dMin_X = ptResult2.x;
+			if (dMin_Y > ptResult2.y) dMin_Y = ptResult2.y;
 		}
 		cv::Point2d ptResult3 = TriangleCentroid(ptChk, ptB0, ptC0, ptB, ptC);
 		if (ptResult3.x != 0 && ptResult3.y != 0)
@@ -1015,7 +1032,21 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 			dSumX += ptResult3.x;
 			dSumY += ptResult3.y;
 			nCount++;
+
+			if (dMin_X == 0) dMin_X = ptResult3.x;
+			if (dMin_Y == 0) dMin_Y = ptResult3.y;
+			if (dMax_X < ptResult3.x) dMax_X = ptResult3.x;
+			if (dMax_Y < ptResult3.y) dMax_Y = ptResult3.y;
+			if (dMin_X > ptResult3.x) dMin_X = ptResult3.x;
+			if (dMin_Y > ptResult3.y) dMin_Y = ptResult3.y;
 		}
+
+// 		dSumX -= dMax_X;
+// 		dSumX -= dMin_X;
+// 		dSumY -= dMax_Y;
+// 		dSumY -= dMin_Y;
+// 		nCount -= 2;
+
 		if (nCount > 0)
 		{
 			ptResult.x = dSumX / nCount;
@@ -1077,7 +1108,7 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 		long double dSumX = 0;
 		long double dSumY = 0;
 		int nCount = 0;
-		ptResult = TriangleSide(ptChk, ptA0, ptB0, ptC0, ptA, ptB, ptC);
+//		ptResult = TriangleSide(ptChk, ptA0, ptB0, ptC0, ptA, ptB, ptC);
 		cv::Point2d ptResult1 = TriangleSide(ptChk, ptA0, ptB0, ptC0, ptA, ptB, ptC);
 		if (ptResult1.x != 0 && ptResult1.y != 0)
 		{
@@ -1099,6 +1130,53 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 			dSumY += ptResult3.y;
 			nCount++;
 		}
+		cv::Point2d ptResult4 = TriangleSide(ptChk, ptA0, ptC0, ptD0, ptA, ptC, ptD);
+		if (ptResult4.x != 0 && ptResult4.y != 0)
+		{
+			dSumX += ptResult4.x;
+			dSumY += ptResult4.y;
+			nCount++;
+		}
+#if 0
+		double d1 = abs(ptResult1.x - ptResult2.x);
+		double d2 = abs(ptResult1.x - ptResult3.x);
+		double d3 = abs(ptResult2.x - ptResult3.x);
+		if (d1 < d2)
+		{
+			if (d1 < d3){ ptResult.x = (ptResult1.x + ptResult2.x) / 2; }
+			else if (d1 > d3) { ptResult.x = (ptResult3.x + ptResult2.x) / 2; }
+			else { ptResult.x = (ptResult1.x + ptResult2.x + ptResult3.x) / 3; }
+		}
+		else if (d1 > d2)
+		{
+			if (d2 < d3){ ptResult.x = (ptResult1.x + ptResult3.x) / 2; }
+			else if (d2 > d3) { ptResult.x = (ptResult3.x + ptResult2.x) / 2; }
+			else { ptResult.x = (ptResult1.x + ptResult2.x + ptResult3.x) / 3; }
+		}
+		else
+		{
+			ptResult.x = (ptResult1.x + ptResult2.x + ptResult3.x) / 3;
+		}
+		double d4 = abs(ptResult1.y - ptResult2.y);
+		double d5 = abs(ptResult1.y - ptResult3.y);
+		double d6 = abs(ptResult2.y - ptResult3.y);
+		if (d4 < d5)
+		{
+			if (d4 < d6){ ptResult.y = (ptResult1.y + ptResult2.y) / 2; }
+			else if (d4 > d6) { ptResult.y = (ptResult3.y + ptResult2.y) / 2; }
+			else { ptResult.y = (ptResult1.y + ptResult2.y + ptResult3.y) / 3; }
+		}
+		else if (d4 > d5)
+		{
+			if (d5 < d6){ ptResult.y = (ptResult1.y + ptResult3.y) / 2; }
+			else if (d5 > d6) { ptResult.y = (ptResult3.y + ptResult2.y) / 2; }
+			else { ptResult.y = (ptResult1.y + ptResult2.y + ptResult3.y) / 3; }
+		}
+		else
+		{
+			ptResult.y = (ptResult1.y + ptResult2.y + ptResult3.y) / 3;
+		}
+#else
 		if (nCount > 0)
 		{
 			ptResult.x = dSumX / nCount;
@@ -1108,54 +1186,110 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 		{
 			std::string strLog = "质心计算失败，没有交点";
 		}
-		TRACE("三边质心算法: ptResult1(%f,%f),ptResult2(%f,%f),ptResult3(%f,%f),最终质心(%f,%f)\n", \
-			  ptResult1.x, ptResult1.y, ptResult2.x, ptResult2.y, ptResult3.x, ptResult3.y, ptResult.x, ptResult.y);
+#endif
+		TRACE("三边定位算法: ptResult1(%f,%f),ptResult2(%f,%f),ptResult3(%f,%f), ptResult4(%f,%f)最终质心(%f,%f)\n", \
+			  ptResult1.x, ptResult1.y, ptResult2.x, ptResult2.y, ptResult3.x, ptResult3.y, ptResult4.x, ptResult4.y, ptResult.x, ptResult.y);
 #else
+		long double dMax_X = 0, dMax_Y = 0, dMin_X = 0, dMin_Y = 0;
 		long double dSumX = 0;
 		long double dSumY = 0;
 		int nCount = 0;
 		cv::Point2d ptResult1 = TriangleCentroid(ptChk, ptA0, ptB0, ptA, ptB);
-		if (ptResult1.x != 0 && ptResult1.y != 0)
+		if (ptResult1.x > 0 && ptResult1.y > 0)
 		{
 			dSumX += ptResult1.x;
 			dSumY += ptResult1.y;
 			nCount++;
+
+			dMin_X = ptResult1.x;
+			dMin_Y = ptResult1.y;
+			if (dMax_X < ptResult1.x) dMax_X = ptResult1.x;
+			if (dMax_Y < ptResult1.y) dMax_Y = ptResult1.y;
+			if (dMin_X > ptResult1.x) dMin_X = ptResult1.x;
+			if (dMin_Y > ptResult1.y) dMin_Y = ptResult1.y;
 		}
+		
 		cv::Point2d ptResult2 = TriangleCentroid(ptChk, ptA0, ptC0, ptA, ptC);
-		if (ptResult2.x != 0 && ptResult2.y != 0)
+		if (ptResult2.x > 0 && ptResult2.y > 0)
 		{
 			dSumX += ptResult2.x;
 			dSumY += ptResult2.y;
 			nCount++;
+
+			if (dMin_X == 0) dMin_X = ptResult2.x;
+			if (dMin_Y == 0) dMin_Y = ptResult2.y;
+			if (dMax_X < ptResult2.x) dMax_X = ptResult2.x;
+			if (dMax_Y < ptResult2.y) dMax_Y = ptResult2.y;
+			if (dMin_X > ptResult2.x) dMin_X = ptResult2.x;
+			if (dMin_Y > ptResult2.y) dMin_Y = ptResult2.y;
 		}
+		
 		cv::Point2d ptResult3 = TriangleCentroid(ptChk, ptB0, ptC0, ptB, ptC);
-		if (ptResult3.x != 0 && ptResult3.y != 0)
+		if (ptResult3.x > 0 && ptResult3.y > 0)
 		{
 			dSumX += ptResult3.x;
 			dSumY += ptResult3.y;
 			nCount++;
+
+			if (dMin_X == 0) dMin_X = ptResult3.x;
+			if (dMin_Y == 0) dMin_Y = ptResult3.y;
+			if (dMax_X < ptResult3.x) dMax_X = ptResult3.x;
+			if (dMax_Y < ptResult3.y) dMax_Y = ptResult3.y;
+			if (dMin_X > ptResult3.x) dMin_X = ptResult3.x;
+			if (dMin_Y > ptResult3.y) dMin_Y = ptResult3.y;
 		}
+		
 		cv::Point2d ptResult4 = TriangleCentroid(ptChk, ptA0, ptD0, ptA, ptD);
-		if (ptResult4.x != 0 && ptResult4.y != 0)
+		if (ptResult4.x > 0 && ptResult4.y > 0)
 		{
 			dSumX += ptResult4.x;
 			dSumY += ptResult4.y;
 			nCount++;
+
+			if (dMin_X == 0) dMin_X = ptResult4.x;
+			if (dMin_Y == 0) dMin_Y = ptResult4.y;
+			if (dMax_X < ptResult4.x) dMax_X = ptResult4.x;
+			if (dMax_Y < ptResult4.y) dMax_Y = ptResult4.y;
+			if (dMin_X > ptResult4.x) dMin_X = ptResult4.x;
+			if (dMin_Y > ptResult4.y) dMin_Y = ptResult4.y;
 		}
+		
 		cv::Point2d ptResult5 = TriangleCentroid(ptChk, ptB0, ptD0, ptB, ptD);
-		if (ptResult5.x != 0 && ptResult5.y != 0)
+		if (ptResult5.x > 0 && ptResult5.y > 0)
 		{
 			dSumX += ptResult5.x;
 			dSumY += ptResult5.y;
 			nCount++;
+
+			if (dMin_X == 0) dMin_X = ptResult5.x;
+			if (dMin_Y == 0) dMin_Y = ptResult5.y;
+			if (dMax_X < ptResult5.x) dMax_X = ptResult5.x;
+			if (dMax_Y < ptResult5.y) dMax_Y = ptResult5.y;
+			if (dMin_X > ptResult5.x) dMin_X = ptResult5.x;
+			if (dMin_Y > ptResult5.y) dMin_Y = ptResult5.y;
 		}
+		
 		cv::Point2d ptResult6 = TriangleCentroid(ptChk, ptC0, ptD0, ptC, ptD);
 		if (ptResult6.x != 0 && ptResult6.y != 0)
 		{
 			dSumX += ptResult6.x;
 			dSumY += ptResult6.y;
 			nCount++;
+
+			if (dMin_X == 0) dMin_X = ptResult6.x;
+			if (dMin_Y == 0) dMin_Y = ptResult6.y;
+			if (dMax_X < ptResult6.x) dMax_X = ptResult6.x;
+			if (dMax_Y < ptResult6.y) dMax_Y = ptResult6.y;
+			if (dMin_X > ptResult6.x) dMin_X = ptResult6.x;
+			if (dMin_Y > ptResult6.y) dMin_Y = ptResult6.y;
 		}
+		
+		dSumX -= dMax_X;
+		dSumX -= dMin_X;
+		dSumY -= dMax_Y;
+		dSumY -= dMin_Y;
+		nCount -= 2;
+
 		if (nCount > 0)
 		{
 			ptResult.x = dSumX / nCount;

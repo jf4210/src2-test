@@ -55,6 +55,9 @@ void CFileUpLoad::OnTcpClientNotifyDisconnect( UINT uSocket )
 	TRACE0("file server disconnect!\n");
 	m_uThreadType = 1;
 	m_bConnect = FALSE;
+
+	std::string strLog = "文件发送线程与服务器连接断开";
+	g_pLogger->information(strLog);
 }
 
 BOOL CFileUpLoad::SendAnsFile(CString strFilePath, CString strFileName)
@@ -94,6 +97,13 @@ RESTART:
 			if (dwTimeWait > 3000)
 			{
 				staticTimer = dwTimeLatest;
+
+				if (m_pITcpClient)
+				{
+					m_pITcpClient->ReleaseConnections();
+					m_pITcpClient = NULL;
+				}
+
 				USES_CONVERSION;
 				m_pITcpClient = CreateTcpClient(*this, T2A(m_strAddr), m_usPort);
 				if (m_pITcpClient == NULL)
@@ -139,6 +149,9 @@ RESTART:
 					MyFileSend.Close();
 
 					TRACE0("start send ans file\n");
+					char szLog[300] = { 0 };
+					sprintf_s(szLog, "开始上传文件: %s", pTask->strAnsName);
+					g_pLogger->information(szLog);
 					//上传文件
 					ST_CMD_HEADER stHead;
 					stHead.usCmd = REQUEST_UPLOADANS;
@@ -153,18 +166,32 @@ RESTART:
 					memcpy(m_szSendBuf, &stHead, HEAD_SIZE);
 					memcpy(m_szSendBuf + HEAD_SIZE, &stAnsInfo, sizeof(ST_FILE_INFO));
 				RESENDHEAD:
-					sendData(m_szSendBuf, HEAD_SIZE + sizeof(ST_FILE_INFO));
+					if (!sendData(m_szSendBuf, HEAD_SIZE + sizeof(ST_FILE_INFO)))
+					{
+						std::string strLog = "sendData失败，需要重连";
+						g_pLogger->information(strLog);
+						break;
+					}
 					WaitForSingleObject(m_hSendReadyEvent, INFINITE);
 					ResetEvent(m_hSendReadyEvent);
 					if (m_bReadyOK == FALSE)
 					{
+						sprintf_s(szLog, "上传文件(%s)的反馈信息失败，重传", pTask->strAnsName);
+						g_pLogger->information(szLog);
 						goto RESENDHEAD;
 					}
-					sendData(szFileBuff, Length);
+					if (!sendData(szFileBuff, Length))
+					{
+						std::string strLog = "sendData失败2，需要重连";
+						g_pLogger->information(strLog);
+						break;
+					}
 					WaitForSingleObject(m_hSendDoneEvent, INFINITE);
 					ResetEvent(m_hSendDoneEvent);
 					if (m_bSendOK == FALSE)
 					{
+						sprintf_s(szLog, "上传文件(%s)失败，重传", pTask->strAnsName);
+						g_pLogger->information(szLog);
 						goto RESENDHEAD;
 					}
 					pTask->bUpload = TRUE;
@@ -189,25 +216,37 @@ BOOL CFileUpLoad::InitUpLoadTcp(CString strAddr,USHORT usPort)
 	return CThread::StartThread();
 }
 
-void CFileUpLoad::sendData( char * szBuff, DWORD nLen)
+bool CFileUpLoad::sendData( char * szBuff, DWORD nLen)
 {
 	ULONG uOffset = 0;
 	if(m_pITcpClient == NULL)
-		return;
+		return false;
 
+	bool bResult = true;
 	while(uOffset < nLen)
 	{
 		if ((nLen-uOffset)<TCP_PACKET_MAXSIZE)
 		{
-			m_pITcpClient->SendData(szBuff + uOffset, nLen-uOffset);
+			int nSendLen = m_pITcpClient->SendData(szBuff + uOffset, nLen-uOffset);
+			if (nSendLen < 0)
+			{
+				bResult = false;
+				break;
+			}
 			uOffset=nLen;
 		}
 		else
 		{
-			m_pITcpClient->SendData(szBuff + uOffset,TCP_PACKET_MAXSIZE);
+			int nSendLen = m_pITcpClient->SendData(szBuff + uOffset,TCP_PACKET_MAXSIZE);
+			if (nSendLen < 0)
+			{
+				bResult = false;
+				break;
+			}
 			uOffset+=TCP_PACKET_MAXSIZE;
 		}
 	}
+	return bResult;
 }
 
 //反馈结果成功则记录，失败则重发
