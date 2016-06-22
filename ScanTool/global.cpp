@@ -617,6 +617,35 @@ int GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, RECT
 	return nFind;
 }
 
+void GetMaxMin(cv::Point2f ptChk, cv::Point2f ptA, cv::Point2f ptB, cv::Point2f ptC, cv::Point2f ptD, cv::Point2f ptA0, cv::Point2f ptB0, cv::Point2f ptC0, cv::Point2f ptD0, cv::Point2f pt[], cv::Point2f pt2[])
+{
+	long double da = sqrt(pow(ptChk.x - ptA.x, 2) + pow(ptChk.y - ptA.y, 2));
+	long double db = sqrt(pow(ptChk.x - ptB.x, 2) + pow(ptChk.y - ptB.y, 2));
+	long double dc = sqrt(pow(ptChk.x - ptC.x, 2) + pow(ptChk.y - ptC.y, 2));
+	long double dd = sqrt(pow(ptChk.x - ptD.x, 2) + pow(ptChk.y - ptD.y, 2));
+
+	long double dMin = da, dMax = da;
+	cv::Point2f ptMin = ptA, ptMax = ptA;
+	
+	if (dMax < db){ dMax = db; ptMax = ptB; }
+	if (dMax < dc){ dMax = dc; ptMax = ptC; }
+	if (dMax < dd){ dMax = dd; ptMax = ptD; }
+
+	if (dMin > db){ dMin = db; ptMin = ptB; }
+	if (dMin > dc){ dMin = dc; ptMin = ptC; }
+	if (dMin > dd){ dMin = dd; ptMin = ptD; }
+	pt[0] = ptMin;
+	int i = 1;
+	if (ptA != ptMin && ptA != ptMax) { pt[i] = ptA; pt2[i++] = ptA0; };
+	if (ptB != ptMin && ptB != ptMax) { pt[i] = ptB; pt2[i++] = ptB0; };
+	if (ptC != ptMin && ptC != ptMax) { pt[i] = ptC; pt2[i++] = ptC0; };
+	if (ptD != ptMin && ptD != ptMax) { pt[i] = ptD; pt2[i++] = ptD0; };
+	if (ptA == ptMin) pt2[0] = ptA0;
+	if (ptB == ptMin) pt2[0] = ptB0;
+	if (ptC == ptMin) pt2[0] = ptC0;
+	if (ptD == ptMin) pt2[0] = ptD0;
+}
+
 //三边质心算法
 inline cv::Point2d TriangleCentroid(cv::Point ptChk, cv::Point2f ptA, cv::Point2f ptB, cv::Point2f ptNewA, cv::Point2f ptNewB)
 {
@@ -661,6 +690,11 @@ inline cv::Point2d TriangleCentroid(cv::Point ptChk, cv::Point2f ptA, cv::Point2
 		else
 		{
 			return NULL;
+			long double x = (ptNewA.x + ptNewB.x) / 2;
+			long double y = (ptNewA.y + ptNewB.y) / 2;
+			ptNewChk.x = x;
+			ptNewChk.y = y;
+			return ptNewChk;
 		}
 	}
 	if (d4 <= d5)
@@ -997,6 +1031,7 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 		long double dMax_X = 0, dMax_Y = 0, dMin_X = 0, dMin_Y = 0;
 		long double dSumX = 0;
 		long double dSumY = 0;
+		long double v1 = 0, v2 = 0, v3 = 0;
 		int nCount = 0;
 		cv::Point2d ptResult1 = TriangleCentroid(ptChk, ptA0, ptB0, ptA, ptB);
 		if (ptResult1.x != 0 && ptResult1.y != 0)
@@ -1011,6 +1046,8 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 			if (dMax_Y < ptResult1.y) dMax_Y = ptResult1.y;
 			if (dMin_X > ptResult1.x) dMin_X = ptResult1.x;
 			if (dMin_Y > ptResult1.y) dMin_Y = ptResult1.y;
+
+			v1 = 1;
 		}
 		cv::Point2d ptResult2 = TriangleCentroid(ptChk, ptA0, ptC0, ptA, ptC);
 		if (ptResult2.x != 0 && ptResult2.y != 0)
@@ -1025,6 +1062,8 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 			if (dMax_Y < ptResult2.y) dMax_Y = ptResult2.y;
 			if (dMin_X > ptResult2.x) dMin_X = ptResult2.x;
 			if (dMin_Y > ptResult2.y) dMin_Y = ptResult2.y;
+
+			v2 = 1;
 		}
 		cv::Point2d ptResult3 = TriangleCentroid(ptChk, ptB0, ptC0, ptB, ptC);
 		if (ptResult3.x != 0 && ptResult3.y != 0)
@@ -1039,24 +1078,32 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 			if (dMax_Y < ptResult3.y) dMax_Y = ptResult3.y;
 			if (dMin_X > ptResult3.x) dMin_X = ptResult3.x;
 			if (dMin_Y > ptResult3.y) dMin_Y = ptResult3.y;
+
+			v3 = 1;
 		}
 
-// 		dSumX -= dMax_X;
-// 		dSumX -= dMin_X;
-// 		dSumY -= dMax_Y;
-// 		dSumY -= dMin_Y;
-// 		nCount -= 2;
+		long double da = sqrt(pow(ptChk.x - ptA.x, 2) + pow(ptChk.y - ptA.y, 2));
+		long double db = sqrt(pow(ptChk.x - ptB.x, 2) + pow(ptChk.y - ptB.y, 2));
+		long double dc = sqrt(pow(ptChk.x - ptC.x, 2) + pow(ptChk.y - ptC.y, 2));
+
+		long double x1 = (ptResult1.x / (da + db) + ptResult2.x / (da + dc) + ptResult3.x / (db + dc)) / (v1 / (da + db) + v2 / (da + dc) + v3 / (db + dc));
+		long double y1 = (ptResult1.y / (da + db) + ptResult2.y / (da + dc) + ptResult3.y / (db + dc)) / (v1 / (da + db) + v2 / (da + dc) + v3 / (db + dc));
+		long double x = (ptResult1.x * (v1/da + v2/db) + ptResult2.x * (v1/da + v3/dc) + ptResult3.x * (v2/db + v3/dc)) / (2*(v1/da + v2/db + v3/dc));
+		long double y = (ptResult1.y * (v1 / da + v2 / db) + ptResult2.y * (v1 / da + v3 / dc) + ptResult3.y * (v2 / db + v3 / dc)) / (2 * (v1 / da + v2 / db + v3 / dc));
 
 		if (nCount > 0)
 		{
-			ptResult.x = dSumX / nCount;
-			ptResult.y = dSumY / nCount;
+// 			ptResult.x = dSumX / nCount;
+// 			ptResult.y = dSumY / nCount;
+			ptResult.x = x;
+			ptResult.y = y;
 		}
 		else
 		{
 			std::string strLog = "质心计算失败，没有交点";
 		}
-		TRACE("三边质心算法: ptResult1(%f,%f),ptResult2(%f,%f),ptResult3(%f,%f),最终质心(%f,%f)\n", ptResult1.x, ptResult1.y, ptResult2.x, ptResult2.y, ptResult3.x, ptResult3.y, ptResult.x, ptResult.y);
+		TRACE("三边质心算法: chk(%f,%f),ptResult1(%f,%f),ptResult2(%f,%f),ptResult3(%f,%f),最终质心(%f,%f)备用点(%f,%f)\n", ptChk.x, ptChk.y,\
+			  ptResult1.x, ptResult1.y, ptResult2.x, ptResult2.y, ptResult3.x, ptResult3.y, ptResult.x, ptResult.y, x1, y1);
 	#endif
 		rt.x = ptResult.x;
 		rt.y = ptResult.y;
@@ -1290,17 +1337,49 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 		dSumY -= dMin_Y;
 		nCount -= 2;
 
-		if (nCount > 0)
+		long double da = sqrt(pow(ptChk.x - ptA.x, 2) + pow(ptChk.y - ptA.y, 2));
+		long double db = sqrt(pow(ptChk.x - ptB.x, 2) + pow(ptChk.y - ptB.y, 2));
+		long double dc = sqrt(pow(ptChk.x - ptC.x, 2) + pow(ptChk.y - ptC.y, 2));
+		long double dd = sqrt(pow(ptChk.x - ptD.x, 2) + pow(ptChk.y - ptD.y, 2));
+#if 1	//根据最近的3个点来求，这3个点中，取经过最近点的2条直线，如ABC是最近的3个点，其中A点最近，则区AB、AC计算的点
+		cv::Point2f pt[3];
+		cv::Point2f pt2[3];
+		GetMaxMin(ptChk, ptA, ptB, ptC, ptD, ptA0, ptB0, ptC0, ptD0, pt, pt2);
+
+		long double dSx = 0;
+		long double dSy = 0;
+		int nCount2 = 0;
+		cv::Point2d ptResultT1 = TriangleCentroid(ptChk, pt2[0], pt2[1], pt[0], pt[1]);
+		if (ptResultT1.x > 0 && ptResultT1.y > 0)
 		{
-			ptResult.x = dSumX / nCount;
-			ptResult.y = dSumY / nCount;
+			dSx += ptResultT1.x;
+			dSy += ptResultT1.y;
+			nCount2++;
 		}
-		else
+		cv::Point2d ptResultT2 = TriangleCentroid(ptChk, pt2[0], pt2[2], pt[0], pt[2]);
+		if (ptResultT2.x > 0 && ptResultT2.y > 0)
 		{
-			std::string strLog = "质心计算失败，没有交点";
+			dSx += ptResultT2.x;
+			dSy += ptResultT2.y;
+			nCount2++;
 		}
-		TRACE("三边质心算法: ptResult1(%f,%f),ptResult2(%f,%f),ptResult3(%f,%f),ptResult4(%f,%f),ptResult5(%f,%f),ptResult6(%f,%f),最终质心(%f,%f)\n", \
-			  ptResult1.x, ptResult1.y, ptResult2.x, ptResult2.y, ptResult3.x, ptResult3.y, ptResult4.x, ptResult4.y, ptResult5.x, ptResult5.y, ptResult6.x, ptResult6.y, ptResult.x, ptResult.y);
+		ptResult.x = dSx / nCount2;
+		ptResult.y = dSy / nCount2;
+#endif
+
+
+// 		if (nCount > 0)
+// 		{
+// 			ptResult.x = dSumX / nCount;
+// 			ptResult.y = dSumY / nCount;
+// 		}
+// 		else
+// 		{
+// 			std::string strLog = "质心计算失败，没有交点";
+// 		}
+		TRACE("参考(%f,%f), ptResultT1((%f,%f), ptResultT1((%f,%f)\n", dSumX / nCount, dSumY / nCount, ptResultT1.x, ptResultT1.y, ptResultT2.x, ptResultT2.y);
+		TRACE("三边质心算法: chk(%f,%f), da=%f,db=%f,dc=%f,dd=%f,\nptResult1(%f,%f),ptResult2(%f,%f),ptResult3(%f,%f),ptResult4(%f,%f),ptResult5(%f,%f),ptResult6(%f,%f),最终质心(%f,%f)\n", ptChk.x, ptChk.y,\
+			  da,db,dc,dd,ptResult1.x, ptResult1.y, ptResult2.x, ptResult2.y, ptResult3.x, ptResult3.y, ptResult4.x, ptResult4.y, ptResult5.x, ptResult5.y, ptResult6.x, ptResult6.y, ptResult.x, ptResult.y);
 #endif
 		rt.x = ptResult.x;
 		rt.y = ptResult.y;

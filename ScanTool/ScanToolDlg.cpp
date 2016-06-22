@@ -1661,6 +1661,12 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		return;
 	}
 
+	if (m_pPapersInfo->lIssue.size() > 0)
+	{
+		AfxMessageBox(_T("存在识别异常试卷，不能上传，请先处理异常试卷"));
+		return;
+	}
+
 	CPapersInfoSaveDlg dlg(m_pPapersInfo);
 	if (dlg.DoModal() != IDOK)
 		return;
@@ -1857,7 +1863,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	}
 	SetStatusShowInfo(strInfo, bWarn);
 
-	if (!bWarn)
+	if (bWarn)
 		return;
 
 	//添加上传列表，	******************		需要进行鉴权操作	***************	

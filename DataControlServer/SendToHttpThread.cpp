@@ -178,15 +178,15 @@ void CSendToHttpThread::run()
 					}
 					else if (pTask->nTaskType == 3)
 					{
-						std::string strLog = "发送ZKZH信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: " + pTask->strResult;
+						std::string strLog = "发送OMR信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: " /*+ pTask->strResult*/;
 						g_Log.LogOut(strLog);
-						std::cout << "post papers ZKZH result info success, papersName: " << pTask->pPapers->strPapersName << std::endl;
+						std::cout << "post papers OMR result info success, papersName: " << pTask->pPapers->strPapersName << std::endl;
 					}
 					else if (pTask->nTaskType == 4)
 					{
-						std::string strLog = "发送OMR信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: " + pTask->strResult;
+						std::string strLog = "发送ZKZH信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: "/* + pTask->strResult*/;
 						g_Log.LogOut(strLog);
-						std::cout << "post papers OMR result info success, papersName: " << pTask->pPapers->strPapersName << std::endl;
+						std::cout << "post papers ZKZH result info success, papersName: " << pTask->pPapers->strPapersName << std::endl;
 					}
 				}
 			}
@@ -209,6 +209,18 @@ void CSendToHttpThread::run()
 				else if (pTask->nTaskType == 2)
 				{
 					strLog = "post papers result failed: " + pTask->pPapers->strPapersName + "\tErrCode: " + response.getReason() + "\tPath: " + pTask->pPapers->strPapersPath + "\nResult info: ..." /*+ pTask->strResult*/;
+					g_Log.LogOutError(strLog);
+					std::cout << strLog << std::endl;
+				}
+				else if (pTask->nTaskType == 3)
+				{
+					strLog = "post omr result failed: " + pTask->pPapers->strPapersName + "\tErrCode: " + response.getReason() + "\tName: " + pTask->pPapers->strPapersName + "\nResult info: ..." /*+ pTask->strResult*/;
+					g_Log.LogOutError(strLog);
+					std::cout << strLog << std::endl;
+				}
+				else if (pTask->nTaskType == 4)
+				{
+					strLog = "post zkzh result failed: " + pTask->pPapers->strPapersName + "\tErrCode: " + response.getReason() + "\tName: " + pTask->pPapers->strPapersName + "\nResult info: ..." /*+ pTask->strResult*/;
 					g_Log.LogOutError(strLog);
 					std::cout << strLog << std::endl;
 				}
@@ -485,7 +497,8 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				}
 				char szCount[5] = { 0 };
 				sprintf(szCount, "%d", pTask->nSendFlag);
-				std::string strLog = "提交OMR信息给后端失败，失败原因: " + strMsg;
+				std::string strLog = "提交OMR信息给后端失败(试卷袋:" + pTask->pPapers->strPapersName;
+				strLog.append(")，失败原因: " + strMsg);
 				strLog.append("\t发送失败次数: ");
 				strLog.append(szCount);
 				g_Log.LogOutError(strLog);
@@ -505,7 +518,8 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				}
 				char szCount[5] = { 0 };
 				sprintf(szCount, "%d", pTask->nSendFlag);
-				std::string strLog = "提交ZKZH信息给后端失败，失败原因: " + strMsg;
+				std::string strLog = "提交ZKZH信息给后端失败(试卷袋:" + pTask->pPapers->strPapersName;
+				strLog.append(")，失败原因: " + strMsg);
 				strLog.append("\t发送失败次数: ");
 				strLog.append(szCount);
 				g_Log.LogOutError(strLog);
