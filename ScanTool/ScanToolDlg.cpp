@@ -494,11 +494,15 @@ void CScanToolDlg::InitUI()
 
 // 	int sx = GetSystemMetrics(SM_CXFULLSCREEN);
 // 	int sy = GetSystemMetrics(SM_CYFULLSCREEN);
-#if 0
+#if 1
 	CRect rc;
 	::SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
 	int sx = rc.Width();
 	int sy = rc.Height();
+	if (sx > MAX_DLG_WIDTH)
+		sx = MAX_DLG_WIDTH;
+	if (sy > MAX_DLG_HEIGHT)
+		sy = MAX_DLG_HEIGHT;
 #else
 	int sx = MAX_DLG_WIDTH;
 	int sy = MAX_DLG_HEIGHT;

@@ -1631,7 +1631,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 
 	if (m_bNewModelFlag && !m_bSavedModelFlag)
 	{
-		CModelSaveDlg dlg;
+		CModelSaveDlg dlg(m_pModel);
 		if (dlg.DoModal() != IDOK)
 			return;
 		

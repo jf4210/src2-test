@@ -11,9 +11,9 @@
 
 IMPLEMENT_DYNAMIC(CModelSaveDlg, CDialog)
 
-CModelSaveDlg::CModelSaveDlg(CWnd* pParent /*=NULL*/)
+CModelSaveDlg::CModelSaveDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	: CDialog(CModelSaveDlg::IDD, pParent)
-	, m_strExamTypeName(_T("")), m_strGradeName(_T("")), m_SubjectID(0), m_nExamID(0)
+	, m_strExamTypeName(_T("")), m_strGradeName(_T("")), m_SubjectID(0), m_nExamID(0), m_nSaveMode(0), m_pModel(pModel)
 {
 
 }
@@ -39,6 +39,8 @@ BEGIN_MESSAGE_MAP(CModelSaveDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_SaveModelDlg, &CModelSaveDlg::OnBnClickedBtnSavemodeldlg)
 	ON_CBN_SELCHANGE(IDC_COMBO_ExamName, &CModelSaveDlg::OnCbnSelchangeComboExamname)
 	ON_CBN_SELCHANGE(IDC_COMBO_SubjectName, &CModelSaveDlg::OnCbnSelchangeComboSubjectname)
+	ON_BN_CLICKED(IDC_RADIO_LocalMode, &CModelSaveDlg::OnBnClickedRadioLocalmode)
+	ON_BN_CLICKED(IDC_RADIO_RemoteMode, &CModelSaveDlg::OnBnClickedRadioRemotemode)
 END_MESSAGE_MAP()
 
 
@@ -49,46 +51,57 @@ BOOL CModelSaveDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	USES_CONVERSION;
-	if (g_lExamList.size() == 0)
-		return TRUE;
-
-	EXAM_LIST::iterator itExam = g_lExamList.begin();
-	for (; itExam != g_lExamList.end(); itExam++)
+	if (g_lExamList.size() > 0)
 	{
-		CString strName = A2T(itExam->strExamName.c_str());
-
-		int nCount = m_comboExamName.GetCount();
-		m_comboExamName.InsertString(nCount, strName);
-
-		m_comboExamName.SetItemDataPtr(nCount, (void*)&(*itExam));
-	}
-	m_comboExamName.SetCurSel(0);
-
-
-	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemDataPtr(0);
-	if (pExamInfo)
-	{
-		m_comboSubject.ResetContent();
-		SUBJECT_LIST::iterator itSub = pExamInfo->lSubjects.begin();
-		for (int i = 0; itSub != pExamInfo->lSubjects.end(); itSub++, i++)
+		EXAM_LIST::iterator itExam = g_lExamList.begin();
+		for (; itExam != g_lExamList.end(); itExam++)
 		{
-			EXAM_SUBJECT* pSubject = &(*itSub);
-			CString strSubjectName = A2T(itSub->strSubjName.c_str());
+			CString strName = A2T(itExam->strExamName.c_str());
 
-			int nCount = m_comboSubject.GetCount();
-			m_comboSubject.InsertString(nCount, strSubjectName);
-			m_comboSubject.SetItemDataPtr(nCount, pSubject);
+			int nCount = m_comboExamName.GetCount();
+			m_comboExamName.InsertString(nCount, strName);
 
-			if (i == 0)
-			{
-				m_SubjectID = itSub->nSubjID;
-			}
+			m_comboExamName.SetItemDataPtr(nCount, (void*)&(*itExam));
 		}
-		m_comboSubject.SetCurSel(0);
+		m_comboExamName.SetCurSel(0);
 
-		m_nExamID = pExamInfo->nExamID;
-		m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
-		m_strGradeName = pExamInfo->strGradeName.c_str();
+
+		EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemDataPtr(0);
+		if (pExamInfo)
+		{
+			m_comboSubject.ResetContent();
+			SUBJECT_LIST::iterator itSub = pExamInfo->lSubjects.begin();
+			for (int i = 0; itSub != pExamInfo->lSubjects.end(); itSub++, i++)
+			{
+				EXAM_SUBJECT* pSubject = &(*itSub);
+				CString strSubjectName = A2T(itSub->strSubjName.c_str());
+
+				int nCount = m_comboSubject.GetCount();
+				m_comboSubject.InsertString(nCount, strSubjectName);
+				m_comboSubject.SetItemDataPtr(nCount, pSubject);
+
+				if (i == 0)
+				{
+					m_SubjectID = itSub->nSubjID;
+				}
+			}
+			m_comboSubject.SetCurSel(0);
+
+			m_nExamID = pExamInfo->nExamID;
+			m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
+			m_strGradeName = pExamInfo->strGradeName.c_str();
+		}
+	}	
+
+	if (m_nSaveMode == 0)
+	{
+		((CButton*)GetDlgItem(IDC_RADIO_LocalMode))->SetCheck(1);
+		((CButton*)GetDlgItem(IDC_RADIO_RemoteMode))->SetCheck(0);
+	}
+	else
+	{
+		((CButton*)GetDlgItem(IDC_RADIO_LocalMode))->SetCheck(0);
+		((CButton*)GetDlgItem(IDC_RADIO_RemoteMode))->SetCheck(1);
 	}
 
 	UpdateData(FALSE);
@@ -156,4 +169,26 @@ void CModelSaveDlg::OnCbnSelchangeComboSubjectname()
 	}
 
 	UpdateData(FALSE);
+}
+
+
+void CModelSaveDlg::OnBnClickedRadioLocalmode()
+{
+	if (m_nSaveMode != 0)
+	{
+		((CButton*)GetDlgItem(IDC_RADIO_LocalMode))->SetCheck(1);
+		((CButton*)GetDlgItem(IDC_RADIO_RemoteMode))->SetCheck(0);
+		m_nSaveMode = 0;
+	}
+}
+
+
+void CModelSaveDlg::OnBnClickedRadioRemotemode()
+{
+	if (m_nSaveMode != 1)
+	{
+		((CButton*)GetDlgItem(IDC_RADIO_LocalMode))->SetCheck(0);
+		((CButton*)GetDlgItem(IDC_RADIO_RemoteMode))->SetCheck(1);
+		m_nSaveMode = 1;
+	}
 }
