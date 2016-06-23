@@ -102,18 +102,15 @@ void CvvImage::Destroy()
 	{
 		if (m_img == NULL)
 			return;
-
-		try
+		
+		__try
 		{
 			cvReleaseImage(&m_img);
 		}
-		catch (cv::Exception& exc)
+		__except (EXCEPTION_EXECUTE_HANDLER)
 		{
-			TRACE("CvvImage::Destroy(): %s\n", exc.err);
-		}
-		catch (...)
-		{
-			TRACE("CvvImage::Destroy()\n");
+			TRACE("^^^^^^^^^^^^^^^^^^^^^^^^^^^^ CvvImage::Destroy() ^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+			AfxMessageBox(_T("CvvImage::Destroy()“Ï≥£"));
 		}		
 	}
 }

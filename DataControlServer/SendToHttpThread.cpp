@@ -31,6 +31,7 @@ void CSendToHttpThread::run()
 				}
 				else if ((*it)->nSendFlag >= SysSet.m_nSendTimes)		//此任务连续发送5次，每次间隔5秒，都失败了，将它删除
 				{
+					pTask = *it;
 					std::string strEraseInfo;
 					if (pTask->nTaskType == 1)
 					{
@@ -58,7 +59,6 @@ void CSendToHttpThread::run()
 					g_Log.LogOutError(strEraseInfo);
 					std::cout << strEraseInfo << std::endl;
 
-					pTask = *it;
 					it = g_lHttpSend.erase(it);
 					delete pTask;
 					pTask = NULL;

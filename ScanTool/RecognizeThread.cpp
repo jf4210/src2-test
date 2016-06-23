@@ -197,8 +197,23 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			pPapers->fmlPaper.unlock();
 
 			pPapers->fmlIssue.lock();
-			pPapers->lIssue.push_back(pPaper);
-			pPapers->nRecogErrCount++;
+			bool bFind = false;
+			PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
+			for (; itIssuePaper != pPapers->lIssue.end();)
+			{
+				if (*itIssuePaper == pPaper)
+				{
+					bFind = true;
+					break;
+				}
+				else
+					itIssuePaper++;
+			}
+			if (!bFind)
+			{
+				pPapers->lIssue.push_back(pPaper);
+				pPapers->nRecogErrCount++;
+			}
 			pPapers->fmlIssue.unlock();
 
 			(static_cast<CDialog*>(pPaper->pSrcDlg))->PostMessageW(MSG_ERR_RECOG, (WPARAM)pPaper, (LPARAM)pPapers);

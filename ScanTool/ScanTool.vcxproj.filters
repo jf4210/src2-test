@@ -79,6 +79,9 @@
     <Filter Include="下载扫描模板窗口">
       <UniqueIdentifier>{e302b5d5-8d9b-48ff-8469-8a05d7e6ff86}</UniqueIdentifier>
     </Filter>
+    <Filter Include="dump">
+      <UniqueIdentifier>{17f87518-1d96-41f6-8047-c6de675e9ea7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -191,6 +194,9 @@
     </ClInclude>
     <ClInclude Include="SNInfoSetDlg.h">
       <Filter>扫描模板制作窗口\考号信息设置窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="minidump.h">
+      <Filter>dump</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

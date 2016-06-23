@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "ScanTool.h"
 #include "ScanToolDlg.h"
+#include "minidump.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -69,6 +70,9 @@ BOOL CScanToolApp::InitInstance()
 	// TODO:  应适当修改该字符串，
 	// 例如修改为公司或组织名
 	SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
+
+	RunCrashHandler();
+
 
 	CScanToolDlg dlg;
 	m_pMainWnd = &dlg;

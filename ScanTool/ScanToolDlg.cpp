@@ -9,6 +9,7 @@
 #include "LoginDlg.h"
 #include "GetModelDlg.h"
 #include "Net_Cmd_Protocol.h"
+//#include "minidump.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -146,6 +147,8 @@ BOOL CScanToolDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
+//	RunCrashHandler();
+
 	USES_CONVERSION;
 	CString strTitle = _T("");
 	strTitle.Format(_T("YKLX-ScanTool %s"), SOFT_VERSION);
@@ -157,8 +160,7 @@ BOOL CScanToolDlg::OnInitDialog()
 // 	char szTime[50] = { 0 };
 // 	sprintf_s(szTime, "%d-%02d-%02d %02d:%02d:%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
 // 	TRACE(szTime);
-
-
+	
 	SearchModel();         
 	m_comboModel.SetCurSel(0);
 	if (m_comboModel.GetCount())
@@ -1643,7 +1645,7 @@ LRESULT CScanToolDlg::MsgRecogErr(WPARAM wParam, LPARAM lParam)
 	USES_CONVERSION;
 	char szErrInfo[200] = { 0 };
 	sprintf_s(szErrInfo, "考生 %s 第%d页识别出错误校验点", pPaper->strStudentInfo.c_str(), nIssuePaper + 1);
-	SetStatusShowInfo(A2T(szErrInfo));
+	SetStatusShowInfo(A2T(szErrInfo), TRUE);
 	return TRUE;
 }
 
@@ -1917,7 +1919,7 @@ void CScanToolDlg::ShowRectByPoint(cv::Point pt, pST_PaperInfo pPaper)
 		return;
 
 	CString strInfo;
-	strInfo.Format(_T("阀值: %d, 要求比例: %f, 实际: %f"), pRc->nThresholdValue, pRc->fStandardValuePercent, pRc->fRealValuePercent);
+	strInfo.Format(_T("阀值: %d, 要求比例: %.3f, 实际: %.3f"), pRc->nThresholdValue, pRc->fStandardValuePercent, pRc->fRealValuePercent);
 	if (pPaper->bIssuePaper)
 		SetStatusShowInfo(strInfo, TRUE);
 	else
