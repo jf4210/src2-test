@@ -181,6 +181,8 @@ pMODEL LoadModelFile(CString strModelPath)
 
 		pModel = new MODEL;
 		pModel->strModelName	= A2T(CMyCodeConvert::Utf8ToGb2312(objData->get("modelName").convert<std::string>()).c_str());
+		pModel->strModelDesc	= A2T(CMyCodeConvert::Utf8ToGb2312(objData->get("modelDesc").convert<std::string>()).c_str());
+		pModel->nSaveMode		= objData->get("modeSaveMode").convert<int>();
 		pModel->nPicNum			= objData->get("paperModelCount").convert<int>();
 		pModel->nEnableModify	= objData->get("enableModify").convert<int>();
 		pModel->nABModel		= objData->get("abPaper").convert<int>();

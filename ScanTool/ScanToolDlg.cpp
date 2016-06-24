@@ -82,6 +82,7 @@ CScanToolDlg::CScanToolDlg(CWnd* pParent /*=NULL*/)
 	, m_pPapersInfo(NULL), m_pPaper(NULL), m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL)
 	, m_pSendFileObj(NULL), m_SendFileThread(NULL), m_bLogin(FALSE), m_pTcpCmdObj(NULL), m_TcpCmdThread(NULL)
 	, m_nTeacherId(-1), m_nUserId(-1)
+	, m_pShowModelInfoDlg(NULL)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -177,6 +178,7 @@ BOOL CScanToolDlg::OnInitDialog()
 			m_nModelPicNums = m_pModel->nPicNum;
 		InitTab();
 	}
+	m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
 
 	// 调用TWAIN 初始化扫描设置
 	ReleaseTwain();
@@ -258,6 +260,8 @@ void CScanToolDlg::OnDestroy()
 	g_nExitFlag = 1;
 	ReleaseTwain();
 	g_pLogger->information("ReleaseTwain() complete.");
+
+	SAFE_RELEASE(m_pShowModelInfoDlg);
 
 	std::vector<CPicShow*>::iterator itPic = m_vecPicShow.begin();
 	for (; itPic != m_vecPicShow.end();)
@@ -450,9 +454,12 @@ void CScanToolDlg::InitTab()
 	{
 		CRect rtTab;
 		m_tabPicShowCtrl.GetClientRect(&rtTab);
-		int nTabHead_H = 25;		//tab控件头的高度
+		int nTabHead_H = 24;		//tab控件头的高度
 		CRect rtPic = rtTab;
 		rtPic.top = rtPic.top + nTabHead_H;
+		rtPic.left += 2;
+		rtPic.right -= 4;
+		rtPic.bottom -= 4;
 		for (int i = 0; i < m_vecPicShow.size(); i++)
 			m_vecPicShow[i]->MoveWindow(&rtPic);
 	}
@@ -483,7 +490,7 @@ void CScanToolDlg::InitUI()
 		CPicShow* pPicShow = new CPicShow(this);
 		pPicShow->Create(CPicShow::IDD, &m_tabPicShowCtrl);
 		pPicShow->ShowWindow(SW_HIDE);
-		pPicShow->MoveWindow(&rtTab);
+//		pPicShow->MoveWindow(&rtTab);
 		m_vecPicShow.push_back(pPicShow);
 	}
 	m_tabPicShowCtrl.SetCurSel(0);
@@ -491,6 +498,11 @@ void CScanToolDlg::InitUI()
 	m_pCurrentPicShow = m_vecPicShow[0];
 	m_nCurrTabSel = 0;
 
+	m_pShowModelInfoDlg = new CShowModelInfoDlg(this);
+	m_pShowModelInfoDlg->Create(CShowModelInfoDlg::IDD, this);
+	m_pShowModelInfoDlg->ShowWindow(SW_SHOW);
+	GetDlgItem(IDC_STATIC_PaperList)->ShowWindow(SW_HIDE);
+	m_lcPaper.ShowWindow(SW_HIDE);
 
 // 	int sx = GetSystemMetrics(SM_CXFULLSCREEN);
 // 	int sy = GetSystemMetrics(SM_CYFULLSCREEN);
@@ -574,13 +586,13 @@ void CScanToolDlg::InitCtrlPosition()
 	int nStaticTip = 15;		//列表提示static控件高度
 	int nStatusHeight = nStaticTip * 2;		//底层状态提示栏的高度
 	int nComboBoxHeith = 25;	//模板下拉列表控件的高度
-	int nPaperListHeigth = cy / 3;	//试卷袋列表的控件高度
+	int nPaperListHeigth = cy * 0.3;	//试卷袋列表的控件高度
 	if (nPaperListHeigth > 300)
 		nPaperListHeigth = 300;
-	int nPicListHeight = cy - nTopGap - nStaticTip - nGap - nComboBoxHeith - nGap - nStaticTip - nGap - nGap - nStaticTip - nGap - nPaperListHeigth - nGap - nStatusHeight - nBottomGap;		//图片列表控件高度
+	int nPicListHeight = cy - nTopGap - nStaticTip - nGap - nComboBoxHeith - nGap - nStaticTip - nGap /*- nGap - nStaticTip*/ - nGap - nPaperListHeigth - nGap - nStatusHeight - nBottomGap;		//图片列表控件高度
 
 	int nCurrentTop = 0;
-	if (GetDlgItem(IDC_STATIC_PicList)->GetSafeHwnd())
+	if (GetDlgItem(IDC_STATIC_Model)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_STATIC_Model)->MoveWindow(nLeftGap, nTopGap, nListCtrlWidth, nStaticTip);
 		nCurrentTop = nTopGap + nStaticTip + nGap;
@@ -600,7 +612,14 @@ void CScanToolDlg::InitCtrlPosition()
 		m_lcPicture.MoveWindow(nLeftGap, nCurrentTop, nListCtrlWidth, nPicListHeight);
 		nCurrentTop = nCurrentTop + nPicListHeight + nGap;
 	}
-	if (GetDlgItem(IDC_STATIC_PicList)->GetSafeHwnd())
+#if 1
+	if (m_pShowModelInfoDlg && m_pShowModelInfoDlg->GetSafeHwnd())
+	{
+		m_pShowModelInfoDlg->MoveWindow(nLeftGap, nCurrentTop, nListCtrlWidth, nPaperListHeigth);
+		nCurrentTop = nCurrentTop + nPaperListHeigth + nGap;
+	}
+#else
+	if (GetDlgItem(IDC_STATIC_PaperList)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_STATIC_PaperList)->MoveWindow(nLeftGap, nCurrentTop, nListCtrlWidth, nStaticTip);
 		nCurrentTop = nCurrentTop + nStaticTip + nGap;
@@ -610,27 +629,29 @@ void CScanToolDlg::InitCtrlPosition()
 		m_lcPaper.MoveWindow(nLeftGap, nCurrentTop, nListCtrlWidth, nPaperListHeigth);
 		nCurrentTop = nCurrentTop + nPaperListHeigth + nGap;
 	}
+#endif
 	if (GetDlgItem(IDC_STATIC_SCANCOUNT)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_STATIC_SCANCOUNT)->MoveWindow(nLeftGap, nCurrentTop, 150, nStatusHeight);
+		GetDlgItem(IDC_STATIC_SCANCOUNT)->MoveWindow(nLeftGap, cy - nBottomGap - nStatusHeight, 150, nStatusHeight);
 	}
 	if (GetDlgItem(IDC_STATIC_STATUS)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_STATIC_STATUS)->MoveWindow(nLeftGap + 150, nCurrentTop, cx - nLeftGap - nRightGap, nStatusHeight);
+		GetDlgItem(IDC_STATIC_STATUS)->MoveWindow(nLeftGap + 150, cy - nBottomGap - nStatusHeight, cx - nLeftGap - nRightGap, nStatusHeight);
 	}
 
 	int nPicShowTabCtrlWidth = cx - nLeftGap - nRightGap - nListCtrlWidth - nGap - nGap;
 	if (m_tabPicShowCtrl.GetSafeHwnd())
 	{
-		m_tabPicShowCtrl.MoveWindow(nLeftGap + nListCtrlWidth + nGap, nTopGap, nPicShowTabCtrlWidth, cy - nTopGap - nGap - nStatusHeight - nBottomGap);
+		m_tabPicShowCtrl.MoveWindow(nLeftGap + nListCtrlWidth + nGap, nTopGap, nPicShowTabCtrlWidth, cy - nTopGap - nGap - nGap - nStatusHeight - nBottomGap);
 
 		CRect rtTab;
 		m_tabPicShowCtrl.GetClientRect(&rtTab);
-		int nTabHead_H = 25;		//tab控件头的高度
+		int nTabHead_H = 24;		//tab控件头的高度
 		CRect rtPic = rtTab;
 		rtPic.top = rtPic.top + nTabHead_H;
-		rtPic.right -= 2;
-		rtPic.bottom -= 2;
+		rtPic.left += 2;
+		rtPic.right -= 4;
+		rtPic.bottom -= 4;
 		for (int i = 0; i < m_vecPicShow.size(); i++)
 			m_vecPicShow[i]->MoveWindow(&rtPic);
 	}
@@ -666,7 +687,18 @@ void CScanToolDlg::InitCtrlPosition()
 	if (GetDlgItem(IDC_BTN_UpLoadPapers)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_UpLoadPapers)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
+		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
+	//++test
+// 	int nModelInfo_W = cx - nRightGap - nBtnCurrLeft;
+// 	if (nModelInfo_W > 250)
+// 		nModelInfo_W = 250;
+// 	if (m_pShowModelInfoDlg && m_pShowModelInfoDlg->GetSafeHwnd())
+// 	{
+// 		m_pShowModelInfoDlg->MoveWindow(nBtnCurrLeft, nGap, nModelInfo_W, nTopGap - nGap - nGap);
+// 	}
+	//--
+	Invalidate();
 }
 
 BOOL CScanToolDlg::ScanSrcInit()
@@ -934,6 +966,7 @@ void CScanToolDlg::OnCbnSelchangeComboModel()
 
 	m_nModelPicNums = m_pModel->nPicNum;
 	InitTab();
+	m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
 
 	//模板切换后之前的扫描试卷需要清除
 	m_pCurrentShowPaper = NULL;

@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CModelSaveDlg, CDialog)
 
 CModelSaveDlg::CModelSaveDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	: CDialog(CModelSaveDlg::IDD, pParent)
-	, m_strExamTypeName(_T("")), m_strGradeName(_T("")), m_SubjectID(0), m_nExamID(0), m_nSaveMode(0), m_pModel(pModel)
+	, m_strExamTypeName(_T("")), m_strGradeName(_T("")), m_strSubjectName(_T("")), m_SubjectID(0), m_nExamID(0), m_nSaveMode(1), m_pModel(pModel)
 {
 
 }
@@ -30,6 +30,7 @@ void CModelSaveDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_ExamTypeName, m_strExamTypeName);
 	DDX_Text(pDX, IDC_EDIT_GradeName, m_strGradeName);
 	DDX_Text(pDX, IDC_EDIT_SubjectID, m_SubjectID);
+	DDX_Text(pDX, IDC_EDIT_ModelDesc, m_strLocalModelDesc);
 	DDX_Control(pDX, IDC_COMBO_ExamName, m_comboExamName);
 	DDX_Control(pDX, IDC_COMBO_SubjectName, m_comboSubject);
 }
@@ -83,6 +84,7 @@ BOOL CModelSaveDlg::OnInitDialog()
 				if (i == 0)
 				{
 					m_SubjectID = itSub->nSubjID;
+					m_strSubjectName = itSub->strSubjName.c_str();
 				}
 			}
 			m_comboSubject.SetCurSel(0);
@@ -92,17 +94,27 @@ BOOL CModelSaveDlg::OnInitDialog()
 			m_strGradeName = pExamInfo->strGradeName.c_str();
 		}
 	}	
-
-	if (m_nSaveMode == 0)
+	m_nSaveMode = m_pModel->nSaveMode;
+	if (m_nSaveMode == 1)
 	{
 		((CButton*)GetDlgItem(IDC_RADIO_LocalMode))->SetCheck(1);
 		((CButton*)GetDlgItem(IDC_RADIO_RemoteMode))->SetCheck(0);
 	}
-	else
+	else if (m_nSaveMode == 2)
 	{
 		((CButton*)GetDlgItem(IDC_RADIO_LocalMode))->SetCheck(0);
 		((CButton*)GetDlgItem(IDC_RADIO_RemoteMode))->SetCheck(1);
 	}
+	else
+	{
+		((CButton*)GetDlgItem(IDC_RADIO_LocalMode))->SetCheck(0);
+		((CButton*)GetDlgItem(IDC_RADIO_RemoteMode))->SetCheck(0);
+	}
+	if (m_pModel)
+	{
+		m_strLocalModelDesc = m_pModel->strModelDesc;
+		m_strModelName		= m_pModel->strModelName;
+	}	
 
 	UpdateData(FALSE);
 	return TRUE;
@@ -112,6 +124,28 @@ BOOL CModelSaveDlg::OnInitDialog()
 void CModelSaveDlg::OnBnClickedBtnSavemodeldlg()
 {
 	UpdateData(TRUE);
+
+	if (m_nSaveMode == 1)
+	{
+		if (m_strModelName == _T(""))
+		{
+			AfxMessageBox(_T("请设置模板保存名称！"));
+			return;
+		}
+	}
+	else if (m_nSaveMode == 2)
+	{
+		if (m_nExamID == 0 || m_SubjectID == 0)
+		{
+			AfxMessageBox(_T("当前考试信息不完整，请重新选择"));
+			return;
+		}
+	}
+	else
+	{
+		AfxMessageBox(_T("请设置模板保存方式！"));
+		return;
+	}
 
 	OnOK();
 }
@@ -138,6 +172,7 @@ void CModelSaveDlg::OnCbnSelchangeComboExamname()
 		if (i == 0)
 		{
 			m_SubjectID = itSub->nSubjID;
+			m_strSubjectName = itSub->strSubjName.c_str();
 		}
 	}
 	m_comboSubject.SetCurSel(0);
@@ -165,6 +200,7 @@ void CModelSaveDlg::OnCbnSelchangeComboSubjectname()
 		if (i == n2)
 		{
 			m_SubjectID = itSub->nSubjID;
+			m_strSubjectName = itSub->strSubjName.c_str();
 		}
 	}
 
@@ -174,21 +210,21 @@ void CModelSaveDlg::OnCbnSelchangeComboSubjectname()
 
 void CModelSaveDlg::OnBnClickedRadioLocalmode()
 {
-	if (m_nSaveMode != 0)
+	if (m_nSaveMode != 1)
 	{
 		((CButton*)GetDlgItem(IDC_RADIO_LocalMode))->SetCheck(1);
 		((CButton*)GetDlgItem(IDC_RADIO_RemoteMode))->SetCheck(0);
-		m_nSaveMode = 0;
+		m_nSaveMode = 1;
 	}
 }
 
 
 void CModelSaveDlg::OnBnClickedRadioRemotemode()
 {
-	if (m_nSaveMode != 1)
+	if (m_nSaveMode != 2)
 	{
 		((CButton*)GetDlgItem(IDC_RADIO_LocalMode))->SetCheck(0);
 		((CButton*)GetDlgItem(IDC_RADIO_RemoteMode))->SetCheck(1);
-		m_nSaveMode = 1;
+		m_nSaveMode = 2;
 	}
 }

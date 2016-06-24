@@ -82,6 +82,9 @@
     <Filter Include="dump">
       <UniqueIdentifier>{17f87518-1d96-41f6-8047-c6de675e9ea7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="模板信息显示窗口">
+      <UniqueIdentifier>{e93232b8-0a2e-4016-8353-5e98f305b12d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -198,6 +201,9 @@
     <ClInclude Include="minidump.h">
       <Filter>dump</Filter>
     </ClInclude>
+    <ClInclude Include="ShowModelInfoDlg.h">
+      <Filter>模板信息显示窗口</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
@@ -292,6 +298,9 @@
     </ClCompile>
     <ClCompile Include="SNInfoSetDlg.cpp">
       <Filter>扫描模板制作窗口\考号信息设置窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ShowModelInfoDlg.cpp">
+      <Filter>模板信息显示窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

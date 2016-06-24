@@ -331,9 +331,12 @@ void CMakeModelDlg::InitTab()
 	{
 		CRect rtTab;
 		m_tabModelPicCtrl.GetClientRect(&rtTab);
-		int nTabHead_H = 25;		//tab控件头的高度
+		int nTabHead_H = 24;		//tab控件头的高度
 		CRect rtPic = rtTab;
 		rtPic.top = rtPic.top + nTabHead_H;
+		rtPic.left += 2;
+		rtPic.right -= 4;
+		rtPic.bottom -= 4;
 		for (int i = 0; i < m_vecPicShow.size(); i++)
 			m_vecPicShow[i]->MoveWindow(&rtPic);
 	}
@@ -500,9 +503,12 @@ void CMakeModelDlg::InitCtrlPosition()
 
 		CRect rtTab;
 		m_tabModelPicCtrl.GetClientRect(&rtTab);
-		int nTabHead_H = 25;		//tab控件头的高度
+		int nTabHead_H = 24;		//tab控件头的高度
 		CRect rtPic = rtTab;
 		rtPic.top = rtPic.top + nTabHead_H;
+		rtPic.left += 2;
+		rtPic.right -= 4;
+		rtPic.bottom -= 4;
 		for (int i = 0; i < m_vecPicShow.size(); i++)
 			m_vecPicShow[i]->MoveWindow(&rtPic);
 	}
@@ -1628,7 +1634,33 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	}
 	
 	if (!checkValidity()) return;
+#if 1
+	CModelSaveDlg dlg(m_pModel);
+	if (dlg.DoModal() != IDOK)
+		return;
 
+	m_pModel->nSaveMode = dlg.m_nSaveMode;
+	if (dlg.m_nSaveMode == 1)
+	{		
+		m_pModel->strModelName = dlg.m_strModelName;
+		m_pModel->strModelDesc = dlg.m_strLocalModelDesc;
+	}
+	else
+	{
+		char szModelName[30] = { 0 };
+		sprintf_s(szModelName, "%d_%d", dlg.m_nExamID, dlg.m_SubjectID);
+		char szModelDesc[300] = { 0 };
+		sprintf_s(szModelDesc, "年级: %s\n考试名称: %s\n科目: %s", dlg.m_strGradeName, dlg.m_strExamTypeName, dlg.m_strSubjectName);
+		m_pModel->nExamID		= dlg.m_nExamID;
+		m_pModel->nSubjectID	= dlg.m_SubjectID;
+		m_pModel->strModelName	= szModelName;
+		m_pModel->strModelDesc	= szModelDesc;
+	}
+
+	CString strTitle = _T("");
+	strTitle.Format(_T("模板名称: %s"), m_pModel->strModelName);
+	SetWindowText(strTitle);
+#else
 	if (m_bNewModelFlag && !m_bSavedModelFlag)
 	{
 		CModelSaveDlg dlg(m_pModel);
@@ -1636,19 +1668,27 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 			return;
 		
 		if (!pDlg->m_bLogin)
+		{
 			m_pModel->strModelName = dlg.m_strModelName;
+			m_pModel->strModelDesc = dlg.m_strLocalModelDesc;
+		}
 		else
 		{
 			char szModelName[30] = { 0 };
 			sprintf_s(szModelName, "%d_%d", dlg.m_nExamID, dlg.m_SubjectID);
-			m_pModel->strModelName = szModelName;
+			char szModelDesc[300] = { 0 };
+			sprintf_s(szModelDesc, "年级: %s\n考试名称: %s\n科目: %s", dlg.m_strGradeName, dlg.m_strExamTypeName, dlg.m_strSubjectName);
+			m_pModel->nExamID		= dlg.m_nExamID;
+			m_pModel->nSubjectID	= dlg.m_SubjectID;
+			m_pModel->strModelName	= szModelName;
+			m_pModel->strModelDesc	= szModelDesc;
 		}
 
 		CString strTitle = _T("");
 		strTitle.Format(_T("模板名称: %s"), m_pModel->strModelName);
 		SetWindowText(strTitle);
 	}
-
+#endif
 	m_bSavedModelFlag = true;
 	
 	for (int i = 0; i < m_pModel->vecPaperModel.size(); i++)
@@ -2036,6 +2076,8 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	}
 	
 	jsnModel.set("modelName", CMyCodeConvert::Gb2312ToUtf8(T2A(pModel->strModelName)));		//CMyCodeConvert::Gb2312ToUtf8(T2A(pModel->strModelName))
+	jsnModel.set("modelDesc", CMyCodeConvert::Gb2312ToUtf8(T2A(pModel->strModelDesc)));
+	jsnModel.set("modeSaveMode", pModel->nSaveMode);
 	jsnModel.set("paperModelCount", pModel->nPicNum);			//此模板有几页试卷(图片)
 	jsnModel.set("enableModify", 1);							//是否可以修改标识
 	jsnModel.set("abPaper", m_pModel->nABModel);				//是否是AB卷					*************	暂时没加入AB卷的模板	**************

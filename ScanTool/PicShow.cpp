@@ -61,6 +61,8 @@ BOOL CPicShow::OnInitDialog()
 	m_scrollBarV.ShowScrollBar(m_bShowScrolV);
 	m_scrollBarH.ShowScrollBar(m_bShowScrolH);
 
+	InitCtrlPosition();
+
 	return TRUE;
 }
 
@@ -71,24 +73,25 @@ void CPicShow::OnSize(UINT nType, int cx, int cy)
 
 
 #if 1
-	CRect rt;
-	GetClientRect(&rt);
-	if (m_picShow.GetSafeHwnd())
-	{
-		if (!m_bShowScrolH && !m_bShowScrolV)
-			m_picShow.MoveWindow(0, 0, rt.Width(), rt.Height());
-		else if (!m_bShowScrolH)
-			m_picShow.MoveWindow(0, 0, rt.Width() - nScrollV_W - 1, rt.Height());
-		else if (!m_bShowScrolV)
-			m_picShow.MoveWindow(0, 0, rt.Width(), rt.Height() - nScrollH_H - 1);
-		else
-			m_picShow.MoveWindow(0, 0, rt.Width() - nScrollV_W - 1, rt.Height() - nScrollH_H - 1);
-	}
-
-	if (m_bShowScrolH && m_scrollBarH.GetSafeHwnd())
-		m_scrollBarH.MoveWindow(0, rt.Height() - nScrollH_H, rt.Width(), rt.Height());
-	if (m_bShowScrolV && m_scrollBarV.GetSafeHwnd())
-		m_scrollBarV.MoveWindow(rt.Width() - nScrollV_W, 0, rt.Width(), rt.Height());
+	InitCtrlPosition();
+// 	CRect rt;
+// 	GetClientRect(&rt);
+// 	if (m_picShow.GetSafeHwnd())
+// 	{
+// 		if (!m_bShowScrolH && !m_bShowScrolV)
+// 			m_picShow.MoveWindow(0, 0, rt.Width(), rt.Height());
+// 		else if (!m_bShowScrolH)
+// 			m_picShow.MoveWindow(0, 0, rt.Width() - nScrollV_W - 1, rt.Height());
+// 		else if (!m_bShowScrolV)
+// 			m_picShow.MoveWindow(0, 0, rt.Width(), rt.Height() - nScrollH_H - 1);
+// 		else
+// 			m_picShow.MoveWindow(0, 0, rt.Width() - nScrollV_W - 1, rt.Height() - nScrollH_H - 1);
+// 	}
+// 
+// 	if (m_bShowScrolH && m_scrollBarH.GetSafeHwnd())
+// 		m_scrollBarH.MoveWindow(0, rt.Height() - nScrollH_H, rt.Width(), rt.Height());
+// 	if (m_bShowScrolV && m_scrollBarV.GetSafeHwnd())
+// 		m_scrollBarV.MoveWindow(rt.Width() - nScrollV_W, 0, rt.Width(), rt.Height());
 #else
 	if (m_picShow.GetSafeHwnd())
 	{
@@ -107,6 +110,31 @@ void CPicShow::OnSize(UINT nType, int cx, int cy)
 	if (m_bShowScrolV && m_scrollBarV.GetSafeHwnd())
 		m_scrollBarV.MoveWindow(cx - nScrollV_W, 0, cx, cy);
 #endif
+//	Invalidate();
+}
+
+void CPicShow::InitCtrlPosition()
+{
+	CRect rt;
+	GetClientRect(&rt);
+	const int nGap = 1;
+
+	if (m_picShow.GetSafeHwnd())
+	{
+		if (!m_bShowScrolH && !m_bShowScrolV)
+			m_picShow.MoveWindow(0, 0, rt.Width(), rt.Height());
+		else if (!m_bShowScrolH)
+			m_picShow.MoveWindow(0, 0, rt.Width() - nScrollV_W - nGap, rt.Height());
+		else if (!m_bShowScrolV)
+			m_picShow.MoveWindow(0, 0, rt.Width(), rt.Height() - nScrollH_H - nGap);
+		else
+			m_picShow.MoveWindow(0, 0, rt.Width() - nScrollV_W - nGap, rt.Height() - nScrollH_H - nGap);
+	}
+
+	if (m_bShowScrolH && m_scrollBarH.GetSafeHwnd())
+		m_scrollBarH.MoveWindow(0, rt.Height() - nScrollH_H, rt.Width(), nScrollH_H);
+	if (m_bShowScrolV && m_scrollBarV.GetSafeHwnd())
+		m_scrollBarV.MoveWindow(rt.Width() - nScrollV_W, 0, nScrollV_W, rt.Height());
 }
 
 BOOL CPicShow::PreTranslateMessage(MSG* pMsg)

@@ -16,19 +16,21 @@ public:
 	enum { IDD = IDD_MODELSAVEDLG };
 public:
 	CString		m_strModelName;
-	CString		m_strModelDesc;
+//	CString		m_strModelDesc;
 
 	CComboBox	m_comboExamName;
 	CComboBox	m_comboSubject;
 
 	int			m_nExamID;
 	CString		m_strExamTypeName;
+	CString		m_strSubjectName;
 	CString		m_strGradeName;
 	int			m_SubjectID;
 
 	pMODEL		m_pModel;
 
-	int			m_nSaveMode;
+	int			m_nSaveMode;			//1-本地模式，2-联网模式
+	CString		m_strLocalModelDesc;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

@@ -47,6 +47,8 @@ public:
 	LRESULT HTrackerChange(WPARAM wParam, LPARAM lParam);
 	LRESULT VTrackerChange(WPARAM wParam, LPARAM lParam);
 	LRESULT SNTrackerChange(WPARAM wParam, LPARAM lParam);
+private:
+	void InitCtrlPosition();
 protected:
 	virtual BOOL OnInitDialog();
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö

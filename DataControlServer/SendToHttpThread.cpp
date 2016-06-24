@@ -46,15 +46,18 @@ void CSendToHttpThread::run()
 					}
 					else if (pTask->nTaskType == 2)
 					{
-						strEraseInfo = "Erase task(提交图片结果信息给后端)";
+						strEraseInfo = "Erase task(提交图片结果信息给后端),试卷袋: ";
+						strEraseInfo.append(pTask->pPapers->strPapersName);
 					}
 					else if (pTask->nTaskType == 3)
 					{
-						strEraseInfo = "Erase task(提交 OMR 结果信息给后端)";
+						strEraseInfo = "Erase task(提交 OMR 结果信息给后端),试卷袋: ";
+						strEraseInfo.append(pTask->pPapers->strPapersName);
 					}
 					else if (pTask->nTaskType == 4)
 					{
-						strEraseInfo = "Erase task(提交 ZKZH 结果信息给后端)";
+						strEraseInfo = "Erase task(提交 ZKZH 结果信息给后端),试卷袋: ";
+						strEraseInfo.append(pTask->pPapers->strPapersName);
 					}
 					g_Log.LogOutError(strEraseInfo);
 					std::cout << strEraseInfo << std::endl;

@@ -15,6 +15,7 @@
 #include "PapersInfoSaveDlg.h"
 #include "SendFileThread.h"
 #include "TcpClient.h"
+#include "ShowModelInfoDlg.h"
 
 // CScanToolDlg 对话框
 class CScanToolDlg : public CDialogEx, public CTwain
@@ -38,6 +39,8 @@ public:
 	int				m_nStatusSize;			//状态栏字体大小
 	CFont			m_fontStatus;			//状态栏字体
 	COLORREF		m_colorStatus;			//状态栏字体颜色
+
+	CShowModelInfoDlg* m_pShowModelInfoDlg;
 
 	pMODEL			m_pModel;				//扫描试卷时的校验模板
 	MODELLIST		m_lModel;				//已经加载的模板列表

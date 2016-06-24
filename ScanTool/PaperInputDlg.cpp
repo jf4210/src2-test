@@ -241,10 +241,12 @@ void CPaperInputDlg::InitCtrlPosition()
 
 		CRect rtTab;
 		m_tabPicShow.GetClientRect(&rtTab);
-		int nTabHead_H = 25;		//tab控件头的高度
+		int nTabHead_H = 24;		//tab控件头的高度
 		CRect rtPic = rtTab;
 		rtPic.top = rtPic.top + nTabHead_H;
-		//		if (m_pModelPicShow) m_pModelPicShow->MoveWindow(&rtPic);
+		rtPic.left += 2;
+		rtPic.right -= 4;
+		rtPic.bottom -= 4;
 		for (int i = 0; i < m_vecPicShow.size(); i++)
 			m_vecPicShow[i]->MoveWindow(&rtPic);
 	}
@@ -346,9 +348,12 @@ void CPaperInputDlg::InitTab()
 	{
 		CRect rtTab;
 		m_tabPicShow.GetClientRect(&rtTab);
-		int nTabHead_H = 25;		//tab控件头的高度
+		int nTabHead_H = 24;		//tab控件头的高度
 		CRect rtPic = rtTab;
 		rtPic.top = rtPic.top + nTabHead_H;
+		rtPic.left += 2;
+		rtPic.right -= 4;
+		rtPic.bottom -= 4;
 		for (int i = 0; i < m_vecPicShow.size(); i++)
 			m_vecPicShow[i]->MoveWindow(&rtPic);
 	}
@@ -543,7 +548,7 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 	}
 
 	USES_CONVERSION;
-	std::string strPaperPath = T2A(m_strPapersPath);
+	std::string strPaperPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strPapersPath));
 	Poco::DirectoryIterator it(strPaperPath);
 	Poco::DirectoryIterator end;
 	while (it != end)

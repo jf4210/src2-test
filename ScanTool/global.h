@@ -48,8 +48,9 @@
 
 //#define PIC_RECTIFY_TEST	//图像旋转纠正测试
 #define WarpAffine_TEST		//仿射变换测试
-#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
-
+#ifdef DEBUG
+	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
+#endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
 	#ifndef TriangleSide_TEST
@@ -208,7 +209,11 @@ typedef struct _Model_
 	int			nPicNum;				//图片数量
 	int			nABModel;				//是否是AB卷模式
 	int			nHasHead;				//是否有水平和垂直同步头
+	int			nExamID;
+	int			nSubjectID;
+	int			nSaveMode;				//保存模式: 1-本地模式，2-远程联网模式
 	CString		strModelName;			//模板名称
+	CString		strModelDesc;			//模板描述
 
 	std::vector<pPAPERMODEL> vecPaperModel;	//存储每一页试卷的模板信息
 	_Model_()
@@ -216,6 +221,9 @@ typedef struct _Model_
 		nPicNum = 0;
 		nABModel = 0;
 		nHasHead = 1;
+		nExamID = 0;
+		nSubjectID = 0;
+		nSaveMode = 1;
 	}
 	~_Model_()
 	{
@@ -422,6 +430,6 @@ bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 
 std::string calcFileMd5(std::string strPath);
 void	CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int height);
 bool	PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat);
-bool FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);		//定点进行仿射变换
-bool FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);	//定点透视变换
-bool PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);
+bool	FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);		//定点进行仿射变换
+bool	FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);	//定点透视变换
+bool	PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);
