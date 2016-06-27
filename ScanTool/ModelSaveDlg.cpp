@@ -99,11 +99,15 @@ BOOL CModelSaveDlg::OnInitDialog()
 	{
 		((CButton*)GetDlgItem(IDC_RADIO_LocalMode))->SetCheck(1);
 		((CButton*)GetDlgItem(IDC_RADIO_RemoteMode))->SetCheck(0);
+		SetLocalModelEnable(TRUE);
+		SetNetModelEnable(FALSE);
 	}
 	else if (m_nSaveMode == 2)
 	{
 		((CButton*)GetDlgItem(IDC_RADIO_LocalMode))->SetCheck(0);
 		((CButton*)GetDlgItem(IDC_RADIO_RemoteMode))->SetCheck(1);
+		SetLocalModelEnable(FALSE);
+		SetNetModelEnable(TRUE);
 	}
 	else
 	{
@@ -215,6 +219,9 @@ void CModelSaveDlg::OnBnClickedRadioLocalmode()
 		((CButton*)GetDlgItem(IDC_RADIO_LocalMode))->SetCheck(1);
 		((CButton*)GetDlgItem(IDC_RADIO_RemoteMode))->SetCheck(0);
 		m_nSaveMode = 1;
+
+		SetLocalModelEnable(TRUE);
+		SetNetModelEnable(FALSE);
 	}
 }
 
@@ -226,5 +233,20 @@ void CModelSaveDlg::OnBnClickedRadioRemotemode()
 		((CButton*)GetDlgItem(IDC_RADIO_LocalMode))->SetCheck(0);
 		((CButton*)GetDlgItem(IDC_RADIO_RemoteMode))->SetCheck(1);
 		m_nSaveMode = 2;
+
+		SetLocalModelEnable(FALSE);
+		SetNetModelEnable(TRUE);
 	}
+}
+
+void CModelSaveDlg::SetLocalModelEnable(BOOL bEnable)
+{
+	GetDlgItem(IDC_EDIT_ModelName)->EnableWindow(bEnable);
+	GetDlgItem(IDC_EDIT_ModelDesc)->EnableWindow(bEnable);
+}
+
+void CModelSaveDlg::SetNetModelEnable(BOOL bEnable)
+{
+	GetDlgItem(IDC_COMBO_ExamName)->EnableWindow(bEnable);
+	GetDlgItem(IDC_COMBO_SubjectName)->EnableWindow(bEnable);
 }

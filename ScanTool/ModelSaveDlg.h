@@ -31,6 +31,9 @@ public:
 
 	int			m_nSaveMode;			//1-本地模式，2-联网模式
 	CString		m_strLocalModelDesc;
+private:
+	void	SetLocalModelEnable(BOOL bEnable);
+	void	SetNetModelEnable(BOOL bEnable);
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

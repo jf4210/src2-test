@@ -1641,7 +1641,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 
 	m_pModel->nSaveMode = dlg.m_nSaveMode;
 	if (dlg.m_nSaveMode == 1)
-	{		
+	{
 		m_pModel->strModelName = dlg.m_strModelName;
 		m_pModel->strModelDesc = dlg.m_strLocalModelDesc;
 	}
