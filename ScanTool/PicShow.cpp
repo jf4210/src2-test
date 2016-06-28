@@ -50,6 +50,8 @@ BEGIN_MESSAGE_MAP(CPicShow, CDialog)
 	ON_MESSAGE(WM_CV_SNTrackerChange, &CPicShow::SNTrackerChange)
 	ON_MESSAGE(WM_CV_MBtnDown, &CPicShow::MBtnDown)
 	ON_MESSAGE(WM_CV_MBtnUp, &CPicShow::MBtnUp)
+	ON_MESSAGE(WM_CV_ShiftDown, &CPicShow::ShiftKeyDown)
+	ON_MESSAGE(WM_CV_ShiftUp, &CPicShow::ShiftKeyUp)
 END_MESSAGE_MAP()
 
 BOOL CPicShow::OnInitDialog()
@@ -448,6 +450,18 @@ LRESULT CPicShow::MBtnUp(WPARAM wParam, LPARAM lParam)
 	cv::Point2f pt = *(cv::Point2f*)(wParam);
 	m_iX = static_cast<int>(pt.x);
 	m_iY = static_cast<int>(pt.y);
+	return TRUE;
+}
+
+LRESULT CPicShow::ShiftKeyDown(WPARAM wParam, LPARAM lParam)
+{
+	::SendMessageA(this->GetParent()->GetParent()->m_hWnd, WM_CV_ShiftDown, wParam, lParam);
+	return TRUE;
+}
+
+LRESULT CPicShow::ShiftKeyUp(WPARAM wParam, LPARAM lParam)
+{
+	::SendMessageA(this->GetParent()->GetParent()->m_hWnd, WM_CV_ShiftUp, wParam, lParam);
 	return TRUE;
 }
 

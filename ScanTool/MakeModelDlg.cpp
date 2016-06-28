@@ -30,6 +30,7 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_pCurRectInfo(NULL), m_ptFixCP(0,0)
 	, m_bFistHTracker(true), m_bFistVTracker(true), m_bFistSNTracker(true)
 	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL), m_pSNInfoDlg(NULL)
+	, m_bShiftKeyDown(false)
 {
 }
 
@@ -125,6 +126,8 @@ BEGIN_MESSAGE_MAP(CMakeModelDlg, CDialog)
 	ON_MESSAGE(WM_CV_SNTrackerChange, &CMakeModelDlg::SNTrackerChange)
 	ON_BN_CLICKED(IDC_BTN_uploadModel, &CMakeModelDlg::OnBnClickedBtnuploadmodel)
 	ON_BN_CLICKED(IDC_BTN_ScanModel, &CMakeModelDlg::OnBnClickedBtnScanmodel)
+	ON_MESSAGE(WM_CV_ShiftDown, &CMakeModelDlg::ShiftKeyDown)
+	ON_MESSAGE(WM_CV_ShiftUp, &CMakeModelDlg::ShiftKeyUp)
 	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
@@ -354,7 +357,7 @@ void CMakeModelDlg::InitUI()
 	USES_CONVERSION;
 	if (m_pModel)
 		m_nModelPicNums = m_pModel->nPicNum;
-
+	
 	m_cpListCtrl.SetExtendedStyle(m_cpListCtrl.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_cpListCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36);
 	m_cpListCtrl.InsertColumn(1, _T("位置信息"), LVCFMT_CENTER, 120);
@@ -670,7 +673,74 @@ LRESULT CMakeModelDlg::RoiLBtnUp(WPARAM wParam, LPARAM lParam)
 LRESULT CMakeModelDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
 {
 	cv::Point pt = *(cv::Point*)(wParam);
-	ShowRectByPoint(pt);
+	if (m_pModel->nHasHead != 0 && m_bShiftKeyDown)		//shift按下
+	{
+		if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
+			return false;
+		if (!m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.size())
+		{
+			AfxMessageBox(_T("请先设置水平同步头"));
+			return false;
+		}
+		if (!m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.size())
+		{
+			AfxMessageBox(_T("请先设置垂直同步头"));
+			return false;
+		}
+		int nPosH = -1;
+		int nPosV = -1;
+		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.size(); i++)
+		{
+			RECTINFO& rtPosH = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head[i];
+			if (rtPosH.rt.tl().x <= pt.x && rtPosH.rt.br().x >= pt.x)
+			{
+				nPosH = i;
+				break;
+			}
+		}
+		if (nPosH == -1) return false;
+
+		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.size(); i++)
+		{
+			RECTINFO& rtPosV = m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head[i];
+			if (rtPosV.rt.tl().y <= pt.y && rtPosV.rt.br().y >= pt.y)
+			{
+				nPosV = i;
+				break;
+			}
+		}
+		if (nPosV == -1) return false;
+
+		cv::Rect rt;
+		rt.x = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head[nPosH].rt.x;
+		rt.y = m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head[nPosV].rt.y;
+		rt.width = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head[nPosH].rt.width;
+		rt.height = m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head[nPosV].rt.height;
+		RECTINFO rc;
+		rc.rt = rt;
+		rc.eCPType = m_eCurCPType;
+		rc.nHItem = nPosH;
+		rc.nVItem = nPosV;
+		m_vecTmp.push_back(rc);
+
+		Mat tmp = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
+		Mat tmp2 = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
+
+		
+		for (int i = 0; i < m_vecTmp.size(); i++)
+		{
+			cv::rectangle(tmp, m_vecTmp[i].rt, CV_RGB(20, 225, 25), 2);
+			cv::rectangle(tmp2, m_vecTmp[i].rt, CV_RGB(255, 233, 10), -1);
+		}
+		cv::addWeighted(tmp, 0.5, tmp2, 0.5, 0, tmp);
+		m_pModelPicShow->ShowPic(tmp);
+	}
+	else
+	{
+		ShowRectByPoint(pt);
+
+		m_vecTmp.clear();		//*******************	这里要检测，显示有问题	**************************
+	}
 	return TRUE;
 }
 
@@ -3260,7 +3330,25 @@ void CMakeModelDlg::RecognizeRectTracker()
 
 void CMakeModelDlg::DeleteRectInfoOnList()
 {
-	if (DeleteRectInfo(m_eCurCPType, m_nCurListCtrlSel))
+	int nItem = m_nCurListCtrlSel;
+	if (m_eCurCPType == OMR)
+	{
+		int nOmrCount = 0;
+		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.size(); i++)
+		{
+			nOmrCount = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].lSelAnswer.size();
+			if (nItem < nOmrCount)
+			{
+				nItem = i;	//获取当前选择的所属题号
+				break;
+			}
+			else
+			{
+				nItem -= nOmrCount;
+			}
+		}
+	}
+	if (DeleteRectInfo(m_eCurCPType, nItem))
 	{
 		UpdataCPList();
 		ShowRectByCPType(m_eCurCPType);
@@ -3355,7 +3443,15 @@ BOOL CMakeModelDlg::DeleteRectInfo(CPType eType, int nItem)
 		break;
 	case OMR:
 		//******************	单独处理，OMR的删除，需要将整题的选项都删除	***********************************
-		break;
+		{
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.size() < 0)
+				return FALSE;
+			std::vector<OMR_QUESTION>::iterator itOmr;
+			itOmr = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.begin() + nItem;
+			if (itOmr != m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.end())
+				m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.erase(itOmr);
+			break;
+		}
 	default: return FALSE;
 	}
 	return TRUE;
@@ -3393,6 +3489,11 @@ void CMakeModelDlg::OnNMDblclkListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult)
 
 	m_nCurListCtrlSel = pNMItemActivate->iItem;
 	ShowRectByItem(m_nCurListCtrlSel);
+
+	//++ test	高亮显示一行，失去焦点后也一直显示
+//	m_cpListCtrl.SetItemState(m_nCurListCtrlSel, LVIS_SELECTED, LVIS_SELECTED);
+//	m_cpListCtrl.SetItemState(m_nCurListCtrlSel, LVIS_DROPHILITED, LVIS_DROPHILITED);		//高亮显示一行，失去焦点后也一直显示
+	//--
 }
 
 void CMakeModelDlg::SortRect()
@@ -3605,178 +3706,7 @@ inline int CMakeModelDlg::GetRectInfoByPoint(cv::Point pt, CPType eType, RECTINF
 
 	return nFind;
 }
-#if 0
-bool CMakeModelDlg::PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
-{
-	clock_t start, end;
-	start = clock();
 
-	Rect rt;
-	rt.width = src.cols;
-	rt.height = src.rows / 5;
-
-	Mat matSrc = src(rt);
-	Mat hsv;
-	cvtColor(matSrc, hsv, CV_BGR2GRAY);
-	Mat srcImg = hsv;
-
-	Point center(src.cols / 2, src.rows / 2);
-
-	//Expand image to an optimal size, for faster processing speed
-	//Set widths of borders in four directions
-	//If borderType==BORDER_CONSTANT, fill the borders with (0,0,0)
-	Mat padded;
-	int opWidth = getOptimalDFTSize(srcImg.rows);
-	int opHeight = getOptimalDFTSize(srcImg.cols);
-	copyMakeBorder(srcImg, padded, 0, opWidth - srcImg.rows, 0, opHeight - srcImg.cols, BORDER_CONSTANT, Scalar::all(0));
-
-
-	char szTmpLog[200] = { 0 };
-	end = clock();
-	sprintf_s(szTmpLog, "时间1: %d\n", end - start);
-	TRACE(szTmpLog);
-
-	Mat planes[] = { Mat_<float>(padded), Mat::zeros(padded.size(), CV_32F) };
-	Mat comImg;
-	//Merge into a double-channel image
-	merge(planes, 2, comImg);
-
-
-	end = clock();
-	sprintf_s(szTmpLog, "时间2-0: %d\n", end - start);
-	TRACE(szTmpLog);
-
-	//Use the same image as input and output,
-	//so that the results can fit in Mat well
-	dft(comImg, comImg);
-
-
-	end = clock();
-	sprintf_s(szTmpLog, "时间2-1: %d\n", end - start);
-	TRACE(szTmpLog);
-
-	//Compute the magnitude
-	//planes[0]=Re(DFT(I)), planes[1]=Im(DFT(I))
-	//magnitude=sqrt(Re^2+Im^2)
-	split(comImg, planes);
-	magnitude(planes[0], planes[1], planes[0]);
-
-	end = clock();
-	sprintf_s(szTmpLog, "时间2-2: %d\n", end - start);
-	TRACE(szTmpLog);
-
-	//Switch to logarithmic scale, for better visual results
-	//M2=log(1+M1)
-	Mat magMat = planes[0];
-	magMat += Scalar::all(1);
-	log(magMat, magMat);
-
-	end = clock();
-	sprintf_s(szTmpLog, "时间3: %d\n", end - start);
-	TRACE(szTmpLog);
-
-	//Crop the spectrum
-	//Width and height of magMat should be even, so that they can be divided by 2
-	//-2 is 11111110 in binary system, operator & make sure width and height are always even
-	magMat = magMat(Rect(0, 0, magMat.cols & -2, magMat.rows & -2));
-
-	//Rearrange the quadrants of Fourier image,
-	//so that the origin is at the center of image,
-	//and move the high frequency to the corners
-	int cx = magMat.cols / 2;
-	int cy = magMat.rows / 2;
-
-	Mat q0(magMat, Rect(0, 0, cx, cy));
-	Mat q1(magMat, Rect(0, cy, cx, cy));
-	Mat q2(magMat, Rect(cx, cy, cx, cy));
-	Mat q3(magMat, Rect(cx, 0, cx, cy));
-
-	Mat tmp;
-	q0.copyTo(tmp);
-	q2.copyTo(q0);
-	tmp.copyTo(q2);
-
-	q1.copyTo(tmp);
-	q3.copyTo(q1);
-	tmp.copyTo(q3);
-
-	end = clock();
-	sprintf_s(szTmpLog, "时间4: %d\n", end - start);
-	TRACE(szTmpLog);
-
-	//Normalize the magnitude to [0,1], then to[0,255]
-	normalize(magMat, magMat, 0, 1, CV_MINMAX);
-	Mat magImg(magMat.size(), CV_8UC1);
-	magMat.convertTo(magImg, CV_8UC1, 255, 0);
-	//	imshow("magnitude", magImg);
-	//imwrite("imageText_mag.jpg",magImg);
-
-	//Turn into binary image
-	threshold(magImg, magImg, 150, 255, CV_THRESH_BINARY);
-	//	imshow("mag_binary", magImg);
-	//imwrite("imageText_bin.jpg",magImg);
-
-	end = clock();
-	sprintf_s(szTmpLog, "时间5: %d\n", end - start);
-	TRACE(szTmpLog);
-
-	//Find lines with Hough Transformation
-	std::vector<cv::Vec2f> lines;
-	float pi180 = (float)CV_PI / 180;
-	Mat linImg(magImg.size(), CV_8UC3);
-	HoughLines(magImg, lines, 1, pi180, 100, 0, 0);
-
-
-	end = clock();
-	sprintf_s(szTmpLog, "时间6-0: %d\n", end - start);
-	TRACE(szTmpLog);
-
-	int numLines = lines.size();
-
-	//Find the proper angel from the three found angels
-	float angel = 0;
-	float piThresh = (float)CV_PI / 90;
-	float pi2 = CV_PI / 2;
-	for (int l = 0; l < numLines; l++)
-	{
-		float theta = lines[l][1];
-		if (abs(theta) < piThresh || abs(theta - pi2) < piThresh)
-			continue;
-		else{
-			angel = theta;
-			break;
-		}
-	}
-
-	//Calculate the rotation angel
-	//The image has to be square,
-	//so that the rotation angel can be calculate right
-	angel = angel < pi2 ? angel : angel - CV_PI;
-	if (angel != pi2){
-		float angelT = srcImg.rows*tan(angel) / srcImg.cols;
-		angel = atan(angelT);
-	}
-	float angelD = angel * 180 / (float)CV_PI;
-
-	sprintf_s(szTmpLog, "the rotation angel to be applied: %f\n", angelD);
-	TRACE(szTmpLog);
-
-	end = clock();
-	sprintf_s(szTmpLog, "时间7: %d\n", end - start);
-	TRACE(szTmpLog);
-
-	//Rotate the image to recover
-	rotMat = getRotationMatrix2D(center, angelD, 1.0);
-	dst = Mat::ones(src.size(), CV_8UC3);
-	warpAffine(src, dst, rotMat, src.size(), INTER_LINEAR, 0, Scalar(255, 255, 255));
-
-	end = clock();
-	sprintf_s(szTmpLog, "总时间: %d\n", end - start);
-	TRACE(szTmpLog);
-
-	return true;
-}
-#endif
 bool CMakeModelDlg::PicRotate()
 {
 	if (m_vecPaperModelInfo.size() < m_nCurrTabSel)
@@ -4321,4 +4251,16 @@ void CMakeModelDlg::OnDestroy()
 		}
 		itPaperModelInfo = m_vecPaperModelInfo.erase(itPaperModelInfo);
 	}
+}
+
+LRESULT CMakeModelDlg::ShiftKeyDown(WPARAM wParam, LPARAM lParam)
+{
+	m_bShiftKeyDown = true;
+	return TRUE;
+}
+
+LRESULT CMakeModelDlg::ShiftKeyUp(WPARAM wParam, LPARAM lParam)
+{
+	m_bShiftKeyDown = false;
+	return TRUE;
 }

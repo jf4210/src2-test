@@ -47,6 +47,9 @@ public:
 	LRESULT HTrackerChange(WPARAM wParam, LPARAM lParam);
 	LRESULT VTrackerChange(WPARAM wParam, LPARAM lParam);
 	LRESULT SNTrackerChange(WPARAM wParam, LPARAM lParam);
+
+	LRESULT ShiftKeyDown(WPARAM wParam, LPARAM lParam);
+	LRESULT ShiftKeyUp(WPARAM wParam, LPARAM lParam);
 private:
 	void InitCtrlPosition();
 protected:

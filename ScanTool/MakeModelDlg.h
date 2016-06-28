@@ -135,6 +135,8 @@ public:
 
 	int			m_nStartTH;			//添加OMR时的起始题号
 
+	bool		m_bShiftKeyDown;	//shift按键是否按下
+
 	//扫描
 	BOOL m_bTwainInit;
 	CString		m_strScanSavePath;
@@ -182,7 +184,10 @@ private:
 	LRESULT HTrackerChange(WPARAM wParam, LPARAM lParam);
 	LRESULT VTrackerChange(WPARAM wParam, LPARAM lParam);
 	LRESULT SNTrackerChange(WPARAM wParam, LPARAM lParam);
-	
+
+	LRESULT ShiftKeyDown(WPARAM wParam, LPARAM lParam);
+	LRESULT ShiftKeyUp(WPARAM wParam, LPARAM lParam);
+
 	bool checkValidity();						//保存模板前合法性检查
 	bool SaveModelFile(pMODEL pModel);			//保存模板到文件
 	void setUploadModelInfo(CString& strName, CString& strModelPath, int nExamId, int nSubjectId);					//设置上传模板的信息

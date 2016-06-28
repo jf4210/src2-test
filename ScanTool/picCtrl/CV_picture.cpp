@@ -625,6 +625,7 @@ BEGIN_MESSAGE_MAP(CV_picture, CStatic)
 	ON_WM_RBUTTONUP()
 	ON_WM_PAINT()
 	ON_WM_KEYDOWN()
+	ON_WM_KEYUP()
 	ON_WM_SETCURSOR()
 END_MESSAGE_MAP()
 
@@ -1252,9 +1253,22 @@ void CV_picture::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
 	ShowImage_roi(m_dst_img,m_iDrawingMethod);
 
+	if (nChar == VK_SHIFT)
+	{
+		::SendMessageA(this->GetParent()->m_hWnd, WM_CV_ShiftDown, NULL, NULL);
+	}
+
 	CStatic::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
+void CV_picture::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	if (nChar == VK_SHIFT)
+	{
+		::SendMessageA(this->GetParent()->m_hWnd, WM_CV_ShiftUp, NULL, NULL);
+	}
+	CStatic::OnKeyUp(nChar, nRepCnt, nFlags);
+}
 
 void CV_picture::OnPaint()
 {

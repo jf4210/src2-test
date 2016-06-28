@@ -37,6 +37,8 @@
 #define WM_CV_MBtnDown			(WM_USER + 0x008)	//中间滚轮按下事件
 #define WM_CV_MBtnUp			(WM_USER + 0x009)	//中间滚轮按下事件
 #define WM_CV_SNTrackerChange	(WM_USER + 0x010)	//橡皮筋类改变事件
+#define WM_CV_ShiftDown			(WM_USER + 0x011)	//shift按下事件
+#define WM_CV_ShiftUp			(WM_USER + 0x012)	//shift抬起事件
 
 class CV_picture : public CStatic
 {
@@ -171,6 +173,7 @@ protected:
 /////////////////////在这里添加额外的成员变量//////////////////////////
 public:
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags); 
+	afx_msg void OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 
 	CPoint m_ptMouseMove;		//鼠标移动时在控件中的坐标，m_bMouseMoveinfoEnable为False时无效
