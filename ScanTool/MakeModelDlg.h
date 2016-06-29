@@ -171,7 +171,7 @@ private:
 //	inline void ShowDetailRectInfo();
 	inline int GetStandardVal(CPType eType);
 	inline int GetRectInfoByPoint(cv::Point pt, CPType eType, RECTINFO*& pRc);
-	void ShowRectByPoint(cv::Point pt);
+	bool ShowRectByPoint(cv::Point pt);
 	void ShowRectByItem(int nItem);
 	void ShowRectByCPType(CPType eType);
 	void ShowTmpRect();
