@@ -1140,7 +1140,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		{
 			Poco::JSON::Object jsnOmr;
 			jsnOmr.set("th", itOmr->nTH);
-			jsnOmr.set("type", itOmr->nSingle);
+			jsnOmr.set("type", itOmr->nSingle + 1);
 			jsnOmr.set("value", itOmr->strRecogVal);
 			jsnOmr.set("doubt", itOmr->nDoubt);
 			Poco::JSON::Array jsnPositionArry;
@@ -1150,6 +1150,9 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 // 				if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
 // 				{
 					Poco::JSON::Object jsnItem;
+					char szVal[5] = { 0 };
+					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+					jsnItem.set("val", szVal);
 					jsnItem.set("x", itRect->rt.x);
 					jsnItem.set("y", itRect->rt.y);
 					jsnItem.set("w", itRect->rt.width);
@@ -1182,14 +1185,14 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
 			for (; itRect != (*itSn)->lSN.end(); itRect++)
 			{
-				if ((*itSn)->nRecogVal == itRect->nSnVal)
-				{
+// 				if ((*itSn)->nRecogVal == itRect->nSnVal)
+// 				{
 					jsnSnPosition.set("x", itRect->rt.x);
 					jsnSnPosition.set("y", itRect->rt.y);
 					jsnSnPosition.set("w", itRect->rt.width);
 					jsnSnPosition.set("h", itRect->rt.height);
-					break;
-				}
+// 					break;
+// 				}
 			}
 			jsnSnItem.set("position", jsnSnPosition);
 			jsnSnDetailArry.add(jsnSnItem);
@@ -1202,22 +1205,25 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		{
 			Poco::JSON::Object jsnOmr;
 			jsnOmr.set("th", itOmr->nTH);
-			jsnOmr.set("type", itOmr->nSingle);
+			jsnOmr.set("type", itOmr->nSingle + 1);
 			jsnOmr.set("value", itOmr->strRecogVal);
 			jsnOmr.set("doubt", itOmr->nDoubt);
 			Poco::JSON::Array jsnPositionArry;
 			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
 			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
 			{
-				if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
-				{
+// 				if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
+// 				{
 					Poco::JSON::Object jsnItem;
+					char szVal[5] = { 0 };
+					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+					jsnItem.set("val", szVal);
 					jsnItem.set("x", itRect->rt.x);
 					jsnItem.set("y", itRect->rt.y);
 					jsnItem.set("w", itRect->rt.width);
 					jsnItem.set("h", itRect->rt.height);
 					jsnPositionArry.add(jsnItem);
-				}
+//				}
 			}
 			jsnOmr.set("position", jsnPositionArry);
 			jsnOmrArry.add(jsnOmr);

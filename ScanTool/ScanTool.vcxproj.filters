@@ -85,6 +85,9 @@
     <Filter Include="模板信息显示窗口">
       <UniqueIdentifier>{e93232b8-0a2e-4016-8353-5e98f305b12d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="模板管理窗口">
+      <UniqueIdentifier>{044f69cb-8fde-4362-a5e5-5352c4874b09}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -204,6 +207,9 @@
     <ClInclude Include="ShowModelInfoDlg.h">
       <Filter>模板信息显示窗口</Filter>
     </ClInclude>
+    <ClInclude Include="ScanModleMgrDlg.h">
+      <Filter>模板管理窗口</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
@@ -301,6 +307,9 @@
     </ClCompile>
     <ClCompile Include="ShowModelInfoDlg.cpp">
       <Filter>模板信息显示窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanModleMgrDlg.cpp">
+      <Filter>模板管理窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

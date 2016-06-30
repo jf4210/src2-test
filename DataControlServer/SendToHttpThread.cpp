@@ -181,13 +181,13 @@ void CSendToHttpThread::run()
 					}
 					else if (pTask->nTaskType == 3)
 					{
-						std::string strLog = "发送OMR信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: " /*+ pTask->strResult*/;
+						std::string strLog = "发送OMR信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: " + pTask->strResult;
 						g_Log.LogOut(strLog);
 						std::cout << "post papers OMR result info success, papersName: " << pTask->pPapers->strPapersName << std::endl;
 					}
 					else if (pTask->nTaskType == 4)
 					{
-						std::string strLog = "发送ZKZH信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: "/* + pTask->strResult*/;
+						std::string strLog = "发送ZKZH信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: " + pTask->strResult;
 						g_Log.LogOut(strLog);
 						std::cout << "post papers ZKZH result info success, papersName: " << pTask->pPapers->strPapersName << std::endl;
 					}

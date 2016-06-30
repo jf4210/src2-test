@@ -133,4 +133,5 @@ public:
 	afx_msg void OnBnClickedBtnUploadpapers();
 	afx_msg void OnBnClickedBtnLogin();
 	afx_msg void OnBnClickedBtnGetmodel();
+	afx_msg void OnBnClickedBtnModelmgr();
 };

@@ -8,6 +8,7 @@
 #include "afxdialogex.h"
 #include "LoginDlg.h"
 #include "GetModelDlg.h"
+#include "ScanModleMgrDlg.h"
 #include "Net_Cmd_Protocol.h"
 //#include "minidump.h"
 
@@ -114,6 +115,7 @@ BEGIN_MESSAGE_MAP(CScanToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_UpLoadPapers, &CScanToolDlg::OnBnClickedBtnUploadpapers)
 	ON_BN_CLICKED(IDC_BTN_Login, &CScanToolDlg::OnBnClickedBtnLogin)
 	ON_BN_CLICKED(IDC_BTN_GetModel, &CScanToolDlg::OnBnClickedBtnGetmodel)
+	ON_BN_CLICKED(IDC_BTN_ModelMgr, &CScanToolDlg::OnBnClickedBtnModelmgr)
 END_MESSAGE_MAP()
 
 
@@ -672,6 +674,11 @@ void CScanToolDlg::InitCtrlPosition()
 	if (GetDlgItem(IDC_BTN_ScanModule)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_ScanModule)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
+		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
+	}
+	if (GetDlgItem(IDC_BTN_ModelMgr)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_ModelMgr)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
 	if (GetDlgItem(IDC_BTN_GetModel)->GetSafeHwnd())
@@ -1258,6 +1265,9 @@ void CScanToolDlg::OnNMDblclkListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	*pResult = 0;
 
+	if (pNMItemActivate->iItem < 0)
+		return;
+
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcPicture.GetItemData(pNMItemActivate->iItem);
 //	m_nCurrItemPaper = pNMItemActivate->iItem;
 
@@ -1759,7 +1769,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		{
 			Poco::JSON::Object jsnOmr;
 			jsnOmr.set("th", itOmr->nTH);
-			jsnOmr.set("type", itOmr->nSingle);
+			jsnOmr.set("type", itOmr->nSingle + 1);
 			jsnOmr.set("value", itOmr->strRecogVal);
 			jsnOmr.set("doubt", itOmr->nDoubt);
 			Poco::JSON::Array jsnPositionArry;
@@ -1769,6 +1779,9 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 // 				if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
 // 				{
 					Poco::JSON::Object jsnItem;
+					char szVal[5] = { 0 };
+					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+					jsnItem.set("val", szVal);
 					jsnItem.set("x", itRect->rt.x);
 					jsnItem.set("y", itRect->rt.y);
 					jsnItem.set("w", itRect->rt.width);
@@ -1801,14 +1814,14 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
 			for (; itRect != (*itSn)->lSN.end(); itRect++)
 			{
-				if ((*itSn)->nRecogVal == itRect->nSnVal)
-				{
+// 				if ((*itSn)->nRecogVal == itRect->nSnVal)
+// 				{
 					jsnSnPosition.set("x", itRect->rt.x);
 					jsnSnPosition.set("y", itRect->rt.y);
 					jsnSnPosition.set("w", itRect->rt.width);
 					jsnSnPosition.set("h", itRect->rt.height);
-					break;
-				}
+// 					break;
+// 				}
 			}
 			jsnSnItem.set("position", jsnSnPosition);
 			jsnSnDetailArry.add(jsnSnItem);
@@ -1821,22 +1834,25 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		{
 			Poco::JSON::Object jsnOmr;
 			jsnOmr.set("th", itOmr->nTH);
-			jsnOmr.set("type", itOmr->nSingle);
+			jsnOmr.set("type", itOmr->nSingle + 1);
 			jsnOmr.set("value", itOmr->strRecogVal);
 			jsnOmr.set("doubt", itOmr->nDoubt);
 			Poco::JSON::Array jsnPositionArry;
 			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
 			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
 			{
-				if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
-				{
+// 				if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
+// 				{
 					Poco::JSON::Object jsnItem;
+					char szVal[5] = { 0 };
+					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+					jsnItem.set("val", szVal);
 					jsnItem.set("x", itRect->rt.x);
 					jsnItem.set("y", itRect->rt.y);
 					jsnItem.set("w", itRect->rt.width);
 					jsnItem.set("h", itRect->rt.height);
 					jsnPositionArry.add(jsnItem);
-				}
+//				}
 			}
 			jsnOmr.set("position", jsnPositionArry);
 			jsnOmrArry.add(jsnOmr);
@@ -2021,5 +2037,15 @@ void CScanToolDlg::OnBnClickedBtnGetmodel()
 		if (m_pModel != NULL)
 			m_nModelPicNums = m_pModel->nPicNum;
 		InitTab();
+	}
+}
+
+
+void CScanToolDlg::OnBnClickedBtnModelmgr()
+{
+	CScanModleMgrDlg modelMgrDlg;
+	if (modelMgrDlg.DoModal() != IDOK)
+	{
+		return;
 	}
 }
