@@ -82,7 +82,7 @@ CScanToolDlg::CScanToolDlg(CWnd* pParent /*=NULL*/)
 	, m_bTwainInit(FALSE), m_nCurrTabSel(0), m_nScanCount(0), m_nScanStatus(0)
 	, m_pPapersInfo(NULL), m_pPaper(NULL), m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL)
 	, m_pSendFileObj(NULL), m_SendFileThread(NULL), m_bLogin(FALSE), m_pTcpCmdObj(NULL), m_TcpCmdThread(NULL)
-	, m_nTeacherId(-1), m_nUserId(-1)
+	, m_nTeacherId(-1), m_nUserId(-1), m_nCurrItemPaperList(-1)
 	, m_pShowModelInfoDlg(NULL)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -116,6 +116,8 @@ BEGIN_MESSAGE_MAP(CScanToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_Login, &CScanToolDlg::OnBnClickedBtnLogin)
 	ON_BN_CLICKED(IDC_BTN_GetModel, &CScanToolDlg::OnBnClickedBtnGetmodel)
 	ON_BN_CLICKED(IDC_BTN_ModelMgr, &CScanToolDlg::OnBnClickedBtnModelmgr)
+	ON_NOTIFY(NM_HOVER, IDC_LIST_Picture, &CScanToolDlg::OnNMHoverListPicture)
+	ON_NOTIFY(LVN_KEYDOWN, IDC_LIST_Picture, &CScanToolDlg::OnLvnKeydownListPicture)
 END_MESSAGE_MAP()
 
 
@@ -366,6 +368,8 @@ void CScanToolDlg::InitConfig()
 	g_strCurrentPath = strFile;
 	
 	USES_CONVERSION;
+	std::string strModelPath = T2A(g_strCurrentPath + _T("Model"));
+	g_strModelSavePath = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
 
 	std::string strLogPath = CMyCodeConvert::Gb2312ToUtf8(T2A(g_strCurrentPath + _T("ScanTool.log")));
 	Poco::AutoPtr<Poco::PatternFormatter> pFormatter(new Poco::PatternFormatter("%L%Y-%m-%d %H:%M:%S.%F %q:%t"));
@@ -503,8 +507,12 @@ void CScanToolDlg::InitUI()
 	m_pShowModelInfoDlg = new CShowModelInfoDlg(this);
 	m_pShowModelInfoDlg->Create(CShowModelInfoDlg::IDD, this);
 	m_pShowModelInfoDlg->ShowWindow(SW_SHOW);
+
+	//++ 后期可以删除
+	GetDlgItem(IDC_BTN_GetModel)->ShowWindow(SW_HIDE);
 	GetDlgItem(IDC_STATIC_PaperList)->ShowWindow(SW_HIDE);
 	m_lcPaper.ShowWindow(SW_HIDE);
+	//
 
 // 	int sx = GetSystemMetrics(SM_CXFULLSCREEN);
 // 	int sy = GetSystemMetrics(SM_CYFULLSCREEN);
@@ -681,11 +689,13 @@ void CScanToolDlg::InitCtrlPosition()
 		GetDlgItem(IDC_BTN_ModelMgr)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
+#if 0
 	if (GetDlgItem(IDC_BTN_GetModel)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_GetModel)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
+#endif
 	if (GetDlgItem(IDC_BTN_InputPaper)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_InputPaper)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
@@ -814,6 +824,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	m_comboModel.EnableWindow(FALSE);
 	GetDlgItem(IDC_BTN_Scan)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTN_ScanModule)->EnableWindow(FALSE);
+	GetDlgItem(IDC_BTN_ModelMgr)->EnableWindow(FALSE); 
 	GetDlgItem(IDC_BTN_InputPaper)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTN_GetModel)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTN_UpLoadPapers)->EnableWindow(FALSE);
@@ -866,6 +877,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		m_comboModel.EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_Scan)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_ScanModule)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BTN_ModelMgr)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_InputPaper)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_GetModel)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_UpLoadPapers)->EnableWindow(TRUE);
@@ -921,7 +933,7 @@ void CScanToolDlg::SearchModel()
 {
 	USES_CONVERSION;
 	std::string strModelPath = T2A(g_strCurrentPath + _T("Model"));
-	g_strModelSavePath = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
+//	g_strModelSavePath = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
 
 	std::string strLog;
 	try
@@ -1206,6 +1218,7 @@ void CScanToolDlg::ScanDone(int nStatus)
 	m_comboModel.EnableWindow(TRUE);
 	GetDlgItem(IDC_BTN_Scan)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTN_ScanModule)->EnableWindow(TRUE);
+	GetDlgItem(IDC_BTN_ModelMgr)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTN_InputPaper)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTN_GetModel)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTN_UpLoadPapers)->EnableWindow(TRUE);
@@ -1268,8 +1281,12 @@ void CScanToolDlg::OnNMDblclkListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 	if (pNMItemActivate->iItem < 0)
 		return;
 
+	m_nCurrItemPaperList = pNMItemActivate->iItem;
+#if 1
+	ShowPaperByItem(m_nCurrItemPaperList);
+#else
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcPicture.GetItemData(pNMItemActivate->iItem);
-//	m_nCurrItemPaper = pNMItemActivate->iItem;
+
 
 	m_pCurrentShowPaper = pPaper;
 	if (pPaper->bIssuePaper)
@@ -1287,6 +1304,7 @@ void CScanToolDlg::OnNMDblclkListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 		if (i != 0)
 			m_vecPicShow[i]->ShowWindow(SW_HIDE);
 	}
+#endif
 }
 
 void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
@@ -2040,12 +2058,70 @@ void CScanToolDlg::OnBnClickedBtnGetmodel()
 	}
 }
 
-
 void CScanToolDlg::OnBnClickedBtnModelmgr()
 {
 	CScanModleMgrDlg modelMgrDlg;
 	if (modelMgrDlg.DoModal() != IDOK)
 	{
 		return;
+	}
+}
+
+
+void CScanToolDlg::OnNMHoverListPicture(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	*pResult = 1;		//**********	这里如果不响应，同时返回结果值不为1的话，	****************
+						//**********	就会产生产生TRACK SELECT，也就是鼠标悬停	****************
+						//**********	一段时间后，所在行自动被选中
+}
+
+
+void CScanToolDlg::OnLvnKeydownListPicture(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMLVKEYDOWN pLVKeyDow = reinterpret_cast<LPNMLVKEYDOWN>(pNMHDR);
+	*pResult = 0;
+
+	if (pLVKeyDow->wVKey == VK_UP)
+	{
+		m_nCurrItemPaperList--;
+		if (m_nCurrItemPaperList <= 0)
+			m_nCurrItemPaperList = 0;
+
+		ShowPaperByItem(m_nCurrItemPaperList);
+	}
+	else if (pLVKeyDow->wVKey == VK_DOWN)
+	{
+
+		m_nCurrItemPaperList++;
+		if (m_nCurrItemPaperList >= m_lcPicture.GetItemCount() - 1)
+			m_nCurrItemPaperList = m_lcPicture.GetItemCount() - 1;
+
+		ShowPaperByItem(m_nCurrItemPaperList);
+	}
+}
+
+void CScanToolDlg::ShowPaperByItem(int nItem)
+{
+	if (nItem < 0)
+		return;
+
+	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcPicture.GetItemData(nItem);
+//	m_nCurrItemPaperList = pNMItemActivate->iItem;
+
+	m_pCurrentShowPaper = pPaper;
+	if (pPaper->bIssuePaper)
+		PaintIssueRect(pPaper);
+	else
+		PaintRecognisedRect(pPaper);
+
+	m_nCurrTabSel = 0;
+
+	m_tabPicShowCtrl.SetCurSel(0);
+	m_pCurrentPicShow = m_vecPicShow[0];
+	m_pCurrentPicShow->ShowWindow(SW_SHOW);
+	for (int i = 0; i < m_vecPicShow.size(); i++)
+	{
+		if (i != 0)
+			m_vecPicShow[i]->ShowWindow(SW_HIDE);
 	}
 }

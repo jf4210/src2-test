@@ -129,6 +129,7 @@ BEGIN_MESSAGE_MAP(CMakeModelDlg, CDialog)
 	ON_MESSAGE(WM_CV_ShiftDown, &CMakeModelDlg::ShiftKeyDown)
 	ON_MESSAGE(WM_CV_ShiftUp, &CMakeModelDlg::ShiftKeyUp)
 	ON_WM_DESTROY()
+	ON_NOTIFY(NM_HOVER, IDC_LIST_CheckPoint, &CMakeModelDlg::OnNMHoverListCheckpoint)
 END_MESSAGE_MAP()
 
 // CMakeModelDlg 消息处理程序
@@ -651,6 +652,7 @@ LRESULT CMakeModelDlg::RoiLBtnUp(WPARAM wParam, LPARAM lParam)
 	Rect  Rt = *(Rect*)(wParam);
 	Mat*  pShowMat = (Mat*)(lParam);
 
+	m_cpListCtrl.SetItemState(m_nCurListCtrlSel, 0, LVIS_DROPHILITED);		// 取消高亮显示
 	if (m_eCurCPType == UNKNOWN)
 	{
 		AfxMessageBox(_T("请先选中校验点类型"));
@@ -3285,7 +3287,11 @@ void CMakeModelDlg::OnNMRClickListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult)
 
 	if (m_eCurCPType == UNKNOWN)
 		return;
+
+	m_cpListCtrl.SetItemState(m_nCurListCtrlSel, 0, LVIS_DROPHILITED);		// 取消高亮显示
 	m_nCurListCtrlSel = pNMItemActivate->iItem;
+	m_cpListCtrl.SetItemState(m_nCurListCtrlSel, LVIS_DROPHILITED, LVIS_DROPHILITED);		//高亮显示一行，失去焦点后也一直显示
+
 	//下面的这段代码, 不单单适应于ListCtrl  
 	CMenu menu, *pPopup;
 	menu.LoadMenu(IDR_MENU_RectRecognition);
@@ -3683,17 +3689,25 @@ void CMakeModelDlg::OnLvnKeydownListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 0;
 	if (pLVKeyDow->wVKey == VK_UP)
 	{
+		m_cpListCtrl.SetItemState(m_nCurListCtrlSel, 0, LVIS_DROPHILITED);		// 取消高亮显示
+
 		m_nCurListCtrlSel--;
 		if (m_nCurListCtrlSel <= 0)
 			m_nCurListCtrlSel = 0;
 		ShowRectByItem(m_nCurListCtrlSel);
+
+		m_cpListCtrl.SetItemState(m_nCurListCtrlSel, LVIS_DROPHILITED, LVIS_DROPHILITED);		//高亮显示一行，失去焦点后也一直显示
 	}
 	else if (pLVKeyDow->wVKey == VK_DOWN)
 	{
+		m_cpListCtrl.SetItemState(m_nCurListCtrlSel, 0, LVIS_DROPHILITED);		// 取消高亮显示
+
 		m_nCurListCtrlSel++;
 		if (m_nCurListCtrlSel >= m_cpListCtrl.GetItemCount() - 1)
 			m_nCurListCtrlSel = m_cpListCtrl.GetItemCount() - 1;
 		ShowRectByItem(m_nCurListCtrlSel);
+
+		m_cpListCtrl.SetItemState(m_nCurListCtrlSel, LVIS_DROPHILITED, LVIS_DROPHILITED);		//高亮显示一行，失去焦点后也一直显示
 	}
 }
 
@@ -3702,12 +3716,14 @@ void CMakeModelDlg::OnNMDblclkListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult)
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	*pResult = 0;
 
+	m_cpListCtrl.SetItemState(m_nCurListCtrlSel, 0, LVIS_DROPHILITED);		// 取消高亮显示
+
 	m_nCurListCtrlSel = pNMItemActivate->iItem;
 	ShowRectByItem(m_nCurListCtrlSel);
 
 	//++ test	高亮显示一行，失去焦点后也一直显示
 //	m_cpListCtrl.SetItemState(m_nCurListCtrlSel, LVIS_SELECTED, LVIS_SELECTED);
-//	m_cpListCtrl.SetItemState(m_nCurListCtrlSel, LVIS_DROPHILITED, LVIS_DROPHILITED);		//高亮显示一行，失去焦点后也一直显示
+	m_cpListCtrl.SetItemState(m_nCurListCtrlSel, LVIS_DROPHILITED, LVIS_DROPHILITED);		//高亮显示一行，失去焦点后也一直显示
 	//--
 }
 
@@ -4478,4 +4494,12 @@ LRESULT CMakeModelDlg::ShiftKeyUp(WPARAM wParam, LPARAM lParam)
 {
 	m_bShiftKeyDown = false;
 	return TRUE;
+}
+
+
+void CMakeModelDlg::OnNMHoverListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	*pResult = 1;		//**********	这里如果不响应，同时返回结果值不为1的话，	****************
+						//**********	就会产生产生TRACK SELECT，也就是鼠标悬停	****************
+						//**********	一段时间后，所在行自动被选中
 }

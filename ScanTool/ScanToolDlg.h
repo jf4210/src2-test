@@ -45,6 +45,7 @@ public:
 	pMODEL			m_pModel;				//扫描试卷时的校验模板
 	MODELLIST		m_lModel;				//已经加载的模板列表
 
+	int				m_nCurrItemPaperList;	//当前时间列表选中的项
 	int				m_ncomboCurrentSel;		//下拉列表当前选择项
 
 	Poco::Thread*	m_pRecogThread;
@@ -88,6 +89,7 @@ public:
 //	bool	UnZipModel(CString strZipPath);
 //	pMODEL	LoadModelFile(CString strModelPath);			//加载模板文件
 
+	void	ShowPaperByItem(int nItem);
 	void	ShowRectByPoint(cv::Point pt, pST_PaperInfo pPaper);
 	LRESULT RoiLBtnDown(WPARAM wParam, LPARAM lParam);		//鼠标左键按下的通知
 	LRESULT MsgRecogErr(WPARAM wParam, LPARAM lParam);
@@ -134,4 +136,6 @@ public:
 	afx_msg void OnBnClickedBtnLogin();
 	afx_msg void OnBnClickedBtnGetmodel();
 	afx_msg void OnBnClickedBtnModelmgr();
+	afx_msg void OnNMHoverListPicture(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnLvnKeydownListPicture(NMHDR *pNMHDR, LRESULT *pResult);
 };

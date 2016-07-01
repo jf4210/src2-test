@@ -14,7 +14,7 @@ IMPLEMENT_DYNAMIC(CScanModleMgrDlg, CDialog)
 
 CScanModleMgrDlg::CScanModleMgrDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CScanModleMgrDlg::IDD, pParent)
-	, m_pShowModelInfoDlg(NULL)
+	, m_pShowModelInfoDlg(NULL), m_pModel(NULL), m_nCurModelItem(-1)
 {
 
 }
@@ -22,6 +22,13 @@ CScanModleMgrDlg::CScanModleMgrDlg(CWnd* pParent /*=NULL*/)
 CScanModleMgrDlg::~CScanModleMgrDlg()
 {
 	SAFE_RELEASE(m_pShowModelInfoDlg);
+
+	for (int i = 0; i < m_vecModel.size(); i++)
+	{
+		pMODEL pModel = m_vecModel[i];
+		SAFE_RELEASE(pModel);
+	}
+	m_vecModel.clear();
 }
 
 void CScanModleMgrDlg::DoDataExchange(CDataExchange* pDX)
@@ -35,6 +42,9 @@ BEGIN_MESSAGE_MAP(CScanModleMgrDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_Refresh, &CScanModleMgrDlg::OnBnClickedBtnRefresh)
 	ON_BN_CLICKED(IDC_BTN_DLModel, &CScanModleMgrDlg::OnBnClickedBtnDlmodel)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_Model, &CScanModleMgrDlg::OnNMDblclkListModel)
+	ON_BN_CLICKED(IDC_BTN_DelModel, &CScanModleMgrDlg::OnBnClickedBtnDelmodel)
+	ON_BN_CLICKED(IDC_BTN_AddModel, &CScanModleMgrDlg::OnBnClickedBtnAddmodel)
+	ON_NOTIFY(NM_HOVER, IDC_LIST_Model, &CScanModleMgrDlg::OnNMHoverListModel)
 END_MESSAGE_MAP()
 
 BOOL CScanModleMgrDlg::OnInitDialog()
@@ -42,6 +52,8 @@ BOOL CScanModleMgrDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	InitUI();
+
+	OnBnClickedBtnRefresh();
 
 	return TRUE;
 }
@@ -87,9 +99,16 @@ void CScanModleMgrDlg::InitCtrlPosition()
 void CScanModleMgrDlg::OnBnClickedBtnRefresh()
 {
 	m_ModelListCtrl.DeleteAllItems();
+	for (int i = 0; i < m_vecModel.size(); i++)
+	{
+		pMODEL pModel = m_vecModel[i];
+		SAFE_RELEASE(pModel);
+	}
+	m_vecModel.clear();
+
 	USES_CONVERSION;
 	std::string strModelPath = T2A(g_strCurrentPath + _T("Model"));
-	g_strModelSavePath = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
+//	g_strModelSavePath = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
 
 	std::string strLog;
 	int nCount = 0;
@@ -110,7 +129,13 @@ void CScanModleMgrDlg::OnBnClickedBtnRefresh()
 				m_ModelListCtrl.InsertItem(nCount, NULL);
 				m_ModelListCtrl.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 				m_ModelListCtrl.SetItemText(nCount, 1, (LPCTSTR)A2T(strModelName.c_str()));
+				m_ModelListCtrl.SetItemData(nCount, NULL);
 				nCount++;
+
+// 				CString strModelFilePath = g_strCurrentPath + _T("Model\\") + A2T(strModelName.c_str());
+// 				pMODEL pModel;
+// 				pModel = LoadModelFile(strModelFilePath);
+// 				m_vecModel.push_back(pModel);
 			}
 			it++;
 		}
@@ -143,12 +168,133 @@ void CScanModleMgrDlg::OnBnClickedBtnDlmodel()
 	CGetModelDlg dlg(A2T(pDlg->m_strCmdServerIP.c_str()), pDlg->m_nCmdPort);
 	if (dlg.DoModal() != IDOK)
 		return;
+
+	OnBnClickedBtnRefresh();
 }
 
 
 void CScanModleMgrDlg::OnNMDblclkListModel(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
-	// TODO:  在此添加控件通知处理程序代码
 	*pResult = 0;
+
+	m_nCurModelItem = pNMItemActivate->iItem;
+	if (m_nCurModelItem < 0)
+		return;
+
+	pMODEL pModel = NULL;
+	pModel = (pMODEL)m_ModelListCtrl.GetItemData(m_nCurModelItem);
+	if (NULL == pModel)
+	{
+		CString strModelName = m_ModelListCtrl.GetItemText(m_nCurModelItem, 1);
+		CString strModelFilePath = g_strCurrentPath + _T("Model\\") + strModelName;
+
+		pModel = LoadModelFile(strModelFilePath);
+		m_vecModel.push_back(pModel);
+
+		m_ModelListCtrl.SetItemData(m_nCurModelItem, (DWORD_PTR)pModel);
+	}
+	m_pModel = pModel;
+	m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+}
+
+
+void CScanModleMgrDlg::OnBnClickedBtnDelmodel()
+{
+	USES_CONVERSION;
+	POSITION pos = m_ModelListCtrl.GetFirstSelectedItemPosition();
+	if (pos == NULL)
+		TRACE0("No items were selected!\n");
+	else
+	{
+		while (pos)
+		{
+			int nItem = m_ModelListCtrl.GetNextSelectedItem(pos);
+			TRACE1("Item %d was selected!\n", nItem);
+			CString strModelName = m_ModelListCtrl.GetItemText(nItem, 1);
+			CString strModelFilePath = g_strCurrentPath + _T("Model\\") + strModelName + _T(".mod");
+			CString strModelDirPath = g_strCurrentPath + _T("Model\\") + strModelName;
+
+			std::string strUtfFilePath = CMyCodeConvert::Gb2312ToUtf8(T2A(strModelFilePath));
+			std::string strUtfDirPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strModelDirPath));
+
+			std::string strLog = "删除模板文件: ";
+			strLog.append(T2A(strModelFilePath));
+			g_pLogger->information(strLog);
+
+			try
+			{
+				Poco::File modelFile(strUtfFilePath);
+				modelFile.remove(true);
+				Poco::File modelDir(strUtfDirPath);	
+				modelDir.remove(true);
+			}
+			catch (Poco::Exception &exc)
+			{
+				std::string strLog;
+				strLog.append("model file remove error: " + exc.displayText());
+				std::string strGBLog = CMyCodeConvert::Utf8ToGb2312(strLog);
+				g_pLogger->information(strGBLog);
+				TRACE(strGBLog.c_str());
+			}
+		}
+
+		OnBnClickedBtnRefresh();
+	}
+}
+
+
+void CScanModleMgrDlg::OnBnClickedBtnAddmodel()
+{
+	CFileDialog dlg(TRUE,
+					NULL,
+					NULL,
+					OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
+					_T("mod Files (*.mod)|*.mod;)||"),
+					NULL);
+	if (dlg.DoModal() != IDOK)
+		return;
+
+	USES_CONVERSION;
+	CString strModelPath = dlg.GetPathName();
+	CString strModelName = dlg.GetFileName();
+	CString strModelNewPath = g_strCurrentPath + _T("Model\\") + strModelName;
+	try
+	{
+		std::string strUtf8OldPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strModelPath));
+		std::string strUtf8ModelPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strModelNewPath));
+
+		Poco::File modelPath0(strUtf8ModelPath);
+		if (modelPath0.exists())
+		{
+			if (MessageBox(_T("已经存在此模板，是否覆盖"), _T(""), MB_YESNO) != IDYES)
+			{
+				return;
+			}
+		}
+		std::string strLog = "导入模板: ";
+		strLog.append(T2A(strModelPath));
+		g_pLogger->information(strLog);
+
+		Poco::File modelPath(strUtf8OldPath);
+		modelPath.copyTo(strUtf8ModelPath);
+
+		OnBnClickedBtnRefresh();
+	}
+	catch (Poco::Exception &exc)
+	{
+		std::string strLog;
+		strLog.append("file cope error: " + exc.displayText());
+		std::string strGBLog = CMyCodeConvert::Utf8ToGb2312(strLog);
+		g_pLogger->information(strGBLog);
+		TRACE(strGBLog.c_str());
+	}
+}
+
+
+void CScanModleMgrDlg::OnNMHoverListModel(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	*pResult = 1;		//**********	这里如果不响应，同时返回结果值不为1的话，	****************
+						//**********	就会产生产生TRACK SELECT，也就是鼠标悬停	****************
+						//**********	一段时间后，所在行自动被选中
 }

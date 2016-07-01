@@ -18,7 +18,7 @@ IMPLEMENT_DYNAMIC(CPaperInputDlg, CDialog)
 CPaperInputDlg::CPaperInputDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	: CDialog(CPaperInputDlg::IDD, pParent)
 	, m_strPapersPath(_T("")), m_nModelPicNums(1), m_nCurrTabSel(0), m_pCurrentPicShow(NULL), m_pModel(pModel), m_pOldModel(pModel)
-	, m_strModelName(_T("")), m_strPapersName(_T("")), m_strPapersDesc(_T("")), m_nCurrItemPapers(0), m_nCurrItemPaper(-1)
+	, m_strModelName(_T("")), m_strPapersName(_T("")), m_strPapersDesc(_T("")), m_nCurrItemPapers(-1), m_nCurrItemPaper(-1)
 	, m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL)
 {
 
@@ -689,7 +689,7 @@ void CPaperInputDlg::SeachModel()
 {
 	USES_CONVERSION;
 	std::string strModelPath = T2A(g_strCurrentPath + _T("Model"));
-	g_strModelSavePath = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
+//	g_strModelSavePath = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
 
 	std::string strLog;
 	try
