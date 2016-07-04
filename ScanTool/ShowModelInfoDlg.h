@@ -15,7 +15,7 @@ public:
 	enum { IDD = IDD_SHOWMODELINFODLG };
 
 public:
-	void ShowModelInfo(pMODEL pModel);
+	void ShowModelInfo(pMODEL pModel, int nFlag = 0);
 
 private:
 	void InitUI();

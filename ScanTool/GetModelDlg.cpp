@@ -26,6 +26,7 @@ CGetModelDlg::CGetModelDlg(CString strIP, int nPort, CWnd* pParent /*=NULL*/)
 
 CGetModelDlg::~CGetModelDlg()
 {
+	m_ss.close();
 	SAFE_RELEASE_ARRY(m_pFileRecv);
 }
 
@@ -48,6 +49,7 @@ BEGIN_MESSAGE_MAP(CGetModelDlg, CDialog)
 	ON_CBN_SELCHANGE(IDC_COMBO_SubjectName, &CGetModelDlg::OnCbnSelchangeComboSubjectname)
 	ON_BN_CLICKED(IDC_BTN_DOWN, &CGetModelDlg::OnBnClickedBtnDown)
 	ON_BN_CLICKED(IDC_BTN_Exit, &CGetModelDlg::OnBnClickedBtnExit)
+	ON_BN_CLICKED(IDC_BTN_RefreshExam, &CGetModelDlg::OnBnClickedBtnRefreshexam)
 END_MESSAGE_MAP()
 
 BOOL CGetModelDlg::OnInitDialog()
@@ -56,50 +58,8 @@ BOOL CGetModelDlg::OnInitDialog()
 
 	USES_CONVERSION;
 
-	if (g_lExamList.size() == 0)
-		return TRUE;
+	InitUI();
 
-	EXAM_LIST::iterator itExam = g_lExamList.begin();
-	for (; itExam != g_lExamList.end(); itExam++)
-	{
-		CString strName = A2T(itExam->strExamName.c_str());
-
-		int nCount = m_comboExamName.GetCount();
-		m_comboExamName.InsertString(nCount, strName);
-		
-		m_comboExamName.SetItemDataPtr(nCount, (void*)&(*itExam));
-	}
-	m_comboExamName.SetCurSel(0);
-
-
-	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemDataPtr(0);
-	if (pExamInfo)
-	{
-		m_comboSubject.ResetContent();
-		SUBJECT_LIST::iterator itSub = pExamInfo->lSubjects.begin();
-		for (int i = 0; itSub != pExamInfo->lSubjects.end(); itSub++, i++)
-		{
-			EXAM_SUBJECT* pSubject = &(*itSub);
-			CString strSubjectName = A2T(itSub->strSubjName.c_str());
-
-			int nCount = m_comboSubject.GetCount();
-			m_comboSubject.InsertString(nCount, strSubjectName);
-			m_comboSubject.SetItemDataPtr(nCount, pSubject);
-
-			if (i == 0)
-			{
-				m_SubjectID = itSub->nSubjID;
-				m_strScanModelName = A2T(itSub->strModelName.c_str());
-			}
-		}
-		m_comboSubject.SetCurSel(0);
-
-		m_nExamID = pExamInfo->nExamID;
-		m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
-		m_strGradeName = pExamInfo->strGradeName.c_str();
-	}
-
-	UpdateData(FALSE);
 	return TRUE;
 }
 
@@ -507,5 +467,89 @@ int CGetModelDlg::RecvFile(pST_DOWN_MODEL pModelInfo)
 
 void CGetModelDlg::OnBnClickedBtnExit()
 {
+	m_ss.close();
 	OnOK();
+}
+
+
+void CGetModelDlg::OnBnClickedBtnRefreshexam()
+{
+	USES_CONVERSION;
+	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+	g_lExamList.clear();
+	GetDlgItem(IDC_BTN_DOWN)->EnableWindow(FALSE);
+
+	ST_CMD_HEADER stHead;
+	stHead.usCmd = USER_GETEXAMINFO;
+	stHead.uPackSize = sizeof(ST_EXAM_INFO);
+	ST_EXAM_INFO stExamInfo;
+	ZeroMemory(&stExamInfo, sizeof(ST_EXAM_INFO));
+	strcpy(stExamInfo.szEzs, T2A(pDlg->m_strEzs));
+
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_GETEXAMINFO;
+	pTcpTask->nPkgLen = sizeof(ST_EXAM_INFO);
+	memcpy(pTcpTask->szSendBuf, (char*)&stExamInfo, sizeof(ST_EXAM_INFO));
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
+
+	int nCount = 0;
+	while (nCount < 3 && g_lExamList.size() == 0)
+	{
+		Sleep(1000);
+		nCount++;
+	}
+
+	InitUI();
+	GetDlgItem(IDC_BTN_DOWN)->EnableWindow(TRUE);
+}
+
+void CGetModelDlg::InitUI()
+{
+	USES_CONVERSION;
+	if (g_lExamList.size() == 0)
+		return ;
+
+	EXAM_LIST::iterator itExam = g_lExamList.begin();
+	for (; itExam != g_lExamList.end(); itExam++)
+	{
+		CString strName = A2T(itExam->strExamName.c_str());
+
+		int nCount = m_comboExamName.GetCount();
+		m_comboExamName.InsertString(nCount, strName);
+
+		m_comboExamName.SetItemDataPtr(nCount, (void*)&(*itExam));
+	}
+	m_comboExamName.SetCurSel(0);
+
+
+	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemDataPtr(0);
+	if (pExamInfo)
+	{
+		m_comboSubject.ResetContent();
+		SUBJECT_LIST::iterator itSub = pExamInfo->lSubjects.begin();
+		for (int i = 0; itSub != pExamInfo->lSubjects.end(); itSub++, i++)
+		{
+			EXAM_SUBJECT* pSubject = &(*itSub);
+			CString strSubjectName = A2T(itSub->strSubjName.c_str());
+
+			int nCount = m_comboSubject.GetCount();
+			m_comboSubject.InsertString(nCount, strSubjectName);
+			m_comboSubject.SetItemDataPtr(nCount, pSubject);
+
+			if (i == 0)
+			{
+				m_SubjectID = itSub->nSubjID;
+				m_strScanModelName = A2T(itSub->strModelName.c_str());
+			}
+		}
+		m_comboSubject.SetCurSel(0);
+
+		m_nExamID = pExamInfo->nExamID;
+		m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
+		m_strGradeName = pExamInfo->strGradeName.c_str();
+	}
+
+	UpdateData(FALSE);
 }

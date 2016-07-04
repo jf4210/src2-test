@@ -135,7 +135,7 @@ HBRUSH CShowModelInfoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return hbr;
 }
 
-void CShowModelInfoDlg::ShowModelInfo(pMODEL pModel)
+void CShowModelInfoDlg::ShowModelInfo(pMODEL pModel, int nFlag /*= 0*/)
 {
 	if (!pModel)
 	{
@@ -147,5 +147,23 @@ void CShowModelInfoDlg::ShowModelInfo(pMODEL pModel)
 
 	m_strModelName = pModel->strModelName;
 	m_strModelDesc = pModel->strModelDesc;
+
+	if (nFlag > 0)
+	{
+		USES_CONVERSION;
+		CString strExamInfo = _T("");
+		char szPicNum[20] = { 0 };
+		sprintf_s(szPicNum, "模板页数: %d\r\n", pModel->nPicNum);
+		char szHead[20] = { 0 };
+		sprintf_s(szHead, "同步头: %d\r\n", pModel->nHasHead);
+		char szExamInfo[30] = { 0 };
+		sprintf_s(szExamInfo, "考试ID: %d\r\n科目ID: %d\r\n", pModel->nExamID, pModel->nSubjectID);
+		strExamInfo = szPicNum;
+		strExamInfo.Append(A2T(szHead));
+		strExamInfo.Append(A2T(szExamInfo));
+		m_strModelDesc.Append(A2T("\r\n"));
+		m_strModelDesc.Append(strExamInfo);
+	}
+
 	UpdateData(FALSE);
 }

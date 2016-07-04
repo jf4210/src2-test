@@ -104,6 +104,7 @@ typedef std::list<pPIC_DETAIL> LIST_PIC_DETAIL;
 //试卷,针对考生
 typedef struct _Paper_
 {
+	int			nQkFlag;	//缺考标识,0-未缺考, 1-缺考
 	std::string strName;	//识别出来的考生名称S1、S2、。。。
 	std::string strMd5Key;	//给后端的MD5--密号
 	std::string strZkzh;	//识别出来的考生序列号、准考证号
@@ -114,6 +115,10 @@ typedef struct _Paper_
 
 // 	SNLIST				lSnResult;
 // 	OMRRESULTLIST		lOmrResult;
+	_Paper_()
+	{
+		nQkFlag = 0;
+	}
 	~_Paper_()
 	{
 		LIST_PIC_DETAIL::iterator it = lPic.begin();

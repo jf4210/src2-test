@@ -98,7 +98,7 @@ void CSendToHttpThread::run()
 
 					pTask->pPic->bUpLoadFlag = false;
 					pTask->pPapers->fmNum.lock();
-					pTask->pPapers->nUpLoadFail++;
+//					pTask->pPapers->nUpLoadFail++;
 					GenerateResult(pTask->pPapers, pTask);
 					pTask->pPapers->fmNum.unlock();
 
@@ -148,7 +148,7 @@ void CSendToHttpThread::run()
 					{
 						pTask->pPic->bUpLoadFlag = false;
 						pTask->pPapers->fmNum.lock();
-						pTask->pPapers->nUpLoadFail++;
+//						pTask->pPapers->nUpLoadFail++;
 						GenerateResult(pTask->pPapers, pTask);
 						pTask->pPapers->fmNum.unlock();
 					}
@@ -205,7 +205,7 @@ void CSendToHttpThread::run()
 
 					pTask->pPic->bUpLoadFlag = false;
 					pTask->pPapers->fmNum.lock();
-					pTask->pPapers->nUpLoadFail++;
+//					pTask->pPapers->nUpLoadFail++;
 					GenerateResult(pTask->pPapers, pTask);
 					pTask->pPapers->fmNum.unlock();
 				}
@@ -284,7 +284,15 @@ void CSendToHttpThread::run()
 			{
 				strErrorInfo.append("**** Unknown error ***\tPapersName: " + pTask->pPapers->strPapersName);
 				strErrorInfo.append("\tPath: " + pTask->pPapers->strPapersPath);
-			}			
+			}
+			else if (pTask->nTaskType == 3)
+			{
+				strErrorInfo.append("**** Unknown error ***\t提交OMR异常");
+			}
+			else if (pTask->nTaskType == 4)
+			{
+				strErrorInfo.append("**** Unknown error ***\t提交ZKZH异常");
+			}
 
 			std::cout << "\n";
 			std::cout << strErrorInfo << std::endl;

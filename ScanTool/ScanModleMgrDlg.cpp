@@ -88,16 +88,14 @@ void CScanModleMgrDlg::InitCtrlPosition()
 
 	if (m_pShowModelInfoDlg && m_pShowModelInfoDlg->GetSafeHwnd())
 	{
-		m_pShowModelInfoDlg->MoveWindow(250, 12, 200, 200);
+		m_pShowModelInfoDlg->MoveWindow(250, 12, 250, 200);
 	}
 }
 
-
 // CScanModleMgrDlg 消息处理程序
-
-
 void CScanModleMgrDlg::OnBnClickedBtnRefresh()
 {
+	m_pShowModelInfoDlg->ShowModelInfo(NULL);
 	m_ModelListCtrl.DeleteAllItems();
 	for (int i = 0; i < m_vecModel.size(); i++)
 	{
@@ -108,7 +106,6 @@ void CScanModleMgrDlg::OnBnClickedBtnRefresh()
 
 	USES_CONVERSION;
 	std::string strModelPath = T2A(g_strCurrentPath + _T("Model"));
-//	g_strModelSavePath = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
 
 	std::string strLog;
 	int nCount = 0;
@@ -140,7 +137,6 @@ void CScanModleMgrDlg::OnBnClickedBtnRefresh()
 			it++;
 		}
 		strLog = "搜索模板完成";
-		//		m_comboModel.SetCurSel(0);
 	}
 	catch (Poco::FileException& exc)
 	{
@@ -195,7 +191,7 @@ void CScanModleMgrDlg::OnNMDblclkListModel(NMHDR *pNMHDR, LRESULT *pResult)
 		m_ModelListCtrl.SetItemData(m_nCurModelItem, (DWORD_PTR)pModel);
 	}
 	m_pModel = pModel;
-	m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+	m_pShowModelInfoDlg->ShowModelInfo(m_pModel, 1);
 }
 
 
@@ -261,8 +257,10 @@ void CScanModleMgrDlg::OnBnClickedBtnAddmodel()
 	CString strModelNewPath = g_strCurrentPath + _T("Model\\") + strModelName;
 	try
 	{
-		std::string strUtf8OldPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strModelPath));
+		std::string strUtf8OldPath	= CMyCodeConvert::Gb2312ToUtf8(T2A(strModelPath));
 		std::string strUtf8ModelPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strModelNewPath));
+		CString strModelNewDirPath	= strModelNewPath.Left(strModelNewPath.GetLength() - 4);
+		std::string strUtf8ModelDir = CMyCodeConvert::Gb2312ToUtf8(T2A(strModelNewDirPath));
 
 		Poco::File modelPath0(strUtf8ModelPath);
 		if (modelPath0.exists())
@@ -271,6 +269,14 @@ void CScanModleMgrDlg::OnBnClickedBtnAddmodel()
 			{
 				return;
 			}
+			modelPath0.remove(true);
+
+			Poco::File modelDirPath(strUtf8ModelDir);
+			modelDirPath.remove(true);
+
+			std::string strLog = "删除模板: ";
+			strLog.append(T2A(strModelName));
+			g_pLogger->information(strLog);
 		}
 		std::string strLog = "导入模板: ";
 		strLog.append(T2A(strModelPath));

@@ -883,7 +883,7 @@ bool CRecognizeThread::RecogQKCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 		{
 			if (rc.fRealValuePercent >= rc.fStandardValuePercent)
 			{
-				((pST_PaperInfo)pPic->pPaper)->bQKFlag = true;			//设置学生缺考
+				((pST_PaperInfo)pPic->pPaper)->nQKFlag = 1;			//设置学生缺考
 			}
 			pPic->lNormalRect.push_back(rc);
 			bResult = true;

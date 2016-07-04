@@ -31,6 +31,7 @@ public:
 	Poco::Net::StreamSocket m_ss;
 	int			RecvData();
 	int			RecvFile(pST_DOWN_MODEL pModelInfo);
+	void		InitUI();
 private:
 	CString		m_strServerIP;
 	int			m_nServerPort;
@@ -49,4 +50,5 @@ public:
 	afx_msg void OnCbnSelchangeComboSubjectname();
 	afx_msg void OnBnClickedBtnDown();
 	afx_msg void OnBnClickedBtnExit();
+	afx_msg void OnBnClickedBtnRefreshexam();
 };

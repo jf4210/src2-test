@@ -37,6 +37,9 @@
     <Filter Include="扫描端鉴权及请求处理">
       <UniqueIdentifier>{ac359fbc-b236-40c1-8cd4-6f614798ed54}</UniqueIdentifier>
     </Filter>
+    <Filter Include="dump">
+      <UniqueIdentifier>{9c55c59c-909b-4bcd-b0b1-45682d05a222}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ExamServerMgr.h">
@@ -114,6 +117,9 @@
     <ClInclude Include="ScanResquestHandler.h">
       <Filter>扫描端鉴权及请求处理</Filter>
     </ClInclude>
+    <ClInclude Include="crash_dumper_w32.h">
+      <Filter>dump</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ExamServerMgr.cpp">
@@ -181,6 +187,9 @@
     </ClCompile>
     <ClCompile Include="ScanResquestHandler.cpp">
       <Filter>扫描端鉴权及请求处理</Filter>
+    </ClCompile>
+    <ClCompile Include="crash_dumper_w32.cpp">
+      <Filter>dump</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

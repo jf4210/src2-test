@@ -6,6 +6,7 @@
 #include "DecompressThread.h"
 #include "SendToHttpThread.h"
 #include "ScanResquestHandler.h"
+#include "crash_dumper_w32.h"
 
 int		g_nExitFlag = 0;
 CLog	g_Log;
@@ -141,7 +142,7 @@ protected:
 		std::string strLogPath = strCurrentPath + "DCS.Log";
 		std::string strDllLogPath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath) + "DCS_Dll.Log";
 		std::string strConfigPath = strCurrentPath + "DCS-config.ini";
-		
+				
 		g_Log.SetFileName(strLogPath);
 		SetLogFileName((char*)strDllLogPath.c_str());
 		SysSet.Load(strConfigPath);

@@ -46,7 +46,7 @@
 #include "unzip.h"
 #include "MyCodeConvert.h"
 
-//#define PIC_RECTIFY_TEST	//图像旋转纠正测试
+#define PIC_RECTIFY_TEST	//图像旋转纠正测试
 #define WarpAffine_TEST		//仿射变换测试
 #ifdef DEBUG
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
@@ -270,7 +270,7 @@ typedef std::list<pST_PicInfo> PIC_LIST;	//图片列表定义
 typedef struct _PaperInfo_
 {
 	bool		bIssuePaper;		//是否是问题试卷
-	int			bQKFlag;			//缺考标识
+	int			nQKFlag;			//缺考标识
 	pMODEL		pModel;				//识别此学生试卷所用的模板
 	void*		pPapers;			//所属的试卷袋信息
 	void*		pSrcDlg;			//来源，来自哪个窗口，扫描or导入试卷窗口
@@ -283,7 +283,7 @@ typedef struct _PaperInfo_
 	_PaperInfo_()
 	{
 		bIssuePaper = false;
-		bQKFlag = false;
+		nQKFlag = false;
 		pModel = NULL;
 		pPapers = NULL;
 		pSrcDlg = NULL;

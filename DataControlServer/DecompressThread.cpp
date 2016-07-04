@@ -360,6 +360,7 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 			if (pPaper)
 			{
 				pPaper->strZkzh = jsnPaperObj->get("zkzh").convert<std::string>();
+				pPaper->nQkFlag = jsnPaperObj->get("qk").convert<int>();
 
  				Poco::JSON::Array::Ptr jsnSnArry = jsnPaperObj->getArray("snDetail");
 				Poco::JSON::Object jsnSn;

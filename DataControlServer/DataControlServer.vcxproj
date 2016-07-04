@@ -91,6 +91,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\common\Net_Cmd_Protocol.h" />
+    <ClInclude Include="crash_dumper_w32.h" />
     <ClInclude Include="DCSDef.h" />
     <ClInclude Include="DecompressThread.h" />
     <ClInclude Include="ExamServerMgr.h" />
@@ -117,6 +118,7 @@
     <ClInclude Include="UserMgr.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="crash_dumper_w32.cpp" />
     <ClCompile Include="DecompressThread.cpp" />
     <ClCompile Include="ExamServerMgr.cpp" />
     <ClCompile Include="ListMission.cpp" />

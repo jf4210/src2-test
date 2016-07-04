@@ -1107,6 +1107,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		Poco::JSON::Object jsnPaper;
 		jsnPaper.set("name", (*itNomarlPaper)->strStudentInfo);
 		jsnPaper.set("zkzh", (*itNomarlPaper)->strSN);
+		jsnPaper.set("qk", (*itNomarlPaper)->nQKFlag);
 
 		Poco::JSON::Array jsnSnDetailArry;
 		SNLIST::iterator itSn = (*itNomarlPaper)->lSnResult.begin();
@@ -1172,6 +1173,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		Poco::JSON::Object jsnPaper;
 		jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
 		jsnPaper.set("zkzh", (*itIssuePaper)->strSN);
+		jsnPaper.set("qk", (*itIssuePaper)->nQKFlag);
 
 		Poco::JSON::Array jsnSnDetailArry;
 		SNLIST::iterator itSn = (*itIssuePaper)->lSnResult.begin();

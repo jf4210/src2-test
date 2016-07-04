@@ -1749,6 +1749,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		Poco::JSON::Object jsnPaper;
 		jsnPaper.set("name", (*itNomarlPaper)->strStudentInfo);
 		jsnPaper.set("zkzh", (*itNomarlPaper)->strSN);
+		jsnPaper.set("qk", (*itNomarlPaper)->nQKFlag);
 // 		if ((*itNomarlPaper)->strSN != "")
 // 			jsnPaper.set("doubt", 0);
 // 		else
@@ -1819,6 +1820,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		Poco::JSON::Object jsnPaper;
 		jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
 		jsnPaper.set("zkzh", (*itIssuePaper)->strSN);
+		jsnPaper.set("qk", (*itIssuePaper)->nQKFlag);
 
 		Poco::JSON::Array jsnSnDetailArry;
 		SNLIST::iterator itSn = (*itIssuePaper)->lSnResult.begin();
