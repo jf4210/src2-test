@@ -289,6 +289,8 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	std::string strPapersFilePath = strOutDir + "\\papersInfo.dat";
 	GetFileData(strPapersFilePath, pPapers);
 
+#ifdef TEST_MODE
+#else
 	LIST_PAPER_INFO::iterator itPaper = pPapers->lPaper.begin();
 	for (; itPaper != pPapers->lPaper.end(); itPaper++)
 	{
@@ -308,6 +310,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 			g_fmHttpSend.unlock();
 		}
 	}
+#endif
 	
 	g_fmPapers.lock();
 	g_lPapers.push_back(pPapers);

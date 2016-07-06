@@ -9,6 +9,7 @@
 #include "LoginDlg.h"
 #include "GetModelDlg.h"
 #include "ScanModleMgrDlg.h"
+#include "ShowFileTransferDlg.h"
 #include "Net_Cmd_Protocol.h"
 //#include "minidump.h"
 
@@ -118,6 +119,7 @@ BEGIN_MESSAGE_MAP(CScanToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_ModelMgr, &CScanToolDlg::OnBnClickedBtnModelmgr)
 	ON_NOTIFY(NM_HOVER, IDC_LIST_Picture, &CScanToolDlg::OnNMHoverListPicture)
 	ON_NOTIFY(LVN_KEYDOWN, IDC_LIST_Picture, &CScanToolDlg::OnLvnKeydownListPicture)
+	ON_BN_CLICKED(IDC_BTN_UploadMgr, &CScanToolDlg::OnBnClickedBtnUploadmgr)
 END_MESSAGE_MAP()
 
 
@@ -706,6 +708,11 @@ void CScanToolDlg::InitCtrlPosition()
 		GetDlgItem(IDC_BTN_UpLoadPapers)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
+	if (GetDlgItem(IDC_BTN_UploadMgr)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_UploadMgr)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
+		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
+	}
 	//++test
 // 	int nModelInfo_W = cx - nRightGap - nBtnCurrLeft;
 // 	if (nModelInfo_W > 250)
@@ -828,6 +835,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	GetDlgItem(IDC_BTN_InputPaper)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTN_GetModel)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTN_UpLoadPapers)->EnableWindow(FALSE);
+	GetDlgItem(IDC_BTN_UploadMgr)->EnableWindow(FALSE);
 	GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(_T(""));
 
 	Poco::Random rnd;
@@ -881,6 +889,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		GetDlgItem(IDC_BTN_InputPaper)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_GetModel)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_UpLoadPapers)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BTN_UploadMgr)->EnableWindow(TRUE);
 		GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(_T(""));
 		m_nScanStatus = 2;
 	}
@@ -1222,6 +1231,7 @@ void CScanToolDlg::ScanDone(int nStatus)
 	GetDlgItem(IDC_BTN_InputPaper)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTN_GetModel)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTN_UpLoadPapers)->EnableWindow(TRUE);
+	GetDlgItem(IDC_BTN_UploadMgr)->EnableWindow(TRUE);
 
 	bool bWarn = false;
 	if (nStatus != 1)
@@ -2126,4 +2136,11 @@ void CScanToolDlg::ShowPaperByItem(int nItem)
 		if (i != 0)
 			m_vecPicShow[i]->ShowWindow(SW_HIDE);
 	}
+}
+
+
+void CScanToolDlg::OnBnClickedBtnUploadmgr()
+{
+	CShowFileTransferDlg dlg;
+	dlg.DoModal();
 }

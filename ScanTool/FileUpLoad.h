@@ -5,17 +5,21 @@
 #include <list>
 #include "NetCtrl.h"
 #include "md5.h"
+//#include "global.h"
 
 #define FILE_BUFF	1024
 
 //文件上传结构体
 typedef struct ST_UPLOAD_ANS
 {
+	BOOL	bUpload;
+	void*	pTask;
 	CString strAnsName;
 	CString strPath;
-	BOOL	bUpload;
+	
 	ST_UPLOAD_ANS()
 	{
+		pTask	= NULL;
 		strAnsName = _T("");
 		strPath = _T("");
 		bUpload = FALSE;
@@ -36,8 +40,8 @@ public:
 
 	BOOL		InitUpLoadTcp(CString strAddr,USHORT usPort);
 	void		UnInit();
-	BOOL		SendAnsFile(CString strFilePath, CString strFileName);
-	bool sendData(char * szBuff, DWORD nLen);
+	BOOL		SendAnsFile(CString strFilePath, CString strFileName, void* pTask);
+	bool		sendData(char * szBuff, DWORD nLen, stUpLoadAns* pTask);
 	
 	void		ProcessUpLoadResponse(BOOL bFlag);
 	void		ProcessUpLoadDone(BOOL bFlag);

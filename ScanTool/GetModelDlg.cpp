@@ -137,19 +137,13 @@ void CGetModelDlg::OnBnClickedBtnDown()
 		m_ss.connect(sa);
 		m_ss.setReceiveTimeout(ts);
 
-		CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+		CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();
 
 		//先查本地列表，如果没有则请求，如果有，计算crc，和服务器不同则下载
 		USES_CONVERSION;
 		CString modelPath = g_strCurrentPath + _T("Model");
 		modelPath = modelPath + _T("\\") + m_strScanModelName;
 		std::string strModelPath = T2A(modelPath);
-
-#if 0	//test data
-		m_nExamID = 11;
-		m_SubjectID = 12;
-		m_strScanModelName = _T("11_12.mod");
-#endif
 
 		ST_DOWN_MODEL stModelInfo;
 		ZeroMemory(&stModelInfo, sizeof(ST_DOWN_MODEL));
@@ -475,7 +469,7 @@ void CGetModelDlg::OnBnClickedBtnExit()
 void CGetModelDlg::OnBnClickedBtnRefreshexam()
 {
 	USES_CONVERSION;
-	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();//GetParent();
 	g_lExamList.clear();
 	GetDlgItem(IDC_BTN_DOWN)->EnableWindow(FALSE);
 
@@ -511,6 +505,7 @@ void CGetModelDlg::InitUI()
 	if (g_lExamList.size() == 0)
 		return ;
 
+	m_comboExamName.ResetContent();
 	EXAM_LIST::iterator itExam = g_lExamList.begin();
 	for (; itExam != g_lExamList.end(); itExam++)
 	{

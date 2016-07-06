@@ -291,6 +291,10 @@ void CV_picture::ShowImage_roi(cv::Mat &src,int method)
 			int nY1 = (int)((float)(m_ptHTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
 			int nX2 = (int)((float)(m_ptHTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
 			int nY2 = (int)((float)(m_ptHTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+// 			if (nX1 < m_rect_roi.tl().x) nX1 = m_rect_roi.tl().x;
+// 			if (nX2 > m_rect_roi.br().x) nX2 = m_rect_roi.br().x;
+// 			if (nY1 < m_rect_roi.tl().y) nY1 = m_rect_roi.tl().y;
+// 			if (nY2 > m_rect_roi.br().y) nY2 = m_rect_roi.br().y;
 			m_RectTrackerH.m_rect.left = nX1;
 			m_RectTrackerH.m_rect.top = nY1;
 			m_RectTrackerH.m_rect.right = nX2;
@@ -385,6 +389,10 @@ void CV_picture::ShowImage_Rect_roi(cv::Mat &src, cv::Point pt, int method)
 			int nY1 = (int)((float)(m_ptHTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
 			int nX2 = (int)((float)(m_ptHTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
 			int nY2 = (int)((float)(m_ptHTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+// 			if (nX1 < m_rect_roi.tl().x) nX1 = m_rect_roi.tl().x;
+// 			if (nX2 > m_rect_roi.br().x) nX2 = m_rect_roi.br().x;
+// 			if (nY1 < m_rect_roi.tl().y) nY1 = m_rect_roi.tl().y;
+// 			if (nY2 > m_rect_roi.br().y) nY2 = m_rect_roi.br().y;
 			m_RectTrackerH.m_rect.left = nX1;
 			m_RectTrackerH.m_rect.top = nY1;
 			m_RectTrackerH.m_rect.right = nX2;
@@ -477,6 +485,10 @@ void CV_picture::ShowImage_rect(cv::Mat &src, cv::Point pt)
 			int nY1 = (int)((float)(m_ptHTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
 			int nX2 = (int)((float)(m_ptHTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
 			int nY2 = (int)((float)(m_ptHTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+// 			if (nX1 < m_rect_roi.tl().x) nX1 = m_rect_roi.tl().x;
+// 			if (nX2 > m_rect_roi.br().x) nX2 = m_rect_roi.br().x;
+// 			if (nY1 < m_rect_roi.tl().y) nY1 = m_rect_roi.tl().y;
+// 			if (nY2 > m_rect_roi.br().y) nY2 = m_rect_roi.br().y;
 			m_RectTrackerH.m_rect.left = nX1;
 			m_RectTrackerH.m_rect.top = nY1;
 			m_RectTrackerH.m_rect.right = nX2;

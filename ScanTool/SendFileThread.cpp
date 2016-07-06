@@ -20,7 +20,6 @@ CSendFileThread::~CSendFileThread()
 void CSendFileThread::run()
 {
 	USES_CONVERSION;
-//	m_upLoad.InitUpLoadTcp(A2T(_strIp.c_str()), _nPort);
 	m_pUpLoad = new CFileUpLoad(*this);
 	m_pUpLoad->InitUpLoadTcp(A2T(_strIp.c_str()), _nPort);
 
@@ -28,6 +27,22 @@ void CSendFileThread::run()
 	{
 		pSENDTASK pTask = NULL;
 		g_fmSendLock.lock();
+#if 1
+		SENDTASKLIST::iterator it = g_lSendTask.begin();
+		for (; it != g_lSendTask.end();)
+		{
+			if ((*it)->nSendState == 0)
+			{
+				(*it)->nSendState = 1;
+				pTask = *it;
+				break;
+			}
+			else
+			{
+				it++;
+			}
+		}
+#else
 		SENDTASKLIST::iterator it = g_lSendTask.begin();
 		for (; it != g_lSendTask.end();)
 		{
@@ -35,20 +50,19 @@ void CSendFileThread::run()
 			it = g_lSendTask.erase(it);
 			break;
 		}
+#endif
 		g_fmSendLock.unlock();
 		if (NULL == pTask)
 		{
-			Poco::Thread::sleep(500);
+			Poco::Thread::sleep(1000);
 			continue;
 		}
 
 		HandleTask(pTask);
 
-		delete pTask;
-		pTask = NULL;
+// 		delete pTask;
+// 		pTask = NULL;
 	}
-//	m_upLoad.UnInit();
-//	m_upLoad.m_bStop = TRUE;
 }
 
 void CSendFileThread::HandleTask(pSENDTASK pTask)
@@ -71,7 +85,7 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 	g_pLogger->information(szLog);
 
 //	m_upLoad.SendAnsFile(A2T(pTask->strPath.c_str()), A2T(pTask->strFileName.c_str()));
-	m_pUpLoad->SendAnsFile(A2T(pTask->strPath.c_str()), A2T(pTask->strFileName.c_str()));
+	m_pUpLoad->SendAnsFile(A2T(pTask->strPath.c_str()), A2T(pTask->strFileName.c_str()), pTask);
 }
 
 void CSendFileThread::SendFileComplete(char* pName, char* pSrcPath)

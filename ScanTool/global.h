@@ -48,7 +48,7 @@
 
 #define PIC_RECTIFY_TEST	//图像旋转纠正测试
 #define WarpAffine_TEST		//仿射变换测试
-#ifdef DEBUG
+#ifdef _DEBUG
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
 #endif
 #ifndef WarpAffine_TEST
@@ -380,8 +380,15 @@ extern TCP_TASKLIST			g_lTcpTask;
 //文件上传任务
 typedef struct _SendTask_
 {
+	int		nSendState;			//0-未发送，1-正在发送，2-发送完成，3-发送失败
+	float	fSendPercent;
 	std::string strFileName;
 	std::string strPath;
+	_SendTask_()
+	{
+		nSendState = 0;
+		fSendPercent = 0.0;
+	}
 }SENDTASK, *pSENDTASK;
 typedef std::list<pSENDTASK> SENDTASKLIST;	//识别任务列表
 

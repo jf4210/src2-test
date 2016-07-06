@@ -8,9 +8,13 @@
 #include "Net_Cmd_Protocol.h"
 #include "NetUser.h"
 
+#ifdef _DEBUG
+	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
+#endif
+
 #define SOFT_VERSION "DataControlServer V1.0"
 
-//#define HEAD_SIZE	sizeof(ST_CMD_HEADER)
+
 #define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}
 
 extern CLog g_Log;

@@ -60,12 +60,13 @@ void CFileUpLoad::OnTcpClientNotifyDisconnect( UINT uSocket )
 	g_pLogger->information(strLog);
 }
 
-BOOL CFileUpLoad::SendAnsFile(CString strFilePath, CString strFileName)
+BOOL CFileUpLoad::SendAnsFile(CString strFilePath, CString strFileName, void* pTask)
 {
-	stUpLoadAns* stAns = new stUpLoadAns();
-	stAns->strAnsName = strFileName;
-	stAns->strPath = strFilePath;
-	stAns->bUpload = FALSE;
+	stUpLoadAns* stAns	= new stUpLoadAns();
+	stAns->strAnsName	= strFileName;
+	stAns->strPath	= strFilePath;
+	stAns->bUpload	= FALSE;
+	stAns->pTask	= pTask;
 #if 1
 	mutexObj.Lock();
 	m_listFile.push_back(stAns);
@@ -166,10 +167,12 @@ RESTART:
 					memcpy(m_szSendBuf, &stHead, HEAD_SIZE);
 					memcpy(m_szSendBuf + HEAD_SIZE, &stAnsInfo, sizeof(ST_FILE_INFO));
 				RESENDHEAD:
-					if (!sendData(m_szSendBuf, HEAD_SIZE + sizeof(ST_FILE_INFO)))
+					if (!sendData(m_szSendBuf, HEAD_SIZE + sizeof(ST_FILE_INFO), pTask))
 					{
 						std::string strLog = "sendData失败，需要重连";
 						g_pLogger->information(strLog);
+
+						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
 						break;
 					}
 					WaitForSingleObject(m_hSendReadyEvent, INFINITE);
@@ -178,12 +181,17 @@ RESTART:
 					{
 						sprintf_s(szLog, "上传文件(%s)的反馈信息失败，重传", pTask->strAnsName);
 						g_pLogger->information(szLog);
+
+						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
 						goto RESENDHEAD;
 					}
-					if (!sendData(szFileBuff, Length))
+					if (!sendData(szFileBuff, Length, pTask))
 					{
 						std::string strLog = "sendData失败2，需要重连";
 						g_pLogger->information(strLog);
+
+						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
+
 						break;
 					}
 					WaitForSingleObject(m_hSendDoneEvent, INFINITE);
@@ -192,9 +200,15 @@ RESTART:
 					{
 						sprintf_s(szLog, "上传文件(%s)失败，重传", pTask->strAnsName);
 						g_pLogger->information(szLog);
+
+						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
 						goto RESENDHEAD;
 					}
 					pTask->bUpload = TRUE;
+
+					(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 100;
+					(reinterpret_cast<pSENDTASK>(pTask->pTask))->nSendState = 2;
+
 					delete szFileBuff;
 					delete pMd5;
 					TRACE0("end send ans file\n");
@@ -216,7 +230,7 @@ BOOL CFileUpLoad::InitUpLoadTcp(CString strAddr,USHORT usPort)
 	return CThread::StartThread();
 }
 
-bool CFileUpLoad::sendData( char * szBuff, DWORD nLen)
+bool CFileUpLoad::sendData( char * szBuff, DWORD nLen, stUpLoadAns* pTask)
 {
 	ULONG uOffset = 0;
 	if(m_pITcpClient == NULL)
@@ -234,6 +248,8 @@ bool CFileUpLoad::sendData( char * szBuff, DWORD nLen)
 				break;
 			}
 			uOffset=nLen;
+
+			(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = uOffset / nLen * 100;
 		}
 		else
 		{
@@ -244,6 +260,8 @@ bool CFileUpLoad::sendData( char * szBuff, DWORD nLen)
 				break;
 			}
 			uOffset+=TCP_PACKET_MAXSIZE;
+
+			(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = uOffset / nLen * 100;
 		}
 	}
 	return bResult;

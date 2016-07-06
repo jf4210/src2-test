@@ -138,4 +138,5 @@ public:
 	afx_msg void OnBnClickedBtnModelmgr();
 	afx_msg void OnNMHoverListPicture(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnLvnKeydownListPicture(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedBtnUploadmgr();
 };

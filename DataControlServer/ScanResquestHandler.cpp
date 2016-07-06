@@ -169,7 +169,6 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 					nUserID = objUser->get("id").convert<int>();
 				}
 
-
 				ST_LOGIN_RESULT stResult;
 				ZeroMemory(&stResult, sizeof(stResult));
 				stResult.nTeacherId = nTeacher;

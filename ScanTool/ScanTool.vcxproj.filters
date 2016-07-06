@@ -88,6 +88,9 @@
     <Filter Include="模板管理窗口">
       <UniqueIdentifier>{044f69cb-8fde-4362-a5e5-5352c4874b09}</UniqueIdentifier>
     </Filter>
+    <Filter Include="文件传输显示窗口">
+      <UniqueIdentifier>{dec69c08-3808-49af-8a27-bc66c8cc8685}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -210,6 +213,9 @@
     <ClInclude Include="ScanModleMgrDlg.h">
       <Filter>模板管理窗口</Filter>
     </ClInclude>
+    <ClInclude Include="ShowFileTransferDlg.h">
+      <Filter>文件传输显示窗口</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
@@ -310,6 +316,9 @@
     </ClCompile>
     <ClCompile Include="ScanModleMgrDlg.cpp">
       <Filter>模板管理窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ShowFileTransferDlg.cpp">
+      <Filter>文件传输显示窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
