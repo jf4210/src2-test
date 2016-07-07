@@ -274,7 +274,8 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	pPAPERS_DETAIL pPapers = new PAPERS_DETAIL;
 	pPapers->strPapersName = pTask->strFileName;
 	pPapers->strPapersPath = CMyCodeConvert::Utf8ToGb2312(strOutDir);
-	
+
+#ifdef USE_POCO_UNZIP
 	Poco::Zip::Decompress dec(inp, strOutDir);
 	DecompressHandler handler(pPapers);
 	dec.EError += Poco::Delegate<DecompressHandler, std::pair<const Poco::Zip::ZipLocalFileHeader, const std::string> >(&handler, &DecompressHandler::onError);
@@ -282,6 +283,10 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	dec.decompressAllFiles();
 	dec.EError -= Poco::Delegate<DecompressHandler, std::pair<const Poco::Zip::ZipLocalFileHeader, const std::string> >(&handler, &DecompressHandler::onError);
 	dec.EOk -= Poco::Delegate<DecompressHandler, std::pair<const Poco::Zip::ZipLocalFileHeader, const Poco::Path> >(&handler, &DecompressHandler::onOk);
+#else
+
+#endif
+
 	//½âÑ¹Íê³É
 	pPapers->lPaper.sort(SortByPaper);
 
