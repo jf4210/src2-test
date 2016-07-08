@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "global.h"
 
+const char* pPwd = NULL;
+static char s_szZipPwd[20] = "static";
 
 //…®√Ë”√
 void CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int height)
@@ -102,7 +104,11 @@ bool ZipFile(CString strSrcPath, CString strDstPath, CString strExtName /*= _T("
 	if (p.exists())
 		p.remove(true);
 
-	HZIP hz = CreateZip(zipName, 0);
+#ifdef USES_PWD_ZIP_UNZIP
+	pPwd = s_szZipPwd;
+#endif
+
+	HZIP hz = CreateZip(zipName, pPwd);
 //	std::string strModelPath = T2A(strSrcPath);
 	std::string strUtf8ModelPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strSrcPath));
 
@@ -135,7 +141,11 @@ bool UnZipFile(CString strZipPath)
 	if (p.exists())
 		p.remove(true);
 
-	HZIP hz = OpenZip(strZipPath, 0);
+#ifdef USES_PWD_ZIP_UNZIP
+	pPwd = s_szZipPwd;
+#endif
+
+	HZIP hz = OpenZip(strZipPath, pPwd);
 	ZIPENTRY ze;
 	GetZipItem(hz, -1, &ze);
 	int numitems = ze.index;

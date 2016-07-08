@@ -12,5 +12,7 @@ public:
 
 	void HandleTask(pDECOMPRESSTASK pTask);
 	void GetFileData(std::string strFilePath, pPAPERS_DETAIL pPapers);
+
+	void SearchExtractFile(pPAPERS_DETAIL pPapers, std::string strPath);
 };
 

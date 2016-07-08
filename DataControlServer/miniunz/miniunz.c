@@ -437,7 +437,7 @@ int do_extract_all(unzFile uf, int opt_extract_without_path, int opt_overwrite, 
 
     do
     {
-        err = do_extract_currentfile(uf, opt_extract_without_path, &opt_overwrite, password);
+		err = do_extract_currentfile(uf, opt_extract_without_path, &opt_overwrite, password);
         if (err != UNZ_OK)
             break;
         err = unzGoToNextFile(uf);
@@ -453,7 +453,7 @@ int do_extract_all(unzFile uf, int opt_extract_without_path, int opt_overwrite, 
 }
 
 int do_extract_onefile(unzFile uf, const char* filename, int opt_extract_without_path, int opt_overwrite,
-    const char* password)
+					   const char* password)
 {
     if (unzLocateFile(uf, filename, NULL) != UNZ_OK)
     {
@@ -465,6 +465,7 @@ int do_extract_onefile(unzFile uf, const char* filename, int opt_extract_without
     return 1;
 }
 
+#if 0
 int main(int argc, const char *argv[])
 {
     const char *zipfilename = NULL;
@@ -571,3 +572,4 @@ int main(int argc, const char *argv[])
     unzClose(uf);
     return ret;
 }
+#endif

@@ -40,6 +40,9 @@
     <Filter Include="dump">
       <UniqueIdentifier>{9c55c59c-909b-4bcd-b0b1-45682d05a222}</UniqueIdentifier>
     </Filter>
+    <Filter Include="解压\miniz">
+      <UniqueIdentifier>{ce57e675-b44c-4036-9e91-8d8273716421}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ExamServerMgr.h">
@@ -120,6 +123,24 @@
     <ClInclude Include="crash_dumper_w32.h">
       <Filter>dump</Filter>
     </ClInclude>
+    <ClInclude Include="miniunz\crypt.h">
+      <Filter>解压\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="miniunz\ioapi.h">
+      <Filter>解压\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="miniunz\iowin32.h">
+      <Filter>解压\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="miniunz\unzip.h">
+      <Filter>解压\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="miniunz\zconf.h">
+      <Filter>解压\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="miniunz\zlib.h">
+      <Filter>解压\miniz</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ExamServerMgr.cpp">
@@ -190,6 +211,18 @@
     </ClCompile>
     <ClCompile Include="crash_dumper_w32.cpp">
       <Filter>dump</Filter>
+    </ClCompile>
+    <ClCompile Include="miniunz\ioapi.c">
+      <Filter>解压\miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="miniunz\iowin32.c">
+      <Filter>解压\miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="miniunz\miniunz.c">
+      <Filter>解压\miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="miniunz\unzip.c">
+      <Filter>解压\miniz</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

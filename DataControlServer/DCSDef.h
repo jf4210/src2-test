@@ -8,9 +8,13 @@
 #include "Net_Cmd_Protocol.h"
 #include "NetUser.h"
 
+//#include "TypeDef.h"
+
 #ifdef _DEBUG
 	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
 #endif
+
+//#define USE_POCO_UNZIP
 
 #define SOFT_VERSION "DataControlServer V1.0"
 
@@ -91,7 +95,7 @@ typedef struct _OmrResult_
 typedef std::list<OMR_RESULT> OMRRESULTLIST;
 #endif
 
-//图片文件
+// 图片文件
 typedef struct _Pic_
 {
 	bool		bUpLoadFlag;		//上传http服务器成功标志

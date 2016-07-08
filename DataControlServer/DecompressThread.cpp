@@ -1,5 +1,8 @@
 #include "DecompressThread.h"
 #include <algorithm>
+#ifndef USE_POCO_UNZIP
+#include "miniunz/miniunz.c"
+#endif
 
 
 bool SortbyNumASC(const std::string& x, const std::string& y)
@@ -284,7 +287,53 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	dec.EError -= Poco::Delegate<DecompressHandler, std::pair<const Poco::Zip::ZipLocalFileHeader, const std::string> >(&handler, &DecompressHandler::onError);
 	dec.EOk -= Poco::Delegate<DecompressHandler, std::pair<const Poco::Zip::ZipLocalFileHeader, const Poco::Path> >(&handler, &DecompressHandler::onOk);
 #else
+	unzFile uf = NULL;
 
+	#ifdef USEWIN32IOAPI
+	zlib_filefunc64_def ffunc;
+	fill_win32_filefunc64A(&ffunc);
+	uf = unzOpen2_64(pTask->strFilePath.c_str(), &ffunc);
+	#else
+	uf = unzOpen64(pTask->strFilePath.c_str());
+	#endif
+
+	if (uf == NULL)
+	{
+		std::string strLog = "打开压缩文件失败:" + pPapers->strPapersPath;
+		g_Log.LogOutError(strLog);
+		std::cout << strLog << std::endl;
+		return;
+	}
+	int ret = 0;
+	int opt_do_extract_withoutpath = 0;
+	int opt_overwrite = 0;
+	const char *password = NULL;
+	password = "static";
+
+	Poco::File decompressDir(strOutDir);
+	if (!decompressDir.exists())
+		decompressDir.createDirectories();
+
+	if (CHDIR(pPapers->strPapersPath.c_str()))
+	{
+		std::string strLog = "切换目录失败:" + pPapers->strPapersPath;
+		g_Log.LogOutError(strLog);
+		std::cout << strLog << std::endl;
+		return;
+	}
+	ret = do_extract_all(uf, opt_do_extract_withoutpath, opt_overwrite, password);
+	unzClose(uf);
+
+	if (ret != 0)
+	{
+		std::string strLog = "解压试卷包(";
+		strLog.append(pPapers->strPapersName);
+		strLog.append(")失败, 路径: " + pPapers->strPapersPath);
+		g_Log.LogOutError(strLog);
+		std::cout << strLog << std::endl;
+		return;
+	}
+	SearchExtractFile(pPapers, pPapers->strPapersPath);
 #endif
 
 	//解压完成
@@ -443,3 +492,52 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 	}
 
 }
+
+void CDecompressThread::SearchExtractFile(pPAPERS_DETAIL pPapers, std::string strPath)
+{
+	std::string strPapersPath = CMyCodeConvert::Gb2312ToUtf8(strPath);
+	Poco::DirectoryIterator it(strPapersPath);
+	Poco::DirectoryIterator end;
+	while (it != end)
+	{
+		Poco::Path p(it->path());
+		if (it->isFile())
+		{
+			std::string strName = p.getFileName();
+			if (strName.find("papersInfo.dat") != std::string::npos)
+			{
+				it++;
+				continue;
+			}
+
+			pPIC_DETAIL pPic = new PIC_DETAIL;
+			pPic->strFileName = strName;
+			pPic->strFilePath = pPapers->strPapersPath + "\\" + pPic->strFileName;
+
+			int nPos = pPic->strFileName.find("_");
+			std::string strPaperName = pPic->strFileName.substr(0, nPos);
+			bool bFind = false;
+			LIST_PAPER_INFO::iterator it = pPapers->lPaper.begin();
+			for (; it != pPapers->lPaper.end(); it++)
+			{
+				if ((*it)->strName == strPaperName)
+				{
+					(*it)->lPic.push_back(pPic);
+					bFind = true;
+					break;
+				}
+			}
+			if (!bFind)
+			{
+				pPAPER_INFO pPaper = new PAPER_INFO;
+				pPaper->lPic.push_back(pPic);
+				pPaper->strName = strPaperName;
+				pPapers->lPaper.push_back(pPaper);
+			}
+			pPapers->nTotalPics++;						//图片数增加一张
+		}
+		it++;
+	}
+}
+
+

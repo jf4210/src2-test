@@ -58,6 +58,8 @@
 	#endif
 #endif
 
+#define USES_PWD_ZIP_UNZIP		//是否使用密码解压缩
+
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 
 #define SOFT_VERSION	_T("1.0")
