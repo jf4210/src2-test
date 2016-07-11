@@ -12,9 +12,10 @@
 
 IMPLEMENT_DYNAMIC(CScanModleMgrDlg, CDialog)
 
-CScanModleMgrDlg::CScanModleMgrDlg(CWnd* pParent /*=NULL*/)
+CScanModleMgrDlg::CScanModleMgrDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	: CDialog(CScanModleMgrDlg::IDD, pParent)
 	, m_pShowModelInfoDlg(NULL), m_pModel(NULL), m_nCurModelItem(-1)
+	, m_pOldModel(pModel), m_strCurModelName(_T(""))
 {
 
 }
@@ -35,6 +36,7 @@ void CScanModleMgrDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_Model, m_ModelListCtrl);
+	DDX_Text(pDX, IDC_EDIT_CurModel, m_strCurModelName);
 }
 
 
@@ -45,15 +47,20 @@ BEGIN_MESSAGE_MAP(CScanModleMgrDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_DelModel, &CScanModleMgrDlg::OnBnClickedBtnDelmodel)
 	ON_BN_CLICKED(IDC_BTN_AddModel, &CScanModleMgrDlg::OnBnClickedBtnAddmodel)
 	ON_NOTIFY(NM_HOVER, IDC_LIST_Model, &CScanModleMgrDlg::OnNMHoverListModel)
+	ON_BN_CLICKED(IDOK, &CScanModleMgrDlg::OnBnClickedOk)
 END_MESSAGE_MAP()
 
 BOOL CScanModleMgrDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	if (m_pOldModel)
+		m_strCurModelName = m_pOldModel->strModelName;
+	
 	InitUI();
 
 	OnBnClickedBtnRefresh();
+	UpdateData(FALSE);
 
 	return TRUE;
 }
@@ -88,7 +95,7 @@ void CScanModleMgrDlg::InitCtrlPosition()
 
 	if (m_pShowModelInfoDlg && m_pShowModelInfoDlg->GetSafeHwnd())
 	{
-		m_pShowModelInfoDlg->MoveWindow(250, 12, 250, 200);
+		m_pShowModelInfoDlg->MoveWindow(250, 12, 250, 235);
 	}
 }
 
@@ -191,7 +198,11 @@ void CScanModleMgrDlg::OnNMDblclkListModel(NMHDR *pNMHDR, LRESULT *pResult)
 		m_ModelListCtrl.SetItemData(m_nCurModelItem, (DWORD_PTR)pModel);
 	}
 	m_pModel = pModel;
+	if (m_pModel)
+		m_strCurModelName = m_pModel->strModelName;
+
 	m_pShowModelInfoDlg->ShowModelInfo(m_pModel, 1);
+	UpdateData(FALSE);
 }
 
 
@@ -207,6 +218,16 @@ void CScanModleMgrDlg::OnBnClickedBtnDelmodel()
 		{
 			int nItem = m_ModelListCtrl.GetNextSelectedItem(pos);
 			TRACE1("Item %d was selected!\n", nItem);
+
+			pMODEL pModel = NULL;
+			pModel = (pMODEL)m_ModelListCtrl.GetItemData(nItem);
+			if (pModel&& pModel == m_pModel)
+			{
+//				SAFE_RELEASE(m_pModel);
+				m_pModel = NULL;
+				m_strCurModelName = _T("");
+			}
+
 			CString strModelName = m_ModelListCtrl.GetItemText(nItem, 1);
 			CString strModelFilePath = g_strCurrentPath + _T("Model\\") + strModelName + _T(".mod");
 			CString strModelDirPath = g_strCurrentPath + _T("Model\\") + strModelName;
@@ -234,7 +255,7 @@ void CScanModleMgrDlg::OnBnClickedBtnDelmodel()
 				TRACE(strGBLog.c_str());
 			}
 		}
-
+		UpdateData(FALSE);
 		OnBnClickedBtnRefresh();
 	}
 }
@@ -303,4 +324,19 @@ void CScanModleMgrDlg::OnNMHoverListModel(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 1;		//**********	这里如果不响应，同时返回结果值不为1的话，	****************
 						//**********	就会产生产生TRACK SELECT，也就是鼠标悬停	****************
 						//**********	一段时间后，所在行自动被选中
+}
+
+
+void CScanModleMgrDlg::OnBnClickedOk()
+{
+	for (int i = 0; i < m_vecModel.size(); i++)
+	{
+		if (m_pModel != m_vecModel[i])
+		{
+			pMODEL pModel = m_vecModel[i];
+			SAFE_RELEASE(pModel);
+		}
+	}
+	m_vecModel.clear();
+	CDialog::OnOK();
 }

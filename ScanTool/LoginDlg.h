@@ -18,6 +18,8 @@ public:
 	CString		m_strUserName;
 	CString		m_strPwd;
 	CString		m_strEzs;
+	CString		m_strUser;
+	CString		m_strNickName;
 	int			m_nTeacherId;
 	int			m_nUserId;
 

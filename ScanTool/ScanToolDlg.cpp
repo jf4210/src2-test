@@ -84,7 +84,7 @@ CScanToolDlg::CScanToolDlg(CWnd* pParent /*=NULL*/)
 	, m_pPapersInfo(NULL), m_pPaper(NULL), m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL)
 	, m_pSendFileObj(NULL), m_SendFileThread(NULL), m_bLogin(FALSE), m_pTcpCmdObj(NULL), m_TcpCmdThread(NULL)
 	, m_nTeacherId(-1), m_nUserId(-1), m_nCurrItemPaperList(-1)
-	, m_pShowModelInfoDlg(NULL)
+	, m_pShowModelInfoDlg(NULL), m_pShowScannerInfoDlg(NULL)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -268,6 +268,7 @@ void CScanToolDlg::OnDestroy()
 	g_pLogger->information("ReleaseTwain() complete.");
 
 	SAFE_RELEASE(m_pShowModelInfoDlg);
+	SAFE_RELEASE(m_pShowScannerInfoDlg);
 
 	std::vector<CPicShow*>::iterator itPic = m_vecPicShow.begin();
 	for (; itPic != m_vecPicShow.end();)
@@ -510,6 +511,10 @@ void CScanToolDlg::InitUI()
 	m_pShowModelInfoDlg->Create(CShowModelInfoDlg::IDD, this);
 	m_pShowModelInfoDlg->ShowWindow(SW_SHOW);
 
+	m_pShowScannerInfoDlg = new CScanerInfoDlg(this);
+	m_pShowScannerInfoDlg->Create(CScanerInfoDlg::IDD, this);
+	m_pShowScannerInfoDlg->ShowWindow(SW_SHOW);
+
 	//++ 后期可以删除
 	GetDlgItem(IDC_BTN_GetModel)->ShowWindow(SW_HIDE);
 	GetDlgItem(IDC_STATIC_PaperList)->ShowWindow(SW_HIDE);
@@ -713,6 +718,11 @@ void CScanToolDlg::InitCtrlPosition()
 		GetDlgItem(IDC_BTN_UploadMgr)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
+
+	if (m_pShowScannerInfoDlg && m_pShowScannerInfoDlg->GetSafeHwnd())
+	{
+		m_pShowScannerInfoDlg->MoveWindow(cx - nRightGap - 180, nGap, 180, nTopGap - nGap - nGap);	//cy - nRightGap - 10, nGap, 150, nTopGap - nGap - nGap
+	}
 	//++test
 // 	int nModelInfo_W = cx - nRightGap - nBtnCurrLeft;
 // 	if (nModelInfo_W > 250)
@@ -772,6 +782,7 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 			g_lExamList.clear();
 			m_bLogin = FALSE;
 			m_strUserName = _T("");
+			m_strNickName = _T("");
 			m_strEzs = _T("");
 			m_strPwd = _T("");
 			m_nTeacherId = -1;
@@ -782,6 +793,7 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 		{
 			m_bLogin = TRUE;
 			m_strUserName = dlg.m_strUserName;
+			m_strNickName = dlg.m_strNickName;
 			m_strPwd = dlg.m_strPwd;
 			m_strEzs = dlg.m_strEzs;
 			m_nTeacherId = dlg.m_nTeacherId;
@@ -794,12 +806,14 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 		g_lExamList.clear();
 		m_bLogin = FALSE;
 		m_strUserName = _T("");
+		m_strNickName = _T("");
 		m_strPwd = _T("");
 		m_strEzs = _T("");
 		m_nTeacherId = -1;
 		m_nUserId = -1;
 		GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("登录"));
-	}	
+	}
+	m_pShowScannerInfoDlg->setShowInfo(m_strUserName, m_strNickName);
 }
 void CScanToolDlg::OnBnClickedBtnScan()
 {
@@ -988,13 +1002,13 @@ void CScanToolDlg::OnCbnSelchangeComboModel()
 
 	SAFE_RELEASE(m_pModel);
 	m_pModel = LoadModelFile(strModelPath);
+	m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
 	if (!m_pModel)
 		return;
 	m_ncomboCurrentSel = m_comboModel.GetCurSel();
 
 	m_nModelPicNums = m_pModel->nPicNum;
 	InitTab();
-	m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
 
 	//模板切换后之前的扫描试卷需要清除
 	m_pCurrentShowPaper = NULL;
@@ -2072,10 +2086,26 @@ void CScanToolDlg::OnBnClickedBtnGetmodel()
 
 void CScanToolDlg::OnBnClickedBtnModelmgr()
 {
-	CScanModleMgrDlg modelMgrDlg;
+	CScanModleMgrDlg modelMgrDlg(m_pModel);
 	if (modelMgrDlg.DoModal() != IDOK)
 	{
 		return;
+	}
+	if (m_pModel != modelMgrDlg.m_pModel)
+	{
+		SAFE_RELEASE(m_pModel);
+		m_pModel = modelMgrDlg.m_pModel;
+		m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+		if (!m_pModel)
+			return;
+
+		m_nModelPicNums = m_pModel->nPicNum;
+		InitTab();
+
+		//模板切换后之前的扫描试卷需要清除
+		m_pCurrentShowPaper = NULL;
+		m_lcPicture.DeleteAllItems();
+		SAFE_RELEASE(m_pPapersInfo);
 	}
 }
 

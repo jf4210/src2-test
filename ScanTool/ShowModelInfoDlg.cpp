@@ -167,3 +167,20 @@ void CShowModelInfoDlg::ShowModelInfo(pMODEL pModel, int nFlag /*= 0*/)
 
 	UpdateData(FALSE);
 }
+
+BOOL CShowModelInfoDlg::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		if (pMsg->wParam == VK_ESCAPE)
+		{
+			return TRUE;
+		}
+		if (pMsg->wParam == VK_RETURN)
+		{
+			return TRUE;
+		}
+		return TRUE;
+	}
+	return CDialog::PreTranslateMessage(pMsg);
+}

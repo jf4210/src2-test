@@ -16,6 +16,7 @@
 #include "SendFileThread.h"
 #include "TcpClient.h"
 #include "ShowModelInfoDlg.h"
+#include "ScanerInfoDlg.h"
 
 // CScanToolDlg 对话框
 class CScanToolDlg : public CDialogEx, public CTwain
@@ -41,6 +42,7 @@ public:
 	COLORREF		m_colorStatus;			//状态栏字体颜色
 
 	CShowModelInfoDlg* m_pShowModelInfoDlg;
+	CScanerInfoDlg*		m_pShowScannerInfoDlg;
 
 	pMODEL			m_pModel;				//扫描试卷时的校验模板
 	MODELLIST		m_lModel;				//已经加载的模板列表
@@ -73,6 +75,7 @@ public:
 
 	BOOL			m_bLogin;
 	CString			m_strUserName;
+	CString			m_strNickName;
 	CString			m_strPwd;
 	CString			m_strEzs;
 	int				m_nTeacherId;

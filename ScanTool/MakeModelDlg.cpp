@@ -4254,11 +4254,11 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 			break;
 		case 38:
 			rc.nTH = x;
-			rc.nAnswer = nMaxCols - y - 1;
+			rc.nAnswer = nMaxRow - y - 1;	//nMaxCols - y - 1
 			break;
 		case 37:
-			rc.nTH = nMaxRow - x - 1;
-			rc.nAnswer = nMaxCols - y - 1;
+			rc.nTH = nMaxCols - x - 1;		//nMaxRow - x - 1
+			rc.nAnswer = nMaxRow - y - 1;	//nMaxCols - y - 1
 			break;
 		case 26:
 			rc.nTH = y;
@@ -4270,11 +4270,11 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 			break;
 		case 22:
 			rc.nTH = y;
-			rc.nAnswer = nMaxRow - x - 1;
+			rc.nAnswer = nMaxCols - x - 1;		//nMaxRow - x - 1
 			break;
 		case 21:
-			rc.nTH = nMaxCols - y - 1;
-			rc.nAnswer = nMaxRow - x - 1;
+			rc.nTH = nMaxRow - y - 1;			//nMaxCols - y - 1
+			rc.nAnswer = nMaxCols - x - 1;		//nMaxRow - x - 1
 			break;
 		}
 		if (m_pOmrInfoDlg->m_bSingle)

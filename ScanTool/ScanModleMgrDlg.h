@@ -8,18 +8,21 @@ class CScanModleMgrDlg : public CDialog
 	DECLARE_DYNAMIC(CScanModleMgrDlg)
 
 public:
-	CScanModleMgrDlg(CWnd* pParent = NULL);   // 标准构造函数
+	CScanModleMgrDlg(pMODEL pModel, CWnd* pParent = NULL);   // 标准构造函数
 	virtual ~CScanModleMgrDlg();
 
 // 对话框数据
 	enum { IDD = IDD_SCANMODLEMGRDLG };
 
+public:
+	pMODEL				m_pModel;
 private:
 	CShowModelInfoDlg*	m_pShowModelInfoDlg;
 	CListCtrl			m_ModelListCtrl;
-	pMODEL				m_pModel;
+	pMODEL				m_pOldModel;
 	std::vector<pMODEL>	m_vecModel;
 	int					m_nCurModelItem;
+	CString				m_strCurModelName;
 private:
 	void InitUI();
 	void InitCtrlPosition();
@@ -35,4 +38,5 @@ public:
 	afx_msg void OnBnClickedBtnDelmodel();
 	afx_msg void OnBnClickedBtnAddmodel();
 	afx_msg void OnNMHoverListModel(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedOk();
 };

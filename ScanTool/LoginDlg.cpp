@@ -16,6 +16,8 @@ CLoginDlg::CLoginDlg(CString strIP, int nPort, CWnd* pParent /*=NULL*/)
 	: CDialog(CLoginDlg::IDD, pParent)
 	, m_strUserName(_T("18520883118"))
 	, m_strPwd(_T("123456"))
+	, m_strUser(_T(""))
+	, m_strNickName(_T(""))
 	, m_strServerIP(strIP)
 	, m_nServerPort(nPort)
 	, m_nRecvLen(0)
@@ -161,10 +163,37 @@ int CLoginDlg::RecvData(CString& strResultInfo)
 				memcpy(szData, m_szRecvBuff + HEAD_SIZE, pstHead->uPackSize);
 				pST_LOGIN_RESULT pstResult = (pST_LOGIN_RESULT)szData;
 
-
 				m_strEzs = pstResult->szEzs;
 				m_nTeacherId = pstResult->nTeacherId;
 				m_nUserId = pstResult->nUserId;
+
+				Poco::JSON::Parser parser;
+				Poco::Dynamic::Var result;
+				try
+				{
+					result = parser.parse(pstResult->szUserInfo);
+					Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
+
+					std::string strUserName = object->get("name").convert<std::string>();
+					Poco::JSON::Object::Ptr objDetail = object->getObject("detail");
+					std::string strNickName = CMyCodeConvert::Utf8ToGb2312(objDetail->get("nickName").convert<std::string>());
+					m_strUser		= strUserName.c_str();
+					m_strNickName	= strNickName.c_str();
+				}
+				catch (Poco::JSON::JSONException& jsone)
+				{
+					std::string strErrInfo;
+					strErrInfo.append("Error when parse json(获取用户信息): ");
+					strErrInfo.append(jsone.message() + "\tData:" + pstResult->szUserInfo);
+					g_pLogger->information(strErrInfo);
+				}
+				catch (Poco::Exception& exc)
+				{
+					std::string strErrInfo;
+					strErrInfo.append("Error(获取用户信息): ");
+					strErrInfo.append(exc.message() + "\tData:" + pstResult->szUserInfo);
+					g_pLogger->information(strErrInfo);
+				}
 			}
 			break;
 		case RESULT_LOGIN_FAIL:

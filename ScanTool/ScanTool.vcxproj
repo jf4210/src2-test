@@ -147,6 +147,7 @@
     <ClInclude Include="RecognizeThread.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ScanCtrlDlg.h" />
+    <ClInclude Include="ScanerInfoDlg.h" />
     <ClInclude Include="ScanModleMgrDlg.h" />
     <ClInclude Include="ScanTool.h" />
     <ClInclude Include="ScanToolDlg.h" />
@@ -191,6 +192,7 @@
     <ClCompile Include="RecogInfoDlg.cpp" />
     <ClCompile Include="RecognizeThread.cpp" />
     <ClCompile Include="ScanCtrlDlg.cpp" />
+    <ClCompile Include="ScanerInfoDlg.cpp" />
     <ClCompile Include="ScanModleMgrDlg.cpp" />
     <ClCompile Include="ScanTool.cpp" />
     <ClCompile Include="ScanToolDlg.cpp" />

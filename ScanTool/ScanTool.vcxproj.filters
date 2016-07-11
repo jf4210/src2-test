@@ -76,9 +76,6 @@
     <Filter Include="扫描模板制作窗口\考号信息设置窗口">
       <UniqueIdentifier>{f5a93192-21a1-475b-88da-77896c6eab7f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="下载扫描模板窗口">
-      <UniqueIdentifier>{e302b5d5-8d9b-48ff-8469-8a05d7e6ff86}</UniqueIdentifier>
-    </Filter>
     <Filter Include="dump">
       <UniqueIdentifier>{17f87518-1d96-41f6-8047-c6de675e9ea7}</UniqueIdentifier>
     </Filter>
@@ -90,6 +87,12 @@
     </Filter>
     <Filter Include="文件传输显示窗口">
       <UniqueIdentifier>{dec69c08-3808-49af-8a27-bc66c8cc8685}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描员信息窗口">
+      <UniqueIdentifier>{48caa546-e825-4802-97fd-692843950200}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="模板管理窗口\下载扫描模板窗口">
+      <UniqueIdentifier>{e302b5d5-8d9b-48ff-8469-8a05d7e6ff86}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -196,7 +199,7 @@
       <Filter>扫描模板制作窗口\OMR题号设置窗口</Filter>
     </ClInclude>
     <ClInclude Include="GetModelDlg.h">
-      <Filter>下载扫描模板窗口</Filter>
+      <Filter>模板管理窗口\下载扫描模板窗口</Filter>
     </ClInclude>
     <ClInclude Include="TcpClient.h">
       <Filter>与服务器通信线程</Filter>
@@ -215,6 +218,9 @@
     </ClInclude>
     <ClInclude Include="ShowFileTransferDlg.h">
       <Filter>文件传输显示窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanerInfoDlg.h">
+      <Filter>扫描员信息窗口</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -303,7 +309,7 @@
       <Filter>扫描模板制作窗口\OMR题号设置窗口</Filter>
     </ClCompile>
     <ClCompile Include="GetModelDlg.cpp">
-      <Filter>下载扫描模板窗口</Filter>
+      <Filter>模板管理窗口\下载扫描模板窗口</Filter>
     </ClCompile>
     <ClCompile Include="TcpClient.cpp">
       <Filter>与服务器通信线程</Filter>
@@ -319,6 +325,9 @@
     </ClCompile>
     <ClCompile Include="ShowFileTransferDlg.cpp">
       <Filter>文件传输显示窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanerInfoDlg.cpp">
+      <Filter>扫描员信息窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
