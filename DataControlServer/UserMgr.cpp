@@ -23,7 +23,32 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			ST_LOGIN_INFO  LoginInfo = *(pStLoginInfo)(pMission->m_pMissionData + HEAD_SIZE);
 			std::cout << "login info: " << LoginInfo.szUserNo << ", pwd: " << LoginInfo.szPWD << std::endl;
 
+// 			_mapUserLock_.lock();
+// 			MAP_USER::iterator itFind = _mapUser_.find(LoginInfo.szUserNo);
+// 			if (itFind != _mapUser_.end())
+// 			{
+// 				//ÖØ¸´µÇÂ¼ÌáÐÑ£¬
+// 				std::string strSendData = "ÕËºÅÒÑµÇÂ¼";
+// 
+// 				pUser->SendResponesInfo(USER_RESPONSE_LOGIN, RESULT_LOGIN_FAIL, (char*)strSendData.c_str(), strSendData.length());
+// 				_mapUserLock_.unlock();
+// 				return 1;
+// 			}
+// 			_mapUserLock_.unlock();
+
 			#ifdef TEST_MODE
+			_mapUserLock_.lock();
+			MAP_USER::iterator itFind2 = _mapUser_.find(LoginInfo.szUserNo);
+			if (itFind2 == _mapUser_.end())
+			{
+				_mapUser_.insert(MAP_USER::value_type(LoginInfo.szUserNo, pUser));
+			}
+			else
+			{
+				itFind2->second = pUser;
+			}
+			_mapUserLock_.unlock();
+
 			ST_LOGIN_RESULT stResult;
 			ZeroMemory(&stResult, sizeof(stResult));
 			stResult.nTeacherId = 100;
@@ -52,6 +77,27 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			g_fmScanReq.lock();
 			g_lScanReq.push_back(pTask);
 			g_fmScanReq.unlock();
+		}
+		break;
+	case USER_LOGOUT:
+		{
+			char szData[1024] = { 0 };
+			strncpy(szData, pMission->m_pMissionData + HEAD_SIZE, header.uPackSize);
+			std::string strUser = szData;
+
+			_mapUserLock_.lock();
+			MAP_USER::iterator itFind = _mapUser_.find(strUser);
+			if (itFind != _mapUser_.end())
+			{
+				_mapUser_.erase(itFind);
+
+				std::string strLog = "ÕËºÅ" + strUser + "ÍË³öµÇÂ¼";
+
+				pUser->SendResponesInfo(USER_RESPONSE_LOGOUT, RESULT_SUCCESS, (char*)strUser.c_str(), strUser.length());
+				g_Log.LogOut(strLog);
+			}
+			_mapUserLock_.unlock();
+
 		}
 		break;
 	case USER_GETEXAMINFO:

@@ -7,6 +7,7 @@
 #include "afxdialogex.h"
 #include "GetModelDlg.h"
 #include "ScanToolDlg.h"
+#include "MakeModelDlg.h"
 
 // CScanModleMgrDlg 对话框
 
@@ -26,8 +27,11 @@ CScanModleMgrDlg::~CScanModleMgrDlg()
 
 	for (int i = 0; i < m_vecModel.size(); i++)
 	{
-		pMODEL pModel = m_vecModel[i];
-		SAFE_RELEASE(pModel);
+		if (m_pModel != m_vecModel[i])
+		{
+			pMODEL pModel = m_vecModel[i];
+			SAFE_RELEASE(pModel);
+		}
 	}
 	m_vecModel.clear();
 }
@@ -48,6 +52,7 @@ BEGIN_MESSAGE_MAP(CScanModleMgrDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_AddModel, &CScanModleMgrDlg::OnBnClickedBtnAddmodel)
 	ON_NOTIFY(NM_HOVER, IDC_LIST_Model, &CScanModleMgrDlg::OnNMHoverListModel)
 	ON_BN_CLICKED(IDOK, &CScanModleMgrDlg::OnBnClickedOk)
+	ON_BN_CLICKED(IDC_BTN_MakeModel, &CScanModleMgrDlg::OnBnClickedBtnMakemodel)
 END_MESSAGE_MAP()
 
 BOOL CScanModleMgrDlg::OnInitDialog()
@@ -339,4 +344,19 @@ void CScanModleMgrDlg::OnBnClickedOk()
 	}
 	m_vecModel.clear();
 	CDialog::OnOK();
+}
+
+
+void CScanModleMgrDlg::OnBnClickedBtnMakemodel()
+{
+	CMakeModelDlg dlg(m_pModel);
+	dlg.DoModal();
+
+	if (!m_pModel)	//如果模板不为空，说明之前已经有模板了，不需要使用新模板
+		m_pModel = dlg.m_pModel;
+
+	if (m_pModel != dlg.m_pModel)
+	{
+		SAFE_RELEASE(dlg.m_pModel);
+	}
 }

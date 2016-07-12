@@ -193,6 +193,18 @@ void CTcpClient::HandleCmd()
 	if (pstHead->usCmd == USER_RESPONSE_LOGIN)
 	{
 	}
+	else if (pstHead->usCmd == USER_RESPONSE_LOGOUT)
+	{
+		if (pstHead->usResult == RESULT_SUCCESS)
+		{
+			char szData[1024] = { 0 };
+			strncpy(szData, m_pRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+			std::string strUser = szData;
+
+			std::string strLog = "ÍË³öµÇÂ¼ÕËºÅ(" + strUser + ")³É¹¦";
+			g_pLogger->information(strLog);
+		}
+	}
 	else if (pstHead->usCmd == USER_RESPONSE_EXAMINFO)
 	{
 		switch (pstHead->usResult)

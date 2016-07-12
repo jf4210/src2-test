@@ -1727,10 +1727,12 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	}
 	else
 	{
+		USES_CONVERSION;
+
 		char szModelName[30] = { 0 };
 		sprintf_s(szModelName, "%d_%d", dlg.m_nExamID, dlg.m_SubjectID);
 		char szModelDesc[300] = { 0 };
-		sprintf_s(szModelDesc, "年级: %s\n考试名称: %s\n科目: %s", dlg.m_strGradeName, dlg.m_strExamTypeName, dlg.m_strSubjectName);
+		sprintf_s(szModelDesc, "年级: %s\r\n考试名称: %s\r\n科目: %s", T2A(dlg.m_strGradeName), T2A(dlg.m_strExamTypeName), T2A(dlg.m_strSubjectName));
 		m_pModel->nExamID		= dlg.m_nExamID;
 		m_pModel->nSubjectID	= dlg.m_SubjectID;
 		m_pModel->strModelName	= szModelName;
@@ -1825,27 +1827,27 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 			pPaperModel->lSNInfo.push_back(pSnItem);
 		}
 		//++ 有同步头的情况下，直接新建模板马上保存，需要设置水平和垂直橡皮筋的长度
-		if (m_pModel->nHasHead && m_vecPaperModelInfo[m_nCurrTabSel]->bFirstH)
+		if (m_pModel->nHasHead && m_vecPaperModelInfo[i]->bFirstH)
 		{
 			m_ptHTracker1 = cv::Point(0, 0);
-			m_ptHTracker2 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols, 90);
+			m_ptHTracker2 = cv::Point(m_vecPaperModelInfo[i]->matSrcImg.cols, 90);
 //			m_vecPaperModelInfo[m_nCurrTabSel]->bFirstH = false;
 
-			m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.x = m_ptHTracker1.x;
-			m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.y = m_ptHTracker1.y;
-			m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.width = m_ptHTracker2.x - m_ptHTracker1.x;
-			m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.height = m_ptHTracker2.y - m_ptHTracker1.y;
+			m_vecPaperModelInfo[i]->rtHTracker.x = m_ptHTracker1.x;
+			m_vecPaperModelInfo[i]->rtHTracker.y = m_ptHTracker1.y;
+			m_vecPaperModelInfo[i]->rtHTracker.width = m_ptHTracker2.x - m_ptHTracker1.x;
+			m_vecPaperModelInfo[i]->rtHTracker.height = m_ptHTracker2.y - m_ptHTracker1.y;
 		}
-		if (m_pModel->nHasHead && m_vecPaperModelInfo[m_nCurrTabSel]->bFirstV)
+		if (m_pModel->nHasHead && m_vecPaperModelInfo[i]->bFirstV)
 		{
-			m_ptVTracker1 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols - 90, 0);
-			m_ptVTracker2 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols, m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.rows);
+			m_ptVTracker1 = cv::Point(m_vecPaperModelInfo[i]->matSrcImg.cols - 90, 0);
+			m_ptVTracker2 = cv::Point(m_vecPaperModelInfo[i]->matSrcImg.cols, m_vecPaperModelInfo[i]->matSrcImg.rows);
 //			m_vecPaperModelInfo[m_nCurrTabSel]->bFirstV = false;
 
-			m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.x = m_ptVTracker1.x;
-			m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.y = m_ptVTracker1.y;
-			m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.width = m_ptVTracker2.x - m_ptVTracker1.x;
-			m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.height = m_ptVTracker2.y - m_ptVTracker1.y;
+			m_vecPaperModelInfo[i]->rtVTracker.x = m_ptVTracker1.x;
+			m_vecPaperModelInfo[i]->rtVTracker.y = m_ptVTracker1.y;
+			m_vecPaperModelInfo[i]->rtVTracker.width = m_ptVTracker2.x - m_ptVTracker1.x;
+			m_vecPaperModelInfo[i]->rtVTracker.height = m_ptVTracker2.y - m_ptVTracker1.y;
 		}
 		//--
 		pPaperModel->rtHTracker = m_vecPaperModelInfo[i]->rtHTracker;

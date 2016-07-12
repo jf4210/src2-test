@@ -606,19 +606,21 @@ void CScanToolDlg::InitCtrlPosition()
 	int nPaperListHeigth = cy * 0.3;	//试卷袋列表的控件高度
 	if (nPaperListHeigth > 300)
 		nPaperListHeigth = 300;
-	int nPicListHeight = cy - nTopGap - nStaticTip - nGap - nComboBoxHeith - nGap - nStaticTip - nGap /*- nGap - nStaticTip*/ - nGap - nPaperListHeigth - nGap - nStatusHeight - nBottomGap;		//图片列表控件高度
+	int nPicListHeight = cy - nTopGap /*- nStaticTip - nGap - nComboBoxHeith - nGap*/ - nStaticTip - nGap /*- nGap - nStaticTip*/ - nGap - nPaperListHeigth - nGap - nStatusHeight - nBottomGap;		//图片列表控件高度
 
-	int nCurrentTop = 0;
+	int nCurrentTop = nTopGap;
+#if 0
 	if (GetDlgItem(IDC_STATIC_Model)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_STATIC_Model)->MoveWindow(nLeftGap, nTopGap, nListCtrlWidth, nStaticTip);
-		nCurrentTop = nTopGap + nStaticTip + nGap;
+		GetDlgItem(IDC_STATIC_Model)->MoveWindow(nLeftGap, nCurrentTop, nListCtrlWidth, nStaticTip);
+		nCurrentTop = nCurrentTop + nStaticTip + nGap;
 	}
 	if (m_comboModel.GetSafeHwnd())
 	{
 		m_comboModel.MoveWindow(nLeftGap, nCurrentTop, nListCtrlWidth, nComboBoxHeith);
 		nCurrentTop = nCurrentTop + nComboBoxHeith + nGap;
 	}
+#endif
 	if (GetDlgItem(IDC_STATIC_PicList)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_STATIC_PicList)->MoveWindow(nLeftGap, nCurrentTop, nListCtrlWidth, nStaticTip);
@@ -803,6 +805,16 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 	}
 	else
 	{
+		std::string strUser = T2A(m_strUserName);
+		pTCP_TASK pTcpTask	= new TCP_TASK;
+		pTcpTask->usCmd		= USER_LOGOUT;
+		pTcpTask->nPkgLen	= strUser.length();
+		memcpy(pTcpTask->szSendBuf, (char*)strUser.c_str(), strUser.length());
+		g_fmTcpTaskLock.lock();
+		g_lTcpTask.push_back(pTcpTask);
+		g_fmTcpTaskLock.unlock();
+
+
 		g_lExamList.clear();
 		m_bLogin = FALSE;
 		m_strUserName = _T("");
@@ -2089,6 +2101,7 @@ void CScanToolDlg::OnBnClickedBtnModelmgr()
 	CScanModleMgrDlg modelMgrDlg(m_pModel);
 	if (modelMgrDlg.DoModal() != IDOK)
 	{
+		SAFE_RELEASE(modelMgrDlg.m_pModel);
 		return;
 	}
 	if (m_pModel != modelMgrDlg.m_pModel)

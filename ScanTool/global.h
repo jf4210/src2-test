@@ -46,7 +46,7 @@
 #include "unzip.h"
 #include "MyCodeConvert.h"
 
-#define PIC_RECTIFY_TEST	//图像旋转纠正测试
+//#define PIC_RECTIFY_TEST	//图像旋转纠正测试
 #define WarpAffine_TEST		//仿射变换测试
 #ifdef _DEBUG
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
@@ -373,6 +373,10 @@ typedef struct _TcpTask_
 	unsigned short usCmd;
 	int		nPkgLen;
 	char	szSendBuf[1024];
+	_TcpTask_()
+	{
+		ZeroMemory(szSendBuf, 1024);
+	}
 }TCP_TASK, *pTCP_TASK;
 typedef std::list<pTCP_TASK> TCP_TASKLIST;
 
