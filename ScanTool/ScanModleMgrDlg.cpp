@@ -53,6 +53,7 @@ BEGIN_MESSAGE_MAP(CScanModleMgrDlg, CDialog)
 	ON_NOTIFY(NM_HOVER, IDC_LIST_Model, &CScanModleMgrDlg::OnNMHoverListModel)
 	ON_BN_CLICKED(IDOK, &CScanModleMgrDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDC_BTN_MakeModel, &CScanModleMgrDlg::OnBnClickedBtnMakemodel)
+	ON_BN_CLICKED(IDCANCEL, &CScanModleMgrDlg::OnBnClickedCancel)
 END_MESSAGE_MAP()
 
 BOOL CScanModleMgrDlg::OnInitDialog()
@@ -115,6 +116,7 @@ void CScanModleMgrDlg::OnBnClickedBtnRefresh()
 		SAFE_RELEASE(pModel);
 	}
 	m_vecModel.clear();
+	m_pModel = NULL;
 
 	USES_CONVERSION;
 	std::string strModelPath = T2A(g_strCurrentPath + _T("Model"));
@@ -139,8 +141,18 @@ void CScanModleMgrDlg::OnBnClickedBtnRefresh()
 				m_ModelListCtrl.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 				m_ModelListCtrl.SetItemText(nCount, 1, (LPCTSTR)A2T(strModelName.c_str()));
 				m_ModelListCtrl.SetItemData(nCount, NULL);
-				nCount++;
+				
+				if (strModelName == T2A(m_strCurModelName))
+				{
+					m_ModelListCtrl.SetItemState(nCount, LVIS_DROPHILITED, LVIS_DROPHILITED);		//高亮显示一行，失去焦点后也一直显示
 
+					CString strModelFilePath = g_strCurrentPath + _T("Model\\") + m_strCurModelName;
+
+					m_pModel = LoadModelFile(strModelFilePath);
+					m_vecModel.push_back(m_pModel);
+					m_pShowModelInfoDlg->ShowModelInfo(m_pModel, 1);
+				}
+				nCount++;
 // 				CString strModelFilePath = g_strCurrentPath + _T("Model\\") + A2T(strModelName.c_str());
 // 				pMODEL pModel;
 // 				pModel = LoadModelFile(strModelFilePath);
@@ -186,9 +198,13 @@ void CScanModleMgrDlg::OnNMDblclkListModel(NMHDR *pNMHDR, LRESULT *pResult)
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	*pResult = 0;
 
+	m_ModelListCtrl.SetItemState(m_nCurModelItem, 0, LVIS_DROPHILITED);
+
 	m_nCurModelItem = pNMItemActivate->iItem;
 	if (m_nCurModelItem < 0)
 		return;
+
+	m_ModelListCtrl.SetItemState(m_nCurModelItem, LVIS_DROPHILITED, LVIS_DROPHILITED);
 
 	pMODEL pModel = NULL;
 	pModel = (pMODEL)m_ModelListCtrl.GetItemData(m_nCurModelItem);
@@ -349,6 +365,11 @@ void CScanModleMgrDlg::OnBnClickedOk()
 
 void CScanModleMgrDlg::OnBnClickedBtnMakemodel()
 {
+	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+
+	pDlg->ReleaseTwain();
+	pDlg->m_bTwainInit = FALSE;
+
 	CMakeModelDlg dlg(m_pModel);
 	dlg.DoModal();
 
@@ -359,4 +380,19 @@ void CScanModleMgrDlg::OnBnClickedBtnMakemodel()
 	{
 		SAFE_RELEASE(dlg.m_pModel);
 	}
+}
+
+
+void CScanModleMgrDlg::OnBnClickedCancel()
+{
+	for (int i = 0; i < m_vecModel.size(); i++)
+	{
+		if (m_pModel != m_vecModel[i])
+		{
+			pMODEL pModel = m_vecModel[i];
+			SAFE_RELEASE(pModel);
+		}
+	}
+	m_vecModel.clear();
+	CDialog::OnCancel();
 }

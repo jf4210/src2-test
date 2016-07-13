@@ -59,6 +59,8 @@
 #endif
 
 #define USES_PWD_ZIP_UNZIP		//是否使用密码解压缩
+//#define SHOW_MODELMAKE_MAINDLG		//是否在主界面上显示模板制作按钮
+//#define SHOW_COMBOLIST_MAINDLG		//是否在主界面上显示下拉列表控件
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 

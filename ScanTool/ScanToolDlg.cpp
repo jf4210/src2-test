@@ -515,6 +515,13 @@ void CScanToolDlg::InitUI()
 	m_pShowScannerInfoDlg->Create(CScanerInfoDlg::IDD, this);
 	m_pShowScannerInfoDlg->ShowWindow(SW_SHOW);
 
+#ifndef SHOW_MODELMAKE_MAINDLG
+	GetDlgItem(IDC_BTN_ScanModule)->ShowWindow(SW_HIDE);
+#endif
+#ifndef SHOW_COMBOLIST_MAINDLG
+	GetDlgItem(IDC_STATIC_Model)->ShowWindow(SW_HIDE);
+	m_comboModel.ShowWindow(SW_HIDE);
+#endif
 	//++ 后期可以删除
 	GetDlgItem(IDC_BTN_GetModel)->ShowWindow(SW_HIDE);
 	GetDlgItem(IDC_STATIC_PaperList)->ShowWindow(SW_HIDE);
@@ -606,10 +613,14 @@ void CScanToolDlg::InitCtrlPosition()
 	int nPaperListHeigth = cy * 0.3;	//试卷袋列表的控件高度
 	if (nPaperListHeigth > 300)
 		nPaperListHeigth = 300;
+#ifdef SHOW_COMBOLIST_MAINDLG
+	int nPicListHeight = cy - nTopGap - nStaticTip - nGap - nComboBoxHeith - nGap - nStaticTip - nGap /*- nGap - nStaticTip*/ - nGap - nPaperListHeigth - nGap - nStatusHeight - nBottomGap;		//图片列表控件高度
+#else
 	int nPicListHeight = cy - nTopGap /*- nStaticTip - nGap - nComboBoxHeith - nGap*/ - nStaticTip - nGap /*- nGap - nStaticTip*/ - nGap - nPaperListHeigth - nGap - nStatusHeight - nBottomGap;		//图片列表控件高度
+#endif
 
 	int nCurrentTop = nTopGap;
-#if 0
+#ifdef SHOW_COMBOLIST_MAINDLG
 	if (GetDlgItem(IDC_STATIC_Model)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_STATIC_Model)->MoveWindow(nLeftGap, nCurrentTop, nListCtrlWidth, nStaticTip);
@@ -688,11 +699,13 @@ void CScanToolDlg::InitCtrlPosition()
 		GetDlgItem(IDC_BTN_Scan)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
+#ifdef SHOW_MODELMAKE_MAINDLG
 	if (GetDlgItem(IDC_BTN_ScanModule)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_ScanModule)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
+#endif
 	if (GetDlgItem(IDC_BTN_ModelMgr)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_ModelMgr)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);

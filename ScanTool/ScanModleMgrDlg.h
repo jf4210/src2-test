@@ -40,4 +40,5 @@ public:
 	afx_msg void OnNMHoverListModel(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedBtnMakemodel();
+	afx_msg void OnBnClickedCancel();
 };

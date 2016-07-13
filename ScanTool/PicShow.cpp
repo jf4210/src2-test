@@ -76,24 +76,6 @@ void CPicShow::OnSize(UINT nType, int cx, int cy)
 
 #if 1
 	InitCtrlPosition();
-// 	CRect rt;
-// 	GetClientRect(&rt);
-// 	if (m_picShow.GetSafeHwnd())
-// 	{
-// 		if (!m_bShowScrolH && !m_bShowScrolV)
-// 			m_picShow.MoveWindow(0, 0, rt.Width(), rt.Height());
-// 		else if (!m_bShowScrolH)
-// 			m_picShow.MoveWindow(0, 0, rt.Width() - nScrollV_W - 1, rt.Height());
-// 		else if (!m_bShowScrolV)
-// 			m_picShow.MoveWindow(0, 0, rt.Width(), rt.Height() - nScrollH_H - 1);
-// 		else
-// 			m_picShow.MoveWindow(0, 0, rt.Width() - nScrollV_W - 1, rt.Height() - nScrollH_H - 1);
-// 	}
-// 
-// 	if (m_bShowScrolH && m_scrollBarH.GetSafeHwnd())
-// 		m_scrollBarH.MoveWindow(0, rt.Height() - nScrollH_H, rt.Width(), rt.Height());
-// 	if (m_bShowScrolV && m_scrollBarV.GetSafeHwnd())
-// 		m_scrollBarV.MoveWindow(rt.Width() - nScrollV_W, 0, rt.Width(), rt.Height());
 #else
 	if (m_picShow.GetSafeHwnd())
 	{
@@ -112,7 +94,6 @@ void CPicShow::OnSize(UINT nType, int cx, int cy)
 	if (m_bShowScrolV && m_scrollBarV.GetSafeHwnd())
 		m_scrollBarV.MoveWindow(cx - nScrollV_W, 0, cx, cy);
 #endif
-//	Invalidate();
 }
 
 void CPicShow::InitCtrlPosition()

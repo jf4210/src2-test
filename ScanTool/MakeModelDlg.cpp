@@ -1705,7 +1705,7 @@ bool CMakeModelDlg::checkValidity()
 
 void CMakeModelDlg::OnBnClickedBtnSave()
 {
-	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();	//GetParent();
 
 	if (!m_pModel)
 	{
@@ -4301,7 +4301,7 @@ void CMakeModelDlg::setUploadModelInfo(CString& strName, CString& strModelPath, 
 
 	strMd5 = calcFileMd5(strPath);
 
-	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();	//GetParent();
 
 	ST_MODELINFO stModelInfo;
 	ZeroMemory(&stModelInfo, sizeof(ST_MODELINFO));
@@ -4330,13 +4330,19 @@ void CMakeModelDlg::OnBnClickedBtnuploadmodel()
 		return;
 	}
 
-	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+	if (m_pModel->nSaveMode == 1)
+	{
+		AfxMessageBox(_T("此模板为本地模式，不可上传！"));
+		return;
+	}
+
+	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();	//GetParent();AfxGetMainWnd
 	if (!pDlg->m_bLogin)
 	{
 		AfxMessageBox(_T("请先登录！"));
 		return;
 	}
-
+	
 	USES_CONVERSION;
 	std::string strModelName = T2A(m_pModel->strModelName);
 	strModelName.append(".mod");

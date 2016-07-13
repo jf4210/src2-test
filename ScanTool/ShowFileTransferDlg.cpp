@@ -15,6 +15,7 @@ IMPLEMENT_DYNAMIC(CShowFileTransferDlg, CDialog)
 
 CShowFileTransferDlg::CShowFileTransferDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CShowFileTransferDlg::IDD, pParent)
+	, m_nCurListItem(-1)
 {
 
 }
@@ -33,6 +34,8 @@ void CShowFileTransferDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CShowFileTransferDlg, CDialog)
 	ON_NOTIFY(NM_HOVER, IDC_LIST_FileTransfer, &CShowFileTransferDlg::OnNMHoverListFiletransfer)
 	ON_WM_TIMER()
+	ON_NOTIFY(NM_RCLICK, IDC_LIST_FileTransfer, &CShowFileTransferDlg::OnNMRClickListFiletransfer)
+	ON_COMMAND(ID_ReSendFile, &CShowFileTransferDlg::ReSendFile)
 END_MESSAGE_MAP()
 
 
@@ -115,4 +118,32 @@ void CShowFileTransferDlg::ShowFileTransferList()
 		m_lFileTranser.SetItemText(i, 1, (LPCTSTR)A2T(szPercent));
 		m_lFileTranser.SetItemText(i, 2, (LPCTSTR)A2T(szState));
 	}
+}
+
+
+void CShowFileTransferDlg::OnNMRClickListFiletransfer(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	*pResult = 0;
+
+	if (m_lFileTranser.GetSelectedCount() <= 0)
+		return;
+
+	m_lFileTranser.SetItemState(m_nCurListItem, 0, LVIS_DROPHILITED);		// 取消高亮显示
+	m_nCurListItem = pNMItemActivate->iItem;
+	m_lFileTranser.SetItemState(m_nCurListItem, LVIS_DROPHILITED, LVIS_DROPHILITED);		//高亮显示一行，失去焦点后也一直显示
+
+	//下面的这段代码, 不单单适应于ListCtrl  
+	CMenu menu, *pPopup;
+	menu.LoadMenu(IDR_MENU_ReSendFile);
+	pPopup = menu.GetSubMenu(0);
+	CPoint myPoint;
+	ClientToScreen(&myPoint);
+	GetCursorPos(&myPoint); //鼠标位置  
+	pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, myPoint.x, myPoint.y, this);//GetParent()
+}
+
+void CShowFileTransferDlg::ReSendFile()
+{
+
 }

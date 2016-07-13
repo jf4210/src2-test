@@ -1094,7 +1094,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	clock_t start, end;
 	start = clock();
 
-	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();	//AfxGetMainWnd()
 
 	CPapersInfoSaveDlg dlg(pPapers);
 	if (dlg.DoModal() != IDOK)

@@ -157,17 +157,28 @@ protected:
 		SetConsoleTitle(wstrTitle.c_str());
 #endif
 
-		Poco::File decompressDir(SysSet.m_strDecompressPath);
-		if (!decompressDir.exists())
-			decompressDir.createDirectories();
+		try
+		{
+			Poco::File decompressDir(SysSet.m_strDecompressPath);
+			if (!decompressDir.exists())
+				decompressDir.createDirectories();
 
-		Poco::File fileRecvDir(SysSet.m_strUpLoadPath);
-		if (!fileRecvDir.exists())
-			fileRecvDir.createDirectories();
+			Poco::File fileRecvDir(SysSet.m_strUpLoadPath);
+			if (!fileRecvDir.exists())
+				fileRecvDir.createDirectories();
 
-		Poco::File modelSaveDir(SysSet.m_strModelSavePath);
-		if (!modelSaveDir.exists())
-			modelSaveDir.createDirectories();
+			Poco::File modelSaveDir(SysSet.m_strModelSavePath);
+			if (!modelSaveDir.exists())
+				modelSaveDir.createDirectories();
+		}
+		catch (Poco::Exception& exc)
+		{
+			std::string strErrInfo;
+			strErrInfo.append("**** 文件夹初始化创建失败，请检查路径设置是否正确！****");
+			strErrInfo.append(exc.message());
+			g_Log.LogOutError(strErrInfo);
+			std::cout << strErrInfo << std::endl;
+		}
 
 		InitModelInfo();
 

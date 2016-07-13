@@ -16,12 +16,12 @@ public:
 
 private:
 	CListCtrl	m_lFileTranser;
-
+	int			m_nCurListItem;
 private:
 	void	InitUI();
 	void	InitCtrlPosition();
 	void	ShowFileTransferList();
-
+	void	ReSendFile();
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
 	virtual BOOL OnInitDialog();
@@ -29,4 +29,5 @@ protected:
 public:
 	afx_msg void OnNMHoverListFiletransfer(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnNMRClickListFiletransfer(NMHDR *pNMHDR, LRESULT *pResult);
 };
