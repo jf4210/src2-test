@@ -188,6 +188,8 @@ private:
 	LRESULT ShiftKeyDown(WPARAM wParam, LPARAM lParam);
 	LRESULT ShiftKeyUp(WPARAM wParam, LPARAM lParam);
 
+	inline bool checkOverlap(CPType eType, cv::Rect rtSrc);		//区域重叠检测
+
 	bool checkValidity();						//保存模板前合法性检查
 	bool SaveModelFile(pMODEL pModel);			//保存模板到文件
 	void setUploadModelInfo(CString& strName, CString& strModelPath, int nExamId, int nSubjectId);					//设置上传模板的信息

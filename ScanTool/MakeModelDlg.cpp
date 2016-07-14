@@ -490,16 +490,18 @@ void CMakeModelDlg::InitCtrlPosition()
 		GetDlgItem(IDC_BTN_SAVE)->MoveWindow(nLeftGap, nCurrentTop, nBtnWidth, nBtnHeigh);
 //		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
 	}
+#if 0
 	if (GetDlgItem(IDC_BTN_uploadModel)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_uploadModel)->MoveWindow(nLeftGap + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeigh);
 		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
 	}
+#endif
 	if (GetDlgItem(IDC_BTN_ExitModelDlg)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_BTN_ExitModelDlg)->MoveWindow(nLeftGap, nCurrentTop, nBtnWidth, nBtnHeigh);
-// 		GetDlgItem(IDC_BTN_ExitModelDlg)->MoveWindow(nLeftGap + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeigh);
-// 		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
+//		GetDlgItem(IDC_BTN_ExitModelDlg)->MoveWindow(nLeftGap, nCurrentTop, nBtnWidth, nBtnHeigh);
+		GetDlgItem(IDC_BTN_ExitModelDlg)->MoveWindow(nLeftGap + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeigh);
+		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
 	}
 	if (m_tabModelPicCtrl.GetSafeHwnd())
 	{
@@ -661,12 +663,22 @@ LRESULT CMakeModelDlg::RoiLBtnUp(WPARAM wParam, LPARAM lParam)
 
 	if (m_eCurCPType != H_HEAD && m_eCurCPType != V_HEAD && m_pModel->nHasHead == 0)
 	{
+		if (checkOverlap(m_eCurCPType, Rt))
+		{
+			AfxMessageBox(_T("检测到包含已选区域"));
+			return FALSE;
+		}
 		Recognise(Rt);
 		SortRect();
 		UpdataCPList();
 	}
 	else if (m_eCurCPType != H_HEAD && m_eCurCPType != V_HEAD && m_pModel->nHasHead != 0)
 	{
+		if (checkOverlap(m_eCurCPType, Rt))
+		{
+			AfxMessageBox(_T("检测到包含已选区域"));
+			return FALSE;
+		}
 		RecogByHead(Rt);
 	}
 	return TRUE;
@@ -2184,9 +2196,9 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	jsnModel.set("modelDesc", CMyCodeConvert::Gb2312ToUtf8(T2A(pModel->strModelDesc)));
 	jsnModel.set("modeSaveMode", pModel->nSaveMode);
 	jsnModel.set("paperModelCount", pModel->nPicNum);			//此模板有几页试卷(图片)
-	jsnModel.set("enableModify", 1);							//是否可以修改标识
-	jsnModel.set("abPaper", m_pModel->nABModel);				//是否是AB卷					*************	暂时没加入AB卷的模板	**************
-	jsnModel.set("hasHead", m_pModel->nHasHead);				//是否有同步头
+	jsnModel.set("enableModify", pModel->nEnableModify);		//是否可以修改标识
+	jsnModel.set("abPaper", pModel->nABModel);					//是否是AB卷					*************	暂时没加入AB卷的模板	**************
+	jsnModel.set("hasHead", pModel->nHasHead);					//是否有同步头
 	jsnModel.set("paperInfo", jsnPicModel);
 
 	std::stringstream jsnString;
@@ -4358,6 +4370,8 @@ void CMakeModelDlg::OnBnClickedBtnuploadmodel()
 	CString modelPath = g_strCurrentPath + _T("Model");
 	modelPath = modelPath + _T("\\") + m_pModel->strModelName + _T(".mod");
 	setUploadModelInfo(m_pModel->strModelName, modelPath, atoi(strExamID.c_str()), atoi(strSubjectID.c_str()));
+
+	AfxMessageBox(_T("添加上传任务完成，后台操作中。。。"));
 }
 
 void CMakeModelDlg::CopyImage(HANDLE hBitmap, TW_IMAGEINFO& info)
@@ -4510,4 +4524,132 @@ void CMakeModelDlg::OnNMHoverListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 1;		//**********	这里如果不响应，同时返回结果值不为1的话，	****************
 						//**********	就会产生产生TRACK SELECT，也就是鼠标悬停	****************
 						//**********	一段时间后，所在行自动被选中
+}
+
+inline bool CMakeModelDlg::checkOverlap(CPType eType, cv::Rect rtSrc)
+{
+	bool bResult = false;
+	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
+		return bResult;
+
+	switch (eType)
+	{
+		case Fix_CP:
+			{
+				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.size(); i++)
+				{
+					cv::Rect rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix[i].rt;
+					if (rt.contains(rtSrc.tl()) || rt.contains(rtSrc.br()) || rtSrc.contains(rt.tl()) || rtSrc.contains(rt.br()))
+					{
+						bResult = true;
+						break;
+					}
+				}
+			}
+			break;
+		case H_HEAD:
+			{
+				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.size(); i++)
+				{
+					cv::Rect rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head[i].rt;
+					if (rt.contains(rtSrc.tl()) || rt.contains(rtSrc.br()) || rtSrc.contains(rt.tl()) || rtSrc.contains(rt.br()))
+					{
+						bResult = true;
+						break;
+					}
+				}
+			}
+			break;
+		case V_HEAD:
+			{
+				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.size(); i++)
+				{
+					cv::Rect rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head[i].rt;
+					if (rt.contains(rtSrc.tl()) || rt.contains(rtSrc.br()) || rtSrc.contains(rt.tl()) || rtSrc.contains(rt.br()))
+					{
+						bResult = true;
+						break;
+					}
+				}
+			}
+			break;
+		case ABMODEL:
+			{
+				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel.size(); i++)
+				{
+					cv::Rect rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel[i].rt;
+					if (rt.contains(rtSrc.tl()) || rt.contains(rtSrc.br()) || rtSrc.contains(rt.tl()) || rtSrc.contains(rt.br()))
+					{
+						bResult = true;
+						break;
+					}
+				}
+			}
+			break;
+		case COURSE:
+			{
+				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecCourse.size(); i++)
+				{
+					cv::Rect rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecCourse[i].rt;
+					if (rt.contains(rtSrc.tl()) || rt.contains(rtSrc.br()) || rtSrc.contains(rt.tl()) || rtSrc.contains(rt.br()))
+					{
+						bResult = true;
+						break;
+					}
+				}
+			}
+			break;
+		case QK_CP:
+			{
+				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.size(); i++)
+				{
+					cv::Rect rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP[i].rt;
+					if (rt.contains(rtSrc.tl()) || rt.contains(rtSrc.br()) || rtSrc.contains(rt.tl()) || rtSrc.contains(rt.br()))
+					{
+						bResult = true;
+						break;
+					}
+				}
+			}
+			break;
+		case GRAY_CP:
+			{
+				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecGray.size(); i++)
+				{
+					cv::Rect rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecGray[i].rt;
+					if (rt.contains(rtSrc.tl()) || rt.contains(rtSrc.br()) || rtSrc.contains(rt.tl()) || rtSrc.contains(rt.br()))
+					{
+						bResult = true;
+						break;
+					}
+				}
+			}
+			break;
+		case WHITE_CP:
+			{
+				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.size(); i++)
+				{
+					cv::Rect rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite[i].rt;
+					if (rt.contains(rtSrc.tl()) || rt.contains(rtSrc.br()) || rtSrc.contains(rt.tl()) || rtSrc.contains(rt.br()))
+					{
+						bResult = true;
+						break;
+					}
+				}
+			}
+			break;
+		case SN:
+			{
+
+			}
+			break;
+		case OMR:
+			{
+
+			}
+			break;
+		default:
+			break;
+	}
+	return bResult;
 }

@@ -24,6 +24,7 @@ public:
 public:
 	virtual BOOL InitInstance();
 
+	BOOL FirstInstance();
 // й╣ож
 
 	DECLARE_MESSAGE_MAP()

@@ -54,6 +54,7 @@ BEGIN_MESSAGE_MAP(CScanModleMgrDlg, CDialog)
 	ON_BN_CLICKED(IDOK, &CScanModleMgrDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDC_BTN_MakeModel, &CScanModleMgrDlg::OnBnClickedBtnMakemodel)
 	ON_BN_CLICKED(IDCANCEL, &CScanModleMgrDlg::OnBnClickedCancel)
+	ON_BN_CLICKED(IDC_BTN_uploadModel, &CScanModleMgrDlg::OnBnClickedBtnuploadmodel)
 END_MESSAGE_MAP()
 
 BOOL CScanModleMgrDlg::OnInitDialog()
@@ -395,4 +396,74 @@ void CScanModleMgrDlg::OnBnClickedCancel()
 	}
 	m_vecModel.clear();
 	CDialog::OnCancel();
+}
+
+
+void CScanModleMgrDlg::OnBnClickedBtnuploadmodel()
+{
+	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+
+	if (!pDlg->m_bLogin)
+	{
+		AfxMessageBox(_T("请先登录"));
+		return;
+	}
+
+	if (!m_pModel)
+	{
+		AfxMessageBox(_T("请先选择模板"));
+		return;
+	}
+
+	if (m_pModel->nSaveMode == 1)
+	{
+		AfxMessageBox(_T("此模板为本地模式，不可上传！"));
+		return;
+	}
+
+	USES_CONVERSION;
+	std::string strModelName = T2A(m_pModel->strModelName);
+	strModelName.append(".mod");
+
+	int nPos = 0;
+	int nOldPos = 0;
+	nPos = strModelName.find("_");
+	std::string strExamID = strModelName.substr(0, nPos);
+	nOldPos = nPos;
+	nPos = strModelName.find(".", nPos + 1);
+	std::string strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+
+	CString modelPath = g_strCurrentPath + _T("Model");
+	modelPath = modelPath + _T("\\") + m_pModel->strModelName + _T(".mod");
+	setUploadModelInfo(m_pModel->strModelName, modelPath, atoi(strExamID.c_str()), atoi(strSubjectID.c_str()));
+
+	AfxMessageBox(_T("添加上传任务完成，后台操作中。。。"));
+}
+
+void CScanModleMgrDlg::setUploadModelInfo(CString& strName, CString& strModelPath, int nExamId, int nSubjectId)
+{
+	USES_CONVERSION;
+	std::string strPath = T2A(strModelPath);
+	std::string strMd5;
+
+	strMd5 = calcFileMd5(strPath);
+
+	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();	//GetParent();
+
+	ST_MODELINFO stModelInfo;
+	ZeroMemory(&stModelInfo, sizeof(ST_MODELINFO));
+	stModelInfo.nExamID = nExamId;
+	stModelInfo.nSubjectID = nSubjectId;
+	sprintf_s(stModelInfo.szUserNo, "%s", T2A(pDlg->m_strUserName));
+	sprintf_s(stModelInfo.szModelName, "%s.mod", T2A(strName));
+	sprintf_s(stModelInfo.szEzs, "%s", T2A(pDlg->m_strEzs));
+	strncpy(stModelInfo.szMD5, strMd5.c_str(), strMd5.length());
+
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_SETMODELINFO;
+	pTcpTask->nPkgLen = sizeof(ST_MODELINFO);
+	memcpy(pTcpTask->szSendBuf, (char*)&stModelInfo, sizeof(ST_MODELINFO));
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
 }

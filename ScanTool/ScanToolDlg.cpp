@@ -20,6 +20,8 @@
 using namespace std;
 using namespace cv;
 
+bool				g_bCmdConnect = false;		//命令通道连接
+bool				g_bFileConnect = false;		//文件通道连接
 float				g_fSamePercent = 0.75;		//判断校验区域是否填图百分比
 int					g_nExitFlag = 0;
 CString				g_strCurrentPath;
@@ -157,9 +159,9 @@ BOOL CScanToolDlg::OnInitDialog()
 //	RunCrashHandler();
 
 	USES_CONVERSION;
-	CString strTitle = _T("");
-	strTitle.Format(_T("YKLX-ScanTool %s"), SOFT_VERSION);
-	SetWindowText(strTitle);
+// 	CString strTitle = _T("");
+// 	strTitle.Format(_T("YKLX-ScanTool %s"), SOFT_VERSION);
+	SetWindowText(SYS_NAME);
 
 	InitUI();
 	InitConfig();

@@ -70,6 +70,8 @@ void CTcpClient::run()
 		g_pLogger->information(strLog);
 		TRACE(strLog.c_str());
 	}
+	_bConnect = false;
+	g_bCmdConnect = _bConnect;
 }
 
 bool CTcpClient::connectServer()
@@ -82,6 +84,7 @@ bool CTcpClient::connectServer()
 		m_ss.setBlocking(false);
 		m_ss.setNoDelay(true);
 		_bConnect = true;
+		g_bCmdConnect = _bConnect;
 		TRACE("连接服务器成功\n"); 
 		std::string strLog = "连接服务器成功\n";
 		TRACE(strLog.c_str());
@@ -93,6 +96,7 @@ bool CTcpClient::connectServer()
 //		TRACE(strLog.c_str());
 		g_pLogger->information(strLog);
 		_bConnect = false;
+		g_bCmdConnect = _bConnect;
 	}
 	return _bConnect;
 }
@@ -173,6 +177,7 @@ bool CTcpClient::receiveData()
 		TRACE(strLog.c_str());
 		g_pLogger->information(strLog);
 		_bConnect = false;
+		g_bCmdConnect = _bConnect;
 		return false;
 	}
 
@@ -361,5 +366,6 @@ void CTcpClient::HandleTask(pTCP_TASK pTask)
 		TRACE(strLog.c_str());
 		g_pLogger->information(strLog);
 		_bConnect = false;
+		g_bCmdConnect = _bConnect;
 	}
 }

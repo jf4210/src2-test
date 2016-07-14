@@ -6,12 +6,14 @@
 #include "ScanTool.h"
 #include "ScanToolDlg.h"
 #include "minidump.h"
+#include "global.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 
+//#define SYS_NAME			(SYS_BASE_NAME + SOFT_VERSION)
 // CScanToolApp
 
 BEGIN_MESSAGE_MAP(CScanToolApp, CWinApp)
@@ -55,6 +57,8 @@ BOOL CScanToolApp::InitInstance()
 
 	AfxEnableControlContainer();
 
+	if (!FirstInstance())
+		return FALSE;
 	// 创建 shell 管理器，以防对话框包含
 	// 任何 shell 树视图控件或 shell 列表视图控件。
 	CShellManager *pShellManager = new CShellManager;
@@ -69,7 +73,7 @@ BOOL CScanToolApp::InitInstance()
 	// 更改用于存储设置的注册表项
 	// TODO:  应适当修改该字符串，
 	// 例如修改为公司或组织名
-	SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
+	SetRegistryKey(_T("EasyTNT"));
 
 	RunCrashHandler();
 
@@ -102,5 +106,22 @@ BOOL CScanToolApp::InitInstance()
 	// 由于对话框已关闭，所以将返回 FALSE 以便退出应用程序，
 	//  而不是启动应用程序的消息泵。
 	return FALSE;
+}
+
+BOOL CScanToolApp::FirstInstance()
+{
+	CWnd *pWndPrev, *pWndChild;
+	//根据主窗口类名和主窗口名判断是否已经有实例存在了
+	if (pWndPrev = CWnd::FindWindow(_T("#32770"), SYS_NAME))//#32770是默认的对话框类名字
+	{
+		//如果存在就将其激活，并显示出来	  
+		pWndChild = pWndPrev->GetLastActivePopup();
+		//如果是最小化的就还原窗口
+		if (pWndPrev->IsIconic())
+			pWndPrev->ShowWindow(SW_RESTORE);
+		pWndChild->SetForegroundWindow();
+		return FALSE;
+	}
+	return TRUE;
 }
 

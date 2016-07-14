@@ -65,6 +65,8 @@
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 
 #define SOFT_VERSION	_T("1.0")
+#define SYS_NAME		_T("YKLX-ScanTool 1.0")
+
 #define MAX_DLG_WIDTH	1024
 #define MAX_DLG_HEIGHT	768
 
@@ -77,6 +79,9 @@ extern std::string			g_strModelSavePath;
 extern Poco::Logger*		g_pLogger;
 extern int					g_nExitFlag;
 extern float				g_fSamePercent;		//判断校验区域是否填图百分比
+
+extern bool				g_bCmdConnect;		//命令通道连接
+extern bool				g_bFileConnect;		//文件通道连接
 
 typedef enum CPType
 {
@@ -222,6 +227,7 @@ typedef struct _Model_
 	std::vector<pPAPERMODEL> vecPaperModel;	//存储每一页试卷的模板信息
 	_Model_()
 	{
+		nEnableModify = 1;
 		nPicNum = 0;
 		nABModel = 0;
 		nHasHead = 1;

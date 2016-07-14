@@ -55,6 +55,7 @@ void CFileUpLoad::OnTcpClientNotifyDisconnect( UINT uSocket )
 	TRACE0("file server disconnect!\n");
 	m_uThreadType = 1;
 	m_bConnect = FALSE;
+	g_bFileConnect = false;
 
 	std::string strLog = "文件发送线程与服务器连接断开";
 	g_pLogger->information(strLog);
@@ -109,7 +110,8 @@ RESTART:
 				m_pITcpClient = CreateTcpClient(*this, T2A(m_strAddr), m_usPort);
 				if (m_pITcpClient == NULL)
 				{
-//					TRACE0("\nconect to File Server failed!\n");
+					//TRACE0("\nconect to File Server failed!\n");
+					g_bFileConnect = false;
 					Sleep(100);
 					continue;
 				}
@@ -118,6 +120,7 @@ RESTART:
 					TRACE0("\nconect to File Server Success!\n");
 					m_bConnect = TRUE;
 					m_uThreadType = 2;
+					g_bFileConnect = true;
 					goto RESTART;
 				}
 			}
@@ -302,7 +305,7 @@ void CFileUpLoad::UnInit()
 {
 	m_bStop = TRUE;
 	m_bConnect=FALSE;
-		
+	g_bFileConnect = false;
 	m_bUpLoad = FALSE;
 
 	g_pLogger->information("CFileUpLoad UnInit==>WaitForStop().");
