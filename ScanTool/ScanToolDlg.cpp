@@ -159,9 +159,9 @@ BOOL CScanToolDlg::OnInitDialog()
 //	RunCrashHandler();
 
 	USES_CONVERSION;
-// 	CString strTitle = _T("");
-// 	strTitle.Format(_T("YKLX-ScanTool %s"), SOFT_VERSION);
-	SetWindowText(SYS_NAME);
+	CString strTitle = _T("");
+	strTitle.Format(_T("%s %s"), SYS_BASE_NAME, SOFT_VERSION);
+	SetWindowText(strTitle);
 
 	InitUI();
 	InitConfig();

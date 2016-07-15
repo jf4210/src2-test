@@ -110,17 +110,30 @@ BOOL CScanToolApp::InitInstance()
 
 BOOL CScanToolApp::FirstInstance()
 {
-	CWnd *pWndPrev, *pWndChild;
-	//根据主窗口类名和主窗口名判断是否已经有实例存在了
-	if (pWndPrev = CWnd::FindWindow(_T("#32770"), SYS_NAME))//#32770是默认的对话框类名字
+	TCHAR strTitle[MAX_PATH] = { 0 };
+	HWND hwnd = NULL;
+	HWND AfterHwnd = NULL;
+	while (true)
 	{
-		//如果存在就将其激活，并显示出来	  
-		pWndChild = pWndPrev->GetLastActivePopup();
-		//如果是最小化的就还原窗口
-		if (pWndPrev->IsIconic())
-			pWndPrev->ShowWindow(SW_RESTORE);
-		pWndChild->SetForegroundWindow();
-		return FALSE;
+		hwnd = ::FindWindowEx(NULL, AfterHwnd, _T("#32770"), NULL);
+		if (!hwnd)
+			break;
+		else
+		{
+			if (::GetWindowText(hwnd, strTitle, MAX_PATH))
+			{
+				if (StrStr(strTitle, SYS_BASE_NAME) != 0)
+				{
+					//找到窗口后的操作
+					GetLastActivePopup(hwnd);
+					if (IsIconic(hwnd))
+						ShowWindow(hwnd, SW_RESTORE);
+					SetForegroundWindow(hwnd);
+					return FALSE;
+				}
+			}
+		}
+		AfterHwnd = hwnd;
 	}
 	return TRUE;
 }

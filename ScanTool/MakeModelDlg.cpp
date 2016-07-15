@@ -730,6 +730,14 @@ LRESULT CMakeModelDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
 		rt.y = m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head[nPosV].rt.y;
 		rt.width = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head[nPosH].rt.width;
 		rt.height = m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head[nPosV].rt.height;
+
+		if (checkOverlap(m_eCurCPType, rt))
+		{
+			m_bShiftKeyDown = false;
+//			AfxMessageBox(_T("检测到包含已选区域"));
+			return FALSE;
+		}
+
 		RECTINFO rc;
 		rc.rt = rt;
 		rc.eCPType = m_eCurCPType;
@@ -1452,7 +1460,7 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 		if (rtOri.br().x > rtPosH.rt.br().x  && nPosH_B >= 0)
 			nPosH_E = i;
 	}
-	if (nPosH_E - nPosH_B < 0)
+	if (nPosH_E - nPosH_B < 0 || (nPosH_E < 0 && nPosH_B < 0))
 		return false;
 
 	for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.size(); i++)
@@ -1475,7 +1483,7 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 		if (rtOri.br().y > rtPosV.rt.br().y && nPosV_B >= 0)
 			nPosV_E = i;
 	}
-	if (nPosV_E - nPosV_B < 0)
+	if (nPosV_E - nPosV_B < 0 || (nPosV_B < 0 && nPosV_E < 0))
 		return false;
 
 	cv::Rect** arr;
@@ -4544,6 +4552,16 @@ inline bool CMakeModelDlg::checkOverlap(CPType eType, cv::Rect rtSrc)
 						bResult = true;
 						break;
 					}
+					if (rt.tl().x >= rtSrc.tl().x && rt.br().x <= rtSrc.br().x && rt.tl().y <= rtSrc.tl().y && rt.br().y >= rtSrc.br().y)
+					{
+						bResult = true;
+						break;
+					}
+					if (rtSrc.tl().x >= rt.tl().x && rtSrc.br().x <= rt.br().x && rtSrc.tl().y <= rt.tl().y && rtSrc.br().y >= rt.br().y)
+					{
+						bResult = true;
+						break;
+					}
 				}
 			}
 			break;
@@ -4553,6 +4571,16 @@ inline bool CMakeModelDlg::checkOverlap(CPType eType, cv::Rect rtSrc)
 				{
 					cv::Rect rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head[i].rt;
 					if (rt.contains(rtSrc.tl()) || rt.contains(rtSrc.br()) || rtSrc.contains(rt.tl()) || rtSrc.contains(rt.br()))
+					{
+						bResult = true;
+						break;
+					}
+					if (rt.tl().x >= rtSrc.tl().x && rt.br().x <= rtSrc.br().x && rt.tl().y <= rtSrc.tl().y && rt.br().y >= rtSrc.br().y)
+					{
+						bResult = true;
+						break;
+					}
+					if (rtSrc.tl().x >= rt.tl().x && rtSrc.br().x <= rt.br().x && rtSrc.tl().y <= rt.tl().y && rtSrc.br().y >= rt.br().y)
 					{
 						bResult = true;
 						break;
@@ -4570,6 +4598,16 @@ inline bool CMakeModelDlg::checkOverlap(CPType eType, cv::Rect rtSrc)
 						bResult = true;
 						break;
 					}
+					if (rt.tl().x >= rtSrc.tl().x && rt.br().x <= rtSrc.br().x && rt.tl().y <= rtSrc.tl().y && rt.br().y >= rtSrc.br().y)
+					{
+						bResult = true;
+						break;
+					}
+					if (rtSrc.tl().x >= rt.tl().x && rtSrc.br().x <= rt.br().x && rtSrc.tl().y <= rt.tl().y && rtSrc.br().y >= rt.br().y)
+					{
+						bResult = true;
+						break;
+					}
 				}
 			}
 			break;
@@ -4579,6 +4617,16 @@ inline bool CMakeModelDlg::checkOverlap(CPType eType, cv::Rect rtSrc)
 				{
 					cv::Rect rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel[i].rt;
 					if (rt.contains(rtSrc.tl()) || rt.contains(rtSrc.br()) || rtSrc.contains(rt.tl()) || rtSrc.contains(rt.br()))
+					{
+						bResult = true;
+						break;
+					}
+					if (rt.tl().x >= rtSrc.tl().x && rt.br().x <= rtSrc.br().x && rt.tl().y <= rtSrc.tl().y && rt.br().y >= rtSrc.br().y)
+					{
+						bResult = true;
+						break;
+					}
+					if (rtSrc.tl().x >= rt.tl().x && rtSrc.br().x <= rt.br().x && rtSrc.tl().y <= rt.tl().y && rtSrc.br().y >= rt.br().y)
 					{
 						bResult = true;
 						break;
@@ -4596,6 +4644,16 @@ inline bool CMakeModelDlg::checkOverlap(CPType eType, cv::Rect rtSrc)
 						bResult = true;
 						break;
 					}
+					if (rt.tl().x >= rtSrc.tl().x && rt.br().x <= rtSrc.br().x && rt.tl().y <= rtSrc.tl().y && rt.br().y >= rtSrc.br().y)
+					{
+						bResult = true;
+						break;
+					}
+					if (rtSrc.tl().x >= rt.tl().x && rtSrc.br().x <= rt.br().x && rtSrc.tl().y <= rt.tl().y && rtSrc.br().y >= rt.br().y)
+					{
+						bResult = true;
+						break;
+					}
 				}
 			}
 			break;
@@ -4605,6 +4663,16 @@ inline bool CMakeModelDlg::checkOverlap(CPType eType, cv::Rect rtSrc)
 				{
 					cv::Rect rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP[i].rt;
 					if (rt.contains(rtSrc.tl()) || rt.contains(rtSrc.br()) || rtSrc.contains(rt.tl()) || rtSrc.contains(rt.br()))
+					{
+						bResult = true;
+						break;
+					}
+					if (rt.tl().x >= rtSrc.tl().x && rt.br().x <= rtSrc.br().x && rt.tl().y <= rtSrc.tl().y && rt.br().y >= rtSrc.br().y)
+					{
+						bResult = true;
+						break;
+					}
+					if (rtSrc.tl().x >= rt.tl().x && rtSrc.br().x <= rt.br().x && rtSrc.tl().y <= rt.tl().y && rtSrc.br().y >= rt.br().y)
 					{
 						bResult = true;
 						break;
@@ -4622,6 +4690,16 @@ inline bool CMakeModelDlg::checkOverlap(CPType eType, cv::Rect rtSrc)
 						bResult = true;
 						break;
 					}
+					if (rt.tl().x >= rtSrc.tl().x && rt.br().x <= rtSrc.br().x && rt.tl().y <= rtSrc.tl().y && rt.br().y >= rtSrc.br().y)
+					{
+						bResult = true;
+						break;
+					}
+					if (rtSrc.tl().x >= rt.tl().x && rtSrc.br().x <= rt.br().x && rtSrc.tl().y <= rt.tl().y && rtSrc.br().y >= rt.br().y)
+					{
+						bResult = true;
+						break;
+					}
 				}
 			}
 			break;
@@ -4635,17 +4713,27 @@ inline bool CMakeModelDlg::checkOverlap(CPType eType, cv::Rect rtSrc)
 						bResult = true;
 						break;
 					}
+					if (rt.tl().x >= rtSrc.tl().x && rt.br().x <= rtSrc.br().x && rt.tl().y <= rtSrc.tl().y && rt.br().y >= rtSrc.br().y)
+					{
+						bResult = true;
+						break;
+					}
+					if (rtSrc.tl().x >= rt.tl().x && rtSrc.br().x <= rt.br().x && rtSrc.tl().y <= rt.tl().y && rtSrc.br().y >= rt.br().y)
+					{
+						bResult = true;
+						break;
+					}
 				}
 			}
 			break;
 		case SN:
 			{
-
+				//不进行区域重叠检测
 			}
 			break;
 		case OMR:
 			{
-
+				//不进行区域重叠检测
 			}
 			break;
 		default:

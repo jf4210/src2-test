@@ -64,8 +64,8 @@
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 
-#define SOFT_VERSION	_T("1.0")
-#define SYS_NAME		_T("YKLX-ScanTool 1.0")
+#define SOFT_VERSION	_T("1.718")
+#define SYS_BASE_NAME	_T("YKLX-ScanTool")
 
 #define MAX_DLG_WIDTH	1024
 #define MAX_DLG_HEIGHT	768
