@@ -375,6 +375,8 @@ void CScanToolDlg::InitConfig()
 	USES_CONVERSION;
 	std::string strModelPath = T2A(g_strCurrentPath + _T("Model"));
 	g_strModelSavePath = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
+	Poco::File fileModelPath(g_strModelSavePath);
+	fileModelPath.createDirectories();
 
 	std::string strLogPath = CMyCodeConvert::Gb2312ToUtf8(T2A(g_strCurrentPath + _T("ScanTool.log")));
 	Poco::AutoPtr<Poco::PatternFormatter> pFormatter(new Poco::PatternFormatter("%L%Y-%m-%d %H:%M:%S.%F %q:%t"));

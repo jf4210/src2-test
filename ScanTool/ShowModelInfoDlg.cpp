@@ -152,10 +152,18 @@ void CShowModelInfoDlg::ShowModelInfo(pMODEL pModel, int nFlag /*= 0*/)
 	{
 		USES_CONVERSION;
 		CString strExamInfo = _T("");
+		
 		char szPicNum[20] = { 0 };
 		sprintf_s(szPicNum, "模板页数: %d\r\n", pModel->nPicNum);
+
+		char szHeadVal[10] = { 0 };
+		if (pModel->nHasHead)
+			strcpy_s(szHeadVal, "有");
+		else
+			strcpy_s(szHeadVal, "无");
 		char szHead[20] = { 0 };
-		sprintf_s(szHead, "同步头: %d\r\n", pModel->nHasHead);
+		sprintf_s(szHead, "同步头: %s\r\n", szHeadVal);
+
 		char szExamInfo[30] = { 0 };
 		sprintf_s(szExamInfo, "考试ID: %d\r\n科目ID: %d\r\n", pModel->nExamID, pModel->nSubjectID);
 		strExamInfo = szPicNum;

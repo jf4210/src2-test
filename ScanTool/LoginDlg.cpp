@@ -14,8 +14,8 @@ IMPLEMENT_DYNAMIC(CLoginDlg, CDialog)
 
 CLoginDlg::CLoginDlg(CString strIP, int nPort, CWnd* pParent /*=NULL*/)
 	: CDialog(CLoginDlg::IDD, pParent)
-	, m_strUserName(_T("18520883118"))
-	, m_strPwd(_T("123456"))
+	, m_strUserName(_T(""))
+	, m_strPwd(_T(""))
 	, m_strUser(_T(""))
 	, m_strNickName(_T(""))
 	, m_strServerIP(strIP)
@@ -55,6 +55,16 @@ END_MESSAGE_MAP()
 BOOL CLoginDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
+
+	char* ret;
+	ret = new char[255];
+	ret[0] = '\0';
+	if (ReadRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", "login", ret) == 0)
+	{
+		m_strUserName = ret;
+	}
+	SAFE_RELEASE_ARRY(ret);
+
 	UpdateData(FALSE);
 
 	return TRUE;
@@ -90,6 +100,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 		if (RecvData(strResult))
 		{
 			GetExamInfo();
+			WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", "login", T2A(m_strUserName));
 			AfxMessageBox(_T("登录成功"));	//登录成功，获取考试信息失败
 			CDialog::OnOK();
 		}

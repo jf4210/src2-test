@@ -440,12 +440,21 @@ int CGetModelDlg::RecvFile(pST_DOWN_MODEL pModelInfo)
 				//覆盖本地文件
 				std::string strModelPath = T2A(g_strCurrentPath);
 				strModelPath.append("Model\\");
+
+				Poco::File fileModelPath(g_strModelSavePath);
+				fileModelPath.createDirectories();
+
 				strModelPath.append(pModelInfo->szModelName);
 				Poco::File fileModel(strModelPath);
 				if (fileModel.exists())
 					fileModel.remove();
 
 				ofstream out(strModelPath, std::ios::binary);
+				if (!out)
+				{
+					nResult = 0;
+					break;
+				}
 				std::stringstream buffer;
 				buffer.write(m_pFileRecv + HEAD_SIZE, pstHead->uPackSize);
 				int n = buffer.str().length();

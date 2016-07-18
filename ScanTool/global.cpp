@@ -93,6 +93,55 @@ bool SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2)
 	return bResult;
 }
 
+int WriteRegKey(HKEY root, char * subDir, char * regKey, char * regValue)
+{
+	USES_CONVERSION;
+	char strTemp[_MAX_PATH];
+	HKEY hKey;
+	sprintf(strTemp, subDir);
+
+	DWORD nbf = 0;
+
+	long ret = RegCreateKeyEx(root, A2T(strTemp), 0, _T(""), REG_OPTION_NON_VOLATILE, KEY_READ | KEY_WRITE, NULL, &hKey, &nbf);
+	if (ret != ERROR_SUCCESS)
+	{
+		return -1;
+	}
+	int n = _tcslen(A2T(regValue));
+	ret = RegSetValueEx(hKey, A2T(regKey), 0, REG_SZ, LPBYTE(A2T(regValue)), (_tcslen(A2T(regValue)) + 1) * sizeof(TCHAR));
+	if (ret != ERROR_SUCCESS) 
+	{
+		return -1;
+	}
+	RegCloseKey(hKey);
+	return 0;
+}
+
+int ReadRegKey(HKEY root, char * subDir, char * regKey, char* & regValue)
+{
+	char strTemp[_MAX_PATH];
+	HKEY hKey;
+	sprintf(strTemp, subDir);
+
+	long ret = (::RegOpenKeyExA(root, strTemp, 0, KEY_READ, &hKey));
+	if (ret != ERROR_SUCCESS)
+	{
+		return -1;
+	}
+
+	DWORD valueType = REG_SZ;
+	DWORD cbData = 255;
+
+	ret = ::RegQueryValueExA(hKey, regKey, NULL, &valueType, (LPBYTE)regValue, &cbData);
+	if (ret != ERROR_SUCCESS)
+	{
+		return -1;
+	}
+	RegCloseKey(hKey);
+
+	return 0;
+}
+
 bool ZipFile(CString strSrcPath, CString strDstPath, CString strExtName /*= _T(".zip")*/)
 {
 	USES_CONVERSION;
@@ -197,6 +246,8 @@ pMODEL LoadModelFile(CString strModelPath)
 		pModel->nEnableModify	= objData->get("enableModify").convert<int>();
 		pModel->nABModel		= objData->get("abPaper").convert<int>();
 		pModel->nHasHead		= objData->get("hasHead").convert<int>();
+		pModel->nExamID			= objData->get("nExamId").convert<int>();
+		pModel->nSubjectID		= objData->get("nSubjectId").convert<int>();
 
 		Poco::JSON::Array::Ptr arrayPapers = objData->getArray("paperInfo");
 		for (int i = 0; i < arrayPapers->size(); i++)

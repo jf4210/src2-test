@@ -46,7 +46,7 @@
 #include "unzip.h"
 #include "MyCodeConvert.h"
 
-//#define PIC_RECTIFY_TEST	//图像旋转纠正测试
+#define PIC_RECTIFY_TEST	//图像旋转纠正测试
 #define WarpAffine_TEST		//仿射变换测试
 #ifdef _DEBUG
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
@@ -454,3 +454,5 @@ bool	PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat);
 bool	FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);		//定点进行仿射变换
 bool	FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);	//定点透视变换
 bool	PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);
+int		WriteRegKey(HKEY root, char * subDir, char * regKey, char * regValue);
+int		ReadRegKey(HKEY root, char * subDir, char * regKey, char* & regValue);

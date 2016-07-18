@@ -325,6 +325,9 @@ void CScanModleMgrDlg::OnBnClickedBtnAddmodel()
 		strLog.append(T2A(strModelPath));
 		g_pLogger->information(strLog);
 
+		Poco::File fileModelPath(g_strModelSavePath);
+		fileModelPath.createDirectories();
+
 		Poco::File modelPath(strUtf8OldPath);
 		modelPath.copyTo(strUtf8ModelPath);
 

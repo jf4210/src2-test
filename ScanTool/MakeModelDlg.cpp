@@ -1361,7 +1361,7 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecGray.push_back(rc);
 		}
-		else if (m_eCurCPType == WHITE_CP)
+		else if (m_eCurCPType == WHITE_CP)		//黑白提卡空白校验点设置不了，以后再解决
 		{
 			rc.nThresholdValue = m_nWhiteVal;
 			rc.fStandardValuePercent = m_fWhiteThresholdPercent;
@@ -1372,8 +1372,24 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.push_back(rc);
 		}
+		else if (m_eCurCPType == SN)
+		{
+			TRACE("SN - rt(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+		}
+		else if (m_eCurCPType == OMR)
+		{
+			TRACE("OMR - rt(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+		}
 
-		bResult = true;	
+		bResult = true;
+	}
+	if (m_eCurCPType == SN)
+	{
+		GetSNArry(RectCompList);
+	}
+	if (m_eCurCPType == OMR)
+	{
+		GetOmrArry(RectCompList);
 	}
 #endif
 	if (m_eCurCPType == Fix_CP)
@@ -2207,6 +2223,8 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	jsnModel.set("enableModify", pModel->nEnableModify);		//是否可以修改标识
 	jsnModel.set("abPaper", pModel->nABModel);					//是否是AB卷					*************	暂时没加入AB卷的模板	**************
 	jsnModel.set("hasHead", pModel->nHasHead);					//是否有同步头
+	jsnModel.set("nExamId", pModel->nExamID);
+	jsnModel.set("nSubjectId", pModel->nSubjectID);
 	jsnModel.set("paperInfo", jsnPicModel);
 
 	std::stringstream jsnString;
