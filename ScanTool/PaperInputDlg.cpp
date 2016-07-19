@@ -1267,19 +1267,19 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 
 		sprintf_s(szPapersSrcPath, "%s\\%s", T2A(m_strPapersPath), pPapers->strPapersName.c_str());
 		sprintf_s(szPapersSavePath, "%sPaper\\%s_%s", T2A(g_strCurrentPath), T2A(pDlg->m_strUserName), szTime);
-		sprintf_s(szZipName, "%s_%s.zip", T2A(pDlg->m_strUserName), szTime);
+		sprintf_s(szZipName, "%s_%s.pkg", T2A(pDlg->m_strUserName), szTime);
 	}
 	else
 	{
 		sprintf_s(szPapersSrcPath, "%s\\%s", T2A(m_strPapersPath), pPapers->strPapersName.c_str());
 		sprintf_s(szPapersSavePath, "%sPaper\\%s", T2A(g_strCurrentPath), pPapers->strPapersName.c_str());
-		sprintf_s(szZipName, "%s.zip", pPapers->strPapersName.c_str());
+		sprintf_s(szZipName, "%s.pkg", pPapers->strPapersName.c_str());
 	}
 	CString strInfo;
 	bool bWarn = false;
 	strInfo.Format(_T("正在保存%s..."), A2T(szZipName));
 //	SetStatusShowInfo(strInfo, bWarn);
-	if (!ZipFile(A2T(szPapersSrcPath), A2T(szPapersSavePath)))
+	if (!ZipFile(A2T(szPapersSrcPath), A2T(szPapersSavePath), _T(".pkg")))
 	{
 		bWarn = true;
 		strInfo.Format(_T("保存%s失败"), A2T(szZipName));
@@ -1294,7 +1294,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 
 	//添加上传列表，	******************		需要进行鉴权操作	***************
 	char szFileFullPath[300] = { 0 };
-	sprintf_s(szFileFullPath, "%s.zip", szPapersSavePath);
+	sprintf_s(szFileFullPath, "%s.pkg", szPapersSavePath);
 	pSENDTASK pTask = new SENDTASK;
 	pTask->strFileName = szZipName;
 	pTask->strPath = szFileFullPath;

@@ -32,6 +32,7 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL), m_pSNInfoDlg(NULL)
 	, m_bShiftKeyDown(false)
 {
+	InitParam();
 }
 
 CMakeModelDlg::~CMakeModelDlg()
@@ -42,30 +43,6 @@ CMakeModelDlg::~CMakeModelDlg()
 
 	if (m_bNewModelFlag && !m_bSavedModelFlag && m_pModel != NULL)
 		SAFE_RELEASE(m_pModel);
-// 	if (!m_bSavedModelFlag && m_pModel != NULL)
-// 	{
-// 		for (int i = 0; i < m_pModel->nPicNum; i++)
-// 		{
-// 			SNLIST::iterator itSn = m_vecPaperModelInfo[i]->lSN.begin();
-// 			for (; itSn != m_vecPaperModelInfo[i]->lSN.end(); )
-// 			{
-// 				pSN_ITEM pSn = *itSn;
-// 				itSn = m_vecPaperModelInfo[i]->lSN.erase(itSn);
-// 				SAFE_RELEASE(pSn);
-// 			}
-// 		}
-// 	}
-
-// 	for (int i = 0; i < m_vecPaperModelInfo.size(); i++)
-// 	{
-// 		SNLIST::iterator itSn = m_vecPaperModelInfo[i]->lSN.begin();
-// 		for (; itSn != m_vecPaperModelInfo[i]->lSN.end();)
-// 		{
-// 			pSN_ITEM pSn = *itSn;
-// 			itSn = m_vecPaperModelInfo[i]->lSN.erase(itSn);
-// 			SAFE_RELEASE(pSn);
-// 		}
-// 	}
 
 	std::vector<CPicShow*>::iterator itPic = m_vecPicShow.begin();
 	for (; itPic != m_vecPicShow.end();)
@@ -4758,4 +4735,72 @@ inline bool CMakeModelDlg::checkOverlap(CPType eType, cv::Rect rtSrc)
 			break;
 	}
 	return bResult;
+}
+
+void CMakeModelDlg::InitParam()
+{
+	std::string strLog;
+	std::string strFile = g_strCurrentPath + "param.dat";
+	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(strFile);
+	try
+	{
+		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strUtf8Path));
+
+		m_nGaussKernel = pConf->getInt("Recog.gauseKernel", 5);
+		m_nSharpKernel = pConf->getInt("Recog.sharpKernel", 5);
+		m_nCannyKernel = pConf->getInt("Recog.cannyKernel", 90);
+		m_nDelateKernel = pConf->getInt("Recog.delateKernel", 6);
+		m_nErodeKernel = pConf->getInt("Recog.eRodeKernel", 2);
+
+		m_nWhiteVal = pConf->getInt("Threshold.white", 225);
+		m_nHeadVal	= pConf->getInt("Threshold.head", 136);
+		m_nABModelVal = pConf->getInt("Threshold.abModel", 150);
+		m_nCourseVal = pConf->getInt("Threshold.course", 150);
+		m_nQK_CPVal = pConf->getInt("Threshold.qk", 150);
+		m_nGrayVal	= pConf->getInt("Threshold.gray", 150);
+		m_nFixVal	= pConf->getInt("Threshold.fix", 150);
+		m_nOMR		= pConf->getInt("Threshold.omr", 230);
+		m_nSN		= pConf->getInt("Threshold.sn", 200);
+
+		m_fHeadThresholdPercent		= pConf->getDouble("RecogPercent.head", 0.75);
+		m_fABModelThresholdPercent	= pConf->getDouble("RecogPercent.abModel", 0.75);
+		m_fCourseThresholdPercent	= pConf->getDouble("RecogPercent.course", 0.75);
+		m_fQK_CPThresholdPercent	= pConf->getDouble("RecogPercent.qk", 0.75);
+		m_fFixThresholdPercent		= pConf->getDouble("RecogPercent.fix", 0.8);
+		m_fGrayThresholdPercent		= pConf->getDouble("RecogPercent.gray", 0.75);
+		m_fWhiteThresholdPercent	= pConf->getDouble("RecogPercent.white", 0.75);
+		m_fOMRThresholdPercent		= pConf->getDouble("RecogPercent.omr", 1.5);
+		m_fSNThresholdPercent		= pConf->getDouble("RecogPercent.sn", 1.5);
+		strLog = "读取参数完成";
+	}
+	catch (Poco::Exception& exc)
+	{
+		strLog = "读取参数失败，使用默认参数 " + exc.displayText();
+		m_nGaussKernel = 5;
+		m_nSharpKernel = 5;
+		m_nCannyKernel = 90;
+		m_nDelateKernel = 6;
+		m_nErodeKernel = 2;
+
+		m_nWhiteVal = 225;
+		m_nHeadVal	= 136;
+		m_nABModelVal = 150;
+		m_nCourseVal = 150;
+		m_nQK_CPVal = 150;
+		m_nGrayVal	= 150;
+		m_nFixVal	= 150;
+		m_nOMR		= 230;
+		m_nSN		= 200;
+
+		m_fHeadThresholdPercent		= 0.75;
+		m_fABModelThresholdPercent	= 0.75;
+		m_fCourseThresholdPercent	= 0.75;
+		m_fQK_CPThresholdPercent	= 0.75;
+		m_fFixThresholdPercent		= 0.8;
+		m_fGrayThresholdPercent		= 0.75;
+		m_fWhiteThresholdPercent	= 0.75;
+		m_fOMRThresholdPercent		= 1.5;
+		m_fSNThresholdPercent		= 1.5;
+	}
+	g_pLogger->information(strLog);
 }

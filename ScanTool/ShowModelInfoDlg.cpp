@@ -161,7 +161,7 @@ void CShowModelInfoDlg::ShowModelInfo(pMODEL pModel, int nFlag /*= 0*/)
 			strcpy_s(szHeadVal, "有");
 		else
 			strcpy_s(szHeadVal, "无");
-		char szHead[20] = { 0 };
+		char szHead[30] = { 0 };
 		sprintf_s(szHead, "同步头: %s\r\n", szHeadVal);
 
 		char szExamInfo[30] = { 0 };

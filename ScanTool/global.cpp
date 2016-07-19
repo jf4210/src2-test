@@ -246,8 +246,10 @@ pMODEL LoadModelFile(CString strModelPath)
 		pModel->nEnableModify	= objData->get("enableModify").convert<int>();
 		pModel->nABModel		= objData->get("abPaper").convert<int>();
 		pModel->nHasHead		= objData->get("hasHead").convert<int>();
-		pModel->nExamID			= objData->get("nExamId").convert<int>();
-		pModel->nSubjectID		= objData->get("nSubjectId").convert<int>();
+		if (objData->has("nExamId"))
+			pModel->nExamID			= objData->get("nExamId").convert<int>();
+		if (objData->has("nSubjectId"))
+			pModel->nSubjectID		= objData->get("nSubjectId").convert<int>();
 
 		Poco::JSON::Array::Ptr arrayPapers = objData->getArray("paperInfo");
 		for (int i = 0; i < arrayPapers->size(); i++)

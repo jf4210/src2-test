@@ -78,24 +78,24 @@ public:
 // 	CString		m_strCPTypeName;		//校验点的类型名
 // 	int			m_nThresholdVal;		//校验点的识别阀值
 // 	float		m_fThresholdValPercent;	//校验点达到阀值的比例
-	const int	m_nFixVal;
-	const int	m_nHeadVal;				//水平垂直同步头的阀值
-	const int	m_nABModelVal;
-	const int	m_nCourseVal;
-	const int	m_nQK_CPVal;
-	const int	m_nGrayVal;
-	const int	m_nWhiteVal;
-	const int   m_nOMR;
-	const int	m_nSN;
-	const float m_fFixThresholdPercent;
-	const float m_fHeadThresholdPercent;	//同步头达到阀值的比例
-	const float m_fABModelThresholdPercent;
-	const float m_fCourseThresholdPercent;
-	const float m_fQK_CPThresholdPercent;
-	const float m_fGrayThresholdPercent;
-	const float m_fWhiteThresholdPercent;
-	const float m_fOMRThresholdPercent;
-	const float m_fSNThresholdPercent;
+	int	m_nFixVal;
+	int	m_nHeadVal;				//水平垂直同步头的阀值
+	int	m_nABModelVal;
+	int	m_nCourseVal;
+	int	m_nQK_CPVal;
+	int	m_nGrayVal;
+	int	m_nWhiteVal;
+	int   m_nOMR;
+	int	m_nSN;
+	float m_fFixThresholdPercent;
+	float m_fHeadThresholdPercent;	//同步头达到阀值的比例
+	float m_fABModelThresholdPercent;
+	float m_fCourseThresholdPercent;
+	float m_fQK_CPThresholdPercent;
+	float m_fGrayThresholdPercent;
+	float m_fWhiteThresholdPercent;
+	float m_fOMRThresholdPercent;
+	float m_fSNThresholdPercent;
 
 	std::vector<CPicShow*>	m_vecPicShow;	//存储图片显示窗口指针，有多个模板图片时，对应到不同的tab控件页面
 	int						m_nCurrTabSel;	//当前Tab控件选择的页面
@@ -154,6 +154,8 @@ private:
 	void InitTab();
 	void InitCtrlPosition();
 	void InitConf();
+	void InitParam();
+
 	void UpdataCPList();
 	CPType GetComboSelCpType();
 	bool RecogByHead(cv::Rect rtOri);			//通过同步头来识别点
