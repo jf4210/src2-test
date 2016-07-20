@@ -214,6 +214,9 @@ void CScanModleMgrDlg::OnNMDblclkListModel(NMHDR *pNMHDR, LRESULT *pResult)
 		CString strModelName = m_ModelListCtrl.GetItemText(m_nCurModelItem, 1);
 		CString strModelFilePath = g_strCurrentPath + _T("Model\\") + strModelName;
 
+		CString strModelFullPath = strModelFilePath + _T(".mod");
+		UnZipFile(strModelFullPath);
+
 		pModel = LoadModelFile(strModelFilePath);
 		m_vecModel.push_back(pModel);
 
