@@ -42,6 +42,14 @@ void CSendFileThread::run()
 				it++;
 			}
 		}
+		g_fmSendLock.unlock();
+		if (NULL == pTask)
+		{
+			Poco::Thread::sleep(1000);
+			continue;
+		}
+
+		HandleTask(pTask);
 #else
 		SENDTASKLIST::iterator it = g_lSendTask.begin();
 		for (; it != g_lSendTask.end();)
@@ -50,7 +58,6 @@ void CSendFileThread::run()
 			it = g_lSendTask.erase(it);
 			break;
 		}
-#endif
 		g_fmSendLock.unlock();
 		if (NULL == pTask)
 		{
@@ -60,8 +67,9 @@ void CSendFileThread::run()
 
 		HandleTask(pTask);
 
-// 		delete pTask;
-// 		pTask = NULL;
+		delete pTask;
+		pTask = NULL;
+#endif
 	}
 }
 

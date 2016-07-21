@@ -165,12 +165,17 @@ BOOL CScanToolDlg::OnInitDialog()
 
 	InitUI();
 	InitConfig();
+	InitFileUpLoadList();
+
+// 	Poco::LocalDateTime dtNow;
+// 	std::string strData;
+// 	Poco::format(strData, "%4d-%2d-%2d %2d:%2d", dtNow.year(), dtNow.month(), dtNow.day(), dtNow.hour(), dtNow.minute());
 // 	Poco::LocalDateTime now;
 // 	char szTime[50] = { 0 };
 // 	sprintf_s(szTime, "%d-%02d-%02d %02d:%02d:%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
 // 	TRACE(szTime);
 	
-	SearchModel();         
+	SearchModel();
 	m_comboModel.SetCurSel(0);
 	if (m_comboModel.GetCount())
 	{
@@ -263,6 +268,7 @@ HCURSOR CScanToolDlg::OnQueryDragIcon()
 void CScanToolDlg::OnDestroy()
 {
 	CDialogEx::OnDestroy();
+	USES_CONVERSION;
 
 	g_lExamList.clear();
 	g_nExitFlag = 1;
@@ -320,6 +326,43 @@ void CScanToolDlg::OnDestroy()
 		m_pRecogThread = NULL;
 	}
 	g_pLogger->information("识别线程释放完毕.");
+
+	Poco::JSON::Object jsnFileList;
+	Poco::JSON::Array jsnSendTaskArry;
+	g_fmSendLock.lock();
+	SENDTASKLIST::iterator itSendTask = g_lSendTask.begin();
+	for (; itSendTask != g_lSendTask.end();)
+	{
+		if ((*itSendTask)->nSendState != 2)
+		{
+			//发送失败的文件暂存信息，下次登录时提示是否重新上传
+			Poco::JSON::Object objTask;
+			objTask.set("name", CMyCodeConvert::Gb2312ToUtf8((*itSendTask)->strFileName));
+			objTask.set("path", CMyCodeConvert::Gb2312ToUtf8((*itSendTask)->strPath));
+			jsnSendTaskArry.add(objTask);
+		}
+		itSendTask = g_lSendTask.erase(itSendTask);
+	}
+	g_fmSendLock.unlock();
+	if (jsnSendTaskArry.size())
+	{
+		Poco::LocalDateTime dtNow;
+		std::string strData;
+		Poco::format(strData, "%4d-%02d-%02d %02d:%02d", dtNow.year(), dtNow.month(), dtNow.day(), dtNow.hour(), dtNow.minute());
+		jsnFileList.set("time", strData);
+		jsnFileList.set("fileList", jsnSendTaskArry);
+
+		std::stringstream jsnString;
+		jsnFileList.stringify(jsnString);
+
+		std::string strJsnFile = T2A(g_strCurrentPath + _T("tmpFileList.dat"));
+		ofstream out(strJsnFile);
+		if (out)
+		{
+			out << jsnString.str().c_str();
+			out.close();
+		}
+	}
 
 	m_SendFileThread->join();
 	SAFE_RELEASE(m_pSendFileObj);
@@ -2203,4 +2246,67 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 {
 	CShowFileTransferDlg dlg;
 	dlg.DoModal();
+}
+
+void CScanToolDlg::InitFileUpLoadList()
+{
+	USES_CONVERSION;
+	std::string strFilePath = T2A(g_strCurrentPath + _T("tmpFileList.dat"));
+	
+	std::ifstream in(strFilePath);
+	if (!in)	return ;
+
+	std::string strJsnData;
+	std::string strJsnLine;
+	while (!in.eof())
+	{
+		getline(in, strJsnLine);					//不过滤空格
+		strJsnData.append(strJsnLine);
+	}
+	in.close();
+
+	Poco::JSON::Parser parser;
+	Poco::Dynamic::Var result;
+	try
+	{
+		result = parser.parse(strJsnData);		//strJsnData
+		Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
+
+		std::string strDate = objData->get("time").convert<std::string>();
+		Poco::JSON::Array::Ptr objArry = objData->getArray("fileList");
+		if (objArry->size())
+		{
+			CString strMsg = _T("");
+			strMsg.Format(_T("存在未上传成功的文件(%d个)，是否继续上传?(上次上传时间: %s)"), objArry->size(), A2T(strDate.c_str()));
+			if (MessageBox(strMsg, _T(""), MB_YESNO) != IDYES)
+			{
+				Poco::File fileList(strFilePath);
+				if (fileList.exists())
+					fileList.remove();
+
+				return;
+			}
+		}
+		for (int i = 0; i < objArry->size(); i++)
+		{
+			Poco::JSON::Object::Ptr objFileTask = objArry->getObject(i);
+
+			pSENDTASK pTask = new SENDTASK;
+			pTask->strFileName	= CMyCodeConvert::Utf8ToGb2312(objFileTask->get("name").convert<std::string>());
+			pTask->strPath		= CMyCodeConvert::Utf8ToGb2312(objFileTask->get("path").convert<std::string>());
+			g_fmSendLock.lock();
+			g_lSendTask.push_back(pTask);
+			g_fmSendLock.unlock();
+		}
+		Poco::File fileList(strFilePath);
+		if (fileList.exists())
+			fileList.remove();
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strErrInfo;
+		strErrInfo.append("解析临时文件发送列表失败: ");
+		strErrInfo.append(exc.message());
+		g_pLogger->information(strErrInfo);
+	}
 }
