@@ -51,4 +51,9 @@
 #include "Poco/InflatingStream.h"
 
 
+#include "Poco/Crypto/CipherFactory.h"
+#include "Poco/Crypto/Cipher.h"
+#include "Poco/Crypto/CipherKey.h"
+#include "Poco/Crypto/X509Certificate.h"
+#include "Poco/Crypto/CryptoStream.h"
 

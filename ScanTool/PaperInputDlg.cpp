@@ -1248,10 +1248,18 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	std::stringstream jsnString;
 	jsnFileData.stringify(jsnString, 0);
 
+
+	std::string strFileData;
+#ifdef USES_FILE_ENC
+	encString(jsnString.str(), strFileData);
+#else
+	strFileData = jsnString.str();
+#endif
+
 	char szExamInfoPath[MAX_PATH] = { 0 };
 	sprintf_s(szExamInfoPath, "%s\\%s\\papersInfo.dat", T2A(m_strPapersPath), pPapers->strPapersName.c_str());
 	ofstream out(szExamInfoPath);
-	out << jsnString.str().c_str();
+	out << strFileData.c_str();
 	out.close();
 	//
 

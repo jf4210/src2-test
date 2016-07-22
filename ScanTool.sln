@@ -7,6 +7,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScanTool", "ScanTool\ScanTo
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sendFileTest", "sendFileTest\sendFileTest.vcxproj", "{6D74B7B1-7350-4FC7-A132-903E31310FD2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RecogDLL", "RecogDLL\RecogDLL\RecogDLL.vcxproj", "{A862B745-B99B-460F-ADD1-19E3222BC387}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RecogDLL_Test", "RecogDLL_Test\RecogDLL_Test.vcxproj", "{4B252D55-375F-42CE-85D9-181C920FE3B8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -21,6 +25,14 @@ Global
 		{6D74B7B1-7350-4FC7-A132-903E31310FD2}.Debug|Win32.Build.0 = Debug|Win32
 		{6D74B7B1-7350-4FC7-A132-903E31310FD2}.Release|Win32.ActiveCfg = Release|Win32
 		{6D74B7B1-7350-4FC7-A132-903E31310FD2}.Release|Win32.Build.0 = Release|Win32
+		{A862B745-B99B-460F-ADD1-19E3222BC387}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A862B745-B99B-460F-ADD1-19E3222BC387}.Debug|Win32.Build.0 = Debug|Win32
+		{A862B745-B99B-460F-ADD1-19E3222BC387}.Release|Win32.ActiveCfg = Release|Win32
+		{A862B745-B99B-460F-ADD1-19E3222BC387}.Release|Win32.Build.0 = Release|Win32
+		{4B252D55-375F-42CE-85D9-181C920FE3B8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4B252D55-375F-42CE-85D9-181C920FE3B8}.Debug|Win32.Build.0 = Debug|Win32
+		{4B252D55-375F-42CE-85D9-181C920FE3B8}.Release|Win32.ActiveCfg = Release|Win32
+		{4B252D55-375F-42CE-85D9-181C920FE3B8}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

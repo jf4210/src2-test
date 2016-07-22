@@ -42,6 +42,12 @@
 #include "Poco/Net/NetException.h"
 #include "Poco/Net/TCPServer.h"
 
+#include "Poco/Crypto/CipherFactory.h"
+#include "Poco/Crypto/Cipher.h"
+#include "Poco/Crypto/CipherKey.h"
+#include "Poco/Crypto/X509Certificate.h"
+#include "Poco/Crypto/CryptoStream.h"
+
 #include "zip.h"
 #include "unzip.h"
 #include "MyCodeConvert.h"
@@ -57,6 +63,8 @@
 		#define TriangleCentroid_TEST	//三边质心算法
 	#endif
 #endif
+
+#define USES_FILE_ENC			//是否对文件使用加密
 
 #define USES_PWD_ZIP_UNZIP		//是否使用密码解压缩
 //#define SHOW_MODELMAKE_MAINDLG		//是否在主界面上显示模板制作按钮
@@ -79,6 +87,11 @@ extern std::string			g_strModelSavePath;
 extern Poco::Logger*		g_pLogger;
 extern int					g_nExitFlag;
 extern float				g_fSamePercent;		//判断校验区域是否填图百分比
+
+extern int		g_nRecogGrayMin;		//灰度点(除空白点,OMR外)计算灰度的最小考试范围
+extern int		g_nRecogGrayMax_White;	//空白点校验点计算灰度的最大考试范围
+extern int		g_nRecogGrayMin_OMR;	//OMR计算灰度的最小考试范围
+extern int		g_RecogGrayMax_OMR;		//OMR计算灰度的最大考试范围
 
 extern bool				g_bCmdConnect;		//命令通道连接
 extern bool				g_bFileConnect;		//文件通道连接
@@ -456,3 +469,5 @@ bool	FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST&
 bool	PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);
 int		WriteRegKey(HKEY root, char * subDir, char * regKey, char * regValue);
 int		ReadRegKey(HKEY root, char * subDir, char * regKey, char* & regValue);
+void	encString(std::string& strSrc, std::string& strDst);
+void	decString(std::string& strSrc, std::string& strDst);

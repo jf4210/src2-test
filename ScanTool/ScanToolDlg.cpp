@@ -44,6 +44,12 @@ EXAM_LIST			g_lExamList;	//当前账号对应的考试列表
 
 Poco::Event			g_eTcpThreadExit;
 Poco::Event			g_eSendFileThreadExit;
+
+int		g_nRecogGrayMin = 0;			//灰度点(除空白点,OMR外)计算灰度的最小考试范围
+int		g_nRecogGrayMax_White = 255;	//空白点校验点计算灰度的最大考试范围
+int		g_nRecogGrayMin_OMR = 0;		//OMR计算灰度的最小考试范围
+int		g_RecogGrayMax_OMR = 235;		//OMR计算灰度的最大考试范围
+
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
 class CAboutDlg : public CDialogEx
@@ -1991,10 +1997,17 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	std::stringstream jsnString;
 	jsnFileData.stringify(jsnString, 0);
 
+	std::string strFileData;
+#ifdef USES_FILE_ENC
+	encString(jsnString.str(), strFileData);
+#else
+	strFileData = jsnString.str();
+#endif
+
 	char szExamInfoPath[MAX_PATH] = { 0 };
 	sprintf_s(szExamInfoPath, "%s\\papersInfo.dat", m_strCurrPicSavePath.c_str());
 	ofstream out(szExamInfoPath);
-	out << jsnString.str().c_str();
+	out << strFileData.c_str();
 	out.close();
 	//
 
@@ -2309,4 +2322,31 @@ void CScanToolDlg::InitFileUpLoadList()
 		strErrInfo.append(exc.message());
 		g_pLogger->information(strErrInfo);
 	}
+}
+
+void CScanToolDlg::InitParam()
+{
+	std::string strLog;
+	std::string strFile = g_strCurrentPath + "param.dat";
+	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(strFile);
+	try
+	{
+		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strUtf8Path));
+
+		g_nRecogGrayMin		= pConf->getInt("RecogGray.gray_Min", 0);
+		g_nRecogGrayMax_White = pConf->getInt("RecogGray.white_Max", 255);
+		g_nRecogGrayMin_OMR = pConf->getInt("RecogGray.omr_Min", 0);
+		g_RecogGrayMax_OMR	= pConf->getInt("RecogGray.omr_Max", 235);
+		
+		strLog = "读取识别灰度参数完成";
+	}
+	catch (Poco::Exception& exc)
+	{
+		strLog = "读取参数失败，使用默认参数 " + exc.displayText();
+		g_nRecogGrayMin		= 0;
+		g_nRecogGrayMax_White = 255;
+		g_nRecogGrayMin_OMR = 0;
+		g_RecogGrayMax_OMR	= 235;
+	}
+	g_pLogger->information(strLog);
 }

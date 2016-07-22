@@ -14,6 +14,7 @@
 	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
 #endif
 
+#define USES_FILE_DNC			//是否对文件使用解密
 //#define USE_POCO_UNZIP	//使用poco解压缩zip文件
 
 #define SOFT_VERSION "DataControlServer V1.0"

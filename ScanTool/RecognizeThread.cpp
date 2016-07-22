@@ -293,20 +293,20 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 		float hranges[2];
 		if (rc.eCPType != WHITE_CP && rc.eCPType != OMR)
 		{
-			hranges[0] = 0;
+			hranges[0] = g_nRecogGrayMin;
 			hranges[1] = static_cast<float>(rc.nThresholdValue);
 			ranges[0] = hranges;
 		}
 		else if (rc.eCPType == OMR)
 		{
-			hranges[0] = 0;
-			hranges[1] = 235;
+			hranges[0] = g_nRecogGrayMin_OMR;
+			hranges[1] = g_RecogGrayMax_OMR;
 			ranges[0] = hranges;
 		}
 		else
 		{
 			hranges[0] = static_cast<float>(rc.nThresholdValue);
-			hranges[1] = 255;
+			hranges[1] = g_nRecogGrayMax_White;	//255		//256时可统计完全空白的点，即RGB值为255的完全空白点;255时只能统计到RGB为254的值，255的值统计不到
 			ranges[0] = hranges;
 		}
 		MatND src_hist, comp_hist;
@@ -1269,54 +1269,22 @@ bool CRecognizeThread::RecogVal(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST
 		//图片二值化
 		threshold(matCompRoi, matCompRoi, 240, 255, THRESH_BINARY_INV);				//200, 255
 #if 1
-// 		if (rc.nTH == 26)
-// 		{
-// 			namedWindow("threshold", 1);
-// 			imshow("threshold", matCompRoi);
-// 		}
-
 		//确定腐蚀和膨胀核的大小
 		Mat element = getStructuringElement(MORPH_RECT, Size(4, 4));	//Size(4, 4)
 		//膨胀操作
 		dilate(matCompRoi, matCompRoi, element);
-
-// 		if (rc.nTH == 26)
-// 		{
-// 			namedWindow("dilate", 1);
-// 			imshow("dilate", matCompRoi);
-// 		}
-
+		
 		Mat element2 = getStructuringElement(MORPH_RECT, Size(15, 15));	//Size(4, 4)
 		//腐蚀操作1
 		erode(matCompRoi, matCompRoi, element2);
-
-// 		if (rc.nTH == 26)
-// 		{
-// 			namedWindow("erode", 1);
-// 			imshow("erode", matCompRoi);
-// 		}
-
+		
 		Mat element3 = getStructuringElement(MORPH_RECT, Size(4, 4));	//Size(4, 4)
 		//腐蚀操作2
 		erode(matCompRoi, matCompRoi, element3);
-
-// 		if (rc.nTH == 26)
-// 		{
-// 			namedWindow("erode2", 1);
-// 			imshow("erode2", matCompRoi);
-// 		}
-
-
+		
 		Mat element4 = getStructuringElement(MORPH_RECT, Size(5, 5));	//Size(4, 4)
 		dilate(matCompRoi, matCompRoi, element4);
-
-// 		if(rc.nTH == 26)
-// 		{
-// 			namedWindow("dilate2", 1);
-// 			imshow("dilate2", matCompRoi);
-// 			waitKey(0);
-// 		}
-
+		
 #else
 		//确定腐蚀和膨胀核的大小
 		Mat element = getStructuringElement(MORPH_RECT, Size(5, 5));	//Size(4, 4)

@@ -1038,14 +1038,14 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	float hranges[2];
 	if (rc.eCPType != WHITE_CP)
 	{
-		hranges[0] = 0;
+		hranges[0] = g_nRecogGrayMin;
 		hranges[1] = static_cast<float>(rc.nThresholdValue);
 		ranges[0] = hranges;
 	}
 	else
 	{
 		hranges[0] = static_cast<float>(rc.nThresholdValue);
-		hranges[1] = 255;
+		hranges[1] = g_nRecogGrayMax_White;	//255			//256时可统计完全空白的点，即RGB值为255的完全空白点;255时只能统计到RGB为254的值，255的值统计不到
 		ranges[0] = hranges;
 	}
 	MatND src_hist;
@@ -2207,11 +2207,18 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	std::stringstream jsnString;
 	jsnModel.stringify(jsnString, 0);
 
+	std::string strFileData;
+#ifdef USES_FILE_ENC
+	encString(jsnString.str(), strFileData);
+#else
+	strFileData = jsnString.str();
+#endif
+
 	std::string strJsnFile = T2A(modelPath);
 	strJsnFile += "\\model.dat";
 	ofstream out(strJsnFile);
 	if (!out)	return false;
-	out << jsnString.str().c_str();
+	out << strFileData.c_str();
 	out.close();
 	
 	return true;
@@ -4746,31 +4753,31 @@ void CMakeModelDlg::InitParam()
 	{
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strUtf8Path));
 
-		m_nGaussKernel = pConf->getInt("Recog.gauseKernel", 5);
-		m_nSharpKernel = pConf->getInt("Recog.sharpKernel", 5);
-		m_nCannyKernel = pConf->getInt("Recog.cannyKernel", 90);
-		m_nDelateKernel = pConf->getInt("Recog.delateKernel", 6);
-		m_nErodeKernel = pConf->getInt("Recog.eRodeKernel", 2);
+		m_nGaussKernel = pConf->getInt("MakeModel_Recog.gauseKernel", 5);
+		m_nSharpKernel = pConf->getInt("MakeModel_Recog.sharpKernel", 5);
+		m_nCannyKernel = pConf->getInt("MakeModel_Recog.cannyKernel", 90);
+		m_nDelateKernel = pConf->getInt("MakeModel_Recog.delateKernel", 6);
+		m_nErodeKernel = pConf->getInt("MakeModel_Recog.eRodeKernel", 2);
 
-		m_nWhiteVal = pConf->getInt("Threshold.white", 225);
-		m_nHeadVal	= pConf->getInt("Threshold.head", 136);
-		m_nABModelVal = pConf->getInt("Threshold.abModel", 150);
-		m_nCourseVal = pConf->getInt("Threshold.course", 150);
-		m_nQK_CPVal = pConf->getInt("Threshold.qk", 150);
-		m_nGrayVal	= pConf->getInt("Threshold.gray", 150);
-		m_nFixVal	= pConf->getInt("Threshold.fix", 150);
-		m_nOMR		= pConf->getInt("Threshold.omr", 230);
-		m_nSN		= pConf->getInt("Threshold.sn", 200);
+		m_nWhiteVal = pConf->getInt("MakeModel_Threshold.white", 225);
+		m_nHeadVal	= pConf->getInt("MakeModel_Threshold.head", 136);
+		m_nABModelVal = pConf->getInt("MakeModel_Threshold.abModel", 150);
+		m_nCourseVal = pConf->getInt("MakeModel_Threshold.course", 150);
+		m_nQK_CPVal = pConf->getInt("MakeModel_Threshold.qk", 150);
+		m_nGrayVal	= pConf->getInt("MakeModel_Threshold.gray", 150);
+		m_nFixVal	= pConf->getInt("MakeModel_Threshold.fix", 150);
+		m_nOMR		= pConf->getInt("MakeModel_Threshold.omr", 230);
+		m_nSN		= pConf->getInt("MakeModel_Threshold.sn", 200);
 
-		m_fHeadThresholdPercent		= pConf->getDouble("RecogPercent.head", 0.75);
-		m_fABModelThresholdPercent	= pConf->getDouble("RecogPercent.abModel", 0.75);
-		m_fCourseThresholdPercent	= pConf->getDouble("RecogPercent.course", 0.75);
-		m_fQK_CPThresholdPercent	= pConf->getDouble("RecogPercent.qk", 0.75);
-		m_fFixThresholdPercent		= pConf->getDouble("RecogPercent.fix", 0.8);
-		m_fGrayThresholdPercent		= pConf->getDouble("RecogPercent.gray", 0.75);
-		m_fWhiteThresholdPercent	= pConf->getDouble("RecogPercent.white", 0.75);
-		m_fOMRThresholdPercent		= pConf->getDouble("RecogPercent.omr", 1.5);
-		m_fSNThresholdPercent		= pConf->getDouble("RecogPercent.sn", 1.5);
+		m_fHeadThresholdPercent		= pConf->getDouble("MakeModel_RecogPercent.head", 0.75);
+		m_fABModelThresholdPercent	= pConf->getDouble("MakeModel_RecogPercent.abModel", 0.75);
+		m_fCourseThresholdPercent	= pConf->getDouble("MakeModel_RecogPercent.course", 0.75);
+		m_fQK_CPThresholdPercent	= pConf->getDouble("MakeModel_RecogPercent.qk", 0.75);
+		m_fFixThresholdPercent		= pConf->getDouble("MakeModel_RecogPercent.fix", 0.8);
+		m_fGrayThresholdPercent		= pConf->getDouble("MakeModel_RecogPercent.gray", 0.75);
+		m_fWhiteThresholdPercent	= pConf->getDouble("MakeModel_RecogPercent.white", 0.75);
+		m_fOMRThresholdPercent		= pConf->getDouble("MakeModel_RecogPercent.omr", 1.5);
+		m_fSNThresholdPercent		= pConf->getDouble("MakeModel_RecogPercent.sn", 1.5);
 		strLog = "读取参数完成";
 	}
 	catch (Poco::Exception& exc)

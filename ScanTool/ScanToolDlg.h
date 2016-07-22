@@ -85,6 +85,7 @@ public:
 	void	InitTab();
 	void	InitConfig();
 	void	InitCtrlPosition();
+	void	InitParam();
 	void	InitFileUpLoadList();
 	void	SetFontSize(int nSize);
 	void	SetStatusShowInfo(CString strMsg, BOOL bWarn = FALSE);	//设置状态栏显示的消息

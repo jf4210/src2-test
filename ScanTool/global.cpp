@@ -230,12 +230,19 @@ pMODEL LoadModelFile(CString strModelPath)
 
 	in.close();
 
+	std::string strFileData;
+#ifdef USES_FILE_ENC
+	decString(strJsnData, strFileData);
+#else
+	strFileData = strJsnData;
+#endif
+
 	pMODEL pModel = NULL;
 	Poco::JSON::Parser parser;
 	Poco::Dynamic::Var result;
 	try
 	{
-		result = parser.parse(strJsnData);		//strJsnData
+		result = parser.parse(strFileData);		//strJsnData
 		Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
 
 		pModel = new MODEL;
@@ -1796,4 +1803,18 @@ bool PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModel
 		FixwarpPerspective(nPic, matCompPic, lFix, lModelFix);
 
 	return true;
+}
+
+void encString(std::string& strSrc, std::string& strDst)
+{
+	Poco::Crypto::Cipher::Ptr pCipher = Poco::Crypto::CipherFactory::defaultFactory().createCipher(Poco::Crypto::CipherKey("aes256", "simplepwd"));
+
+	strDst = pCipher->encryptString(strSrc, Poco::Crypto::Cipher::ENC_BINHEX);
+}
+
+void decString(std::string& strSrc, std::string& strDst)
+{
+	Poco::Crypto::Cipher::Ptr pCipher = Poco::Crypto::CipherFactory::defaultFactory().createCipher(Poco::Crypto::CipherKey("aes256", "simplepwd"));
+	
+	strDst = pCipher->decryptString(strSrc, Poco::Crypto::Cipher::ENC_BINHEX);
 }

@@ -5,6 +5,20 @@
 #endif
 
 
+void encString(std::string& strSrc, std::string& strDst)
+{
+	Poco::Crypto::Cipher::Ptr pCipher = Poco::Crypto::CipherFactory::defaultFactory().createCipher(Poco::Crypto::CipherKey("aes256", "simplepwd"));
+
+	strDst = pCipher->encryptString(strSrc, Poco::Crypto::Cipher::ENC_BINHEX);
+}
+
+void decString(std::string& strSrc, std::string& strDst)
+{
+	Poco::Crypto::Cipher::Ptr pCipher = Poco::Crypto::CipherFactory::defaultFactory().createCipher(Poco::Crypto::CipherKey("aes256", "simplepwd"));
+
+	strDst = pCipher->decryptString(strSrc, Poco::Crypto::Cipher::ENC_BINHEX);
+}
+
 bool SortbyNumASC(const std::string& x, const std::string& y)
 {
 	char szX[MAX_PATH] = { 0 };
@@ -383,11 +397,18 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 	}
 	in.close();
 
+	std::string strFileData;
+#ifdef USES_FILE_DNC
+	decString(strJsnData, strFileData);
+#else
+	strFileData = strJsnData;
+#endif
+
 	Poco::JSON::Parser parser;
 	Poco::Dynamic::Var result;
 	try
 	{
-		result = parser.parse(strJsnData);		//strJsnData
+		result = parser.parse(strFileData);		//strJsnData
 		Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
 
 		int nExamId		= objData->get("examId").convert<int>();
