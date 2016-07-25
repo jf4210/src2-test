@@ -1251,7 +1251,8 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 
 	std::string strFileData;
 #ifdef USES_FILE_ENC
-	encString(jsnString.str(), strFileData);
+	if(!encString(jsnString.str(), strFileData))
+		strFileData = jsnString.str();
 #else
 	strFileData = jsnString.str();
 #endif

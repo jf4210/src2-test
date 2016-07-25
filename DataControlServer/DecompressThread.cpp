@@ -5,18 +5,40 @@
 #endif
 
 
-void encString(std::string& strSrc, std::string& strDst)
+bool encString(std::string& strSrc, std::string& strDst)
 {
-	Poco::Crypto::Cipher::Ptr pCipher = Poco::Crypto::CipherFactory::defaultFactory().createCipher(Poco::Crypto::CipherKey("aes256", "simplepwd"));
+	bool bResult = true;
+	try
+	{
+		Poco::Crypto::Cipher::Ptr pCipher = Poco::Crypto::CipherFactory::defaultFactory().createCipher(Poco::Crypto::CipherKey("aes256", "simplepwd"));
 
-	strDst = pCipher->encryptString(strSrc, Poco::Crypto::Cipher::ENC_BINHEX);
+		strDst = pCipher->encryptString(strSrc, Poco::Crypto::Cipher::ENC_BINHEX);
+	}
+	catch (...)
+	{
+		bResult = false;
+		std::string strLog = "数据加密失败，按原数据操作";
+		g_Log.LogOut(strLog);
+	}
+	return bResult;
 }
 
-void decString(std::string& strSrc, std::string& strDst)
+bool decString(std::string& strSrc, std::string& strDst)
 {
-	Poco::Crypto::Cipher::Ptr pCipher = Poco::Crypto::CipherFactory::defaultFactory().createCipher(Poco::Crypto::CipherKey("aes256", "simplepwd"));
+	bool bResult = true;
+	try
+	{
+		Poco::Crypto::Cipher::Ptr pCipher = Poco::Crypto::CipherFactory::defaultFactory().createCipher(Poco::Crypto::CipherKey("aes256", "simplepwd"));
 
-	strDst = pCipher->decryptString(strSrc, Poco::Crypto::Cipher::ENC_BINHEX);
+		strDst = pCipher->decryptString(strSrc, Poco::Crypto::Cipher::ENC_BINHEX);
+	}
+	catch (...)
+	{
+		bResult = false;
+		std::string strLog = "数据解密失败，按原数据操作";
+		g_Log.LogOut(strLog);
+	}
+	return bResult;
 }
 
 bool SortbyNumASC(const std::string& x, const std::string& y)
@@ -320,7 +342,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	}
 	int ret = 0;
 	int opt_do_extract_withoutpath = 0;
-	int opt_overwrite = 0;
+	int opt_overwrite = 1;
 	const char *password = NULL;
 	password = "static";
 
@@ -399,7 +421,8 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 
 	std::string strFileData;
 #ifdef USES_FILE_DNC
-	decString(strJsnData, strFileData);
+	if (!decString(strJsnData, strFileData))
+		strFileData = strJsnData;
 #else
 	strFileData = strJsnData;
 #endif

@@ -86,7 +86,8 @@ extern std::string			g_strPaperSavePath;
 extern std::string			g_strModelSavePath;
 extern Poco::Logger*		g_pLogger;
 extern int					g_nExitFlag;
-extern float				g_fSamePercent;		//判断校验区域是否填图百分比
+
+extern std::string			g_strEncPwd;				//文件加密解密密码
 
 extern int		g_nRecogGrayMin;		//灰度点(除空白点,OMR外)计算灰度的最小考试范围
 extern int		g_nRecogGrayMax_White;	//空白点校验点计算灰度的最大考试范围
@@ -469,5 +470,5 @@ bool	FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST&
 bool	PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);
 int		WriteRegKey(HKEY root, char * subDir, char * regKey, char * regValue);
 int		ReadRegKey(HKEY root, char * subDir, char * regKey, char* & regValue);
-void	encString(std::string& strSrc, std::string& strDst);
-void	decString(std::string& strSrc, std::string& strDst);
+bool	encString(std::string& strSrc, std::string& strDst);
+bool	decString(std::string& strSrc, std::string& strDst);

@@ -62,7 +62,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\..\bin\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>opencv_world310d.lib</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world310d.lib;libeay32.lib;ssleay32.lib</AdditionalDependencies>
       <StackReserveSize>
       </StackReserveSize>
       <StackCommitSize>
@@ -105,6 +105,7 @@
       </StackReserveSize>
       <StackCommitSize>
       </StackCommitSize>
+      <AdditionalDependencies>opencv_world310.lib;libeay32.lib;ssleay32.lib</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>

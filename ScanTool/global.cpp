@@ -232,7 +232,8 @@ pMODEL LoadModelFile(CString strModelPath)
 
 	std::string strFileData;
 #ifdef USES_FILE_ENC
-	decString(strJsnData, strFileData);
+	if (!decString(strJsnData, strFileData))
+		strFileData = strJsnData;
 #else
 	strFileData = strJsnData;
 #endif
@@ -1805,16 +1806,38 @@ bool PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModel
 	return true;
 }
 
-void encString(std::string& strSrc, std::string& strDst)
+bool encString(std::string& strSrc, std::string& strDst)
 {
-	Poco::Crypto::Cipher::Ptr pCipher = Poco::Crypto::CipherFactory::defaultFactory().createCipher(Poco::Crypto::CipherKey("aes256", "simplepwd"));
+	bool bResult = true;
+	try
+	{
+		Poco::Crypto::Cipher::Ptr pCipher = Poco::Crypto::CipherFactory::defaultFactory().createCipher(Poco::Crypto::CipherKey("aes256", "simplepwd"));
 
-	strDst = pCipher->encryptString(strSrc, Poco::Crypto::Cipher::ENC_BINHEX);
+		strDst = pCipher->encryptString(strSrc, Poco::Crypto::Cipher::ENC_BINHEX);
+	}
+	catch (...)
+	{
+		bResult = false;
+		std::string strLog = "数据加密失败，按原数据操作";
+		g_pLogger->information(strLog);
+	}
+	return bResult;
 }
 
-void decString(std::string& strSrc, std::string& strDst)
+bool decString(std::string& strSrc, std::string& strDst)
 {
-	Poco::Crypto::Cipher::Ptr pCipher = Poco::Crypto::CipherFactory::defaultFactory().createCipher(Poco::Crypto::CipherKey("aes256", "simplepwd"));
-	
-	strDst = pCipher->decryptString(strSrc, Poco::Crypto::Cipher::ENC_BINHEX);
+	bool bResult = true;
+	try
+	{
+		Poco::Crypto::Cipher::Ptr pCipher = Poco::Crypto::CipherFactory::defaultFactory().createCipher(Poco::Crypto::CipherKey("aes256", "simplepwd"));
+
+		strDst = pCipher->decryptString(strSrc, Poco::Crypto::Cipher::ENC_BINHEX);
+	}
+	catch (...)
+	{
+		bResult = false;
+		std::string strLog = "数据解密失败，按原数据操作";
+		g_pLogger->information(strLog);
+	}
+	return bResult;
 }

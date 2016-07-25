@@ -22,7 +22,7 @@ using namespace cv;
 
 bool				g_bCmdConnect = false;		//命令通道连接
 bool				g_bFileConnect = false;		//文件通道连接
-float				g_fSamePercent = 0.75;		//判断校验区域是否填图百分比
+
 int					g_nExitFlag = 0;
 CString				g_strCurrentPath;
 std::string			g_strPaperSavePath;	//试卷扫描后保存的总路径
@@ -49,6 +49,8 @@ int		g_nRecogGrayMin = 0;			//灰度点(除空白点,OMR外)计算灰度的最小考试范围
 int		g_nRecogGrayMax_White = 255;	//空白点校验点计算灰度的最大考试范围
 int		g_nRecogGrayMin_OMR = 0;		//OMR计算灰度的最小考试范围
 int		g_RecogGrayMax_OMR = 235;		//OMR计算灰度的最大考试范围
+
+std::string g_strEncPwd = "simplepwd";				//文件加密解密密码
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -171,6 +173,7 @@ BOOL CScanToolDlg::OnInitDialog()
 
 	InitUI();
 	InitConfig();
+	InitParam();
 	InitFileUpLoadList();
 
 // 	Poco::LocalDateTime dtNow;
@@ -531,7 +534,7 @@ void CScanToolDlg::InitUI()
 {
 	m_lcPicture.SetExtendedStyle(m_lcPicture.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcPicture.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 40);
-	m_lcPicture.InsertColumn(1, _T("学生信息"), LVCFMT_CENTER, 100);
+	m_lcPicture.InsertColumn(1, _T("学生信息"), LVCFMT_CENTER, 150);
 
 	m_lcPaper.SetExtendedStyle(m_lcPaper.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcPaper.InsertColumn(0, _T("试卷名"), LVCFMT_CENTER, 80);
@@ -1999,7 +2002,8 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 
 	std::string strFileData;
 #ifdef USES_FILE_ENC
-	encString(jsnString.str(), strFileData);
+	if(!encString(jsnString.str(), strFileData))
+		strFileData = jsnString.str();
 #else
 	strFileData = jsnString.str();
 #endif
