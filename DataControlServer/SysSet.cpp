@@ -31,6 +31,6 @@ bool CSysSet::Load(std::string& strConfPath)
 	m_nIntervalTime		= pConf->getInt("UpHttp.intervalTime", 5);
 	m_strUpLoadHttpUri	= pConf->getString("UpHttp.upUri");
 	m_strBackUri		= pConf->getString("UpHttp.backUri");
-	m_strScanReqUri		= pConf->getString("UpHttp.scanReqUri");
+	m_strEncryptPwd		= pConf->getString("Sys.encryptPwd", "yklxTest");
 	return true;
 }

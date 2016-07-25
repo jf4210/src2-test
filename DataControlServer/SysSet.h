@@ -33,7 +33,7 @@ public:
 	string m_strModelSavePath;
 	string m_strUpLoadHttpUri;
 	string m_strBackUri;
-	string m_strScanReqUri;
+	string m_strEncryptPwd;	//扫描端进行文件加密解密的密码
 };
 
 #define SysSet CSysSet::GetRef()

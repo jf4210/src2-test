@@ -1745,7 +1745,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 		char szModelName[30] = { 0 };
 		sprintf_s(szModelName, "%d_%d", dlg.m_nExamID, dlg.m_SubjectID);
 		char szModelDesc[300] = { 0 };
-		sprintf_s(szModelDesc, "年级: %s\r\n考试类型名称: %s\r\n科目: %s", T2A(dlg.m_strGradeName), T2A(dlg.m_strExamTypeName), T2A(dlg.m_strSubjectName));
+		sprintf_s(szModelDesc, "考试名称: %s\r\n科目: %s\r\n年级: %s\r\n考试类型名称: %s", T2A(dlg.m_strExamName), T2A(dlg.m_strSubjectName), T2A(dlg.m_strGradeName), T2A(dlg.m_strExamTypeName));
 		m_pModel->nExamID		= dlg.m_nExamID;
 		m_pModel->nSubjectID	= dlg.m_SubjectID;
 		m_pModel->strModelName	= szModelName;

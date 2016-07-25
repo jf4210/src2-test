@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CModelSaveDlg, CDialog)
 
 CModelSaveDlg::CModelSaveDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	: CDialog(CModelSaveDlg::IDD, pParent)
-	, m_strExamTypeName(_T("")), m_strGradeName(_T("")), m_strSubjectName(_T("")), m_SubjectID(0), m_nExamID(0), m_nSaveMode(1), m_pModel(pModel)
+	, m_strExamTypeName(_T("")), m_strGradeName(_T("")), m_strSubjectName(_T("")), m_SubjectID(0), m_nExamID(0), m_nSaveMode(1), m_pModel(pModel), m_strExamName(_T(""))
 {
 
 }
@@ -58,6 +58,7 @@ BOOL CModelSaveDlg::OnInitDialog()
 		for (; itExam != g_lExamList.end(); itExam++)
 		{
 			CString strName = A2T(itExam->strExamName.c_str());
+			m_strExamName = strName;
 
 			int nCount = m_comboExamName.GetCount();
 			m_comboExamName.InsertString(nCount, strName);
@@ -181,6 +182,7 @@ void CModelSaveDlg::OnCbnSelchangeComboExamname()
 	}
 	m_comboSubject.SetCurSel(0);
 
+	m_strExamName = pExamInfo->strExamName.c_str();
 	m_nExamID = pExamInfo->nExamID;
 	m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
 	m_strGradeName = pExamInfo->strGradeName.c_str();

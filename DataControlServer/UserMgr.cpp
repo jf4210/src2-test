@@ -66,9 +66,9 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			#endif
 
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
-			pTask->strUri	  = SysSet.m_strScanReqUri + "/login";
-			pTask->pUser	  = pUser;
-			pTask->strMsg	  = "login";
+			pTask->strUri		= SysSet.m_strBackUri + "/login";
+			pTask->pUser		= pUser;
+			pTask->strMsg		= "login";
 			pTask->strUser		= LoginInfo.szUserNo;
 			pTask->strPwd		= LoginInfo.szPWD;
 			char szTmp[200] = { 0 };
@@ -152,7 +152,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			#endif
 
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
-			pTask->strUri = SysSet.m_strScanReqUri + "/examinfo";
+			pTask->strUri = SysSet.m_strBackUri + "/examinfo";
 			pTask->pUser  = pUser;
 			pTask->strEzs = "ezs=" + strEzs;
 			pTask->strMsg = "ezs";
@@ -208,7 +208,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 
 				std::string strEzs = stModelInfo.szEzs;
 				pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
-				pTask->strUri = SysSet.m_strScanReqUri + "/scanTemplate";
+				pTask->strUri = SysSet.m_strBackUri + "/scanTemplate";
 				pTask->pUser = pUser;
 				pTask->strEzs = "ezs=" + strEzs;
 				pTask->strMsg = "setScanModel";
