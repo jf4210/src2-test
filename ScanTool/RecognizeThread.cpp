@@ -165,7 +165,8 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		m_ptFixCP = Point(0, 0);
 		bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo);
 #ifdef WarpAffine_TEST
-		if (bResult) bResult = PicTransfer(nPic, matCompPic, (*itPic)->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix);
+		cv::Mat	inverseMat(2, 3, CV_32FC1);
+		if (bResult) bResult = PicTransfer(nPic, matCompPic, (*itPic)->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, inverseMat);
 #endif
 		if(bResult) bResult = RecogHHead(nPic, matCompPic, *itPic, pModelInfo);
 		if(bResult) bResult = RecogVHead(nPic, matCompPic, *itPic, pModelInfo);

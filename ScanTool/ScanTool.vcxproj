@@ -132,6 +132,7 @@
     <ClInclude Include="FileUpLoad.h" />
     <ClInclude Include="GetModelDlg.h" />
     <ClInclude Include="global.h" />
+    <ClInclude Include="GuideDlg.h" />
     <ClInclude Include="LoginDlg.h" />
     <ClInclude Include="MakeModelDlg.h" />
     <ClInclude Include="minidump.h" />
@@ -173,6 +174,7 @@
     <ClCompile Include="FileUpLoad.cpp" />
     <ClCompile Include="GetModelDlg.cpp" />
     <ClCompile Include="global.cpp" />
+    <ClCompile Include="GuideDlg.cpp" />
     <ClCompile Include="LoginDlg.cpp" />
     <ClCompile Include="MakeModelDlg.cpp" />
     <ClCompile Include="ModelInfoDlg.cpp" />

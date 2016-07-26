@@ -1671,7 +1671,7 @@ bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat)
 	return true;
 }
 
-bool FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix)
+bool FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat)
 {
 	if (lFix.size() < 3)
 		return false;
@@ -1723,6 +1723,10 @@ bool FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lMod
 	warp_mat = cv::getAffineTransform(srcTri, dstTri);
 	cv::warpAffine(matCompPic, matCompPic, warp_mat, matCompPic.size(), 1, 0, cv::Scalar(255, 255, 255));
 
+#if 1	//计算逆矩阵，计算相对模板的原坐标
+	cv::Mat warp_mat2(2, 3, CV_32FC1);
+	inverseMat = cv::getAffineTransform(dstTri, srcTri);
+#endif
 
 // 	RECTLIST::iterator itCP3 = lFix.begin();
 // 	for (; itCP3 != lFix.end(); itCP3++)
@@ -1744,7 +1748,7 @@ bool FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lMod
 	return true;
 }
 
-bool FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix)
+bool FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat)
 {
 	if (lFix.size() < 4)
 		return false;
@@ -1796,12 +1800,12 @@ bool FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST&
 	return true;
 }
 
-bool PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix)
+bool PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat)
 {
 	if (lFix.size() == 3)
-		FixWarpAffine(nPic, matCompPic, lFix, lModelFix);
+		FixWarpAffine(nPic, matCompPic, lFix, lModelFix, inverseMat);
 	else if (lFix.size() == 4)
-		FixwarpPerspective(nPic, matCompPic, lFix, lModelFix);
+		FixwarpPerspective(nPic, matCompPic, lFix, lModelFix, inverseMat);
 
 	return true;
 }
@@ -1809,9 +1813,14 @@ bool PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModel
 bool encString(std::string& strSrc, std::string& strDst)
 {
 	bool bResult = true;
+	if (g_strEncPwd.empty())
+	{
+		strDst = strSrc;
+		return bResult;
+	}
 	try
 	{
-		Poco::Crypto::Cipher::Ptr pCipher = Poco::Crypto::CipherFactory::defaultFactory().createCipher(Poco::Crypto::CipherKey("aes256", "simplepwd"));
+		Poco::Crypto::Cipher::Ptr pCipher = Poco::Crypto::CipherFactory::defaultFactory().createCipher(Poco::Crypto::CipherKey("aes256", g_strEncPwd));
 
 		strDst = pCipher->encryptString(strSrc, Poco::Crypto::Cipher::ENC_BINHEX);
 	}
@@ -1827,9 +1836,14 @@ bool encString(std::string& strSrc, std::string& strDst)
 bool decString(std::string& strSrc, std::string& strDst)
 {
 	bool bResult = true;
+	if (g_strEncPwd.empty())
+	{
+		strDst = strSrc;
+		return bResult;
+	}
 	try
 	{
-		Poco::Crypto::Cipher::Ptr pCipher = Poco::Crypto::CipherFactory::defaultFactory().createCipher(Poco::Crypto::CipherKey("aes256", "simplepwd"));
+		Poco::Crypto::Cipher::Ptr pCipher = Poco::Crypto::CipherFactory::defaultFactory().createCipher(Poco::Crypto::CipherKey("aes256", g_strEncPwd));
 
 		strDst = pCipher->decryptString(strSrc, Poco::Crypto::Cipher::ENC_BINHEX);
 	}
@@ -1840,4 +1854,73 @@ bool decString(std::string& strSrc, std::string& strDst)
 		g_pLogger->information(strLog);
 	}
 	return bResult;
+}
+
+
+
+
+
+
+
+
+bool GetInverseMat(RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat)
+{
+	std::vector<cv::Point2f> vecFixPt;
+	std::vector<cv::Point2f> vecFixNewPt;
+
+	RECTLIST::iterator itCP = lModelFix.begin();
+	for (; itCP != lModelFix.end(); itCP++)
+	{
+		cv::Point2f pt;
+		pt.x = itCP->rt.x + itCP->rt.width / 2;
+		pt.y = itCP->rt.y + itCP->rt.height / 2;
+		vecFixPt.push_back(pt);
+	}
+	RECTLIST::iterator itCP2 = lFix.begin();
+	for (; itCP2 != lFix.end(); itCP2++)
+	{
+		cv::Point2f pt;
+		pt.x = itCP2->rt.x + itCP2->rt.width / 2;
+		pt.y = itCP2->rt.y + itCP2->rt.height / 2;
+		vecFixNewPt.push_back(pt);
+	}
+	if (lFix.size() == 3)
+	{
+		cv::Point2f srcTri[3];
+		cv::Point2f dstTri[3];
+		cv::Mat warp_mat(2, 3, CV_32FC1);
+		cv::Mat warp_dst, warp_rotate_dst;
+		for (int i = 0; i < vecFixPt.size(); i++)
+		{
+			srcTri[i] = vecFixNewPt[i];
+			dstTri[i] = vecFixPt[i];
+		}
+		inverseMat = cv::getAffineTransform(dstTri, srcTri);
+	}
+	else if (lFix.size() == 4)
+	{
+		cv::Point2f srcTri[4];
+		cv::Point2f dstTri[4];
+		cv::Mat warp_mat(2, 3, CV_32FC1);
+		cv::Mat warp_dst, warp_rotate_dst;
+		for (int i = 0; i < vecFixPt.size(); i++)
+		{
+			srcTri[i] = vecFixNewPt[i];
+			dstTri[i] = vecFixPt[i];
+		}
+		inverseMat = cv::getAffineTransform(dstTri, srcTri);
+	}
+	return true;
+}
+
+bool GetPosition2(cv::Mat& inverseMat, cv::Rect& rtSrc, cv::Rect& rtDst)
+{
+	cv::Point2f pt;
+	rtDst = rtSrc;
+
+	pt.x = inverseMat.ptr<double>(0)[0] * rtSrc.x + inverseMat.ptr<double>(0)[1] * rtSrc.y + inverseMat.ptr<double>(0)[2];
+	pt.y = inverseMat.ptr<double>(1)[0] * rtSrc.x + inverseMat.ptr<double>(1)[1] * rtSrc.y + inverseMat.ptr<double>(1)[2];
+	rtDst.x = pt.x;
+	rtDst.y = pt.y;
+	return true;
 }

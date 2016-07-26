@@ -94,6 +94,9 @@
     <Filter Include="模板管理窗口\下载扫描模板窗口">
       <UniqueIdentifier>{e302b5d5-8d9b-48ff-8469-8a05d7e6ff86}</UniqueIdentifier>
     </Filter>
+    <Filter Include="%2a%2a%2a%2a%2a%2a%2a主引导界面%2a%2a%2a%2a%2a%2a%2a%2a%2a">
+      <UniqueIdentifier>{e08696e7-2110-4acd-96bd-7739a7b25859}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -222,6 +225,9 @@
     <ClInclude Include="ScanerInfoDlg.h">
       <Filter>扫描员信息窗口</Filter>
     </ClInclude>
+    <ClInclude Include="GuideDlg.h">
+      <Filter>%2a%2a%2a%2a%2a%2a%2a主引导界面%2a%2a%2a%2a%2a%2a%2a%2a%2a</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
@@ -328,6 +334,9 @@
     </ClCompile>
     <ClCompile Include="ScanerInfoDlg.cpp">
       <Filter>扫描员信息窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="GuideDlg.cpp">
+      <Filter>%2a%2a%2a%2a%2a%2a%2a主引导界面%2a%2a%2a%2a%2a%2a%2a%2a%2a</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

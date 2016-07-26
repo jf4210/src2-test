@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "ScanTool.h"
 #include "ScanToolDlg.h"
+#include "GuideDlg.h"
 #include "minidump.h"
 #include "global.h"
 
@@ -77,10 +78,15 @@ BOOL CScanToolApp::InitInstance()
 
 	RunCrashHandler();
 
-
-	CScanToolDlg dlg;
+#ifdef SHOW_GUIDEDLG
+	CGuideDlg dlg;
+	m_pMainWnd = &dlg;  
+	INT_PTR nResponse = dlg.DoModal();
+#else
+	CScanToolDlg dlg(NULL);
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
+#endif
 	if (nResponse == IDOK)
 	{
 		// TODO:  在此放置处理何时用

@@ -56,6 +56,7 @@
 #define WarpAffine_TEST		//仿射变换测试
 #ifdef _DEBUG
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
+//	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -67,12 +68,15 @@
 #define USES_FILE_ENC			//是否对文件使用加密
 
 #define USES_PWD_ZIP_UNZIP		//是否使用密码解压缩
+
+#define SHOW_GUIDEDLG					//显示引导界面
 //#define SHOW_MODELMAKE_MAINDLG		//是否在主界面上显示模板制作按钮
 //#define SHOW_COMBOLIST_MAINDLG		//是否在主界面上显示下拉列表控件
+//#define SHOW_SCANALL_MAINDLG			//是否在主界面上显示整袋扫描按钮
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 
-#define SOFT_VERSION	_T("1.718")
+#define SOFT_VERSION	_T("1.801")
 #define SYS_BASE_NAME	_T("YKLX-ScanTool")
 
 #define MAX_DLG_WIDTH	1024
@@ -465,10 +469,13 @@ bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 
 std::string calcFileMd5(std::string strPath);
 void	CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int height);
 bool	PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat);
-bool	FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);		//定点进行仿射变换
-bool	FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);	//定点透视变换
-bool	PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);
+bool	FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);		//定点进行仿射变换
+bool	FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//定点透视变换
+bool	PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);
 int		WriteRegKey(HKEY root, char * subDir, char * regKey, char * regValue);
 int		ReadRegKey(HKEY root, char * subDir, char * regKey, char* & regValue);
 bool	encString(std::string& strSrc, std::string& strDst);
 bool	decString(std::string& strSrc, std::string& strDst);
+
+bool	GetInverseMat(RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);
+bool	GetPosition2(cv::Mat& inverseMat, cv::Rect& rtSrc, cv::Rect& rtDst);

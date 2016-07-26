@@ -843,12 +843,24 @@ void CPaperInputDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			cvtColor(dst, matImg, CV_GRAY2BGR);
 		else
 			matImg = dst;
-#ifdef WarpAffine_TEST
-		PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix);
-#endif
+// #ifdef WarpAffine_TEST
+// 			cv::Mat	inverseMat(2, 3, CV_32FC1);
+// 			PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
+// #endif
 #else
 		Mat matImg = matSrc;
 #endif
+
+#ifdef WarpAffine_TEST
+		cv::Mat	inverseMat(2, 3, CV_32FC1);
+		PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
+#endif
+
+#ifdef Test_ShowOriPosition
+		cv::Mat	inverseMat(2, 3, CV_32FC1);
+		GetInverseMat((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
+#endif
+
 		Mat tmp = matImg.clone();
 		Mat tmp2 = matImg.clone();
 
@@ -908,7 +920,11 @@ void CPaperInputDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			for (; itSnItem != pSnItem->lSN.end(); itSnItem++)
 			{
 				cv::Rect rt = (*itSnItem).rt;
+#ifdef Test_ShowOriPosition
+				GetPosition2(inverseMat, rt, rt);
+#else
 				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+#endif
 
 				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
@@ -923,7 +939,11 @@ void CPaperInputDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			for (; itOmrItem != pOmrQuestion->lSelAnswer.end(); itOmrItem++)
 			{
 				cv::Rect rt = (*itOmrItem).rt;
+#ifdef Test_ShowOriPosition
+				GetPosition2(inverseMat, rt, rt);
+#else
 				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+#endif
 
 				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
@@ -954,12 +974,19 @@ void CPaperInputDlg::PaintIssueRect(pST_PaperInfo pPaper)
 				cvtColor(dst, matImg, CV_GRAY2BGR);
 			else
 				matImg = dst;
-#ifdef WarpAffine_TEST
-			PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix);
-#endif
+// #ifdef WarpAffine_TEST
+// 			cv::Mat	inverseMat(2, 3, CV_32FC1);
+// 			PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
+// #endif
 #else
 			Mat matImg = matSrc;
 #endif
+
+#ifdef WarpAffine_TEST
+			cv::Mat	inverseMat(2, 3, CV_32FC1);
+			PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
+#endif
+
 			Mat tmp = matImg.clone();
 			Mat tmp2 = matImg.clone();
 

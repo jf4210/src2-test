@@ -23,7 +23,7 @@ class CScanToolDlg : public CDialogEx, public CTwain
 {
 // 构造
 public:
-	CScanToolDlg(CWnd* pParent = NULL);	// 标准构造函数
+	CScanToolDlg(pMODEL pModel, CWnd* pParent = NULL);	// 标准构造函数
 
 // 对话框数据
 	enum { IDD = IDD_SCANTOOL_DIALOG };
@@ -139,9 +139,10 @@ public:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnBnClickedBtnUploadpapers();
 	afx_msg void OnBnClickedBtnLogin();
-	afx_msg void OnBnClickedBtnGetmodel();
 	afx_msg void OnBnClickedBtnModelmgr();
 	afx_msg void OnNMHoverListPicture(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnLvnKeydownListPicture(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedBtnUploadmgr();
+	afx_msg void OnBnClickedBtnScanall();
+	afx_msg void OnClose();
 };

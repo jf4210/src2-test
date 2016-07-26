@@ -372,10 +372,12 @@ void CScanModleMgrDlg::OnBnClickedOk()
 
 void CScanModleMgrDlg::OnBnClickedBtnMakemodel()
 {
+#ifndef SHOW_GUIDEDLG
 	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
 
 	pDlg->ReleaseTwain();
 	pDlg->m_bTwainInit = FALSE;
+#endif
 
 	CMakeModelDlg dlg(m_pModel);
 	dlg.DoModal();
