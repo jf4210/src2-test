@@ -87,6 +87,11 @@ public:
 	void	InitCtrlPosition();
 	void	InitParam();
 	void	InitFileUpLoadList();
+
+	void	InitShow(pMODEL pModel);
+	void	InitScan();
+	void	ReleaseScan();
+
 	void	SetFontSize(int nSize);
 	void	SetStatusShowInfo(CString strMsg, BOOL bWarn = FALSE);	//设置状态栏显示的消息
 
@@ -145,4 +150,5 @@ public:
 	afx_msg void OnBnClickedBtnUploadmgr();
 	afx_msg void OnBnClickedBtnScanall();
 	afx_msg void OnClose();
+	afx_msg void OnBnClickedBtnReback();
 };

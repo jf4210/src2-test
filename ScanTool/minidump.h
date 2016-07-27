@@ -7,6 +7,7 @@
 
 #include "ScanTool.h"
 #include "ScanToolDlg.h"
+#include "GuideDlg.h"
 
 #pragma comment(lib, "dbghelp.lib")  
 
@@ -157,7 +158,11 @@ LONG WINAPI UnhandledExceptionFilterEx(struct _EXCEPTION_POINTERS *pException)
 	
 
 	//++让主窗口关闭扫描仪连接
+#ifdef SHOW_GUIDEDLG
+	((CGuideDlg*)AfxGetMainWnd())->m_pScanDlg->ReleaseScan();
+#else
 	((CScanToolDlg*)AfxGetMainWnd())->ReleaseTwain();
+#endif
 	//--
 
 	// TODO: MiniDumpWriteDump  

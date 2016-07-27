@@ -16,6 +16,14 @@ public:
 	enum { IDD = IDD_GUIDEDLG };
 
 public:
+	BOOL	m_bLogin;
+	CString			m_strUserName;
+	CString			m_strNickName;
+	CString			m_strPwd;
+	CString			m_strEzs;
+	int				m_nTeacherId;
+	int				m_nUserId;
+
 	pMODEL	m_pModel;
 	CScanToolDlg* m_pScanDlg;
 
@@ -35,4 +43,5 @@ public:
 	afx_msg void OnBnClickedBtnModel();
 	afx_msg void OnBnClickedBtnParam();
 	afx_msg void OnDestroy();
+	afx_msg void OnBnClickedBtnLogin();
 };

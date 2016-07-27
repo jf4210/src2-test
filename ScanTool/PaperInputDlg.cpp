@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "ScanTool.h"
 #include "ScanToolDlg.h"
+#include "GuideDlg.h"
 #include "PaperInputDlg.h"
 #include "afxdialogex.h"
 #include <string.h>
@@ -1121,7 +1122,28 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	clock_t start, end;
 	start = clock();
 
+	BOOL	bLogin = FALSE;
+	CString strUser = _T("");
+	CString strEzs = _T("");
+	int nTeacherId = -1;
+	int nUserId = -1;
+#ifdef SHOW_GUIDEDLG
+	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
+
+	strEzs = pDlg->m_strEzs;
+	strUser = pDlg->m_strUserName;
+	nTeacherId = pDlg->m_nTeacherId;
+	nUserId = pDlg->m_nUserId;
+	bLogin = pDlg->m_bLogin;
+#else
 	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();	//AfxGetMainWnd()
+	strEzs = pDlg->m_strEzs;
+	strUser = pDlg->m_strUserName;
+	nTeacherId = pDlg->m_nTeacherId;
+	nUserId = pDlg->m_nUserId;
+	bLogin = pDlg->m_bLogin;
+#endif
+	
 
 	CPapersInfoSaveDlg dlg(pPapers);
 	if (dlg.DoModal() != IDOK)
@@ -1261,15 +1283,15 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		jsnPaperArry.add(jsnPaper);
 	}
 	//写试卷袋信息到文件
-	std::string strUploader = CMyCodeConvert::Gb2312ToUtf8(T2A(pDlg->m_strUserName));
-	std::string strEzs = T2A(pDlg->m_strEzs);
+	std::string strUploader = CMyCodeConvert::Gb2312ToUtf8(T2A(strUser));
+	std::string sEzs = T2A(strEzs);
 	Poco::JSON::Object jsnFileData;
 	jsnFileData.set("examId", dlg.m_nExamID);
 	jsnFileData.set("subjectId", dlg.m_SubjectID);
 	jsnFileData.set("uploader", strUploader);
-	jsnFileData.set("ezs", strEzs);
-	jsnFileData.set("nTeacherId", pDlg->m_nTeacherId);
-	jsnFileData.set("nUserId", pDlg->m_nUserId);
+	jsnFileData.set("ezs", sEzs);
+	jsnFileData.set("nTeacherId", nTeacherId);
+	jsnFileData.set("nUserId", nUserId);
 	jsnFileData.set("scanNum", pPapers->nPaperCount);		//扫描的学生数量
 	jsnFileData.set("detail", jsnPaperArry);
 	std::stringstream jsnString;
@@ -1295,15 +1317,15 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	char szPapersSrcPath[MAX_PATH] = { 0 };
 	char szPapersSavePath[MAX_PATH] = { 0 };
 	char szZipName[50] = { 0 };
-	if (pDlg->m_bLogin)
+	if (bLogin)
 	{
 		Poco::LocalDateTime now;
 		char szTime[50] = { 0 };
 		sprintf_s(szTime, "%d%02d%02d%02d%02d%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
 
 		sprintf_s(szPapersSrcPath, "%s\\%s", T2A(m_strPapersPath), pPapers->strPapersName.c_str());
-		sprintf_s(szPapersSavePath, "%sPaper\\%s_%s", T2A(g_strCurrentPath), T2A(pDlg->m_strUserName), szTime);
-		sprintf_s(szZipName, "%s_%s.pkg", T2A(pDlg->m_strUserName), szTime);
+		sprintf_s(szPapersSavePath, "%sPaper\\%s_%s", T2A(g_strCurrentPath), T2A(strUser), szTime);
+		sprintf_s(szZipName, "%s_%s.pkg", T2A(strUser), szTime);
 	}
 	else
 	{

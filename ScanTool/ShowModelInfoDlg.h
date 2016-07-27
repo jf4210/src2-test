@@ -20,13 +20,15 @@ public:
 private:
 	void InitUI();
 	void InitCtrlPosition();
-	void SetFontSize(int nSize);
+	void SetFontSize(int nNameSize, int nDesSize);
 
 	CString			m_strModelName;
 	CString			m_strModelDesc;
 
-	int				m_nStatusSize;			//字体大小
-	CFont			m_fontStatus;			//字体
+	int				m_nNameSize;			//字体大小
+	int				m_nDesSize;
+	CFont			m_fontStatus_Name;		//字体
+	CFont			m_fontStatus_Des;		//字体
 	COLORREF		m_colorStatus;			//字体颜色
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持

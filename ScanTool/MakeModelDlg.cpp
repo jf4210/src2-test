@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "ScanTool.h"
 #include "ScanToolDlg.h"
+#include "GuideDlg.h"
 #include "MakeModelDlg.h"
 #include "afxdialogex.h"
 #include "ModelSaveDlg.h"
@@ -1718,8 +1719,6 @@ bool CMakeModelDlg::checkValidity()
 
 void CMakeModelDlg::OnBnClickedBtnSave()
 {
-	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();	//GetParent();
-
 	if (!m_pModel)
 	{
 		AfxMessageBox(_T("请先创建模板"));
@@ -1727,7 +1726,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	}
 	
 	if (!checkValidity()) return;
-#if 1
+
 	CModelSaveDlg dlg(m_pModel);
 	if (dlg.DoModal() != IDOK)
 		return;
@@ -1755,35 +1754,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	CString strTitle = _T("");
 	strTitle.Format(_T("模板名称: %s"), m_pModel->strModelName);
 	SetWindowText(strTitle);
-#else
-	if (m_bNewModelFlag && !m_bSavedModelFlag)
-	{
-		CModelSaveDlg dlg(m_pModel);
-		if (dlg.DoModal() != IDOK)
-			return;
-		
-		if (!pDlg->m_bLogin)
-		{
-			m_pModel->strModelName = dlg.m_strModelName;
-			m_pModel->strModelDesc = dlg.m_strLocalModelDesc;
-		}
-		else
-		{
-			char szModelName[30] = { 0 };
-			sprintf_s(szModelName, "%d_%d", dlg.m_nExamID, dlg.m_SubjectID);
-			char szModelDesc[300] = { 0 };
-			sprintf_s(szModelDesc, "年级: %s\n考试名称: %s\n科目: %s", dlg.m_strGradeName, dlg.m_strExamTypeName, dlg.m_strSubjectName);
-			m_pModel->nExamID		= dlg.m_nExamID;
-			m_pModel->nSubjectID	= dlg.m_SubjectID;
-			m_pModel->strModelName	= szModelName;
-			m_pModel->strModelDesc	= szModelDesc;
-		}
 
-		CString strTitle = _T("");
-		strTitle.Format(_T("模板名称: %s"), m_pModel->strModelName);
-		SetWindowText(strTitle);
-	}
-#endif
 	m_bSavedModelFlag = true;
 	
 	for (int i = 0; i < m_pModel->vecPaperModel.size(); i++)
@@ -4324,15 +4295,27 @@ void CMakeModelDlg::setUploadModelInfo(CString& strName, CString& strModelPath, 
 
 	strMd5 = calcFileMd5(strPath);
 
+	CString strUser = _T("");
+	CString strEzs = _T("");
+#ifdef SHOW_GUIDEDLG
+	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
+
+	strEzs = pDlg->m_strEzs;
+	strUser = pDlg->m_strUserName;
+#else
 	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();	//GetParent();
+	strEzs = pDlg->m_strEzs;
+	strUser = pDlg->m_strUserName;
+#endif
+	
 
 	ST_MODELINFO stModelInfo;
 	ZeroMemory(&stModelInfo, sizeof(ST_MODELINFO));
 	stModelInfo.nExamID = nExamId;
 	stModelInfo.nSubjectID = nSubjectId;
-	sprintf_s(stModelInfo.szUserNo, "%s", T2A(pDlg->m_strUserName));
+	sprintf_s(stModelInfo.szUserNo, "%s", T2A(strUser));
 	sprintf_s(stModelInfo.szModelName, "%s.mod", T2A(strName));
-	sprintf_s(stModelInfo.szEzs, "%s", T2A(pDlg->m_strEzs));
+	sprintf_s(stModelInfo.szEzs, "%s", T2A(strEzs));
 	strncpy(stModelInfo.szMD5, strMd5.c_str(), strMd5.length());
 
 	pTCP_TASK pTcpTask = new TCP_TASK;
@@ -4359,8 +4342,17 @@ void CMakeModelDlg::OnBnClickedBtnuploadmodel()
 		return;
 	}
 
+	BOOL	bLogin = FALSE;
+#ifdef SHOW_GUIDEDLG
+	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
+	
+	bLogin = pDlg->m_bLogin;
+#else
 	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();	//GetParent();AfxGetMainWnd
-	if (!pDlg->m_bLogin)
+	bLogin = pDlg->m_bLogin;
+#endif
+	
+	if (!bLogin)
 	{
 		AfxMessageBox(_T("请先登录！"));
 		return;

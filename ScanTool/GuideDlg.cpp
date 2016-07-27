@@ -6,7 +6,9 @@
 #include "GuideDlg.h"
 #include "afxdialogex.h"
 
+#include "LoginDlg.h"
 #include "ScanModleMgrDlg.h"
+#include "Net_Cmd_Protocol.h"
 
 // CGuideDlg 对话框
 
@@ -15,7 +17,7 @@ IMPLEMENT_DYNAMIC(CGuideDlg, CDialog)
 
 CGuideDlg::CGuideDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CGuideDlg::IDD, pParent)
-	, m_pModel(NULL), m_pScanDlg(NULL)
+	, m_pModel(NULL), m_pScanDlg(NULL), m_bLogin(FALSE), m_nTeacherId(-1), m_nUserId(-1)
 {
 
 }
@@ -37,6 +39,7 @@ BEGIN_MESSAGE_MAP(CGuideDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_Model, &CGuideDlg::OnBnClickedBtnModel)
 	ON_BN_CLICKED(IDC_BTN_Param, &CGuideDlg::OnBnClickedBtnParam)
 	ON_WM_DESTROY()
+	ON_BN_CLICKED(IDC_BTN_Login, &CGuideDlg::OnBnClickedBtnLogin)
 END_MESSAGE_MAP()
 
 BOOL CGuideDlg::OnInitDialog()
@@ -51,7 +54,11 @@ BOOL CGuideDlg::OnInitDialog()
 	InitConf();
 	InitCtrlPosition();
 
-//	SearchModel();
+	m_pScanDlg = new CScanToolDlg(m_pModel);
+	m_pScanDlg->Create(CScanToolDlg::IDD, this);
+	m_pScanDlg->ShowWindow(SW_HIDE);
+	CenterWindow();
+	ShowWindow(SW_SHOW);
 
 	return TRUE;
 }
@@ -74,14 +81,53 @@ void CGuideDlg::InitCtrlPosition()
 	const int nRightGap = 20;	//右边的空白间隔
 	const int nGap = 2;			//普通控件的间隔
 
-	int nBtnW = (cx - nLeftGap - nRightGap - nGap) / 2;
-	int nBtnH = (cy - nTopGap - nRightGap - nGap) / 2;
+	int nCurrentTop		= nTopGap;
+	int nCurrentLeft	= nLeftGap;
+
+#if 1
+	int nClientW = cx - nLeftGap - nRightGap;
+	int nClientH = cy - nTopGap - nRightGap;
+	int nBtnW = (nClientW - nGap * 2) / 3;
+	int nBtnH = (nClientH - nGap) / 2;
 
 	if (nBtnW < 20)	nBtnW = 30;
 	if (nBtnH < 20) nBtnH = 30;
 
-	int nCurrentTop		= nTopGap;
-	int nCurrentLeft	= nLeftGap;
+	
+	if (GetDlgItem(IDC_BTN_Scan)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_Scan)->MoveWindow(nCurrentLeft, nCurrentTop, nClientW - nBtnW - nGap, nBtnH);
+		nCurrentLeft = nCurrentLeft + nClientW - nBtnW - nGap + nGap;
+	}
+	if (GetDlgItem(IDC_BTN_Login)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_Login)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
+		nCurrentLeft = nLeftGap;
+		nCurrentTop = nCurrentTop + nBtnH + nGap;
+	}
+	if (GetDlgItem(IDC_BTN_Model)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_Model)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
+		nCurrentLeft = nCurrentLeft + nBtnW + nGap;
+	}
+	if (GetDlgItem(IDC_BTN_Param)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_Param)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
+		nCurrentLeft = nCurrentLeft + nBtnW + nGap;
+	}
+	if (GetDlgItem(IDC_BTN_Exit)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_Exit)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
+		nCurrentLeft = nLeftGap;
+		nCurrentTop = nCurrentTop + nBtnH + nGap;
+	}
+#else
+	int nBtnW = (nClientW - nGap) / 2;
+	int nBtnH = (nClientH - nGap) / 2;
+
+	if (nBtnW < 20)	nBtnW = 30;
+	if (nBtnH < 20) nBtnH = 30;
+
 	if (GetDlgItem(IDC_BTN_Scan)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_Scan)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
@@ -104,6 +150,7 @@ void CGuideDlg::InitCtrlPosition()
 		nCurrentLeft = nLeftGap;
 		nCurrentTop = nCurrentTop + nBtnH + nGap;
 	}
+#endif
 }
 
 
@@ -157,6 +204,7 @@ void CGuideDlg::InitLog()
 	Poco::Logger& appLogger = Poco::Logger::create("ScanTool", pFCFile, Poco::Message::PRIO_INFORMATION);
 	g_pLogger = &appLogger;
 }
+
 void CGuideDlg::OnBnClickedBtnScan()
 {
 	if (!m_pScanDlg)
@@ -167,19 +215,20 @@ void CGuideDlg::OnBnClickedBtnScan()
 	}
 	else
 	{
+		m_pScanDlg->InitShow(m_pModel);
+		m_pScanDlg->InitScan();
 		m_pScanDlg->ShowWindow(SW_SHOW);
+		ShowWindow(SW_HIDE);
 	}
-
-// 	CScanToolDlg dlg(m_pModel);
-// 	dlg.DoModal();
 }
-
 
 void CGuideDlg::OnBnClickedBtnExit()
 {
+	if (m_pModel != m_pScanDlg->m_pModel)
+		SAFE_RELEASE(m_pModel);
+
 	OnCancel();
 }
-
 
 void CGuideDlg::OnBnClickedBtnModel()
 {
@@ -191,23 +240,74 @@ void CGuideDlg::OnBnClickedBtnModel()
 	}
 	if (m_pModel != modelMgrDlg.m_pModel)
 	{
-		SAFE_RELEASE(m_pModel);
+//		SAFE_RELEASE(m_pModel);
 		m_pModel = modelMgrDlg.m_pModel;
 	}
 }
 
-
 void CGuideDlg::OnBnClickedBtnParam()
 {
-	
+
 }
-
-
 
 void CGuideDlg::OnDestroy()
 {
 	CDialog::OnDestroy();
-
+	
 	SAFE_RELEASE(m_pScanDlg);
+}
 
+
+void CGuideDlg::OnBnClickedBtnLogin()
+{
+	USES_CONVERSION;
+	if (!m_bLogin)
+	{
+		CLoginDlg dlg(A2T(g_strIP.c_str()), g_nCmdPort);
+		if (dlg.DoModal() != IDOK)
+		{
+			g_lExamList.clear();
+			m_bLogin = FALSE;
+			m_strUserName = _T("");
+			m_strNickName = _T("");
+			m_strEzs = _T("");
+			m_strPwd = _T("");
+			m_nTeacherId = -1;
+			m_nUserId = -1;
+			GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("登录"));
+		}
+		else
+		{
+			m_bLogin = TRUE;
+			m_strUserName = dlg.m_strUserName;
+			m_strNickName = dlg.m_strNickName;
+			m_strPwd = dlg.m_strPwd;
+			m_strEzs = dlg.m_strEzs;
+			m_nTeacherId = dlg.m_nTeacherId;
+			m_nUserId = dlg.m_nUserId;
+			GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("退出"));
+		}
+	}
+	else
+	{
+		std::string strUser = T2A(m_strUserName);
+		pTCP_TASK pTcpTask = new TCP_TASK;
+		pTcpTask->usCmd = USER_LOGOUT;
+		pTcpTask->nPkgLen = strUser.length();
+		memcpy(pTcpTask->szSendBuf, (char*)strUser.c_str(), strUser.length());
+		g_fmTcpTaskLock.lock();
+		g_lTcpTask.push_back(pTcpTask);
+		g_fmTcpTaskLock.unlock();
+
+		g_lExamList.clear();
+		m_bLogin = FALSE;
+		m_strUserName = _T("");
+		m_strNickName = _T("");
+		m_strPwd = _T("");
+		m_strEzs = _T("");
+		m_nTeacherId = -1;
+		m_nUserId = -1;
+		GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("登录"));
+	}
+	m_pScanDlg->m_pShowScannerInfoDlg->setShowInfo(m_strUserName, m_strNickName);
 }

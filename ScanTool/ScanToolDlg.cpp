@@ -11,6 +11,7 @@
 #include "ScanModleMgrDlg.h"
 #include "ShowFileTransferDlg.h"
 #include "Net_Cmd_Protocol.h"
+#include "GuideDlg.h"
 //#include "minidump.h"
 
 #ifdef _DEBUG
@@ -50,7 +51,10 @@ int		g_nRecogGrayMax_White = 255;	//空白点校验点计算灰度的最大考试范围
 int		g_nRecogGrayMin_OMR = 0;		//OMR计算灰度的最小考试范围
 int		g_RecogGrayMax_OMR = 235;		//OMR计算灰度的最大考试范围
 
-std::string			g_strEncPwd = "yklxTest";				//文件加密解密密码	
+std::string			g_strEncPwd = "yklxTest";				//文件加密解密密码
+std::string			g_strIP;
+int					g_nCmdPort;
+int					g_nFilePort;
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -131,6 +135,7 @@ BEGIN_MESSAGE_MAP(CScanToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_UploadMgr, &CScanToolDlg::OnBnClickedBtnUploadmgr)
 	ON_BN_CLICKED(IDC_BTN_ScanAll, &CScanToolDlg::OnBnClickedBtnScanall)
 	ON_WM_CLOSE()
+	ON_BN_CLICKED(IDC_BTN_ReBack, &CScanToolDlg::OnBnClickedBtnReback)
 END_MESSAGE_MAP()
 
 
@@ -176,7 +181,7 @@ BOOL CScanToolDlg::OnInitDialog()
 	InitConfig();
 	InitParam();
 	InitFileUpLoadList();
-
+	
 // 	Poco::LocalDateTime dtNow;
 // 	std::string strData;
 // 	Poco::format(strData, "%4d-%2d-%2d %2d:%2d", dtNow.year(), dtNow.month(), dtNow.day(), dtNow.hour(), dtNow.minute());
@@ -198,15 +203,17 @@ BOOL CScanToolDlg::OnInitDialog()
 		UnZipFile(strModelFullPath);
 		m_pModel = LoadModelFile(strModelPath);
 
-		if (m_pModel != NULL)
-			m_nModelPicNums = m_pModel->nPicNum;
-		InitTab();
+// 		if (m_pModel != NULL)
+// 			m_nModelPicNums = m_pModel->nPicNum;
+// 		InitTab();
 	}
-#else
+#endif
 	if (m_pModel != NULL)
 		m_nModelPicNums = m_pModel->nPicNum;
+	else
+		m_nModelPicNums = 1;
 	InitTab();
-#endif
+
 	m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
 
 	// 调用TWAIN 初始化扫描设置
@@ -357,7 +364,9 @@ void CScanToolDlg::OnDestroy()
 			objTask.set("path", CMyCodeConvert::Gb2312ToUtf8((*itSendTask)->strPath));
 			jsnSendTaskArry.add(objTask);
 		}
+		pSENDTASK pTask = *itSendTask;
 		itSendTask = g_lSendTask.erase(itSendTask);
+		SAFE_RELEASE(pTask);
 	}
 	g_fmSendLock.unlock();
 	if (jsnSendTaskArry.size())
@@ -465,6 +474,9 @@ void CScanToolDlg::InitConfig()
 	int			nFileServerPort	= pConf->getInt("Server.filePort", 19980);
 	m_strCmdServerIP				= pConf->getString("Server.cmdIP");
 	m_nCmdPort						= pConf->getInt("Server.cmdPort", 19980);
+	g_strIP		= m_strCmdServerIP;
+	g_nCmdPort	= m_nCmdPort;
+	g_nFilePort = nFileServerPort;
 
 	m_pRecogThread = new Poco::Thread[nRecogThreads];
 	for (int i = 0; i < nRecogThreads; i++)
@@ -552,24 +564,23 @@ void CScanToolDlg::InitUI()
 	SetFontSize(m_nStatusSize);
 
 	USES_CONVERSION;
-	CRect rtTab;
-	m_tabPicShowCtrl.GetClientRect(&rtTab);
-	for (int i = 0; i < m_nModelPicNums; i++)
-	{
-		char szTabHeadName[20] = { 0 };
-		sprintf_s(szTabHeadName, "第%d页", i + 1);
-
-		m_tabPicShowCtrl.InsertItem(i, A2T(szTabHeadName));
-
-		CPicShow* pPicShow = new CPicShow(this);
-		pPicShow->Create(CPicShow::IDD, &m_tabPicShowCtrl);
-		pPicShow->ShowWindow(SW_HIDE);
-//		pPicShow->MoveWindow(&rtTab);
-		m_vecPicShow.push_back(pPicShow);
-	}
-	m_tabPicShowCtrl.SetCurSel(0);
-	m_vecPicShow[0]->ShowWindow(SW_SHOW);
-	m_pCurrentPicShow = m_vecPicShow[0];
+// 	CRect rtTab;
+// 	m_tabPicShowCtrl.GetClientRect(&rtTab);
+// 	for (int i = 0; i < m_nModelPicNums; i++)
+// 	{
+// 		char szTabHeadName[20] = { 0 };
+// 		sprintf_s(szTabHeadName, "第%d页", i + 1);
+// 
+// 		m_tabPicShowCtrl.InsertItem(i, A2T(szTabHeadName));
+// 
+// 		CPicShow* pPicShow = new CPicShow(this);
+// 		pPicShow->Create(CPicShow::IDD, &m_tabPicShowCtrl);
+// 		pPicShow->ShowWindow(SW_HIDE);
+// 		m_vecPicShow.push_back(pPicShow);
+// 	}
+// 	m_tabPicShowCtrl.SetCurSel(0);
+// 	m_vecPicShow[0]->ShowWindow(SW_SHOW);
+// 	m_pCurrentPicShow = m_vecPicShow[0];
 	m_nCurrTabSel = 0;
 
 	m_pShowModelInfoDlg = new CShowModelInfoDlg(this);
@@ -590,8 +601,14 @@ void CScanToolDlg::InitUI()
 	GetDlgItem(IDC_STATIC_Model)->ShowWindow(SW_HIDE);
 	m_comboModel.ShowWindow(SW_HIDE);
 #endif
+#ifdef SHOW_GUIDEDLG
+	GetDlgItem(IDC_BTN_Login)->ShowWindow(SW_HIDE);
+	GetDlgItem(IDC_BTN_ModelMgr)->ShowWindow(SW_HIDE);
+#endif
+#ifndef SHOW_GUIDEDLG
+	GetDlgItem(IDC_BTN_ReBack)->ShowWindow(SW_HIDE);
+#endif
 	//++ 后期可以删除
-//	GetDlgItem(IDC_BTN_GetModel)->ShowWindow(SW_HIDE);
 	GetDlgItem(IDC_STATIC_PaperList)->ShowWindow(SW_HIDE);
 	m_lcPaper.ShowWindow(SW_HIDE);
 	//
@@ -755,11 +772,13 @@ void CScanToolDlg::InitCtrlPosition()
 	//控制栏按钮位置
 	int nBtnWidth = nTopGap - nGap - nGap;
 	int nBtnCurrLeft = nLeftGap;
+#ifndef SHOW_GUIDEDLG
 	if (GetDlgItem(IDC_BTN_Login)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_Login)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
+#endif
 	if (GetDlgItem(IDC_BTN_Scan)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_Scan)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
@@ -779,11 +798,13 @@ void CScanToolDlg::InitCtrlPosition()
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
 #endif
+#ifndef SHOW_GUIDEDLG
 	if (GetDlgItem(IDC_BTN_ModelMgr)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_ModelMgr)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
+#endif
 	if (GetDlgItem(IDC_BTN_InputPaper)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_InputPaper)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
@@ -799,7 +820,13 @@ void CScanToolDlg::InitCtrlPosition()
 		GetDlgItem(IDC_BTN_UploadMgr)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
-
+#ifdef SHOW_GUIDEDLG
+	if (GetDlgItem(IDC_BTN_ReBack)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_ReBack)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
+		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
+	}
+#endif
 	if (m_pShowScannerInfoDlg && m_pShowScannerInfoDlg->GetSafeHwnd())
 	{
 		m_pShowScannerInfoDlg->MoveWindow(cx - nRightGap - 180, nGap, 180, nTopGap - nGap - nGap);	//cy - nRightGap - 10, nGap, 150, nTopGap - nGap - nGap
@@ -941,6 +968,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	GetDlgItem(IDC_BTN_InputPaper)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTN_UpLoadPapers)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTN_UploadMgr)->EnableWindow(FALSE);
+	GetDlgItem(IDC_BTN_ReBack)->EnableWindow(FALSE);
 	GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(_T(""));
 
 	USES_CONVERSION;
@@ -993,6 +1021,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		GetDlgItem(IDC_BTN_InputPaper)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_UpLoadPapers)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_UploadMgr)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BTN_ReBack)->EnableWindow(TRUE);
 		GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(_T(""));
 		m_nScanStatus = 2;
 	}
@@ -1033,6 +1062,7 @@ void CScanToolDlg::OnBnClickedBtnScanall()
 	GetDlgItem(IDC_BTN_InputPaper)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTN_UpLoadPapers)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTN_UploadMgr)->EnableWindow(FALSE);
+	GetDlgItem(IDC_BTN_ReBack)->EnableWindow(FALSE);
 	GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(_T(""));
 
 	USES_CONVERSION;
@@ -1083,6 +1113,7 @@ void CScanToolDlg::OnBnClickedBtnScanall()
 		GetDlgItem(IDC_BTN_InputPaper)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_UpLoadPapers)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_UploadMgr)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BTN_ReBack)->EnableWindow(TRUE);
 		GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(_T(""));
 		m_nScanStatus = 2;
 	}
@@ -1425,6 +1456,7 @@ void CScanToolDlg::ScanDone(int nStatus)
 	GetDlgItem(IDC_BTN_InputPaper)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTN_UpLoadPapers)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTN_UploadMgr)->EnableWindow(TRUE);
+	GetDlgItem(IDC_BTN_ReBack)->EnableWindow(TRUE);
 
 	bool bWarn = false;
 	if (nStatus != 1)
@@ -1478,6 +1510,12 @@ BOOL CScanToolDlg::PreTranslateMessage(MSG* pMsg)
 	{
 		if (pMsg->wParam == VK_ESCAPE || pMsg->wParam == VK_RETURN)
 		{
+			if (m_nScanStatus == 1)
+			{
+				AfxMessageBox(_T("扫描进行中, 请稍后操作!"));
+				return TRUE;
+			}
+			((CGuideDlg*)AfxGetMainWnd())->ShowWindow(SW_SHOW);
 			this->ShowWindow(SW_HIDE);
 			return TRUE;
 		}
@@ -2460,7 +2498,67 @@ void CScanToolDlg::InitParam()
 void CScanToolDlg::OnClose()
 {
 #ifdef SHOW_GUIDEDLG
+	if (m_nScanStatus == 1)
+	{
+		AfxMessageBox(_T("扫描进行中, 请稍后操作!"));
+		return;
+	}
+	((CGuideDlg*)AfxGetMainWnd())->ShowWindow(SW_SHOW);
 	this->ShowWindow(SW_HIDE);
+	return;
 #endif
 	__super::OnClose();
+}
+
+void CScanToolDlg::InitShow(pMODEL pModel)
+{
+	if (m_pModel != pModel)
+	{
+		SAFE_RELEASE(m_pModel);
+		m_pModel = pModel;
+	}
+	if (pModel != NULL)
+		m_nModelPicNums = pModel->nPicNum;
+	else
+		m_nModelPicNums = 1;
+	InitTab();
+	m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+
+	SAFE_RELEASE(m_pPapersInfo);
+	m_lcPicture.DeleteAllItems();
+}
+
+void CScanToolDlg::InitScan()
+{
+	if (!m_bTwainInit)
+	{
+		if (!m_bTwainInit)
+		{
+			m_bTwainInit = InitTwain(m_hWnd);
+			if (!IsValidDriver())
+			{
+				AfxMessageBox(_T("Unable to load Twain Driver."));
+			}
+			m_scanSourceArry.RemoveAll();
+			ScanSrcInit();
+		}
+	}
+	m_nScanStatus = 0;
+}
+
+void CScanToolDlg::ReleaseScan()
+{
+	ReleaseTwain();
+	m_bTwainInit = FALSE;
+}
+
+void CScanToolDlg::OnBnClickedBtnReback()
+{
+	if (m_nScanStatus == 1)
+	{
+		AfxMessageBox(_T("扫描进行中, 请稍后操作!"));
+		return;
+	}
+	((CGuideDlg*)AfxGetMainWnd())->ShowWindow(SW_SHOW);
+	this->ShowWindow(SW_HIDE);
 }

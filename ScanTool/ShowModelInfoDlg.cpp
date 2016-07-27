@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CShowModelInfoDlg, CDialog)
 
 CShowModelInfoDlg::CShowModelInfoDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CShowModelInfoDlg::IDD, pParent)
-	, m_nStatusSize(27), m_strModelName(_T("")), m_strModelDesc(_T(""))
+	, m_nNameSize(26), m_nDesSize(24), m_strModelName(_T("")), m_strModelDesc(_T(""))
 {
 
 }
@@ -37,7 +37,7 @@ END_MESSAGE_MAP()
 
 void CShowModelInfoDlg::InitUI()
 {
-	SetFontSize(m_nStatusSize);
+	SetFontSize(m_nNameSize, m_nDesSize);
 
 	InitCtrlPosition();
 }
@@ -87,7 +87,7 @@ BOOL CShowModelInfoDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	InitUI();
-	m_colorStatus = RGB(0, 0, 255);
+	m_colorStatus = RGB(50, 20, 255);
 	return TRUE;
 }
 
@@ -99,10 +99,10 @@ void CShowModelInfoDlg::OnSize(UINT nType, int cx, int cy)
 //	Invalidate();
 }
 
-void CShowModelInfoDlg::SetFontSize(int nSize)
+void CShowModelInfoDlg::SetFontSize(int nNameSize, int nDesSize)
 {
-	m_fontStatus.DeleteObject();
-	m_fontStatus.CreateFont(nSize, 0, 0, 0,
+	m_fontStatus_Name.DeleteObject();
+	m_fontStatus_Name.CreateFont(nNameSize, 0, 0, 0,
 							FW_BOLD, FALSE, FALSE, 0,
 							DEFAULT_CHARSET,
 							OUT_DEFAULT_PRECIS,
@@ -110,8 +110,18 @@ void CShowModelInfoDlg::SetFontSize(int nSize)
 							DEFAULT_QUALITY,
 							DEFAULT_PITCH | FF_SWISS,
 							_T("Arial"));
-	GetDlgItem(IDC_STATIC_ModelName)->SetFont(&m_fontStatus);
-	GetDlgItem(IDC_EDIT_ModelDesc)->SetFont(&m_fontStatus);
+	m_fontStatus_Des.DeleteObject();
+	m_fontStatus_Des.CreateFont(nDesSize, 0, 0, 0,
+								 FW_BOLD, FALSE, FALSE, 0,
+								 DEFAULT_CHARSET,
+								 OUT_DEFAULT_PRECIS,
+								 CLIP_DEFAULT_PRECIS,
+								 DEFAULT_QUALITY,
+								 DEFAULT_PITCH | FF_SWISS,
+								 _T("Arial"));
+
+	GetDlgItem(IDC_STATIC_ModelName)->SetFont(&m_fontStatus_Name);
+	GetDlgItem(IDC_EDIT_ModelDesc)->SetFont(&m_fontStatus_Des);
 }
 
 HBRUSH CShowModelInfoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)

@@ -7,6 +7,7 @@
 #include "afxdialogex.h"
 #include "GetModelDlg.h"
 #include "ScanToolDlg.h"
+#include "GuideDlg.h"
 #include "MakeModelDlg.h"
 
 // CScanModleMgrDlg ¶Ô»°¿ò
@@ -177,16 +178,26 @@ void CScanModleMgrDlg::OnBnClickedBtnRefresh()
 
 void CScanModleMgrDlg::OnBnClickedBtnDlmodel()
 {
-	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+#ifdef SHOW_GUIDEDLG
+	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
 
 	if (!pDlg->m_bLogin)
 	{
 		AfxMessageBox(_T("ÇëÏÈµÇÂ¼"));
 		return;
 	}
+#else
+	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+	if (!pDlg->m_bLogin)
+	{
+		AfxMessageBox(_T("ÇëÏÈµÇÂ¼"));
+		return;
+	}
+#endif
+	
 
 	USES_CONVERSION;
-	CGetModelDlg dlg(A2T(pDlg->m_strCmdServerIP.c_str()), pDlg->m_nCmdPort);
+	CGetModelDlg dlg(A2T(g_strIP.c_str()), g_nCmdPort);
 	if (dlg.DoModal() != IDOK)
 		return;
 
@@ -409,13 +420,22 @@ void CScanModleMgrDlg::OnBnClickedCancel()
 
 void CScanModleMgrDlg::OnBnClickedBtnuploadmodel()
 {
-	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+#ifdef SHOW_GUIDEDLG
+	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
 
 	if (!pDlg->m_bLogin)
 	{
 		AfxMessageBox(_T("ÇëÏÈµÇÂ¼"));
 		return;
 	}
+#else
+	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+	if (!pDlg->m_bLogin)
+	{
+		AfxMessageBox(_T("ÇëÏÈµÇÂ¼"));
+		return;
+	}
+#endif
 
 	if (!m_pModel)
 	{
@@ -456,16 +476,25 @@ void CScanModleMgrDlg::setUploadModelInfo(CString& strName, CString& strModelPat
 
 	strMd5 = calcFileMd5(strPath);
 
-	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();	//GetParent();
-
 	ST_MODELINFO stModelInfo;
 	ZeroMemory(&stModelInfo, sizeof(ST_MODELINFO));
 	stModelInfo.nExamID = nExamId;
 	stModelInfo.nSubjectID = nSubjectId;
-	sprintf_s(stModelInfo.szUserNo, "%s", T2A(pDlg->m_strUserName));
+
 	sprintf_s(stModelInfo.szModelName, "%s.mod", T2A(strName));
-	sprintf_s(stModelInfo.szEzs, "%s", T2A(pDlg->m_strEzs));
 	strncpy(stModelInfo.szMD5, strMd5.c_str(), strMd5.length());
+
+#ifdef SHOW_GUIDEDLG
+	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
+
+	sprintf_s(stModelInfo.szUserNo, "%s", T2A(pDlg->m_strUserName));
+	sprintf_s(stModelInfo.szEzs, "%s", T2A(pDlg->m_strEzs));
+#else
+	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();	//GetParent();
+	
+	sprintf_s(stModelInfo.szUserNo, "%s", T2A(pDlg->m_strUserName));
+	sprintf_s(stModelInfo.szEzs, "%s", T2A(pDlg->m_strEzs));
+#endif
 
 	pTCP_TASK pTcpTask = new TCP_TASK;
 	pTcpTask->usCmd = USER_SETMODELINFO;

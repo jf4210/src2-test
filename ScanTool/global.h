@@ -92,6 +92,9 @@ extern Poco::Logger*		g_pLogger;
 extern int					g_nExitFlag;
 
 extern std::string			g_strEncPwd;				//文件加密解密密码
+extern std::string			g_strIP;
+extern int					g_nCmdPort;
+extern int					g_nFilePort;
 
 extern int		g_nRecogGrayMin;		//灰度点(除空白点,OMR外)计算灰度的最小考试范围
 extern int		g_nRecogGrayMax_White;	//空白点校验点计算灰度的最大考试范围

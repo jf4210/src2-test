@@ -6,6 +6,7 @@
 #include "ScanToolDlg.h"
 #include "GetModelDlg.h"
 #include "afxdialogex.h"
+#include "GuideDlg.h"
 //#include "Net_Cmd_Protocol.h"
 
 // CGetModelDlg 对话框
@@ -137,8 +138,15 @@ void CGetModelDlg::OnBnClickedBtnDown()
 		m_ss.connect(sa);
 		m_ss.setReceiveTimeout(ts);
 
-		CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();
+		CString strUser = _T("");
+#ifdef SHOW_GUIDEDLG
+		CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
 
+		strUser = pDlg->m_strUserName;
+#else
+		CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();
+		strUser = pDlg->m_strUserName;
+#endif
 		//先查本地列表，如果没有则请求，如果有，计算crc，和服务器不同则下载
 		USES_CONVERSION;
 		CString modelPath = g_strCurrentPath + _T("Model");
@@ -149,7 +157,7 @@ void CGetModelDlg::OnBnClickedBtnDown()
 		ZeroMemory(&stModelInfo, sizeof(ST_DOWN_MODEL));
 		stModelInfo.nExamID = m_nExamID;
 		stModelInfo.nSubjectID = m_SubjectID;
-		sprintf_s(stModelInfo.szUserNo, "%s", T2A(pDlg->m_strUserName));
+		sprintf_s(stModelInfo.szUserNo, "%s", T2A(strUser));
 		sprintf_s(stModelInfo.szModelName, "%s", T2A(m_strScanModelName));
 
 		Poco::File fileModel(strModelPath);
@@ -478,7 +486,15 @@ void CGetModelDlg::OnBnClickedBtnExit()
 void CGetModelDlg::OnBnClickedBtnRefreshexam()
 {
 	USES_CONVERSION;
+	CString strEzs = _T("");
+#ifdef SHOW_GUIDEDLG
+	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
+	
+	strEzs = pDlg->m_strEzs;
+#else
 	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();//GetParent();
+	strEzs = pDlg->m_strEzs;
+#endif
 	g_lExamList.clear();
 	GetDlgItem(IDC_BTN_DOWN)->EnableWindow(FALSE);
 
@@ -487,7 +503,7 @@ void CGetModelDlg::OnBnClickedBtnRefreshexam()
 	stHead.uPackSize = sizeof(ST_EXAM_INFO);
 	ST_EXAM_INFO stExamInfo;
 	ZeroMemory(&stExamInfo, sizeof(ST_EXAM_INFO));
-	strcpy(stExamInfo.szEzs, T2A(pDlg->m_strEzs));
+	strcpy(stExamInfo.szEzs, T2A(strEzs));
 
 	pTCP_TASK pTcpTask = new TCP_TASK;
 	pTcpTask->usCmd = USER_GETEXAMINFO;
