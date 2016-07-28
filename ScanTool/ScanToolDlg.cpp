@@ -93,7 +93,7 @@ END_MESSAGE_MAP()
 
 CScanToolDlg::CScanToolDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	: CDialogEx(CScanToolDlg::IDD, pParent)
-	, m_pModel(pModel), m_ncomboCurrentSel(0), m_pRecogThread(NULL), m_pCurrentPicShow(NULL), m_nModelPicNums(1)
+	, m_pModel(pModel), m_ncomboCurrentSel(-1), m_pRecogThread(NULL), m_pCurrentPicShow(NULL), m_nModelPicNums(1)
 	, m_bTwainInit(FALSE), m_nCurrTabSel(0), m_nScanCount(0), m_nScanStatus(0)
 	, m_pPapersInfo(NULL), m_pPaper(NULL), m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL)
 	, m_pSendFileObj(NULL), m_SendFileThread(NULL), m_bLogin(FALSE), m_pTcpCmdObj(NULL), m_TcpCmdThread(NULL)
@@ -190,22 +190,35 @@ BOOL CScanToolDlg::OnInitDialog()
 // 	sprintf_s(szTime, "%d-%02d-%02d %02d:%02d:%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
 // 	TRACE(szTime);
 	
-#ifndef SHOW_GUIDEDLG
+#ifdef SHOW_COMBOLIST_MAINDLG
 	SearchModel();
-	m_comboModel.SetCurSel(0);
-	if (m_comboModel.GetCount())
+	if (m_ncomboCurrentSel != -1)
 	{
-		m_ncomboCurrentSel = m_comboModel.GetCurSel();
-		CString strModelName;
-		m_comboModel.GetLBText(m_comboModel.GetCurSel(), strModelName);
-		CString strModelPath = g_strCurrentPath + _T("Model\\") + strModelName;
-		CString strModelFullPath = strModelPath + _T(".mod");
-		UnZipFile(strModelFullPath);
-		m_pModel = LoadModelFile(strModelPath);
-
-// 		if (m_pModel != NULL)
-// 			m_nModelPicNums = m_pModel->nPicNum;
-// 		InitTab();
+		m_comboModel.SetCurSel(m_ncomboCurrentSel);
+		if (m_comboModel.GetCount())
+		{
+//			m_ncomboCurrentSel = m_comboModel.GetCurSel();
+// 			CString strModelName;
+// 			m_comboModel.GetLBText(m_ncomboCurrentSel, strModelName);
+// 			CString strModelPath = g_strCurrentPath + _T("Model\\") + strModelName;
+// 			CString strModelFullPath = strModelPath + _T(".mod");
+// 			UnZipFile(strModelFullPath);
+// 			m_pModel = LoadModelFile(strModelPath);
+		}
+	}
+	else
+	{
+		if (m_comboModel.GetCount())
+		{
+			m_ncomboCurrentSel = 0;
+			CString strModelName;
+			m_comboModel.GetLBText(m_ncomboCurrentSel, strModelName);
+			CString strModelPath = g_strCurrentPath + _T("Model\\") + strModelName;
+			CString strModelFullPath = strModelPath + _T(".mod");
+			UnZipFile(strModelFullPath);
+			m_pModel = LoadModelFile(strModelPath);
+		}
+		m_comboModel.SetCurSel(m_ncomboCurrentSel);
 	}
 #endif
 	if (m_pModel != NULL)
@@ -779,10 +792,11 @@ void CScanToolDlg::InitCtrlPosition()
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
 #endif
+	int nScanBtnW = (nTopGap - nGap - nGap) * 1.5;
 	if (GetDlgItem(IDC_BTN_Scan)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_BTN_Scan)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
-		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
+		GetDlgItem(IDC_BTN_Scan)->MoveWindow(nBtnCurrLeft, nGap, nScanBtnW, nTopGap - nGap - nGap);
+		nBtnCurrLeft = nBtnCurrLeft + nScanBtnW + nGap;
 	}
 #ifdef SHOW_SCANALL_MAINDLG
 	if (GetDlgItem(IDC_BTN_ScanAll)->GetSafeHwnd())
@@ -805,19 +819,19 @@ void CScanToolDlg::InitCtrlPosition()
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
 #endif
-	if (GetDlgItem(IDC_BTN_InputPaper)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_BTN_InputPaper)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
-		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
-	}
 	if (GetDlgItem(IDC_BTN_UpLoadPapers)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_BTN_UpLoadPapers)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
-		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
+		GetDlgItem(IDC_BTN_UpLoadPapers)->MoveWindow(nBtnCurrLeft, nGap, nScanBtnW, nTopGap - nGap - nGap);
+		nBtnCurrLeft = nBtnCurrLeft + nScanBtnW + nGap;
 	}
 	if (GetDlgItem(IDC_BTN_UploadMgr)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_UploadMgr)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
+		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
+	}
+	if (GetDlgItem(IDC_BTN_InputPaper)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_InputPaper)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
 #ifdef SHOW_GUIDEDLG
@@ -992,7 +1006,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		Poco::File tmpPath1(strUtfPath);
 		tmpPath1.createDirectories();
 
-		m_strCurrPicSavePath = strUtfPath;
+		m_strCurrPicSavePath = szPicTmpPath;
 		m_pPapersInfo = new PAPERSINFO();
 		m_nScanCount = 0;					//已扫描数量清0
 	}
@@ -1084,7 +1098,7 @@ void CScanToolDlg::OnBnClickedBtnScanall()
 		Poco::File tmpPath1(strUtfPath);
 		tmpPath1.createDirectories();
 
-		m_strCurrPicSavePath = strUtfPath;
+		m_strCurrPicSavePath = szPicTmpPath;
 		m_pPapersInfo = new PAPERSINFO();
 		m_nScanCount = 0;					//已扫描数量清0
 	}
@@ -1182,6 +1196,11 @@ void CScanToolDlg::SearchModel()
 //				std::string strModelName = p.getBaseName();
 				std::string strModelName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
 				m_comboModel.AddString(A2T(strModelName.c_str()));
+
+				if (m_pModel && m_pModel->strModelName.Compare(A2T(strModelName.c_str())) == 0)
+				{
+					m_ncomboCurrentSel = m_comboModel.GetCount() - 1;
+				}
 			}
 			it++;
 		}
@@ -1204,6 +1223,8 @@ void CScanToolDlg::OnCbnSelchangeComboModel()
 	if (m_ncomboCurrentSel == m_comboModel.GetCurSel())
 		return;
 
+	m_ncomboCurrentSel = m_comboModel.GetCurSel();
+
 	CString strModelName;
 	m_comboModel.GetLBText(m_comboModel.GetCurSel(), strModelName);
 	CString strModelPath = g_strCurrentPath + _T("Model\\") + strModelName;
@@ -1215,7 +1236,6 @@ void CScanToolDlg::OnCbnSelchangeComboModel()
 	m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
 	if (!m_pModel)
 		return;
-	m_ncomboCurrentSel = m_comboModel.GetCurSel();
 
 	m_nModelPicNums = m_pModel->nPicNum;
 	InitTab();
@@ -1381,7 +1401,6 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 #if 1
 	m_pCurrentPicShow->ShowPic(matTest3);
 #endif
-	m_pCurrentShowPaper = m_pPaper;
 
 	std::string strLog = "Get image: " + strPicName;
 	g_pLogger->information(strLog);
@@ -1413,14 +1432,6 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 		m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(szStudentName));
 		m_lcPicture.SetItemData(nCount, (DWORD_PTR)m_pPaper);
-
-// 		//添加到识别任务列表
-// 		if (m_pModel)
-// 		{
-// 			pRECOGTASK pTask = new RECOGTASK;
-// 			pTask->pPaper = m_pPaper;
-// 			g_lRecogTask.push_back(pTask);
-// 		}
 	}
 	else
 	{
@@ -1435,6 +1446,8 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 		pTask->pPaper = m_pPaper;
 		g_lRecogTask.push_back(pTask);
 	}
+
+	m_pCurrentShowPaper = m_pPaper;
 
 	CString strMsg = _T("");
 	strMsg.Format(_T("已扫描%d张"), m_nScanCount);
@@ -1514,6 +1527,11 @@ BOOL CScanToolDlg::PreTranslateMessage(MSG* pMsg)
 			{
 				AfxMessageBox(_T("扫描进行中, 请稍后操作!"));
 				return TRUE;
+			}
+			if (m_pPapersInfo)
+			{
+				if (MessageBox(_T("存在未保存的试卷，是否退出？"), _T("警告"), MB_YESNO) != IDYES)
+					return TRUE;
 			}
 			((CGuideDlg*)AfxGetMainWnd())->ShowWindow(SW_SHOW);
 			this->ShowWindow(SW_HIDE);
@@ -1999,7 +2017,15 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		return;
 	}
 
-	if (!m_bLogin)
+	BOOL bLogin = FALSE;
+#ifdef SHOW_GUIDEDLG
+	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
+	bLogin = pDlg->m_bLogin;
+#else
+	bLogin = m_bLogin;
+#endif
+
+	if (!bLogin)
 	{
 		AfxMessageBox(_T("没有登录，不能上传，请先登录!"));
 		return;
@@ -2503,6 +2529,11 @@ void CScanToolDlg::OnClose()
 		AfxMessageBox(_T("扫描进行中, 请稍后操作!"));
 		return;
 	}
+	if (m_pPapersInfo)
+	{
+		if (MessageBox(_T("存在未保存的试卷，是否退出？"), _T("警告"), MB_YESNO) != IDYES)
+			return;
+	}
 	((CGuideDlg*)AfxGetMainWnd())->ShowWindow(SW_SHOW);
 	this->ShowWindow(SW_HIDE);
 	return;
@@ -2526,6 +2557,11 @@ void CScanToolDlg::InitShow(pMODEL pModel)
 
 	SAFE_RELEASE(m_pPapersInfo);
 	m_lcPicture.DeleteAllItems();
+
+	m_comboModel.ResetContent();
+	m_ncomboCurrentSel = -1;
+	SearchModel();
+	m_comboModel.SetCurSel(m_ncomboCurrentSel);
 }
 
 void CScanToolDlg::InitScan()
@@ -2558,6 +2594,11 @@ void CScanToolDlg::OnBnClickedBtnReback()
 	{
 		AfxMessageBox(_T("扫描进行中, 请稍后操作!"));
 		return;
+	}
+	if (m_pPapersInfo)
+	{
+		if (MessageBox(_T("存在未保存的试卷，是否退出？"), _T("警告"), MB_YESNO) != IDYES)
+			return;
 	}
 	((CGuideDlg*)AfxGetMainWnd())->ShowWindow(SW_SHOW);
 	this->ShowWindow(SW_HIDE);

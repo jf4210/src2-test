@@ -93,7 +93,7 @@ bool SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2)
 	return bResult;
 }
 
-int WriteRegKey(HKEY root, char * subDir, char * regKey, char * regValue)
+int WriteRegKey(HKEY root, char * subDir, DWORD regType, char * regKey, char * regValue)
 {
 	USES_CONVERSION;
 	char strTemp[_MAX_PATH];
@@ -108,7 +108,7 @@ int WriteRegKey(HKEY root, char * subDir, char * regKey, char * regValue)
 		return -1;
 	}
 	int n = _tcslen(A2T(regValue));
-	ret = RegSetValueEx(hKey, A2T(regKey), 0, REG_SZ, LPBYTE(A2T(regValue)), (_tcslen(A2T(regValue)) + 1) * sizeof(TCHAR));
+	ret = RegSetValueEx(hKey, A2T(regKey), 0, regType, LPBYTE(A2T(regValue)), (_tcslen(A2T(regValue)) + 1) * sizeof(TCHAR));	//REG_SZ
 	if (ret != ERROR_SUCCESS) 
 	{
 		return -1;
@@ -117,7 +117,7 @@ int WriteRegKey(HKEY root, char * subDir, char * regKey, char * regValue)
 	return 0;
 }
 
-int ReadRegKey(HKEY root, char * subDir, char * regKey, char* & regValue)
+int ReadRegKey(HKEY root, char * subDir, DWORD regType, char * regKey, char* & regValue)
 {
 	char strTemp[_MAX_PATH];
 	HKEY hKey;
@@ -129,7 +129,7 @@ int ReadRegKey(HKEY root, char * subDir, char * regKey, char* & regValue)
 		return -1;
 	}
 
-	DWORD valueType = REG_SZ;
+	DWORD valueType = regType;	//REG_SZ;
 	DWORD cbData = 255;
 
 	ret = ::RegQueryValueExA(hKey, regKey, NULL, &valueType, (LPBYTE)regValue, &cbData);

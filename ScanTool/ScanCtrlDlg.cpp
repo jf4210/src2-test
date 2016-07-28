@@ -5,7 +5,7 @@
 #include "ScanTool.h"
 #include "ScanCtrlDlg.h"
 #include "afxdialogex.h"
-
+#include "global.h"
 
 // CScanCtrlDlg 对话框
 
@@ -67,12 +67,32 @@ bool CScanCtrlDlg::InitUI()
 	ScanSrcInit();
 
 	USES_CONVERSION;
-	m_comboScanSrc.SetCurSel(0);
+	
 
 	m_comboDuplex.AddString(_T("单面扫描"));
 	m_comboDuplex.AddString(_T("双面扫描"));
-	m_comboDuplex.SetCurSel(1);
-	m_nCurrDuplex = 1;
+
+	int nSrc = 0;
+	int nDuplex = 1;
+	char* ret;
+	ret = new char[20];
+	ret[0] = '\0';
+	if (ReadRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "scanSrc", ret) == 0)
+	{
+		nSrc = atoi(ret);
+	}
+	memset(ret, 0, 20);
+
+	if (ReadRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "scanDuplex", ret) == 0)
+	{
+		nDuplex = atoi(ret);
+	}
+	SAFE_RELEASE_ARRY(ret);
+
+	m_comboScanSrc.SetCurSel(nSrc);
+	m_comboDuplex.SetCurSel(nDuplex);
+	m_nCurrScanSrc = nSrc;
+	m_nCurrDuplex = nDuplex;
 
 	UpdateData(FALSE);
 	return true;
@@ -98,5 +118,13 @@ void CScanCtrlDlg::OnCbnSelchangeComboDuplex()
 void CScanCtrlDlg::OnBnClickedBtnScan()
 {
 	UpdateData(TRUE);
+
+	char szRet[20] = { 0 };
+	sprintf_s(szRet, "%d", m_nCurrScanSrc);
+	WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "scanSrc", szRet);
+	memset(szRet, 0, 20);
+	sprintf_s(szRet, "%d", m_nCurrDuplex);
+	WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "scanDuplex", szRet);
+
 	OnOK();
 }

@@ -247,7 +247,7 @@ void CGuideDlg::OnBnClickedBtnModel()
 
 void CGuideDlg::OnBnClickedBtnParam()
 {
-
+	
 }
 
 void CGuideDlg::OnDestroy()

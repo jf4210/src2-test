@@ -71,7 +71,7 @@
 
 #define SHOW_GUIDEDLG					//显示引导界面
 //#define SHOW_MODELMAKE_MAINDLG		//是否在主界面上显示模板制作按钮
-//#define SHOW_COMBOLIST_MAINDLG		//是否在主界面上显示下拉列表控件
+#define SHOW_COMBOLIST_MAINDLG		//是否在主界面上显示下拉列表控件
 //#define SHOW_SCANALL_MAINDLG			//是否在主界面上显示整袋扫描按钮
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)
@@ -314,7 +314,7 @@ typedef struct _PaperInfo_
 	_PaperInfo_()
 	{
 		bIssuePaper = false;
-		nQKFlag = false;
+		nQKFlag = 0;
 		pModel = NULL;
 		pPapers = NULL;
 		pSrcDlg = NULL;
@@ -475,8 +475,8 @@ bool	PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat);
 bool	FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);		//定点进行仿射变换
 bool	FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//定点透视变换
 bool	PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);
-int		WriteRegKey(HKEY root, char * subDir, char * regKey, char * regValue);
-int		ReadRegKey(HKEY root, char * subDir, char * regKey, char* & regValue);
+int		WriteRegKey(HKEY root, char * subDir, DWORD regType, char * regKey, char * regValue);
+int		ReadRegKey(HKEY root, char * subDir, DWORD regType, char * regKey, char* & regValue);
 bool	encString(std::string& strSrc, std::string& strDst);
 bool	decString(std::string& strSrc, std::string& strDst);
 
