@@ -142,6 +142,7 @@
     <ClInclude Include="OmrInfoDlg.h" />
     <ClInclude Include="PaperInputDlg.h" />
     <ClInclude Include="PapersInfoSaveDlg.h" />
+    <ClInclude Include="ParamSetDlg.h" />
     <ClInclude Include="picCtrl\CvvImage.h" />
     <ClInclude Include="picCtrl\CV_picture.h" />
     <ClInclude Include="PicShow.h" />
@@ -183,6 +184,7 @@
     <ClCompile Include="OmrInfoDlg.cpp" />
     <ClCompile Include="PaperInputDlg.cpp" />
     <ClCompile Include="PapersInfoSaveDlg.cpp" />
+    <ClCompile Include="ParamSetDlg.cpp" />
     <ClCompile Include="picCtrl\CvvImage.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>

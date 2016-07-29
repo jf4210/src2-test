@@ -52,7 +52,8 @@ int		g_nRecogGrayMin_OMR = 0;		//OMR计算灰度的最小考试范围
 int		g_RecogGrayMax_OMR = 235;		//OMR计算灰度的最大考试范围
 
 std::string			g_strEncPwd = "yklxTest";				//文件加密解密密码
-std::string			g_strIP;
+std::string			g_strCmdIP;
+std::string			g_strFileIP;
 int					g_nCmdPort;
 int					g_nFilePort;
 
@@ -487,8 +488,9 @@ void CScanToolDlg::InitConfig()
 	int			nFileServerPort	= pConf->getInt("Server.filePort", 19980);
 	m_strCmdServerIP				= pConf->getString("Server.cmdIP");
 	m_nCmdPort						= pConf->getInt("Server.cmdPort", 19980);
-	g_strIP		= m_strCmdServerIP;
+	g_strCmdIP	= m_strCmdServerIP;
 	g_nCmdPort	= m_nCmdPort;
+	g_strFileIP = strFileServerIP;
 	g_nFilePort = nFileServerPort;
 
 	m_pRecogThread = new Poco::Thread[nRecogThreads];
@@ -1533,6 +1535,7 @@ BOOL CScanToolDlg::PreTranslateMessage(MSG* pMsg)
 				if (MessageBox(_T("存在未保存的试卷，是否退出？"), _T("警告"), MB_YESNO) != IDYES)
 					return TRUE;
 			}
+			((CGuideDlg*)AfxGetMainWnd())->m_pModel = m_pModel;
 			((CGuideDlg*)AfxGetMainWnd())->ShowWindow(SW_SHOW);
 			this->ShowWindow(SW_HIDE);
 			return TRUE;
@@ -2534,6 +2537,7 @@ void CScanToolDlg::OnClose()
 		if (MessageBox(_T("存在未保存的试卷，是否退出？"), _T("警告"), MB_YESNO) != IDYES)
 			return;
 	}
+	((CGuideDlg*)AfxGetMainWnd())->m_pModel = m_pModel;
 	((CGuideDlg*)AfxGetMainWnd())->ShowWindow(SW_SHOW);
 	this->ShowWindow(SW_HIDE);
 	return;
@@ -2600,6 +2604,7 @@ void CScanToolDlg::OnBnClickedBtnReback()
 		if (MessageBox(_T("存在未保存的试卷，是否退出？"), _T("警告"), MB_YESNO) != IDYES)
 			return;
 	}
+	((CGuideDlg*)AfxGetMainWnd())->m_pModel = m_pModel;
 	((CGuideDlg*)AfxGetMainWnd())->ShowWindow(SW_SHOW);
 	this->ShowWindow(SW_HIDE);
 }

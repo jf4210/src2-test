@@ -115,9 +115,9 @@ void CPicShow::InitCtrlPosition()
 	}
 
 	if (m_bShowScrolH && m_scrollBarH.GetSafeHwnd())
-		m_scrollBarH.MoveWindow(0, rt.Height() - nScrollH_H, rt.Width(), nScrollH_H);
+		m_scrollBarH.MoveWindow(0, rt.Height() - nScrollH_H, rt.Width() - 12, nScrollH_H);	//-12为防止两个滚动条重叠
 	if (m_bShowScrolV && m_scrollBarV.GetSafeHwnd())
-		m_scrollBarV.MoveWindow(rt.Width() - nScrollV_W, 0, nScrollV_W, rt.Height());
+		m_scrollBarV.MoveWindow(rt.Width() - nScrollV_W, 0, nScrollV_W, rt.Height() - 12);
 }
 
 BOOL CPicShow::PreTranslateMessage(MSG* pMsg)

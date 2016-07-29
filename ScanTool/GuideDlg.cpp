@@ -8,6 +8,7 @@
 
 #include "LoginDlg.h"
 #include "ScanModleMgrDlg.h"
+#include "ParamSetDlg.h"
 #include "Net_Cmd_Protocol.h"
 
 // CGuideDlg ¶Ô»°¿ò
@@ -58,7 +59,7 @@ BOOL CGuideDlg::OnInitDialog()
 	m_pScanDlg->Create(CScanToolDlg::IDD, this);
 	m_pScanDlg->ShowWindow(SW_HIDE);
 	CenterWindow();
-	ShowWindow(SW_SHOW);
+//	ShowWindow(SW_SHOW);
 
 	return TRUE;
 }
@@ -247,7 +248,47 @@ void CGuideDlg::OnBnClickedBtnModel()
 
 void CGuideDlg::OnBnClickedBtnParam()
 {
-	
+	CParamSetDlg dlg;
+	dlg.m_strFileIP = g_strCmdIP.c_str();
+	dlg.m_strCmdIP	= g_strCmdIP.c_str();
+	dlg.m_nCmdPort	= g_nCmdPort;
+	dlg.m_nFilePort = g_nFilePort;
+	if (dlg.DoModal() != IDOK)
+		return;
+
+
+	USES_CONVERSION;
+	bool bChange = false;
+	if (g_strCmdIP != T2A(dlg.m_strCmdIP))		bChange = true;
+	if (g_strFileIP != T2A(dlg.m_strFileIP))	bChange = true;
+	if (g_nFilePort != dlg.m_nFilePort)			bChange = true;
+	if (g_nCmdPort != dlg.m_nCmdPort)			bChange = true;
+
+	g_strCmdIP	= T2A(dlg.m_strCmdIP);
+	g_strFileIP = T2A(dlg.m_strFileIP);
+	g_nFilePort = dlg.m_nFilePort;
+	g_nCmdPort	= dlg.m_nCmdPort;
+
+	if (bChange)
+	{
+		CString strConfigPath = g_strCurrentPath;
+		strConfigPath.Append(_T("config.ini"));
+// 		std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(T2A(strConfigPath));
+// 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strUtf8Path));
+// 		pConf->setString("Server.fileIP", g_strFileIP);
+// 		pConf->setString("Server.cmdIP", g_strCmdIP);
+// 		pConf->setInt("Server.filePort", g_nFilePort);
+// 		pConf->setInt("Server.cmdPort", g_nCmdPort);
+
+		WritePrivateProfileString(_T("Server"), _T("fileIP"), dlg.m_strFileIP, strConfigPath);
+		WritePrivateProfileString(_T("Server"), _T("cmdIP"), dlg.m_strCmdIP, strConfigPath);
+
+		CString strVal;
+		strVal.Format(_T("%d"), g_nFilePort);
+		WritePrivateProfileString(_T("Server"), _T("filePort"), strVal, strConfigPath);
+		strVal.Format(_T("%d"), g_nCmdPort);
+		WritePrivateProfileString(_T("Server"), _T("cmdPort"), strVal, strConfigPath);
+	}	
 }
 
 void CGuideDlg::OnDestroy()
@@ -263,7 +304,7 @@ void CGuideDlg::OnBnClickedBtnLogin()
 	USES_CONVERSION;
 	if (!m_bLogin)
 	{
-		CLoginDlg dlg(A2T(g_strIP.c_str()), g_nCmdPort);
+		CLoginDlg dlg(A2T(g_strCmdIP.c_str()), g_nCmdPort);
 		if (dlg.DoModal() != IDOK)
 		{
 			g_lExamList.clear();

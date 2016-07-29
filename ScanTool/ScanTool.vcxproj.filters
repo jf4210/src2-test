@@ -97,6 +97,9 @@
     <Filter Include="%2a%2a%2a%2a%2a%2a%2a主引导界面%2a%2a%2a%2a%2a%2a%2a%2a%2a">
       <UniqueIdentifier>{e08696e7-2110-4acd-96bd-7739a7b25859}</UniqueIdentifier>
     </Filter>
+    <Filter Include="参数设置界面">
+      <UniqueIdentifier>{652d5421-bd3c-4cc2-8cc5-c847d1911f6c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -228,6 +231,9 @@
     <ClInclude Include="GuideDlg.h">
       <Filter>%2a%2a%2a%2a%2a%2a%2a主引导界面%2a%2a%2a%2a%2a%2a%2a%2a%2a</Filter>
     </ClInclude>
+    <ClInclude Include="ParamSetDlg.h">
+      <Filter>参数设置界面</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
@@ -337,6 +343,9 @@
     </ClCompile>
     <ClCompile Include="GuideDlg.cpp">
       <Filter>%2a%2a%2a%2a%2a%2a%2a主引导界面%2a%2a%2a%2a%2a%2a%2a%2a%2a</Filter>
+    </ClCompile>
+    <ClCompile Include="ParamSetDlg.cpp">
+      <Filter>参数设置界面</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

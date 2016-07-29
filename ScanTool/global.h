@@ -71,7 +71,7 @@
 
 #define SHOW_GUIDEDLG					//显示引导界面
 //#define SHOW_MODELMAKE_MAINDLG		//是否在主界面上显示模板制作按钮
-#define SHOW_COMBOLIST_MAINDLG		//是否在主界面上显示下拉列表控件
+//#define SHOW_COMBOLIST_MAINDLG		//是否在主界面上显示下拉列表控件
 //#define SHOW_SCANALL_MAINDLG			//是否在主界面上显示整袋扫描按钮
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)
@@ -92,7 +92,8 @@ extern Poco::Logger*		g_pLogger;
 extern int					g_nExitFlag;
 
 extern std::string			g_strEncPwd;				//文件加密解密密码
-extern std::string			g_strIP;
+extern std::string			g_strCmdIP;
+extern std::string			g_strFileIP;
 extern int					g_nCmdPort;
 extern int					g_nFilePort;
 

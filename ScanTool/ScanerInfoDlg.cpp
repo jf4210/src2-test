@@ -27,8 +27,8 @@ CScanerInfoDlg::~CScanerInfoDlg()
 void CScanerInfoDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	DDX_Text(pDX, IDC_EDIT_UserName, m_strUser);
-	DDX_Text(pDX, IDC_EDIT_NickName, m_strNickName);
+	DDX_Text(pDX, IDC_STATIC_UserName, m_strUser);
+	DDX_Text(pDX, IDC_STATIC_NickName, m_strNickName);
 }
 
 
@@ -77,8 +77,18 @@ void CScanerInfoDlg::SetFontSize(int nSize)
 							DEFAULT_QUALITY,
 							DEFAULT_PITCH | FF_SWISS,
 							_T("Arial"));
-	GetDlgItem(IDC_EDIT_UserName)->SetFont(&m_fontStatus);
-	GetDlgItem(IDC_EDIT_NickName)->SetFont(&m_fontStatus);
+	m_fontUnLogin.DeleteObject();
+	m_fontUnLogin.CreateFont(nSize + 2, 0, 0, 0,
+							FW_BOLD, FALSE, FALSE, 0,
+							DEFAULT_CHARSET,
+							OUT_DEFAULT_PRECIS,
+							CLIP_DEFAULT_PRECIS,
+							DEFAULT_QUALITY,
+							DEFAULT_PITCH | FF_SWISS,
+							_T("Arial"));
+	GetDlgItem(IDC_STATIC_UserName)->SetFont(&m_fontStatus);
+	GetDlgItem(IDC_STATIC_NickName)->SetFont(&m_fontStatus);
+	GetDlgItem(IDC_STATIC_STATUS)->SetFont(&m_fontUnLogin);
 }
 
 
@@ -91,15 +101,15 @@ HBRUSH CScanerInfoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 	UINT CurID = pWnd->GetDlgCtrlID();
 
-	if (IDC_EDIT_UserName == CurID)
+	if (IDC_STATIC_UserName == CurID || IDC_STATIC_NickName == CurID)
 	{
 		pDC->SetTextColor(m_colorStatus);
 
 		return hbr;	// hbrsh;
 	}
-	if (IDC_EDIT_NickName == CurID)
+	if (IDC_STATIC_STATUS == CurID)
 	{
-		pDC->SetTextColor(m_colorStatus);
+		pDC->SetTextColor(RGB(255,0,0));
 
 		return hbr;	// hbrsh;
 	}
@@ -108,8 +118,22 @@ HBRUSH CScanerInfoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 void CScanerInfoDlg::setShowInfo(CString& strUser, CString& strNickName)
 {
-	m_strUser		= strUser;
-	m_strNickName	= strNickName;
+	m_strUser = strUser;
+	m_strNickName = strNickName;
+
+	if (strUser == _T("") && strNickName == _T(""))
+	{
+		GetDlgItem(IDC_STATIC_UserName)->ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_STATIC_NickName)->ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_STATIC_STATUS)->ShowWindow(SW_SHOW);
+	}
+	else
+	{
+		GetDlgItem(IDC_STATIC_UserName)->ShowWindow(SW_SHOW);
+		GetDlgItem(IDC_STATIC_NickName)->ShowWindow(SW_SHOW);
+		GetDlgItem(IDC_STATIC_STATUS)->ShowWindow(SW_HIDE);
+	}
+	
 	UpdateData(FALSE);
 }
 
@@ -127,25 +151,20 @@ void CScanerInfoDlg::InitCtrlPosition()
 	const int nGap = 2;			//普通控件的间隔
 
 	int nCurrentTop = nTopGap;
-	int nStaticW = 30;
-	int nStaticH = 25;
-	int nEditW = cx - nLeftGap - nRightGap - nStaticW - nGap;
+	int nStaticW = cx - nLeftGap - nRightGap;
+	int nStaticH = (cy - nTopGap - nBottomGap - nGap) / 2;
 	if (GetDlgItem(IDC_STATIC_UserName)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_STATIC_UserName)->MoveWindow(nLeftGap, nCurrentTop, nStaticW, nStaticH);
-	}
-	if (GetDlgItem(IDC_EDIT_UserName)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_EDIT_UserName)->MoveWindow(nLeftGap + nStaticW + nGap, nCurrentTop, nEditW, nStaticH);
 		nCurrentTop = nCurrentTop + nStaticH + nGap;
 	}
 	if (GetDlgItem(IDC_STATIC_NickName)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_STATIC_NickName)->MoveWindow(nLeftGap, nCurrentTop, nStaticW, nStaticH);
 	}
-	if (GetDlgItem(IDC_EDIT_NickName)->GetSafeHwnd())
+	if (GetDlgItem(IDC_STATIC_STATUS)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_EDIT_NickName)->MoveWindow(nLeftGap + nStaticW + nGap, nCurrentTop, nEditW, nStaticH);
+		GetDlgItem(IDC_STATIC_STATUS)->MoveWindow(nLeftGap, nTopGap, nStaticW, nStaticH * 2 + nGap);
 		nCurrentTop = nCurrentTop + nStaticH + nGap;
 	}
 }

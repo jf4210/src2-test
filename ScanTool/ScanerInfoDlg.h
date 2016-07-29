@@ -23,6 +23,7 @@ private:
 
 	int				m_nStatusSize;			//字体大小
 	CFont			m_fontStatus;			//字体
+	CFont			m_fontUnLogin;
 	COLORREF		m_colorStatus;			//字体颜色
 
 	void			SetFontSize(int nSize);

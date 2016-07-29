@@ -10,6 +10,7 @@
 #include "GuideDlg.h"
 #include "MakeModelDlg.h"
 
+
 // CScanModleMgrDlg ¶Ô»°¿ò
 
 IMPLEMENT_DYNAMIC(CScanModleMgrDlg, CDialog)
@@ -197,7 +198,7 @@ void CScanModleMgrDlg::OnBnClickedBtnDlmodel()
 	
 
 	USES_CONVERSION;
-	CGetModelDlg dlg(A2T(g_strIP.c_str()), g_nCmdPort);
+	CGetModelDlg dlg(A2T(g_strCmdIP.c_str()), g_nCmdPort);
 	if (dlg.DoModal() != IDOK)
 		return;
 
