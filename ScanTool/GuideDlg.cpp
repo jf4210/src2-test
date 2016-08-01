@@ -213,11 +213,19 @@ void CGuideDlg::OnBnClickedBtnScan()
 		m_pScanDlg = new CScanToolDlg(m_pModel);
 		m_pScanDlg->Create(CScanToolDlg::IDD, this);
 		m_pScanDlg->ShowWindow(SW_SHOW);
+
+		CRect rt;
+		m_pScanDlg->GetWindowRect(&rt);
+		SetCursorPos(rt.left + 30, rt.top + 300);
 	}
 	else
 	{
 		m_pScanDlg->InitShow(m_pModel);
 		m_pScanDlg->InitScan();
+
+		CRect rt;
+		m_pScanDlg->GetWindowRect(&rt);
+		SetCursorPos(rt.left + 30, rt.top + 300);
 		m_pScanDlg->ShowWindow(SW_SHOW);
 		ShowWindow(SW_HIDE);
 	}
@@ -351,4 +359,21 @@ void CGuideDlg::OnBnClickedBtnLogin()
 		GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("µÇÂ¼"));
 	}
 	m_pScanDlg->m_pShowScannerInfoDlg->setShowInfo(m_strUserName, m_strNickName);
+}
+
+BOOL CGuideDlg::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		if (pMsg->wParam == VK_ESCAPE)
+		{
+			return TRUE;
+		}
+		if (pMsg->wParam == VK_RETURN)
+		{
+			return TRUE;
+		}
+		return TRUE;
+	}
+	return CDialog::PreTranslateMessage(pMsg);
 }

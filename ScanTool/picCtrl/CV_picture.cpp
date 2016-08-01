@@ -772,7 +772,7 @@ void CV_picture::OnMouseMove(UINT nFlags, CPoint point)
 // 		}
 // 		tl_inROI_last=tl_inROI;
 	}
-	TRACE("OnMouseMove: m_dst_img(%d,%d)\n", m_dst_img.cols, m_dst_img.rows);
+//	TRACE("OnMouseMove: m_dst_img(%d,%d)\n", m_dst_img.cols, m_dst_img.rows);
 	ShowImage_roi(m_dst_img,m_iDrawingMethod);
 
 	if (m_bMouseMoveinfoEnable)
