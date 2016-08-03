@@ -2021,11 +2021,23 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	}
 
 	BOOL bLogin = FALSE;
+	CString strUser = _T("");
+	CString strEzs = _T("");
+	int nTeacherId = -1;
+	int nUserId = -1;
 #ifdef SHOW_GUIDEDLG
 	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
 	bLogin = pDlg->m_bLogin;
+	strUser = pDlg->m_strUserName;
+	strEzs = pDlg->m_strEzs;
+	nTeacherId = pDlg->m_nTeacherId;
+	nUserId = pDlg->m_nUserId;
 #else
 	bLogin = m_bLogin;
+	strUser = m_strUserName;
+	strEzs = m_strEzs;
+	nTeacherId = m_nTeacherId;
+	nUserId = m_nUserId;
 #endif
 
 	if (!bLogin)
@@ -2187,15 +2199,15 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		jsnPaperArry.add(jsnPaper);
 	}
 	//写试卷袋信息到文件
-	std::string strUploader = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strUserName));
-	std::string strEzs = T2A(m_strEzs);
+	std::string strUploader = CMyCodeConvert::Gb2312ToUtf8(T2A(strUser));
+	std::string sEzs = T2A(strEzs);
 	Poco::JSON::Object jsnFileData;
 	jsnFileData.set("examId", dlg.m_nExamID);
 	jsnFileData.set("subjectId", dlg.m_SubjectID);
 	jsnFileData.set("uploader", strUploader);
-	jsnFileData.set("ezs", strEzs);
-	jsnFileData.set("nTeacherId", m_nTeacherId);
-	jsnFileData.set("nUserId", m_nUserId);
+	jsnFileData.set("ezs", sEzs);
+	jsnFileData.set("nTeacherId", nTeacherId);
+	jsnFileData.set("nUserId", nUserId);
 	jsnFileData.set("scanNum", m_pPapersInfo->nPaperCount);		//扫描的学生数量
 	jsnFileData.set("detail", jsnPaperArry);
 	std::stringstream jsnString;
@@ -2219,14 +2231,14 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	//试卷袋压缩
 	char szPapersSavePath[MAX_PATH] = { 0 };
 	char szZipName[50] = { 0 };
-	if (m_bLogin)
+	if (bLogin)
 	{
 		Poco::LocalDateTime now;
 		char szTime[50] = { 0 };
 		sprintf_s(szTime, "%d%02d%02d%02d%02d%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
 
-		sprintf_s(szPapersSavePath, "%sPaper\\%s_%s", T2A(g_strCurrentPath), T2A(m_strUserName), szTime);
-		sprintf_s(szZipName, "%s_%s.pkg", T2A(m_strUserName), szTime);
+		sprintf_s(szPapersSavePath, "%sPaper\\%s_%s", T2A(g_strCurrentPath), T2A(strUser), szTime);
+		sprintf_s(szZipName, "%s_%s.pkg", T2A(strUser), szTime);
 	}
 	else
 	{
