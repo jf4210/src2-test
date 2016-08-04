@@ -334,7 +334,7 @@ void CGuideDlg::OnBnClickedBtnLogin()
 			m_strEzs = dlg.m_strEzs;
 			m_nTeacherId = dlg.m_nTeacherId;
 			m_nUserId = dlg.m_nUserId;
-			GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("ÍË³ö"));
+			GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("×¢Ïú"));
 		}
 	}
 	else

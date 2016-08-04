@@ -220,7 +220,7 @@ void CGetModelDlg::OnBnClickedBtnDown()
 		std::string strLog = "连接服务器失败，Detail: " + exc.displayText();
 		g_pLogger->information(strLog);
 		TRACE(strLog.c_str());
-		AfxMessageBox(_T("登录失败"));
+		AfxMessageBox(_T("连接服务器失败"));
 	}
 
 	GetDlgItem(IDC_BTN_DOWN)->EnableWindow(TRUE);

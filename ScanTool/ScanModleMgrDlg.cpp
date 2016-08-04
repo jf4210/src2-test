@@ -369,6 +369,16 @@ void CScanModleMgrDlg::OnNMHoverListModel(NMHDR *pNMHDR, LRESULT *pResult)
 
 void CScanModleMgrDlg::OnBnClickedOk()
 {
+	if (!m_pModel)
+	{
+		AfxMessageBox(_T("当前模板为空，请选择扫描模板!"));
+		return;
+	}
+	CString strShow = _T("");
+	strShow.Format(_T("是否选择\"%s\"为扫描模板?")); m_pModel->strModelName;
+	if (MessageBox(strShow, _T("扫描模板确认"), MB_OKCANCEL) != IDOK)
+		return;
+
 	for (int i = 0; i < m_vecModel.size(); i++)
 	{
 		if (m_pModel != m_vecModel[i])

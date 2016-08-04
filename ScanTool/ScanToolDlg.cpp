@@ -922,7 +922,7 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 			m_strEzs = dlg.m_strEzs;
 			m_nTeacherId = dlg.m_nTeacherId;
 			m_nUserId = dlg.m_nUserId;
-			GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("退出"));
+			GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("注销"));
 		}
 	}
 	else
@@ -966,7 +966,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	}
 	if (!m_pModel)
 	{
-		AfxMessageBox(_T("模板解析错误"));
+		AfxMessageBox(_T("未设置扫描模板，请在模板设置界面选择扫描模板"));	//模板解析错误
 		return;
 	}
 	if (m_nScanStatus == 1)	//扫描中，不能操作
@@ -1060,7 +1060,7 @@ void CScanToolDlg::OnBnClickedBtnScanall()
 	}
 	if (!m_pModel)
 	{
-		AfxMessageBox(_T("模板解析错误"));
+		AfxMessageBox(_T("未设置扫描模板，请在模板设置界面选择扫描模板"));	//模板解析错误
 		return;
 	}
 	if (m_nScanStatus == 1)	//扫描中，不能操作
