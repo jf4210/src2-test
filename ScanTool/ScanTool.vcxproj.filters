@@ -410,5 +410,11 @@
     <Image Include="res\竖直4.png">
       <Filter>扫描模板制作窗口\OMR选项设置\OMR图片</Filter>
     </Image>
+    <Image Include="res\bitmap1.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\..\..\..\code\终端管理平台\TerminalPlatform\Debug\skin\btnDecoderNormal.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>

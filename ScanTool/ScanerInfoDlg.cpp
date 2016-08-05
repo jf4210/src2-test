@@ -27,8 +27,7 @@ CScanerInfoDlg::~CScanerInfoDlg()
 void CScanerInfoDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	DDX_Text(pDX, IDC_STATIC_UserName, m_strUser);
-	DDX_Text(pDX, IDC_STATIC_NickName, m_strNickName);
+	DDX_Text(pDX, IDC_STATIC_UserInfo, m_strUserInfo);
 }
 
 
@@ -86,8 +85,7 @@ void CScanerInfoDlg::SetFontSize(int nSize)
 							DEFAULT_QUALITY,
 							DEFAULT_PITCH | FF_SWISS,
 							_T("Arial"));
-	GetDlgItem(IDC_STATIC_UserName)->SetFont(&m_fontStatus);
-	GetDlgItem(IDC_STATIC_NickName)->SetFont(&m_fontStatus);
+	GetDlgItem(IDC_STATIC_UserInfo)->SetFont(&m_fontStatus);
 	GetDlgItem(IDC_STATIC_STATUS)->SetFont(&m_fontUnLogin);
 }
 
@@ -101,7 +99,7 @@ HBRUSH CScanerInfoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 	UINT CurID = pWnd->GetDlgCtrlID();
 
-	if (IDC_STATIC_UserName == CurID || IDC_STATIC_NickName == CurID)
+	if (IDC_STATIC_UserInfo == CurID)
 	{
 		pDC->SetTextColor(m_colorStatus);
 
@@ -120,17 +118,21 @@ void CScanerInfoDlg::setShowInfo(CString& strUser, CString& strNickName)
 {
 	m_strUser = strUser;
 	m_strNickName = strNickName;
+	if (strNickName != _T(""))
+		m_strUserInfo = strNickName;
+	else if (strUser != _T(""))
+		m_strUserInfo = strUser;
+	else
+		m_strUserInfo = _T("");
 
 	if (strUser == _T("") && strNickName == _T(""))
 	{
-		GetDlgItem(IDC_STATIC_UserName)->ShowWindow(SW_HIDE);
-		GetDlgItem(IDC_STATIC_NickName)->ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_STATIC_UserInfo)->ShowWindow(SW_HIDE);
 		GetDlgItem(IDC_STATIC_STATUS)->ShowWindow(SW_SHOW);
 	}
 	else
 	{
-		GetDlgItem(IDC_STATIC_UserName)->ShowWindow(SW_SHOW);
-		GetDlgItem(IDC_STATIC_NickName)->ShowWindow(SW_SHOW);
+		GetDlgItem(IDC_STATIC_UserInfo)->ShowWindow(SW_SHOW);
 		GetDlgItem(IDC_STATIC_STATUS)->ShowWindow(SW_HIDE);
 	}
 	
@@ -153,14 +155,19 @@ void CScanerInfoDlg::InitCtrlPosition()
 	int nCurrentTop = nTopGap;
 	int nStaticW = cx - nLeftGap - nRightGap;
 	int nStaticH = (cy - nTopGap - nBottomGap - nGap) / 2;
-	if (GetDlgItem(IDC_STATIC_UserName)->GetSafeHwnd())
+// 	if (GetDlgItem(IDC_STATIC_UserName)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_STATIC_UserName)->MoveWindow(nLeftGap, nCurrentTop, nStaticW, nStaticH);
+// 		nCurrentTop = nCurrentTop + nStaticH + nGap;
+// 	}
+// 	if (GetDlgItem(IDC_STATIC_NickName)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_STATIC_NickName)->MoveWindow(nLeftGap, nCurrentTop, nStaticW, nStaticH);
+// 	}
+	if (GetDlgItem(IDC_STATIC_UserInfo)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_STATIC_UserName)->MoveWindow(nLeftGap, nCurrentTop, nStaticW, nStaticH);
+		GetDlgItem(IDC_STATIC_UserInfo)->MoveWindow(nLeftGap, nTopGap, nStaticW, nStaticH * 2 + nGap);
 		nCurrentTop = nCurrentTop + nStaticH + nGap;
-	}
-	if (GetDlgItem(IDC_STATIC_NickName)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_STATIC_NickName)->MoveWindow(nLeftGap, nCurrentTop, nStaticW, nStaticH);
 	}
 	if (GetDlgItem(IDC_STATIC_STATUS)->GetSafeHwnd())
 	{

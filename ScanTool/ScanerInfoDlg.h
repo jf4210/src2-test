@@ -20,6 +20,7 @@ public:
 private:
 	CString		m_strUser;
 	CString		m_strNickName;
+	CString		m_strUserInfo;
 
 	int				m_nStatusSize;			//字体大小
 	CFont			m_fontStatus;			//字体

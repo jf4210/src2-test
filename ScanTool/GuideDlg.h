@@ -1,6 +1,7 @@
 #pragma once
 #include "global.h"
 #include "ScanToolDlg.h"
+#include "ScanerInfoDlg.h"
 
 // CGuideDlg ¶Ô»°¿ò
 
@@ -26,7 +27,7 @@ public:
 
 	pMODEL	m_pModel;
 	CScanToolDlg* m_pScanDlg;
-
+	CScanerInfoDlg* m_pShowScannerInfoDlg;
 private:
 	void InitConf();
 	void InitLog();
@@ -45,4 +46,7 @@ public:
 	afx_msg void OnBnClickedBtnParam();
 	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedBtnLogin();
+	afx_msg void OnNMClickSyslinkSetting(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnClose();
+	afx_msg void OnNMClickSyslinkLogin(NMHDR *pNMHDR, LRESULT *pResult);
 };

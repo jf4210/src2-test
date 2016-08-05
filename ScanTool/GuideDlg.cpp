@@ -18,7 +18,7 @@ IMPLEMENT_DYNAMIC(CGuideDlg, CDialog)
 
 CGuideDlg::CGuideDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CGuideDlg::IDD, pParent)
-	, m_pModel(NULL), m_pScanDlg(NULL), m_bLogin(FALSE), m_nTeacherId(-1), m_nUserId(-1)
+	, m_pModel(NULL), m_pScanDlg(NULL), m_pShowScannerInfoDlg(NULL), m_bLogin(FALSE), m_nTeacherId(-1), m_nUserId(-1)
 {
 
 }
@@ -36,11 +36,14 @@ void CGuideDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CGuideDlg, CDialog)
 	ON_WM_SIZE()
 	ON_BN_CLICKED(IDC_BTN_Scan, &CGuideDlg::OnBnClickedBtnScan)
-	ON_BN_CLICKED(IDC_BTN_Exit, &CGuideDlg::OnBnClickedBtnExit)
+//	ON_BN_CLICKED(IDC_BTN_Exit, &CGuideDlg::OnBnClickedBtnExit)
 	ON_BN_CLICKED(IDC_BTN_Model, &CGuideDlg::OnBnClickedBtnModel)
-	ON_BN_CLICKED(IDC_BTN_Param, &CGuideDlg::OnBnClickedBtnParam)
+//	ON_BN_CLICKED(IDC_BTN_Param, &CGuideDlg::OnBnClickedBtnParam)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BTN_Login, &CGuideDlg::OnBnClickedBtnLogin)
+	ON_NOTIFY(NM_CLICK, IDC_SYSLINK_Setting, &CGuideDlg::OnNMClickSyslinkSetting)
+	ON_WM_CLOSE()
+	ON_NOTIFY(NM_CLICK, IDC_SYSLINK_Login, &CGuideDlg::OnNMClickSyslinkLogin)
 END_MESSAGE_MAP()
 
 BOOL CGuideDlg::OnInitDialog()
@@ -52,8 +55,14 @@ BOOL CGuideDlg::OnInitDialog()
 	strTitle.Format(_T("%s %s"), SYS_BASE_NAME, SOFT_VERSION);
 	SetWindowText(strTitle);
 
+	m_pShowScannerInfoDlg = new CScanerInfoDlg(this);
+	m_pShowScannerInfoDlg->Create(CScanerInfoDlg::IDD, this);
+	m_pShowScannerInfoDlg->ShowWindow(SW_SHOW);
+
 	InitConf();
 	InitCtrlPosition();
+
+	
 
 	m_pScanDlg = new CScanToolDlg(m_pModel);
 	m_pScanDlg->Create(CScanToolDlg::IDD, this);
@@ -74,9 +83,52 @@ void CGuideDlg::InitCtrlPosition()
 	int nTopGap = cy / 10;	//ÉÏ±ßµÄ¼ä¸ô£¬Áô¸ø¿ØÖÆÀ¸
 	if (nTopGap > 90)
 		nTopGap = 90;
-	else if (nTopGap < 30)
-		nTopGap = 30;
+	else if (nTopGap < 60)
+		nTopGap = 60;
 
+#if 1
+	const int nLeftGap = 20;		//×ó±ßµÄ¿Õ°×¼ä¸ô
+	const int nBottomGap = 20;	//ÏÂ±ßµÄ¿Õ°×¼ä¸ô
+	const int nRightGap = 20;	//ÓÒ±ßµÄ¿Õ°×¼ä¸ô
+	const int nGap = 40;			//ÆÕÍ¨¿Ø¼þµÄ¼ä¸ô
+
+	int nCurrentTop = nTopGap;
+	int nCurrentLeft = nLeftGap;
+
+	int nClientW = cx - nLeftGap - nRightGap;
+	int nClientH = cy - nTopGap - nRightGap;
+	int nMin = (nClientW - nGap > nClientH) ? nClientH : nClientW - nGap;
+	int nBtnW = (nClientW - nGap) / 2;
+	int nBtnH = nClientH > nBtnW ? nBtnW : nClientH;
+
+	if (nBtnW < 30)	nBtnW = 30;
+	if (nBtnH < 30) nBtnH = 30;
+
+	int nLeft_Top = cx - nRightGap - 120;
+	if (m_pShowScannerInfoDlg && m_pShowScannerInfoDlg->GetSafeHwnd())
+	{
+		m_pShowScannerInfoDlg->MoveWindow(5, 5, nClientW / 3, nTopGap - 10);
+	}
+	if (GetDlgItem(IDC_SYSLINK_Login)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_SYSLINK_Login)->MoveWindow(nLeft_Top, 5, 50, 30);
+	}
+	if (GetDlgItem(IDC_SYSLINK_Setting)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_SYSLINK_Setting)->MoveWindow(nLeft_Top + 60, 5, 50, 30);
+	}
+	
+	if (GetDlgItem(IDC_BTN_Scan)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_Scan)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
+		nCurrentLeft = nCurrentLeft + nBtnW + nGap;
+	}
+	if (GetDlgItem(IDC_BTN_Model)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_Model)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
+		nCurrentLeft = nCurrentLeft + nBtnW + nGap;
+	}
+#else
 	const int nLeftGap = 20;		//×ó±ßµÄ¿Õ°×¼ä¸ô
 	const int nBottomGap = 20;	//ÏÂ±ßµÄ¿Õ°×¼ä¸ô
 	const int nRightGap = 20;	//ÓÒ±ßµÄ¿Õ°×¼ä¸ô
@@ -85,7 +137,6 @@ void CGuideDlg::InitCtrlPosition()
 	int nCurrentTop		= nTopGap;
 	int nCurrentLeft	= nLeftGap;
 
-#if 1
 	int nClientW = cx - nLeftGap - nRightGap;
 	int nClientH = cy - nTopGap - nRightGap;
 	int nBtnW = (nClientW - nGap * 2) / 3;
@@ -94,7 +145,7 @@ void CGuideDlg::InitCtrlPosition()
 	if (nBtnW < 20)	nBtnW = 30;
 	if (nBtnH < 20) nBtnH = 30;
 
-	
+
 	if (GetDlgItem(IDC_BTN_Scan)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_Scan)->MoveWindow(nCurrentLeft, nCurrentTop, nClientW - nBtnW - nGap, nBtnH);
@@ -115,42 +166,12 @@ void CGuideDlg::InitCtrlPosition()
 	{
 		GetDlgItem(IDC_BTN_Param)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
 		nCurrentLeft = nCurrentLeft + nBtnW + nGap;
-	}
+}
 	if (GetDlgItem(IDC_BTN_Exit)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_Exit)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
 		nCurrentLeft = nLeftGap;
 		nCurrentTop = nCurrentTop + nBtnH + nGap;
-	}
-#else
-	int nBtnW = (nClientW - nGap) / 2;
-	int nBtnH = (nClientH - nGap) / 2;
-
-	if (nBtnW < 20)	nBtnW = 30;
-	if (nBtnH < 20) nBtnH = 30;
-
-	if (GetDlgItem(IDC_BTN_Scan)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_BTN_Scan)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
-		nCurrentLeft = nCurrentLeft + nBtnW + nGap;
-	}
-	if (GetDlgItem(IDC_BTN_Model)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_BTN_Model)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
-		nCurrentLeft = nLeftGap;
-		nCurrentTop = nCurrentTop + nBtnH + nGap;
-	}
-	if (GetDlgItem(IDC_BTN_Param)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_BTN_Param)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
-		nCurrentLeft = nCurrentLeft + nBtnW + nGap;
-	}
-	if (GetDlgItem(IDC_BTN_Exit)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_BTN_Exit)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
-		nCurrentLeft = nLeftGap;
-		nCurrentTop = nCurrentTop + nBtnH + nGap;
-	}
 #endif
 }
 
@@ -264,7 +285,6 @@ void CGuideDlg::OnBnClickedBtnParam()
 	if (dlg.DoModal() != IDOK)
 		return;
 
-
 	USES_CONVERSION;
 	bool bChange = false;
 	if (g_strCmdIP != T2A(dlg.m_strCmdIP))		bChange = true;
@@ -299,13 +319,21 @@ void CGuideDlg::OnBnClickedBtnParam()
 	}	
 }
 
+void CGuideDlg::OnClose()
+{
+	if (m_pModel != m_pScanDlg->m_pModel)
+		SAFE_RELEASE(m_pModel);
+
+	CDialog::OnClose();
+}
+
 void CGuideDlg::OnDestroy()
 {
 	CDialog::OnDestroy();
 	
+	SAFE_RELEASE(m_pShowScannerInfoDlg);
 	SAFE_RELEASE(m_pScanDlg);
 }
-
 
 void CGuideDlg::OnBnClickedBtnLogin()
 {
@@ -323,7 +351,7 @@ void CGuideDlg::OnBnClickedBtnLogin()
 			m_strPwd = _T("");
 			m_nTeacherId = -1;
 			m_nUserId = -1;
-			GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("µÇÂ¼"));
+			GetDlgItem(IDC_SYSLINK_Login)->SetWindowTextW(_T("<a>µÇÂ¼</a>"));
 		}
 		else
 		{
@@ -334,7 +362,7 @@ void CGuideDlg::OnBnClickedBtnLogin()
 			m_strEzs = dlg.m_strEzs;
 			m_nTeacherId = dlg.m_nTeacherId;
 			m_nUserId = dlg.m_nUserId;
-			GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("×¢Ïú"));
+			GetDlgItem(IDC_SYSLINK_Login)->SetWindowTextW(_T("<a>×¢Ïú</a>"));
 		}
 	}
 	else
@@ -356,8 +384,9 @@ void CGuideDlg::OnBnClickedBtnLogin()
 		m_strEzs = _T("");
 		m_nTeacherId = -1;
 		m_nUserId = -1;
-		GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("µÇÂ¼"));
+		GetDlgItem(IDC_SYSLINK_Login)->SetWindowTextW(_T("<a>µÇÂ¼</a>"));
 	}
+	m_pShowScannerInfoDlg->setShowInfo(m_strUserName, m_strNickName);
 	m_pScanDlg->m_pShowScannerInfoDlg->setShowInfo(m_strUserName, m_strNickName);
 }
 
@@ -376,4 +405,16 @@ BOOL CGuideDlg::PreTranslateMessage(MSG* pMsg)
 		return TRUE;
 	}
 	return CDialog::PreTranslateMessage(pMsg);
+}
+
+void CGuideDlg::OnNMClickSyslinkSetting(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	OnBnClickedBtnParam();
+	*pResult = 0;
+}
+
+void CGuideDlg::OnNMClickSyslinkLogin(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	OnBnClickedBtnLogin();
+	*pResult = 0;
 }

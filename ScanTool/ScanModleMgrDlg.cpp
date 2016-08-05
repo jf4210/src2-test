@@ -375,7 +375,7 @@ void CScanModleMgrDlg::OnBnClickedOk()
 		return;
 	}
 	CString strShow = _T("");
-	strShow.Format(_T("是否选择\"%s\"为扫描模板?")); m_pModel->strModelName;
+	strShow.Format(_T("是否选择\"%s\"为扫描模板?"), m_pModel->strModelName);
 	if (MessageBox(strShow, _T("扫描模板确认"), MB_OKCANCEL) != IDOK)
 		return;
 
