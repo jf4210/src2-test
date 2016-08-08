@@ -47,7 +47,7 @@ public:
 	pMODEL			m_pModel;				//扫描试卷时的校验模板
 	MODELLIST		m_lModel;				//已经加载的模板列表
 
-	int				m_nCurrItemPaperList;	//当前时间列表选中的项
+	int				m_nCurrItemPaperList;	//当前试卷列表选中的项
 	int				m_ncomboCurrentSel;		//下拉列表当前选择项
 
 	Poco::Thread*	m_pRecogThread;

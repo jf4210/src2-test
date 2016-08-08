@@ -411,6 +411,7 @@ void CScanModleMgrDlg::OnBnClickedBtnMakemodel()
 	{
 		SAFE_RELEASE(dlg.m_pModel);
 	}
+	OnBnClickedBtnRefresh();
 }
 
 

@@ -721,7 +721,67 @@ LRESULT CMakeModelDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
 		rc.eCPType = m_eCurCPType;
 		rc.nHItem = nPosH;
 		rc.nVItem = nPosV;
-		m_vecTmp.push_back(rc);
+		if (m_eCurCPType == ABMODEL)
+		{
+			rc.nThresholdValue = m_nABModelVal;
+			rc.fStandardValuePercent = m_fABModelThresholdPercent;
+
+			Rect rtTmp = rc.rt;
+			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+			RecogGrayValue(matSrcModel, rc);
+
+			m_vecTmp.push_back(rc);
+		}
+		else if (m_eCurCPType == COURSE)
+		{
+			rc.nThresholdValue = m_nCourseVal;
+			rc.fStandardValuePercent = m_fCourseThresholdPercent;
+
+			Rect rtTmp = rc.rt;
+			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+			RecogGrayValue(matSrcModel, rc);
+
+			m_vecTmp.push_back(rc);
+		}
+		else if (m_eCurCPType == QK_CP)
+		{
+			rc.nThresholdValue = m_nQK_CPVal;
+			rc.fStandardValuePercent = m_fQK_CPThresholdPercent;
+
+			Rect rtTmp = rc.rt;
+			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+			RecogGrayValue(matSrcModel, rc);
+
+			m_vecTmp.push_back(rc);
+		}
+		else if (m_eCurCPType == GRAY_CP)
+		{
+			rc.nThresholdValue = m_nGrayVal;
+			rc.fStandardValuePercent = m_fGrayThresholdPercent;
+
+			Rect rtTmp = rc.rt;
+			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+			RecogGrayValue(matSrcModel, rc);
+
+			m_vecTmp.push_back(rc);
+		}
+		else if (m_eCurCPType == WHITE_CP)
+		{
+			rc.nThresholdValue = m_nWhiteVal;
+			rc.fStandardValuePercent = m_fWhiteThresholdPercent;
+
+			Rect rtTmp = rc.rt;
+			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+			RecogGrayValue(matSrcModel, rc);
+
+			m_vecTmp.push_back(rc);
+		}
+		else
+		{
+			m_bShiftKeyDown = false;
+			return FALSE;
+		}
+//		m_vecTmp.push_back(rc);
 
 		Mat tmp = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
 		Mat tmp2 = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
@@ -4245,7 +4305,7 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 			rc.nAnswer = y;
 			break;
 		case 41:
-			rc.nTH = nMaxRow - x - 1;
+			rc.nTH = nMaxCols - x - 1;		//nMaxRow - x - 1;
 			rc.nAnswer = y;
 			break;
 		case 38:

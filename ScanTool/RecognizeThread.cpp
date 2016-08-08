@@ -417,6 +417,15 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		std::vector<Rect>RectCompList;
 		try
 		{
+			if (rc.rt.br().x > matCompPic.cols)
+			{
+				rc.rt.width = matCompPic.cols - rc.rt.x;
+			}
+			if (rc.rt.br().y > matCompPic.rows)
+			{
+				rc.rt.height = matCompPic.rows - rc.rt.y;
+			}
+
 			Mat matCompRoi;
 			matCompRoi = matCompPic(rc.rt);
 
@@ -556,6 +565,15 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		std::vector<Rect>RectCompList;
 		try
 		{
+			if (rc.rt.br().x > matCompPic.cols)
+			{
+				rc.rt.width = matCompPic.cols - rc.rt.x;
+			}
+			if (rc.rt.br().y > matCompPic.rows)
+			{
+				rc.rt.height = matCompPic.rows - rc.rt.y;
+			}
+
 			Mat matCompRoi;
 			matCompRoi = matCompPic(rc.rt);
 
@@ -658,6 +676,15 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		std::vector<Rect>RectCompList;
 		try
 		{
+			if (rc.rt.br().x > matCompPic.cols)
+			{
+				rc.rt.width = matCompPic.cols - rc.rt.x;
+			}
+			if (rc.rt.br().y > matCompPic.rows)
+			{
+				rc.rt.height = matCompPic.rows - rc.rt.y;
+			}
+
 			Mat matCompRoi;
 			matCompRoi = matCompPic(rc.rt);
 

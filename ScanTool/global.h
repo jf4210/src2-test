@@ -65,6 +65,8 @@
 	#endif
 #endif
 
+#define TO_WHTY		//给武汉天喻信息使用，无识别，只扫描上传
+
 #define USES_FILE_ENC			//是否对文件使用加密
 
 #define USES_PWD_ZIP_UNZIP		//是否使用密码解压缩
