@@ -16,7 +16,6 @@ CPapersInfoSaveDlg::CPapersInfoSaveDlg(pPAPERSINFO pPapers, CWnd* pParent /*=NUL
 	, m_nPaperCount(0), m_strPapersName(_T("")), m_strPapersDetail(_T("")), m_pPapers(pPapers)
 	, m_strExamTypeName(_T("")), m_strGradeName(_T("")), m_SubjectID(0), m_nExamID(0)
 {
-
 }
 
 CPapersInfoSaveDlg::~CPapersInfoSaveDlg()
@@ -71,7 +70,6 @@ BOOL CPapersInfoSaveDlg::OnInitDialog()
 	}
 	m_comboExamName.SetCurSel(0);
 
-
 	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemDataPtr(0);
 	if (pExamInfo)
 	{
@@ -98,8 +96,6 @@ BOOL CPapersInfoSaveDlg::OnInitDialog()
 		m_strGradeName = pExamInfo->strGradeName.c_str();
 	}
 
-	
-
 	UpdateData(FALSE);
 	return TRUE;
 }
@@ -111,6 +107,16 @@ BOOL CPapersInfoSaveDlg::OnInitDialog()
 void CPapersInfoSaveDlg::OnBnClickedOk()
 {
 	UpdateData(TRUE);
+
+	if (g_lExamList.size() == 0)
+	{
+		if (m_strPapersName == _T(""))
+		{
+			AfxMessageBox(_T("ÊÔ¾í´üÃû³ÆÎ´ÉèÖÃ"));
+			return;
+		}
+	}
+
 	USES_CONVERSION;
 	m_pPapers->strPapersName = T2A(m_strPapersName);
 	m_pPapers->strPapersDesc = T2A(m_strPapersDetail);

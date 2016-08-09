@@ -65,20 +65,41 @@
 	#endif
 #endif
 
-#define TO_WHTY		//给武汉天喻信息使用，无识别，只扫描上传
+#define SHOW_GUIDEDLG					//显示引导界面
+//#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
 
 #define USES_FILE_ENC			//是否对文件使用加密
 
-#define USES_PWD_ZIP_UNZIP		//是否使用密码解压缩
+#ifndef TO_WHTY
+	#define USES_PWD_ZIP_UNZIP		//是否使用密码解压缩
+#endif
 
-#define SHOW_GUIDEDLG					//显示引导界面
-//#define SHOW_MODELMAKE_MAINDLG		//是否在主界面上显示模板制作按钮
-//#define SHOW_COMBOLIST_MAINDLG		//是否在主界面上显示下拉列表控件
-//#define SHOW_SCANALL_MAINDLG			//是否在主界面上显示整袋扫描按钮
+#ifdef SHOW_GUIDEDLG
+	//#define SHOW_LOGIN_MAINDLG			//是否在主界面上显示登录按钮
+	//#define SHOW_MODELMGR_MAINDLG			//是否在主界面上显示模板管理按钮
+	//#define SHOW_MODELMAKE_MAINDLG		//是否在主界面上显示模板制作按钮
+	//#define SHOW_COMBOLIST_MAINDLG		//是否在主界面上显示下拉列表控件
+	//#define SHOW_SCANALL_MAINDLG			//是否在主界面上显示整袋扫描按钮
+	#define SHOW_PAPERINPUT_MAINDLG			//是否在主界面上显示试卷导入按钮
+#elif defined (TO_WHTY)
+	//#define SHOW_LOGIN_MAINDLG			//是否在主界面上显示登录按钮
+	//#define SHOW_MODELMGR_MAINDLG			//是否在主界面上显示模板管理按钮
+	//#define SHOW_MODELMAKE_MAINDLG		//是否在主界面上显示模板制作按钮
+	//#define SHOW_COMBOLIST_MAINDLG		//是否在主界面上显示下拉列表控件
+	//#define SHOW_SCANALL_MAINDLG			//是否在主界面上显示整袋扫描按钮
+	//#define SHOW_PAPERINPUT_MAINDLG		//是否在主界面上显示试卷导入按钮
+#else
+	#define SHOW_LOGIN_MAINDLG				//是否在主界面上显示登录按钮
+	#define SHOW_MODELMGR_MAINDLG			//是否在主界面上显示模板管理按钮
+	//#define SHOW_MODELMAKE_MAINDLG		//是否在主界面上显示模板制作按钮
+	//#define SHOW_COMBOLIST_MAINDLG		//是否在主界面上显示下拉列表控件
+	//#define SHOW_SCANALL_MAINDLG			//是否在主界面上显示整袋扫描按钮
+	#define SHOW_PAPERINPUT_MAINDLG			//是否在主界面上显示试卷导入按钮
+#endif
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 
-#define SOFT_VERSION	_T("1.801")
+#define SOFT_VERSION	_T("1.809")
 #define SYS_BASE_NAME	_T("YKLX-ScanTool")
 
 #define MAX_DLG_WIDTH	1024

@@ -4835,7 +4835,7 @@ void CMakeModelDlg::InitParam()
 	}
 	catch (Poco::Exception& exc)
 	{
-		strLog = "读取参数失败，使用默认参数 " + exc.displayText();
+		strLog = "读取参数失败，使用默认参数 " + CMyCodeConvert::Utf8ToGb2312(exc.displayText());
 		m_nGaussKernel = 5;
 		m_nSharpKernel = 5;
 		m_nCannyKernel = 90;

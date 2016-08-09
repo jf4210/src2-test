@@ -163,11 +163,11 @@ protected:
 			if (!decompressDir.exists())
 				decompressDir.createDirectories();
 
-			Poco::File fileRecvDir(SysSet.m_strUpLoadPath);
+			Poco::File fileRecvDir(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strUpLoadPath));
 			if (!fileRecvDir.exists())
 				fileRecvDir.createDirectories();
 
-			Poco::File modelSaveDir(SysSet.m_strModelSavePath);
+			Poco::File modelSaveDir(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strModelSavePath));
 			if (!modelSaveDir.exists())
 				modelSaveDir.createDirectories();
 		}
@@ -193,7 +193,7 @@ protected:
 
 		std::vector<CSendToHttpThread*> vecSendHttpThreadObj;
 		Poco::Thread* pSendHttpThread = new Poco::Thread[SysSet.m_nSendHttpThreads];
-		for (int i = 0; i < SysSet.m_nDecompressThreads; i++)
+		for (int i = 0; i < SysSet.m_nSendHttpThreads; i++)
 		{
 			CSendToHttpThread* pObj = new CSendToHttpThread;
 			pSendHttpThread[i].start(*pObj);

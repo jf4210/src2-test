@@ -15,7 +15,12 @@
 #endif
 
 #define USES_FILE_DNC			//是否对文件使用解密
-//#define USE_POCO_UNZIP	//使用poco解压缩zip文件
+//#define USE_POCO_UNZIP			//使用poco解压缩zip文件
+
+//#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
+#ifdef TO_WHTY
+	#define USE_POCO_UNZIP			//给武汉天喻信息使用,不使用加密压缩
+#endif
 
 #define SOFT_VERSION "DataControlServer V1.0"
 

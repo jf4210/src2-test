@@ -96,7 +96,7 @@ CScanToolDlg::CScanToolDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	: CDialogEx(CScanToolDlg::IDD, pParent)
 	, m_pModel(pModel), m_ncomboCurrentSel(-1), m_pRecogThread(NULL), m_pCurrentPicShow(NULL), m_nModelPicNums(1)
 	, m_bTwainInit(FALSE), m_nCurrTabSel(0), m_nScanCount(0), m_nScanStatus(0)
-	, m_pPapersInfo(NULL), m_pPaper(NULL), m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL)
+	, m_pPapersInfo(NULL), m_pPaper(NULL), m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(30), m_pCurrentShowPaper(NULL)
 	, m_pSendFileObj(NULL), m_SendFileThread(NULL), m_bLogin(FALSE), m_pTcpCmdObj(NULL), m_TcpCmdThread(NULL)
 	, m_nTeacherId(-1), m_nUserId(-1), m_nCurrItemPaperList(-1)
 	, m_pShowModelInfoDlg(NULL), m_pShowScannerInfoDlg(NULL)
@@ -225,7 +225,11 @@ BOOL CScanToolDlg::OnInitDialog()
 	if (m_pModel != NULL)
 		m_nModelPicNums = m_pModel->nPicNum;
 	else
+	{
+#ifndef TO_WHTY
 		m_nModelPicNums = 1;
+#endif
+	}
 	InitTab();
 
 	m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
@@ -493,6 +497,10 @@ void CScanToolDlg::InitConfig()
 	g_strFileIP = strFileServerIP;
 	g_nFilePort = nFileServerPort;
 
+#ifdef TO_WHTY
+	m_nModelPicNums = pConf->getInt("WHTY.picNums", 2);
+#endif
+
 	m_pRecogThread = new Poco::Thread[nRecogThreads];
 	for (int i = 0; i < nRecogThreads; i++)
 	{
@@ -606,6 +614,9 @@ void CScanToolDlg::InitUI()
 	m_pShowScannerInfoDlg->Create(CScanerInfoDlg::IDD, this);
 	m_pShowScannerInfoDlg->ShowWindow(SW_SHOW);
 
+#ifdef TO_WHTY
+	m_pShowScannerInfoDlg->ShowWindow(SW_HIDE);
+#endif
 #ifndef SHOW_SCANALL_MAINDLG
 	GetDlgItem(IDC_BTN_ScanAll)->ShowWindow(SW_HIDE);
 #endif
@@ -616,9 +627,14 @@ void CScanToolDlg::InitUI()
 	GetDlgItem(IDC_STATIC_Model)->ShowWindow(SW_HIDE);
 	m_comboModel.ShowWindow(SW_HIDE);
 #endif
-#ifdef SHOW_GUIDEDLG
+#ifndef SHOW_LOGIN_MAINDLG
 	GetDlgItem(IDC_BTN_Login)->ShowWindow(SW_HIDE);
+#endif
+#ifndef SHOW_MODELMGR_MAINDLG
 	GetDlgItem(IDC_BTN_ModelMgr)->ShowWindow(SW_HIDE);
+#endif
+#ifndef SHOW_PAPERINPUT_MAINDLG
+	GetDlgItem(IDC_BTN_InputPaper)->ShowWindow(SW_HIDE);
 #endif
 #ifndef SHOW_GUIDEDLG
 	GetDlgItem(IDC_BTN_ReBack)->ShowWindow(SW_HIDE);
@@ -787,7 +803,7 @@ void CScanToolDlg::InitCtrlPosition()
 	//控制栏按钮位置
 	int nBtnWidth = nTopGap - nGap - nGap;
 	int nBtnCurrLeft = nLeftGap;
-#ifndef SHOW_GUIDEDLG
+#ifdef SHOW_LOGIN_MAINDLG
 	if (GetDlgItem(IDC_BTN_Login)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_Login)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
@@ -814,7 +830,7 @@ void CScanToolDlg::InitCtrlPosition()
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
 #endif
-#ifndef SHOW_GUIDEDLG
+#ifdef SHOW_MODELMGR_MAINDLG
 	if (GetDlgItem(IDC_BTN_ModelMgr)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_ModelMgr)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
@@ -831,11 +847,13 @@ void CScanToolDlg::InitCtrlPosition()
 		GetDlgItem(IDC_BTN_UploadMgr)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
+#ifdef SHOW_PAPERINPUT_MAINDLG
 	if (GetDlgItem(IDC_BTN_InputPaper)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_InputPaper)->MoveWindow(nBtnCurrLeft, nGap, nBtnWidth, nTopGap - nGap - nGap);
 		nBtnCurrLeft = nBtnCurrLeft + nBtnWidth + nGap;
 	}
+#endif
 #ifdef SHOW_GUIDEDLG
 	if (GetDlgItem(IDC_BTN_ReBack)->GetSafeHwnd())
 	{
@@ -847,15 +865,7 @@ void CScanToolDlg::InitCtrlPosition()
 	{
 		m_pShowScannerInfoDlg->MoveWindow(cx - nRightGap - 180, nGap, 180, nTopGap - nGap - nGap);	//cy - nRightGap - 10, nGap, 150, nTopGap - nGap - nGap
 	}
-	//++test
-// 	int nModelInfo_W = cx - nRightGap - nBtnCurrLeft;
-// 	if (nModelInfo_W > 250)
-// 		nModelInfo_W = 250;
-// 	if (m_pShowModelInfoDlg && m_pShowModelInfoDlg->GetSafeHwnd())
-// 	{
-// 		m_pShowModelInfoDlg->MoveWindow(nBtnCurrLeft, nGap, nModelInfo_W, nTopGap - nGap - nGap);
-// 	}
-	//--
+
 	Invalidate();
 }
 
@@ -964,7 +974,21 @@ void CScanToolDlg::OnBnClickedBtnScan()
 			ScanSrcInit();
 		}
 	}
+
 #ifndef TO_WHTY
+	BOOL bLogin = FALSE;
+#ifdef SHOW_GUIDEDLG
+	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
+	bLogin = pDlg->m_bLogin;
+#else
+	bLogin = m_bLogin;
+#endif
+	if (!bLogin)
+	{
+		if(MessageBox(_T("未登录，图像不能保存，是否继续扫描？"), _T("警告"), MB_YESNO) != IDYES)
+			return;
+	}
+
 	if (!m_pModel)
 	{
 		AfxMessageBox(_T("未设置扫描模板，请在模板设置界面选择扫描模板"));	//模板解析错误
@@ -1059,6 +1083,19 @@ void CScanToolDlg::OnBnClickedBtnScanall()
 			m_scanSourceArry.RemoveAll();
 			ScanSrcInit();
 		}
+	}
+
+	BOOL bLogin = FALSE;
+#ifdef SHOW_GUIDEDLG
+	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
+	bLogin = pDlg->m_bLogin;
+#else
+	bLogin = m_bLogin;
+#endif
+	if (!bLogin)
+	{
+		if (MessageBox(_T("未登录，图像不能保存，是否继续扫描？"), _T("警告"), MB_YESNO) != IDYES)
+			return;
 	}
 	if (!m_pModel)
 	{
@@ -2066,12 +2103,13 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	nUserId = m_nUserId;
 #endif
 
+#ifndef TO_WHTY
 	if (!bLogin)
 	{
 		AfxMessageBox(_T("没有登录，不能上传，请先登录!"));
 		return;
 	}
-
+#endif
 	if (m_pPapersInfo->lIssue.size() > 0)
 	{
 		AfxMessageBox(_T("存在识别异常试卷，不能上传，请先处理异常试卷"));
@@ -2283,7 +2321,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	else
 	{
 		end = clock();
-		strInfo.Format(_T("保存%s成功,试卷袋压缩时间: %dms"), A2T(szZipName), end - start);
+		strInfo.Format(_T("保存%s成功,试卷袋压缩时间: %.2fs"), A2T(szZipName), (end - start)/1000.0);
 		SAFE_RELEASE(m_pPapersInfo);
 		m_lcPicture.DeleteAllItems();
 		m_pCurrentShowPaper = NULL;
@@ -2504,7 +2542,7 @@ void CScanToolDlg::InitFileUpLoadList()
 			strMsg.Format(_T("存在未上传成功的文件(%d个)，是否继续上传?(上次上传时间: %s)"), objArry->size(), A2T(strDate.c_str()));
 			if (MessageBox(strMsg, _T(""), MB_YESNO) != IDYES)
 			{
-				Poco::File fileList(strFilePath);
+				Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(strFilePath));
 				if (fileList.exists())
 					fileList.remove();
 
@@ -2522,7 +2560,7 @@ void CScanToolDlg::InitFileUpLoadList()
 			g_lSendTask.push_back(pTask);
 			g_fmSendLock.unlock();
 		}
-		Poco::File fileList(strFilePath);
+		Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(strFilePath));
 		if (fileList.exists())
 			fileList.remove();
 	}
@@ -2553,7 +2591,7 @@ void CScanToolDlg::InitParam()
 	}
 	catch (Poco::Exception& exc)
 	{
-		strLog = "读取参数失败，使用默认参数 " + exc.displayText();
+		strLog = "读取参数失败，使用默认参数 " + CMyCodeConvert::Utf8ToGb2312(exc.displayText());
 		g_nRecogGrayMin		= 0;
 		g_nRecogGrayMax_White = 255;
 		g_nRecogGrayMin_OMR = 0;
