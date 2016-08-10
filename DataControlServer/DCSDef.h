@@ -12,10 +12,12 @@
 
 #ifdef _DEBUG
 	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
+	#define TEST_FILE_PRESSURE	//文件上传压力测试
 #endif
 
 #define USES_FILE_DNC			//是否对文件使用解密
 //#define USE_POCO_UNZIP			//使用poco解压缩zip文件
+
 
 //#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
 #ifdef TO_WHTY

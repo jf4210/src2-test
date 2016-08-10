@@ -18,7 +18,8 @@ public:
 
 	bool	connectServer();
 	bool	sendMyData(char* szBuf, int nLen);
-	bool	recvMyData();
+	bool	recvMyData(char* szBuf);
+	bool	HandleCmd(char* szBuf, unsigned short usCmd);
 
 	Poco::Net::StreamSocket m_ss;
 	bool	_bConnect;

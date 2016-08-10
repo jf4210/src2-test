@@ -83,7 +83,7 @@ protected:
 
 	void  InitModelInfo()
 	{
-		std::string strModelPath = SysSet.m_strModelSavePath;
+		std::string strModelPath = CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strModelSavePath);
 
 		try
 		{

@@ -22,6 +22,8 @@ public:
 
 	std::vector<CSendFileThread*> m_vecRecogThreadObj;
 	Poco::Thread* m_pRecogThread;
+
+	CMFCEditBrowseCtrl	m_ctrlSendFile;
 // й╣ож
 protected:
 	HICON m_hIcon;

@@ -217,7 +217,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			}
 			pPapers->fmlIssue.unlock();
 
-			(static_cast<CDialog*>(pPaper->pSrcDlg))->PostMessageW(MSG_ERR_RECOG, (WPARAM)pPaper, (LPARAM)pPapers);
+			(static_cast<CDialog*>(pPaper->pSrcDlg))->SendMessage(MSG_ERR_RECOG, (WPARAM)pPaper, (LPARAM)pPapers);		//PostMessageW
 			break;									//找到这张试卷有问题点，不进行下一张试卷的检测
 		}	
 

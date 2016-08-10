@@ -290,6 +290,12 @@ BOOL CTwain::ProcessMessage(MSG msg)
 		//  CallTwainProc(&m_AppId,&m_Source,DG_CONTROL,DAT_EVENT,MSG_PROCESSEVENT,(TW_MEMREF)&twEvent);
 		//  if(GetRC() != TWRC_NOTDSEVENT)
 		//  {
+
+		if (!_bTwainContinue)
+		{
+			twEvent.TWMessage = MSG_CLOSEDSREQ;
+		}
+
 		TranslateMessage(twEvent);
 		//  }
 
@@ -630,7 +636,7 @@ void CTwain::TransferImage()
 					if (!_bHasNextPic)
 						nScanStatus = 1;
 					else
-						nScanStatus = 2;
+						nScanStatus = 2; 
 					break;
 			default:
 				TRACE("************ TransferImage--> default. ************\n");

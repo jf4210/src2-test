@@ -1802,6 +1802,9 @@ bool FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST&
 
 bool PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat)
 {
+	if (lFix.size() != lModelFix.size())
+		return false;
+
 	if (lFix.size() == 3)
 		FixWarpAffine(nPic, matCompPic, lFix, lModelFix, inverseMat);
 	else if (lFix.size() == 4)

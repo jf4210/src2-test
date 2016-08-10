@@ -61,6 +61,7 @@ CsendFileTestDlg::CsendFileTestDlg(CWnd* pParent /*=NULL*/)
 void CsendFileTestDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_MFCEDITBROWSE_SendFile, m_ctrlSendFile);
 }
 
 BEGIN_MESSAGE_MAP(CsendFileTestDlg, CDialogEx)
@@ -163,12 +164,16 @@ void CsendFileTestDlg::OnBnClickedBtnSendfile()
 {
 	const int sendFileCount = 1;
 
+	CString strFilePath;
+	m_ctrlSendFile.GetWindowTextW(strFilePath);
+
 	for (int i = 0; i < sendFileCount; i++)
 	{
 		pSENDTASK pTask = new SENDTASK;
 		char szFilePath[200] = { 0 };
 		sprintf_s(szFilePath, "E:\\myWorkspace\\yklx\\bin\\debug\\Paper\\%d.zip", i + 1);
 		pTask->strPath = szFilePath;
+		pTask->strName = "1.zip";
 
 		g_lSendTask.push_back(pTask);
 	}

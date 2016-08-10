@@ -164,6 +164,7 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 						}
 						else
 						{
+							#ifndef TEST_FILE_PRESSURE
 							pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
 							pDecompressTask->strFilePath = m_szFilePath;
 							pDecompressTask->strFileName = m_szFileName;
@@ -171,6 +172,7 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 							g_fmDecompressLock.lock();
 							g_lDecompressTask.push_back(pDecompressTask);
 							g_fmDecompressLock.unlock();
+							#endif
 						}						
 					}
 					else

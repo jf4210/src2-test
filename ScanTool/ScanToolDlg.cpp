@@ -963,16 +963,13 @@ void CScanToolDlg::OnBnClickedBtnScan()
 {
 	if (!m_bTwainInit)
 	{
-		if (!m_bTwainInit)
+		m_bTwainInit = InitTwain(m_hWnd);
+		if (!IsValidDriver())
 		{
-			m_bTwainInit = InitTwain(m_hWnd);
-			if (!IsValidDriver())
-			{
-				AfxMessageBox(_T("Unable to load Twain Driver."));
-			}
-			m_scanSourceArry.RemoveAll();
-			ScanSrcInit();
+			AfxMessageBox(_T("Unable to load Twain Driver."));
 		}
+		m_scanSourceArry.RemoveAll();
+		ScanSrcInit();
 	}
 
 #ifndef TO_WHTY
@@ -1015,6 +1012,8 @@ void CScanToolDlg::OnBnClickedBtnScan()
 
 	USES_CONVERSION;
 	char szPicTmpPath[MAX_PATH] = { 0 };
+
+	m_pCurrentShowPaper = NULL;
 
 	if (m_nScanStatus == 2)		//扫描异常结束后，删除前一份的试卷袋信息
 	{
@@ -1073,16 +1072,13 @@ void CScanToolDlg::OnBnClickedBtnScanall()
 {
 	if (!m_bTwainInit)
 	{
-		if (!m_bTwainInit)
+		m_bTwainInit = InitTwain(m_hWnd);
+		if (!IsValidDriver())
 		{
-			m_bTwainInit = InitTwain(m_hWnd);
-			if (!IsValidDriver())
-			{
-				AfxMessageBox(_T("Unable to load Twain Driver."));
-			}
-			m_scanSourceArry.RemoveAll();
-			ScanSrcInit();
+			AfxMessageBox(_T("Unable to load Twain Driver."));
 		}
+		m_scanSourceArry.RemoveAll();
+		ScanSrcInit();
 	}
 
 	BOOL bLogin = FALSE;
@@ -1122,6 +1118,8 @@ void CScanToolDlg::OnBnClickedBtnScanall()
 
 	USES_CONVERSION;
 	char szPicTmpPath[MAX_PATH] = { 0 };
+
+	m_pCurrentShowPaper = NULL;
 
 	SAFE_RELEASE(m_pPapersInfo);	//整袋重扫，删除前一袋试卷的信息
 	
@@ -1559,6 +1557,7 @@ BOOL CScanToolDlg::PreTranslateMessage(MSG* pMsg)
 			return TRUE;
 		}
 	}
+
 	ProcessMessage(*pMsg);
 
 #ifdef SHOW_GUIDEDLG
@@ -1576,6 +1575,7 @@ BOOL CScanToolDlg::PreTranslateMessage(MSG* pMsg)
 				if (MessageBox(_T("存在未保存的试卷，是否退出？"), _T("警告"), MB_YESNO) != IDYES)
 					return TRUE;
 			}
+			ReleaseScan();
 			((CGuideDlg*)AfxGetMainWnd())->m_pModel = m_pModel;
 			((CGuideDlg*)AfxGetMainWnd())->ShowWindow(SW_SHOW);
 			this->ShowWindow(SW_HIDE);
@@ -2036,7 +2036,14 @@ LRESULT CScanToolDlg::MsgRecogErr(WPARAM wParam, LPARAM lParam)
 	pST_PaperInfo pPaper	= (pST_PaperInfo)wParam;
 	pPAPERSINFO   pPapers	= (pPAPERSINFO)lParam;
 
+	TRACE("\nMsgRecogErr ==> 识别出错，需要停止扫描仪\n");
 	_bTwainContinue = FALSE;
+//	CancelTransfer();
+//	ReleaseScan();
+// 	if (DisableSource())
+// 	{
+// 		TRACE("nMsgRecogErr ==> DisableSource() success\n");
+// 	}
 
 	int nIssuePaper = 0;
 	int nCount = m_lcPicture.GetItemCount();
@@ -2613,6 +2620,7 @@ void CScanToolDlg::OnClose()
 		if (MessageBox(_T("存在未保存的试卷，是否退出？"), _T("警告"), MB_YESNO) != IDYES)
 			return;
 	}
+	ReleaseScan();
 	((CGuideDlg*)AfxGetMainWnd())->m_pModel = m_pModel;
 	((CGuideDlg*)AfxGetMainWnd())->ShowWindow(SW_SHOW);
 	this->ShowWindow(SW_HIDE);
@@ -2680,6 +2688,7 @@ void CScanToolDlg::OnBnClickedBtnReback()
 		if (MessageBox(_T("存在未保存的试卷，是否退出？"), _T("警告"), MB_YESNO) != IDYES)
 			return;
 	}
+	ReleaseScan();
 	((CGuideDlg*)AfxGetMainWnd())->m_pModel = m_pModel;
 	((CGuideDlg*)AfxGetMainWnd())->ShowWindow(SW_SHOW);
 	this->ShowWindow(SW_HIDE);

@@ -3,7 +3,7 @@
 #include "ListPaperUser.h"
 #include "Net_Cmd_Protocol.h"
 
-#define ANSWERPACK_LEN		4096
+#define ANSWERPACK_LEN		40960
 class CPaperUser :
 	public ITcpContextNotify
 {

@@ -235,20 +235,30 @@ void CGuideDlg::OnBnClickedBtnScan()
 		m_pScanDlg->Create(CScanToolDlg::IDD, this);
 		m_pScanDlg->ShowWindow(SW_SHOW);
 
-		CRect rt;
-		m_pScanDlg->GetWindowRect(&rt);
-		SetCursorPos(rt.left + 30, rt.top + 300);
+// 		CRect rt;
+// 		m_pScanDlg->GetWindowRect(&rt);
+//		SetCursorPos(rt.left + 30, rt.top + 300);
+		CPoint pt;
+		GetCursorPos(&pt);
+		mouse_event(MOUSEEVENTF_LEFTDOWN, pt.x, pt.y, 0, 0);
+		mouse_event(MOUSEEVENTF_LEFTUP, pt.x, pt.y, 0, 0);
 	}
 	else
 	{
 		m_pScanDlg->InitShow(m_pModel);
 		m_pScanDlg->InitScan();
 
-		CRect rt;
-		m_pScanDlg->GetWindowRect(&rt);
-		SetCursorPos(rt.left + 30, rt.top + 300);
-		m_pScanDlg->ShowWindow(SW_SHOW);
+// 		CRect rt;
+// 		m_pScanDlg->GetWindowRect(&rt);
+//		SetCursorPos(rt.left + 30, rt.top + 300);
+
 		ShowWindow(SW_HIDE);
+		m_pScanDlg->ShowWindow(SW_SHOW);
+		
+		CPoint pt;
+		GetCursorPos(&pt);
+		mouse_event(MOUSEEVENTF_LEFTDOWN, pt.x, pt.y, 0, 0);
+		mouse_event(MOUSEEVENTF_LEFTUP, pt.x, pt.y, 0, 0);
 	}
 }
 
