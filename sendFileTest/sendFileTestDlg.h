@@ -24,6 +24,9 @@ public:
 	Poco::Thread* m_pRecogThread;
 
 	CMFCEditBrowseCtrl	m_ctrlSendFile;
+
+private:
+	void InitConfig();
 // й╣ож
 protected:
 	HICON m_hIcon;
@@ -37,4 +40,5 @@ protected:
 public:
 	afx_msg void OnBnClickedBtnSendfile();
 	afx_msg void OnDestroy();
+	afx_msg void OnBnClickedBtnSendtest();
 };

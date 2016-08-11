@@ -38,7 +38,7 @@
 
 
 extern int					g_nExitFlag;					//ÍË³ö±êÊ¾
-
+extern Poco::Logger* g_pLogger;
 
 
 typedef struct _SendTask_

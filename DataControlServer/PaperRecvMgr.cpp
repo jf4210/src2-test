@@ -14,7 +14,7 @@ CPaperRecvMgr::~CPaperRecvMgr()
 
 void CPaperRecvMgr::OnAccept(ITcpContext* pTcpContext)
 {
-	std::cout << "new file sender connected." << std::endl;
+	std::cout << "new file sender connected. Current connecter: " << m_listPaperUser.m_UserList.size() << std::endl;
 	CPaperUser* pUser = new CPaperUser(pTcpContext, m_listPaperUser);
 	if (!pUser)
 	{

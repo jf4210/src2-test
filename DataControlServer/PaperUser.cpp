@@ -7,6 +7,7 @@ CPaperUser::CPaperUser(ITcpContext* pTcpContext, CListPaperUser& PaperUserList)
 , m_nAnswerPacketError(0)
 , m_pTcpContext(pTcpContext)
 , m_PaperUserList(PaperUserList)
+, m_pf(NULL)
 {
 	ZeroMemory(m_szFileName, sizeof(m_szFileName));
 	ZeroMemory(m_szFilePath, sizeof(m_szFilePath));
@@ -18,12 +19,20 @@ CPaperUser::CPaperUser(ITcpContext* pTcpContext, CListPaperUser& PaperUserList)
 
 CPaperUser::~CPaperUser()
 {
+	if (m_pf)
+	{
+		fclose(m_pf);
+		m_pf = NULL;
+	}
 }
 
 void CPaperUser::OnClose(void)
 {
-	std::cout << "file sender close" << std::endl;
-	g_Log.LogOut("file sender close");
+	m_PaperUserList.RemoveUser(this);
+	std::string strLog = Poco::format("file sender close, Current connecter: %z", m_PaperUserList.m_UserList.size());
+	
+	std::cout << strLog << std::endl;
+	g_Log.LogOut(strLog);
 	delete this;
 }
 
@@ -74,7 +83,7 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 			}
 			else
 			{
-				if (WriteAnswerFile(m_PacketBuf, nDataLen) == 0)
+				if (WriteAnswerFile(m_PacketBuf, nDataLen) <= 0)
 				{
 					m_nAnswerPacketError = 1;
 					ClearAnswerInfo();
@@ -222,6 +231,8 @@ void CPaperUser::SetAnswerInfo(ST_FILE_INFO info)
 		Poco::File filePath(strFilePath);
 		if (filePath.exists())
 			filePath.remove(true);
+
+		
 	}
 	catch (Poco::Exception &exc)
 	{
@@ -235,6 +246,24 @@ void CPaperUser::SetAnswerInfo(ST_FILE_INFO info)
 	sprintf(m_szFilePath, "%s", strFilePath.c_str());
 	m_dwTotalFileSize = info.dwFileLen;
 	m_dwRecvFileSize = 0;
+
+	if (m_pf)
+	{
+		fclose(m_pf);
+		m_pf = NULL;
+	}
+	try
+	{
+		m_pf = fopen(m_szFilePath, "wb");
+	}
+	catch (...)
+	{
+		if (m_pf)
+		{
+			fclose(m_pf);
+			m_pf = NULL;
+		}
+	}
 }
 
 bool CPaperUser::CheckAnswerFile(void)
@@ -284,12 +313,50 @@ void CPaperUser::ClearAnswerInfo(void)
 	memset(m_szFilePath, 0, 255);
 	m_dwTotalFileSize = 0;
 	m_dwRecvFileSize = 0;
+
+	if (m_pf)
+	{
+		fclose(m_pf);
+		m_pf = NULL;
+	}
 }
 
 int CPaperUser::WriteAnswerFile(char* pData, int nDataLen)
 {
 	try
 	{
+#if 1
+// 		if (m_dwRecvFileSize == 0)
+// 		{
+// 			m_pf = fopen(m_szFilePath, "wb");
+// 		}
+		if (!m_pf)
+		{
+			m_pf = fopen(m_szFilePath, "wb");
+			if (!m_pf)	return 0;
+//			return 0;
+		}
+
+		int ret = fwrite(pData, 1, nDataLen, m_pf);
+		if (ret <= 0)
+		{
+			std::string strLog = "写文件失败\n";
+			g_Log.LogOutError(strLog);
+			OutputDebugStringA(strLog.c_str());
+
+			fclose(m_pf);
+			m_pf = NULL;
+			return ret;
+		}
+		m_dwRecvFileSize += nDataLen;
+
+		if (m_dwRecvFileSize == m_dwTotalFileSize)
+		{
+			fclose(m_pf);
+			m_pf = NULL;
+		}
+
+#else
 		FILE *pf = NULL;
 		if (m_dwRecvFileSize == 0)
 		{
@@ -310,9 +377,19 @@ int CPaperUser::WriteAnswerFile(char* pData, int nDataLen)
 		}
 		fclose(pf);
 		m_dwRecvFileSize += nDataLen;
+#endif
 	}
 	catch (...)
 	{
+		std::string strLog = "写文件异常\n";
+		g_Log.LogOutError(strLog);
+		OutputDebugStringA(strLog.c_str());
+		
+		if (m_pf)
+		{
+			fclose(m_pf);
+			m_pf = NULL;
+		}
 		return 0;
 	}
 

@@ -35,10 +35,12 @@ public:
 	// 接收的答案文件是否出错0-无错误，1-有错误
 	int				m_nAnswerPacketError;
 	ITcpContext*			m_pTcpContext;
-	CListPaperUser			m_PaperUserList;
+	CListPaperUser&			m_PaperUserList;
 
 	char			m_PacketBuf[ANSWERPACK_LEN];
 	char			m_ResponseBuf[512];
+
+	FILE *			m_pf;
 
 	bool CheckAnswerFile(void);
 	void ClearAnswerInfo(void);
