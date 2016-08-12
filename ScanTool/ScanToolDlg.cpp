@@ -863,7 +863,7 @@ void CScanToolDlg::InitCtrlPosition()
 #endif
 	if (m_pShowScannerInfoDlg && m_pShowScannerInfoDlg->GetSafeHwnd())
 	{
-		m_pShowScannerInfoDlg->MoveWindow(cx - nRightGap - 180, nGap, 180, nTopGap - nGap - nGap);	//cy - nRightGap - 10, nGap, 150, nTopGap - nGap - nGap
+		m_pShowScannerInfoDlg->MoveWindow(cx - nRightGap - 220, nGap, 220, nTopGap - nGap - nGap);	//cy - nRightGap - 10, nGap, 150, nTopGap - nGap - nGap
 	}
 
 	Invalidate();

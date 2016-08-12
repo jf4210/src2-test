@@ -36,10 +36,13 @@
 #include "Poco/Net/NetException.h"
 #include "Poco/Net/TCPServer.h"
 
+#include "Poco/Net/MulticastSocket.h"
+
+#define MULTICAST_START		0x9001		//组播命令，开始发送文件
 
 extern int					g_nExitFlag;					//退出标示
 extern Poco::Logger* g_pLogger;
-
+extern Poco::Event		g_eStartMulticast;
 
 typedef struct _SendTask_
 {

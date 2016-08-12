@@ -12,6 +12,8 @@ CSendFileThread::CSendFileThread(std::string& strIP, int nPort)
 
 CSendFileThread::~CSendFileThread()
 {
+	std::string strInfo = "发送线程退出";
+	g_pLogger->information(strInfo);
 	if (m_pRecvBuff)
 	{
 		delete m_pRecvBuff;
@@ -76,6 +78,11 @@ void CSendFileThread::run()
 void CSendFileThread::HandleTask(pSENDTASK pTask)
 {
 #if 1
+	g_eStartMulticast.wait();
+
+	std::string strInfo = "开始处理任务，文件名: " + pTask->strName;
+	g_pLogger->information(strInfo);
+
 	bool bSendOK = false;
 	while (!g_nExitFlag && !bSendOK && pTask->nSendTimes <= 3)
 	{
@@ -104,6 +111,8 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 		memcpy(szSendBuf + HEAD_SIZE, &stFileInfo, sizeof(ST_FILE_INFO));
 
 		TRACE("发送文件头\n");
+		strInfo = Poco::format("发送文件头, 次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
+		g_pLogger->information(strInfo);
 		if (!sendMyData(szSendBuf, HEAD_SIZE + sizeof(ST_FILE_INFO)))
 		{
 			pTask->nSendTimes++;
@@ -113,6 +122,8 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 		}
 
 		TRACE("接收发送文件命令\n");
+		strInfo = Poco::format("接收发送文件命令, 次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
+		g_pLogger->information(strInfo);
 		char szRecvBuf[1024] = { 0 };
 		if (!recvMyData(szRecvBuf))
 		{
@@ -131,6 +142,8 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 		}
 
 		TRACE("读取文件内容\n");
+		strInfo = Poco::format("读取文件内容, 次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
+		g_pLogger->information(strInfo);
 		std::string strFileData;
 		std::ifstream fin(pTask->strPath, std::ifstream::binary);
 		if (!fin)
@@ -140,15 +153,27 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 			g_pLogger->information(strLog);
 			continue;
 		}
-		std::stringstream buffer;
-		buffer << fin.rdbuf();
-		strFileData = buffer.str();
-		fin.close();
+		try
+		{
+			std::stringstream buffer;
+			buffer << fin.rdbuf();
+			strFileData = buffer.str();
+			fin.close();
+		}
+		catch (Poco::Exception& exc)
+		{
+			pTask->nSendTimes++;
+			std::string strLog = Poco::format("读取文件内容失败,次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
+			g_pLogger->information(strLog);
+			continue;
+		}
 
 		clock_t start, end;
 		start = clock();
 
 		TRACE("发送文件内容\n");
+		strInfo = Poco::format("发送文件内容, 次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
+		g_pLogger->information(strInfo);
 		if (!sendMyData(const_cast<char*>(strFileData.c_str()), nLen))
 		{
 			pTask->nSendTimes++;
@@ -158,6 +183,8 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 		}
 
 		TRACE("接收是否发送成功命令\n");
+		strInfo = Poco::format("接收是否发送成功命令, 次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
+		g_pLogger->information(strInfo);
 		ZeroMemory(szRecvBuf, sizeof(szRecvBuf));
 		if (!recvMyData(szRecvBuf))
 		{
@@ -178,7 +205,7 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 		end = clock();
 
 
-		std::string strLog = Poco::format("------>发送文件成功,次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
+		std::string strLog = Poco::format("------>发送文件成功,次数%d, 文件名:%s，时间: %.2fs", pTask->nSendTimes, pTask->strName, (end - start) / 1000.0);
 		g_pLogger->information(strLog);
 		TRACE("发送完成，时间：%.2f\n", (end - start)/1000.0);
 		bSendOK = true;

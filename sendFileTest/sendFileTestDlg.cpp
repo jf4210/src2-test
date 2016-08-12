@@ -7,6 +7,7 @@
 #include "sendFileTestDlg.h"
 #include "afxdialogex.h"
 #include "MyCodeConvert.h"
+#include "Net_Cmd_Protocol.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -16,6 +17,7 @@
 int					g_nExitFlag = 0;				//退出标示
 
 Poco::Logger*		g_pLogger;
+Poco::Event			g_eStartMulticast;
 
 Poco::FastMutex		g_fmSendLock;
 SENDTASKLIST		g_lSendTask;	
@@ -57,6 +59,7 @@ END_MESSAGE_MAP()
 
 CsendFileTestDlg::CsendFileTestDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CsendFileTestDlg::IDD, pParent)
+	, m_nThreads(0), m_nFileTasks(0), m_pMulticastServer(NULL)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -65,6 +68,8 @@ void CsendFileTestDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_SendFile, m_ctrlSendFile);
+	DDX_Text(pDX, IDC_EDIT_Threads, m_nThreads);
+	DDX_Text(pDX, IDC_EDIT_FileTasks, m_nFileTasks);
 }
 
 BEGIN_MESSAGE_MAP(CsendFileTestDlg, CDialogEx)
@@ -74,6 +79,7 @@ BEGIN_MESSAGE_MAP(CsendFileTestDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_SendFile, &CsendFileTestDlg::OnBnClickedBtnSendfile)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BTN_SendTest, &CsendFileTestDlg::OnBnClickedBtnSendtest)
+	ON_BN_CLICKED(IDC_BTN_Multicast, &CsendFileTestDlg::OnBnClickedBtnMulticast)
 END_MESSAGE_MAP()
 
 
@@ -109,6 +115,8 @@ BOOL CsendFileTestDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	InitConfig();
+
+	UpdateData(FALSE);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -166,36 +174,17 @@ HCURSOR CsendFileTestDlg::OnQueryDragIcon()
 
 void CsendFileTestDlg::OnBnClickedBtnSendfile()
 {
-//	const int sendFileCount = 1;
-
-// 	CString strFilePath;
-// 	m_ctrlSendFile.GetWindowTextW(strFilePath);
-// 
-// 	if (strFilePath.IsEmpty())
-// 	{
-// 		AfxMessageBox(_T("未设置文件路径"));
-// 		return;
-// 	}
-// 
-// 	USES_CONVERSION;
-// 	for (int i = 0; i < sendFileCount; i++)
-// 	{
-// 		pSENDTASK pTask = new SENDTASK;
-// 		char szFilePath[200] = { 0 };
-// //		sprintf_s(szFilePath, "E:\\myWorkspace\\yklx\\bin\\debug\\Paper\\%d.zip", i + 1);
-// 		strcpy_s(szFilePath, "E:\\myWorkspace\\yklx\\bin\\debug\\Paper\\1.zip");
-// 		pTask->strPath = T2A(strFilePath);
-// //		pTask->strName = "1.zip";
-// 
-// 		g_lSendTask.push_back(pTask);
-// 	}
-
-	const int sendThreadCount = 50;
-	std::string strIp = "192.168.1.131";
-	m_pRecogThread = new Poco::Thread[sendThreadCount];
-	for (int i = 0; i < sendThreadCount; i++)
+	UpdateData(TRUE);
+	if (m_nThreads <= 0)
 	{
-		CSendFileThread* pObj = new CSendFileThread(strIp, 19980);
+		AfxMessageBox(_T("设置线程数量"));
+		return;
+	}
+
+	m_pRecogThread = new Poco::Thread[m_nThreads];
+	for (int i = 0; i < m_nThreads; i++)
+	{
+		CSendFileThread* pObj = new CSendFileThread(m_strServerIP, m_nServerPort);
 		m_pRecogThread[i].start(*pObj);
 
 		m_vecRecogThreadObj.push_back(pObj);
@@ -237,8 +226,13 @@ void CsendFileTestDlg::OnBnClickedBtnSendtest()
 		return;
 	}
 
+	UpdateData(TRUE);
+	if (m_nFileTasks <= 0)
+	{
+		AfxMessageBox(_T("设置文件任务数量"));
+		return;
+	}
 
-	const int sendFileCount = 50;
 	std::string strPath;
 	std::string strExt;
 	std::string strBaseName;
@@ -257,7 +251,7 @@ void CsendFileTestDlg::OnBnClickedBtnSendtest()
 		int nPos = strPath.rfind('.');
 		strPath = strPath.substr(0, nPos);
 
-		for (int i = 1; i <= sendFileCount; i++)
+		for (int i = 1; i <= m_nFileTasks; i++)
 		{
 			std::string strNewFilePath = Poco::format("%s_%d_%d.%s", strPath, i, nCurrentThreadID, strExt);
 
@@ -271,7 +265,7 @@ void CsendFileTestDlg::OnBnClickedBtnSendtest()
 		TRACE(strLog.c_str());
 	}
 
-	for (int i = 1; i < sendFileCount; i++)
+	for (int i = 1; i <= m_nFileTasks; i++)
 	{
 		std::string strNewFilePath = Poco::format("%s_%d_%d.%s", strPath, i, nCurrentThreadID, strExt);
 		std::string strNewName = Poco::format("%s_%d_%d.%s", strBaseName, i, nCurrentThreadID, strExt);
@@ -310,6 +304,35 @@ void CsendFileTestDlg::InitConfig()
 	pFCFile->setProperty("archive", "timestamp");
 	pFCFile->setProperty("compress", "true");
 	pFCFile->setProperty("purgeCount", "5");
-	Poco::Logger& appLogger = Poco::Logger::create("sendFile", pFCFile, Poco::Message::PRIO_INFORMATION);
+
+	std::string strName = Poco::format("sendFile_%d", Poco::Thread::currentTid());
+
+	Poco::Logger& appLogger = Poco::Logger::create(strName, pFCFile, Poco::Message::PRIO_INFORMATION);
 	g_pLogger = &appLogger;
+
+	CString strConfigPath = strFile;
+	strConfigPath.Append(_T("config_sendFileTest.ini"));
+	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(T2A(strConfigPath));
+	Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strUtf8Path));
+	m_strServerIP = pConf->getString("SERVER.IP");
+	m_nServerPort = pConf->getInt("SERVER.Port", 19980);
+
+	m_strMulticastIP = pConf->getString("Multicast.IP");
+	m_nMulticastPort = pConf->getInt("Multicast.Port", 19980);
+}
+
+
+void CsendFileTestDlg::OnBnClickedBtnMulticast()
+{
+	if (!m_pMulticastServer)
+		m_pMulticastServer = new MulticastServer(m_strMulticastIP, m_nMulticastPort);
+
+	ST_CMD_HEADER stHead;
+	stHead.usCmd = MULTICAST_START;
+	stHead.uPackSize = 0;
+	char szSendBuf[1024] = { 0 };
+	memcpy(szSendBuf, &stHead, HEAD_SIZE);
+
+	Poco::Net::MulticastSocket ms;
+	int n = ms.sendTo(szSendBuf, HEAD_SIZE, m_pMulticastServer->group());
 }

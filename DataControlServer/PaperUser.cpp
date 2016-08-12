@@ -88,6 +88,10 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 					m_nAnswerPacketError = 1;
 					ClearAnswerInfo();
 					SendResult(RESPONSE_UPLOADANS, RESULT_ERROR_FILEIO);
+					m_end = clock();
+					char szLog[300] = { 0 };
+					sprintf(szLog, "WriteAnswerFile: %s failed. Timed = %d", m_szFilePath, m_end - m_start);
+					g_Log.LogOut(szLog);
 					return;
 				}
 
@@ -97,8 +101,9 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 					if (CheckAnswerFile())
 					{
 						SendResult(NOTIFY_RECVANSWERFIN, RESULT_SUCCESS);
+						m_end = clock();
 						char szLog[300] = { 0 };
-						sprintf(szLog, "recv file: %s completed.", m_szFilePath);
+						sprintf(szLog, "recv file: %s completed. time = %.2f", m_szFilePath, (m_end - m_start)/1000.0);
 						g_Log.LogOut(szLog);
 						std::cout << szLog << std::endl;
 
@@ -181,6 +186,15 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 							g_fmDecompressLock.lock();
 							g_lDecompressTask.push_back(pDecompressTask);
 							g_fmDecompressLock.unlock();
+							#else
+							Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
+							if (fileList.exists())
+							{
+								fileList.remove();
+								std::string strLog = "文件接收完成，删除文件，文件名: ";
+								strLog.append(m_szFileName);
+								g_Log.LogOut(strLog);
+							}
 							#endif
 						}						
 					}
@@ -246,6 +260,8 @@ void CPaperUser::SetAnswerInfo(ST_FILE_INFO info)
 	sprintf(m_szFilePath, "%s", strFilePath.c_str());
 	m_dwTotalFileSize = info.dwFileLen;
 	m_dwRecvFileSize = 0;
+
+	m_start = clock();
 
 	if (m_pf)
 	{
@@ -340,7 +356,8 @@ int CPaperUser::WriteAnswerFile(char* pData, int nDataLen)
 		int ret = fwrite(pData, 1, nDataLen, m_pf);
 		if (ret <= 0)
 		{
-			std::string strLog = "写文件失败\n";
+			std::string strLog = "写文件失败，文件名: ";
+			strLog.append(m_szFileName);
 			g_Log.LogOutError(strLog);
 			OutputDebugStringA(strLog.c_str());
 
@@ -381,7 +398,8 @@ int CPaperUser::WriteAnswerFile(char* pData, int nDataLen)
 	}
 	catch (...)
 	{
-		std::string strLog = "写文件异常\n";
+		std::string strLog = "写文件失败，文件名: ";
+		strLog.append(m_szFileName);
 		g_Log.LogOutError(strLog);
 		OutputDebugStringA(strLog.c_str());
 		

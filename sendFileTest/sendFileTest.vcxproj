@@ -112,6 +112,7 @@
     <ClInclude Include="..\..\common\md5.h" />
     <ClInclude Include="FileUpLoad.h" />
     <ClInclude Include="global.h" />
+    <ClInclude Include="MulticastServer.h" />
     <ClInclude Include="MyCodeConvert.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="sendFileTest.h" />
@@ -124,6 +125,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\common\md5.cpp" />
     <ClCompile Include="FileUpLoad.cpp" />
+    <ClCompile Include="MulticastServer.cpp" />
     <ClCompile Include="MyCodeConvert.cpp" />
     <ClCompile Include="sendFileTest.cpp" />
     <ClCompile Include="sendFileTestDlg.cpp" />

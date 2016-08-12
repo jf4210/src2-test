@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="组播">
+      <UniqueIdentifier>{ecc5a3aa-06d5-4d8f-85e2-b4387a3e9663}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -51,6 +54,9 @@
     <ClInclude Include="MyCodeConvert.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="MulticastServer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sendFileTest.cpp">
@@ -75,6 +81,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="MyCodeConvert.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MulticastServer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
