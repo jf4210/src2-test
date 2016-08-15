@@ -33,6 +33,9 @@ public:
 	int			m_nServerPort;
 	std::string m_strMulticastIP;
 	int			m_nMulticastPort;
+
+	int		m_nChildProcess;
+	int		m_nChildThreads;
 private:
 	void InitConfig();
 // й╣ож
@@ -50,4 +53,6 @@ public:
 	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedBtnSendtest();
 	afx_msg void OnBnClickedBtnMulticast();
+	afx_msg void OnBnClickedBtnStartchild();
+	afx_msg void OnBnClickedBtnStartchildthread();
 };

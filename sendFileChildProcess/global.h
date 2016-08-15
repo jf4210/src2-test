@@ -38,15 +38,22 @@
 
 #include "Poco/Net/MulticastSocket.h"
 
+
 #define MULTICAST_START		0x9001		//组播命令，开始发送文件
 #define MULTICAST_INIT_PROCESS		0x9002		//组播命令，开始初始化进程
 #define MULTICAST_INIT_THREAD		0x9003		//组播命令，开始初始化线程
 
-extern int					g_nExitFlag;					//退出标示
-extern Poco::Logger* g_pLogger;
-extern Poco::Event*		g_peStartMulticast;
+extern bool				_bAllOK_;
+extern int				_nExitFlag_;					//退出标示
+extern Poco::Logger*	_pLogger_;
+extern Poco::Event*		_peStartMulticast_;
+extern Poco::Event		_eInitMulticast_;
 
-extern std::string			g_strCurPath;
+extern int				_nThreads_;
+extern Poco::Event		_eTaskCompleted_;
+
+extern int					_nCurOKThreads_;
+extern Poco::FastMutex		_fmCurOKLock_;
 
 typedef struct _SendTask_
 {

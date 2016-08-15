@@ -1,10 +1,10 @@
-#include "stdafx.h"
+//#include "stdafx.h"
 #include "SendFileThread.h"
 #include "MyCodeConvert.h"
 #include "Net_Cmd_Protocol.h"
 
 CSendFileThread::CSendFileThread(std::string& strIP, int nPort)
-	: _strIp(strIP), _nPort(nPort), m_upLoad(*this), m_pRecvBuff(NULL), _bConnect(false)
+	: _strIp(strIP), _nPort(nPort), m_pRecvBuff(NULL), _bConnect(false)
 {
 	connectServer();
 }
@@ -13,7 +13,7 @@ CSendFileThread::CSendFileThread(std::string& strIP, int nPort)
 CSendFileThread::~CSendFileThread()
 {
 	std::string strInfo = "发送线程退出";
-	g_pLogger->information(strInfo);
+	_pLogger_->information(strInfo);
 	if (m_pRecvBuff)
 	{
 		delete m_pRecvBuff;
@@ -23,10 +23,7 @@ CSendFileThread::~CSendFileThread()
 
 void CSendFileThread::run()
 {
-	USES_CONVERSION;
-//	m_upLoad.InitUpLoadTcp(A2T(_strIp.c_str()), _nPort);
-
-	while (!g_nExitFlag)
+	while (!_nExitFlag_)
 	{
 		pSENDTASK pTask = NULL;
 		g_fmSendLock.lock();
@@ -44,47 +41,30 @@ void CSendFileThread::run()
 			continue;
 		}
 
-// 		try
-// 		{
-// 			int nThreadId = Poco::Thread::currentTid();
-// 
-// 			Poco::Path filePath(CMyCodeConvert::Gb2312ToUtf8(pTask->strPath));
-// 			std::string strPath = filePath.toString();
-// 
-// 			int nPos = strPath.rfind('.');
-// 			strPath = strPath.substr(0, nPos);
-// 			std::string strNewFilePath = Poco::format("%s_%d.%s", strPath, nThreadId, filePath.getExtension());
-// 
-// 			Poco::File fileTask(CMyCodeConvert::Gb2312ToUtf8(pTask->strPath));
-// 			fileTask.copyTo(strNewFilePath);
-// 
-// 			std::string strNewName = Poco::format("%s_%d.%s", filePath.getBaseName(), nThreadId, filePath.getExtension());
-// 			pTask->strPath = strNewFilePath;
-// 			pTask->strName = strNewName;
-// 		}
-// 		catch (Poco::Exception& exc)
-// 		{
-// 			std::string strLog = "文件复制异常: " + CMyCodeConvert::Utf8ToGb2312(exc.displayText()) + "\n";
-// 			TRACE(strLog.c_str());
-// 		}
-
 		HandleTask(pTask);
 
 		delete pTask;
 		pTask = NULL;
+
+		break;
 	}
+	_fmCurOKLock_.lock();
+	_nCurOKThreads_++;
+	if (_nCurOKThreads_ == _nThreads_)
+		_eTaskCompleted_.set();
+	_fmCurOKLock_.unlock();
 }
 
 void CSendFileThread::HandleTask(pSENDTASK pTask)
 {
-#if 1
-	g_peStartMulticast->wait();
+	_peStartMulticast_->wait();
 
 	std::string strInfo = "开始处理任务，文件名: " + pTask->strName;
-	g_pLogger->information(strInfo);
+	_pLogger_->information(strInfo);
+	std::cout << strInfo << std::endl;
 
 	bool bSendOK = false;
-	while (!g_nExitFlag && !bSendOK && pTask->nSendTimes <= 3)
+	while (!_nExitFlag_ && !bSendOK && pTask->nSendTimes <= 3)
 	{
 		while (!_bConnect)
 		{
@@ -99,58 +79,65 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 		stHead.usCmd = REQUEST_UPLOADANS;
 		stHead.uPackSize = sizeof(ST_FILE_INFO) + nLen;
 		ST_FILE_INFO stFileInfo;
-		USES_CONVERSION;
 		strcpy(stFileInfo.szFileName, pTask->strName.c_str());
 
-		char *pMd5 = MD5File((char*)pTask->strPath.c_str());
-		memcpy(stFileInfo.szMD5, pMd5, LEN_MD5);
+		std::string strMd5 = calcMd5(pTask->strPath);
+		memcpy(stFileInfo.szMD5, strMd5.c_str(), LEN_MD5);
 		stFileInfo.dwFileLen = nLen;
 
 		char szSendBuf[1024] = { 0 };
 		memcpy(szSendBuf, &stHead, HEAD_SIZE);
 		memcpy(szSendBuf + HEAD_SIZE, &stFileInfo, sizeof(ST_FILE_INFO));
 
-		TRACE("发送文件头\n");
+//		TRACE("发送文件头\n");
 		strInfo = Poco::format("发送文件头, 次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
-		g_pLogger->information(strInfo);
+		_pLogger_->information(strInfo);
 		if (!sendMyData(szSendBuf, HEAD_SIZE + sizeof(ST_FILE_INFO)))
 		{
+			_bAllOK_ = false;
 			pTask->nSendTimes++;
 			std::string strLog = Poco::format("发送文件头失败(发送时),次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
-			g_pLogger->information(strLog);
+			_pLogger_->information(strLog);
+			std::cout << strLog << std::endl;
 			continue;
 		}
 
-		TRACE("接收发送文件命令\n");
+//		TRACE("接收发送文件命令\n");
 		strInfo = Poco::format("接收发送文件命令, 次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
-		g_pLogger->information(strInfo);
+		_pLogger_->information(strInfo);
 		char szRecvBuf[1024] = { 0 };
 		if (!recvMyData(szRecvBuf))
 		{
+			_bAllOK_ = false;
 			pTask->nSendTimes++;
 			std::string strLog = Poco::format("接收文件头成功与否命令失败,次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
-			g_pLogger->information(strLog);
+			_pLogger_->information(strLog);
+			std::cout << strLog << std::endl;
 			continue;
 		}
 
 		if (!HandleCmd(szRecvBuf, RESPONSE_UPLOADANS))
 		{
+			_bAllOK_ = false;
 			pTask->nSendTimes++;
 			std::string strLog = Poco::format("发送文件头失败(发送结果),次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
-			g_pLogger->information(strLog);
+			_pLogger_->information(strLog);
+			std::cout << strLog << std::endl;
 			continue;
 		}
 
-		TRACE("读取文件内容\n");
+//		TRACE("读取文件内容\n");
 		strInfo = Poco::format("读取文件内容, 次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
-		g_pLogger->information(strInfo);
+		_pLogger_->information(strInfo);
 		std::string strFileData;
 		std::ifstream fin(pTask->strPath, std::ifstream::binary);
 		if (!fin)
 		{
+			_bAllOK_ = false;
 			pTask->nSendTimes++;
 			std::string strLog = Poco::format("打开文件失败,次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
-			g_pLogger->information(strLog);
+			_pLogger_->information(strLog);
+			std::cout << strLog << std::endl;
 			continue;
 		}
 		try
@@ -162,43 +149,51 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 		}
 		catch (Poco::Exception& exc)
 		{
+			_bAllOK_ = false;
 			pTask->nSendTimes++;
 			std::string strLog = Poco::format("读取文件内容失败,次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
-			g_pLogger->information(strLog);
+			_pLogger_->information(strLog);
+			std::cout << strLog << std::endl;
 			continue;
 		}
 
 		clock_t start, end;
 		start = clock();
 
-		TRACE("发送文件内容\n");
+//		TRACE("发送文件内容\n");
 		strInfo = Poco::format("发送文件内容, 次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
-		g_pLogger->information(strInfo);
+		_pLogger_->information(strInfo);
 		if (!sendMyData(const_cast<char*>(strFileData.c_str()), nLen))
 		{
+			_bAllOK_ = false;
 			pTask->nSendTimes++;
 			std::string strLog = Poco::format("发送文件失败(发送中),次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
-			g_pLogger->information(strLog);
+			_pLogger_->information(strLog);
+			std::cout << strLog << std::endl;
 			continue;
 		}
 
-		TRACE("接收是否发送成功命令\n");
+//		TRACE("接收是否发送成功命令\n");
 		strInfo = Poco::format("接收是否发送成功命令, 次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
-		g_pLogger->information(strInfo);
+		_pLogger_->information(strInfo);
 		ZeroMemory(szRecvBuf, sizeof(szRecvBuf));
 		if (!recvMyData(szRecvBuf))
 		{
+			_bAllOK_ = false;
 			pTask->nSendTimes++;
 			std::string strLog = Poco::format("接收文件发送成功与否命令失败,次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
-			g_pLogger->information(strLog);
+			_pLogger_->information(strLog);
+			std::cout << strLog << std::endl;
 			continue;
 		}
 
 		if (!HandleCmd(szRecvBuf, NOTIFY_RECVANSWERFIN))
 		{
+			_bAllOK_ = false;
 			pTask->nSendTimes++;
 			std::string strLog = Poco::format("发送文件失败(发送结果),次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
-			g_pLogger->information(strLog);
+			_pLogger_->information(strLog);
+			std::cout << strLog << std::endl;
 			continue;
 		}
 
@@ -206,8 +201,9 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 
 
 		std::string strLog = Poco::format("------>发送文件成功,次数%d, 文件名:%s，时间: %.2fs", pTask->nSendTimes, pTask->strName, (end - start) / 1000.0);
-		g_pLogger->information(strLog);
-		TRACE("发送完成，时间：%.2f\n", (end - start)/1000.0);
+		_pLogger_->information(strLog);
+		std::cout << strLog << std::endl;
+//		TRACE("发送完成，时间：%.2f\n", (end - start)/1000.0);
 		bSendOK = true;
 	}
 	
@@ -217,31 +213,6 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 		if (fileList.exists())
 			fileList.remove();
 	}
-
-
-#else
-	USES_CONVERSION;
-	std::string strDesPath = "E:\\myWorkspace\\yklx\\bin\\debug\\sendFileTest\\";
-
-	Poco::File fileSrcPath(CMyCodeConvert::Gb2312ToUtf8(pTask->strPath));
-	Poco::File fileDesPath(strDesPath);
-	if (!fileDesPath.exists())
-		fileDesPath.createDirectories();
-
-	Poco::Random rnd;
-	rnd.seed();
-	char szDesFileName[50] = { 0 };
-	sprintf_s(szDesFileName, "测试_%d_%05d.zip", Poco::Thread::currentTid(), rnd.next(99999));
-	strDesPath.append(szDesFileName);
-	fileSrcPath.copyTo(CMyCodeConvert::Gb2312ToUtf8(strDesPath));
-
-	m_upLoad.SendAnsFile(A2T(strDesPath.c_str()), A2T(szDesFileName));
-
-// 	if (fileDesPath.exists())
-// 		fileDesPath.remove(true);
-
-	Sleep(1000);
-#endif
 }
 
 void CSendFileThread::SendFileComplete(char* pName, char* pSrcPath)
@@ -254,7 +225,7 @@ void CSendFileThread::SendFileComplete(char* pName, char* pSrcPath)
 
 	char szLog[300] = { 0 };
 	sprintf_s(szLog, "发送文件(%s)完成.\n", pName);
-	TRACE(szLog);
+//	TRACE(szLog);
 
 	Poco::File fileDesPath(pSrcPath);
 	if (fileDesPath.exists())
@@ -272,7 +243,8 @@ bool CSendFileThread::connectServer()
 // 		m_ss.setNoDelay(true);
 		_bConnect = true;
 		std::string strLog = "连接服务器成功\n";
-		TRACE(strLog.c_str());
+		std::cout << strLog << std::endl;
+//		TRACE(strLog.c_str());
 	}
 	catch (Poco::Exception& exc)
 	{
@@ -295,9 +267,9 @@ bool CSendFileThread::sendMyData(char* szBuf, int nLen)
 			int nSend = m_ss.sendBytes(szBuf + nSended, nWantSend);
 			if (nSend == 0)
 			{
-				TRACE("the peer has closed.\n");
+//				TRACE("the peer has closed.\n");
 				std::string strLog = "the peer has closed";
-				g_pLogger->information(strLog);
+				_pLogger_->information(strLog);
 				_bConnect = false;
 				if (nSended == nLen)	bResult = true;
 				return bResult;
@@ -310,8 +282,8 @@ bool CSendFileThread::sendMyData(char* szBuf, int nLen)
 	catch (Poco::Exception& exc)
 	{
 		std::string strLog = "发送数据异常 ==> " + exc.displayText();
-		g_pLogger->information(strLog);
-		TRACE(strLog.c_str());
+		_pLogger_->information(strLog);
+//		TRACE(strLog.c_str());
 		_bConnect = false;
 	}
 	return bResult;
@@ -347,9 +319,9 @@ bool CSendFileThread::recvMyData(char* szBuf)
 				}
 				else if (nLen == 0)
 				{
-					TRACE("the peer has closed.\n");
+//					TRACE("the peer has closed.\n");
 					std::string strLog = "the peer has closed";
-					g_pLogger->information(strLog);
+					_pLogger_->information(strLog);
 					_bConnect = false;
 					return bResult;
 				}
@@ -364,8 +336,8 @@ bool CSendFileThread::recvMyData(char* szBuf)
 	catch (Poco::Exception& exc)
 	{
 		std::string strLog = "接收数据异常 ==> " + exc.displayText();
-		g_pLogger->information(strLog);
-		TRACE(strLog.c_str());
+		_pLogger_->information(strLog);
+//		TRACE(strLog.c_str());
 		_bConnect = false;
 	}
 	
@@ -385,5 +357,37 @@ bool CSendFileThread::HandleCmd(char* szBuf, unsigned short usCmd)
 	}
 
 	return bResult;
+}
+
+std::string CSendFileThread::calcMd5(std::string strFilePath)
+{
+	std::string strMd5;
+	try
+	{
+		Poco::MD5Engine md5;
+		Poco::DigestOutputStream dos(md5);
+
+		std::ifstream istr(strFilePath, std::ios::binary);
+		if (!istr)
+		{
+			string strLog = "calc MD5 failed 1: ";
+			strLog.append(strFilePath);
+			_pLogger_->information(strLog);
+			std::cout << strLog << std::endl;
+			return false;
+		}
+		Poco::StreamCopier::copyStream(istr, dos);
+		dos.close();
+
+		strMd5 = Poco::DigestEngine::digestToHex(md5.digest());
+	}
+	catch (...)
+	{
+		string strLog = "calc MD5 failed 3: ";
+		strLog.append(strFilePath);
+		_pLogger_->information(strLog);
+		std::cout << strLog << std::endl;
+	}
+	return strMd5;
 }
 

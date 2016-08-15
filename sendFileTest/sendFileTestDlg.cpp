@@ -17,7 +17,9 @@
 int					g_nExitFlag = 0;				//退出标示
 
 Poco::Logger*		g_pLogger;
-Poco::Event			g_eStartMulticast;
+Poco::Event*		g_peStartMulticast = new Poco::Event(false);
+
+std::string			g_strCurPath;
 
 Poco::FastMutex		g_fmSendLock;
 SENDTASKLIST		g_lSendTask;	
@@ -59,7 +61,7 @@ END_MESSAGE_MAP()
 
 CsendFileTestDlg::CsendFileTestDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CsendFileTestDlg::IDD, pParent)
-	, m_nThreads(0), m_nFileTasks(0), m_pMulticastServer(NULL)
+	, m_nThreads(0), m_nFileTasks(0), m_nChildProcess(0), m_nChildThreads(0), m_pMulticastServer(NULL)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -70,6 +72,8 @@ void CsendFileTestDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_SendFile, m_ctrlSendFile);
 	DDX_Text(pDX, IDC_EDIT_Threads, m_nThreads);
 	DDX_Text(pDX, IDC_EDIT_FileTasks, m_nFileTasks);
+	DDX_Text(pDX, IDC_EDIT_Childs, m_nChildProcess);
+	DDX_Text(pDX, IDC_EDIT_ChildThreads, m_nChildThreads);
 }
 
 BEGIN_MESSAGE_MAP(CsendFileTestDlg, CDialogEx)
@@ -80,6 +84,8 @@ BEGIN_MESSAGE_MAP(CsendFileTestDlg, CDialogEx)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BTN_SendTest, &CsendFileTestDlg::OnBnClickedBtnSendtest)
 	ON_BN_CLICKED(IDC_BTN_Multicast, &CsendFileTestDlg::OnBnClickedBtnMulticast)
+	ON_BN_CLICKED(IDC_BTN_StartChild, &CsendFileTestDlg::OnBnClickedBtnStartchild)
+	ON_BN_CLICKED(IDC_BTN_StartChildThread, &CsendFileTestDlg::OnBnClickedBtnStartchildthread)
 END_MESSAGE_MAP()
 
 
@@ -115,6 +121,7 @@ BOOL CsendFileTestDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	InitConfig();
+	m_pMulticastServer = new MulticastServer(m_strMulticastIP, m_nMulticastPort);
 
 	UpdateData(FALSE);
 
@@ -196,6 +203,11 @@ void CsendFileTestDlg::OnDestroy()
 {
 	CDialogEx::OnDestroy();
 	g_nExitFlag = 1;
+	if (g_peStartMulticast)
+	{
+		delete g_peStartMulticast;
+		g_peStartMulticast = NULL;
+	}
 	Sleep(1000);
 	for (int i = 0; i < m_vecRecogThreadObj.size(); i++)
 	{
@@ -293,8 +305,12 @@ void CsendFileTestDlg::InitConfig()
 
 	CString strFile(szPath);
 	strFile = strFile.Left(strFile.ReverseFind('\\') + 1);
+	g_strCurPath = T2A(strFile);
 	
-	std::string strLogPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strFile + _T("sendFile.log")));
+	std::string strName = Poco::format("sendFile_%d.log", (int)Poco::Thread::currentTid());
+
+	std::string strLogPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strFile));	//_T("sendFile.log")
+	strLogPath.append(strName);
 	Poco::AutoPtr<Poco::PatternFormatter> pFormatter(new Poco::PatternFormatter("%L%Y-%m-%d %H:%M:%S.%F %q:%t"));
 	Poco::AutoPtr<Poco::FormattingChannel> pFCFile(new Poco::FormattingChannel(pFormatter));
 	Poco::AutoPtr<Poco::FileChannel> pFileChannel(new Poco::FileChannel(strLogPath));
@@ -305,7 +321,7 @@ void CsendFileTestDlg::InitConfig()
 	pFCFile->setProperty("compress", "true");
 	pFCFile->setProperty("purgeCount", "5");
 
-	std::string strName = Poco::format("sendFile_%d", Poco::Thread::currentTid());
+//	std::string strName = Poco::format("sendFile_%d", Poco::Thread::currentTid());
 
 	Poco::Logger& appLogger = Poco::Logger::create(strName, pFCFile, Poco::Message::PRIO_INFORMATION);
 	g_pLogger = &appLogger;
@@ -324,12 +340,51 @@ void CsendFileTestDlg::InitConfig()
 
 void CsendFileTestDlg::OnBnClickedBtnMulticast()
 {
-	if (!m_pMulticastServer)
-		m_pMulticastServer = new MulticastServer(m_strMulticastIP, m_nMulticastPort);
-
 	ST_CMD_HEADER stHead;
 	stHead.usCmd = MULTICAST_START;
 	stHead.uPackSize = 0;
+	char szSendBuf[1024] = { 0 };
+	memcpy(szSendBuf, &stHead, HEAD_SIZE);
+
+	Poco::Net::MulticastSocket ms;
+	int n = ms.sendTo(szSendBuf, HEAD_SIZE, m_pMulticastServer->group());
+}
+
+
+void CsendFileTestDlg::OnBnClickedBtnStartchild()
+{
+	UpdateData(TRUE);
+	if (m_nChildProcess <= 0)
+	{
+		AfxMessageBox(_T("设置启动的子进程数量"));
+		return;
+	}
+
+	ST_CMD_HEADER stHead;
+	stHead.usCmd = MULTICAST_INIT_PROCESS;
+	stHead.uPackSize = 0;
+	stHead.usResult = m_nChildProcess;
+	char szSendBuf[1024] = { 0 };
+	memcpy(szSendBuf, &stHead, HEAD_SIZE);
+
+	Poco::Net::MulticastSocket ms;
+	int n = ms.sendTo(szSendBuf, HEAD_SIZE, m_pMulticastServer->group());
+}
+
+
+void CsendFileTestDlg::OnBnClickedBtnStartchildthread()
+{
+	UpdateData(TRUE);
+	if (m_nChildThreads <= 0)
+	{
+		AfxMessageBox(_T("设置启动的子线程数量"));
+		return;
+	}
+
+	ST_CMD_HEADER stHead;
+	stHead.usCmd = MULTICAST_INIT_THREAD;
+	stHead.uPackSize = 0;
+	stHead.usResult = m_nChildThreads;
 	char szSendBuf[1024] = { 0 };
 	memcpy(szSendBuf, &stHead, HEAD_SIZE);
 

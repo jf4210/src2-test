@@ -1,7 +1,6 @@
-#include "stdafx.h"
+//#include "stdafx.h"
 #include "MulticastServer.h"
 #include "Net_Cmd_Protocol.h"
-//#include <Windows.h>
 
 
 MulticastServer::MulticastServer(std::string& strIp, int nPort) :
@@ -51,7 +50,7 @@ void MulticastServer::run()
 			catch (Poco::Exception& exc)
 			{
 				std::string strLog = "MulticastServer异常 ==> " + exc.displayText();
-				g_pLogger->error(strLog);
+				_pLogger_->error(strLog);
 			}
 		}
 	}
@@ -114,16 +113,16 @@ bool MulticastServer::recvMyData(char* szBuf)
 							ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)szBuf;
 							nBaseLen += pstHead->uPackSize;
 							std::string strLog = "接收到组播数据";
-							g_pLogger->information(strLog);
+							_pLogger_->information(strLog);
 						}
 						nCount++;
 					}
 				}
 				else if (nLen == 0)
 				{
-					TRACE("the peer has closed.\n");
+//					TRACE("the peer has closed.\n");
 					std::string strLog = "the peer has closed";
-					g_pLogger->information(strLog);
+					_pLogger_->information(strLog);
 					return bResult;
 				}
 				else
@@ -137,8 +136,8 @@ bool MulticastServer::recvMyData(char* szBuf)
 	catch (Poco::Exception& exc)
 	{
 		std::string strLog = "接收数据异常 ==> " + exc.displayText();
-		g_pLogger->information(strLog);
-		TRACE(strLog.c_str());
+		_pLogger_->information(strLog);
+//		TRACE(strLog.c_str());
 	}
 
 	return bResult;
@@ -152,34 +151,21 @@ bool MulticastServer::HandleCmd(char* szBuf)
 	{
 		case MULTICAST_START:
 			{
-				g_peStartMulticast->set();
+				_peStartMulticast_->set();
 				bResult = true;
 				std::string strLog = "组播命令: 传输开始";
-				g_pLogger->information(strLog);
+				_pLogger_->information(strLog);
+				std::cout << strLog << std::endl;
 			}
 			break;
-		case MULTICAST_INIT_PROCESS:
+		case MULTICAST_INIT_THREAD:
 			{
-				std::string strComm = g_strCurPath + "sendFileChildProcess.exe";
-				USES_CONVERSION;
-				for (int i = 0; i < pstHead->usResult; i++)
-				{
-//					std::system(strComm.c_str());
-
-					STARTUPINFO si;
-					PROCESS_INFORMATION pi;
-					memset(&si, 0, sizeof(si));
-					si.cb = sizeof(si);
-					ZeroMemory(&pi, sizeof(pi));
-					if (!CreateProcessW(NULL, (LPTSTR)(LPCTSTR)A2T(strComm.c_str()), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
-					{
-						return false;
-					}
-				}
-				
+				_eInitMulticast_.set();
+				_nThreads_ = pstHead->usResult;
 				bResult = true;
-				std::string strLog = "组播命令: 初始化";
-				g_pLogger->information(strLog);
+				std::string strLog = "组播命令: 初始化子连接线程";
+				_pLogger_->information(strLog);
+				std::cout << strLog << std::endl;
 			}
 			break;
 	}

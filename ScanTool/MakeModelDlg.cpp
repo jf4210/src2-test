@@ -1181,9 +1181,10 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 		CvRect aRect = cvBoundingRect(contour, 0);
 		Rect rm = aRect;
 
-		if (rm.width < 10 || rm.height < 7 || rm.width > 70 || rm.height > 60 || rm.area() < 70)
+		if (rm.width < 10 || rm.height < 7 || rm.width > 80 || rm.height > 80 || rm.area() < 70 || rm.area() > 6400)
 		{
-			TRACE("过滤矩形:(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+			TRACE("过滤矩形:(%d,%d,%d,%d), 面积: %d\n", rm.x, rm.y, rm.width, rm.height, rm.area());
+			g_pLogger->information("过滤矩形:(%d,%d,%d,%d), 面积: %d\n", rm.x, rm.y, rm.width, rm.height, rm.area());
 			continue;
 		}
 
