@@ -639,7 +639,7 @@ LRESULT CMakeModelDlg::RoiLBtnUp(WPARAM wParam, LPARAM lParam)
 		return FALSE;
 	}
 
-	if (m_eCurCPType != H_HEAD && m_eCurCPType != V_HEAD && m_pModel->nHasHead == 0)
+	if (m_eCurCPType != H_HEAD && m_eCurCPType != V_HEAD && m_pModel && m_pModel->nHasHead == 0)
 	{
 		if (checkOverlap(m_eCurCPType, Rt))
 		{
@@ -650,7 +650,7 @@ LRESULT CMakeModelDlg::RoiLBtnUp(WPARAM wParam, LPARAM lParam)
 		SortRect();
 		UpdataCPList();
 	}
-	else if (m_eCurCPType != H_HEAD && m_eCurCPType != V_HEAD && m_pModel->nHasHead != 0)
+	else if (m_eCurCPType != H_HEAD && m_eCurCPType != V_HEAD && m_pModel &&  m_pModel->nHasHead != 0)
 	{
 		if (checkOverlap(m_eCurCPType, Rt))
 		{
@@ -665,7 +665,7 @@ LRESULT CMakeModelDlg::RoiLBtnUp(WPARAM wParam, LPARAM lParam)
 LRESULT CMakeModelDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
 {
 	cv::Point pt = *(cv::Point*)(wParam);
-	if (m_pModel->nHasHead != 0 && m_bShiftKeyDown)		//shift按下
+	if (m_pModel && m_pModel->nHasHead != 0 && m_bShiftKeyDown)		//shift按下
 	{
 		if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
 			return false;

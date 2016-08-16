@@ -335,6 +335,7 @@ void CPaperUser::ClearAnswerInfo(void)
 		fclose(m_pf);
 		m_pf = NULL;
 	}
+	std::cout << "****ClearAnswerInfo...\n" << std::endl;
 }
 
 int CPaperUser::WriteAnswerFile(char* pData, int nDataLen)

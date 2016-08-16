@@ -1,6 +1,6 @@
 #pragma once
 #include "global.h"
-
+#include "ExamInfoDlg.h"
 // CPapersInfoSaveDlg 对话框
 
 class CPapersInfoSaveDlg : public CDialog
@@ -28,6 +28,8 @@ public:
 	int			m_SubjectID;
 private:
 	pPAPERSINFO m_pPapers;
+	CExamInfoDlg* m_pExamInfoDlg;
+	void	InitCtrlPosition();
 protected:
 	virtual BOOL OnInitDialog();
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
@@ -37,4 +39,5 @@ public:
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnCbnSelchangeComboExamname();
 	afx_msg void OnCbnSelchangeComboSubjectname();
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 };

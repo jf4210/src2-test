@@ -2143,8 +2143,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 // 			jsnPaper.set("doubt", 0);
 // 		else
 // 			jsnPaper.set("doubt", 1);
-
-
+		
 		Poco::JSON::Array jsnSnDetailArry;
 		SNLIST::iterator itSn = (*itNomarlPaper)->lSnResult.begin();
 		for (; itSn != (*itNomarlPaper)->lSnResult.end(); itSn++)
@@ -2309,18 +2308,18 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		sprintf_s(szTime, "%d%02d%02d%02d%02d%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
 
 		sprintf_s(szPapersSavePath, "%sPaper\\%s_%s", T2A(g_strCurrentPath), T2A(strUser), szTime);
-		sprintf_s(szZipName, "%s_%s.pkg", T2A(strUser), szTime);
+		sprintf_s(szZipName, "%s_%s%s", T2A(strUser), szTime, T2A(PAPERS_EXT_NAME));	//%s_%s.pkg
 	}
 	else
 	{
 		sprintf_s(szPapersSavePath, "%sPaper\\%s", T2A(g_strCurrentPath), m_pPapersInfo->strPapersName.c_str());
-		sprintf_s(szZipName, "%s.pkg", m_pPapersInfo->strPapersName.c_str());
+		sprintf_s(szZipName, "%s%s", m_pPapersInfo->strPapersName.c_str(), T2A(PAPERS_EXT_NAME));
 	}
 	CString strInfo;
 	bool bWarn = false;
 	strInfo.Format(_T("正在保存%s..."), A2T(szZipName));
 	SetStatusShowInfo(strInfo, bWarn);
-	if (!ZipFile(A2T(m_strCurrPicSavePath.c_str()), A2T(szPapersSavePath), _T(".pkg")))
+	if (!ZipFile(A2T(m_strCurrPicSavePath.c_str()), A2T(szPapersSavePath), PAPERS_EXT_NAME))
 	{
 		bWarn = true;
 		strInfo.Format(_T("保存%s失败"), A2T(szZipName));
@@ -2340,7 +2339,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 
 	//添加上传列表，	******************		需要进行鉴权操作	***************	
 	char szFileFullPath[300] = { 0 };
-	sprintf_s(szFileFullPath, "%s.pkg", szPapersSavePath);
+	sprintf_s(szFileFullPath, "%s%s", szPapersSavePath, T2A(PAPERS_EXT_NAME));
 	pSENDTASK pTask = new SENDTASK;
 	pTask->strFileName	= szZipName;
 	pTask->strPath = szFileFullPath;

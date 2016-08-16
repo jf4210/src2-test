@@ -15,11 +15,13 @@ CPapersInfoSaveDlg::CPapersInfoSaveDlg(pPAPERSINFO pPapers, CWnd* pParent /*=NUL
 	: CDialog(CPapersInfoSaveDlg::IDD, pParent)
 	, m_nPaperCount(0), m_strPapersName(_T("")), m_strPapersDetail(_T("")), m_pPapers(pPapers)
 	, m_strExamTypeName(_T("")), m_strGradeName(_T("")), m_SubjectID(0), m_nExamID(0)
+	, m_pExamInfoDlg(NULL)
 {
 }
 
 CPapersInfoSaveDlg::~CPapersInfoSaveDlg()
 {
+	SAFE_RELEASE(m_pExamInfoDlg);
 }
 
 void CPapersInfoSaveDlg::DoDataExchange(CDataExchange* pDX)
@@ -41,6 +43,7 @@ BEGIN_MESSAGE_MAP(CPapersInfoSaveDlg, CDialog)
 	ON_BN_CLICKED(IDOK, &CPapersInfoSaveDlg::OnBnClickedOk)
 	ON_CBN_SELCHANGE(IDC_COMBO_ExamName, &CPapersInfoSaveDlg::OnCbnSelchangeComboExamname)
 	ON_CBN_SELCHANGE(IDC_COMBO_SubjectName, &CPapersInfoSaveDlg::OnCbnSelchangeComboSubjectname)
+	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 BOOL CPapersInfoSaveDlg::OnInitDialog()
@@ -48,10 +51,28 @@ BOOL CPapersInfoSaveDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	USES_CONVERSION;
-	m_nPaperCount = m_pPapers->nPaperCount;
-	m_strPapersDetail = m_pPapers->strPapersDesc.c_str();
-	m_strPapersName = m_pPapers->strPapersName.c_str();
+	if (m_pPapers)
+	{
+		m_nPaperCount = m_pPapers->nPaperCount;
+		m_strPapersDetail = m_pPapers->strPapersDesc.c_str();
+		m_strPapersName = m_pPapers->strPapersName.c_str();
+	}
+#if 1
 
+#ifndef TO_WHTY
+	m_pExamInfoDlg = new CExamInfoDlg(this);
+	m_pExamInfoDlg->Create(CExamInfoDlg::IDD, this);
+	m_pExamInfoDlg->ShowWindow(SW_SHOW);
+
+	MoveWindow(0, 0, 450, 350);
+	CenterWindow();
+#else
+	MoveWindow(0, 0, 450, 200);
+	CenterWindow();
+#endif
+	InitCtrlPosition();
+
+#else
 	if (g_lExamList.size() == 0)
 	{
 		UpdateData(FALSE);
@@ -95,7 +116,7 @@ BOOL CPapersInfoSaveDlg::OnInitDialog()
 		m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
 		m_strGradeName = pExamInfo->strGradeName.c_str();
 	}
-
+#endif
 	UpdateData(FALSE);
 	return TRUE;
 }
@@ -108,6 +129,14 @@ void CPapersInfoSaveDlg::OnBnClickedOk()
 {
 	UpdateData(TRUE);
 
+	if (m_pExamInfoDlg)
+	{
+		m_nExamID = m_pExamInfoDlg->m_nExamID;
+		m_SubjectID = m_pExamInfoDlg->m_SubjectID;
+		m_strGradeName = m_pExamInfoDlg->m_strGradeName;
+		m_strExamTypeName = m_pExamInfoDlg->m_strExamTypeName;
+	}	
+
 	if (g_lExamList.size() == 0)
 	{
 		if (m_strPapersName == _T(""))
@@ -118,9 +147,11 @@ void CPapersInfoSaveDlg::OnBnClickedOk()
 	}
 
 	USES_CONVERSION;
-	m_pPapers->strPapersName = T2A(m_strPapersName);
-	m_pPapers->strPapersDesc = T2A(m_strPapersDetail);
-
+	if (m_pPapers)
+	{
+		m_pPapers->strPapersName = T2A(m_strPapersName);
+		m_pPapers->strPapersDesc = T2A(m_strPapersDetail);
+	}
 	CDialog::OnOK();
 }
 
@@ -179,4 +210,78 @@ void CPapersInfoSaveDlg::OnCbnSelchangeComboSubjectname()
 	}
 
 	UpdateData(FALSE);
+}
+
+
+void CPapersInfoSaveDlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialog::OnSize(nType, cx, cy);
+
+	InitCtrlPosition();
+}
+
+void CPapersInfoSaveDlg::InitCtrlPosition()
+{
+	CRect rcClient;
+	GetClientRect(&rcClient);
+	int cx = rcClient.right;
+	int cy = rcClient.bottom;
+
+	const int nTopGap = 10;
+	const int nLeftGap = 4;		//×ó±ßµÄ¿Õ°×¼ä¸ô
+	const int nBottomGap = 2;	//ÏÂ±ßµÄ¿Õ°×¼ä¸ô
+	const int nRightGap = 4;	//ÓÒ±ßµÄ¿Õ°×¼ä¸ô
+	const int nGap = 4;			//ÆÕÍ¨¿Ø¼þµÄ¼ä¸ô
+
+	int nCurrentTop = nTopGap;
+	int nCurrentLeft = nLeftGap;
+
+	int nStaticW = (cx - nLeftGap - nRightGap) / 6;
+	int nStaticH = 25;
+	if (GetDlgItem(IDC_STATIC_PapersName)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_PapersName)->MoveWindow(nCurrentLeft, nCurrentTop, nStaticW, nStaticH);
+		nCurrentLeft = nCurrentLeft + nStaticW + nGap;
+	}
+	if (GetDlgItem(IDC_EDIT_PapersName)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_EDIT_PapersName)->MoveWindow(nCurrentLeft, nCurrentTop, 2 * nStaticW, nStaticH);
+		nCurrentLeft = nCurrentLeft + 2 * nStaticW + 2 * nGap;
+	}
+	if (GetDlgItem(IDC_STATIC_PapersCount)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_PapersCount)->MoveWindow(nCurrentLeft, nCurrentTop, nStaticW, nStaticH);
+		nCurrentLeft = nCurrentLeft + nStaticW + nGap;
+	}
+	if (GetDlgItem(IDC_EDIT_PaperCount)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_EDIT_PaperCount)->MoveWindow(nCurrentLeft, nCurrentTop, 2 * nStaticW - 4 * nGap, nStaticH);
+		nCurrentLeft = nLeftGap;
+		nCurrentTop = nCurrentTop + nStaticH + nGap * 3;
+	}
+	//-------------
+	if (GetDlgItem(IDC_STATIC_Detail)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_Detail)->MoveWindow(nCurrentLeft, nCurrentTop, nStaticW, nStaticH * 2);
+		nCurrentLeft = nCurrentLeft + nStaticW + nGap;
+	}
+	if (GetDlgItem(IDC_EDIT_PapersDetail)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_EDIT_PapersDetail)->MoveWindow(nCurrentLeft, nCurrentTop, cx - nCurrentLeft - nRightGap, nStaticH * 2);
+		nCurrentLeft = nLeftGap;
+		nCurrentTop = nCurrentTop + nStaticH * 2 + nGap * 3;
+	}
+	//-------------------
+	int nExamInfo_H = rcClient.Height() - nCurrentTop - nBottomGap - 50;
+	if (m_pExamInfoDlg && m_pExamInfoDlg->GetSafeHwnd())
+	{
+		m_pExamInfoDlg->MoveWindow(nCurrentLeft, nCurrentTop, rcClient.Width() - nLeftGap - nRightGap, nExamInfo_H);
+		nCurrentTop = nCurrentTop + nExamInfo_H + nGap * 3;
+	}
+
+	//---------------
+	if (GetDlgItem(IDOK)->GetSafeHwnd())
+	{
+		GetDlgItem(IDOK)->MoveWindow(cx * 0.4, nCurrentTop, 50, 25);
+	}
 }

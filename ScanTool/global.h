@@ -65,13 +65,19 @@
 	#endif
 #endif
 
+//+++++++++	选在版本 ++++++++++++++++++
 #define SHOW_GUIDEDLG					//显示引导界面
 //#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
+//+++++++++++++++++++++++++++
+
 
 #define USES_FILE_ENC			//是否对文件使用加密
 
 #ifndef TO_WHTY
 	#define USES_PWD_ZIP_UNZIP		//是否使用密码解压缩
+	#define PAPERS_EXT_NAME	_T(".pkg")			//试卷袋压缩后的扩展名(保证有4位)
+#else
+	#define PAPERS_EXT_NAME	_T(".zip")			//试卷袋压缩后的扩展名(保证有4位)
 #endif
 
 #ifdef SHOW_GUIDEDLG
@@ -101,6 +107,7 @@
 
 #define SOFT_VERSION	_T("1.809")
 #define SYS_BASE_NAME	_T("YKLX-ScanTool")
+
 
 #define MAX_DLG_WIDTH	1024
 #define MAX_DLG_HEIGHT	768

@@ -129,6 +129,7 @@
     <ClInclude Include="..\..\common\zip.h" />
     <ClInclude Include="bmp2ipl.h" />
     <ClInclude Include="DIB.h" />
+    <ClInclude Include="ExamInfoDlg.h" />
     <ClInclude Include="FileUpLoad.h" />
     <ClInclude Include="GetModelDlg.h" />
     <ClInclude Include="global.h" />
@@ -172,6 +173,7 @@
     <ClCompile Include="..\..\common\zip.cpp" />
     <ClCompile Include="bmp2ipl.cpp" />
     <ClCompile Include="DIB.cpp" />
+    <ClCompile Include="ExamInfoDlg.cpp" />
     <ClCompile Include="FileUpLoad.cpp" />
     <ClCompile Include="GetModelDlg.cpp" />
     <ClCompile Include="global.cpp" />

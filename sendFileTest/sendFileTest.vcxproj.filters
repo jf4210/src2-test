@@ -55,7 +55,7 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="MulticastServer.h">
-      <Filter>头文件</Filter>
+      <Filter>组播</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -84,7 +84,7 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="MulticastServer.cpp">
-      <Filter>源文件</Filter>
+      <Filter>组播</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
