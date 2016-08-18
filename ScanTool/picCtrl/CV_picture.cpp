@@ -1177,6 +1177,11 @@ void CV_picture::OnLButtonUp(UINT nFlags, CPoint point)
 	{
 		ReleaseCapture();
 
+		//++liujf 2016.8.17		鼠标左键未按下时，不响应鼠标左键抬起事件
+		if (!m_bLButtonDown)
+			return CStatic::OnLButtonUp(nFlags, point);
+		//--
+
 		m_bLButtonDown = 0;
 
 		if (2 == m_iMouseDraw)

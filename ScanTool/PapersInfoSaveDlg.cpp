@@ -58,7 +58,7 @@ BOOL CPapersInfoSaveDlg::OnInitDialog()
 		m_strPapersName = m_pPapers->strPapersName.c_str();
 	}
 #if 1
-
+	InitUI(SW_HIDE);
 #ifndef TO_WHTY
 	m_pExamInfoDlg = new CExamInfoDlg(this);
 	m_pExamInfoDlg->Create(CExamInfoDlg::IDD, this);
@@ -73,6 +73,7 @@ BOOL CPapersInfoSaveDlg::OnInitDialog()
 	InitCtrlPosition();
 
 #else
+	InitUI(SW_SHOW);
 	if (g_lExamList.size() == 0)
 	{
 		UpdateData(FALSE);
@@ -120,10 +121,7 @@ BOOL CPapersInfoSaveDlg::OnInitDialog()
 	UpdateData(FALSE);
 	return TRUE;
 }
-
-
 // CPapersInfoSaveDlg 消息处理程序
-
 
 void CPapersInfoSaveDlg::OnBnClickedOk()
 {
@@ -135,6 +133,7 @@ void CPapersInfoSaveDlg::OnBnClickedOk()
 		m_SubjectID = m_pExamInfoDlg->m_SubjectID;
 		m_strGradeName = m_pExamInfoDlg->m_strGradeName;
 		m_strExamTypeName = m_pExamInfoDlg->m_strExamTypeName;
+		UpdateData(FALSE);
 	}	
 
 	if (g_lExamList.size() == 0)
@@ -152,9 +151,8 @@ void CPapersInfoSaveDlg::OnBnClickedOk()
 		m_pPapers->strPapersName = T2A(m_strPapersName);
 		m_pPapers->strPapersDesc = T2A(m_strPapersDetail);
 	}
-	CDialog::OnOK();
+	OnOK();
 }
-
 
 void CPapersInfoSaveDlg::OnCbnSelchangeComboExamname()
 {
@@ -188,7 +186,6 @@ void CPapersInfoSaveDlg::OnCbnSelchangeComboExamname()
 	UpdateData(FALSE);
 }
 
-
 void CPapersInfoSaveDlg::OnCbnSelchangeComboSubjectname()
 {
 	UpdateData(TRUE);
@@ -211,7 +208,6 @@ void CPapersInfoSaveDlg::OnCbnSelchangeComboSubjectname()
 
 	UpdateData(FALSE);
 }
-
 
 void CPapersInfoSaveDlg::OnSize(UINT nType, int cx, int cy)
 {
@@ -284,4 +280,34 @@ void CPapersInfoSaveDlg::InitCtrlPosition()
 	{
 		GetDlgItem(IDOK)->MoveWindow(cx * 0.4, nCurrentTop, 50, 25);
 	}
+}
+
+void CPapersInfoSaveDlg::InitUI(int nShow)
+{
+	if (GetDlgItem(IDC_STATIC_Group)->GetSafeHwnd())
+		GetDlgItem(IDC_STATIC_Group)->ShowWindow(nShow);
+	if (GetDlgItem(IDC_STATIC_ExamName)->GetSafeHwnd())
+		GetDlgItem(IDC_STATIC_ExamName)->ShowWindow(nShow);
+	if (GetDlgItem(IDC_COMBO_ExamName)->GetSafeHwnd())
+		GetDlgItem(IDC_COMBO_ExamName)->ShowWindow(nShow);
+	if (GetDlgItem(IDC_STATIC_SubjectName)->GetSafeHwnd())
+		GetDlgItem(IDC_STATIC_SubjectName)->ShowWindow(nShow);
+	if (GetDlgItem(IDC_COMBO_SubjectName)->GetSafeHwnd())
+		GetDlgItem(IDC_COMBO_SubjectName)->ShowWindow(nShow);
+	if (GetDlgItem(IDC_STATIC_ExamID)->GetSafeHwnd())
+		GetDlgItem(IDC_STATIC_ExamID)->ShowWindow(nShow);
+	if (GetDlgItem(IDC_EDIT_ExamID)->GetSafeHwnd())
+		GetDlgItem(IDC_EDIT_ExamID)->ShowWindow(nShow);
+	if (GetDlgItem(IDC_STATIC_SubjectID)->GetSafeHwnd())
+		GetDlgItem(IDC_STATIC_SubjectID)->ShowWindow(nShow);
+	if (GetDlgItem(IDC_EDIT_SubjectID)->GetSafeHwnd())
+		GetDlgItem(IDC_EDIT_SubjectID)->ShowWindow(nShow);
+	if (GetDlgItem(IDC_STATIC_TypeName)->GetSafeHwnd())
+		GetDlgItem(IDC_STATIC_TypeName)->ShowWindow(nShow);
+	if (GetDlgItem(IDC_EDIT_ExamTypeName)->GetSafeHwnd())
+		GetDlgItem(IDC_EDIT_ExamTypeName)->ShowWindow(nShow);
+	if (GetDlgItem(IDC_STATIC_Grade)->GetSafeHwnd())
+		GetDlgItem(IDC_STATIC_Grade)->ShowWindow(nShow);
+	if (GetDlgItem(IDC_EDIT_GradeName)->GetSafeHwnd())
+		GetDlgItem(IDC_EDIT_GradeName)->ShowWindow(nShow);
 }

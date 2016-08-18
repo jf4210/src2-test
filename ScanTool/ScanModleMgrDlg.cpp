@@ -251,45 +251,48 @@ void CScanModleMgrDlg::OnBnClickedBtnDelmodel()
 		TRACE0("No items were selected!\n");
 	else
 	{
-		while (pos)
+		if (MessageBox(_T("确定删除所选模板？"), _T("警告！"), MB_YESNO) == IDYES)
 		{
-			int nItem = m_ModelListCtrl.GetNextSelectedItem(pos);
-			TRACE1("Item %d was selected!\n", nItem);
-
-			pMODEL pModel = NULL;
-			pModel = (pMODEL)m_ModelListCtrl.GetItemData(nItem);
-			if (pModel&& pModel == m_pModel)
+			while (pos)
 			{
-//				SAFE_RELEASE(m_pModel);
-				m_pModel = NULL;
-				m_strCurModelName = _T("");
-			}
+				int nItem = m_ModelListCtrl.GetNextSelectedItem(pos);
+				TRACE1("Item %d was selected!\n", nItem);
 
-			CString strModelName = m_ModelListCtrl.GetItemText(nItem, 1);
-			CString strModelFilePath = g_strCurrentPath + _T("Model\\") + strModelName + _T(".mod");
-			CString strModelDirPath = g_strCurrentPath + _T("Model\\") + strModelName;
+				pMODEL pModel = NULL;
+				pModel = (pMODEL)m_ModelListCtrl.GetItemData(nItem);
+				if (pModel&& pModel == m_pModel)
+				{
+					//				SAFE_RELEASE(m_pModel);
+					m_pModel = NULL;
+					m_strCurModelName = _T("");
+				}
 
-			std::string strUtfFilePath = CMyCodeConvert::Gb2312ToUtf8(T2A(strModelFilePath));
-			std::string strUtfDirPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strModelDirPath));
+				CString strModelName = m_ModelListCtrl.GetItemText(nItem, 1);
+				CString strModelFilePath = g_strCurrentPath + _T("Model\\") + strModelName + _T(".mod");
+				CString strModelDirPath = g_strCurrentPath + _T("Model\\") + strModelName;
 
-			std::string strLog = "删除模板文件: ";
-			strLog.append(T2A(strModelFilePath));
-			g_pLogger->information(strLog);
+				std::string strUtfFilePath = CMyCodeConvert::Gb2312ToUtf8(T2A(strModelFilePath));
+				std::string strUtfDirPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strModelDirPath));
 
-			try
-			{
-				Poco::File modelFile(strUtfFilePath);
-				modelFile.remove(true);
-				Poco::File modelDir(strUtfDirPath);	
-				modelDir.remove(true);
-			}
-			catch (Poco::Exception &exc)
-			{
-				std::string strLog;
-				strLog.append("model file remove error: " + exc.displayText());
-				std::string strGBLog = CMyCodeConvert::Utf8ToGb2312(strLog);
-				g_pLogger->information(strGBLog);
-				TRACE(strGBLog.c_str());
+				std::string strLog = "删除模板文件: ";
+				strLog.append(T2A(strModelFilePath));
+				g_pLogger->information(strLog);
+
+				try
+				{
+					Poco::File modelFile(strUtfFilePath);
+					modelFile.remove(true);
+					Poco::File modelDir(strUtfDirPath);
+					modelDir.remove(true);
+				}
+				catch (Poco::Exception &exc)
+				{
+					std::string strLog;
+					strLog.append("model file remove error: " + exc.displayText());
+					std::string strGBLog = CMyCodeConvert::Utf8ToGb2312(strLog);
+					g_pLogger->information(strGBLog);
+					TRACE(strGBLog.c_str());
+				}
 			}
 		}
 		UpdateData(FALSE);

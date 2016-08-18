@@ -86,6 +86,8 @@ BEGIN_MESSAGE_MAP(CsendFileTestDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_Multicast, &CsendFileTestDlg::OnBnClickedBtnMulticast)
 	ON_BN_CLICKED(IDC_BTN_StartChild, &CsendFileTestDlg::OnBnClickedBtnStartchild)
 	ON_BN_CLICKED(IDC_BTN_StartChildThread, &CsendFileTestDlg::OnBnClickedBtnStartchildthread)
+	ON_BN_CLICKED(IDC_BTN_Test, &CsendFileTestDlg::OnBnClickedBtnTest)
+	ON_BN_CLICKED(IDC_BTN_Test2, &CsendFileTestDlg::OnBnClickedBtnTest2)
 END_MESSAGE_MAP()
 
 
@@ -390,4 +392,93 @@ void CsendFileTestDlg::OnBnClickedBtnStartchildthread()
 
 	Poco::Net::MulticastSocket ms;
 	int n = ms.sendTo(szSendBuf, HEAD_SIZE, m_pMulticastServer->group());
+}
+
+
+void CsendFileTestDlg::OnBnClickedBtnTest()
+{
+	CFileDialog dlg(TRUE,
+					NULL,
+					NULL,
+					OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
+					_T("All Files (*.*)|*.*;)||"),
+					NULL);
+	if (dlg.DoModal() != IDOK)
+		return;
+
+	USES_CONVERSION;
+	std::string strJsnModel = T2A(dlg.GetPathName());
+
+	std::string strJsnData;
+	std::ifstream in(strJsnModel);
+	if (!in)
+		return ;
+
+	std::string strJsnLine;
+	while (!in.eof())
+	{
+		getline(in, strJsnLine);					//不过滤空格
+		strJsnData.append(strJsnLine);
+	}
+	in.close();
+
+	Poco::JSON::Parser parser;
+	Poco::Dynamic::Var result;
+	try
+	{
+		result = parser.parse(strJsnData);		//strJsnData
+		Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
+
+
+
+	}
+	catch (Poco::JSON::JSONException& jsone)
+	{
+		std::string strErrInfo;
+		strErrInfo.append("加载模板文件解析json失败: ");
+		strErrInfo.append(jsone.message());
+		g_pLogger->information(strErrInfo);
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strErrInfo;
+		strErrInfo.append("加载模板文件解析json失败2: ");
+		strErrInfo.append(exc.message());
+		g_pLogger->information(strErrInfo);
+	}
+}
+
+
+void CsendFileTestDlg::OnBnClickedBtnTest2()
+{
+	std::string strPath = "E:\\myWorkspace\\yklx\\bin\\debug\\fileRecv\\";
+
+	static int i = 1;
+
+	USES_CONVERSION;
+	std::string strPaperPath = CMyCodeConvert::Gb2312ToUtf8(strPath);
+	Poco::DirectoryIterator it(strPaperPath);
+	Poco::DirectoryIterator end;
+	while (it != end)
+	{
+		Poco::Path p(it->path());
+		if (it->isFile())
+		{
+			Poco::Path pSubFile(it->path());
+			Poco::File file(it->path());
+			std::string strOldFileName = pSubFile.getFileName();
+
+			if (strOldFileName.find("test_") == std::string::npos)
+			{
+				std::string strNewName = "test_" + pSubFile.getBaseName() + pSubFile.getExtension();
+				std::string strNewPath = strPaperPath + strNewName;
+				Poco::File file2(strNewPath);
+				if (file2.exists())
+					file2.remove();
+
+				file.copyTo(strNewPath);
+			}
+		}
+		it++;
+	}
 }

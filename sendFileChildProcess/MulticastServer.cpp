@@ -13,6 +13,8 @@ _stop(false)
 {
 	_socket.bind(Poco::Net::SocketAddress(Poco::Net::IPAddress(), _group.port()), true);
 	_socket.joinGroup(_group.host(), _if);
+	std::string strInfo = Poco::format("×é²¥µØÖ·:%s, Íø¿¨Ãû:%s, IP:%s\n", _group.host().toString(), _if.displayName(), _if.address(1).toString());
+	std::cout << strInfo << std::endl;
 	_thread.start(*this);
 	_ready.wait();
 }

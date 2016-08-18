@@ -28,8 +28,11 @@ CPaperUser::~CPaperUser()
 
 void CPaperUser::OnClose(void)
 {
+	m_pTcpContext = NULL;
 	m_PaperUserList.RemoveUser(this);
 	std::string strLog = Poco::format("file sender close, Current connecter: %z", m_PaperUserList.m_UserList.size());
+	strLog.append("\tfileName: ");
+	strLog.append(m_szFileName);
 	
 	std::cout << strLog << std::endl;
 	g_Log.LogOut(strLog);
@@ -85,14 +88,46 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 			{
 				if (WriteAnswerFile(m_PacketBuf, nDataLen) <= 0)
 				{
+#if 1
+					if (!m_bIOError)
+					{
+						m_end = clock();
+						char szLog[300] = { 0 };
+						sprintf(szLog, "WriteAnswerFile: %s failed. Timed = %d", m_szFileName, m_end - m_start);
+						g_Log.LogOut(szLog);
+
+						m_bIOError = true;											
+					}
+					if (m_dwRecvFileSize == m_dwTotalFileSize)
+					{
+						m_nAnswerPacketError = 1;
+						ClearAnswerInfo();
+						SendResult(RESPONSE_UPLOADANS, RESULT_ERROR_FILEIO);
+						m_pTcpContext->RecvData(m_PacketBuf, HEAD_SIZE + sizeof(ST_FILE_INFO));		//再次投递，准备重新接收文件
+						return;
+					}
+	
+					int nWantDataLen = m_dwTotalFileSize - m_dwRecvFileSize;
+					if (nWantDataLen > ANSWERPACK_LEN)
+					{
+						nWantDataLen = ANSWERPACK_LEN;
+					}
+					m_pTcpContext->RecvData(m_PacketBuf, nWantDataLen);
+
+ 					return;
+#else
+					m_end = clock();
+					char szLog[300] = { 0 };
+					sprintf(szLog, "WriteAnswerFile: %s failed. Timed = %d", m_szFileName, m_end - m_start);
+					g_Log.LogOut(szLog);
+
 					m_nAnswerPacketError = 1;
 					ClearAnswerInfo();
 					SendResult(RESPONSE_UPLOADANS, RESULT_ERROR_FILEIO);
-					m_end = clock();
-					char szLog[300] = { 0 };
-					sprintf(szLog, "WriteAnswerFile: %s failed. Timed = %d", m_szFilePath, m_end - m_start);
-					g_Log.LogOut(szLog);
+
+					m_pTcpContext->RecvData(m_PacketBuf, HEAD_SIZE + sizeof(ST_FILE_INFO));		//再次投递，准备重新接收文件	*****有问题？
 					return;
+#endif
 				}
 
 				if (m_dwRecvFileSize == m_dwTotalFileSize)
@@ -178,6 +213,14 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 						}
 						else
 						{
+							#ifdef TO_WHTY	//武汉天喻版本，收到文件后重命名	8.18	*******	注意	********
+							Poco::Path filePath(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
+							std::string strNewFilePath = filePath.getFileName() + ".zip";
+							
+							Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
+							fileList.renameTo(strNewFilePath);
+							#endif
+
 							#ifndef TEST_FILE_PRESSURE
 							pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
 							pDecompressTask->strFilePath = m_szFilePath;
@@ -263,6 +306,7 @@ void CPaperUser::SetAnswerInfo(ST_FILE_INFO info)
 
 	m_start = clock();
 
+	m_bIOError = false;
 	if (m_pf)
 	{
 		fclose(m_pf);
@@ -279,6 +323,9 @@ void CPaperUser::SetAnswerInfo(ST_FILE_INFO info)
 			fclose(m_pf);
 			m_pf = NULL;
 		}
+		std::string strLog = "文件首次打开异常，文件名: ";
+		strLog.append(m_szFileName);
+		g_Log.LogOutError(strLog);
 	}
 }
 
@@ -340,18 +387,26 @@ void CPaperUser::ClearAnswerInfo(void)
 
 int CPaperUser::WriteAnswerFile(char* pData, int nDataLen)
 {
+	if (m_bIOError)
+	{
+		m_dwRecvFileSize += nDataLen;
+		return 0;
+	}
+
 	try
 	{
 #if 1
-// 		if (m_dwRecvFileSize == 0)
-// 		{
-// 			m_pf = fopen(m_szFilePath, "wb");
-// 		}
 		if (!m_pf)
 		{
 			m_pf = fopen(m_szFilePath, "wb");
-			if (!m_pf)	return 0;
-//			return 0;
+			if (!m_pf)
+			{
+				std::string strLog = "文件句柄打开失败，文件名: ";
+				strLog.append(m_szFileName);
+				g_Log.LogOutError(strLog);
+				m_dwRecvFileSize += nDataLen;	//++8.18
+				return 0;
+			}
 		}
 
 		int ret = fwrite(pData, 1, nDataLen, m_pf);
@@ -361,6 +416,9 @@ int CPaperUser::WriteAnswerFile(char* pData, int nDataLen)
 			strLog.append(m_szFileName);
 			g_Log.LogOutError(strLog);
 			OutputDebugStringA(strLog.c_str());
+
+
+			m_dwRecvFileSize += nDataLen;	//++8.18
 
 			fclose(m_pf);
 			m_pf = NULL;
@@ -409,6 +467,7 @@ int CPaperUser::WriteAnswerFile(char* pData, int nDataLen)
 			fclose(m_pf);
 			m_pf = NULL;
 		}
+		m_dwRecvFileSize += nDataLen;	//++8.18
 		return 0;
 	}
 

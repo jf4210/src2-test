@@ -13,7 +13,9 @@ _thread("MulticastEchoServer"),
 _stop(false)
 {
 	_socket.bind(Poco::Net::SocketAddress(Poco::Net::IPAddress(), _group.port()), true);
-	_socket.joinGroup(_group.host(), _if);
+	_socket.joinGroup(_group.host(), _if); 
+	TRACE("×é²¥µØÖ·:%s, Íø¿¨Ãû:%s,\n %s, %s\n", _group.host().toString().c_str(), _if.displayName().c_str(), _if.adapterName().c_str(),\
+		  _if.address(1).toString().c_str());
 	_thread.start(*this);
 	_ready.wait();
 }

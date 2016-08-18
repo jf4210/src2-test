@@ -3,6 +3,8 @@
 #include "MyCodeConvert.h"
 #include "Net_Cmd_Protocol.h"
 
+#define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}
+
 CSendFileThread::CSendFileThread(std::string& strIP, int nPort)
 	: _strIp(strIP), _nPort(nPort), m_pRecvBuff(NULL), _bConnect(false)
 {
@@ -81,6 +83,8 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 		ST_FILE_INFO stFileInfo;
 		strcpy(stFileInfo.szFileName, pTask->strName.c_str());
 
+		strInfo = Poco::format("calcMd5, 次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
+		_pLogger_->information(strInfo);
 		std::string strMd5 = calcMd5(pTask->strPath);
 		memcpy(stFileInfo.szMD5, strMd5.c_str(), LEN_MD5);
 		stFileInfo.dwFileLen = nLen;
@@ -129,10 +133,13 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 //		TRACE("读取文件内容\n");
 		strInfo = Poco::format("读取文件内容, 次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
 		_pLogger_->information(strInfo);
-		std::string strFileData;
+//		std::string strFileData;
+//		std::stringstream buffer;
+		char* pFileData = new char[nLen];
 		std::ifstream fin(pTask->strPath, std::ifstream::binary);
 		if (!fin)
 		{
+			SAFE_RELEASE(pFileData);
 			_bAllOK_ = false;
 			pTask->nSendTimes++;
 			std::string strLog = Poco::format("打开文件失败,次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
@@ -144,11 +151,13 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 		{
 			std::stringstream buffer;
 			buffer << fin.rdbuf();
-			strFileData = buffer.str();
+//			strFileData = buffer.str();
+			memcpy(pFileData, buffer.str().c_str(), nLen);
 			fin.close();
 		}
 		catch (Poco::Exception& exc)
 		{
+			SAFE_RELEASE(pFileData);
 			_bAllOK_ = false;
 			pTask->nSendTimes++;
 			std::string strLog = Poco::format("读取文件内容失败,次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
@@ -156,15 +165,16 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 			std::cout << strLog << std::endl;
 			continue;
 		}
-
+		
 		clock_t start, end;
 		start = clock();
 
 //		TRACE("发送文件内容\n");
 		strInfo = Poco::format("发送文件内容, 次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
 		_pLogger_->information(strInfo);
-		if (!sendMyData(const_cast<char*>(strFileData.c_str()), nLen))
+		if (!sendMyData(pFileData, nLen))	//const_cast<char*>(strFileData.c_str())
 		{
+			SAFE_RELEASE(pFileData);
 			_bAllOK_ = false;
 			pTask->nSendTimes++;
 			std::string strLog = Poco::format("发送文件失败(发送中),次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
@@ -179,16 +189,21 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 		ZeroMemory(szRecvBuf, sizeof(szRecvBuf));
 		if (!recvMyData(szRecvBuf))
 		{
+			SAFE_RELEASE(pFileData);
 			_bAllOK_ = false;
 			pTask->nSendTimes++;
 			std::string strLog = Poco::format("接收文件发送成功与否命令失败,次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
 			_pLogger_->information(strLog);
 			std::cout << strLog << std::endl;
+
+//			m_ss.shutdownSend();
+
 			continue;
 		}
 
 		if (!HandleCmd(szRecvBuf, NOTIFY_RECVANSWERFIN))
 		{
+			SAFE_RELEASE(pFileData);
 			_bAllOK_ = false;
 			pTask->nSendTimes++;
 			std::string strLog = Poco::format("发送文件失败(发送结果),次数%d, 文件名:%s", pTask->nSendTimes, pTask->strName);
@@ -199,6 +214,7 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 
 		end = clock();
 
+		SAFE_RELEASE(pFileData);
 
 		std::string strLog = Poco::format("------>发送文件成功,次数%d, 文件名:%s，时间: %.2fs", pTask->nSendTimes, pTask->strName, (end - start) / 1000.0);
 		_pLogger_->information(strLog);

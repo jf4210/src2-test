@@ -43,7 +43,7 @@ void InitConfig()
 	strPath = strPath.substr(0, strPath.rfind('\\') + 1);
 	_strCurPath_ = strPath;
 
-	std::string strName = Poco::format("sendFile_%d.log", (int)Poco::Thread::currentTid());
+	std::string strName = Poco::format("sendFile_Child_%d.log", (int)Poco::Thread::currentTid());
 
 	std::string strLogPath = CMyCodeConvert::Gb2312ToUtf8(strPath + strName);	//_T("sendFile.log")
 	Poco::AutoPtr<Poco::PatternFormatter> pFormatter(new Poco::PatternFormatter("%L%Y-%m-%d %H:%M:%S.%F %q:%t"));
@@ -131,7 +131,9 @@ bool InitTask()
 				fileTask.copyTo(strNewFilePath);
 			else
 			{
-				std::cout << "文件不存在: " << strSrcPath << std::endl;
+				std::cout << "文件不存在: " << strSrcPath << std::endl; 
+				std::string strLog = "文件不存在: " + strSrcPath;
+				_pLogger_->information(strLog);
 				return false;
 			}
 		}
@@ -139,6 +141,7 @@ bool InitTask()
 	catch (Poco::Exception& exc)
 	{
 		std::string strLog = "文件复制异常: " + CMyCodeConvert::Utf8ToGb2312(exc.displayText()) + "\n";
+		_pLogger_->information(strLog);
 		return false;
 	}
 
@@ -157,8 +160,20 @@ bool InitTask()
 	return true;
 }
 
+void afterExit()
+{
+// 	_pLogger_->shutdown();
+// 	std::string strName = Poco::format("sendFile_Child_%d.log", (int)Poco::Thread::currentTid());
+// 	std::string strLogPath = _strCurPath_ + strName;
+// 	Poco::File logFile(CMyCodeConvert::Gb2312ToUtf8(strLogPath));
+// 	if (_bAllOK_ && logFile.exists())
+// 		logFile.remove();
+}
+
 int main()
 {
+	atexit(afterExit);
+
 	std::cout << "文件发送子进程启动完成，等待命令中。。。" << std::endl;
 	InitConfig();
 	MulticastServer _MulticastServer(_strMulticastIP_, _nMulticastPort_);
@@ -171,14 +186,15 @@ int main()
 		system("pause");
 		return 0;
 	}
-	
+	std::cout << "Init task OK" << std::endl;
 	_eTaskCompleted_.wait();
 
 	
 
 	releaseData();
 
-	std::string strName = Poco::format("sendFile_%d.log", (int)Poco::Thread::currentTid());
+	_pLogger_->shutdown();
+	std::string strName = Poco::format("sendFile_Child_%d.log", (int)Poco::Thread::currentTid());
 	std::string strLogPath = _strCurPath_ + strName;
 	Poco::File logFile(CMyCodeConvert::Gb2312ToUtf8(strLogPath));
 	if (_bAllOK_ && logFile.exists())

@@ -55,4 +55,6 @@ public:
 	afx_msg void OnBnClickedBtnMulticast();
 	afx_msg void OnBnClickedBtnStartchild();
 	afx_msg void OnBnClickedBtnStartchildthread();
+	afx_msg void OnBnClickedBtnTest();
+	afx_msg void OnBnClickedBtnTest2();
 };

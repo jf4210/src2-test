@@ -43,6 +43,7 @@ public:
 	FILE *			m_pf;
 	clock_t			m_start;
 	clock_t			m_end;
+	bool			m_bIOError;
 
 	bool CheckAnswerFile(void);
 	void ClearAnswerInfo(void);

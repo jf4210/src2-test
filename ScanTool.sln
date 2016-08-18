@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RecogDLL_Test", "RecogDLL_T
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sendFileChildProcess", "sendFileChildProcess\sendFileChildProcess.vcxproj", "{E9F2824D-F7E7-45A5-BA50-A35F757AB5CE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testPro", "testPro\testPro.vcxproj", "{FCE2B95A-80C7-4733-8C5C-69A864093C02}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -39,6 +41,10 @@ Global
 		{E9F2824D-F7E7-45A5-BA50-A35F757AB5CE}.Debug|Win32.Build.0 = Debug|Win32
 		{E9F2824D-F7E7-45A5-BA50-A35F757AB5CE}.Release|Win32.ActiveCfg = Release|Win32
 		{E9F2824D-F7E7-45A5-BA50-A35F757AB5CE}.Release|Win32.Build.0 = Release|Win32
+		{FCE2B95A-80C7-4733-8C5C-69A864093C02}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FCE2B95A-80C7-4733-8C5C-69A864093C02}.Debug|Win32.Build.0 = Debug|Win32
+		{FCE2B95A-80C7-4733-8C5C-69A864093C02}.Release|Win32.ActiveCfg = Release|Win32
+		{FCE2B95A-80C7-4733-8C5C-69A864093C02}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

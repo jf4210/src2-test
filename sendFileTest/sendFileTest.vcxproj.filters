@@ -16,6 +16,15 @@
     <Filter Include="组播">
       <UniqueIdentifier>{ecc5a3aa-06d5-4d8f-85e2-b4387a3e9663}</UniqueIdentifier>
     </Filter>
+    <Filter Include="转码">
+      <UniqueIdentifier>{4baf82e2-2f5e-4368-ace6-8a5a8d76b19f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{354dbd51-5db1-4888-a14d-af9def838740}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="旧上传类">
+      <UniqueIdentifier>{23ae126c-40be-4033-8b12-977c802a8c2b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -42,20 +51,20 @@
     <ClInclude Include="global.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="FileUpLoad.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Thread.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\common\md5.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="MyCodeConvert.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="MulticastServer.h">
       <Filter>组播</Filter>
+    </ClInclude>
+    <ClInclude Include="MyCodeConvert.h">
+      <Filter>转码</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\md5.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="FileUpLoad.h">
+      <Filter>旧上传类</Filter>
+    </ClInclude>
+    <ClInclude Include="Thread.h">
+      <Filter>common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -71,20 +80,20 @@
     <ClCompile Include="SendFileThread.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="FileUpLoad.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Thread.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\common\md5.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="MyCodeConvert.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="MulticastServer.cpp">
       <Filter>组播</Filter>
+    </ClCompile>
+    <ClCompile Include="MyCodeConvert.cpp">
+      <Filter>转码</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\md5.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="FileUpLoad.cpp">
+      <Filter>旧上传类</Filter>
+    </ClCompile>
+    <ClCompile Include="Thread.cpp">
+      <Filter>common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

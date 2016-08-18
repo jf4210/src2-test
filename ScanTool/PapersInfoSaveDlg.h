@@ -29,6 +29,7 @@ public:
 private:
 	pPAPERSINFO m_pPapers;
 	CExamInfoDlg* m_pExamInfoDlg;
+	void	InitUI(int nShow);
 	void	InitCtrlPosition();
 protected:
 	virtual BOOL OnInitDialog();
