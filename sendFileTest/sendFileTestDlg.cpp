@@ -456,7 +456,7 @@ void CsendFileTestDlg::OnBnClickedBtnTest2()
 	static int i = 1;
 
 	USES_CONVERSION;
-	std::string strPaperPath = CMyCodeConvert::Gb2312ToUtf8(strPath);
+	std::string strPaperPath = CMyCodeConvert::Gb2312ToUtf8(g_strCurPath);
 	Poco::DirectoryIterator it(strPaperPath);
 	Poco::DirectoryIterator end;
 	while (it != end)
@@ -468,15 +468,9 @@ void CsendFileTestDlg::OnBnClickedBtnTest2()
 			Poco::File file(it->path());
 			std::string strOldFileName = pSubFile.getFileName();
 
-			if (strOldFileName.find("test_") == std::string::npos)
+			if (strOldFileName.find("_Child") != std::string::npos)
 			{
-				std::string strNewName = "test_" + pSubFile.getBaseName() + pSubFile.getExtension();
-				std::string strNewPath = strPaperPath + strNewName;
-				Poco::File file2(strNewPath);
-				if (file2.exists())
-					file2.remove();
-
-				file.copyTo(strNewPath);
+				file.remove();
 			}
 		}
 		it++;

@@ -68,6 +68,7 @@ public:
 	pST_PaperInfo	m_pPaper;				//当前扫描的学生信息
 	pST_PaperInfo	m_pCurrentShowPaper;	//当前显示的学生信息 与m_pCurrentPicShow一起
 
+	int				m_nDuplex;				//当前扫描是单面扫描(0)还是双面扫描(1)
 	int				m_nScanStatus;			//当前扫描状态, 0-未扫描，1-扫描中，2-扫描异常，3-扫描结束
 
 	std::string		m_strCmdServerIP;

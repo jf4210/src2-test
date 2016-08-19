@@ -100,6 +100,7 @@ CScanToolDlg::CScanToolDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	, m_pSendFileObj(NULL), m_SendFileThread(NULL), m_bLogin(FALSE), m_pTcpCmdObj(NULL), m_TcpCmdThread(NULL)
 	, m_nTeacherId(-1), m_nUserId(-1), m_nCurrItemPaperList(-1)
 	, m_pShowModelInfoDlg(NULL), m_pShowScannerInfoDlg(NULL)
+	, m_nDuplex(1)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -1045,10 +1046,25 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
 	int nResolution = 200;					//dpi: 72, 150, 200, 300
 
-	int nNum = dlg.m_nStudentNum;
+// 	int nNum = dlg.m_nStudentNum * m_nModelPicNums;
+// 
+// 	if (nDuplex == 1)
+// 		nNum *= 2;
 
-	if (nDuplex == 1)
-		nNum *= 2;
+	int nNum = 0;
+	if (nDuplex == 0)
+	{
+		nNum = dlg.m_nStudentNum * m_nModelPicNums;
+	}
+	else
+	{
+		int nModelPics = m_nModelPicNums;
+		if (nModelPics % 2)
+			nModelPics++;
+
+		nNum = dlg.m_nStudentNum * nModelPics;
+	}
+	m_nDuplex = nDuplex;
 
 	if (nNum == 0)
 		nNum = TWCPP_ANYCOUNT;
@@ -1149,10 +1165,25 @@ void CScanToolDlg::OnBnClickedBtnScanall()
 	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
 	int nResolution = 200;					//dpi: 72, 150, 200, 300
 
-	int nNum = dlg.m_nStudentNum;
+// 	int nNum = dlg.m_nStudentNum;
+// 
+// 	if (nDuplex == 1)
+// 		nNum *= 2;
 
-	if (nDuplex == 1)
-		nNum *= 2;
+	int nNum = 0;
+	if (nDuplex == 0)
+	{
+		nNum = dlg.m_nStudentNum * m_nModelPicNums;
+	}
+	else
+	{
+		int nModelPics = m_nModelPicNums;
+		if (nModelPics % 2)
+			nModelPics++;
+
+		nNum = dlg.m_nStudentNum * nModelPics;
+	}
+	m_nDuplex = nDuplex;
 
 	if (nNum == 0)
 		nNum = TWCPP_ANYCOUNT;
@@ -1381,6 +1412,12 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 {
 // 	clock_t start, end;
 // 	start = clock();
+
+	if (m_nDuplex)	//如果是双面扫描，需要判断模板为奇数时舍弃最后一张图片的情况
+	{
+
+	}
+
 
 	CDIB dib;
 	dib.CreateFromHandle(hBitmap, bits);

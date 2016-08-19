@@ -69,7 +69,8 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 			std::cout << szLog << std::endl;
 
 			SetAnswerInfo(AnswerInfo);
-			SendResult(RESPONSE_UPLOADANS, RESULT_SUCCESS);
+			if (!SendResult(RESPONSE_UPLOADANS, RESULT_SUCCESS))
+				return;
 			m_nAnswerPacketError = 0;
 			int nWantDataLen = m_dwTotalFileSize - m_dwRecvFileSize;
 			if (nWantDataLen > ANSWERPACK_LEN)
@@ -89,6 +90,10 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 				if (WriteAnswerFile(m_PacketBuf, nDataLen) <= 0)
 				{
 #if 1
+					m_bIOError = true;
+					m_pTcpContext->ReleaseConnections();	//写文件错误直接断开，让客户端重连
+					return;
+
 					if (!m_bIOError)
 					{
 						m_end = clock();
@@ -102,7 +107,8 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 					{
 						m_nAnswerPacketError = 1;
 						ClearAnswerInfo();
-						SendResult(RESPONSE_UPLOADANS, RESULT_ERROR_FILEIO);
+						if (!SendResult(RESPONSE_UPLOADANS, RESULT_ERROR_FILEIO))
+							return;
 						m_pTcpContext->RecvData(m_PacketBuf, HEAD_SIZE + sizeof(ST_FILE_INFO));		//再次投递，准备重新接收文件
 						return;
 					}
@@ -213,14 +219,13 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 						}
 						else
 						{
-							#ifdef TO_WHTY	//武汉天喻版本，收到文件后重命名	8.18	*******	注意	********
+						#ifdef TO_WHTY	//武汉天喻版本，收到文件后重命名	8.18	*******	注意	********
 							Poco::Path filePath(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
 							std::string strNewFilePath = filePath.getFileName() + ".zip";
 							
 							Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
 							fileList.renameTo(strNewFilePath);
-							#endif
-
+						#else
 							#ifndef TEST_FILE_PRESSURE
 							pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
 							pDecompressTask->strFilePath = m_szFilePath;
@@ -239,12 +244,14 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 								g_Log.LogOut(strLog);
 							}
 							#endif
+						#endif							
 						}						
 					}
 					else
 					{
 						m_nAnswerPacketError = 1;
-						SendResult(NOTIFY_RECVANSWERFIN, RESULT_ERROR_CHECKMD5);
+						if (!SendResult(NOTIFY_RECVANSWERFIN, RESULT_ERROR_CHECKMD5))
+							return;
 					}
 					ClearAnswerInfo();
 					m_pTcpContext->RecvData(m_PacketBuf, HEAD_SIZE + sizeof(ST_FILE_INFO));
@@ -270,7 +277,14 @@ bool CPaperUser::SendResult(unsigned short usCmd, int nResultCode)
 	resultCmd->usCmd	= usCmd;
 	resultCmd->uPackSize	= 0;
 	resultCmd->usResult		= nResultCode;
-	m_pTcpContext->SendData(m_ResponseBuf, HEAD_SIZE);
+	int nResult = m_pTcpContext->SendData(m_ResponseBuf, HEAD_SIZE);
+	if (nResult < 0)
+	{
+		std::string strLog = "发送数据失败，套接字可能关闭，context可能被释放, 文件名: ";
+		strLog.append(m_szFileName);
+		g_Log.LogOutError(strLog);
+		return false;
+	}
 	return true;
 }
 

@@ -112,6 +112,8 @@ bool InitTask()
 	std::string strPath;
 	std::string strExt;
 	std::string strBaseName;
+
+	std::vector<Poco::UInt32> vecRd;
 	try
 	{
 		Poco::Path filePath(CMyCodeConvert::Gb2312ToUtf8(strSrcPath));
@@ -122,9 +124,14 @@ bool InitTask()
 		int nPos = strPath.rfind('.');
 		strPath = strPath.substr(0, nPos);
 
+		Poco::Random rd;
+		rd.seed();
+		
 		for (int i = 1; i <= _nThreads_; i++)
 		{
-			std::string strNewFilePath = Poco::format("%s_ChildProcess_%d_%d.%s", strPath, i, (int)Poco::Thread::currentTid(), strExt);
+			Poco::UInt32 uRd = rd.next(9999);
+			vecRd.push_back(uRd);
+			std::string strNewFilePath = Poco::format("%s_ChildProcess_%d_%d_%04u.%s", strPath, i, (int)Poco::Thread::currentTid(), uRd, strExt);
 
 			Poco::File fileTask(CMyCodeConvert::Gb2312ToUtf8(strSrcPath));
 			if (fileTask.exists())
@@ -147,8 +154,8 @@ bool InitTask()
 
 	for (int i = 1; i <= _nThreads_; i++)
 	{
-		std::string strNewFilePath = Poco::format("%s_ChildProcess_%d_%d.%s", strPath, i, (int)Poco::Thread::currentTid(), strExt);
-		std::string strNewName = Poco::format("%s_ChildProcess_%d_%d.%s", strBaseName, i, (int)Poco::Thread::currentTid(), strExt);
+		std::string strNewFilePath = Poco::format("%s_ChildProcess_%d_%d_%04u.%s", strPath, i, (int)Poco::Thread::currentTid(), vecRd[i - 1], strExt);
+		std::string strNewName = Poco::format("%s_ChildProcess_%d_%d_%04u.%s", strBaseName, i, (int)Poco::Thread::currentTid(), vecRd[i - 1], strExt);
 
 		pSENDTASK pTask = new SENDTASK;
 		char szFilePath[200] = { 0 };
