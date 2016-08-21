@@ -1413,9 +1413,16 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 // 	clock_t start, end;
 // 	start = clock();
 
+	
 	if (m_nDuplex)	//如果是双面扫描，需要判断模板为奇数时舍弃最后一张图片的情况
 	{
-
+		static int i = 1;
+		if (i % (m_nModelPicNums + 1) == 0)
+		{
+			i = 1;
+			return;
+		}
+		i++;
 	}
 
 
