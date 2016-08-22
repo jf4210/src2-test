@@ -1419,7 +1419,9 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 		static int i = 1;
 		if (i % (m_nModelPicNums + 1) == 0)
 		{
-			i = 1;
+			std::string strLog = Poco::format("abandon image, i = %d", i);
+			g_pLogger->information(strLog);
+			i = 1;			
 			return;
 		}
 		i++;
@@ -2688,6 +2690,7 @@ void CScanToolDlg::InitShow(pMODEL pModel)
 
 	SAFE_RELEASE(m_pPapersInfo);
 	m_lcPicture.DeleteAllItems();
+	m_pCurrentShowPaper = NULL;
 
 	m_comboModel.ResetContent();
 	m_ncomboCurrentSel = -1;

@@ -417,6 +417,8 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		std::vector<Rect>RectCompList;
 		try
 		{
+			if (rc.rt.x < 0) rc.rt.x = 0;
+			if (rc.rt.y < 0) rc.rt.y = 0;
 			if (rc.rt.br().x > matCompPic.cols)
 			{
 				rc.rt.width = matCompPic.cols - rc.rt.x;
@@ -565,6 +567,8 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		std::vector<Rect>RectCompList;
 		try
 		{
+			if (rc.rt.x < 0) rc.rt.x = 0;
+			if (rc.rt.y < 0) rc.rt.y = 0;
 			if (rc.rt.br().x > matCompPic.cols)
 			{
 				rc.rt.width = matCompPic.cols - rc.rt.x;
@@ -676,6 +680,8 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		std::vector<Rect>RectCompList;
 		try
 		{
+			if (rc.rt.x < 0) rc.rt.x = 0;
+			if (rc.rt.y < 0) rc.rt.y = 0;
 			if (rc.rt.br().x > matCompPic.cols)
 			{
 				rc.rt.width = matCompPic.cols - rc.rt.x;
