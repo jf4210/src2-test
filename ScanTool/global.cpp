@@ -1927,3 +1927,341 @@ bool GetPosition2(cv::Mat& inverseMat, cv::Rect& rtSrc, cv::Rect& rtDst)
 	rtDst.y = pt.y;
 	return true;
 }
+
+//--------------	加载制卷模板数据	-----------------------------
+bool SortByIndex(RECTPOS& rc1, RECTPOS& rc2)
+{
+	return rc1.nIndex < rc2.nIndex;
+}
+
+bool GetHeader(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
+{
+	Poco::JSON::Object::Ptr objHeader = objTK->getObject("syncHeader");
+	Poco::JSON::Object::Ptr objAnchorPoint = objTK->getObject("anchorPoint");
+
+	int nPaperType = 1;		//纸张类型：A3-0，A4-1
+	std::string strPaperType = objHeader->get("sheetType").convert<std::string>();
+	if (strPaperType == "A3")
+		nPaperType = 0;
+	else
+		nPaperType = 1;
+
+	//同步头
+	std::vector<RECTPOS> vecHeader_H;
+	std::vector<RECTPOS> vecHeader_V;
+	//获取定点中的同步头信息
+	Poco::JSON::Array::Ptr arryItems = objAnchorPoint->getArray("items");
+	for (int j = 0; j < arryItems->size(); j++)
+	{
+		Poco::JSON::Object::Ptr objItem = arryItems->getObject(j);
+		int nHor = objItem->get("horIndex").convert<int>();
+		int nVer = objItem->get("verIndex").convert<int>();
+		RECTPOS rc;
+		rc.rt.x = objItem->get("x").convert<int>();
+		rc.rt.y = objItem->get("y").convert<int>();
+		rc.rt.width = objItem->get("width").convert<int>();
+		rc.rt.height = objItem->get("height").convert<int>();
+		if (nPaperType == 1)	//A4垂直同步头在右边，A3垂直同步头在左边
+		{
+			if (nHor == 0 && nVer == 0)
+			{
+				rc.nIndex = 0;
+				vecHeader_H.push_back(rc);
+			}
+			else if (nHor != 0 && nVer == 0)
+			{
+				rc.nIndex = nHor;
+				vecHeader_H.push_back(rc);
+				rc.nIndex = 0;		//交叉定位点，对垂直同步头来说索引是0
+				vecHeader_V.push_back(rc);
+			}
+			else if (nHor != 0 && nVer != 0)
+			{
+				rc.nIndex = nVer;
+				vecHeader_V.push_back(rc);
+			}
+		}
+		else
+		{
+			if (nHor == 0 && nVer == 0)
+			{
+				rc.nIndex = 0;
+				vecHeader_H.push_back(rc);
+				vecHeader_V.push_back(rc);
+			}
+			else if (nHor != 0 && nVer == 0)
+			{
+				rc.nIndex = nHor;
+				vecHeader_H.push_back(rc);
+			}
+			else if (nHor == 0 && nVer != 0)
+			{
+				rc.nIndex = nVer;
+				vecHeader_V.push_back(rc);
+			}
+		}
+	}
+	Poco::JSON::Array::Ptr arryHorHeaders = objHeader->getArray("horHeaders");
+	for (int k = 0; k < arryHorHeaders->size(); k++)
+	{
+		Poco::JSON::Object::Ptr objItem = arryHorHeaders->getObject(k);
+		RECTPOS rc;
+		rc.rt.x = objItem->get("x").convert<int>();
+		rc.rt.y = objItem->get("y").convert<int>();
+		rc.rt.width = objItem->get("width").convert<int>();
+		rc.rt.height = objItem->get("height").convert<int>();
+		rc.nIndex = objItem->get("index").convert<int>();
+		vecHeader_H.push_back(rc);
+	}
+	Poco::JSON::Array::Ptr arryVerHeaders = objHeader->getArray("verHeaders");
+	for (int k = 0; k < arryVerHeaders->size(); k++)
+	{
+		Poco::JSON::Object::Ptr objItem = arryVerHeaders->getObject(k);
+		RECTPOS rc;
+		rc.rt.x = objItem->get("x").convert<int>();
+		rc.rt.y = objItem->get("y").convert<int>();
+		rc.rt.width = objItem->get("width").convert<int>();
+		rc.rt.height = objItem->get("height").convert<int>();
+		rc.nIndex = objItem->get("index").convert<int>();
+		vecHeader_V.push_back(rc);
+	}
+	std::sort(vecHeader_H.begin(), vecHeader_H.end(), SortByIndex);
+	std::sort(vecHeader_V.begin(), vecHeader_V.end(), SortByIndex);
+
+	//设置同步头橡皮筋大小
+	cv::Rect rcTracker_H, rcTracker_V;
+	cv::Point pt1 = vecHeader_H[0].rt.tl() - cv::Point(50, 50);
+	cv::Point pt2 = vecHeader_H[vecHeader_H.size() - 1].rt.br() + cv::Point(50, 50);
+	cv::Point pt3 = vecHeader_V[0].rt.tl() - cv::Point(50, 50);
+	cv::Point pt4 = vecHeader_V[vecHeader_V.size() - 1].rt.br() + cv::Point(50, 50);
+	pPaperModel->rtHTracker = cv::Rect(pt1, pt2);
+	pPaperModel->rtVTracker = cv::Rect(pt3, pt4);
+
+	//设置同步头
+	for (int m = 0; m < vecHeader_H.size(); m++)
+	{
+		RECTINFO rc;
+		rc.eCPType = H_HEAD;
+		rc.nHItem = vecHeader_H[m].nIndex;
+		rc.nVItem = 0;
+		rc.rt = vecHeader_H[m].rt;
+		pPaperModel->lH_Head.push_back(rc);
+	}
+	for (int m = 0; m < vecHeader_V.size(); m++)
+	{
+		RECTINFO rc;
+		rc.eCPType = V_HEAD;
+		rc.nHItem = 0;
+		rc.nVItem = vecHeader_V[m].nIndex;
+		rc.rt = vecHeader_V[m].rt;
+		pPaperModel->lV_Head.push_back(rc);
+	}
+	return true;
+}
+
+bool GetZkzh(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
+{
+	cv::Point ptZkzh1, ptZkzh2;
+	if (!objTK->isNull("baseInfo"))
+	{
+		Poco::JSON::Object::Ptr objBaseInfo = objTK->getObject("baseInfo");
+		Poco::JSON::Object::Ptr objZKZH = objBaseInfo->getObject("zkzh");
+		Poco::JSON::Array::Ptr arryZkzhItems = objZKZH->getArray("items");
+		for (int n = 0; n < arryZkzhItems->size(); n++)
+		{
+			Poco::JSON::Object::Ptr objItem = arryZkzhItems->getObject(n);
+			Poco::JSON::Object::Ptr objPanel = objItem->getObject("panel");
+			int nItem = objPanel->get("index").convert<int>();
+			if (nItem == 0)
+			{
+				ptZkzh1.x = objPanel->get("x").convert<int>();
+				ptZkzh1.y = objPanel->get("y").convert<int>();
+			}
+			if (nItem == arryZkzhItems->size() - 1)
+			{
+				ptZkzh2.x = objPanel->get("x").convert<int>() + objPanel->get("width").convert<int>();
+				ptZkzh2.y = objPanel->get("y").convert<int>() + objPanel->get("height").convert<int>();
+			}
+
+			//获取每列的准考证信息
+			pSN_ITEM pSnItem = new SN_ITEM;
+			pSnItem->nItem = nItem;
+
+			Poco::JSON::Array::Ptr arryZkzhGrids = objItem->getArray("grids");
+			for (int k = 0; k < arryZkzhGrids->size(); k++)
+			{
+				Poco::JSON::Object::Ptr objGrids = arryZkzhGrids->getObject(k);
+				RECTINFO rc;
+				rc.eCPType = SN;
+				rc.rt.x = objGrids->get("x").convert<int>();
+				rc.rt.y = objGrids->get("y").convert<int>();
+				rc.rt.width = objGrids->get("width").convert<int>();
+				rc.rt.height = objGrids->get("height").convert<int>();
+				rc.nTH = nItem;
+				rc.nSnVal = objGrids->get("index").convert<int>();
+				rc.nHItem = objGrids->get("horIndex").convert<int>();
+				rc.nVItem = objGrids->get("verIndex").convert<int>();
+				pSnItem->lSN.push_back(rc);
+			}
+			pPaperModel->lSNInfo.push_back(pSnItem);
+		}
+		ptZkzh1 += cv::Point(2, 2);			//准考证橡皮筋缩放，防止选框太大
+		ptZkzh2 -= cv::Point(2, 2);			//准考证橡皮筋缩放，防止选框太大
+		pPaperModel->rtSNTracker = cv::Rect(ptZkzh1, ptZkzh2);
+	}
+	return true;
+}
+
+bool GetOMR(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
+{
+	Poco::JSON::Array::Ptr arryElement = objTK->getArray("elements");
+	for (int m = 0; m < arryElement->size(); m++)
+	{
+		Poco::JSON::Object::Ptr objElement = arryElement->getObject(m);
+		Poco::JSON::Object::Ptr objItem = objElement->getObject("item");
+		Poco::JSON::Array::Ptr arryQuestions = objItem->getArray("questions");
+		for (int n = 0; n < arryQuestions->size(); n++)
+		{
+			Poco::JSON::Object::Ptr objQuestion = arryQuestions->getObject(n);
+			OMR_QUESTION omrItem;
+			omrItem.nTH = objQuestion->get("num").convert<int>();
+			omrItem.nSingle = objQuestion->get("choiceType").convert<int>() - 1;
+
+			Poco::JSON::Array::Ptr arryOptions = objQuestion->getArray("options");
+			for (int k = 0; k < arryOptions->size(); k++)
+			{
+				Poco::JSON::Object::Ptr objOptions = arryOptions->getObject(k);
+				Poco::JSON::Object::Ptr objPanel = objOptions->getObject("panel");
+				RECTINFO rc;
+				rc.eCPType = OMR;
+				rc.rt.x = objPanel->get("x").convert<int>();
+				rc.rt.y = objPanel->get("y").convert<int>();
+				rc.rt.width = objPanel->get("width").convert<int>();
+				rc.rt.height = objPanel->get("height").convert<int>();
+				rc.nHItem = objPanel->get("horIndex").convert<int>();
+				rc.nVItem = objPanel->get("verIndex").convert<int>();
+				rc.nAnswer = (int)objOptions->get("label").convert<char>() - 65;
+				rc.nTH = omrItem.nTH;
+				rc.nSingle = omrItem.nSingle;
+				omrItem.lSelAnswer.push_back(rc);
+			}
+			pPaperModel->lOMR2.push_back(omrItem);
+		}
+	}
+	return true;
+}
+
+bool GetCourse(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
+{
+	Poco::JSON::Object::Ptr objSubject = objTK->getObject("subject");
+	Poco::JSON::Array::Ptr arryCourse = objSubject->getArray("items");
+	for (int k = 0; k < arryCourse->size(); k++)
+	{
+		Poco::JSON::Object::Ptr objItem = arryCourse->getObject(k);
+		RECTINFO rcCourse;
+		rcCourse.eCPType = COURSE;
+		rcCourse.rt.x = objItem->get("x").convert<int>();
+		rcCourse.rt.y = objItem->get("y").convert<int>();
+		rcCourse.rt.width = objItem->get("width").convert<int>();
+		rcCourse.rt.height = objItem->get("height").convert<int>();
+		rcCourse.nHItem = objItem->get("horIndex").convert<int>();
+		rcCourse.nVItem = objItem->get("verIndex").convert<int>();
+		pPaperModel->lCourse.push_back(rcCourse);
+	}
+	return true;
+}
+
+bool GetQK(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
+{
+	if (!objTK->isNull("baseInfo"))
+	{
+		Poco::JSON::Object::Ptr objBaseInfo = objTK->getObject("baseInfo");
+		Poco::JSON::Object::Ptr objAbsentBreach = objBaseInfo->getObject("absentAndBreach");
+		Poco::JSON::Object::Ptr objAbsent = objAbsentBreach->getObject("absent");
+		RECTINFO rcAbsent;
+		rcAbsent.eCPType = QK_CP;
+		rcAbsent.rt.x = objAbsent->get("x").convert<int>();
+		rcAbsent.rt.y = objAbsent->get("y").convert<int>();
+		rcAbsent.rt.width = objAbsent->get("width").convert<int>();
+		rcAbsent.rt.height = objAbsent->get("height").convert<int>();
+		rcAbsent.nHItem = objAbsent->get("horIndex").convert<int>();
+		rcAbsent.nVItem = objAbsent->get("verIndex").convert<int>();
+		pPaperModel->lQK_CP.push_back(rcAbsent);
+	}
+	return true;
+}
+
+pMODEL LoadMakePaperData(std::string strData)
+{
+	pMODEL pModel = new MODEL;
+
+	USES_CONVERSION;
+	Poco::JSON::Parser parser;
+	Poco::Dynamic::Var result;
+	try
+	{
+		result = parser.parse(strData);		//strJsnData
+		Poco::JSON::Array::Ptr arryData = result.extract<Poco::JSON::Array::Ptr>();
+		pModel->nPicNum = arryData->size();
+		for (int i = 0; i < arryData->size(); i++)
+		{
+			Poco::JSON::Object::Ptr objTK = arryData->getObject(i);
+			Poco::JSON::Object::Ptr objSubject = objTK->getObject("subject");
+			Poco::JSON::Object::Ptr objPageNum = objTK->getObject("pageNum");
+
+			if (i == 0)
+			{
+				Poco::JSON::Object::Ptr objCurSubject = objSubject->getObject("curSubject");
+				pModel->strModelName = A2T(CMyCodeConvert::Utf8ToGb2312(objCurSubject->get("name").convert<std::string>()).c_str());
+			}			
+
+			std::string strName = Poco::format("model%d.jpg", i + 1);
+
+			pPAPERMODEL pPaperModel = new PAPERMODEL;
+			pPaperModel->nPaper = objPageNum->get("curPageNum").convert<int>();
+			pPaperModel->strModelPicName = A2T(strName.c_str());	//图片名称，目前不知道			//**********	test	*****************
+
+ 			//同步头
+			GetHeader(objTK, pPaperModel);
+
+			//准考证号
+			GetZkzh(objTK, pPaperModel);
+
+			//OMR设置
+			GetOMR(objTK, pPaperModel);
+
+			//添加科目点
+			GetCourse(objTK, pPaperModel);
+
+			//添加缺考点
+			GetQK(objTK, pPaperModel);
+
+			//添加灰度点
+
+			//添加白校验点
+
+			//添加试卷模板到总模板
+			pModel->vecPaperModel.push_back(pPaperModel);
+		}
+
+	}
+	catch (Poco::JSON::JSONException& jsone)
+	{
+		SAFE_RELEASE(pModel);
+		std::string strErrInfo;
+		strErrInfo.append("加载模板文件解析json失败: ");
+		strErrInfo.append(jsone.message());
+		g_pLogger->information(strErrInfo);
+	}
+	catch (Poco::Exception& exc)
+	{
+		SAFE_RELEASE(pModel);
+		std::string strErrInfo;
+		strErrInfo.append("加载模板文件解析json失败2: ");
+		strErrInfo.append(exc.message());
+		g_pLogger->information(strErrInfo);
+	}
+
+	return pModel;
+}
+//---------------------------------------------------------------

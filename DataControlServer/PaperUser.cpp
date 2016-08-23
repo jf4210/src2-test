@@ -141,7 +141,8 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 					//文件接收完成
 					if (CheckAnswerFile())
 					{
-						SendResult(NOTIFY_RECVANSWERFIN, RESULT_SUCCESS);
+						if (!SendResult(NOTIFY_RECVANSWERFIN, RESULT_SUCCESS))
+							return;
 						m_end = clock();
 						char szLog[300] = { 0 };
 						sprintf(szLog, "recv file: %s completed. time = %.2f", m_szFilePath, (m_end - m_start)/1000.0);

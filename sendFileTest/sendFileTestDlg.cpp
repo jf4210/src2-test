@@ -434,6 +434,7 @@ void CsendFileTestDlg::OnBnClickedBtnTest()
 	{
 		result = parser.parse(strJsnData);		//strJsnData
 		Poco::JSON::Array::Ptr arryData = result.extract<Poco::JSON::Array::Ptr>();	
+		pModel->nPicNum = arryData->size();
 		for (int i = 0; i < arryData->size(); i++)
 		{
 			Poco::JSON::Object::Ptr objTK = arryData->getObject(i);
@@ -441,16 +442,22 @@ void CsendFileTestDlg::OnBnClickedBtnTest()
 			Poco::JSON::Object::Ptr objAnchorPoint = objTK->getObject("anchorPoint");
 			Poco::JSON::Object::Ptr objSubject = objTK->getObject("subject");
 			Poco::JSON::Object::Ptr objPageNum = objTK->getObject("pageNum");
-//			Poco::JSON::Object::Ptr objBaseInfo = objTK->getObject("baseInfo");
-			Poco::JSON::Object::Ptr objElement = objTK->getObject("elements");
+			Poco::JSON::Array::Ptr arryElement = objTK->getArray("elements");
 
 			Poco::JSON::Object::Ptr objCurSubject = objSubject->getObject("curSubject");
-			pModel->strModelName = A2T(CMyCodeConvert::Gb2312ToUtf8(objCurSubject->get("name").convert<std::string>()).c_str());
+			pModel->strModelName = A2T(CMyCodeConvert::Utf8ToGb2312(objCurSubject->get("name").convert<std::string>()).c_str());
 
 			pPAPERMODEL pPaperModel = new PAPERMODEL;
 
 			pPaperModel->nPaper = objPageNum->get("curPageNum").convert<int>();
 			pPaperModel->strModelPicName = _T("");	//图片名称，目前不知道
+
+			int nPaperType = 1;		//纸张类型：A3-0，A4-1
+			std::string strPaperType = objHeader->get("sheetType").convert<std::string>();
+			if (strPaperType == "A3")
+				nPaperType = 0;
+			else
+				nPaperType = 1;
 
 			//同步头
 			std::vector<RECTPOS> vecHeader_H;
@@ -467,21 +474,44 @@ void CsendFileTestDlg::OnBnClickedBtnTest()
 				rc.rt.y			= objItem->get("y").convert<int>();
 				rc.rt.width		= objItem->get("width").convert<int>();
 				rc.rt.height	= objItem->get("height").convert<int>();
-				if (nHor == 0 && nVer == 0)
+				if (nPaperType == 1)	//A4垂直同步头在右边，A3垂直同步头在左边
 				{
-					rc.nIndex = 0;
-					vecHeader_H.push_back(rc);
-					vecHeader_V.push_back(rc);
+					if (nHor == 0 && nVer == 0)
+					{
+						rc.nIndex = 0;
+						vecHeader_H.push_back(rc);
+					}
+					else if (nHor != 0 && nVer == 0)
+					{
+						rc.nIndex = nHor;
+						vecHeader_H.push_back(rc);
+						rc.nIndex = 0;		//交叉定位点，对垂直同步头来说索引是0
+						vecHeader_V.push_back(rc);
+					}
+					else if (nHor != 0 && nVer != 0)
+					{
+						rc.nIndex = nVer;
+						vecHeader_V.push_back(rc);
+					}
 				}
-				else if (nHor == 0 && nVer != 0)
+				else
 				{
-					rc.nIndex = nVer;
-					vecHeader_V.push_back(rc);
-				}
-				else if (nHor != 0 && nVer == 0)
-				{
-					rc.nIndex = nHor;
-					vecHeader_H.push_back(rc);
+					if (nHor == 0 && nVer == 0)
+					{
+						rc.nIndex = 0;
+						vecHeader_H.push_back(rc);
+						vecHeader_V.push_back(rc);
+					}
+					else if (nHor != 0 && nVer == 0)
+					{
+						rc.nIndex = nHor;
+						vecHeader_H.push_back(rc);
+					}
+					else if (nHor == 0 && nVer != 0)
+					{
+						rc.nIndex = nVer;
+						vecHeader_V.push_back(rc);
+					}
 				}
 			}
 			Poco::JSON::Array::Ptr arryHorHeaders = objHeader->getArray("horHeaders");
@@ -509,7 +539,7 @@ void CsendFileTestDlg::OnBnClickedBtnTest()
 				vecHeader_V.push_back(rc);
 			}
 			std::sort(vecHeader_H.begin(), vecHeader_H.end(), SortByIndex);
-			std::sort(vecHeader_H.begin(), vecHeader_H.end(), SortByIndex);
+			std::sort(vecHeader_V.begin(), vecHeader_V.end(), SortByIndex);
 
 			//设置同步头橡皮筋大小
 			cv::Rect rcTracker_H, rcTracker_V;
@@ -528,7 +558,7 @@ void CsendFileTestDlg::OnBnClickedBtnTest()
 				rc.nHItem = vecHeader_H[m].nIndex;
 				rc.nVItem = 0;
 				rc.rt = vecHeader_H[m].rt;
-				pPaperModel->lSelHTracker.push_back(rc);
+				pPaperModel->lH_Head.push_back(rc);
 			}
 			for (int m = 0; m < vecHeader_V.size(); m++)
 			{
@@ -537,12 +567,12 @@ void CsendFileTestDlg::OnBnClickedBtnTest()
 				rc.nHItem = 0;
 				rc.nVItem = vecHeader_V[m].nIndex;
 				rc.rt = vecHeader_V[m].rt;
-				pPaperModel->lSelVTracker.push_back(rc);
+				pPaperModel->lV_Head.push_back(rc);
 			}
 
 			//准考证号
 			cv::Point ptZkzh1, ptZkzh2;
-			if (!objTK->isNull("zkzh"))
+			if (!objTK->isNull("baseInfo"))
 			{
 				Poco::JSON::Object::Ptr objBaseInfo = objTK->getObject("baseInfo");
 				Poco::JSON::Object::Ptr objZKZH = objBaseInfo->getObject("zkzh");
@@ -550,18 +580,17 @@ void CsendFileTestDlg::OnBnClickedBtnTest()
 				for (int n = 0; n < arryZkzhItems->size(); n++)
 				{
 					Poco::JSON::Object::Ptr objItem = arryZkzhItems->getObject(n);
-					int nItem = objItem->get("index").convert<int>();
+					Poco::JSON::Object::Ptr objPanel = objItem->getObject("panel");
+					int nItem = objPanel->get("index").convert<int>();
 					if (nItem == 0)
 					{
-						Poco::JSON::Object::Ptr objPanel = objItem->getObject("panel");
 						ptZkzh1.x = objPanel->get("x").convert<int>();
 						ptZkzh1.y = objPanel->get("y").convert<int>();
 					}
 					if (nItem == arryZkzhItems->size() - 1)
 					{
-						Poco::JSON::Object::Ptr objPanel = objItem->getObject("panel");
-						ptZkzh2.x = objPanel->get("x").convert<int>();
-						ptZkzh2.y = objPanel->get("y").convert<int>();
+						ptZkzh2.x = objPanel->get("x").convert<int>() + objPanel->get("width").convert<int>();
+						ptZkzh2.y = objPanel->get("y").convert<int>() + objPanel->get("height").convert<int>();
 					}
 
 					//获取每列的准考证信息
@@ -578,6 +607,7 @@ void CsendFileTestDlg::OnBnClickedBtnTest()
 						rc.rt.y = objGrids->get("y").convert<int>();
 						rc.rt.width = objGrids->get("width").convert<int>();
 						rc.rt.height = objGrids->get("height").convert<int>();
+						rc.nTH = nItem;
 						rc.nSnVal = objGrids->get("index").convert<int>();
 						rc.nHItem = objGrids->get("horIndex").convert<int>();
 						rc.nVItem = objGrids->get("verIndex").convert<int>();
@@ -591,38 +621,72 @@ void CsendFileTestDlg::OnBnClickedBtnTest()
 			}			
 
 			//OMR设置
-			Poco::JSON::Array::Ptr arryQuestions = objElement->getArray("questions");
-			for (int n = 0; n < arryQuestions->size(); n++)
+			for (int m = 0; m < arryElement->size(); m++)
 			{
-				Poco::JSON::Object::Ptr objQuestion = arryQuestions->getObject(n);
-				OMR_QUESTION omrItem;
-				omrItem.nTH = objQuestion->get("num").convert<int>();
-				omrItem.nSingle = objQuestion->get("choiceType").convert<int>() - 1;
-
-				Poco::JSON::Array::Ptr arryOptions = objQuestion->getArray("options");
-				for (int k = 0; k < arryOptions->size(); k++)
+				Poco::JSON::Object::Ptr objElement = arryElement->getObject(m);
+				Poco::JSON::Object::Ptr objItem = objElement->getObject("item");
+				Poco::JSON::Array::Ptr arryQuestions = objItem->getArray("questions");
+				for (int n = 0; n < arryQuestions->size(); n++)
 				{
-					Poco::JSON::Object::Ptr objOptions = arryOptions->getObject(k);
-					RECTINFO rc;
-					rc.eCPType = OMR;
-					rc.rt.x = objOptions->get("x").convert<int>();
-					rc.rt.y = objOptions->get("y").convert<int>();
-					rc.rt.width = objOptions->get("width").convert<int>();
-					rc.rt.height = objOptions->get("height").convert<int>();
-					rc.nHItem = objOptions->get("horIndex").convert<int>();
-					rc.nVItem = objOptions->get("verIndex").convert<int>();
-					rc.nAnswer = (int)objOptions->get("label").convert<char>() - 65;
-					rc.nTH = omrItem.nTH;
-					rc.nSingle = omrItem.nSingle;
-					omrItem.lSelAnswer.push_back(rc);
+					Poco::JSON::Object::Ptr objQuestion = arryQuestions->getObject(n);
+					OMR_QUESTION omrItem;
+					omrItem.nTH = objQuestion->get("num").convert<int>();
+					omrItem.nSingle = objQuestion->get("choiceType").convert<int>() - 1;
+
+					Poco::JSON::Array::Ptr arryOptions = objQuestion->getArray("options");
+					for (int k = 0; k < arryOptions->size(); k++)
+					{
+						Poco::JSON::Object::Ptr objOptions = arryOptions->getObject(k);
+						Poco::JSON::Object::Ptr objPanel = objOptions->getObject("panel");
+						RECTINFO rc;
+						rc.eCPType = OMR;
+						rc.rt.x = objPanel->get("x").convert<int>();
+						rc.rt.y = objPanel->get("y").convert<int>();
+						rc.rt.width = objPanel->get("width").convert<int>();
+						rc.rt.height = objPanel->get("height").convert<int>();
+						rc.nHItem = objPanel->get("horIndex").convert<int>();
+						rc.nVItem = objPanel->get("verIndex").convert<int>();
+						rc.nAnswer = (int)objOptions->get("label").convert<char>() - 65;
+						rc.nTH = omrItem.nTH;
+						rc.nSingle = omrItem.nSingle;
+						omrItem.lSelAnswer.push_back(rc);
+					}
+					pPaperModel->lOMR2.push_back(omrItem);
 				}
-				pPaperModel->lOMR2.push_back(omrItem);
-			}
+			}			
 
 			//添加科目点
+			Poco::JSON::Array::Ptr arryCourse = objSubject->getArray("items");
+			for (int k = 0; k < arryCourse->size(); k++)
+			{
+				Poco::JSON::Object::Ptr objItem = arryCourse->getObject(k);
+				RECTINFO rcCourse;
+				rcCourse.eCPType = COURSE;
+				rcCourse.rt.x = objItem->get("x").convert<int>();
+				rcCourse.rt.y = objItem->get("y").convert<int>();
+				rcCourse.rt.width = objItem->get("width").convert<int>();
+				rcCourse.rt.height = objItem->get("height").convert<int>();
+				rcCourse.nHItem = objItem->get("horIndex").convert<int>();
+				rcCourse.nVItem = objItem->get("verIndex").convert<int>();
+				pPaperModel->lCourse.push_back(rcCourse);
+			}			
 
 			//添加缺考点
-
+			if (!objTK->isNull("baseInfo"))
+			{
+				Poco::JSON::Object::Ptr objBaseInfo = objTK->getObject("baseInfo");
+				Poco::JSON::Object::Ptr objAbsentBreach = objBaseInfo->getObject("absentAndBreach");
+				Poco::JSON::Object::Ptr objAbsent = objAbsentBreach->getObject("absent");
+				RECTINFO rcAbsent;
+				rcAbsent.eCPType = QK_CP;
+				rcAbsent.rt.x = objAbsent->get("x").convert<int>();
+				rcAbsent.rt.y = objAbsent->get("y").convert<int>();
+				rcAbsent.rt.width = objAbsent->get("width").convert<int>();
+				rcAbsent.rt.height = objAbsent->get("height").convert<int>();
+				rcAbsent.nHItem = objAbsent->get("horIndex").convert<int>();
+				rcAbsent.nVItem = objAbsent->get("verIndex").convert<int>();
+				pPaperModel->lQK_CP.push_back(rcAbsent);
+			}
 			//添加灰度点
 
 			//添加白校验点

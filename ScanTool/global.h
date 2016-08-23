@@ -513,3 +513,12 @@ bool	decString(std::string& strSrc, std::string& strDst);
 
 bool	GetInverseMat(RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);
 bool	GetPosition2(cv::Mat& inverseMat, cv::Rect& rtSrc, cv::Rect& rtDst);
+
+//--------------	加载制卷工具导出的模板数据	-------------------
+typedef struct _RectPos_
+{
+	int nIndex;
+	cv::Rect rt;
+}RECTPOS;
+pMODEL	LoadMakePaperData(std::string strData);	//加载制卷工具导出的模板数据
+//-----------------------------------------------------------------
