@@ -1939,12 +1939,8 @@ bool GetHeader(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 	Poco::JSON::Object::Ptr objHeader = objTK->getObject("syncHeader");
 	Poco::JSON::Object::Ptr objAnchorPoint = objTK->getObject("anchorPoint");
 
-	int nPaperType = 1;		//纸张类型：A3-0，A4-1
-	std::string strPaperType = objHeader->get("sheetType").convert<std::string>();
-	if (strPaperType == "A3")
-		nPaperType = 0;
-	else
-		nPaperType = 1;
+	int nPaperType = 1;		//纸张类型：A3-1，A4-2
+	nPaperType = objHeader->get("sheetType").convert<int>();
 
 	//同步头
 	std::vector<RECTPOS> vecHeader_H;
@@ -1957,11 +1953,11 @@ bool GetHeader(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 		int nHor = objItem->get("horIndex").convert<int>();
 		int nVer = objItem->get("verIndex").convert<int>();
 		RECTPOS rc;
-		rc.rt.x = objItem->get("x").convert<int>();
-		rc.rt.y = objItem->get("y").convert<int>();
-		rc.rt.width = objItem->get("width").convert<int>();
-		rc.rt.height = objItem->get("height").convert<int>();
-		if (nPaperType == 1)	//A4垂直同步头在右边，A3垂直同步头在左边
+		rc.rt.x = objItem->get("x").convert<int>() + 0.5;
+		rc.rt.y = objItem->get("y").convert<int>() + 0.5;
+		rc.rt.width = objItem->get("width").convert<int>() + 0.5;
+		rc.rt.height = objItem->get("height").convert<int>() + 0.5;
+		if (nPaperType == 2)	//A4垂直同步头在右边，A3垂直同步头在左边
 		{
 			if (nHor == 0 && nVer == 0)
 			{
@@ -2006,10 +2002,10 @@ bool GetHeader(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 	{
 		Poco::JSON::Object::Ptr objItem = arryHorHeaders->getObject(k);
 		RECTPOS rc;
-		rc.rt.x = objItem->get("x").convert<int>();
-		rc.rt.y = objItem->get("y").convert<int>();
-		rc.rt.width = objItem->get("width").convert<int>();
-		rc.rt.height = objItem->get("height").convert<int>();
+		rc.rt.x = objItem->get("x").convert<int>() + 0.5;
+		rc.rt.y = objItem->get("y").convert<int>() + 0.5;
+		rc.rt.width = objItem->get("width").convert<int>() + 0.5;
+		rc.rt.height = objItem->get("height").convert<int>() + 0.5;
 		rc.nIndex = objItem->get("index").convert<int>();
 		vecHeader_H.push_back(rc);
 	}
@@ -2018,10 +2014,10 @@ bool GetHeader(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 	{
 		Poco::JSON::Object::Ptr objItem = arryVerHeaders->getObject(k);
 		RECTPOS rc;
-		rc.rt.x = objItem->get("x").convert<int>();
-		rc.rt.y = objItem->get("y").convert<int>();
-		rc.rt.width = objItem->get("width").convert<int>();
-		rc.rt.height = objItem->get("height").convert<int>();
+		rc.rt.x = objItem->get("x").convert<int>() + 0.5;
+		rc.rt.y = objItem->get("y").convert<int>() + 0.5;
+		rc.rt.width = objItem->get("width").convert<int>() + 0.5;
+		rc.rt.height = objItem->get("height").convert<int>() + 0.5;
 		rc.nIndex = objItem->get("index").convert<int>();
 		vecHeader_V.push_back(rc);
 	}

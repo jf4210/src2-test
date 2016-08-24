@@ -4424,7 +4424,7 @@ void CMakeModelDlg::OnBnClickedBtnuploadmodel()
 	m_vecPaperModelInfo.clear();
 	for (int i = 0; i < m_pModel->nPicNum; i++)
 	{
-		CString strPicPath = g_strCurrentPath + _T("Model\\test\\") + m_pModel->vecPaperModel[i]->strModelPicName;
+		CString strPicPath = g_strCurrentPath + _T("Model\\A3_json\\") + m_pModel->vecPaperModel[i]->strModelPicName;
 
 		pPaperModelInfo pPaperModel = new PaperModelInfo;
 		m_vecPaperModelInfo.push_back(pPaperModel);
