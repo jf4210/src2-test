@@ -15,6 +15,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sendFileChildProcess", "sen
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testPro", "testPro\testPro.vcxproj", "{FCE2B95A-80C7-4733-8C5C-69A864093C02}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "yklxServer", "yklxServer\yklxServer.vcxproj", "{7F260EF1-31A9-4783-B863-78B029E2BEFB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "yklxServerPS", "yklxServer\yklxServerPS.vcxproj", "{38F1189D-D095-433F-8B2D-23F4B0149970}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7F260EF1-31A9-4783-B863-78B029E2BEFB} = {7F260EF1-31A9-4783-B863-78B029E2BEFB}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -45,6 +52,12 @@ Global
 		{FCE2B95A-80C7-4733-8C5C-69A864093C02}.Debug|Win32.Build.0 = Debug|Win32
 		{FCE2B95A-80C7-4733-8C5C-69A864093C02}.Release|Win32.ActiveCfg = Release|Win32
 		{FCE2B95A-80C7-4733-8C5C-69A864093C02}.Release|Win32.Build.0 = Release|Win32
+		{7F260EF1-31A9-4783-B863-78B029E2BEFB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7F260EF1-31A9-4783-B863-78B029E2BEFB}.Debug|Win32.Build.0 = Debug|Win32
+		{7F260EF1-31A9-4783-B863-78B029E2BEFB}.Release|Win32.ActiveCfg = Release|Win32
+		{7F260EF1-31A9-4783-B863-78B029E2BEFB}.Release|Win32.Build.0 = Release|Win32
+		{38F1189D-D095-433F-8B2D-23F4B0149970}.Debug|Win32.ActiveCfg = Debug|Win32
+		{38F1189D-D095-433F-8B2D-23F4B0149970}.Release|Win32.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -222,7 +222,7 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 						{
 						#ifdef TO_WHTY	//武汉天喻版本，收到文件后重命名	8.18	*******	注意	********
 							Poco::Path filePath(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
-							std::string strNewFilePath = filePath.getFileName() + ".zip";
+							std::string strNewFilePath = SysSet.m_strUpLoadPath + "\\" + filePath.getBaseName() + ".zip";
 							
 							Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
 							fileList.renameTo(strNewFilePath);

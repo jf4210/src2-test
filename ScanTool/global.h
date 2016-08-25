@@ -66,8 +66,10 @@
 #endif
 
 //+++++++++	选择版本 ++++++++++++++++++
-#define SHOW_GUIDEDLG					//显示引导界面
 //#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
+#ifndef TO_WHTY
+	#define SHOW_GUIDEDLG				//显示引导界面,易考乐学自己用，显示引导界面.******** 此处不定义，则直接显示主界面	***********
+#endif
 //+++++++++++++++++++++++++++
 
 
@@ -77,7 +79,7 @@
 	#define USES_PWD_ZIP_UNZIP		//是否使用密码解压缩
 	#define PAPERS_EXT_NAME	_T(".pkg")			//试卷袋压缩后的扩展名(保证有4位)
 #else
-	#define PAPERS_EXT_NAME	_T(".zip")			//试卷袋压缩后的扩展名(保证有4位)
+	#define PAPERS_EXT_NAME	_T(".pkg")			//试卷袋压缩后的扩展名(保证有4位),通过服务器收完文件后重命名为.zip
 #endif
 
 #ifdef SHOW_GUIDEDLG

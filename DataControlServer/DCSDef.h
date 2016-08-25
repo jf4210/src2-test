@@ -19,7 +19,7 @@
 //#define USE_POCO_UNZIP			//使用poco解压缩zip文件
 
 
-//#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
+#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
 #ifdef TO_WHTY
 	#define USE_POCO_UNZIP			//给武汉天喻信息使用,不使用加密压缩
 #endif
