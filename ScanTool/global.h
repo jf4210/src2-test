@@ -268,6 +268,7 @@ typedef struct _PaperModel_
 
 typedef struct _Model_
 {
+	int			nType;					//类型：0-通过扫描的图片手动制作的，1-通过制卷工具自动生成的
 	int			nEnableModify;			//模板是否可以修改
 	int			nPicNum;				//图片数量
 	int			nABModel;				//是否是AB卷模式
@@ -281,6 +282,7 @@ typedef struct _Model_
 	std::vector<pPAPERMODEL> vecPaperModel;	//存储每一页试卷的模板信息
 	_Model_()
 	{
+		nType = 0;
 		nEnableModify = 1;
 		nPicNum = 0;
 		nABModel = 0;

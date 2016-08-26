@@ -32,5 +32,6 @@ bool CSysSet::Load(std::string& strConfPath)
 	m_strUpLoadHttpUri	= pConf->getString("UpHttp.upUri");
 	m_strBackUri		= pConf->getString("UpHttp.backUri");
 	m_strEncryptPwd		= pConf->getString("Sys.encryptPwd", "yklxTest");
+	m_strSessionName	= pConf->getString("Sys.sessionName", "ezs");
 	return true;
 }

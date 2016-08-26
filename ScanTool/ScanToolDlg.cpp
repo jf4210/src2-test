@@ -1478,6 +1478,13 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 	cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
 	cv::Mat matTest3 = matTest2.clone();
 
+	//++ 2016.8.26 判断扫描图片方向，并进行旋转
+// 	if (m_pModel->nType)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
+// 	{
+		CheckOrientation(matTest2, nOrder - 1);
+//	}
+	//--
+
 	std::string strPicName = szPicPath;
 	imwrite(strPicName, matTest2);
 
@@ -2738,4 +2745,150 @@ void CScanToolDlg::OnBnClickedBtnReback()
 	((CGuideDlg*)AfxGetMainWnd())->m_pModel = m_pModel;
 	((CGuideDlg*)AfxGetMainWnd())->ShowWindow(SW_SHOW);
 	this->ShowWindow(SW_HIDE);
+}
+
+void sharpenImage1(const cv::Mat &image, cv::Mat &result)
+{
+	//创建并初始化滤波模板
+	cv::Mat kernel(3, 3, CV_32F, cv::Scalar(0));
+	kernel.at<float>(1, 1) = 5;
+	kernel.at<float>(0, 1) = -1.0;
+	kernel.at<float>(1, 0) = -1.0;
+	kernel.at<float>(1, 2) = -1.0;
+	kernel.at<float>(2, 1) = -1.0;
+
+	result.create(image.size(), image.type());
+
+	//对图像进行滤波
+	cv::filter2D(image, result, image.depth(), kernel);
+}
+
+int GetRects(cv::Mat& matSrc, cv::Rect rt)
+{
+	int nResult = 0;
+	std::vector<Rect>RectCompList;
+	try
+	{
+		if (rt.x < 0) rt.x = 0;
+		if (rt.y < 0) rt.y = 0;
+		if (rt.br().x > matSrc.cols)
+		{
+			rt.width = matSrc.cols - rt.x;
+		}
+		if (rt.br().y > matSrc.rows)
+		{
+			rt.height = matSrc.rows - rt.y;
+		}
+
+		Mat matCompRoi;
+		matCompRoi = matSrc(rt);
+
+		cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+		GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
+		sharpenImage1(matCompRoi, matCompRoi);
+
+#if 1
+		int blockSize = 25;		//25
+		int constValue = 10;
+		cv::adaptiveThreshold(matCompRoi, matCompRoi, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, blockSize, constValue);
+#else
+		threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
+#endif
+		cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
+		Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(6, 6)	普通空白框可识别
+		dilate(matCompRoi, matCompRoi, element);
+		IplImage ipl_img(matCompRoi);
+
+		//the parm. for cvFindContours  
+		CvMemStorage* storage = cvCreateMemStorage(0);
+		CvSeq* contour = 0;
+
+		//提取轮廓  
+		cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+		for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
+		{
+			CvRect aRect = cvBoundingRect(contour, 0);
+			Rect rm = aRect;
+			rm.x = rm.x + rt.x;
+			rm.y = rm.y + rt.y;
+			if (rm.width < 10 || rm.height < 7 || rm.width > 70 || rm.height > 50 || rm.area() < 70)	//********** 需要寻找一种新的方法来过滤矩形	********
+			{
+				continue;
+			}
+			RectCompList.push_back(rm);
+		}
+
+		nResult = RectCompList.size();
+	}
+	catch (cv::Exception& exc)
+	{
+		std::string strLog = "识别水平同步头异常: " + exc.msg;
+		g_pLogger->information(strLog);
+		TRACE(strLog.c_str());
+		nResult = -1;
+	}
+	return nResult;
+}
+
+cv::Rect GetRectByOrientation(cv::Mat& matSrc, cv::Rect rt, int nOrientation)
+{
+	int nW = matSrc.cols;
+	int nH = matSrc.rows;
+	cv::Rect rtResult;
+	if (nOrientation == 1)	//matSrc正向
+	{
+		rtResult = rt;
+	}
+	else if (nOrientation == 2)	//matSrc右转90度
+	{
+		cv::Point pt1, pt2;
+		pt1.x = nH - rt.tl().y;
+		pt1.y = rt.tl().x;
+		pt2.x = nH - rt.br().y;
+		pt2.y = rt.br().x;
+		rtResult = cv::Rect(pt1, pt2);
+	}
+	else if (nOrientation == 3)	//matSrc左转90度
+	{
+		cv::Point pt1, pt2;
+		pt1.x = rt.tl().y;
+		pt1.y = nW - rt.tl().x;
+		pt2.x = rt.br().y;
+		pt2.y = nW - rt.br().x;
+		rtResult = cv::Rect(pt1, pt2);
+	}
+	else if (nOrientation == 4)	//matSrc右转180度
+	{
+		cv::Point pt1, pt2;
+		pt1.x = nW - rt.tl().x;
+		pt1.y = nH - rt.tl().y;
+		pt2.x = nW - rt.br().x;
+		pt2.y = nH - rt.br().y;
+		rtResult = cv::Rect(pt1, pt2);
+	}
+	return rtResult;
+}
+
+int CScanToolDlg::CheckOrientation(cv::Mat& matSrc, int n)
+{
+	clock_t start, end;
+	start = clock();
+
+	for (int i = 1; i <= 4; i++)
+	{
+		cv::Rect rtH = GetRectByOrientation(matSrc, m_pModel->vecPaperModel[n]->rtHTracker, i);
+		int nHead_H = GetRects(matSrc, rtH);
+		int nSum_H = m_pModel->vecPaperModel[n]->lH_Head.size();
+
+		cv::Rect rtH2 = GetRectByOrientation(matSrc, m_pModel->vecPaperModel[n]->rtVTracker, i);
+		int nHead_V = GetRects(matSrc, rtH2);
+		int nSum_V = m_pModel->vecPaperModel[n]->lV_Head.size();
+		TRACE("rtH = (%d,%d,%d,%d), rtH2 = (%d,%d,%d,%d),\nnHead_H = %d, nHead_V = %d, nSum_H = %d, nSum_V = %d, H=%.2f, V=%.2f\n", rtH.tl().x, rtH.tl().y, rtH.width, rtH.height, rtH2.tl().x, rtH2.tl().y, rtH2.width, rtH2.height, \
+			  nHead_H, nHead_V, nSum_H, nSum_V, nHead_H / (float)nSum_H, nHead_V / (float)nSum_V);
+	}
+	end = clock();
+	TRACE("判断旋转方向时间: %dms\n", end - start);
+	return 1;
 }

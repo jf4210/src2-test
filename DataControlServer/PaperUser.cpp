@@ -225,7 +225,7 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 							std::string strNewFilePath = SysSet.m_strUpLoadPath + "\\" + filePath.getBaseName() + ".zip";
 							
 							Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
-							fileList.renameTo(strNewFilePath);
+							fileList.renameTo(CMyCodeConvert::Gb2312ToUtf8(strNewFilePath));
 						#else
 							#ifndef TEST_FILE_PRESSURE
 							pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;

@@ -528,7 +528,7 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 		pPapers->nUserId	= nUserId;
 		pPapers->nTotalPaper = nStudentNum;
 		pPapers->strUploader = strUploader;
-		pPapers->strEzs		= "ezs=" + strEzs;
+		pPapers->strEzs		= SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
 	}
 	catch (Poco::JSON::JSONException& jsone)
 	{

@@ -249,6 +249,10 @@ pMODEL LoadModelFile(CString strModelPath)
 		pModel = new MODEL;
 		pModel->strModelName	= A2T(CMyCodeConvert::Utf8ToGb2312(objData->get("modelName").convert<std::string>()).c_str());
 		pModel->strModelDesc	= A2T(CMyCodeConvert::Utf8ToGb2312(objData->get("modelDesc").convert<std::string>()).c_str());
+		if (objData->has("modelType"))
+			pModel->nType		= objData->get("modelType").convert<int>();
+		else
+			pModel->nType		= 0;
 		pModel->nSaveMode		= objData->get("modeSaveMode").convert<int>();
 		pModel->nPicNum			= objData->get("paperModelCount").convert<int>();
 		pModel->nEnableModify	= objData->get("enableModify").convert<int>();
@@ -2033,6 +2037,14 @@ bool GetHeader(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 	pPaperModel->rtHTracker = cv::Rect(pt1, pt2);
 	pPaperModel->rtVTracker = cv::Rect(pt3, pt4);
 
+	RECTINFO rtSelHTracker, rtSelVTracker;
+	rtSelHTracker.eCPType = H_HEAD;
+	rtSelHTracker.rt = pPaperModel->rtHTracker;
+	rtSelVTracker.eCPType = V_HEAD;
+	rtSelVTracker.rt = pPaperModel->rtVTracker;
+	pPaperModel->lSelHTracker.push_back(rtSelHTracker);		//识别时查找同步头
+	pPaperModel->lSelVTracker.push_back(rtSelVTracker);		//识别时查找同步头
+
 	//设置同步头
 	for (int m = 0; m < vecHeader_H.size(); m++)
 	{
@@ -2214,7 +2226,7 @@ pMODEL LoadMakePaperData(std::string strData)
 			std::string strName = Poco::format("model%d.jpg", i + 1);
 
 			pPAPERMODEL pPaperModel = new PAPERMODEL;
-			pPaperModel->nPaper = objPageNum->get("curPageNum").convert<int>();
+			pPaperModel->nPaper = objPageNum->get("curPageNum").convert<int>() - 1;			//add from 0
 			pPaperModel->strModelPicName = A2T(strName.c_str());	//图片名称，目前不知道			//**********	test	*****************
 
  			//同步头
@@ -2239,7 +2251,7 @@ pMODEL LoadMakePaperData(std::string strData)
 			//添加试卷模板到总模板
 			pModel->vecPaperModel.push_back(pPaperModel);
 		}
-
+		pModel->nType = 1;
 	}
 	catch (Poco::JSON::JSONException& jsone)
 	{

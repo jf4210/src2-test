@@ -34,6 +34,7 @@ public:
 	string m_strUpLoadHttpUri;
 	string m_strBackUri;
 	string m_strEncryptPwd;	//扫描端进行文件加密解密的密码
+	string m_strSessionName;	//提交数据给后端时的cookie字段的名称，默认ezs
 };
 
 #define SysSet CSysSet::GetRef()

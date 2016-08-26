@@ -122,6 +122,8 @@ public:
 	void CopyImage(HANDLE hBitmap, TW_IMAGEINFO& info);
 	void SetImage(HANDLE hBitmap, int bits);
 	void ScanDone(int nStatus);
+
+	int CheckOrientation(cv::Mat& matSrc, int n);
 // й╣ож
 protected:
 	HICON m_hIcon;

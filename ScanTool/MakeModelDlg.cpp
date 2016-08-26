@@ -1181,8 +1181,8 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 		CvRect aRect = cvBoundingRect(contour, 0);
 		Rect rm = aRect;
 
-		if (rm.width < 10 || rm.height < 7 || rm.width > 80 || rm.height > 80 || rm.area() < 70 || rm.area() > 6400)
-		{
+		if (rm.width < 10 || rm.height < 7 || rm.width > 80 || rm.height > 80 || rm.area() < 40 || rm.area() > 6400)
+		{//10,7
 			TRACE("过滤矩形:(%d,%d,%d,%d), 面积: %d\n", rm.x, rm.y, rm.width, rm.height, rm.area());
 			g_pLogger->information("过滤矩形:(%d,%d,%d,%d), 面积: %d\n", rm.x, rm.y, rm.width, rm.height, rm.area());
 			continue;
@@ -2227,6 +2227,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	
 	jsnModel.set("modelName", CMyCodeConvert::Gb2312ToUtf8(T2A(pModel->strModelName)));		//CMyCodeConvert::Gb2312ToUtf8(T2A(pModel->strModelName))
 	jsnModel.set("modelDesc", CMyCodeConvert::Gb2312ToUtf8(T2A(pModel->strModelDesc)));
+	jsnModel.set("modelType", pModel->nType);
 	jsnModel.set("modeSaveMode", pModel->nSaveMode);
 	jsnModel.set("paperModelCount", pModel->nPicNum);			//此模板有几页试卷(图片)
 	jsnModel.set("enableModify", pModel->nEnableModify);		//是否可以修改标识
