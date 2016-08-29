@@ -14,6 +14,8 @@ typedef struct _PaperModelInfo_
 	bool bFirstH;		//第一次展示水平同步头
 	bool bFirstV;		//第一次展示垂直同步头
 	int nPaper;			//第几张试卷
+	int			nPicW;					//图片宽
+	int			nPicH;					//图片高
 	CString		strModelPicName;	//模板图片的名称
 	CString		strModelPicPath;	//模板图片路径
 	cv::Mat		matSrcImg;			//原始图像的Mat
@@ -39,6 +41,8 @@ typedef struct _PaperModelInfo_
 		bFirstH = true;
 		bFirstV = true;
 		nPaper = 0;
+		nPicW = -1;
+		nPicH = -1;
 	}
 	~_PaperModelInfo_()
 	{

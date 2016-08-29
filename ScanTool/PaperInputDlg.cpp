@@ -665,6 +665,11 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				pPic->strPicPath = CMyCodeConvert::Utf8ToGb2312(strNewFilePath);	// strNewFilePath;
 				pPic->pPaper = pPaper;
 				i++;
+
+				//2016.8.29 for test
+				Mat mtPic = imread(CMyCodeConvert::Utf8ToGb2312(strNewFilePath));
+				CheckOrientation(mtPic, i / m_pModel->nPicNum);
+				//--
 			}
 
 			//更新试卷袋数量
@@ -1475,4 +1480,234 @@ HBRUSH CPaperInputDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		return hbr;	// hbrsh;
 	}
 	return hbr;
+}
+
+
+void sharpenImage11(const cv::Mat &image, cv::Mat &result)
+{
+	//创建并初始化滤波模板
+	cv::Mat kernel(3, 3, CV_32F, cv::Scalar(0));
+	kernel.at<float>(1, 1) = 5;
+	kernel.at<float>(0, 1) = -1.0;
+	kernel.at<float>(1, 0) = -1.0;
+	kernel.at<float>(1, 2) = -1.0;
+	kernel.at<float>(2, 1) = -1.0;
+
+	result.create(image.size(), image.type());
+
+	//对图像进行滤波
+	cv::filter2D(image, result, image.depth(), kernel);
+}
+
+int GetRects1(cv::Mat& matSrc, cv::Rect rt)
+{
+	clock_t start, end;
+	start = clock();
+
+	int nResult = 0;
+	std::vector<Rect>RectCompList;
+	try
+	{
+		if (rt.x < 0) rt.x = 0;
+		if (rt.y < 0) rt.y = 0;
+		if (rt.br().x > matSrc.cols)
+		{
+			rt.width = matSrc.cols - rt.x;
+		}
+		if (rt.br().y > matSrc.rows)
+		{
+			rt.height = matSrc.rows - rt.y;
+		}
+
+		Mat matCompRoi;
+		matCompRoi = matSrc(rt);
+
+		cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+		GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
+		sharpenImage11(matCompRoi, matCompRoi);
+
+#if 1
+		int blockSize = 25;		//25
+		int constValue = 10;
+		cv::adaptiveThreshold(matCompRoi, matCompRoi, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, blockSize, constValue);
+#else
+		threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
+#endif
+		cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
+		Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(6, 6)	普通空白框可识别
+		dilate(matCompRoi, matCompRoi, element);
+		IplImage ipl_img(matCompRoi);
+
+		//the parm. for cvFindContours  
+		CvMemStorage* storage = cvCreateMemStorage(0);
+		CvSeq* contour = 0;
+
+		//提取轮廓  
+		cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+		for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
+		{
+			CvRect aRect = cvBoundingRect(contour, 0);
+			Rect rm = aRect;
+			rm.x = rm.x + rt.x;
+			rm.y = rm.y + rt.y;
+			if (rm.width < 10 || rm.height < 7 || rm.width > 70 || rm.height > 50 || rm.area() < 70)	//********** 需要寻找一种新的方法来过滤矩形	********
+			{
+				//				TRACE("过滤矩形:(%d,%d,%d,%d), 面积: %d\n", rm.x, rm.y, rm.width, rm.height, rm.area());
+				continue;
+			}
+			RectCompList.push_back(rm);
+		}
+
+		nResult = RectCompList.size();
+	}
+	catch (cv::Exception& exc)
+	{
+		std::string strLog = "识别水平同步头异常: " + exc.msg;
+		g_pLogger->information(strLog);
+		TRACE(strLog.c_str());
+		nResult = -1;
+	}
+	end = clock();
+	TRACE("计算矩形数量时间: %d\n", end - start);
+	return nResult;
+}
+
+cv::Rect GetRectByOrientation1(cv::Rect& rtPic, cv::Rect rt, int nOrientation)
+{
+	int nW = rtPic.width;
+	int nH = rtPic.height;
+	cv::Rect rtResult;
+	if (nOrientation == 1)	//matSrc正向
+	{
+		rtResult = rt;
+	}
+	else if (nOrientation == 2)	//matSrc右转90度
+	{
+		cv::Point pt1, pt2;
+		pt1.x = nH - rt.tl().y;
+		pt1.y = rt.tl().x;
+		pt2.x = nH - rt.br().y;
+		pt2.y = rt.br().x;
+		rtResult = cv::Rect(pt1, pt2);
+	}
+	else if (nOrientation == 3)	//matSrc左转90度
+	{
+		cv::Point pt1, pt2;
+		pt1.x = rt.tl().y;
+		pt1.y = nW - rt.tl().x;
+		pt2.x = rt.br().y;
+		pt2.y = nW - rt.br().x;
+		rtResult = cv::Rect(pt1, pt2);
+	}
+	else if (nOrientation == 4)	//matSrc右转180度
+	{
+		cv::Point pt1, pt2;
+		pt1.x = nW - rt.tl().x;
+		pt1.y = nH - rt.tl().y;
+		pt2.x = nW - rt.br().x;
+		pt2.y = nH - rt.br().y;
+		rtResult = cv::Rect(pt1, pt2);
+	}
+	return rtResult;
+}
+
+int CPaperInputDlg::CheckOrientation(cv::Mat& matSrc, int n)
+{
+	clock_t start, end;
+	start = clock();
+
+	int nResult = 1;	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+
+	cv::Rect rtModelPic;
+	rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+	rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+	cv::Rect rtSrcPic;
+	rtSrcPic.width = matSrc.cols;
+	rtSrcPic.height = matSrc.rows;
+	
+	int nModelPicPersent = rtModelPic.width / rtModelPic.height;	//0||1
+	int nSrcPicPercent = matSrc.cols / matSrc.rows;
+
+	cv::Rect rt1 = m_pModel->vecPaperModel[n]->rtHTracker;
+	cv::Rect rt2 = m_pModel->vecPaperModel[n]->rtVTracker;
+	TRACE("水平橡皮筋:(%d,%d,%d,%d), 垂直橡皮筋(%d,%d,%d,%d)\n", rt1.x, rt1.y, rt1.width, rt1.height, rt2.x, rt2.y, rt2.width, rt2.height);
+
+	if (nModelPicPersent == nSrcPicPercent)	//与模板图片方向一致，需判断正向还是反向一致
+	{
+		TRACE("与模板图片方向一致\n");
+		for (int i = 1; i <= 4; i = i + 3)
+		{
+			cv::Rect rtH = GetRectByOrientation1(rtModelPic, m_pModel->vecPaperModel[n]->rtHTracker, i);
+			int nHead_H = GetRects1(matSrc, rtH);
+			int nSum_H = m_pModel->vecPaperModel[n]->lH_Head.size();
+
+			float fSimilarity_H = (float)nHead_H / nSum_H;
+			if (fSimilarity_H < 0.5)
+				continue;
+			
+			cv::Rect rtH2 = GetRectByOrientation1(rtModelPic, m_pModel->vecPaperModel[n]->rtVTracker, i);
+			int nHead_V = GetRects1(matSrc, rtH2);
+			int nSum_V = m_pModel->vecPaperModel[n]->lV_Head.size();
+
+			float fSimilarity_V = (float)nHead_V / nSum_V;
+			
+			TRACE("rtH = (%d,%d,%d,%d), rtH2 = (%d,%d,%d,%d),\nnHead_H = %d, nHead_V = %d, nSum_H = %d, nSum_V = %d, H=%.2f, V=%.2f\n", rtH.tl().x, rtH.tl().y, rtH.width, rtH.height, rtH2.tl().x, rtH2.tl().y, rtH2.width, rtH2.height, \
+				  nHead_H, nHead_V, nSum_H, nSum_V, fSimilarity_H, fSimilarity_V);
+
+			if (fSimilarity_H > 0.8)
+			{
+				if (fSimilarity_V > 0.8)
+				{
+					nResult = i;
+					break;
+				}
+				else if (fSimilarity_V <= 0.8 && fSimilarity_V >= 0.5)
+				{
+
+				}
+				else
+				{
+
+				}
+			}
+			else	//有可能，再进行进一步判断
+			{
+				if (fSimilarity_V < 0.5)
+					continue;
+			}
+		}
+	}
+	else	//与模板图片方向不一致，需判断向右旋转90还是向左旋转90
+	{
+		TRACE("与模板图片方向不一致\n");
+		for (int i = 2; i <= 3; i++)
+		{
+			cv::Rect rtH = GetRectByOrientation1(rtModelPic, m_pModel->vecPaperModel[n]->rtHTracker, i);
+			int nHead_H = GetRects1(matSrc, rtH);
+			int nSum_H = m_pModel->vecPaperModel[n]->lH_Head.size();
+
+			if ((float)nHead_H / nSum_H > 0.8)
+			{
+				cv::Rect rtH2 = GetRectByOrientation1(rtModelPic, m_pModel->vecPaperModel[n]->rtVTracker, i);
+				int nHead_V = GetRects1(matSrc, rtH2);
+				int nSum_V = m_pModel->vecPaperModel[n]->lV_Head.size();
+
+
+				TRACE("rtH = (%d,%d,%d,%d), rtH2 = (%d,%d,%d,%d),\nnHead_H = %d, nHead_V = %d, nSum_H = %d, nSum_V = %d, H=%.2f, V=%.2f\n", rtH.tl().x, rtH.tl().y, rtH.width, rtH.height, rtH2.tl().x, rtH2.tl().y, rtH2.width, rtH2.height, \
+					  nHead_H, nHead_V, nSum_H, nSum_V, nHead_H / (float)nSum_H, nHead_V / (float)nSum_V);
+
+				if ((float)nHead_V / nSum_V > 0.8)
+				{
+					nResult = i;
+					break;
+				}
+			}
+		}
+	}
+
+	end = clock();
+	TRACE("判断旋转方向时间: %dms\n", end - start);
+	return 1;
 }

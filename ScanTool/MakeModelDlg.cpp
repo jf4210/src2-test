@@ -152,6 +152,9 @@ BOOL CMakeModelDlg::OnInitDialog()
 			Mat src_img;
 			src_img = m_vecPaperModelInfo[i]->matDstImg;
 			m_vecPicShow[i]->ShowPic(src_img);
+
+			pPaperModel->nPicW = src_img.cols;
+			pPaperModel->nPicH = src_img.rows;
 			
 			pPaperModel->rtHTracker = m_pModel->vecPaperModel[i]->rtHTracker;
 			pPaperModel->rtVTracker = m_pModel->vecPaperModel[i]->rtVTracker;
@@ -936,6 +939,9 @@ void CMakeModelDlg::OnBnClickedBtnNew()
 		paperMode->matDstImg = paperMode->matSrcImg;
 		if (i == 0)
 			m_pModelPicShow->ShowPic(matImg);
+		
+		paperMode->nPicW = matImg.cols;
+		paperMode->nPicH = matImg.rows;
 	}
 	SetWindowTextW(_T("*未保存模板*"));
 }
@@ -970,6 +976,9 @@ void CMakeModelDlg::OnBnClickedBtnSelpic()
 	paperMode->matSrcImg = src_img;
 	paperMode->matDstImg = paperMode->matSrcImg;
 	m_pModelPicShow->ShowPic(src_img);
+	
+	paperMode->nPicW = src_img.cols;
+	paperMode->nPicH = src_img.rows;
 
 	//重新选择图片后，需要重置本页面的所有点信息
 	if (m_vecPaperModelInfo.size() <= 0 || m_vecPaperModelInfo.size() <= m_nCurrTabSel)
@@ -1899,6 +1908,9 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 		pPaperModel->rtVTracker = m_vecPaperModelInfo[i]->rtVTracker;
 		pPaperModel->rtSNTracker = m_vecPaperModelInfo[i]->rtSNTracker;
 
+		pPaperModel->nPicW = m_vecPaperModelInfo[i]->nPicW;
+		pPaperModel->nPicH = m_vecPaperModelInfo[i]->nPicH;
+
 		m_pModel->vecPaperModel.push_back(pPaperModel);
 	}
 	USES_CONVERSION;
@@ -2209,6 +2221,8 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		jsnPaperObj.set("selOmrRect", jsnOMRArry);
 		jsnPaperObj.set("snList", jsnSNArry);
 
+		jsnPaperObj.set("picW", m_vecPaperModelInfo[i]->nPicW);		//add on 16.8.29
+		jsnPaperObj.set("picH", m_vecPaperModelInfo[i]->nPicH);		//add on 16.8.29
 		jsnPaperObj.set("rtHTracker.x", m_vecPaperModelInfo[i]->rtHTracker.x);
 		jsnPaperObj.set("rtHTracker.y", m_vecPaperModelInfo[i]->rtHTracker.y);
 		jsnPaperObj.set("rtHTracker.width", m_vecPaperModelInfo[i]->rtHTracker.width);
@@ -3118,6 +3132,7 @@ void CMakeModelDlg::UpdataCPList()
 		{
 			m_ptHTracker1 = m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.tl();
 			m_ptHTracker2 = m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.br();
+			m_vecPaperModelInfo[m_nCurrTabSel]->bFirstH = false;
 		}		
 		m_pModelPicShow->m_picShow.setHTrackerPosition(m_ptHTracker1, m_ptHTracker2);
 	}
@@ -3139,6 +3154,7 @@ void CMakeModelDlg::UpdataCPList()
 		{
 			m_ptVTracker1 = m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.tl();
 			m_ptVTracker2 = m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.br();
+			m_vecPaperModelInfo[m_nCurrTabSel]->bFirstV = false;
 		}		
 		m_pModelPicShow->m_picShow.setVTrackerPosition(m_ptVTracker1, m_ptVTracker2);
 	}
@@ -3536,6 +3552,7 @@ void CMakeModelDlg::RecognizeRectTracker()
 		rcHTrackerSel.eCPType = m_eCurCPType;
 		rcHTrackerSel.rt = rt;
 		m_vecPaperModelInfo[m_nCurrTabSel]->vecHTracker.push_back(rcHTrackerSel);
+		m_vecPaperModelInfo[m_nCurrTabSel]->bFirstH = false;
 	}
 	else if (m_eCurCPType == V_HEAD)
 	{
@@ -3558,6 +3575,7 @@ void CMakeModelDlg::RecognizeRectTracker()
 		rcVTrackerSel.eCPType = m_eCurCPType;
 		rcVTrackerSel.rt = rt;
 		m_vecPaperModelInfo[m_nCurrTabSel]->vecVTracker.push_back(rcVTrackerSel);
+		m_vecPaperModelInfo[m_nCurrTabSel]->bFirstV = false;
 	}
 	else if (m_eCurCPType == SN)
 	{
@@ -4041,6 +4059,7 @@ LRESULT CMakeModelDlg::HTrackerChange(WPARAM wParam, LPARAM lParam)
 	m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.y = m_ptHTracker1.y;
 	m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.width = m_ptHTracker2.x - m_ptHTracker1.x;
 	m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.height = m_ptHTracker2.y - m_ptHTracker1.y;
+	m_vecPaperModelInfo[m_nCurrTabSel]->bFirstH = false;
 	return true;
 }
 
@@ -4056,6 +4075,7 @@ LRESULT CMakeModelDlg::VTrackerChange(WPARAM wParam, LPARAM lParam)
 	m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.y = m_ptVTracker1.y;
 	m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.width = m_ptVTracker2.x - m_ptVTracker1.x;
 	m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.height = m_ptVTracker2.y - m_ptVTracker1.y;
+	m_vecPaperModelInfo[m_nCurrTabSel]->bFirstV = false;
 	return true;
 }
 
@@ -4439,6 +4459,9 @@ void CMakeModelDlg::OnBnClickedBtnuploadmodel()
 		Mat src_img;
 		src_img = m_vecPaperModelInfo[i]->matDstImg;
 		m_vecPicShow[i]->ShowPic(src_img);
+		
+		pPaperModel->nPicW = src_img.cols;
+		pPaperModel->nPicH = src_img.rows;
 
 		pPaperModel->rtHTracker = m_pModel->vecPaperModel[i]->rtHTracker;
 		pPaperModel->rtVTracker = m_pModel->vecPaperModel[i]->rtVTracker;

@@ -272,6 +272,11 @@ pMODEL LoadModelFile(CString strModelPath)
 			paperModelInfo->nPaper = jsnPaperObj->get("paperNum").convert<int>();
 			paperModelInfo->strModelPicName = A2T(CMyCodeConvert::Utf8ToGb2312(jsnPaperObj->get("modelPicName").convert<std::string>()).c_str());
 
+			if (jsnPaperObj->has("picW"))			//add on 16.8.29
+				paperModelInfo->nPicW = jsnPaperObj->get("picW").convert<int>();
+			if (jsnPaperObj->has("picH"))			//add on 16.8.29
+				paperModelInfo->nPicH = jsnPaperObj->get("picH").convert<int>();
+
 			paperModelInfo->rtHTracker.x = jsnPaperObj->get("rtHTracker.x").convert<int>();
 			paperModelInfo->rtHTracker.y = jsnPaperObj->get("rtHTracker.y").convert<int>();
 			paperModelInfo->rtHTracker.width = jsnPaperObj->get("rtHTracker.width").convert<int>();

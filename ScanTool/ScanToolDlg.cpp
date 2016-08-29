@@ -1416,15 +1416,19 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 	
 	if (m_nDuplex)	//如果是双面扫描，需要判断模板为奇数时舍弃最后一张图片的情况
 	{
-		static int i = 1;
-		if (i % (m_nModelPicNums + 1) == 0)
+		if (m_nModelPicNums % 2 != 0)
 		{
-			std::string strLog = Poco::format("abandon image, i = %d", i);
-			g_pLogger->information(strLog);
-			i = 1;			
-			return;
-		}
-		i++;
+			static int i = 1;
+			if (i % (m_nModelPicNums + 1) == 0)
+			{
+				std::string strLog = Poco::format("abandon image, i = %d", i);
+				g_pLogger->information(strLog);
+				TRACE("%s\n", strLog.c_str());
+				i = 1;
+				return;
+			}
+			i++;
+		}		
 	}
 
 
@@ -2815,6 +2819,7 @@ int GetRects(cv::Mat& matSrc, cv::Rect rt)
 			rm.y = rm.y + rt.y;
 			if (rm.width < 10 || rm.height < 7 || rm.width > 70 || rm.height > 50 || rm.area() < 70)	//********** 需要寻找一种新的方法来过滤矩形	********
 			{
+//				TRACE("过滤矩形:(%d,%d,%d,%d), 面积: %d\n", rm.x, rm.y, rm.width, rm.height, rm.area());
 				continue;
 			}
 			RectCompList.push_back(rm);
@@ -2876,6 +2881,9 @@ int CScanToolDlg::CheckOrientation(cv::Mat& matSrc, int n)
 	clock_t start, end;
 	start = clock();
 
+	cv::Rect rt1 = m_pModel->vecPaperModel[n]->rtHTracker;
+	cv::Rect rt2 = m_pModel->vecPaperModel[n]->rtVTracker;
+	TRACE("水平橡皮筋:(%d,%d,%d,%d), 垂直橡皮筋(%d,%d,%d,%d)\n", rt1.x, rt1.y, rt1.width, rt1.height, rt2.x, rt2.y, rt2.width, rt2.height);
 	for (int i = 1; i <= 4; i++)
 	{
 		cv::Rect rtH = GetRectByOrientation(matSrc, m_pModel->vecPaperModel[n]->rtHTracker, i);

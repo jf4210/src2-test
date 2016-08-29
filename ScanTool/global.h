@@ -237,6 +237,8 @@ typedef std::list<pSN_ITEM> SNLIST;
 typedef struct _PaperModel_
 {
 	int			nPaper;					//标识此模板属于第几张试卷
+	int			nPicW;					//图片宽
+	int			nPicH;					//图片高
 	CString		strModelPicName;		//模板图片名称
 	cv::Rect	rtHTracker;
 	cv::Rect	rtVTracker;
@@ -254,6 +256,12 @@ typedef struct _PaperModel_
 	RECTLIST	lQK_CP;					//缺考校验点
 	RECTLIST	lGray;					//灰度校验点
 	RECTLIST	lWhite;					//空白校验点
+	_PaperModel_()
+	{
+		nPaper = -1;
+		nPicW = -1;
+		nPicH = -1;
+	}
 	~_PaperModel_()
 	{
 		SNLIST::iterator itSn = lSNInfo.begin();
