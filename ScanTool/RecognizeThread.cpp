@@ -436,7 +436,41 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
 			sharpenImage1(matCompRoi, matCompRoi);
 
+
+#ifdef USES_GETTHRESHOLD_ZTFB
+			const int channels[1] = { 0 };
+			const int histSize[1] = { 150 };
+			float hranges[2] = { 0, 150 };
+			const float* ranges[1];
+			ranges[0] = hranges;
+			MatND hist;
+			calcHist(&matCompRoi, 1, channels, Mat(), hist, 1, histSize, ranges);	//histSize, ranges
+
+			int nSum = 0;
+			int nDevSum = 0;
+			int nCount = 0;
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nCount += static_cast<int>(binVal);
+				nSum += h*binVal;
+			}
+			float fMean = (float)nSum / nCount;		//均值
+
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nDevSum += pow(h - fMean, 2)*binVal;
+			}
+			float fStdev = sqrt(nDevSum / nCount);
+			int nThreshold = fMean + 2 * fStdev;
+			if (nThreshold > 150) nThreshold = 150;
+			threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY);
+#else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
+#endif
 			cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
 			Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(6, 6)	普通空白框可识别
 			dilate(matCompRoi, matCompRoi, element);
@@ -586,7 +620,40 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
 			sharpenImage1(matCompRoi, matCompRoi);
 
+#ifdef USES_GETTHRESHOLD_ZTFB
+			const int channels[1] = { 0 };
+			const int histSize[1] = { 150 };
+			float hranges[2] = { 0, 150 };
+			const float* ranges[1];
+			ranges[0] = hranges;
+			MatND hist;
+			calcHist(&matCompRoi, 1, channels, Mat(), hist, 1, histSize, ranges);	//histSize, ranges
+
+			int nSum = 0;
+			int nDevSum = 0;
+			int nCount = 0;
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nCount += static_cast<int>(binVal);
+				nSum += h*binVal;
+			}
+			float fMean = (float)nSum / nCount;		//均值
+
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nDevSum += pow(h - fMean, 2)*binVal;
+			}
+			float fStdev = sqrt(nDevSum / nCount);
+			int nThreshold = fMean + 2 * fStdev;
+			if (nThreshold > 150) nThreshold = 150;
+			threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY);
+#else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
+#endif
 			cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
 			Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(6, 6)	普通空白框可识别
 			dilate(matCompRoi, matCompRoi, element);
@@ -699,7 +766,41 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
 			sharpenImage1(matCompRoi, matCompRoi);
 
+
+#ifdef USES_GETTHRESHOLD_ZTFB
+			const int channels[1] = { 0 };
+			const int histSize[1] = { 150 };
+			float hranges[2] = { 0, 150 };
+			const float* ranges[1];
+			ranges[0] = hranges;
+			MatND hist;
+			calcHist(&matCompRoi, 1, channels, Mat(), hist, 1, histSize, ranges);	//histSize, ranges
+
+			int nSum = 0;
+			int nDevSum = 0;
+			int nCount = 0;
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nCount += static_cast<int>(binVal);
+				nSum += h*binVal;
+			}
+			float fMean = (float)nSum / nCount;		//均值
+
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nDevSum += pow(h - fMean, 2)*binVal;
+			}
+			float fStdev = sqrt(nDevSum / nCount);
+			int nThreshold = fMean + 2 * fStdev;
+			if (nThreshold > 150) nThreshold = 150;
+			threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY);
+#else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
+#endif
 			cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
 			Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(6, 6)	普通空白框可识别
 			dilate(matCompRoi, matCompRoi, element);

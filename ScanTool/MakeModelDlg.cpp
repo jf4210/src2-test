@@ -1134,7 +1134,44 @@ inline void CMakeModelDlg::GetThreshold(cv::Mat& matSrc, cv::Mat& matDst)
 	case V_HEAD:
 	case ABMODEL:
 	case COURSE:
-	case QK_CP:		threshold(matSrc, matDst, 60, 255, THRESH_BINARY); break;
+	case QK_CP:
+		{
+#ifdef USES_GETTHRESHOLD_ZTFB	//先计算ROI区域的均值u和标准差p，二值化的阀值取u + 2p，根据正态分布，理论上可以囊括95%以上的范围
+			const int channels[1] = { 0 };
+			const int histSize[1] = { 150 };
+			float hranges[2] = { 0, 150 };
+			const float* ranges[1];
+			ranges[0] = hranges;
+			MatND hist;
+			calcHist(&matSrc, 1, channels, Mat(), hist, 1, histSize, ranges);	//histSize, ranges
+
+			int nSum = 0;
+			int nDevSum = 0;
+			int nCount = 0;
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nCount += static_cast<int>(binVal);
+				nSum += h*binVal;
+			}
+			float fMean = (float)nSum / nCount;		//均值
+
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nDevSum += pow(h - fMean, 2)*binVal;
+			}
+			float fStdev = sqrt(nDevSum / nCount);	//标准差
+			int nThreshold = fMean + 2 * fStdev;
+			if (nThreshold > 150) nThreshold = 150;
+			threshold(matSrc, matDst, nThreshold, 255, THRESH_BINARY);
+#else
+			threshold(matSrc, matDst, 60, 255, THRESH_BINARY);
+#endif
+		}
+		break;
 	case GRAY_CP: 
 	case WHITE_CP:
 	case SN:

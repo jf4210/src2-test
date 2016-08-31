@@ -1531,10 +1531,41 @@ int GetRects1(cv::Mat& matSrc, cv::Rect rt)
 		GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
 		sharpenImage11(matCompRoi, matCompRoi);
 
-#if 1
-		int blockSize = 25;		//25
-		int constValue = 10;
-		cv::adaptiveThreshold(matCompRoi, matCompRoi, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, blockSize, constValue);
+#ifdef USES_GETTHRESHOLD_ZTFB
+		const int channels[1] = { 0 };
+		const int histSize[1] = { 150 };
+		float hranges[2] = { 0, 150 };
+		const float* ranges[1];
+		ranges[0] = hranges;
+		MatND hist;
+		calcHist(&matCompRoi, 1, channels, Mat(), hist, 1, histSize, ranges);	//histSize, ranges
+
+		int nSum = 0;
+		int nDevSum = 0;
+		int nCount = 0;
+		for (int h = 0; h < hist.rows; h++)	//histSize
+		{
+			float binVal = hist.at<float>(h);
+
+			nCount += static_cast<int>(binVal);
+			nSum += h*binVal;
+		}
+		float fMean = (float)nSum / nCount;		//均值
+
+		for (int h = 0; h < hist.rows; h++)	//histSize
+		{
+			float binVal = hist.at<float>(h);
+
+			nDevSum += pow(h - fMean, 2)*binVal;
+		}
+		float fStdev = sqrt(nDevSum / nCount);	//标准差
+		int nThreshold = fMean + 2 * fStdev;
+		if (nThreshold > 150) nThreshold = 150;
+		threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY);
+
+// 		int blockSize = 25;		//25
+// 		int constValue = 10;
+// 		cv::adaptiveThreshold(matCompRoi, matCompRoi, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, blockSize, constValue);
 #else
 		threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
 #endif

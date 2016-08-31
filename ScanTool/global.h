@@ -72,7 +72,7 @@
 #endif
 //+++++++++++++++++++++++++++
 
-
+#define USES_GETTHRESHOLD_ZTFB	//使用正态分布方式获取校验点的阀值，未定义时使用固定阀值进行二值化查找矩形
 #define USES_FILE_ENC			//是否对文件使用加密
 
 #ifndef TO_WHTY
