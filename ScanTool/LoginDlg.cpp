@@ -106,6 +106,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 		}
 		else
 		{
+			WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "login", T2A(m_strUserName));
 			if (strResult != _T(""))
 				AfxMessageBox(_T("µÇÂ¼Ê§°Ü: ") + strResult);
 			else

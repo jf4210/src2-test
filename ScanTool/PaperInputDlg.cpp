@@ -1503,7 +1503,7 @@ void sharpenImage11(const cv::Mat &image, cv::Mat &result)
 	cv::filter2D(image, result, image.depth(), kernel);
 }
 
-int GetRects1(cv::Mat& matSrc, cv::Rect rt)
+int GetRects1(cv::Mat& matSrc, cv::Rect rt, pMODEL pModel, int nPic)
 {
 	clock_t start, end;
 	start = clock();
@@ -1560,6 +1560,9 @@ int GetRects1(cv::Mat& matSrc, cv::Rect rt)
 		}
 		float fStdev = sqrt(nDevSum / nCount);	//标准差
 		int nThreshold = fMean + 2 * fStdev;
+		if (fStdev > fMean)
+			nThreshold = fMean + fStdev;
+
 		if (nThreshold > 150) nThreshold = 150;
 		threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY);
 
@@ -1580,7 +1583,70 @@ int GetRects1(cv::Mat& matSrc, cv::Rect rt)
 
 		//提取轮廓  
 		cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+#if 1
+		//模板图像的水平同步头平均长宽
+		RECTLIST::iterator itBegin = pModel->vecPaperModel[nPic]->lH_Head.begin();
+		RECTINFO rcFist = *itBegin;
+		RECTINFO rcSecond = *(++itBegin);
 
+		int nMid_minW, nMid_maxW, nMid_minH, nMid_maxH;
+		int nHead_minW, nHead_maxW, nHead_minH, nHead_maxH;
+
+		if (pModel->nType == 1)
+		{
+			float fOffset = 0.1;
+			int nMid_modelW = rcSecond.rt.width + 2;		//加2是因为制卷模板框框没有经过查边框运算，经过查边框后，外框会包含整个矩形，需要加上上下各1个单位的线宽
+			int nMid_modelH = rcSecond.rt.height + 2;
+			if (nMid_modelW < rcFist.rt.width * 0.5 + 0.5)	nMid_modelW = rcFist.rt.width * 0.5 + 0.5;
+			if (nMid_modelH < rcFist.rt.height * 0.25 + 0.5)	nMid_modelH = rcFist.rt.height * 0.25 + 0.5;
+			nMid_minW = nMid_modelW * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nMid_maxW = nMid_modelW * (1 + fOffset * 4) + 0.5;		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nMid_minH = nMid_modelH * (1 - fOffset);				//同上
+			nMid_maxH = nMid_modelH * (1 + fOffset * 4) + 0.5;		//同上
+
+			nHead_minW = rcFist.rt.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nHead_maxW = rcFist.rt.width * (1 + fOffset * 4) + 0.5;		//同上
+			nHead_minH = rcFist.rt.height * (1 - fOffset);				//同上
+			nHead_maxH = rcFist.rt.height * (1 + fOffset * 4) + 0.5;	//同上
+		}
+		else
+		{
+			float fOffset = 0.2;
+			nMid_minW = rcSecond.rt.width * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nMid_maxW = rcSecond.rt.width * (1 + fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nMid_minH = rcSecond.rt.height * (1 - fOffset);		//同上
+			nMid_maxH = rcSecond.rt.height * (1 + fOffset);		//同上
+
+			nHead_minW = rcFist.rt.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nHead_maxW = rcFist.rt.width * (1 + fOffset);		//同上
+			nHead_minH = rcFist.rt.height * (1 - fOffset);		//同上
+			nHead_maxH = rcFist.rt.height * (1 + fOffset);		//同上
+		}
+
+		int nYSum = 0;
+		for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
+		{
+			CvRect aRect = cvBoundingRect(contour, 0);
+			Rect rm = aRect;
+			rm.x = rm.x + rt.x;
+			rm.y = rm.y + rt.y;
+
+			if (rm.width < nMid_minW || rm.height < nMid_minH || rm.width > nMid_maxW || rm.height > nMid_maxH)
+			{
+				if (!(rm.width > nHead_minH && rm.width < nHead_maxW && rm.height > nHead_minH && rm.height < nHead_maxH))	//排除第一个或最后一个大的同步头
+				{
+					TRACE("过滤同步头(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+					continue;
+				}
+				else
+				{
+					TRACE("首尾同步头(即定位点同步头)(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+				}
+			}
+			RectCompList.push_back(rm);
+			nYSum += rm.y;
+		}
+#else
 		for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
 		{
 			CvRect aRect = cvBoundingRect(contour, 0);
@@ -1594,7 +1660,7 @@ int GetRects1(cv::Mat& matSrc, cv::Rect rt)
 			}
 			RectCompList.push_back(rm);
 		}
-
+#endif
 		nResult = RectCompList.size();
 	}
 	catch (cv::Exception& exc)
@@ -1682,7 +1748,7 @@ int CPaperInputDlg::CheckOrientation(cv::Mat& matSrc, int n)
 		for (int i = 1; i <= 4; i = i + 3)
 		{
 			cv::Rect rtH = GetRectByOrientation1(rtModelPic, m_pModel->vecPaperModel[n]->rtHTracker, i);
-			int nHead_H = GetRects1(matSrc, rtH);
+			int nHead_H = GetRects1(matSrc, rtH, m_pModel, n);
 			int nSum_H = m_pModel->vecPaperModel[n]->lH_Head.size();
 
 			float fSimilarity_H = (float)nHead_H / nSum_H;
@@ -1695,7 +1761,7 @@ int CPaperInputDlg::CheckOrientation(cv::Mat& matSrc, int n)
 				fSecond_H = fSimilarity_H;
 			
 			cv::Rect rtH2 = GetRectByOrientation1(rtModelPic, m_pModel->vecPaperModel[n]->rtVTracker, i);
-			int nHead_V = GetRects1(matSrc, rtH2);
+			int nHead_V = GetRects1(matSrc, rtH2, m_pModel, n);
 			int nSum_V = m_pModel->vecPaperModel[n]->lV_Head.size();
 
 			float fSimilarity_V = (float)nHead_V / nSum_V;
@@ -1761,7 +1827,7 @@ int CPaperInputDlg::CheckOrientation(cv::Mat& matSrc, int n)
 		for (int i = 2; i <= 3; i++)
 		{
 			cv::Rect rtH = GetRectByOrientation1(rtModelPic, m_pModel->vecPaperModel[n]->rtHTracker, i);
-			int nHead_H = GetRects1(matSrc, rtH);
+			int nHead_H = GetRects1(matSrc, rtH, m_pModel, n);
 			int nSum_H = m_pModel->vecPaperModel[n]->lH_Head.size();
 
 			float fSimilarity_H = (float)nHead_H / nSum_H;
@@ -1774,7 +1840,7 @@ int CPaperInputDlg::CheckOrientation(cv::Mat& matSrc, int n)
 				fSecond_H = fSimilarity_H;
 
 			cv::Rect rtH2 = GetRectByOrientation1(rtModelPic, m_pModel->vecPaperModel[n]->rtVTracker, i);
-			int nHead_V = GetRects1(matSrc, rtH2);
+			int nHead_V = GetRects1(matSrc, rtH2, m_pModel, n);
 			int nSum_V = m_pModel->vecPaperModel[n]->lV_Head.size();
 
 			float fSimilarity_V = (float)nHead_V / nSum_V;

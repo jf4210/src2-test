@@ -51,6 +51,7 @@
 #include "zip.h"
 #include "unzip.h"
 #include "MyCodeConvert.h"
+#include "./pdf2jpg/MuPDFConvert.h"
 
 //#define PIC_RECTIFY_TEST	//图像旋转纠正测试
 #define WarpAffine_TEST		//仿射变换测试
@@ -156,10 +157,10 @@ typedef struct _RectInfo_
 {
 	CPType		eCPType;						//校验点类型
 	int			nThresholdValue;				//此矩形识别时要求的标准值，即达到的灰度值的阀值
-	float		fStandardValue;					//此矩形识别时测量值
+	float		fStandardValue;					//此矩形识别时标准测量值，即按照灰度阀值计算的灰度值
 	float		fRealValue;						//
 	float		fStandardValuePercent;			//此矩形要求的标准值比例，即达到给定的灰度值的比例
-	float		fRealValuePercent;				//此矩形实际的值(灰度值)
+	float		fRealValuePercent;				//此矩形实际的比例(灰度值)
 	int			nHItem;							//第几个水平同步头
 	int			nVItem;							//第几个垂直同步头
 	int			nSnVal;							//标识准考证的数字 0-9
@@ -533,4 +534,6 @@ typedef struct _RectPos_
 	cv::Rect rt;
 }RECTPOS;
 pMODEL	LoadMakePaperData(std::string strData);	//加载制卷工具导出的模板数据
+bool Pdf2Jpg(std::string strPdfPath, std::string strBaseName);
+bool InitModelRecog(pMODEL pModel);		//初始化制卷工具模板的识别参数
 //-----------------------------------------------------------------

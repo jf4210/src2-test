@@ -55,14 +55,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include;.\picCtrl;..\..\common</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;.\picCtrl;..\..\common;.\pdf2jpg\mupdf</AdditionalIncludeDirectories>
       <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\..\bin\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>opencv_world310d.lib;libeay32.lib;ssleay32.lib</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world310d.lib;libeay32.lib;ssleay32.lib;libmupdf.lib</AdditionalDependencies>
       <StackReserveSize>
       </StackReserveSize>
       <StackCommitSize>
@@ -93,7 +93,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include;.\picCtrl;..\..\common</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;.\picCtrl;..\..\common;.\pdf2jpg\mupdf</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -105,7 +105,7 @@
       </StackReserveSize>
       <StackCommitSize>
       </StackCommitSize>
-      <AdditionalDependencies>opencv_world310.lib;libeay32.lib;ssleay32.lib</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world310.lib;libeay32.lib;ssleay32.lib;libmupdf.lib</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -144,6 +144,7 @@
     <ClInclude Include="PaperInputDlg.h" />
     <ClInclude Include="PapersInfoSaveDlg.h" />
     <ClInclude Include="ParamSetDlg.h" />
+    <ClInclude Include="pdf2jpg\MuPDFConvert.h" />
     <ClInclude Include="picCtrl\CvvImage.h" />
     <ClInclude Include="picCtrl\CV_picture.h" />
     <ClInclude Include="PicShow.h" />
@@ -187,6 +188,7 @@
     <ClCompile Include="PaperInputDlg.cpp" />
     <ClCompile Include="PapersInfoSaveDlg.cpp" />
     <ClCompile Include="ParamSetDlg.cpp" />
+    <ClCompile Include="pdf2jpg\MuPDFConvert.cpp" />
     <ClCompile Include="picCtrl\CvvImage.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>

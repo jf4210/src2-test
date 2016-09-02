@@ -2232,8 +2232,8 @@ pMODEL LoadMakePaperData(std::string strData)
 
 			pPAPERMODEL pPaperModel = new PAPERMODEL;
 			pPaperModel->nPaper = objPageNum->get("curPageNum").convert<int>() - 1;			//add from 0
-			pPaperModel->strModelPicName = A2T(strName.c_str());	//图片名称，目前不知道			//**********	test	*****************
-
+			pPaperModel->strModelPicName = A2T(strName.c_str());	//图片名称，目前不知道，考虑从PDF直接转图片然后命名			//**********	test	*****************
+			
  			//同步头
 			GetHeader(objTK, pPaperModel);
 
@@ -2262,7 +2262,7 @@ pMODEL LoadMakePaperData(std::string strData)
 	{
 		SAFE_RELEASE(pModel);
 		std::string strErrInfo;
-		strErrInfo.append("加载模板文件解析json失败: ");
+		strErrInfo.append("加载制卷模板文件解析json失败: ");
 		strErrInfo.append(jsone.message());
 		g_pLogger->information(strErrInfo);
 	}
@@ -2270,11 +2270,169 @@ pMODEL LoadMakePaperData(std::string strData)
 	{
 		SAFE_RELEASE(pModel);
 		std::string strErrInfo;
-		strErrInfo.append("加载模板文件解析json失败2: ");
+		strErrInfo.append("加载制卷模板文件解析json失败2: ");
 		strErrInfo.append(exc.message());
 		g_pLogger->information(strErrInfo);
 	}
 
 	return pModel;
 }
+
+bool Pdf2Jpg(std::string strPdfPath, std::string strBaseName)
+{
+	USES_CONVERSION;
+	Poco::File pdfFile(CMyCodeConvert::Gb2312ToUtf8(strPdfPath));
+	if (!pdfFile.exists())
+	{
+		AfxMessageBox(_T("pdf文件不存在"));
+		return false;
+	}
+
+	std::string strModelSavePath = g_strModelSavePath + "\\" + CMyCodeConvert::Gb2312ToUtf8(strBaseName);
+	Poco::File modelFile(strModelSavePath);
+	if (modelFile.exists())
+		modelFile.remove(true);
+
+	modelFile.createDirectories();
+
+	CString strSrcPdfPath = A2T(strPdfPath.c_str());
+	std::string outPicPath = strModelSavePath + "\\" + "model";
+
+
+	CMuPDFConvert pdfConvert;
+	int nNum = 0;
+	bool bResult = pdfConvert.Pdf2Png(strSrcPdfPath, outPicPath.c_str(), nNum);
+	return bResult;
+}
+
+inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
+{
+	const int channels[1] = { 0 };
+	const float* ranges[1];
+	const int histSize[1] = { 1 };
+	float hranges[2];
+	if (rc.eCPType != WHITE_CP)
+	{
+		hranges[0] = g_nRecogGrayMin;
+		hranges[1] = static_cast<float>(rc.nThresholdValue);
+		ranges[0] = hranges;
+	}
+	else
+	{
+		hranges[0] = static_cast<float>(rc.nThresholdValue);
+		hranges[1] = g_nRecogGrayMax_White;	//255			//256时可统计完全空白的点，即RGB值为255的完全空白点;255时只能统计到RGB为254的值，255的值统计不到
+		ranges[0] = hranges;
+	}
+	cv::MatND src_hist;
+	cv::calcHist(&matSrcRoi, 1, channels, cv::Mat(), src_hist, 1, histSize, ranges, false);
+
+	rc.fStandardValue = src_hist.at<float>(0);
+	return true;
+}
+
+bool InitModelRecog(pMODEL pModel)
+{
+	bool bResult = false;
+	USES_CONVERSION;
+	for(int i = 0; i < pModel->vecPaperModel.size(); i++)
+	{
+		std::string strModelPicPath = g_strModelSavePath + "\\" + T2A(pModel->strModelName + _T("\\") + pModel->vecPaperModel[i]->strModelPicName);
+
+		cv::Mat matSrc = cv::imread(strModelPicPath);
+
+		pPAPERMODEL pPicModel = pModel->vecPaperModel[i];
+		RECTLIST::iterator itHead_H = pPicModel->lH_Head.begin();
+		for (; itHead_H != pPicModel->lH_Head.end(); itHead_H++)
+		{
+			itHead_H->nThresholdValue = 150;
+			itHead_H->fStandardValuePercent = 0.75;
+
+			cv::Mat matComp = matSrc(itHead_H->rt);
+			RecogGrayValue(matComp, *itHead_H);
+		}
+		RECTLIST::iterator itHead_V = pPicModel->lV_Head.begin();
+		for (; itHead_V != pPicModel->lV_Head.end(); itHead_V++)
+		{
+			itHead_V->nThresholdValue = 150;
+			itHead_V->fStandardValuePercent = 0.75;
+
+			cv::Mat matComp = matSrc(itHead_V->rt);
+			RecogGrayValue(matComp, *itHead_V);
+		}
+		RECTLIST::iterator itABModel = pPicModel->lABModel.begin();
+		for (; itABModel != pPicModel->lABModel.end(); itABModel++)
+		{
+			itABModel->nThresholdValue = 150;
+			itABModel->fStandardValuePercent = 0.75;
+
+			cv::Mat matComp = matSrc(itABModel->rt);
+			RecogGrayValue(matComp, *itABModel);
+		}
+		RECTLIST::iterator itCourse = pPicModel->lCourse.begin();
+		for (; itCourse != pPicModel->lCourse.end(); itCourse++)
+		{
+			itCourse->nThresholdValue = 150;
+			itCourse->fStandardValuePercent = 0.75;
+
+			cv::Mat matComp = matSrc(itCourse->rt);
+			RecogGrayValue(matComp, *itCourse);
+		}
+		RECTLIST::iterator itQK = pPicModel->lQK_CP.begin();
+		for (; itQK != pPicModel->lQK_CP.end(); itQK++)
+		{
+			itQK->nThresholdValue = 150;
+			itQK->fStandardValuePercent = 0.75;
+
+			cv::Mat matComp = matSrc(itQK->rt);
+			RecogGrayValue(matComp, *itQK);
+		}
+		RECTLIST::iterator itGray = pPicModel->lGray.begin();
+		for (; itGray != pPicModel->lGray.end(); itGray++)
+		{
+			itGray->nThresholdValue = 150;
+			itGray->fStandardValuePercent = 0.75;
+
+			cv::Mat matComp = matSrc(itGray->rt);
+			RecogGrayValue(matComp, *itGray);
+		}
+		RECTLIST::iterator itWhite = pPicModel->lWhite.begin();
+		for (; itWhite != pPicModel->lWhite.end(); itWhite++)
+		{
+			itWhite->nThresholdValue = 225;
+			itWhite->fStandardValuePercent = 0.75;
+
+			cv::Mat matComp = matSrc(itWhite->rt);
+			RecogGrayValue(matComp, *itWhite);
+		}
+		SNLIST::iterator itSN = pPicModel->lSNInfo.begin();
+		for (; itSN != pPicModel->lSNInfo.end(); itSN++)
+		{
+			pSN_ITEM pSNItem = *itSN;
+			RECTLIST::iterator itSNItem = pSNItem->lSN.begin();
+			for (; itSNItem != pSNItem->lSN.end(); itSNItem++)
+			{
+				itSNItem->nThresholdValue = 200;
+				itSNItem->fStandardValuePercent = 0.75;
+
+				cv::Mat matComp = matSrc(itSNItem->rt);
+				RecogGrayValue(matComp, *itSNItem);
+			}
+		}
+		OMRLIST::iterator itOmr = pPicModel->lOMR2.begin();
+		for (; itOmr != pPicModel->lOMR2.end(); itOmr++)
+		{
+			RECTLIST::iterator itOmrItem = itOmr->lSelAnswer.begin();
+			for (; itOmrItem != itOmr->lSelAnswer.end(); itOmrItem++)
+			{
+				itOmrItem->nThresholdValue = 230;
+				itOmrItem->fStandardValuePercent = 0.75;
+
+				cv::Mat matComp = matSrc(itOmrItem->rt);
+				RecogGrayValue(matComp, *itOmrItem);
+			}
+		}
+	}
+	return bResult;
+}
+
 //---------------------------------------------------------------

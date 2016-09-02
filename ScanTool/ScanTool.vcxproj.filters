@@ -103,6 +103,9 @@
     <Filter Include="模板制作窗口%2a%2a%2a\考号信息设置窗口">
       <UniqueIdentifier>{f5a93192-21a1-475b-88da-77896c6eab7f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="pdf转jpg">
+      <UniqueIdentifier>{7725052b-edd6-4873-87a1-2026e2ad570d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -240,6 +243,9 @@
     <ClInclude Include="ExamInfoDlg.h">
       <Filter>考试信息子窗口</Filter>
     </ClInclude>
+    <ClInclude Include="pdf2jpg\MuPDFConvert.h">
+      <Filter>pdf转jpg</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
@@ -355,6 +361,9 @@
     </ClCompile>
     <ClCompile Include="ExamInfoDlg.cpp">
       <Filter>考试信息子窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="pdf2jpg\MuPDFConvert.cpp">
+      <Filter>pdf转jpg</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

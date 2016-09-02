@@ -13,6 +13,7 @@
 #include "THSetDlg.h"
 #include "ScanCtrlDlg.h"
 #include "Net_Cmd_Protocol.h"
+#include "./pdf2jpg/MuPDFConvert.h"
 
 using namespace std;
 using namespace cv;
@@ -156,6 +157,8 @@ BOOL CMakeModelDlg::OnInitDialog()
 			pPaperModel->nPicW = src_img.cols;
 			pPaperModel->nPicH = src_img.rows;
 			
+			pPaperModel->bFirstH = false;
+			pPaperModel->bFirstV = false;
 			pPaperModel->rtHTracker = m_pModel->vecPaperModel[i]->rtHTracker;
 			pPaperModel->rtVTracker = m_pModel->vecPaperModel[i]->rtVTracker;
 			pPaperModel->rtSNTracker = m_pModel->vecPaperModel[i]->rtSNTracker;
@@ -1165,6 +1168,9 @@ inline void CMakeModelDlg::GetThreshold(cv::Mat& matSrc, cv::Mat& matDst)
 			}
 			float fStdev = sqrt(nDevSum / nCount);	//标准差
 			int nThreshold = fMean + 2 * fStdev;
+			if (fStdev > fMean)
+				nThreshold = fMean + fStdev;
+
 			if (nThreshold > 150) nThreshold = 150;
 			threshold(matSrc, matDst, nThreshold, 255, THRESH_BINARY);
 #else
@@ -4474,15 +4480,33 @@ void CMakeModelDlg::OnBnClickedBtnuploadmodel()
 	}
 	in.close();
 
+	//++ 将PDF转JPG
+	int nPos1 = strJsnModel.rfind('\\');
+	int nPos2 = strJsnModel.rfind('.');
+	std::string strBaseName = strJsnModel.substr(nPos1 + 1, nPos2 - nPos1 - 1);
+	std::string strPdfPath = T2A(dlg.GetFolderPath());
+	strPdfPath.append("\\" + strBaseName + ".pdf");
+
+	bool bResult = Pdf2Jpg(strPdfPath, strBaseName);
+	if (!bResult)
+	{
+		AfxMessageBox(_T("pdf转jpg失败"));
+		return;
+	}
+	//--
+
 	m_pModel = LoadMakePaperData(strJsnData);
 	if (!m_pModel)	return;
+
+	InitModelRecog(m_pModel);
+
 	m_nModelPicNums = m_pModel->nPicNum;
 	InitTab();
 	InitConf();
 	m_vecPaperModelInfo.clear();
 	for (int i = 0; i < m_pModel->nPicNum; i++)
 	{
-		CString strPicPath = g_strCurrentPath + _T("Model\\A4_json\\") + m_pModel->vecPaperModel[i]->strModelPicName;
+		CString strPicPath = g_strCurrentPath + _T("Model\\") + strBaseName.c_str() + _T("\\") + m_pModel->vecPaperModel[i]->strModelPicName;
 
 		pPaperModelInfo pPaperModel = new PaperModelInfo;
 		m_vecPaperModelInfo.push_back(pPaperModel);

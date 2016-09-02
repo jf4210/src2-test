@@ -466,6 +466,9 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			}
 			float fStdev = sqrt(nDevSum / nCount);
 			int nThreshold = fMean + 2 * fStdev;
+			if (fStdev > fMean)
+				nThreshold = fMean + fStdev;
+
 			if (nThreshold > 150) nThreshold = 150;
 			threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY);
 #else
@@ -592,6 +595,7 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 	if (pModelInfo->pModel->nHasHead == 0)
 		return true;
 
+	std::string strErrDesc;
 	m_vecH_Head.clear();
 	RECTLIST::iterator itRoi = pModelInfo->pModel->vecPaperModel[nPic]->lSelHTracker.begin();
 	for (; itRoi != pModelInfo->pModel->vecPaperModel[nPic]->lSelHTracker.end(); itRoi++)
@@ -649,13 +653,16 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			}
 			float fStdev = sqrt(nDevSum / nCount);
 			int nThreshold = fMean + 2 * fStdev;
+			if (fStdev > fMean)
+				nThreshold = fMean + fStdev;
+
 			if (nThreshold > 150) nThreshold = 150;
 			threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY);
 #else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
 #endif
 			cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
-			Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(6, 6)	普通空白框可识别
+			Mat element = getStructuringElement(MORPH_RECT, Size(3, 3));	//Size(6, 6)	普通空白框可识别
 			dilate(matCompRoi, matCompRoi, element);
 			IplImage ipl_img(matCompRoi);
 
@@ -666,6 +673,71 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			//提取轮廓  
 			cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
+#if 1
+			//模板图像的水平同步头平均长宽
+			RECTLIST::iterator itBegin = pModelInfo->pModel->vecPaperModel[nPic]->lH_Head.begin();
+			RECTINFO rcFist = *itBegin;
+			RECTINFO rcSecond = *(++itBegin);
+			
+			int nMid_minW, nMid_maxW, nMid_minH, nMid_maxH;
+			int nHead_minW, nHead_maxW, nHead_minH, nHead_maxH;
+
+			if (pModelInfo->pModel->nType == 1)
+			{
+				float fOffset = 0.1;
+				int nMid_modelW = rcSecond.rt.width + 2;		//加2是因为制卷模板框框没有经过查边框运算，经过查边框后，外框会包含整个矩形，需要加上上下各1个单位的线宽
+				int nMid_modelH = rcSecond.rt.height + 2;
+				if (nMid_modelW < rcFist.rt.width * 0.5 + 0.5)	nMid_modelW = rcFist.rt.width * 0.5 + 0.5;
+				if (nMid_modelH < rcFist.rt.height * 0.25 + 0.5)	nMid_modelH = rcFist.rt.height * 0.25 + 0.5;
+				nMid_minW = nMid_modelW * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nMid_maxW = nMid_modelW * (1 + fOffset * 4) + 0.5;		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nMid_minH = nMid_modelH * (1 - fOffset);				//同上
+				nMid_maxH = nMid_modelH * (1 + fOffset * 4) + 0.5;		//同上
+
+				nHead_minW = rcFist.rt.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nHead_maxW = rcFist.rt.width * (1 + fOffset * 4) + 0.5;		//同上
+				nHead_minH = rcFist.rt.height * (1 - fOffset);				//同上
+				nHead_maxH = rcFist.rt.height * (1 + fOffset * 4) + 0.5;	//同上
+			}
+			else
+			{
+				float fOffset = 0.2;
+				nMid_minW = rcSecond.rt.width * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nMid_maxW = rcSecond.rt.width * (1 + fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nMid_minH = rcSecond.rt.height * (1 - fOffset);		//同上
+				nMid_maxH = rcSecond.rt.height * (1 + fOffset);		//同上
+
+				nHead_minW = rcFist.rt.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nHead_maxW = rcFist.rt.width * (1 + fOffset);		//同上
+				nHead_minH = rcFist.rt.height * (1 - fOffset);		//同上
+				nHead_maxH = rcFist.rt.height * (1 + fOffset);		//同上
+			}
+
+			int nYSum = 0;
+			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
+			{
+				CvRect aRect = cvBoundingRect(contour, 0);
+				Rect rm = aRect;
+				rm.x = rm.x + rc.rt.x;
+				rm.y = rm.y + rc.rt.y;
+				
+				if (rm.width < nMid_minW || rm.height < nMid_minH || rm.width > nMid_maxW || rm.height > nMid_maxH)
+				{
+					if (!(rm.width > nHead_minH && rm.width < nHead_maxW && rm.height > nHead_minH && rm.height < nHead_maxH))	//排除第一个或最后一个大的同步头
+					{
+						TRACE("过滤水平同步头(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+						continue;
+					}
+					else
+					{
+						TRACE("首尾水平同步头(即定位点同步头)(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+					}
+				}
+				RectCompList.push_back(rm);
+				nYSum += rm.y;
+			}
+//			int nYMean = nYSum / RectCompList.size();
+#else
 			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
 			{
 				CvRect aRect = cvBoundingRect(contour, 0);
@@ -678,6 +750,7 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				}
 				RectCompList.push_back(rm);
 			}
+#endif
 		}
 		catch (cv::Exception& exc)
 		{
@@ -689,7 +762,10 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			break;
 		}
 		if (RectCompList.size() == 0)
+		{
 			bResult = false;
+			strErrDesc = "水平同步头数量为0.";
+		}
 		else
 		{
 			for (int i = 0; i < RectCompList.size(); i++)
@@ -707,6 +783,11 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		if(m_vecH_Head.size() != pModelInfo->pModel->vecPaperModel[nPic]->lH_Head.size())
 		{
 			bResult = false;
+			pPic->bFindIssue = true;
+			for(int i = 0; i < m_vecH_Head.size(); i++)
+				pPic->lIssueRect.push_back(m_vecH_Head[i]);
+
+			strErrDesc = Poco::format("水平同步头数量为%u, 与模板水平同步头数量(%u)不一致", m_vecH_Head.size(), pModelInfo->pModel->vecPaperModel[nPic]->lH_Head.size());
 		}
 #else
 		GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic].lFix, rc.rt);
@@ -725,7 +806,7 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 	if (!bResult)
 	{
 		char szLog[MAX_PATH] = { 0 };
-		sprintf_s(szLog, "识别水平同步头失败, 图片名: %s\n", pPic->strPicName.c_str());
+		sprintf_s(szLog, "识别水平同步头失败, 原因: %s, 图片名: %s\n", strErrDesc.c_str(), pPic->strPicName.c_str());
 		g_pLogger->information(szLog);
 		TRACE(szLog);
 	}
@@ -738,6 +819,7 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 	if (pModelInfo->pModel->nHasHead == 0)
 		return true;
 
+	std::string strErrDesc;
 	m_vecV_Head.clear();
 	RECTLIST::iterator itRoi = pModelInfo->pModel->vecPaperModel[nPic]->lSelVTracker.begin();
 	for (; itRoi != pModelInfo->pModel->vecPaperModel[nPic]->lSelVTracker.end(); itRoi++)
@@ -765,7 +847,6 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 
 			GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
 			sharpenImage1(matCompRoi, matCompRoi);
-
 
 #ifdef USES_GETTHRESHOLD_ZTFB
 			const int channels[1] = { 0 };
@@ -796,13 +877,16 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			}
 			float fStdev = sqrt(nDevSum / nCount);
 			int nThreshold = fMean + 2 * fStdev;
+			if (fStdev > fMean)
+				nThreshold = fMean + fStdev;
+
 			if (nThreshold > 150) nThreshold = 150;
 			threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY);
 #else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
 #endif
 			cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
-			Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(6, 6)	普通空白框可识别
+			Mat element = getStructuringElement(MORPH_RECT, Size(3, 3));	//Size(6, 6)	普通空白框可识别
 			dilate(matCompRoi, matCompRoi, element);
 			IplImage ipl_img(matCompRoi);
 
@@ -813,6 +897,71 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			//提取轮廓  
 			cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
+#if 1
+			//模板图像的水平同步头平均长宽
+			RECTLIST::iterator itBegin = pModelInfo->pModel->vecPaperModel[nPic]->lV_Head.begin();
+			RECTINFO rcFist = *itBegin;
+			RECTINFO rcSecond = *(++itBegin);
+
+			int nMid_minW, nMid_maxW, nMid_minH, nMid_maxH;
+			int nHead_minW, nHead_maxW, nHead_minH, nHead_maxH;
+
+			if (pModelInfo->pModel->nType == 1)
+			{
+				float fOffset = 0.1;
+				int nMid_modelW = rcSecond.rt.width + 2;		//加2是因为制卷模板框框没有经过查边框运算，经过查边框后，外框会包含整个矩形，需要加上上下各1个单位的线宽
+				int nMid_modelH = rcSecond.rt.height + 2;
+				if (nMid_modelW < rcFist.rt.width * 0.5 + 0.5)	nMid_modelW = rcFist.rt.width * 0.5 + 0.5;
+				if (nMid_modelH < rcFist.rt.height * 0.25 + 0.5)	nMid_modelH = rcFist.rt.height * 0.25 + 0.5;
+				nMid_minW = nMid_modelW * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nMid_maxW = nMid_modelW * (1 + fOffset * 4) + 0.5;		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nMid_minH = nMid_modelH * (1 - fOffset);				//同上
+				nMid_maxH = nMid_modelH * (1 + fOffset * 4) + 0.5;		//同上
+
+				nHead_minW = rcFist.rt.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nHead_maxW = rcFist.rt.width * (1 + fOffset * 4) + 0.5;		//同上
+				nHead_minH = rcFist.rt.height * (1 - fOffset);				//同上
+				nHead_maxH = rcFist.rt.height * (1 + fOffset * 4) + 0.5;	//同上
+			}
+			else
+			{
+				float fOffset = 0.2;
+				nMid_minW = rcSecond.rt.width * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nMid_maxW = rcSecond.rt.width * (1 + fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nMid_minH = rcSecond.rt.height * (1 - fOffset);		//同上
+				nMid_maxH = rcSecond.rt.height * (1 + fOffset);		//同上
+
+				nHead_minW = rcFist.rt.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nHead_maxW = rcFist.rt.width * (1 + fOffset);		//同上
+				nHead_minH = rcFist.rt.height * (1 - fOffset);		//同上
+				nHead_maxH = rcFist.rt.height * (1 + fOffset);		//同上
+			}
+
+			int nYSum = 0;
+			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
+			{
+				CvRect aRect = cvBoundingRect(contour, 0);
+				Rect rm = aRect;
+				rm.x = rm.x + rc.rt.x;
+				rm.y = rm.y + rc.rt.y;
+
+				if (rm.width < nMid_minW || rm.height < nMid_minH || rm.width > nMid_maxW || rm.height > nMid_maxH)
+				{
+					if (!(rm.width > nHead_minH && rm.width < nHead_maxW && rm.height > nHead_minH && rm.height < nHead_maxH))	//排除第一个或最后一个大的同步头
+					{
+						TRACE("过滤垂直同步头(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+						continue;
+					}
+					else
+					{
+						TRACE("首尾垂直同步头(即定位点同步头)(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+					}
+				}
+				RectCompList.push_back(rm);
+				nYSum += rm.y;
+			}
+//			int nYMean = nYSum / RectCompList.size();
+#else
 			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
 			{
 				CvRect aRect = cvBoundingRect(contour, 0);
@@ -825,6 +974,7 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				}
 				RectCompList.push_back(rm);
 			}
+#endif
 		}
 		catch (cv::Exception& exc)
 		{
@@ -836,7 +986,10 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			break;
 		}
 		if (RectCompList.size() == 0)
+		{
 			bResult = false;
+			strErrDesc = "垂直同步头数量为0.";
+		}
 		else
 		{
 			for (int i = 0; i < RectCompList.size(); i++)
@@ -854,6 +1007,11 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		if(m_vecV_Head.size() != pModelInfo->pModel->vecPaperModel[nPic]->lV_Head.size())
 		{
 			bResult = false;
+			pPic->bFindIssue = true;
+			for(int i = 0; i < m_vecV_Head.size(); i++)
+				pPic->lIssueRect.push_back(m_vecV_Head[i]);
+
+			strErrDesc = Poco::format("垂直同步头数量为%u, 与模板垂直同步头数量(%u)不一致", m_vecV_Head.size(), pModelInfo->pModel->vecPaperModel[nPic]->lV_Head.size());
 		}
 #else
 		GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic].lFix, rc.rt);
@@ -871,7 +1029,7 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 	if (!bResult)
 	{
 		char szLog[MAX_PATH] = { 0 };
-		sprintf_s(szLog, "识别垂直同步头失败, 图片名: %s\n", pPic->strPicName.c_str());
+		sprintf_s(szLog, "识别垂直同步头失败, 原因: %s, 图片名: %s\n", strErrDesc.c_str(), pPic->strPicName.c_str());
 		g_pLogger->information(szLog);
 		TRACE(szLog);
 	}
