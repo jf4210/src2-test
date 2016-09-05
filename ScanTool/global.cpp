@@ -2114,6 +2114,7 @@ bool GetZkzh(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 				rc.nSnVal = objGrids->get("index").convert<int>();
 				rc.nHItem = objGrids->get("horIndex").convert<int>();
 				rc.nVItem = objGrids->get("verIndex").convert<int>();
+				rc.nRecogFlag = 10;
 				pSnItem->lSN.push_back(rc);
 			}
 			pPaperModel->lSNInfo.push_back(pSnItem);
@@ -2296,9 +2297,8 @@ bool Pdf2Jpg(std::string strPdfPath, std::string strBaseName)
 	modelFile.createDirectories();
 
 	CString strSrcPdfPath = A2T(strPdfPath.c_str());
-	std::string outPicPath = strModelSavePath + "\\" + "model";
-
-
+	std::string outPicPath = CMyCodeConvert::Utf8ToGb2312(strModelSavePath + "\\" + "model");
+	
 	CMuPDFConvert pdfConvert;
 	int nNum = 0;
 	bool bResult = pdfConvert.Pdf2Png(strSrcPdfPath, outPicPath.c_str(), nNum);
@@ -2330,6 +2330,358 @@ inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	return true;
 }
 
+//++ test
+void sharpenImage1(const cv::Mat &image, cv::Mat &result)
+{
+	//创建并初始化滤波模板
+	cv::Mat kernel(3, 3, CV_32F, cv::Scalar(0));
+	kernel.at<float>(1, 1) = 5;
+	kernel.at<float>(0, 1) = -1.0;
+	kernel.at<float>(1, 0) = -1.0;
+	kernel.at<float>(1, 2) = -1.0;
+	kernel.at<float>(2, 1) = -1.0;
+
+	result.create(image.size(), image.type());
+
+	//对图像进行滤波
+	cv::filter2D(image, result, image.depth(), kernel);
+}
+//过滤有问题
+bool RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pPAPERMODEL pPicModel)
+{
+	bool bResult = true;
+	std::vector<RECTINFO> vecH_Head;
+
+	std::string strErrDesc;
+	RECTLIST::iterator itRoi = pPicModel->lSelHTracker.begin();
+	for (; itRoi != pPicModel->lSelHTracker.end(); itRoi++)
+	{
+		RECTINFO rc = *itRoi;
+
+		std::vector<cv::Rect>RectCompList;
+		try
+		{
+			if (rc.rt.x < 0) rc.rt.x = 0;
+			if (rc.rt.y < 0) rc.rt.y = 0;
+			if (rc.rt.br().x > matCompPic.cols)
+			{
+				rc.rt.width = matCompPic.cols - rc.rt.x;
+			}
+			if (rc.rt.br().y > matCompPic.rows)
+			{
+				rc.rt.height = matCompPic.rows - rc.rt.y;
+			}
+
+			cv::Mat matCompRoi;
+			matCompRoi = matCompPic(rc.rt);
+
+			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+			GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
+			sharpenImage1(matCompRoi, matCompRoi);
+
+			const int channels[1] = { 0 };
+			const int histSize[1] = { 150 };
+			float hranges[2] = { 0, 150 };
+			const float* ranges[1];
+			ranges[0] = hranges;
+			cv::MatND hist;
+			calcHist(&matCompRoi, 1, channels, cv::Mat(), hist, 1, histSize, ranges);	//histSize, ranges
+
+			int nSum = 0;
+			int nDevSum = 0;
+			int nCount = 0;
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nCount += static_cast<int>(binVal);
+				nSum += h*binVal;
+			}
+			float fMean = (float)nSum / nCount;		//均值
+
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nDevSum += pow(h - fMean, 2)*binVal;
+			}
+			float fStdev = sqrt(nDevSum / nCount);
+			int nThreshold = fMean + 2 * fStdev;
+			if (fStdev > fMean)
+				nThreshold = fMean + fStdev;
+
+			if (nThreshold > 150) nThreshold = 150;
+			threshold(matCompRoi, matCompRoi, nThreshold, 255, cv::THRESH_BINARY);
+
+			cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
+			cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));	//Size(6, 6)	普通空白框可识别
+			cv::dilate(matCompRoi, matCompRoi, element);
+			IplImage ipl_img(matCompRoi);
+
+			//the parm. for cvFindContours  
+			CvMemStorage* storage = cvCreateMemStorage(0);
+			CvSeq* contour = 0;
+
+			//提取轮廓  
+			cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+			//模板图像的水平同步头平均长宽
+			RECTLIST::iterator itBegin = pPicModel->lH_Head.begin();
+			RECTINFO rcFist = *itBegin;
+			RECTINFO rcSecond = *(++itBegin);
+
+			int nMid_minW, nMid_maxW, nMid_minH, nMid_maxH;
+			int nHead_minW, nHead_maxW, nHead_minH, nHead_maxH;
+
+			float fOffset = 0.1;
+			int nMid_modelW = rcSecond.rt.width + 2;		//加2是因为制卷模板框框没有经过查边框运算，经过查边框后，外框会包含整个矩形，需要加上上下各1个单位的线宽
+			int nMid_modelH = rcSecond.rt.height + 2;
+			if (nMid_modelW < rcFist.rt.width * 0.5 + 0.5)	nMid_modelW = rcFist.rt.width * 0.5 + 0.5;
+			if (nMid_modelH < rcFist.rt.height * 0.25 + 0.5)	nMid_modelH = rcFist.rt.height * 0.25 + 0.5;
+			nMid_minW = nMid_modelW * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nMid_maxW = nMid_modelW * (1 + fOffset * 4) + 0.5;		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nMid_minH = nMid_modelH * (1 - fOffset);				//同上
+			nMid_maxH = nMid_modelH * (1 + fOffset * 4) + 0.5;		//同上
+
+			nHead_minW = rcFist.rt.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nHead_maxW = rcFist.rt.width * (1 + fOffset * 4) + 0.5;		//同上
+			nHead_minH = rcFist.rt.height * (1 - fOffset);				//同上
+			nHead_maxH = rcFist.rt.height * (1 + fOffset * 4) + 0.5;	//同上
+
+			int nYSum = 0;
+			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
+			{
+				CvRect aRect = cvBoundingRect(contour, 0);
+				cv::Rect rm = aRect;
+				rm.x = rm.x + rc.rt.x;
+				rm.y = rm.y + rc.rt.y;
+
+				if (rm.width < nMid_minW || rm.height < nMid_minH || rm.width > nMid_maxW || rm.height > nMid_maxH)
+				{
+					if (!(rm.width > nHead_minH && rm.width < nHead_maxW && rm.height > nHead_minH && rm.height < nHead_maxH))	//排除第一个或最后一个大的同步头
+					{
+						TRACE("过滤垂直同步头(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+						continue;
+					}
+					else
+					{
+						TRACE("首尾垂直同步头(即定位点同步头)(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+					}
+				}
+				RectCompList.push_back(rm);
+				nYSum += rm.y;
+			}
+			//			int nYMean = nYSum / RectCompList.size();
+
+		}
+		catch (cv::Exception& exc)
+		{
+			std::string strLog = "识别垂直同步头异常: " + exc.msg;
+			g_pLogger->information(strLog);
+			TRACE(strLog.c_str());
+
+			bResult = false;
+			break;
+		}
+		if (RectCompList.size() == 0)
+		{
+			bResult = false;
+			strErrDesc = "垂直同步头数量为0.";
+		}
+		else
+		{
+			for (int i = 0; i < RectCompList.size(); i++)
+			{
+				RECTINFO rc;
+				rc.rt = RectCompList[i];
+				rc.eCPType = H_HEAD;
+				vecH_Head.push_back(rc);
+			}
+			std::sort(vecH_Head.begin(), vecH_Head.end(), SortByPositionY);
+
+			for (int i = 0; i < vecH_Head.size(); i++)
+				pPicModel->lH_Head.push_back(vecH_Head[i]);
+		}
+	}
+	if (!bResult)
+	{
+		char szLog[MAX_PATH] = { 0 };
+		sprintf_s(szLog, "识别垂直同步头失败, 原因: %s, 图片名: %s\n", strErrDesc.c_str(), pPic->strPicName.c_str());
+		g_pLogger->information(szLog);
+		TRACE(szLog);
+	}
+	return bResult;
+}
+
+bool RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pPAPERMODEL pPicModel)
+{
+	bool bResult = true;
+	std::vector<RECTINFO> vecV_Head;
+
+	std::string strErrDesc;
+	RECTLIST::iterator itRoi = pPicModel->lSelVTracker.begin();
+	for (; itRoi != pPicModel->lSelVTracker.end(); itRoi++)
+	{
+		RECTINFO rc = *itRoi;
+
+		std::vector<cv::Rect>RectCompList;
+		try
+		{
+			if (rc.rt.x < 0) rc.rt.x = 0;
+			if (rc.rt.y < 0) rc.rt.y = 0;
+			if (rc.rt.br().x > matCompPic.cols)
+			{
+				rc.rt.width = matCompPic.cols - rc.rt.x;
+			}
+			if (rc.rt.br().y > matCompPic.rows)
+			{
+				rc.rt.height = matCompPic.rows - rc.rt.y;
+			}
+
+			cv::Mat matCompRoi;
+			matCompRoi = matCompPic(rc.rt);
+
+			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+			GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
+			sharpenImage1(matCompRoi, matCompRoi);
+
+			const int channels[1] = { 0 };
+			const int histSize[1] = { 150 };
+			float hranges[2] = { 0, 150 };
+			const float* ranges[1];
+			ranges[0] = hranges;
+			cv::MatND hist;
+			calcHist(&matCompRoi, 1, channels, cv::Mat(), hist, 1, histSize, ranges);	//histSize, ranges
+
+			int nSum = 0;
+			int nDevSum = 0;
+			int nCount = 0;
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nCount += static_cast<int>(binVal);
+				nSum += h*binVal;
+			}
+			float fMean = (float)nSum / nCount;		//均值
+
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nDevSum += pow(h - fMean, 2)*binVal;
+			}
+			float fStdev = sqrt(nDevSum / nCount);
+			int nThreshold = fMean + 2 * fStdev;
+			if (fStdev > fMean)
+				nThreshold = fMean + fStdev;
+
+			if (nThreshold > 150) nThreshold = 150;
+			threshold(matCompRoi, matCompRoi, nThreshold, 255, cv::THRESH_BINARY);
+
+			cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
+			cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));	//Size(6, 6)	普通空白框可识别
+			cv::dilate(matCompRoi, matCompRoi, element);
+			IplImage ipl_img(matCompRoi);
+
+			//the parm. for cvFindContours  
+			CvMemStorage* storage = cvCreateMemStorage(0);
+			CvSeq* contour = 0;
+
+			//提取轮廓  
+			cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+			//模板图像的水平同步头平均长宽
+			RECTLIST::iterator itBegin = pPicModel->lV_Head.begin();
+			RECTINFO rcFist = *itBegin;
+			RECTINFO rcSecond = *(++itBegin);
+
+			int nMid_minW, nMid_maxW, nMid_minH, nMid_maxH;
+			int nHead_minW, nHead_maxW, nHead_minH, nHead_maxH;
+					
+			float fOffset = 0.1;
+			int nMid_modelW = rcSecond.rt.width + 2;		//加2是因为制卷模板框框没有经过查边框运算，经过查边框后，外框会包含整个矩形，需要加上上下各1个单位的线宽
+			int nMid_modelH = rcSecond.rt.height + 2;
+			if (nMid_modelW < rcFist.rt.width * 0.5 + 0.5)	nMid_modelW = rcFist.rt.width * 0.5 + 0.5;
+			if (nMid_modelH < rcFist.rt.height * 0.25 + 0.5)	nMid_modelH = rcFist.rt.height * 0.25 + 0.5;
+			nMid_minW = nMid_modelW * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nMid_maxW = nMid_modelW * (1 + fOffset * 4) + 0.5;		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nMid_minH = nMid_modelH * (1 - fOffset);				//同上
+			nMid_maxH = nMid_modelH * (1 + fOffset * 4) + 0.5;		//同上
+
+			nHead_minW = rcFist.rt.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nHead_maxW = rcFist.rt.width * (1 + fOffset * 4) + 0.5;		//同上
+			nHead_minH = rcFist.rt.height * (1 - fOffset);				//同上
+			nHead_maxH = rcFist.rt.height * (1 + fOffset * 4) + 0.5;	//同上
+			
+			int nYSum = 0;
+			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
+			{
+				CvRect aRect = cvBoundingRect(contour, 0);
+				cv::Rect rm = aRect;
+				rm.x = rm.x + rc.rt.x;
+				rm.y = rm.y + rc.rt.y;
+
+				if (rm.width < nMid_minW || rm.height < nMid_minH || rm.width > nMid_maxW || rm.height > nMid_maxH)
+				{
+					if (!(rm.width > nHead_minH && rm.width < nHead_maxW && rm.height > nHead_minH && rm.height < nHead_maxH))	//排除第一个或最后一个大的同步头
+					{
+						TRACE("过滤垂直同步头(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+						continue;
+					}
+					else
+					{
+						TRACE("首尾垂直同步头(即定位点同步头)(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+					}
+				}
+				RectCompList.push_back(rm);
+				nYSum += rm.y;
+			}
+			//			int nYMean = nYSum / RectCompList.size();
+
+		}
+		catch (cv::Exception& exc)
+		{
+			std::string strLog = "识别垂直同步头异常: " + exc.msg;
+			g_pLogger->information(strLog);
+			TRACE(strLog.c_str());
+
+			bResult = false;
+			break;
+		}
+		if (RectCompList.size() == 0)
+		{
+			bResult = false;
+			strErrDesc = "垂直同步头数量为0.";
+		}
+		else
+		{
+			for (int i = 0; i < RectCompList.size(); i++)
+			{
+				RECTINFO rc;
+				rc.rt = RectCompList[i];
+				rc.eCPType = V_HEAD;
+				vecV_Head.push_back(rc);
+			}
+			std::sort(vecV_Head.begin(), vecV_Head.end(), SortByPositionY);
+
+			for (int i = 0; i < vecV_Head.size(); i++)
+				pPicModel->lV_Head.push_back(vecV_Head[i]);
+		}
+	}
+	if (!bResult)
+	{
+		char szLog[MAX_PATH] = { 0 };
+		sprintf_s(szLog, "识别垂直同步头失败, 原因: %s, 图片名: %s\n", strErrDesc.c_str(), pPic->strPicName.c_str());
+		g_pLogger->information(szLog);
+		TRACE(szLog);
+	}
+	return bResult;
+}
+//--
+
 bool InitModelRecog(pMODEL pModel)
 {
 	bool bResult = false;
@@ -2341,6 +2693,11 @@ bool InitModelRecog(pMODEL pModel)
 		cv::Mat matSrc = cv::imread(strModelPicPath);
 
 		pPAPERMODEL pPicModel = pModel->vecPaperModel[i];
+
+		//++ test	识别模板的同步头大小
+
+		//--
+
 		RECTLIST::iterator itHead_H = pPicModel->lH_Head.begin();
 		for (; itHead_H != pPicModel->lH_Head.end(); itHead_H++)
 		{
@@ -2412,7 +2769,7 @@ bool InitModelRecog(pMODEL pModel)
 			for (; itSNItem != pSNItem->lSN.end(); itSNItem++)
 			{
 				itSNItem->nThresholdValue = 200;
-				itSNItem->fStandardValuePercent = 0.75;
+				itSNItem->fStandardValuePercent = 1.5;
 
 				cv::Mat matComp = matSrc(itSNItem->rt);
 				RecogGrayValue(matComp, *itSNItem);
@@ -2425,7 +2782,7 @@ bool InitModelRecog(pMODEL pModel)
 			for (; itOmrItem != itOmr->lSelAnswer.end(); itOmrItem++)
 			{
 				itOmrItem->nThresholdValue = 230;
-				itOmrItem->fStandardValuePercent = 0.75;
+				itOmrItem->fStandardValuePercent = 1.5;
 
 				cv::Mat matComp = matSrc(itOmrItem->rt);
 				RecogGrayValue(matComp, *itOmrItem);

@@ -1924,7 +1924,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 			pPaperModel->lSNInfo.push_back(pSnItem);
 		}
 		//++ 有同步头的情况下，直接新建模板马上保存，需要设置水平和垂直橡皮筋的长度
-		if (m_pModel->nHasHead && m_vecPaperModelInfo[i]->bFirstH)
+		if (m_pModel->nHasHead && m_vecPaperModelInfo[i]->bFirstH && m_pModel->nType == 0)
 		{
 			m_ptHTracker1 = cv::Point(0, 0);
 			m_ptHTracker2 = cv::Point(m_vecPaperModelInfo[i]->matSrcImg.cols, 90);
@@ -1935,7 +1935,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 			m_vecPaperModelInfo[i]->rtHTracker.width = m_ptHTracker2.x - m_ptHTracker1.x;
 			m_vecPaperModelInfo[i]->rtHTracker.height = m_ptHTracker2.y - m_ptHTracker1.y;
 		}
-		if (m_pModel->nHasHead && m_vecPaperModelInfo[i]->bFirstV)
+		if (m_pModel->nHasHead && m_vecPaperModelInfo[i]->bFirstV && m_pModel->nType == 0)
 		{
 			m_ptVTracker1 = cv::Point(m_vecPaperModelInfo[i]->matSrcImg.cols - 90, 0);
 			m_ptVTracker2 = cv::Point(m_vecPaperModelInfo[i]->matSrcImg.cols, m_vecPaperModelInfo[i]->matSrcImg.rows);
@@ -4231,19 +4231,19 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 
 		switch (m_pSNInfoDlg->m_nCurrentSNVal)
 		{
-		case 10:
+		case 10:	//1010
 			rc.nTH = x;
 			rc.nSnVal = y;
 			break;
-		case 9:
+		case 9:		//1001
 			rc.nTH = nMaxCols - x - 1;
 			rc.nSnVal = nMaxRow - y - 1;
 			break;
-		case 6:
+		case 6:		//0110
 			rc.nTH = nMaxRow - y - 1;
 			rc.nSnVal = x;
 			break;
-		case 5:
+		case 5:		//0101
 			rc.nTH = y;
 			rc.nSnVal = nMaxCols - x - 1;
 			break;
@@ -4365,19 +4365,19 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 
 		switch (m_pOmrInfoDlg->m_nCurrentOmrVal)
 		{
-		case 42:
+		case 42:	//101010
 			rc.nTH = x;
 			rc.nAnswer = y;
 			break;
-		case 41:
+		case 41:	//101001
 			rc.nTH = nMaxCols - x - 1;		//nMaxRow - x - 1;
 			rc.nAnswer = y;
 			break;
-		case 38:
+		case 38:	//100110
 			rc.nTH = x;
 			rc.nAnswer = nMaxRow - y - 1;	//nMaxCols - y - 1
 			break;
-		case 37:
+		case 37:	//100101
 			rc.nTH = nMaxCols - x - 1;		//nMaxRow - x - 1
 			rc.nAnswer = nMaxRow - y - 1;	//nMaxCols - y - 1
 			break;
@@ -4479,6 +4479,9 @@ void CMakeModelDlg::OnBnClickedBtnuploadmodel()
 		strJsnData.append(strJsnLine);
 	}
 	in.close();
+		
+	m_pModel = LoadMakePaperData(strJsnData);
+	if (!m_pModel)	return;
 
 	//++ 将PDF转JPG
 	int nPos1 = strJsnModel.rfind('\\');
@@ -4487,16 +4490,13 @@ void CMakeModelDlg::OnBnClickedBtnuploadmodel()
 	std::string strPdfPath = T2A(dlg.GetFolderPath());
 	strPdfPath.append("\\" + strBaseName + ".pdf");
 
-	bool bResult = Pdf2Jpg(strPdfPath, strBaseName);
+	bool bResult = Pdf2Jpg(strPdfPath, T2A(m_pModel->strModelName));
 	if (!bResult)
 	{
 		AfxMessageBox(_T("pdf转jpg失败"));
 		return;
 	}
 	//--
-
-	m_pModel = LoadMakePaperData(strJsnData);
-	if (!m_pModel)	return;
 
 	InitModelRecog(m_pModel);
 
@@ -4506,7 +4506,7 @@ void CMakeModelDlg::OnBnClickedBtnuploadmodel()
 	m_vecPaperModelInfo.clear();
 	for (int i = 0; i < m_pModel->nPicNum; i++)
 	{
-		CString strPicPath = g_strCurrentPath + _T("Model\\") + strBaseName.c_str() + _T("\\") + m_pModel->vecPaperModel[i]->strModelPicName;
+		CString strPicPath = g_strCurrentPath + _T("Model\\") + m_pModel->strModelName + _T("\\") + m_pModel->vecPaperModel[i]->strModelPicName;
 
 		pPaperModelInfo pPaperModel = new PaperModelInfo;
 		m_vecPaperModelInfo.push_back(pPaperModel);
