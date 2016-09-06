@@ -681,7 +681,18 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			
 			int nMid_minW, nMid_maxW, nMid_minH, nMid_maxH;
 			int nHead_minW, nHead_maxW, nHead_minH, nHead_maxH;
+#if 1	//test
+			float fOffset = 0.2;
+			nMid_minW = rcSecond.rt.width * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nMid_maxW = rcSecond.rt.width * (1 + fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nMid_minH = rcSecond.rt.height * (1 - fOffset);		//同上
+			nMid_maxH = rcSecond.rt.height * (1 + fOffset);		//同上
 
+			nHead_minW = rcFist.rt.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nHead_maxW = rcFist.rt.width * (1 + fOffset);		//同上
+			nHead_minH = rcFist.rt.height * (1 - fOffset);		//同上
+			nHead_maxH = rcFist.rt.height * (1 + fOffset);		//同上
+#else
 			if (pModelInfo->pModel->nType == 1)
 			{
 				float fOffset = 0.1;
@@ -712,6 +723,7 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				nHead_minH = rcFist.rt.height * (1 - fOffset);		//同上
 				nHead_maxH = rcFist.rt.height * (1 + fOffset);		//同上
 			}
+#endif
 
 			int nYSum = 0;
 			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
@@ -905,7 +917,18 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 
 			int nMid_minW, nMid_maxW, nMid_minH, nMid_maxH;
 			int nHead_minW, nHead_maxW, nHead_minH, nHead_maxH;
+#if 1	//test
+			float fOffset = 0.2;
+			nMid_minW = rcSecond.rt.width * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nMid_maxW = rcSecond.rt.width * (1 + fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nMid_minH = rcSecond.rt.height * (1 - fOffset);		//同上
+			nMid_maxH = rcSecond.rt.height * (1 + fOffset);		//同上
 
+			nHead_minW = rcFist.rt.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nHead_maxW = rcFist.rt.width * (1 + fOffset);		//同上
+			nHead_minH = rcFist.rt.height * (1 - fOffset);		//同上
+			nHead_maxH = rcFist.rt.height * (1 + fOffset);		//同上
+#else
 			if (pModelInfo->pModel->nType == 1)
 			{
 				float fOffset = 0.1;
@@ -936,7 +959,7 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				nHead_minH = rcFist.rt.height * (1 - fOffset);		//同上
 				nHead_maxH = rcFist.rt.height * (1 + fOffset);		//同上
 			}
-
+#endif
 			int nYSum = 0;
 			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
 			{
@@ -1561,7 +1584,7 @@ bool CRecognizeThread::RecogVal(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST
 
 		//图片二值化
 		threshold(matCompRoi, matCompRoi, 240, 255, THRESH_BINARY_INV);				//200, 255
-#if 1
+#if 0
 		//确定腐蚀和膨胀核的大小
 		Mat element = getStructuringElement(MORPH_RECT, Size(4, 4));	//Size(4, 4)
 		//膨胀操作
