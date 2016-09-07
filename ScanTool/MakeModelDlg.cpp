@@ -1105,6 +1105,10 @@ bool CMakeModelDlg::RecogNewGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 
 inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 {
+	cv::cvtColor(matSrcRoi, matSrcRoi, CV_BGR2GRAY);
+	cv::GaussianBlur(matSrcRoi, matSrcRoi, cv::Size(m_nGaussKernel, m_nGaussKernel), 0, 0);
+	sharpenImage1(matSrcRoi, matSrcRoi);
+
 	const int channels[1] = { 0 };
 	const float* ranges[1];
 	const int histSize[1] = { 1 };

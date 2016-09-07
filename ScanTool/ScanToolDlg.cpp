@@ -1773,8 +1773,16 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 //			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 			char szCP[20] = { 0 };
-			rectangle(tmp, rt, CV_RGB(50, 255, 55), 2);
-			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+			if (itNormal->eCPType == SN || itNormal->eCPType == OMR)
+			{
+				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+			}
+			else
+			{
+				rectangle(tmp, rt, CV_RGB(50, 255, 55), 2);
+				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+			}
 		}
 		if (pPaper->pModel)
 		{
@@ -1906,43 +1914,43 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 
 			//´òÓ¡OMR¡¢SNÎ»ÖÃ
 #ifdef PaintOmrSnRect
-			SNLIST::iterator itSN = pPaper->pModel->vecPaperModel[i]->lSNInfo.begin();
-			for (; itSN != pPaper->pModel->vecPaperModel[i]->lSNInfo.end(); itSN++)
-			{
-				pSN_ITEM pSnItem = *itSN;
-				RECTLIST::iterator itSnItem = pSnItem->lSN.begin();
-				for (; itSnItem != pSnItem->lSN.end(); itSnItem++)
-				{
-					cv::Rect rt = (*itSnItem).rt;
-	#ifdef Test_ShowOriPosition
-
-					GetPosition2(inverseMat, rt, rt);
-	#else
-					GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
-	#endif
-					rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
-					rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-				}
-			}
-
-			OMRLIST::iterator itOmr = pPaper->pModel->vecPaperModel[i]->lOMR2.begin();
-			for (; itOmr != pPaper->pModel->vecPaperModel[i]->lOMR2.end(); itOmr++)
-			{
-				pOMR_QUESTION pOmrQuestion = &(*itOmr);
-				RECTLIST::iterator itOmrItem = pOmrQuestion->lSelAnswer.begin();
-				for (; itOmrItem != pOmrQuestion->lSelAnswer.end(); itOmrItem++)
-				{
-					cv::Rect rt = (*itOmrItem).rt;
-	#ifdef Test_ShowOriPosition
-
-					GetPosition2(inverseMat, rt, rt);
-	#else
-					GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
-	#endif
-					rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
-					rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-				}
-			}
+// 			SNLIST::iterator itSN = pPaper->pModel->vecPaperModel[i]->lSNInfo.begin();
+// 			for (; itSN != pPaper->pModel->vecPaperModel[i]->lSNInfo.end(); itSN++)
+// 			{
+// 				pSN_ITEM pSnItem = *itSN;
+// 				RECTLIST::iterator itSnItem = pSnItem->lSN.begin();
+// 				for (; itSnItem != pSnItem->lSN.end(); itSnItem++)
+// 				{
+// 					cv::Rect rt = (*itSnItem).rt;
+// 	#ifdef Test_ShowOriPosition
+// 
+// 					GetPosition2(inverseMat, rt, rt);
+// 	#else
+// 					GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+// 	#endif
+// 					rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+// 					rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+// 				}
+// 			}
+// 
+// 			OMRLIST::iterator itOmr = pPaper->pModel->vecPaperModel[i]->lOMR2.begin();
+// 			for (; itOmr != pPaper->pModel->vecPaperModel[i]->lOMR2.end(); itOmr++)
+// 			{
+// 				pOMR_QUESTION pOmrQuestion = &(*itOmr);
+// 				RECTLIST::iterator itOmrItem = pOmrQuestion->lSelAnswer.begin();
+// 				for (; itOmrItem != pOmrQuestion->lSelAnswer.end(); itOmrItem++)
+// 				{
+// 					cv::Rect rt = (*itOmrItem).rt;
+// 	#ifdef Test_ShowOriPosition
+// 
+// 					GetPosition2(inverseMat, rt, rt);
+// 	#else
+// 					GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
+// 	#endif
+// 					rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+// 					rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+// 				}
+// 			}
 #endif
 		}
 		

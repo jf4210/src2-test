@@ -2305,30 +2305,6 @@ bool Pdf2Jpg(std::string strPdfPath, std::string strBaseName)
 	return bResult;
 }
 
-inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
-{
-	const int channels[1] = { 0 };
-	const float* ranges[1];
-	const int histSize[1] = { 1 };
-	float hranges[2];
-	if (rc.eCPType != WHITE_CP)
-	{
-		hranges[0] = g_nRecogGrayMin;
-		hranges[1] = static_cast<float>(rc.nThresholdValue);
-		ranges[0] = hranges;
-	}
-	else
-	{
-		hranges[0] = static_cast<float>(rc.nThresholdValue);
-		hranges[1] = g_nRecogGrayMax_White;	//255			//256时可统计完全空白的点，即RGB值为255的完全空白点;255时只能统计到RGB为254的值，255的值统计不到
-		ranges[0] = hranges;
-	}
-	cv::MatND src_hist;
-	cv::calcHist(&matSrcRoi, 1, channels, cv::Mat(), src_hist, 1, histSize, ranges, false);
-
-	rc.fStandardValue = src_hist.at<float>(0);
-	return true;
-}
 
 //++ test
 void sharpenImage2(const cv::Mat &image, cv::Mat &result)
@@ -2555,6 +2531,35 @@ bool GetPositionByHead(pPAPERMODEL pPicModel, int nH, int nV, cv::Rect& rt)
 }
 //--
 
+inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
+{
+	cv::cvtColor(matSrcRoi, matSrcRoi, CV_BGR2GRAY);
+	cv::GaussianBlur(matSrcRoi, matSrcRoi, cv::Size(5, 5), 0, 0);
+	sharpenImage2(matSrcRoi, matSrcRoi);
+
+	const int channels[1] = { 0 };
+	const float* ranges[1];
+	const int histSize[1] = { 1 };
+	float hranges[2];
+	if (rc.eCPType != WHITE_CP)
+	{
+		hranges[0] = g_nRecogGrayMin;
+		hranges[1] = static_cast<float>(rc.nThresholdValue);
+		ranges[0] = hranges;
+	}
+	else
+	{
+		hranges[0] = static_cast<float>(rc.nThresholdValue);
+		hranges[1] = g_nRecogGrayMax_White;	//255			//256时可统计完全空白的点，即RGB值为255的完全空白点;255时只能统计到RGB为254的值，255的值统计不到
+		ranges[0] = hranges;
+	}
+	cv::MatND src_hist;
+	cv::calcHist(&matSrcRoi, 1, channels, cv::Mat(), src_hist, 1, histSize, ranges, false);
+
+	rc.fStandardValue = src_hist.at<float>(0);
+	return true;
+}
+
 bool InitModelRecog(pMODEL pModel)
 {
 	bool bResult = false;
@@ -2673,7 +2678,7 @@ bool InitModelRecog(pMODEL pModel)
 			for (; itSNItem != pSNItem->lSN.end(); itSNItem++)
 			{
 				itSNItem->nThresholdValue = 200;
-				itSNItem->fStandardValuePercent = 1.5;
+				itSNItem->fStandardValuePercent = 1.1;
 
 				GetPositionByHead(pPicModel, itSNItem->nHItem, itSNItem->nVItem, itSNItem->rt);
 
@@ -2687,8 +2692,8 @@ bool InitModelRecog(pMODEL pModel)
 			RECTLIST::iterator itOmrItem = itOmr->lSelAnswer.begin();
 			for (; itOmrItem != itOmr->lSelAnswer.end(); itOmrItem++)
 			{
-				itOmrItem->nThresholdValue = 230;
-				itOmrItem->fStandardValuePercent = 1.5;
+				itOmrItem->nThresholdValue = g_RecogGrayMax_OMR;
+				itOmrItem->fStandardValuePercent = 1.1;
 
 				GetPositionByHead(pPicModel, itOmrItem->nHItem, itOmrItem->nVItem, itOmrItem->rt);
 

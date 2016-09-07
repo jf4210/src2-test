@@ -287,6 +287,8 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 
 		Mat imag_src, img_comp;
 		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+		cv::GaussianBlur(matSrcRoi, matSrcRoi, cv::Size(5, 5), 0, 0);
+		sharpenImage1(matSrcRoi, matSrcRoi);
 
 		const int channels[1] = { 0 };
 		const float* ranges[1];
@@ -1412,6 +1414,10 @@ bool CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, 
 			}
 #endif
 			pSn->lSN.push_back(rc);
+
+			#ifdef PaintOmrSnRect	//打印OMR、SN位置
+			pPic->lNormalRect.push_back(rc);
+			#endif
 		}
 		if (vecItemVal.size() == 1)
 		{
@@ -1501,10 +1507,6 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 //					omrResult.lSelAnswer.push_back(rc);
 				}
 			}
-// 			char szTmp[300] = {0};
-// 			sprintf_s(szTmp, "图片名: %s, OMR: 题号=%d, 选项=%c, 识别实际比例=%.3f, val=%.2f, 识别标准=%.3f, val=%.2f, 是否成功:%d\n", pPic->strPicName.c_str(),\
-// 				pOmrQuestion->nTH, rc.nAnswer + 65, rc.fRealValuePercent, rc.fRealValue, rc.fStandardValuePercent, rc.fStandardValue, rc.fRealValuePercent > rc.fStandardValuePercent);
-// 			TRACE(szTmp);
 
 			bool bResult_Recog2 = RecogVal(nPic, rc, matCompPic, pPic, pModelInfo);
 			if (bResult_Recog2)
@@ -1512,6 +1514,10 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				vecVal_threshold.push_back(rc.nAnswer);
 			}
 			omrResult.lSelAnswer.push_back(rc);
+
+			#ifdef PaintOmrSnRect	//打印OMR、SN位置
+			pPic->lNormalRect.push_back(rc);
+			#endif
 #endif
 		}
 		std::string strRecogAnswer1;
