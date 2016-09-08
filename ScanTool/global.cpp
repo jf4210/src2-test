@@ -1937,6 +1937,23 @@ bool GetPosition2(cv::Mat& inverseMat, cv::Rect& rtSrc, cv::Rect& rtDst)
 	return true;
 }
 
+
+void SharpenImage(const cv::Mat &image, cv::Mat &result)
+{
+	//创建并初始化滤波模板
+	cv::Mat kernel(3, 3, CV_32F, cv::Scalar(0));
+	kernel.at<float>(1, 1) = _nSharpKernel_;
+	kernel.at<float>(0, 1) = -1.0;
+	kernel.at<float>(1, 0) = -1.0;
+	kernel.at<float>(1, 2) = -1.0;
+	kernel.at<float>(2, 1) = -1.0;
+
+	result.create(image.size(), image.type());
+
+	//对图像进行滤波
+	cv::filter2D(image, result, image.depth(), kernel);
+}
+
 //--------------	加载制卷模板数据	-----------------------------
 bool SortByIndex(RECTPOS& rc1, RECTPOS& rc2)
 {
@@ -2307,22 +2324,6 @@ bool Pdf2Jpg(std::string strPdfPath, std::string strBaseName)
 
 
 //++ test
-void sharpenImage2(const cv::Mat &image, cv::Mat &result)
-{
-	//创建并初始化滤波模板
-	cv::Mat kernel(3, 3, CV_32F, cv::Scalar(0));
-	kernel.at<float>(1, 1) = 5;
-	kernel.at<float>(0, 1) = -1.0;
-	kernel.at<float>(1, 0) = -1.0;
-	kernel.at<float>(1, 2) = -1.0;
-	kernel.at<float>(2, 1) = -1.0;
-
-	result.create(image.size(), image.type());
-
-	//对图像进行滤波
-	cv::filter2D(image, result, image.depth(), kernel);
-}
-//过滤有问题
 bool RecogHHead(int nPic, cv::Mat& matCompPic, pPAPERMODEL pPicModel, RECTINFO rc)
 {
 	bool bResult = true;
@@ -2349,13 +2350,13 @@ bool RecogHHead(int nPic, cv::Mat& matCompPic, pPAPERMODEL pPicModel, RECTINFO r
 
 		cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
-		GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
-		sharpenImage2(matCompRoi, matCompRoi);
+		GaussianBlur(matCompRoi, matCompRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
+		SharpenImage(matCompRoi, matCompRoi);
 
 		int nThreshold = 100;
 		threshold(matCompRoi, matCompRoi, nThreshold, 255, cv::THRESH_BINARY);
 
-		cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
+		cv::Canny(matCompRoi, matCompRoi, 0, _nCannyKernel_, 5);
 		cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));	//Size(6, 6)	普通空白框可识别
 		cv::dilate(matCompRoi, matCompRoi, element);
 		IplImage ipl_img(matCompRoi);
@@ -2441,13 +2442,13 @@ bool RecogVHead(int nPic, cv::Mat& matCompPic, pPAPERMODEL pPicModel, RECTINFO r
 
 		cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
-		GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
-		sharpenImage2(matCompRoi, matCompRoi);
+		GaussianBlur(matCompRoi, matCompRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
+		SharpenImage(matCompRoi, matCompRoi);
 
 		int nThreshold = 100;
 		threshold(matCompRoi, matCompRoi, nThreshold, 255, cv::THRESH_BINARY);
 
-		cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
+		cv::Canny(matCompRoi, matCompRoi, 0, _nCannyKernel_, 5);
 		cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));	//Size(6, 6)	普通空白框可识别
 		cv::dilate(matCompRoi, matCompRoi, element);
 		IplImage ipl_img(matCompRoi);
@@ -2534,8 +2535,8 @@ bool GetPositionByHead(pPAPERMODEL pPicModel, int nH, int nV, cv::Rect& rt)
 inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 {
 	cv::cvtColor(matSrcRoi, matSrcRoi, CV_BGR2GRAY);
-	cv::GaussianBlur(matSrcRoi, matSrcRoi, cv::Size(5, 5), 0, 0);
-	sharpenImage2(matSrcRoi, matSrcRoi);
+	cv::GaussianBlur(matSrcRoi, matSrcRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
+	SharpenImage(matSrcRoi, matSrcRoi);
 
 	const int channels[1] = { 0 };
 	const float* ranges[1];

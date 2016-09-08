@@ -130,6 +130,12 @@ extern std::string			g_strFileIP;
 extern int					g_nCmdPort;
 extern int					g_nFilePort;
 
+extern int		_nGauseKernel_;			//高斯变换核因子
+extern int		_nSharpKernel_;			//锐化核因子
+extern int		_nCannyKernel_;			//轮廓化核因子
+extern int		_nDilateKernel_;		//膨胀核因子
+extern int		_nErodeKernel_;			//腐蚀核因子
+
 extern int		g_nRecogGrayMin;		//灰度点(除空白点,OMR外)计算灰度的最小考试范围
 extern int		g_nRecogGrayMax_White;	//空白点校验点计算灰度的最大考试范围
 extern int		g_nRecogGrayMin_OMR;	//OMR计算灰度的最小考试范围
@@ -526,6 +532,8 @@ bool	decString(std::string& strSrc, std::string& strDst);
 
 bool	GetInverseMat(RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);
 bool	GetPosition2(cv::Mat& inverseMat, cv::Rect& rtSrc, cv::Rect& rtDst);
+
+void	SharpenImage(const cv::Mat &image, cv::Mat &result);
 
 //--------------	加载制卷工具导出的模板数据	-------------------
 typedef struct _RectPos_

@@ -110,7 +110,7 @@ public:
 	int m_nSharpKernel;			//锐化核因子
 	int m_nThresholdKernel;		//二值化核因子
 	int m_nCannyKernel;			//轮廓化核因子
-	int m_nDelateKernel;		//膨胀核因子
+	int m_nDilateKernel;		//膨胀核因子
 	int m_nErodeKernel;			//腐蚀核因子
 
 	CString m_strModelPicPath;	

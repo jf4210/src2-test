@@ -86,7 +86,7 @@ void CRecognizeThread::sharpenImage1(const cv::Mat &image, cv::Mat &result)
 {
 	//创建并初始化滤波模板
 	cv::Mat kernel(3, 3, CV_32F, cv::Scalar(0));
-	kernel.at<float>(1, 1) = 5;
+	kernel.at<float>(1, 1) = _nSharpKernel_;
 	kernel.at<float>(0, 1) = -1.0;
 	kernel.at<float>(1, 0) = -1.0;
 	kernel.at<float>(1, 2) = -1.0;
@@ -256,9 +256,11 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			{
 				// 			if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
 				// 			{
-				char szTmp[100] = { 0 };
-				sprintf_s(szTmp, "选项=%c, 识别实际比例=%.3f, val=%.2f, 识别标准val=%.2f, 是否成功:%d\t", itRect->nAnswer + 65, \
+				char szTmp[100] = { 0 }; 
+				sprintf_s(szTmp, "选项=%c, 识别比例=%.3f(R/S= %.2f/%.2f), 成功:%d\t", itRect->nAnswer + 65, \
 					itRect->fRealValuePercent, itRect->fRealValue, itRect->fStandardValue, itRect->fRealValuePercent > itRect->fStandardValuePercent);
+// 				sprintf_s(szTmp, "选项=%c, 识别实际比例=%.3f, val=%.2f, 识别标准val=%.2f, 是否成功:%d\t", itRect->nAnswer + 65, \
+// 					itRect->fRealValuePercent, itRect->fRealValue, itRect->fStandardValue, itRect->fRealValuePercent > itRect->fStandardValuePercent);
 				strcat_s(szItemInfo, szTmp);
 				//			}
 			}
@@ -287,8 +289,8 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 
 		Mat imag_src, img_comp;
 		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
-		cv::GaussianBlur(matSrcRoi, matSrcRoi, cv::Size(5, 5), 0, 0);
-		sharpenImage1(matSrcRoi, matSrcRoi);
+		cv::GaussianBlur(matSrcRoi, matSrcRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
+		SharpenImage(matSrcRoi, matSrcRoi);
 
 		const int channels[1] = { 0 };
 		const float* ranges[1];
@@ -362,49 +364,7 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 	
 	return bResult;
 }
-#if 0
-int CRecognizeThread::FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix)
-{
-	if (lFix.size() < 3)
-		return 1;
 
-	std::vector<cv::Point2f> vecFixPt;
-	RECTLIST::iterator itCP = lModelFix.begin();
-	for (; itCP != lModelFix.end(); itCP++)
-	{
-		cv::Point2f pt;
-		pt.x = itCP->rt.x + itCP->rt.width / 2;
-		pt.y = itCP->rt.y + itCP->rt.height / 2;
-		vecFixPt.push_back(pt);
-	}
-	std::vector<cv::Point2f> vecFixNewPt;
-	RECTLIST::iterator itCP2 = lFix.begin();
-	for (; itCP2 != lFix.end(); itCP2++)
-	{
-		cv::Point2f pt;
-		pt.x = itCP2->rt.x + itCP2->rt.width / 2;
-		pt.y = itCP2->rt.y + itCP2->rt.height / 2;
-		vecFixNewPt.push_back(pt);
-	}
-
-	Point2f srcTri[3];
-	Point2f dstTri[3];
-	Mat rot_mat(2, 3, CV_32FC1);
-	Mat warp_mat(2, 3, CV_32FC1);
-	Mat warp_dst, warp_rotate_dst;
-	for (int i = 0; i < vecFixPt.size(); i++)
-	{
-		srcTri[i] = vecFixNewPt[i];
-		dstTri[i] = vecFixPt[i];
-	}
-
-//	warp_dst = Mat::zeros(matCompPic.rows, matCompPic.cols, matCompPic.type());
-	warp_mat = getAffineTransform(srcTri, dstTri);
-	warpAffine(matCompPic, matCompPic, warp_mat, matCompPic.size(), 1, 0, Scalar(255, 255, 255));
-
-	return 1;
-}
-#endif
 bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bResult = true;
@@ -435,8 +395,8 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 
 			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
-			GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
-			sharpenImage1(matCompRoi, matCompRoi);
+			GaussianBlur(matCompRoi, matCompRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
+			SharpenImage(matCompRoi, matCompRoi);
 
 
 #ifdef USES_GETTHRESHOLD_ZTFB
@@ -476,8 +436,8 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 #else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
 #endif
-			cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
-			Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(6, 6)	普通空白框可识别
+			cv::Canny(matCompRoi, matCompRoi, 0, _nCannyKernel_, 5);
+			Mat element = getStructuringElement(MORPH_RECT, Size(_nDilateKernel_, _nDilateKernel_));	//Size(6, 6)	普通空白框可识别
 			dilate(matCompRoi, matCompRoi, element);
 
 #if 1
@@ -623,8 +583,8 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 
 			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
-			GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
-			sharpenImage1(matCompRoi, matCompRoi);
+			GaussianBlur(matCompRoi, matCompRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
+			SharpenImage(matCompRoi, matCompRoi);
 
 #ifdef USES_GETTHRESHOLD_ZTFB
 			const int channels[1] = { 0 };
@@ -663,7 +623,7 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 #else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
 #endif
-			cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
+			cv::Canny(matCompRoi, matCompRoi, 0, _nCannyKernel_, 5);
 			Mat element = getStructuringElement(MORPH_RECT, Size(3, 3));	//Size(6, 6)	普通空白框可识别
 			dilate(matCompRoi, matCompRoi, element);
 			IplImage ipl_img(matCompRoi);
@@ -683,7 +643,7 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			
 			int nMid_minW, nMid_maxW, nMid_minH, nMid_maxH;
 			int nHead_minW, nHead_maxW, nHead_minH, nHead_maxH;
-#if 1	//test
+#if 0	//test
 			float fOffset = 0.2;
 			nMid_minW = rcSecond.rt.width * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
 			nMid_maxW = rcSecond.rt.width * (1 + fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
@@ -697,20 +657,40 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 #else
 			if (pModelInfo->pModel->nType == 1)
 			{
-				float fOffset = 0.1;
-				int nMid_modelW = rcSecond.rt.width + 2;		//加2是因为制卷模板框框没有经过查边框运算，经过查边框后，外框会包含整个矩形，需要加上上下各1个单位的线宽
-				int nMid_modelH = rcSecond.rt.height + 2;
-				if (nMid_modelW < rcFist.rt.width * 0.5 + 0.5)	nMid_modelW = rcFist.rt.width * 0.5 + 0.5;
-				if (nMid_modelH < rcFist.rt.height * 0.25 + 0.5)	nMid_modelH = rcFist.rt.height * 0.25 + 0.5;
-				nMid_minW = nMid_modelW * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
-				nMid_maxW = nMid_modelW * (1 + fOffset * 4) + 0.5;		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
-				nMid_minH = nMid_modelH * (1 - fOffset);				//同上
-				nMid_maxH = nMid_modelH * (1 + fOffset * 4) + 0.5;		//同上
+				int nMid_modelW = rcSecond.rt.width;
+				int nMid_modelH = rcSecond.rt.height;
+				int nMidInterW, nMidInterH, nHeadInterW, nHeadInterH;
+				nMidInterW = 3;
+				nMidInterH = 3;
+				nHeadInterW = 4;
+				nHeadInterH = 4;
+				nMid_minW = nMid_modelW - nMidInterW;
+				nMid_maxW = nMid_modelW + nMidInterW;
+				nMid_minH = nMid_modelH - nMidInterH;
+				nMid_maxH = nMid_modelH + nMidInterH;
 
-				nHead_minW = rcFist.rt.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
-				nHead_maxW = rcFist.rt.width * (1 + fOffset * 4) + 0.5;		//同上
-				nHead_minH = rcFist.rt.height * (1 - fOffset);				//同上
-				nHead_maxH = rcFist.rt.height * (1 + fOffset * 4) + 0.5;	//同上
+				nHead_minW = rcFist.rt.width - nHeadInterW;
+				nHead_maxW = rcFist.rt.width + nHeadInterW;
+				nHead_minH = rcFist.rt.height - nHeadInterH;
+				nHead_maxH = rcFist.rt.height + nHeadInterH;
+
+// 				float fOffset = 0.1;
+// 				float fPer_W, fPer_H;	//模板第二个点与第一个点的宽、高的比例，用于最小值控制
+// 				fPer_W = 0.5;
+// 				fPer_H = 0.25;
+// 				int nMid_modelW = rcSecond.rt.width + 2;		//加2是因为制卷模板框框没有经过查边框运算，经过查边框后，外框会包含整个矩形，需要加上上下各1个单位的线宽
+// 				int nMid_modelH = rcSecond.rt.height + 2;
+// 				if (nMid_modelW < rcFist.rt.width * fPer_W + 0.5)	nMid_modelW = rcFist.rt.width * fPer_W + 0.5;
+// 				if (nMid_modelH < rcFist.rt.height * fPer_H + 0.5)	nMid_modelH = rcFist.rt.height * fPer_H + 0.5;
+// 				nMid_minW = nMid_modelW * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+// 				nMid_maxW = nMid_modelW * (1 + fOffset * 4) + 0.5;		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+// 				nMid_minH = nMid_modelH * (1 - fOffset);				//同上
+// 				nMid_maxH = nMid_modelH * (1 + fOffset * 4) + 0.5;		//同上
+// 
+// 				nHead_minW = rcFist.rt.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
+// 				nHead_maxW = rcFist.rt.width * (1 + fOffset * 4) + 0.5;		//同上
+// 				nHead_minH = rcFist.rt.height * (1 - fOffset);				//同上
+// 				nHead_maxH = rcFist.rt.height * (1 + fOffset * 4) + 0.5;	//同上
 			}
 			else
 			{
@@ -739,7 +719,7 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				{
 					if (!(rm.width > nHead_minH && rm.width < nHead_maxW && rm.height > nHead_minH && rm.height < nHead_maxH))	//排除第一个或最后一个大的同步头
 					{
-						TRACE("过滤水平同步头(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+						TRACE("过滤水平同步头(%d,%d,%d,%d), 要求范围W:[%d,%d], H[%d,%d], 参考大小(%d,%d)\n", rm.x, rm.y, rm.width, rm.height, nMid_minW, nMid_maxW, nMid_minH, nMid_maxH, rcSecond.rt.width, rcSecond.rt.height);
 						continue;
 					}
 					else
@@ -859,8 +839,8 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 
 			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
-			GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
-			sharpenImage1(matCompRoi, matCompRoi);
+			GaussianBlur(matCompRoi, matCompRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
+			SharpenImage(matCompRoi, matCompRoi);
 
 #ifdef USES_GETTHRESHOLD_ZTFB
 			const int channels[1] = { 0 };
@@ -899,7 +879,7 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 #else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
 #endif
-			cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
+			cv::Canny(matCompRoi, matCompRoi, 0, _nCannyKernel_, 5);
 			Mat element = getStructuringElement(MORPH_RECT, Size(3, 3));	//Size(6, 6)	普通空白框可识别
 			dilate(matCompRoi, matCompRoi, element);
 			IplImage ipl_img(matCompRoi);
@@ -919,7 +899,7 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 
 			int nMid_minW, nMid_maxW, nMid_minH, nMid_maxH;
 			int nHead_minW, nHead_maxW, nHead_minH, nHead_maxH;
-#if 1	//test
+#if 0	//test
 			float fOffset = 0.2;
 			nMid_minW = rcSecond.rt.width * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
 			nMid_maxW = rcSecond.rt.width * (1 + fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
@@ -933,20 +913,40 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 #else
 			if (pModelInfo->pModel->nType == 1)
 			{
-				float fOffset = 0.1;
-				int nMid_modelW = rcSecond.rt.width + 2;		//加2是因为制卷模板框框没有经过查边框运算，经过查边框后，外框会包含整个矩形，需要加上上下各1个单位的线宽
-				int nMid_modelH = rcSecond.rt.height + 2;
-				if (nMid_modelW < rcFist.rt.width * 0.5 + 0.5)	nMid_modelW = rcFist.rt.width * 0.5 + 0.5;
-				if (nMid_modelH < rcFist.rt.height * 0.25 + 0.5)	nMid_modelH = rcFist.rt.height * 0.25 + 0.5;
-				nMid_minW = nMid_modelW * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
-				nMid_maxW = nMid_modelW * (1 + fOffset * 4) + 0.5;		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
-				nMid_minH = nMid_modelH * (1 - fOffset);				//同上
-				nMid_maxH = nMid_modelH * (1 + fOffset * 4) + 0.5;		//同上
+				int nMid_modelW = rcSecond.rt.width;
+				int nMid_modelH = rcSecond.rt.height;
+				int nMidInterW, nMidInterH, nHeadInterW, nHeadInterH;
+				nMidInterW = 3;
+				nMidInterH = 3;
+				nHeadInterW = 4;
+				nHeadInterH = 4;
+				nMid_minW = nMid_modelW - nMidInterW;
+				nMid_maxW = nMid_modelW + nMidInterW;
+				nMid_minH = nMid_modelH - nMidInterH;
+				nMid_maxH = nMid_modelH + nMidInterH;
 
-				nHead_minW = rcFist.rt.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
-				nHead_maxW = rcFist.rt.width * (1 + fOffset * 4) + 0.5;		//同上
-				nHead_minH = rcFist.rt.height * (1 - fOffset);				//同上
-				nHead_maxH = rcFist.rt.height * (1 + fOffset * 4) + 0.5;	//同上
+				nHead_minW = rcFist.rt.width - nHeadInterW;
+				nHead_maxW = rcFist.rt.width + nHeadInterW;
+				nHead_minH = rcFist.rt.height - nHeadInterH;
+				nHead_maxH = rcFist.rt.height + nHeadInterH;
+
+// 				float fOffset = 0.1;
+// 				float fPer_W, fPer_H;	//模板第二个点与第一个点的宽、高的比例，用于最小值控制
+// 				fPer_W = 0.5;
+// 				fPer_H = 0.25;
+// 				int nMid_modelW = rcSecond.rt.width + 2;		//加2是因为制卷模板框框没有经过查边框运算，经过查边框后，外框会包含整个矩形，需要加上上下各1个单位的线宽
+// 				int nMid_modelH = rcSecond.rt.height + 2;
+// 				if (nMid_modelW < rcFist.rt.width * fPer_W + 0.5)	nMid_modelW = rcFist.rt.width * fPer_W + 0.5;
+// 				if (nMid_modelH < rcFist.rt.height * fPer_H + 0.5)	nMid_modelH = rcFist.rt.height * fPer_H + 0.5;
+// 				nMid_minW = nMid_modelW * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+// 				nMid_maxW = nMid_modelW * (1 + fOffset * 4) + 0.5;		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+// 				nMid_minH = nMid_modelH * (1 - fOffset);				//同上
+// 				nMid_maxH = nMid_modelH * (1 + fOffset * 4) + 0.5;		//同上
+// 
+// 				nHead_minW = rcFist.rt.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
+// 				nHead_maxW = rcFist.rt.width * (1 + fOffset * 4) + 0.5;		//同上
+// 				nHead_minH = rcFist.rt.height * (1 - fOffset);				//同上
+// 				nHead_maxH = rcFist.rt.height * (1 + fOffset * 4) + 0.5;	//同上
 			}
 			else
 			{
@@ -974,7 +974,7 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				{
 					if (!(rm.width > nHead_minH && rm.width < nHead_maxW && rm.height > nHead_minH && rm.height < nHead_maxH))	//排除第一个或最后一个大的同步头
 					{
-						TRACE("过滤垂直同步头(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+						TRACE("过滤垂直同步头(%d,%d,%d,%d), 要求范围W:[%d,%d], H[%d,%d], 参考大小(%d,%d)\n", rm.x, rm.y, rm.width, rm.height, nMid_minW, nMid_maxW, nMid_minH, nMid_maxH, rcSecond.rt.width, rcSecond.rt.height);
 						continue;
 					}
 					else
@@ -1497,14 +1497,13 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			}
 			else
 				GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
-#if 1
+
 			bool bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
 			if (bResult_Recog)
 			{
 				if (rc.fRealValuePercent > rc.fStandardValuePercent)
 				{
 					vecVal_calcHist.push_back(rc.nAnswer);
-//					omrResult.lSelAnswer.push_back(rc);
 				}
 			}
 
@@ -1518,7 +1517,6 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			#ifdef PaintOmrSnRect	//打印OMR、SN位置
 			pPic->lNormalRect.push_back(rc);
 			#endif
-#endif
 		}
 		std::string strRecogAnswer1;
 		for (int i = 0; i < vecVal_calcHist.size(); i++)

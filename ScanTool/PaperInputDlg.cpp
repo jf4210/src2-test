@@ -1627,20 +1627,37 @@ int GetRects1(cv::Mat& matSrc, cv::Rect rt, pMODEL pModel, int nPic, int nOrient
 
 		if (pModel->nType == 1)
 		{
-			float fOffset = 0.1;
-			int nMid_modelW = rtSecond.width + 2;		//加2是因为制卷模板框框没有经过查边框运算，经过查边框后，外框会包含整个矩形，需要加上上下各1个单位的线宽
-			int nMid_modelH = rtSecond.height + 2;
-			if (nMid_modelW < rtFirst.width * fPer_W + 0.5)	nMid_modelW = rtFirst.width * fPer_W + 0.5;
-			if (nMid_modelH < rtFirst.height * fPer_H + 0.5)	nMid_modelH = rtFirst.height * fPer_H + 0.5;
-			nMid_minW = nMid_modelW * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
-			nMid_maxW = nMid_modelW * (1 + fOffset * 4) + 0.5;		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
-			nMid_minH = nMid_modelH * (1 - fOffset);				//同上
-			nMid_maxH = nMid_modelH * (1 + fOffset * 4) + 0.5;		//同上
+			int nMid_modelW = rcSecond.rt.width;
+			int nMid_modelH = rcSecond.rt.height;
+			int nMidInterW, nMidInterH, nHeadInterW, nHeadInterH;
+			nMidInterW = 3;
+			nMidInterH = 3;
+			nHeadInterW = 4;
+			nHeadInterH = 4;
+			nMid_minW = nMid_modelW - nMidInterW;
+			nMid_maxW = nMid_modelW + nMidInterW;
+			nMid_minH = nMid_modelH - nMidInterH;
+			nMid_maxH = nMid_modelH + nMidInterH;
 
-			nHead_minW = rtFirst.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
-			nHead_maxW = rtFirst.width * (1 + fOffset * 4) + 0.5;		//同上
-			nHead_minH = rtFirst.height * (1 - fOffset);				//同上
-			nHead_maxH = rtFirst.height * (1 + fOffset * 4) + 0.5;		//同上
+			nHead_minW = rcFist.rt.width - nHeadInterW;
+			nHead_maxW = rcFist.rt.width + nHeadInterW;
+			nHead_minH = rcFist.rt.height - nHeadInterH;
+			nHead_maxH = rcFist.rt.height + nHeadInterH;
+
+// 			float fOffset = 0.1;
+// 			int nMid_modelW = rtSecond.width + 2;		//加2是因为制卷模板框框没有经过查边框运算，经过查边框后，外框会包含整个矩形，需要加上上下各1个单位的线宽
+// 			int nMid_modelH = rtSecond.height + 2;
+// 			if (nMid_modelW < rtFirst.width * fPer_W + 0.5)	nMid_modelW = rtFirst.width * fPer_W + 0.5;
+// 			if (nMid_modelH < rtFirst.height * fPer_H + 0.5)	nMid_modelH = rtFirst.height * fPer_H + 0.5;
+// 			nMid_minW = nMid_modelW * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+// 			nMid_maxW = nMid_modelW * (1 + fOffset * 4) + 0.5;		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+// 			nMid_minH = nMid_modelH * (1 - fOffset);				//同上
+// 			nMid_maxH = nMid_modelH * (1 + fOffset * 4) + 0.5;		//同上
+// 
+// 			nHead_minW = rtFirst.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
+// 			nHead_maxW = rtFirst.width * (1 + fOffset * 4) + 0.5;		//同上
+// 			nHead_minH = rtFirst.height * (1 - fOffset);				//同上
+// 			nHead_maxH = rtFirst.height * (1 + fOffset * 4) + 0.5;		//同上
 		}
 		else
 		{
@@ -1668,7 +1685,7 @@ int GetRects1(cv::Mat& matSrc, cv::Rect rt, pMODEL pModel, int nPic, int nOrient
 			{
 				if (!(rm.width > nHead_minH && rm.width < nHead_maxW && rm.height > nHead_minH && rm.height < nHead_maxH))	//排除第一个或最后一个大的同步头
 				{
-					TRACE("过滤同步头(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+					TRACE("过滤同步头(%d,%d,%d,%d), 要求范围W:[%d,%d], H[%d,%d], 参考大小(%d,%d)\n", rm.x, rm.y, rm.width, rm.height, nMid_minW, nMid_maxW, nMid_minH, nMid_maxH, rcSecond.rt.width, rcSecond.rt.height);
 					continue;
 				}
 				else
@@ -1755,6 +1772,9 @@ int CPaperInputDlg::CheckOrientation(cv::Mat& matSrc, int n)
 	bool bFind = false;
 	int nResult = 1;	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
 
+	if (!m_pModel->nHasHead)
+		return nResult;
+
 	const float fMinPer = 0.5;		//识别矩形数/模板矩形数 低于最小值，认为不合格
 	const float fMaxPer = 1.5;		//识别矩形数/模板矩形数 超过最大值，认为不合格
 	const float fMidPer = 0.8;
@@ -1780,6 +1800,7 @@ int CPaperInputDlg::CheckOrientation(cv::Mat& matSrc, int n)
 		TRACE("与模板图片方向一致\n");
 		for (int i = 1; i <= 4; i = i + 3)
 		{
+			TRACE("查水平同步头\n");
 			cv::Rect rtH = GetRectByOrientation1(rtModelPic, m_pModel->vecPaperModel[n]->rtHTracker, i);
 			int nHead_H = GetRects1(matSrc, rtH, m_pModel, n, i, 1);		//查水平同步头数量
 			int nSum_H = m_pModel->vecPaperModel[n]->lH_Head.size();
@@ -1792,7 +1813,8 @@ int CPaperInputDlg::CheckOrientation(cv::Mat& matSrc, int n)
 				fFirst_H = fSimilarity_H;
 			else
 				fSecond_H = fSimilarity_H;
-			
+
+			TRACE("查垂直同步头\n");
 			cv::Rect rtH2 = GetRectByOrientation1(rtModelPic, m_pModel->vecPaperModel[n]->rtVTracker, i);
 			int nHead_V = GetRects1(matSrc, rtH2, m_pModel, n, i, 2);		//查垂直同步头数量
 			int nSum_V = m_pModel->vecPaperModel[n]->lV_Head.size();
@@ -1859,6 +1881,7 @@ int CPaperInputDlg::CheckOrientation(cv::Mat& matSrc, int n)
 		TRACE("与模板图片方向不一致\n");
 		for (int i = 2; i <= 3; i++)
 		{
+			TRACE("查水平同步头\n");
 			cv::Rect rtH = GetRectByOrientation1(rtModelPic, m_pModel->vecPaperModel[n]->rtHTracker, i);
 			int nHead_H = GetRects1(matSrc, rtH, m_pModel, n, i, 1);		//查水平同步头数量
 			int nSum_H = m_pModel->vecPaperModel[n]->lH_Head.size();
@@ -1872,6 +1895,7 @@ int CPaperInputDlg::CheckOrientation(cv::Mat& matSrc, int n)
 			else
 				fSecond_H = fSimilarity_H;
 
+			TRACE("查垂直同步头\n");
 			cv::Rect rtH2 = GetRectByOrientation1(rtModelPic, m_pModel->vecPaperModel[n]->rtVTracker, i);
 			int nHead_V = GetRects1(matSrc, rtH2, m_pModel, n, i, 2);		//查垂直同步头数量
 			int nSum_V = m_pModel->vecPaperModel[n]->lV_Head.size();

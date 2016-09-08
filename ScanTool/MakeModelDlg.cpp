@@ -23,7 +23,7 @@ IMPLEMENT_DYNAMIC(CMakeModelDlg, CDialog)
 
 CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	: CDialog(CMakeModelDlg::IDD, pParent)
-	, m_pModelPicShow(NULL), m_nGaussKernel(5), m_nSharpKernel(5), m_nThresholdKernel(150), m_nCannyKernel(90), m_nDelateKernel(6), m_nErodeKernel(2)
+	, m_pModelPicShow(NULL), m_nGaussKernel(5), m_nSharpKernel(5), m_nThresholdKernel(150), m_nCannyKernel(90), m_nDilateKernel(6), m_nErodeKernel(2)
 	, m_pModel(pModel), m_bNewModelFlag(false), m_nModelPicNums(2), m_nCurrTabSel(0), m_bSavedModelFlag(false), m_ncomboCurrentSel(0), m_eCurCPType(UNKNOWN)
 	, m_nCurListCtrlSel(0), m_nStartTH(0)
 	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200)
@@ -1208,17 +1208,11 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 	cvtColor(imgResult, imgResult, CV_BGR2GRAY);
 	GaussianBlur(imgResult, imgResult, cv::Size(m_nGaussKernel, m_nGaussKernel), 0, 0);
 	sharpenImage1(imgResult, imgResult);
-#if 1
+
 	GetThreshold(imgResult, imgResult);
-#else
-	// 局部自适应阈值的图像二值化
-	int blockSize = 25;		//25
-	int constValue = 10;
-	cv::Mat local;
-	cv::adaptiveThreshold(imgResult, imgResult, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, blockSize, constValue);
-#endif
+
 	cv::Canny(imgResult, imgResult, 0, m_nCannyKernel, 5);
-	Mat element = getStructuringElement(MORPH_RECT, Size(m_nDelateKernel, m_nDelateKernel));	//Size(6, 6)	普通空白框可识别
+	Mat element = getStructuringElement(MORPH_RECT, Size(m_nDilateKernel, m_nDilateKernel));	//Size(6, 6)	普通空白框可识别
 	dilate(imgResult, imgResult, element);
 #if 1
 	IplImage ipl_img(imgResult);
@@ -1244,8 +1238,8 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 			continue;
 		}
 
-		rm.x = rm.x + rtOri.x/* - m_ptFixCP.x*/;
-		rm.y = rm.y + rtOri.y/* - m_ptFixCP.y*/;
+		rm.x = rm.x + rtOri.x;
+		rm.y = rm.y + rtOri.y;
 
 		RectCompList.push_back(rm);
 
@@ -1335,22 +1329,10 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 		else if (m_eCurCPType == SN)
 		{
 			TRACE("SN - rt(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
-// 			rc.nThresholdValue = m_nWhiteVal;
-// 			rc.fStandardValuePercent = m_fSNThresholdPercent;
-// 
-// 			Rect rtTmp = rm;
-// 			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
-// 			RecogGrayValue(matSrcModel, rc);
 		}
 		else if (m_eCurCPType == OMR)
 		{
 			TRACE("OMR - rt(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
-// 			rc.nThresholdValue = m_nWhiteVal;
-// 			rc.fStandardValuePercent = m_fOMRThresholdPercent;
-// 
-// 			Rect rtTmp = rm;
-// 			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
-// 			RecogGrayValue(matSrcModel, rc);
 		}
 
 		bResult = true;
@@ -3120,11 +3102,11 @@ void CMakeModelDlg::OnCbnSelchangeComboCptype()
 	{
 		case SN:
 		{
-			m_nDelateKernel = 4;
+			m_nDilateKernel = 4;
 		}
 		break;
 		default:
-			m_nDelateKernel = 6;
+			m_nDilateKernel = 6;
 			break;
 	}
 
@@ -4984,7 +4966,7 @@ void CMakeModelDlg::InitParam()
 		m_nGaussKernel = pConf->getInt("MakeModel_Recog.gauseKernel", 5);
 		m_nSharpKernel = pConf->getInt("MakeModel_Recog.sharpKernel", 5);
 		m_nCannyKernel = pConf->getInt("MakeModel_Recog.cannyKernel", 90);
-		m_nDelateKernel = pConf->getInt("MakeModel_Recog.delateKernel", 6);
+		m_nDilateKernel = pConf->getInt("MakeModel_Recog.delateKernel", 6);
 		m_nErodeKernel = pConf->getInt("MakeModel_Recog.eRodeKernel", 2);
 
 		m_nWhiteVal = pConf->getInt("MakeModel_Threshold.white", 225);
@@ -5014,7 +4996,7 @@ void CMakeModelDlg::InitParam()
 		m_nGaussKernel = 5;
 		m_nSharpKernel = 5;
 		m_nCannyKernel = 90;
-		m_nDelateKernel = 6;
+		m_nDilateKernel = 6;
 		m_nErodeKernel = 2;
 
 		m_nWhiteVal = 225;
