@@ -106,7 +106,7 @@ CScanToolDlg::CScanToolDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	, m_pSendFileObj(NULL), m_SendFileThread(NULL), m_bLogin(FALSE), m_pTcpCmdObj(NULL), m_TcpCmdThread(NULL)
 	, m_nTeacherId(-1), m_nUserId(-1), m_nCurrItemPaperList(-1)
 	, m_pShowModelInfoDlg(NULL), m_pShowScannerInfoDlg(NULL)
-	, m_nDuplex(1)
+	, m_nDuplex(1), m_nShowScanCtrlDlg(1)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -506,6 +506,7 @@ void CScanToolDlg::InitConfig()
 
 #ifdef TO_WHTY
 	m_nModelPicNums = pConf->getInt("WHTY.picNums", 2);
+	m_nShowScanCtrlDlg = pConf->getInt("WHTY.bShowScanCtrl", 1);
 #endif
 
 	m_pRecogThread = new Poco::Thread[nRecogThreads];
@@ -998,13 +999,24 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		AfxMessageBox(_T("未设置扫描模板，请在模板设置界面选择扫描模板"));	//模板解析错误
 		return;
 	}
+	m_nShowScanCtrlDlg = 1;	//显示扫描控制窗口
 #endif
 	if (m_nScanStatus == 1)	//扫描中，不能操作
 		return;
 
-	CScanCtrlDlg dlg(m_scanSourceArry);
-	if (dlg.DoModal() != IDOK)
-		return;
+	int nScanSrc = 0;
+	int nDuplexDef = 1;
+	int nScanCount = 0;
+	if (m_nShowScanCtrlDlg)
+	{
+		CScanCtrlDlg dlg(m_scanSourceArry);
+		if (dlg.DoModal() != IDOK)
+			return;
+
+		nScanSrc = dlg.m_nCurrScanSrc;
+		nDuplexDef = dlg.m_nCurrDuplex;
+		nScanCount = dlg.m_nStudentNum;
+	}
 
 	m_comboModel.EnableWindow(FALSE);
 	GetDlgItem(IDC_BTN_Scan)->EnableWindow(FALSE);
@@ -1046,8 +1058,8 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	}
 	m_nScanStatus = 1;
 
-	m_Source = m_scanSourceArry.GetAt(dlg.m_nCurrScanSrc);
-	int nDuplex = dlg.m_nCurrDuplex;		//单双面,0-单面,1-双面
+	m_Source = m_scanSourceArry.GetAt(nScanSrc);
+	int nDuplex = nDuplexDef;		//单双面,0-单面,1-双面
 	int nSize = 1;							//1-A4
 	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
 	int nResolution = 200;					//dpi: 72, 150, 200, 300
@@ -1060,7 +1072,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	int nNum = 0;
 	if (nDuplex == 0)
 	{
-		nNum = dlg.m_nStudentNum * m_nModelPicNums;
+		nNum = nScanCount * m_nModelPicNums;
 	}
 	else
 	{
@@ -1068,7 +1080,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		if (nModelPics % 2)
 			nModelPics++;
 
-		nNum = dlg.m_nStudentNum * nModelPics;
+		nNum = nScanCount * nModelPics;
 	}
 	m_nDuplex = nDuplex;
 
@@ -1488,7 +1500,7 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 	cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
 
 	//++ 2016.8.26 判断扫描图片方向，并进行旋转
-	if (m_pModel->nType)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
+	if (m_pModel && m_pModel->nType)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
 	{
 		int nResult = CheckOrientation(matTest2, nOrder - 1);
 		switch (nResult)	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
@@ -2225,9 +2237,23 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		return;
 	}
 
+	int nExamID = 0;
+	int nSubjectID = 0;
+#ifndef TO_WHTY
 	CPapersInfoSaveDlg dlg(m_pPapersInfo);
 	if (dlg.DoModal() != IDOK)
 		return;
+
+	nExamID = dlg.m_nExamID;
+	nSubjectID = dlg.m_SubjectID;
+#else
+	Poco::LocalDateTime nowTime;
+	Poco::Random rm;
+	rm.seed();
+	char szPapersName[50] = { 0 };
+	sprintf_s(szPapersName, "%d%02d%02d%02d%02d%02d-%05d", nowTime.year(), nowTime.month(), nowTime.day(), nowTime.hour(), nowTime.minute(), nowTime.second(), rm.next(99999));
+	m_pPapersInfo->strPapersName = szPapersName;
+#endif
 
 	clock_t start, end;
 	start = clock();
@@ -2374,8 +2400,8 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	std::string strUploader = CMyCodeConvert::Gb2312ToUtf8(T2A(strUser));
 	std::string sEzs = T2A(strEzs);
 	Poco::JSON::Object jsnFileData;
-	jsnFileData.set("examId", dlg.m_nExamID);
-	jsnFileData.set("subjectId", dlg.m_SubjectID);
+	jsnFileData.set("examId", nExamID);
+	jsnFileData.set("subjectId", nSubjectID);
 	jsnFileData.set("uploader", strUploader);
 	jsnFileData.set("ezs", sEzs);
 	jsnFileData.set("nTeacherId", nTeacherId);

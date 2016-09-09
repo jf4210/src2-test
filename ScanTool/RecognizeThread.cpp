@@ -1664,4 +1664,97 @@ bool CRecognizeThread::RecogVal(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST
 	return bResult;
 }
 
+bool CRecognizeThread::RecogVal2(int nPic, cv::Rect& rt, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+{
+	Mat matSrcRoi, matCompRoi;
+	Rect rt = rt;
+	bool bResult = false;
+
+	//omr框的大小高度
+	OMRLIST::iterator itOmr = pModelInfo->pModel->vecPaperModel[nPic]->lOMR2.begin();
+	RECTLIST::iterator itItem = itOmr->lSelAnswer.begin();
+	int nOmrW, nOmrH;
+	nOmrW = itItem->rt.width;
+	nOmrH = itItem->rt.height;
+	//根据大小先过滤一下可能框选到题号的情况
+
+
+
+
+	try
+	{
+		matCompRoi = matCompPic(rt);
+
+		Mat imag_src, img_comp;
+		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+		//图片二值化
+		threshold(matCompRoi, matCompRoi, 240, 255, THRESH_BINARY_INV);				//200, 255
+#if 0
+		//确定腐蚀和膨胀核的大小
+		Mat element = getStructuringElement(MORPH_RECT, Size(4, 4));	//Size(4, 4)
+		//膨胀操作
+		dilate(matCompRoi, matCompRoi, element);
+
+		Mat element2 = getStructuringElement(MORPH_RECT, Size(15, 15));	//Size(4, 4)
+		//腐蚀操作1
+		erode(matCompRoi, matCompRoi, element2);
+
+		Mat element3 = getStructuringElement(MORPH_RECT, Size(4, 4));	//Size(4, 4)
+		//腐蚀操作2
+		erode(matCompRoi, matCompRoi, element3);
+
+		Mat element4 = getStructuringElement(MORPH_RECT, Size(5, 5));	//Size(4, 4)
+		dilate(matCompRoi, matCompRoi, element4);
+
+#else
+		//确定腐蚀和膨胀核的大小
+		Mat element = getStructuringElement(MORPH_RECT, Size(5, 5));	//Size(4, 4)
+		//腐蚀操作1
+		erode(matCompRoi, matCompRoi, element);
+
+		//确定腐蚀和膨胀核的大小
+		Mat element2 = getStructuringElement(MORPH_RECT, Size(3, 3));	//Size(4, 4)
+		//腐蚀操作2
+		erode(matCompRoi, matCompRoi, element2);
+
+		//膨胀操作
+		dilate(matCompRoi, matCompRoi, element2);
+		//膨胀操作
+		dilate(matCompRoi, matCompRoi, element);
+#endif
+		IplImage ipl_img(matCompRoi);
+
+		//the parm. for cvFindContours  
+		CvMemStorage* storage = cvCreateMemStorage(0);
+		CvSeq* contour = 0;
+
+		//提取轮廓  
+		cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+		std::vector<Rect>RectCompList;
+		for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++)
+		{
+			CvRect aRect = cvBoundingRect(contour, 0);
+			Rect rm = aRect;
+			RectCompList.push_back(rm);
+
+		}
+		if (RectCompList.size() == 0)
+			bResult = false;
+		else
+			bResult = true;
+
+	}
+	catch (cv::Exception &exc)
+	{
+		char szLog[300] = { 0 };
+		sprintf_s(szLog, "CRecognizeThread::RecogVal2 error. detail: %s\n", exc.msg);
+		g_pLogger->information(szLog);
+		TRACE(szLog);
+	}
+
+	return bResult;
+}
+
 
