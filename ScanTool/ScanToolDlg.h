@@ -62,8 +62,6 @@ public:
 	CPicShow*				m_pCurrentPicShow;		//当前图片显示控件
 	int						m_nModelPicNums;		//模板图片数，即一份模板有多少图片，对应多少试卷
 
-	int				m_nShowScanCtrlDlg;		//是否显示扫描控制窗口，针对武汉天喻
-
 	int				m_nScanCount;			//已经扫描生成的图片数
 	std::string		m_strCurrPicSavePath;	//当前扫描图像保存位置
 	pPAPERSINFO		m_pPapersInfo;			//当前扫描的考场信息

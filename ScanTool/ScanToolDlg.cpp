@@ -106,7 +106,7 @@ CScanToolDlg::CScanToolDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	, m_pSendFileObj(NULL), m_SendFileThread(NULL), m_bLogin(FALSE), m_pTcpCmdObj(NULL), m_TcpCmdThread(NULL)
 	, m_nTeacherId(-1), m_nUserId(-1), m_nCurrItemPaperList(-1)
 	, m_pShowModelInfoDlg(NULL), m_pShowScannerInfoDlg(NULL)
-	, m_nDuplex(1), m_nShowScanCtrlDlg(1)
+	, m_nDuplex(1)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -506,7 +506,6 @@ void CScanToolDlg::InitConfig()
 
 #ifdef TO_WHTY
 	m_nModelPicNums = pConf->getInt("WHTY.picNums", 2);
-	m_nShowScanCtrlDlg = pConf->getInt("WHTY.bShowScanCtrl", 1);
 #endif
 
 	m_pRecogThread = new Poco::Thread[nRecogThreads];
@@ -999,7 +998,6 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		AfxMessageBox(_T("未设置扫描模板，请在模板设置界面选择扫描模板"));	//模板解析错误
 		return;
 	}
-	m_nShowScanCtrlDlg = 1;	//显示扫描控制窗口
 #endif
 	if (m_nScanStatus == 1)	//扫描中，不能操作
 		return;
@@ -1007,17 +1005,15 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	int nScanSrc = 0;
 	int nDuplexDef = 1;
 	int nScanCount = 0;
-	if (m_nShowScanCtrlDlg)
-	{
-		CScanCtrlDlg dlg(m_scanSourceArry);
-		if (dlg.DoModal() != IDOK)
-			return;
 
-		nScanSrc = dlg.m_nCurrScanSrc;
-		nDuplexDef = dlg.m_nCurrDuplex;
-		nScanCount = dlg.m_nStudentNum;
-	}
+	CScanCtrlDlg dlg(m_scanSourceArry);
+	if (dlg.DoModal() != IDOK)
+		return;
 
+	nScanSrc = dlg.m_nCurrScanSrc;
+	nDuplexDef = dlg.m_nCurrDuplex;
+	nScanCount = dlg.m_nStudentNum;
+	
 	m_comboModel.EnableWindow(FALSE);
 	GetDlgItem(IDC_BTN_Scan)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTN_ScanAll)->EnableWindow(FALSE);
@@ -2247,6 +2243,9 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	nExamID = dlg.m_nExamID;
 	nSubjectID = dlg.m_SubjectID;
 #else
+	if (MessageBox(_T("是否上传当前扫描卷?"), _T("提示"), MB_YESNO) != IDYES)
+		return;
+
 	Poco::LocalDateTime nowTime;
 	Poco::Random rm;
 	rm.seed();

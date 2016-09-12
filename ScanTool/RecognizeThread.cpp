@@ -1646,12 +1646,6 @@ bool CRecognizeThread::RecogVal(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST
 			bResult = false;
 		else
 			bResult = true;
-
-// 		if (RectCompList.size() > 0 && rc.nSnVal == 7)
-// 		{
-// 			namedWindow("5轮廓化resultImage", 1);
-// 			cv::imshow("5轮廓化resultImage", matShow);
-// 		}
 	}
 	catch (cv::Exception &exc)
 	{
@@ -1664,65 +1658,39 @@ bool CRecognizeThread::RecogVal(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST
 	return bResult;
 }
 
-bool CRecognizeThread::RecogVal2(int nPic, cv::Rect& rt, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, pOMR_QUESTION pOmrQuestion)
 {
 	Mat matSrcRoi, matCompRoi;
-	Rect rt = rt;
+	
 	bool bResult = false;
 
+
+
 	//omr框的大小高度
-	OMRLIST::iterator itOmr = pModelInfo->pModel->vecPaperModel[nPic]->lOMR2.begin();
-	RECTLIST::iterator itItem = itOmr->lSelAnswer.begin();
-	int nOmrW, nOmrH;
-	nOmrW = itItem->rt.width;
-	nOmrH = itItem->rt.height;
-	//根据大小先过滤一下可能框选到题号的情况
+	RECTLIST::iterator itItem = pOmrQuestion->lSelAnswer.begin();
+	RECTLIST::reverse_iterator itEndItem = pOmrQuestion->lSelAnswer.rbegin();
+	cv::Point pt1, pt2;
+	pt1 = itItem->rt.tl();
+	pt2 = itEndItem->rt.br();
+	Rect rt = cv::Rect(pt1, pt2);	//ABCD整个题目的选项区
 
-
-
+	int nOmrMinW, nOmrMinH, nAreaMin;
+	nOmrMinW = itItem->rt.width * 0.4;
+	nOmrMinH = itItem->rt.height * 0.4;
+	nAreaMin = itItem->rt.area() * 0.3;
+	//根据大小、面积先过滤一下可能框选到题号的情况
 
 	try
 	{
 		matCompRoi = matCompPic(rt);
+		matSrcRoi = matCompRoi.clone();
 
 		Mat imag_src, img_comp;
 		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 		//图片二值化
 		threshold(matCompRoi, matCompRoi, 240, 255, THRESH_BINARY_INV);				//200, 255
-#if 0
-		//确定腐蚀和膨胀核的大小
-		Mat element = getStructuringElement(MORPH_RECT, Size(4, 4));	//Size(4, 4)
-		//膨胀操作
-		dilate(matCompRoi, matCompRoi, element);
 
-		Mat element2 = getStructuringElement(MORPH_RECT, Size(15, 15));	//Size(4, 4)
-		//腐蚀操作1
-		erode(matCompRoi, matCompRoi, element2);
-
-		Mat element3 = getStructuringElement(MORPH_RECT, Size(4, 4));	//Size(4, 4)
-		//腐蚀操作2
-		erode(matCompRoi, matCompRoi, element3);
-
-		Mat element4 = getStructuringElement(MORPH_RECT, Size(5, 5));	//Size(4, 4)
-		dilate(matCompRoi, matCompRoi, element4);
-
-#else
-		//确定腐蚀和膨胀核的大小
-		Mat element = getStructuringElement(MORPH_RECT, Size(5, 5));	//Size(4, 4)
-		//腐蚀操作1
-		erode(matCompRoi, matCompRoi, element);
-
-		//确定腐蚀和膨胀核的大小
-		Mat element2 = getStructuringElement(MORPH_RECT, Size(3, 3));	//Size(4, 4)
-		//腐蚀操作2
-		erode(matCompRoi, matCompRoi, element2);
-
-		//膨胀操作
-		dilate(matCompRoi, matCompRoi, element2);
-		//膨胀操作
-		dilate(matCompRoi, matCompRoi, element);
-#endif
 		IplImage ipl_img(matCompRoi);
 
 		//the parm. for cvFindContours  
@@ -1733,12 +1701,31 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Rect& rt, cv::Mat& matCompPic, pS
 		cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
 		std::vector<Rect>RectCompList;
+		if (contour->total > pOmrQuestion->lSelAnswer.size())	//识别出的选项数量比模板选项数量多, 可能框选到题号
+		{			
+			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++)
+			{
+				CvRect aRect = cvBoundingRect(contour, 0);
+				cv::Rect rm = aRect;
+
+				if (rm.width < nOmrMinW || rm.height < nOmrMinH || rm.area() < nAreaMin)		//************	针对中括号的选项会存在问题	************
+					continue;
+
+				RectCompList.push_back(rm);
+			}
+		}
+		else if (contour->total < pOmrQuestion->lSelAnswer.size())	//识别出的选项数量比模板选项数量少, 可能选项有连在一起的情况
+		{
+
+		}
+			
+		//识别出的选项数量与模板选项数量一致，只需判断ABCD值
 		for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++)
 		{
 			CvRect aRect = cvBoundingRect(contour, 0);
 			Rect rm = aRect;
+			
 			RectCompList.push_back(rm);
-
 		}
 		if (RectCompList.size() == 0)
 			bResult = false;

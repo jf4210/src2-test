@@ -68,6 +68,10 @@ bool CScanCtrlDlg::InitUI()
 
 	USES_CONVERSION;
 	
+#ifdef TO_WHTY
+	GetDlgItem(IDC_STATIC_COUNT)->ShowWindow(SW_HIDE);
+	GetDlgItem(IDC_EDIT_TiKaNum)->ShowWindow(SW_HIDE);
+#endif
 
 	m_comboDuplex.AddString(_T("µ•√Ê…®√Ë"));
 	m_comboDuplex.AddString(_T("À´√Ê…®√Ë"));

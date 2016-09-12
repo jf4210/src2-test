@@ -24,7 +24,7 @@ public:
 	void sharpenImage1(const cv::Mat &image, cv::Mat &result);
 	inline bool Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo);
 	inline bool RecogVal(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo);
-	inline bool RecogVal2(int nPic, cv::Rect& rt, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo);	//通过识别整个题的选项区，来判断选择项
+	inline bool RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, pOMR_QUESTION pOmrQuestion);	//通过识别整个题的选项区，来判断选择项
 
 	bool RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo);		//识别水平同步头
 	bool RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo);		//识别水平同步头
