@@ -123,6 +123,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\common\md5.h" />
+    <ClInclude Include="..\..\common\modelInfo.h" />
     <ClInclude Include="..\..\common\NetCtrl.h" />
     <ClInclude Include="..\..\common\Net_Cmd_Protocol.h" />
     <ClInclude Include="..\..\common\unzip.h" />

@@ -138,6 +138,8 @@ protected:
 
 	int main(const std::vector < std::string > & args) 
 	{
+		Poco::Net::HTTPStreamFactory::registerFactory();
+
 		std::string strCurrentPath = config().getString("application.dir");
 		std::string strLogPath = strCurrentPath + "DCS.Log";
 		std::string strDllLogPath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath) + "DCS_Dll.Log";
@@ -215,6 +217,34 @@ protected:
 		else
 			g_Log.LogOut("StartCmdChannel fail.");
 
+
+#if 1	//test
+		char szIndex[50] = { 0 };
+		strcpy(szIndex, "1_1");
+		pMODELINFO pModelInfo = NULL;
+		MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
+		if (itFind == _mapModel_.end())		//服务器上没有模板，请求后端提供数据生成模板
+		{
+			pModelInfo = new MODELINFO;
+			pModelInfo->nExamID = 1;
+			pModelInfo->nSubjectID = 1;
+
+			_mapModelLock_.lock();
+			_mapModel_.insert(MAP_MODEL::value_type(szIndex, pModelInfo));
+			_mapModelLock_.unlock();
+
+			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
+			pTask->strUri = Poco::format("%s/sheet/data/1/1", SysSet.m_strBackUri);
+//			pTask->pUser = pUser;
+			pTask->strMsg = "createModel";
+			pTask->nExamID = 1;
+			pTask->nSubjectID = 1;
+
+			g_fmScanReq.lock();
+			g_lScanReq.push_back(pTask);
+			g_fmScanReq.unlock();
+		}
+#endif
 
 		waitForTerminationRequest();
 		g_nExitFlag = 1;

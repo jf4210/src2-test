@@ -116,6 +116,7 @@ BOOL CMakeModelDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	USES_CONVERSION;
 	InitUI();
 	InitConf();
 	if (m_pModel)
@@ -124,7 +125,7 @@ BOOL CMakeModelDlg::OnInitDialog()
 
 		for (int i = 0; i < m_pModel->nPicNum; i++)
 		{
-			CString strPicPath = g_strCurrentPath + _T("Model\\") + m_pModel->strModelName + _T("\\") + m_pModel->vecPaperModel[i]->strModelPicName;
+			CString strPicPath = g_strCurrentPath + _T("Model\\") + A2T(m_pModel->strModelName.c_str()) + _T("\\") + A2T(m_pModel->vecPaperModel[i]->strModelPicName.c_str());
 
 			pPaperModelInfo pPaperModel = new PaperModelInfo;
 			m_vecPaperModelInfo.push_back(pPaperModel);
@@ -244,7 +245,7 @@ BOOL CMakeModelDlg::OnInitDialog()
 		}
 
 		CString strTitle = _T("");
-		strTitle.Format(_T("模板名称: %s"), m_pModel->strModelName);
+		strTitle.Format(_T("模板名称: %s"), m_pModel->strModelName.c_str());
 		SetWindowText(strTitle);
 	}
 	else
@@ -921,7 +922,7 @@ void CMakeModelDlg::OnBnClickedBtnNew()
 		pPaperModelInfo paperMode = new PaperModelInfo;
 		m_vecPaperModelInfo.push_back(paperMode);
 
-		paperMode->strModelPicName = dlg.m_vecPath[i].strName;
+		paperMode->strModelPicName = T2A(dlg.m_vecPath[i].strName);
 		paperMode->strModelPicPath = dlg.m_vecPath[i].strPath;
 
 		
@@ -967,13 +968,13 @@ void CMakeModelDlg::OnBnClickedBtnSelpic()
 	if (dlg.DoModal() != IDOK)
 		return;
 
+	USES_CONVERSION;
 	pPaperModelInfo paperMode = NULL;
 	paperMode = m_vecPaperModelInfo[m_nCurrTabSel];
 
-	paperMode->strModelPicName = dlg.GetFileName();
+	paperMode->strModelPicName = T2A(dlg.GetFileName());
 	paperMode->strModelPicPath = dlg.GetPathName();
 
-	USES_CONVERSION;
 	Mat src_img = imread((std::string)(CT2CA)paperMode->strModelPicPath);	//(std::string)(CT2CA)paperMode->strModelPicPath
 
 	paperMode->matSrcImg = src_img;
@@ -1830,16 +1831,15 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	if (dlg.DoModal() != IDOK)
 		return;
 
+	USES_CONVERSION;
 	m_pModel->nSaveMode = dlg.m_nSaveMode;
 	if (dlg.m_nSaveMode == 1)
 	{
-		m_pModel->strModelName = dlg.m_strModelName;
-		m_pModel->strModelDesc = dlg.m_strLocalModelDesc;
+		m_pModel->strModelName = T2A(dlg.m_strModelName);
+		m_pModel->strModelDesc = T2A(dlg.m_strLocalModelDesc);
 	}
 	else
 	{
-		USES_CONVERSION;
-
 		char szModelName[30] = { 0 };
 		sprintf_s(szModelName, "%d_%d", dlg.m_nExamID, dlg.m_SubjectID);
 		char szModelDesc[300] = { 0 };
@@ -1851,7 +1851,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	}
 
 	CString strTitle = _T("");
-	strTitle.Format(_T("模板名称: %s"), m_pModel->strModelName);
+	strTitle.Format(_T("模板名称: %s"), m_pModel->strModelName.c_str());
 	SetWindowText(strTitle);
 
 	m_bSavedModelFlag = true;
@@ -1942,9 +1942,9 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 
 		m_pModel->vecPaperModel.push_back(pPaperModel);
 	}
-	USES_CONVERSION;
+
 	CString modelPath = g_strCurrentPath + _T("Model");
-	modelPath = modelPath + _T("\\") + m_pModel->strModelName;
+	modelPath = modelPath + _T("\\") + A2T(m_pModel->strModelName.c_str());
 	if (SaveModelFile(m_pModel))
 	{
 		ZipFile(modelPath, modelPath, _T(".mod"));
@@ -1963,7 +1963,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	{
 		CreateDirectoryA(T2A(modelPath), NULL);
 	}
-	modelPath = modelPath + _T("\\") + pModel->strModelName;
+	modelPath = modelPath + _T("\\") + A2T(pModel->strModelName.c_str());
 	dwAttr = GetFileAttributesA(T2A(modelPath));
 	if (dwAttr == 0xFFFFFFFF)
 	{
@@ -1994,7 +1994,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			TRACE(strGBLog.c_str());
 		}
 
-		CString strPicName = pModel->vecPaperModel[i]->strModelPicName;
+		CString strPicName = A2T(pModel->vecPaperModel[i]->strModelPicName.c_str());
 
 		Poco::JSON::Array jsnSNArry;
 		Poco::JSON::Array jsnSelHTrackerArry;
@@ -2268,8 +2268,8 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		jsnPicModel.add(jsnPaperObj);
 	}
 	
-	jsnModel.set("modelName", CMyCodeConvert::Gb2312ToUtf8(T2A(pModel->strModelName)));		//CMyCodeConvert::Gb2312ToUtf8(T2A(pModel->strModelName))
-	jsnModel.set("modelDesc", CMyCodeConvert::Gb2312ToUtf8(T2A(pModel->strModelDesc)));
+	jsnModel.set("modelName", CMyCodeConvert::Gb2312ToUtf8(pModel->strModelName));		//CMyCodeConvert::Gb2312ToUtf8(T2A(pModel->strModelName))
+	jsnModel.set("modelDesc", CMyCodeConvert::Gb2312ToUtf8(pModel->strModelDesc));
 	jsnModel.set("modelType", pModel->nType);
 	jsnModel.set("modeSaveMode", pModel->nSaveMode);
 	jsnModel.set("paperModelCount", pModel->nPicNum);			//此模板有几页试卷(图片)
@@ -4476,7 +4476,7 @@ void CMakeModelDlg::OnBnClickedBtnuploadmodel()
 	std::string strPdfPath = T2A(dlg.GetFolderPath());
 	strPdfPath.append("\\" + strBaseName + ".pdf");
 
-	bool bResult = Pdf2Jpg(strPdfPath, T2A(m_pModel->strModelName));
+	bool bResult = Pdf2Jpg(strPdfPath, m_pModel->strModelName);
 	if (!bResult)
 	{
 		AfxMessageBox(_T("pdf转jpg失败"));
@@ -4492,7 +4492,7 @@ void CMakeModelDlg::OnBnClickedBtnuploadmodel()
 	m_vecPaperModelInfo.clear();
 	for (int i = 0; i < m_pModel->nPicNum; i++)
 	{
-		CString strPicPath = g_strCurrentPath + _T("Model\\") + m_pModel->strModelName + _T("\\") + m_pModel->vecPaperModel[i]->strModelPicName;
+		CString strPicPath = g_strCurrentPath + _T("Model\\") + A2T(m_pModel->strModelName.c_str()) + _T("\\") + A2T(m_pModel->vecPaperModel[i]->strModelPicName.c_str());
 
 		pPaperModelInfo pPaperModel = new PaperModelInfo;
 		m_vecPaperModelInfo.push_back(pPaperModel);

@@ -7,19 +7,20 @@
 #include "MissionFactory.h"
 #include "Net_Cmd_Protocol.h"
 #include "NetUser.h"
+#include "modelInfo.h"
 
 //#include "TypeDef.h"
 
 #ifdef _DEBUG
-	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
-	#define TEST_FILE_PRESSURE	//文件上传压力测试
+//	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
+//	#define TEST_FILE_PRESSURE	//文件上传压力测试
 #endif
 
 #define USES_FILE_DNC			//是否对文件使用解密
 //#define USE_POCO_UNZIP			//使用poco解压缩zip文件
 
 
-#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
+//#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
 #ifdef TO_WHTY
 	#define USE_POCO_UNZIP			//给武汉天喻信息使用,不使用加密压缩
 #endif
@@ -41,6 +42,7 @@ typedef struct _ModelInfo_
 {
 	int		nExamID;
 	int		nSubjectID;
+	pMODEL		pModel;
 	std::string strMd5;
 	std::string strName;
 	std::string strPath;
@@ -48,6 +50,7 @@ typedef struct _ModelInfo_
 	{
 		nExamID = 0;
 		nSubjectID = 0;
+		pModel = NULL;
 	}
 }MODELINFO,*pMODELINFO;
 
@@ -218,7 +221,9 @@ extern LIST_SEND_HTTP		g_lHttpSend;		//发送HTTP任务列表
 
 typedef struct _ScanReqTask_
 {
-	CNetUser*		pUser;
+	int			nExamID;
+	int			nSubjectID;
+	CNetUser*	pUser;
 	std::string strRequest;
 	std::string strUri;
 	std::string strMsg;
@@ -228,6 +233,8 @@ typedef struct _ScanReqTask_
 	_ScanReqTask_()
 	{
 		pUser = NULL;
+		nExamID = 0;
+		nSubjectID = 0;
 	}
 }SCAN_REQ_TASK, *pSCAN_REQ_TASK;
 typedef std::list<pSCAN_REQ_TASK> LIST_SCAN_REQ;

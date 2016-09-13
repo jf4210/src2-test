@@ -103,7 +103,7 @@ bool CRecognizeThread::LoadModel(pMODELINFO pModelInfo)
 	USES_CONVERSION;
 	for (int i = 0; i < pModelInfo->pModel->nPicNum; i++)
 	{
-		std::string strModelPicPath = g_strModelSavePath + "\\" + T2A(pModelInfo->pModel->strModelName + _T("\\") + pModelInfo->pModel->vecPaperModel[i]->strModelPicName);
+		std::string strModelPicPath = g_strModelSavePath + "\\" + pModelInfo->pModel->strModelName + "\\" + pModelInfo->pModel->vecPaperModel[i]->strModelPicName;
 
 		cv::Mat matSrc = cv::imread(strModelPicPath);
 #ifdef PIC_RECTIFY_TEST
@@ -1673,6 +1673,26 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 	pt1 = itItem->rt.tl();
 	pt2 = itEndItem->rt.br();
 	Rect rt = cv::Rect(pt1, pt2);	//ABCD整个题目的选项区
+
+	switch (itItem->nRecogFlag)	//获取选项间的空白区域宽度或高度
+	{
+		case 42:	//101010
+			break;
+		case 41:	//101001
+			break;
+		case 38:	//100110
+			break;
+		case 37:	//100101
+			break;
+		case 26:
+			break;
+		case 25:
+			break;
+		case 22:
+			break;
+		case 21:
+			break;
+	}
 
 	int nOmrMinW, nOmrMinH, nAreaMin;
 	nOmrMinW = itItem->rt.width * 0.4;

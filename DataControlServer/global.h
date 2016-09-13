@@ -49,6 +49,9 @@
 #include "Poco/Net/NetException.h"
 #include "Poco/Net/FilePartSource.h"
 #include "Poco/InflatingStream.h"
+#include "Poco/Net/HTTPStreamFactory.h"
+#include "Poco/URIStreamOpener.h"
+#include "Poco/StreamCopier.h"
 
 
 #include "Poco/Crypto/CipherFactory.h"

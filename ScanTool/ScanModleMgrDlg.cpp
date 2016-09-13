@@ -62,9 +62,10 @@ END_MESSAGE_MAP()
 BOOL CScanModleMgrDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
+	USES_CONVERSION;
 
 	if (m_pOldModel)
-		m_strCurModelName = m_pOldModel->strModelName;
+		m_strCurModelName = A2T(m_pOldModel->strModelName.c_str());
 	
 	InitUI();
 
@@ -210,6 +211,7 @@ void CScanModleMgrDlg::OnNMDblclkListModel(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	*pResult = 0;
+	USES_CONVERSION;
 
 	m_ModelListCtrl.SetItemState(m_nCurModelItem, 0, LVIS_DROPHILITED);
 
@@ -236,7 +238,7 @@ void CScanModleMgrDlg::OnNMDblclkListModel(NMHDR *pNMHDR, LRESULT *pResult)
 	}
 	m_pModel = pModel;
 	if (m_pModel)
-		m_strCurModelName = m_pModel->strModelName;
+		m_strCurModelName = A2T(m_pModel->strModelName.c_str());
 
 	m_pShowModelInfoDlg->ShowModelInfo(m_pModel, 1);
 	UpdateData(FALSE);
@@ -378,7 +380,7 @@ void CScanModleMgrDlg::OnBnClickedOk()
 		return;
 	}
 	CString strShow = _T("");
-	strShow.Format(_T("是否选择\"%s\"为扫描模板?"), m_pModel->strModelName);
+	strShow.Format(_T("是否选择\"%s\"为扫描模板?"), m_pModel->strModelName.c_str());
 	if (MessageBox(strShow, _T("扫描模板确认"), MB_OKCANCEL) != IDOK)
 		return;
 
@@ -465,7 +467,7 @@ void CScanModleMgrDlg::OnBnClickedBtnuploadmodel()
 	}
 
 	USES_CONVERSION;
-	std::string strModelName = T2A(m_pModel->strModelName);
+	std::string strModelName = m_pModel->strModelName;
 	strModelName.append(".mod");
 
 	int nPos = 0;
@@ -477,13 +479,13 @@ void CScanModleMgrDlg::OnBnClickedBtnuploadmodel()
 	std::string strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
 
 	CString modelPath = g_strCurrentPath + _T("Model");
-	modelPath = modelPath + _T("\\") + m_pModel->strModelName + _T(".mod");
+	modelPath = modelPath + _T("\\") + A2T(m_pModel->strModelName.c_str()) + _T(".mod");
 	setUploadModelInfo(m_pModel->strModelName, modelPath, atoi(strExamID.c_str()), atoi(strSubjectID.c_str()));
 
 	AfxMessageBox(_T("添加上传任务完成，后台操作中。。。"));
 }
 
-void CScanModleMgrDlg::setUploadModelInfo(CString& strName, CString& strModelPath, int nExamId, int nSubjectId)
+void CScanModleMgrDlg::setUploadModelInfo(std::string& strName, CString& strModelPath, int nExamId, int nSubjectId)
 {
 	USES_CONVERSION;
 	std::string strPath = T2A(strModelPath);
@@ -496,7 +498,7 @@ void CScanModleMgrDlg::setUploadModelInfo(CString& strName, CString& strModelPat
 	stModelInfo.nExamID = nExamId;
 	stModelInfo.nSubjectID = nSubjectId;
 
-	sprintf_s(stModelInfo.szModelName, "%s.mod", T2A(strName));
+	sprintf_s(stModelInfo.szModelName, "%s.mod", strName);
 	strncpy(stModelInfo.szMD5, strMd5.c_str(), strMd5.length());
 
 #ifdef SHOW_GUIDEDLG

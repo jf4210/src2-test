@@ -246,6 +246,9 @@
     <ClInclude Include="pdf2jpg\MuPDFConvert.h">
       <Filter>pdf转jpg</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\common\modelInfo.h">
+      <Filter>common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">

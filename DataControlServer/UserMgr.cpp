@@ -292,6 +292,41 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			}
 		}
 		break;
+	case USER_NEED_CREATE_MODEL:
+		{
+			ST_DOWN_MODEL stModelInfo = *(pST_DOWN_MODEL)(pMission->m_pMissionData + HEAD_SIZE);
+
+			char szIndex[50] = { 0 };
+			sprintf(szIndex, "%d_%d", stModelInfo.nExamID, stModelInfo.nSubjectID);
+			pMODELINFO pModelInfo = NULL;
+			MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
+			if (itFind == _mapModel_.end())		//服务器上没有模板，请求后端提供数据生成模板
+			{
+				pModelInfo = new MODELINFO;
+				pModelInfo->nExamID = stModelInfo.nExamID;
+				pModelInfo->nSubjectID = stModelInfo.nSubjectID;
+
+				_mapModelLock_.lock();
+				_mapModel_.insert(MAP_MODEL::value_type(szIndex, pModelInfo));
+				_mapModelLock_.unlock();
+
+				pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
+				pTask->strUri = Poco::format("%s/sheet/data/%d/%d", SysSet.m_strBackUri, stModelInfo.nExamID, stModelInfo.nSubjectID);
+				pTask->pUser = pUser;
+				pTask->strMsg = "createModel";
+				pTask->nExamID = stModelInfo.nExamID;
+				pTask->nSubjectID = stModelInfo.nSubjectID;
+
+				g_fmScanReq.lock();
+				g_lScanReq.push_back(pTask);
+				g_fmScanReq.unlock();
+			}
+			else	//已经存在此模板
+			{
+
+			}
+		}
+		break;
 	default:
 		bFind = FALSE;
 		break;

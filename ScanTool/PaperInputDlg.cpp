@@ -76,6 +76,7 @@ BOOL CPaperInputDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	USES_CONVERSION;
 	InitUI();
 	SeachModel();
 	if (NULL != m_pModel)
@@ -84,7 +85,7 @@ BOOL CPaperInputDlg::OnInitDialog()
 		{
 			CString strItemName;
 			m_comboModel.GetLBText(i, strItemName);
-			if (strItemName == m_pModel->strModelName)
+			if (strItemName == A2T(m_pModel->strModelName.c_str()))
 			{
 				m_comboModel.SetCurSel(i);
 				m_ncomboCurrentSel = i;
@@ -774,7 +775,7 @@ void CPaperInputDlg::OnNMDblclkListPapers(NMHDR *pNMHDR, LRESULT *pResult)
 	{
 		if (i == 0)
 		{
-			m_strModelName = (*itPaper)->pModel->strModelName;
+			m_strModelName = A2T((*itPaper)->pModel->strModelName.c_str());
 		}
 		int nCount = m_lPaperCtrl.GetItemCount();
 		char szCount[10] = { 0 };

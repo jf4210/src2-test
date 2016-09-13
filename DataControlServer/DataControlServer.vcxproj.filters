@@ -141,6 +141,9 @@
     <ClInclude Include="miniunz\zlib.h">
       <Filter>解压\miniz</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\common\modelInfo.h">
+      <Filter>global</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ExamServerMgr.cpp">

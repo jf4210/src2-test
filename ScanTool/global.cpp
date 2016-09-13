@@ -247,8 +247,8 @@ pMODEL LoadModelFile(CString strModelPath)
 		Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
 
 		pModel = new MODEL;
-		pModel->strModelName	= A2T(CMyCodeConvert::Utf8ToGb2312(objData->get("modelName").convert<std::string>()).c_str());
-		pModel->strModelDesc	= A2T(CMyCodeConvert::Utf8ToGb2312(objData->get("modelDesc").convert<std::string>()).c_str());
+		pModel->strModelName	= CMyCodeConvert::Utf8ToGb2312(objData->get("modelName").convert<std::string>());
+		pModel->strModelDesc	= CMyCodeConvert::Utf8ToGb2312(objData->get("modelDesc").convert<std::string>());
 		if (objData->has("modelType"))
 			pModel->nType		= objData->get("modelType").convert<int>();
 		else
@@ -270,7 +270,7 @@ pMODEL LoadModelFile(CString strModelPath)
 
 			pPAPERMODEL paperModelInfo = new PAPERMODEL;
 			paperModelInfo->nPaper = jsnPaperObj->get("paperNum").convert<int>();
-			paperModelInfo->strModelPicName = A2T(CMyCodeConvert::Utf8ToGb2312(jsnPaperObj->get("modelPicName").convert<std::string>()).c_str());
+			paperModelInfo->strModelPicName = CMyCodeConvert::Utf8ToGb2312(jsnPaperObj->get("modelPicName").convert<std::string>());
 
 			if (jsnPaperObj->has("picW"))			//add on 16.8.29
 				paperModelInfo->nPicW = jsnPaperObj->get("picW").convert<int>();
@@ -2150,34 +2150,38 @@ bool GetOMR(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 	{
 		Poco::JSON::Object::Ptr objElement = arryElement->getObject(m);
 		Poco::JSON::Object::Ptr objItem = objElement->getObject("item");
-		Poco::JSON::Array::Ptr arryQuestions = objItem->getArray("questions");
-		for (int n = 0; n < arryQuestions->size(); n++)
+		int nQuestionType = objElement->get("type").convert<int>();
+		if (nQuestionType == 11)	//11表示选择题
 		{
-			Poco::JSON::Object::Ptr objQuestion = arryQuestions->getObject(n);
-			OMR_QUESTION omrItem;
-			omrItem.nTH = objQuestion->get("num").convert<int>();
-			omrItem.nSingle = objQuestion->get("choiceType").convert<int>() - 1;
-
-			Poco::JSON::Array::Ptr arryOptions = objQuestion->getArray("options");
-			for (int k = 0; k < arryOptions->size(); k++)
+			Poco::JSON::Array::Ptr arryQuestions = objItem->getArray("questions");
+			for (int n = 0; n < arryQuestions->size(); n++)
 			{
-				Poco::JSON::Object::Ptr objOptions = arryOptions->getObject(k);
-				Poco::JSON::Object::Ptr objPanel = objOptions->getObject("panel");
-				RECTINFO rc;
-				rc.eCPType = OMR;
-				rc.rt.x = objPanel->get("x").convert<int>();
-				rc.rt.y = objPanel->get("y").convert<int>();
-				rc.rt.width = objPanel->get("width").convert<int>();
-				rc.rt.height = objPanel->get("height").convert<int>();
-				rc.nHItem = objPanel->get("horIndex").convert<int>();
-				rc.nVItem = objPanel->get("verIndex").convert<int>();
-				rc.nAnswer = (int)objOptions->get("label").convert<char>() - 65;
-				rc.nTH = omrItem.nTH;
-				rc.nSingle = omrItem.nSingle;
-				omrItem.lSelAnswer.push_back(rc);
+				Poco::JSON::Object::Ptr objQuestion = arryQuestions->getObject(n);
+				OMR_QUESTION omrItem;
+				omrItem.nTH = objQuestion->get("num").convert<int>();
+				omrItem.nSingle = objQuestion->get("choiceType").convert<int>() - 1;
+
+				Poco::JSON::Array::Ptr arryOptions = objQuestion->getArray("options");
+				for (int k = 0; k < arryOptions->size(); k++)
+				{
+					Poco::JSON::Object::Ptr objOptions = arryOptions->getObject(k);
+					Poco::JSON::Object::Ptr objPanel = objOptions->getObject("panel");
+					RECTINFO rc;
+					rc.eCPType = OMR;
+					rc.rt.x = objPanel->get("x").convert<int>();
+					rc.rt.y = objPanel->get("y").convert<int>();
+					rc.rt.width = objPanel->get("width").convert<int>();
+					rc.rt.height = objPanel->get("height").convert<int>();
+					rc.nHItem = objPanel->get("horIndex").convert<int>();
+					rc.nVItem = objPanel->get("verIndex").convert<int>();
+					rc.nAnswer = (int)objOptions->get("label").convert<char>() - 65;
+					rc.nTH = omrItem.nTH;
+					rc.nSingle = omrItem.nSingle;
+					omrItem.lSelAnswer.push_back(rc);
+				}
+				pPaperModel->lOMR2.push_back(omrItem);
 			}
-			pPaperModel->lOMR2.push_back(omrItem);
-		}
+		}		
 	}
 	return true;
 }
@@ -2243,14 +2247,14 @@ pMODEL LoadMakePaperData(std::string strData)
 			if (i == 0)
 			{
 				Poco::JSON::Object::Ptr objCurSubject = objSubject->getObject("curSubject");
-				pModel->strModelName = A2T(CMyCodeConvert::Utf8ToGb2312(objCurSubject->get("name").convert<std::string>()).c_str());
+				pModel->strModelName = CMyCodeConvert::Utf8ToGb2312(objCurSubject->get("name").convert<std::string>());
 			}			
 
 			std::string strName = Poco::format("model%d.jpg", i + 1);
 
 			pPAPERMODEL pPaperModel = new PAPERMODEL;
 			pPaperModel->nPaper = objPageNum->get("curPageNum").convert<int>() - 1;			//add from 0
-			pPaperModel->strModelPicName = A2T(strName.c_str());	//图片名称，目前不知道，考虑从PDF直接转图片然后命名			//**********	test	*****************
+			pPaperModel->strModelPicName = strName;	//图片名称，目前不知道，考虑从PDF直接转图片然后命名			//**********	test	*****************
 			
  			//同步头
 			GetHeader(objTK, pPaperModel);
@@ -2567,7 +2571,7 @@ bool InitModelRecog(pMODEL pModel)
 	USES_CONVERSION;
 	for(int i = 0; i < pModel->vecPaperModel.size(); i++)
 	{
-		std::string strModelPicPath = g_strModelSavePath + "\\" + T2A(pModel->strModelName + _T("\\") + pModel->vecPaperModel[i]->strModelPicName);
+		std::string strModelPicPath = g_strModelSavePath + "\\" + pModel->strModelName + "\\" + pModel->vecPaperModel[i]->strModelPicName;
 
 		cv::Mat matSrc = cv::imread(strModelPicPath);
 

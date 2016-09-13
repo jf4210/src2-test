@@ -52,6 +52,7 @@
 #include "unzip.h"
 #include "MyCodeConvert.h"
 #include "./pdf2jpg/MuPDFConvert.h"
+#include "modelInfo.h"
 
 //#define PIC_RECTIFY_TEST	//图像旋转纠正测试
 #define WarpAffine_TEST		//仿射变换测试
@@ -115,8 +116,8 @@
 #define MAX_DLG_WIDTH	1024
 #define MAX_DLG_HEIGHT	768
 
-#define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}
-#define SAFE_RELEASE_ARRY(pObj) if(pObj) {delete[] pObj; pObj = NULL;}
+// #define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}
+// #define SAFE_RELEASE_ARRY(pObj) if(pObj) {delete[] pObj; pObj = NULL;}
 
 extern CString				g_strCurrentPath;
 extern std::string			g_strPaperSavePath;
@@ -144,6 +145,7 @@ extern int		g_RecogGrayMax_OMR;		//OMR计算灰度的最大考试范围
 extern bool				g_bCmdConnect;		//命令通道连接
 extern bool				g_bFileConnect;		//文件通道连接
 
+#if 0
 typedef enum CPType
 {
 	UNKNOWN = 0,
@@ -246,7 +248,7 @@ typedef struct _PaperModel_
 	int			nPaper;					//标识此模板属于第几张试卷
 	int			nPicW;					//图片宽
 	int			nPicH;					//图片高
-	CString		strModelPicName;		//模板图片名称
+	std::string	strModelPicName;		//模板图片名称
 	cv::Rect	rtHTracker;
 	cv::Rect	rtVTracker;
 	cv::Rect	rtSNTracker;
@@ -291,8 +293,8 @@ typedef struct _Model_
 	int			nExamID;
 	int			nSubjectID;
 	int			nSaveMode;				//保存模式: 1-本地模式，2-远程联网模式
-	CString		strModelName;			//模板名称
-	CString		strModelDesc;			//模板描述
+	std::string	strModelName;			//模板名称
+	std::string	strModelDesc;			//模板描述
 
 	std::vector<pPAPERMODEL> vecPaperModel;	//存储每一页试卷的模板信息
 	_Model_()
@@ -318,15 +320,12 @@ typedef struct _Model_
 	}
 }MODEL, *pMODEL;
 typedef std::list<pMODEL> MODELLIST;	//模板列表
-
+#endif
 
 typedef struct _PicInfo_				//图片信息
 {
 	bool			bRecoged;		//是否已经识别过
 	bool			bFindIssue;		//是否找到问题点
-//	bool			bImgOpen;		//试卷图片是否已经打开，打开了就不需要再次打开
-//	cv::Point		ptModelFix;		//模板的定点
-//	cv::Point		ptFix;			//定点位置
 	void*			pPaper;			//所属试卷的信息
 	cv::Rect		rtFix;			//定点矩形
 	std::string		strPicName;		//图片名称

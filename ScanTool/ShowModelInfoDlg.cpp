@@ -154,9 +154,10 @@ void CShowModelInfoDlg::ShowModelInfo(pMODEL pModel, int nFlag /*= 0*/)
 		UpdateData(FALSE);
 		return;
 	}
-
-	m_strModelName = pModel->strModelName;
-	m_strModelDesc = pModel->strModelDesc;
+	
+	USES_CONVERSION;
+	m_strModelName = A2T(pModel->strModelName.c_str());
+	m_strModelDesc = A2T(pModel->strModelDesc.c_str());
 
 	if (nFlag > 0)
 	{

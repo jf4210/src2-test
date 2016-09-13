@@ -90,6 +90,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\common\modelInfo.h" />
     <ClInclude Include="..\..\common\Net_Cmd_Protocol.h" />
     <ClInclude Include="crash_dumper_w32.h" />
     <ClInclude Include="DCSDef.h" />

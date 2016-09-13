@@ -1237,6 +1237,7 @@ void CScanToolDlg::OnBnClickedBtnScanmodule()
 		SAFE_RELEASE(dlg.m_pModel);
 	}
 
+	USES_CONVERSION;
 	if (m_pModel)
 	{
 		m_comboModel.ResetContent();
@@ -1246,7 +1247,7 @@ void CScanToolDlg::OnBnClickedBtnScanmodule()
 		{
 			CString strItemName;
 			m_comboModel.GetLBText(i, strItemName);
-			if (strItemName == m_pModel->strModelName)
+			if (strItemName == A2T(m_pModel->strModelName.c_str()))
 			{
 				m_comboModel.SetCurSel(i);
 				m_ncomboCurrentSel = i;
@@ -1281,7 +1282,7 @@ void CScanToolDlg::SearchModel()
 				std::string strModelName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
 				m_comboModel.AddString(A2T(strModelName.c_str()));
 
-				if (m_pModel && m_pModel->strModelName.Compare(A2T(strModelName.c_str())) == 0)
+				if (m_pModel && m_pModel->strModelName.compare(strModelName) == 0)
 				{
 					m_ncomboCurrentSel = m_comboModel.GetCount() - 1;
 				}

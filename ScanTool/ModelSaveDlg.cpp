@@ -117,8 +117,8 @@ BOOL CModelSaveDlg::OnInitDialog()
 	}
 	if (m_pModel)
 	{
-		m_strLocalModelDesc = m_pModel->strModelDesc;
-		m_strModelName		= m_pModel->strModelName;
+		m_strLocalModelDesc = A2T(m_pModel->strModelDesc.c_str());
+		m_strModelName		= A2T(m_pModel->strModelName.c_str());
 	}	
 
 	UpdateData(FALSE);
