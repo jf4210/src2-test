@@ -1,4 +1,5 @@
 #include "ScanResquestHandler.h"
+#include "miniunz/minizip.c"
 
 
 CScanResquestHandler::CScanResquestHandler()
@@ -235,7 +236,8 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 			}
 			else
 			{
-				pMODEL pModel = CreateModel(object);
+				std::vector<std::vector<int>> vecSheets;
+				pMODEL pModel = CreateModel(object, pTask->nExamID, pTask->nSubjectID, vecSheets);
 
 				char szIndex[50] = { 0 };
 				sprintf(szIndex, "%d_%d", pTask->nExamID, pTask->nSubjectID);
@@ -249,12 +251,33 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 					pModelInfo->pModel = pModel;
 
 					//下载PDF
-					std::string strModelPath = Poco::format("%s/%s", SysSet.m_strModelSavePath, szIndex);
-					Poco::File modelDir(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
-					if (!modelDir.exists())
-						modelDir.createDirectories();
+					std::string strModelPath = SysSet.m_strModelSavePath + "\\";
+					strModelPath.append(szIndex);
+					try
+					{
+						Poco::File modelDir(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
+						if (modelDir.exists())
+							modelDir.remove(true);
 
-					GetPdf(object, strModelPath);
+						modelDir.createDirectories();
+					}
+					catch (Poco::Exception& exc)
+					{
+						std::string strErr = "模板路径(" + strModelPath + ")判断异常: " + exc.message();
+						g_Log.LogOutError(strErr);
+					}
+
+					bool bResult = GetPdf(object, strModelPath);
+					bResult = Pdf2Jpg(strModelPath, vecSheets);
+					if (bResult)
+					{
+						std::cout << "PDF转换完成" << std::endl;
+
+						InitModelRecog(pModel);
+
+						SaveModel(pModel, strModelPath);
+						ZipModel(pModel, strModelPath);
+					}
 				}
 				else
 					SAFE_RELEASE(pModel);
@@ -294,7 +317,8 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 	else if (pTask->strMsg == "ezs")
 		nCmd = USER_RESPONSE_EXAMINFO;
 
-	pTask->pUser->SendResponesInfo(nCmd, ret, (char*)strSendData.c_str(), strSendData.length());
+	if (pTask->pUser)
+		pTask->pUser->SendResponesInfo(nCmd, ret, (char*)strSendData.c_str(), strSendData.length());
 	return bResult;
 }
 
@@ -576,7 +600,7 @@ bool GetQK(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 	return true;
 }
 
-pMODEL CScanResquestHandler::CreateModel(Poco::JSON::Object::Ptr object)
+pMODEL CScanResquestHandler::CreateModel(Poco::JSON::Object::Ptr object, int nExamID, int nSubjectID, std::vector<std::vector<int>>& vecSheets)
 {
 	pMODEL pModel = NULL;
 	Poco::JSON::Array::Ptr arrySheets = object->getArray("sheets");
@@ -584,19 +608,27 @@ pMODEL CScanResquestHandler::CreateModel(Poco::JSON::Object::Ptr object)
 	{
 		Poco::JSON::Object::Ptr objSheet = arrySheets->getObject(k);
 		
-		int nArry[10] = { 0 };
+		std::vector<int> vecPage;
 		Poco::JSON::Array::Ptr arryContents = objSheet->getArray("contents");
-		for (int k = 0; k < arryContents->size(); k++)
+		for (int i = 0; i < arryContents->size(); i++)
 		{
-			int nPage = arryContents->get(k).convert<int>();
-			nArry[k] = nPage;
+			int nPage = arryContents->get(i).convert<int>();
+			vecPage.push_back(nPage);
 		}
+		vecSheets.push_back(vecPage);
 
 		std::string strContent = objSheet->get("content").convert<std::string>();
 		Poco::JSON::Parser parser;
 		Poco::Dynamic::Var result;
 		result = parser.parse(strContent);		//strJsnData
 		Poco::JSON::Array::Ptr arryData = result.extract<Poco::JSON::Array::Ptr>();
+
+		//++test
+		std::stringstream jsnString;
+		arryData->stringify(jsnString, 0);
+		std::string strVal = jsnString.str();
+		g_Log.LogOut(strVal);
+		//--
 
 		pModel = new MODEL;
 		for (int i = 0; i < arryData->size(); i++)
@@ -608,10 +640,13 @@ pMODEL CScanResquestHandler::CreateModel(Poco::JSON::Object::Ptr object)
 			if (i == 0)
 			{
 				Poco::JSON::Object::Ptr objCurSubject = objSubject->getObject("curSubject");
-				pModel->strModelName = CMyCodeConvert::Utf8ToGb2312(objCurSubject->get("name").convert<std::string>());
+//				pModel->strModelName = CMyCodeConvert::Utf8ToGb2312(objCurSubject->get("name").convert<std::string>());		//使用考试ID和科目ID做模板名称
+				char szIndex[30] = { 0 };
+				sprintf(szIndex, "%d_%d", nExamID, nSubjectID);
+				pModel->strModelName = szIndex;
 			}
 
-			std::string strName = Poco::format("model%d.jpg", nArry[i]);
+			std::string strName = Poco::format("model%d.jpg", vecPage[i]);
 
 			pPAPERMODEL pPaperModel = new PAPERMODEL;
 			pPaperModel->nPaper = objPageNum->get("curPageNum").convert<int>() - 1;			//add from 0
@@ -647,6 +682,7 @@ pMODEL CScanResquestHandler::CreateModel(Poco::JSON::Object::Ptr object)
 
 bool CScanResquestHandler::GetPdf(Poco::JSON::Object::Ptr object, std::string strSavePath)
 {
+	bool bResult = true;
 	Poco::JSON::Array::Ptr arrySheets = object->getArray("sheets");
 	for (int i = 0; i < arrySheets->size(); i++)
 	{
@@ -658,14 +694,849 @@ bool CScanResquestHandler::GetPdf(Poco::JSON::Object::Ptr object, std::string st
 			int nPage = arryContents->get(k).convert<int>();
 
 			std::string strUri = Poco::format("%s/sheet/download/%d", SysSet.m_strBackUri, nPage);
-			Poco::URI uri(strUri);
-			std::auto_ptr<std::istream> pStr(Poco::URIStreamOpener::defaultOpener().open(uri));
 
-			std::string strPicPath = Poco::format("%s\\model%d.pdf", strSavePath, nPage);
-			std::ofstream out(strPicPath, std::ios::binary);
-			Poco::StreamCopier::copyStream(*pStr.get(), out);
+			std::string strLog;
+			clock_t start, end;
+			try
+			{
+				start = clock();
+				Poco::URI uri(strUri);
+				std::auto_ptr<std::istream> pStr(Poco::URIStreamOpener::defaultOpener().open(uri));
 
-			out.close();
+				std::string strPicPath = Poco::format("%s\\model%d.pdf", strSavePath, nPage);
+				std::ofstream out(strPicPath, std::ios::binary);
+				Poco::StreamCopier::copyStream(*pStr.get(), out);
+
+				out.close();
+				end = clock();
+				strLog = Poco::format("下载PDF试卷: %s, time: %d", strUri, (int)(end - start));
+				g_Log.LogOut(strLog);
+				std::cout << strLog << std::endl;
+			}
+			catch (Poco::Exception &exc)
+			{
+				std::string strErr = "下载PDF试卷(" + strUri + ")失败: " + exc.message();
+				g_Log.LogOutError(strErr);
+				std::cout << strLog << std::endl;
+				bResult = false;
+			}			
 		}
 	}
+	return bResult;
+}
+
+bool CScanResquestHandler::Pdf2Jpg(std::string strModelPath, std::vector<std::vector<int>>& vecSheets)
+{
+	bool bResult = true;
+	for (int i = 0; i < vecSheets.size(); i++)
+	{
+		for (int j = 0; j < vecSheets[i].size(); j++)
+		{
+			std::string strPdfPath = Poco::format("%s\\model%d.pdf", strModelPath, vecSheets[i][j]);
+			Poco::File picFile(CMyCodeConvert::Gb2312ToUtf8(strPdfPath));
+			if (!picFile.exists())
+			{
+				std::string strLog = "pdf试卷文件(" + strPdfPath + ")不存在，停止PDF与jpg转换";
+				g_Log.LogOutError(strLog);
+				std::cout << strLog << std::endl;
+				bResult = false;
+				return bResult;
+			}
+			int nPos = strPdfPath.rfind('.');
+			std::string strPicOutPath = strPdfPath.substr(0, nPos);
+			strPicOutPath.append(".jpg");
+
+			std::wstring strWSrc;
+			Poco::UnicodeConverter::toUTF16(strPdfPath, strWSrc);
+
+			clock_t start, end;
+			start = clock();
+			CMuPDFConvert pdfConvert;
+			int nNum = 0;
+			bResult = pdfConvert.Pdf2Png(strWSrc.c_str(), strPicOutPath.c_str(), nNum);
+			end = clock();
+			std::string strLog;
+			if (bResult)
+				strLog = Poco::format("pdf转jpg成功: %s, time: %d", strPicOutPath, (int)(end - start));
+			else
+				strLog = Poco::format("pdf转jpg失败: %s, time: %d", strPicOutPath, (int)(end - start));
+			g_Log.LogOut(strLog);
+			std::cout << strLog << std::endl;
+
+			try
+			{
+				picFile.remove(true);
+				std::string  strLog = "删除pdf试卷文件(" + strPdfPath + ")成功";
+				g_Log.LogOut(strLog);
+			}
+			catch (Poco::Exception& exc)
+			{
+				std::string strErr = "删除pdf试卷文件(" + strPdfPath + ")失败: " + exc.message();
+				g_Log.LogOutError(strErr);
+			}
+		}
+	}
+	return bResult;
+}
+
+//++ 识别相关
+void SharpenImage(const cv::Mat &image, cv::Mat &result)
+{
+	//创建并初始化滤波模板
+	cv::Mat kernel(3, 3, CV_32F, cv::Scalar(0));
+	kernel.at<float>(1, 1) = 5;
+	kernel.at<float>(0, 1) = -1.0;
+	kernel.at<float>(1, 0) = -1.0;
+	kernel.at<float>(1, 2) = -1.0;
+	kernel.at<float>(2, 1) = -1.0;
+
+	result.create(image.size(), image.type());
+
+	//对图像进行滤波
+	cv::filter2D(image, result, image.depth(), kernel);
+}
+
+bool SortByPositionX(RECTINFO& rc1, RECTINFO& rc2)
+{
+	bool bResult = true;
+	bResult = rc1.rt.x < rc2.rt.x ? true : false;
+	if (!bResult)
+	{
+		if (rc1.rt.x == rc2.rt.x)
+			bResult = rc1.rt.y < rc2.rt.y ? true : false;
+	}
+	return bResult;
+}
+bool SortByPositionY(RECTINFO& rc1, RECTINFO& rc2)
+{
+	bool bResult = true;
+	bResult = rc1.rt.y < rc2.rt.y ? true : false;
+	if (!bResult)
+	{
+		if (rc1.rt.y == rc2.rt.y)
+			bResult = rc1.rt.x < rc2.rt.x ? true : false;
+	}
+	return bResult;
+}
+
+bool RecogHHead(int nPic, cv::Mat& matCompPic, pPAPERMODEL pPicModel, RECTINFO rc)
+{
+	bool bResult = true;
+	std::vector<RECTINFO> vecH_Head;
+
+	std::string strErrDesc;
+
+	std::vector<cv::Rect>RectCompList;
+	try
+	{
+		if (rc.rt.x < 0) rc.rt.x = 0;
+		if (rc.rt.y < 0) rc.rt.y = 0;
+		if (rc.rt.br().x > matCompPic.cols)
+		{
+			rc.rt.width = matCompPic.cols - rc.rt.x;
+		}
+		if (rc.rt.br().y > matCompPic.rows)
+		{
+			rc.rt.height = matCompPic.rows - rc.rt.y;
+		}
+
+		cv::Mat matCompRoi;
+		matCompRoi = matCompPic(rc.rt);
+
+		cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+		GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
+		SharpenImage(matCompRoi, matCompRoi);
+
+		int nThreshold = 100;
+		threshold(matCompRoi, matCompRoi, nThreshold, 255, cv::THRESH_BINARY);
+
+		cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
+		cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));	//Size(6, 6)	普通空白框可识别
+		cv::dilate(matCompRoi, matCompRoi, element);
+		IplImage ipl_img(matCompRoi);
+
+		//the parm. for cvFindContours  
+		CvMemStorage* storage = cvCreateMemStorage(0);
+		CvSeq* contour = 0;
+
+		//提取轮廓  
+		cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+		int nYSum = 0;
+		for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
+		{
+			CvRect aRect = cvBoundingRect(contour, 0);
+			cv::Rect rm = aRect;
+			rm.x = rm.x + rc.rt.x;
+			rm.y = rm.y + rc.rt.y;
+
+			RectCompList.push_back(rm);
+			nYSum += rm.y;
+		}
+	}
+	catch (cv::Exception& exc)
+	{
+		std::string strLog = "识别水平同步头异常: " + exc.msg;
+		g_Log.LogOutError(strLog);
+
+		bResult = false;
+	}
+	if (RectCompList.size() == 0)
+	{
+		bResult = false;
+		strErrDesc = "水平同步头数量为0.";
+	}
+	else
+	{
+		for (int i = 0; i < RectCompList.size(); i++)
+		{
+			RECTINFO rcHead;
+			rcHead.rt = RectCompList[i];
+			rcHead.eCPType = H_HEAD;
+			vecH_Head.push_back(rcHead);
+		}
+		std::sort(vecH_Head.begin(), vecH_Head.end(), SortByPositionX);
+
+		for (int i = 0; i < vecH_Head.size(); i++)
+			pPicModel->lH_Head.push_back(vecH_Head[i]);
+	}
+	if (!bResult)
+	{
+		char szLog[MAX_PATH] = { 0 };
+		sprintf_s(szLog, "识别水平同步头失败, 原因: %s\n", strErrDesc.c_str());
+		g_Log.LogOutError(std::string(szLog));
+	}
+	return bResult;
+}
+
+bool RecogVHead(int nPic, cv::Mat& matCompPic, pPAPERMODEL pPicModel, RECTINFO rc)
+{
+	bool bResult = true;
+	std::vector<RECTINFO> vecV_Head;
+
+	std::string strErrDesc;
+	std::vector<cv::Rect>RectCompList;
+	try
+	{
+		if (rc.rt.x < 0) rc.rt.x = 0;
+		if (rc.rt.y < 0) rc.rt.y = 0;
+		if (rc.rt.br().x > matCompPic.cols)
+		{
+			rc.rt.width = matCompPic.cols - rc.rt.x;
+		}
+		if (rc.rt.br().y > matCompPic.rows)
+		{
+			rc.rt.height = matCompPic.rows - rc.rt.y;
+		}
+
+		cv::Mat matCompRoi;
+		matCompRoi = matCompPic(rc.rt);
+
+		cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+		GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
+		SharpenImage(matCompRoi, matCompRoi);
+
+		int nThreshold = 100;
+		threshold(matCompRoi, matCompRoi, nThreshold, 255, cv::THRESH_BINARY);
+
+		cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
+		cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));	//Size(6, 6)	普通空白框可识别
+		cv::dilate(matCompRoi, matCompRoi, element);
+		IplImage ipl_img(matCompRoi);
+
+		//the parm. for cvFindContours  
+		CvMemStorage* storage = cvCreateMemStorage(0);
+		CvSeq* contour = 0;
+
+		//提取轮廓  
+		cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+		int nYSum = 0;
+		for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
+		{
+			CvRect aRect = cvBoundingRect(contour, 0);
+			cv::Rect rm = aRect;
+			rm.x = rm.x + rc.rt.x;
+			rm.y = rm.y + rc.rt.y;
+
+			RectCompList.push_back(rm);
+			nYSum += rm.y;
+		}
+	}
+	catch (cv::Exception& exc)
+	{
+		std::string strLog = "识别垂直同步头异常: " + exc.msg;
+		g_Log.LogOutError(strLog);
+
+		bResult = false;
+	}
+	if (RectCompList.size() == 0)
+	{
+		bResult = false;
+		strErrDesc = "垂直同步头数量为0.";
+	}
+	else
+	{
+		for (int i = 0; i < RectCompList.size(); i++)
+		{
+			RECTINFO rcHead;
+			rcHead.rt = RectCompList[i];
+			rcHead.eCPType = V_HEAD;
+			vecV_Head.push_back(rcHead);
+		}
+		std::sort(vecV_Head.begin(), vecV_Head.end(), SortByPositionY);
+
+		for (int i = 0; i < vecV_Head.size(); i++)
+			pPicModel->lV_Head.push_back(vecV_Head[i]);
+	}
+
+	if (!bResult)
+	{
+		char szLog[MAX_PATH] = { 0 };
+		sprintf_s(szLog, "识别垂直同步头失败, 原因: %s\n", strErrDesc.c_str());
+		g_Log.LogOutError(std::string(szLog));
+	}
+	return bResult;
+}
+
+bool GetPositionByHead(pPAPERMODEL pPicModel, int nH, int nV, cv::Rect& rt)
+{
+	RECTLIST::iterator itItemH = pPicModel->lH_Head.begin();
+	for (int i = 0; itItemH != pPicModel->lH_Head.end(); itItemH++, i++)
+	{
+		if (i == nH)
+			break;
+	}
+	RECTLIST::iterator itItemV = pPicModel->lV_Head.begin();
+	for (int i = 0; itItemV != pPicModel->lV_Head.end(); itItemV++, i++)
+	{
+		if (i == nV)
+			break;
+	}
+	rt.x = itItemH->rt.x;
+	rt.y = itItemV->rt.y;
+	rt.width = itItemH->rt.width;
+	rt.height = itItemV->rt.height;
+	return true;
+}
+//--
+
+inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
+{
+	cv::cvtColor(matSrcRoi, matSrcRoi, CV_BGR2GRAY);
+	cv::GaussianBlur(matSrcRoi, matSrcRoi, cv::Size(5, 5), 0, 0);
+	SharpenImage(matSrcRoi, matSrcRoi);
+
+	const int channels[1] = { 0 };
+	const float* ranges[1];
+	const int histSize[1] = { 1 };
+	float hranges[2];
+	if (rc.eCPType != WHITE_CP)
+	{
+		hranges[0] = 0;
+		hranges[1] = static_cast<float>(rc.nThresholdValue);
+		ranges[0] = hranges;
+	}
+	else
+	{
+		hranges[0] = static_cast<float>(rc.nThresholdValue);
+		hranges[1] = 255;	//255			//256时可统计完全空白的点，即RGB值为255的完全空白点;255时只能统计到RGB为254的值，255的值统计不到
+		ranges[0] = hranges;
+	}
+	cv::MatND src_hist;
+	cv::calcHist(&matSrcRoi, 1, channels, cv::Mat(), src_hist, 1, histSize, ranges, false);
+
+	rc.fStandardValue = src_hist.at<float>(0);
+	return true;
+}
+
+bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
+{
+	bool bResult = false;
+
+	for (int i = 0; i < pModel->vecPaperModel.size(); i++)
+	{
+		std::string strModelPicPath = SysSet.m_strModelSavePath + "\\" + pModel->strModelName + "\\" + pModel->vecPaperModel[i]->strModelPicName;
+
+		cv::Mat matSrc = cv::imread(strModelPicPath);
+
+		pPAPERMODEL pPicModel = pModel->vecPaperModel[i];
+
+		//++ test	识别模板的同步头大小
+		RECTLIST::iterator itBegin = pPicModel->lH_Head.begin();
+		RECTINFO rcFist = *itBegin;
+		RECTLIST::reverse_iterator itLast = pPicModel->lH_Head.rbegin();
+		RECTINFO rcLast = *(itLast);
+		RECTINFO rcH_Tracker;
+		cv::Point pt1, pt2;
+		pt1 = rcFist.rt.tl() - cv::Point(15, 15);
+		pt2 = rcLast.rt.br() + cv::Point(15, 15);
+		rcH_Tracker.rt = cv::Rect(pt1, pt2);
+		pPicModel->lH_Head.clear();
+		RecogHHead(i, matSrc, pPicModel, rcH_Tracker);
+
+		itBegin = pPicModel->lV_Head.begin();
+		itLast = pPicModel->lV_Head.rbegin();
+		rcFist = *itBegin;
+		rcLast = *itLast;
+		RECTINFO rcV_Tracker;
+		pt1 = rcFist.rt.tl() - cv::Point(15, 15);
+		pt2 = rcLast.rt.br() + cv::Point(15, 15);
+		rcV_Tracker.rt = cv::Rect(pt1, pt2);
+		pPicModel->lV_Head.clear();
+		RecogVHead(i, matSrc, pPicModel, rcV_Tracker);
+		//--
+
+		RECTLIST::iterator itHead_H = pPicModel->lH_Head.begin();
+		for (; itHead_H != pPicModel->lH_Head.end(); itHead_H++)
+		{
+			itHead_H->nThresholdValue = 150;
+			itHead_H->fStandardValuePercent = 0.75;
+
+			cv::Mat matComp = matSrc(itHead_H->rt);
+			RecogGrayValue(matComp, *itHead_H);
+		}
+		RECTLIST::iterator itHead_V = pPicModel->lV_Head.begin();
+		for (; itHead_V != pPicModel->lV_Head.end(); itHead_V++)
+		{
+			itHead_V->nThresholdValue = 150;
+			itHead_V->fStandardValuePercent = 0.75;
+
+			cv::Mat matComp = matSrc(itHead_V->rt);
+			RecogGrayValue(matComp, *itHead_V);
+		}
+		RECTLIST::iterator itABModel = pPicModel->lABModel.begin();
+		for (; itABModel != pPicModel->lABModel.end(); itABModel++)
+		{
+			itABModel->nThresholdValue = 150;
+			itABModel->fStandardValuePercent = 0.75;
+
+			GetPositionByHead(pPicModel, itABModel->nHItem, itABModel->nVItem, itABModel->rt);
+
+			cv::Mat matComp = matSrc(itABModel->rt);
+			RecogGrayValue(matComp, *itABModel);
+		}
+		RECTLIST::iterator itCourse = pPicModel->lCourse.begin();
+		for (; itCourse != pPicModel->lCourse.end(); itCourse++)
+		{
+			itCourse->nThresholdValue = 150;
+			itCourse->fStandardValuePercent = 0.75;
+
+			GetPositionByHead(pPicModel, itCourse->nHItem, itCourse->nVItem, itCourse->rt);
+
+			cv::Mat matComp = matSrc(itCourse->rt);
+			RecogGrayValue(matComp, *itCourse);
+		}
+		RECTLIST::iterator itQK = pPicModel->lQK_CP.begin();
+		for (; itQK != pPicModel->lQK_CP.end(); itQK++)
+		{
+			itQK->nThresholdValue = 150;
+			itQK->fStandardValuePercent = 0.75;
+
+			GetPositionByHead(pPicModel, itQK->nHItem, itQK->nVItem, itQK->rt);
+
+			cv::Mat matComp = matSrc(itQK->rt);
+			RecogGrayValue(matComp, *itQK);
+		}
+		RECTLIST::iterator itGray = pPicModel->lGray.begin();
+		for (; itGray != pPicModel->lGray.end(); itGray++)
+		{
+			itGray->nThresholdValue = 150;
+			itGray->fStandardValuePercent = 0.75;
+
+			GetPositionByHead(pPicModel, itGray->nHItem, itGray->nVItem, itGray->rt);
+
+			cv::Mat matComp = matSrc(itGray->rt);
+			RecogGrayValue(matComp, *itGray);
+		}
+		RECTLIST::iterator itWhite = pPicModel->lWhite.begin();
+		for (; itWhite != pPicModel->lWhite.end(); itWhite++)
+		{
+			itWhite->nThresholdValue = 225;
+			itWhite->fStandardValuePercent = 0.75;
+
+			GetPositionByHead(pPicModel, itWhite->nHItem, itWhite->nVItem, itWhite->rt);
+
+			cv::Mat matComp = matSrc(itWhite->rt);
+			RecogGrayValue(matComp, *itWhite);
+		}
+		SNLIST::iterator itSN = pPicModel->lSNInfo.begin();
+		for (; itSN != pPicModel->lSNInfo.end(); itSN++)
+		{
+			pSN_ITEM pSNItem = *itSN;
+			RECTLIST::iterator itSNItem = pSNItem->lSN.begin();
+			for (; itSNItem != pSNItem->lSN.end(); itSNItem++)
+			{
+				itSNItem->nThresholdValue = 200;
+				itSNItem->fStandardValuePercent = 1.1;
+
+				GetPositionByHead(pPicModel, itSNItem->nHItem, itSNItem->nVItem, itSNItem->rt);
+
+				cv::Mat matComp = matSrc(itSNItem->rt);
+				RecogGrayValue(matComp, *itSNItem);
+			}
+		}
+		OMRLIST::iterator itOmr = pPicModel->lOMR2.begin();
+		for (; itOmr != pPicModel->lOMR2.end(); itOmr++)
+		{
+			RECTLIST::iterator itOmrItem = itOmr->lSelAnswer.begin();
+			for (; itOmrItem != itOmr->lSelAnswer.end(); itOmrItem++)
+			{
+				itOmrItem->nThresholdValue = 235;
+				itOmrItem->fStandardValuePercent = 1.1;
+
+				GetPositionByHead(pPicModel, itOmrItem->nHItem, itOmrItem->nVItem, itOmrItem->rt);
+
+				cv::Mat matComp = matSrc(itOmrItem->rt);
+				RecogGrayValue(matComp, *itOmrItem);
+			}
+		}
+	}
+	return bResult;
+}
+
+bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string strModelPath)
+{
+	Poco::JSON::Object jsnModel;
+	Poco::JSON::Array  jsnPicModel;
+	Poco::JSON::Array  jsnPaperModel;				//卷形模板，AB卷用
+	for (int i = 0; i < pModel->nPicNum; i++)
+	{
+		Poco::JSON::Object jsnPaperObj;
+
+		std::string strPicName = pModel->vecPaperModel[i]->strModelPicName;
+
+		Poco::JSON::Array jsnSNArry;
+		Poco::JSON::Array jsnSelHTrackerArry;
+		Poco::JSON::Array jsnSelVTrackerArry;
+		Poco::JSON::Array jsnSelRoiArry;
+		Poco::JSON::Array jsnOMRArry;
+		Poco::JSON::Array jsnFixCPArry;
+		Poco::JSON::Array jsnHHeadArry;
+		Poco::JSON::Array jsnVHeadArry;
+		Poco::JSON::Array jsnABModelArry;
+		Poco::JSON::Array jsnCourseArry;
+		Poco::JSON::Array jsnQKArry;
+		Poco::JSON::Array jsnGrayCPArry;
+		Poco::JSON::Array jsnWhiteCPArry;
+		RECTLIST::iterator itFix = pModel->vecPaperModel[i]->lFix.begin();
+		for (; itFix != pModel->vecPaperModel[i]->lFix.end(); itFix++)
+		{
+			Poco::JSON::Object jsnObj;
+			jsnObj.set("eType", (int)itFix->eCPType);
+			jsnObj.set("left", itFix->rt.x);
+			jsnObj.set("top", itFix->rt.y);
+			jsnObj.set("width", itFix->rt.width);
+			jsnObj.set("height", itFix->rt.height);
+			jsnObj.set("thresholdValue", itFix->nThresholdValue);
+			jsnObj.set("standardValPercent", itFix->fStandardValuePercent);
+			jsnObj.set("standardVal", itFix->fStandardValue);
+			jsnFixCPArry.add(jsnObj);
+		}
+		RECTLIST::iterator itHHead = pModel->vecPaperModel[i]->lH_Head.begin();
+		for (; itHHead != pModel->vecPaperModel[i]->lH_Head.end(); itHHead++)
+		{
+			Poco::JSON::Object jsnObj;
+			jsnObj.set("eType", (int)itHHead->eCPType);
+			jsnObj.set("left", itHHead->rt.x);
+			jsnObj.set("top", itHHead->rt.y);
+			jsnObj.set("width", itHHead->rt.width);
+			jsnObj.set("height", itHHead->rt.height);
+			jsnObj.set("thresholdValue", itHHead->nThresholdValue);
+			jsnObj.set("standardValPercent", itHHead->fStandardValuePercent);
+			jsnObj.set("standardVal", itHHead->fStandardValue);
+			jsnHHeadArry.add(jsnObj);
+		}
+		RECTLIST::iterator itVHead = pModel->vecPaperModel[i]->lV_Head.begin();
+		for (; itVHead != pModel->vecPaperModel[i]->lV_Head.end(); itVHead++)
+		{
+			Poco::JSON::Object jsnObj;
+			jsnObj.set("eType", (int)itVHead->eCPType);
+			jsnObj.set("left", itVHead->rt.x);
+			jsnObj.set("top", itVHead->rt.y);
+			jsnObj.set("width", itVHead->rt.width);
+			jsnObj.set("height", itVHead->rt.height);
+			jsnObj.set("thresholdValue", itVHead->nThresholdValue);
+			jsnObj.set("standardValPercent", itVHead->fStandardValuePercent);
+			jsnObj.set("standardVal", itVHead->fStandardValue);
+			jsnVHeadArry.add(jsnObj);
+		}
+		RECTLIST::iterator itABModel = pModel->vecPaperModel[i]->lABModel.begin();
+		for (; itABModel != pModel->vecPaperModel[i]->lABModel.end(); itABModel++)
+		{
+			Poco::JSON::Object jsnObj;
+			jsnObj.set("eType", (int)itABModel->eCPType);
+			jsnObj.set("left", itABModel->rt.x);
+			jsnObj.set("top", itABModel->rt.y);
+			jsnObj.set("width", itABModel->rt.width);
+			jsnObj.set("height", itABModel->rt.height);
+			jsnObj.set("hHeadItem", itABModel->nHItem);
+			jsnObj.set("vHeadItem", itABModel->nVItem);
+			jsnObj.set("thresholdValue", itABModel->nThresholdValue);
+			jsnObj.set("standardValPercent", itABModel->fStandardValuePercent);
+			jsnObj.set("standardVal", itABModel->fStandardValue);
+			jsnABModelArry.add(jsnObj);
+		}
+		RECTLIST::iterator itCourse = pModel->vecPaperModel[i]->lCourse.begin();
+		for (; itCourse != pModel->vecPaperModel[i]->lCourse.end(); itCourse++)
+		{
+			Poco::JSON::Object jsnObj;
+			jsnObj.set("eType", (int)itCourse->eCPType);
+			jsnObj.set("left", itCourse->rt.x);
+			jsnObj.set("top", itCourse->rt.y);
+			jsnObj.set("width", itCourse->rt.width);
+			jsnObj.set("height", itCourse->rt.height);
+			jsnObj.set("hHeadItem", itCourse->nHItem);
+			jsnObj.set("vHeadItem", itCourse->nVItem);
+			jsnObj.set("thresholdValue", itCourse->nThresholdValue);
+			jsnObj.set("standardValPercent", itCourse->fStandardValuePercent);
+			jsnObj.set("standardVal", itCourse->fStandardValue);
+			jsnCourseArry.add(jsnObj);
+		}
+		RECTLIST::iterator itQKCP = pModel->vecPaperModel[i]->lQK_CP.begin();
+		for (; itQKCP != pModel->vecPaperModel[i]->lQK_CP.end(); itQKCP++)
+		{
+			Poco::JSON::Object jsnObj;
+			jsnObj.set("eType", (int)itQKCP->eCPType);
+			jsnObj.set("left", itQKCP->rt.x);
+			jsnObj.set("top", itQKCP->rt.y);
+			jsnObj.set("width", itQKCP->rt.width);
+			jsnObj.set("height", itQKCP->rt.height);
+			jsnObj.set("hHeadItem", itQKCP->nHItem);
+			jsnObj.set("vHeadItem", itQKCP->nVItem);
+			jsnObj.set("thresholdValue", itQKCP->nThresholdValue);
+			jsnObj.set("standardValPercent", itQKCP->fStandardValuePercent);
+			jsnObj.set("standardVal", itQKCP->fStandardValue);
+			jsnQKArry.add(jsnObj);
+		}
+		RECTLIST::iterator itGrayCP = pModel->vecPaperModel[i]->lGray.begin();
+		for (; itGrayCP != pModel->vecPaperModel[i]->lGray.end(); itGrayCP++)
+		{
+			Poco::JSON::Object jsnObj;
+			jsnObj.set("eType", (int)itGrayCP->eCPType);
+			jsnObj.set("left", itGrayCP->rt.x);
+			jsnObj.set("top", itGrayCP->rt.y);
+			jsnObj.set("width", itGrayCP->rt.width);
+			jsnObj.set("height", itGrayCP->rt.height);
+			jsnObj.set("hHeadItem", itGrayCP->nHItem);
+			jsnObj.set("vHeadItem", itGrayCP->nVItem);
+			jsnObj.set("thresholdValue", itGrayCP->nThresholdValue);
+			jsnObj.set("standardValPercent", itGrayCP->fStandardValuePercent);
+			jsnObj.set("standardVal", itGrayCP->fStandardValue);
+			jsnGrayCPArry.add(jsnObj);
+		}
+		RECTLIST::iterator itWhiteCP = pModel->vecPaperModel[i]->lWhite.begin();
+		for (; itWhiteCP != pModel->vecPaperModel[i]->lWhite.end(); itWhiteCP++)
+		{
+			Poco::JSON::Object jsnObj;
+			jsnObj.set("eType", (int)itWhiteCP->eCPType);
+			jsnObj.set("left", itWhiteCP->rt.x);
+			jsnObj.set("top", itWhiteCP->rt.y);
+			jsnObj.set("width", itWhiteCP->rt.width);
+			jsnObj.set("height", itWhiteCP->rt.height);
+			jsnObj.set("hHeadItem", itWhiteCP->nHItem);
+			jsnObj.set("vHeadItem", itWhiteCP->nVItem);
+			jsnObj.set("thresholdValue", itWhiteCP->nThresholdValue);
+			jsnObj.set("standardValPercent", itWhiteCP->fStandardValuePercent);
+			jsnObj.set("standardVal", itWhiteCP->fStandardValue);
+			jsnWhiteCPArry.add(jsnObj);
+		}
+		RECTLIST::iterator itSelRoi = pModel->vecPaperModel[i]->lSelFixRoi.begin();
+		for (; itSelRoi != pModel->vecPaperModel[i]->lSelFixRoi.end(); itSelRoi++)
+		{
+			Poco::JSON::Object jsnObj;
+			jsnObj.set("eType", (int)itSelRoi->eCPType);
+			jsnObj.set("left", itSelRoi->rt.x);
+			jsnObj.set("top", itSelRoi->rt.y);
+			jsnObj.set("width", itSelRoi->rt.width);
+			jsnObj.set("height", itSelRoi->rt.height);
+			jsnObj.set("thresholdValue", itSelRoi->nThresholdValue);
+			jsnObj.set("standardValPercent", itSelRoi->fStandardValuePercent);
+			//			jsnObj.set("standardVal", itSelRoi->fStandardValue);
+			jsnSelRoiArry.add(jsnObj);
+		}
+		RECTLIST::iterator itSelHTracker = pModel->vecPaperModel[i]->lSelHTracker.begin();
+		for (; itSelHTracker != pModel->vecPaperModel[i]->lSelHTracker.end(); itSelHTracker++)
+		{
+			Poco::JSON::Object jsnObj;
+			jsnObj.set("eType", (int)itSelHTracker->eCPType);
+			jsnObj.set("left", itSelHTracker->rt.x);
+			jsnObj.set("top", itSelHTracker->rt.y);
+			jsnObj.set("width", itSelHTracker->rt.width);
+			jsnObj.set("height", itSelHTracker->rt.height);
+			jsnObj.set("thresholdValue", itSelHTracker->nThresholdValue);
+			jsnObj.set("standardValPercent", itSelHTracker->fStandardValuePercent);
+			//			jsnObj.set("standardVal", itSelHTracker->fStandardValue);
+			jsnSelHTrackerArry.add(jsnObj);
+		}
+		RECTLIST::iterator itSelVTracker = pModel->vecPaperModel[i]->lSelVTracker.begin();
+		for (; itSelVTracker != pModel->vecPaperModel[i]->lSelVTracker.end(); itSelVTracker++)
+		{
+			Poco::JSON::Object jsnObj;
+			jsnObj.set("eType", (int)itSelVTracker->eCPType);
+			jsnObj.set("left", itSelVTracker->rt.x);
+			jsnObj.set("top", itSelVTracker->rt.y);
+			jsnObj.set("width", itSelVTracker->rt.width);
+			jsnObj.set("height", itSelVTracker->rt.height);
+			jsnObj.set("thresholdValue", itSelVTracker->nThresholdValue);
+			jsnObj.set("standardValPercent", itSelVTracker->fStandardValuePercent);
+			//			jsnObj.set("standardVal", itSelVTracker->fStandardValue);
+			jsnSelVTrackerArry.add(jsnObj);
+		}
+		OMRLIST::iterator itOmr = pModel->vecPaperModel[i]->lOMR2.begin();
+		for (; itOmr != pModel->vecPaperModel[i]->lOMR2.end(); itOmr++)
+		{
+			Poco::JSON::Object jsnTHObj;
+			Poco::JSON::Array  jsnArry;
+			RECTLIST::iterator itOmrSel = itOmr->lSelAnswer.begin();
+			for (; itOmrSel != itOmr->lSelAnswer.end(); itOmrSel++)
+			{
+				Poco::JSON::Object jsnObj;
+				jsnObj.set("eType", (int)itOmrSel->eCPType);
+				jsnObj.set("nTH", itOmrSel->nTH);
+				jsnObj.set("nAnswer", itOmrSel->nAnswer);
+				jsnObj.set("nSingle", itOmrSel->nSingle);
+				jsnObj.set("nOmrRecogFlag", itOmrSel->nRecogFlag);
+				jsnObj.set("left", itOmrSel->rt.x);
+				jsnObj.set("top", itOmrSel->rt.y);
+				jsnObj.set("width", itOmrSel->rt.width);
+				jsnObj.set("height", itOmrSel->rt.height);
+				jsnObj.set("hHeadItem", itOmrSel->nHItem);
+				jsnObj.set("vHeadItem", itOmrSel->nVItem);
+				jsnObj.set("thresholdValue", itOmrSel->nThresholdValue);
+				jsnObj.set("standardValPercent", itOmrSel->fStandardValuePercent);
+				jsnObj.set("standardVal", itOmrSel->fStandardValue);
+				jsnArry.add(jsnObj);
+			}
+			jsnTHObj.set("nTH", itOmr->nTH);
+			jsnTHObj.set("nSingle", itOmr->nSingle);
+			jsnTHObj.set("omrlist", jsnArry);
+			jsnOMRArry.add(jsnTHObj);
+		}
+		SNLIST::iterator itSn = pModel->vecPaperModel[i]->lSNInfo.begin();
+		for (; itSn != pModel->vecPaperModel[i]->lSNInfo.end(); itSn++)
+		{
+			Poco::JSON::Object jsnSNObj;
+			Poco::JSON::Array  jsnArry;
+			RECTLIST::iterator itSnDetail = (*itSn)->lSN.begin();
+			for (; itSnDetail != (*itSn)->lSN.end(); itSnDetail++)
+			{
+				Poco::JSON::Object jsnObj;
+				jsnObj.set("eType", (int)itSnDetail->eCPType);
+				jsnObj.set("nTH", itSnDetail->nTH);
+				jsnObj.set("nSnVal", itSnDetail->nSnVal);
+				jsnObj.set("nAnswer", itSnDetail->nAnswer);
+				jsnObj.set("nSingle", itSnDetail->nSingle);
+				jsnObj.set("nSnRecogFlag", itSnDetail->nRecogFlag);
+				jsnObj.set("left", itSnDetail->rt.x);
+				jsnObj.set("top", itSnDetail->rt.y);
+				jsnObj.set("width", itSnDetail->rt.width);
+				jsnObj.set("height", itSnDetail->rt.height);
+				jsnObj.set("hHeadItem", itSnDetail->nHItem);
+				jsnObj.set("vHeadItem", itSnDetail->nVItem);
+				jsnObj.set("thresholdValue", itSnDetail->nThresholdValue);
+				jsnObj.set("standardValPercent", itSnDetail->fStandardValuePercent);
+				jsnObj.set("standardVal", itSnDetail->fStandardValue);
+				jsnArry.add(jsnObj);
+			}
+			jsnSNObj.set("nItem", (*itSn)->nItem);
+			jsnSNObj.set("nRecogVal", (*itSn)->nRecogVal);
+			jsnSNObj.set("snList", jsnArry);
+			jsnSNArry.add(jsnSNObj);
+		}
+		jsnPaperObj.set("paperNum", i);
+		jsnPaperObj.set("modelPicName", CMyCodeConvert::Gb2312ToUtf8(strPicName));		//CMyCodeConvert::Gb2312ToUtf8(T2A(strPicName))
+		jsnPaperObj.set("FixCP", jsnFixCPArry);
+		jsnPaperObj.set("H_Head", jsnHHeadArry);
+		jsnPaperObj.set("V_Head", jsnVHeadArry);
+		jsnPaperObj.set("ABModel", jsnABModelArry);
+		jsnPaperObj.set("Course", jsnCourseArry);
+		jsnPaperObj.set("QKCP", jsnQKArry);
+		jsnPaperObj.set("GrayCP", jsnGrayCPArry);
+		jsnPaperObj.set("WhiteCP", jsnWhiteCPArry);
+		jsnPaperObj.set("selRoiRect", jsnSelRoiArry);
+		jsnPaperObj.set("hTrackerRect", jsnSelHTrackerArry);
+		jsnPaperObj.set("vTrackerRect", jsnSelVTrackerArry);
+		jsnPaperObj.set("selOmrRect", jsnOMRArry);
+		jsnPaperObj.set("snList", jsnSNArry);
+
+		jsnPaperObj.set("picW", pModel->vecPaperModel[i]->nPicW);		//add on 16.8.29
+		jsnPaperObj.set("picH", pModel->vecPaperModel[i]->nPicH);		//add on 16.8.29
+		jsnPaperObj.set("rtHTracker.x", pModel->vecPaperModel[i]->rtHTracker.x);
+		jsnPaperObj.set("rtHTracker.y", pModel->vecPaperModel[i]->rtHTracker.y);
+		jsnPaperObj.set("rtHTracker.width", pModel->vecPaperModel[i]->rtHTracker.width);
+		jsnPaperObj.set("rtHTracker.height", pModel->vecPaperModel[i]->rtHTracker.height);
+		jsnPaperObj.set("rtVTracker.x", pModel->vecPaperModel[i]->rtVTracker.x);
+		jsnPaperObj.set("rtVTracker.y", pModel->vecPaperModel[i]->rtVTracker.y);
+		jsnPaperObj.set("rtVTracker.width", pModel->vecPaperModel[i]->rtVTracker.width);
+		jsnPaperObj.set("rtVTracker.height", pModel->vecPaperModel[i]->rtVTracker.height);
+		jsnPaperObj.set("rtSNTracker.x", pModel->vecPaperModel[i]->rtSNTracker.x);
+		jsnPaperObj.set("rtSNTracker.y", pModel->vecPaperModel[i]->rtSNTracker.y);
+		jsnPaperObj.set("rtSNTracker.width", pModel->vecPaperModel[i]->rtSNTracker.width);
+		jsnPaperObj.set("rtSNTracker.height", pModel->vecPaperModel[i]->rtSNTracker.height);
+
+		jsnPicModel.add(jsnPaperObj);
+	}
+
+	jsnModel.set("modelName", CMyCodeConvert::Gb2312ToUtf8(pModel->strModelName));		//CMyCodeConvert::Gb2312ToUtf8(T2A(pModel->strModelName))
+	jsnModel.set("modelDesc", CMyCodeConvert::Gb2312ToUtf8(pModel->strModelDesc));
+	jsnModel.set("modelType", pModel->nType);
+	jsnModel.set("modeSaveMode", pModel->nSaveMode);
+	jsnModel.set("paperModelCount", pModel->nPicNum);			//此模板有几页试卷(图片)
+	jsnModel.set("enableModify", pModel->nEnableModify);		//是否可以修改标识
+	jsnModel.set("abPaper", pModel->nABModel);					//是否是AB卷					*************	暂时没加入AB卷的模板	**************
+	jsnModel.set("hasHead", pModel->nHasHead);					//是否有同步头
+	jsnModel.set("nExamId", pModel->nExamID);
+	jsnModel.set("nSubjectId", pModel->nSubjectID);
+	jsnModel.set("paperInfo", jsnPicModel);
+
+	std::stringstream jsnString;
+	jsnModel.stringify(jsnString, 0);
+
+	std::string strFileData;
+#ifdef USES_FILE_CRYPTOGRAM
+	if (!encString(jsnString.str(), strFileData))
+		strFileData = jsnString.str();
+#else
+	strFileData = jsnString.str();
+#endif
+
+	std::string strJsnFile = strModelPath;
+	strJsnFile += "\\model.dat";
+	ofstream out(strJsnFile);
+	if (!out)	return false;
+	out << strFileData.c_str();
+	out.close();
+
+	return true;
+}
+
+bool CScanResquestHandler::ZipModel(pMODEL pModel, std::string strModelPath)
+{
+	bool bResult = true;
+
+	zipFile zf = NULL;
+#ifdef USEWIN32IOAPI
+	zlib_filefunc64_def ffunc = { 0 };
+#endif
+	char *zipfilename = NULL;
+	const char* password = NULL;
+	password = "static";
+
+	int opt_overwrite = APPEND_STATUS_CREATE;
+	int opt_compress_level = Z_DEFAULT_COMPRESSION;
+
+
+#ifdef USEWIN32IOAPI
+	fill_win32_filefunc64A(&ffunc);
+	zf = zipOpen2_64(zipfilename, opt_overwrite, NULL, &ffunc);
+#else
+	zf = zipOpen64(zipfilename, opt_overwrite);
+#endif
+
+
+
+	return bResult;
 }

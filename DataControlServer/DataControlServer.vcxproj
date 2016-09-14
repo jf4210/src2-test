@@ -58,14 +58,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include;..\..\common</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;..\..\common;.\pdf2jpg\mupdf</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\..\bin\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>zdll.lib;NetOperatorDll.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world310d.lib;libmupdf.lib;zdll.lib;NetOperatorDll.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -77,7 +77,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include;..\..\common</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;..\..\common;.\pdf2jpg\mupdf</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -86,7 +86,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <OutputFile>..\..\bin\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>zdll.lib;NetOperatorDll.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world310.lib;libmupdf.lib;zdll.lib;NetOperatorDll.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -106,6 +106,7 @@
     <ClInclude Include="miniunz\iowin32.h" />
     <ClInclude Include="miniunz\unzip.h" />
     <ClInclude Include="miniunz\zconf.h" />
+    <ClInclude Include="miniunz\zip.h" />
     <ClInclude Include="miniunz\zlib.h" />
     <ClInclude Include="Mission.h" />
     <ClInclude Include="MissionFactory.h" />
@@ -119,6 +120,7 @@
     <ClInclude Include="NetUser.h" />
     <ClInclude Include="PaperRecvMgr.h" />
     <ClInclude Include="PaperUser.h" />
+    <ClInclude Include="pdf2jpg\MuPDFConvert.h" />
     <ClInclude Include="ScanResquestHandler.h" />
     <ClInclude Include="SendToHttpThread.h" />
     <ClInclude Include="SysSet.h" />
@@ -126,6 +128,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="crash_dumper_w32.cpp" />
+    <ClCompile Include="DCSDef.cpp" />
     <ClCompile Include="DecompressThread.cpp" />
     <ClCompile Include="ExamServerMgr.cpp" />
     <ClCompile Include="ListMission.cpp" />
@@ -136,7 +139,9 @@
     <ClCompile Include="miniunz\ioapi.c" />
     <ClCompile Include="miniunz\iowin32.c" />
     <ClCompile Include="miniunz\miniunz.c" />
+    <ClCompile Include="miniunz\minizip.c" />
     <ClCompile Include="miniunz\unzip.c" />
+    <ClCompile Include="miniunz\zip.c" />
     <ClCompile Include="Mission.cpp" />
     <ClCompile Include="MissionFactory.cpp" />
     <ClCompile Include="MissionHandleMgr.cpp" />
@@ -148,6 +153,7 @@
     <ClCompile Include="NetUser.cpp" />
     <ClCompile Include="PaperRecvMgr.cpp" />
     <ClCompile Include="PaperUser.cpp" />
+    <ClCompile Include="pdf2jpg\MuPDFConvert.cpp" />
     <ClCompile Include="ScanResquestHandler.cpp" />
     <ClCompile Include="SendToHttpThread.cpp" />
     <ClCompile Include="SysSet.cpp" />

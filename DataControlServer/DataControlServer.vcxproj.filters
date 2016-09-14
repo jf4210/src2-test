@@ -43,6 +43,9 @@
     <Filter Include="解压\miniz">
       <UniqueIdentifier>{ce57e675-b44c-4036-9e91-8d8273716421}</UniqueIdentifier>
     </Filter>
+    <Filter Include="pdf转jpg">
+      <UniqueIdentifier>{4cde89e0-2d35-4f0a-9c6a-135e01758c63}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ExamServerMgr.h">
@@ -144,6 +147,12 @@
     <ClInclude Include="..\..\common\modelInfo.h">
       <Filter>global</Filter>
     </ClInclude>
+    <ClInclude Include="pdf2jpg\MuPDFConvert.h">
+      <Filter>pdf转jpg</Filter>
+    </ClInclude>
+    <ClInclude Include="miniunz\zip.h">
+      <Filter>解压\miniz</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ExamServerMgr.cpp">
@@ -225,6 +234,18 @@
       <Filter>解压\miniz</Filter>
     </ClCompile>
     <ClCompile Include="miniunz\unzip.c">
+      <Filter>解压\miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="pdf2jpg\MuPDFConvert.cpp">
+      <Filter>pdf转jpg</Filter>
+    </ClCompile>
+    <ClCompile Include="DCSDef.cpp">
+      <Filter>global</Filter>
+    </ClCompile>
+    <ClCompile Include="miniunz\minizip.c">
+      <Filter>解压\miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="miniunz\zip.c">
       <Filter>解压\miniz</Filter>
     </ClCompile>
   </ItemGroup>

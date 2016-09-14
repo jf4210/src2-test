@@ -13,7 +13,11 @@ public:
 
 	bool ParseResult(std::string& strInput, pSCAN_REQ_TASK pTask);
 
-	pMODEL CreateModel(Poco::JSON::Object::Ptr object);
+	pMODEL CreateModel(Poco::JSON::Object::Ptr object, int nExamID, int nSubjectID, std::vector<std::vector<int>>& vecSheets);
 	bool GetPdf(Poco::JSON::Object::Ptr object, std::string strSavePath);
+	bool Pdf2Jpg(std::string strModelPath, std::vector<std::vector<int>>& vecSheets);
+	bool InitModelRecog(pMODEL pModel);
+	bool SaveModel(pMODEL pModel, std::string strModelPath);
+	bool ZipModel(pMODEL pModel, std::string strModelPath);
 };
 

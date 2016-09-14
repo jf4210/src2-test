@@ -2250,20 +2250,20 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		jsnPaperObj.set("selOmrRect", jsnOMRArry);
 		jsnPaperObj.set("snList", jsnSNArry);
 
-		jsnPaperObj.set("picW", m_vecPaperModelInfo[i]->nPicW);		//add on 16.8.29
-		jsnPaperObj.set("picH", m_vecPaperModelInfo[i]->nPicH);		//add on 16.8.29
-		jsnPaperObj.set("rtHTracker.x", m_vecPaperModelInfo[i]->rtHTracker.x);
-		jsnPaperObj.set("rtHTracker.y", m_vecPaperModelInfo[i]->rtHTracker.y);
-		jsnPaperObj.set("rtHTracker.width", m_vecPaperModelInfo[i]->rtHTracker.width);
-		jsnPaperObj.set("rtHTracker.height", m_vecPaperModelInfo[i]->rtHTracker.height);
-		jsnPaperObj.set("rtVTracker.x", m_vecPaperModelInfo[i]->rtVTracker.x);
-		jsnPaperObj.set("rtVTracker.y", m_vecPaperModelInfo[i]->rtVTracker.y);
-		jsnPaperObj.set("rtVTracker.width", m_vecPaperModelInfo[i]->rtVTracker.width);
-		jsnPaperObj.set("rtVTracker.height", m_vecPaperModelInfo[i]->rtVTracker.height);
-		jsnPaperObj.set("rtSNTracker.x", m_vecPaperModelInfo[i]->rtSNTracker.x);
-		jsnPaperObj.set("rtSNTracker.y", m_vecPaperModelInfo[i]->rtSNTracker.y);
-		jsnPaperObj.set("rtSNTracker.width", m_vecPaperModelInfo[i]->rtSNTracker.width);
-		jsnPaperObj.set("rtSNTracker.height", m_vecPaperModelInfo[i]->rtSNTracker.height);
+		jsnPaperObj.set("picW", pModel->vecPaperModel[i]->nPicW);		//add on 16.8.29
+		jsnPaperObj.set("picH", pModel->vecPaperModel[i]->nPicH);		//add on 16.8.29
+		jsnPaperObj.set("rtHTracker.x", pModel->vecPaperModel[i]->rtHTracker.x);
+		jsnPaperObj.set("rtHTracker.y", pModel->vecPaperModel[i]->rtHTracker.y);
+		jsnPaperObj.set("rtHTracker.width", pModel->vecPaperModel[i]->rtHTracker.width);
+		jsnPaperObj.set("rtHTracker.height", pModel->vecPaperModel[i]->rtHTracker.height);
+		jsnPaperObj.set("rtVTracker.x", pModel->vecPaperModel[i]->rtVTracker.x);
+		jsnPaperObj.set("rtVTracker.y", pModel->vecPaperModel[i]->rtVTracker.y);
+		jsnPaperObj.set("rtVTracker.width", pModel->vecPaperModel[i]->rtVTracker.width);
+		jsnPaperObj.set("rtVTracker.height", pModel->vecPaperModel[i]->rtVTracker.height);
+		jsnPaperObj.set("rtSNTracker.x", pModel->vecPaperModel[i]->rtSNTracker.x);
+		jsnPaperObj.set("rtSNTracker.y", pModel->vecPaperModel[i]->rtSNTracker.y);
+		jsnPaperObj.set("rtSNTracker.width", pModel->vecPaperModel[i]->rtSNTracker.width);
+		jsnPaperObj.set("rtSNTracker.height", pModel->vecPaperModel[i]->rtSNTracker.height);
 		
 		jsnPicModel.add(jsnPaperObj);
 	}

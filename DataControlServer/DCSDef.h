@@ -8,6 +8,7 @@
 #include "Net_Cmd_Protocol.h"
 #include "NetUser.h"
 #include "modelInfo.h"
+#include "./pdf2jpg/MuPDFConvert.h"
 
 //#include "TypeDef.h"
 
@@ -16,7 +17,7 @@
 //	#define TEST_FILE_PRESSURE	//文件上传压力测试
 #endif
 
-#define USES_FILE_DNC			//是否对文件使用解密
+#define USES_FILE_CRYPTOGRAM			//是否对文件使用解密
 //#define USE_POCO_UNZIP			//使用poco解压缩zip文件
 
 
@@ -242,3 +243,5 @@ typedef std::list<pSCAN_REQ_TASK> LIST_SCAN_REQ;
 extern Poco::FastMutex		g_fmScanReq;
 extern LIST_SCAN_REQ		g_lScanReq;		//扫描端请求任务列表
 
+bool encString(std::string& strSrc, std::string& strDst);
+bool decString(std::string& strSrc, std::string& strDst);

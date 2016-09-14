@@ -29,6 +29,7 @@ bool SortByArea(cv::Rect& rt1, cv::Rect& rt2)
 {
 	return rt1.area() > rt2.area() ? true : (rt1.area() < rt2.area() ? false : (rt1.x > rt2.x ? true : false));
 }
+
 bool SortByPositionX(RECTINFO& rc1, RECTINFO& rc2)
 {
 	bool bResult = true;
@@ -2386,7 +2387,7 @@ bool RecogHHead(int nPic, cv::Mat& matCompPic, pPAPERMODEL pPicModel, RECTINFO r
 	}
 	catch (cv::Exception& exc)
 	{
-		std::string strLog = "识别垂直同步头异常: " + exc.msg;
+		std::string strLog = "识别水平同步头异常: " + exc.msg;
 		g_pLogger->information(strLog);
 		TRACE(strLog.c_str());
 
@@ -2395,7 +2396,7 @@ bool RecogHHead(int nPic, cv::Mat& matCompPic, pPAPERMODEL pPicModel, RECTINFO r
 	if (RectCompList.size() == 0)
 	{
 		bResult = false;
-		strErrDesc = "垂直同步头数量为0.";
+		strErrDesc = "水平同步头数量为0.";
 	}
 	else
 	{
@@ -2414,7 +2415,7 @@ bool RecogHHead(int nPic, cv::Mat& matCompPic, pPAPERMODEL pPicModel, RECTINFO r
 	if (!bResult)
 	{
 		char szLog[MAX_PATH] = { 0 };
-		sprintf_s(szLog, "识别垂直同步头失败, 原因: %s\n", strErrDesc.c_str());
+		sprintf_s(szLog, "识别水平同步头失败, 原因: %s\n", strErrDesc.c_str());
 		g_pLogger->information(szLog);
 		TRACE(szLog);
 	}
