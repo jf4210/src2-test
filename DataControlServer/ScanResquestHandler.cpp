@@ -1536,7 +1536,17 @@ bool CScanResquestHandler::ZipModel(pMODEL pModel, std::string strModelPath)
 	zf = zipOpen64(zipfilename, opt_overwrite);
 #endif
 
-
+	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
+	Poco::DirectoryIterator it(strUtf8Path);
+	Poco::DirectoryIterator end;
+	while (it != end)
+	{
+		Poco::Path p(it->path());
+		if (it->isFile())
+		{
+		}
+		it++;
+	}
 
 	return bResult;
 }
