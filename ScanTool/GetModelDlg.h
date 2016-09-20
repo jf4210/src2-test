@@ -51,4 +51,5 @@ public:
 	afx_msg void OnBnClickedBtnDown();
 	afx_msg void OnBnClickedBtnExit();
 	afx_msg void OnBnClickedBtnRefreshexam();
+	afx_msg void OnBnClickedBtnCreatemodel();
 };

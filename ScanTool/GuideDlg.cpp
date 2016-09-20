@@ -297,10 +297,16 @@ void CGuideDlg::OnBnClickedBtnParam()
 
 	USES_CONVERSION;
 	bool bChange = false;
-	if (g_strCmdIP != T2A(dlg.m_strCmdIP))		bChange = true;
-	if (g_strFileIP != T2A(dlg.m_strFileIP))	bChange = true;
-	if (g_nFilePort != dlg.m_nFilePort)			bChange = true;
-	if (g_nCmdPort != dlg.m_nCmdPort)			bChange = true;
+	if (g_strCmdIP != T2A(dlg.m_strCmdIP) || g_nCmdPort != dlg.m_nCmdPort)
+	{
+		bChange = true;
+		g_bCmdNeedConnect = true;
+	}
+	if (g_strFileIP != T2A(dlg.m_strFileIP) || g_nFilePort != dlg.m_nFilePort)
+	{
+		bChange = true;
+		g_bFileNeedConnect = true;
+	}
 
 	g_strCmdIP	= T2A(dlg.m_strCmdIP);
 	g_strFileIP = T2A(dlg.m_strFileIP);

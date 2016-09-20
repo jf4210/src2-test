@@ -145,6 +145,9 @@ extern int		g_RecogGrayMax_OMR;		//OMR计算灰度的最大考试范围
 extern bool				g_bCmdConnect;		//命令通道连接
 extern bool				g_bFileConnect;		//文件通道连接
 
+extern bool				g_bCmdNeedConnect;	//命令通道是否需要重连，用于通道地址信息修改的情况
+extern bool				g_bFileNeedConnect;	//文件通道是否需要重连，用于通道地址信息修改的情况
+
 #if 0
 typedef enum CPType
 {

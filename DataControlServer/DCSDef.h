@@ -17,7 +17,7 @@
 //	#define TEST_FILE_PRESSURE	//文件上传压力测试
 #endif
 
-#define USES_FILE_CRYPTOGRAM			//是否对文件使用解密
+#define USES_FILE_CRYPTOGRAM			//是否对文件使用密码
 //#define USE_POCO_UNZIP			//使用poco解压缩zip文件
 
 
@@ -245,3 +245,5 @@ extern LIST_SCAN_REQ		g_lScanReq;		//扫描端请求任务列表
 
 bool encString(std::string& strSrc, std::string& strDst);
 bool decString(std::string& strSrc, std::string& strDst);
+
+std::string calcFileMd5(std::string strPath);

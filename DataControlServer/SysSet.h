@@ -27,9 +27,9 @@ public:
 
 	//心跳监测间隔，单位秒
 	int m_nHeartPacketTime;
-	string m_strCurrentDir;
+	string m_strCurrentDir;			//utf8
 	string m_strUpLoadPath;
-	string m_strDecompressPath;
+	string m_strDecompressPath;		//utf8
 	string m_strModelSavePath;
 	string m_strUpLoadHttpUri;
 	string m_strBackUri;

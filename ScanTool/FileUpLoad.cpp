@@ -340,3 +340,11 @@ void CFileUpLoad::UnInit()
 
 	}
 }
+
+void CFileUpLoad::ReConnectAddr(CString strAddr, USHORT usPort)
+{
+	m_strAddr = strAddr;
+	m_usPort = usPort;
+	m_uThreadType = 1;
+	m_bConnect = FALSE;
+}

@@ -51,6 +51,7 @@ BEGIN_MESSAGE_MAP(CGetModelDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_DOWN, &CGetModelDlg::OnBnClickedBtnDown)
 	ON_BN_CLICKED(IDC_BTN_Exit, &CGetModelDlg::OnBnClickedBtnExit)
 	ON_BN_CLICKED(IDC_BTN_RefreshExam, &CGetModelDlg::OnBnClickedBtnRefreshexam)
+	ON_BN_CLICKED(IDC_BTN_CREATEMODEL, &CGetModelDlg::OnBnClickedBtnCreatemodel)
 END_MESSAGE_MAP()
 
 BOOL CGetModelDlg::OnInitDialog()
@@ -309,6 +310,55 @@ int CGetModelDlg::RecvData()
 				nResult = 3;
 			}
 			break;
+		}
+	}
+	else if (pstHead->usCmd == USER_RESPONSE_CREATE_MODEL)
+	{
+		switch (pstHead->usResult)
+		{
+			case RESULT_CREATE_MODEL_SUCCESS:
+				{
+					std::string strLog = "服务器端生成模板数据成功，请重新刷新数据并下载！";
+					g_pLogger->information(strLog);
+					AfxMessageBox(_T("服务器端生成模板数据成功，请重新刷新数据并下载！"));
+					nResult = 1;
+				}
+				break;
+			case RESULT_CREATE_MODEL_FAIL:
+				{
+					std::string strLog = "服务器端生成模板数据失败，请重试！";
+					g_pLogger->information(strLog);
+					AfxMessageBox(_T("服务器端生成模板数据失败，请重试！"));
+					nResult = 1;
+				}
+				break;
+			case RESULT_CREATE_MODEL_NOFIND:
+				{
+					std::string strLog = "服务器端无法生成模板数据，请确定是否进行过题卡设计操作！";
+					g_pLogger->information(strLog);
+					AfxMessageBox(_T("服务器端无法生成模板数据，请确定是否进行过题卡设计操作！"));
+					nResult = 1;
+				}
+				break;
+			case RESULT_CREATE_MODEL_NONEED:
+				{
+					std::string strLog = "服务器端已经生成了模板，不需要进行再次生成！";
+					g_pLogger->information(strLog);
+					AfxMessageBox(_T("服务器端已经生成了模板，不需要进行再次生成！"));
+					nResult = 1;
+				}
+				break;
+			case RESULT_CREATE_MODEL_DOING:
+				{
+					std::string strLog = "服务器端正在生成扫描模板，请稍后操作！";
+					g_pLogger->information(strLog);
+					AfxMessageBox(_T("服务器端正在生成扫描模板，请稍后操作！"));
+					nResult = 1;
+				}
+				break;
+			default:
+				nResult = 1;
+				break;
 		}
 	}
 	return nResult;
@@ -572,4 +622,66 @@ void CGetModelDlg::InitUI()
 	}
 
 	UpdateData(FALSE);
+}
+
+
+void CGetModelDlg::OnBnClickedBtnCreatemodel()
+{
+	USES_CONVERSION;
+	CString strEzs = _T("");
+#ifdef SHOW_GUIDEDLG
+	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
+
+	strEzs = pDlg->m_strEzs;
+#else
+	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();//GetParent();
+	strEzs = pDlg->m_strEzs;
+#endif
+
+	ST_CMD_HEADER stHead;
+	stHead.usCmd = USER_NEED_CREATE_MODEL;
+	stHead.uPackSize = sizeof(ST_EXAM_INFO);
+	ST_CREATE_MODEL stModelInfo;
+	ZeroMemory(&stModelInfo, sizeof(ST_CREATE_MODEL));
+	stModelInfo.nExamID = m_nExamID;
+	stModelInfo.nSubjectID = m_SubjectID;
+	strcpy(stModelInfo.szEzs, T2A(strEzs));
+
+	Poco::Net::SocketAddress sa(T2A(m_strServerIP), m_nServerPort);
+	m_ss.close();
+	try
+	{
+		Poco::Timespan ts(10, 0);
+		m_ss.connect(sa);
+		m_ss.setReceiveTimeout(ts);
+		
+		char szSendBuf[1024] = { 0 };
+		memcpy(szSendBuf, (char*)&stHead, HEAD_SIZE);
+		memcpy(szSendBuf + HEAD_SIZE, (char*)&stModelInfo, sizeof(ST_CREATE_MODEL));
+		m_ss.sendBytes(szSendBuf, HEAD_SIZE + stHead.uPackSize);
+
+		int nResult = RecvData();
+		if (nResult == 0)
+		{
+			std::string strLog = "连接异常，接收数据失败";
+			g_pLogger->information(strLog);
+			AfxMessageBox(_T("连接异常，接收数据失败"));
+			memset(m_szRecvBuff, 0, sizeof(m_szRecvBuff));
+			m_nRecvLen = 0;
+			m_nWantLen = 0;
+			return;
+		}
+		else if (nResult == 1)
+		{
+			
+		}
+
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strLog = "连接服务器失败，Detail: " + exc.displayText();
+		g_pLogger->information(strLog);
+		TRACE(strLog.c_str());
+		AfxMessageBox(_T("连接服务器失败"));
+	}
 }

@@ -123,14 +123,14 @@ uLong filetime(const char *filename, tm_zip *tmzip, uLong *dostime)
     return ret;
 }
 
-int check_file_exists(const char* filename)
-{
-    FILE* ftestexist = FOPEN_FUNC(filename, "rb");
-    if (ftestexist == NULL)
-        return 0;
-    fclose(ftestexist);
-    return 1;
-}
+// int check_file_exists(const char* filename)
+// {
+//     FILE* ftestexist = FOPEN_FUNC(filename, "rb");
+//     if (ftestexist == NULL)
+//         return 0;
+//     fclose(ftestexist);
+//     return 1;
+// }
 
 int is_large_file(const char* filename)
 {
@@ -173,7 +173,7 @@ int get_file_crc(const char* filenameinzip, void *buf, unsigned long size_buf, u
             }
 
             if (size_read > 0)
-                calculate_crc = crc32(calculate_crc,buf,size_read);
+				calculate_crc = crc32(calculate_crc, (const Bytef *)buf, size_read);
         }
         while ((err == ZIP_OK) && (size_read > 0));
     }
@@ -186,22 +186,22 @@ int get_file_crc(const char* filenameinzip, void *buf, unsigned long size_buf, u
     return err;
 }
 
-void do_banner()
-{
-    printf("MiniZip 1.1, demo of zLib + MiniZip64 package, written by Gilles Vollant\n");
-    printf("more info on MiniZip at http://www.winimage.com/zLibDll/minizip.html\n\n");
-}
-
-void do_help()
-{
-    printf("Usage : minizip [-o] [-a] [-0 to -9] [-p password] [-j] file.zip [files_to_add]\n\n" \
-           "  -o  Overwrite existing file.zip\n" \
-           "  -a  Append to existing file.zip\n" \
-           "  -0  Store only\n" \
-           "  -1  Compress faster\n" \
-           "  -9  Compress better\n\n" \
-           "  -j  exclude path. store only the file name.\n\n");
-}
+// void do_banner()
+// {
+//     printf("MiniZip 1.1, demo of zLib + MiniZip64 package, written by Gilles Vollant\n");
+//     printf("more info on MiniZip at http://www.winimage.com/zLibDll/minizip.html\n\n");
+// }
+// 
+// void do_help()
+// {
+//     printf("Usage : minizip [-o] [-a] [-0 to -9] [-p password] [-j] file.zip [files_to_add]\n\n" \
+//            "  -o  Overwrite existing file.zip\n" \
+//            "  -a  Append to existing file.zip\n" \
+//            "  -0  Store only\n" \
+//            "  -1  Compress faster\n" \
+//            "  -9  Compress better\n\n" \
+//            "  -j  exclude path. store only the file name.\n\n");
+// }
 
 #if 0
 int main(int argc, char *argv[])

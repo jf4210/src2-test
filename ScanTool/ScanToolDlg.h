@@ -154,4 +154,5 @@ public:
 	afx_msg void OnBnClickedBtnScanall();
 	afx_msg void OnClose();
 	afx_msg void OnBnClickedBtnReback();
+	afx_msg void OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2);
 };

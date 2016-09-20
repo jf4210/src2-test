@@ -115,6 +115,7 @@ void CScanResquestHandler::HandleTask(pSCAN_REQ_TASK pTask)
 		{
 			std::string strLog = "发送数据:" + pTask->strRequest + "\t\t后端数据返回错误,不是200 OK";
 			g_Log.LogOut(strLog);
+			std::cout << strLog << std::endl;
 		}
 	}
 	catch (Poco::Exception& exc)
@@ -225,6 +226,12 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 				g_Log.LogOutError(strLog);
 				std::cout << strLog << std::endl;
 			}
+			else
+			{
+				std::string strLog = Poco::format("设置考试科目(%d_%d)的扫描模板名称成功", pTask->nExamID, pTask->nSubjectID);
+				g_Log.LogOut(strLog);
+				std::cout << strLog << std::endl;
+			}
 		}
 		else if (pTask->strMsg == "createModel")
 		{
@@ -233,9 +240,29 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 			if (!bResult)
 			{
 				//后端不存在此模板数据
+				ret = RESULT_CREATE_MODEL_NOFIND;
+				_mapModelLock_.lock();
+				char szIndex[50] = { 0 };
+				sprintf(szIndex, "%d_%d", pTask->nExamID, pTask->nSubjectID);
+				pMODELINFO pModelInfo = NULL;
+				MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
+				if (itFind != _mapModel_.end())
+					_mapModel_.erase(itFind);
+				_mapModelLock_.unlock();
 			}
 			else
 			{
+// 				if (!objResult->isNull("code"))
+// 				{
+// 					std::string strCode = objResult->get("code").convert<std::string>();
+// 					if (strCode == "NO_UPDATED")
+// 					{
+// 
+// 					}
+// 				}
+				clock_t start, end;
+				start = clock();
+
 				std::vector<std::vector<int>> vecSheets;
 				pMODEL pModel = CreateModel(object, pTask->nExamID, pTask->nSubjectID, vecSheets);
 
@@ -268,15 +295,69 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 					}
 
 					bool bResult = GetPdf(object, strModelPath);
-					bResult = Pdf2Jpg(strModelPath, vecSheets);
+					if(bResult)	bResult = Pdf2Jpg(strModelPath, vecSheets);
+					if (bResult) bResult = InitModelRecog(pModel);
+					if (bResult) bResult = SaveModel(pModel, strModelPath);
+					if (bResult) bResult = ZipModel(pModel, strModelPath);
 					if (bResult)
 					{
-						std::cout << "PDF转换完成" << std::endl;
+						
+						pModelInfo->strName = szIndex;
+						pModelInfo->strName.append(".mod");
+						pModelInfo->strPath = CMyCodeConvert::Gb2312ToUtf8(strModelPath + ".mod");
+						pModelInfo->strMd5 = calcFileMd5(pModelInfo->strPath);
 
-						InitModelRecog(pModel);
+						std::string strLog;
+						Poco::File modelDir(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
+						if (modelDir.exists())
+						{
+							modelDir.remove(true);
+							strLog = "模板文件夹(" + strModelPath + ")移除完成";
+							g_Log.LogOut(strLog);
+							std::cout << strLog << std::endl;
+						}
 
-						SaveModel(pModel, strModelPath);
-						ZipModel(pModel, strModelPath);
+						//设置后端数据库中扫描模板的名称
+						Poco::JSON::Object jsnModel;
+						jsnModel.set("examId", pTask->nExamID);
+						jsnModel.set("subjectId", pTask->nSubjectID);
+						jsnModel.set("tmplateName", pModelInfo->strName);
+
+						std::stringstream jsnString;
+						jsnModel.stringify(jsnString, 0);
+
+						std::string strEzs = pTask->strEzs;
+						pSCAN_REQ_TASK pNewTask = new SCAN_REQ_TASK;
+						pNewTask->strUri = SysSet.m_strBackUri + "/scanTemplate";
+						pNewTask->pUser = pTask->pUser;
+						pNewTask->strEzs = "ezs=" + strEzs;
+						pNewTask->strMsg = "setScanModel";
+						pNewTask->strRequest = jsnString.str();
+						g_fmScanReq.lock();
+						g_lScanReq.push_back(pNewTask);
+						g_fmScanReq.unlock();
+
+						end = clock();
+						strLog = Poco::format("模板生成全程完成，耗时(%dms)", (int)(end - start));
+						g_Log.LogOut(strLog);
+						std::cout << strLog << std::endl;
+
+						ret = RESULT_CREATE_MODEL_SUCCESS;
+					}
+					else
+					{
+						ret = RESULT_CREATE_MODEL_FAIL;
+						//删除模板列表中预存的模板信息
+						_mapModelLock_.lock();
+						char szIndex[50] = { 0 };
+						sprintf(szIndex, "%d_%d", pTask->nExamID, pTask->nSubjectID);
+						pMODELINFO pModelInfo = NULL;
+						MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
+						if (itFind != _mapModel_.end())
+							_mapModel_.erase(itFind);
+						_mapModelLock_.unlock();
+
+						SAFE_RELEASE(pModel);
 					}
 				}
 				else
@@ -316,6 +397,8 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 		nCmd = USER_RESPONSE_LOGIN;
 	else if (pTask->strMsg == "ezs")
 		nCmd = USER_RESPONSE_EXAMINFO;
+	else if (pTask->strMsg == "createModel")
+		nCmd = USER_RESPONSE_CREATE_MODEL;
 
 	if (pTask->pUser)
 		pTask->pUser->SendResponesInfo(nCmd, ret, (char*)strSendData.c_str(), strSendData.length());
@@ -624,10 +707,10 @@ pMODEL CScanResquestHandler::CreateModel(Poco::JSON::Object::Ptr object, int nEx
 		Poco::JSON::Array::Ptr arryData = result.extract<Poco::JSON::Array::Ptr>();
 
 		//++test
-		std::stringstream jsnString;
-		arryData->stringify(jsnString, 0);
-		std::string strVal = jsnString.str();
-		g_Log.LogOut(strVal);
+// 		std::stringstream jsnString;
+// 		arryData->stringify(jsnString, 0);
+// 		std::string strVal = jsnString.str();
+// 		g_Log.LogOut(strVal);
 		//--
 
 		pModel = new MODEL;
@@ -674,13 +757,14 @@ pMODEL CScanResquestHandler::CreateModel(Poco::JSON::Object::Ptr object, int nEx
 			//添加试卷模板到总模板
 			pModel->vecPaperModel.push_back(pPaperModel);
 		}
+		pModel->nPicNum = arryData->size();
 		pModel->nType = 1;
 		break;					//************	注意：先不支持AB卷模板	****************
 	}
 	return pModel;
 }
 
-bool CScanResquestHandler::GetPdf(Poco::JSON::Object::Ptr object, std::string strSavePath)
+bool CScanResquestHandler::GetPdf(Poco::JSON::Object::Ptr object, std::string& strSavePath)
 {
 	bool bResult = true;
 	Poco::JSON::Array::Ptr arrySheets = object->getArray("sheets");
@@ -725,7 +809,7 @@ bool CScanResquestHandler::GetPdf(Poco::JSON::Object::Ptr object, std::string st
 	return bResult;
 }
 
-bool CScanResquestHandler::Pdf2Jpg(std::string strModelPath, std::vector<std::vector<int>>& vecSheets)
+bool CScanResquestHandler::Pdf2Jpg(std::string& strModelPath, std::vector<std::vector<int>>& vecSheets)
 {
 	bool bResult = true;
 	for (int i = 0; i < vecSheets.size(); i++)
@@ -733,7 +817,8 @@ bool CScanResquestHandler::Pdf2Jpg(std::string strModelPath, std::vector<std::ve
 		for (int j = 0; j < vecSheets[i].size(); j++)
 		{
 			std::string strPdfPath = Poco::format("%s\\model%d.pdf", strModelPath, vecSheets[i][j]);
-			Poco::File picFile(CMyCodeConvert::Gb2312ToUtf8(strPdfPath));
+			std::string strUtfPdfPath = CMyCodeConvert::Gb2312ToUtf8(strPdfPath);
+			Poco::File picFile(strUtfPdfPath);
 			if (!picFile.exists())
 			{
 				std::string strLog = "pdf试卷文件(" + strPdfPath + ")不存在，停止PDF与jpg转换";
@@ -746,9 +831,11 @@ bool CScanResquestHandler::Pdf2Jpg(std::string strModelPath, std::vector<std::ve
 			std::string strPicOutPath = strPdfPath.substr(0, nPos);
 			strPicOutPath.append(".jpg");
 
+			char szPdfPath[250] = { 0 };
+			strcpy_s(szPdfPath, strUtfPdfPath.c_str());
 			std::wstring strWSrc;
-			Poco::UnicodeConverter::toUTF16(strPdfPath, strWSrc);
-
+			Poco::UnicodeConverter::toUTF16(szPdfPath, strWSrc);
+			
 			clock_t start, end;
 			start = clock();
 			CMuPDFConvert pdfConvert;
@@ -1054,7 +1141,10 @@ inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 
 bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 {
-	bool bResult = false;
+	bool bResult = true;
+	std::string strLog;
+	clock_t start, end;
+	start = clock();
 
 	for (int i = 0; i < pModel->vecPaperModel.size(); i++)
 	{
@@ -1194,10 +1284,15 @@ bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 			}
 		}
 	}
+
+	end = clock();
+	strLog = Poco::format("模板图片校验信息识别完成(%dms)", (int)(end - start));
+	g_Log.LogOut(strLog);
+	std::cout << strLog << std::endl;
 	return bResult;
 }
 
-bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string strModelPath)
+bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 {
 	Poco::JSON::Object jsnModel;
 	Poco::JSON::Array  jsnPicModel;
@@ -1513,21 +1608,51 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string strModelPath)
 	return true;
 }
 
-bool CScanResquestHandler::ZipModel(pMODEL pModel, std::string strModelPath)
+int CScanResquestHandler::ZipModel(pMODEL pModel, std::string& strModelPath)
 {
 	bool bResult = true;
+	std::string strZipName = strModelPath + ".mod";
+
+	try
+	{
+		Poco::File zipModel(CMyCodeConvert::Gb2312ToUtf8(strZipName));
+		if (zipModel.exists())
+			zipModel.remove(true);
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strErr = "模板文件(" + strZipName + ")判断异常: " + exc.message();
+		g_Log.LogOutError(strErr);
+	}
+
+	clock_t startTime, endTime;
+	startTime = clock();
+	std::string strLog = "开始模板文件压缩: " + strZipName;
+	g_Log.LogOut(strLog);
+	std::cout << strLog << std::endl;
 
 	zipFile zf = NULL;
 #ifdef USEWIN32IOAPI
 	zlib_filefunc64_def ffunc = { 0 };
 #endif
-	char *zipfilename = NULL;
+	char *zipfilename = const_cast<char*>(strZipName.c_str());
 	const char* password = NULL;
 	password = "static";
+	
+	void* buf = NULL;
+	int size_buf = WRITEBUFFERSIZE;
+	int err = 0;
+	int errclose = 0;
 
 	int opt_overwrite = APPEND_STATUS_CREATE;
 	int opt_compress_level = Z_DEFAULT_COMPRESSION;
 
+	buf = (void*)malloc(size_buf);
+	if (buf == NULL)
+	{
+		printf("Error allocating memory\n");
+		return ZIP_INTERNALERROR;
+	}
 
 #ifdef USEWIN32IOAPI
 	fill_win32_filefunc64A(&ffunc);
@@ -1542,11 +1667,94 @@ bool CScanResquestHandler::ZipModel(pMODEL pModel, std::string strModelPath)
 	while (it != end)
 	{
 		Poco::Path p(it->path());
+		std::string strFilePath = CMyCodeConvert::Utf8ToGb2312(it->path());
 		if (it->isFile())
 		{
+			Poco::File modelFile(it->path());
+			
+			FILE *fin = NULL;
+			int size_read = 0;
+			const char* filenameinzip = strFilePath.c_str();
+			const char *savefilenameinzip;
+			zip_fileinfo zi = { 0 };
+			unsigned long crcFile = 0;
+			int zip64 = 0;
+			
+			/* Get information about the file on disk so we can store it in zip */
+			filetime(filenameinzip, &zi.tmz_date, &zi.dosDate);
+
+			std::string strName = CMyCodeConvert::Utf8ToGb2312(p.getFileName());
+			savefilenameinzip = strName.c_str();
+
+			/* Add to zip file */
+			err = zipOpenNewFileInZip3_64(zf, savefilenameinzip, &zi,
+										  NULL, 0, NULL, 0, NULL /* comment*/,
+										  (opt_compress_level != 0) ? Z_DEFLATED : 0,
+										  opt_compress_level, 0,
+										  -MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY,
+										  password, crcFile, zip64);
+
+			if (err != ZIP_OK)
+				printf("error in opening %s in zipfile (%d)\n", filenameinzip, err);
+			else
+			{
+				fin = FOPEN_FUNC(filenameinzip, "rb");
+				if (fin == NULL)
+				{
+					err = ZIP_ERRNO;
+					printf("error in opening %s for reading\n", filenameinzip);
+				}
+			}
+
+			if (err == ZIP_OK)
+			{
+				/* Read contents of file and write it to zip */
+				do
+				{
+					size_read = (int)fread(buf, 1, size_buf, fin);
+					if ((size_read < size_buf) && (feof(fin) == 0))
+					{
+						printf("error in reading %s\n", filenameinzip);
+						err = ZIP_ERRNO;
+					}
+
+					if (size_read > 0)
+					{
+						err = zipWriteInFileInZip(zf, buf, size_read);
+						if (err < 0)
+							printf("error in writing %s in the zipfile (%d)\n", filenameinzip, err);
+					}
+				} while ((err == ZIP_OK) && (size_read > 0));
+			}
+
+			if (fin)
+				fclose(fin);
+
+			if (err < 0)
+			{
+				err = ZIP_ERRNO;
+				strLog = "压缩文件失败(" + strName + ")";
+				g_Log.LogOutError(strLog);
+			}
+			else
+			{
+				err = zipCloseFileInZip(zf);
+				if (err != ZIP_OK)
+					printf("error in closing %s in the zipfile (%d)\n", filenameinzip, err);
+			}
 		}
 		it++;
 	}
 
+	errclose = zipClose(zf, NULL);
+	if (errclose != ZIP_OK)
+		printf("error in closing %s (%d)\n", zipfilename, errclose);
+
+	free(buf);
+
+	endTime = clock();
+	strLog = Poco::format("模板文件压缩完成: %s, 时间: %dms", strZipName, (int)(endTime - startTime));
+	g_Log.LogOut(strLog);
+	std::cout << strLog << std::endl;
 	return bResult;
 }

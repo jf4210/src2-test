@@ -294,10 +294,12 @@ int CUserMgr::HandleHeader(CMission* pMission)
 		break;
 	case USER_NEED_CREATE_MODEL:
 		{
-			ST_DOWN_MODEL stModelInfo = *(pST_DOWN_MODEL)(pMission->m_pMissionData + HEAD_SIZE);
+			ST_CREATE_MODEL stModelInfo = *(pST_CREATE_MODEL)(pMission->m_pMissionData + HEAD_SIZE);
 
 			char szIndex[50] = { 0 };
 			sprintf(szIndex, "%d_%d", stModelInfo.nExamID, stModelInfo.nSubjectID);
+
+			_mapModelLock_.lock();
 			pMODELINFO pModelInfo = NULL;
 			MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
 			if (itFind == _mapModel_.end())		//服务器上没有模板，请求后端提供数据生成模板
@@ -306,7 +308,6 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				pModelInfo->nExamID = stModelInfo.nExamID;
 				pModelInfo->nSubjectID = stModelInfo.nSubjectID;
 
-				_mapModelLock_.lock();
 				_mapModel_.insert(MAP_MODEL::value_type(szIndex, pModelInfo));
 				_mapModelLock_.unlock();
 
@@ -316,6 +317,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				pTask->strMsg = "createModel";
 				pTask->nExamID = stModelInfo.nExamID;
 				pTask->nSubjectID = stModelInfo.nSubjectID;
+				pTask->strEzs = stModelInfo.szEzs;
 
 				g_fmScanReq.lock();
 				g_lScanReq.push_back(pTask);
@@ -323,7 +325,12 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			}
 			else	//已经存在此模板
 			{
-
+				_mapModelLock_.unlock();
+				pModelInfo = itFind->second;
+				if (pModelInfo->strPath.empty())
+					pUser->SendResult(USER_RESPONSE_CREATE_MODEL, RESULT_CREATE_MODEL_DOING);
+				else
+					pUser->SendResult(USER_RESPONSE_CREATE_MODEL, RESULT_CREATE_MODEL_NONEED);
 			}
 		}
 		break;

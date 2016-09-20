@@ -22,6 +22,15 @@ void CTcpClient::run()
 {
 	while (!g_nExitFlag)
 	{
+		if (g_bCmdNeedConnect)
+		{
+			if (_strIP != g_strCmdIP || _nPort != g_nCmdPort)
+			{
+				_strIP = g_strCmdIP;
+				_nPort = g_nCmdPort;
+				_bConnect = false;
+			}
+		}
 		if (!_bConnect)
 		{
 			connectServer();
@@ -343,7 +352,7 @@ void CTcpClient::HandleCmd()
 		}
 		break;
 		}
-	}
+	}	
 }
 
 void CTcpClient::HandleTask(pTCP_TASK pTask)

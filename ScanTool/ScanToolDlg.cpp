@@ -24,6 +24,9 @@ using namespace cv;
 bool				g_bCmdConnect = false;		//命令通道连接
 bool				g_bFileConnect = false;		//文件通道连接
 
+bool				g_bCmdNeedConnect = false;	//命令通道是否需要重连，用于通道地址信息修改的情况
+bool				g_bFileNeedConnect = false;	//文件通道是否需要重连，用于通道地址信息修改的情况
+
 int					g_nExitFlag = 0;
 CString				g_strCurrentPath;
 std::string			g_strPaperSavePath;	//试卷扫描后保存的总路径
@@ -144,6 +147,7 @@ BEGIN_MESSAGE_MAP(CScanToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_ScanAll, &CScanToolDlg::OnBnClickedBtnScanall)
 	ON_WM_CLOSE()
 	ON_BN_CLICKED(IDC_BTN_ReBack, &CScanToolDlg::OnBnClickedBtnReback)
+	ON_WM_HOTKEY()
 END_MESSAGE_MAP()
 
 
@@ -261,6 +265,9 @@ BOOL CScanToolDlg::OnInitDialog()
 
 			ScanSrcInit();
 	}
+
+	RegisterHotKey(GetSafeHwnd(), 1001, NULL, VK_F1);//F1键
+	RegisterHotKey(GetSafeHwnd(), 1002, NULL, VK_F2);//F2键  
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -317,6 +324,9 @@ void CScanToolDlg::OnDestroy()
 {
 	CDialogEx::OnDestroy();
 	USES_CONVERSION;
+
+	UnregisterHotKey(GetSafeHwnd(), 1001);//注销F2键  
+	UnregisterHotKey(GetSafeHwnd(), 1002);//注销Alt+1键  
 
 	g_lExamList.clear();
 	g_nExitFlag = 1;
@@ -968,6 +978,9 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 }
 void CScanToolDlg::OnBnClickedBtnScan()
 {
+	if (m_nScanStatus == 1)	//扫描中，不能操作
+		return;
+
 	if (!m_bTwainInit)
 	{
 		m_bTwainInit = InitTwain(m_hWnd);
@@ -998,9 +1011,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		AfxMessageBox(_T("未设置扫描模板，请在模板设置界面选择扫描模板"));	//模板解析错误
 		return;
 	}
-#endif
-	if (m_nScanStatus == 1)	//扫描中，不能操作
-		return;
+#endif	
 
 	int nScanSrc = 0;
 	int nDuplexDef = 1;
@@ -1041,12 +1052,21 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		GetDlgItem(IDC_STATIC_SCANCOUNT)->SetWindowText(_T(""));
 
 		std::string strUtfPath = CMyCodeConvert::Gb2312ToUtf8(szPicTmpPath);
-		Poco::File tmpPath(strUtfPath);
-		if (tmpPath.exists())
-			tmpPath.remove(true);
+		try
+		{
+			Poco::File tmpPath(strUtfPath);
+			if (tmpPath.exists())
+				tmpPath.remove(true);
 
-		Poco::File tmpPath1(strUtfPath);
-		tmpPath1.createDirectories();
+			Poco::File tmpPath1(strUtfPath);
+			tmpPath1.createDirectories();
+		}
+		catch (Poco::Exception& exc)
+		{
+			std::string strLog = "删除临时文件夹失败(" + exc.message() + "): ";
+			strLog.append(szPicTmpPath);
+			g_pLogger->information(strLog);
+		}
 
 		m_strCurrPicSavePath = szPicTmpPath;
 		m_pPapersInfo = new PAPERSINFO();
@@ -1100,6 +1120,9 @@ void CScanToolDlg::OnBnClickedBtnScan()
 
 void CScanToolDlg::OnBnClickedBtnScanall()
 {
+	if (m_nScanStatus == 1)	//扫描中，不能操作
+		return;
+
 	if (!m_bTwainInit)
 	{
 		m_bTwainInit = InitTwain(m_hWnd);
@@ -1128,8 +1151,6 @@ void CScanToolDlg::OnBnClickedBtnScanall()
 		AfxMessageBox(_T("未设置扫描模板，请在模板设置界面选择扫描模板"));	//模板解析错误
 		return;
 	}
-	if (m_nScanStatus == 1)	//扫描中，不能操作
-		return;
 
 	CScanCtrlDlg dlg(m_scanSourceArry);
 	if (dlg.DoModal() != IDOK)
@@ -1160,12 +1181,21 @@ void CScanToolDlg::OnBnClickedBtnScanall()
 		GetDlgItem(IDC_STATIC_SCANCOUNT)->SetWindowText(_T(""));
 
 		std::string strUtfPath = CMyCodeConvert::Gb2312ToUtf8(szPicTmpPath);
-		Poco::File tmpPath(strUtfPath);
-		if (tmpPath.exists())
-			tmpPath.remove(true);
+		try
+		{
+			Poco::File tmpPath(strUtfPath);
+			if (tmpPath.exists())
+				tmpPath.remove(true);
 
-		Poco::File tmpPath1(strUtfPath);
-		tmpPath1.createDirectories();
+			Poco::File tmpPath1(strUtfPath);
+			tmpPath1.createDirectories();
+		}
+		catch (Poco::Exception& exc)
+		{
+			std::string strLog = "删除临时文件夹失败(" + exc.message() + "): ";
+			strLog.append(szPicTmpPath);
+			g_pLogger->information(strLog);
+		}
 
 		m_strCurrPicSavePath = szPicTmpPath;
 		m_pPapersInfo = new PAPERSINFO();
@@ -1650,16 +1680,16 @@ void CScanToolDlg::SetStatusShowInfo(CString strMsg, BOOL bWarn /*= FALSE*/)
 
 BOOL CScanToolDlg::PreTranslateMessage(MSG* pMsg)
 {
-	if (pMsg->message == WM_SYSCHAR)		//WM_SYSCHAR
-	{
-		switch (pMsg->wParam)
-		{
-		case 's':
-		case 'S':
-			OnBnClickedBtnScan();
-			return TRUE;
-		}
-	}
+// 	if (pMsg->message == WM_SYSCHAR)		//WM_SYSCHAR
+// 	{
+// 		switch (pMsg->wParam)
+// 		{
+// 		case 's':
+// 		case 'S':
+// 			OnBnClickedBtnScan();
+// 			return TRUE;
+// 		}
+// 	}
 
 	ProcessMessage(*pMsg);
 
@@ -3297,4 +3327,21 @@ int CScanToolDlg::CheckOrientation(cv::Mat& matSrc, int n)
 	TRACE("%s\n", strLog.c_str());
 
 	return nResult;
+}
+
+
+void CScanToolDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
+{
+	// TODO:  在此添加消息处理程序代码和/或调用默认值
+	if (nHotKeyId == 1001)
+	{
+		if (m_nScanStatus != 1)		//扫描中不进行快捷键响应
+			OnBnClickedBtnScan();
+	}
+	else if (nHotKeyId == 1002)
+	{
+		if (m_nScanStatus != 1)		//扫描中不进行快捷键响应
+			OnBnClickedBtnUploadpapers();
+	}
+	__super::OnHotKey(nHotKeyId, nKey1, nKey2);
 }

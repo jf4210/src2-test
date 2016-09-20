@@ -25,6 +25,15 @@ void CSendFileThread::run()
 
 	while (!g_nExitFlag)
 	{
+		if (g_bFileNeedConnect)
+		{
+			if (_strIp != g_strFileIP || _nPort != g_nFilePort)
+			{
+				_strIp = g_strFileIP;
+				_nPort = g_nFilePort;
+				m_pUpLoad->ReConnectAddr(A2T(_strIp.c_str()), _nPort);
+			}
+		}
 		pSENDTASK pTask = NULL;
 		g_fmSendLock.lock();
 #if 1

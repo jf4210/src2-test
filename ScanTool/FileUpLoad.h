@@ -47,6 +47,8 @@ public:
 	void		ProcessUpLoadDone(BOOL bFlag);
 	BOOL		CheckUpLoadFile();
 
+	void		ReConnectAddr(CString strAddr, USHORT usPort);
+
 	std::list<stUpLoadAns*>		m_listFile; 
 	std::vector<stUpLoadAns*> m_VecAns;
 

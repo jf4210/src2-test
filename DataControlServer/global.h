@@ -60,3 +60,5 @@
 #include "Poco/Crypto/X509Certificate.h"
 #include "Poco/Crypto/CryptoStream.h"
 
+#include "Poco/Checksum.h"
+

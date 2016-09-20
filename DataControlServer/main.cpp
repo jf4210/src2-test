@@ -8,6 +8,7 @@
 #include "ScanResquestHandler.h"
 #include "crash_dumper_w32.h"
 
+
 int		g_nExitFlag = 0;
 CLog	g_Log;
 Poco::FastMutex			g_fmDecompressLock;		//解压文件列表锁
@@ -44,43 +45,7 @@ protected:
 	{
 		ServerApplication::uninitialize();
 	}
-
-	std::string calcFileMd5(std::string strPath)
-	{
-		std::string strResult;
-		try
-		{
-			Poco::MD5Engine md5;
-			Poco::DigestOutputStream dos(md5);
-
-			std::string strgb = CMyCodeConvert::Utf8ToGb2312(strPath);
-
-			std::ifstream istr(strgb, std::ios::binary);
-			if (!istr)
-			{
-				string strLog = "calc MD5 failed 1: ";
-				strLog.append(strPath);
-				g_Log.LogOutError(strLog);
-				std::cout << strLog << std::endl;
-				return false;
-			}
-			Poco::StreamCopier::copyStream(istr, dos);
-			dos.close();
-
-			strResult = Poco::DigestEngine::digestToHex(md5.digest());
-			
-		}
-		catch (...)
-		{
-			string strLog = "calc MD5 failed 3: ";
-			strLog.append(strPath);
-			g_Log.LogOutError(strLog);
-			std::cout << strLog << std::endl;
-			return strResult;
-		}
-		return strResult;
-	}
-
+	
 	void  InitModelInfo()
 	{
 		std::string strModelPath = CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strModelSavePath);
@@ -218,7 +183,7 @@ protected:
 			g_Log.LogOut("StartCmdChannel fail.");
 
 
-#if 1	//test
+#if 0	//test
 		char szIndex[50] = { 0 };
 		strcpy(szIndex, "1_1");
 		pMODELINFO pModelInfo = NULL;
@@ -244,6 +209,11 @@ protected:
 			g_lScanReq.push_back(pTask);
 			g_fmScanReq.unlock();
 		}
+#endif
+
+#if 0	//test
+		std::string strModelTestPath = SysSet.m_strModelSavePath + "\\1_1";
+		test(NULL, strModelTestPath);
 #endif
 
 		waitForTerminationRequest();
