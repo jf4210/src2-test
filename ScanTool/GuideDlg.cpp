@@ -260,6 +260,8 @@ void CGuideDlg::OnBnClickedBtnScan()
 		mouse_event(MOUSEEVENTF_LEFTDOWN, pt.x, pt.y, 0, 0);
 		mouse_event(MOUSEEVENTF_LEFTUP, pt.x, pt.y, 0, 0);
 	}
+	m_pScanDlg->m_bF1Enable = TRUE;
+	m_pScanDlg->m_bF2Enable = TRUE;
 }
 
 void CGuideDlg::OnBnClickedBtnExit()

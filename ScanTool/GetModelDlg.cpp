@@ -356,6 +356,14 @@ int CGetModelDlg::RecvData()
 					nResult = 1;
 				}
 				break;
+			case RESULT_ERROR_UNKNOWN:
+				{
+					std::string strLog = "创建扫描模板时发生未知错误，请重试！";
+					g_pLogger->information(strLog);
+					AfxMessageBox(_T("创建扫描模板时发生未知错误，请重试！"));
+					nResult = 1;
+				}
+				break;
 			default:
 				nResult = 1;
 				break;
@@ -637,6 +645,7 @@ void CGetModelDlg::OnBnClickedBtnCreatemodel()
 	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();//GetParent();
 	strEzs = pDlg->m_strEzs;
 #endif
+	GetDlgItem(IDC_BTN_CREATEMODEL)->EnableWindow(FALSE);
 
 	ST_CMD_HEADER stHead;
 	stHead.usCmd = USER_NEED_CREATE_MODEL;
@@ -651,7 +660,7 @@ void CGetModelDlg::OnBnClickedBtnCreatemodel()
 	m_ss.close();
 	try
 	{
-		Poco::Timespan ts(10, 0);
+		Poco::Timespan ts(15, 0);
 		m_ss.connect(sa);
 		m_ss.setReceiveTimeout(ts);
 		
@@ -669,6 +678,8 @@ void CGetModelDlg::OnBnClickedBtnCreatemodel()
 			memset(m_szRecvBuff, 0, sizeof(m_szRecvBuff));
 			m_nRecvLen = 0;
 			m_nWantLen = 0;
+
+			GetDlgItem(IDC_BTN_CREATEMODEL)->EnableWindow(TRUE);
 			return;
 		}
 		else if (nResult == 1)
@@ -684,4 +695,6 @@ void CGetModelDlg::OnBnClickedBtnCreatemodel()
 		TRACE(strLog.c_str());
 		AfxMessageBox(_T("连接服务器失败"));
 	}
+
+	GetDlgItem(IDC_BTN_CREATEMODEL)->EnableWindow(TRUE);
 }

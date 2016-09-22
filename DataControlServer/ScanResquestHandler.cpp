@@ -252,14 +252,44 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 			}
 			else
 			{
-// 				if (!objResult->isNull("code"))
-// 				{
-// 					std::string strCode = objResult->get("code").convert<std::string>();
-// 					if (strCode == "NO_UPDATED")
-// 					{
-// 
-// 					}
-// 				}
+				char szIndex[50] = { 0 };
+				sprintf(szIndex, "%d_%d", pTask->nExamID, pTask->nSubjectID);
+				std::string strModelPath = SysSet.m_strModelSavePath + "\\";
+				strModelPath.append(szIndex);
+				strModelPath.append(".mod");
+				Poco::File modelFile(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
+
+				if (!objResult->isNull("code"))
+				{
+					std::string strCode = objResult->get("code").convert<std::string>();
+					if (strCode == "NO_UPDATED")	//题卡数据没有修改
+					{
+						//先判断本地是否存在此模板，如果没有，则重新生成
+						if (modelFile.exists())
+							ret = RESULT_CREATE_MODEL_NONEED;
+						else
+							ret = modelHandle(pTask, object);
+					}
+				}
+				else
+				{
+					//删除本地可能已经存在的模板
+					char szIndex[50] = { 0 };
+					sprintf(szIndex, "%d_%d", pTask->nExamID, pTask->nSubjectID);
+					std::string strModelPath = SysSet.m_strModelSavePath + "\\";
+					strModelPath.append(szIndex);
+					strModelPath.append(".mod");
+					try
+					{
+						if (modelFile.exists())
+							modelFile.remove(true);
+					}
+					catch (Poco::Exception& exc)
+					{
+					}
+					ret = modelHandle(pTask, object);
+				}
+				#if 0
 				clock_t start, end;
 				start = clock();
 
@@ -301,7 +331,6 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 					if (bResult) bResult = ZipModel(pModel, strModelPath);
 					if (bResult)
 					{
-						
 						pModelInfo->strName = szIndex;
 						pModelInfo->strName.append(".mod");
 						pModelInfo->strPath = CMyCodeConvert::Gb2312ToUtf8(strModelPath + ".mod");
@@ -328,6 +357,8 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 
 						std::string strEzs = pTask->strEzs;
 						pSCAN_REQ_TASK pNewTask = new SCAN_REQ_TASK;
+						pNewTask->nExamID = pTask->nExamID;
+						pNewTask->nSubjectID = pTask->nSubjectID;
 						pNewTask->strUri = SysSet.m_strBackUri + "/scanTemplate";
 						pNewTask->pUser = pTask->pUser;
 						pNewTask->strEzs = "ezs=" + strEzs;
@@ -336,6 +367,7 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 						g_fmScanReq.lock();
 						g_lScanReq.push_back(pNewTask);
 						g_fmScanReq.unlock();
+						g_Log.LogOut("设置科目扫描模板名称任务以发出。");
 
 						end = clock();
 						strLog = Poco::format("模板生成全程完成，耗时(%dms)", (int)(end - start));
@@ -362,6 +394,7 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 				}
 				else
 					SAFE_RELEASE(pModel);
+				#endif
 			}
 		}
 	}
@@ -403,6 +436,125 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 	if (pTask->pUser)
 		pTask->pUser->SendResponesInfo(nCmd, ret, (char*)strSendData.c_str(), strSendData.length());
 	return bResult;
+}
+
+int CScanResquestHandler::modelHandle(pSCAN_REQ_TASK pTask, Poco::JSON::Object::Ptr object)
+{
+	clock_t start, end;
+	start = clock();
+
+	int ret = RESULT_ERROR_UNKNOWN;
+	
+	char szIndex[50] = { 0 };
+	sprintf(szIndex, "%d_%d", pTask->nExamID, pTask->nSubjectID);
+	pMODELINFO pModelInfo = NULL;
+	MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
+	if (itFind != _mapModel_.end())
+	{
+		pModelInfo = itFind->second;
+		if (pModelInfo->pModel)
+			SAFE_RELEASE(pModelInfo->pModel);
+		
+		//创建基本模板
+		std::vector<std::vector<int>> vecSheets;
+		pMODEL pModel = CreateModel(object, pTask->nExamID, pTask->nSubjectID, vecSheets);
+		pModelInfo->pModel = pModel;
+
+		//下载PDF
+		std::string strModelPath = SysSet.m_strModelSavePath + "\\";
+		strModelPath.append(szIndex);
+		try
+		{
+			Poco::File modelDir(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
+			if (modelDir.exists())
+				modelDir.remove(true);
+
+			modelDir.createDirectories();
+		}
+		catch (Poco::Exception& exc)
+		{
+			std::string strErr = "模板路径(" + strModelPath + ")判断异常: " + exc.message();
+			g_Log.LogOutError(strErr);
+		}
+
+		bool bResult = GetPdf(object, strModelPath);
+		if (bResult) bResult = Pdf2Jpg(strModelPath, vecSheets);
+		if (bResult) bResult = InitModelRecog(pModel);				//初始化模板识别参数
+		if (bResult) bResult = SaveModel(pModel, strModelPath);
+		if (bResult) bResult = ZipModel(pModel, strModelPath);
+		if (bResult)
+		{
+			pModelInfo->strName = szIndex;
+			pModelInfo->strName.append(".mod");
+			pModelInfo->strPath = CMyCodeConvert::Gb2312ToUtf8(strModelPath + ".mod");
+			pModelInfo->strMd5 = calcFileMd5(pModelInfo->strPath);
+
+			std::string strLog;
+			Poco::File modelDir(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
+			if (modelDir.exists())
+			{
+				modelDir.remove(true);
+				strLog = "模板文件夹(" + strModelPath + ")移除完成";
+				g_Log.LogOut(strLog);
+				std::cout << strLog << std::endl;
+			}
+
+			//设置后端数据库中扫描模板的名称
+			Poco::JSON::Object jsnModel;
+			jsnModel.set("examId", pTask->nExamID);
+			jsnModel.set("subjectId", pTask->nSubjectID);
+			jsnModel.set("tmplateName", pModelInfo->strName);
+
+			std::stringstream jsnString;
+			jsnModel.stringify(jsnString, 0);
+
+			std::string strEzs = pTask->strEzs;
+			pSCAN_REQ_TASK pNewTask = new SCAN_REQ_TASK;
+			pNewTask->nExamID = pTask->nExamID;
+			pNewTask->nSubjectID = pTask->nSubjectID;
+			pNewTask->strUri = SysSet.m_strBackUri + "/scanTemplate";
+			pNewTask->pUser = pTask->pUser;
+			pNewTask->strEzs = "ezs=" + strEzs;
+			pNewTask->strMsg = "setScanModel";
+			pNewTask->strRequest = jsnString.str();
+			g_fmScanReq.lock();
+			g_lScanReq.push_back(pNewTask);
+			g_fmScanReq.unlock();
+			g_Log.LogOut("设置科目扫描模板名称任务已发出。");
+
+			end = clock();
+			strLog = Poco::format("模板生成全程完成，耗时(%dms)", (int)(end - start));
+			g_Log.LogOut(strLog);
+			std::cout << strLog << std::endl;
+
+			ret = RESULT_CREATE_MODEL_SUCCESS;
+		}
+		else
+		{
+			ret = RESULT_CREATE_MODEL_FAIL;
+			//删除模板列表中预存的模板信息
+			_mapModelLock_.lock();
+			char szIndex[50] = { 0 };
+			sprintf(szIndex, "%d_%d", pTask->nExamID, pTask->nSubjectID);
+			pMODELINFO pModelInfo = NULL;
+			MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
+			if (itFind != _mapModel_.end())
+				_mapModel_.erase(itFind);
+			_mapModelLock_.unlock();
+
+			std::string strLog;
+			Poco::File modelDir(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
+			if (modelDir.exists())
+			{
+				modelDir.remove(true);
+				strLog = "模板创建失败，删除未完成的模板文件夹(" + strModelPath + ")";
+				g_Log.LogOutError(strLog);
+				std::cout << strLog << std::endl;
+			}			
+		}
+		SAFE_RELEASE(pModel);
+	}
+	return ret;
 }
 
 typedef struct _RectPos_
@@ -607,6 +759,12 @@ bool GetOMR(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 	{
 		Poco::JSON::Object::Ptr objElement = arryElement->getObject(m);
 		Poco::JSON::Object::Ptr objItem = objElement->getObject("item");
+		int nOrientation = objElement->get("orientation").convert<int>();
+		int nRecogFlag;
+		if (nOrientation == 1)
+			nRecogFlag = 26;
+		else
+			nRecogFlag = 42;
 		int nQuestionType = objElement->get("type").convert<int>();
 		if (nQuestionType == 11)	//11表示选择题
 		{
@@ -634,6 +792,7 @@ bool GetOMR(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 					rc.nAnswer = (int)objOptions->get("label").convert<char>() - 65;
 					rc.nTH = omrItem.nTH;
 					rc.nSingle = omrItem.nSingle;
+					rc.nRecogFlag = nRecogFlag;
 					omrItem.lSelAnswer.push_back(rc);
 				}
 				pPaperModel->lOMR2.push_back(omrItem);

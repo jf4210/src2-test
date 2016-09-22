@@ -245,7 +245,7 @@ BOOL CMakeModelDlg::OnInitDialog()
 		}
 
 		CString strTitle = _T("");
-		strTitle.Format(_T("模板名称: %s"), m_pModel->strModelName.c_str());
+		strTitle.Format(_T("模板名称: %s"), A2T(m_pModel->strModelName.c_str()));
 		SetWindowText(strTitle);
 	}
 	else
@@ -475,7 +475,7 @@ void CMakeModelDlg::InitCtrlPosition()
 		GetDlgItem(IDC_BTN_SAVE)->MoveWindow(nLeftGap, nCurrentTop, nBtnWidth, nBtnHeigh);
 //		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
 	}
-#if 1
+#if 0
 	if (GetDlgItem(IDC_BTN_uploadModel)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_uploadModel)->MoveWindow(nLeftGap + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeigh);

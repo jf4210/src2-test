@@ -81,6 +81,8 @@ public:
 	CString			m_strEzs;
 	int				m_nTeacherId;
 	int				m_nUserId;
+	BOOL			m_bF1Enable;
+	BOOL			m_bF2Enable;
 public:
 	void	InitUI();
 	void	InitTab();

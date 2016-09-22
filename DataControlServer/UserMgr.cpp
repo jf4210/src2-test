@@ -299,6 +299,32 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			char szIndex[50] = { 0 };
 			sprintf(szIndex, "%d_%d", stModelInfo.nExamID, stModelInfo.nSubjectID);
 
+		#if 1
+			_mapModelLock_.lock();
+			pMODELINFO pModelInfo = NULL;
+			MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
+			if (itFind == _mapModel_.end())		//服务器上没有模板，请求后端提供数据生成模板
+			{
+				pModelInfo = new MODELINFO;
+				pModelInfo->nExamID = stModelInfo.nExamID;
+				pModelInfo->nSubjectID = stModelInfo.nSubjectID;
+
+				_mapModel_.insert(MAP_MODEL::value_type(szIndex, pModelInfo));
+			}
+			_mapModelLock_.unlock();
+
+			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
+			pTask->strUri = Poco::format("%s/sheet/data/%d/%d", SysSet.m_strBackUri, stModelInfo.nExamID, stModelInfo.nSubjectID);
+			pTask->pUser = pUser;
+			pTask->strMsg = "createModel";
+			pTask->nExamID = stModelInfo.nExamID;
+			pTask->nSubjectID = stModelInfo.nSubjectID;
+			pTask->strEzs = stModelInfo.szEzs;
+
+			g_fmScanReq.lock();
+			g_lScanReq.push_back(pTask);
+			g_fmScanReq.unlock();
+		#else
 			_mapModelLock_.lock();
 			pMODELINFO pModelInfo = NULL;
 			MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
@@ -327,11 +353,12 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			{
 				_mapModelLock_.unlock();
 				pModelInfo = itFind->second;
-				if (pModelInfo->strPath.empty())
+				if (pModelInfo->strMd5.empty())
 					pUser->SendResult(USER_RESPONSE_CREATE_MODEL, RESULT_CREATE_MODEL_DOING);
 				else
 					pUser->SendResult(USER_RESPONSE_CREATE_MODEL, RESULT_CREATE_MODEL_NONEED);
 			}
+		#endif
 		}
 		break;
 	default:

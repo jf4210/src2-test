@@ -1674,30 +1674,43 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 	pt2 = itEndItem->rt.br();
 	Rect rt = cv::Rect(pt1, pt2);	//ABCD整个题目的选项区
 
+	RECTLIST::iterator itFirst = itItem++;
+	int nSpace = 0;		//选项间的空格距离(可能是宽，可能是高)
 	switch (itItem->nRecogFlag)	//获取选项间的空白区域宽度或高度
 	{
 		case 42:	//101010
+			nSpace = itItem->rt.tl().y - itFirst->rt.br().y;
 			break;
 		case 41:	//101001
+			nSpace = itItem->rt.tl().y - itFirst->rt.br().y;
 			break;
 		case 38:	//100110
+			nSpace = itFirst->rt.tl().y - itItem->rt.br().y;
 			break;
 		case 37:	//100101
+			nSpace = itFirst->rt.tl().y - itItem->rt.br().y;
 			break;
 		case 26:
+			nSpace = itItem->rt.tl().x - itFirst->rt.br().x;
 			break;
 		case 25:
+			nSpace = itItem->rt.tl().x - itFirst->rt.br().x;
 			break;
 		case 22:
+			nSpace = itFirst->rt.tl().x - itItem->rt.br().x;
 			break;
 		case 21:
+			nSpace = itFirst->rt.tl().x - itItem->rt.br().x;
+			break;
+		default:
+			nSpace = max(abs(itFirst->rt.tl().x - itItem->rt.br().x), abs(itFirst->rt.tl().y - itItem->rt.br().y));
 			break;
 	}
 
 	int nOmrMinW, nOmrMinH, nAreaMin;
-	nOmrMinW = itItem->rt.width * 0.4;
-	nOmrMinH = itItem->rt.height * 0.4;
-	nAreaMin = itItem->rt.area() * 0.3;
+	nOmrMinW = itFirst->rt.width * 0.4;
+	nOmrMinH = itFirst->rt.height * 0.4;
+	nAreaMin = itFirst->rt.area() * 0.3;
 	//根据大小、面积先过滤一下可能框选到题号的情况
 
 	try
@@ -1705,7 +1718,6 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 		matCompRoi = matCompPic(rt);
 		matSrcRoi = matCompRoi.clone();
 
-		Mat imag_src, img_comp;
 		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 		//图片二值化
@@ -1720,6 +1732,58 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 		//提取轮廓  
 		cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
+	#if 1
+		std::vector<Rect>RectCompList;
+		cv::Point ptNew1, ptNew2;
+		for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++)
+		{
+			CvRect aRect = cvBoundingRect(contour, 0);
+			cv::Rect rm = aRect;
+
+			if (rm.width < nOmrMinW || rm.height < nOmrMinH || rm.area() < nAreaMin)		//************	针对中括号的选项会存在问题	************
+				continue;
+
+			if(iteratorIdx == 0)
+			{
+				ptNew1 = rm.tl();
+				ptNew2 = rm.br();
+			}
+			if(itItem->nRecogFlag >= 37)	//选项为竖向的
+			{
+				if (rm.tl().y < ptNew1.y)	ptNew1 = rm.tl();
+				if (rm.br().y > ptNew2.y)	ptNew2 = rm.br();
+			}
+			else  //选项为横向的
+			{
+				if(rm.tl().x < ptNew1.x)	ptNew1 = rm.tl();
+				if(rm.br().x > ptNew2.x)	ptNew2 = rm.br();
+			}
+
+			RectCompList.push_back(rm);
+		}
+
+		//根据新的坐标点计算新选项区矩形的填涂情况
+		matCompRoi = matSrcRoi(cv::Rect(ptNew1, ptNew2));
+		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+		//图片二值化
+		threshold(matCompRoi, matCompRoi, 240, 255, THRESH_BINARY_INV);				//200, 255
+
+		//这里进行开闭运算
+
+
+		IplImage ipl_img2(matCompRoi);
+
+		//the parm. for cvFindContours  
+		CvMemStorage* storage2 = cvCreateMemStorage(0);
+		CvSeq* contour2 = 0;
+
+		//提取轮廓  
+		cvFindContours(&ipl_img2, storage2, &contour2, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+		//接下来根据位置信息判断abcd
+
+	#else
 		std::vector<Rect>RectCompList;
 		if (contour->total > pOmrQuestion->lSelAnswer.size())	//识别出的选项数量比模板选项数量多, 可能框选到题号
 		{			
@@ -1751,7 +1815,7 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 			bResult = false;
 		else
 			bResult = true;
-
+	#endif
 	}
 	catch (cv::Exception &exc)
 	{

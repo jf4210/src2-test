@@ -109,7 +109,7 @@ CScanToolDlg::CScanToolDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	, m_pSendFileObj(NULL), m_SendFileThread(NULL), m_bLogin(FALSE), m_pTcpCmdObj(NULL), m_TcpCmdThread(NULL)
 	, m_nTeacherId(-1), m_nUserId(-1), m_nCurrItemPaperList(-1)
 	, m_pShowModelInfoDlg(NULL), m_pShowScannerInfoDlg(NULL)
-	, m_nDuplex(1)
+	, m_nDuplex(1), m_bF1Enable(TRUE), m_bF2Enable(TRUE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -981,6 +981,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	if (m_nScanStatus == 1)	//扫描中，不能操作
 		return;
 
+	m_bF1Enable = FALSE;
 	if (!m_bTwainInit)
 	{
 		m_bTwainInit = InitTwain(m_hWnd);
@@ -1002,13 +1003,17 @@ void CScanToolDlg::OnBnClickedBtnScan()
 #endif
 	if (!bLogin)
 	{
-		if(MessageBox(_T("未登录，图像不能保存，是否继续扫描？"), _T("警告"), MB_YESNO) != IDYES)
+		if (MessageBox(_T("未登录，图像不能保存，是否继续扫描？"), _T("警告"), MB_YESNO) != IDYES)
+		{
+			m_bF1Enable = TRUE;
 			return;
+		}
 	}
 
 	if (!m_pModel)
 	{
 		AfxMessageBox(_T("未设置扫描模板，请在模板设置界面选择扫描模板"));	//模板解析错误
+		m_bF1Enable = TRUE;
 		return;
 	}
 #endif	
@@ -1019,7 +1024,10 @@ void CScanToolDlg::OnBnClickedBtnScan()
 
 	CScanCtrlDlg dlg(m_scanSourceArry);
 	if (dlg.DoModal() != IDOK)
+	{
+		m_bF1Enable = TRUE;
 		return;
+	}
 
 	nScanSrc = dlg.m_nCurrScanSrc;
 	nDuplexDef = dlg.m_nCurrDuplex;
@@ -1116,6 +1124,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(_T(""));
 		m_nScanStatus = 2;
 	}
+	m_bF1Enable = TRUE;
 }
 
 void CScanToolDlg::OnBnClickedBtnScanall()
@@ -1363,9 +1372,18 @@ void CScanToolDlg::OnCbnSelchangeComboModel()
 
 void CScanToolDlg::OnBnClickedBtnInputpaper()
 {
+	m_bF1Enable = FALSE;
+	m_bF2Enable = FALSE;
 	CPaperInputDlg dlg(m_pModel);
 	if (dlg.DoModal() != IDOK)
+	{
+		m_bF1Enable = TRUE;
+		m_bF2Enable = TRUE;
 		return;
+	}
+
+	m_bF1Enable = TRUE;
+	m_bF2Enable = TRUE;
 }
 
 // 
@@ -1712,6 +1730,8 @@ BOOL CScanToolDlg::PreTranslateMessage(MSG* pMsg)
 			((CGuideDlg*)AfxGetMainWnd())->m_pModel = m_pModel;
 			((CGuideDlg*)AfxGetMainWnd())->ShowWindow(SW_SHOW);
 			this->ShowWindow(SW_HIDE);
+			m_bF1Enable = FALSE;
+			m_bF2Enable = FALSE;
 			return TRUE;
 		}
 	}
@@ -2225,9 +2245,11 @@ LRESULT CScanToolDlg::MsgRecogErr(WPARAM wParam, LPARAM lParam)
 
 void CScanToolDlg::OnBnClickedBtnUploadpapers()
 {
+	m_bF2Enable = FALSE;
 	if (!m_pPapersInfo)
 	{
 		AfxMessageBox(_T("没有试卷袋信息"));
+		m_bF2Enable = TRUE;
 		return;
 	}
 
@@ -2255,12 +2277,14 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	if (!bLogin)
 	{
 		AfxMessageBox(_T("没有登录，不能上传，请先登录!"));
+		m_bF2Enable = TRUE;
 		return;
 	}
 #endif
 	if (m_pPapersInfo->lIssue.size() > 0)
 	{
 		AfxMessageBox(_T("存在识别异常试卷，不能上传，请先处理异常试卷"));
+		m_bF2Enable = TRUE;
 		return;
 	}
 
@@ -2269,13 +2293,19 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 #ifndef TO_WHTY
 	CPapersInfoSaveDlg dlg(m_pPapersInfo);
 	if (dlg.DoModal() != IDOK)
+	{
+		m_bF2Enable = TRUE;
 		return;
+	}
 
 	nExamID = dlg.m_nExamID;
 	nSubjectID = dlg.m_SubjectID;
 #else
 	if (MessageBox(_T("是否上传当前扫描卷?"), _T("提示"), MB_YESNO) != IDYES)
+	{
+		m_bF2Enable = TRUE;
 		return;
+	}
 
 	Poco::LocalDateTime nowTime;
 	Poco::Random rm;
@@ -2493,7 +2523,10 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	SetStatusShowInfo(strInfo, bWarn);
 
 	if (bWarn)
+	{
+		m_bF2Enable = TRUE;
 		return;
+	}
 
 	//添加上传列表，	******************		需要进行鉴权操作	***************	
 	char szFileFullPath[300] = { 0 };
@@ -2504,6 +2537,8 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	g_fmSendLock.lock();
 	g_lSendTask.push_back(pTask);
 	g_fmSendLock.unlock();
+
+	m_bF2Enable = TRUE;
 }
 
 LRESULT CScanToolDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
@@ -2781,6 +2816,8 @@ void CScanToolDlg::OnClose()
 	((CGuideDlg*)AfxGetMainWnd())->m_pModel = m_pModel;
 	((CGuideDlg*)AfxGetMainWnd())->ShowWindow(SW_SHOW);
 	this->ShowWindow(SW_HIDE);
+	m_bF1Enable = FALSE;
+	m_bF2Enable = FALSE;
 	return;
 #endif
 	__super::OnClose();
@@ -2850,6 +2887,8 @@ void CScanToolDlg::OnBnClickedBtnReback()
 	((CGuideDlg*)AfxGetMainWnd())->m_pModel = m_pModel;
 	((CGuideDlg*)AfxGetMainWnd())->ShowWindow(SW_SHOW);
 	this->ShowWindow(SW_HIDE);
+	m_bF1Enable = FALSE;
+	m_bF2Enable = FALSE;
 }
 
 void sharpenImage1(const cv::Mat &image, cv::Mat &result)
@@ -3333,14 +3372,14 @@ int CScanToolDlg::CheckOrientation(cv::Mat& matSrc, int n)
 void CScanToolDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
-	if (nHotKeyId == 1001)
+	if (nHotKeyId == 1001)	//F1
 	{
-		if (m_nScanStatus != 1)		//扫描中不进行快捷键响应
+		if (m_bF1Enable && m_nScanStatus != 1)		//扫描中不进行快捷键响应
 			OnBnClickedBtnScan();
 	}
-	else if (nHotKeyId == 1002)
+	else if (nHotKeyId == 1002)	//F2
 	{
-		if (m_nScanStatus != 1)		//扫描中不进行快捷键响应
+		if (m_bF2Enable && m_nScanStatus != 1)		//扫描中不进行快捷键响应
 			OnBnClickedBtnUploadpapers();
 	}
 	__super::OnHotKey(nHotKeyId, nKey1, nKey2);
