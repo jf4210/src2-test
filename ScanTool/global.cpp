@@ -77,6 +77,16 @@ bool SortByPositionY2(cv::Rect& rt1, cv::Rect& rt2)
 	return bResult;
 }
 
+bool SortByOmrDiff(ST_OMR_ITEM_DIFF& item1, ST_OMR_ITEM_DIFF& item2)
+{
+	return abs(item1.fDiff) > abs(item2.fDiff) ? true : false;
+}
+
+bool SortByOmrGray(pRECTINFO item1, pRECTINFO item2)
+{
+	return item1->fRealValuePercent > item2->fRealValuePercent ? true : false;
+}
+
 bool SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2)
 {
 	bool bResult = true;

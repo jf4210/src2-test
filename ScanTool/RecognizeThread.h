@@ -39,6 +39,8 @@ public:
 
 //	int FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix);		//定点进行仿射变换
 
+	int calcDiffVal(pOMR_QUESTION pOmrQuestion, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_OMR_ITEM_DIFF>& vecOmrItemDiff);
+	int calcDiffVal2(OMR_RESULT& omrResult, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_OMR_ITEM_DIFF>& vecOmrItemDiff);
 	Poco::Event		eExit;
 private:
 	std::map<pMODEL, pMODELINFO> _mapModel;		//本线程已经读取的模板列表，防止同样的模板多次读取浪费时间

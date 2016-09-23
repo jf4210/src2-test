@@ -547,3 +547,15 @@ pMODEL	LoadMakePaperData(std::string strData);	//加载制卷工具导出的模板数据
 bool Pdf2Jpg(std::string strPdfPath, std::string strBaseName);
 bool InitModelRecog(pMODEL pModel);		//初始化制卷工具模板的识别参数
 //-----------------------------------------------------------------
+
+//----------------	OMR识别灰度差值比较	------------------
+typedef struct
+{
+	char szVal[10];
+	float fFirst;
+	float fSecond;
+	float fDiff;
+}ST_OMR_ITEM_DIFF, *pST_OMR_ITEM_DIFF;
+bool	SortByOmrDiff(ST_OMR_ITEM_DIFF& item1, ST_OMR_ITEM_DIFF& item2);
+bool SortByOmrGray(pRECTINFO item1, pRECTINFO item2);
+//--------------------------------------------------------

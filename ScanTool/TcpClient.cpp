@@ -103,7 +103,7 @@ bool CTcpClient::connectServer()
 	{
 		std::string strLog = "连接服务器失败 ==> " + exc.displayText();
 //		TRACE(strLog.c_str());
-		g_pLogger->information(strLog);
+//		g_pLogger->information(strLog);
 		_bConnect = false;
 		g_bCmdConnect = _bConnect;
 	}
