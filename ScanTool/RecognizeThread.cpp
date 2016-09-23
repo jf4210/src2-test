@@ -1557,7 +1557,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				if (vecItemsDesc[i]->fRealValuePercent >= fThreld)
 				{
 					char szVal[2] = { 0 };
-					sprintf_s(szVal, "%c", vecVal_calcHist[i] + 65);
+					sprintf_s(szVal, "%c", vecItemsDesc[i] + 65);
 					strRecogAnswer1.append(szVal);
 				}
 				else
