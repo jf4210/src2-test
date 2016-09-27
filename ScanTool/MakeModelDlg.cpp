@@ -1684,6 +1684,8 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 					rc.nSnVal = nPosH_E - nPosH_B - j;
 					break;
 				}
+				rc.nRecogFlag = m_pSNInfoDlg->m_nCurrentSNVal;
+
 				Rect rtTmp = arr[i][j];
 				Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
 				RecogGrayValue(matSrcModel, rc);
@@ -1734,6 +1736,7 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 					rc.nSingle = 0;
 				else
 					rc.nSingle = 1;
+				rc.nRecogFlag = m_pOmrInfoDlg->m_nCurrentOmrVal;
 
 				Rect rtTmp = arr[i][j];
 				Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);

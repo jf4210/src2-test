@@ -551,7 +551,7 @@ bool InitModelRecog(pMODEL pModel);		//初始化制卷工具模板的识别参数
 //----------------	OMR识别灰度差值比较	------------------
 typedef struct
 {
-	char szVal[10];
+	char szVal[4];
 	float fFirst;
 	float fSecond;
 	float fDiff;
