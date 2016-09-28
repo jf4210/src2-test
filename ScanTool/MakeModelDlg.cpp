@@ -1747,6 +1747,9 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 #endif
 		}
 	}
+	if (m_eCurCPType == SN || m_eCurCPType == OMR)
+		std::sort(m_vecTmp.begin(), m_vecTmp.end(), SortByTH);
+
 
 	ShowTmpRect();
 	for (int i = 0; i < nPosV_E - nPosV_B + 1; i++)
@@ -4244,6 +4247,7 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 
 		m_vecTmp.push_back(rc);
 	}
+	std::sort(m_vecTmp.begin(), m_vecTmp.end(), SortByTH);
 
 	ShowTmpRect();
 }
@@ -4397,6 +4401,7 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 
 		m_vecTmp.push_back(rc);
 	}
+	std::sort(m_vecTmp.begin(), m_vecTmp.end(), SortByTH);
 
 	ShowTmpRect();
 }

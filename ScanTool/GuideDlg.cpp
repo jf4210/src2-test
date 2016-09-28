@@ -61,9 +61,7 @@ BOOL CGuideDlg::OnInitDialog()
 
 	InitConf();
 	InitCtrlPosition();
-
 	
-
 	m_pScanDlg = new CScanToolDlg(m_pModel);
 	m_pScanDlg->Create(CScanToolDlg::IDD, this);
 	m_pScanDlg->ShowWindow(SW_HIDE);

@@ -668,12 +668,12 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				i++;
 
 				//2016.8.29 for test
-				static int j = 0;
-				if (i % m_pModel->nPicNum == 0)
-					j = 0;
-				Mat mtPic = imread(CMyCodeConvert::Utf8ToGb2312(strNewFilePath));
-				CheckOrientation(mtPic, j);
-				j++;
+// 				static int j = 0;
+// 				if (i % m_pModel->nPicNum == 0)
+// 					j = 0;
+// 				Mat mtPic = imread(CMyCodeConvert::Utf8ToGb2312(strNewFilePath));
+// 				CheckOrientation(mtPic, j);
+// 				j++;
 				//--
 			}
 
@@ -1428,25 +1428,26 @@ void CPaperInputDlg::ShowRectByPoint(cv::Point pt, pST_PaperInfo pPaper)
 int CPaperInputDlg::GetRectInfoByPoint(cv::Point pt, pST_PicInfo pPic, RECTINFO*& pRc)
 {
 	int  nFind = -1;
-	RECTLIST::iterator itRectInfo = pPic->lNormalRect.begin();
-	for (int i = 0; itRectInfo != pPic->lNormalRect.end(); itRectInfo++, i++)
+	RECTLIST::iterator itIssueRectInfo = pPic->lIssueRect.begin();
+	for (int i = 0; itIssueRectInfo != pPic->lIssueRect.end(); itIssueRectInfo++, i++)
 	{
-		if (itRectInfo->rt.contains(pt))
+		if (itIssueRectInfo->rt.contains(pt))
 		{
 			nFind = i;
-			pRc = &(*itRectInfo);
+			pRc = &(*itIssueRectInfo);
 			break;
 		}
 	}
+	
 	if (nFind < 0)
 	{
-		RECTLIST::iterator itIssueRectInfo = pPic->lIssueRect.begin();
-		for (int i = 0; itIssueRectInfo != pPic->lIssueRect.end(); itIssueRectInfo++, i++)
+		RECTLIST::iterator itRectInfo = pPic->lNormalRect.begin();
+		for (int i = 0; itRectInfo != pPic->lNormalRect.end(); itRectInfo++, i++)
 		{
-			if (itIssueRectInfo->rt.contains(pt))
+			if (itRectInfo->rt.contains(pt))
 			{
 				nFind = i;
-				pRc = &(*itIssueRectInfo);
+				pRc = &(*itRectInfo);
 				break;
 			}
 		}

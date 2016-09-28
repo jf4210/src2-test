@@ -520,6 +520,7 @@ bool	SortByPositionY(RECTINFO& rc1, RECTINFO& rc2);
 bool	SortByPositionX2(cv::Rect& rt1, cv::Rect& rt2);
 bool	SortByPositionY2(cv::Rect& rt1, cv::Rect& rt2);
 bool	SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2);
+bool	SortByTH(RECTINFO& rc1, RECTINFO& rc2);
 bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 0, int nPicH = 0);
 std::string calcFileMd5(std::string strPath);
 void	CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int height);
@@ -555,7 +556,7 @@ typedef struct
 	float fFirst;
 	float fSecond;
 	float fDiff;
-}ST_OMR_ITEM_DIFF, *pST_OMR_ITEM_DIFF;
-bool	SortByOmrDiff(ST_OMR_ITEM_DIFF& item1, ST_OMR_ITEM_DIFF& item2);
-bool SortByOmrGray(pRECTINFO item1, pRECTINFO item2);
+}ST_ITEM_DIFF, *pST_ITEM_DIFF;
+bool	SortByItemDiff(ST_ITEM_DIFF& item1, ST_ITEM_DIFF& item2);
+bool SortByItemGray(pRECTINFO item1, pRECTINFO item2);
 //--------------------------------------------------------

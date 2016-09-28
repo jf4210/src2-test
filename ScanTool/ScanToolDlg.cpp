@@ -2591,25 +2591,26 @@ void CScanToolDlg::ShowRectByPoint(cv::Point pt, pST_PaperInfo pPaper)
 int CScanToolDlg::GetRectInfoByPoint(cv::Point pt, pST_PicInfo pPic, RECTINFO*& pRc)
 {
 	int  nFind = -1;
-	RECTLIST::iterator itRectInfo = pPic->lNormalRect.begin();
-	for (int i = 0; itRectInfo != pPic->lNormalRect.end(); itRectInfo++, i++)
+	RECTLIST::iterator itIssueRectInfo = pPic->lIssueRect.begin();
+	for (int i = 0; itIssueRectInfo != pPic->lIssueRect.end(); itIssueRectInfo++, i++)
 	{
-		if (itRectInfo->rt.contains(pt))
+		if (itIssueRectInfo->rt.contains(pt))
 		{
 			nFind = i;
-			pRc = &(*itRectInfo);
+			pRc = &(*itIssueRectInfo);
 			break;
 		}
 	}
+	
 	if (nFind < 0)
 	{
-		RECTLIST::iterator itIssueRectInfo = pPic->lIssueRect.begin();
-		for (int i = 0; itIssueRectInfo != pPic->lIssueRect.end(); itIssueRectInfo++, i++)
+		RECTLIST::iterator itRectInfo = pPic->lNormalRect.begin();
+		for (int i = 0; itRectInfo != pPic->lNormalRect.end(); itRectInfo++, i++)
 		{
-			if (itIssueRectInfo->rt.contains(pt))
+			if (itRectInfo->rt.contains(pt))
 			{
 				nFind = i;
-				pRc = &(*itIssueRectInfo);
+				pRc = &(*itRectInfo);
 				break;
 			}
 		}

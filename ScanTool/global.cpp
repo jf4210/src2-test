@@ -77,12 +77,12 @@ bool SortByPositionY2(cv::Rect& rt1, cv::Rect& rt2)
 	return bResult;
 }
 
-bool SortByOmrDiff(ST_OMR_ITEM_DIFF& item1, ST_OMR_ITEM_DIFF& item2)
+bool SortByItemDiff(ST_ITEM_DIFF& item1, ST_ITEM_DIFF& item2)
 {
 	return abs(item1.fDiff) > abs(item2.fDiff) ? true : false;
 }
 
-bool SortByOmrGray(pRECTINFO item1, pRECTINFO item2)
+bool SortByItemGray(pRECTINFO item1, pRECTINFO item2)
 {
 	return item1->fRealValuePercent > item2->fRealValuePercent ? true : false;
 }
@@ -102,6 +102,11 @@ bool SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2)
 			bResult = rt1.x == rt2.x?  rt1.y < rt2.y : false;
 	}
 	return bResult;
+}
+
+bool SortByTH(RECTINFO& rc1, RECTINFO& rc2)
+{
+	return rc1.nTH < rc2.nTH ? true : false;
 }
 
 int WriteRegKey(HKEY root, char * subDir, DWORD regType, char * regKey, char * regValue)
