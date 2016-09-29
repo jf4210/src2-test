@@ -1493,7 +1493,7 @@ bool CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, 
 			sprintf_s(szTmpLog, "%d=%.3f", vecItemsDesc[i]->nSnVal, vecItemsDesc[i]->fRealValuePercent);
 			strcat_s(szTmpLog, szTmp);
 		}
-		sprintf_s(szTmpLog, "\n第%d位SN[", pSn->nItem);
+		sprintf_s(szTmpLog, "图片%s\n第%d位SN[", pPic->strPicName.c_str(), pSn->nItem);
 		for (int i = 0; i < vecSnItemDiff.size(); i++)
 		{
 			char szTmp[15] = { 0 };

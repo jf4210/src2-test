@@ -199,7 +199,8 @@ bool ZipFile(CString strSrcPath, CString strDstPath, CString strExtName /*= _T("
 bool UnZipFile(CString strZipPath)
 {
 	USES_CONVERSION;
-	CString strPath = strZipPath.Left(strZipPath.GetLength() - 4);		//.zip
+	int nPos = strZipPath.ReverseFind('.');
+	CString strPath = strZipPath.Left(nPos);		//.zip		strZipPath.GetLength() - 4
 	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(T2A(strPath));
 
 	Poco::File p(strUtf8Path);	//T2A(strPath)

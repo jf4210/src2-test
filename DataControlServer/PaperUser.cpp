@@ -220,21 +220,38 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 						}
 						else
 						{
-						#ifdef TO_WHTY	//武汉天喻版本，收到文件后重命名	8.18	*******	注意	********
-							Poco::Path filePath(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
-							std::string strNewFilePath = SysSet.m_strUpLoadPath + "\\" + filePath.getBaseName() + ".zip";
-							
-							Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
-							fileList.renameTo(CMyCodeConvert::Gb2312ToUtf8(strNewFilePath));
-						#else
 							#ifndef TEST_FILE_PRESSURE
-							pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
-							pDecompressTask->strFilePath = m_szFilePath;
-							pDecompressTask->strFileName = m_szFileName;
-							pDecompressTask->strFileName = pDecompressTask->strFileName.substr(0, pDecompressTask->strFileName.length() - 4);
-							g_fmDecompressLock.lock();
-							g_lDecompressTask.push_back(pDecompressTask);
-							g_fmDecompressLock.unlock();
+							std::string strExtFileName = m_szFileName;
+							int nPos = strExtFileName.rfind('.');
+							strExtFileName = strExtFileName.substr(nPos, strExtFileName.length());
+							if (strExtFileName == ".typkg")		//武汉天喻版本，收到文件后重命名	8.18	*******	注意	********
+							{
+								Poco::Path filePath(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
+								std::string strNewFilePath = SysSet.m_strUpLoadPath + "\\" + filePath.getBaseName() + ".zip";
+
+								Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
+								fileList.renameTo(CMyCodeConvert::Gb2312ToUtf8(strNewFilePath));
+							}
+							else
+							{
+								pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+								pDecompressTask->strFilePath = m_szFilePath;
+								pDecompressTask->strFileName = m_szFileName;
+
+								pDecompressTask->strFileName = pDecompressTask->strFileName.substr(0, nPos);	//pDecompressTask->strFileName.length() - 4
+								g_fmDecompressLock.lock();
+								g_lDecompressTask.push_back(pDecompressTask);
+								g_fmDecompressLock.unlock();
+							}
+							
+// 							pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+// 							pDecompressTask->strFilePath = m_szFilePath;
+// 							pDecompressTask->strFileName = m_szFileName;
+//							int nPos = pDecompressTask->strFileName.rfind('.');
+// 							pDecompressTask->strFileName = pDecompressTask->strFileName.substr(0, nPos);	//pDecompressTask->strFileName.length() - 4
+// 							g_fmDecompressLock.lock();
+// 							g_lDecompressTask.push_back(pDecompressTask);
+// 							g_fmDecompressLock.unlock();
 							#else
 							Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
 							if (fileList.exists())
@@ -244,8 +261,7 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 								strLog.append(m_szFileName);
 								g_Log.LogOut(strLog);
 							}
-							#endif
-						#endif							
+							#endif					
 						}						
 					}
 					else

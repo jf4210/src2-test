@@ -24,6 +24,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "yklxServerPS", "yklxServer\
 EndProject
 Project("{6141683F-8A12-4E36-9623-2EB02B2C2303}") = "Setup", "Setup\Setup\Setup.isproj", "{C846A163-C756-49D8-8F92-2F0FCEC27752}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScanToolStart", "ScanToolStart\ScanToolStart.vcxproj", "{364B069E-839B-4F35-AD8F-B2A704F26D7D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		CD_ROM|Win32 = CD_ROM|Win32
@@ -121,6 +123,16 @@ Global
 		{C846A163-C756-49D8-8F92-2F0FCEC27752}.Release|Win32.Build.0 = SingleImage
 		{C846A163-C756-49D8-8F92-2F0FCEC27752}.SingleImage|Win32.ActiveCfg = SingleImage
 		{C846A163-C756-49D8-8F92-2F0FCEC27752}.SingleImage|Win32.Build.0 = SingleImage
+		{364B069E-839B-4F35-AD8F-B2A704F26D7D}.CD_ROM|Win32.ActiveCfg = Release|Win32
+		{364B069E-839B-4F35-AD8F-B2A704F26D7D}.CD_ROM|Win32.Build.0 = Release|Win32
+		{364B069E-839B-4F35-AD8F-B2A704F26D7D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{364B069E-839B-4F35-AD8F-B2A704F26D7D}.Debug|Win32.Build.0 = Debug|Win32
+		{364B069E-839B-4F35-AD8F-B2A704F26D7D}.DVD-5|Win32.ActiveCfg = Debug|Win32
+		{364B069E-839B-4F35-AD8F-B2A704F26D7D}.DVD-5|Win32.Build.0 = Debug|Win32
+		{364B069E-839B-4F35-AD8F-B2A704F26D7D}.Release|Win32.ActiveCfg = Release|Win32
+		{364B069E-839B-4F35-AD8F-B2A704F26D7D}.Release|Win32.Build.0 = Release|Win32
+		{364B069E-839B-4F35-AD8F-B2A704F26D7D}.SingleImage|Win32.ActiveCfg = Release|Win32
+		{364B069E-839B-4F35-AD8F-B2A704F26D7D}.SingleImage|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -81,7 +81,7 @@
 	#define USES_PWD_ZIP_UNZIP		//是否使用密码解压缩
 	#define PAPERS_EXT_NAME	_T(".pkg")			//试卷袋压缩后的扩展名(保证有4位)
 #else
-	#define PAPERS_EXT_NAME	_T(".pkg")			//试卷袋压缩后的扩展名(保证有4位),通过服务器收完文件后重命名为.zip
+	#define PAPERS_EXT_NAME	_T(".typkg")			//试卷袋压缩后的扩展名(保证有4位),通过服务器收完文件后重命名为.zip
 #endif
 
 #ifdef SHOW_GUIDEDLG
@@ -558,5 +558,5 @@ typedef struct
 	float fDiff;
 }ST_ITEM_DIFF, *pST_ITEM_DIFF;
 bool	SortByItemDiff(ST_ITEM_DIFF& item1, ST_ITEM_DIFF& item2);
-bool SortByItemGray(pRECTINFO item1, pRECTINFO item2);
+bool	SortByItemGray(pRECTINFO item1, pRECTINFO item2);
 //--------------------------------------------------------
