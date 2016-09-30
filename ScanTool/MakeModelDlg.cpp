@@ -4241,7 +4241,7 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 			break;
 		}
 		
-		Rect rtTmp = rcList[i];
+		Rect rtTmp = rcList_XY[i];
 		Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
 		RecogGrayValue(matSrcModel, rc);
 
@@ -4395,7 +4395,7 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 			rc.nSingle = 0;
 		else
 			rc.nSingle = 1;
-		Rect rtTmp = rcList[i];
+		Rect rtTmp = rcList_XY[i];
 		Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
 		RecogGrayValue(matSrcModel, rc);
 

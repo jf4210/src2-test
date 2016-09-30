@@ -759,6 +759,7 @@ void CPaperInputDlg::OnNMDblclkListPapers(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	*pResult = 0;
+	if (pNMItemActivate->iItem < 0) return;
 
 	m_lPaperCtrl.DeleteAllItems();
 	m_lIssuePaperCtrl.DeleteAllItems();

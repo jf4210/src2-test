@@ -312,7 +312,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 
 inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
-	Mat matSrcRoi, matCompRoi;
+	Mat matCompRoi;
 	Rect rt = rc.rt;
 	bool bResult = false;
 	try
@@ -321,8 +321,8 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 
 		Mat imag_src, img_comp;
 		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
-		cv::GaussianBlur(matSrcRoi, matSrcRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
-		SharpenImage(matSrcRoi, matSrcRoi);
+		cv::GaussianBlur(matCompRoi, matCompRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
+		SharpenImage(matCompRoi, matCompRoi);
 
 		const int channels[1] = { 0 };
 		const float* ranges[1];
@@ -1428,7 +1428,7 @@ bool CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, 
 			else
 				GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
 #if 1
-			bool bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
+			bool bResult_Recog = Recog2(nPic, rc, matCompPic, pPic, pModelInfo);
 			if (bResult_Recog)
 			{
 				if (rc.fRealValuePercent > rc.fStandardValuePercent)
@@ -1457,19 +1457,35 @@ bool CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, 
 		std::vector<ST_ITEM_DIFF> vecSnItemDiff;
 		calcSnDiffVal(pSn, vecItemsDesc, vecSnItemDiff);
 
+		float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
+		float fDiffThread = 0.0;		//选项可能填涂的可能灰度梯度阀值
+		float fDiffExit = 0;			//灰度的梯度递减太快时，可以认为后面选项没有填涂，此时的灰度梯度阀值
+		if (pModelInfo->pModel->nHasHead)
+		{
+			fCompThread = 1.0;
+			fDiffThread = 0.085;
+			fDiffExit = 0.15;
+		}
+		else
+		{
+			fCompThread = 1.2;
+			fDiffThread = 0.2;
+			fDiffExit = 0.3;
+		}
+
 		int nFlag = -1;
 		float fThreld = 0.0;
 		for (int i = 0; i < vecSnItemDiff.size(); i++)
 		{
 			//根据所有选项灰度值排序，相邻灰度值差值超过阀值，同时其中第一个最大的灰度值超过1.0，就认为这个区间为选中的阀值区间
 			//(大于1.0是防止最小的灰度值很小的时候影响阀值判断)
-			float fDiff = (1.0 - vecSnItemDiff[i].fFirst) * 0.1;
-			if ((vecSnItemDiff[i].fDiff >= 0.085 && vecSnItemDiff[i].fFirst > 1.0) ||
-				(vecSnItemDiff[i].fDiff >= 0.085 + fDiff && vecSnItemDiff[i].fFirst > 0.90 && fDiff > 0))
+			float fDiff = (fCompThread - vecSnItemDiff[i].fFirst) * 0.1;
+			if ((vecSnItemDiff[i].fDiff >= fDiffThread && vecSnItemDiff[i].fFirst > fCompThread) ||
+				(vecSnItemDiff[i].fDiff >= fDiffThread + fDiff && vecSnItemDiff[i].fFirst > (fCompThread - 0.1) && fDiff > 0))
 			{
 				nFlag = i;
 				fThreld = vecSnItemDiff[i].fFirst;
-				if (vecSnItemDiff[i].fDiff > 0.15)	//灰度值变化较大，直接退出
+				if (vecSnItemDiff[i].fDiff > fDiffExit)	//灰度值变化较大，直接退出
 					break;
 			}
 		}
@@ -1512,7 +1528,7 @@ bool CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, 
 		else
 		{
 			bRecogAll = false;
-			char szVal[10] = { 0 };
+			char szVal[21] = { 0 };
 			for (int i = 0; i < vecItemVal.size(); i++)
 			{
 				char szTmp[3] = { 0 };
@@ -1592,7 +1608,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			else
 				GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
 
-			bool bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
+			bool bResult_Recog = Recog2(nPic, rc, matCompPic, pPic, pModelInfo);
 			if (bResult_Recog)
 			{
 				if (rc.fRealValuePercent > rc.fStandardValuePercent)
@@ -1618,35 +1634,41 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		std::vector<pRECTINFO> vecItemsDesc;
 		std::vector<ST_ITEM_DIFF> vecOmrItemDiff;
 		calcOmrDiffVal(omrResult, vecItemsDesc, vecOmrItemDiff);
+
+		float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
+		float fDiffThread = 0.0;		//选项可能填涂的可能灰度梯度阀值
+		float fDiffExit = 0;			//灰度的梯度递减太快时，可以认为后面选项没有填涂，此时的灰度梯度阀值
+		if (pModelInfo->pModel->nHasHead)
+		{
+			fCompThread = 1.0;
+			fDiffThread = 0.085;
+			fDiffExit = 0.15;
+		}
+		else
+		{
+			fCompThread = 1.2;
+			fDiffThread = 0.2;
+			fDiffExit = 0.3;
+		}
+
 		int nFlag = -1;
 		float fThreld = 0.0;
 		for (int i = 0; i < vecOmrItemDiff.size(); i++)
 		{
-// 			if (omrResult.nTH == 48)
+// 			if (omrResult.nTH == 26)
 // 				TRACE("test");
-	#if 1
+
 			//根据所有选项灰度值排序，相邻灰度值差值超过阀值，同时其中第一个最大的灰度值超过1.0，就认为这个区间为选中的阀值区间
 			//(大于1.0是防止最小的灰度值很小的时候影响阀值判断)
-			float fDiff = (1.0 - vecOmrItemDiff[i].fFirst) * 0.1;
-			if ((vecOmrItemDiff[i].fDiff >= 0.085 && vecOmrItemDiff[i].fFirst > 1.0) ||
-				(vecOmrItemDiff[i].fDiff >= 0.085 + fDiff && vecOmrItemDiff[i].fFirst > 0.90 && fDiff > 0))
+			float fDiff = (fCompThread - vecOmrItemDiff[i].fFirst) * 0.1;
+			if ((vecOmrItemDiff[i].fDiff >= fDiffThread && vecOmrItemDiff[i].fFirst > fCompThread) ||
+				(vecOmrItemDiff[i].fDiff >= fDiffThread + fDiff && vecOmrItemDiff[i].fFirst > (fCompThread - 0.1) && fDiff > 0))
 			{
 				nFlag = i;
 				fThreld = vecOmrItemDiff[i].fFirst;
-				if (vecOmrItemDiff[i].fDiff > 0.15)	//灰度值变化较大，直接退出
+				if (vecOmrItemDiff[i].fDiff > fDiffExit && i + 1 >= vecVal_calcHist.size())	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
 					break;
 			}
-	#else
-			//根据所有选项灰度值排序，相邻灰度值差值超过阀值，同时其中第一个最大的灰度值超过1.0，就认为这个区间为选中的阀值区间
-			//(大于1.0是防止最小的灰度值很小的时候影响阀值判断)
-			float fDiff = (1.0 - vecOmrItemDiff[i].fFirst) * 0.1;
-			if ((vecOmrItemDiff[i].fDiff >= 0.065 && vecOmrItemDiff[i].fFirst > 1.0) ||
-				(vecOmrItemDiff[i].fDiff >= 0.065 + fDiff && vecOmrItemDiff[i].fFirst > 0.90 && fDiff > 0))
-			{
-				nFlag = i;
-				fThreld = vecOmrItemDiff[i].fFirst;
-			}
-	#endif
 		}
 		if (nFlag >= 0)
 		{
@@ -1993,7 +2015,8 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 
 		//提取轮廓  
 		cvFindContours(&ipl_img2, storage2, &contour2, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-				
+
+		int nMaxArea = 0;
 		std::vector<Rect>RectCompList;
 		for (int iteratorIdx = 0; contour2 != 0; contour2 = contour2->h_next, iteratorIdx++)
 		{
@@ -2001,11 +2024,32 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 			cv::Rect rm = aRect;
 			rm.x += ptNew1.x;
 			rm.y += ptNew1.y;
+			if (rm.area() > nMaxArea)
+				nMaxArea = rm.area();
 
 			RectCompList.push_back(rm);
 		}
 
+		if (RectCompList.size() > 1)
+		{
+			int nMinArea = nMaxArea * 0.3;				//在所有二值化识别出来的矩形中再过滤一遍，根据最大识别矩形的面积
+			std::vector<Rect>::iterator itRect = RectCompList.begin();
+			for (; itRect != RectCompList.end();)
+			{
+				if (itRect->area() < nMinArea)
+					itRect = RectCompList.erase(itRect);
+				else
+					itRect++;
+			}
+		}		
+
 		//接下来根据位置信息判断abcd
+		float fThreod;
+		if (pModelInfo->pModel->nHasHead)
+			fThreod = 1.0;
+		else
+			fThreod = 1.2;
+
 		std::string strRecogAnswer;
 		if (RectCompList.size())
 		{
@@ -2028,13 +2072,13 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 					}
 				}
 
-				float fThreod = 1.0;
+				
 				if (strTmpVal.length())
 				{
-					if (strTmpVal.length() > 1)
-						fThreod = 1.0;
-					else if (strTmpVal.length() == 1)
-						fThreod = 1.0;					//0.95
+// 					if (strTmpVal.length() > 1)
+// 						fThreod = 1.0;
+// 					else if (strTmpVal.length() == 1)
+// 						fThreod = 1.0;					//0.95
 
 					RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
 					for (; itItem != omrResult.lSelAnswer.end(); itItem++)
@@ -2096,13 +2140,13 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 					}
 				}
 
-				float fThreod = 1.0;
+//				float fThreod = 1.0;
 				if (strTmpVal.length())
 				{
-					if (strTmpVal.length() > 1)
-						fThreod = 1.0;
-					else if (strTmpVal.length() == 1)	//当只识别出只有一个选项时，降低灰度值标准
-						fThreod = 1.0;					//0.95
+// 					if (strTmpVal.length() > 1)
+// 						fThreod = 1.0;
+// 					else if (strTmpVal.length() == 1)	//当只识别出只有一个选项时，降低灰度值标准
+// 						fThreod = 1.0;					//0.95
 
 					RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
 					for (; itItem != omrResult.lSelAnswer.end(); itItem++)
@@ -2236,6 +2280,68 @@ int CRecognizeThread::calcSnDiffVal(pSN_ITEM pSn, std::vector<pRECTINFO>& vecIte
 		}
 	}
 	return 1;
+}
+
+bool CRecognizeThread::Recog2(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+{
+	bool bResult_Recog = false;
+
+	if (!pModelInfo->pModel->nHasHead)	//同步头模式不需要判断是否矩形区框选到了其他区域
+	{
+		try
+		{
+			Mat matCompRoi;
+
+			matCompRoi = matCompPic(rc.rt);
+
+			cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+			//图片二值化
+			// 局部自适应阈值的图像二值化
+			int blockSize = 25;		//25
+			int constValue = 10;
+			cv::Mat local;
+			cv::adaptiveThreshold(matCompRoi, matCompRoi, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, blockSize, constValue);
+			cv::Canny(matCompRoi, matCompRoi, 0, _nCannyKernel_, 5);
+			Mat element = getStructuringElement(MORPH_RECT, Size(2, 2));	//Size(6, 6)	普通空白框可识别
+			dilate(matCompRoi, matCompRoi, element);
+
+			IplImage ipl_img(matCompRoi);
+
+			//the parm. for cvFindContours  
+			CvMemStorage* storage = cvCreateMemStorage(0);
+			CvSeq* contour = 0;
+
+			//提取轮廓  
+			cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+			int nMaxArea = 0;
+			cv::Rect rt;
+			int i = 0;
+			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++)
+			{
+				CvRect aRect = cvBoundingRect(contour, 0);
+				cv::Rect rm = aRect;
+
+				if (rm.area() > nMaxArea)
+				{
+					nMaxArea = rm.area();
+					rt = rm;
+					rt.x += rc.rt.x;
+					rt.y += rc.rt.y;
+				}
+				i++;
+			}
+			if (i > 1)
+				rc.rt = rt;
+		}
+		catch (cv::Exception &exc)
+		{
+			bResult_Recog = false;
+		}
+	}
+	bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
+	return bResult_Recog;
 }
 
 

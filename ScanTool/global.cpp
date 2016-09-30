@@ -106,7 +106,19 @@ bool SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2)
 
 bool SortByTH(RECTINFO& rc1, RECTINFO& rc2)
 {
-	return rc1.nTH < rc2.nTH ? true : false;
+	bool bResult = rc1.nTH < rc2.nTH ? true : false;
+	if (!bResult)
+	{
+		if (rc1.nTH == rc2.nTH)
+		{
+			if (rc1.eCPType == SN)
+				bResult = rc1.nTH == rc2.nTH ? rc1.nSnVal < rc2.nSnVal : false;
+			else if (rc1.eCPType == OMR)
+				bResult = rc1.nTH == rc2.nTH ? rc1.nAnswer < rc2.nAnswer : false;
+		}
+	}
+		
+	return bResult;
 }
 
 int WriteRegKey(HKEY root, char * subDir, DWORD regType, char * regKey, char * regValue)
@@ -165,9 +177,15 @@ bool ZipFile(CString strSrcPath, CString strDstPath, CString strExtName /*= _T("
 	CString zipName = strDstPath + strExtName;
 	std::string strUtf8ZipName = CMyCodeConvert::Gb2312ToUtf8(T2A(zipName));
 
-	Poco::File p(strUtf8ZipName);	//T2A(zipName)
-	if (p.exists())
-		p.remove(true);
+	try
+	{
+		Poco::File p(strUtf8ZipName);	//T2A(zipName)
+		if (p.exists())
+			p.remove(true);
+	}
+	catch (cv::Exception)
+	{
+	}
 
 #ifdef USES_PWD_ZIP_UNZIP
 	pPwd = s_szZipPwd;
@@ -203,9 +221,15 @@ bool UnZipFile(CString strZipPath)
 	CString strPath = strZipPath.Left(nPos);		//.zip		strZipPath.GetLength() - 4
 	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(T2A(strPath));
 
-	Poco::File p(strUtf8Path);	//T2A(strPath)
-	if (p.exists())
-		p.remove(true);
+	try
+	{
+		Poco::File p(strUtf8Path);	//T2A(strPath)
+		if (p.exists())
+			p.remove(true);
+	}
+	catch (cv::Exception)
+	{
+	}
 
 #ifdef USES_PWD_ZIP_UNZIP
 	pPwd = s_szZipPwd;
