@@ -1520,6 +1520,10 @@ bool CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, 
 		g_pLogger->information(szTmpLog);
 #endif		
 
+#if 1	//第二种ZKZH识别方法 test
+		RecogVal_Sn2(nPic, matCompPic, pPic, pModelInfo, pSn);
+#endif
+
 		if (vecItemVal.size() == 1)
 		{
 			pSn->nRecogVal = vecItemVal[0];
@@ -1655,9 +1659,6 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		float fThreld = 0.0;
 		for (int i = 0; i < vecOmrItemDiff.size(); i++)
 		{
-// 			if (omrResult.nTH == 26)
-// 				TRACE("test");
-
 			//根据所有选项灰度值排序，相邻灰度值差值超过阀值，同时其中第一个最大的灰度值超过1.0，就认为这个区间为选中的阀值区间
 			//(大于1.0是防止最小的灰度值很小的时候影响阀值判断)
 			float fDiff = (fCompThread - vecOmrItemDiff[i].fFirst) * 0.1;
@@ -1705,7 +1706,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 
 #if 1
 		//++ test	测试整题选项进行二值化识别
-		RecogVal2(nPic, matCompPic, pPic, pModelInfo, omrResult);
+		RecogVal_Omr2(nPic, matCompPic, pPic, pModelInfo, omrResult);
 		//--
 		std::string strRecogAnswer2 = omrResult.strRecogVal2;
 #else
@@ -1775,7 +1776,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	if (bResult && nCount)
 	{
 		char szStatistics[150] = { 0 };
-		sprintf_s(szStatistics, "选项总数[%d],空值%d(%.2f%%)[No.1=%d(%.2f%%),No.2=%d(%.2f%%)],怀疑%d(%.2f%%),无怀疑%d(%.2f%%)", nCount, nNullCount, (float)nNullCount / nCount * 100, \
+		sprintf_s(szStatistics, "图片(%s)选项总数[%d],空值%d(%.2f%%)[No.1=%d(%.2f%%),No.2=%d(%.2f%%)],怀疑%d(%.2f%%),无怀疑%d(%.2f%%)", pPic->strPicName.c_str(), nCount, nNullCount, (float)nNullCount / nCount * 100, \
 				  nNullCount_1, (float)nNullCount_1 / nCount * 100, nNullCount_2, (float)nNullCount_2 / nCount * 100, \
 				  nDoubtCount, (float)nDoubtCount / nCount * 100, nEqualCount, (float)nEqualCount / nCount * 100);
 
@@ -1876,15 +1877,15 @@ bool CRecognizeThread::RecogVal(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST
 	return bResult;
 }
 
-bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, OMR_RESULT& omrResult)
+bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, RECTLIST& lSelInfo, std::string& strResult)
 {
 	Mat matCompRoi;
 	
 	bool bResult = false;
 
 	//omr框的大小高度
-	RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
-	RECTLIST::reverse_iterator itEndItem = omrResult.lSelAnswer.rbegin();
+	RECTLIST::iterator itItem = lSelInfo.begin();
+	RECTLIST::reverse_iterator itEndItem = lSelInfo.rbegin();
 
 	cv::Point pt1, pt2;
 	pt1 = itItem->rt.tl() - cv::Point(3, 3);
@@ -1983,10 +1984,17 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 				}
 				RectBaseList.push_back(rm);
 			}
-			if (itItem->nRecogFlag >= 37)
-				std::sort(RectBaseList.begin(), RectBaseList.end(), SortByPositionY2);
-			else
-				std::sort(RectBaseList.begin(), RectBaseList.end(), SortByPositionX2);
+
+			if (RectBaseList.size() <= lSelInfo.size())	//识别出的矩形区个数和选项一致，可能有删除的情况，还是去新的起点与原起点的中间值
+			{
+				ptNew1 = (pt1 + ptNew1) / 2;
+				ptNew2 = (pt2 + ptNew2) / 2;
+			}
+
+// 			if (itItem->nRecogFlag >= 37)
+// 				std::sort(RectBaseList.begin(), RectBaseList.end(), SortByPositionY2);
+// 			else
+// 				std::sort(RectBaseList.begin(), RectBaseList.end(), SortByPositionX2);
 		}
 		else
 		{
@@ -2056,50 +2064,50 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 			if (itItem->nRecogFlag >= 37)	//选项竖直排列
 			{
 				std::string strTmpVal;
-				RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
-				for (; itItem != omrResult.lSelAnswer.end(); itItem++)
+				RECTLIST::iterator itItem = lSelInfo.begin();
+				for (; itItem != lSelInfo.end(); itItem++)
 				{
 					bool bFind = false;
 					for (int i = 0; i < RectCompList.size(); i++)
 					{
-						if (RectCompList[i].tl().y < itItem->rt.br().y && RectCompList[i].br().x > itItem->rt.tl().x)
+						if (RectCompList[i].tl().y < itItem->rt.br().y && RectCompList[i].br().x > itItem->rt.tl().x && itItem->fRealValuePercent > fThreod)	//灰度值必须大于1.0才认为有填涂
 						{
 							char szVal[2] = { 0 };
 							sprintf_s(szVal, "%c", itItem->nAnswer + 65);
-							if (strTmpVal.find(szVal) == std::string::npos)
-								strTmpVal.append(szVal);
+// 							if (strTmpVal.find(szVal) == std::string::npos)
+// 								strTmpVal.append(szVal);
+
+							if (strRecogAnswer.find(szVal) == std::string::npos)
+								strRecogAnswer.append(szVal);
 						}
 					}
 				}
 
-				
-				if (strTmpVal.length())
-				{
-// 					if (strTmpVal.length() > 1)
-// 						fThreod = 1.0;
-// 					else if (strTmpVal.length() == 1)
-// 						fThreod = 1.0;					//0.95
+				//下面逻辑和上面有重复，先测试上面的，没问题就可以删除下面
+// 				if (strTmpVal.length())
+// 				{
+// 					RECTLIST::iterator itItem = lSelInfo.begin();
+// 					for (; itItem != lSelInfo.end(); itItem++)
+// 					{
+// 						for (int i = 0; i < RectCompList.size(); i++)
+// 						{
+// 							if (RectCompList[i].tl().y < itItem->rt.br().y && RectCompList[i].br().x > itItem->rt.tl().x)
+// 							{
+// 								if (itItem->fRealValuePercent > fThreod)	//灰度值必须大于1.0才认为有填涂
+// 								{
+// 									char szVal[2] = { 0 };
+// 									sprintf_s(szVal, "%c", itItem->nAnswer + 65);
+// 									if (strRecogAnswer.find(szVal) == std::string::npos)
+// 										strRecogAnswer.append(szVal);
+// 								}
+// 							}
+// 						}
+// 					}
+// 				}
 
-					RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
-					for (; itItem != omrResult.lSelAnswer.end(); itItem++)
-					{
-						for (int i = 0; i < RectCompList.size(); i++)
-						{
-							if (RectCompList[i].tl().y < itItem->rt.br().y && RectCompList[i].br().x > itItem->rt.tl().x)
-							{
-								if (itItem->fRealValuePercent > fThreod)	//灰度值必须大于1.0才认为有填涂
-								{
-									char szVal[2] = { 0 };
-									sprintf_s(szVal, "%c", itItem->nAnswer + 65);
-									if (strRecogAnswer.find(szVal) == std::string::npos)
-										strRecogAnswer.append(szVal);
-								}
-							}
-						}
-					}
-				}
-// 				RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
-// 				for (; itItem != omrResult.lSelAnswer.end(); itItem++)
+				//以下可用
+// 				RECTLIST::iterator itItem = lSelInfo.begin();
+// 				for (; itItem != lSelInfo.end(); itItem++)
 // 				{
 // 					for (int i = 0; i < RectCompList.size(); i++)
 // 					{
@@ -2124,48 +2132,45 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 			{
 #if 1
 				std::string strTmpVal;
-				RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
-				for (; itItem != omrResult.lSelAnswer.end(); itItem++)
+				RECTLIST::iterator itItem = lSelInfo.begin();
+				for (; itItem != lSelInfo.end(); itItem++)
 				{
 					bool bFind = false;
 					for (int i = 0; i < RectCompList.size(); i++)
 					{
-						if (RectCompList[i].tl().x < itItem->rt.br().x && RectCompList[i].br().x > itItem->rt.tl().x)
+						if (RectCompList[i].tl().x < itItem->rt.br().x && RectCompList[i].br().x > itItem->rt.tl().x && itItem->fRealValuePercent > fThreod)	//灰度值必须大于1.0才认为有填涂
 						{
 							char szVal[2] = { 0 };
 							sprintf_s(szVal, "%c", itItem->nAnswer + 65);
-							if (strTmpVal.find(szVal) == std::string::npos)
-								strTmpVal.append(szVal);
+// 							if (strTmpVal.find(szVal) == std::string::npos)
+// 								strTmpVal.append(szVal);
+
+							if (strRecogAnswer.find(szVal) == std::string::npos)
+								strRecogAnswer.append(szVal);
 						}
 					}
 				}
 
-//				float fThreod = 1.0;
-				if (strTmpVal.length())
-				{
-// 					if (strTmpVal.length() > 1)
-// 						fThreod = 1.0;
-// 					else if (strTmpVal.length() == 1)	//当只识别出只有一个选项时，降低灰度值标准
-// 						fThreod = 1.0;					//0.95
-
-					RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
-					for (; itItem != omrResult.lSelAnswer.end(); itItem++)
-					{
-						for (int i = 0; i < RectCompList.size(); i++)
-						{
-							if (RectCompList[i].tl().x < itItem->rt.br().x && RectCompList[i].br().x > itItem->rt.tl().x)
-							{
-								if (itItem->fRealValuePercent > fThreod)	//灰度值必须大于1.0才认为有填涂
-								{
-									char szVal[2] = { 0 };
-									sprintf_s(szVal, "%c", itItem->nAnswer + 65);
-									if (strRecogAnswer.find(szVal) == std::string::npos)
-										strRecogAnswer.append(szVal);
-								}
-							}
-						}
-					}
-				}
+// 				if (strTmpVal.length())
+// 				{
+// 					RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
+// 					for (; itItem != omrResult.lSelAnswer.end(); itItem++)
+// 					{
+// 						for (int i = 0; i < RectCompList.size(); i++)
+// 						{
+// 							if (RectCompList[i].tl().x < itItem->rt.br().x && RectCompList[i].br().x > itItem->rt.tl().x)
+// 							{
+// 								if (itItem->fRealValuePercent > fThreod)	//灰度值必须大于1.0才认为有填涂
+// 								{
+// 									char szVal[2] = { 0 };
+// 									sprintf_s(szVal, "%c", itItem->nAnswer + 65);
+// 									if (strRecogAnswer.find(szVal) == std::string::npos)
+// 										strRecogAnswer.append(szVal);
+// 								}
+// 							}
+// 						}
+// 					}
+// 				}
 #else
 				RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
 				for (; itItem != omrResult.lSelAnswer.end(); itItem++)
@@ -2200,7 +2205,7 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 #endif
 			}
 		}
-		omrResult.strRecogVal2 = strRecogAnswer;
+		strResult = strRecogAnswer;
 	}
 	catch (cv::Exception &exc)
 	{
@@ -2342,6 +2347,18 @@ bool CRecognizeThread::Recog2(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_P
 	}
 	bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
 	return bResult_Recog;
+}
+
+bool CRecognizeThread::RecogVal_Omr2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, OMR_RESULT& omrResult)
+{
+	return RecogVal2(nPic, matCompPic, pPic, pModelInfo, omrResult.lSelAnswer, omrResult.strRecogVal2);
+}
+
+bool CRecognizeThread::RecogVal_Sn2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, pSN_ITEM pSn)
+{
+	std::string strResult;
+	RecogVal2(nPic, matCompPic, pPic, pModelInfo, pSn->lSN, strResult);
+	return true;
 }
 
 

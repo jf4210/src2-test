@@ -27,8 +27,8 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_pModel(pModel), m_bNewModelFlag(false), m_nModelPicNums(2), m_nCurrTabSel(0), m_bSavedModelFlag(false), m_ncomboCurrentSel(0), m_eCurCPType(UNKNOWN)
 	, m_nCurListCtrlSel(0), m_nStartTH(0)
 	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200)
-	, m_fHeadThresholdPercent(0.75), m_fABModelThresholdPercent(0.75), m_fCourseThresholdPercent(0.75), m_fQK_CPThresholdPercent(0.75), m_fFixThresholdPercent(0.80)
-	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75), m_fOMRThresholdPercent(1.5), m_fSNThresholdPercent(1.5)
+	, m_fHeadThresholdPercent(0.75), m_fABModelThresholdPercent(0.75), m_fCourseThresholdPercent(0.75), m_fQK_CPThresholdPercent_Fix(1.5), m_fQK_CPThresholdPercent_Head(1.2), m_fFixThresholdPercent(0.80)
+	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75), m_fOMRThresholdPercent_Fix(1.5), m_fSNThresholdPercent_Fix(1.5), m_fOMRThresholdPercent_Head(1.2), m_fSNThresholdPercent_Head(1.2)
 	, m_pCurRectInfo(NULL), m_ptFixCP(0,0)
 	, m_bFistHTracker(true), m_bFistVTracker(true), m_bFistSNTracker(true)
 	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL), m_pSNInfoDlg(NULL)
@@ -753,7 +753,7 @@ LRESULT CMakeModelDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
 		else if (m_eCurCPType == QK_CP)
 		{
 			rc.nThresholdValue = m_nQK_CPVal;
-			rc.fStandardValuePercent = m_fQK_CPThresholdPercent;
+			rc.fStandardValuePercent = m_fQK_CPThresholdPercent_Head;
 
 			Rect rtTmp = rc.rt;
 			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
@@ -1297,7 +1297,7 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 		else if (m_eCurCPType == QK_CP)
 		{
 			rc.nThresholdValue = m_nQK_CPVal;
-			rc.fStandardValuePercent = m_fQK_CPThresholdPercent;
+			rc.fStandardValuePercent = m_fQK_CPThresholdPercent_Fix;
 
 			Rect rtTmp = rm;
 			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
@@ -1420,7 +1420,7 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 		else if (m_eCurCPType == QK_CP)
 		{
 			rc.nThresholdValue = m_nQK_CPVal;
-			rc.fStandardValuePercent = m_fQK_CPThresholdPercent;
+			rc.fStandardValuePercent = m_fQK_CPThresholdPercent_Fix;
 
 			Rect rtTmp = rm;
 			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
@@ -1630,7 +1630,7 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 			else if (m_eCurCPType == QK_CP)
 			{
 				rc.nThresholdValue = m_nQK_CPVal;
-				rc.fStandardValuePercent = m_fQK_CPThresholdPercent;
+				rc.fStandardValuePercent = m_fQK_CPThresholdPercent_Head;
 
 				Rect rtTmp = arr[i][j];
 				Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
@@ -1663,7 +1663,7 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 			else if (m_eCurCPType == SN)
 			{
 				rc.nThresholdValue = m_nSN;
-				rc.fStandardValuePercent = m_fSNThresholdPercent;
+				rc.fStandardValuePercent = m_fSNThresholdPercent_Head;
 
 				switch (m_pSNInfoDlg->m_nCurrentSNVal)
 				{
@@ -1695,7 +1695,7 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 			else if (m_eCurCPType == OMR)
 			{
 				rc.nThresholdValue = m_nOMR;
-				rc.fStandardValuePercent = m_fOMRThresholdPercent;
+				rc.fStandardValuePercent = m_fOMRThresholdPercent_Head;
 
 				switch (m_pOmrInfoDlg->m_nCurrentOmrVal)
 				{
@@ -1857,7 +1857,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	}
 
 	CString strTitle = _T("");
-	strTitle.Format(_T("模板名称: %s"), m_pModel->strModelName.c_str());
+	strTitle.Format(_T("模板名称: %s"), A2T(m_pModel->strModelName.c_str()));
 	SetWindowText(strTitle);
 
 	m_bSavedModelFlag = true;
@@ -4218,7 +4218,7 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 		rc.rt = rcList_XY[i];
 		rc.eCPType = m_eCurCPType;
 		rc.nThresholdValue = m_nSN;
-		rc.fStandardValuePercent = m_fSNThresholdPercent;
+		rc.fStandardValuePercent = m_fSNThresholdPercent_Fix;
 		rc.nRecogFlag = m_pSNInfoDlg->m_nCurrentSNVal;
 
 		switch (m_pSNInfoDlg->m_nCurrentSNVal)
@@ -4353,7 +4353,7 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 		rc.rt = rcList_XY[i];
 		rc.eCPType = m_eCurCPType;
 		rc.nThresholdValue = m_nOMR;
-		rc.fStandardValuePercent = m_fOMRThresholdPercent;
+		rc.fStandardValuePercent = m_fOMRThresholdPercent_Fix;
 		rc.nRecogFlag = m_pOmrInfoDlg->m_nCurrentOmrVal;
 
 		switch (m_pOmrInfoDlg->m_nCurrentOmrVal)
@@ -4987,15 +4987,20 @@ void CMakeModelDlg::InitParam()
 		m_nOMR		= pConf->getInt("MakeModel_Threshold.omr", 230);
 		m_nSN		= pConf->getInt("MakeModel_Threshold.sn", 200);
 
-		m_fHeadThresholdPercent		= pConf->getDouble("MakeModel_RecogPercent.head", 0.75);
-		m_fABModelThresholdPercent	= pConf->getDouble("MakeModel_RecogPercent.abModel", 0.75);
-		m_fCourseThresholdPercent	= pConf->getDouble("MakeModel_RecogPercent.course", 0.75);
-		m_fQK_CPThresholdPercent	= pConf->getDouble("MakeModel_RecogPercent.qk", 0.75);
-		m_fFixThresholdPercent		= pConf->getDouble("MakeModel_RecogPercent.fix", 0.8);
-		m_fGrayThresholdPercent		= pConf->getDouble("MakeModel_RecogPercent.gray", 0.75);
-		m_fWhiteThresholdPercent	= pConf->getDouble("MakeModel_RecogPercent.white", 0.75);
-		m_fOMRThresholdPercent		= pConf->getDouble("MakeModel_RecogPercent.omr", 1.5);
-		m_fSNThresholdPercent		= pConf->getDouble("MakeModel_RecogPercent.sn", 1.5);
+		m_fHeadThresholdPercent		= pConf->getDouble("MakeModel_RecogPercent_Common.head", 0.75);
+		m_fABModelThresholdPercent	= pConf->getDouble("MakeModel_RecogPercent_Common.abModel", 0.75);
+		m_fCourseThresholdPercent	= pConf->getDouble("MakeModel_RecogPercent_Common.course", 0.75);		
+		m_fFixThresholdPercent		= pConf->getDouble("MakeModel_RecogPercent_Common.fix", 0.8);
+		m_fGrayThresholdPercent		= pConf->getDouble("MakeModel_RecogPercent_Common.gray", 0.75);
+		m_fWhiteThresholdPercent	= pConf->getDouble("MakeModel_RecogPercent_Common.white", 0.75); 
+		
+		m_fQK_CPThresholdPercent_Fix	= pConf->getDouble("MakeModel_RecogPercent_Fix.qk", 1.5);
+		m_fOMRThresholdPercent_Fix		= pConf->getDouble("MakeModel_RecogPercent_Fix.omr", 1.5);
+		m_fSNThresholdPercent_Fix		= pConf->getDouble("MakeModel_RecogPercent_Fix.sn", 1.5);
+
+		m_fQK_CPThresholdPercent_Head	= pConf->getDouble("MakeModel_RecogPercent_Head.qk", 1.2);
+		m_fOMRThresholdPercent_Head		= pConf->getDouble("MakeModel_RecogPercent_Head.omr", 1.2);
+		m_fSNThresholdPercent_Head		= pConf->getDouble("MakeModel_RecogPercent_Head.sn", 1.2);
 		strLog = "读取参数完成";
 	}
 	catch (Poco::Exception& exc)
@@ -5020,12 +5025,15 @@ void CMakeModelDlg::InitParam()
 		m_fHeadThresholdPercent		= 0.75;
 		m_fABModelThresholdPercent	= 0.75;
 		m_fCourseThresholdPercent	= 0.75;
-		m_fQK_CPThresholdPercent	= 0.75;
+		m_fQK_CPThresholdPercent_Head	= 1.2;
+		m_fQK_CPThresholdPercent_Fix = 1.5;
 		m_fFixThresholdPercent		= 0.8;
 		m_fGrayThresholdPercent		= 0.75;
 		m_fWhiteThresholdPercent	= 0.75;
-		m_fOMRThresholdPercent		= 1.5;
-		m_fSNThresholdPercent		= 1.5;
+		m_fOMRThresholdPercent_Fix	= 1.5;
+		m_fSNThresholdPercent_Fix	= 1.5;
+		m_fOMRThresholdPercent_Head = 1.2;
+		m_fSNThresholdPercent_Head	= 1.2;
 	}
 	g_pLogger->information(strLog);
 }

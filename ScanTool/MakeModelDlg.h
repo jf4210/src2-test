@@ -95,11 +95,14 @@ public:
 	float m_fHeadThresholdPercent;	//同步头达到阀值的比例
 	float m_fABModelThresholdPercent;
 	float m_fCourseThresholdPercent;
-	float m_fQK_CPThresholdPercent;
+	float m_fQK_CPThresholdPercent_Head;	//通过同步头识别
+	float m_fQK_CPThresholdPercent_Fix;		//通过定点识别（无同步头）
 	float m_fGrayThresholdPercent;
 	float m_fWhiteThresholdPercent;
-	float m_fOMRThresholdPercent;
-	float m_fSNThresholdPercent;
+	float m_fOMRThresholdPercent_Fix;	//通过定点识别（无同步头）
+	float m_fSNThresholdPercent_Fix;	//通过定点识别（无同步头）
+	float m_fOMRThresholdPercent_Head;	//通过同步头识别
+	float m_fSNThresholdPercent_Head;	//通过同步头识别
 
 	std::vector<CPicShow*>	m_vecPicShow;	//存储图片显示窗口指针，有多个模板图片时，对应到不同的tab控件页面
 	int						m_nCurrTabSel;	//当前Tab控件选择的页面
