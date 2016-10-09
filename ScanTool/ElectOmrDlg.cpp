@@ -206,6 +206,11 @@ void ElectOmrDlg::OnBnClickedBtnDel()
 void ElectOmrDlg::OnBnClickedBtnSave()
 {
 	UpdateData(TRUE);
+	if (m_nRealItem == 0 || m_nAllCount == 0)
+	{
+		AfxMessageBox(_T("选项数量设置不合法，不能报错！"));
+		return;
+	}
 	int nItem = m_comboGroup.GetCurSel();
 	pELECTOMRGROUPINFO pElectOmr = (pELECTOMRGROUPINFO)m_comboGroup.GetItemDataPtr(nItem);
 

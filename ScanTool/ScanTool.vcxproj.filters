@@ -106,7 +106,7 @@
     <Filter Include="pdf转jpg">
       <UniqueIdentifier>{7725052b-edd6-4873-87a1-2026e2ad570d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="模板制作窗口%2a%2a%2a\多选题设置窗口">
+    <Filter Include="模板制作窗口%2a%2a%2a\选做题信息设置窗口">
       <UniqueIdentifier>{5adb2dbd-7544-4b61-b7bb-5db388e88263}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -253,7 +253,7 @@
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="ElectOmrDlg.h">
-      <Filter>模板制作窗口%2a%2a%2a\多选题设置窗口</Filter>
+      <Filter>模板制作窗口%2a%2a%2a\选做题信息设置窗口</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -375,7 +375,7 @@
       <Filter>pdf转jpg</Filter>
     </ClCompile>
     <ClCompile Include="ElectOmrDlg.cpp">
-      <Filter>模板制作窗口%2a%2a%2a\多选题设置窗口</Filter>
+      <Filter>模板制作窗口%2a%2a%2a\选做题信息设置窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

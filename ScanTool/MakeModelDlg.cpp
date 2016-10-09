@@ -1348,6 +1348,10 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 		{
 			TRACE("OMR - rt(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
 		}
+		else if (m_eCurCPType == ELECT_OMR)
+		{
+			//选做题信息处理
+		}
 
 		bResult = true;
 	}
@@ -1358,6 +1362,10 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 	if(m_eCurCPType == OMR)
 	{
 		GetOmrArry(RectCompList);
+	}
+	if(m_eCurCPType == ELECT_OMR)
+	{
+		GetElectOmrInfo(RectCompList);
 	}
 #else
 	m_vecContours.clear();
@@ -4472,6 +4480,73 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 	std::sort(m_vecTmp.begin(), m_vecTmp.end(), SortByTH);
 
 	ShowTmpRect();
+}
+
+void CMakeModelDlg::GetElectOmrInfo(std::vector<cv::Rect>& rcList)
+{
+	if (rcList.size() <= 0)
+		return;
+	int nMaxRow = 1;
+	int nMaxCols = 1;
+
+	m_vecTmp.clear();
+	std::vector<Rect> rcList_X = rcList;
+	std::vector<Rect> rcList_XY = rcList;
+	std::sort(rcList_X.begin(), rcList_X.end(), SortByPositionX2);
+
+	int nW = rcList_X[0].width;				//矩形框平均宽度
+	int nH = rcList_X[0].height;			//矩形框平均高度
+	int nWInterval = 0;						//矩形间的X轴平均间隔
+	int nHInterval = 0;						//矩形间的Y轴平均间隔
+
+	int nX = rcList_X[0].width * 0.2 + 0.5;		//判断属于同一列的X轴偏差
+	int nY = rcList_X[0].height * 0.3 + 0.5;	//判断属于同一行的Y轴偏差
+
+	std::sort(rcList_XY.begin(), rcList_XY.end(), SortByPositionXYInterval);
+
+	for (int i = 1; i < rcList_XY.size(); i++)
+	{
+		int nTmp = rcList_XY[i].y - rcList_XY[i - 1].y;
+		if (abs(rcList_XY[i].y - rcList_XY[i - 1].y) > nY)
+		{
+			nMaxRow++;
+			nHInterval += abs(rcList_XY[i].y - rcList_XY[i - 1].y - rcList_XY[i - 1].height);
+		}
+
+		nW += rcList_XY[i].width;
+		nH += rcList_XY[i].height;
+	}
+	for (int i = 1; i < rcList_X.size(); i++)
+	{
+		int nTmp = rcList_X[i].x - rcList_X[i - 1].x;
+		if (abs(rcList_X[i].x - rcList_X[i - 1].x) > nX)
+		{
+			nMaxCols++;
+			nWInterval += abs(rcList_X[i].x - rcList_X[i - 1].x - rcList_X[i - 1].width);
+		}
+	}
+
+	nW = nW / rcList_XY.size() + 0.5;
+	nH = nH / rcList_XY.size() + 0.5;
+	if (nMaxCols > 1)
+		nWInterval = nWInterval / (nMaxCols - 1) + 0.5;
+	if (nMaxRow > 1)
+		nHInterval = nHInterval / (nMaxRow - 1) + 0.5;
+
+	TRACE("检测到框选了%d * %d的矩形区\n", nMaxRow, nMaxCols);
+	if (nMaxCols > 1 && nMaxRow > 1)
+	{
+		AfxMessageBox(_T("选择区域不合法，请重新选择！"));
+		return;
+	}
+
+	//如果选择的区域中矩形个数超过当前组的总选项数，报错
+
+
+
+	//按顺序设置题号和位置信息
+
+
 }
 
 void CMakeModelDlg::setUploadModelInfo(CString& strName, CString& strModelPath, int nExamId, int nSubjectId)

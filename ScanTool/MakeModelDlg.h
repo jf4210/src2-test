@@ -178,6 +178,7 @@ private:
 
 	void GetOmrArry(std::vector<cv::Rect>& rcList);	//黑白卡时获取框选的OMR排列数组
 	void GetSNArry(std::vector<cv::Rect>& rcList);	//黑白卡时获取框选的考号排列数组
+	void GetElectOmrInfo(std::vector<cv::Rect>& rcList);	//黑白卡时获取框选的选做题信息
 
 	inline void GetThreshold(cv::Mat& matSrc, cv::Mat& matDst);			//二值化计算
 //	inline void ShowDetailRectInfo();
