@@ -6,38 +6,46 @@ delateKernel=6
 eRodeKernel=2
 
 [MakeModel_Threshold]
-；空白校验点二值化识别阀值
+；空白校验点二值化识别阀值	计算灰度值用
 white=225
-；同步头二值化识别阀值
+；同步头二值化识别阀值	计算灰度值用
 head=136
-；AB卷二值化识别阀值
+；AB卷二值化识别阀值	计算灰度值用
 abModel=150
-；科目二值化识别阀值
+；科目二值化识别阀值	计算灰度值用
 course=150
-；缺考二值化识别阀值
+；缺考二值化识别阀值	计算灰度值用
 qk=150
-；灰度校验点二值化识别阀值
+；灰度校验点二值化识别阀值	计算灰度值用
 gray=150
-；定点二值化识别阀值
+；定点二值化识别阀值	计算灰度值用
 fix=150
-；OMR二值化识别阀值
+；OMR二值化识别阀值	计算灰度值用
 omr=230
-；准考证号二值化识别阀值
+；准考证号二值化识别阀值	计算灰度值用
 sn=200
 
 
-[MakeModel_RecogPercent]
+[MakeModel_RecogPercent_Common]
 ;识别校验点的密度
 head=0.75
 abModel=0.75
 course=0.75
-qk=0.75
 fix=0.8
 gray=0.75
 white=0.75
+
+[MakeModel_RecogPercent_Fix]
+;识别校验点的密度，定点模式
+qk=1.5
 omr=1.5
 sn=1.5
 
+[MakeModel_RecogPercent_Head]
+;识别校验点的密度，同步头模式
+qk=1.2
+omr=1.2
+sn=1.2
 
 [RecogGray]
 ;识别灰度值
