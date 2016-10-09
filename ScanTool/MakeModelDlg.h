@@ -6,6 +6,7 @@
 #include "OmrInfoDlg.h"
 #include "TwainCpp.h"
 #include "SNInfoSetDlg.h"
+#include "ElectOmrDlg.h"
 // CMakeModelDlg 对话框
 
 
@@ -28,7 +29,6 @@ typedef struct _PaperModelInfo_
 	std::vector<RECTINFO> vecVTracker;	//垂直橡皮筋区域
 	std::vector<RECTINFO> vecRtSel;				//存储选择的矩形,框的大矩形，用来框定点
 	std::vector<RECTINFO> vecRtFix;				//存储定点矩形
-	std::vector<OMR_QUESTION> vecOmr2;
 	std::vector<RECTINFO>	vecH_Head;				//水平校验点列表
 	std::vector<RECTINFO>	vecV_Head;				//垂直同步头列表
 	std::vector<RECTINFO>	vecABModel;				//卷型校验点
@@ -36,6 +36,8 @@ typedef struct _PaperModelInfo_
 	std::vector<RECTINFO>	vecQK_CP;				//缺考校验点
 	std::vector<RECTINFO>	vecGray;				//灰度校验点
 	std::vector<RECTINFO>	vecWhite;				//空白校验点
+	std::vector<OMR_QUESTION> vecOmr2;
+	std::vector<ELECTOMR_QUESTION> vecElectOmr;		//选做题信息
 	_PaperModelInfo_()
 	{
 		bFirstH = true;
@@ -78,6 +80,7 @@ public:
 	CRecogInfoDlg*	m_pRecogInfoDlg;	//矩形识别信息的窗口
 	COmrInfoDlg*	m_pOmrInfoDlg;		//OMR选项信息设置窗口
 	CSNInfoSetDlg*	m_pSNInfoDlg;		//SN信息设置窗口
+	ElectOmrDlg*	m_pElectOmrDlg;		//选做题OMR信息设置窗口
 
 // 	CString		m_strCPTypeName;		//校验点的类型名
 // 	int			m_nThresholdVal;		//校验点的识别阀值

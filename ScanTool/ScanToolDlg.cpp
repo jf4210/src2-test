@@ -109,7 +109,7 @@ CScanToolDlg::CScanToolDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	, m_pSendFileObj(NULL), m_SendFileThread(NULL), m_bLogin(FALSE), m_pTcpCmdObj(NULL), m_TcpCmdThread(NULL)
 	, m_nTeacherId(-1), m_nUserId(-1), m_nCurrItemPaperList(-1)
 	, m_pShowModelInfoDlg(NULL), m_pShowScannerInfoDlg(NULL)
-	, m_nDuplex(1), m_bF1Enable(TRUE), m_bF2Enable(TRUE)
+	, m_nDuplex(1), m_bF1Enable(FALSE), m_bF2Enable(FALSE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -516,6 +516,8 @@ void CScanToolDlg::InitConfig()
 
 #ifdef TO_WHTY
 	m_nModelPicNums = pConf->getInt("WHTY.picNums", 2);
+	m_bF1Enable = TRUE;
+	m_bF2Enable = TRUE;
 #endif
 
 	m_pRecogThread = new Poco::Thread[nRecogThreads];

@@ -31,7 +31,7 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75), m_fOMRThresholdPercent_Fix(1.5), m_fSNThresholdPercent_Fix(1.5), m_fOMRThresholdPercent_Head(1.2), m_fSNThresholdPercent_Head(1.2)
 	, m_pCurRectInfo(NULL), m_ptFixCP(0,0)
 	, m_bFistHTracker(true), m_bFistVTracker(true), m_bFistSNTracker(true)
-	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL), m_pSNInfoDlg(NULL)
+	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL), m_pSNInfoDlg(NULL), m_pElectOmrDlg(NULL)
 	, m_bShiftKeyDown(false)
 {
 	InitParam();
@@ -42,6 +42,7 @@ CMakeModelDlg::~CMakeModelDlg()
 	SAFE_RELEASE(m_pRecogInfoDlg);
 	SAFE_RELEASE(m_pOmrInfoDlg);
 	SAFE_RELEASE(m_pSNInfoDlg);
+	SAFE_RELEASE(m_pElectOmrDlg);
 
 	if (m_bNewModelFlag && !m_bSavedModelFlag && m_pModel != NULL)
 		SAFE_RELEASE(m_pModel);
@@ -379,6 +380,10 @@ void CMakeModelDlg::InitUI()
 	m_pSNInfoDlg->Create(CSNInfoSetDlg::IDD, this);
 	m_pSNInfoDlg->ShowWindow(SW_HIDE);
 
+	m_pElectOmrDlg = new ElectOmrDlg;
+	m_pElectOmrDlg->Create(ElectOmrDlg::IDD, this);
+	m_pElectOmrDlg->ShowWindow(SW_HIDE);
+
 	CRect rc;
 	::SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
 	int sx = rc.Width();
@@ -447,6 +452,10 @@ void CMakeModelDlg::InitCtrlPosition()
 	if (m_pSNInfoDlg && m_pSNInfoDlg->GetSafeHwnd())
 	{
 		m_pSNInfoDlg->MoveWindow(nLeftGap, nTopInGroup, nLeftCtrlWidth, nGroupHeight);
+	}
+	if (m_pElectOmrDlg && m_pElectOmrDlg->GetSafeHwnd())
+	{
+		m_pElectOmrDlg->MoveWindow(nLeftGap, nTopInGroup, nLeftCtrlWidth, nGroupHeight);
 	}
 
 	nCurrentTop = nCurrentTop + nGroupHeight + nGap;
@@ -523,6 +532,7 @@ void CMakeModelDlg::InitConf()
 			m_comboCheckPointType.AddString(_T("空白校验点"));
 			m_comboCheckPointType.AddString(_T("考号设置"));
 			m_comboCheckPointType.AddString(_T("选择题"));
+			m_comboCheckPointType.AddString(_T("选做题"));
 		}
 		else if (m_pModel->nABModel&&!m_pModel->nHasHead)
 		{
@@ -536,6 +546,7 @@ void CMakeModelDlg::InitConf()
 			m_comboCheckPointType.AddString(_T("空白校验点"));
 			m_comboCheckPointType.AddString(_T("考号设置"));
 			m_comboCheckPointType.AddString(_T("选择题"));
+			m_comboCheckPointType.AddString(_T("选做题"));
 		}
 		else if (!m_pModel->nABModel&&m_pModel->nHasHead)
 		{
@@ -550,6 +561,7 @@ void CMakeModelDlg::InitConf()
 			m_comboCheckPointType.AddString(_T("空白校验点"));
 			m_comboCheckPointType.AddString(_T("考号设置"));
 			m_comboCheckPointType.AddString(_T("选择题"));
+			m_comboCheckPointType.AddString(_T("选做题"));
 		}
 		else
 		{
@@ -562,6 +574,7 @@ void CMakeModelDlg::InitConf()
 //			m_comboCheckPointType.AddString(_T("空白校验点"));
 			m_comboCheckPointType.AddString(_T("考号设置"));
 			m_comboCheckPointType.AddString(_T("选择题"));
+			m_comboCheckPointType.AddString(_T("选做题"));
 		}
 	}
 	m_comboCheckPointType.SetCurSel(0);
@@ -3057,6 +3070,27 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 				}
 			}
 		}
+	case ELECT_OMR:
+		if (eType == ELECT_OMR || eType == UNKNOWN)
+		{
+			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.size(); i++)
+			{
+				RECTLIST::iterator itElectOmr = m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[i].lItemInfo.begin();
+				for (; itElectOmr != m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[i].lItemInfo.end(); itElectOmr++)
+				{
+					RECTINFO rc = *itElectOmr;
+					rt = rc.rt;
+
+					cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+
+					char szAnswerVal[10] = { 0 };
+					sprintf_s(szAnswerVal, "%d_%d", m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[i].sElectOmrGroupInfo.nGroupID, rc.nTH);
+
+					cv::putText(tmp, szAnswerVal, Point(rt.x + rt.width / 10, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
+					cv::rectangle(tmp2, rt, CV_RGB(50, 200, 150), -1);
+				}
+			}
+		}
 		break;
 	default: return;
 	}
@@ -3091,6 +3125,8 @@ CPType CMakeModelDlg::GetComboSelCpType()
 		eType = SN;
 	else if (strCheckPoint == "选择题")
 		eType = OMR;
+	else if (strCheckPoint == "选做题")
+		eType = ELECT_OMR;
 	return eType;
 }
 
@@ -3126,18 +3162,28 @@ void CMakeModelDlg::InitShowSnOmrDlg(CPType eType)
 		m_pOmrInfoDlg->ShowWindow(SW_SHOW);
 		m_pRecogInfoDlg->ShowWindow(SW_HIDE);
 		m_pSNInfoDlg->ShowWindow(SW_HIDE);
+		m_pElectOmrDlg->ShowWindow(SW_HIDE);
 	}
 	else if (eType == SN)
 	{
 		m_pOmrInfoDlg->ShowWindow(SW_HIDE);
 		m_pRecogInfoDlg->ShowWindow(SW_HIDE);
 		m_pSNInfoDlg->ShowWindow(SW_SHOW);
+		m_pElectOmrDlg->ShowWindow(SW_HIDE);
+	}
+	else if (eType == ELECT_OMR)
+	{
+		m_pOmrInfoDlg->ShowWindow(SW_HIDE);
+		m_pRecogInfoDlg->ShowWindow(SW_HIDE);
+		m_pSNInfoDlg->ShowWindow(SW_HIDE);
+		m_pElectOmrDlg->ShowWindow(SW_SHOW);
 	}
 	else
 	{
 		m_pOmrInfoDlg->ShowWindow(SW_HIDE);
 		m_pRecogInfoDlg->ShowWindow(SW_SHOW);
 		m_pSNInfoDlg->ShowWindow(SW_HIDE);
+		m_pElectOmrDlg->ShowWindow(SW_HIDE);
 	}
 }
 
@@ -3383,6 +3429,28 @@ void CMakeModelDlg::UpdataCPList()
 		}
 		if (m_eCurCPType == UNKNOWN)
 			nCount += nSNCount;
+	}
+	if (m_eCurCPType == ELECT_OMR || m_eCurCPType == UNKNOWN)
+	{
+		int nElectOmrCount = 0;
+		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.size(); i++)
+		{
+			RECTLIST::iterator itElectOmr = m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[i].lItemInfo.begin();
+			for (int j = nElectOmrCount; itElectOmr != m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[i].lItemInfo.end(); itElectOmr++, j++)
+			{
+				RECTINFO rcInfo = *itElectOmr;
+				char szPosition[50] = { 0 };
+				sprintf_s(szPosition, "(%d,%d,%d,%d)", rcInfo.rt.x, rcInfo.rt.y, rcInfo.rt.width, rcInfo.rt.height);
+				char szCount[10] = { 0 };
+				sprintf_s(szCount, "%d", j + nCount + 1);
+				m_cpListCtrl.InsertItem(j + nCount, NULL);
+				m_cpListCtrl.SetItemText(j + nCount, 0, (LPCTSTR)A2T(szCount));
+				m_cpListCtrl.SetItemText(j + nCount, 1, (LPCTSTR)A2T(szPosition));
+			}
+			nElectOmrCount += m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[i].lItemInfo.size();
+		}
+		if (m_eCurCPType == UNKNOWN)
+			nCount += nElectOmrCount;
 	}
 }
 
@@ -4705,6 +4773,7 @@ void CMakeModelDlg::OnDestroy()
 	SAFE_RELEASE(m_pRecogInfoDlg);
 	SAFE_RELEASE(m_pOmrInfoDlg);
 	SAFE_RELEASE(m_pSNInfoDlg);
+	SAFE_RELEASE(m_pElectOmrDlg);
 
 	if (m_bNewModelFlag && !m_bSavedModelFlag && m_pModel != NULL)
 		SAFE_RELEASE(m_pModel);

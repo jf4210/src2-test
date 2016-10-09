@@ -1502,26 +1502,30 @@ bool CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, 
 			}
 		}
 
-		char szTmpLog[300] = { 0 };
-		for (int i = 0; i < vecItemsDesc.size(); i++)
+		if (vecItemVal.size() != 1)
 		{
-			char szTmp[10] = { 0 };
-			sprintf_s(szTmpLog, "%d=%.3f", vecItemsDesc[i]->nSnVal, vecItemsDesc[i]->fRealValuePercent);
-			strcat_s(szTmpLog, szTmp);
+			char szTmpLog[300] = { 0 };
+			for (int i = 0; i < vecItemsDesc.size(); i++)
+			{
+				char szTmp[10] = { 0 };
+				sprintf_s(szTmpLog, "%d=%.3f", vecItemsDesc[i]->nSnVal, vecItemsDesc[i]->fRealValuePercent);
+				strcat_s(szTmpLog, szTmp);
+			}
+			sprintf_s(szTmpLog, "图片%s\n第%d位SN[", pPic->strPicName.c_str(), pSn->nItem);
+			for (int i = 0; i < vecSnItemDiff.size(); i++)
+			{
+				char szTmp[15] = { 0 };
+				sprintf_s(szTmp, "%s:%.5f ", vecSnItemDiff[i].szVal, vecSnItemDiff[i].fDiff);
+				strcat_s(szTmpLog, szTmp);
+			}
+			strcat_s(szTmpLog, "]");
+			g_pLogger->information(szTmpLog);
 		}
-		sprintf_s(szTmpLog, "图片%s\n第%d位SN[", pPic->strPicName.c_str(), pSn->nItem);
-		for (int i = 0; i < vecSnItemDiff.size(); i++)
-		{
-			char szTmp[15] = { 0 };
-			sprintf_s(szTmp, "%s:%.5f ", vecSnItemDiff[i].szVal, vecSnItemDiff[i].fDiff);
-			strcat_s(szTmpLog, szTmp);
-		}
-		strcat_s(szTmpLog, "]");
-		g_pLogger->information(szTmpLog);
 #endif		
 
 #if 1	//第二种ZKZH识别方法 test
-		RecogVal_Sn2(nPic, matCompPic, pPic, pModelInfo, pSn);
+		std::vector<int> vecItemVal2;
+		RecogVal_Sn2(nPic, matCompPic, pPic, pModelInfo, pSn, vecItemVal2);
 #endif
 
 		if (vecItemVal.size() == 1)
@@ -1531,18 +1535,25 @@ bool CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, 
 		}
 		else
 		{
-			bRecogAll = false;
-			char szVal[21] = { 0 };
-			for (int i = 0; i < vecItemVal.size(); i++)
+			if (vecItemVal.size() == 0 && vecItemVal2.size() == 1)
 			{
-				char szTmp[3] = { 0 };
-				sprintf_s(szTmp, "%d ", vecItemVal[i]);
-				strcat(szVal, szTmp);
+				vecSN.push_back(vecItemVal2[0]);
 			}
-			char szLog[MAX_PATH] = { 0 };
-			sprintf_s(szLog, "识别准考证号第%d位失败,识别出结果%d位(%s), 图片名: %s\n", pSnItem->nItem, vecItemVal.size(), szVal, pPic->strPicName.c_str());
-			g_pLogger->information(szLog);
-			TRACE(szLog);
+			else
+			{
+				bRecogAll = false;
+				char szVal[21] = { 0 };
+				for (int i = 0; i < vecItemVal.size(); i++)
+				{
+					char szTmp[3] = { 0 };
+					sprintf_s(szTmp, "%d ", vecItemVal[i]);
+					strcat(szVal, szTmp);
+				}
+				char szLog[MAX_PATH] = { 0 };
+				sprintf_s(szLog, "识别准考证号第%d位失败,识别出结果%d位(%s), 图片名: %s\n", pSnItem->nItem, vecItemVal.size(), szVal, pPic->strPicName.c_str());
+				g_pLogger->information(szLog);
+				TRACE(szLog);
+			}
 		}
 	}
 	if (bRecogAll && vecSN.size() > 0)
@@ -1877,7 +1888,7 @@ bool CRecognizeThread::RecogVal(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST
 	return bResult;
 }
 
-bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, RECTLIST& lSelInfo, std::string& strResult)
+inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, RECTLIST& lSelInfo, std::string& strResult)
 {
 	Mat matCompRoi;
 	
@@ -2061,7 +2072,7 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 		std::string strRecogAnswer;
 		if (RectCompList.size())
 		{
-			if (itItem->nRecogFlag >= 37)	//选项竖直排列
+			if (itItem->eCPType == OMR && itItem->nRecogFlag >= 37)	//选项竖直排列
 			{
 				std::string strTmpVal;
 				RECTLIST::iterator itItem = lSelInfo.begin();
@@ -2070,7 +2081,7 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 					bool bFind = false;
 					for (int i = 0; i < RectCompList.size(); i++)
 					{
-						if (RectCompList[i].tl().y < itItem->rt.br().y && RectCompList[i].br().x > itItem->rt.tl().x && itItem->fRealValuePercent > fThreod)	//灰度值必须大于1.0才认为有填涂
+						if (RectCompList[i].tl().y < itItem->rt.br().y && RectCompList[i].br().y > itItem->rt.tl().y && itItem->fRealValuePercent > fThreod)	//灰度值必须大于1.0才认为有填涂
 						{
 							char szVal[2] = { 0 };
 							sprintf_s(szVal, "%c", itItem->nAnswer + 65);
@@ -2128,7 +2139,7 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 // 					}
 // 				}
 			}
-			else	//选项横向排列
+			else if(itItem->eCPType == OMR && itItem->nRecogFlag < 37)	//选项横向排列
 			{
 #if 1
 				std::string strTmpVal;
@@ -2203,6 +2214,46 @@ bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 					}
 				}
 #endif
+			}
+			else if (itItem->eCPType == SN && itItem->nRecogFlag >= 9)	//竖直排列
+			{
+				std::string strTmpVal;
+				RECTLIST::iterator itItem = lSelInfo.begin();
+				for (; itItem != lSelInfo.end(); itItem++)
+				{
+					bool bFind = false;
+					for (int i = 0; i < RectCompList.size(); i++)
+					{
+						if (RectCompList[i].tl().y < itItem->rt.br().y && RectCompList[i].br().y > itItem->rt.tl().y && itItem->fRealValuePercent > fThreod)	//灰度值必须大于1.0才认为有填涂
+						{
+							char szVal[2] = { 0 };
+							sprintf_s(szVal, "%d", itItem->nSnVal);
+
+							if (strRecogAnswer.find(szVal) == std::string::npos)
+								strRecogAnswer.append(szVal);
+						}
+					}
+				}
+			}
+			else if (itItem->eCPType == SN && itItem->nRecogFlag < 9)
+			{
+				std::string strTmpVal;
+				RECTLIST::iterator itItem = lSelInfo.begin();
+				for (; itItem != lSelInfo.end(); itItem++)
+				{
+					bool bFind = false;
+					for (int i = 0; i < RectCompList.size(); i++)
+					{
+						if (RectCompList[i].tl().x < itItem->rt.br().x && RectCompList[i].br().x > itItem->rt.tl().x && itItem->fRealValuePercent > fThreod)	//灰度值必须大于1.0才认为有填涂
+						{
+							char szVal[2] = { 0 };
+							sprintf_s(szVal, "%d", itItem->nSnVal);
+
+							if (strRecogAnswer.find(szVal) == std::string::npos)
+								strRecogAnswer.append(szVal);
+						}
+					}
+				}
 			}
 		}
 		strResult = strRecogAnswer;
@@ -2354,10 +2405,16 @@ bool CRecognizeThread::RecogVal_Omr2(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 	return RecogVal2(nPic, matCompPic, pPic, pModelInfo, omrResult.lSelAnswer, omrResult.strRecogVal2);
 }
 
-bool CRecognizeThread::RecogVal_Sn2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, pSN_ITEM pSn)
+bool CRecognizeThread::RecogVal_Sn2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, pSN_ITEM pSn, std::vector<int>& vecItemVal)
 {
 	std::string strResult;
 	RecogVal2(nPic, matCompPic, pPic, pModelInfo, pSn->lSN, strResult);
+	char* p = NULL;
+	for (int i = 0; i < strResult.length(); i++)
+	{
+		p = const_cast<char*>(strResult.c_str() + i);
+		vecItemVal.push_back(atoi(p));
+	}
 	return true;
 }
 
