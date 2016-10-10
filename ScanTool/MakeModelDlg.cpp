@@ -180,11 +180,6 @@ BOOL CMakeModelDlg::OnInitDialog()
 			{
 				pPaperModel->vecRtSel.push_back(*itSelRoi);
 			}
-			OMRLIST::iterator itOmr2 = m_pModel->vecPaperModel[i]->lOMR2.begin();
-			for (; itOmr2 != m_pModel->vecPaperModel[i]->lOMR2.end(); itOmr2++)
-			{
-				pPaperModel->vecOmr2.push_back(*itOmr2);
-			}
 			RECTLIST::iterator itFix = m_pModel->vecPaperModel[i]->lFix.begin();
 			for (; itFix != m_pModel->vecPaperModel[i]->lFix.end(); itFix++)
 			{
@@ -224,6 +219,16 @@ BOOL CMakeModelDlg::OnInitDialog()
 			for (; itWhite != m_pModel->vecPaperModel[i]->lWhite.end(); itWhite++)
 			{
 				pPaperModel->vecWhite.push_back(*itWhite);
+			}
+			OMRLIST::iterator itOmr2 = m_pModel->vecPaperModel[i]->lOMR2.begin();
+			for (; itOmr2 != m_pModel->vecPaperModel[i]->lOMR2.end(); itOmr2++)
+			{
+				pPaperModel->vecOmr2.push_back(*itOmr2);
+			}
+			ELECTOMR_LIST::iterator itElectOmr = m_pModel->vecPaperModel[i]->lElectOmr.begin();
+			for (; itElectOmr != m_pModel->vecPaperModel[i]->lElectOmr.end(); itElectOmr++)
+			{
+				pPaperModel->vecElectOmr.push_back(*itElectOmr);
 			}
 			SNLIST::iterator itSn = m_pModel->vecPaperModel[i]->lSNInfo.begin();
 			for (; itSn != m_pModel->vecPaperModel[i]->lSNInfo.end(); itSn++)
@@ -1950,8 +1955,6 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 			pPaperModel->lSelFixRoi.push_back(m_vecPaperModelInfo[i]->vecRtSel[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecRtFix.size(); j++)
 			pPaperModel->lFix.push_back(m_vecPaperModelInfo[i]->vecRtFix[j]);
-		for (int j = 0; j < m_vecPaperModelInfo[i]->vecOmr2.size(); j++)
-			pPaperModel->lOMR2.push_back(m_vecPaperModelInfo[i]->vecOmr2[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecH_Head.size(); j++)
 			pPaperModel->lH_Head.push_back(m_vecPaperModelInfo[i]->vecH_Head[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecV_Head.size(); j++)
@@ -1966,6 +1969,10 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 			pPaperModel->lGray.push_back(m_vecPaperModelInfo[i]->vecGray[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecWhite.size(); j++)
 			pPaperModel->lWhite.push_back(m_vecPaperModelInfo[i]->vecWhite[j]);
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecOmr2.size(); j++)
+			pPaperModel->lOMR2.push_back(m_vecPaperModelInfo[i]->vecOmr2[j]);
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecElectOmr.size(); j++)
+			pPaperModel->lElectOmr.push_back(m_vecPaperModelInfo[i]->vecElectOmr[j]);
 		SNLIST::iterator itSn = m_vecPaperModelInfo[i]->lSN.begin();
 		for (; itSn != m_vecPaperModelInfo[i]->lSN.end(); itSn++)
 		{
@@ -2073,7 +2080,6 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		Poco::JSON::Array jsnSelHTrackerArry;
 		Poco::JSON::Array jsnSelVTrackerArry;
 		Poco::JSON::Array jsnSelRoiArry;
-		Poco::JSON::Array jsnOMRArry;
 		Poco::JSON::Array jsnFixCPArry;
 		Poco::JSON::Array jsnHHeadArry;
 		Poco::JSON::Array jsnVHeadArry;
@@ -2082,6 +2088,8 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		Poco::JSON::Array jsnQKArry;
 		Poco::JSON::Array jsnGrayCPArry;
 		Poco::JSON::Array jsnWhiteCPArry;
+		Poco::JSON::Array jsnOMRArry;
+		Poco::JSON::Array jsnElectOmrArry;
 		RECTLIST::iterator itFix = pModel->vecPaperModel[i]->lFix.begin();
 		for (; itFix != pModel->vecPaperModel[i]->lFix.end(); itFix++)
 		{
@@ -2307,6 +2315,35 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnSNObj.set("snList", jsnArry);
 			jsnSNArry.add(jsnSNObj);
 		}
+		ELECTOMR_LIST::iterator itElectOmr = pModel->vecPaperModel[i]->lElectOmr.begin();
+		for (; itElectOmr != pModel->vecPaperModel[i]->lElectOmr.end(); itElectOmr++)
+		{
+			Poco::JSON::Object jsnTHObj;
+			Poco::JSON::Array  jsnArry;
+			RECTLIST::iterator itOmrSel = itElectOmr->lItemInfo.begin();
+			for (; itOmrSel != itElectOmr->lItemInfo.end(); itOmrSel++)
+			{
+				Poco::JSON::Object jsnObj;
+				jsnObj.set("eType", (int)itOmrSel->eCPType);
+				jsnObj.set("nTH", itOmrSel->nTH);
+				jsnObj.set("nAnswer", itOmrSel->nAnswer);
+				jsnObj.set("left", itOmrSel->rt.x);
+				jsnObj.set("top", itOmrSel->rt.y);
+				jsnObj.set("width", itOmrSel->rt.width);
+				jsnObj.set("height", itOmrSel->rt.height);
+				jsnObj.set("hHeadItem", itOmrSel->nHItem);
+				jsnObj.set("vHeadItem", itOmrSel->nVItem);
+				jsnObj.set("thresholdValue", itOmrSel->nThresholdValue);
+				jsnObj.set("standardValPercent", itOmrSel->fStandardValuePercent);
+				jsnObj.set("standardVal", itOmrSel->fStandardValue);
+				jsnArry.add(jsnObj);
+			}
+			jsnTHObj.set("nGroupID", itElectOmr->sElectOmrGroupInfo.nGroupID);
+			jsnTHObj.set("nAllCount", itElectOmr->sElectOmrGroupInfo.nAllCount);
+			jsnTHObj.set("nRealCount", itElectOmr->sElectOmrGroupInfo.nRealCount);
+			jsnTHObj.set("omrlist", jsnArry);
+			jsnElectOmrArry.add(jsnTHObj);
+		}
 		jsnPaperObj.set("paperNum", i);
 		jsnPaperObj.set("modelPicName", CMyCodeConvert::Gb2312ToUtf8(T2A(strPicName)));		//CMyCodeConvert::Gb2312ToUtf8(T2A(strPicName))
 		jsnPaperObj.set("FixCP", jsnFixCPArry);
@@ -2322,6 +2359,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		jsnPaperObj.set("vTrackerRect", jsnSelVTrackerArry);
 		jsnPaperObj.set("selOmrRect", jsnOMRArry);
 		jsnPaperObj.set("snList", jsnSNArry);
+		jsnPaperObj.set("electOmrList", jsnElectOmrArry);
 
 		jsnPaperObj.set("picW", pModel->vecPaperModel[i]->nPicW);		//add on 16.8.29
 		jsnPaperObj.set("picH", pModel->vecPaperModel[i]->nPicH);		//add on 16.8.29
@@ -2433,13 +2471,13 @@ bool CMakeModelDlg::ShowRectByPoint(cv::Point pt)
 
 	if (m_pRecogInfoDlg)	m_pRecogInfoDlg->ShowDetailRectInfo(m_pCurRectInfo);
 
+	InitShowSnOmrDlg(m_pCurRectInfo->eCPType);
 	if (m_pCurRectInfo->eCPType == SN && m_pSNInfoDlg)
 		m_pSNInfoDlg->ShowUI(m_pCurRectInfo->nRecogFlag);
 	else if (m_pCurRectInfo->eCPType == OMR && m_pOmrInfoDlg)
 		m_pOmrInfoDlg->ShowUI(m_pCurRectInfo->nRecogFlag, m_pCurRectInfo->nSingle);
 	else if (m_pCurRectInfo->eCPType == ELECT_OMR && m_pElectOmrDlg)
 		m_pElectOmrDlg->showUI(m_pCurRectInfo->nTH);
-	InitShowSnOmrDlg(m_pCurRectInfo->eCPType);
 
 	Rect rt = m_pCurRectInfo->rt;
 	Mat tmp = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
@@ -2977,6 +3015,14 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 #endif
 	if(m_pRecogInfoDlg)	m_pRecogInfoDlg->ShowDetailRectInfo(m_pCurRectInfo);
 
+	InitShowSnOmrDlg(m_pCurRectInfo->eCPType);
+	if (m_pCurRectInfo->eCPType == SN && m_pSNInfoDlg)
+		m_pSNInfoDlg->ShowUI(m_pCurRectInfo->nRecogFlag);
+	else if (m_pCurRectInfo->eCPType == OMR && m_pOmrInfoDlg)
+		m_pOmrInfoDlg->ShowUI(m_pCurRectInfo->nRecogFlag, m_pCurRectInfo->nSingle);
+	else if (m_pCurRectInfo->eCPType == ELECT_OMR && m_pElectOmrDlg)
+		m_pElectOmrDlg->showUI(m_pCurRectInfo->nTH);
+
 	Mat tmp = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
 	Mat tmp2 = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
 
@@ -3307,9 +3353,9 @@ void CMakeModelDlg::InitShowSnOmrDlg(CPType eType)
 		m_pSNInfoDlg->ShowWindow(SW_HIDE);
 		m_pElectOmrDlg->ShowWindow(SW_SHOW);
 
-// 		if (!m_pModel || m_vecPaperModelInfo.size() <= m_nCurrTabSel)
-// 			return;
-// 		m_pElectOmrDlg->InitGroupInfo(m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr);
+		if (!m_pModel || m_vecPaperModelInfo.size() <= m_nCurrTabSel)
+			return;
+		m_pElectOmrDlg->InitGroupInfo(m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr);
 	}
 	else
 	{
@@ -3920,6 +3966,21 @@ void CMakeModelDlg::DeleteRectInfoOnList()
 			{
 				nItem -= nOmrCount;
 			}
+		}
+	}
+	else if (m_eCurCPType == ELECT_OMR)
+	{
+		int nElectOmr = 0;
+		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.size(); i++)
+		{
+			nElectOmr = m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[i].lItemInfo.size();
+			if (nItem < nElectOmr)
+			{
+				nItem = i;
+				break;
+			}
+			else
+				nItem -= nElectOmr;
 		}
 	}
 	if (DeleteRectInfo(m_eCurCPType, nItem))
