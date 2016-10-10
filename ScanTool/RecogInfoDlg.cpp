@@ -160,6 +160,7 @@ void CRecogInfoDlg::ShowDetailRectInfo(pRECTINFO pCurRectInfo)
 		else m_strCPTypeName = _T("多选题");
 		break;
 	}
+	case ELECT_OMR:	m_strCPTypeName = _T("选做题"); break;
 	default:
 		m_strCPTypeName = _T(""); break;
 	}

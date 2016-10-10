@@ -1601,6 +1601,30 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 	if (nPosV_E - nPosV_B < 0 || (nPosV_B < 0 && nPosV_E < 0))
 		return false;
 
+	if (m_eCurCPType == ELECT_OMR)
+	{
+		if (nPosV_E - nPosV_B > 0 && nPosH_E - nPosH_B > 0)
+		{
+			AfxMessageBox(_T("选择区域不合法，请重新选择！"));
+			return false;
+		}
+		if (!m_pElectOmrDlg->m_pCurrentGroup)
+		{
+			AfxMessageBox(_T("当前选做题信息不存在，请新建!"));
+			return false;
+		}
+		if (!m_pElectOmrDlg->checkValid())
+		{
+			AfxMessageBox(_T("当前选做题信息未保存，请先保存此题选做题信息!"));
+			return false;
+		}
+		if (m_pElectOmrDlg->m_pCurrentGroup->nAllCount < (nPosV_E - nPosV_B + 1)*(nPosH_E - nPosH_B + 1))
+		{
+			AfxMessageBox(_T("识别出的选项数超出范围!"));
+			return false;
+		}
+	}
+
 	cv::Rect** arr;
 	arr = new cv::Rect*[nPosV_E - nPosV_B + 1];
 	for (int i = 0; i < nPosV_E - nPosV_B + 1; i++)
@@ -1765,10 +1789,32 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 
 				m_vecTmp.push_back(rc);
 			}
+			else if (m_eCurCPType == ELECT_OMR)
+			{
+				rc.nThresholdValue = m_nOMR;
+				rc.fStandardValuePercent = m_fOMRThresholdPercent_Head;
+
+				if (nPosV_E - nPosV_B == 0)		//垂直同步头一样，说明是水平排列的
+				{
+					rc.nTH = m_pElectOmrDlg->m_pCurrentGroup->nGroupID;
+					rc.nAnswer = j;
+				}
+				else         //水平同步头一样，说明是垂直排列的
+				{
+					rc.nTH = m_pElectOmrDlg->m_pCurrentGroup->nGroupID;
+					rc.nAnswer = i;
+				}
+
+				Rect rtTmp = arr[i][j];
+				Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+				RecogGrayValue(matSrcModel, rc);
+
+				m_vecTmp.push_back(rc);
+			}
 #endif
 		}
 	}
-	if (m_eCurCPType == SN || m_eCurCPType == OMR)
+	if (m_eCurCPType == SN || m_eCurCPType == OMR || m_eCurCPType == ELECT_OMR)
 		std::sort(m_vecTmp.begin(), m_vecTmp.end(), SortByTH);
 
 
@@ -2391,6 +2437,8 @@ bool CMakeModelDlg::ShowRectByPoint(cv::Point pt)
 		m_pSNInfoDlg->ShowUI(m_pCurRectInfo->nRecogFlag);
 	else if (m_pCurRectInfo->eCPType == OMR && m_pOmrInfoDlg)
 		m_pOmrInfoDlg->ShowUI(m_pCurRectInfo->nRecogFlag, m_pCurRectInfo->nSingle);
+	else if (m_pCurRectInfo->eCPType == ELECT_OMR && m_pElectOmrDlg)
+		m_pElectOmrDlg->showUI(m_pCurRectInfo->nTH);
 	InitShowSnOmrDlg(m_pCurRectInfo->eCPType);
 
 	Rect rt = m_pCurRectInfo->rt;
@@ -2579,6 +2627,39 @@ bool CMakeModelDlg::ShowRectByPoint(cv::Point pt)
 				}
 			}
 		}
+	case ELECT_OMR:
+		if (eType == ELECT_OMR || eType == UNKNOWN)
+		{
+			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.size(); i++)
+			{
+				RECTLIST::iterator itElectOmr = m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[i].lItemInfo.begin();
+				for (; itElectOmr != m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[i].lItemInfo.end(); itElectOmr++)
+				{
+					if (m_pCurRectInfo != &(*itElectOmr))
+					{
+						RECTINFO rc = *itElectOmr;
+						rt = rc.rt;
+
+						char szAnswerVal[10] = { 0 };
+						sprintf_s(szAnswerVal, "%d_%c", rc.nTH, rc.nAnswer + 65);
+
+						cv::putText(tmp, szAnswerVal, Point(rt.x + rt.width / 10, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
+						cv::rectangle(tmp2, rt, CV_RGB(40, 190, 135), -1);
+					}
+					else
+					{
+						RECTINFO rc = *itElectOmr;
+						rt = rc.rt;
+
+						char szAnswerVal[10] = { 0 };
+						sprintf_s(szAnswerVal, "%d_%c", rc.nTH, rc.nAnswer + 65);
+
+						cv::putText(tmp, szAnswerVal, Point(rt.x + rt.width / 10, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
+						cv::rectangle(tmp2, rt, CV_RGB(40, 205, 150), -1);
+					}
+				}
+			}
+		}
 	}
 	cv::addWeighted(tmp, 0.5, tmp2, 0.5, 0, tmp);
 	m_pModelPicShow->ShowPic(tmp);
@@ -2592,8 +2673,10 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 
 	bool bFindOmr = false;
 	bool bFindSN = false;
+	bool bFindElectOmr = false;
 	int nSNCount = 0;
 	int nOmrCount = 0;
+	int nElectOmrCount = 0;
 	cv::Rect rt;
 #if 1
 	int nCount = 0;
@@ -2751,6 +2834,37 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 			}
 		}		
 	}
+	if(m_eCurCPType == ELECT_OMR || UNKNOWN)
+	{
+		if(!bFind)
+		{
+			for(int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.size(); i++)
+			{
+				nElectOmrCount = m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[i].lItemInfo.size();
+				if(nCurItem < nElectOmrCount)
+				{
+					RECTLIST::iterator itAnswer = m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[i].lItemInfo.begin();
+					for (int j = 0; itAnswer != m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[i].lItemInfo.end(); itAnswer++, j++)
+					{
+						if (j == nCurItem)
+						{
+							bFindElectOmr = true;
+							bFind = true;
+							rt = itAnswer->rt;
+							m_pCurRectInfo = &(*itAnswer);
+							break;
+						}
+					}
+					if (bFindElectOmr)
+						break;
+				}
+				else
+				{
+					nCurItem -= nElectOmrCount;
+				}
+			}
+		}
+	}
 #else
 	switch (m_eCurCPType)
 	{
@@ -2904,6 +3018,13 @@ void CMakeModelDlg::ShowTmpRect()
 			sprintf_s(szAnswerVal, "%d_%d", m_vecTmp[i].nTH, m_vecTmp[i].nSnVal);
 			putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
 			rectangle(tmp2, rt, CV_RGB(50, 255, 100), -1);
+		}
+		else if (m_vecTmp[i].eCPType == ELECT_OMR)
+		{
+			char szAnswerVal[10] = { 0 };
+			sprintf_s(szAnswerVal, "%d_%c", m_vecTmp[i].nTH, m_vecTmp[i].nAnswer + 65);
+			putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
+			rectangle(tmp2, rt, CV_RGB(40, 255, 110), -1);
 		}
 		else 
 			rectangle(tmp2, rt, CV_RGB(150, 100, 255), -1);
@@ -3092,10 +3213,10 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 					cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 
 					char szAnswerVal[10] = { 0 };
-					sprintf_s(szAnswerVal, "%d_%d", m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[i].sElectOmrGroupInfo.nGroupID, rc.nTH);
+					sprintf_s(szAnswerVal, "%d_%c", rc.nTH, rc.nAnswer + 65);
 
 					cv::putText(tmp, szAnswerVal, Point(rt.x + rt.width / 10, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
-					cv::rectangle(tmp2, rt, CV_RGB(50, 200, 150), -1);
+					cv::rectangle(tmp2, rt, CV_RGB(40, 205, 150), -1);
 				}
 			}
 		}
@@ -3185,6 +3306,10 @@ void CMakeModelDlg::InitShowSnOmrDlg(CPType eType)
 		m_pRecogInfoDlg->ShowWindow(SW_HIDE);
 		m_pSNInfoDlg->ShowWindow(SW_HIDE);
 		m_pElectOmrDlg->ShowWindow(SW_SHOW);
+
+// 		if (!m_pModel || m_vecPaperModelInfo.size() <= m_nCurrTabSel)
+// 			return;
+// 		m_pElectOmrDlg->InitGroupInfo(m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr);
 	}
 	else
 	{
@@ -3630,6 +3755,47 @@ void CMakeModelDlg::AddRecogRectToList()
 				nAddTH++;
 			}
 		}
+		else if (m_eCurCPType == ELECT_OMR)
+		{
+			bool bError = false;
+			bool bFind = false;
+			for (int k = 0; k < m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.size(); k++)
+			{
+				if (m_vecTmp[i].nTH == m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[k].sElectOmrGroupInfo.nGroupID)
+				{
+
+					if (m_vecTmp.size() - i + m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[k].lItemInfo.size() > m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[k].sElectOmrGroupInfo.nAllCount)
+					{
+						bError = true;
+						break;
+					}
+
+					bFind = true;
+					m_vecTmp[i].nAnswer = m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[k].lItemInfo.size();		//修改内部题号，根据当前列表中已经存在的个数来算
+					m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[k].lItemInfo.push_back(m_vecTmp[i]);
+					break;
+				}
+			}
+			if (bError)
+			{
+				AfxMessageBox(_T("此组选做题实际选项总数超出范围"));
+				break;
+			}
+			if (!bFind)
+			{
+				if (!m_pElectOmrDlg->m_pCurrentGroup)
+				{
+					AfxMessageBox(_T("添加失败，当前选做题信息为空"));
+					break;
+				}
+				ELECTOMR_QUESTION sElectOmr;
+				sElectOmr.sElectOmrGroupInfo.nGroupID = m_pElectOmrDlg->m_pCurrentGroup->nGroupID;
+				sElectOmr.sElectOmrGroupInfo.nAllCount = m_pElectOmrDlg->m_pCurrentGroup->nAllCount;
+				sElectOmr.sElectOmrGroupInfo.nRealCount = m_pElectOmrDlg->m_pCurrentGroup->nRealCount;
+				sElectOmr.lItemInfo.push_back(m_vecTmp[i]);
+				m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.push_back(sElectOmr);
+			}
+		}
 	}
 	m_nStartTH += nAddTH - 1;
 
@@ -3860,6 +4026,20 @@ BOOL CMakeModelDlg::DeleteRectInfo(CPType eType, int nItem)
 				m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.erase(itOmr);
 			break;
 		}
+	case ELECT_OMR:
+		{
+			//****************	这里有问题	********************
+
+
+
+
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.size() < 0)
+				return FALSE;
+			std::vector<ELECTOMR_QUESTION>::iterator itElectOmr = m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.begin() + nItem;
+			if (itElectOmr != m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.end())
+				m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.erase(itElectOmr);
+		}
+		break;
 	default: return FALSE;
 	}
 	return TRUE;
@@ -4118,6 +4298,24 @@ inline int CMakeModelDlg::GetRectInfoByPoint(cv::Point pt, CPType eType, RECTINF
 					}
 					if (nFind >= 0) break;
 				}
+			}
+		}
+	case ELECT_OMR:
+		if (eType == ELECT_OMR || eType == UNKNOWN)
+		{
+			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.size(); i++)
+			{
+				RECTLIST::iterator itElectOmr = m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[i].lItemInfo.begin();
+				for (; itElectOmr != m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[i].lItemInfo.end(); itElectOmr++)
+				{
+					if (itElectOmr->rt.contains(pt))
+					{
+						nFind = i;
+						pRc = &(*itElectOmr);
+						break;
+					}					
+				}
+				if (nFind > 0) break;
 			}
 		}
 	}
@@ -4542,11 +4740,80 @@ void CMakeModelDlg::GetElectOmrInfo(std::vector<cv::Rect>& rcList)
 
 	//如果选择的区域中矩形个数超过当前组的总选项数，报错
 
-
-
+	//m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr
+	if (!m_pElectOmrDlg->m_pCurrentGroup)
+	{
+		AfxMessageBox(_T("当前选做题信息不存在，请新建!"));
+		return;
+	}
+	if (!m_pElectOmrDlg->checkValid())
+	{
+		AfxMessageBox(_T("当前选做题信息未保存，请先保存此题选做题信息!"));
+		return;
+	}
+	if (m_pElectOmrDlg->m_pCurrentGroup->nAllCount < rcList_XY.size())
+	{
+		AfxMessageBox(_T("识别出的选项数超出范围!"));
+		return;
+	}
+	
 	//按顺序设置题号和位置信息
+	for (int i = 0; i < rcList_XY.size(); i++)
+	{
+		RECTINFO rc;
+		rc.rt = rcList_XY[i];
+		rc.eCPType = m_eCurCPType;
+		rc.nThresholdValue = m_nOMR;
+		rc.fStandardValuePercent = m_fOMRThresholdPercent_Fix;
+		rc.nTH = m_pElectOmrDlg->m_pCurrentGroup->nGroupID;
+		rc.nAnswer = i;
 
+		Rect rtTmp = rcList_XY[i];
+		Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+		RecogGrayValue(matSrcModel, rc);
 
+		m_vecTmp.push_back(rc);
+	}
+	std::sort(m_vecTmp.begin(), m_vecTmp.end(), SortByTH);
+
+//	ShowTmpRect();
+
+	for (int i = 0; i < m_vecTmp.size(); i++)
+	{
+		bool bError = false;
+		bool bFind = false;
+		for (int k = 0; k < m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.size(); k++)
+		{
+			if (m_vecTmp[i].nTH == m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[k].sElectOmrGroupInfo.nGroupID)
+			{
+				if (m_vecTmp.size() - i + m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[k].lItemInfo.size() > m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[k].sElectOmrGroupInfo.nAllCount)
+				{
+					bError = true;
+					break;
+				}
+
+				bFind = true;
+				m_vecTmp[i].nAnswer = m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[k].lItemInfo.size();		//修改内部题号，根据当前列表中已经存在的个数来算
+				m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[k].lItemInfo.push_back(m_vecTmp[i]);
+				break;
+			}
+		}
+		if (bError)
+		{
+			AfxMessageBox(_T("此组选做题实际选项总数超出范围"));
+			break;
+		}
+		if (!bFind)
+		{
+			ELECTOMR_QUESTION sElectOmr;
+			sElectOmr.sElectOmrGroupInfo.nGroupID = m_pElectOmrDlg->m_pCurrentGroup->nGroupID;
+			sElectOmr.sElectOmrGroupInfo.nAllCount = m_pElectOmrDlg->m_pCurrentGroup->nAllCount;
+			sElectOmr.sElectOmrGroupInfo.nRealCount = m_pElectOmrDlg->m_pCurrentGroup->nRealCount;
+			sElectOmr.lItemInfo.push_back(m_vecTmp[i]);
+			m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.push_back(sElectOmr);
+		}
+	}
+	m_vecTmp.clear();
 }
 
 void CMakeModelDlg::setUploadModelInfo(CString& strName, CString& strModelPath, int nExamId, int nSubjectId)
@@ -5096,6 +5363,11 @@ inline bool CMakeModelDlg::checkOverlap(CPType eType, cv::Rect rtSrc)
 			}
 			break;
 		case OMR:
+			{
+				//不进行区域重叠检测
+			}
+			break;
+		case ELECT_OMR:
 			{
 				//不进行区域重叠检测
 			}

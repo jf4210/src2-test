@@ -15,16 +15,23 @@ public:
 	enum { IDD = IDD_ELECTOMRDLG };
 
 public:
-	std::vector<pELECTOMRGROUPINFO> m_vecElectOmrInfo;
+	std::vector<pELECTOMRGROUPINFO> m_vecElectOmrInfoAll;	//所有选做题信息组，可能有新建后有删除的，都保存在此
+	std::vector<pELECTOMRGROUPINFO> m_vecElectOmrInfoReal;	//实际有效的选做题信息
 
 	CComboBox m_comboGroup;
 	int		m_nAllCount;	//总选项数
 	int		m_nRealItem;	//有效数
 
 	int		m_nCurrentSel;
+	pELECTOMRGROUPINFO	m_pCurrentGroup;
 
+
+	bool checkValid();		//检测当前组信息是否是有效的信息 
+	void showUI(int nGroup);
+	void InitGroupInfo(std::vector<ELECTOMR_QUESTION>& vecElectOmr);
 private:
 	void InitCtrlPosition();
+	void InitUI();
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持

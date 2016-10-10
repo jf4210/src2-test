@@ -5,7 +5,7 @@
 #include "ScanTool.h"
 #include "ElectOmrDlg.h"
 #include "afxdialogex.h"
-
+#include "MakeModelDlg.h"
 
 // ElectOmrDlg 对话框
 
@@ -13,16 +13,16 @@ IMPLEMENT_DYNAMIC(ElectOmrDlg, CDialog)
 
 ElectOmrDlg::ElectOmrDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(ElectOmrDlg::IDD, pParent)
-	, m_nCurrentSel(-1), m_nAllCount(0), m_nRealItem(0)
+	, m_nCurrentSel(-1), m_nAllCount(0), m_nRealItem(0), m_pCurrentGroup(NULL)
 {
 
 }
 
 ElectOmrDlg::~ElectOmrDlg()
 {
-	for (int i = 0; i < m_vecElectOmrInfo.size(); i++)
+	for (int i = 0; i < m_vecElectOmrInfoAll.size(); i++)
 	{
-		pELECTOMRGROUPINFO pElectOmr = m_vecElectOmrInfo[i];
+		pELECTOMRGROUPINFO pElectOmr = m_vecElectOmrInfoAll[i];
 		SAFE_RELEASE(pElectOmr);
 	}
 }
@@ -158,48 +158,73 @@ BOOL ElectOmrDlg::PreTranslateMessage(MSG* pMsg)
 
 void ElectOmrDlg::OnBnClickedBtnNew()
 {
-	int nCount = m_comboGroup.GetCount();
+	int nGroupId = 0;
+	for (int i = 0; i < m_vecElectOmrInfoAll.size(); i++)
+		if (m_vecElectOmrInfoAll[i]->nGroupID > nGroupId)
+			nGroupId = m_vecElectOmrInfoAll[i]->nGroupID;
+
 	char szVal[10] = { 0 };
-	sprintf_s(szVal, "%d", nCount + 1);
+	sprintf_s(szVal, "%d", nGroupId + 1);
 
 	USES_CONVERSION;
-
+	int nCount = m_comboGroup.GetCount();
 	m_comboGroup.InsertString(nCount, A2T(szVal));
 
 	pELECTOMRGROUPINFO pElectOmr = new ELECTOMRGROUPINFO;
-	pElectOmr->nGroupID = nCount + 1;
+	pElectOmr->nGroupID = nGroupId + 1;
 	m_comboGroup.SetItemDataPtr(nCount, pElectOmr);
 
 	m_comboGroup.SetCurSel(nCount);
 	m_nCurrentSel = nCount;
+	m_pCurrentGroup = pElectOmr;
 
 	m_nAllCount = pElectOmr->nAllCount;
 	m_nRealItem = pElectOmr->nRealCount;
 	UpdateData(FALSE);
 
-	m_vecElectOmrInfo.push_back(pElectOmr);
+	m_vecElectOmrInfoAll.push_back(pElectOmr);
 }
 
 
 void ElectOmrDlg::OnBnClickedBtnDel()
 {
 	//********	注意：如果有已经属于此组的选做题，则不能删除，需要先将那些属于此组的选项删除，然后才能删除此组信息
+	CMakeModelDlg* pDlg = (CMakeModelDlg*)GetParent();
+
 
 	pELECTOMRGROUPINFO pElectOmr = (pELECTOMRGROUPINFO)m_comboGroup.GetItemDataPtr(m_comboGroup.GetCurSel());
 
+	bool bFind = false;
+	for (int i = 0; i < pDlg->m_vecPaperModelInfo[pDlg->m_nCurrTabSel]->vecElectOmr.size(); i++)
+	{
+		if (pElectOmr->nGroupID == pDlg->m_vecPaperModelInfo[pDlg->m_nCurrTabSel]->vecElectOmr[i].sElectOmrGroupInfo.nGroupID)
+		{
+			bFind = true;
+			break;
+		}
+	}
+	if (bFind)
+	{
+		AfxMessageBox(_T("请先清除属于此组选做题的选项"));
+		return;
+	}
+
+
 	m_comboGroup.DeleteString(m_comboGroup.GetCurSel());
 
-	std::vector<pELECTOMRGROUPINFO>::iterator itElectOmr = m_vecElectOmrInfo.begin();
-	for (; itElectOmr != m_vecElectOmrInfo.end(); )
+	std::vector<pELECTOMRGROUPINFO>::iterator itElectOmr = m_vecElectOmrInfoReal.begin();
+	for (; itElectOmr != m_vecElectOmrInfoReal.end();)
 	{
 		if (*itElectOmr == pElectOmr)
 		{
-			itElectOmr = m_vecElectOmrInfo.erase(itElectOmr);
-			SAFE_RELEASE(pElectOmr);
+			itElectOmr = m_vecElectOmrInfoReal.erase(itElectOmr);
 		}
 		else
 			itElectOmr++;
 	}
+	m_nCurrentSel = -1;
+	m_pCurrentGroup = NULL;
+	m_comboGroup.SetCurSel(-1);
 }
 
 
@@ -208,7 +233,7 @@ void ElectOmrDlg::OnBnClickedBtnSave()
 	UpdateData(TRUE);
 	if (m_nRealItem == 0 || m_nAllCount == 0)
 	{
-		AfxMessageBox(_T("选项数量设置不合法，不能报错！"));
+		AfxMessageBox(_T("选项数量设置不合法，不能保存！"));
 		return;
 	}
 	int nItem = m_comboGroup.GetCurSel();
@@ -216,6 +241,18 @@ void ElectOmrDlg::OnBnClickedBtnSave()
 
 	pElectOmr->nAllCount = m_nAllCount;
 	pElectOmr->nRealCount = m_nRealItem;
+
+	bool bFind = false;
+	for (int i = 0; i < m_vecElectOmrInfoReal.size(); i++)
+	{
+		if (m_vecElectOmrInfoReal[i] == pElectOmr)
+		{
+			bFind = true;
+			break;
+		}
+	}
+	if (!bFind)
+		m_vecElectOmrInfoReal.push_back(pElectOmr);
 }
 
 void ElectOmrDlg::OnCbnSelchangeComboGroup()
@@ -227,5 +264,91 @@ void ElectOmrDlg::OnCbnSelchangeComboGroup()
 	pELECTOMRGROUPINFO pElectOmr = (pELECTOMRGROUPINFO)m_comboGroup.GetItemDataPtr(m_nCurrentSel);
 	m_nAllCount = pElectOmr->nAllCount;
 	m_nRealItem = pElectOmr->nRealCount;
+	m_pCurrentGroup = pElectOmr;
 	UpdateData(FALSE);
+}
+
+void ElectOmrDlg::InitGroupInfo(std::vector<ELECTOMR_QUESTION>& vecElectOmr)
+{
+	for (int i = 0; i < m_vecElectOmrInfoAll.size(); i++)
+	{
+		pELECTOMRGROUPINFO pElectOmr = m_vecElectOmrInfoAll[i];
+		SAFE_RELEASE(pElectOmr);
+	}
+	m_vecElectOmrInfoAll.clear();
+	m_vecElectOmrInfoReal.clear();
+	m_comboGroup.ResetContent();
+
+	for (int i = 0; i < vecElectOmr.size(); i++)
+	{
+		pELECTOMRGROUPINFO pElectOmr = new ELECTOMRGROUPINFO;
+		pElectOmr->nGroupID = vecElectOmr[i].sElectOmrGroupInfo.nGroupID;
+		pElectOmr->nAllCount = vecElectOmr[i].sElectOmrGroupInfo.nAllCount;
+		pElectOmr->nRealCount = vecElectOmr[i].sElectOmrGroupInfo.nRealCount;
+		m_vecElectOmrInfoAll.push_back(pElectOmr);
+		m_vecElectOmrInfoReal.push_back(pElectOmr);
+	}
+	InitUI();
+}
+
+void ElectOmrDlg::InitUI()
+{
+	USES_CONVERSION;
+	for (int i = 0; i < m_vecElectOmrInfoReal.size(); i++)
+	{
+		char szVal[10] = { 0 };
+		sprintf_s(szVal, "%d", m_vecElectOmrInfoReal[i]->nGroupID);
+		
+		m_comboGroup.InsertString(i, A2T(szVal));
+		m_comboGroup.SetItemDataPtr(i, m_vecElectOmrInfoReal[i]);
+	}
+	if (m_vecElectOmrInfoReal.size())
+	{
+		m_comboGroup.SetCurSel(0);
+		m_nCurrentSel = 0;
+
+		m_nAllCount = m_vecElectOmrInfoReal[0]->nAllCount;
+		m_nRealItem = m_vecElectOmrInfoReal[0]->nRealCount;
+	}
+	else
+	{
+		m_comboGroup.SetCurSel(-1);
+		m_nCurrentSel = -1;
+
+		m_nAllCount = 0;
+		m_nRealItem = 0;
+	}	
+	UpdateData(FALSE);
+}
+
+bool ElectOmrDlg::checkValid()
+{
+	for (int i = 0; i < m_vecElectOmrInfoReal.size(); i++)
+	{
+		if (m_vecElectOmrInfoReal[i] == m_pCurrentGroup)
+			return true;
+	}
+	return false;
+}
+
+void ElectOmrDlg::showUI(int nGroup)
+{
+	int nCount = m_comboGroup.GetCount();
+	bool bFind = false;
+	for (int i = 0; i < nCount; i++)
+	{
+		pELECTOMRGROUPINFO pElectOmr = (pELECTOMRGROUPINFO)m_comboGroup.GetItemDataPtr(i);
+		if (pElectOmr->nGroupID == nGroup)
+		{
+			bFind = true;
+			m_comboGroup.SetCurSel(i);
+			m_nAllCount = pElectOmr->nAllCount;
+			m_nRealItem = pElectOmr->nRealCount;
+			m_pCurrentGroup = pElectOmr;
+			UpdateData(FALSE);
+			break;
+		}
+	}
+	if (!bFind)
+		m_comboGroup.SetCurSel(-1);
 }

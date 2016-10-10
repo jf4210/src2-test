@@ -115,6 +115,8 @@ bool SortByTH(RECTINFO& rc1, RECTINFO& rc2)
 				bResult = rc1.nTH == rc2.nTH ? rc1.nSnVal < rc2.nSnVal : false;
 			else if (rc1.eCPType == OMR)
 				bResult = rc1.nTH == rc2.nTH ? rc1.nAnswer < rc2.nAnswer : false;
+			else if (rc1.eCPType == ELECT_OMR)
+				bResult = rc1.nTH == rc2.nTH ? rc1.nAnswer < rc2.nAnswer : false;
 		}
 	}
 		
