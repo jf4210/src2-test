@@ -1243,6 +1243,10 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 	//提取轮廓  
 	cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
+	Rect rtFix_H1, rtFix_H2, rtFix_V1, rtFix_V2;	//同步头模式时首尾点设为定点
+	rtFix_H1.x = rtFix_H2.x = rtFix_V1.x = rtFix_V2.x = 0;
+	rtFix_H1.y = rtFix_H2.y = rtFix_V1.y = rtFix_V2.y = 0;
+
 	bool bResult = false;
 	std::vector<Rect>RectCompList;
 	for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++)
@@ -1278,6 +1282,16 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 			RecogGrayValue(matSrcModel, rc);
 
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.push_back(rc);
+
+			if (iteratorIdx == 0)
+			{
+				rtFix_H1 = rm;
+				rtFix_H2 = rm;
+			}
+			if (rm.x < rtFix_H1.x)
+				rtFix_H1 = rm;
+			if (rm.x > rtFix_H2.x)
+				rtFix_H2 = rm;
 		}
 		else if (m_eCurCPType == V_HEAD)
 		{
@@ -1289,6 +1303,16 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 			RecogGrayValue(matSrcModel, rc);
 
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.push_back(rc);
+
+			if (iteratorIdx == 0)
+			{
+				rtFix_V1 = rm;
+				rtFix_V2 = rm;
+			}
+			if (rm.y < rtFix_H1.y)
+				rtFix_V1 = rm;
+			if (rm.y > rtFix_H2.y)
+				rtFix_V2 = rm;
 		}
 		else if (m_eCurCPType == ABMODEL)
 		{
