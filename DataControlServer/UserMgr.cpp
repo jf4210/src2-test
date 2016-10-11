@@ -361,6 +361,33 @@ int CUserMgr::HandleHeader(CMission* pMission)
 		#endif
 		}
 		break;
+	case USER_ELECTOMR_MODEL:
+		{
+			ST_UPLOAD_ELECTOMR stModelInfo = *(pST_UPLOAD_ELECTOMR)(pMission->m_pMissionData + HEAD_SIZE);
+			std::string strJsnData;
+			char szJsnData[2048] = { 0 };
+			strncpy_s(szJsnData, pMission->m_pMissionData + HEAD_SIZE + sizeof(ST_UPLOAD_ELECTOMR), header.uPackSize - sizeof(ST_UPLOAD_ELECTOMR));
+
+			std::cout << szJsnData << std::endl;
+
+			char szIndex[50] = { 0 };
+			sprintf(szIndex, "%d_%d", stModelInfo.nExamID, stModelInfo.nSubjectID);
+
+			//++向后端提交选做题模板信息	************* 注意：这里需要和后端确认，目前还不清楚后端接口	******************
+
+			/*std::string strEzs = stModelInfo.szEzs;
+			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
+			pTask->strUri = SysSet.m_strBackUri + "/scanTemplate";
+			pTask->pUser = pUser;
+			pTask->strEzs = "ezs=" + strEzs;
+			pTask->strMsg = "setElectOmrInfo";
+			pTask->strRequest = szJsnData;
+			g_fmScanReq.lock();
+			g_lScanReq.push_back(pTask);
+			g_fmScanReq.unlock();*/
+			//--
+		}
+		break;
 	default:
 		bFind = FALSE;
 		break;

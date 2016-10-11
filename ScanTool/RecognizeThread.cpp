@@ -177,6 +177,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		if(bResult) bResult = RecogWhiteCP(nPic, matCompPic, *itPic, pModelInfo);
 		if (bResult) bResult = RecogSN(nPic, matCompPic, *itPic, pModelInfo);
 		if (bResult) bResult = RecogOMR(nPic, matCompPic, *itPic, pModelInfo);
+		if (bResult) bResult = RecogElectOmr(nPic, matCompPic, *itPic, pModelInfo);
 		if(!bResult) bFind = true;
 		if (bFind)
 		{
@@ -278,7 +279,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		//++++++++	test	++++++++
 		std::vector<pRECTINFO> vecItemsDesc;
 		std::vector<ST_ITEM_DIFF> vecOmrItemDiff;
-		calcOmrDiffVal(*itOmr, vecItemsDesc, vecOmrItemDiff);
+		calcOmrDiffVal(itOmr->lSelAnswer, vecItemsDesc, vecOmrItemDiff);
 		strcat_s(szItemInfo, "\n[");
 		for (int i = 0; i < vecOmrItemDiff.size(); i++)
 		{
@@ -1648,7 +1649,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		std::string strRecogAnswer1;
 		std::vector<pRECTINFO> vecItemsDesc;
 		std::vector<ST_ITEM_DIFF> vecOmrItemDiff;
-		calcOmrDiffVal(omrResult, vecItemsDesc, vecOmrItemDiff);
+		calcOmrDiffVal(omrResult.lSelAnswer, vecItemsDesc, vecOmrItemDiff);
 
 		float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
 		float fDiffThread = 0.0;		//选项可能填涂的可能灰度梯度阀值
@@ -1793,6 +1794,149 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 
 		g_pLogger->information(szStatistics);
 	}	
+
+	return bResult;
+}
+
+bool CRecognizeThread::RecogElectOmr(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+{
+	bool bResult = true;
+
+	std::vector<int> vecOmr;
+	ELECTOMR_LIST::iterator itElectOmr = pModelInfo->pModel->vecPaperModel[nPic]->lElectOmr.begin();
+	for (; itElectOmr != pModelInfo->pModel->vecPaperModel[nPic]->lElectOmr.end(); itElectOmr++)
+	{
+		pELECTOMR_QUESTION pOmrQuestion = &(*itElectOmr);
+
+		ELECTOMR_QUESTION omrResult;
+		omrResult.sElectOmrGroupInfo = pOmrQuestion->sElectOmrGroupInfo;
+
+		std::vector<int> vecVal_calcHist;		//直方图灰度计算的识别结果
+		std::vector<int> vecVal_threshold;		//二值化计算的识别结果
+		RECTLIST::iterator itOmrItem = pOmrQuestion->lItemInfo.begin();
+		for (; itOmrItem != pOmrQuestion->lItemInfo.end(); itOmrItem++)
+		{
+			RECTINFO rc = *itOmrItem;
+
+			if (pModelInfo->pModel->nHasHead)
+			{
+				if (rc.nHItem >= m_vecH_Head.size() || rc.nVItem >= m_vecV_Head.size())
+				{
+					bResult = false;
+					pPic->bFindIssue = true;
+					pPic->lIssueRect.push_back(rc);
+					break;
+				}
+				rc.rt.x = m_vecH_Head[rc.nHItem].rt.tl().x;
+				rc.rt.y = m_vecV_Head[rc.nVItem].rt.tl().y;
+				rc.rt.width = m_vecH_Head[rc.nHItem].rt.width;
+				rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
+			}
+			else
+				GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
+
+			bool bResult_Recog = Recog2(nPic, rc, matCompPic, pPic, pModelInfo);
+			if (bResult_Recog)
+			{
+				if (rc.fRealValuePercent > rc.fStandardValuePercent)
+				{
+					vecVal_calcHist.push_back(rc.nAnswer);
+				}
+			}
+
+			bool bResult_Recog2 = RecogVal(nPic, rc, matCompPic, pPic, pModelInfo);
+			if (bResult_Recog2)
+			{
+				vecVal_threshold.push_back(rc.nAnswer);
+			}
+			omrResult.lItemInfo.push_back(rc);
+
+#ifdef PaintOmrSnRect	//打印OMR、SN位置
+			pPic->lNormalRect.push_back(rc);
+#endif
+		}
+
+#if 1
+		std::string strRecogAnswer1;
+		std::vector<pRECTINFO> vecItemsDesc;
+		std::vector<ST_ITEM_DIFF> vecOmrItemDiff;
+		calcOmrDiffVal(omrResult.lItemInfo, vecItemsDesc, vecOmrItemDiff);
+
+		float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
+		float fDiffThread = 0.0;		//选项可能填涂的可能灰度梯度阀值
+		float fDiffExit = 0;			//灰度的梯度递减太快时，可以认为后面选项没有填涂，此时的灰度梯度阀值
+		if (pModelInfo->pModel->nHasHead)
+		{
+			fCompThread = 1.0;
+			fDiffThread = 0.085;
+			fDiffExit = 0.15;
+		}
+		else
+		{
+			fCompThread = 1.2;
+			fDiffThread = 0.2;
+			fDiffExit = 0.3;
+		}
+
+		int nFlag = -1;
+		float fThreld = 0.0;
+		for (int i = 0; i < vecOmrItemDiff.size(); i++)
+		{
+			//根据所有选项灰度值排序，相邻灰度值差值超过阀值，同时其中第一个最大的灰度值超过1.0，就认为这个区间为选中的阀值区间
+			//(大于1.0是防止最小的灰度值很小的时候影响阀值判断)
+			float fDiff = (fCompThread - vecOmrItemDiff[i].fFirst) * 0.1;
+			if ((vecOmrItemDiff[i].fDiff >= fDiffThread && vecOmrItemDiff[i].fFirst > fCompThread) ||
+				(vecOmrItemDiff[i].fDiff >= fDiffThread + fDiff && vecOmrItemDiff[i].fFirst > (fCompThread - 0.1) && fDiff > 0))
+			{
+				nFlag = i;
+				fThreld = vecOmrItemDiff[i].fFirst;
+				if (vecOmrItemDiff[i].fDiff > fDiffExit && i + 1 >= vecVal_calcHist.size())	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
+					break;
+			}
+		}
+		if (nFlag >= 0)
+		{
+			RECTLIST::iterator itItem = omrResult.lItemInfo.begin();
+			for (; itItem != omrResult.lItemInfo.end(); itItem++)
+			{
+				if (itItem->fRealValuePercent >= fThreld)
+				{
+					char szVal[2] = { 0 };
+					sprintf_s(szVal, "%c", itItem->nAnswer + 65);
+					strRecogAnswer1.append(szVal);
+				}
+			}
+		}
+		else
+		{
+			for (int i = 0; i < vecVal_calcHist.size(); i++)
+			{
+				char szVal[5] = { 0 };
+				sprintf_s(szVal, "%c", vecVal_calcHist[i] + 65);
+				strRecogAnswer1.append(szVal);
+			}
+		}
+#else	//一下是直接通过阀值判断是否选中，可用，对填涂不规范并且不清晰的情况不够理想
+		std::string strRecogAnswer1;
+		for (int i = 0; i < vecVal_calcHist.size(); i++)
+		{
+			char szVal[5] = { 0 };
+			sprintf_s(szVal, "%c", vecVal_calcHist[i] + 65);
+			strRecogAnswer1.append(szVal);
+		}
+#endif
+		
+		omrResult.strRecogResult = strRecogAnswer1;
+		(static_cast<pST_PaperInfo>(pPic->pPaper))->lElectOmrResult.push_back(omrResult);
+
+	}
+	if (!bResult)
+	{
+		char szLog[MAX_PATH] = { 0 };
+		sprintf_s(szLog, "识别选做题OMR失败, 图片名: %s\n", pPic->strPicName.c_str());
+		g_pLogger->information(szLog);
+		TRACE(szLog);
+	}
 
 	return bResult;
 }
@@ -2269,11 +2413,11 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 	return bResult;
 }
 
-int CRecognizeThread::calcOmrDiffVal(OMR_RESULT& omrResult, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemDiff)
+int CRecognizeThread::calcOmrDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemDiff)
 {
 #if 1	//下面将所有选项识别灰度值降序排列并相邻比较
-	RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
-	for (; itItem != omrResult.lSelAnswer.end(); itItem++)
+	RECTLIST::iterator itItem = rectList.begin();
+	for (; itItem != rectList.end(); itItem++)
 	{
 		vecItemsDesc.push_back(&(*itItem));
 	}
@@ -2293,12 +2437,12 @@ int CRecognizeThread::calcOmrDiffVal(OMR_RESULT& omrResult, std::vector<pRECTINF
 		}
 	}
 #else	//下面是整题所有选项的两两识别灰度值的比较并按降序排列
-	RECTLIST::iterator itFirst = omrResult.lSelAnswer.begin();
-	for (; itFirst != omrResult.lSelAnswer.end(); itFirst++)
+	RECTLIST::iterator itFirst = rectList.begin();
+	for (; itFirst != rectList.end(); itFirst++)
 	{
 		RECTLIST::iterator itSecond = itFirst;
 		itSecond++;
-		for (; itSecond != omrResult.lSelAnswer.end(); itSecond++)
+		for (; itSecond != rectList.end(); itSecond++)
 		{
 			ST_ITEM_DIFF stDiff;
 			sprintf_s(stDiff.szVal, "%c%c", (char)(itFirst->nAnswer + 65), (char)(itSecond->nAnswer + 65));
@@ -2417,5 +2561,7 @@ bool CRecognizeThread::RecogVal_Sn2(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 	}
 	return true;
 }
+
+
 
 

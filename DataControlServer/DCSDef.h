@@ -13,7 +13,7 @@
 //#include "TypeDef.h"
 
 #ifdef _DEBUG
-//	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
+	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
 //	#define TEST_FILE_PRESSURE	//文件上传压力测试
 #endif
 
@@ -130,6 +130,7 @@ typedef struct _Paper_
 	std::string strZkzh;	//识别出来的考生序列号、准考证号
 	std::string strSnDetail;	//zkzh的详细识别情况，从文件读取
 	std::string strOmrDetail;	//同上
+	std::string strElectOmrDetail;	//选做题详细识别情况
 
 	LIST_PIC_DETAIL lPic;
 
@@ -199,7 +200,7 @@ extern LIST_PAPERS_DETAIL	g_lPapers;		//试卷袋列表
 
 typedef struct _SendHttpTask_
 {
-	int			nTaskType;			//任务类型: 1-给img服务器提交图片，2-给后端提交图片数据, 3-提交OMR，4-提交ZKZH
+	int			nTaskType;			//任务类型: 1-给img服务器提交图片，2-给后端提交图片数据, 3-提交OMR，4-提交ZKZH，5-提交选做题信息
 	int			nSendFlag;			//发送标示，1：发送失败1次，2：发送失败2次...
 	Poco::Timestamp sTime;			//创建任务时间，用于发送失败时延时发送
 	pPIC_DETAIL pPic;

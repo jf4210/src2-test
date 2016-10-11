@@ -2318,6 +2318,8 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		ELECTOMR_LIST::iterator itElectOmr = pModel->vecPaperModel[i]->lElectOmr.begin();
 		for (; itElectOmr != pModel->vecPaperModel[i]->lElectOmr.end(); itElectOmr++)
 		{
+			pModel->nHasElectOmr = 1;		//设置标识
+
 			Poco::JSON::Object jsnTHObj;
 			Poco::JSON::Array  jsnArry;
 			RECTLIST::iterator itOmrSel = itElectOmr->lItemInfo.begin();
@@ -2387,6 +2389,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	jsnModel.set("enableModify", pModel->nEnableModify);		//是否可以修改标识
 	jsnModel.set("abPaper", pModel->nABModel);					//是否是AB卷					*************	暂时没加入AB卷的模板	**************
 	jsnModel.set("hasHead", pModel->nHasHead);					//是否有同步头
+	jsnModel.set("hasElectOmr", pModel->nHasElectOmr);			//是否有选做题
 	jsnModel.set("nExamId", pModel->nExamID);
 	jsnModel.set("nSubjectId", pModel->nSubjectID);
 	jsnModel.set("paperInfo", jsnPicModel);
@@ -4089,11 +4092,6 @@ BOOL CMakeModelDlg::DeleteRectInfo(CPType eType, int nItem)
 		}
 	case ELECT_OMR:
 		{
-			//****************	这里有问题	********************
-
-
-
-
 			if (m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.size() < 0)
 				return FALSE;
 			std::vector<ELECTOMR_QUESTION>::iterator itElectOmr = m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.begin() + nItem;

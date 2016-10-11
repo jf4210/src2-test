@@ -191,6 +191,12 @@ void CSendToHttpThread::run()
 						g_Log.LogOut(strLog);
 						std::cout << "post papers ZKZH result info success, papersName: " << pTask->pPapers->strPapersName << std::endl;
 					}
+					else if (pTask->nTaskType == 5)
+					{
+						std::string strLog = "发送选做题信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: " + pTask->strResult;
+						g_Log.LogOut(strLog);
+						std::cout << "post papers ElectOmr result info success, papersName: " << pTask->pPapers->strPapersName << std::endl;
+					}
 				}
 			}
 			else
@@ -224,6 +230,12 @@ void CSendToHttpThread::run()
 				else if (pTask->nTaskType == 4)
 				{
 					strLog = "post zkzh result failed: " + pTask->pPapers->strPapersName + "\tErrCode: " + response.getReason() + "\tName: " + pTask->pPapers->strPapersName + "\nResult info: ..." /*+ pTask->strResult*/;
+					g_Log.LogOutError(strLog);
+					std::cout << strLog << std::endl;
+				}
+				else if (pTask->nTaskType == 5)
+				{
+					strLog = "post ElectOmr result failed: " + pTask->pPapers->strPapersName + "\tErrCode: " + response.getReason() + "\tName: " + pTask->pPapers->strPapersName + "\nResult info: ..." /*+ pTask->strResult*/;
 					g_Log.LogOutError(strLog);
 					std::cout << strLog << std::endl;
 				}
@@ -421,8 +433,10 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				g_Log.LogOut(strLog);
 				Poco::JSON::Array snArry;
 				Poco::JSON::Array omrArry;
+				Poco::JSON::Array electOmrArry;
 				std::stringstream jsnSnString;
 				std::stringstream jsnOmrString;
+				std::stringstream jsnElectOmrString;
 				LIST_PAPER_INFO::iterator it = pTask->pPapers->lPaper.begin();
 				for (; it != pTask->pPapers->lPaper.end(); it++)
 				{
@@ -465,10 +479,31 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 						g_Log.LogOutError(strErrInfo);
 						std::cout << strErrInfo << std::endl;
 					}
+
+					Poco::JSON::Parser parserElectOmr;
+					Poco::Dynamic::Var resultElectOmr;
+					try
+					{
+						resultElectOmr = parserElectOmr.parse(pPaper->strOmrDetail);
+						Poco::JSON::Object::Ptr electOmrObj = resultElectOmr.extract<Poco::JSON::Object::Ptr>();
+
+						electOmrObj->set("studentKey", pPaper->strMd5Key);
+						electOmrArry.add(electOmrObj);
+					}
+					catch (Poco::JSON::JSONException& jsone)
+					{
+						std::string strErrInfo;
+						strErrInfo.append("Error when parse ElectOmr: ");
+						strErrInfo.append(jsone.message() + "\tData:" + pPaper->strSnDetail);
+						g_Log.LogOutError(strErrInfo);
+						std::cout << strErrInfo << std::endl;
+					}
 				}
 
 				snArry.stringify(jsnSnString, 0);
 				omrArry.stringify(jsnOmrString, 0);
+				electOmrArry.stringify(jsnElectOmrString, 0);
+
 				pSEND_HTTP_TASK pSnTask = new SEND_HTTP_TASK;
 				pSnTask->nTaskType = 4;
 				pSnTask->strResult = jsnSnString.str();
@@ -489,9 +524,24 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				g_lHttpSend.push_back(pOmrTask);
 				g_fmHttpSend.unlock();
 
+				//++提交选做题信息	*************	注意：这里还不行，需要和后端确认	********************
+
+// 				pSEND_HTTP_TASK pElectOmrTask = new SEND_HTTP_TASK;
+// 				pElectOmrTask->nTaskType = 5;
+// 				pElectOmrTask->strResult = jsnElectOmrString.str();
+// 				pElectOmrTask->pPapers = pTask->pPapers;
+// 				pElectOmrTask->strEzs = pTask->pPapers->strEzs;
+// 				pElectOmrTask->strUri = SysSet.m_strBackUri + "/electOmr";
+// 				g_fmHttpSend.lock();
+// 				g_lHttpSend.push_back(pElectOmrTask);
+// 				g_fmHttpSend.unlock();
+				//--
+
 				strLog = "ZKZH信息如下: " + jsnSnString.str();
 				g_Log.LogOut(strLog);
 				strLog = "OMR信息如下: " + jsnOmrString.str();
+				g_Log.LogOut(strLog); 
+				strLog = "选做题信息如下: " + jsnElectOmrString.str();
 				g_Log.LogOut(strLog);
 			}
 		}
@@ -530,6 +580,27 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				char szCount[5] = { 0 };
 				sprintf(szCount, "%d", pTask->nSendFlag);
 				std::string strLog = "提交ZKZH信息给后端失败(试卷袋:" + pTask->pPapers->strPapersName;
+				strLog.append(")，失败原因: " + strMsg);
+				strLog.append("\t发送失败次数: ");
+				strLog.append(szCount);
+				g_Log.LogOutError(strLog);
+				std::cout << strLog << std::endl;
+			}
+		}
+		else if (pTask->nTaskType == 5)
+		{
+			Poco::JSON::Object::Ptr objResult = object->getObject("status");
+			bResult = objResult->get("success").convert<bool>();
+			if (!bResult)
+			{
+				std::string strMsg;
+				if (!objResult->isNull("msg"))
+				{
+					strMsg = CMyCodeConvert::Utf8ToGb2312(objResult->get("msg").convert<std::string>());
+				}
+				char szCount[5] = { 0 };
+				sprintf(szCount, "%d", pTask->nSendFlag);
+				std::string strLog = "提交选做题信息给后端失败(试卷袋:" + pTask->pPapers->strPapersName;
 				strLog.append(")，失败原因: " + strMsg);
 				strLog.append("\t发送失败次数: ");
 				strLog.append(szCount);

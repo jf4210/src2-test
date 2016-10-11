@@ -466,6 +466,23 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 				std::stringstream jsnOmrString;
 				jsnOmr.stringify(jsnOmrString, 0);
 				pPaper->strOmrDetail = jsnOmrString.str();
+
+				if (jsnPaperObj->has("electOmr"))
+				{
+					//*************	注意：这里需要和后端确认，现在还不行	********************
+
+// 					Poco::JSON::Array::Ptr jsnElectOmrArry = jsnPaperObj->getArray("electOmr");
+// 					Poco::JSON::Object jsnElectOmr;
+// 					jsnElectOmr.set("examId", nExamId);
+// 					jsnElectOmr.set("subjectId", nSubjectId);
+// 					jsnElectOmr.set("userId", nUserId);
+// 					jsnElectOmr.set("teacherId", nTeacherId);
+// 					jsnElectOmr.set("zkzh", pPaper->strZkzh);
+// 					jsnElectOmr.set("electOmr", jsnElectOmrArry);
+// 					std::stringstream jsnElectOmrString;
+// 					jsnElectOmr.stringify(jsnElectOmrString, 0);
+// 					pPaper->strElectOmrDetail = jsnElectOmrString.str();
+				}				
 			}
 			else
 			{

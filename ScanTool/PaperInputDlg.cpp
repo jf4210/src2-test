@@ -1233,6 +1233,34 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 			jsnOmrArry.add(jsnOmr);
 		}
 		jsnPaper.set("omr", jsnOmrArry);
+
+		Poco::JSON::Array jsnElectOmrArry;
+		ELECTOMR_LIST::iterator itElectOmr = (*itNomarlPaper)->lElectOmrResult.begin();
+		for (; itElectOmr != (*itNomarlPaper)->lElectOmrResult.end(); itElectOmr++)
+		{
+			Poco::JSON::Object jsnElectOmr;
+			jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
+			jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
+			jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
+			jsnElectOmr.set("value", itElectOmr->strRecogResult);
+			Poco::JSON::Array jsnPositionArry;
+			RECTLIST::iterator itRect = itElectOmr->lItemInfo.begin();
+			for (; itRect != itElectOmr->lItemInfo.end(); itRect++)
+			{
+				Poco::JSON::Object jsnItem;
+				char szVal[5] = { 0 };
+				sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+				jsnItem.set("val", szVal);
+				jsnItem.set("x", itRect->rt.x);
+				jsnItem.set("y", itRect->rt.y);
+				jsnItem.set("w", itRect->rt.width);
+				jsnItem.set("h", itRect->rt.height);
+				jsnPositionArry.add(jsnItem);
+			}
+			jsnElectOmr.set("position", jsnPositionArry);
+			jsnElectOmrArry.add(jsnElectOmr);
+		}
+		jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
 		jsnPaperArry.add(jsnPaper);
 	}
 	PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
@@ -1299,6 +1327,34 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 			jsnOmrArry.add(jsnOmr);
 		}
 		jsnPaper.set("omr", jsnOmrArry);
+
+		Poco::JSON::Array jsnElectOmrArry;
+		ELECTOMR_LIST::iterator itElectOmr = (*itIssuePaper)->lElectOmrResult.begin();
+		for (; itElectOmr != (*itIssuePaper)->lElectOmrResult.end(); itElectOmr++)
+		{
+			Poco::JSON::Object jsnElectOmr;
+			jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
+			jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
+			jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
+			jsnElectOmr.set("value", itElectOmr->strRecogResult);
+			Poco::JSON::Array jsnPositionArry;
+			RECTLIST::iterator itRect = itElectOmr->lItemInfo.begin();
+			for (; itRect != itElectOmr->lItemInfo.end(); itRect++)
+			{
+				Poco::JSON::Object jsnItem;
+				char szVal[5] = { 0 };
+				sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+				jsnItem.set("val", szVal);
+				jsnItem.set("x", itRect->rt.x);
+				jsnItem.set("y", itRect->rt.y);
+				jsnItem.set("w", itRect->rt.width);
+				jsnItem.set("h", itRect->rt.height);
+				jsnPositionArry.add(jsnItem);
+			}
+			jsnElectOmr.set("position", jsnPositionArry);
+			jsnElectOmrArry.add(jsnElectOmr);
+		}
+		jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
 		jsnPaperArry.add(jsnPaper);
 	}
 	//写试卷袋信息到文件

@@ -109,7 +109,7 @@
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 
-#define SOFT_VERSION	_T("1.829")
+#define SOFT_VERSION	_T("1.1011")
 #define SYS_BASE_NAME	_T("YKLX-ScanTool")
 
 
@@ -362,6 +362,7 @@ typedef struct _PaperInfo_
 	
 	SNLIST				lSnResult;
 	OMRRESULTLIST		lOmrResult;			//OMRRESULTLIST
+	ELECTOMR_LIST		lElectOmrResult;	//识别的选做题OMR结果
 	PIC_LIST	lPic;
 	_PaperInfo_()
 	{
@@ -453,10 +454,10 @@ typedef struct _TcpTask_
 {
 	unsigned short usCmd;
 	int		nPkgLen;
-	char	szSendBuf[1024];
+	char	szSendBuf[2048];
 	_TcpTask_()
 	{
-		ZeroMemory(szSendBuf, 1024);
+		ZeroMemory(szSendBuf, 2048);
 	}
 }TCP_TASK, *pTCP_TASK;
 typedef std::list<pTCP_TASK> TCP_TASKLIST;

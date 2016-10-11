@@ -352,7 +352,10 @@ void CTcpClient::HandleCmd()
 		}
 		break;
 		}
-	}	
+	}
+	else if (pstHead->usCmd == USER_RESPONSE_ELECTOMR_MODEL)
+	{
+	}
 }
 
 void CTcpClient::HandleTask(pTCP_TASK pTask)
@@ -361,7 +364,7 @@ void CTcpClient::HandleTask(pTCP_TASK pTask)
 	stHead.usCmd = pTask->usCmd;
 	stHead.uPackSize = pTask->nPkgLen;
 
-	char szSendBuf[1024 + HEAD_SIZE] = { 0 };
+	char szSendBuf[2048 + HEAD_SIZE] = { 0 };
 	memcpy(szSendBuf, (char*)&stHead, HEAD_SIZE);
 	memcpy(szSendBuf + HEAD_SIZE, pTask->szSendBuf, pTask->nPkgLen);
 

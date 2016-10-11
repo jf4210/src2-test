@@ -301,6 +301,8 @@ pMODEL LoadModelFile(CString strModelPath)
 		pModel->nEnableModify	= objData->get("enableModify").convert<int>();
 		pModel->nABModel		= objData->get("abPaper").convert<int>();
 		pModel->nHasHead		= objData->get("hasHead").convert<int>();
+		if (objData->has("hasElectOmr"))
+			pModel->nHasElectOmr = objData->get("hasElectOmr").convert<int>();
 		if (objData->has("nExamId"))
 			pModel->nExamID			= objData->get("nExamId").convert<int>();
 		if (objData->has("nSubjectId"))
@@ -346,7 +348,9 @@ pMODEL LoadModelFile(CString strModelPath)
 			Poco::JSON::Array::Ptr arrayWhiteCP = jsnPaperObj->getArray("WhiteCP");
 			Poco::JSON::Array::Ptr arraySn = jsnPaperObj->getArray("snList");
 			Poco::JSON::Array::Ptr arrayOmr = jsnPaperObj->getArray("selOmrRect");
-			Poco::JSON::Array::Ptr arrayElectOmr = jsnPaperObj->getArray("electOmrList");
+			Poco::JSON::Array::Ptr arrayElectOmr;
+			if (jsnPaperObj->has("electOmrList"))
+				arrayElectOmr = jsnPaperObj->getArray("electOmrList");
 
 			for (int i = 0; i < arrayFixCP->size(); i++)
 			{
@@ -571,33 +575,36 @@ pMODEL LoadModelFile(CString strModelPath)
 				}
 				paperModelInfo->lSNInfo.push_back(pSnItem);
 			}
-			for (int i = 0; i < arrayElectOmr->size(); i++)
+			if (jsnPaperObj->has("electOmrList"))
 			{
-				Poco::JSON::Object::Ptr jsnRectInfoObj = arrayElectOmr->getObject(i);
-				ELECTOMR_QUESTION objElectOmr;
-				objElectOmr.sElectOmrGroupInfo.nGroupID = jsnRectInfoObj->get("nGroupID").convert<int>();
-				objElectOmr.sElectOmrGroupInfo.nAllCount = jsnRectInfoObj->get("nAllCount").convert<int>();
-				objElectOmr.sElectOmrGroupInfo.nRealCount = jsnRectInfoObj->get("nRealCount").convert<int>();
-				Poco::JSON::Array::Ptr omrList = jsnRectInfoObj->getArray("omrlist");
-				for (int j = 0; j < omrList->size(); j++)
+				for (int i = 0; i < arrayElectOmr->size(); i++)
 				{
-					Poco::JSON::Object::Ptr jsnOmrObj = omrList->getObject(j);
-					RECTINFO rc;
-					rc.eCPType = (CPType)jsnOmrObj->get("eType").convert<int>();
-					rc.nThresholdValue = jsnOmrObj->get("thresholdValue").convert<int>();
-					rc.fStandardValuePercent = jsnOmrObj->get("standardValPercent").convert<float>();
-					rc.fStandardValue = jsnOmrObj->get("standardVal").convert<float>();
-					rc.nTH = jsnOmrObj->get("nTH").convert<int>();
-					rc.nAnswer = jsnOmrObj->get("nAnswer").convert<int>();
-					rc.rt.x = jsnOmrObj->get("left").convert<int>();
-					rc.rt.y = jsnOmrObj->get("top").convert<int>();
-					rc.rt.width = jsnOmrObj->get("width").convert<int>();
-					rc.rt.height = jsnOmrObj->get("height").convert<int>();
-					rc.nHItem = jsnOmrObj->get("hHeadItem").convert<int>();
-					rc.nVItem = jsnOmrObj->get("vHeadItem").convert<int>();
-					objElectOmr.lItemInfo.push_back(rc);
+					Poco::JSON::Object::Ptr jsnRectInfoObj = arrayElectOmr->getObject(i);
+					ELECTOMR_QUESTION objElectOmr;
+					objElectOmr.sElectOmrGroupInfo.nGroupID = jsnRectInfoObj->get("nGroupID").convert<int>();
+					objElectOmr.sElectOmrGroupInfo.nAllCount = jsnRectInfoObj->get("nAllCount").convert<int>();
+					objElectOmr.sElectOmrGroupInfo.nRealCount = jsnRectInfoObj->get("nRealCount").convert<int>();
+					Poco::JSON::Array::Ptr omrList = jsnRectInfoObj->getArray("omrlist");
+					for (int j = 0; j < omrList->size(); j++)
+					{
+						Poco::JSON::Object::Ptr jsnOmrObj = omrList->getObject(j);
+						RECTINFO rc;
+						rc.eCPType = (CPType)jsnOmrObj->get("eType").convert<int>();
+						rc.nThresholdValue = jsnOmrObj->get("thresholdValue").convert<int>();
+						rc.fStandardValuePercent = jsnOmrObj->get("standardValPercent").convert<float>();
+						rc.fStandardValue = jsnOmrObj->get("standardVal").convert<float>();
+						rc.nTH = jsnOmrObj->get("nTH").convert<int>();
+						rc.nAnswer = jsnOmrObj->get("nAnswer").convert<int>();
+						rc.rt.x = jsnOmrObj->get("left").convert<int>();
+						rc.rt.y = jsnOmrObj->get("top").convert<int>();
+						rc.rt.width = jsnOmrObj->get("width").convert<int>();
+						rc.rt.height = jsnOmrObj->get("height").convert<int>();
+						rc.nHItem = jsnOmrObj->get("hHeadItem").convert<int>();
+						rc.nVItem = jsnOmrObj->get("vHeadItem").convert<int>();
+						objElectOmr.lItemInfo.push_back(rc);
+					}
+					paperModelInfo->lElectOmr.push_back(objElectOmr);
 				}
-				paperModelInfo->lElectOmr.push_back(objElectOmr);
 			}
 
 			std::vector<pPAPERMODEL>::iterator itBegin = pModel->vecPaperModel.begin();
