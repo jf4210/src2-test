@@ -3322,7 +3322,8 @@ void CMakeModelDlg::OnCbnSelchangeComboCptype()
 	{
 		case SN:
 		{
-			m_nDilateKernel = 4;
+			if (m_nDilateKernel > 4)
+				m_nDilateKernel = 4;
 		}
 		break;
 		default:
