@@ -379,8 +379,10 @@ void CScanModleMgrDlg::OnBnClickedOk()
 		AfxMessageBox(_T("当前模板为空，请选择扫描模板!"));
 		return;
 	}
+
+	USES_CONVERSION;
 	CString strShow = _T("");
-	strShow.Format(_T("是否选择\"%s\"为扫描模板?"), m_pModel->strModelName.c_str());
+	strShow.Format(_T("是否选择\"%s\"为扫描模板?"), A2T(m_pModel->strModelName.c_str()));
 	if (MessageBox(strShow, _T("扫描模板确认"), MB_OKCANCEL) != IDOK)
 		return;
 

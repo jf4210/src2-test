@@ -214,6 +214,8 @@ private:
 	void RecognizeRectTracker();				//识别橡皮筋区域
 	void AddRecogRectToList();					//添加识别出来的区域到对应的列表中，针对有同步头的情况
 	void AddRecogSN();							//添加考号识别区域
+
+	void RecogFixWithHead(int i);				//在同步头模式，识别定点信息
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog(); 

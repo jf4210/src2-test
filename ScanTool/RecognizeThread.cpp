@@ -401,8 +401,8 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bResult = true;
-	if (pModelInfo->pModel->nHasHead != 0)	//有同步头的，不需要进行定点识别
-		return bResult;
+// 	if (pModelInfo->pModel->nHasHead != 0)	//有同步头的，不需要进行定点识别
+// 		return bResult;
 
 	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.begin();
 	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.end(); itCP++)

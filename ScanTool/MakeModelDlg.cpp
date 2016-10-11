@@ -1242,11 +1242,7 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 
 	//提取轮廓  
 	cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-
-	Rect rtFix_H1, rtFix_H2, rtFix_V1, rtFix_V2;	//同步头模式时首尾点设为定点
-	rtFix_H1.x = rtFix_H2.x = rtFix_V1.x = rtFix_V2.x = 0;
-	rtFix_H1.y = rtFix_H2.y = rtFix_V1.y = rtFix_V2.y = 0;
-
+	
 	bool bResult = false;
 	std::vector<Rect>RectCompList;
 	for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++)
@@ -1282,16 +1278,6 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 			RecogGrayValue(matSrcModel, rc);
 
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.push_back(rc);
-
-			if (iteratorIdx == 0)
-			{
-				rtFix_H1 = rm;
-				rtFix_H2 = rm;
-			}
-			if (rm.x < rtFix_H1.x)
-				rtFix_H1 = rm;
-			if (rm.x > rtFix_H2.x)
-				rtFix_H2 = rm;
 		}
 		else if (m_eCurCPType == V_HEAD)
 		{
@@ -1303,16 +1289,6 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 			RecogGrayValue(matSrcModel, rc);
 
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.push_back(rc);
-
-			if (iteratorIdx == 0)
-			{
-				rtFix_V1 = rm;
-				rtFix_V2 = rm;
-			}
-			if (rm.y < rtFix_H1.y)
-				rtFix_V1 = rm;
-			if (rm.y > rtFix_H2.y)
-				rtFix_V2 = rm;
 		}
 		else if (m_eCurCPType == ABMODEL)
 		{
@@ -1965,11 +1941,17 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	}
 	m_pModel->vecPaperModel.clear();
 
+
+
 	m_pModel->nPicNum = m_vecPaperModelInfo.size();
 	for (int i = 0; i < m_pModel->nPicNum; i++)
 	{
 		pPAPERMODEL pPaperModel = new PAPERMODEL;
 		pPaperModel->strModelPicName = m_vecPaperModelInfo[i]->strModelPicName;
+		
+		//++同步头模式时，添加4个定点
+		RecogFixWithHead(i);
+		//--
 
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecHTracker.size(); j++)
 			pPaperModel->lSelHTracker.push_back(m_vecPaperModelInfo[i]->vecHTracker[j]);
@@ -5536,4 +5518,180 @@ void CMakeModelDlg::InitParam()
 		m_fSNThresholdPercent_Head	= 1.2;
 	}
 	g_pLogger->information(strLog);
+}
+
+void CMakeModelDlg::RecogFixWithHead(int i)
+{
+	if (m_pModel->nHasHead)
+	{
+		int nHCounts = m_vecPaperModelInfo[i]->vecH_Head.size();
+		int nVCounts = m_vecPaperModelInfo[i]->vecV_Head.size();
+
+		if (nHCounts < 2 || nVCounts < 2)
+			return;
+
+		m_vecPaperModelInfo[i]->vecRtFix.clear();
+		m_vecPaperModelInfo[i]->vecRtSel.clear();
+
+		RECTINFO rcFix_H1, rcFix_H2, rcFix_V1, rcFix_V2;
+		rcFix_H1.eCPType = rcFix_H2.eCPType = rcFix_V1.eCPType = rcFix_V2.eCPType = Fix_CP;
+
+		rcFix_H1 = m_vecPaperModelInfo[i]->vecH_Head[0];
+		rcFix_H2 = m_vecPaperModelInfo[i]->vecH_Head[nHCounts - 1];
+		rcFix_V1 = m_vecPaperModelInfo[i]->vecV_Head[0];
+		rcFix_V2 = m_vecPaperModelInfo[i]->vecV_Head[nVCounts - 1];
+
+		RECTINFO rcFixSel_1, rcFixSel_2, rcFixSel_3, rcFixSel_4;
+		rcFixSel_1.eCPType = rcFixSel_2.eCPType = rcFixSel_3.eCPType = rcFixSel_4.eCPType = Fix_CP;
+
+		RECTINFO rcFix_HV;
+		rcFix_HV.eCPType = Fix_CP;
+		rcFix_HV.nThresholdValue = m_nFixVal;
+		rcFix_HV.fStandardValuePercent = m_fFixThresholdPercent;
+		rcFix_H1.nThresholdValue = m_nFixVal;
+		rcFix_H1.fStandardValuePercent = m_fFixThresholdPercent;
+		rcFix_H2.nThresholdValue = m_nFixVal;
+		rcFix_H2.fStandardValuePercent = m_fFixThresholdPercent;
+		rcFix_V1.nThresholdValue = m_nFixVal;
+		rcFix_V1.fStandardValuePercent = m_fFixThresholdPercent;
+		rcFix_V2.nThresholdValue = m_nFixVal;
+		rcFix_V2.fStandardValuePercent = m_fFixThresholdPercent;
+		//判断交叉定位点
+		if (abs(rcFix_H1.rt.x - rcFix_V1.rt.x) < 5 && abs(rcFix_H1.rt.y - rcFix_V1.rt.y) < 5)
+		{
+			rcFix_HV.rt.x = rcFix_H2.rt.x;
+			rcFix_HV.rt.y = rcFix_V2.rt.y;
+			rcFix_HV.rt.width = rcFix_H2.rt.width;
+			rcFix_HV.rt.height = rcFix_V2.rt.height;
+
+			Rect rtTmp = rcFix_HV.rt;
+			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+			RecogGrayValue(matSrcModel, rcFix_HV);
+
+			m_vecPaperModelInfo[i]->vecRtFix.push_back(rcFix_H1);
+			m_vecPaperModelInfo[i]->vecRtFix.push_back(rcFix_H2);
+			m_vecPaperModelInfo[i]->vecRtFix.push_back(rcFix_V2);
+			m_vecPaperModelInfo[i]->vecRtFix.push_back(rcFix_HV);
+
+			cv::Point pt1, pt2;
+			pt1 = rcFix_H1.rt.tl() - cv::Point(50, 50);
+			pt2 = rcFix_H1.rt.br() + cv::Point(50, 50);
+			rcFixSel_1.rt = cv::Rect(pt1, pt2);
+			pt1 = rcFix_H2.rt.tl() - cv::Point(50, 50);
+			pt2 = rcFix_H2.rt.br() + cv::Point(50, 50);
+			rcFixSel_2.rt = cv::Rect(pt1, pt2);
+			pt1 = rcFix_V2.rt.tl() - cv::Point(50, 50);
+			pt2 = rcFix_V2.rt.br() + cv::Point(50, 50);
+			rcFixSel_3.rt = cv::Rect(pt1, pt2);
+			pt1 = rcFix_HV.rt.tl() - cv::Point(50, 50);
+			pt2 = rcFix_HV.rt.br() + cv::Point(50, 50);
+			rcFixSel_4.rt = cv::Rect(pt1, pt2);
+			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_1);
+			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_2);
+			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_3);
+			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_4);
+		}
+		if (abs(rcFix_H1.rt.x - rcFix_V2.rt.x) < 5 && abs(rcFix_H1.rt.y - rcFix_V2.rt.y) < 5)
+		{
+			rcFix_HV.rt.x = rcFix_H2.rt.x;
+			rcFix_HV.rt.y = rcFix_V1.rt.y;
+			rcFix_HV.rt.width = rcFix_H2.rt.width;
+			rcFix_HV.rt.height = rcFix_V1.rt.height;
+
+			Rect rtTmp = rcFix_HV.rt;
+			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+			RecogGrayValue(matSrcModel, rcFix_HV);
+
+			m_vecPaperModelInfo[i]->vecRtFix.push_back(rcFix_V1);
+			m_vecPaperModelInfo[i]->vecRtFix.push_back(rcFix_HV);
+			m_vecPaperModelInfo[i]->vecRtFix.push_back(rcFix_H1);
+			m_vecPaperModelInfo[i]->vecRtFix.push_back(rcFix_H2);
+
+			cv::Point pt1, pt2;
+			pt1 = rcFix_H1.rt.tl() - cv::Point(50, 50);
+			pt2 = rcFix_H1.rt.br() + cv::Point(50, 50);
+			rcFixSel_1.rt = cv::Rect(pt1, pt2);
+			pt1 = rcFix_H2.rt.tl() - cv::Point(50, 50);
+			pt2 = rcFix_H2.rt.br() + cv::Point(50, 50);
+			rcFixSel_2.rt = cv::Rect(pt1, pt2);
+			pt1 = rcFix_V1.rt.tl() - cv::Point(50, 50);
+			pt2 = rcFix_V1.rt.br() + cv::Point(50, 50);
+			rcFixSel_3.rt = cv::Rect(pt1, pt2);
+			pt1 = rcFix_HV.rt.tl() - cv::Point(50, 50);
+			pt2 = rcFix_HV.rt.br() + cv::Point(50, 50);
+			rcFixSel_4.rt = cv::Rect(pt1, pt2);
+			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_3);
+			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_4);
+			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_1);
+			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_2);
+		}
+		if (abs(rcFix_H2.rt.x - rcFix_V1.rt.x) < 5 && abs(rcFix_H2.rt.y - rcFix_V1.rt.y) < 5)
+		{
+			rcFix_HV.rt.x = rcFix_H1.rt.x;
+			rcFix_HV.rt.y = rcFix_V2.rt.y;
+			rcFix_HV.rt.width = rcFix_H1.rt.width;
+			rcFix_HV.rt.height = rcFix_V2.rt.height;
+
+			Rect rtTmp = rcFix_HV.rt;
+			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+			RecogGrayValue(matSrcModel, rcFix_HV);
+
+			m_vecPaperModelInfo[i]->vecRtFix.push_back(rcFix_H1);
+			m_vecPaperModelInfo[i]->vecRtFix.push_back(rcFix_H2);
+			m_vecPaperModelInfo[i]->vecRtFix.push_back(rcFix_V2);
+			m_vecPaperModelInfo[i]->vecRtFix.push_back(rcFix_HV);
+
+			cv::Point pt1, pt2;
+			pt1 = rcFix_H1.rt.tl() - cv::Point(50, 50);
+			pt2 = rcFix_H1.rt.br() + cv::Point(50, 50);
+			rcFixSel_1.rt = cv::Rect(pt1, pt2);
+			pt1 = rcFix_H2.rt.tl() - cv::Point(50, 50);
+			pt2 = rcFix_H2.rt.br() + cv::Point(50, 50);
+			rcFixSel_2.rt = cv::Rect(pt1, pt2);
+			pt1 = rcFix_V2.rt.tl() - cv::Point(50, 50);
+			pt2 = rcFix_V2.rt.br() + cv::Point(50, 50);
+			rcFixSel_3.rt = cv::Rect(pt1, pt2);
+			pt1 = rcFix_HV.rt.tl() - cv::Point(50, 50);
+			pt2 = rcFix_HV.rt.br() + cv::Point(50, 50);
+			rcFixSel_4.rt = cv::Rect(pt1, pt2);
+			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_1);
+			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_2);
+			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_3);
+			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_4);
+		}
+		if (abs(rcFix_H2.rt.x - rcFix_V2.rt.x) < 5 && abs(rcFix_H2.rt.y - rcFix_V2.rt.y) < 5)
+		{
+			rcFix_HV.rt.x = rcFix_H1.rt.x;
+			rcFix_HV.rt.y = rcFix_V1.rt.y;
+			rcFix_HV.rt.width = rcFix_H1.rt.width;
+			rcFix_HV.rt.height = rcFix_V1.rt.height;
+
+			Rect rtTmp = rcFix_HV.rt;
+			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+			RecogGrayValue(matSrcModel, rcFix_HV);
+
+			m_vecPaperModelInfo[i]->vecRtFix.push_back(rcFix_HV);
+			m_vecPaperModelInfo[i]->vecRtFix.push_back(rcFix_V1);
+			m_vecPaperModelInfo[i]->vecRtFix.push_back(rcFix_H2);
+			m_vecPaperModelInfo[i]->vecRtFix.push_back(rcFix_H1);
+
+			cv::Point pt1, pt2;
+			pt1 = rcFix_H1.rt.tl() - cv::Point(50, 50);
+			pt2 = rcFix_H1.rt.br() + cv::Point(50, 50);
+			rcFixSel_1.rt = cv::Rect(pt1, pt2);
+			pt1 = rcFix_H2.rt.tl() - cv::Point(50, 50);
+			pt2 = rcFix_H2.rt.br() + cv::Point(50, 50);
+			rcFixSel_2.rt = cv::Rect(pt1, pt2);
+			pt1 = rcFix_V1.rt.tl() - cv::Point(50, 50);
+			pt2 = rcFix_V1.rt.br() + cv::Point(50, 50);
+			rcFixSel_3.rt = cv::Rect(pt1, pt2);
+			pt1 = rcFix_HV.rt.tl() - cv::Point(50, 50);
+			pt2 = rcFix_HV.rt.br() + cv::Point(50, 50);
+			rcFixSel_4.rt = cv::Rect(pt1, pt2);
+			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_4);
+			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_3);
+			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_2);
+			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_1);
+		}
+	}
 }
