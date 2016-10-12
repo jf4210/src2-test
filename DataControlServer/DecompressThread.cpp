@@ -325,6 +325,8 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 
 	if (ret != 0)
 	{
+		//************	注意：解压失败需要再次尝试	*************************
+
 		std::string strLog = "解压试卷包(";
 		strLog.append(pPapers->strPapersName);
 		strLog.append(")失败, 路径: " + pPapers->strPapersPath);

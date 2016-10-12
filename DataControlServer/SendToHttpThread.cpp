@@ -727,6 +727,25 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 	g_fmHttpSend.unlock();
 #endif
 
+	//É¾³ý½âÑ¹µÄÎÄ¼þ¼Ð
+	try
+	{
+		Poco::File papersDir(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
+		if (papersDir.exists())
+		{
+			papersDir.remove(true);
+
+			strLog = "É¾³ýÊÔ¾í´ü½âÑ¹ÎÄ¼þ¼Ð(" + pPapers->strPapersPath + ")³É¹¦";
+			g_Log.LogOut(strLog);
+			std::cout << strLog << std::endl;
+		}
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strErr = "É¾³ýÊÔ¾í´ü½âÑ¹ÎÄ¼þ¼Ð(" + pPapers->strPapersPath + ")Ê§°Ü: " + exc.message();
+		g_Log.LogOutError(strErr);
+	}	
+
 	return true;
 }
 
