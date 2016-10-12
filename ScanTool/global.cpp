@@ -123,6 +123,13 @@ bool SortByTH(RECTINFO& rc1, RECTINFO& rc2)
 	return bResult;
 }
 
+bool SortByOmrTH(OMR_QUESTION& omr1, OMR_QUESTION& omr2)
+{
+	bool bResult = omr1.nTH < omr2.nTH ? true : false;
+
+	return bResult;
+}
+
 int WriteRegKey(HKEY root, char * subDir, DWORD regType, char * regKey, char * regValue)
 {
 	USES_CONVERSION;
@@ -303,6 +310,16 @@ pMODEL LoadModelFile(CString strModelPath)
 		pModel->nHasHead		= objData->get("hasHead").convert<int>();
 		if (objData->has("hasElectOmr"))
 			pModel->nHasElectOmr = objData->get("hasElectOmr").convert<int>();
+
+// 		if (objData->has("gaussKernel"))
+// 			pModel->nGaussKernel = objData->get("gaussKernel").convert<int>();
+// 		if (objData->has("sharpKernel"))
+// 			pModel->nSharpKernel = objData->get("sharpKernel").convert<int>();
+// 		if (objData->has("cannyKernel"))
+// 			pModel->nCannyKernel = objData->get("cannyKernel").convert<int>();
+// 		if (objData->has("dilateKernel"))
+// 			pModel->nDilateKernel = objData->get("dilateKernel").convert<int>();
+
 		if (objData->has("nExamId"))
 			pModel->nExamID			= objData->get("nExamId").convert<int>();
 		if (objData->has("nSubjectId"))
@@ -364,6 +381,16 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
 				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
 				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+
+				if (jsnRectInfoObj->has("gaussKernel"))
+					rc.nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
+				if (jsnRectInfoObj->has("sharpKernel"))
+					rc.nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
+				if (jsnRectInfoObj->has("cannyKernel"))
+					rc.nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();
+				if (jsnRectInfoObj->has("dilateKernel"))
+					rc.nDilateKernel = jsnRectInfoObj->get("dilateKernel").convert<int>();
+
 				paperModelInfo->lFix.push_back(rc);
 			}
 			for (int i = 0; i < arrayHHead->size(); i++)
@@ -378,6 +405,16 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
 				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
 				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+
+				if (jsnRectInfoObj->has("gaussKernel"))
+					rc.nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
+				if (jsnRectInfoObj->has("sharpKernel"))
+					rc.nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
+				if (jsnRectInfoObj->has("cannyKernel"))
+					rc.nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();
+				if (jsnRectInfoObj->has("dilateKernel"))
+					rc.nDilateKernel = jsnRectInfoObj->get("dilateKernel").convert<int>();
+
 				paperModelInfo->lH_Head.push_back(rc);
 			}
 			for (int i = 0; i < arrayVHead->size(); i++)
@@ -392,6 +429,16 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
 				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
 				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+
+				if (jsnRectInfoObj->has("gaussKernel"))
+					rc.nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
+				if (jsnRectInfoObj->has("sharpKernel"))
+					rc.nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
+				if (jsnRectInfoObj->has("cannyKernel"))
+					rc.nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();
+				if (jsnRectInfoObj->has("dilateKernel"))
+					rc.nDilateKernel = jsnRectInfoObj->get("dilateKernel").convert<int>();
+
 				paperModelInfo->lV_Head.push_back(rc);
 			}
 			for (int i = 0; i < arrayABModel->size(); i++)
@@ -408,6 +455,16 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
 				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
 				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+
+				if (jsnRectInfoObj->has("gaussKernel"))
+					rc.nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
+				if (jsnRectInfoObj->has("sharpKernel"))
+					rc.nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
+				if (jsnRectInfoObj->has("cannyKernel"))
+					rc.nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();
+				if (jsnRectInfoObj->has("dilateKernel"))
+					rc.nDilateKernel = jsnRectInfoObj->get("dilateKernel").convert<int>();
+
 				paperModelInfo->lABModel.push_back(rc);
 			}
 			for (int i = 0; i < arrayCourse->size(); i++)
@@ -424,6 +481,16 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
 				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
 				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+
+				if (jsnRectInfoObj->has("gaussKernel"))
+					rc.nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
+				if (jsnRectInfoObj->has("sharpKernel"))
+					rc.nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
+				if (jsnRectInfoObj->has("cannyKernel"))
+					rc.nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();
+				if (jsnRectInfoObj->has("dilateKernel"))
+					rc.nDilateKernel = jsnRectInfoObj->get("dilateKernel").convert<int>();
+
 				paperModelInfo->lCourse.push_back(rc);
 			}
 			for (int i = 0; i < arrayQKCP->size(); i++)
@@ -440,6 +507,16 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
 				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
 				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+
+				if (jsnRectInfoObj->has("gaussKernel"))
+					rc.nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
+				if (jsnRectInfoObj->has("sharpKernel"))
+					rc.nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
+				if (jsnRectInfoObj->has("cannyKernel"))
+					rc.nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();
+				if (jsnRectInfoObj->has("dilateKernel"))
+					rc.nDilateKernel = jsnRectInfoObj->get("dilateKernel").convert<int>();
+
 				paperModelInfo->lQK_CP.push_back(rc);
 			}
 			for (int i = 0; i < arrayGrayCP->size(); i++)
@@ -456,6 +533,16 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
 				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
 				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+
+				if (jsnRectInfoObj->has("gaussKernel"))
+					rc.nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
+				if (jsnRectInfoObj->has("sharpKernel"))
+					rc.nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
+				if (jsnRectInfoObj->has("cannyKernel"))
+					rc.nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();
+				if (jsnRectInfoObj->has("dilateKernel"))
+					rc.nDilateKernel = jsnRectInfoObj->get("dilateKernel").convert<int>();
+
 				paperModelInfo->lGray.push_back(rc);
 			}
 			for (int i = 0; i < arrayWhiteCP->size(); i++)
@@ -472,6 +559,16 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
 				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
 				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+
+				if (jsnRectInfoObj->has("gaussKernel"))
+					rc.nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
+				if (jsnRectInfoObj->has("sharpKernel"))
+					rc.nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
+				if (jsnRectInfoObj->has("cannyKernel"))
+					rc.nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();
+				if (jsnRectInfoObj->has("dilateKernel"))
+					rc.nDilateKernel = jsnRectInfoObj->get("dilateKernel").convert<int>();
+
 				paperModelInfo->lWhite.push_back(rc);
 			}
 			for (int i = 0; i < arraySelFixRoi->size(); i++)
@@ -486,6 +583,16 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
 				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
 				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+
+				if (jsnRectInfoObj->has("gaussKernel"))
+					rc.nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
+				if (jsnRectInfoObj->has("sharpKernel"))
+					rc.nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
+				if (jsnRectInfoObj->has("cannyKernel"))
+					rc.nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();
+				if (jsnRectInfoObj->has("dilateKernel"))
+					rc.nDilateKernel = jsnRectInfoObj->get("dilateKernel").convert<int>();
+
 				paperModelInfo->lSelFixRoi.push_back(rc);
 			}
 			for (int i = 0; i < arraySelHTracker->size(); i++)
@@ -500,6 +607,16 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
 				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
 				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+
+				if (jsnRectInfoObj->has("gaussKernel"))
+					rc.nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
+				if (jsnRectInfoObj->has("sharpKernel"))
+					rc.nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
+				if (jsnRectInfoObj->has("cannyKernel"))
+					rc.nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();
+				if (jsnRectInfoObj->has("dilateKernel"))
+					rc.nDilateKernel = jsnRectInfoObj->get("dilateKernel").convert<int>();
+
 				paperModelInfo->lSelHTracker.push_back(rc);
 			}
 			for (int i = 0; i < arraySelVTracker->size(); i++)
@@ -514,6 +631,16 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
 				rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
 				rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+
+				if (jsnRectInfoObj->has("gaussKernel"))
+					rc.nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
+				if (jsnRectInfoObj->has("sharpKernel"))
+					rc.nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
+				if (jsnRectInfoObj->has("cannyKernel"))
+					rc.nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();
+				if (jsnRectInfoObj->has("dilateKernel"))
+					rc.nDilateKernel = jsnRectInfoObj->get("dilateKernel").convert<int>();
+
 				paperModelInfo->lSelVTracker.push_back(rc);
 			}
 			for (int i = 0; i < arrayOmr->size(); i++)
@@ -541,6 +668,16 @@ pMODEL LoadModelFile(CString strModelPath)
 					rc.rt.y = jsnOmrObj->get("top").convert<int>();
 					rc.rt.width = jsnOmrObj->get("width").convert<int>();
 					rc.rt.height = jsnOmrObj->get("height").convert<int>();
+
+					if (jsnOmrObj->has("gaussKernel"))
+						rc.nGaussKernel = jsnOmrObj->get("gaussKernel").convert<int>();
+					if (jsnOmrObj->has("sharpKernel"))
+						rc.nSharpKernel = jsnOmrObj->get("sharpKernel").convert<int>();
+					if (jsnOmrObj->has("cannyKernel"))
+						rc.nCannyKernel = jsnOmrObj->get("cannyKernel").convert<int>();
+					if (jsnOmrObj->has("dilateKernel"))
+						rc.nDilateKernel = jsnOmrObj->get("dilateKernel").convert<int>();
+
 					objOmr.lSelAnswer.push_back(rc);
 				}
 				paperModelInfo->lOMR2.push_back(objOmr);
@@ -571,6 +708,16 @@ pMODEL LoadModelFile(CString strModelPath)
 					rc.rt.y = jsnSnObj->get("top").convert<int>();
 					rc.rt.width = jsnSnObj->get("width").convert<int>();
 					rc.rt.height = jsnSnObj->get("height").convert<int>();
+
+					if (jsnSnObj->has("gaussKernel"))
+						rc.nGaussKernel = jsnSnObj->get("gaussKernel").convert<int>();
+					if (jsnSnObj->has("sharpKernel"))
+						rc.nSharpKernel = jsnSnObj->get("sharpKernel").convert<int>();
+					if (jsnSnObj->has("cannyKernel"))
+						rc.nCannyKernel = jsnSnObj->get("cannyKernel").convert<int>();
+					if (jsnSnObj->has("dilateKernel"))
+						rc.nDilateKernel = jsnSnObj->get("dilateKernel").convert<int>();
+
 					pSnItem->lSN.push_back(rc);
 				}
 				paperModelInfo->lSNInfo.push_back(pSnItem);
@@ -601,6 +748,16 @@ pMODEL LoadModelFile(CString strModelPath)
 						rc.rt.height = jsnOmrObj->get("height").convert<int>();
 						rc.nHItem = jsnOmrObj->get("hHeadItem").convert<int>();
 						rc.nVItem = jsnOmrObj->get("vHeadItem").convert<int>();
+
+						if (jsnOmrObj->has("gaussKernel"))
+							rc.nGaussKernel = jsnOmrObj->get("gaussKernel").convert<int>();
+						if (jsnOmrObj->has("sharpKernel"))
+							rc.nSharpKernel = jsnOmrObj->get("sharpKernel").convert<int>();
+						if (jsnOmrObj->has("cannyKernel"))
+							rc.nCannyKernel = jsnOmrObj->get("cannyKernel").convert<int>();
+						if (jsnOmrObj->has("dilateKernel"))
+							rc.nDilateKernel = jsnOmrObj->get("dilateKernel").convert<int>();
+
 						objElectOmr.lItemInfo.push_back(rc);
 					}
 					paperModelInfo->lElectOmr.push_back(objElectOmr);
@@ -2018,11 +2175,11 @@ bool GetPosition2(cv::Mat& inverseMat, cv::Rect& rtSrc, cv::Rect& rtDst)
 }
 
 
-void SharpenImage(const cv::Mat &image, cv::Mat &result)
+void SharpenImage(const cv::Mat &image, cv::Mat &result, int nSharpKernel)
 {
 	//创建并初始化滤波模板
 	cv::Mat kernel(3, 3, CV_32F, cv::Scalar(0));
-	kernel.at<float>(1, 1) = _nSharpKernel_;
+	kernel.at<float>(1, 1) = nSharpKernel;		//_nSharpKernel_
 	kernel.at<float>(0, 1) = -1.0;
 	kernel.at<float>(1, 0) = -1.0;
 	kernel.at<float>(1, 2) = -1.0;
@@ -2435,7 +2592,7 @@ bool RecogHHead(int nPic, cv::Mat& matCompPic, pPAPERMODEL pPicModel, RECTINFO r
 		cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 		GaussianBlur(matCompRoi, matCompRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
-		SharpenImage(matCompRoi, matCompRoi);
+		SharpenImage(matCompRoi, matCompRoi, _nSharpKernel_);
 
 		int nThreshold = 100;
 		threshold(matCompRoi, matCompRoi, nThreshold, 255, cv::THRESH_BINARY);
@@ -2527,7 +2684,7 @@ bool RecogVHead(int nPic, cv::Mat& matCompPic, pPAPERMODEL pPicModel, RECTINFO r
 		cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 		GaussianBlur(matCompRoi, matCompRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
-		SharpenImage(matCompRoi, matCompRoi);
+		SharpenImage(matCompRoi, matCompRoi, _nSharpKernel_);
 
 		int nThreshold = 100;
 		threshold(matCompRoi, matCompRoi, nThreshold, 255, cv::THRESH_BINARY);
@@ -2620,7 +2777,7 @@ inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 {
 	cv::cvtColor(matSrcRoi, matSrcRoi, CV_BGR2GRAY);
 	cv::GaussianBlur(matSrcRoi, matSrcRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
-	SharpenImage(matSrcRoi, matSrcRoi);
+	SharpenImage(matSrcRoi, matSrcRoi, _nSharpKernel_);
 
 	const int channels[1] = { 0 };
 	const float* ranges[1];

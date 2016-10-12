@@ -301,7 +301,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 	int nCount = pPaper->lOmrResult.size();
 	if (nCount)
 	{
-		std::string strCorrectPerInfo = Poco::format("总数[%u],空值%d(%.2f%%),怀疑%d(%.2f%%),无怀疑%d(%.2f%%)", pPaper->lOmrResult.size(), nNullCount, (double)nNullCount / nCount * 100, \
+		std::string strCorrectPerInfo = Poco::format("%s总数[%u],空值%d(%.2f%%),怀疑%d(%.2f%%),无怀疑%d(%.2f%%)", pPaper->strStudentInfo, pPaper->lOmrResult.size(), nNullCount, (double)nNullCount / nCount * 100, \
 													 nDoubtCount, (double)nDoubtCount / nCount * 100, nEqualCount, (double)nEqualCount / nCount * 100);
 
 		g_pLogger->information(strCorrectPerInfo);
@@ -322,8 +322,8 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 
 		Mat imag_src, img_comp;
 		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
-		cv::GaussianBlur(matCompRoi, matCompRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
-		SharpenImage(matCompRoi, matCompRoi);
+		cv::GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//_nGauseKernel_
+		SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
 
 		const int channels[1] = { 0 };
 		const float* ranges[1];
@@ -428,8 +428,8 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 
 			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
-			GaussianBlur(matCompRoi, matCompRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
-			SharpenImage(matCompRoi, matCompRoi);
+			GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
+			SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
 
 
 #ifdef USES_GETTHRESHOLD_ZTFB
@@ -469,8 +469,8 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 #else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
 #endif
-			cv::Canny(matCompRoi, matCompRoi, 0, _nCannyKernel_, 5);
-			Mat element = getStructuringElement(MORPH_RECT, Size(_nDilateKernel_, _nDilateKernel_));	//Size(6, 6)	普通空白框可识别
+			cv::Canny(matCompRoi, matCompRoi, 0, rc.nCannyKernel, 5);	//_nCannyKernel_
+			Mat element = getStructuringElement(MORPH_RECT, Size(rc.nDilateKernel, rc.nDilateKernel));	//Size(6, 6)	普通空白框可识别	Size(_nDilateKernel_, _nDilateKernel_)
 			dilate(matCompRoi, matCompRoi, element);
 
 #if 1
@@ -562,7 +562,7 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			rtFix.x = rtFix.x + rc.rt.x;
 			rtFix.y = rtFix.y + rc.rt.y;
 
-			RECTINFO rcFixInfo;
+			RECTINFO rcFixInfo = rc;
 			rcFixInfo.rt = rtFix;
 			pPic->lFix.push_back(rcFixInfo);
 			TRACE("定点矩形: (%d,%d,%d,%d)\n", rtFix.x, rtFix.y, rtFix.width, rtFix.height);
@@ -616,8 +616,8 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 
 			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
-			GaussianBlur(matCompRoi, matCompRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
-			SharpenImage(matCompRoi, matCompRoi);
+			GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
+			SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
 
 #ifdef USES_GETTHRESHOLD_ZTFB
 			const int channels[1] = { 0 };
@@ -656,8 +656,8 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 #else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
 #endif
-			cv::Canny(matCompRoi, matCompRoi, 0, _nCannyKernel_, 5);
-			Mat element = getStructuringElement(MORPH_RECT, Size(3, 3));	//Size(6, 6)	普通空白框可识别
+			cv::Canny(matCompRoi, matCompRoi, 0, rc.nCannyKernel, 5);	//_nCannyKernel_
+			Mat element = getStructuringElement(MORPH_RECT, Size(rc.nDilateKernel, rc.nDilateKernel));	//Size(6, 6)	普通空白框可识别		Size(3, 3)
 			dilate(matCompRoi, matCompRoi, element);
 			IplImage ipl_img(matCompRoi);
 
@@ -797,12 +797,18 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		{
 			for (int i = 0; i < RectCompList.size(); i++)
 			{
-				RECTINFO rc;
-				rc.rt = RectCompList[i];
-				rc.eCPType = H_HEAD;
-				m_vecH_Head.push_back(rc);
+				RECTINFO rcHead;
+				rcHead.rt = RectCompList[i];
+				
+				rcHead.nGaussKernel = rc.nGaussKernel;
+				rcHead.nSharpKernel = rc.nSharpKernel;
+				rcHead.nCannyKernel = rc.nCannyKernel;
+				rcHead.nDilateKernel = rc.nDilateKernel;
+
+				rcHead.eCPType = H_HEAD;
+				m_vecH_Head.push_back(rcHead);
 				//++ for test
-				pPic->lNormalRect.push_back(rc);
+				pPic->lNormalRect.push_back(rcHead);
 				//--
 			}
 			std::sort(m_vecH_Head.begin(), m_vecH_Head.end(), SortByPositionX);
@@ -872,8 +878,8 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 
 			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
-			GaussianBlur(matCompRoi, matCompRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
-			SharpenImage(matCompRoi, matCompRoi);
+			GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//_nGauseKernel_
+			SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
 
 #ifdef USES_GETTHRESHOLD_ZTFB
 			const int channels[1] = { 0 };
@@ -912,8 +918,8 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 #else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
 #endif
-			cv::Canny(matCompRoi, matCompRoi, 0, _nCannyKernel_, 5);
-			Mat element = getStructuringElement(MORPH_RECT, Size(3, 3));	//Size(6, 6)	普通空白框可识别
+			cv::Canny(matCompRoi, matCompRoi, 0, rc.nCannyKernel, 5);	//_nCannyKernel_
+			Mat element = getStructuringElement(MORPH_RECT, Size(rc.nDilateKernel, rc.nDilateKernel));	//Size(6, 6)	普通空白框可识别		Size(3, 3)
 			dilate(matCompRoi, matCompRoi, element);
 			IplImage ipl_img(matCompRoi);
 
@@ -1052,12 +1058,18 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		{
 			for (int i = 0; i < RectCompList.size(); i++)
 			{
-				RECTINFO rc;
-				rc.rt = RectCompList[i];
-				rc.eCPType = V_HEAD;
-				m_vecV_Head.push_back(rc);
+				RECTINFO rcHead;
+				rcHead.rt = RectCompList[i];
+
+				rcHead.nGaussKernel = rc.nGaussKernel;
+				rcHead.nSharpKernel = rc.nSharpKernel;
+				rcHead.nCannyKernel = rc.nCannyKernel;
+				rcHead.nDilateKernel = rc.nDilateKernel;
+
+				rcHead.eCPType = V_HEAD;
+				m_vecV_Head.push_back(rcHead);
 				//++ for test
-				pPic->lNormalRect.push_back(rc);
+				pPic->lNormalRect.push_back(rcHead);
 				//--
 			}
 			std::sort(m_vecV_Head.begin(), m_vecV_Head.end(), SortByPositionY);

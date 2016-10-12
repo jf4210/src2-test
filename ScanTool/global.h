@@ -522,6 +522,7 @@ bool	SortByPositionX2(cv::Rect& rt1, cv::Rect& rt2);
 bool	SortByPositionY2(cv::Rect& rt1, cv::Rect& rt2);
 bool	SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2);
 bool	SortByTH(RECTINFO& rc1, RECTINFO& rc2);
+bool	SortByOmrTH(OMR_QUESTION& rc1, OMR_QUESTION& rc2);
 bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 0, int nPicH = 0);
 std::string calcFileMd5(std::string strPath);
 void	CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int height);
@@ -537,7 +538,7 @@ bool	decString(std::string& strSrc, std::string& strDst);
 bool	GetInverseMat(RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);
 bool	GetPosition2(cv::Mat& inverseMat, cv::Rect& rtSrc, cv::Rect& rtDst);
 
-void	SharpenImage(const cv::Mat &image, cv::Mat &result);
+void SharpenImage(const cv::Mat &image, cv::Mat &result, int nSharpKernel);
 
 //--------------	加载制卷工具导出的模板数据	-------------------
 typedef struct _RectPos_

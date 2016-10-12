@@ -23,7 +23,7 @@ IMPLEMENT_DYNAMIC(CMakeModelDlg, CDialog)
 
 CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	: CDialog(CMakeModelDlg::IDD, pParent)
-	, m_pModelPicShow(NULL), m_nGaussKernel(5), m_nSharpKernel(5), m_nThresholdKernel(150), m_nCannyKernel(90), m_nDilateKernel(6), m_nErodeKernel(2)
+	, m_pModelPicShow(NULL), m_nGaussKernel(5), m_nSharpKernel(5), m_nThresholdKernel(150), m_nCannyKernel(90), m_nDilateKernel(6), m_nErodeKernel(2), m_nDilateKernel_Common(6), m_nDilateKernel_Sn(6)
 	, m_pModel(pModel), m_bNewModelFlag(false), m_nModelPicNums(2), m_nCurrTabSel(0), m_bSavedModelFlag(false), m_ncomboCurrentSel(0), m_eCurCPType(UNKNOWN)
 	, m_nCurListCtrlSel(0), m_nStartTH(0)
 	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200)
@@ -1265,8 +1265,16 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 		RECTINFO rc;
 		rc.rt = rm;
 		rc.eCPType = m_eCurCPType;
+		rc.nGaussKernel = m_nGaussKernel;
+		rc.nSharpKernel = m_nSharpKernel;
+		rc.nCannyKernel = m_nCannyKernel;
+		rc.nDilateKernel = m_nDilateKernel;
 		RECTINFO rcOri;
 		rcOri.rt = rtOri;
+		rcOri.nGaussKernel = m_nGaussKernel;
+		rcOri.nSharpKernel = m_nSharpKernel;
+		rcOri.nCannyKernel = m_nCannyKernel;
+		rcOri.nDilateKernel = m_nDilateKernel;
 
 		if (m_eCurCPType == H_HEAD)
 		{
@@ -1505,9 +1513,21 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 			
 			RECTINFO rcFixSel;					//把定位点选择的矩形框存入，在扫描匹配的时候根据这个框来识别定点坐标
 			rcFixSel.eCPType = m_eCurCPType;
+
+			rcFixSel.nGaussKernel = m_nGaussKernel;
+			rcFixSel.nSharpKernel = m_nSharpKernel;
+			rcFixSel.nCannyKernel = m_nCannyKernel;
+			rcFixSel.nDilateKernel = m_nDilateKernel;
+
 			rcFixSel.rt = rtOri;
 			RECTINFO rcFixRt;					//把定位点选择的矩形框存入，在扫描匹配的时候根据这个框来识别定点坐标
 			rcFixRt.eCPType = m_eCurCPType;
+
+			rcFixRt.nGaussKernel = m_nGaussKernel;
+			rcFixRt.nSharpKernel = m_nSharpKernel;
+			rcFixRt.nCannyKernel = m_nCannyKernel;
+			rcFixRt.nDilateKernel = m_nDilateKernel;
+
 			rcFixRt.rt = RectCompList[0];
 
 			Rect rtTmp = RectCompList[0];
@@ -1654,6 +1674,11 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 			rc.eCPType = m_eCurCPType;
 			rc.nHItem = j + nPosH_B;
 			rc.nVItem = i + nPosV_B;
+
+			rc.nGaussKernel = m_nGaussKernel;
+			rc.nSharpKernel = m_nSharpKernel;
+			rc.nCannyKernel = m_nCannyKernel;
+			rc.nDilateKernel = m_nDilateKernel;
 #if 1
 			if (m_eCurCPType == ABMODEL)
 			{
@@ -2029,6 +2054,13 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 		m_pModel->vecPaperModel.push_back(pPaperModel);
 	}
 
+	//++将识别时的参数存入模板
+// 	m_pModel->nGaussKernel = m_nGaussKernel;
+// 	m_pModel->nSharpKernel = m_nSharpKernel;
+// 	m_pModel->nCannyKernel = m_nCannyKernel;
+// 	m_pModel->nDilateKernel = m_nDilateKernel;
+	//--
+
 	CString modelPath = g_strCurrentPath + _T("Model");
 	modelPath = modelPath + _T("\\") + A2T(m_pModel->strModelName.c_str());
 	if (SaveModelFile(m_pModel))
@@ -2108,6 +2140,11 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itFix->nThresholdValue);
 			jsnObj.set("standardValPercent", itFix->fStandardValuePercent);
 			jsnObj.set("standardVal", itFix->fStandardValue);
+
+			jsnObj.set("gaussKernel", itFix->nGaussKernel);
+			jsnObj.set("sharpKernel", itFix->nSharpKernel);
+			jsnObj.set("cannyKernel", itFix->nCannyKernel);
+			jsnObj.set("dilateKernel", itFix->nDilateKernel);
 			jsnFixCPArry.add(jsnObj);
 		}
 		RECTLIST::iterator itHHead = pModel->vecPaperModel[i]->lH_Head.begin();
@@ -2122,6 +2159,11 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itHHead->nThresholdValue);
 			jsnObj.set("standardValPercent", itHHead->fStandardValuePercent);
 			jsnObj.set("standardVal", itHHead->fStandardValue);
+
+			jsnObj.set("gaussKernel", itHHead->nGaussKernel);
+			jsnObj.set("sharpKernel", itHHead->nSharpKernel);
+			jsnObj.set("cannyKernel", itHHead->nCannyKernel);
+			jsnObj.set("dilateKernel", itHHead->nDilateKernel);
 			jsnHHeadArry.add(jsnObj);
 		}
 		RECTLIST::iterator itVHead = pModel->vecPaperModel[i]->lV_Head.begin();
@@ -2136,6 +2178,11 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itVHead->nThresholdValue);
 			jsnObj.set("standardValPercent", itVHead->fStandardValuePercent);
 			jsnObj.set("standardVal", itVHead->fStandardValue);
+
+			jsnObj.set("gaussKernel", itVHead->nGaussKernel);
+			jsnObj.set("sharpKernel", itVHead->nSharpKernel);
+			jsnObj.set("cannyKernel", itVHead->nCannyKernel);
+			jsnObj.set("dilateKernel", itVHead->nDilateKernel);
 			jsnVHeadArry.add(jsnObj);
 		}
 		RECTLIST::iterator itABModel = pModel->vecPaperModel[i]->lABModel.begin();
@@ -2152,6 +2199,11 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itABModel->nThresholdValue);
 			jsnObj.set("standardValPercent", itABModel->fStandardValuePercent);
 			jsnObj.set("standardVal", itABModel->fStandardValue);
+
+			jsnObj.set("gaussKernel", itABModel->nGaussKernel);
+			jsnObj.set("sharpKernel", itABModel->nSharpKernel);
+			jsnObj.set("cannyKernel", itABModel->nCannyKernel);
+			jsnObj.set("dilateKernel", itABModel->nDilateKernel);
 			jsnABModelArry.add(jsnObj);
 		}
 		RECTLIST::iterator itCourse = pModel->vecPaperModel[i]->lCourse.begin();
@@ -2168,6 +2220,11 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itCourse->nThresholdValue);
 			jsnObj.set("standardValPercent", itCourse->fStandardValuePercent);
 			jsnObj.set("standardVal", itCourse->fStandardValue);
+
+			jsnObj.set("gaussKernel", itCourse->nGaussKernel);
+			jsnObj.set("sharpKernel", itCourse->nSharpKernel);
+			jsnObj.set("cannyKernel", itCourse->nCannyKernel);
+			jsnObj.set("dilateKernel", itCourse->nDilateKernel);
 			jsnCourseArry.add(jsnObj);
 		}
 		RECTLIST::iterator itQKCP = pModel->vecPaperModel[i]->lQK_CP.begin();
@@ -2184,6 +2241,11 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itQKCP->nThresholdValue);
 			jsnObj.set("standardValPercent", itQKCP->fStandardValuePercent);
 			jsnObj.set("standardVal", itQKCP->fStandardValue);
+
+			jsnObj.set("gaussKernel", itQKCP->nGaussKernel);
+			jsnObj.set("sharpKernel", itQKCP->nSharpKernel);
+			jsnObj.set("cannyKernel", itQKCP->nCannyKernel);
+			jsnObj.set("dilateKernel", itQKCP->nDilateKernel);
 			jsnQKArry.add(jsnObj);
 		}
 		RECTLIST::iterator itGrayCP = pModel->vecPaperModel[i]->lGray.begin();
@@ -2200,6 +2262,11 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itGrayCP->nThresholdValue);
 			jsnObj.set("standardValPercent", itGrayCP->fStandardValuePercent);
 			jsnObj.set("standardVal", itGrayCP->fStandardValue);
+
+			jsnObj.set("gaussKernel", itGrayCP->nGaussKernel);
+			jsnObj.set("sharpKernel", itGrayCP->nSharpKernel);
+			jsnObj.set("cannyKernel", itGrayCP->nCannyKernel);
+			jsnObj.set("dilateKernel", itGrayCP->nDilateKernel);
 			jsnGrayCPArry.add(jsnObj);
 		}
 		RECTLIST::iterator itWhiteCP = pModel->vecPaperModel[i]->lWhite.begin();
@@ -2216,6 +2283,11 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itWhiteCP->nThresholdValue);
 			jsnObj.set("standardValPercent", itWhiteCP->fStandardValuePercent);
 			jsnObj.set("standardVal", itWhiteCP->fStandardValue);
+
+			jsnObj.set("gaussKernel", itWhiteCP->nGaussKernel);
+			jsnObj.set("sharpKernel", itWhiteCP->nSharpKernel);
+			jsnObj.set("cannyKernel", itWhiteCP->nCannyKernel);
+			jsnObj.set("dilateKernel", itWhiteCP->nDilateKernel);
 			jsnWhiteCPArry.add(jsnObj);
 		}
 		RECTLIST::iterator itSelRoi = pModel->vecPaperModel[i]->lSelFixRoi.begin();
@@ -2229,7 +2301,12 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("height", itSelRoi->rt.height);
 			jsnObj.set("thresholdValue", itSelRoi->nThresholdValue);
 			jsnObj.set("standardValPercent", itSelRoi->fStandardValuePercent);
-//			jsnObj.set("standardVal", itSelRoi->fStandardValue);
+			//			jsnObj.set("standardVal", itSelRoi->fStandardValue);
+
+			jsnObj.set("gaussKernel", itSelRoi->nGaussKernel);
+			jsnObj.set("sharpKernel", itSelRoi->nSharpKernel);
+			jsnObj.set("cannyKernel", itSelRoi->nCannyKernel);
+			jsnObj.set("dilateKernel", itSelRoi->nDilateKernel);
 			jsnSelRoiArry.add(jsnObj);
 		}
 		RECTLIST::iterator itSelHTracker = pModel->vecPaperModel[i]->lSelHTracker.begin();
@@ -2244,6 +2321,11 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itSelHTracker->nThresholdValue);
 			jsnObj.set("standardValPercent", itSelHTracker->fStandardValuePercent);
 			//			jsnObj.set("standardVal", itSelHTracker->fStandardValue);
+
+			jsnObj.set("gaussKernel", itSelHTracker->nGaussKernel);
+			jsnObj.set("sharpKernel", itSelHTracker->nSharpKernel);
+			jsnObj.set("cannyKernel", itSelHTracker->nCannyKernel);
+			jsnObj.set("dilateKernel", itSelHTracker->nDilateKernel);
 			jsnSelHTrackerArry.add(jsnObj);
 		}
 		RECTLIST::iterator itSelVTracker = pModel->vecPaperModel[i]->lSelVTracker.begin();
@@ -2258,6 +2340,11 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itSelVTracker->nThresholdValue);
 			jsnObj.set("standardValPercent", itSelVTracker->fStandardValuePercent);
 			//			jsnObj.set("standardVal", itSelVTracker->fStandardValue);
+
+			jsnObj.set("gaussKernel", itSelVTracker->nGaussKernel);
+			jsnObj.set("sharpKernel", itSelVTracker->nSharpKernel);
+			jsnObj.set("cannyKernel", itSelVTracker->nCannyKernel);
+			jsnObj.set("dilateKernel", itSelVTracker->nDilateKernel);
 			jsnSelVTrackerArry.add(jsnObj);
 		}
 		OMRLIST::iterator itOmr = pModel->vecPaperModel[i]->lOMR2.begin();
@@ -2283,6 +2370,11 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 				jsnObj.set("thresholdValue", itOmrSel->nThresholdValue);
 				jsnObj.set("standardValPercent", itOmrSel->fStandardValuePercent);
 				jsnObj.set("standardVal", itOmrSel->fStandardValue);
+
+				jsnObj.set("gaussKernel", itOmrSel->nGaussKernel);
+				jsnObj.set("sharpKernel", itOmrSel->nSharpKernel);
+				jsnObj.set("cannyKernel", itOmrSel->nCannyKernel);
+				jsnObj.set("dilateKernel", itOmrSel->nDilateKernel);
 				jsnArry.add(jsnObj);
 			}
 			jsnTHObj.set("nTH", itOmr->nTH);
@@ -2314,6 +2406,11 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 				jsnObj.set("thresholdValue", itSnDetail->nThresholdValue);
 				jsnObj.set("standardValPercent", itSnDetail->fStandardValuePercent);
 				jsnObj.set("standardVal", itSnDetail->fStandardValue);
+
+				jsnObj.set("gaussKernel", itSnDetail->nGaussKernel);
+				jsnObj.set("sharpKernel", itSnDetail->nSharpKernel);
+				jsnObj.set("cannyKernel", itSnDetail->nCannyKernel);
+				jsnObj.set("dilateKernel", itSnDetail->nDilateKernel);
 				jsnArry.add(jsnObj);
 			}
 			jsnSNObj.set("nItem", (*itSn)->nItem);
@@ -2344,6 +2441,11 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 				jsnObj.set("thresholdValue", itOmrSel->nThresholdValue);
 				jsnObj.set("standardValPercent", itOmrSel->fStandardValuePercent);
 				jsnObj.set("standardVal", itOmrSel->fStandardValue);
+
+				jsnObj.set("gaussKernel", itOmrSel->nGaussKernel);
+				jsnObj.set("sharpKernel", itOmrSel->nSharpKernel);
+				jsnObj.set("cannyKernel", itOmrSel->nCannyKernel);
+				jsnObj.set("dilateKernel", itOmrSel->nDilateKernel);
 				jsnArry.add(jsnObj);
 			}
 			jsnTHObj.set("nGroupID", itElectOmr->sElectOmrGroupInfo.nGroupID);
@@ -2396,6 +2498,12 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	jsnModel.set("abPaper", pModel->nABModel);					//是否是AB卷					*************	暂时没加入AB卷的模板	**************
 	jsnModel.set("hasHead", pModel->nHasHead);					//是否有同步头
 	jsnModel.set("hasElectOmr", pModel->nHasElectOmr);			//是否有选做题
+ 
+// 	jsnModel.set("gaussKernel", pModel->nGaussKernel);
+// 	jsnModel.set("sharpKernel", pModel->nSharpKernel);
+// 	jsnModel.set("cannyKernel", pModel->nCannyKernel);
+// 	jsnModel.set("dilateKernel", pModel->nDilateKernel);
+
 	jsnModel.set("nExamId", pModel->nExamID);
 	jsnModel.set("nSubjectId", pModel->nSubjectID);
 	jsnModel.set("paperInfo", jsnPicModel);
@@ -3328,12 +3436,11 @@ void CMakeModelDlg::OnCbnSelchangeComboCptype()
 	{
 		case SN:
 		{
-			if (m_nDilateKernel > 4)
-				m_nDilateKernel = 4;
+			m_nDilateKernel = m_nDilateKernel_Sn;
 		}
 		break;
 		default:
-			m_nDilateKernel = 6;
+			m_nDilateKernel = m_nDilateKernel_Common;
 			break;
 	}
 
@@ -3759,32 +3866,6 @@ void CMakeModelDlg::AddRecogRectToList()
 		}
 		else if (m_eCurCPType == SN)
 		{
-#if 0
-			bool bFind = false;
-			SNLIST::iterator itSNItem = m_vecPaperModelInfo[m_nCurrTabSel]->lSN.begin();
-			for (; itSNItem != m_vecPaperModelInfo[m_nCurrTabSel]->lSN.end(); itSNItem++)
-			{
-				if ((*itSNItem).nItem == m_vecTmp[i].nTH)
-				{
-					bFind = true;
-					pSN_DETAIL pSnDetail = new SN_DETAIL;
-					pSnDetail->nVal = m_vecTmp[i].nAnswer;
-					pSnDetail->rcSN.rt = m_vecTmp[i].rt;
-					itSNItem->lSN.push_back(pSnDetail);
-					break;
-				}
-			}
-			if (!bFind)
-			{
-				SN_ITEM snItem;
-				snItem.nItem = m_vecTmp[i].nTH;
-				pSN_DETAIL pSnDetail = new SN_DETAIL;
-				pSnDetail->nVal = m_vecTmp[i].nAnswer;
-				pSnDetail->rcSN.rt = m_vecTmp[i].rt;
-				snItem.lSN.push_back(pSnDetail);
-				m_vecPaperModelInfo[m_nCurrTabSel]->lSN.push_back(snItem);
-			}
-#endif
 		}
 		else if (m_eCurCPType == OMR)
 		{
@@ -3855,6 +3936,9 @@ void CMakeModelDlg::AddRecogRectToList()
 	}
 	m_nStartTH += nAddTH - 1;
 
+	if (m_eCurCPType == OMR)
+		std::sort(m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.begin(), m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.end(), SortByOmrTH);
+
 	m_vecTmp.clear();
 	UpdataCPList();
 	ShowRectByCPType(m_eCurCPType);
@@ -3883,6 +3967,12 @@ void CMakeModelDlg::RecognizeRectTracker()
 		m_vecPaperModelInfo[m_nCurrTabSel]->vecHTracker.clear();
 		RECTINFO rcHTrackerSel;					//水平橡皮筋的区域
 		rcHTrackerSel.eCPType = m_eCurCPType;
+		
+		rcHTrackerSel.nGaussKernel = m_nGaussKernel;
+		rcHTrackerSel.nSharpKernel = m_nSharpKernel;
+		rcHTrackerSel.nCannyKernel = m_nCannyKernel;
+		rcHTrackerSel.nDilateKernel = m_nDilateKernel;
+
 		rcHTrackerSel.rt = rt;
 		m_vecPaperModelInfo[m_nCurrTabSel]->vecHTracker.push_back(rcHTrackerSel);
 		m_vecPaperModelInfo[m_nCurrTabSel]->bFirstH = false;
@@ -3906,6 +3996,12 @@ void CMakeModelDlg::RecognizeRectTracker()
 		m_vecPaperModelInfo[m_nCurrTabSel]->vecVTracker.clear();
 		RECTINFO rcVTrackerSel;					//垂直橡皮筋的区域
 		rcVTrackerSel.eCPType = m_eCurCPType;
+
+		rcVTrackerSel.nGaussKernel = m_nGaussKernel;
+		rcVTrackerSel.nSharpKernel = m_nSharpKernel;
+		rcVTrackerSel.nCannyKernel = m_nCannyKernel;
+		rcVTrackerSel.nDilateKernel = m_nDilateKernel;
+
 		rcVTrackerSel.rt = rt;
 		m_vecPaperModelInfo[m_nCurrTabSel]->vecVTracker.push_back(rcVTrackerSel);
 		m_vecPaperModelInfo[m_nCurrTabSel]->bFirstV = false;
@@ -4557,6 +4653,12 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 		RECTINFO rc;
 		rc.rt = rcList_XY[i];
 		rc.eCPType = m_eCurCPType;
+
+		rc.nGaussKernel = m_nGaussKernel;
+		rc.nSharpKernel = m_nSharpKernel;
+		rc.nCannyKernel = m_nCannyKernel;
+		rc.nDilateKernel = m_nDilateKernel;
+
 		rc.nThresholdValue = m_nSN;
 		rc.fStandardValuePercent = m_fSNThresholdPercent_Fix;
 		rc.nRecogFlag = m_pSNInfoDlg->m_nCurrentSNVal;
@@ -4692,6 +4794,12 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 		RECTINFO rc;
 		rc.rt = rcList_XY[i];
 		rc.eCPType = m_eCurCPType;
+
+		rc.nGaussKernel = m_nGaussKernel;
+		rc.nSharpKernel = m_nSharpKernel;
+		rc.nCannyKernel = m_nCannyKernel;
+		rc.nDilateKernel = m_nDilateKernel;
+
 		rc.nThresholdValue = m_nOMR;
 		rc.fStandardValuePercent = m_fOMRThresholdPercent_Fix;
 		rc.nRecogFlag = m_pOmrInfoDlg->m_nCurrentOmrVal;
@@ -4829,6 +4937,12 @@ void CMakeModelDlg::GetElectOmrInfo(std::vector<cv::Rect>& rcList)
 		RECTINFO rc;
 		rc.rt = rcList_XY[i];
 		rc.eCPType = m_eCurCPType;
+
+		rc.nGaussKernel = m_nGaussKernel;
+		rc.nSharpKernel = m_nSharpKernel;
+		rc.nCannyKernel = m_nCannyKernel;
+		rc.nDilateKernel = m_nDilateKernel;
+
 		rc.nThresholdValue = m_nOMR;
 		rc.fStandardValuePercent = m_fOMRThresholdPercent_Fix;
 		rc.nTH = m_pElectOmrDlg->m_pCurrentGroup->nGroupID;
@@ -5459,6 +5573,9 @@ void CMakeModelDlg::InitParam()
 		m_nDilateKernel = pConf->getInt("MakeModel_Recog.delateKernel", 6);
 		m_nErodeKernel = pConf->getInt("MakeModel_Recog.eRodeKernel", 2);
 
+		m_nDilateKernel_Sn = pConf->getInt("MakeModel_Recog.delateKernel_sn", 6);
+		m_nDilateKernel_Common = pConf->getInt("MakeModel_Recog.delateKernel", 6);
+
 		m_nWhiteVal = pConf->getInt("MakeModel_Threshold.white", 225);
 		m_nHeadVal	= pConf->getInt("MakeModel_Threshold.head", 136);
 		m_nABModelVal = pConf->getInt("MakeModel_Threshold.abModel", 150);
@@ -5493,6 +5610,9 @@ void CMakeModelDlg::InitParam()
 		m_nCannyKernel = 90;
 		m_nDilateKernel = 6;
 		m_nErodeKernel = 2;
+
+		m_nDilateKernel_Sn = 6;
+		m_nDilateKernel_Common = 6;
 
 		m_nWhiteVal = 225;
 		m_nHeadVal	= 136;

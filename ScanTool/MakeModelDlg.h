@@ -120,6 +120,9 @@ public:
 	int m_nDilateKernel;		//膨胀核因子
 	int m_nErodeKernel;			//腐蚀核因子
 
+	int m_nDilateKernel_Sn;		//ZKZH识别时用的膨胀因子
+	int	m_nDilateKernel_Common;	//通用膨胀核因子，SN时不用
+
 	CString m_strModelPicPath;	
 	HZIP hz;					//压缩
 

@@ -1168,6 +1168,12 @@ bool RecogHHead(int nPic, cv::Mat& matCompPic, pPAPERMODEL pPicModel, RECTINFO r
 		{
 			RECTINFO rcHead;
 			rcHead.rt = RectCompList[i];
+
+			rcHead.nGaussKernel = 5;
+			rcHead.nSharpKernel = 5;
+			rcHead.nCannyKernel = 90;
+			rcHead.nDilateKernel = 3;
+
 			rcHead.eCPType = H_HEAD;
 			vecH_Head.push_back(rcHead);
 		}
@@ -1258,6 +1264,12 @@ bool RecogVHead(int nPic, cv::Mat& matCompPic, pPAPERMODEL pPicModel, RECTINFO r
 		{
 			RECTINFO rcHead;
 			rcHead.rt = RectCompList[i];
+
+			rcHead.nGaussKernel = 5;
+			rcHead.nSharpKernel = 5;
+			rcHead.nCannyKernel = 90;
+			rcHead.nDilateKernel = 3;
+
 			rcHead.eCPType = V_HEAD;
 			vecV_Head.push_back(rcHead);
 		}
@@ -1301,7 +1313,7 @@ bool GetPositionByHead(pPAPERMODEL pPicModel, int nH, int nV, cv::Rect& rt)
 inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 {
 	cv::cvtColor(matSrcRoi, matSrcRoi, CV_BGR2GRAY);
-	cv::GaussianBlur(matSrcRoi, matSrcRoi, cv::Size(5, 5), 0, 0);
+	cv::GaussianBlur(matSrcRoi, matSrcRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);
 	SharpenImage(matSrcRoi, matSrcRoi);
 
 	const int channels[1] = { 0 };

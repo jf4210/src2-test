@@ -2,6 +2,7 @@
 gauseKernel=5
 sharpKernel=5
 cannyKernel=90
+delateKernel_sn=6
 delateKernel=6
 eRodeKernel=2
 
