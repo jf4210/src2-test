@@ -153,7 +153,7 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 						std::string strName = m_szFileName;
 						if (strName.find(".mod") != std::string::npos)
 						{
-							Poco::File filePath(SysSet.m_strModelSavePath);
+							Poco::File filePath(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strModelSavePath));
 							filePath.createDirectories();
 
 							std::string strModelNewPath = SysSet.m_strModelSavePath + "\\";
@@ -227,15 +227,30 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 							if (strExtFileName == ".typkg")		//武汉天喻版本，收到文件后重命名	8.18	*******	注意	********
 							{
 								Poco::Path filePath(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
-								std::string strNewFilePath = SysSet.m_strUpLoadPath + "\\" + filePath.getBaseName() + ".zip";
+								std::string strNewFilePath = SysSet.m_strPapersBackupPath + "\\" + filePath.getBaseName() + ".zip";
 
 								Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
 								fileList.renameTo(CMyCodeConvert::Gb2312ToUtf8(strNewFilePath));
 							}
 							else
 							{
+								std::string strUploadPath = SysSet.m_strUpLoadPath + "\\";
+								strUploadPath.append(m_szFileName);
+								try
+								{
+									Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
+									filePapers.moveTo(CMyCodeConvert::Gb2312ToUtf8(strUploadPath));
+								}
+								catch (Poco::Exception& exc)
+								{
+									std::string strFileName = m_szFileName;
+									std::string strErrInfo = Poco::format("移动试卷袋(%s)失败,%s", strFileName, exc.message());
+									g_Log.LogOutError(strErrInfo);
+									std::cout << strErrInfo << std::endl;
+								}
+
 								pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
-								pDecompressTask->strFilePath = m_szFilePath;
+								pDecompressTask->strFilePath = strUploadPath;
 								pDecompressTask->strFileName = m_szFileName;
 
 								pDecompressTask->strFileName = pDecompressTask->strFileName.substr(0, nPos);	//pDecompressTask->strFileName.length() - 4
@@ -307,26 +322,24 @@ bool CPaperUser::SendResult(unsigned short usCmd, int nResultCode)
 
 void CPaperUser::SetAnswerInfo(ST_FILE_INFO info)
 {
-	string strFilePath = SysSet.m_strUpLoadPath + "\\";
+	string strFilePath = SysSet.m_strRecvFilePath;
 	strFilePath.append(info.szFileName);
 
 	try
 	{
-		Poco::File upLoadPath(SysSet.m_strUpLoadPath);
+		Poco::File upLoadPath(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strRecvFilePath));
 		if (!upLoadPath.exists())
 			upLoadPath.createDirectories();
 
-		Poco::File filePath(strFilePath);
+		Poco::File filePath(CMyCodeConvert::Gb2312ToUtf8(strFilePath));
 		if (filePath.exists())
-			filePath.remove(true);
-
-		
+			filePath.remove(true);				
 	}
 	catch (Poco::Exception &exc)
 	{
 		std::string strLog;
 		strLog.append("upLoadPath createDirectories or filePath remove error: " + exc.displayText());
-		g_Log.LogOut(strLog);
+		g_Log.LogOutError(strLog);
 		std::cout << strLog << std::endl;
 	}
 

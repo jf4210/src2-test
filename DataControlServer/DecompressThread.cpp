@@ -345,6 +345,25 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	GetFileData(strPapersFilePath, pPapers);
 
 #ifdef TEST_MODE
+	LIST_PAPER_INFO::iterator itPaper = pPapers->lPaper.begin();
+	for (; itPaper != pPapers->lPaper.end(); itPaper++)
+	{
+		pPAPER_INFO pPaper = *itPaper;
+		LIST_PIC_DETAIL::iterator itPic = pPaper->lPic.begin();
+		for (; itPic != pPaper->lPic.end(); itPic++)
+		{
+			pPIC_DETAIL pPic = *itPic;
+
+			pSEND_HTTP_TASK pHttpTask = new SEND_HTTP_TASK;
+			pHttpTask->nTaskType = 1;
+			pHttpTask->pPic = pPic;
+			pHttpTask->pPapers = pPapers;
+			pHttpTask->strUri = SysSet.m_strUpLoadHttpUri;
+			g_fmHttpSend.lock();
+			g_lHttpSend.push_back(pHttpTask);
+			g_fmHttpSend.unlock();
+		}
+	}
 #else
 	LIST_PAPER_INFO::iterator itPaper = pPapers->lPaper.begin();
 	for (; itPaper != pPapers->lPaper.end(); itPaper++)
@@ -484,6 +503,7 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 // 					std::stringstream jsnElectOmrString;
 // 					jsnElectOmr.stringify(jsnElectOmrString, 0);
 // 					pPaper->strElectOmrDetail = jsnElectOmrString.str();
+//					pPaper->nHasElectOmr = 1;
 				}				
 			}
 			else

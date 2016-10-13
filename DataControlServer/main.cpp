@@ -101,10 +101,45 @@ protected:
 		}
 	}
 
+	//启动的时候，检测本地文件接收文件夹，将其中所有文件都加入压缩列表，目的：如果有异常退出，已接收文件还需要继续处理
+	void  InitPapersList()
+	{
+		bool bFind = false;
+		std::string strLog = "添加上次关闭未处理完成的试卷袋列表:";
+		std::string strPapersPath = CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strUpLoadPath);
+		Poco::DirectoryIterator it(strPapersPath);
+		Poco::DirectoryIterator end;
+		while (it != end)
+		{
+			Poco::Path p(it->path());
+			if (it->isFile())
+			{
+				if (p.getExtension() == "pkg")
+				{
+					bFind = true;
+					pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+					pDecompressTask->strFilePath = CMyCodeConvert::Utf8ToGb2312(p.toString());
+					pDecompressTask->strFileName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
+
+					strLog.append(pDecompressTask->strFileName + " ");
+					g_fmDecompressLock.lock();
+					g_lDecompressTask.push_back(pDecompressTask);
+					g_fmDecompressLock.unlock();
+				}
+			}
+			it++;
+		}
+		if (bFind)
+		{
+			g_Log.LogOut(strLog);
+			std::cout << strLog << std::endl;
+		}		
+	}
+
 	int main(const std::vector < std::string > & args) 
 	{
 		Poco::Net::HTTPStreamFactory::registerFactory();
-
+		
 		std::string strCurrentPath = config().getString("application.dir");
 		std::string strLogPath = strCurrentPath + "DCS.Log";
 		std::string strDllLogPath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath) + "DCS_Dll.Log";
@@ -115,6 +150,9 @@ protected:
 		SysSet.Load(strConfigPath);
 		SysSet.m_strCurrentDir = strCurrentPath;
 		SysSet.m_strDecompressPath = strCurrentPath + "DecompressDir";
+		SysSet.m_strUpLoadPath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath) + "fileDispose";
+		SysSet.m_strModelSavePath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath) + "modelSave";
+		SysSet.m_strRecvFilePath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath + "tmpFileRecv\\");
 		
 #ifdef POCO_OS_FAMILY_WINDOWS
 		char szTitle[50] = { 0 };
@@ -137,6 +175,16 @@ protected:
 			Poco::File modelSaveDir(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strModelSavePath));
 			if (!modelSaveDir.exists())
 				modelSaveDir.createDirectories();
+
+			Poco::File papersBackupDir(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strPapersBackupPath));
+			if (!papersBackupDir.exists())
+				papersBackupDir.createDirectories();
+
+			Poco::File recvFileDir(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strRecvFilePath));
+			if (recvFileDir.exists())
+				recvFileDir.remove(true);
+
+			recvFileDir.createDirectories();
 		}
 		catch (Poco::Exception& exc)
 		{
@@ -148,6 +196,7 @@ protected:
 		}
 
 		InitModelInfo();
+		InitPapersList();
 
 		std::vector<CDecompressThread*> vecDecompressThreadObj;
 		Poco::Thread* pDecompressThread = new Poco::Thread[SysSet.m_nDecompressThreads];

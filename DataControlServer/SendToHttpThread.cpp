@@ -48,16 +48,39 @@ void CSendToHttpThread::run()
 					{
 						strEraseInfo = "Erase task(提交图片结果信息给后端),试卷袋: ";
 						strEraseInfo.append(pTask->pPapers->strPapersName);
+
+
+						checkTaskStatus(pTask->pPapers);
 					}
 					else if (pTask->nTaskType == 3)
 					{
 						strEraseInfo = "Erase task(提交 OMR 结果信息给后端),试卷袋: ";
 						strEraseInfo.append(pTask->pPapers->strPapersName);
+
+						pTask->pPapers->fmTask.lock();
+						pTask->pPapers->nTaskCounts--;			//omr
+						pTask->pPapers->fmTask.unlock();
+						checkTaskStatus(pTask->pPapers);
 					}
 					else if (pTask->nTaskType == 4)
 					{
 						strEraseInfo = "Erase task(提交 ZKZH 结果信息给后端),试卷袋: ";
 						strEraseInfo.append(pTask->pPapers->strPapersName);
+
+						pTask->pPapers->fmTask.lock();
+						pTask->pPapers->nTaskCounts--;			//omr
+						pTask->pPapers->fmTask.unlock();
+						checkTaskStatus(pTask->pPapers);
+					}
+					else if (pTask->nTaskType == 5)
+					{
+						strEraseInfo = "Erase task(提交 选做题 结果信息给后端),试卷袋: ";
+						strEraseInfo.append(pTask->pPapers->strPapersName);
+
+						pTask->pPapers->fmTask.lock();
+						pTask->pPapers->nTaskCounts--;			//omr
+						pTask->pPapers->fmTask.unlock();
+						checkTaskStatus(pTask->pPapers);
 					}
 					g_Log.LogOutError(strEraseInfo);
 					std::cout << strEraseInfo << std::endl;
@@ -184,18 +207,33 @@ void CSendToHttpThread::run()
 						std::string strLog = "发送OMR信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: " + pTask->strResult;
 						g_Log.LogOut(strLog);
 						std::cout << "post papers OMR result info success, papersName: " << pTask->pPapers->strPapersName << std::endl;
+
+						pTask->pPapers->fmTask.lock();
+						pTask->pPapers->nTaskCounts--;			//omr
+						pTask->pPapers->fmTask.unlock();
+						checkTaskStatus(pTask->pPapers);
 					}
 					else if (pTask->nTaskType == 4)
 					{
 						std::string strLog = "发送ZKZH信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: " + pTask->strResult;
 						g_Log.LogOut(strLog);
 						std::cout << "post papers ZKZH result info success, papersName: " << pTask->pPapers->strPapersName << std::endl;
+
+						pTask->pPapers->fmTask.lock();
+						pTask->pPapers->nTaskCounts--;			//zkzh
+						pTask->pPapers->fmTask.unlock();
+						checkTaskStatus(pTask->pPapers);
 					}
 					else if (pTask->nTaskType == 5)
 					{
 						std::string strLog = "发送选做题信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: " + pTask->strResult;
 						g_Log.LogOut(strLog);
 						std::cout << "post papers ElectOmr result info success, papersName: " << pTask->pPapers->strPapersName << std::endl;
+
+						pTask->pPapers->fmTask.lock();
+						pTask->pPapers->nTaskCounts--;			//electomr
+						pTask->pPapers->fmTask.unlock();
+						checkTaskStatus(pTask->pPapers);
 					}
 				}
 			}
@@ -358,7 +396,7 @@ bool CSendToHttpThread::doRequest(Poco::Net::HTTPClientSession& session, Poco::N
 		request.set("Accept", "application/json");
 		request.set("Cookie", pTask->strEzs);
 	}
-	else if (pTask->nTaskType == 3 || pTask->nTaskType == 4)
+	else if (pTask->nTaskType == 3 || pTask->nTaskType == 4 || pTask->nTaskType == 5)
 	{
 		strBody = pTask->strResult;
 		request.setContentType("application/json");
@@ -429,8 +467,9 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 			}
 			else
 			{
-				std::string strLog = "开始提交OMR和ZKZH信息";
+				std::string strLog = "开始提交OMR、ZKZH、选做题信息(" + pTask->pPapers->strPapersName + ")";
 				g_Log.LogOut(strLog);
+				bool bHasElectOmr = false;
 				Poco::JSON::Array snArry;
 				Poco::JSON::Array omrArry;
 				Poco::JSON::Array electOmrArry;
@@ -475,34 +514,43 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 					{
 						std::string strErrInfo;
 						strErrInfo.append("Error when parse Omr: ");
-						strErrInfo.append(jsone.message() + "\tData:" + pPaper->strSnDetail);
+						strErrInfo.append(jsone.message() + "\tData:" + pPaper->strOmrDetail);
 						g_Log.LogOutError(strErrInfo);
 						std::cout << strErrInfo << std::endl;
 					}
 
-					Poco::JSON::Parser parserElectOmr;
-					Poco::Dynamic::Var resultElectOmr;
-					try
+					if (pPaper->nHasElectOmr)
 					{
-						resultElectOmr = parserElectOmr.parse(pPaper->strOmrDetail);
-						Poco::JSON::Object::Ptr electOmrObj = resultElectOmr.extract<Poco::JSON::Object::Ptr>();
+						bHasElectOmr = true;
+						Poco::JSON::Parser parserElectOmr;
+						Poco::Dynamic::Var resultElectOmr;
+						try
+						{
+							resultElectOmr = parserElectOmr.parse(pPaper->strElectOmrDetail);
+							Poco::JSON::Object::Ptr electOmrObj = resultElectOmr.extract<Poco::JSON::Object::Ptr>();
 
-						electOmrObj->set("studentKey", pPaper->strMd5Key);
-						electOmrArry.add(electOmrObj);
-					}
-					catch (Poco::JSON::JSONException& jsone)
-					{
-						std::string strErrInfo;
-						strErrInfo.append("Error when parse ElectOmr: ");
-						strErrInfo.append(jsone.message() + "\tData:" + pPaper->strSnDetail);
-						g_Log.LogOutError(strErrInfo);
-						std::cout << strErrInfo << std::endl;
-					}
+							electOmrObj->set("studentKey", pPaper->strMd5Key);
+							electOmrArry.add(electOmrObj);
+						}
+						catch (Poco::JSON::JSONException& jsone)
+						{
+							std::string strErrInfo;
+							strErrInfo.append("Error when parse ElectOmr: ");
+							strErrInfo.append(jsone.message() + "\tData:" + pPaper->strElectOmrDetail);
+							g_Log.LogOutError(strErrInfo);
+							std::cout << strErrInfo << std::endl;
+						}
+					}					
 				}
 
 				snArry.stringify(jsnSnString, 0);
 				omrArry.stringify(jsnOmrString, 0);
-				electOmrArry.stringify(jsnElectOmrString, 0);
+				if (bHasElectOmr)
+					electOmrArry.stringify(jsnElectOmrString, 0);
+				
+				pTask->pPapers->fmTask.lock();
+				pTask->pPapers->nTaskCounts++;			//zkzh
+				pTask->pPapers->fmTask.unlock();
 
 				pSEND_HTTP_TASK pSnTask = new SEND_HTTP_TASK;
 				pSnTask->nTaskType = 4;
@@ -513,6 +561,10 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				g_fmHttpSend.lock();
 				g_lHttpSend.push_back(pSnTask);
 				g_fmHttpSend.unlock();
+
+				pTask->pPapers->fmTask.lock();
+				pTask->pPapers->nTaskCounts++;			//omr
+				pTask->pPapers->fmTask.unlock();
 
 				pSEND_HTTP_TASK pOmrTask = new SEND_HTTP_TASK;
 				pOmrTask->nTaskType = 3;
@@ -526,6 +578,10 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 
 				//++提交选做题信息	*************	注意：这里还不行，需要和后端确认	********************
 
+// 				pTask->pPapers->fmTask.lock();
+// 				pTask->pPapers->nTaskCounts++;			//electOmr
+// 				pTask->pPapers->fmTask.unlock();
+//
 // 				pSEND_HTTP_TASK pElectOmrTask = new SEND_HTTP_TASK;
 // 				pElectOmrTask->nTaskType = 5;
 // 				pElectOmrTask->strResult = jsnElectOmrString.str();
@@ -541,8 +597,11 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				g_Log.LogOut(strLog);
 				strLog = "OMR信息如下: " + jsnOmrString.str();
 				g_Log.LogOut(strLog); 
-				strLog = "选做题信息如下: " + jsnElectOmrString.str();
-				g_Log.LogOut(strLog);
+				if (bHasElectOmr)
+				{
+					strLog = "选做题信息如下: " + jsnElectOmrString.str();
+					g_Log.LogOut(strLog);
+				}				
 			}
 		}
 		else if (pTask->nTaskType == 3)
@@ -757,5 +816,62 @@ std::string CSendToHttpThread::calcMd5(std::string& strInfo)
 	outstr.flush();
 	const Poco::DigestEngine::Digest& digest = md5.digest();
 	return Poco::DigestEngine::digestToHex(digest);
+}
+
+void CSendToHttpThread::checkTaskStatus(pPAPERS_DETAIL pPapers)
+{
+	if (pPapers->nTaskCounts == 0)
+	{
+		if (SysSet.m_nBackupPapers)
+		{
+			std::string strBackupPath = SysSet.m_strPapersBackupPath + "\\" + pPapers->strPapersName;
+			try
+			{
+				Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
+				filePapers.moveTo(strBackupPath);
+				std::string strLog = "备份试卷袋文件(" + pPapers->strPapersName + ")完成";
+				g_Log.LogOut(strLog);
+				std::cout << strLog << std::endl;
+			}
+			catch (Poco::Exception& exc)
+			{
+				std::string strErrInfo = Poco::format("备份试卷袋(%s)失败,%s", pPapers->strPapersPath, exc.message());
+				g_Log.LogOutError(strErrInfo);
+				std::cout << strErrInfo << std::endl;
+			}
+		}
+		else
+		{
+			try
+			{
+				Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
+				filePapers.remove(true);
+				std::string strLog = "删除试卷袋文件(" + pPapers->strPapersName + ")完成";
+				g_Log.LogOut(strLog);
+				std::cout << strLog << std::endl;
+			}
+			catch (Poco::Exception& exc)
+			{
+				std::string strErrInfo = Poco::format("删除试卷袋(%s)失败,%s", pPapers->strPapersPath, exc.message());
+				g_Log.LogOutError(strErrInfo);
+				std::cout << strErrInfo << std::endl;
+			}
+		}
+
+		g_fmPapers.lock();
+		LIST_PAPERS_DETAIL::iterator itPapers = g_lPapers.begin();
+		for (; itPapers != g_lPapers.end();)
+		{
+			if (*itPapers == pPapers)
+			{
+				SAFE_RELEASE(*itPapers);
+				itPapers = g_lPapers.erase(itPapers);
+				break;
+			}
+			else
+				itPapers++;
+		}
+		g_fmPapers.unlock();
+	}
 }
 

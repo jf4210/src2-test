@@ -21,9 +21,11 @@ bool CSysSet::Load(std::string& strConfPath)
 	m_sLocalIP			= pConf->getString("Net.LocalIP", "127.0.0.1");
 	m_nPaperUpLoadPort	= pConf->getInt("Net.FilePort", 19980);
 	m_nCmdPort			= pConf->getInt("Net.CmdPort", 19981);
-	m_strUpLoadPath		= pConf->getString("Sys.upLoadPath");
-	m_strModelSavePath	= pConf->getString("Sys.modelSavePath");
+//	m_strUpLoadPath		= pConf->getString("Sys.upLoadPath");
+//	m_strModelSavePath	= pConf->getString("Sys.modelSavePath");
 	m_nDecompressThreads = pConf->getInt("Sys.decompressThreads", 2);
+	m_nBackupPapers		= pConf->getInt("Sys.bPapersBackup", 0);
+	m_strPapersBackupPath	= pConf->getString("Sys.papersBackupPath");
 
 	m_nSendHttpThreads	= pConf->getInt("UpHttp.sendThreads", 2);
 	m_nHttpTimeOut		= pConf->getInt("UpHttp.sendTimeout", 60);

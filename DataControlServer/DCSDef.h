@@ -13,7 +13,7 @@
 //#include "TypeDef.h"
 
 #ifdef _DEBUG
-//	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
+	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
 //	#define TEST_FILE_PRESSURE	//文件上传压力测试
 #endif
 
@@ -125,6 +125,7 @@ typedef std::list<pPIC_DETAIL> LIST_PIC_DETAIL;
 typedef struct _Paper_
 {
 	int			nQkFlag;	//缺考标识,0-未缺考, 1-缺考
+	int			nHasElectOmr;	//是否有多选题
 	std::string strName;	//识别出来的考生名称S1、S2、。。。
 	std::string strMd5Key;	//给后端的MD5--密号
 	std::string strZkzh;	//识别出来的考生序列号、准考证号
@@ -139,6 +140,7 @@ typedef struct _Paper_
 	_Paper_()
 	{
 		nQkFlag = 0;
+		nHasElectOmr = 0;
 	}
 	~_Paper_()
 	{
@@ -155,6 +157,8 @@ typedef std::list<pPAPER_INFO> LIST_PAPER_INFO;
 //试卷袋
 typedef struct _Papers_
 {
+	int			nTaskCounts;		//该试卷袋的任务数，在提交完图片后，需要给后端提交图片数据、准考证号、OMR、选做题信息
+									//该数据可以用来在试卷袋的所有任务处理完毕后进行试卷袋删除操作
 	int			nTotalPics;			//总的图片数
 	int			nUpLoadSuccess;
 	int			nUpLoadFail;
@@ -170,9 +174,11 @@ typedef struct _Papers_
 	std::string strPapersName;
 	std::string strPapersPath;
 	Poco::FastMutex	fmNum;			//对上传结果的计数操作的锁
+	Poco::FastMutex	fmTask;			//对提交后端数据的任务(即:nTaskCounts)计数操作的锁
 	LIST_PAPER_INFO lPaper;
 	_Papers_()
 	{
+		nTaskCounts = 0;
 		nUserId = -1;
 		nTeacherId = -1;
 		nTotalPics = 0;
