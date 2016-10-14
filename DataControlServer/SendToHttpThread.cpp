@@ -118,7 +118,7 @@ void CSendToHttpThread::run()
 					std::string strLog = "Open file fail: " + pTask->pPic->strFilePath;
 					g_Log.LogOutError(strLog);
 					std::cout << strLog << std::endl;
-
+					
 					pTask->pPic->bUpLoadFlag = false;
 					pTask->pPapers->fmNum.lock();
 //					pTask->pPapers->nUpLoadFail++;
@@ -787,23 +787,23 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 #endif
 
 	//É¾³ý½âÑ¹µÄÎÄ¼þ¼Ð
-	try
-	{
-		Poco::File papersDir(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
-		if (papersDir.exists())
-		{
-			papersDir.remove(true);
-
-			strLog = "É¾³ýÊÔ¾í´ü½âÑ¹ÎÄ¼þ¼Ð(" + pPapers->strPapersPath + ")³É¹¦";
-			g_Log.LogOut(strLog);
-			std::cout << strLog << std::endl;
-		}
-	}
-	catch (Poco::Exception& exc)
-	{
-		std::string strErr = "É¾³ýÊÔ¾í´ü½âÑ¹ÎÄ¼þ¼Ð(" + pPapers->strPapersPath + ")Ê§°Ü: " + exc.message();
-		g_Log.LogOutError(strErr);
-	}	
+// 	try
+// 	{
+// 		Poco::File papersDir(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
+// 		if (papersDir.exists())
+// 		{
+// 			papersDir.remove(true);
+// 
+// 			strLog = "É¾³ýÊÔ¾í´ü½âÑ¹ÎÄ¼þ¼Ð(" + pPapers->strPapersPath + ")³É¹¦";
+// 			g_Log.LogOut(strLog);
+// 			std::cout << strLog << std::endl;
+// 		}
+// 	}
+// 	catch (Poco::Exception& exc)
+// 	{
+// 		std::string strErr = "É¾³ýÊÔ¾í´ü½âÑ¹ÎÄ¼þ¼Ð(" + pPapers->strPapersPath + ")Ê§°Ü: " + exc.message();
+// 		g_Log.LogOutError(strErr);
+// 	}
 
 	return true;
 }
@@ -822,20 +822,39 @@ void CSendToHttpThread::checkTaskStatus(pPAPERS_DETAIL pPapers)
 {
 	if (pPapers->nTaskCounts == 0)
 	{
+		//É¾³ý½âÑ¹µÄÎÄ¼þ¼Ð
+		try
+		{
+			Poco::File papersDir(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
+			if (papersDir.exists())
+			{
+				papersDir.remove(true);
+
+				std::string strLog = "É¾³ýÊÔ¾í´ü½âÑ¹ÎÄ¼þ¼Ð(" + pPapers->strPapersPath + ")³É¹¦";
+				g_Log.LogOut(strLog);
+				std::cout << strLog << std::endl;
+			}
+		}
+		catch (Poco::Exception& exc)
+		{
+			std::string strErr = "É¾³ýÊÔ¾í´ü½âÑ¹ÎÄ¼þ¼Ð(" + pPapers->strPapersPath + ")Ê§°Ü: " + exc.message();
+			g_Log.LogOutError(strErr);
+		}
+
 		if (SysSet.m_nBackupPapers)
 		{
-			std::string strBackupPath = SysSet.m_strPapersBackupPath + "\\" + pPapers->strPapersName;
+			std::string strBackupPath = SysSet.m_strPapersBackupPath + "\\" + pPapers->strSrcPapersFileName;
 			try
 			{
-				Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
-				filePapers.moveTo(strBackupPath);
-				std::string strLog = "±¸·ÝÊÔ¾í´üÎÄ¼þ(" + pPapers->strPapersName + ")Íê³É";
+				Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersPath));
+				filePapers.moveTo(CMyCodeConvert::Gb2312ToUtf8(strBackupPath));
+				std::string strLog = "±¸·ÝÊÔ¾í´üÎÄ¼þ(" + pPapers->strSrcPapersFileName + ")Íê³É";
 				g_Log.LogOut(strLog);
 				std::cout << strLog << std::endl;
 			}
 			catch (Poco::Exception& exc)
 			{
-				std::string strErrInfo = Poco::format("±¸·ÝÊÔ¾í´ü(%s)Ê§°Ü,%s", pPapers->strPapersPath, exc.message());
+				std::string strErrInfo = Poco::format("±¸·ÝÊÔ¾í´ü(%s)Ê§°Ü,%s", pPapers->strSrcPapersPath, exc.message());
 				g_Log.LogOutError(strErrInfo);
 				std::cout << strErrInfo << std::endl;
 			}
@@ -844,15 +863,15 @@ void CSendToHttpThread::checkTaskStatus(pPAPERS_DETAIL pPapers)
 		{
 			try
 			{
-				Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
+				Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersPath));
 				filePapers.remove(true);
-				std::string strLog = "É¾³ýÊÔ¾í´üÎÄ¼þ(" + pPapers->strPapersName + ")Íê³É";
+				std::string strLog = "É¾³ýÊÔ¾í´üÎÄ¼þ(" + pPapers->strSrcPapersFileName + ")Íê³É";
 				g_Log.LogOut(strLog);
 				std::cout << strLog << std::endl;
 			}
 			catch (Poco::Exception& exc)
 			{
-				std::string strErrInfo = Poco::format("É¾³ýÊÔ¾í´ü(%s)Ê§°Ü,%s", pPapers->strPapersPath, exc.message());
+				std::string strErrInfo = Poco::format("É¾³ýÊÔ¾í´ü(%s)Ê§°Ü,%s", pPapers->strSrcPapersPath, exc.message());
 				g_Log.LogOutError(strErrInfo);
 				std::cout << strErrInfo << std::endl;
 			}

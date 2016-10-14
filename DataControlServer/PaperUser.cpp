@@ -251,9 +251,9 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 
 								pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
 								pDecompressTask->strFilePath = strUploadPath;
-								pDecompressTask->strFileName = m_szFileName;
-
-								pDecompressTask->strFileName = pDecompressTask->strFileName.substr(0, nPos);	//pDecompressTask->strFileName.length() - 4
+								pDecompressTask->strFileBaseName = m_szFileName;
+								pDecompressTask->strFileBaseName = pDecompressTask->strFileBaseName.substr(0, nPos);	//pDecompressTask->strFileBaseName.length() - 4
+								pDecompressTask->strSrcFileName = m_szFileName;
 								g_fmDecompressLock.lock();
 								g_lDecompressTask.push_back(pDecompressTask);
 								g_fmDecompressLock.unlock();

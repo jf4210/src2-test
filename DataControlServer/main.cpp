@@ -119,9 +119,10 @@ protected:
 					bFind = true;
 					pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
 					pDecompressTask->strFilePath = CMyCodeConvert::Utf8ToGb2312(p.toString());
-					pDecompressTask->strFileName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
+					pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
+					pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(p.getFileName());
 
-					strLog.append(pDecompressTask->strFileName + " ");
+					strLog.append(pDecompressTask->strFileBaseName + " ");
 					g_fmDecompressLock.lock();
 					g_lDecompressTask.push_back(pDecompressTask);
 					g_fmDecompressLock.unlock();
@@ -165,8 +166,9 @@ protected:
 		try
 		{
 			Poco::File decompressDir(SysSet.m_strDecompressPath);
-			if (!decompressDir.exists())
-				decompressDir.createDirectories();
+			if (decompressDir.exists())
+				decompressDir.remove(true);
+			decompressDir.createDirectories();
 
 			Poco::File fileRecvDir(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strUpLoadPath));
 			if (!fileRecvDir.exists())

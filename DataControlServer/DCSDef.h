@@ -61,7 +61,8 @@ extern	MAP_MODEL	_mapModel_;
 
 typedef struct _DecompressTask_
 {
-	std::string strFileName;
+	std::string strFileBaseName;
+	std::string strSrcFileName;
 	std::string strFilePath;
 }DECOMPRESSTASK, *pDECOMPRESSTASK;
 typedef std::list<pDECOMPRESSTASK> DECOMPRESSTASKLIST;	//识别任务列表
@@ -171,8 +172,10 @@ typedef struct _Papers_
 	std::string	strUploader;		//上传者
 	std::string strEzs;				//上传给后端服务器用，--cookie
 	std::string strDesc;			//从试卷袋文件夹读取
-	std::string strPapersName;
-	std::string strPapersPath;
+	std::string strPapersName;		//试卷袋名称
+	std::string strPapersPath;		//试卷袋路径，解压后的
+	std::string strSrcPapersFileName;	//试卷袋文件名称，原始压缩包名称	gb2312
+	std::string strSrcPapersPath;	//试卷袋文件路径，原始压缩包路径
 	Poco::FastMutex	fmNum;			//对上传结果的计数操作的锁
 	Poco::FastMutex	fmTask;			//对提交后端数据的任务(即:nTaskCounts)计数操作的锁
 	LIST_PAPER_INFO lPaper;

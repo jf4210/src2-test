@@ -271,11 +271,18 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		g_Log.LogOutError(strLog);
 		return;
 	}
-	std::string strOutDir = SysSet.m_strDecompressPath + "\\" + CMyCodeConvert::Gb2312ToUtf8(pTask->strFileName);
+	std::string strOutDir = SysSet.m_strDecompressPath + "\\" + CMyCodeConvert::Gb2312ToUtf8(pTask->strFileBaseName);
 
 	pPAPERS_DETAIL pPapers = new PAPERS_DETAIL;
-	pPapers->strPapersName = pTask->strFileName;
+	pPapers->strPapersName = pTask->strFileBaseName;
 	pPapers->strPapersPath = CMyCodeConvert::Utf8ToGb2312(strOutDir);
+	pPapers->strSrcPapersPath = pTask->strFilePath;
+	pPapers->strSrcPapersFileName = pTask->strSrcFileName;
+
+	Poco::File decompressDir(strOutDir);
+	if (decompressDir.exists())
+		decompressDir.remove(true);
+	decompressDir.createDirectories();
 
 #ifdef USE_POCO_UNZIP
 	Poco::Zip::Decompress dec(inp, strOutDir);
@@ -309,9 +316,10 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	const char *password = NULL;
 	password = "static";
 
-	Poco::File decompressDir(strOutDir);
-	if (!decompressDir.exists())
-		decompressDir.createDirectories();
+// 	Poco::File decompressDir(strOutDir);
+// 	if (decompressDir.exists())
+// 		decompressDir.remove(true);
+// 	decompressDir.createDirectories();
 
 	if (CHDIR(pPapers->strPapersPath.c_str()))
 	{
@@ -334,6 +342,8 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		std::cout << strLog << std::endl;
 		return;
 	}
+	CHDIR(SysSet.m_strDecompressPath.c_str());		//ÇÐ»»»Ø½âÑ¹¸ùÄ¿Â¼£¬·ñÔòÉ¾³ýÑ¹ËõÎÄ¼þ¼ÐÊ§°Ü
+
 	SearchExtractFile(pPapers, pPapers->strPapersPath);
 #endif
 

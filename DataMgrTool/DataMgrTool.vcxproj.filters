@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="global">
+      <UniqueIdentifier>{6ae18c1d-0050-4af6-9cf0-696ac5c6d36a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="解压">
+      <UniqueIdentifier>{ab0a0760-8dd3-4958-9f46-8168697b4249}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="解压\miniz">
+      <UniqueIdentifier>{df0a32e2-e15b-4caa-8ece-d986c64b8aa3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="转码">
+      <UniqueIdentifier>{bd0fae41-8502-4505-a7a3-c2d861264ab8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LOG">
+      <UniqueIdentifier>{52e4de79-09e9-443d-bca1-b4443b1b7575}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DataMgrTool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DataMgrToolDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="global.h">
+      <Filter>global</Filter>
+    </ClInclude>
+    <ClInclude Include="DecompressThread.h">
+      <Filter>解压</Filter>
+    </ClInclude>
+    <ClInclude Include="miniunz\crypt.h">
+      <Filter>解压\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="miniunz\ioapi.h">
+      <Filter>解压\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="miniunz\iowin32.h">
+      <Filter>解压\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="miniunz\unzip.h">
+      <Filter>解压\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="miniunz\zconf.h">
+      <Filter>解压\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="miniunz\zip.h">
+      <Filter>解压\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="miniunz\zlib.h">
+      <Filter>解压\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="MyCodeConvert.h">
+      <Filter>转码</Filter>
+    </ClInclude>
+    <ClInclude Include="Log.h">
+      <Filter>LOG</Filter>
+    </ClInclude>
+    <ClInclude Include="DMTDef.h">
+      <Filter>global</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DataMgrTool.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DataMgrToolDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DecompressThread.cpp">
+      <Filter>解压</Filter>
+    </ClCompile>
+    <ClCompile Include="miniunz\ioapi.c">
+      <Filter>解压\miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="miniunz\iowin32.c">
+      <Filter>解压\miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="miniunz\miniunz.c">
+      <Filter>解压\miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="miniunz\minizip.c">
+      <Filter>解压\miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="miniunz\unzip.c">
+      <Filter>解压\miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="miniunz\zip.c">
+      <Filter>解压\miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="MyCodeConvert.cpp">
+      <Filter>转码</Filter>
+    </ClCompile>
+    <ClCompile Include="Log.cpp">
+      <Filter>LOG</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="DataMgrTool.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\DataMgrTool.rc2">
+      <Filter>资源文件</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\DataMgrTool.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
