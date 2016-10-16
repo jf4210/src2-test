@@ -1,156 +1,11 @@
+#include "stdafx.h"
 #include "DecompressThread.h"
 #include <algorithm>
 #ifndef USE_POCO_UNZIP
 #include "miniunz/miniunz.c"
 #endif
-
-bool SortbyNumASC(const std::string& x, const std::string& y)
-{
-	char szX[MAX_PATH] = { 0 };
-	char szY[MAX_PATH] = { 0 };
-	sprintf_s(szX, "%s", x.c_str()/*T2A(x)*/);
-	sprintf_s(szY, "%s", y.c_str()/*T2A(y)*/);
-	int nLenX = x.length();	// x.GetLength();
-	int nLenY = y.length();	// y.GetLength();
-
-	//	TRACE(_T("compare: %s, %s\n"), x, y);
-
-	int nFlag = 0;
-	while (nLenX && nLenY)
-	{
-		char szXPart[MAX_PATH] = { 0 };
-		char szYPart[MAX_PATH] = { 0 };
-		sscanf(szX, "%[A-Za-z]", szXPart);
-		sscanf(szY, "%[A-Za-z]", szYPart);
-		if (strlen(szXPart) && strlen(szYPart))
-		{
-			int nResult = stricmp(szXPart, szYPart);
-			if (nResult == 0)
-			{
-				int nX = strlen(szXPart);
-				int nY = strlen(szYPart);
-				int nXAll = strlen(szX);
-				int nYAll = strlen(szY);
-				memmove(szX, szX + strlen(szXPart), nXAll - nX);
-				memmove(szY, szY + strlen(szYPart), nYAll - nY);
-				szX[nXAll - nX] = '\0';
-				szY[nYAll - nY] = '\0';
-				nLenX = strlen(szX);
-				nLenY = strlen(szY);
-			}
-			else
-			{
-				return nResult < 0 ? true : false;
-			}
-		}
-		else if (strlen(szXPart))
-			return false;
-		else if (strlen(szYPart))
-			return true;
-		else
-		{
-			sscanf(szX, "%[0-9]", szXPart);
-			sscanf(szY, "%[0-9]", szYPart);
-			if (strlen(szXPart) && strlen(szYPart))
-			{
-				int x = atoi(szXPart);
-				int y = atoi(szYPart);
-				if (x == y)
-				{
-					if (strlen(szXPart) == strlen(szYPart))
-					{
-						int nX = strlen(szXPart);
-						int nY = strlen(szYPart);
-						int nXAll = strlen(szX);
-						int nYAll = strlen(szY);
-						memmove(szX, szX + strlen(szXPart), nXAll - nX);
-						memmove(szY, szY + strlen(szYPart), nYAll - nY);
-						szX[nXAll - nX] = '\0';
-						szY[nYAll - nY] = '\0';
-						nLenX = strlen(szX);
-						nLenY = strlen(szY);
-					}
-					else
-					{
-						return strlen(szXPart) > strlen(szYPart);		//大小相同，长度越大越靠前
-					}
-				}
-				else
-					return x < y;
-			}
-			else if (strlen(szXPart))
-				return false;
-			else if (strlen(szYPart))
-				return true;
-			else
-			{
-				sscanf(szX, "%[^0-9A-Za-z]", szXPart);
-				sscanf(szY, "%[^0-9A-Za-z]", szYPart);
-				int nResult = stricmp(szXPart, szYPart);
-				if (nResult == 0)
-				{
-					int nX = strlen(szXPart);
-					int nY = strlen(szYPart);
-					int nXAll = strlen(szX);
-					int nYAll = strlen(szY);
-					memmove(szX, szX + strlen(szXPart), nXAll - nX);
-					memmove(szY, szY + strlen(szYPart), nYAll - nY);
-					szX[nXAll - nX] = '\0';
-					szY[nYAll - nY] = '\0';
-					nLenX = strlen(szX);
-					nLenY = strlen(szY);
-				}
-				else
-				{
-					char* p1 = szXPart;
-					char* p2 = szYPart;
-					while (*p1 != '\0' && *p2 != '\0')
-					{
-						if (*p1 == '-'&& *p2 != '-')
-							return false;
-						else if (*p1 != '-' && *p2 == '-')
-							return true;
-						else if (*p1 == '=' && *p2 != '=')
-							return false;
-						else if (*p1 != '=' && *p2 == '=')
-							return true;
-						else if (*p1 == '+' && *p2 != '+')
-							return false;
-						else if (*p1 != '+' && *p2 == '+')
-							return true;
-						else if (*p1 > *p2)
-							return false;
-						else if (*p1 < *p2)
-							return true;
-						else
-						{
-							p1++;
-							p2++;
-						}
-					}
-					if (*p1 == '\0' && *p2 != '\0')
-					{
-						if (*p2 == ' ')
-							return false;
-						else
-							return true;
-					}
-					else if (*p1 != '\0' && *p2 == '\0')
-					{
-						if (*p1 == ' ')
-							return true;
-						else
-							return false;
-					}
-					//return nResult < 0?true:false;
-				}
-			}
-		}
-	}
-
-	return x.length() < y.length();
-}
-
+#include "DataMgrTool.h"
+#include "DataMgrToolDlg.h"
 
 class DecompressHandler
 {
@@ -177,7 +32,7 @@ public:
 };
 
 
-CDecompressThread::CDecompressThread()
+CDecompressThread::CDecompressThread(void* pDlg) :m_pDlg(pDlg)
 {
 	std::cout << "decompressThread start.\n";
 }
@@ -287,6 +142,10 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		return;
 	}
 	CHDIR(pTask->strDecompressDir.c_str());		//切换回解压根目录，否则删除压缩文件夹失败
+
+	((CDataMgrToolDlg*)m_pDlg)->m_strMsg.Append(_T("解压完成"));
+	((CDataMgrToolDlg*)m_pDlg)->UpdateData(FALSE);
+//	((CDataMgrToolDlg*)AfxGetMainWnd())->m_strMsg.Append(_T("解压完成"));
 #endif
 }
 

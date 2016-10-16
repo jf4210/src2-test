@@ -32,6 +32,9 @@ public:
 	CString		m_strEncryptPath;
 	CString		m_strDecryptPath;
 
+	CEdit		m_edit_Msg;
+	CString		m_strMsg;
+
 private:
 	Poco::Thread* m_pDecompressThread;
 	std::vector<CDecompressThread*> m_vecDecompressThreadObj;

@@ -5,11 +5,14 @@
 class CDecompressThread : public Poco::Runnable
 {
 public:
-	CDecompressThread();
+	CDecompressThread(void* pDlg);
 	~CDecompressThread();
 
 	virtual void run();
 
 	void HandleTask(pDECOMPRESSTASK pTask);
+
+private:
+	void* m_pDlg;
 };
 

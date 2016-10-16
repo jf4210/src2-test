@@ -71,6 +71,8 @@ void CDataMgrToolDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_Encrypt_Src, m_mfcEdit_Encrypt);
 	DDX_Text(pDX, IDC_MFCEDITBROWSE_DecryptDir, m_strDecryptPath);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_DecryptDir, m_mfcEdit_Decrypt);
+	DDX_Text(pDX, IDC_EDIT_Msg, m_strMsg);
+	DDX_Control(pDX, IDC_EDIT_Msg, m_edit_Msg);
 }
 
 BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
@@ -117,7 +119,7 @@ BOOL CDataMgrToolDlg::OnInitDialog()
 	m_pDecompressThread = new Poco::Thread[1];
 	for (int i = 0; i < 1; i++)
 	{
-		CDecompressThread* pObj = new CDecompressThread;
+		CDecompressThread* pObj = new CDecompressThread(this);
 		m_pDecompressThread[i].start(*pObj);
 		m_vecDecompressThreadObj.push_back(pObj);
 	}
@@ -175,42 +177,11 @@ HCURSOR CDataMgrToolDlg::OnQueryDragIcon()
 }
 
 
-
-void CDataMgrToolDlg::OnBnClickedMfcbuttonDecompress()
-{
-	UpdateData(TRUE);
-	USES_CONVERSION;
-
-	std::string strFilePath = T2A(m_strRarPath);
-	try
-	{
-		Poco::Path filePath(CMyCodeConvert::Gb2312ToUtf8(strFilePath));
-
-		pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
-		pDecompressTask->strFilePath = strFilePath;
-		pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(filePath.getBaseName());
-		pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(filePath.getFileName());
-
-		g_fmDecompressLock.lock();
-		g_lDecompressTask.push_back(pDecompressTask);
-		g_fmDecompressLock.unlock();
-	}
-	catch (Poco::Exception& exc)
-	{
-	}	
-}
-
-
-void CDataMgrToolDlg::OnBnClickedMfcbuttonDecrypt()
-{
-	// TODO:  在此添加控件通知处理程序代码
-}
-
-
 void CDataMgrToolDlg::OnDestroy()
 {
 	CDialogEx::OnDestroy();
 
+	g_nExitFlag = 1;
 	std::vector<CDecompressThread*>::iterator itDecObj = m_vecDecompressThreadObj.begin();
 	for (; itDecObj != m_vecDecompressThreadObj.end();)
 	{
@@ -230,3 +201,36 @@ void CDataMgrToolDlg::OnDestroy()
 	delete[] m_pDecompressThread;
 
 }
+
+
+void CDataMgrToolDlg::OnBnClickedMfcbuttonDecompress()
+{
+	UpdateData(TRUE);
+	USES_CONVERSION;
+
+	std::string strFilePath = T2A(m_strRarPath);
+	try
+	{
+		Poco::Path filePath(CMyCodeConvert::Gb2312ToUtf8(strFilePath));
+
+		pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+		pDecompressTask->strFilePath = strFilePath;
+		pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(filePath.getBaseName());
+		pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(filePath.getFileName());
+		pDecompressTask->strDecompressDir = T2A(m_strDecompressPath);
+
+		g_fmDecompressLock.lock();
+		g_lDecompressTask.push_back(pDecompressTask);
+		g_fmDecompressLock.unlock();
+	}
+	catch (Poco::Exception& exc)
+	{
+	}	
+}
+
+
+void CDataMgrToolDlg::OnBnClickedMfcbuttonDecrypt()
+{
+	// TODO:  在此添加控件通知处理程序代码
+}
+
