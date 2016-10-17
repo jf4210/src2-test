@@ -612,7 +612,11 @@ LRESULT CMakeModelDlg::RoiRBtnUp(WPARAM wParam, LPARAM lParam)
 		if (rtSNTracker.contains(pt))
 		{
 			CMenu menu, *pPopup;
-			menu.LoadMenu(IDR_MENU_RecogSN);
+			if (m_pModel->nZkzhType == 2)		//条码时，只添加区域，不识别
+				menu.LoadMenu(IDR_MENU_AddRecog);
+			else
+				menu.LoadMenu(IDR_MENU_RecogSN);
+
 			pPopup = menu.GetSubMenu(0);
 			CPoint myPoint;
 			ClientToScreen(&myPoint);
@@ -3831,6 +3835,12 @@ void CMakeModelDlg::AddRecogRectToList()
 {
 	if (m_vecPaperModelInfo.size() <= 0 || m_vecPaperModelInfo.size() <= m_nCurrTabSel)
 		return;
+
+	if (m_eCurCPType == SN && m_pModel->nZkzhType == 2)
+	{
+
+		return;
+	}
 
 	if (m_eCurCPType == OMR)
 	{

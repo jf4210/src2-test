@@ -342,7 +342,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		std::cout << strLog << std::endl;
 		return;
 	}
-	CHDIR(SysSet.m_strDecompressPath.c_str());		//ÇÐ»»»Ø½âÑ¹¸ùÄ¿Â¼£¬·ñÔòÉ¾³ýÑ¹ËõÎÄ¼þ¼ÐÊ§°Ü
+	CHDIR(CMyCodeConvert::Utf8ToGb2312(SysSet.m_strDecompressPath).c_str());		//ÇÐ»»»Ø½âÑ¹¸ùÄ¿Â¼£¬·ñÔòÉ¾³ýÑ¹ËõÎÄ¼þ¼ÐÊ§°Ü
 
 	SearchExtractFile(pPapers, pPapers->strPapersPath);
 #endif

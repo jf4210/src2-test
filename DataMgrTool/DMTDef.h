@@ -9,6 +9,9 @@
 extern CLog g_Log;
 extern int	g_nExitFlag;
 
+extern std::string _strEncryptPwd_;
+
+
 typedef struct _DecompressTask_
 {
 	std::string strFileBaseName;
@@ -22,3 +25,5 @@ extern Poco::FastMutex			g_fmDecompressLock;		//解压文件列表锁
 extern DECOMPRESSTASKLIST		g_lDecompressTask;		//解压文件列表
 
 
+bool encString(std::string& strSrc, std::string& strDst);
+bool decString(std::string& strSrc, std::string& strDst);

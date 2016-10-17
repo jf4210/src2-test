@@ -2573,7 +2573,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	else
 	{
 		end = clock();
-		strInfo.Format(_T("保存%s成功,试卷袋压缩时间: %.2fs"), A2T(szZipName), (end - start)/1000.0);
+		strInfo.Format(_T("保存%s成功"), A2T(szZipName));
 		SAFE_RELEASE(m_pPapersInfo);
 		m_lcPicture.DeleteAllItems();
 		m_pCurrentShowPaper = NULL;

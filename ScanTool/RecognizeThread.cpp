@@ -451,18 +451,22 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				nCount += static_cast<int>(binVal);
 				nSum += h*binVal;
 			}
-			float fMean = (float)nSum / nCount;		//均值
-
-			for (int h = 0; h < hist.rows; h++)	//histSize
+			int nThreshold = 150;
+			if (nCount > 0)
 			{
-				float binVal = hist.at<float>(h);
+				float fMean = (float)nSum / nCount;		//均值
 
-				nDevSum += pow(h - fMean, 2)*binVal;
-			}
-			float fStdev = sqrt(nDevSum / nCount);
-			int nThreshold = fMean + 2 * fStdev;
-			if (fStdev > fMean)
-				nThreshold = fMean + fStdev;
+				for (int h = 0; h < hist.rows; h++)	//histSize
+				{
+					float binVal = hist.at<float>(h);
+
+					nDevSum += pow(h - fMean, 2)*binVal;
+				}
+				float fStdev = sqrt(nDevSum / nCount);
+				nThreshold = fMean + 2 * fStdev;
+				if (fStdev > fMean)
+					nThreshold = fMean + fStdev;
+			}		
 
 			if (nThreshold > 150) nThreshold = 150;
 			threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY);
@@ -638,19 +642,22 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				nCount += static_cast<int>(binVal);
 				nSum += h*binVal;
 			}
-			float fMean = (float)nSum / nCount;		//均值
-
-			for (int h = 0; h < hist.rows; h++)	//histSize
+			int nThreshold = 150;
+			if (nCount > 0)
 			{
-				float binVal = hist.at<float>(h);
+				float fMean = (float)nSum / nCount;		//均值
 
-				nDevSum += pow(h - fMean, 2)*binVal;
+				for (int h = 0; h < hist.rows; h++)	//histSize
+				{
+					float binVal = hist.at<float>(h);
+
+					nDevSum += pow(h - fMean, 2)*binVal;
+				}
+				float fStdev = sqrt(nDevSum / nCount);
+				nThreshold = fMean + 2 * fStdev;
+				if (fStdev > fMean)
+					nThreshold = fMean + fStdev;
 			}
-			float fStdev = sqrt(nDevSum / nCount);
-			int nThreshold = fMean + 2 * fStdev;
-			if (fStdev > fMean)
-				nThreshold = fMean + fStdev;
-
 			if (nThreshold > 150) nThreshold = 150;
 			threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY);
 #else
@@ -900,19 +907,22 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				nCount += static_cast<int>(binVal);
 				nSum += h*binVal;
 			}
-			float fMean = (float)nSum / nCount;		//均值
-
-			for (int h = 0; h < hist.rows; h++)	//histSize
+			int nThreshold = 150;
+			if (nCount > 0)
 			{
-				float binVal = hist.at<float>(h);
+				float fMean = (float)nSum / nCount;		//均值
 
-				nDevSum += pow(h - fMean, 2)*binVal;
+				for (int h = 0; h < hist.rows; h++)	//histSize
+				{
+					float binVal = hist.at<float>(h);
+
+					nDevSum += pow(h - fMean, 2)*binVal;
+				}
+				float fStdev = sqrt(nDevSum / nCount);
+				nThreshold = fMean + 2 * fStdev;
+				if (fStdev > fMean)
+					nThreshold = fMean + fStdev;
 			}
-			float fStdev = sqrt(nDevSum / nCount);
-			int nThreshold = fMean + 2 * fStdev;
-			if (fStdev > fMean)
-				nThreshold = fMean + fStdev;
-
 			if (nThreshold > 150) nThreshold = 150;
 			threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY);
 #else

@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CSNInfoSetDlg, CDialog)
 
 CSNInfoSetDlg::CSNInfoSetDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CSNInfoSetDlg::IDD, pParent)
-	, m_nSNSel(0), m_nOptionSel(0), m_bShowFist(FALSE), m_nCurrentSNVal(10)
+	, m_nSNSel(0), m_nOptionSel(0), m_bShowFist(FALSE), m_nCurrentSNVal(10), m_nZkzhType(1)
 {
 
 }
@@ -25,6 +25,7 @@ CSNInfoSetDlg::~CSNInfoSetDlg()
 void CSNInfoSetDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_CHECK_USE_BARCODE, m_chkUseBarCode);
 	DDX_Control(pDX, IDC_RADIO_SN_H, m_radioSN_H);
 	DDX_Control(pDX, IDC_RADIO_SN_V, m_radioSN_V);
 	DDX_Control(pDX, IDC_RADIO_Option_1, m_radioADD_Z);
@@ -39,6 +40,7 @@ BEGIN_MESSAGE_MAP(CSNInfoSetDlg, CDialog)
 	ON_BN_CLICKED(IDC_RADIO_SN_V, &CSNInfoSetDlg::OnBnClickedRadioSnV)
 	ON_BN_CLICKED(IDC_RADIO_Option_1, &CSNInfoSetDlg::OnBnClickedRadioOption1)
 	ON_BN_CLICKED(IDC_RADIO_Option_2, &CSNInfoSetDlg::OnBnClickedRadioOption2)
+	ON_BN_CLICKED(IDC_CHECK_USE_BARCODE, &CSNInfoSetDlg::OnBnClickedCheckUseBarcode)
 END_MESSAGE_MAP()
 
 BOOL CSNInfoSetDlg::OnInitDialog()
@@ -48,6 +50,15 @@ BOOL CSNInfoSetDlg::OnInitDialog()
 
 	m_picSNShow.OnInit(0, false);
 	InitUI();
+
+	if (m_nZkzhType == 1)
+	{
+		m_chkUseBarCode.SetCheck(FALSE);
+	}
+	else
+	{
+		m_chkUseBarCode.SetCheck(TRUE);
+	}
 	
 	ShowSNPic();
 	return TRUE;
@@ -70,7 +81,12 @@ void CSNInfoSetDlg::InitCtrlPosition()
 	int nStaticWidth = (rcClient.Width() - nLeftGap - nRightGap - 2 * nGap) / 5;
 	int nRadioWidth = nStaticWidth * 2;
 
-	if (GetDlgItem(IDC_STATIC_SN))
+	if (GetDlgItem(IDC_CHECK_USE_BARCODE)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_CHECK_USE_BARCODE)->MoveWindow(nLeftGap, nTopGap, nStaticWidth * 5, nStaticHeight);
+	}
+	nTopGap = nTopGap + nStaticHeight + nGap;
+	if (GetDlgItem(IDC_STATIC_SN)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_STATIC_SN)->MoveWindow(nLeftGap, nTopGap, nStaticWidth, nStaticHeight);
 	}
@@ -217,6 +233,7 @@ void CSNInfoSetDlg::ShowUI(int nSnVal)
 	}
 	InitUI();
 	ShowSNPic();
+	m_chkUseBarCode.SetCheck(FALSE);
 }
 
 void CSNInfoSetDlg::InitUI()
@@ -245,5 +262,45 @@ void CSNInfoSetDlg::InitUI()
 	{
 		m_radioADD_Z.SetCheck(0);
 		m_radioADD_F.SetCheck(1);
+	}
+}
+
+
+void CSNInfoSetDlg::OnBnClickedCheckUseBarcode()
+{
+	if (m_chkUseBarCode.GetCheck())
+	{
+		GetDlgItem(IDC_RADIO_SN_H)->EnableWindow(FALSE);
+		GetDlgItem(IDC_RADIO_SN_V)->EnableWindow(FALSE);
+		GetDlgItem(IDC_RADIO_Option_1)->EnableWindow(FALSE);
+		GetDlgItem(IDC_RADIO_Option_2)->EnableWindow(FALSE);
+	}
+	else
+	{
+		GetDlgItem(IDC_RADIO_SN_H)->EnableWindow(TRUE);
+		GetDlgItem(IDC_RADIO_SN_V)->EnableWindow(TRUE);
+		GetDlgItem(IDC_RADIO_Option_1)->EnableWindow(TRUE);
+		GetDlgItem(IDC_RADIO_Option_2)->EnableWindow(TRUE);
+	}
+}
+
+void CSNInfoSetDlg::InitType(int nType)
+{
+	m_nZkzhType = nType;
+	if (m_nZkzhType == 1)
+	{
+		m_chkUseBarCode.SetCheck(FALSE);
+		GetDlgItem(IDC_RADIO_SN_H)->EnableWindow(TRUE);
+		GetDlgItem(IDC_RADIO_SN_V)->EnableWindow(TRUE);
+		GetDlgItem(IDC_RADIO_Option_1)->EnableWindow(TRUE);
+		GetDlgItem(IDC_RADIO_Option_2)->EnableWindow(TRUE);
+	}
+	else if (m_nZkzhType == 2)
+	{
+		m_chkUseBarCode.SetCheck(TRUE);
+		GetDlgItem(IDC_RADIO_SN_H)->EnableWindow(FALSE);
+		GetDlgItem(IDC_RADIO_SN_V)->EnableWindow(FALSE);
+		GetDlgItem(IDC_RADIO_Option_1)->EnableWindow(FALSE);
+		GetDlgItem(IDC_RADIO_Option_2)->EnableWindow(FALSE);
 	}
 }

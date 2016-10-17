@@ -15,6 +15,7 @@
 
 CLog g_Log;
 int	g_nExitFlag;
+std::string _strEncryptPwd_ = "yklxTest";
 
 Poco::FastMutex			g_fmDecompressLock;		//解压文件列表锁
 DECOMPRESSTASKLIST		g_lDecompressTask;		//解压文件列表
@@ -82,6 +83,7 @@ BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_MFCBUTTON_Decompress, &CDataMgrToolDlg::OnBnClickedMfcbuttonDecompress)
 	ON_BN_CLICKED(IDC_MFCBUTTON_Decrypt, &CDataMgrToolDlg::OnBnClickedMfcbuttonDecrypt)
 	ON_WM_DESTROY()
+	ON_BN_CLICKED(IDC_BTN_Clear, &CDataMgrToolDlg::OnBnClickedBtnClear)
 END_MESSAGE_MAP()
 
 
@@ -231,6 +233,53 @@ void CDataMgrToolDlg::OnBnClickedMfcbuttonDecompress()
 
 void CDataMgrToolDlg::OnBnClickedMfcbuttonDecrypt()
 {
-	// TODO:  在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+	USES_CONVERSION;
+
+	std::string strFilePath = T2A(m_strEncryptPath);
+	std::string strJsnData;
+	std::ifstream in(strFilePath);
+	if (!in)
+	{
+		CString strMsg = _T("");
+		strMsg.Format(_T("打开文件(%s)失败\r\n"), A2T(strFilePath.c_str()));
+		showMsg(strMsg);
+		return;
+	}
+	std::string strJsnLine;
+	while (!in.eof())
+	{
+		getline(in, strJsnLine);
+		strJsnData.append(strJsnLine);
+	}
+	in.close();
+
+	std::string strFileData;
+	if (!decString(strJsnData, strFileData))
+		strFileData = strJsnData;
+
+	CString strMsg = _T("");
+	strMsg.Format(_T("-------------------\r\n%s\r\n-------------------\r\n"), A2T(strFileData.c_str()));
+	showMsg(strMsg);
 }
 
+void CDataMgrToolDlg::showMsg(CString& strMsg)
+{
+	if (m_strMsg.GetLength() > 4000)
+		m_strMsg.Empty();
+
+	m_strMsg.Append(strMsg);
+	m_edit_Msg.SetWindowTextW(m_strMsg);
+
+
+	int nLineCount = m_edit_Msg.GetLineCount();
+	m_edit_Msg.LineScroll(nLineCount);
+}
+
+
+
+void CDataMgrToolDlg::OnBnClickedBtnClear()
+{
+	m_strMsg.Empty();
+	UpdateData(FALSE);
+}

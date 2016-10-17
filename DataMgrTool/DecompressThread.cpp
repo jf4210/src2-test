@@ -81,7 +81,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		g_Log.LogOutError(strLog);
 		return;
 	}
-	std::string strOutDir = pTask->strDecompressDir + "\\" + CMyCodeConvert::Gb2312ToUtf8(pTask->strFileBaseName);
+	std::string strOutDir = CMyCodeConvert::Gb2312ToUtf8(pTask->strDecompressDir + "\\" + pTask->strFileBaseName);
 
 	Poco::File decompressDir(strOutDir);
 	if (decompressDir.exists())
@@ -120,7 +120,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	const char *password = NULL;
 	password = "static";
 	
-	if (CHDIR(strOutDir.c_str()))
+	if (CHDIR(CMyCodeConvert::Utf8ToGb2312(strOutDir).c_str()))
 	{
 		std::string strLog = "切换目录失败:" + strOutDir;
 		g_Log.LogOutError(strLog);
@@ -143,9 +143,10 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	}
 	CHDIR(pTask->strDecompressDir.c_str());		//切换回解压根目录，否则删除压缩文件夹失败
 
-	((CDataMgrToolDlg*)m_pDlg)->m_strMsg.Append(_T("解压完成"));
-	((CDataMgrToolDlg*)m_pDlg)->UpdateData(FALSE);
-//	((CDataMgrToolDlg*)AfxGetMainWnd())->m_strMsg.Append(_T("解压完成"));
+	USES_CONVERSION;
+	CString strMsg;
+	strMsg.Format(_T("解压(%s)完成\r\n"), A2T(pTask->strSrcFileName.c_str()));
+	((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
 #endif
 }
 

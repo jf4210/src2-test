@@ -35,6 +35,8 @@ public:
 	CEdit		m_edit_Msg;
 	CString		m_strMsg;
 
+
+	void	showMsg(CString& strMsg);
 private:
 	Poco::Thread* m_pDecompressThread;
 	std::vector<CDecompressThread*> m_vecDecompressThreadObj;
@@ -53,4 +55,5 @@ public:
 	afx_msg void OnBnClickedMfcbuttonDecompress();
 	afx_msg void OnBnClickedMfcbuttonDecrypt();
 	afx_msg void OnDestroy();
+	afx_msg void OnBnClickedBtnClear();
 };
