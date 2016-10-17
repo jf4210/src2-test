@@ -612,7 +612,8 @@ LRESULT CMakeModelDlg::RoiRBtnUp(WPARAM wParam, LPARAM lParam)
 		if (rtSNTracker.contains(pt))
 		{
 			CMenu menu, *pPopup;
-			if (m_pModel->nZkzhType == 2)		//条码时，只添加区域，不识别
+
+			if (m_pSNInfoDlg->m_nZkzhType == 2)		//条码时，只添加区域，不识别
 				menu.LoadMenu(IDR_MENU_AddRecog);
 			else
 				menu.LoadMenu(IDR_MENU_RecogSN);
