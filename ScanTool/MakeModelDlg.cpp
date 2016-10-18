@@ -253,6 +253,8 @@ BOOL CMakeModelDlg::OnInitDialog()
 		CString strTitle = _T("");
 		strTitle.Format(_T("模板名称: %s"), A2T(m_pModel->strModelName.c_str()));
 		SetWindowText(strTitle);
+
+		m_pSNInfoDlg->InitType(m_pModel->nZkzhType);
 	}
 	else
 	{
@@ -613,10 +615,14 @@ LRESULT CMakeModelDlg::RoiRBtnUp(WPARAM wParam, LPARAM lParam)
 		{
 			CMenu menu, *pPopup;
 
+#if 0
+			menu.LoadMenu(IDR_MENU_RecogSN);
+#else
 			if (m_pSNInfoDlg->m_nZkzhType == 2)		//条码时，只添加区域，不识别
 				menu.LoadMenu(IDR_MENU_AddRecog);
 			else
 				menu.LoadMenu(IDR_MENU_RecogSN);
+#endif
 
 			pPopup = menu.GetSubMenu(0);
 			CPoint myPoint;
@@ -1971,7 +1977,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	}
 	m_pModel->vecPaperModel.clear();
 
-
+	m_pModel->nZkzhType = m_pSNInfoDlg->m_nZkzhType;
 
 	m_pModel->nPicNum = m_vecPaperModelInfo.size();
 	for (int i = 0; i < m_pModel->nPicNum; i++)
@@ -2503,6 +2509,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	jsnModel.set("abPaper", pModel->nABModel);					//是否是AB卷					*************	暂时没加入AB卷的模板	**************
 	jsnModel.set("hasHead", pModel->nHasHead);					//是否有同步头
 	jsnModel.set("hasElectOmr", pModel->nHasElectOmr);			//是否有选做题
+	jsnModel.set("nZkzhType", pModel->nZkzhType);				//准考证号识别类型
  
 // 	jsnModel.set("gaussKernel", pModel->nGaussKernel);
 // 	jsnModel.set("sharpKernel", pModel->nSharpKernel);
@@ -3139,7 +3146,10 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 
 	InitShowSnOmrDlg(m_pCurRectInfo->eCPType);
 	if (m_pCurRectInfo->eCPType == SN && m_pSNInfoDlg)
+	{
+		m_pSNInfoDlg->InitType(m_pCurRectInfo->nZkzhType);
 		m_pSNInfoDlg->ShowUI(m_pCurRectInfo->nRecogFlag);
+	}
 	else if (m_pCurRectInfo->eCPType == OMR && m_pOmrInfoDlg)
 		m_pOmrInfoDlg->ShowUI(m_pCurRectInfo->nRecogFlag, m_pCurRectInfo->nSingle);
 	else if (m_pCurRectInfo->eCPType == ELECT_OMR && m_pElectOmrDlg)
@@ -3837,9 +3847,39 @@ void CMakeModelDlg::AddRecogRectToList()
 	if (m_vecPaperModelInfo.size() <= 0 || m_vecPaperModelInfo.size() <= m_nCurrTabSel)
 		return;
 
-	if (m_eCurCPType == SN && m_pModel->nZkzhType == 2)
+	if (m_eCurCPType == SN && m_pSNInfoDlg->m_nZkzhType == 2)
 	{
+		//先清空列表
+		SNLIST::iterator itSn = m_vecPaperModelInfo[m_nCurrTabSel]->lSN.begin();
+		for (; itSn != m_vecPaperModelInfo[m_nCurrTabSel]->lSN.end();)
+		{
+			pSN_ITEM pSNItem = *itSn;
+			itSn = m_vecPaperModelInfo[m_nCurrTabSel]->lSN.erase(itSn);
+			SAFE_RELEASE(pSNItem);
+		}
 
+		cv::Rect rt = cv::Rect(m_ptSNTracker1, m_ptSNTracker2);
+		if (rt.x < 0)
+			rt.x = 0;
+		if (rt.y < 0)
+			rt.y = 0;
+		if (rt.br().x > m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.cols)
+			rt.width = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.cols - rt.x;
+		if (rt.br().y > m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.rows)
+			rt.height = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.rows - rt.y;
+
+		RECTINFO rc;
+		rc.eCPType = m_eCurCPType;
+		rc.nZkzhType = 2;
+		rc.rt = rt;
+
+		pSN_ITEM pSnItem = new SN_ITEM;
+		pSnItem->nItem = 0;
+		pSnItem->lSN.push_back(rc);
+		m_vecPaperModelInfo[m_nCurrTabSel]->lSN.push_back(pSnItem);
+
+		UpdataCPList(); 
+		ShowRectByCPType(m_eCurCPType);
 		return;
 	}
 

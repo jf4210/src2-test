@@ -726,56 +726,82 @@ bool GetHeader(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 	return true;
 }
 
-bool GetZkzh(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
+bool GetZkzh(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel, pMODEL pModel)
 {
 	cv::Point ptZkzh1, ptZkzh2;
 	if (!objTK->isNull("baseInfo"))
 	{
 		Poco::JSON::Object::Ptr objBaseInfo = objTK->getObject("baseInfo");
-		Poco::JSON::Object::Ptr objZKZH = objBaseInfo->getObject("zkzh");
-		Poco::JSON::Array::Ptr arryZkzhItems = objZKZH->getArray("items");
-		for (int n = 0; n < arryZkzhItems->size(); n++)
+		if (objBaseInfo->has("zkzh"))
 		{
-			Poco::JSON::Object::Ptr objItem = arryZkzhItems->getObject(n);
-			Poco::JSON::Object::Ptr objPanel = objItem->getObject("panel");
-			int nItem = objPanel->get("index").convert<int>();
-			if (nItem == 0)
+			Poco::JSON::Object::Ptr objZKZH = objBaseInfo->getObject("zkzh");
+			Poco::JSON::Array::Ptr arryZkzhItems = objZKZH->getArray("items");
+			for (int n = 0; n < arryZkzhItems->size(); n++)
 			{
-				ptZkzh1.x = objPanel->get("x").convert<int>();
-				ptZkzh1.y = objPanel->get("y").convert<int>();
-			}
-			if (nItem == arryZkzhItems->size() - 1)
-			{
-				ptZkzh2.x = objPanel->get("x").convert<int>() + objPanel->get("width").convert<int>();
-				ptZkzh2.y = objPanel->get("y").convert<int>() + objPanel->get("height").convert<int>();
-			}
+				Poco::JSON::Object::Ptr objItem = arryZkzhItems->getObject(n);
+				Poco::JSON::Object::Ptr objPanel = objItem->getObject("panel");
+				int nItem = objPanel->get("index").convert<int>();
+				if (nItem == 0)
+				{
+					ptZkzh1.x = objPanel->get("x").convert<int>();
+					ptZkzh1.y = objPanel->get("y").convert<int>();
+				}
+				if (nItem == arryZkzhItems->size() - 1)
+				{
+					ptZkzh2.x = objPanel->get("x").convert<int>() + objPanel->get("width").convert<int>();
+					ptZkzh2.y = objPanel->get("y").convert<int>() + objPanel->get("height").convert<int>();
+				}
 
-			//获取每列的准考证信息
-			pSN_ITEM pSnItem = new SN_ITEM;
-			pSnItem->nItem = nItem;
+				//获取每列的准考证信息
+				pSN_ITEM pSnItem = new SN_ITEM;
+				pSnItem->nItem = nItem;
 
-			Poco::JSON::Array::Ptr arryZkzhGrids = objItem->getArray("grids");
-			for (int k = 0; k < arryZkzhGrids->size(); k++)
-			{
-				Poco::JSON::Object::Ptr objGrids = arryZkzhGrids->getObject(k);
-				RECTINFO rc;
-				rc.eCPType = SN;
-				rc.rt.x = objGrids->get("x").convert<int>();
-				rc.rt.y = objGrids->get("y").convert<int>();
-				rc.rt.width = objGrids->get("width").convert<int>();
-				rc.rt.height = objGrids->get("height").convert<int>();
-				rc.nTH = nItem;
-				rc.nSnVal = objGrids->get("index").convert<int>();
-				rc.nHItem = objGrids->get("horIndex").convert<int>();
-				rc.nVItem = objGrids->get("verIndex").convert<int>();
-				rc.nRecogFlag = 10;
-				pSnItem->lSN.push_back(rc);
+				Poco::JSON::Array::Ptr arryZkzhGrids = objItem->getArray("grids");
+				for (int k = 0; k < arryZkzhGrids->size(); k++)
+				{
+					Poco::JSON::Object::Ptr objGrids = arryZkzhGrids->getObject(k);
+					RECTINFO rc;
+					rc.eCPType = SN;
+					rc.rt.x = objGrids->get("x").convert<int>();
+					rc.rt.y = objGrids->get("y").convert<int>();
+					rc.rt.width = objGrids->get("width").convert<int>();
+					rc.rt.height = objGrids->get("height").convert<int>();
+					rc.nTH = nItem;
+					rc.nSnVal = objGrids->get("index").convert<int>();
+					rc.nHItem = objGrids->get("horIndex").convert<int>();
+					rc.nVItem = objGrids->get("verIndex").convert<int>();
+					rc.nRecogFlag = 10;
+					pSnItem->lSN.push_back(rc);
+				}
+				pPaperModel->lSNInfo.push_back(pSnItem);
 			}
-			pPaperModel->lSNInfo.push_back(pSnItem);
+			ptZkzh1 += cv::Point(2, 2);			//准考证橡皮筋缩放，防止选框太大
+			ptZkzh2 -= cv::Point(2, 2);			//准考证橡皮筋缩放，防止选框太大
+			pPaperModel->rtSNTracker = cv::Rect(ptZkzh1, ptZkzh2);
 		}
-		ptZkzh1 += cv::Point(2, 2);			//准考证橡皮筋缩放，防止选框太大
-		ptZkzh2 -= cv::Point(2, 2);			//准考证橡皮筋缩放，防止选框太大
-		pPaperModel->rtSNTracker = cv::Rect(ptZkzh1, ptZkzh2);
+		else if (objBaseInfo->has("studentCode"))
+		{
+			Poco::JSON::Object::Ptr objZKZH = objBaseInfo->getObject("studentCode");
+			Poco::JSON::Object::Ptr objPanel = objZKZH->getObject("panel");
+			ptZkzh1.x = objPanel->get("x").convert<int>();
+			ptZkzh1.y = objPanel->get("y").convert<int>();
+			ptZkzh2.x = objPanel->get("x").convert<int>() + objPanel->get("width").convert<int>();
+			ptZkzh2.y = objPanel->get("y").convert<int>() + objPanel->get("height").convert<int>();
+
+			ptZkzh1 += cv::Point(2, 2);			//准考证橡皮筋缩放，防止选框太大
+			ptZkzh2 -= cv::Point(2, 2);			//准考证橡皮筋缩放，防止选框太大
+			pPaperModel->rtSNTracker = cv::Rect(ptZkzh1, ptZkzh2);
+			
+			pSN_ITEM pSnItem = new SN_ITEM;
+			pSnItem->nItem = 0;
+			RECTINFO rc;
+			rc.eCPType = SN;
+			rc.nZkzhType = 2;
+			rc.rt = cv::Rect(ptZkzh1, ptZkzh2);
+			pSnItem->lSN.push_back(rc);
+			pPaperModel->lSNInfo.push_back(pSnItem);
+			pModel->nZkzhType = 2;
+		}
 	}
 	return true;
 }
@@ -927,7 +953,7 @@ pMODEL CScanResquestHandler::CreateModel(Poco::JSON::Object::Ptr object, int nEx
 			GetHeader(objTK, pPaperModel);
 
 			//准考证号
-			GetZkzh(objTK, pPaperModel);
+			GetZkzh(objTK, pPaperModel, pModel);
 
 			//OMR设置
 			GetOMR(objTK, pPaperModel);
@@ -1402,6 +1428,11 @@ bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 		{
 			itABModel->nThresholdValue = 150;
 			itABModel->fStandardValuePercent = 0.75;
+			
+			itABModel->nGaussKernel = 5;
+			itABModel->nSharpKernel = 5;
+			itABModel->nCannyKernel = 90;
+			itABModel->nDilateKernel = 3;
 
 			GetPositionByHead(pPicModel, itABModel->nHItem, itABModel->nVItem, itABModel->rt);
 
@@ -1414,6 +1445,11 @@ bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 			itCourse->nThresholdValue = 150;
 			itCourse->fStandardValuePercent = 0.75;
 
+			itCourse->nGaussKernel = 5;
+			itCourse->nSharpKernel = 5;
+			itCourse->nCannyKernel = 90;
+			itCourse->nDilateKernel = 3;
+
 			GetPositionByHead(pPicModel, itCourse->nHItem, itCourse->nVItem, itCourse->rt);
 
 			cv::Mat matComp = matSrc(itCourse->rt);
@@ -1424,6 +1460,11 @@ bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 		{
 			itQK->nThresholdValue = 150;
 			itQK->fStandardValuePercent = 0.75;
+
+			itQK->nGaussKernel = 5;
+			itQK->nSharpKernel = 5;
+			itQK->nCannyKernel = 90;
+			itQK->nDilateKernel = 3;
 
 			GetPositionByHead(pPicModel, itQK->nHItem, itQK->nVItem, itQK->rt);
 
@@ -1436,6 +1477,11 @@ bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 			itGray->nThresholdValue = 150;
 			itGray->fStandardValuePercent = 0.75;
 
+			itGray->nGaussKernel = 5;
+			itGray->nSharpKernel = 5;
+			itGray->nCannyKernel = 90;
+			itGray->nDilateKernel = 3;
+
 			GetPositionByHead(pPicModel, itGray->nHItem, itGray->nVItem, itGray->rt);
 
 			cv::Mat matComp = matSrc(itGray->rt);
@@ -1447,25 +1493,38 @@ bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 			itWhite->nThresholdValue = 225;
 			itWhite->fStandardValuePercent = 0.75;
 
+			itWhite->nGaussKernel = 5;
+			itWhite->nSharpKernel = 5;
+			itWhite->nCannyKernel = 90;
+			itWhite->nDilateKernel = 3;
+
 			GetPositionByHead(pPicModel, itWhite->nHItem, itWhite->nVItem, itWhite->rt);
 
 			cv::Mat matComp = matSrc(itWhite->rt);
 			RecogGrayValue(matComp, *itWhite);
 		}
-		SNLIST::iterator itSN = pPicModel->lSNInfo.begin();
-		for (; itSN != pPicModel->lSNInfo.end(); itSN++)
+		if (pModel->nZkzhType == 1)
 		{
-			pSN_ITEM pSNItem = *itSN;
-			RECTLIST::iterator itSNItem = pSNItem->lSN.begin();
-			for (; itSNItem != pSNItem->lSN.end(); itSNItem++)
+			SNLIST::iterator itSN = pPicModel->lSNInfo.begin();
+			for (; itSN != pPicModel->lSNInfo.end(); itSN++)
 			{
-				itSNItem->nThresholdValue = 200;
-				itSNItem->fStandardValuePercent = 1.1;
+				pSN_ITEM pSNItem = *itSN;
+				RECTLIST::iterator itSNItem = pSNItem->lSN.begin();
+				for (; itSNItem != pSNItem->lSN.end(); itSNItem++)
+				{
+					itSNItem->nThresholdValue = 200;
+					itSNItem->fStandardValuePercent = 1.1;
 
-				GetPositionByHead(pPicModel, itSNItem->nHItem, itSNItem->nVItem, itSNItem->rt);
+					itSNItem->nGaussKernel = 5;
+					itSNItem->nSharpKernel = 5;
+					itSNItem->nCannyKernel = 90;
+					itSNItem->nDilateKernel = 3;
 
-				cv::Mat matComp = matSrc(itSNItem->rt);
-				RecogGrayValue(matComp, *itSNItem);
+					GetPositionByHead(pPicModel, itSNItem->nHItem, itSNItem->nVItem, itSNItem->rt);
+
+					cv::Mat matComp = matSrc(itSNItem->rt);
+					RecogGrayValue(matComp, *itSNItem);
+				}
 			}
 		}
 		OMRLIST::iterator itOmr = pPicModel->lOMR2.begin();
@@ -1476,6 +1535,32 @@ bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 			{
 				itOmrItem->nThresholdValue = 235;
 				itOmrItem->fStandardValuePercent = 1.1;
+
+				itOmrItem->nGaussKernel = 5;
+				itOmrItem->nSharpKernel = 5;
+				itOmrItem->nCannyKernel = 90;
+				itOmrItem->nDilateKernel = 3;
+
+				GetPositionByHead(pPicModel, itOmrItem->nHItem, itOmrItem->nVItem, itOmrItem->rt);
+
+				cv::Mat matComp = matSrc(itOmrItem->rt);
+				RecogGrayValue(matComp, *itOmrItem);
+			}
+		}
+
+		ELECTOMR_LIST::iterator itElectOmr = pPicModel->lElectOmr.begin();
+		for (; itElectOmr != pPicModel->lElectOmr.end(); itElectOmr++)
+		{
+			RECTLIST::iterator itOmrItem = itElectOmr->lItemInfo.begin();
+			for (; itOmrItem != itElectOmr->lItemInfo.end(); itOmrItem++)
+			{
+				itOmrItem->nThresholdValue = 235;
+				itOmrItem->fStandardValuePercent = 1.1;
+
+				itOmrItem->nGaussKernel = 5;
+				itOmrItem->nSharpKernel = 5;
+				itOmrItem->nCannyKernel = 90;
+				itOmrItem->nDilateKernel = 3;
 
 				GetPositionByHead(pPicModel, itOmrItem->nHItem, itOmrItem->nVItem, itOmrItem->rt);
 
@@ -1507,7 +1592,6 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 		Poco::JSON::Array jsnSelHTrackerArry;
 		Poco::JSON::Array jsnSelVTrackerArry;
 		Poco::JSON::Array jsnSelRoiArry;
-		Poco::JSON::Array jsnOMRArry;
 		Poco::JSON::Array jsnFixCPArry;
 		Poco::JSON::Array jsnHHeadArry;
 		Poco::JSON::Array jsnVHeadArry;
@@ -1516,6 +1600,8 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 		Poco::JSON::Array jsnQKArry;
 		Poco::JSON::Array jsnGrayCPArry;
 		Poco::JSON::Array jsnWhiteCPArry;
+		Poco::JSON::Array jsnOMRArry;
+		Poco::JSON::Array jsnElectOmrArry;
 		RECTLIST::iterator itFix = pModel->vecPaperModel[i]->lFix.begin();
 		for (; itFix != pModel->vecPaperModel[i]->lFix.end(); itFix++)
 		{
@@ -1528,6 +1614,11 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itFix->nThresholdValue);
 			jsnObj.set("standardValPercent", itFix->fStandardValuePercent);
 			jsnObj.set("standardVal", itFix->fStandardValue);
+
+			jsnObj.set("gaussKernel", itFix->nGaussKernel);
+			jsnObj.set("sharpKernel", itFix->nSharpKernel);
+			jsnObj.set("cannyKernel", itFix->nCannyKernel);
+			jsnObj.set("dilateKernel", itFix->nDilateKernel);
 			jsnFixCPArry.add(jsnObj);
 		}
 		RECTLIST::iterator itHHead = pModel->vecPaperModel[i]->lH_Head.begin();
@@ -1542,6 +1633,11 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itHHead->nThresholdValue);
 			jsnObj.set("standardValPercent", itHHead->fStandardValuePercent);
 			jsnObj.set("standardVal", itHHead->fStandardValue);
+
+			jsnObj.set("gaussKernel", itHHead->nGaussKernel);
+			jsnObj.set("sharpKernel", itHHead->nSharpKernel);
+			jsnObj.set("cannyKernel", itHHead->nCannyKernel);
+			jsnObj.set("dilateKernel", itHHead->nDilateKernel);
 			jsnHHeadArry.add(jsnObj);
 		}
 		RECTLIST::iterator itVHead = pModel->vecPaperModel[i]->lV_Head.begin();
@@ -1556,6 +1652,11 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itVHead->nThresholdValue);
 			jsnObj.set("standardValPercent", itVHead->fStandardValuePercent);
 			jsnObj.set("standardVal", itVHead->fStandardValue);
+
+			jsnObj.set("gaussKernel", itVHead->nGaussKernel);
+			jsnObj.set("sharpKernel", itVHead->nSharpKernel);
+			jsnObj.set("cannyKernel", itVHead->nCannyKernel);
+			jsnObj.set("dilateKernel", itVHead->nDilateKernel);
 			jsnVHeadArry.add(jsnObj);
 		}
 		RECTLIST::iterator itABModel = pModel->vecPaperModel[i]->lABModel.begin();
@@ -1572,6 +1673,11 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itABModel->nThresholdValue);
 			jsnObj.set("standardValPercent", itABModel->fStandardValuePercent);
 			jsnObj.set("standardVal", itABModel->fStandardValue);
+
+			jsnObj.set("gaussKernel", itABModel->nGaussKernel);
+			jsnObj.set("sharpKernel", itABModel->nSharpKernel);
+			jsnObj.set("cannyKernel", itABModel->nCannyKernel);
+			jsnObj.set("dilateKernel", itABModel->nDilateKernel);
 			jsnABModelArry.add(jsnObj);
 		}
 		RECTLIST::iterator itCourse = pModel->vecPaperModel[i]->lCourse.begin();
@@ -1588,6 +1694,11 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itCourse->nThresholdValue);
 			jsnObj.set("standardValPercent", itCourse->fStandardValuePercent);
 			jsnObj.set("standardVal", itCourse->fStandardValue);
+
+			jsnObj.set("gaussKernel", itCourse->nGaussKernel);
+			jsnObj.set("sharpKernel", itCourse->nSharpKernel);
+			jsnObj.set("cannyKernel", itCourse->nCannyKernel);
+			jsnObj.set("dilateKernel", itCourse->nDilateKernel);
 			jsnCourseArry.add(jsnObj);
 		}
 		RECTLIST::iterator itQKCP = pModel->vecPaperModel[i]->lQK_CP.begin();
@@ -1604,6 +1715,11 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itQKCP->nThresholdValue);
 			jsnObj.set("standardValPercent", itQKCP->fStandardValuePercent);
 			jsnObj.set("standardVal", itQKCP->fStandardValue);
+
+			jsnObj.set("gaussKernel", itQKCP->nGaussKernel);
+			jsnObj.set("sharpKernel", itQKCP->nSharpKernel);
+			jsnObj.set("cannyKernel", itQKCP->nCannyKernel);
+			jsnObj.set("dilateKernel", itQKCP->nDilateKernel);
 			jsnQKArry.add(jsnObj);
 		}
 		RECTLIST::iterator itGrayCP = pModel->vecPaperModel[i]->lGray.begin();
@@ -1620,6 +1736,11 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itGrayCP->nThresholdValue);
 			jsnObj.set("standardValPercent", itGrayCP->fStandardValuePercent);
 			jsnObj.set("standardVal", itGrayCP->fStandardValue);
+
+			jsnObj.set("gaussKernel", itGrayCP->nGaussKernel);
+			jsnObj.set("sharpKernel", itGrayCP->nSharpKernel);
+			jsnObj.set("cannyKernel", itGrayCP->nCannyKernel);
+			jsnObj.set("dilateKernel", itGrayCP->nDilateKernel);
 			jsnGrayCPArry.add(jsnObj);
 		}
 		RECTLIST::iterator itWhiteCP = pModel->vecPaperModel[i]->lWhite.begin();
@@ -1636,6 +1757,11 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itWhiteCP->nThresholdValue);
 			jsnObj.set("standardValPercent", itWhiteCP->fStandardValuePercent);
 			jsnObj.set("standardVal", itWhiteCP->fStandardValue);
+
+			jsnObj.set("gaussKernel", itWhiteCP->nGaussKernel);
+			jsnObj.set("sharpKernel", itWhiteCP->nSharpKernel);
+			jsnObj.set("cannyKernel", itWhiteCP->nCannyKernel);
+			jsnObj.set("dilateKernel", itWhiteCP->nDilateKernel);
 			jsnWhiteCPArry.add(jsnObj);
 		}
 		RECTLIST::iterator itSelRoi = pModel->vecPaperModel[i]->lSelFixRoi.begin();
@@ -1650,6 +1776,11 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itSelRoi->nThresholdValue);
 			jsnObj.set("standardValPercent", itSelRoi->fStandardValuePercent);
 			//			jsnObj.set("standardVal", itSelRoi->fStandardValue);
+
+			jsnObj.set("gaussKernel", itSelRoi->nGaussKernel);
+			jsnObj.set("sharpKernel", itSelRoi->nSharpKernel);
+			jsnObj.set("cannyKernel", itSelRoi->nCannyKernel);
+			jsnObj.set("dilateKernel", itSelRoi->nDilateKernel);
 			jsnSelRoiArry.add(jsnObj);
 		}
 		RECTLIST::iterator itSelHTracker = pModel->vecPaperModel[i]->lSelHTracker.begin();
@@ -1664,6 +1795,11 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itSelHTracker->nThresholdValue);
 			jsnObj.set("standardValPercent", itSelHTracker->fStandardValuePercent);
 			//			jsnObj.set("standardVal", itSelHTracker->fStandardValue);
+
+			jsnObj.set("gaussKernel", itSelHTracker->nGaussKernel);
+			jsnObj.set("sharpKernel", itSelHTracker->nSharpKernel);
+			jsnObj.set("cannyKernel", itSelHTracker->nCannyKernel);
+			jsnObj.set("dilateKernel", itSelHTracker->nDilateKernel);
 			jsnSelHTrackerArry.add(jsnObj);
 		}
 		RECTLIST::iterator itSelVTracker = pModel->vecPaperModel[i]->lSelVTracker.begin();
@@ -1678,6 +1814,11 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itSelVTracker->nThresholdValue);
 			jsnObj.set("standardValPercent", itSelVTracker->fStandardValuePercent);
 			//			jsnObj.set("standardVal", itSelVTracker->fStandardValue);
+
+			jsnObj.set("gaussKernel", itSelVTracker->nGaussKernel);
+			jsnObj.set("sharpKernel", itSelVTracker->nSharpKernel);
+			jsnObj.set("cannyKernel", itSelVTracker->nCannyKernel);
+			jsnObj.set("dilateKernel", itSelVTracker->nDilateKernel);
 			jsnSelVTrackerArry.add(jsnObj);
 		}
 		OMRLIST::iterator itOmr = pModel->vecPaperModel[i]->lOMR2.begin();
@@ -1703,6 +1844,11 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 				jsnObj.set("thresholdValue", itOmrSel->nThresholdValue);
 				jsnObj.set("standardValPercent", itOmrSel->fStandardValuePercent);
 				jsnObj.set("standardVal", itOmrSel->fStandardValue);
+
+				jsnObj.set("gaussKernel", itOmrSel->nGaussKernel);
+				jsnObj.set("sharpKernel", itOmrSel->nSharpKernel);
+				jsnObj.set("cannyKernel", itOmrSel->nCannyKernel);
+				jsnObj.set("dilateKernel", itOmrSel->nDilateKernel);
 				jsnArry.add(jsnObj);
 			}
 			jsnTHObj.set("nTH", itOmr->nTH);
@@ -1734,12 +1880,53 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 				jsnObj.set("thresholdValue", itSnDetail->nThresholdValue);
 				jsnObj.set("standardValPercent", itSnDetail->fStandardValuePercent);
 				jsnObj.set("standardVal", itSnDetail->fStandardValue);
+
+				jsnObj.set("gaussKernel", itSnDetail->nGaussKernel);
+				jsnObj.set("sharpKernel", itSnDetail->nSharpKernel);
+				jsnObj.set("cannyKernel", itSnDetail->nCannyKernel);
+				jsnObj.set("dilateKernel", itSnDetail->nDilateKernel);
 				jsnArry.add(jsnObj);
 			}
 			jsnSNObj.set("nItem", (*itSn)->nItem);
 			jsnSNObj.set("nRecogVal", (*itSn)->nRecogVal);
 			jsnSNObj.set("snList", jsnArry);
 			jsnSNArry.add(jsnSNObj);
+		}
+		ELECTOMR_LIST::iterator itElectOmr = pModel->vecPaperModel[i]->lElectOmr.begin();
+		for (; itElectOmr != pModel->vecPaperModel[i]->lElectOmr.end(); itElectOmr++)
+		{
+			pModel->nHasElectOmr = 1;		//设置标识
+
+			Poco::JSON::Object jsnTHObj;
+			Poco::JSON::Array  jsnArry;
+			RECTLIST::iterator itOmrSel = itElectOmr->lItemInfo.begin();
+			for (; itOmrSel != itElectOmr->lItemInfo.end(); itOmrSel++)
+			{
+				Poco::JSON::Object jsnObj;
+				jsnObj.set("eType", (int)itOmrSel->eCPType);
+				jsnObj.set("nTH", itOmrSel->nTH);
+				jsnObj.set("nAnswer", itOmrSel->nAnswer);
+				jsnObj.set("left", itOmrSel->rt.x);
+				jsnObj.set("top", itOmrSel->rt.y);
+				jsnObj.set("width", itOmrSel->rt.width);
+				jsnObj.set("height", itOmrSel->rt.height);
+				jsnObj.set("hHeadItem", itOmrSel->nHItem);
+				jsnObj.set("vHeadItem", itOmrSel->nVItem);
+				jsnObj.set("thresholdValue", itOmrSel->nThresholdValue);
+				jsnObj.set("standardValPercent", itOmrSel->fStandardValuePercent);
+				jsnObj.set("standardVal", itOmrSel->fStandardValue);
+
+				jsnObj.set("gaussKernel", itOmrSel->nGaussKernel);
+				jsnObj.set("sharpKernel", itOmrSel->nSharpKernel);
+				jsnObj.set("cannyKernel", itOmrSel->nCannyKernel);
+				jsnObj.set("dilateKernel", itOmrSel->nDilateKernel);
+				jsnArry.add(jsnObj);
+			}
+			jsnTHObj.set("nGroupID", itElectOmr->sElectOmrGroupInfo.nGroupID);
+			jsnTHObj.set("nAllCount", itElectOmr->sElectOmrGroupInfo.nAllCount);
+			jsnTHObj.set("nRealCount", itElectOmr->sElectOmrGroupInfo.nRealCount);
+			jsnTHObj.set("omrlist", jsnArry);
+			jsnElectOmrArry.add(jsnTHObj);
 		}
 		jsnPaperObj.set("paperNum", i);
 		jsnPaperObj.set("modelPicName", CMyCodeConvert::Gb2312ToUtf8(strPicName));		//CMyCodeConvert::Gb2312ToUtf8(T2A(strPicName))
@@ -1756,6 +1943,7 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 		jsnPaperObj.set("vTrackerRect", jsnSelVTrackerArry);
 		jsnPaperObj.set("selOmrRect", jsnOMRArry);
 		jsnPaperObj.set("snList", jsnSNArry);
+		jsnPaperObj.set("electOmrList", jsnElectOmrArry);
 
 		jsnPaperObj.set("picW", pModel->vecPaperModel[i]->nPicW);		//add on 16.8.29
 		jsnPaperObj.set("picH", pModel->vecPaperModel[i]->nPicH);		//add on 16.8.29
@@ -1783,6 +1971,9 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 	jsnModel.set("enableModify", pModel->nEnableModify);		//是否可以修改标识
 	jsnModel.set("abPaper", pModel->nABModel);					//是否是AB卷					*************	暂时没加入AB卷的模板	**************
 	jsnModel.set("hasHead", pModel->nHasHead);					//是否有同步头
+	jsnModel.set("hasElectOmr", pModel->nHasElectOmr);			//是否有选做题
+	jsnModel.set("nZkzhType", pModel->nZkzhType);				//准考证号识别类型
+
 	jsnModel.set("nExamId", pModel->nExamID);
 	jsnModel.set("nSubjectId", pModel->nSubjectID);
 	jsnModel.set("paperInfo", jsnPicModel);

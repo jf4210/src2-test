@@ -19,6 +19,7 @@ public:
 	// 指令通道监听端口
 	int m_nCmdPort;
 
+	int m_nHandleCmdThreads;	//处理接收到的网络命令线程
 	int m_nDecompressThreads;
 	int m_nSendHttpThreads;
 	int m_nHttpTimeOut;		//发送文件间隔时间

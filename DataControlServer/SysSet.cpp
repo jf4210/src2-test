@@ -27,6 +27,7 @@ bool CSysSet::Load(std::string& strConfPath)
 	m_nBackupPapers		= pConf->getInt("Sys.bPapersBackup", 0);
 	m_strPapersBackupPath	= pConf->getString("Sys.papersBackupPath");
 
+	m_nHandleCmdThreads = pConf->getInt("Cmd.sendThreads", 2);
 	m_nSendHttpThreads	= pConf->getInt("UpHttp.sendThreads", 2);
 	m_nHttpTimeOut		= pConf->getInt("UpHttp.sendTimeout", 60);
 	m_nSendTimes		= pConf->getInt("UpHttp.sendTimes", 3);

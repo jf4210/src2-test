@@ -310,6 +310,8 @@ pMODEL LoadModelFile(CString strModelPath)
 		pModel->nHasHead		= objData->get("hasHead").convert<int>();
 		if (objData->has("hasElectOmr"))
 			pModel->nHasElectOmr = objData->get("hasElectOmr").convert<int>();
+		if (objData->has("nZkzhType"))
+			pModel->nZkzhType = objData->get("nZkzhType").convert<int>();
 
 // 		if (objData->has("gaussKernel"))
 // 			pModel->nGaussKernel = objData->get("gaussKernel").convert<int>();
@@ -2946,5 +2948,59 @@ bool InitModelRecog(pMODEL pModel)
 	}
 	return bResult;
 }
-
 //---------------------------------------------------------------
+
+
+
+
+//================ 条码 =============================
+//zbar接口
+std::string ZbarDecoder(cv::Mat img, std::string& strTypeName)
+{
+	std::string result;
+	zbar::ImageScanner scanner;
+	const void *raw = (&img)->data;
+	// configure the reader
+	scanner.set_config(zbar::ZBAR_QRCODE, zbar::ZBAR_CFG_ENABLE, 1);
+	// wrap image data
+	zbar::Image image(img.cols, img.rows, "Y800", raw, img.cols * img.rows);
+	// scan the image for barcodes
+	int n = scanner.scan(image);
+	// extract results
+	result = image.symbol_begin()->get_data();
+	strTypeName = image.symbol_begin()->get_type_name();
+	image.set_data(NULL, 0);
+	return result;
+}
+
+//对二值图像进行识别，如果失败则开运算进行二次识别
+std::string GetQRInBinImg(cv::Mat binImg, std::string& strTypeName)
+{
+	std::string result = ZbarDecoder(binImg, strTypeName);
+	if (result.empty())
+	{
+		cv::Mat openImg;
+		cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+		cv::morphologyEx(binImg, openImg, cv::MORPH_OPEN, element);
+		result = ZbarDecoder(openImg, strTypeName);
+	}
+	return result;
+}
+
+//main function
+std::string GetQR(cv::Mat img, std::string& strTypeName)
+{
+	cv::Mat binImg;
+	//在otsu二值结果的基础上，不断增加阈值，用于识别模糊图像
+	int thre = threshold(img, binImg, 0, 255, cv::THRESH_OTSU);
+	std::string result;
+	while (result.empty() && thre < 255)
+	{
+		threshold(img, binImg, thre, 255, cv::THRESH_BINARY);
+		result = GetQRInBinImg(binImg, strTypeName);
+		thre += 20;//阈值步长设为20，步长越大，识别率越低，速度越快
+	}
+	return result;
+}
+//===================================================
+

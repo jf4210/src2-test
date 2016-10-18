@@ -1416,189 +1416,11 @@ bool CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 
 bool CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
-	bool bRecogAll = true;
 	bool bResult = true;
-	std::vector<int> vecSN;
-	SNLIST::iterator itSN = pModelInfo->pModel->vecPaperModel[nPic]->lSNInfo.begin();
-	for (; itSN != pModelInfo->pModel->vecPaperModel[nPic]->lSNInfo.end(); itSN++)
-	{
-		pSN_ITEM pSnItem = *itSN;
-
-		pSN_ITEM pSn = new SN_ITEM;
-		pSn->nItem = pSnItem->nItem;
-		(static_cast<pST_PaperInfo>(pPic->pPaper))->lSnResult.push_back(pSn);
-
-		std::vector<int> vecItemVal;
-		RECTLIST::iterator itSnItem = pSnItem->lSN.begin();
-		for (; itSnItem != pSnItem->lSN.end(); itSnItem++)
-		{
-			RECTINFO rc = *itSnItem;
-			
-			if (pModelInfo->pModel->nHasHead)
-			{
-				if (rc.nHItem >= m_vecH_Head.size() || rc.nVItem >= m_vecV_Head.size())
-				{
-					bResult = false;
-					pPic->bFindIssue = true;
-					pPic->lIssueRect.push_back(rc);
-					break;
-				}
-				rc.rt.x = m_vecH_Head[rc.nHItem].rt.tl().x;
-				rc.rt.y = m_vecV_Head[rc.nVItem].rt.tl().y;
-				rc.rt.width = m_vecH_Head[rc.nHItem].rt.width;
-				rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
-			}
-			else
-				GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
-#if 1
-			bool bResult_Recog = Recog2(nPic, rc, matCompPic, pPic, pModelInfo);
-			if (bResult_Recog)
-			{
-				if (rc.fRealValuePercent > rc.fStandardValuePercent)
-					vecItemVal.push_back(rc.nSnVal);
-			}
-			char szTmp[300] = {0};
-			sprintf_s(szTmp, "图片名: %s, SN: 第%d位, 选项=%d, 识别实际比例=%.3f, val=%.2f, 识别标准=%.3f, val=%.2f, 是否成功:%d\n", pPic->strPicName.c_str(),\
-				pSnItem->nItem, rc.nSnVal, rc.fRealValuePercent, rc.fRealValue, rc.fStandardValuePercent, rc.fStandardValue, rc.fRealValuePercent > rc.fStandardValuePercent);
-			TRACE(szTmp);
-#else
-			bool bResult_Recog = RecogVal(nPic, rc, matCompPic, pPic, pModelInfo);
-			if (bResult_Recog)
-			{
-				vecItemVal.push_back(rc.nSnVal);
-			}
-#endif
-			pSn->lSN.push_back(rc);
-
-			#ifdef PaintOmrSnRect	//打印OMR、SN位置
-			pPic->lNormalRect.push_back(rc);
-			#endif
-		}
-
-#if 1	//根据选项差值判断选中
-		std::vector<pRECTINFO> vecItemsDesc;
-		std::vector<ST_ITEM_DIFF> vecSnItemDiff;
-		calcSnDiffVal(pSn, vecItemsDesc, vecSnItemDiff);
-
-		float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
-		float fDiffThread = 0.0;		//选项可能填涂的可能灰度梯度阀值
-		float fDiffExit = 0;			//灰度的梯度递减太快时，可以认为后面选项没有填涂，此时的灰度梯度阀值
-		if (pModelInfo->pModel->nHasHead)
-		{
-			fCompThread = 1.0;
-			fDiffThread = 0.085;
-			fDiffExit = 0.15;
-		}
-		else
-		{
-			fCompThread = 1.2;
-			fDiffThread = 0.2;
-			fDiffExit = 0.3;
-		}
-
-		int nFlag = -1;
-		float fThreld = 0.0;
-		for (int i = 0; i < vecSnItemDiff.size(); i++)
-		{
-			//根据所有选项灰度值排序，相邻灰度值差值超过阀值，同时其中第一个最大的灰度值超过1.0，就认为这个区间为选中的阀值区间
-			//(大于1.0是防止最小的灰度值很小的时候影响阀值判断)
-			float fDiff = (fCompThread - vecSnItemDiff[i].fFirst) * 0.1;
-			if ((vecSnItemDiff[i].fDiff >= fDiffThread && vecSnItemDiff[i].fFirst > fCompThread) ||
-				(vecSnItemDiff[i].fDiff >= fDiffThread + fDiff && vecSnItemDiff[i].fFirst > (fCompThread - 0.1) && fDiff > 0))
-			{
-				nFlag = i;
-				fThreld = vecSnItemDiff[i].fFirst;
-				if (vecSnItemDiff[i].fDiff > fDiffExit)	//灰度值变化较大，直接退出
-					break;
-			}
-		}
-		if (nFlag >= 0)
-		{
-			vecItemVal.clear();
-			RECTLIST::iterator itItem = pSn->lSN.begin();
-			for (; itItem != pSn->lSN.end(); itItem++)
-			{
-				if (itItem->fRealValuePercent >= fThreld)
-				{
-					vecItemVal.push_back(itItem->nSnVal);
-				}
-			}
-		}
-
-		if (vecItemVal.size() != 1)
-		{
-			char szTmpLog[300] = { 0 };
-			for (int i = 0; i < vecItemsDesc.size(); i++)
-			{
-				char szTmp[10] = { 0 };
-				sprintf_s(szTmpLog, "%d=%.3f", vecItemsDesc[i]->nSnVal, vecItemsDesc[i]->fRealValuePercent);
-				strcat_s(szTmpLog, szTmp);
-			}
-			sprintf_s(szTmpLog, "图片%s\n第%d位SN[", pPic->strPicName.c_str(), pSn->nItem);
-			for (int i = 0; i < vecSnItemDiff.size(); i++)
-			{
-				char szTmp[15] = { 0 };
-				sprintf_s(szTmp, "%s:%.5f ", vecSnItemDiff[i].szVal, vecSnItemDiff[i].fDiff);
-				strcat_s(szTmpLog, szTmp);
-			}
-			strcat_s(szTmpLog, "]");
-			g_pLogger->information(szTmpLog);
-		}
-#endif		
-
-#if 1	//第二种ZKZH识别方法 test
-		std::vector<int> vecItemVal2;
-		RecogVal_Sn2(nPic, matCompPic, pPic, pModelInfo, pSn, vecItemVal2);
-#endif
-
-		if (vecItemVal.size() == 1)
-		{
-			pSn->nRecogVal = vecItemVal[0];
-			vecSN.push_back(vecItemVal[0]);
-		}
-		else
-		{
-			if (vecItemVal.size() == 0 && vecItemVal2.size() == 1)
-			{
-				vecSN.push_back(vecItemVal2[0]);
-			}
-			else
-			{
-				bRecogAll = false;
-				char szVal[21] = { 0 };
-				for (int i = 0; i < vecItemVal.size(); i++)
-				{
-					char szTmp[3] = { 0 };
-					sprintf_s(szTmp, "%d ", vecItemVal[i]);
-					strcat(szVal, szTmp);
-				}
-				char szLog[MAX_PATH] = { 0 };
-				sprintf_s(szLog, "识别准考证号第%d位失败,识别出结果%d位(%s), 图片名: %s\n", pSnItem->nItem, vecItemVal.size(), szVal, pPic->strPicName.c_str());
-				g_pLogger->information(szLog);
-				TRACE(szLog);
-			}
-		}
-	}
-	if (bRecogAll && vecSN.size() > 0)
-	{
-		for (int i = 0; i < vecSN.size(); i++)
-		{
-			char szTmp[5] = { 0 };
-			itoa(vecSN[i], szTmp, 10);
-			(static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.append(szTmp);
-		}
-		char szLog[MAX_PATH] = { 0 };
-		sprintf_s(szLog, "识别准考证号完成(%s), 图片名: %s\n", (static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.c_str(), pPic->strPicName.c_str());
-		g_pLogger->information(szLog);
-		TRACE(szLog);
-	}
-	if (!bResult)
-	{
-		char szLog[MAX_PATH] = { 0 };
-		sprintf_s(szLog, "识别准考证号失败, 图片名: %s\n", pPic->strPicName.c_str());
-		g_pLogger->information(szLog);
-		TRACE(szLog);
-	}
+	if (pModelInfo->pModel->nZkzhType == 2)
+		bResult = RecogSn_code(nPic, matCompPic, pPic, pModelInfo);
+	else
+		bResult = RecogSn_omr(nPic, matCompPic, pPic, pModelInfo);
 	return bResult;
 }
 
@@ -2582,6 +2404,251 @@ bool CRecognizeThread::RecogVal_Sn2(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 		vecItemVal.push_back(atoi(p));
 	}
 	return true;
+}
+
+bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+{
+	bool bRecogAll = true;
+	bool bResult = true;
+	std::vector<int> vecSN;
+	SNLIST::iterator itSN = pModelInfo->pModel->vecPaperModel[nPic]->lSNInfo.begin();
+	for (; itSN != pModelInfo->pModel->vecPaperModel[nPic]->lSNInfo.end(); itSN++)
+	{
+		pSN_ITEM pSnItem = *itSN;
+
+		pSN_ITEM pSn = new SN_ITEM;
+		pSn->nItem = pSnItem->nItem;
+		(static_cast<pST_PaperInfo>(pPic->pPaper))->lSnResult.push_back(pSn);
+
+		std::vector<int> vecItemVal;
+		RECTLIST::iterator itSnItem = pSnItem->lSN.begin();
+		for (; itSnItem != pSnItem->lSN.end(); itSnItem++)
+		{
+			RECTINFO rc = *itSnItem;
+
+			if (pModelInfo->pModel->nHasHead)
+			{
+				if (rc.nHItem >= m_vecH_Head.size() || rc.nVItem >= m_vecV_Head.size())
+				{
+					bResult = false;
+					pPic->bFindIssue = true;
+					pPic->lIssueRect.push_back(rc);
+					break;
+				}
+				rc.rt.x = m_vecH_Head[rc.nHItem].rt.tl().x;
+				rc.rt.y = m_vecV_Head[rc.nVItem].rt.tl().y;
+				rc.rt.width = m_vecH_Head[rc.nHItem].rt.width;
+				rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
+			}
+			else
+				GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
+#if 1
+			bool bResult_Recog = Recog2(nPic, rc, matCompPic, pPic, pModelInfo);
+			if (bResult_Recog)
+			{
+				if (rc.fRealValuePercent > rc.fStandardValuePercent)
+					vecItemVal.push_back(rc.nSnVal);
+			}
+// 			char szTmp[300] = { 0 };
+// 			sprintf_s(szTmp, "图片名: %s, SN: 第%d位, 选项=%d, 识别实际比例=%.3f, val=%.2f, 识别标准=%.3f, val=%.2f, 是否成功:%d\n", pPic->strPicName.c_str(), \
+// 					  pSnItem->nItem, rc.nSnVal, rc.fRealValuePercent, rc.fRealValue, rc.fStandardValuePercent, rc.fStandardValue, rc.fRealValuePercent > rc.fStandardValuePercent);
+// 			TRACE(szTmp);
+#else
+			bool bResult_Recog = RecogVal(nPic, rc, matCompPic, pPic, pModelInfo);
+			if (bResult_Recog)
+			{
+				vecItemVal.push_back(rc.nSnVal);
+			}
+#endif
+			pSn->lSN.push_back(rc);
+
+#ifdef PaintOmrSnRect	//打印OMR、SN位置
+			pPic->lNormalRect.push_back(rc);
+#endif
+		}
+
+#if 1	//根据选项差值判断选中
+		std::vector<pRECTINFO> vecItemsDesc;
+		std::vector<ST_ITEM_DIFF> vecSnItemDiff;
+		calcSnDiffVal(pSn, vecItemsDesc, vecSnItemDiff);
+
+		float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
+		float fDiffThread = 0.0;		//选项可能填涂的可能灰度梯度阀值
+		float fDiffExit = 0;			//灰度的梯度递减太快时，可以认为后面选项没有填涂，此时的灰度梯度阀值
+		if (pModelInfo->pModel->nHasHead)
+		{
+			fCompThread = 1.0;
+			fDiffThread = 0.085;
+			fDiffExit = 0.15;
+		}
+		else
+		{
+			fCompThread = 1.2;
+			fDiffThread = 0.2;
+			fDiffExit = 0.3;
+		}
+
+		int nFlag = -1;
+		float fThreld = 0.0;
+		for (int i = 0; i < vecSnItemDiff.size(); i++)
+		{
+			//根据所有选项灰度值排序，相邻灰度值差值超过阀值，同时其中第一个最大的灰度值超过1.0，就认为这个区间为选中的阀值区间
+			//(大于1.0是防止最小的灰度值很小的时候影响阀值判断)
+			float fDiff = (fCompThread - vecSnItemDiff[i].fFirst) * 0.1;
+			if ((vecSnItemDiff[i].fDiff >= fDiffThread && vecSnItemDiff[i].fFirst > fCompThread) ||
+				(vecSnItemDiff[i].fDiff >= fDiffThread + fDiff && vecSnItemDiff[i].fFirst > (fCompThread - 0.1) && fDiff > 0))
+			{
+				nFlag = i;
+				fThreld = vecSnItemDiff[i].fFirst;
+				if (vecSnItemDiff[i].fDiff > fDiffExit)	//灰度值变化较大，直接退出
+					break;
+			}
+		}
+		if (nFlag >= 0)
+		{
+			vecItemVal.clear();
+			RECTLIST::iterator itItem = pSn->lSN.begin();
+			for (; itItem != pSn->lSN.end(); itItem++)
+			{
+				if (itItem->fRealValuePercent >= fThreld)
+				{
+					vecItemVal.push_back(itItem->nSnVal);
+				}
+			}
+		}
+
+		if (vecItemVal.size() != 1)
+		{
+			char szTmpLog[300] = { 0 };
+			for (int i = 0; i < vecItemsDesc.size(); i++)
+			{
+				char szTmp[10] = { 0 };
+				sprintf_s(szTmpLog, "%d=%.3f", vecItemsDesc[i]->nSnVal, vecItemsDesc[i]->fRealValuePercent);
+				strcat_s(szTmpLog, szTmp);
+			}
+			sprintf_s(szTmpLog, "图片%s\n第%d位SN[", pPic->strPicName.c_str(), pSn->nItem);
+			for (int i = 0; i < vecSnItemDiff.size(); i++)
+			{
+				char szTmp[15] = { 0 };
+				sprintf_s(szTmp, "%s:%.5f ", vecSnItemDiff[i].szVal, vecSnItemDiff[i].fDiff);
+				strcat_s(szTmpLog, szTmp);
+			}
+			strcat_s(szTmpLog, "]");
+			g_pLogger->information(szTmpLog);
+		}
+#endif		
+
+#if 1	//第二种ZKZH识别方法 test
+		std::vector<int> vecItemVal2;
+		RecogVal_Sn2(nPic, matCompPic, pPic, pModelInfo, pSn, vecItemVal2);
+#endif
+
+		if (vecItemVal.size() == 1)
+		{
+			pSn->nRecogVal = vecItemVal[0];
+			vecSN.push_back(vecItemVal[0]);
+		}
+		else
+		{
+			if (vecItemVal.size() == 0 && vecItemVal2.size() == 1)
+			{
+				vecSN.push_back(vecItemVal2[0]);
+			}
+			else
+			{
+				bRecogAll = false;
+				char szVal[21] = { 0 };
+				for (int i = 0; i < vecItemVal.size(); i++)
+				{
+					char szTmp[3] = { 0 };
+					sprintf_s(szTmp, "%d ", vecItemVal[i]);
+					strcat(szVal, szTmp);
+				}
+				char szLog[MAX_PATH] = { 0 };
+				sprintf_s(szLog, "识别准考证号第%d位失败,识别出结果%d位(%s), 图片名: %s\n", pSnItem->nItem, vecItemVal.size(), szVal, pPic->strPicName.c_str());
+				g_pLogger->information(szLog);
+				TRACE(szLog);
+			}
+		}
+	}
+	if (bRecogAll && vecSN.size() > 0)
+	{
+		for (int i = 0; i < vecSN.size(); i++)
+		{
+			char szTmp[5] = { 0 };
+			itoa(vecSN[i], szTmp, 10);
+			(static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.append(szTmp);
+		}
+		char szLog[MAX_PATH] = { 0 };
+		sprintf_s(szLog, "识别准考证号完成(%s), 图片名: %s\n", (static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.c_str(), pPic->strPicName.c_str());
+		g_pLogger->information(szLog);
+		TRACE(szLog);
+	}
+	if (!bResult)
+	{
+		char szLog[MAX_PATH] = { 0 };
+		sprintf_s(szLog, "识别准考证号失败, 图片名: %s\n", pPic->strPicName.c_str());
+		g_pLogger->information(szLog);
+		TRACE(szLog);
+	}
+	return bResult;
+}
+
+bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+{
+	bool bResult = true;
+	SNLIST::iterator itSN = pModelInfo->pModel->vecPaperModel[nPic]->lSNInfo.begin();
+	for (; itSN != pModelInfo->pModel->vecPaperModel[nPic]->lSNInfo.end(); itSN++)
+	{
+		pSN_ITEM pSnItem = *itSN;
+		
+		pSN_ITEM pSn = new SN_ITEM;
+		pSn->nItem = 0;
+		(static_cast<pST_PaperInfo>(pPic->pPaper))->lSnResult.push_back(pSn);
+
+		RECTLIST::iterator itSnItem = pSnItem->lSN.begin();
+		for (; itSnItem != pSnItem->lSN.end(); itSnItem++)
+		{
+			RECTINFO rc = *itSnItem;
+			pSn->lSN.push_back(rc);
+
+			try
+			{
+				if (rc.rt.x < 0) rc.rt.x = 0;
+				if (rc.rt.y < 0) rc.rt.y = 0;
+				if (rc.rt.br().x > matCompPic.cols)
+					rc.rt.width = matCompPic.cols - rc.rt.x;
+				if (rc.rt.br().y > matCompPic.rows)
+					rc.rt.height = matCompPic.rows - rc.rt.y;
+
+				Mat matCompRoi;
+				matCompRoi = matCompPic(rc.rt);
+
+				cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+				string strTypeName;
+				string strResult = GetQR(matCompRoi, strTypeName);
+				std::string strLog;
+				if (strResult != "")
+					strLog = "识别准考证号完成(" + strResult + "), 图片名: " + pPic->strPicName;
+				else
+				{
+					strLog = "识别准考证号失败, 图片名:" + pPic->strPicName;
+					bResult = false;
+				}
+				(static_cast<pST_PaperInfo>(pPic->pPaper))->strSN = strResult;
+				g_pLogger->information(strLog);
+			}
+			catch (cv::Exception& exc)
+			{
+				std::string strLog = "识别二维码或条码失败(" + pPic->strPicName + "): " + exc.msg;
+				g_pLogger->information(strLog);
+				break;
+			}
+		}
+	}
+
+	return bResult;
 }
 
 

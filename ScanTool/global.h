@@ -54,6 +54,9 @@
 #include "./pdf2jpg/MuPDFConvert.h"
 #include "modelInfo.h"
 
+
+#include "zbar.h"   
+
 //#define PIC_RECTIFY_TEST	//图像旋转纠正测试
 #define WarpAffine_TEST		//仿射变换测试
 #ifdef _DEBUG
@@ -561,4 +564,15 @@ typedef struct
 }ST_ITEM_DIFF, *pST_ITEM_DIFF;
 bool	SortByItemDiff(ST_ITEM_DIFF& item1, ST_ITEM_DIFF& item2);
 bool	SortByItemGray(pRECTINFO item1, pRECTINFO item2);
+//--------------------------------------------------------
+
+//----------------	二维码、条码识别	------------------
+//zbar接口
+std::string ZbarDecoder(cv::Mat img, std::string& strTypeName);
+
+//对二值图像进行识别，如果失败则开运算进行二次识别
+std::string GetQRInBinImg(cv::Mat binImg, std::string& strTypeName);
+
+//main function
+std::string GetQR(cv::Mat img, std::string& strTypeName);
 //--------------------------------------------------------

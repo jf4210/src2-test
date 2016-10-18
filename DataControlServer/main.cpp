@@ -218,9 +218,17 @@ protected:
 			vecSendHttpThreadObj.push_back(pObj);
 		}
 
-		CScanResquestHandler scanReqHandler;
-		Poco::Thread scanReqThread;
-		scanReqThread.start(scanReqHandler);
+// 		CScanResquestHandler scanReqHandler;
+// 		Poco::Thread scanReqThread;
+// 		scanReqThread.start(scanReqHandler);
+		std::vector<CScanResquestHandler*> vecHandleCmdThreadObj;
+		Poco::Thread* pHandleCmdThread = new Poco::Thread[SysSet.m_nHandleCmdThreads];
+		for (int i = 0; i < SysSet.m_nHandleCmdThreads; i++)
+		{
+			CScanResquestHandler* pObj = new CScanResquestHandler;
+			pHandleCmdThread[i].start(*pObj);
+			vecHandleCmdThreadObj.push_back(pObj);
+		}
 
 		CExamServerMgr examServerMgr;
 		if (examServerMgr.StartFileChannel())
@@ -261,12 +269,7 @@ protected:
 			g_fmScanReq.unlock();
 		}
 #endif
-
-#if 0	//test
-		std::string strModelTestPath = SysSet.m_strModelSavePath + "\\1_1";
-		test(NULL, strModelTestPath);
-#endif
-
+		
 		waitForTerminationRequest();
 		g_nExitFlag = 1;
 		examServerMgr.StopFileChannel();
@@ -327,7 +330,6 @@ protected:
 		}
 		g_fmHttpSend.unlock();
 
-		scanReqThread.join();
 		std::vector<CDecompressThread*>::iterator itDecObj = vecDecompressThreadObj.begin();
 		for (; itDecObj != vecDecompressThreadObj.end();)
 		{
@@ -363,6 +365,26 @@ protected:
 			pSendHttpThread[i].join();
 		}
 		delete[] pSendHttpThread;
+
+
+//		scanReqThread.join();
+		std::vector<CScanResquestHandler*>::iterator itHandleCmdObj = vecHandleCmdThreadObj.begin();
+		for (; itHandleCmdObj != vecHandleCmdThreadObj.end();)
+		{
+			CScanResquestHandler* pObj = *itHandleCmdObj;
+			if (pObj)
+			{
+				delete pObj;
+				pObj = NULL;
+			}
+			itHandleCmdObj = vecHandleCmdThreadObj.erase(itHandleCmdObj);
+		}
+
+		for (int i = 0; i < SysSet.m_nHandleCmdThreads; i++)
+		{
+			pHandleCmdThread[i].join();
+		}
+		delete[] pHandleCmdThread;
 
 		g_Log.LogOut("StopFileChannel complete.");
 		g_Log.LogOut("StopCmdChannel complete.");

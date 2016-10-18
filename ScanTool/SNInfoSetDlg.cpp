@@ -270,6 +270,7 @@ void CSNInfoSetDlg::OnBnClickedCheckUseBarcode()
 {
 	if (m_chkUseBarCode.GetCheck())
 	{
+		m_nZkzhType = 2;
 		GetDlgItem(IDC_RADIO_SN_H)->EnableWindow(FALSE);
 		GetDlgItem(IDC_RADIO_SN_V)->EnableWindow(FALSE);
 		GetDlgItem(IDC_RADIO_Option_1)->EnableWindow(FALSE);
@@ -277,6 +278,7 @@ void CSNInfoSetDlg::OnBnClickedCheckUseBarcode()
 	}
 	else
 	{
+		m_nZkzhType = 1;
 		GetDlgItem(IDC_RADIO_SN_H)->EnableWindow(TRUE);
 		GetDlgItem(IDC_RADIO_SN_V)->EnableWindow(TRUE);
 		GetDlgItem(IDC_RADIO_Option_1)->EnableWindow(TRUE);
