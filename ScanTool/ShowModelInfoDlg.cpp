@@ -178,8 +178,18 @@ void CShowModelInfoDlg::ShowModelInfo(pMODEL pModel, int nFlag /*= 0*/)
 		char szExamInfo[30] = { 0 };
 		sprintf_s(szExamInfo, "考试ID: %d\r\n科目ID: %d\r\n", pModel->nExamID, pModel->nSubjectID);
 		strExamInfo = szPicNum;
+
+		char szElectOmrVal[10] = { 0 };
+		if (pModel->nHasElectOmr)
+			strcpy_s(szElectOmrVal, "有");
+		else
+			strcpy_s(szElectOmrVal, "无");
+		char szElectOmr[30] = { 0 };
+		sprintf_s(szElectOmr, "选做题: %s\r\n", szElectOmrVal);
+
 		strExamInfo.Append(A2T(szHead));
 		strExamInfo.Append(A2T(szExamInfo));
+		strExamInfo.Append(A2T(szElectOmr));
 		m_strModelDesc.Append(A2T("\r\n"));
 		m_strModelDesc.Append(strExamInfo);
 	}

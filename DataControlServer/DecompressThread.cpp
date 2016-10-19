@@ -464,6 +464,7 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 				jsnSn.set("userId", nUserId);
 				jsnSn.set("teacherId", nTeacherId);
 				jsnSn.set("zkzh", pPaper->strZkzh);
+				jsnSn.set("papers", pPapers->strPapersName);
 				if (pPaper->strZkzh != "")
 					jsnSn.set("doubt", 0);
 				else
@@ -493,6 +494,7 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 				jsnOmr.set("userId", nUserId);
 				jsnOmr.set("teacherId", nTeacherId);
 				jsnOmr.set("zkzh", pPaper->strZkzh);
+				jsnOmr.set("papers", pPapers->strPapersName);
 				jsnOmr.set("omr", jsnOmrArry);
 				std::stringstream jsnOmrString;
 				jsnOmr.stringify(jsnOmrString, 0);
@@ -502,18 +504,19 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 				{
 					//*************	注意：这里需要和后端确认，现在还不行	********************
 
-// 					Poco::JSON::Array::Ptr jsnElectOmrArry = jsnPaperObj->getArray("electOmr");
-// 					Poco::JSON::Object jsnElectOmr;
-// 					jsnElectOmr.set("examId", nExamId);
-// 					jsnElectOmr.set("subjectId", nSubjectId);
-// 					jsnElectOmr.set("userId", nUserId);
-// 					jsnElectOmr.set("teacherId", nTeacherId);
-// 					jsnElectOmr.set("zkzh", pPaper->strZkzh);
-// 					jsnElectOmr.set("electOmr", jsnElectOmrArry);
-// 					std::stringstream jsnElectOmrString;
-// 					jsnElectOmr.stringify(jsnElectOmrString, 0);
-// 					pPaper->strElectOmrDetail = jsnElectOmrString.str();
-//					pPaper->nHasElectOmr = 1;
+					Poco::JSON::Array::Ptr jsnElectOmrArry = jsnPaperObj->getArray("electOmr");
+					Poco::JSON::Object jsnElectOmr;
+					jsnElectOmr.set("examId", nExamId);
+					jsnElectOmr.set("subjectId", nSubjectId);
+					jsnElectOmr.set("userId", nUserId);
+					jsnElectOmr.set("teacherId", nTeacherId);
+					jsnElectOmr.set("zkzh", pPaper->strZkzh);
+					jsnElectOmr.set("papers", pPapers->strPapersName);
+					jsnElectOmr.set("electOmr", jsnElectOmrArry);
+					std::stringstream jsnElectOmrString;
+					jsnElectOmr.stringify(jsnElectOmrString, 0);
+					pPaper->strElectOmrDetail = jsnElectOmrString.str();
+					pPaper->nHasElectOmr = 1;
 				}				
 			}
 			else

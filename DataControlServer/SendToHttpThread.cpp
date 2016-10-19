@@ -305,6 +305,44 @@ void CSendToHttpThread::run()
 			{
 				strErrorInfo.append("\tPapersName: " + pTask->pPapers->strPapersName);
 				strErrorInfo.append("\tPath: " + pTask->pPapers->strPapersPath);
+
+
+				//++ test
+// 				bool bHasElectOmr = false;
+// 				Poco::JSON::Array electOmrArry;
+// 				std::stringstream jsnElectOmrString;
+// 				LIST_PAPER_INFO::iterator it = pTask->pPapers->lPaper.begin();
+// 				for (; it != pTask->pPapers->lPaper.end(); it++)
+// 				{
+// 					pPAPER_INFO pPaper = *it;
+// 					if (pPaper->nHasElectOmr)
+// 					{
+// 						bHasElectOmr = true;
+// 						Poco::JSON::Parser parserElectOmr;
+// 						Poco::Dynamic::Var resultElectOmr;
+// 						try
+// 						{
+// 							resultElectOmr = parserElectOmr.parse(pPaper->strElectOmrDetail);
+// 							Poco::JSON::Object::Ptr electOmrObj = resultElectOmr.extract<Poco::JSON::Object::Ptr>();
+// 
+// 							electOmrObj->set("studentKey", pPaper->strMd5Key);
+// 							electOmrArry.add(electOmrObj);
+// 						}
+// 						catch (Poco::JSON::JSONException& jsone)
+// 						{
+// 							std::string strErrInfo;
+// 							strErrInfo.append("Error when parse ElectOmr: ");
+// 							strErrInfo.append(jsone.message() + "\tData:" + pPaper->strElectOmrDetail);
+// 							g_Log.LogOutError(strErrInfo);
+// 							std::cout << strErrInfo << std::endl;
+// 						}
+// 					}
+// 				}
+// 				if (bHasElectOmr)
+// 					electOmrArry.stringify(jsnElectOmrString, 0);
+// 				std::string strTmp = jsnElectOmrString.str();
+// 				g_Log.LogOut(strTmp);
+				//--
 			}			
 
 			std::cout << "\n";
@@ -581,7 +619,7 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 // 				pTask->pPapers->fmTask.lock();
 // 				pTask->pPapers->nTaskCounts++;			//electOmr
 // 				pTask->pPapers->fmTask.unlock();
-//
+// 
 // 				pSEND_HTTP_TASK pElectOmrTask = new SEND_HTTP_TASK;
 // 				pElectOmrTask->nTaskType = 5;
 // 				pElectOmrTask->strResult = jsnElectOmrString.str();
