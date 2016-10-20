@@ -499,6 +499,7 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				sprintf(szCount, "%d", pTask->nSendFlag);
 				std::string strLog = "发送试卷袋图片信息给后端失败，失败原因: " + strMsg;
 				strLog.append("\t发送失败次数: ");
+				strLog.append("\n发送数据: " + pTask->strResult);
 				strLog.append(szCount);
 				g_Log.LogOutError(strLog);
 				std::cout << strLog << std::endl;
@@ -658,6 +659,7 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				std::string strLog = "提交OMR信息给后端失败(试卷袋:" + pTask->pPapers->strPapersName;
 				strLog.append(")，失败原因: " + strMsg);
 				strLog.append("\t发送失败次数: ");
+				strLog.append("\n发送数据: " + pTask->strResult);
 				strLog.append(szCount);
 				g_Log.LogOutError(strLog);
 				std::cout << strLog << std::endl;
@@ -679,6 +681,7 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				std::string strLog = "提交ZKZH信息给后端失败(试卷袋:" + pTask->pPapers->strPapersName;
 				strLog.append(")，失败原因: " + strMsg);
 				strLog.append("\t发送失败次数: ");
+				strLog.append("\n发送数据: " + pTask->strResult);
 				strLog.append(szCount);
 				g_Log.LogOutError(strLog);
 				std::cout << strLog << std::endl;
@@ -700,6 +703,7 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				std::string strLog = "提交选做题信息给后端失败(试卷袋:" + pTask->pPapers->strPapersName;
 				strLog.append(")，失败原因: " + strMsg);
 				strLog.append("\t发送失败次数: ");
+				strLog.append("\n发送数据: " + pTask->strResult);
 				strLog.append(szCount);
 				g_Log.LogOutError(strLog);
 				std::cout << strLog << std::endl;

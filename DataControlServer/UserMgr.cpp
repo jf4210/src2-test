@@ -202,6 +202,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				jsnModel.set("examId", stModelInfo.nExamID);
 				jsnModel.set("subjectId", stModelInfo.nSubjectID);
 				jsnModel.set("tmplateName", stModelInfo.szModelName);
+				jsnModel.set("modelElectOmr", stModelInfo.szElectOmr);
 
 				std::stringstream jsnString;
 				jsnModel.stringify(jsnString, 0);

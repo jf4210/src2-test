@@ -26,7 +26,7 @@ private:
 private:
 	void InitUI();
 	void InitCtrlPosition();
-	void setUploadModelInfo(std::string& strName, CString& strModelPath, int nExamId, int nSubjectId);					//设置上传模板的信息
+	void setUploadModelInfo(std::string& strName, CString& strModelPath, int nExamId, int nSubjectId, std::string& strElectOmrInfo);					//设置上传模板的信息
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

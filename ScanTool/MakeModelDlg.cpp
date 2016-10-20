@@ -1028,6 +1028,7 @@ void CMakeModelDlg::OnBnClickedBtnSelpic()
 	m_vecPaperModelInfo[m_nCurrTabSel]->vecGray.clear();
 	m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.clear();
 	m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.clear();
+	m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.clear();
 	SNLIST::iterator itSn = m_vecPaperModelInfo[m_nCurrTabSel]->lSN.begin();
 	for (; itSn != m_vecPaperModelInfo[m_nCurrTabSel]->lSN.end();)
 	{
@@ -1122,6 +1123,11 @@ void CMakeModelDlg::OnBnClickedBtnReset()
 		{
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.clear();
 //			if (m_pModel && m_pModel->vecPaperModel.size()) m_pModel->vecPaperModel[m_nCurrTabSel].lOMR2.clear();
+		}
+	case ELECT_OMR:
+		if (m_eCurCPType == ELECT_OMR || m_eCurCPType == UNKNOWN)
+		{
+			m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.clear();
 		}
 	}
 }
@@ -1978,6 +1984,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	m_pModel->vecPaperModel.clear();
 
 	m_pModel->nZkzhType = m_pSNInfoDlg->m_nZkzhType;
+	bool bHasElectOmr = false;
 
 	m_pModel->nPicNum = m_vecPaperModelInfo.size();
 	for (int i = 0; i < m_pModel->nPicNum; i++)
@@ -2014,7 +2021,10 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecOmr2.size(); j++)
 			pPaperModel->lOMR2.push_back(m_vecPaperModelInfo[i]->vecOmr2[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecElectOmr.size(); j++)
+		{
 			pPaperModel->lElectOmr.push_back(m_vecPaperModelInfo[i]->vecElectOmr[j]);
+			bHasElectOmr = true;
+		}
 		SNLIST::iterator itSn = m_vecPaperModelInfo[i]->lSN.begin();
 		for (; itSn != m_vecPaperModelInfo[i]->lSN.end(); itSn++)
 		{
@@ -2065,12 +2075,8 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 		m_pModel->vecPaperModel.push_back(pPaperModel);
 	}
 
-	//++将识别时的参数存入模板
-// 	m_pModel->nGaussKernel = m_nGaussKernel;
-// 	m_pModel->nSharpKernel = m_nSharpKernel;
-// 	m_pModel->nCannyKernel = m_nCannyKernel;
-// 	m_pModel->nDilateKernel = m_nDilateKernel;
-	//--
+	if (!bHasElectOmr)
+		m_pModel->nHasElectOmr = 0;
 
 	CString modelPath = g_strCurrentPath + _T("Model");
 	modelPath = modelPath + _T("\\") + A2T(m_pModel->strModelName.c_str());
