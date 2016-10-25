@@ -36,6 +36,12 @@ public:
 	CString		m_strMsg;
 
 
+	CMFCEditBrowseCtrl m_mfcEdit_PkgDir;
+	CMFCEditBrowseCtrl m_mfcEdit_RecogDir;
+	CString		m_strPkgPath;
+	CString		m_strRecogPath;
+
+
 	void	showMsg(CString& strMsg);
 private:
 	Poco::Thread* m_pDecompressThread;
@@ -56,4 +62,5 @@ public:
 	afx_msg void OnBnClickedMfcbuttonDecrypt();
 	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedBtnClear();
+	afx_msg void OnBnClickedBtnRecogpkg();
 };

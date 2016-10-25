@@ -11,7 +11,7 @@ public:
 	virtual void run();
 
 	void HandleTask(pDECOMPRESSTASK pTask);
-	void GetFileData(std::string strFilePath, pPAPERS_DETAIL pPapers);
+	bool GetFileData(std::string strFilePath, pPAPERS_DETAIL pPapers);
 
 	void SearchExtractFile(pPAPERS_DETAIL pPapers, std::string strPath);
 };

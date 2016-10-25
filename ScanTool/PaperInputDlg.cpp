@@ -70,6 +70,7 @@ BEGIN_MESSAGE_MAP(CPaperInputDlg, CDialog)
 	ON_MESSAGE(WM_CV_LBTNDOWN, &CPaperInputDlg::RoiLBtnDown)
 	ON_BN_CLICKED(IDC_BTN_SAVE, &CPaperInputDlg::OnBnClickedBtnSave)
 	ON_WM_CTLCOLOR()
+	ON_BN_CLICKED(IDC_BTN_Test, &CPaperInputDlg::OnBnClickedBtnTest)
 END_MESSAGE_MAP()
 
 BOOL CPaperInputDlg::OnInitDialog()
@@ -294,9 +295,14 @@ void CPaperInputDlg::InitCtrlPosition()
 	{
 		GetDlgItem(IDC_BTN_Start)->MoveWindow(nTabLeftPos, nCurrentTop, nBtnWidth, nBtnHeight);
 	}
-	if (GetDlgItem(IDC_BTN_SAVE))
+	if (GetDlgItem(IDC_BTN_SAVE)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_SAVE)->MoveWindow(nTabLeftPos + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeight);
+//		nCurrentTop = nCurrentTop + nBtnHeight + nGap;
+	}
+	if (GetDlgItem(IDC_BTN_Test)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_Test)->MoveWindow(nTabLeftPos + (nBtnWidth + nGap) * 2, nCurrentTop, nBtnWidth, nBtnHeight);
 		nCurrentTop = nCurrentTop + nBtnHeight + nGap;
 	}
 	if (GetDlgItem(IDC_STATIC_TIPS)->GetSafeHwnd())
@@ -1399,8 +1405,11 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		sprintf_s(szTime, "%d%02d%02d%02d%02d%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
 
 		sprintf_s(szPapersSrcPath, "%s\\%s", T2A(m_strPapersPath), pPapers->strPapersName.c_str());
-		sprintf_s(szPapersSavePath, "%sPaper\\%s_%s", T2A(g_strCurrentPath), T2A(strUser), szTime);
-		sprintf_s(szZipName, "%s_%s%s", T2A(strUser), szTime, T2A(PAPERS_EXT_NAME));
+// 		sprintf_s(szPapersSavePath, "%sPaper\\%s_%s", T2A(g_strCurrentPath), T2A(strUser), szTime);
+// 		sprintf_s(szZipName, "%s_%s%s", T2A(strUser), szTime, T2A(PAPERS_EXT_NAME));
+
+		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s", T2A(g_strCurrentPath), T2A(strUser), dlg.m_nExamID, dlg.m_SubjectID, szTime);
+		sprintf_s(szZipName, "%s_%d-%d_%s%s", T2A(strUser), dlg.m_nExamID, dlg.m_SubjectID, szTime, T2A(PAPERS_EXT_NAME));	//%s_%s.pkg
 	}
 	else
 	{
@@ -1411,7 +1420,16 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	CString strInfo;
 	bool bWarn = false;
 	strInfo.Format(_T("正在保存%s..."), A2T(szZipName));
-//	SetStatusShowInfo(strInfo, bWarn);
+#if 1
+	pCOMPRESSTASK pTask = new COMPRESSTASK;
+	pTask->strCompressFileName = szZipName;
+	pTask->strExtName = T2A(PAPERS_EXT_NAME);
+	pTask->strSavePath = szPapersSavePath;
+	pTask->strSrcFilePath = szPapersSrcPath;
+	g_fmCompressLock.lock();
+	g_lCompressTask.push_back(pTask);
+	g_fmCompressLock.unlock();
+#else
 	if (!ZipFile(A2T(szPapersSrcPath), A2T(szPapersSavePath), PAPERS_EXT_NAME))
 	{
 		bWarn = true;
@@ -1434,6 +1452,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	g_fmSendLock.lock();
 	g_lSendTask.push_back(pTask);
 	g_fmSendLock.unlock();
+#endif
 }
 
 LRESULT CPaperInputDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
@@ -1755,6 +1774,7 @@ int GetRects1(cv::Mat& matSrc, cv::Rect rt, pMODEL pModel, int nPic, int nOrient
 			RectCompList.push_back(rm);
 			nYSum += rm.y;
 		}
+		cvReleaseMemStorage(&storage);
 #else
 		for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
 		{
@@ -2033,4 +2053,10 @@ int CPaperInputDlg::CheckOrientation(cv::Mat& matSrc, int n)
 	TRACE("%s\n", strLog.c_str());
 
 	return nResult;
+}
+
+
+void CPaperInputDlg::OnBnClickedBtnTest()
+{
+	// TODO:  在此添加控件通知处理程序代码
 }

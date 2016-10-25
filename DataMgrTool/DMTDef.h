@@ -14,10 +14,15 @@ extern std::string _strEncryptPwd_;
 
 typedef struct _DecompressTask_
 {
+	int nTaskType;				//1-普通解压，2-区分试卷包到不同目录
 	std::string strFileBaseName;
 	std::string strSrcFileName;
 	std::string strFilePath;
 	std::string strDecompressDir;
+	_DecompressTask_()
+	{
+		nTaskType = 1;
+	}
 }DECOMPRESSTASK, *pDECOMPRESSTASK;
 typedef std::list<pDECOMPRESSTASK> DECOMPRESSTASKLIST;	//识别任务列表
 

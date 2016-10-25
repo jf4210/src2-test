@@ -147,7 +147,20 @@ RESTART:
 					bFindTask = true;
 					CFile MyFileSend(pTask->strPath, CFile::modeRead);
 					DWORD Length = MyFileSend.GetLength();
-					char	*szFileBuff = new char[Length];
+					char	*szFileBuff = NULL;
+					try
+					{
+						szFileBuff = new char[Length];
+					}
+					catch (...)
+					{
+						char szLog[100] = { 0 };
+						sprintf_s(szLog, "上传文件(%s)时内存申请失败，需要重新尝试。", pTask->strAnsName);
+						g_pLogger->information(szLog);
+						Sleep(500);
+						continue;
+					}
+					
 					MyFileSend.Seek(0, CFile::begin);
 					MyFileSend.Read(szFileBuff, Length);
 					MyFileSend.Close();
@@ -176,6 +189,8 @@ RESTART:
 						g_pLogger->information(strLog);
 
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
+						delete szFileBuff;
+
 						break;
 					}
 					WaitForSingleObject(m_hSendReadyEvent, INFINITE);
@@ -194,6 +209,7 @@ RESTART:
 						g_pLogger->information(strLog);
 
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
+						delete szFileBuff;
 
 						break;
 					}
@@ -240,7 +256,7 @@ bool CFileUpLoad::sendData( char * szBuff, DWORD nLen, stUpLoadAns* pTask)
 		return false;
 
 	bool bResult = true;
-	while(uOffset < nLen)
+	while (uOffset < nLen && !m_bStop)
 	{
 		if ((nLen-uOffset)<TCP_PACKET_MAXSIZE)
 		{
@@ -267,6 +283,9 @@ bool CFileUpLoad::sendData( char * szBuff, DWORD nLen, stUpLoadAns* pTask)
 			(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = uOffset / nLen * 100;
 		}
 	}
+	if (m_bStop)
+		return false;
+
 	return bResult;
 }
 

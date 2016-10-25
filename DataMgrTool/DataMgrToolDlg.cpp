@@ -74,6 +74,12 @@ void CDataMgrToolDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_DecryptDir, m_mfcEdit_Decrypt);
 	DDX_Text(pDX, IDC_EDIT_Msg, m_strMsg);
 	DDX_Control(pDX, IDC_EDIT_Msg, m_edit_Msg);
+
+	DDX_Text(pDX, IDC_MFCEDITBROWSE_Pkg_DIR, m_strPkgPath);
+	DDX_Control(pDX, IDC_MFCEDITBROWSE_Pkg_DIR, m_mfcEdit_PkgDir);
+
+	DDX_Text(pDX, IDC_MFCEDITBROWSE_RecogDir, m_strRecogPath);
+	DDX_Control(pDX, IDC_MFCEDITBROWSE_RecogDir, m_mfcEdit_RecogDir);
 }
 
 BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
@@ -84,6 +90,7 @@ BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_MFCBUTTON_Decrypt, &CDataMgrToolDlg::OnBnClickedMfcbuttonDecrypt)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BTN_Clear, &CDataMgrToolDlg::OnBnClickedBtnClear)
+	ON_BN_CLICKED(IDC_BTN_RecogPKG, &CDataMgrToolDlg::OnBnClickedBtnRecogpkg)
 END_MESSAGE_MAP()
 
 
@@ -282,4 +289,42 @@ void CDataMgrToolDlg::OnBnClickedBtnClear()
 {
 	m_strMsg.Empty();
 	UpdateData(FALSE);
+}
+
+
+void CDataMgrToolDlg::OnBnClickedBtnRecogpkg()
+{
+	UpdateData(TRUE);
+	USES_CONVERSION;
+
+	try
+	{
+		std::string strPkgPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strPkgPath));
+		Poco::DirectoryIterator it(strPkgPath);
+		Poco::DirectoryIterator end;
+		while (it != end)
+		{
+			Poco::Path p(it->path());
+			if (it->isFile() && p.getExtension() == "pkg")
+			{
+				std::string strFileName = p.getFileName();
+				std::string strExtion = p.getExtension();
+
+				pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+				pDecompressTask->nTaskType = 2;
+				pDecompressTask->strFilePath = CMyCodeConvert::Utf8ToGb2312(p.toString());
+				pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
+				pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(p.getFileName());
+				pDecompressTask->strDecompressDir = T2A(m_strRecogPath);
+
+				g_fmDecompressLock.lock();
+				g_lDecompressTask.push_back(pDecompressTask);
+				g_fmDecompressLock.unlock();
+			}
+			it++;
+		}
+	}
+	catch (Poco::Exception& exc)
+	{
+	}
 }

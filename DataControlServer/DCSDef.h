@@ -61,9 +61,14 @@ extern	MAP_MODEL	_mapModel_;
 
 typedef struct _DecompressTask_
 {
+	int		nTimes;			//解压的次数
 	std::string strFileBaseName;
 	std::string strSrcFileName;
 	std::string strFilePath;
+	_DecompressTask_()
+	{
+		nTimes = 0;
+	}
 }DECOMPRESSTASK, *pDECOMPRESSTASK;
 typedef std::list<pDECOMPRESSTASK> DECOMPRESSTASKLIST;	//识别任务列表
 
