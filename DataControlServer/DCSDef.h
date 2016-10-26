@@ -34,6 +34,9 @@
 extern CLog g_Log;
 extern int	g_nExitFlag;
 
+typedef std::map<std::string, std::string> MAP_PIC_ADDR;
+extern Poco::FastMutex _mapPicAddrLock_;
+extern MAP_PIC_ADDR _mapPicAddr_;
 
 typedef std::map<std::string, CNetUser*>	MAP_USER;
 extern Poco::FastMutex	_mapUserLock_;

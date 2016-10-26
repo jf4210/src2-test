@@ -750,6 +750,33 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 	g_Log.LogOut(strLog);
 	std::cout << strLog << std::endl;
 
+
+	//++图像重复校验
+	bool bResult = true;
+	LIST_PAPER_INFO::iterator it = pPapers->lPaper.begin();
+	for (; it != pPapers->lPaper.end(); it++)
+	{
+		pPAPER_INFO pPaper = *it;
+
+		LIST_PIC_DETAIL::iterator itPic = pPaper->lPic.begin();
+		for (; itPic != pPaper->lPic.end(); itPic++)
+		{
+			pPIC_DETAIL pPic = *itPic;
+			if (!checkPicAddr(pPic->strHashVal, pPapers, pPic))
+			{
+				bResult = false;
+				break;
+			}
+		}
+		if (!bResult)
+			break;
+	}
+	if (!bResult)
+	{
+	}
+	//--
+
+
 	Poco::JSON::Object jsnPapers;
 	jsnPapers.set("papers", CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersName));
 	jsnPapers.set("papersDesc", CMyCodeConvert::Gb2312ToUtf8(pPapers->strDesc));
@@ -916,11 +943,17 @@ void CSendToHttpThread::checkTaskStatus(pPAPERS_DETAIL pPapers)
 
 		if (SysSet.m_nBackupPapers)
 		{
-			std::string strBackupPath = SysSet.m_strPapersBackupPath + "\\" + pPapers->strSrcPapersFileName;
+			Poco::LocalDateTime now;
+			std::string strBackupDir = Poco::format("%s\\%04d-%02d-%02d", CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strPapersBackupPath), now.year(), now.month(), now.day());
+			std::string strBackupPath = strBackupDir + "\\" + CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersFileName);
 			try
 			{
+				Poco::File backupDir(strBackupDir);
+				if (!backupDir.exists())
+					backupDir.createDirectories();
+
 				Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersPath));
-				filePapers.moveTo(CMyCodeConvert::Gb2312ToUtf8(strBackupPath));
+				filePapers.moveTo(strBackupPath);
 				std::string strLog = "备份试卷袋文件(" + pPapers->strSrcPapersFileName + ")完成";
 				g_Log.LogOut(strLog);
 				std::cout << strLog << std::endl;
@@ -965,5 +998,23 @@ void CSendToHttpThread::checkTaskStatus(pPAPERS_DETAIL pPapers)
 		}
 		g_fmPapers.unlock();
 	}
+}
+
+bool CSendToHttpThread::checkPicAddr(std::string& strPicAddr, pPAPERS_DETAIL pPapers, pPIC_DETAIL pPic)
+{
+	MAP_PIC_ADDR::iterator it = _mapPicAddr_.find(strPicAddr);
+	if (it != _mapPicAddr_.end())
+	{
+		std::string strLog = "检测到正要提交的图片地址" + strPicAddr + "(" + pPapers->strPapersName + ":" + pPic->strFileName + ")已经在试卷袋(" + it->second + ")存在";
+		g_Log.LogOutError(strLog);
+		return false;
+	}
+	else
+	{
+		_mapPicAddrLock_.lock();
+		_mapPicAddr_.insert(std::pair<std::string, std::string>(strPicAddr, pPapers->strPapersName + ":" + pPic->strFileName));
+		_mapPicAddrLock_.unlock();
+	}
+	return true;
 }
 
