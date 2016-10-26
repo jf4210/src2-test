@@ -157,6 +157,7 @@ protected:
 		SysSet.m_strUpLoadPath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath) + "fileDispose";
 		SysSet.m_strModelSavePath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath) + "modelSave";
 		SysSet.m_strRecvFilePath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath + "tmpFileRecv\\");
+		SysSet.m_strErrorPkg = CMyCodeConvert::Utf8ToGb2312(strCurrentPath + "errorPkg\\");
 		
 #ifdef POCO_OS_FAMILY_WINDOWS
 		char szTitle[150] = { 0 };
@@ -190,6 +191,10 @@ protected:
 				recvFileDir.remove(true);
 
 			recvFileDir.createDirectories();
+
+			Poco::File errorPkgDir(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strErrorPkg));
+			if (!errorPkgDir.exists())
+				errorPkgDir.createDirectories();
 		}
 		catch (Poco::Exception& exc)
 		{

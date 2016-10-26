@@ -773,6 +773,24 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 	}
 	if (!bResult)
 	{
+		//错误包，移动到指定目录，等待人工处理
+		Poco::LocalDateTime now;
+		std::string strErrorDir = Poco::format("%s\\%04d-%02d-%02d", CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strErrorPkg), now.year(), now.month(), now.day());
+		std::string strErrorPath = strErrorDir + "\\" + CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersFileName);
+		try
+		{
+			Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersPath));
+			filePapers.moveTo(strErrorPath);
+			std::string strLog = "试卷袋(" + pPapers->strSrcPapersFileName + ")存在问题，需要人工检查";
+			g_Log.LogOut(strLog);
+			std::cout << "\n\n*************************\n" << strLog << "\n*************************\n\n\n" << std::endl;
+		}
+		catch (Poco::Exception& exc)
+		{
+			std::string strErr = "移动错误试卷袋(" + pPapers->strPapersPath + ")失败，此试卷袋存在重复图像，需要人工检查: " + exc.message();
+			g_Log.LogOutError(strErr);
+		}
+		return false;
 	}
 	//--
 

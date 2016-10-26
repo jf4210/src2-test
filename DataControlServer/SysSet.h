@@ -36,6 +36,7 @@ public:
 	string m_strPapersBackupPath;	//gb2312	试卷袋备份路径
 	string m_strModelSavePath;		//gb2312	模板保存路径
 	string m_strRecvFilePath;		//gb2312	接收文件的临时文件夹路径
+	string m_strErrorPkg;			//gb2312	错误试卷包，指无法继续处理的包，如图片有重复等
 	string m_strUpLoadHttpUri;
 	string m_strBackUri;
 	string m_strEncryptPwd;	//扫描端进行文件加密解密的密码
