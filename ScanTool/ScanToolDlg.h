@@ -17,6 +17,7 @@
 #include "TcpClient.h"
 #include "ShowModelInfoDlg.h"
 #include "ScanerInfoDlg.h"
+#include "CompressThread.h"
 
 // CScanToolDlg 对话框
 class CScanToolDlg : public CDialogEx, public CTwain
@@ -49,6 +50,10 @@ public:
 
 	int				m_nCurrItemPaperList;	//当前试卷列表选中的项
 	int				m_ncomboCurrentSel;		//下拉列表当前选择项
+
+
+	Poco::Thread* m_pCompressThread;
+	CCompressThread* m_pCompressObj;
 
 	Poco::Thread*	m_pRecogThread;
 	std::vector<CRecognizeThread*> m_vecRecogThreadObj;
@@ -94,6 +99,8 @@ public:
 	void	InitShow(pMODEL pModel);
 	void	InitScan();
 	void	ReleaseScan();
+
+	void	ReleaseUploadFileList();
 
 	void	SetFontSize(int nSize);
 	void	SetStatusShowInfo(CString strMsg, BOOL bWarn = FALSE);	//设置状态栏显示的消息

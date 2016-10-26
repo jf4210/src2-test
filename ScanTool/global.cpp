@@ -378,6 +378,12 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
 				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
 				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+
+				if (jsnRectInfoObj->has("standardArea"))
+					rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
+				if (jsnRectInfoObj->has("standardDensity"))
+					rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+
 				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
 				rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
 				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
@@ -402,6 +408,12 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
 				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
 				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+
+				if (jsnRectInfoObj->has("standardArea"))
+					rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
+				if (jsnRectInfoObj->has("standardDensity"))
+					rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+
 				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
 				rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
 				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
@@ -426,6 +438,12 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
 				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
 				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+
+				if (jsnRectInfoObj->has("standardArea"))
+					rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
+				if (jsnRectInfoObj->has("standardDensity"))
+					rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+
 				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
 				rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
 				rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
@@ -450,6 +468,12 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
 				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
 				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+
+				if (jsnRectInfoObj->has("standardArea"))
+					rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
+				if (jsnRectInfoObj->has("standardDensity"))
+					rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+
 				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
 				rc.nHItem = jsnRectInfoObj->get("hHeadItem").convert<int>();
 				rc.nVItem = jsnRectInfoObj->get("vHeadItem").convert<int>();
@@ -476,6 +500,12 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
 				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
 				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+
+				if (jsnRectInfoObj->has("standardArea"))
+					rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
+				if (jsnRectInfoObj->has("standardDensity"))
+					rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+
 				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
 				rc.nHItem = jsnRectInfoObj->get("hHeadItem").convert<int>();
 				rc.nVItem = jsnRectInfoObj->get("vHeadItem").convert<int>();
@@ -502,6 +532,12 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
 				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
 				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+
+				if (jsnRectInfoObj->has("standardArea"))
+					rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
+				if (jsnRectInfoObj->has("standardDensity"))
+					rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+
 				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
 				rc.nHItem = jsnRectInfoObj->get("hHeadItem").convert<int>();
 				rc.nVItem = jsnRectInfoObj->get("vHeadItem").convert<int>();
@@ -528,6 +564,12 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
 				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
 				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+
+				if (jsnRectInfoObj->has("standardArea"))
+					rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
+				if (jsnRectInfoObj->has("standardDensity"))
+					rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+
 				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
 				rc.nHItem = jsnRectInfoObj->get("hHeadItem").convert<int>();
 				rc.nVItem = jsnRectInfoObj->get("vHeadItem").convert<int>();
@@ -554,6 +596,12 @@ pMODEL LoadModelFile(CString strModelPath)
 				rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
 				rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
 				rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+
+				if (jsnRectInfoObj->has("standardArea"))
+					rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
+				if (jsnRectInfoObj->has("standardDensity"))
+					rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+
 				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
 				rc.nHItem = jsnRectInfoObj->get("hHeadItem").convert<int>();
 				rc.nVItem = jsnRectInfoObj->get("vHeadItem").convert<int>();
@@ -659,6 +707,12 @@ pMODEL LoadModelFile(CString strModelPath)
 					rc.eCPType = (CPType)jsnOmrObj->get("eType").convert<int>();
 					rc.fStandardValuePercent = jsnOmrObj->get("standardValPercent").convert<float>();
 					rc.fStandardValue = jsnOmrObj->get("standardVal").convert<float>();
+
+					if (jsnOmrObj->has("standardArea"))
+						rc.fStandardArea = jsnOmrObj->get("standardArea").convert<float>();
+					if (jsnOmrObj->has("standardDensity"))
+						rc.fStandardDensity = jsnOmrObj->get("standardDensity").convert<float>();
+
 					rc.nThresholdValue = jsnOmrObj->get("thresholdValue").convert<int>();
 					rc.nHItem = jsnOmrObj->get("hHeadItem").convert<int>();
 					rc.nVItem = jsnOmrObj->get("vHeadItem").convert<int>();
@@ -698,6 +752,12 @@ pMODEL LoadModelFile(CString strModelPath)
 					rc.eCPType = (CPType)jsnSnObj->get("eType").convert<int>();
 					rc.fStandardValuePercent = jsnSnObj->get("standardValPercent").convert<float>();
 					rc.fStandardValue = jsnSnObj->get("standardVal").convert<float>();
+
+					if (jsnSnObj->has("standardArea"))
+						rc.fStandardArea = jsnSnObj->get("standardArea").convert<float>();
+					if (jsnSnObj->has("standardDensity"))
+						rc.fStandardDensity = jsnSnObj->get("standardDensity").convert<float>();
+
 					rc.nThresholdValue = jsnSnObj->get("thresholdValue").convert<int>();
 					rc.nHItem = jsnSnObj->get("hHeadItem").convert<int>();
 					rc.nVItem = jsnSnObj->get("vHeadItem").convert<int>();
@@ -742,6 +802,12 @@ pMODEL LoadModelFile(CString strModelPath)
 						rc.nThresholdValue = jsnOmrObj->get("thresholdValue").convert<int>();
 						rc.fStandardValuePercent = jsnOmrObj->get("standardValPercent").convert<float>();
 						rc.fStandardValue = jsnOmrObj->get("standardVal").convert<float>();
+
+						if (jsnOmrObj->has("standardArea"))
+							rc.fStandardArea = jsnOmrObj->get("standardArea").convert<float>();
+						if (jsnOmrObj->has("standardDensity"))
+							rc.fStandardDensity = jsnOmrObj->get("standardDensity").convert<float>();
+
 						rc.nTH = jsnOmrObj->get("nTH").convert<int>();
 						rc.nAnswer = jsnOmrObj->get("nAnswer").convert<int>();
 						rc.rt.x = jsnOmrObj->get("left").convert<int>();
@@ -2622,6 +2688,7 @@ bool RecogHHead(int nPic, cv::Mat& matCompPic, pPAPERMODEL pPicModel, RECTINFO r
 			RectCompList.push_back(rm);
 			nYSum += rm.y;
 		}
+		cvReleaseMemStorage(&storage);
 	}
 	catch (cv::Exception& exc)
 	{
@@ -2714,6 +2781,7 @@ bool RecogVHead(int nPic, cv::Mat& matCompPic, pPAPERMODEL pPicModel, RECTINFO r
 			RectCompList.push_back(rm);
 			nYSum += rm.y;
 		}
+		cvReleaseMemStorage(&storage);
 	}
 	catch (cv::Exception& exc)
 	{

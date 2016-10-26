@@ -147,7 +147,20 @@ RESTART:
 					bFindTask = true;
 					CFile MyFileSend(pTask->strPath, CFile::modeRead);
 					DWORD Length = MyFileSend.GetLength();
-					char	*szFileBuff = new char[Length];
+					char	*szFileBuff = NULL;
+					try
+					{
+						szFileBuff = new char[Length];
+					}
+					catch (...)
+					{
+						char szLog[100] = { 0 };
+						sprintf_s(szLog, "上传文件(%s)时内存申请失败，需要重新尝试。", pTask->strAnsName);
+						g_pLogger->information(szLog);
+						Sleep(500);
+						continue;
+					}
+					
 					MyFileSend.Seek(0, CFile::begin);
 					MyFileSend.Read(szFileBuff, Length);
 					MyFileSend.Close();
@@ -170,15 +183,42 @@ RESTART:
 					memcpy(m_szSendBuf, &stHead, HEAD_SIZE);
 					memcpy(m_szSendBuf + HEAD_SIZE, &stAnsInfo, sizeof(ST_FILE_INFO));
 				RESENDHEAD:
+					if (m_bStop)
+					{
+						sprintf_s(szLog, "发送文件(%s)时检测到系统退出标志，停止发送数据", pTask->strAnsName);
+						g_pLogger->information(szLog);
+						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
+						delete szFileBuff;
+						break;
+					}
 					if (!sendData(m_szSendBuf, HEAD_SIZE + sizeof(ST_FILE_INFO), pTask))
 					{
 						std::string strLog = "sendData失败，需要重连";
 						g_pLogger->information(strLog);
 
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
+						delete szFileBuff;
+
 						break;
 					}
-					WaitForSingleObject(m_hSendReadyEvent, INFINITE);
+//					DWORD dwResult1 = WaitForSingleObject(m_hSendReadyEvent, INFINITE);
+					bool bRecvResult = false;	//接收服务器是否接收完成数据的结果命令
+					DWORD dwResult1 = WaitForSingleObject(m_hSendReadyEvent, 5 * 1000);
+					switch (dwResult1)
+					{
+						case WAIT_OBJECT_0:
+							bRecvResult = true;
+							break;
+						case WAIT_TIMEOUT:
+							sprintf_s(szLog, "文件头数据发送完成，接收服务器回复命令失败(%s)失败1, 需要重传", pTask->strAnsName);
+							g_pLogger->information(szLog);
+							break;
+					}
+					if (!bRecvResult)
+					{
+						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
+						goto RESENDHEAD;
+					}
 					ResetEvent(m_hSendReadyEvent);
 					if (m_bReadyOK == FALSE)
 					{
@@ -194,10 +234,23 @@ RESTART:
 						g_pLogger->information(strLog);
 
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
+						delete szFileBuff;
 
 						break;
 					}
-					WaitForSingleObject(m_hSendDoneEvent, INFINITE);
+//					DWORD dwResult = WaitForSingleObject(m_hSendDoneEvent, INFINITE);
+					bRecvResult = false;	//接收服务器是否接收完成数据的结果命令
+					DWORD dwResult = WaitForSingleObject(m_hSendDoneEvent, 10 * 1000);
+					switch (dwResult)
+					{
+						case WAIT_OBJECT_0:
+							bRecvResult = true;
+							break;
+						case WAIT_TIMEOUT:
+							sprintf_s(szLog, "文件数据发送完成，接收服务器回复命令失败(%s)失败2", pTask->strAnsName);
+							g_pLogger->information(szLog);
+							break;
+					}
 					ResetEvent(m_hSendDoneEvent);
 					if (m_bSendOK == FALSE)
 					{
@@ -240,7 +293,7 @@ bool CFileUpLoad::sendData( char * szBuff, DWORD nLen, stUpLoadAns* pTask)
 		return false;
 
 	bool bResult = true;
-	while(uOffset < nLen)
+	while (uOffset < nLen && !m_bStop)
 	{
 		if ((nLen-uOffset)<TCP_PACKET_MAXSIZE)
 		{
@@ -267,6 +320,9 @@ bool CFileUpLoad::sendData( char * szBuff, DWORD nLen, stUpLoadAns* pTask)
 			(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = uOffset / nLen * 100;
 		}
 	}
+	if (m_bStop)
+		return false;
+
 	return bResult;
 }
 

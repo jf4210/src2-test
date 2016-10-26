@@ -156,7 +156,7 @@ protected:
 		SysSet.m_strRecvFilePath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath + "tmpFileRecv\\");
 		
 #ifdef POCO_OS_FAMILY_WINDOWS
-		char szTitle[50] = { 0 };
+		char szTitle[150] = { 0 };
 		sprintf(szTitle, "%s <%s:%d - %d>", SOFT_VERSION, SysSet.m_sLocalIP.c_str(), SysSet.m_nCmdPort, SysSet.m_nPaperUpLoadPort);
 		std::wstring wstrTitle;
 		Poco::UnicodeConverter::toUTF16(szTitle, wstrTitle);
@@ -195,6 +195,8 @@ protected:
 			strErrInfo.append(exc.message());
 			g_Log.LogOutError(strErrInfo);
 			std::cout << strErrInfo << std::endl;
+			waitForTerminationRequest();
+			return 0;
 		}
 
 		InitModelInfo();

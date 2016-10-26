@@ -144,10 +144,91 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	CHDIR(pTask->strDecompressDir.c_str());		//切换回解压根目录，否则删除压缩文件夹失败
 
 	USES_CONVERSION;
-	CString strMsg;
-	strMsg.Format(_T("解压(%s)完成\r\n"), A2T(pTask->strSrcFileName.c_str()));
-	((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
+	if (pTask->nTaskType == 1)
+	{
+		CString strMsg;
+		strMsg.Format(_T("解压(%s)完成\r\n"), A2T(pTask->strSrcFileName.c_str()));
+		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
+	}
+	else
+	{
+		std::string strPapersFilePath = strOutDir + "\\papersInfo.dat";
+		int nExamID = 0;
+		int nSubjectID = 0;
+		GetFileData(strPapersFilePath, nExamID, nSubjectID);
+
+		std::string strNewPkgDir = Poco::format("%s\\%d_%d", CMyCodeConvert::Gb2312ToUtf8(pTask->strDecompressDir), nExamID, nSubjectID);
+		std::string strNewPkgPath = Poco::format("%s\\%d_%d\\%s", CMyCodeConvert::Gb2312ToUtf8(pTask->strDecompressDir), nExamID, nSubjectID, pTask->strSrcFileName);
+		try
+		{
+			Poco::File copyDir(strNewPkgDir);
+			if (!copyDir.exists())
+				copyDir.createDirectories();
+
+			Poco::File copyFilePath(pTask->strFilePath);
+			copyFilePath.copyTo(strNewPkgPath);
+
+			Poco::File decompressDir(strOutDir);
+			if (decompressDir.exists())
+				decompressDir.remove(true);
+
+			CString strMsg;
+			strMsg.Format(_T("解压(%s)完成\r\n"), A2T(pTask->strSrcFileName.c_str()));
+			((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
+		}
+		catch (Poco::Exception& e)
+		{
+		}
+		
+	}
 #endif
 }
 
+
+void CDecompressThread::GetFileData(std::string strFilePath, int& nExamID, int& nSubjectID)
+{
+	std::string strJsnData;
+	std::ifstream in(strFilePath);
+	std::string strJsnLine;
+	while (!in.eof())
+	{
+		getline(in, strJsnLine);
+		strJsnData.append(strJsnLine);
+	}
+	in.close();
+
+	std::string strFileData;
+	if (!decString(strJsnData, strFileData))
+		strFileData = strJsnData;
+
+	Poco::JSON::Parser parser;
+	Poco::Dynamic::Var result;
+	try
+	{
+		result = parser.parse(strFileData);		//strJsnData
+		Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
+
+		nExamID = objData->get("examId").convert<int>();
+		nSubjectID = objData->get("subjectId").convert<int>();
+		int nTeacherId = objData->get("nTeacherId").convert<int>();
+		int nUserId = objData->get("nUserId").convert<int>();
+		int nStudentNum = objData->get("scanNum").convert<int>();
+		std::string strUploader = objData->get("uploader").convert<std::string>();
+		std::string strEzs = objData->get("ezs").convert<std::string>();
+	}
+	catch (Poco::JSON::JSONException& jsone)
+	{
+		std::string strErrInfo;
+		strErrInfo.append("解析试卷袋文件夹中文件失败: ");
+		strErrInfo.append(jsone.message());
+		g_Log.LogOutError(strErrInfo);
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strErrInfo;
+		strErrInfo.append("解析试卷袋文件夹中文件失败2: ");
+		strErrInfo.append(exc.message());
+		g_Log.LogOutError(strErrInfo);
+	}
+}
 

@@ -640,7 +640,7 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				{
 					strLog = "选做题信息如下: " + jsnElectOmrString.str();
 					g_Log.LogOut(strLog);
-				}				
+				}
 			}
 		}
 		else if (pTask->nTaskType == 3)
@@ -816,6 +816,56 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 // 	std::cout << jsnString.str() << std::endl;
 // 	std::cout << "****************************************" << std::endl;
 
+
+	//for test 2016.10.24	图像有错乱的问题，单独处理
+#if 0
+	std::string strJsnModel = SysSet.m_strCurrentDir + "\\md5.txt";
+
+	std::string strMd5Data;
+	std::ifstream in(strJsnModel);
+	if (!in)
+		return NULL;
+
+	std::string strJsnLine;
+	while (!in.eof())
+	{
+		getline(in, strJsnLine);					//不过滤空格
+		strMd5Data.append(strJsnLine);
+	}
+	in.close();
+
+
+	std::string strData;
+	LIST_PAPER_INFO::iterator it3 = pPapers->lPaper.begin();
+	for (; it3 != pPapers->lPaper.end(); it3++)
+	{
+		pPAPER_INFO pPaper = *it3;
+		LIST_PIC_DETAIL::iterator itPic = pPaper->lPic.begin();
+		for (; itPic != pPaper->lPic.end(); itPic++)
+		{
+			pPIC_DETAIL pPic = *itPic;
+
+			if (strMd5Data.find(pPaper->strMd5Key) != std::string::npos)
+			{
+				char szInfo[200] = { 0 };
+				sprintf_s(szInfo, "UPDATE ks_studentanswersheetimage SET address='%s' WHERE subjectId=12 AND studentKey='%s' AND picName='%s';\r\n", \
+						  pPic->strHashVal.c_str(), pPaper->strMd5Key.c_str(), pPic->strFileName.c_str());
+				strData.append(szInfo);				
+			}	
+		}
+	}
+
+	std::string strJsnFile = SysSet.m_strCurrentDir;
+	strJsnFile += "\\update.txt";
+	ofstream out(CMyCodeConvert::Utf8ToGb2312(strJsnFile));
+	if (!out)	return false;
+	out << strData.c_str();
+	out.close();
+
+	return true;
+	//--
+#endif
+
 #if 1
 	pSEND_HTTP_TASK pNewTask = new SEND_HTTP_TASK;
 	pNewTask->nTaskType = 2;
@@ -827,26 +877,7 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 	g_lHttpSend.push_back(pNewTask);
 	g_fmHttpSend.unlock();
 #endif
-
-	//删除解压的文件夹
-// 	try
-// 	{
-// 		Poco::File papersDir(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
-// 		if (papersDir.exists())
-// 		{
-// 			papersDir.remove(true);
-// 
-// 			strLog = "删除试卷袋解压文件夹(" + pPapers->strPapersPath + ")成功";
-// 			g_Log.LogOut(strLog);
-// 			std::cout << strLog << std::endl;
-// 		}
-// 	}
-// 	catch (Poco::Exception& exc)
-// 	{
-// 		std::string strErr = "删除试卷袋解压文件夹(" + pPapers->strPapersPath + ")失败: " + exc.message();
-// 		g_Log.LogOutError(strErr);
-// 	}
-
+	
 	return true;
 }
 

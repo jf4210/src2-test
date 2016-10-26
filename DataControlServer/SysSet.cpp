@@ -26,6 +26,7 @@ bool CSysSet::Load(std::string& strConfPath)
 	m_nDecompressThreads = pConf->getInt("Sys.decompressThreads", 2);
 	m_nBackupPapers		= pConf->getInt("Sys.bPapersBackup", 0);
 	m_strPapersBackupPath	= pConf->getString("Sys.papersBackupPath");
+	m_nUpLoadOmrData = pConf->getInt("Sys.bUpOmrData", 1);
 
 	m_nHandleCmdThreads = pConf->getInt("Cmd.sendThreads", 2);
 	m_nSendHttpThreads	= pConf->getInt("UpHttp.sendThreads", 2);

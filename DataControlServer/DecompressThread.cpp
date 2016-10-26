@@ -352,48 +352,46 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 
 	//读取试卷袋文件夹里面的文件获取试卷袋信息
 	std::string strPapersFilePath = strOutDir + "\\papersInfo.dat";
-	GetFileData(strPapersFilePath, pPapers);
+	bool bResult_Data = GetFileData(strPapersFilePath, pPapers);
+	if (!bResult_Data)
+	{
+		std::string strLog = Poco::format("试卷袋(%s),解压后数据不一致，需要重新解压,已解压次数%d", pPapers->strPapersName, pTask->nTimes + 1);
+		g_Log.LogOutError(strLog);
+		SAFE_RELEASE(pPapers);
+
+		Poco::Thread::sleep(500);
+		pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+		pDecompressTask->nTimes = pTask->nTimes + 1;
+		pDecompressTask->strFilePath = pTask->strFilePath;
+		pDecompressTask->strFileBaseName = pTask->strFileBaseName;
+		pDecompressTask->strSrcFileName = pTask->strSrcFileName;
+		g_fmDecompressLock.lock();
+		g_lDecompressTask.push_back(pDecompressTask);
+		g_fmDecompressLock.unlock();
+		return;
+	}
 
 #ifdef TEST_MODE
-	LIST_PAPER_INFO::iterator itPaper = pPapers->lPaper.begin();
-	for (; itPaper != pPapers->lPaper.end(); itPaper++)
-	{
-		pPAPER_INFO pPaper = *itPaper;
-		LIST_PIC_DETAIL::iterator itPic = pPaper->lPic.begin();
-		for (; itPic != pPaper->lPic.end(); itPic++)
-		{
-			pPIC_DETAIL pPic = *itPic;
-
-			pSEND_HTTP_TASK pHttpTask = new SEND_HTTP_TASK;
-			pHttpTask->nTaskType = 1;
-			pHttpTask->pPic = pPic;
-			pHttpTask->pPapers = pPapers;
-			pHttpTask->strUri = SysSet.m_strUpLoadHttpUri;
-			g_fmHttpSend.lock();
-			g_lHttpSend.push_back(pHttpTask);
-			g_fmHttpSend.unlock();
-		}
-	}
 #else
-	LIST_PAPER_INFO::iterator itPaper = pPapers->lPaper.begin();
-	for (; itPaper != pPapers->lPaper.end(); itPaper++)
-	{
-		pPAPER_INFO pPaper = *itPaper;
-		LIST_PIC_DETAIL::iterator itPic = pPaper->lPic.begin();
-		for (; itPic != pPaper->lPic.end(); itPic++)
-		{
-			pPIC_DETAIL pPic = *itPic;
-
-			pSEND_HTTP_TASK pHttpTask = new SEND_HTTP_TASK;
-			pHttpTask->nTaskType = 1;
-			pHttpTask->pPic = pPic;
-			pHttpTask->pPapers = pPapers;
-			pHttpTask->strUri = SysSet.m_strUpLoadHttpUri;
-			g_fmHttpSend.lock();
-			g_lHttpSend.push_back(pHttpTask);
-			g_fmHttpSend.unlock();
-		}
-	}
+// 	LIST_PAPER_INFO::iterator itPaper = pPapers->lPaper.begin();
+// 	for (; itPaper != pPapers->lPaper.end(); itPaper++)
+// 	{
+// 		pPAPER_INFO pPaper = *itPaper;
+// 		LIST_PIC_DETAIL::iterator itPic = pPaper->lPic.begin();
+// 		for (; itPic != pPaper->lPic.end(); itPic++)
+// 		{
+// 			pPIC_DETAIL pPic = *itPic;
+// 
+// 			pSEND_HTTP_TASK pHttpTask = new SEND_HTTP_TASK;
+// 			pHttpTask->nTaskType = 1;
+// 			pHttpTask->pPic = pPic;
+// 			pHttpTask->pPapers = pPapers;
+// 			pHttpTask->strUri = SysSet.m_strUpLoadHttpUri;
+// 			g_fmHttpSend.lock();
+// 			g_lHttpSend.push_back(pHttpTask);
+// 			g_fmHttpSend.unlock();
+// 		}
+// 	}
 #endif
 	
 	g_fmPapers.lock();
@@ -401,7 +399,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	g_fmPapers.unlock();
 }
 
-void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPapers)
+bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPapers)
 {
 	std::string strJsnData;
 	std::ifstream in(strFilePath);
@@ -436,6 +434,9 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 		std::string strUploader = objData->get("uploader").convert<std::string>();
 		std::string strEzs	= objData->get("ezs").convert<std::string>();
 
+		bool bFindDeff = false;
+		std::string strStudentList_Src;
+		std::string strStudentList_Decompress;
 		Poco::JSON::Array::Ptr jsnDetailArry = objData->getArray("detail");
 		for (int i = 0; i < jsnDetailArry->size(); i++)
 		{
@@ -446,6 +447,7 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 			LIST_PAPER_INFO::iterator itPaper = pPapers->lPaper.begin();
 			for (int j = 0; itPaper != pPapers->lPaper.end(); itPaper++)
 			{
+				strStudentList_Decompress.append((*itPaper)->strName + " ");
 				if ((*itPaper)->strName == strStudentInfo)
 				{
 					pPaper = *itPaper;
@@ -521,10 +523,16 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 			}
 			else
 			{
-				std::string strLog;
-				strLog = "出现OMR和SN号信息与学生试卷不一致的情况，详情: studentName = " + strStudentInfo;
-				g_Log.LogOutError(strLog);
+				strStudentList_Src.append(strStudentInfo + " ");
+				bFindDeff = true;
 			}
+		}
+		if (bFindDeff)
+		{
+			std::string strLog;
+			strLog = "出现OMR和SN号信息与学生试卷不一致的情况，详情: 源(" + strStudentList_Src + ")未发现, 解压后(" + strStudentList_Decompress + ")";
+			g_Log.LogOutError(strLog);
+			return false;
 		}
 
 		pPapers->nExamID	= nExamId;
@@ -541,6 +549,7 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 		strErrInfo.append("解析试卷袋文件夹中文件失败: ");
 		strErrInfo.append(jsone.message());
 		g_Log.LogOutError(strErrInfo);
+		return false;
 	}
 	catch (Poco::Exception& exc)
 	{
@@ -548,8 +557,9 @@ void CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 		strErrInfo.append("解析试卷袋文件夹中文件失败2: ");
 		strErrInfo.append(exc.message());
 		g_Log.LogOutError(strErrInfo);
+		return false;
 	}
-
+	return true;
 }
 
 void CDecompressThread::SearchExtractFile(pPAPERS_DETAIL pPapers, std::string strPath)

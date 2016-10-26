@@ -1145,6 +1145,10 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	cv::GaussianBlur(matSrcRoi, matSrcRoi, cv::Size(m_nGaussKernel, m_nGaussKernel), 0, 0);
 	sharpenImage1(matSrcRoi, matSrcRoi);
 
+#ifdef TEST_DATA	//for test
+	threshold(matSrcRoi, matSrcRoi, rc.nThresholdValue, 255, THRESH_BINARY);
+#endif
+
 	const int channels[1] = { 0 };
 	const float* ranges[1];
 	const int histSize[1] = { 1 };
@@ -1165,6 +1169,8 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	cv::calcHist(&matSrcRoi, 1, channels, Mat(), src_hist, 1, histSize, ranges, false);
 
 	rc.fStandardValue = src_hist.at<float>(0);
+	rc.fStandardArea = rc.rt.area();
+	rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea;
 	return true;
 }
 
@@ -1385,6 +1391,8 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 
 		bResult = true;
 	}
+	cvReleaseMemStorage(&storage);
+
 	if (m_eCurCPType == SN)
 	{
 		GetSNArry(RectCompList);
@@ -2157,6 +2165,8 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itFix->nThresholdValue);
 			jsnObj.set("standardValPercent", itFix->fStandardValuePercent);
 			jsnObj.set("standardVal", itFix->fStandardValue);
+			jsnObj.set("standardArea", itFix->fStandardArea);
+			jsnObj.set("standardDensity", itFix->fStandardDensity);
 
 			jsnObj.set("gaussKernel", itFix->nGaussKernel);
 			jsnObj.set("sharpKernel", itFix->nSharpKernel);
@@ -2176,6 +2186,8 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itHHead->nThresholdValue);
 			jsnObj.set("standardValPercent", itHHead->fStandardValuePercent);
 			jsnObj.set("standardVal", itHHead->fStandardValue);
+			jsnObj.set("standardArea", itHHead->fStandardArea);
+			jsnObj.set("standardDensity", itHHead->fStandardDensity);
 
 			jsnObj.set("gaussKernel", itHHead->nGaussKernel);
 			jsnObj.set("sharpKernel", itHHead->nSharpKernel);
@@ -2195,6 +2207,8 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itVHead->nThresholdValue);
 			jsnObj.set("standardValPercent", itVHead->fStandardValuePercent);
 			jsnObj.set("standardVal", itVHead->fStandardValue);
+			jsnObj.set("standardArea", itVHead->fStandardArea);
+			jsnObj.set("standardDensity", itVHead->fStandardDensity);
 
 			jsnObj.set("gaussKernel", itVHead->nGaussKernel);
 			jsnObj.set("sharpKernel", itVHead->nSharpKernel);
@@ -2216,6 +2230,8 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itABModel->nThresholdValue);
 			jsnObj.set("standardValPercent", itABModel->fStandardValuePercent);
 			jsnObj.set("standardVal", itABModel->fStandardValue);
+			jsnObj.set("standardArea", itABModel->fStandardArea);
+			jsnObj.set("standardDensity", itABModel->fStandardDensity);
 
 			jsnObj.set("gaussKernel", itABModel->nGaussKernel);
 			jsnObj.set("sharpKernel", itABModel->nSharpKernel);
@@ -2237,6 +2253,8 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itCourse->nThresholdValue);
 			jsnObj.set("standardValPercent", itCourse->fStandardValuePercent);
 			jsnObj.set("standardVal", itCourse->fStandardValue);
+			jsnObj.set("standardArea", itCourse->fStandardArea);
+			jsnObj.set("standardDensity", itCourse->fStandardDensity);
 
 			jsnObj.set("gaussKernel", itCourse->nGaussKernel);
 			jsnObj.set("sharpKernel", itCourse->nSharpKernel);
@@ -2258,6 +2276,8 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itQKCP->nThresholdValue);
 			jsnObj.set("standardValPercent", itQKCP->fStandardValuePercent);
 			jsnObj.set("standardVal", itQKCP->fStandardValue);
+			jsnObj.set("standardArea", itQKCP->fStandardArea);
+			jsnObj.set("standardDensity", itQKCP->fStandardDensity);
 
 			jsnObj.set("gaussKernel", itQKCP->nGaussKernel);
 			jsnObj.set("sharpKernel", itQKCP->nSharpKernel);
@@ -2279,6 +2299,8 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itGrayCP->nThresholdValue);
 			jsnObj.set("standardValPercent", itGrayCP->fStandardValuePercent);
 			jsnObj.set("standardVal", itGrayCP->fStandardValue);
+			jsnObj.set("standardArea", itGrayCP->fStandardArea);
+			jsnObj.set("standardDensity", itGrayCP->fStandardDensity);
 
 			jsnObj.set("gaussKernel", itGrayCP->nGaussKernel);
 			jsnObj.set("sharpKernel", itGrayCP->nSharpKernel);
@@ -2300,6 +2322,8 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("thresholdValue", itWhiteCP->nThresholdValue);
 			jsnObj.set("standardValPercent", itWhiteCP->fStandardValuePercent);
 			jsnObj.set("standardVal", itWhiteCP->fStandardValue);
+			jsnObj.set("standardArea", itWhiteCP->fStandardArea);
+			jsnObj.set("standardDensity", itWhiteCP->fStandardDensity);
 
 			jsnObj.set("gaussKernel", itWhiteCP->nGaussKernel);
 			jsnObj.set("sharpKernel", itWhiteCP->nSharpKernel);
@@ -2387,6 +2411,8 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 				jsnObj.set("thresholdValue", itOmrSel->nThresholdValue);
 				jsnObj.set("standardValPercent", itOmrSel->fStandardValuePercent);
 				jsnObj.set("standardVal", itOmrSel->fStandardValue);
+				jsnObj.set("standardArea", itOmrSel->fStandardArea);
+				jsnObj.set("standardDensity", itOmrSel->fStandardDensity);
 
 				jsnObj.set("gaussKernel", itOmrSel->nGaussKernel);
 				jsnObj.set("sharpKernel", itOmrSel->nSharpKernel);
@@ -2423,6 +2449,8 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 				jsnObj.set("thresholdValue", itSnDetail->nThresholdValue);
 				jsnObj.set("standardValPercent", itSnDetail->fStandardValuePercent);
 				jsnObj.set("standardVal", itSnDetail->fStandardValue);
+				jsnObj.set("standardArea", itSnDetail->fStandardArea);
+				jsnObj.set("standardDensity", itSnDetail->fStandardDensity);
 
 				jsnObj.set("gaussKernel", itSnDetail->nGaussKernel);
 				jsnObj.set("sharpKernel", itSnDetail->nSharpKernel);
@@ -2458,6 +2486,8 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 				jsnObj.set("thresholdValue", itOmrSel->nThresholdValue);
 				jsnObj.set("standardValPercent", itOmrSel->fStandardValuePercent);
 				jsnObj.set("standardVal", itOmrSel->fStandardValue);
+				jsnObj.set("standardArea", itOmrSel->fStandardArea);
+				jsnObj.set("standardDensity", itOmrSel->fStandardDensity);
 
 				jsnObj.set("gaussKernel", itOmrSel->nGaussKernel);
 				jsnObj.set("sharpKernel", itOmrSel->nSharpKernel);
@@ -5264,7 +5294,19 @@ void CMakeModelDlg::SetImage(HANDLE hBitmap, int bits)
 	memcpy((void *)&bFile.bfType, "BM", 2);
 	bFile.bfSize = dib.GetDIBSize() + sizeof(bFile);
 	bFile.bfOffBits = sizeof(BITMAPINFOHEADER) + dib.GetPaletteSize()*sizeof(RGBQUAD) + sizeof(BITMAPFILEHEADER);
-	unsigned char *pBits = (unsigned char *)malloc(bFile.bfSize);
+	unsigned char *pBits = NULL;
+	try
+	{
+		pBits = (unsigned char *)malloc(bFile.bfSize);
+	}
+	catch (...)
+	{
+		char szLog[100] = { 0 };
+		sprintf_s(szLog, "»ñÈ¡ÄÚ´æÊ§°Ü¡£");
+		g_pLogger->information(szLog);
+		return;
+	}
+
 	memcpy(pBits, &bFile, sizeof(BITMAPFILEHEADER));
 	memcpy(pBits + sizeof(BITMAPFILEHEADER), dib.m_pVoid, dib.GetDIBSize());
 

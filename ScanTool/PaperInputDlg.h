@@ -83,4 +83,5 @@ public:
 	afx_msg void OnNMDblclkListIssuepaper(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedBtnSave();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg void OnBnClickedBtnTest();
 };

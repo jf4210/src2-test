@@ -109,6 +109,9 @@
     <Filter Include="模板制作窗口%2a%2a%2a\选做题信息设置窗口">
       <UniqueIdentifier>{5adb2dbd-7544-4b61-b7bb-5db388e88263}</UniqueIdentifier>
     </Filter>
+    <Filter Include="解压缩">
+      <UniqueIdentifier>{e55841e4-0bda-49ea-8fab-0481fd5a6a59}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -255,6 +258,9 @@
     <ClInclude Include="ElectOmrDlg.h">
       <Filter>模板制作窗口%2a%2a%2a\选做题信息设置窗口</Filter>
     </ClInclude>
+    <ClInclude Include="CompressThread.h">
+      <Filter>解压缩</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
@@ -376,6 +382,9 @@
     </ClCompile>
     <ClCompile Include="ElectOmrDlg.cpp">
       <Filter>模板制作窗口%2a%2a%2a\选做题信息设置窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="CompressThread.cpp">
+      <Filter>解压缩</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

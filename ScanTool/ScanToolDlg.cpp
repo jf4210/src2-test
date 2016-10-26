@@ -46,8 +46,19 @@ TCP_TASKLIST		g_lTcpTask;		//tcp任务列表
 
 EXAM_LIST			g_lExamList;	//当前账号对应的考试列表
 
+Poco::FastMutex		g_fmCompressLock;		//压缩文件列表锁
+COMPRESSTASKLIST	g_lCompressTask;		//解压文件列表
+
 Poco::Event			g_eTcpThreadExit;
 Poco::Event			g_eSendFileThreadExit;
+Poco::Event			g_eCompressThreadExit;
+
+double	_dCompThread_Fix_ = 1.2;
+double	_dDiffThread_Fix_ = 0.2;
+double	_dDiffExit_Fix_ = 0.3;
+double	_dCompThread_Head_ = 1.0;
+double	_dDiffThread_Head_ = 0.085;
+double	_dDiffExit_Head_ = 0.15;
 
 int		_nGauseKernel_ = 5;			//高斯变换核因子
 int		_nSharpKernel_ = 5;			//锐化核因子
@@ -110,6 +121,7 @@ CScanToolDlg::CScanToolDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	, m_nTeacherId(-1), m_nUserId(-1), m_nCurrItemPaperList(-1)
 	, m_pShowModelInfoDlg(NULL), m_pShowScannerInfoDlg(NULL)
 	, m_nDuplex(1), m_bF1Enable(FALSE), m_bF2Enable(FALSE)
+	, m_pCompressObj(NULL), m_pCompressThread(NULL)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -385,6 +397,9 @@ void CScanToolDlg::OnDestroy()
 	}
 	g_pLogger->information("识别线程释放完毕.");
 
+#if 1
+	ReleaseUploadFileList();
+#else
 	Poco::JSON::Object jsnFileList;
 	Poco::JSON::Array jsnSendTaskArry;
 	g_fmSendLock.lock();
@@ -423,6 +438,7 @@ void CScanToolDlg::OnDestroy()
 			out.close();
 		}
 	}
+#endif
 
 	m_SendFileThread->join();
 	SAFE_RELEASE(m_pSendFileObj);
@@ -444,6 +460,21 @@ void CScanToolDlg::OnDestroy()
 	g_eTcpThreadExit.wait();
 	SAFE_RELEASE(m_TcpCmdThread);
 	g_pLogger->information("tcp命令处理线程释放完毕.");
+
+	g_fmCompressLock.lock();
+	COMPRESSTASKLIST::iterator itCompress = g_lCompressTask.begin();
+	for (; itCompress != g_lCompressTask.end();)
+	{
+		pCOMPRESSTASK pTask = *itCompress;
+		itCompress = g_lCompressTask.erase(itCompress);
+		SAFE_RELEASE(pTask);
+	}
+	g_fmCompressLock.unlock();
+	m_pCompressThread->join();
+	SAFE_RELEASE(m_pCompressObj);
+	g_eCompressThreadExit.wait();
+	SAFE_RELEASE(m_pCompressThread);
+	g_pLogger->information("压缩处理线程释放完毕.");
 	
 
 	g_fmPapers.lock();			//释放试卷袋列表
@@ -534,7 +565,9 @@ void CScanToolDlg::InitConfig()
 	m_TcpCmdThread = new Poco::Thread;
 	m_pTcpCmdObj = new CTcpClient(m_strCmdServerIP, m_nCmdPort);
 	m_TcpCmdThread->start(*m_pTcpCmdObj);
-
+	m_pCompressThread = new Poco::Thread;
+	m_pCompressObj = new CCompressThread(this);
+	m_pCompressThread->start(*m_pCompressObj);
 }
 
 void CScanToolDlg::InitTab()
@@ -606,23 +639,7 @@ void CScanToolDlg::InitUI()
 	SetFontSize(m_nStatusSize);
 
 	USES_CONVERSION;
-// 	CRect rtTab;
-// 	m_tabPicShowCtrl.GetClientRect(&rtTab);
-// 	for (int i = 0; i < m_nModelPicNums; i++)
-// 	{
-// 		char szTabHeadName[20] = { 0 };
-// 		sprintf_s(szTabHeadName, "第%d页", i + 1);
-// 
-// 		m_tabPicShowCtrl.InsertItem(i, A2T(szTabHeadName));
-// 
-// 		CPicShow* pPicShow = new CPicShow(this);
-// 		pPicShow->Create(CPicShow::IDD, &m_tabPicShowCtrl);
-// 		pPicShow->ShowWindow(SW_HIDE);
-// 		m_vecPicShow.push_back(pPicShow);
-// 	}
-// 	m_tabPicShowCtrl.SetCurSel(0);
-// 	m_vecPicShow[0]->ShowWindow(SW_SHOW);
-// 	m_pCurrentPicShow = m_vecPicShow[0];
+
 	m_nCurrTabSel = 0;
 
 	m_pShowModelInfoDlg = new CShowModelInfoDlg(this);
@@ -1505,7 +1522,27 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 	memcpy((void *)&bFile.bfType, "BM", 2);
 	bFile.bfSize = dib.GetDIBSize() + sizeof(bFile);
 	bFile.bfOffBits = sizeof(BITMAPINFOHEADER) + dib.GetPaletteSize()*sizeof(RGBQUAD) + sizeof(BITMAPFILEHEADER);
-	unsigned char *pBits = (unsigned char *)malloc(bFile.bfSize);
+
+	bool bTmp = false;
+	USES_CONVERSION;
+	unsigned char *pBits = NULL;
+	try
+	{
+		pBits = (unsigned char *)malloc(bFile.bfSize);
+	}
+	catch (...)
+	{
+		_bTwainContinue = FALSE;
+		bTmp = true;
+	}
+	if (bTmp)
+	{
+		char szErrInfo[100] = { 0 };
+		sprintf_s(szErrInfo, "获取内存失败。");
+		SetStatusShowInfo(A2T(szErrInfo), TRUE);
+		g_pLogger->information(szErrInfo);
+	}
+
 	memcpy(pBits, &bFile, sizeof(BITMAPFILEHEADER));
 	memcpy(pBits + sizeof(BITMAPFILEHEADER), dib.m_pVoid, dib.GetDIBSize());
 
@@ -1521,129 +1558,153 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 
 	int nChannel = (bmphdr.biBitCount == 1) ? 1 : bmphdr.biBitCount / 8;
 	int depth = (bmphdr.biBitCount == 1) ? IPL_DEPTH_1U : IPL_DEPTH_8U;
-	IplImage *pIpl2 = cvCreateImage(cvSize(w, h), depth, nChannel);
-
-	int height;
-	bool isLowerLeft = bmphdr.biHeight > 0;
-	height = (bmphdr.biHeight > 0) ? bmphdr.biHeight : -bmphdr.biHeight;
-	CopyData(pIpl2->imageData, (char*)p, bmphdr.biSizeImage, isLowerLeft, height);
-	free(pBits);
-	pBits = NULL;
-
-// 	IplImage* pIpl = DIB2IplImage(dib);
-// 	cv::Mat matTest = cv::cvarrToMat(pIpl);
-	USES_CONVERSION;
-	
-	int nStudentId = m_nScanCount / m_nModelPicNums + 1;
-	int nOrder = m_nScanCount % m_nModelPicNums + 1;
-
-	char szPicName[50] = { 0 };
-	char szPicPath[MAX_PATH] = { 0 };
-	sprintf_s(szPicName, "S%d_%d.jpg", nStudentId, nOrder);
-	sprintf_s(szPicPath, "%s\\S%d_%d.jpg", m_strCurrPicSavePath.c_str(), nStudentId, nOrder);
-
-	m_nScanCount++;
-
-	cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
-
-	//++ 2016.8.26 判断扫描图片方向，并进行旋转
-	if (m_pModel && m_pModel->nType)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
+	try
 	{
-		int nResult = CheckOrientation(matTest2, nOrder - 1);
-		switch (nResult)	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
+		IplImage *pIpl2 = cvCreateImage(cvSize(w, h), depth, nChannel);
+
+		int height;
+		bool isLowerLeft = bmphdr.biHeight > 0;
+		height = (bmphdr.biHeight > 0) ? bmphdr.biHeight : -bmphdr.biHeight;
+		CopyData(pIpl2->imageData, (char*)p, bmphdr.biSizeImage, isLowerLeft, height);
+		free(pBits);
+		pBits = NULL;
+
+		// 	IplImage* pIpl = DIB2IplImage(dib);
+		// 	cv::Mat matTest = cv::cvarrToMat(pIpl);
+
+		int nStudentId = m_nScanCount / m_nModelPicNums + 1;
+		int nOrder = m_nScanCount % m_nModelPicNums + 1;
+
+		char szPicName[50] = { 0 };
+		char szPicPath[MAX_PATH] = { 0 };
+		sprintf_s(szPicName, "S%d_%d.jpg", nStudentId, nOrder);
+		sprintf_s(szPicPath, "%s\\S%d_%d.jpg", m_strCurrPicSavePath.c_str(), nStudentId, nOrder);
+
+		m_nScanCount++;
+
+	
+		cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
+
+		//++ 2016.8.26 判断扫描图片方向，并进行旋转
+		if (m_pModel && m_pModel->nType)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
 		{
-			case 1:	break;
-			case 2:
+			int nResult = CheckOrientation(matTest2, nOrder - 1);
+			switch (nResult)	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
+			{
+				case 1:	break;
+				case 2:
 				{
-					Mat dst;
-					transpose(matTest2, dst);	//左旋90，镜像 
-					flip(dst, matTest2, 0);		//左旋90，模板图像需要右旋90，原图即需要左旋90
+						  Mat dst;
+						  transpose(matTest2, dst);	//左旋90，镜像 
+						  flip(dst, matTest2, 0);		//左旋90，模板图像需要右旋90，原图即需要左旋90
 				}
-				break;
-			case 3:
+					break;
+				case 3:
 				{
-					Mat dst;
-					transpose(matTest2, dst);	//左旋90，镜像 
-					flip(dst, matTest2, 1);		//右旋90，模板图像需要左旋90，原图即需要右旋90
+						  Mat dst;
+						  transpose(matTest2, dst);	//左旋90，镜像 
+						  flip(dst, matTest2, 1);		//右旋90，模板图像需要左旋90，原图即需要右旋90
 				}
-				break;
-			case 4:
+					break;
+				case 4:
 				{
-					Mat dst;
-					transpose(matTest2, dst);	//左旋90，镜像 
-					Mat dst2;
-					flip(dst, dst2, 1);
-					Mat dst5;
-					transpose(dst2, dst5);
-					flip(dst5, matTest2, 1);	//右旋180
+						  Mat dst;
+						  transpose(matTest2, dst);	//左旋90，镜像 
+						  Mat dst2;
+						  flip(dst, dst2, 1);
+						  Mat dst5;
+						  transpose(dst2, dst5);
+						  flip(dst5, matTest2, 1);	//右旋180
 				}
-				break;
-			default: break;
+					break;
+				default: break;
+			}
 		}
-	}
-	//--
+		//--
 
-	cv::Mat matTest3 = matTest2.clone();
+		cv::Mat matTest3 = matTest2.clone();
 
-	std::string strPicName = szPicPath;
-	imwrite(strPicName, matTest2);
+		std::string strPicName = szPicPath;
+		imwrite(strPicName, matTest2);
 
-	cvReleaseImage(&pIpl2);
+		cvReleaseImage(&pIpl2);
 
 #if 1
-	m_pCurrentPicShow->ShowPic(matTest3);
+		m_pCurrentPicShow->ShowPic(matTest3);
 #endif
-
-	std::string strLog = "Get image: " + strPicName;
-	g_pLogger->information(strLog);
-
-	pST_PicInfo pPic = new ST_PicInfo;
-	pPic->strPicName = szPicName;
-	pPic->strPicPath = szPicPath;
-	//试卷列表显示扫描试卷
-	if (nOrder == 1)	//第一页的时候创建新的试卷信息
-	{
-		char szStudentName[30] = { 0 };
-		sprintf_s(szStudentName, "S%d", nStudentId);
-		m_pPaper = new ST_PaperInfo;
-		m_pPaper->strStudentInfo = szStudentName;
-		m_pPaper->pModel = m_pModel;
-		m_pPaper->pPapers = m_pPapersInfo;
-		m_pPaper->pSrcDlg = this;
-		m_pPaper->lPic.push_back(pPic);
-
-		m_pPapersInfo->fmlPaper.lock();
-		m_pPapersInfo->lPaper.push_back(m_pPaper);
-		m_pPapersInfo->fmlPaper.unlock();
 		
-		//添加进试卷列表控件
-		int nCount = m_lcPicture.GetItemCount();
-		char szCount[10] = { 0 };
-		sprintf_s(szCount, "%d", nCount + 1);
-		m_lcPicture.InsertItem(nCount, NULL);
-		m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
-		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(szStudentName));
-		m_lcPicture.SetItemData(nCount, (DWORD_PTR)m_pPaper);
+		std::string strLog = "Get image: " + strPicName;
+		g_pLogger->information(strLog);
+
+		pST_PicInfo pPic = new ST_PicInfo;
+		pPic->strPicName = szPicName;
+		pPic->strPicPath = szPicPath;
+		//试卷列表显示扫描试卷
+		if (nOrder == 1)	//第一页的时候创建新的试卷信息
+		{
+			char szStudentName[30] = { 0 };
+			sprintf_s(szStudentName, "S%d", nStudentId);
+			m_pPaper = new ST_PaperInfo;
+			m_pPaper->strStudentInfo = szStudentName;
+			m_pPaper->pModel = m_pModel;
+			m_pPaper->pPapers = m_pPapersInfo;
+			m_pPaper->pSrcDlg = this;
+			m_pPaper->lPic.push_back(pPic);
+
+			m_pPapersInfo->fmlPaper.lock();
+			m_pPapersInfo->lPaper.push_back(m_pPaper);
+			m_pPapersInfo->fmlPaper.unlock();
+
+			//添加进试卷列表控件
+			int nCount = m_lcPicture.GetItemCount();
+			char szCount[10] = { 0 };
+			sprintf_s(szCount, "%d", nCount + 1);
+			m_lcPicture.InsertItem(nCount, NULL);
+			m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+			m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(szStudentName));
+			m_lcPicture.SetItemData(nCount, (DWORD_PTR)m_pPaper);
+		}
+		else
+		{
+			m_pPaper->lPic.push_back(pPic);
+		}
+		pPic->pPaper = m_pPaper;
+
+		//添加到识别任务列表
+		if (m_pModel)
+		{
+			pRECOGTASK pTask = new RECOGTASK;
+			pTask->pPaper = m_pPaper;
+			g_lRecogTask.push_back(pTask);
+		}
+
+		m_pCurrentShowPaper = m_pPaper;
+
+		CString strMsg = _T("");
+		strMsg.Format(_T("已扫描%d张"), m_nScanCount);
+		GetDlgItem(IDC_STATIC_SCANCOUNT)->SetWindowText(strMsg);
 	}
-	else
+	catch (cv::Exception& exc)
 	{
-		m_pPaper->lPic.push_back(pPic);
+		_bTwainContinue = FALSE;
+		m_nScanStatus = 2;
+
+		free(pBits);
+		pBits = NULL;
+
+		int nStudentId = m_nScanCount / m_nModelPicNums + 1;
+		int nOrder = m_nScanCount % m_nModelPicNums + 1;
+
+		char szPicName[50] = { 0 };
+		sprintf_s(szPicName, "S%d_%d.jpg", nStudentId, nOrder);
+
+		char szErrInfo[200] = { 0 };
+		sprintf_s(szErrInfo, "生成图片(%s)失败", szPicName);
+		CString strShow = _T("");
+		strShow.Format(_T("生成图片(%s)失败"), szPicName);
+		SetStatusShowInfo(strShow, TRUE);
+		g_pLogger->information(szErrInfo);
 	}
-	pPic->pPaper = m_pPaper;
-
-	//添加到识别任务列表
-	if (m_pModel)
-	{
-		pRECOGTASK pTask = new RECOGTASK;
-		pTask->pPaper = m_pPaper;
-		g_lRecogTask.push_back(pTask);
-	}
-
-	m_pCurrentShowPaper = m_pPaper;
-
-	CString strMsg = _T("");
-	strMsg.Format(_T("已扫描%d张"), m_nScanCount);
-	GetDlgItem(IDC_STATIC_SCANCOUNT)->SetWindowText(strMsg);
 }
 
 void CScanToolDlg::ScanDone(int nStatus)
@@ -2255,6 +2316,13 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		return;
 	}
 
+	int nUnRecogCount = g_lRecogTask.size();
+	if (nUnRecogCount > 0)
+	{
+		AfxMessageBox(_T("请稍后，图像正在识别！"));
+		return;
+	}
+
 	BOOL bLogin = FALSE;
 	CString strUser = _T("");
 	CString strEzs = _T("");
@@ -2553,8 +2621,8 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		char szTime[50] = { 0 };
 		sprintf_s(szTime, "%d%02d%02d%02d%02d%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
 
-		sprintf_s(szPapersSavePath, "%sPaper\\%s_%s", T2A(g_strCurrentPath), T2A(strUser), szTime);
-		sprintf_s(szZipName, "%s_%s%s", T2A(strUser), szTime, T2A(PAPERS_EXT_NAME));	//%s_%s.pkg
+		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s", T2A(g_strCurrentPath), T2A(strUser), nExamID, nSubjectID, szTime);
+		sprintf_s(szZipName, "%s_%d-%d_%s%s", T2A(strUser), nExamID, nSubjectID, szTime, T2A(PAPERS_EXT_NAME));	//%s_%s.pkg
 	}
 	else
 	{
@@ -2565,6 +2633,16 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	bool bWarn = false;
 	strInfo.Format(_T("正在保存%s..."), A2T(szZipName));
 	SetStatusShowInfo(strInfo, bWarn);
+#if 1
+	pCOMPRESSTASK pTask = new COMPRESSTASK;
+	pTask->strCompressFileName = szZipName;
+	pTask->strExtName = T2A(PAPERS_EXT_NAME);
+	pTask->strSavePath = szPapersSavePath;
+	pTask->strSrcFilePath = m_strCurrPicSavePath;
+	g_fmCompressLock.lock();
+	g_lCompressTask.push_back(pTask);
+	g_fmCompressLock.unlock();
+#else
 	if (!ZipFile(A2T(m_strCurrPicSavePath.c_str()), A2T(szPapersSavePath), PAPERS_EXT_NAME))
 	{
 		bWarn = true;
@@ -2587,16 +2665,18 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	}
 
 	//添加上传列表，	******************		需要进行鉴权操作	***************	
-	char szFileFullPath[300] = { 0 };
-	sprintf_s(szFileFullPath, "%s%s", szPapersSavePath, T2A(PAPERS_EXT_NAME));
-	pSENDTASK pTask = new SENDTASK;
-	pTask->strFileName	= szZipName;
-	pTask->strPath = szFileFullPath;
-	g_fmSendLock.lock();
-	g_lSendTask.push_back(pTask);
-	g_fmSendLock.unlock();
-
+	#if 0
+		char szFileFullPath[300] = { 0 };
+		sprintf_s(szFileFullPath, "%s%s", szPapersSavePath, T2A(PAPERS_EXT_NAME));
+		pSENDTASK pTask = new SENDTASK;
+		pTask->strFileName	= szZipName;
+		pTask->strPath = szFileFullPath;
+		g_fmSendLock.lock();
+		g_lSendTask.push_back(pTask);
+		g_fmSendLock.unlock();
+	#endif
 	m_bF2Enable = TRUE;
+#endif
 }
 
 LRESULT CScanToolDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
@@ -2844,6 +2924,13 @@ void CScanToolDlg::InitParam()
 		g_nRecogGrayMax_White = pConf->getInt("RecogGray.white_Max", 255);
 		g_nRecogGrayMin_OMR = pConf->getInt("RecogGray.omr_Min", 0);
 		g_RecogGrayMax_OMR	= pConf->getInt("RecogGray.omr_Max", 235);
+
+		_dCompThread_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fCompTread", 1.2);
+		_dDiffThread_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fDiffThread", 0.2);
+		_dDiffExit_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fDiffExit", 0.3);
+		_dCompThread_Head_ = pConf->getDouble("RecogOmrSn_Head.fCompTread", 1.2);
+		_dDiffThread_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffThread", 0.085);
+		_dDiffExit_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffExit", 0.15);
 		
 		strLog = "读取识别灰度参数完成";
 	}
@@ -3149,6 +3236,7 @@ int GetRects(cv::Mat& matSrc, cv::Rect rt, pMODEL pModel, int nPic, int nOrienta
 			RectCompList.push_back(rm);
 			nYSum += rm.y;
 		}
+		cvReleaseMemStorage(&storage);
 #else
 		for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
 		{
@@ -3442,4 +3530,47 @@ void CScanToolDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 			OnBnClickedBtnUploadpapers();
 	}
 	__super::OnHotKey(nHotKeyId, nKey1, nKey2);
+}
+
+void CScanToolDlg::ReleaseUploadFileList()
+{
+	USES_CONVERSION;
+	Poco::JSON::Object jsnFileList;
+	Poco::JSON::Array jsnSendTaskArry;
+	g_fmSendLock.lock();
+	SENDTASKLIST::iterator itSendTask = g_lSendTask.begin();
+	for (; itSendTask != g_lSendTask.end();)
+	{
+		if ((*itSendTask)->nSendState != 2)
+		{
+			//发送失败的文件暂存信息，下次登录时提示是否重新上传
+			Poco::JSON::Object objTask;
+			objTask.set("name", CMyCodeConvert::Gb2312ToUtf8((*itSendTask)->strFileName));
+			objTask.set("path", CMyCodeConvert::Gb2312ToUtf8((*itSendTask)->strPath));
+			jsnSendTaskArry.add(objTask);
+		}
+		pSENDTASK pTask = *itSendTask;
+		itSendTask = g_lSendTask.erase(itSendTask);
+		SAFE_RELEASE(pTask);
+	}
+	g_fmSendLock.unlock();
+	if (jsnSendTaskArry.size())
+	{
+		Poco::LocalDateTime dtNow;
+		std::string strData;
+		Poco::format(strData, "%4d-%02d-%02d %02d:%02d", dtNow.year(), dtNow.month(), dtNow.day(), dtNow.hour(), dtNow.minute());
+		jsnFileList.set("time", strData);
+		jsnFileList.set("fileList", jsnSendTaskArry);
+
+		std::stringstream jsnString;
+		jsnFileList.stringify(jsnString);
+
+		std::string strJsnFile = T2A(g_strCurrentPath + _T("tmpFileList.dat"));
+		ofstream out(strJsnFile);
+		if (out)
+		{
+			out << jsnString.str().c_str();
+			out.close();
+		}
+	}
 }
