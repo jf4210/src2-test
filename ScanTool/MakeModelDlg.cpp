@@ -1146,7 +1146,7 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	sharpenImage1(matSrcRoi, matSrcRoi);
 
 #ifdef TEST_DATA	//for test
-	threshold(matSrcRoi, matSrcRoi, rc.nThresholdValue, 255, THRESH_BINARY);
+//	threshold(matSrcRoi, matSrcRoi, rc.nThresholdValue, 255, THRESH_BINARY);
 #endif
 
 	const int channels[1] = { 0 };
@@ -1167,10 +1167,24 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	}
 	MatND src_hist;
 	cv::calcHist(&matSrcRoi, 1, channels, Mat(), src_hist, 1, histSize, ranges, false);
+//	cv::calcHist(&matSrcRoi, 1, channels, Mat(), src_hist, 1, histSize, ranges, true, false);
 
 	rc.fStandardValue = src_hist.at<float>(0);
 	rc.fStandardArea = rc.rt.area();
 	rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea;
+
+
+
+	MatND src_hist2;
+	const int histSize2[1] = { rc.nThresholdValue - g_nRecogGrayMin };
+	cv::calcHist(&matSrcRoi, 1, channels, Mat(), src_hist2, 1, histSize2, ranges, true, false);
+	int nCount = 0;
+	for (int i = g_nRecogGrayMin; i < rc.nThresholdValue; i++)
+	{
+		nCount = (255 - i) * src_hist2.at<float>(i);
+	}
+
+
 	return true;
 }
 
@@ -4876,7 +4890,7 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 		int y = (float)(rcList_XY[i].y - rcList_XY[0].y) / (nH + nHInterval) + 0.5;	//行
 #endif
 
-		TRACE("第几行几列: %d行%d列, 差值: x-%d, y-%d\n", x, y, rcList_XY[i].x - rcList_XY[0].x, rcList_XY[i].y - rcList_XY[0].y);
+		TRACE("第几行几列: %d行%d列, 差值: x-%d, y-%d\n", y, x, rcList_XY[i].x - rcList_XY[0].x, rcList_XY[i].y - rcList_XY[0].y);
 
 		RECTINFO rc;
 		rc.rt = rcList_XY[i];
@@ -4932,6 +4946,7 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 			rc.nSingle = 1;
 		Rect rtTmp = rcList_XY[i];
 		Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+		Mat matTest = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg;
 		RecogGrayValue(matSrcModel, rc);
 
 		m_vecTmp.push_back(rc);

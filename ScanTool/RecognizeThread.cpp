@@ -363,7 +363,7 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 		SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
 
 #ifdef TEST_DATA	//for test
-		threshold(matCompRoi, matCompRoi, rc.nThresholdValue, 255, THRESH_BINARY);
+//		threshold(matCompRoi, matCompRoi, rc.nThresholdValue, 255, THRESH_BINARY);
 #endif
 		const int channels[1] = { 0 };
 		const float* ranges[1];
@@ -2499,7 +2499,8 @@ bool CRecognizeThread::Recog2(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_P
 			int blockSize = 25;		//25
 			int constValue = 10;
 			cv::Mat local;
-			cv::adaptiveThreshold(matCompRoi, matCompRoi, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, blockSize, constValue);
+//			cv::adaptiveThreshold(matCompRoi, matCompRoi, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, blockSize, constValue);
+			cv::threshold(matCompRoi, matCompRoi, rc.nThresholdValue, 255, THRESH_BINARY);
 			cv::Canny(matCompRoi, matCompRoi, 0, _nCannyKernel_, 5);
 			Mat element = getStructuringElement(MORPH_RECT, Size(2, 2));	//Size(6, 6)	普通空白框可识别
 			dilate(matCompRoi, matCompRoi, element);
@@ -2531,8 +2532,13 @@ bool CRecognizeThread::Recog2(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_P
 				i++;
 			}
 			cvReleaseMemStorage(&storage);
+
+#if 1
+
+#else		//这里先不进行选项框的裁剪(裁剪目的是放在选项框到题目或其他选项的矩形区)，起码这里是有问题的，选项有填涂的时候，如果矩形区全都框选到，会识别出多个矩形，这个需要解决
 			if (i > 1)
 				rc.rt = rt;
+#endif
 		}
 		catch (cv::Exception &exc)
 		{
