@@ -46,7 +46,7 @@ public:
 
 	BOOL SetImageCount(TW_INT16 nCount = 1);
 	BOOL Acquire(int numImages,TW_UINT16 duplex,TW_UINT16 size,TW_UINT16 pixel,TW_UINT16 resolution);
-
+	BOOL Acquire(int numImages = 1);
 protected:
 	BOOL CallTwainProc(pTW_IDENTITY pOrigin,pTW_IDENTITY pDest,
 					   TW_UINT32 DG,TW_UINT16 DAT,TW_UINT16 MSG,

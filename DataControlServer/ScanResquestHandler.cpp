@@ -1362,6 +1362,20 @@ inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	cv::calcHist(&matSrcRoi, 1, channels, cv::Mat(), src_hist, 1, histSize, ranges, false);
 
 	rc.fStandardValue = src_hist.at<float>(0);
+	rc.fStandardArea = rc.rt.area();
+	rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea;
+
+
+
+	cv::MatND src_hist2;
+	const int histSize2[1] = { 255 };	//rc.nThresholdValue - g_nRecogGrayMin
+	cv::calcHist(&matSrcRoi, 1, channels, cv::Mat(), src_hist2, 1, histSize2, ranges, true, false);
+	int nCount = 0;
+	for (int i = 0; i < 255; i++)
+	{
+		nCount += i * src_hist2.at<float>(i);
+	}
+	rc.fStandardMeanGray = nCount / rc.fStandardArea;
 	return true;
 }
 

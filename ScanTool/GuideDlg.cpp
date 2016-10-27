@@ -217,7 +217,7 @@ void CGuideDlg::InitLog()
 	Poco::AutoPtr<Poco::FileChannel> pFileChannel(new Poco::FileChannel(strLogPath));
 	pFCFile->setChannel(pFileChannel);
 	pFCFile->open();
-	pFCFile->setProperty("rotation", "1 M");
+	pFCFile->setProperty("rotation", "5 M");
 	pFCFile->setProperty("archive", "timestamp");
 	pFCFile->setProperty("compress", "true");
 	pFCFile->setProperty("purgeCount", "5");

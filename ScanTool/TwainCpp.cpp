@@ -499,7 +499,7 @@ BOOL CTwain::EnableSource(BOOL showUI)
 {
 	if(DSOpen() && !SourceEnabled())
 	{
-		twUI.ShowUI = FALSE;	//FALSE
+		twUI.ShowUI = showUI;	//FALSE
 		twUI.hParent = (TW_HANDLE)m_hMessageWnd;
 		if(CallTwainProc(&m_AppId,&m_Source,DG_CONTROL,DAT_USERINTERFACE,MSG_ENABLEDS,(TW_MEMREF)&twUI))
 		{
@@ -538,7 +538,22 @@ BOOL CTwain::Acquire(int numImages,TW_UINT16 duplex,TW_UINT16 size,TW_UINT16 pix
 		ret_value=SetResolution(ICAP_YRESOLUTION,resolution);
 		if(SetImageCount(numImages))
 		{
-			if(EnableSource())
+			if(EnableSource(FALSE))
+			{
+				return TRUE;
+			}
+		}
+	}
+	return FALSE;
+}
+
+BOOL CTwain::Acquire(int numImages /*= 1*/)
+{
+	if (DSOpen() || OpenSource())
+	{
+		if (SetImageCount(numImages))
+		{
+			if (EnableSource())
 			{
 				return TRUE;
 			}

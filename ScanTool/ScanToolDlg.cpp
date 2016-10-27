@@ -21,6 +21,7 @@
 using namespace std;
 using namespace cv;
 
+int					g_nManulUploadFile = 0;		//手动上传文件，通过qq这类的
 bool				g_bCmdConnect = false;		//命令通道连接
 bool				g_bFileConnect = false;		//文件通道连接
 
@@ -267,15 +268,21 @@ BOOL CScanToolDlg::OnInitDialog()
 		{
 			AfxMessageBox(_T("Unable to load Twain Driver."));
 		}
-// 		if (CallTwainProc(&m_AppId, NULL, DG_CONTROL, DAT_IDENTITY, MSG_USERSELECT, &m_Source))
-// 		{
-// 			//AfxMessageBox("CallTwainProc true");
-// 			m_bSourceSelected = TRUE;
-// 		}
+#ifdef TEST_SCAN
+		memset(&m_Source, 0, sizeof(m_Source));
+		if (!SourceSelected())
+		{
+			SelectDefaultSource();
+		}
 
-//			SelectDefaultSource();
+		if (CallTwainProc(&m_AppId, NULL, DG_CONTROL, DAT_IDENTITY, MSG_USERSELECT, &m_Source))
+		{
+			m_bSourceSelected = TRUE;
+		}
+	#else
 
-			ScanSrcInit();
+		ScanSrcInit();
+	#endif
 	}
 
 	RegisterHotKey(GetSafeHwnd(), 1001, NULL, VK_F1);//F1键
@@ -519,7 +526,7 @@ void CScanToolDlg::InitConfig()
 	Poco::AutoPtr<Poco::FileChannel> pFileChannel(new Poco::FileChannel(strLogPath));
 	pFCFile->setChannel(pFileChannel);
 	pFCFile->open();
-	pFCFile->setProperty("rotation", "1 M");
+	pFCFile->setProperty("rotation", "5 M");
 	pFCFile->setProperty("archive", "timestamp");
 	pFCFile->setProperty("compress", "true");
 	pFCFile->setProperty("purgeCount", "5");
@@ -536,6 +543,7 @@ void CScanToolDlg::InitConfig()
 	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(T2A(strConfigPath));
 	Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strUtf8Path));
 	int nRecogThreads = pConf->getInt("Recog.threads", 2);
+	g_nManulUploadFile = pConf->getInt("UploadFile.manul", 0);
 	std::string strFileServerIP	= pConf->getString("Server.fileIP");
 	int			nFileServerPort	= pConf->getInt("Server.filePort", 19980);
 	m_strCmdServerIP				= pConf->getString("Server.cmdIP");
@@ -1001,6 +1009,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		return;
 
 	m_bF1Enable = FALSE;
+#ifndef TEST_SCAN
 	if (!m_bTwainInit)
 	{
 		m_bTwainInit = InitTwain(m_hWnd);
@@ -1011,6 +1020,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		m_scanSourceArry.RemoveAll();
 		ScanSrcInit();
 	}
+#endif
 
 #ifndef TO_WHTY
 	BOOL bLogin = FALSE;
@@ -1101,17 +1111,14 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	}
 	m_nScanStatus = 1;
 
+#ifndef TEST_SCAN
 	m_Source = m_scanSourceArry.GetAt(nScanSrc);
+#endif
 	int nDuplex = nDuplexDef;		//单双面,0-单面,1-双面
 	int nSize = 1;							//1-A4
 	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
 	int nResolution = 200;					//dpi: 72, 150, 200, 300
-
-// 	int nNum = dlg.m_nStudentNum * m_nModelPicNums;
-// 
-// 	if (nDuplex == 1)
-// 		nNum *= 2;
-
+	
 	int nNum = 0;
 	if (nDuplex == 0)
 	{
@@ -1129,6 +1136,22 @@ void CScanToolDlg::OnBnClickedBtnScan()
 
 	if (nNum == 0)
 		nNum = TWCPP_ANYCOUNT;
+#ifdef TEST_SCAN
+	if (!Acquire(nNum))	//TWCPP_ANYCOUNT
+	{
+		m_comboModel.EnableWindow(TRUE);
+		GetDlgItem(IDC_BTN_Scan)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BTN_ScanAll)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BTN_ScanModule)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BTN_ModelMgr)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BTN_InputPaper)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BTN_UpLoadPapers)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BTN_UploadMgr)->EnableWindow(TRUE);
+		GetDlgItem(IDC_BTN_ReBack)->EnableWindow(TRUE);
+		GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(_T(""));
+		m_nScanStatus = 2;
+	}
+#else
 	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution))	//TWCPP_ANYCOUNT
 	{
 		m_comboModel.EnableWindow(TRUE);
@@ -1143,6 +1166,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(_T(""));
 		m_nScanStatus = 2;
 	}
+#endif
 	m_bF1Enable = TRUE;
 }
 

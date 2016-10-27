@@ -284,17 +284,17 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		else
 			strcpy_s(szSingle, "多");
 		
-		char szItemInfo[600] = { 0 };
-		if (itOmr->nDoubt)
+		char szItemInfo[1000] = { 0 };
+		if (itOmr->nDoubt)	//itOmr->nDoubt
 		{
 			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
 			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
 			{
 				// 			if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
 				// 			{
-				char szTmp[100] = { 0 }; 
-				sprintf_s(szTmp, "%c,识别=%.3f(R/S=%.1f/%.1f),Succ:%d. ", itRect->nAnswer + 65, \
-					itRect->fRealValuePercent, itRect->fRealValue, itRect->fStandardValue, itRect->fRealValuePercent > itRect->fStandardValuePercent);
+				char szTmp[200] = { 0 }; 
+				sprintf_s(szTmp, "%c,识别=%.3f(R/S=%.1f/%.1f),Succ:%d.(密度比=%.1f/%.1f,灰度比=%.1f/%.1f) ", itRect->nAnswer + 65, \
+					itRect->fRealValuePercent, itRect->fRealValue, itRect->fStandardValue, itRect->fRealValuePercent > itRect->fStandardValuePercent, itRect->fRealDensity, itRect->fStandardDensity, itRect->fRealMeanGray, itRect->fStandardMeanGray);
 // 				sprintf_s(szTmp, "选项=%c, 识别实际比例=%.3f, val=%.2f, 识别标准val=%.2f, 是否成功:%d\t", itRect->nAnswer + 65, \
 // 					itRect->fRealValuePercent, itRect->fRealValue, itRect->fStandardValue, itRect->fRealValuePercent > itRect->fStandardValuePercent);
 				strcat_s(szItemInfo, szTmp);
@@ -316,7 +316,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		strcat_s(szItemInfo, "]");
 		//--------------------------
 		
-		char szOmrItem[660] = { 0 };
+		char szOmrItem[1060] = { 0 };
 		if (itOmr->nDoubt)
 			sprintf_s(szOmrItem, "%d(%s):%s ---%s Doubt(%d)\t==>%s\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal2.c_str(), itOmr->nDoubt, szItemInfo);
 		else
@@ -427,6 +427,7 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 			rc.fRealValue = binValComp;
 			rc.fRealArea = rc.rt.area();
 			rc.fRealDensity = rc.fRealValue / rc.fRealArea;
+			
 
 			float fStandardCompare = (rc.fRealArea / rc.fStandardArea) * rc.fStandardValue;
 			if (binValComp == 0 && rc.fStandardValue == 0)
@@ -436,16 +437,19 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 			else
 				rc.fRealValuePercent = binValComp / rc.fStandardValue;
 			bResult = true;
-// 			if (rc.fRealValuePercent < rc.fStandardValuePercent)		//g_fSamePercent
-// 			{
-// 				bFindRect = true;
-// 				TRACE("校验失败, 灰度百分比: %f, 问题点: (%d,%d,%d,%d)\n", rc.fRealValuePercent * 100, rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
-// 				char szLog[MAX_PATH] = { 0 };
-// 				sprintf_s(szLog, "校验失败, 灰度百分比: %f, 问题点: (%d,%d,%d,%d)\n", rc.fRealValuePercent * 100, rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
-// 				g_pLogger->information(szLog);
-// 			}
 			break;
 		}
+
+
+		MatND src_hist2;
+		const int histSize2[1] = { 255 };	//rc.nThresholdValue - g_nRecogGrayMin
+		cv::calcHist(&matCompRoi, 1, channels, Mat(), src_hist2, 1, histSize2, ranges, true, false);
+		int nCount = 0;
+		for (int i = 0; i < 255; i++)
+		{
+			nCount += i * src_hist2.at<float>(i);
+		}
+		rc.fRealMeanGray = nCount / rc.fRealArea;
 	}
 	catch (cv::Exception &exc)
 	{
@@ -465,7 +469,7 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 // 		return bResult;
 
 	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.begin();
-	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.end(); itCP++)
+	for (int i = 0; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.end(); i++, itCP++)
 	{
 		RECTINFO rc = *itCP;
 
@@ -573,6 +577,7 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			{
 				CvRect aRect = cvBoundingRect(contour, 0);
 				Rect rm = aRect;
+				rm = rm + rc.rt.tl();
 				RectCompList.push_back(rm);
 			}
 			cvReleaseMemStorage(&storage);
@@ -621,11 +626,34 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		{
 			std::sort(RectCompList.begin(), RectCompList.end(), SortByArea);
 			Rect& rtFix = RectCompList[0];
+
+			RECTINFO rcFix;
+			RECTLIST::iterator itFix = pModelInfo->pModel->vecPaperModel[nPic]->lFix.begin();
+			for (int j = 0; itFix != pModelInfo->pModel->vecPaperModel[nPic]->lFix.end(); j++, itFix++)
+			{
+				if (j == i)
+				{
+					rcFix = *itFix;
+					break;
+				}
+			}
+			//通过灰度值来判断
+			for (int i = 0; i < RectCompList.size(); i++)
+			{
+				RECTINFO rcTmp = rcFix;
+				rcTmp.rt = RectCompList[i];
+				Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
+				if (rcTmp.fRealArea / rcTmp.fStandardArea > 0.7 && rcTmp.fRealDensity / rcTmp.fStandardDensity > 0.6)
+				{
+					rtFix = RectCompList[i];
+					break;
+				}
+			}
 			m_ptFixCP.x = static_cast<int>(rtFix.x + rtFix.width / 2 + 0.5 + rc.rt.x);
 			m_ptFixCP.y = static_cast<int>(rtFix.y + rtFix.height / 2 + 0.5 + rc.rt.y);
 
-			rtFix.x = rtFix.x + rc.rt.x;
-			rtFix.y = rtFix.y + rc.rt.y;
+// 			rtFix.x = rtFix.x + rc.rt.x;
+// 			rtFix.y = rtFix.y + rc.rt.y;
 
 			RECTINFO rcFixInfo = rc;
 			rcFixInfo.rt = rtFix;
@@ -864,6 +892,32 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		}
 		else
 		{
+			//二次过滤
+			std::sort(RectCompList.begin(), RectCompList.end(), SortByPositionX2);
+			std::vector<Rect>::iterator itHead = RectCompList.begin();
+			for (int i = 0; itHead != RectCompList.end(); i++)
+			{
+				RECTINFO rcHead1;
+				RECTLIST::iterator itModelHead = pModelInfo->pModel->vecPaperModel[nPic]->lH_Head.begin();
+				for (int j = 0; itModelHead != pModelInfo->pModel->vecPaperModel[nPic]->lH_Head.end(); j++, itModelHead++)
+				{
+					if (j == i)
+					{
+						rcHead1 = *itModelHead;
+						break;
+					}
+				}
+				RECTINFO rcTmp = rcHead1;
+				rcTmp.rt = RectCompList[i];
+				Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
+				if (rcTmp.fRealArea / rcTmp.fStandardArea < 0.8 || rcTmp.fRealDensity / rcTmp.fStandardDensity < 0.8)
+				{
+					itHead = RectCompList.erase(itHead);
+					i = i - 1;
+				}
+				else
+					itHead++;
+			}
 			for (int i = 0; i < RectCompList.size(); i++)
 			{
 				RECTINFO rcHead;
@@ -1129,6 +1183,32 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		}
 		else
 		{
+			//二次过滤
+			std::sort(RectCompList.begin(), RectCompList.end(), SortByPositionY2);
+			std::vector<Rect>::iterator itHead = RectCompList.begin();
+			for (int i = 0; itHead != RectCompList.end(); i++)
+			{
+				RECTINFO rcHead1;
+				RECTLIST::iterator itModelHead = pModelInfo->pModel->vecPaperModel[nPic]->lV_Head.begin();
+				for (int j = 0; itModelHead != pModelInfo->pModel->vecPaperModel[nPic]->lV_Head.end(); j++, itModelHead++)
+				{
+					if (j == i)
+					{
+						rcHead1 = *itModelHead;
+						break;
+					}
+				}
+				RECTINFO rcTmp = rcHead1;
+				rcTmp.rt = RectCompList[i];
+				Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
+				if (rcTmp.fRealArea / rcTmp.fStandardArea < 0.8 || rcTmp.fRealDensity / rcTmp.fStandardDensity < 0.8)
+				{
+					itHead = RectCompList.erase(itHead);
+					i = i - 1;
+				}
+				else
+					itHead++;
+			}
 			for (int i = 0; i < RectCompList.size(); i++)
 			{
 				RECTINFO rcHead;

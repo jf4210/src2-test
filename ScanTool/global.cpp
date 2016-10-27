@@ -383,6 +383,8 @@ pMODEL LoadModelFile(CString strModelPath)
 					rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
 				if (jsnRectInfoObj->has("standardDensity"))
 					rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+				if (jsnRectInfoObj->has("standardMeanGray"))
+					rc.fStandardMeanGray = jsnRectInfoObj->get("standardMeanGray").convert<float>();
 
 				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
 				rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
@@ -413,6 +415,8 @@ pMODEL LoadModelFile(CString strModelPath)
 					rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
 				if (jsnRectInfoObj->has("standardDensity"))
 					rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+				if (jsnRectInfoObj->has("standardMeanGray"))
+					rc.fStandardMeanGray = jsnRectInfoObj->get("standardMeanGray").convert<float>();
 
 				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
 				rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
@@ -443,6 +447,8 @@ pMODEL LoadModelFile(CString strModelPath)
 					rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
 				if (jsnRectInfoObj->has("standardDensity"))
 					rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+				if (jsnRectInfoObj->has("standardMeanGray"))
+					rc.fStandardMeanGray = jsnRectInfoObj->get("standardMeanGray").convert<float>();
 
 				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
 				rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
@@ -473,6 +479,8 @@ pMODEL LoadModelFile(CString strModelPath)
 					rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
 				if (jsnRectInfoObj->has("standardDensity"))
 					rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+				if (jsnRectInfoObj->has("standardMeanGray"))
+					rc.fStandardMeanGray = jsnRectInfoObj->get("standardMeanGray").convert<float>();
 
 				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
 				rc.nHItem = jsnRectInfoObj->get("hHeadItem").convert<int>();
@@ -505,6 +513,8 @@ pMODEL LoadModelFile(CString strModelPath)
 					rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
 				if (jsnRectInfoObj->has("standardDensity"))
 					rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+				if (jsnRectInfoObj->has("standardMeanGray"))
+					rc.fStandardMeanGray = jsnRectInfoObj->get("standardMeanGray").convert<float>();
 
 				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
 				rc.nHItem = jsnRectInfoObj->get("hHeadItem").convert<int>();
@@ -537,6 +547,8 @@ pMODEL LoadModelFile(CString strModelPath)
 					rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
 				if (jsnRectInfoObj->has("standardDensity"))
 					rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+				if (jsnRectInfoObj->has("standardMeanGray"))
+					rc.fStandardMeanGray = jsnRectInfoObj->get("standardMeanGray").convert<float>();
 
 				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
 				rc.nHItem = jsnRectInfoObj->get("hHeadItem").convert<int>();
@@ -569,6 +581,8 @@ pMODEL LoadModelFile(CString strModelPath)
 					rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
 				if (jsnRectInfoObj->has("standardDensity"))
 					rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+				if (jsnRectInfoObj->has("standardMeanGray"))
+					rc.fStandardMeanGray = jsnRectInfoObj->get("standardMeanGray").convert<float>();
 
 				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
 				rc.nHItem = jsnRectInfoObj->get("hHeadItem").convert<int>();
@@ -601,6 +615,8 @@ pMODEL LoadModelFile(CString strModelPath)
 					rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
 				if (jsnRectInfoObj->has("standardDensity"))
 					rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+				if (jsnRectInfoObj->has("standardMeanGray"))
+					rc.fStandardMeanGray = jsnRectInfoObj->get("standardMeanGray").convert<float>();
 
 				rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
 				rc.nHItem = jsnRectInfoObj->get("hHeadItem").convert<int>();
@@ -712,6 +728,8 @@ pMODEL LoadModelFile(CString strModelPath)
 						rc.fStandardArea = jsnOmrObj->get("standardArea").convert<float>();
 					if (jsnOmrObj->has("standardDensity"))
 						rc.fStandardDensity = jsnOmrObj->get("standardDensity").convert<float>();
+					if (jsnOmrObj->has("standardMeanGray"))
+						rc.fStandardMeanGray = jsnOmrObj->get("standardMeanGray").convert<float>();
 
 					rc.nThresholdValue = jsnOmrObj->get("thresholdValue").convert<int>();
 					rc.nHItem = jsnOmrObj->get("hHeadItem").convert<int>();
@@ -757,6 +775,8 @@ pMODEL LoadModelFile(CString strModelPath)
 						rc.fStandardArea = jsnSnObj->get("standardArea").convert<float>();
 					if (jsnSnObj->has("standardDensity"))
 						rc.fStandardDensity = jsnSnObj->get("standardDensity").convert<float>();
+					if (jsnSnObj->has("standardMeanGray"))
+						rc.fStandardMeanGray = jsnSnObj->get("standardMeanGray").convert<float>();
 
 					rc.nThresholdValue = jsnSnObj->get("thresholdValue").convert<int>();
 					rc.nHItem = jsnSnObj->get("hHeadItem").convert<int>();
@@ -807,6 +827,8 @@ pMODEL LoadModelFile(CString strModelPath)
 							rc.fStandardArea = jsnOmrObj->get("standardArea").convert<float>();
 						if (jsnOmrObj->has("standardDensity"))
 							rc.fStandardDensity = jsnOmrObj->get("standardDensity").convert<float>();
+						if (jsnOmrObj->has("standardMeanGray"))
+							rc.fStandardMeanGray = jsnOmrObj->get("standardMeanGray").convert<float>();
 
 						rc.nTH = jsnOmrObj->get("nTH").convert<int>();
 						rc.nAnswer = jsnOmrObj->get("nAnswer").convert<int>();

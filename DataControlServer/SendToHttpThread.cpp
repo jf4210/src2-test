@@ -746,7 +746,7 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 		return false;
 
 //	std::cout << "上传成功 + 失败数量 = " << pPapers->nUpLoadSuccess + pPapers->nUpLoadFail << std::endl;
-	std::string strLog = "试卷袋(" + pPapers->strPapersName +")图片上传服务器完成，开始提交后端。";
+	std::string strLog = "试卷袋(" + pPapers->strPapersName +")图片上传服务器完成，开始进行重复图像校验。";
 	g_Log.LogOut(strLog);
 	std::cout << strLog << std::endl;
 
@@ -793,7 +793,9 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 		return false;
 	}
 	//--
-
+	strLog = "试卷袋(" + pPapers->strPapersName + ")图像重复校验完成，开始提交后端。";
+	g_Log.LogOut(strLog);
+	std::cout << strLog << std::endl;
 
 	Poco::JSON::Object jsnPapers;
 	jsnPapers.set("papers", CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersName));

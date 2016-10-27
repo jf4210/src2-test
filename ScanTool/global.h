@@ -63,6 +63,7 @@
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define TEST_DATA
+//	#define TEST_SCAN
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -72,7 +73,7 @@
 #endif
 
 //+++++++++	选择版本 ++++++++++++++++++
-#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
+//#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
 #ifndef TO_WHTY
 	#define SHOW_GUIDEDLG				//显示引导界面,易考乐学自己用，显示引导界面.******** 此处不定义，则直接显示主界面	***********
 #endif
@@ -153,6 +154,9 @@ extern int		g_nRecogGrayMin;		//灰度点(除空白点,OMR外)计算灰度的最小考试范围
 extern int		g_nRecogGrayMax_White;	//空白点校验点计算灰度的最大考试范围
 extern int		g_nRecogGrayMin_OMR;	//OMR计算灰度的最小考试范围
 extern int		g_RecogGrayMax_OMR;		//OMR计算灰度的最大考试范围
+
+
+extern int				g_nManulUploadFile;		//手动上传文件，通过qq这类的
 
 extern bool				g_bCmdConnect;		//命令通道连接
 extern bool				g_bFileConnect;		//文件通道连接

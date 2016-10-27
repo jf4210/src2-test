@@ -44,7 +44,7 @@ void CCompressThread::run()
 void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 {
 	std::string strLog = "获得试卷包压缩任务: " + pTask->strSrcFilePath;
-//	g_Log.LogOut(strLog);
+	g_pLogger->information(strLog);
 	
 	USES_CONVERSION;
 	CString strInfo;
@@ -70,16 +70,17 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 		return;
 	}
 
-#if 1	//这里暂时不提交试卷，手动提交试卷，后期yO改	***************	***************	***************	***************	***************	***************	
-	char szFileFullPath[300] = { 0 };
-	sprintf_s(szFileFullPath, "%s%s", pTask->strSavePath.c_str(), pTask->strExtName.c_str());
-	pSENDTASK pSendTask = new SENDTASK;
-	pSendTask->strFileName = pTask->strCompressFileName;
-	pSendTask->strPath = szFileFullPath;
-	g_fmSendLock.lock();
-	g_lSendTask.push_back(pSendTask);
-	g_fmSendLock.unlock();
-#endif
+	if (g_nManulUploadFile != 1)
+	{
+		char szFileFullPath[300] = { 0 };
+		sprintf_s(szFileFullPath, "%s%s", pTask->strSavePath.c_str(), pTask->strExtName.c_str());
+		pSENDTASK pSendTask = new SENDTASK;
+		pSendTask->strFileName = pTask->strCompressFileName;
+		pSendTask->strPath = szFileFullPath;
+		g_fmSendLock.lock();
+		g_lSendTask.push_back(pSendTask);
+		g_fmSendLock.unlock();
+	}
 	((CScanToolDlg*)m_pDlg)->m_bF2Enable = TRUE;
 }
 
