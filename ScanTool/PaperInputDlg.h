@@ -42,6 +42,8 @@ public:
 	int				m_nCurrItemPapers;		//试卷袋列表当前选择的项
 	int				m_nCurrItemPaper;		//试卷列表当前选择的项
 	int				m_ncomboCurrentSel;		//下拉列表当前选择项
+
+	int				m_nCurrItemPaperList;	//当前试卷列表选中的项
 private:
 	void	InitUI();
 	void	InitCtrlPosition(); 
@@ -56,6 +58,7 @@ private:
 	void	PaintRecognisedRect(pST_PaperInfo pPaper);		//画已识别的矩形
 	void	PaintIssueRect(pST_PaperInfo pPaper);			//画出已识别出来的问题矩形位置
 
+	void	ShowPaperByItem(int nItem);
 
 	int				m_nStatusSize;			//状态栏字体大小
 	CFont			m_fontStatus;			//状态栏字体
@@ -84,4 +87,5 @@ public:
 	afx_msg void OnBnClickedBtnSave();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnBnClickedBtnTest();
+	afx_msg void OnLvnKeydownListPaper(NMHDR *pNMHDR, LRESULT *pResult);
 };

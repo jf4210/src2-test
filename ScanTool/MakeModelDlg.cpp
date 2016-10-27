@@ -1176,10 +1176,10 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 
 
 	MatND src_hist2;
-	const int histSize2[1] = { 255 };	//rc.nThresholdValue - g_nRecogGrayMin
+	const int histSize2[1] = { 256 };	//rc.nThresholdValue - g_nRecogGrayMin
 	cv::calcHist(&matSrcRoi, 1, channels, Mat(), src_hist2, 1, histSize2, ranges, true, false);
 	int nCount = 0;
-	for (int i = 0; i < 255; i++)
+	for (int i = 0; i < 256; i++)
 	{
 		nCount += i * src_hist2.at<float>(i);
 	}
@@ -1285,6 +1285,7 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 	//提取轮廓  
 	cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 	
+	Rect rtMax;		//记录最大矩形，识别同步头时用来排除非同步头框
 	bool bResult = false;
 	std::vector<Rect>RectCompList;
 	for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++)
@@ -1322,6 +1323,9 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 		{
 			rc.nThresholdValue = m_nHeadVal;
 			rc.fStandardValuePercent = m_fHeadThresholdPercent;
+
+			if (rm.area() > rtMax.area())
+				rtMax = rm;
 
 			Rect rtTmp = rm;
 			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
@@ -1411,6 +1415,38 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 		bResult = true;
 	}
 	cvReleaseMemStorage(&storage);
+
+	//二次过滤同步头
+#if 0
+	if (m_eCurCPType == H_HEAD)
+	{
+		int nDeviation = 5;
+		std::vector<RECTINFO>::iterator itHead = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.begin();
+		for (; itHead != m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.end();)
+		{
+			if (itHead->rt.area() / rtMax.area() < 0.8 && ((itHead->rt.y > rtMax.y + nDeviation) || (itHead->rt.y < rtMax.y + rtMax.height + nDeviation)))
+				itHead = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.erase(itHead);
+			else if (itHead->rt.area() / rtMax.area() < 0.1 || (itHead->rt.width > rtMax.width && itHead->rt.height < rtMax.height * 0.3) || (itHead->rt.height > rtMax.height && itHead->rt.width < rtMax.width * 0.3))
+				itHead = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.erase(itHead);
+			else
+				itHead++;
+		}
+	}
+	if (m_eCurCPType == V_HEAD)
+	{
+		int nDeviation = 4;
+		std::vector<RECTINFO>::iterator itHead = m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.begin();
+		for (; itHead != m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.end();)
+		{
+			if (itHead->rt.area() / rtMax.area() < 0.8 && ((itHead->rt.x < rtMax.x + nDeviation) || (itHead->rt.x < rtMax.x + rtMax.width + nDeviation)))
+				itHead = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.erase(itHead);
+			else if (itHead->rt.area() / rtMax.area() < 0.1 || (itHead->rt.width > rtMax.width && itHead->rt.height < rtMax.height * 0.3) || (itHead->rt.height > rtMax.height && itHead->rt.width < rtMax.width * 0.3))
+				itHead = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.erase(itHead);
+			else
+				itHead++;
+		}
+	}
+#endif
 
 	if (m_eCurCPType == SN)
 	{

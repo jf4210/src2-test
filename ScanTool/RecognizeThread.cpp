@@ -442,10 +442,10 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 
 
 		MatND src_hist2;
-		const int histSize2[1] = { 255 };	//rc.nThresholdValue - g_nRecogGrayMin
+		const int histSize2[1] = { 256 };	//rc.nThresholdValue - g_nRecogGrayMin
 		cv::calcHist(&matCompRoi, 1, channels, Mat(), src_hist2, 1, histSize2, ranges, true, false);
 		int nCount = 0;
-		for (int i = 0; i < 255; i++)
+		for (int i = 0; i < 256; i++)
 		{
 			nCount += i * src_hist2.at<float>(i);
 		}

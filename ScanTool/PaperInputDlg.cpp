@@ -20,7 +20,7 @@ CPaperInputDlg::CPaperInputDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	: CDialog(CPaperInputDlg::IDD, pParent)
 	, m_strPapersPath(_T("")), m_nModelPicNums(1), m_nCurrTabSel(0), m_pCurrentPicShow(NULL), m_pModel(pModel), m_pOldModel(pModel)
 	, m_strModelName(_T("")), m_strPapersName(_T("")), m_strPapersDesc(_T("")), m_nCurrItemPapers(-1), m_nCurrItemPaper(-1)
-	, m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL)
+	, m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL), m_nCurrItemPaperList(-1)
 {
 
 }
@@ -71,6 +71,7 @@ BEGIN_MESSAGE_MAP(CPaperInputDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_SAVE, &CPaperInputDlg::OnBnClickedBtnSave)
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BTN_Test, &CPaperInputDlg::OnBnClickedBtnTest)
+	ON_NOTIFY(LVN_KEYDOWN, IDC_LIST_Paper, &CPaperInputDlg::OnLvnKeydownListPaper)
 END_MESSAGE_MAP()
 
 BOOL CPaperInputDlg::OnInitDialog()
@@ -2059,4 +2060,54 @@ int CPaperInputDlg::CheckOrientation(cv::Mat& matSrc, int n)
 void CPaperInputDlg::OnBnClickedBtnTest()
 {
 	// TODO:  在此添加控件通知处理程序代码
+}
+
+void CPaperInputDlg::ShowPaperByItem(int nItem)
+{
+	if (nItem < 0)
+		return;
+
+	pST_PaperInfo pPaper = (pST_PaperInfo)m_lPaperCtrl.GetItemData(nItem);
+
+	m_pCurrentShowPaper = pPaper;
+	if (pPaper->bIssuePaper)
+		PaintIssueRect(pPaper);
+	else
+		PaintRecognisedRect(pPaper);
+
+	m_nCurrTabSel = 0;
+
+	m_tabPicShow.SetCurSel(0);
+	m_pCurrentPicShow = m_vecPicShow[0];
+	m_pCurrentPicShow->ShowWindow(SW_SHOW);
+	for (int i = 0; i < m_vecPicShow.size(); i++)
+	{
+		if (i != 0)
+			m_vecPicShow[i]->ShowWindow(SW_HIDE);
+	}
+}
+
+
+void CPaperInputDlg::OnLvnKeydownListPaper(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMLVKEYDOWN pLVKeyDow = reinterpret_cast<LPNMLVKEYDOWN>(pNMHDR);
+	*pResult = 0;
+
+	if (pLVKeyDow->wVKey == VK_UP)
+	{
+		m_nCurrItemPaperList--;
+		if (m_nCurrItemPaperList <= 0)
+			m_nCurrItemPaperList = 0;
+
+		ShowPaperByItem(m_nCurrItemPaperList);
+	}
+	else if (pLVKeyDow->wVKey == VK_DOWN)
+	{
+
+		m_nCurrItemPaperList++;
+		if (m_nCurrItemPaperList >= m_lPaperCtrl.GetItemCount() - 1)
+			m_nCurrItemPaperList = m_lPaperCtrl.GetItemCount() - 1;
+
+		ShowPaperByItem(m_nCurrItemPaperList);
+	}
 }
