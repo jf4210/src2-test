@@ -1,4 +1,4 @@
-
+ï»¿
 #include <Poco/Util/ServerApplication.h>
 #include "ExamServerMgr.h"
 #include "DCSDef.h"
@@ -11,23 +11,26 @@
 
 int		g_nExitFlag = 0;
 CLog	g_Log;
-Poco::FastMutex			g_fmDecompressLock;		//½âÑ¹ÎÄ¼şÁĞ±íËø
-DECOMPRESSTASKLIST		g_lDecompressTask;		//½âÑ¹ÎÄ¼şÁĞ±í
+Poco::FastMutex			g_fmDecompressLock;		//è§£å‹æ–‡ä»¶åˆ—è¡¨é”
+DECOMPRESSTASKLIST		g_lDecompressTask;		//è§£å‹æ–‡ä»¶åˆ—è¡¨
 
 Poco::FastMutex			g_fmPapers;
-LIST_PAPERS_DETAIL		g_lPapers;				//ÊÔ¾í´üÁĞ±í
+LIST_PAPERS_DETAIL		g_lPapers;				//è¯•å·è¢‹åˆ—è¡¨
 
 Poco::FastMutex			g_fmHttpSend;
-LIST_SEND_HTTP			g_lHttpSend;			//·¢ËÍHTTPÈÎÎñÁĞ±í
+LIST_SEND_HTTP			g_lHttpSend;			//å‘é€HTTPä»»åŠ¡åˆ—è¡¨
 
 Poco::FastMutex			g_fmScanReq;
-LIST_SCAN_REQ			g_lScanReq;		//É¨Ãè¶ËÇëÇóÈÎÎñÁĞ±í
+LIST_SCAN_REQ			g_lScanReq;		//æ‰«æç«¯è¯·æ±‚ä»»åŠ¡åˆ—è¡¨
 
 Poco::FastMutex			_mapUserLock_;
-MAP_USER				_mapUser_;					//ÓÃ»§Ó³Éä
+MAP_USER				_mapUser_;					//ç”¨æˆ·æ˜ å°„
 
 Poco::FastMutex	_mapModelLock_;
-MAP_MODEL	_mapModel_;				//Ä£°åĞÅÏ¢
+MAP_MODEL	_mapModel_;				//æ¨¡æ¿ä¿¡æ¯
+
+Poco::FastMutex _mapPicAddrLock_;
+MAP_PIC_ADDR	_mapPicAddr_;
 
 class DCS : public Poco::Util::ServerApplication
 {
@@ -61,7 +64,7 @@ protected:
 				{
 					std::string strName = p.getFileName();
 					std::string strPath = p.toString();
-					//ÔÚ_mapModel_ÖĞ°Ñ±¾µØÎÄ¼şĞÅÏ¢²åÈë
+					//åœ¨_mapModel_ä¸­æŠŠæœ¬åœ°æ–‡ä»¶ä¿¡æ¯æ’å…¥
 
 					std::string strModelName = strName;
 					int nPos = 0;
@@ -101,11 +104,11 @@ protected:
 		}
 	}
 
-	//Æô¶¯µÄÊ±ºò£¬¼ì²â±¾µØÎÄ¼ş½ÓÊÕÎÄ¼ş¼Ğ£¬½«ÆäÖĞËùÓĞÎÄ¼ş¶¼¼ÓÈëÑ¹ËõÁĞ±í£¬Ä¿µÄ£ºÈç¹ûÓĞÒì³£ÍË³ö£¬ÒÑ½ÓÊÕÎÄ¼ş»¹ĞèÒª¼ÌĞø´¦Àí
+	//å¯åŠ¨çš„æ—¶å€™ï¼Œæ£€æµ‹æœ¬åœ°æ–‡ä»¶æ¥æ”¶æ–‡ä»¶å¤¹ï¼Œå°†å…¶ä¸­æ‰€æœ‰æ–‡ä»¶éƒ½åŠ å…¥å‹ç¼©åˆ—è¡¨ï¼Œç›®çš„ï¼šå¦‚æœæœ‰å¼‚å¸¸é€€å‡ºï¼Œå·²æ¥æ”¶æ–‡ä»¶è¿˜éœ€è¦ç»§ç»­å¤„ç†
 	void  InitPapersList()
 	{
 		bool bFind = false;
-		std::string strLog = "Ìí¼ÓÉÏ´Î¹Ø±ÕÎ´´¦ÀíÍê³ÉµÄÊÔ¾í´üÁĞ±í:";
+		std::string strLog = "æ·»åŠ ä¸Šæ¬¡å…³é—­æœªå¤„ç†å®Œæˆçš„è¯•å·è¢‹åˆ—è¡¨:";
 		std::string strPapersPath = CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strUpLoadPath);
 		Poco::DirectoryIterator it(strPapersPath);
 		Poco::DirectoryIterator end;
@@ -154,6 +157,7 @@ protected:
 		SysSet.m_strUpLoadPath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath) + "fileDispose";
 		SysSet.m_strModelSavePath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath) + "modelSave";
 		SysSet.m_strRecvFilePath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath + "tmpFileRecv\\");
+		SysSet.m_strErrorPkg = CMyCodeConvert::Utf8ToGb2312(strCurrentPath + "errorPkg\\");
 		
 #ifdef POCO_OS_FAMILY_WINDOWS
 		char szTitle[150] = { 0 };
@@ -187,11 +191,15 @@ protected:
 				recvFileDir.remove(true);
 
 			recvFileDir.createDirectories();
+
+			Poco::File errorPkgDir(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strErrorPkg));
+			if (!errorPkgDir.exists())
+				errorPkgDir.createDirectories();
 		}
 		catch (Poco::Exception& exc)
 		{
 			std::string strErrInfo;
-			strErrInfo.append("**** ÎÄ¼ş¼Ğ³õÊ¼»¯´´½¨Ê§°Ü£¬Çë¼ì²éÂ·¾¶ÉèÖÃÊÇ·ñÕıÈ·£¡****");
+			strErrInfo.append("**** æ–‡ä»¶å¤¹åˆå§‹åŒ–åˆ›å»ºå¤±è´¥ï¼Œè¯·æ£€æŸ¥è·¯å¾„è®¾ç½®æ˜¯å¦æ­£ç¡®ï¼****");
 			strErrInfo.append(exc.message());
 			g_Log.LogOutError(strErrInfo);
 			std::cout << strErrInfo << std::endl;
@@ -249,7 +257,7 @@ protected:
 		strcpy(szIndex, "1_1");
 		pMODELINFO pModelInfo = NULL;
 		MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
-		if (itFind == _mapModel_.end())		//·şÎñÆ÷ÉÏÃ»ÓĞÄ£°å£¬ÇëÇóºó¶ËÌá¹©Êı¾İÉú³ÉÄ£°å
+		if (itFind == _mapModel_.end())		//æœåŠ¡å™¨ä¸Šæ²¡æœ‰æ¨¡æ¿ï¼Œè¯·æ±‚åç«¯æä¾›æ•°æ®ç”Ÿæˆæ¨¡æ¿
 		{
 			pModelInfo = new MODELINFO;
 			pModelInfo->nExamID = 1;
@@ -277,7 +285,7 @@ protected:
 		examServerMgr.StopFileChannel();
 		examServerMgr.StopCmdChannel();
 
-		//ÊÍ·ÅÄ£°åÓ³ÉäĞÅÏ¢
+		//é‡Šæ”¾æ¨¡æ¿æ˜ å°„ä¿¡æ¯
 		_mapModelLock_.lock();
 		MAP_MODEL::iterator itModel = _mapModel_.begin();
 		for (; itModel != _mapModel_.end();)
@@ -288,7 +296,7 @@ protected:
 		}
 		_mapModelLock_.unlock();
 
-		//ÊÍ·ÅÉ¨Ãè¶ËÇëÇóÃüÁîÁĞ±í
+		//é‡Šæ”¾æ‰«æç«¯è¯·æ±‚å‘½ä»¤åˆ—è¡¨
 		g_fmScanReq.lock();
 		LIST_SCAN_REQ::iterator itScanReq = g_lScanReq.begin();
 		for (; itScanReq != g_lScanReq.end();)
@@ -299,7 +307,7 @@ protected:
 		}
 		g_fmScanReq.unlock();
 
-		//ÊÍ·ÅÊÔ¾í´üĞÅÏ¢ÁĞ±í
+		//é‡Šæ”¾è¯•å·è¢‹ä¿¡æ¯åˆ—è¡¨
 		g_fmPapers.lock();
 		LIST_PAPERS_DETAIL::iterator itPapers = g_lPapers.begin();
 		for (; itPapers != g_lPapers.end();)
@@ -310,7 +318,7 @@ protected:
 		}
 		g_fmPapers.unlock();
 
-		//ÊÍ·ÅÎÄ¼ş½âÑ¹ÁĞ±í
+		//é‡Šæ”¾æ–‡ä»¶è§£å‹åˆ—è¡¨
 		g_fmDecompressLock.lock();
 		DECOMPRESSTASKLIST::iterator itDecomp = g_lDecompressTask.begin();
 		for (; itDecomp != g_lDecompressTask.end();)
@@ -321,7 +329,7 @@ protected:
 		}
 		g_fmDecompressLock.unlock();
 
-		//ÊÍ·ÅhttpÇëÇóÁĞ±í
+		//é‡Šæ”¾httpè¯·æ±‚åˆ—è¡¨
 		g_fmHttpSend.lock();
 		LIST_SEND_HTTP::iterator itHttp = g_lHttpSend.begin();
 		for (; itHttp != g_lHttpSend.end();)
