@@ -164,6 +164,7 @@ extern bool				g_bFileConnect;		//文件通道连接
 extern bool				g_bCmdNeedConnect;	//命令通道是否需要重连，用于通道地址信息修改的情况
 extern bool				g_bFileNeedConnect;	//文件通道是否需要重连，用于通道地址信息修改的情况
 
+#if 1
 typedef struct _PicInfo_				//图片信息
 {
 	bool			bRecoged;		//是否已经识别过
@@ -293,6 +294,7 @@ typedef struct _RecogTask_
 	pST_PaperInfo	pPaper;				//需要识别的试卷
 }RECOGTASK, *pRECOGTASK;
 typedef std::list<pRECOGTASK> RECOGTASKLIST;	//识别任务列表
+#endif
 
 extern Poco::FastMutex		g_fmRecog;		//识别线程获取任务锁
 extern RECOGTASKLIST		g_lRecogTask;	//识别任务列表

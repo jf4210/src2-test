@@ -1,5 +1,5 @@
 #pragma once
-#include "global.h"
+#include "DMTDef.h"
 
 typedef struct _ModelInfo_
 {

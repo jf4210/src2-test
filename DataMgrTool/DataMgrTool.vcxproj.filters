@@ -28,6 +28,9 @@
     <Filter Include="LOG">
       <UniqueIdentifier>{52e4de79-09e9-443d-bca1-b4443b1b7575}</UniqueIdentifier>
     </Filter>
+    <Filter Include="识别">
+      <UniqueIdentifier>{211fc0ae-791d-4ae8-9675-2faf106a874a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -84,6 +87,12 @@
     <ClInclude Include="DMTDef.h">
       <Filter>global</Filter>
     </ClInclude>
+    <ClInclude Include="RecognizeThread.h">
+      <Filter>识别</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\modelInfo.h">
+      <Filter>global</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataMgrTool.cpp">
@@ -124,6 +133,9 @@
     </ClCompile>
     <ClCompile Include="DMTDef.cpp">
       <Filter>global</Filter>
+    </ClCompile>
+    <ClCompile Include="RecognizeThread.cpp">
+      <Filter>识别</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

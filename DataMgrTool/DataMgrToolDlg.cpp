@@ -12,6 +12,8 @@
 #endif
 
 
+Poco::FastMutex		g_fmRecog;		//识别线程获取任务锁
+RECOGTASKLIST		g_lRecogTask;	//识别任务列表
 
 CLog g_Log;
 int	g_nExitFlag;

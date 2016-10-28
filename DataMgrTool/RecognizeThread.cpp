@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "RecognizeThread.h"
-#include "ScanTool.h"
+//#include "ScanTool.h"
 
 
 using namespace cv;

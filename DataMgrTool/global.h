@@ -62,6 +62,7 @@
 
 #include "Poco/Checksum.h"
 
+#include "modelInfo.h"
 
 
 
