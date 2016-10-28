@@ -1177,10 +1177,16 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 
 	MatND src_hist2;
 	const int histSize2[1] = { 256 };	//rc.nThresholdValue - g_nRecogGrayMin
-	cv::calcHist(&matSrcRoi, 1, channels, Mat(), src_hist2, 1, histSize2, ranges, true, false);
+	const float* ranges2[1];
+	float hranges2[2];
+	hranges2[0] = 0;
+	hranges2[1] = 255;
+	ranges2[0] = hranges2;
+	cv::calcHist(&matSrcRoi, 1, channels, Mat(), src_hist2, 1, histSize2, ranges2, true, false);
 	int nCount = 0;
 	for (int i = 0; i < 256; i++)
 	{
+		TRACE("i = %d, val = %f\n", i, src_hist2.at<float>(i));
 		nCount += i * src_hist2.at<float>(i);
 	}
 	rc.fStandardMeanGray = nCount / rc.fStandardArea;
@@ -1323,13 +1329,13 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 		{
 			rc.nThresholdValue = m_nHeadVal;
 			rc.fStandardValuePercent = m_fHeadThresholdPercent;
-
-			if (rm.area() > rtMax.area())
-				rtMax = rm;
-
+			
 			Rect rtTmp = rm;
 			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
 			RecogGrayValue(matSrcModel, rc);
+
+			if (rm.area() > rtMax.area() && rc.fStandardDensity > 0.4)
+				rtMax = rm;
 
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.push_back(rc);
 		}
@@ -1341,6 +1347,9 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 			Rect rtTmp = rm;
 			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
 			RecogGrayValue(matSrcModel, rc);
+
+			if (rm.area() > rtMax.area() && rc.fStandardDensity > 0.4)
+				rtMax = rm;
 
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.push_back(rc);
 		}
@@ -1417,31 +1426,53 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 	cvReleaseMemStorage(&storage);
 
 	//二次过滤同步头
-#if 0
+#if 1
 	if (m_eCurCPType == H_HEAD)
 	{
-		int nDeviation = 5;
+		int nDeviation = 10;
 		std::vector<RECTINFO>::iterator itHead = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.begin();
 		for (; itHead != m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.end();)
 		{
-			if (itHead->rt.area() / rtMax.area() < 0.8 && ((itHead->rt.y > rtMax.y + nDeviation) || (itHead->rt.y < rtMax.y + rtMax.height + nDeviation)))
+			if ((float)itHead->rt.area() / rtMax.area() < 0.8 && ((itHead->rt.y < rtMax.y - nDeviation) || (itHead->rt.y > rtMax.y + rtMax.height + nDeviation)))
+			{
+				TRACE("1-当前矩形(%d,%d,%d,%d),面积%d,最大矩形(%d,%d,%d,%d),面积%d\n", itHead->rt.x, itHead->rt.y, itHead->rt.width, itHead->rt.height, itHead->rt.area(), rtMax.x, rtMax.y, rtMax.width, rtMax.height, rtMax.area());
 				itHead = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.erase(itHead);
-			else if (itHead->rt.area() / rtMax.area() < 0.1 || (itHead->rt.width > rtMax.width && itHead->rt.height < rtMax.height * 0.3) || (itHead->rt.height > rtMax.height && itHead->rt.width < rtMax.width * 0.3))
+			}
+			else if ((float)itHead->rt.area() / rtMax.area() < 0.1 || (itHead->rt.width > rtMax.width && itHead->rt.height < rtMax.height * 0.3) || (itHead->rt.height > rtMax.height && itHead->rt.width < rtMax.width * 0.3))
+			{
+				TRACE("2-当前矩形(%d,%d,%d,%d),面积%d,最大矩形(%d,%d,%d,%d),面积%d\n", itHead->rt.x, itHead->rt.y, itHead->rt.width, itHead->rt.height, itHead->rt.area(), rtMax.x, rtMax.y, rtMax.width, rtMax.height, rtMax.area());
 				itHead = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.erase(itHead);
+			}
+			else if (itHead->fStandardDensity < 0.3)
+			{
+				TRACE("3-当前矩形(%d,%d,%d,%d),面积%d, 密度%.3f,最大矩形(%d,%d,%d,%d),面积%d\n", itHead->rt.x, itHead->rt.y, itHead->rt.width, itHead->rt.height, itHead->rt.area(), itHead->fStandardDensity, rtMax.x, rtMax.y, rtMax.width, rtMax.height, rtMax.area());
+				itHead = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.erase(itHead);
+			}
 			else
 				itHead++;
 		}
 	}
 	if (m_eCurCPType == V_HEAD)
 	{
-		int nDeviation = 4;
+		int nDeviation = 10;
 		std::vector<RECTINFO>::iterator itHead = m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.begin();
 		for (; itHead != m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.end();)
 		{
-			if (itHead->rt.area() / rtMax.area() < 0.8 && ((itHead->rt.x < rtMax.x + nDeviation) || (itHead->rt.x < rtMax.x + rtMax.width + nDeviation)))
-				itHead = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.erase(itHead);
-			else if (itHead->rt.area() / rtMax.area() < 0.1 || (itHead->rt.width > rtMax.width && itHead->rt.height < rtMax.height * 0.3) || (itHead->rt.height > rtMax.height && itHead->rt.width < rtMax.width * 0.3))
-				itHead = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.erase(itHead);
+			if ((float)itHead->rt.area() / rtMax.area() < 0.8 && ((itHead->rt.x < rtMax.x - nDeviation) || (itHead->rt.x > rtMax.x + rtMax.width + nDeviation)))
+			{
+				TRACE("1-当前矩形(%d,%d,%d,%d),面积%d,最大矩形(%d,%d,%d,%d),面积%d\n", itHead->rt.x, itHead->rt.y, itHead->rt.width, itHead->rt.height, itHead->rt.area(), rtMax.x, rtMax.y, rtMax.width, rtMax.height, rtMax.area());
+				itHead = m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.erase(itHead);
+			}
+			else if ((float)itHead->rt.area() / rtMax.area() < 0.1 || (itHead->rt.width > rtMax.width && itHead->rt.height < rtMax.height * 0.3) || (itHead->rt.height > rtMax.height && itHead->rt.width < rtMax.width * 0.3))
+			{
+				TRACE("2-当前矩形(%d,%d,%d,%d),面积%d,最大矩形(%d,%d,%d,%d),面积%d\n", itHead->rt.x, itHead->rt.y, itHead->rt.width, itHead->rt.height, itHead->rt.area(), rtMax.x, rtMax.y, rtMax.width, rtMax.height, rtMax.area());
+				itHead = m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.erase(itHead);
+			}
+			else if (itHead->fStandardDensity < 0.3)
+			{
+				TRACE("3-当前矩形(%d,%d,%d,%d),面积%d, 密度%.3f,最大矩形(%d,%d,%d,%d),面积%d\n", itHead->rt.x, itHead->rt.y, itHead->rt.width, itHead->rt.height, itHead->rt.area(), itHead->fStandardDensity, rtMax.x, rtMax.y, rtMax.width, rtMax.height, rtMax.area());
+				itHead = m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.erase(itHead);
+			}
 			else
 				itHead++;
 		}

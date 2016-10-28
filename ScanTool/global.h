@@ -236,6 +236,16 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 {
 	int		nPaperCount;				//试卷袋中试卷总数量(学生数)
 	int		nRecogErrCount;				//识别错误试卷数量
+
+	//++统计信息
+	int		nOmrDoubt;				//OMR怀疑的数量
+	int		nOmrNull;				//OMR识别为空的数量
+	int		nSnNull;				//准考证号识别为空的数量
+
+	Poco::FastMutex	fmOmrStatistics;//omr统计锁
+	Poco::FastMutex fmSnStatistics; //zkzh统计锁
+	//--
+
 	Poco::FastMutex fmlPaper;			//对试卷列表读写锁
 	Poco::FastMutex fmlIssue;			//对问题试卷列表读写锁
 	std::string  strPapersName;			//试卷袋名称
@@ -247,6 +257,9 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	{
 		nPaperCount = 0;
 		nRecogErrCount = 0;
+		nOmrDoubt = 0;
+		nOmrNull = 0;
+		nSnNull = 0;
 	}
 	~_PapersInfo_()
 	{

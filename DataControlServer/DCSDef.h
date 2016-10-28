@@ -78,43 +78,6 @@ typedef std::list<pDECOMPRESSTASK> DECOMPRESSTASKLIST;	//识别任务列表
 extern Poco::FastMutex			g_fmDecompressLock;		//解压文件列表锁
 extern DECOMPRESSTASKLIST		g_lDecompressTask;		//解压文件列表
 
-#if 0
-typedef struct _RectInfo_
-{
-	cv::Rect	rt;
-}RECTINFO,*pRECTINFO;
-typedef std::list<RECTINFO> RECTLIST;
-
-typedef struct _SN_
-{
-	int nItem;			//第几位数
-	int nRecogVal;		//识别的结果
-	cv::Rect rt;
-	_SN_()
-	{
-		nItem = -1;
-		nRecogVal = -1;
-	}
-}SN_ITEM, *pSN_ITEM;
-typedef std::list<SN_ITEM> SNLIST;
-
-typedef struct _OmrResult_
-{
-	int		nTH;				//题号
-	int		nSingle;			//0-单选，1-多选
-	int		nDoubt;				//0-无怀疑, 1-有怀疑
-	std::string strRecogVal;	//识别结果：A、B、C...
-	std::string strRecogVal2;
-	RECTLIST	lSelAnswer;				//选项列表
-	_OmrResult_()
-	{
-		nDoubt = 0;
-		nTH = -1;
-		nSingle = 0;
-	}
-}OMR_RESULT, *pOMR_RESULT;
-typedef std::list<OMR_RESULT> OMRRESULTLIST;
-#endif
 
 // 图片文件
 typedef struct _Pic_
@@ -177,6 +140,13 @@ typedef struct _Papers_
 	int			nSubjectID;			//科目ID
 	int			nTeacherId;			//教师ID
 	int			nUserId;			//用户ID
+
+	//++
+	int		nOmrDoubt;				//OMR怀疑的数量
+	int		nOmrNull;				//OMR识别为空的数量
+	int		nSnNull;				//准考证号识别为空的数量
+	//--
+
 	std::string	strUploader;		//上传者
 	std::string strEzs;				//上传给后端服务器用，--cookie
 	std::string strDesc;			//从试卷袋文件夹读取

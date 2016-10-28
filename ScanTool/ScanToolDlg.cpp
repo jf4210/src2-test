@@ -2421,10 +2421,6 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		jsnPaper.set("name", (*itNomarlPaper)->strStudentInfo);
 		jsnPaper.set("zkzh", (*itNomarlPaper)->strSN);
 		jsnPaper.set("qk", (*itNomarlPaper)->nQKFlag);
-// 		if ((*itNomarlPaper)->strSN != "")
-// 			jsnPaper.set("doubt", 0);
-// 		else
-// 			jsnPaper.set("doubt", 1);
 		
 		Poco::JSON::Array jsnSnDetailArry;
 		SNLIST::iterator itSn = (*itNomarlPaper)->lSnResult.begin();
@@ -2438,14 +2434,10 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
 			for (; itRect != (*itSn)->lSN.end(); itRect++)
 			{
-// 				if ((*itSn)->nRecogVal == itRect->nSnVal)
-// 				{
-					jsnSnPosition.set("x", itRect->rt.x);
-					jsnSnPosition.set("y", itRect->rt.y);
-					jsnSnPosition.set("w", itRect->rt.width);
-					jsnSnPosition.set("h", itRect->rt.height);
-// 					break;
-// 				}
+				jsnSnPosition.set("x", itRect->rt.x);
+				jsnSnPosition.set("y", itRect->rt.y);
+				jsnSnPosition.set("w", itRect->rt.width);
+				jsnSnPosition.set("h", itRect->rt.height);
 			}
 			jsnSnItem.set("position", jsnSnPosition);
 			jsnSnDetailArry.add(jsnSnItem);
@@ -2465,18 +2457,15 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
 			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
 			{
-// 				if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
-// 				{
-					Poco::JSON::Object jsnItem;
-					char szVal[5] = { 0 };
-					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
-					jsnItem.set("val", szVal);
-					jsnItem.set("x", itRect->rt.x);
-					jsnItem.set("y", itRect->rt.y);
-					jsnItem.set("w", itRect->rt.width);
-					jsnItem.set("h", itRect->rt.height);
-					jsnPositionArry.add(jsnItem);
-//				}
+				Poco::JSON::Object jsnItem;
+				char szVal[5] = { 0 };
+				sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+				jsnItem.set("val", szVal);
+				jsnItem.set("x", itRect->rt.x);
+				jsnItem.set("y", itRect->rt.y);
+				jsnItem.set("w", itRect->rt.width);
+				jsnItem.set("h", itRect->rt.height);
+				jsnPositionArry.add(jsnItem);
 			}
 			jsnOmr.set("position", jsnPositionArry);
 			jsnOmrArry.add(jsnOmr);
@@ -2532,14 +2521,10 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
 			for (; itRect != (*itSn)->lSN.end(); itRect++)
 			{
-// 				if ((*itSn)->nRecogVal == itRect->nSnVal)
-// 				{
-					jsnSnPosition.set("x", itRect->rt.x);
-					jsnSnPosition.set("y", itRect->rt.y);
-					jsnSnPosition.set("w", itRect->rt.width);
-					jsnSnPosition.set("h", itRect->rt.height);
-// 					break;
-// 				}
+				jsnSnPosition.set("x", itRect->rt.x);
+				jsnSnPosition.set("y", itRect->rt.y);
+				jsnSnPosition.set("w", itRect->rt.width);
+				jsnSnPosition.set("h", itRect->rt.height);
 			}
 			jsnSnItem.set("position", jsnSnPosition);
 			jsnSnDetailArry.add(jsnSnItem);
@@ -2559,18 +2544,15 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
 			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
 			{
-// 				if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
-// 				{
-					Poco::JSON::Object jsnItem;
-					char szVal[5] = { 0 };
-					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
-					jsnItem.set("val", szVal);
-					jsnItem.set("x", itRect->rt.x);
-					jsnItem.set("y", itRect->rt.y);
-					jsnItem.set("w", itRect->rt.width);
-					jsnItem.set("h", itRect->rt.height);
-					jsnPositionArry.add(jsnItem);
-//				}
+				Poco::JSON::Object jsnItem;
+				char szVal[5] = { 0 };
+				sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+				jsnItem.set("val", szVal);
+				jsnItem.set("x", itRect->rt.x);
+				jsnItem.set("y", itRect->rt.y);
+				jsnItem.set("w", itRect->rt.width);
+				jsnItem.set("h", itRect->rt.height);
+				jsnPositionArry.add(jsnItem);
 			}
 			jsnOmr.set("position", jsnPositionArry);
 			jsnOmrArry.add(jsnOmr);
@@ -2618,6 +2600,10 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	jsnFileData.set("nUserId", nUserId);
 	jsnFileData.set("scanNum", m_pPapersInfo->nPaperCount);		//扫描的学生数量
 	jsnFileData.set("detail", jsnPaperArry);
+
+	jsnFileData.set("nOmrDoubt", m_pPapersInfo->nOmrDoubt);
+	jsnFileData.set("nOmrNull", m_pPapersInfo->nOmrNull);
+	jsnFileData.set("nSnNull", m_pPapersInfo->nSnNull);
 	std::stringstream jsnString;
 	jsnFileData.stringify(jsnString, 0);
 
@@ -2689,7 +2675,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	}
 
 	//添加上传列表，	******************		需要进行鉴权操作	***************	
-	#if 0
+	#if 1
 		char szFileFullPath[300] = { 0 };
 		sprintf_s(szFileFullPath, "%s%s", szPapersSavePath, T2A(PAPERS_EXT_NAME));
 		pSENDTASK pTask = new SENDTASK;

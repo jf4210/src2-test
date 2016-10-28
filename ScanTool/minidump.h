@@ -152,7 +152,7 @@ LONG WINAPI UnhandledExceptionFilterEx(struct _EXCEPTION_POINTERS *pException)
 	if (pFind)
 	{
 		*(pFind + 1) = 0;
-		_tcscat(szMbsFile, _T("CreateMiniDump.dmp"));
+		_tcscat(szMbsFile, _T("ScanTool.dmp"));
 		CreateMiniDump(pException, szMbsFile);
 	}
 	

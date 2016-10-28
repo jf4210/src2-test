@@ -1368,10 +1368,15 @@ inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 
 
 	cv::MatND src_hist2;
-	const int histSize2[1] = { 255 };	//rc.nThresholdValue - g_nRecogGrayMin
-	cv::calcHist(&matSrcRoi, 1, channels, cv::Mat(), src_hist2, 1, histSize2, ranges, true, false);
+	const int histSize2[1] = { 256 };	//rc.nThresholdValue - g_nRecogGrayMin
+	const float* ranges2[1];
+	float hranges2[2];
+	hranges2[0] = 0;
+	hranges2[1] = 255;
+	ranges2[0] = hranges2;
+	cv::calcHist(&matSrcRoi, 1, channels, cv::Mat(), src_hist2, 1, histSize2, ranges2, true, false);
 	int nCount = 0;
-	for (int i = 0; i < 255; i++)
+	for (int i = 0; i < 256; i++)
 	{
 		nCount += i * src_hist2.at<float>(i);
 	}

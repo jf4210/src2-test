@@ -426,6 +426,16 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 		result = parser.parse(strFileData);		//strJsnData
 		Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
 
+		int nOmrDoubt = -1;
+		int nOmrNull = -1;
+		int nSnNull = -1;
+		if (objData->has("nOmrDoubt"))
+			nOmrDoubt = objData->get("nOmrDoubt").convert<int>();
+		if (objData->has("nOmrNull"))
+			nOmrNull = objData->get("nOmrNull").convert<int>();
+		if (objData->has("nSnNull"))
+			nSnNull = objData->get("nSnNull").convert<int>();
+
 		int nExamId		= objData->get("examId").convert<int>();
 		int nSubjectId	= objData->get("subjectId").convert<int>();
 		int nTeacherId	= objData->get("nTeacherId").convert<int>();
@@ -535,6 +545,9 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 			return false;
 		}
 
+		pPapers->nOmrDoubt	= nOmrDoubt;
+		pPapers->nOmrNull	= nOmrNull;
+		pPapers->nSnNull	= nSnNull;
 		pPapers->nExamID	= nExamId;
 		pPapers->nSubjectID = nSubjectId;
 		pPapers->nTeacherId = nTeacherId;

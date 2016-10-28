@@ -1196,14 +1196,10 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
 			for (; itRect != (*itSn)->lSN.end(); itRect++)
 			{
-// 				if ((*itSn)->nRecogVal == itRect->nSnVal)
-// 				{
 					jsnSnPosition.set("x", itRect->rt.x);
 					jsnSnPosition.set("y", itRect->rt.y);
 					jsnSnPosition.set("w", itRect->rt.width);
 					jsnSnPosition.set("h", itRect->rt.height);
-// 					break;
-// 				}
 			}
 			jsnSnItem.set("position", jsnSnPosition);
 			jsnSnDetailArry.add(jsnSnItem);
@@ -1223,8 +1219,6 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
 			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
 			{
-// 				if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
-// 				{
 					Poco::JSON::Object jsnItem;
 					char szVal[5] = { 0 };
 					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
@@ -1234,7 +1228,6 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 					jsnItem.set("w", itRect->rt.width);
 					jsnItem.set("h", itRect->rt.height);
 					jsnPositionArry.add(jsnItem);
-//				}
 			}
 			jsnOmr.set("position", jsnPositionArry);
 			jsnOmrArry.add(jsnOmr);
@@ -1290,14 +1283,10 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
 			for (; itRect != (*itSn)->lSN.end(); itRect++)
 			{
-// 				if ((*itSn)->nRecogVal == itRect->nSnVal)
-// 				{
 					jsnSnPosition.set("x", itRect->rt.x);
 					jsnSnPosition.set("y", itRect->rt.y);
 					jsnSnPosition.set("w", itRect->rt.width);
 					jsnSnPosition.set("h", itRect->rt.height);
-// 					break;
-// 				}
 			}
 			jsnSnItem.set("position", jsnSnPosition);
 			jsnSnDetailArry.add(jsnSnItem);
@@ -1317,8 +1306,6 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
 			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
 			{
-// 				if (itOmr->strRecogVal.find((char)(itRect->nAnswer + 65)) != std::string::npos)
-// 				{
 					Poco::JSON::Object jsnItem;
 					char szVal[5] = { 0 };
 					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
@@ -1328,7 +1315,6 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 					jsnItem.set("w", itRect->rt.width);
 					jsnItem.set("h", itRect->rt.height);
 					jsnPositionArry.add(jsnItem);
-//				}
 			}
 			jsnOmr.set("position", jsnPositionArry);
 			jsnOmrArry.add(jsnOmr);
@@ -1376,6 +1362,10 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	jsnFileData.set("nUserId", nUserId);
 	jsnFileData.set("scanNum", pPapers->nPaperCount);		//扫描的学生数量
 	jsnFileData.set("detail", jsnPaperArry);
+
+	jsnFileData.set("nOmrDoubt", pPapers->nOmrDoubt);
+	jsnFileData.set("nOmrNull", pPapers->nOmrNull);
+	jsnFileData.set("nSnNull", pPapers->nSnNull);
 	std::stringstream jsnString;
 	jsnFileData.stringify(jsnString, 0);
 
@@ -2059,7 +2049,28 @@ int CPaperInputDlg::CheckOrientation(cv::Mat& matSrc, int n)
 
 void CPaperInputDlg::OnBnClickedBtnTest()
 {
-	// TODO:  在此添加控件通知处理程序代码
+	std::string strStatisticsLog;
+	int nModelOmrCount = 0;
+	for (int k = 0; k < m_pModel->vecPaperModel.size(); k++)
+	{
+		nModelOmrCount += m_pModel->vecPaperModel[k]->lOMR2.size();
+	}
+
+	PAPERS_LIST::iterator itPapers = g_lPapers.begin();
+	for (; itPapers != g_lPapers.end(); itPapers++)
+	{
+		int nPapersCount = (*itPapers)->lPaper.size() + (*itPapers)->lIssue.size();
+		int nOmrCount = nModelOmrCount * nPapersCount;
+		if (nPapersCount == 0)
+			continue;
+
+		char szStatisticsInfo[300] = { 0 };
+		sprintf_s(szStatisticsInfo, "\n统计信息: omrDoubt = %.2f(%d/%d), omrNull = %.2f(%d/%d), zkzhNull = %.2f(%d/%d)\n", (float)(*itPapers)->nOmrDoubt / nOmrCount, (*itPapers)->nOmrDoubt, nOmrCount, \
+				  (float)(*itPapers)->nOmrNull / nOmrCount, (*itPapers)->nOmrNull, nOmrCount, \
+				  (float)(*itPapers)->nSnNull / nPapersCount, (*itPapers)->nSnNull, nPapersCount);
+		strStatisticsLog.append(szStatisticsInfo);
+	}
+	g_pLogger->information(strStatisticsLog);
 }
 
 void CPaperInputDlg::ShowPaperByItem(int nItem)
