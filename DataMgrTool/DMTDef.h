@@ -3,17 +3,40 @@
 #include "Log.h"
 #include "MyCodeConvert.h"
 
+#include "zbar.h"   
+
+
+#define  MSG_ERR_RECOG		(WM_USER + 110)
+#define  MSG_RECOG_COMPLETE	(WM_USER + 110)
 
 
 extern CLog g_Log;
 extern int	g_nExitFlag;
 
+extern CString				g_strCurrentPath;
+
 extern std::string _strEncryptPwd_;
+extern pMODEL _pModel_;
+
+
+extern int		_nCannyKernel_;			//轮廓化核因子
+
+extern int		g_nRecogGrayMin;		//灰度点(除空白点,OMR外)计算灰度的最小考试范围
+extern int		g_nRecogGrayMax_White;	//空白点校验点计算灰度的最大考试范围
+extern int		g_nRecogGrayMin_OMR;	//OMR计算灰度的最小考试范围
+extern int		g_RecogGrayMax_OMR;		//OMR计算灰度的最大考试范围
+
+extern double	_dCompThread_Fix_;
+extern double	_dDiffThread_Fix_;
+extern double	_dDiffExit_Fix_;
+extern double	_dCompThread_Head_;
+extern double	_dDiffThread_Head_;
+extern double	_dDiffExit_Head_;
 
 
 typedef struct _DecompressTask_
 {
-	int nTaskType;				//1-普通解压，2-区分试卷包到不同目录
+	int nTaskType;				//1-普通解压，2-区分试卷包到不同目录, 3-重新识别OMR和SN, 4-解压模板
 	std::string strFileBaseName;
 	std::string strSrcFileName;
 	std::string strFilePath;
@@ -102,6 +125,7 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 {
 	int		nPaperCount;				//试卷袋中试卷总数量(学生数)
 	int		nRecogErrCount;				//识别错误试卷数量
+	int		nTotalPics;
 
 	//++统计信息
 	int		nOmrDoubt;				//OMR怀疑的数量
@@ -112,20 +136,29 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	Poco::FastMutex fmSnStatistics; //zkzh统计锁
 	//--
 
+	int		nRecogPics;				//已经识别完成的数量
+	Poco::FastMutex fmRecogCompleteOK; //上面的锁
+
 	Poco::FastMutex fmlPaper;			//对试卷列表读写锁
 	Poco::FastMutex fmlIssue;			//对问题试卷列表读写锁
 	std::string  strPapersName;			//试卷袋名称
 	std::string	 strPapersDesc;			//试卷袋详细描述
 
+	std::string		strPapersPath;
+	std::string		strSrcPapersPath;
+	std::string		strSrcPapersFileName;
+
 	PAPER_LIST	lPaper;					//此试卷袋中试卷列表
 	PAPER_LIST	lIssue;					//此试卷袋中识别有问题的试卷列表
 	_PapersInfo_()
 	{
+		nTotalPics = 0;
 		nPaperCount = 0;
 		nRecogErrCount = 0;
 		nOmrDoubt = 0;
 		nOmrNull = 0;
 		nSnNull = 0;
+		nRecogPics = 0;
 	}
 	~_PapersInfo_()
 	{
@@ -163,11 +196,25 @@ typedef std::list<pRECOGTASK> RECOGTASKLIST;	//识别任务列表
 extern Poco::FastMutex		g_fmRecog;		//识别线程获取任务锁
 extern RECOGTASKLIST		g_lRecogTask;	//识别任务列表
 
+extern Poco::FastMutex		g_fmPapers;		//操作试卷袋列表的任务锁
+extern PAPERS_LIST			g_lPapers;		//所有的试卷袋信息
 
 bool encString(std::string& strSrc, std::string& strDst);
 bool decString(std::string& strSrc, std::string& strDst);
 
 
+void SharpenImage(const cv::Mat &image, cv::Mat &result, int nSharpKernel);
+
+pMODEL	LoadModelFile(CString strModelPath);		//加载模板文件
+bool	SortByArea(cv::Rect& rt1, cv::Rect& rt2);		//按面积排序
+bool	SortByPositionX(RECTINFO& rc1, RECTINFO& rc2);
+bool	SortByPositionY(RECTINFO& rc1, RECTINFO& rc2);
+bool	SortByPositionX2(cv::Rect& rt1, cv::Rect& rt2);
+bool	SortByPositionY2(cv::Rect& rt1, cv::Rect& rt2);
+bool	SortbyNumASC(const std::string& x, const std::string& y);
+bool	SortByPaper(const pST_PaperInfo& x, const pST_PaperInfo& y);
+
+bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 0, int nPicH = 0);
 
 
 //----------------	OMR识别灰度差值比较	------------------
@@ -182,6 +229,17 @@ bool	SortByItemDiff(ST_ITEM_DIFF& item1, ST_ITEM_DIFF& item2);
 bool	SortByItemGray(pRECTINFO item1, pRECTINFO item2);
 //--------------------------------------------------------
 
+
+//----------------	二维码、条码识别	------------------
+//zbar接口
+std::string ZbarDecoder(cv::Mat img, std::string& strTypeName);
+
+//对二值图像进行识别，如果失败则开运算进行二次识别
+std::string GetQRInBinImg(cv::Mat binImg, std::string& strTypeName);
+
+//main function
+std::string GetQR(cv::Mat img, std::string& strTypeName);
+//--------------------------------------------------------
 
 
 

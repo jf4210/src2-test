@@ -7,6 +7,9 @@
 #include "DataMgrTool.h"
 #include "DataMgrToolDlg.h"
 
+
+
+
 class DecompressHandler
 {
 public:
@@ -83,6 +86,21 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	}
 	std::string strOutDir = CMyCodeConvert::Gb2312ToUtf8(pTask->strDecompressDir + "\\" + pTask->strFileBaseName);
 
+	pPAPERSINFO pPapers = NULL;
+	if (pTask->nTaskType == 3)
+	{
+		pPapers = new PAPERSINFO;
+		pPapers->strPapersName = pTask->strFileBaseName;
+		pPapers->strPapersPath = CMyCodeConvert::Utf8ToGb2312(strOutDir);
+		pPapers->strSrcPapersPath = pTask->strFilePath;
+		pPapers->strSrcPapersFileName = pTask->strSrcFileName;
+		
+		g_fmPapers.lock();
+		g_lPapers.push_back(pPapers);
+		g_fmPapers.unlock();
+	}
+	
+
 	Poco::File decompressDir(strOutDir);
 	if (decompressDir.exists())
 		decompressDir.remove(true);
@@ -143,6 +161,16 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	}
 	CHDIR(pTask->strDecompressDir.c_str());		//切换回解压根目录，否则删除压缩文件夹失败
 
+	if (pTask->nTaskType == 3)
+	{
+		SearchExtractFile(pPapers, pPapers->strPapersPath);
+
+		//解压完成
+		pPapers->lPaper.sort(SortByPaper);
+	}
+	
+
+
 	USES_CONVERSION;
 	if (pTask->nTaskType == 1)
 	{
@@ -150,7 +178,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		strMsg.Format(_T("解压(%s)完成\r\n"), A2T(pTask->strSrcFileName.c_str()));
 		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
 	}
-	else
+	else if (pTask->nTaskType == 2)
 	{
 		std::string strPapersFilePath = strOutDir + "\\papersInfo.dat";
 		int nExamID = 0;
@@ -181,6 +209,42 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		}
 		
 	}
+	else if (pTask->nTaskType == 3)
+	{
+		//读取试卷袋文件夹里面的文件获取试卷袋信息
+// 		std::string strPapersFilePath = strOutDir + "\\papersInfo.dat";
+// 		bool bResult_Data = GetFileData(strPapersFilePath, pPapers);
+// 		if (!bResult_Data)
+
+		//添加到识别任务列表
+		PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
+		for (; itPaper != pPapers->lPaper.end(); itPaper++)
+		{
+			pRECOGTASK pTask = new RECOGTASK;
+			pTask->pPaper = *itPaper;
+			g_lRecogTask.push_back(pTask);
+		}
+
+	}
+	else if (pTask->nTaskType == 4)
+	{
+		CString strMsg;
+		strMsg.Format(_T("识别模板解压(%s)完成\r\n"), A2T(pTask->strSrcFileName.c_str()));
+		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
+
+		if (_pModel_)
+		{
+			delete _pModel_;
+			_pModel_ = NULL;
+		}
+
+		std::string strModelPath = strOutDir;
+		_pModel_ = LoadModelFile(A2T(strModelPath.c_str()));
+
+		strMsg.Format(_T("模板加载(%s)完成\r\n"), A2T(pTask->strSrcFileName.c_str()));
+		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
+	}
+
 #endif
 }
 
@@ -229,6 +293,219 @@ void CDecompressThread::GetFileData(std::string strFilePath, int& nExamID, int& 
 		strErrInfo.append("解析试卷袋文件夹中文件失败2: ");
 		strErrInfo.append(exc.message());
 		g_Log.LogOutError(strErrInfo);
+	}
+}
+
+bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERSINFO pPapers)
+{
+	std::string strJsnData;
+	std::ifstream in(strFilePath);
+	std::string strJsnLine;
+	while (!in.eof())
+	{
+		getline(in, strJsnLine);
+		strJsnData.append(strJsnLine);
+	}
+	in.close();
+
+	std::string strFileData;
+
+	if (!decString(strJsnData, strFileData))
+		strFileData = strJsnData;
+
+	Poco::JSON::Parser parser;
+	Poco::Dynamic::Var result;
+	try
+	{
+		result = parser.parse(strFileData);		//strJsnData
+		Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
+
+		int nOmrDoubt = -1;
+		int nOmrNull = -1;
+		int nSnNull = -1;
+		if (objData->has("nOmrDoubt"))
+			nOmrDoubt = objData->get("nOmrDoubt").convert<int>();
+		if (objData->has("nOmrNull"))
+			nOmrNull = objData->get("nOmrNull").convert<int>();
+		if (objData->has("nSnNull"))
+			nSnNull = objData->get("nSnNull").convert<int>();
+
+		int nExamId = objData->get("examId").convert<int>();
+		int nSubjectId = objData->get("subjectId").convert<int>();
+		int nTeacherId = objData->get("nTeacherId").convert<int>();
+		int nUserId = objData->get("nUserId").convert<int>();
+		int nStudentNum = objData->get("scanNum").convert<int>();
+		std::string strUploader = objData->get("uploader").convert<std::string>();
+		std::string strEzs = objData->get("ezs").convert<std::string>();
+
+#if 0
+		bool bFindDeff = false;
+		std::string strStudentList_Src;
+		std::string strStudentList_Decompress;
+		Poco::JSON::Array::Ptr jsnDetailArry = objData->getArray("detail");
+		for (int i = 0; i < jsnDetailArry->size(); i++)
+		{
+			Poco::JSON::Object::Ptr jsnPaperObj = jsnDetailArry->getObject(i);
+			std::string strStudentInfo = jsnPaperObj->get("name").convert<std::string>();
+
+			pST_PaperInfo pPaper = NULL;
+			PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
+			for (int j = 0; itPaper != pPapers->lPaper.end(); itPaper++)
+			{
+				strStudentList_Decompress.append((*itPaper)->strStudentInfo + " ");
+				if ((*itPaper)->strStudentInfo == strStudentInfo)
+				{
+					pPaper = *itPaper;
+					break;
+				}
+			}
+			if (pPaper)
+			{
+				pPaper->strZkzh = jsnPaperObj->get("zkzh").convert<std::string>();
+				pPaper->nQkFlag = jsnPaperObj->get("qk").convert<int>();
+
+				Poco::JSON::Array::Ptr jsnSnArry = jsnPaperObj->getArray("snDetail");
+				Poco::JSON::Object jsnSn;
+				jsnSn.set("examId", nExamId);
+				jsnSn.set("subjectId", nSubjectId);
+				jsnSn.set("userId", nUserId);
+				jsnSn.set("teacherId", nTeacherId);
+				jsnSn.set("zkzh", pPaper->strZkzh);
+				jsnSn.set("papers", pPapers->strPapersName);
+				if (pPaper->strZkzh != "")
+					jsnSn.set("doubt", 0);
+				else
+					jsnSn.set("doubt", 1);
+				jsnSn.set("detail", jsnSnArry);
+				std::stringstream jsnSnString;
+				jsnSn.stringify(jsnSnString, 0);
+				pPaper->strSnDetail = jsnSnString.str();
+
+				Poco::JSON::Array::Ptr jsnOmrArry = jsnPaperObj->getArray("omr");
+				Poco::JSON::Object jsnOmr;
+				jsnOmr.set("examId", nExamId);
+				jsnOmr.set("subjectId", nSubjectId);
+				jsnOmr.set("userId", nUserId);
+				jsnOmr.set("teacherId", nTeacherId);
+				jsnOmr.set("zkzh", pPaper->strZkzh);
+				jsnOmr.set("papers", pPapers->strPapersName);
+				jsnOmr.set("omr", jsnOmrArry);
+				std::stringstream jsnOmrString;
+				jsnOmr.stringify(jsnOmrString, 0);
+				pPaper->strOmrDetail = jsnOmrString.str();
+
+				if (jsnPaperObj->has("electOmr"))
+				{
+					//*************	注意：这里需要和后端确认，现在还不行	********************
+
+					Poco::JSON::Array::Ptr jsnElectOmrArry = jsnPaperObj->getArray("electOmr");
+					Poco::JSON::Object jsnElectOmr;
+					jsnElectOmr.set("examId", nExamId);
+					jsnElectOmr.set("subjectId", nSubjectId);
+					jsnElectOmr.set("userId", nUserId);
+					jsnElectOmr.set("teacherId", nTeacherId);
+					jsnElectOmr.set("zkzh", pPaper->strZkzh);
+					jsnElectOmr.set("papers", pPapers->strPapersName);
+					jsnElectOmr.set("electOmr", jsnElectOmrArry);
+					std::stringstream jsnElectOmrString;
+					jsnElectOmr.stringify(jsnElectOmrString, 0);
+					pPaper->strElectOmrDetail = jsnElectOmrString.str();
+					pPaper->nHasElectOmr = 1;
+				}
+			}
+			else
+			{
+				strStudentList_Src.append(strStudentInfo + " ");
+				bFindDeff = true;
+			}
+		}
+		if (bFindDeff)
+		{
+			std::string strLog;
+			strLog = "出现OMR和SN号信息与学生试卷不一致的情况，详情: 源(" + strStudentList_Src + ")未发现, 解压后(" + strStudentList_Decompress + ")";
+			g_Log.LogOutError(strLog);
+			return false;
+		}
+
+		pPapers->nOmrDoubt = nOmrDoubt;
+		pPapers->nOmrNull = nOmrNull;
+		pPapers->nSnNull = nSnNull;
+		pPapers->nExamID = nExamId;
+		pPapers->nSubjectID = nSubjectId;
+		pPapers->nTeacherId = nTeacherId;
+		pPapers->nUserId = nUserId;
+		pPapers->nTotalPaper = nStudentNum;
+		pPapers->strUploader = strUploader;
+		pPapers->strEzs = SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
+#endif
+	}
+	catch (Poco::JSON::JSONException& jsone)
+	{
+		std::string strErrInfo;
+		strErrInfo.append("解析试卷袋文件夹中文件失败: ");
+		strErrInfo.append(jsone.message());
+		g_Log.LogOutError(strErrInfo);
+		return false;
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strErrInfo;
+		strErrInfo.append("解析试卷袋文件夹中文件失败2: ");
+		strErrInfo.append(exc.message());
+		g_Log.LogOutError(strErrInfo);
+		return false;
+	}
+	return true;
+}
+
+void CDecompressThread::SearchExtractFile(pPAPERSINFO pPapers, std::string strPath)
+{
+	std::string strPapersPath = CMyCodeConvert::Gb2312ToUtf8(strPath);
+	Poco::DirectoryIterator it(strPapersPath);
+	Poco::DirectoryIterator end;
+	while (it != end)
+	{
+		Poco::Path p(it->path());
+		if (it->isFile())
+		{
+			std::string strName = p.getFileName();
+			if (strName.find("papersInfo.dat") != std::string::npos)
+			{
+				it++;
+				continue;
+			}
+
+			pST_PicInfo pPic = new ST_PicInfo;
+			pPic->strPicName = strName;
+			pPic->strPicPath = pPapers->strPapersPath + "\\" + pPic->strPicName;
+
+			int nPos = pPic->strPicName.find("_");
+			std::string strPaperName = pPic->strPicName.substr(0, nPos);
+			bool bFind = false;
+			PAPER_LIST::iterator it = pPapers->lPaper.begin();
+			for (; it != pPapers->lPaper.end(); it++)
+			{
+				if ((*it)->strStudentInfo == strPaperName)
+				{
+					(*it)->lPic.push_back(pPic);
+					bFind = true;
+					break;
+				}
+			}
+			if (!bFind)
+			{
+				pST_PaperInfo pPaper = new ST_PaperInfo;
+				pPaper->lPic.push_back(pPic);
+				pPic->pPaper = pPaper;
+				pPaper->strStudentInfo = strPaperName;
+				pPaper->pModel = _pModel_;
+				pPaper->pPapers = pPapers;
+				pPaper->pSrcDlg = this;
+				pPapers->lPaper.push_back(pPaper);
+			}
+			pPapers->nTotalPics++;						//图片数增加一张
+		}
+		it++;
 	}
 }
 

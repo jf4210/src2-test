@@ -5,7 +5,7 @@
 #pragma once
 #include "global.h"
 #include "DecompressThread.h"
-
+#include "RecognizeThread.h"
 
 // CDataMgrToolDlg 对话框
 class CDataMgrToolDlg : public CDialogEx
@@ -38,15 +38,25 @@ public:
 
 	CMFCEditBrowseCtrl m_mfcEdit_PkgDir;
 	CMFCEditBrowseCtrl m_mfcEdit_RecogDir;
+	CMFCEditBrowseCtrl m_mfcEdit_ModelPath;
 	CString		m_strPkgPath;
 	CString		m_strRecogPath;
+	CString		m_strModelPath;
 
 
 	void	showMsg(CString& strMsg);
+
+	LRESULT MsgRecogErr(WPARAM wParam, LPARAM lParam);
+	LRESULT MsgRecogComplete (WPARAM wParam, LPARAM lParam);
 private:
 	Poco::Thread* m_pDecompressThread;
 	std::vector<CDecompressThread*> m_vecDecompressThreadObj;
 
+	Poco::Thread*	m_pRecogThread;
+	std::vector<CRecognizeThread*> m_vecRecogThreadObj;
+
+	void InitParam();
+	void InitConfig();
 // 实现
 protected:
 	HICON m_hIcon;
@@ -63,4 +73,5 @@ public:
 	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedBtnClear();
 	afx_msg void OnBnClickedBtnRecogpkg();
+	afx_msg void OnBnClickedBtnRerecogpkg();
 };

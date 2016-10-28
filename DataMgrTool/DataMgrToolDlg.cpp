@@ -17,10 +17,33 @@ RECOGTASKLIST		g_lRecogTask;	//识别任务列表
 
 CLog g_Log;
 int	g_nExitFlag;
+CString				g_strCurrentPath;
 std::string _strEncryptPwd_ = "yklxTest";
 
 Poco::FastMutex			g_fmDecompressLock;		//解压文件列表锁
 DECOMPRESSTASKLIST		g_lDecompressTask;		//解压文件列表
+
+Poco::FastMutex		g_fmPapers;		//操作试卷袋列表的任务锁
+PAPERS_LIST			g_lPapers;		//所有的试卷袋信息
+
+pMODEL _pModel_ = NULL;
+
+
+int		_nCannyKernel_ = 90;		//轮廓化核因子
+
+int		g_nRecogGrayMin = 0;			//灰度点(除空白点,OMR外)计算灰度的最小考试范围
+int		g_nRecogGrayMax_White = 255;	//空白点校验点计算灰度的最大考试范围
+int		g_nRecogGrayMin_OMR = 0;		//OMR计算灰度的最小考试范围
+int		g_RecogGrayMax_OMR = 235;		//OMR计算灰度的最大考试范围
+
+
+double	_dCompThread_Fix_ = 1.2;
+double	_dDiffThread_Fix_ = 0.2;
+double	_dDiffExit_Fix_ = 0.3;
+double	_dCompThread_Head_ = 1.0;
+double	_dDiffThread_Head_ = 0.085;
+double	_dDiffExit_Head_ = 0.15;
+
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -82,6 +105,8 @@ void CDataMgrToolDlg::DoDataExchange(CDataExchange* pDX)
 
 	DDX_Text(pDX, IDC_MFCEDITBROWSE_RecogDir, m_strRecogPath);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_RecogDir, m_mfcEdit_RecogDir);
+	DDX_Text(pDX, IDC_MFCEDITBROWSE_ModelPath, m_strModelPath);
+	DDX_Control(pDX, IDC_MFCEDITBROWSE_ModelPath, m_mfcEdit_ModelPath);
 }
 
 BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
@@ -93,6 +118,9 @@ BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BTN_Clear, &CDataMgrToolDlg::OnBnClickedBtnClear)
 	ON_BN_CLICKED(IDC_BTN_RecogPKG, &CDataMgrToolDlg::OnBnClickedBtnRecogpkg)
+	ON_BN_CLICKED(IDC_BTN_ReRecogPKG, &CDataMgrToolDlg::OnBnClickedBtnRerecogpkg)
+	ON_MESSAGE(MSG_ERR_RECOG, &CDataMgrToolDlg::MsgRecogErr)
+	ON_MESSAGE(MSG_RECOG_COMPLETE, &CDataMgrToolDlg::MsgRecogComplete)
 END_MESSAGE_MAP()
 
 
@@ -126,6 +154,9 @@ BOOL CDataMgrToolDlg::OnInitDialog()
 	//  执行此操作
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
+
+	InitConfig();
+	InitParam();
 
 	m_pDecompressThread = new Poco::Thread[1];
 	for (int i = 0; i < 1; i++)
@@ -211,8 +242,123 @@ void CDataMgrToolDlg::OnDestroy()
 	}
 	delete[] m_pDecompressThread;
 
+
+	g_fmRecog.lock();			//释放未处理完的识别任务列表
+	RECOGTASKLIST::iterator itRecog = g_lRecogTask.begin();
+	for (; itRecog != g_lRecogTask.end();)
+	{
+		pRECOGTASK pRecogTask = *itRecog;
+		SAFE_RELEASE(pRecogTask);
+		itRecog = g_lRecogTask.erase(itRecog);
+	}
+	g_fmRecog.unlock();
+
+	for (int i = 0; i < m_vecRecogThreadObj.size(); i++)
+	{
+		m_vecRecogThreadObj[i]->eExit.wait();
+		m_pRecogThread[i].join();
+	}
+	std::vector<CRecognizeThread*>::iterator itRecogObj = m_vecRecogThreadObj.begin();
+	for (; itRecogObj != m_vecRecogThreadObj.end();)
+	{
+		CRecognizeThread* pObj = *itRecogObj;
+		SAFE_RELEASE(pObj);
+		itRecogObj = m_vecRecogThreadObj.erase(itRecogObj);
+	}
+	if (m_pRecogThread)
+	{
+		delete[] m_pRecogThread;
+		m_pRecogThread = NULL;
+	}
+	g_Log.LogOut("识别线程释放完毕.");
+
+	if (_pModel_)
+	{
+		delete _pModel_;
+		_pModel_ = NULL;
+	}
+
+	g_fmPapers.lock();			//释放试卷袋列表
+	PAPERS_LIST::iterator itPapers = g_lPapers.begin();
+	for (; itPapers != g_lPapers.end();)
+	{
+		pPAPERSINFO pPapersTask = *itPapers;
+		SAFE_RELEASE(pPapersTask);
+		itPapers = g_lPapers.erase(itPapers);
+	}
+	g_fmPapers.unlock();
 }
 
+
+void CDataMgrToolDlg::InitParam()
+{
+	std::string strLog;
+	std::string strFile = g_strCurrentPath + "param.dat";
+	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(strFile);
+	try
+	{
+		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strUtf8Path));
+
+		g_nRecogGrayMin = pConf->getInt("RecogGray.gray_Min", 0);
+		g_nRecogGrayMax_White = pConf->getInt("RecogGray.white_Max", 255);
+		g_nRecogGrayMin_OMR = pConf->getInt("RecogGray.omr_Min", 0);
+		g_RecogGrayMax_OMR = pConf->getInt("RecogGray.omr_Max", 235);
+
+		_dCompThread_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fCompTread", 1.2);
+		_dDiffThread_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fDiffThread", 0.2);
+		_dDiffExit_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fDiffExit", 0.3);
+		_dCompThread_Head_ = pConf->getDouble("RecogOmrSn_Head.fCompTread", 1.2);
+		_dDiffThread_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffThread", 0.085);
+		_dDiffExit_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffExit", 0.15);
+
+		strLog = "读取识别灰度参数完成";
+	}
+	catch (Poco::Exception& exc)
+	{
+		strLog = "读取参数失败，使用默认参数 " + CMyCodeConvert::Utf8ToGb2312(exc.displayText());
+		g_nRecogGrayMin = 0;
+		g_nRecogGrayMax_White = 255;
+		g_nRecogGrayMin_OMR = 0;
+		g_RecogGrayMax_OMR = 235;
+	}
+	g_Log.LogOut(strLog);
+}
+
+void CDataMgrToolDlg::InitConfig()
+{
+	USES_CONVERSION;
+	wchar_t szwPath[MAX_PATH] = { 0 };
+	GetModuleFileNameW(NULL, szwPath, MAX_PATH);
+	char szPath[MAX_PATH] = { 0 };
+	int nLen = WideCharToMultiByte(CP_ACP, 0, szwPath, -1, NULL, 0, NULL, NULL);
+	char* pszDst = new char[nLen];
+	WideCharToMultiByte(CP_ACP, 0, szwPath, -1, szPath, nLen, NULL, NULL);
+	szPath[nLen - 1] = 0;
+	delete[] pszDst;
+
+	CString strFile(szPath);
+	strFile = strFile.Left(strFile.ReverseFind('\\') + 1);
+	g_strCurrentPath = strFile;
+
+	std::string strLogPath = g_strCurrentPath + "DMT.Log";
+	g_Log.SetFileName(strLogPath);
+
+	CString strConfigPath = g_strCurrentPath;
+	strConfigPath.Append(_T("DMT_config.ini"));
+	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(T2A(strConfigPath));
+	Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strUtf8Path));
+	int nRecogThreads = pConf->getInt("Recog.threads", 2);
+
+
+	m_pRecogThread = new Poco::Thread[nRecogThreads];
+	for (int i = 0; i < nRecogThreads; i++)
+	{
+		CRecognizeThread* pRecogObj = new CRecognizeThread;
+		m_pRecogThread[i].start(*pRecogObj);
+
+		m_vecRecogThreadObj.push_back(pRecogObj);
+	}
+}
 
 void CDataMgrToolDlg::OnBnClickedMfcbuttonDecompress()
 {
@@ -330,3 +476,91 @@ void CDataMgrToolDlg::OnBnClickedBtnRecogpkg()
 	{
 	}
 }
+
+void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
+{
+	UpdateData(TRUE);
+	USES_CONVERSION;
+
+	CString strDecompressDir = m_strPkgPath + "\\tmpDecompress";
+	try
+	{
+		int nPos1 = m_strModelPath.ReverseFind('\\');
+		int nPos2 = m_strModelPath.ReverseFind('.');
+		std::string strModelPath = T2A(m_strModelPath);
+		std::string strBaseName = strModelPath.substr(nPos1 + 1, nPos2 - nPos1 - 1);
+		std::string strSrcName = strModelPath.substr(nPos1 + 1, strModelPath.length() - nPos1 - 1);
+
+		std::string strBasePath = strModelPath.substr(0, nPos1);
+
+		pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+		pDecompressTask->nTaskType = 4;
+		pDecompressTask->strFilePath = T2A(m_strModelPath);
+		pDecompressTask->strFileBaseName = strBaseName;
+		pDecompressTask->strSrcFileName = strSrcName;
+		pDecompressTask->strDecompressDir = strBasePath;
+
+		g_fmDecompressLock.lock();
+		g_lDecompressTask.push_back(pDecompressTask);
+		g_fmDecompressLock.unlock();
+
+
+
+		std::string strPkgPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strPkgPath));
+		Poco::DirectoryIterator it(strPkgPath);
+		Poco::DirectoryIterator end;
+		while (it != end)
+		{
+			Poco::Path p(it->path());
+			if (it->isFile() && p.getExtension() == "pkg")
+			{
+				std::string strFileName = p.getFileName();
+				std::string strExtion = p.getExtension();
+
+				pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+				pDecompressTask->nTaskType = 3;
+				pDecompressTask->strFilePath = CMyCodeConvert::Utf8ToGb2312(p.toString());
+				pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
+				pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(p.getFileName());
+				pDecompressTask->strDecompressDir = T2A(strDecompressDir);
+
+				g_fmDecompressLock.lock();
+				g_lDecompressTask.push_back(pDecompressTask);
+				g_fmDecompressLock.unlock();
+			}
+			it++;
+		}
+	}
+	catch (Poco::Exception& exc)
+	{
+	}
+}
+
+LRESULT CDataMgrToolDlg::MsgRecogErr(WPARAM wParam, LPARAM lParam)
+{
+	pST_PaperInfo pPaper = (pST_PaperInfo)wParam;
+	pPAPERSINFO   pPapers = (pPAPERSINFO)lParam;
+
+	USES_CONVERSION;
+	CString strMsg;
+	strMsg.Format(_T("%s:%s识别出异常点\r\n"), A2T(pPapers->strPapersName.c_str()), A2T(pPaper->strStudentInfo.c_str()));
+	showMsg(strMsg);
+	return TRUE;
+}
+
+LRESULT CDataMgrToolDlg::MsgRecogComplete(WPARAM wParam, LPARAM lParam)
+{
+	pST_PaperInfo pPaper = (pST_PaperInfo)wParam;
+	pPAPERSINFO   pPapers = (pPAPERSINFO)lParam;
+
+
+	USES_CONVERSION;
+	CString strMsg;
+	if (pPapers->lIssue.size() == 0)
+		strMsg.Format(_T("%s识别完成\r\n"), A2T(pPapers->strPapersName.c_str()));
+	else
+		strMsg.Format(_T("%s识别出问题试卷\r\n"), A2T(pPapers->strPapersName.c_str()));
+	showMsg(strMsg);
+	return TRUE;
+}
+

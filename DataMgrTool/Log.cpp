@@ -77,5 +77,5 @@ void CLog::SetFileName(std::string& strLogFileName)
 	pFCFile->setProperty("compress", "true");
 	pFCFile->setProperty("purgeCount", "5");
 	//	Poco::Logger& appLogger = Poco::Logger::create("ScanTool", pFCFile, Poco::Message::PRIO_INFORMATION);
-	m_pLogger = &(Poco::Logger::create("DCS", pFCFile, Poco::Message::PRIO_INFORMATION));
+	m_pLogger = &(Poco::Logger::create("DMT", pFCFile, Poco::Message::PRIO_INFORMATION));
 }
