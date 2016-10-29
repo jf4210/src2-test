@@ -237,7 +237,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 			_pModel_ = NULL;
 		}
 
-		std::string strModelPath = strOutDir;
+		std::string strModelPath = CMyCodeConvert::Utf8ToGb2312(strOutDir);
 		_pModel_ = LoadModelFile(A2T(strModelPath.c_str()));
 
 		strMsg.Format(_T("模板加载(%s)完成\r\n"), A2T(pTask->strSrcFileName.c_str()));
