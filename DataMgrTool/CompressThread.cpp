@@ -58,6 +58,18 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 	{
 		strInfo.Format(_T("压缩%s成功"), A2T(pTask->strCompressFileName.c_str()));
 		
+		//删除源文件夹
+		try
+		{
+			Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pTask->strSrcFilePath));
+			if (srcFileDir.exists())
+				srcFileDir.remove(true);
+		}
+		catch (Poco::Exception& exc)
+		{
+			std::string strErr = "删除文件夹(" + pTask->strSrcFilePath + ")失败: " + exc.message();
+			g_Log.LogOutError(strErr);
+		}
 	}
 
 	static_cast<CDataMgrToolDlg*>(m_pDlg)->showMsg(strInfo);
