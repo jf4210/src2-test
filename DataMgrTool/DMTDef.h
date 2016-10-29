@@ -6,8 +6,23 @@
 #include "zbar.h"   
 
 
+//#define PIC_RECTIFY_TEST	//图像旋转纠正测试
+#define WarpAffine_TEST		//仿射变换测试
+#ifdef _DEBUG
+	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
+//	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
+#endif
+#ifndef WarpAffine_TEST
+//	#define TriangleSide_TEST		//三边定位算法
+	#ifndef TriangleSide_TEST
+		#define TriangleCentroid_TEST	//三边质心算法
+	#endif
+#endif
+
+#define USES_GETTHRESHOLD_ZTFB	//使用正态分布方式获取校验点的阀值，未定义时使用固定阀值进行二值化查找矩形
+
 #define  MSG_ERR_RECOG		(WM_USER + 110)
-#define  MSG_RECOG_COMPLETE	(WM_USER + 110)
+#define  MSG_RECOG_COMPLETE	(WM_USER + 111)
 
 
 extern CLog g_Log;
@@ -18,6 +33,7 @@ extern CString				g_strCurrentPath;
 extern std::string _strEncryptPwd_;
 extern pMODEL _pModel_;
 
+extern std::string		_strSessionName_;
 
 extern int		_nCannyKernel_;			//轮廓化核因子
 
@@ -127,6 +143,12 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	int		nRecogErrCount;				//识别错误试卷数量
 	int		nTotalPics;
 
+	int			nTotalPaper;		//总学生数量，从试卷袋文件夹读取
+	int			nExamID;			//考试ID
+	int			nSubjectID;			//科目ID
+	int			nTeacherId;			//教师ID
+	int			nUserId;			//用户ID
+
 	//++统计信息
 	int		nOmrDoubt;				//OMR怀疑的数量
 	int		nOmrNull;				//OMR识别为空的数量
@@ -148,6 +170,10 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	std::string		strSrcPapersPath;
 	std::string		strSrcPapersFileName;
 
+	std::string	strUploader;		//上传者
+	std::string strEzs;				//上传给后端服务器用，--cookie
+	std::string strDesc;			//从试卷袋文件夹读取
+
 	PAPER_LIST	lPaper;					//此试卷袋中试卷列表
 	PAPER_LIST	lIssue;					//此试卷袋中识别有问题的试卷列表
 	_PapersInfo_()
@@ -159,6 +185,12 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 		nOmrNull = 0;
 		nSnNull = 0;
 		nRecogPics = 0;
+
+		nTotalPaper = 0;
+		nExamID = -1;
+		nSubjectID = -1;
+		nTeacherId = -1;
+		nUserId = -1;
 	}
 	~_PapersInfo_()
 	{
@@ -183,6 +215,22 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	}
 }PAPERSINFO, *pPAPERSINFO;
 typedef std::list<pPAPERSINFO> PAPERS_LIST;		//试卷袋列表
+
+
+
+typedef struct _CompressTask_
+{
+	std::string strSrcFilePath;
+	std::string strCompressFileName;
+	std::string strSavePath;
+	std::string strExtName;
+}COMPRESSTASK, *pCOMPRESSTASK;
+typedef std::list<pCOMPRESSTASK> COMPRESSTASKLIST;	//识别任务列表
+
+extern Poco::FastMutex			g_fmCompressLock;		//压缩文件列表锁
+extern COMPRESSTASKLIST			g_lCompressTask;		//解压文件列表
+
+extern Poco::Event			g_eCompressThreadExit;
 
 typedef struct _RecogTask_
 {
@@ -215,7 +263,9 @@ bool	SortbyNumASC(const std::string& x, const std::string& y);
 bool	SortByPaper(const pST_PaperInfo& x, const pST_PaperInfo& y);
 
 bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 0, int nPicH = 0);
-
+bool	FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);		//定点进行仿射变换
+bool	FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//定点透视变换
+bool	PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);
 
 //----------------	OMR识别灰度差值比较	------------------
 typedef struct
@@ -241,5 +291,5 @@ std::string GetQRInBinImg(cv::Mat binImg, std::string& strTypeName);
 std::string GetQR(cv::Mat img, std::string& strTypeName);
 //--------------------------------------------------------
 
-
-
+bool ZipFile(std::string& strSavePath, std::string& strSrcDir, std::string strExtName = ".pkg");
+bool SavePapersInfo(pPAPERSINFO pPapers);

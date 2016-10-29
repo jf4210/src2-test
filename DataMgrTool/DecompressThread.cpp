@@ -212,9 +212,8 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	else if (pTask->nTaskType == 3)
 	{
 		//读取试卷袋文件夹里面的文件获取试卷袋信息
-// 		std::string strPapersFilePath = strOutDir + "\\papersInfo.dat";
-// 		bool bResult_Data = GetFileData(strPapersFilePath, pPapers);
-// 		if (!bResult_Data)
+		std::string strPapersFilePath = strOutDir + "\\papersInfo.dat";
+		bool bResult_Data = GetFileData(CMyCodeConvert::Utf8ToGb2312(strPapersFilePath), pPapers);
 
 		//添加到识别任务列表
 		PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
@@ -320,15 +319,15 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERSINFO pPapers
 		result = parser.parse(strFileData);		//strJsnData
 		Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
 
-		int nOmrDoubt = -1;
-		int nOmrNull = -1;
-		int nSnNull = -1;
-		if (objData->has("nOmrDoubt"))
-			nOmrDoubt = objData->get("nOmrDoubt").convert<int>();
-		if (objData->has("nOmrNull"))
-			nOmrNull = objData->get("nOmrNull").convert<int>();
-		if (objData->has("nSnNull"))
-			nSnNull = objData->get("nSnNull").convert<int>();
+// 		int nOmrDoubt = -1;
+// 		int nOmrNull = -1;
+// 		int nSnNull = -1;
+// 		if (objData->has("nOmrDoubt"))
+// 			nOmrDoubt = objData->get("nOmrDoubt").convert<int>();
+// 		if (objData->has("nOmrNull"))
+// 			nOmrNull = objData->get("nOmrNull").convert<int>();
+// 		if (objData->has("nSnNull"))
+// 			nSnNull = objData->get("nSnNull").convert<int>();
 
 		int nExamId = objData->get("examId").convert<int>();
 		int nSubjectId = objData->get("subjectId").convert<int>();
@@ -337,6 +336,10 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERSINFO pPapers
 		int nStudentNum = objData->get("scanNum").convert<int>();
 		std::string strUploader = objData->get("uploader").convert<std::string>();
 		std::string strEzs = objData->get("ezs").convert<std::string>();
+		if (objData->has("desc"))
+		{
+			pPapers->strDesc = objData->get("desc").convert<std::string>();
+		}
 
 #if 0
 		bool bFindDeff = false;
@@ -426,18 +429,18 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERSINFO pPapers
 			g_Log.LogOutError(strLog);
 			return false;
 		}
-
-		pPapers->nOmrDoubt = nOmrDoubt;
-		pPapers->nOmrNull = nOmrNull;
-		pPapers->nSnNull = nSnNull;
+#endif
+// 		pPapers->nOmrDoubt = nOmrDoubt;
+// 		pPapers->nOmrNull = nOmrNull;
+// 		pPapers->nSnNull = nSnNull;
 		pPapers->nExamID = nExamId;
 		pPapers->nSubjectID = nSubjectId;
 		pPapers->nTeacherId = nTeacherId;
 		pPapers->nUserId = nUserId;
 		pPapers->nTotalPaper = nStudentNum;
 		pPapers->strUploader = strUploader;
-		pPapers->strEzs = SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
-#endif
+		pPapers->strEzs = strEzs;		//"ezs=" + strEzs;
+
 	}
 	catch (Poco::JSON::JSONException& jsone)
 	{
@@ -500,7 +503,7 @@ void CDecompressThread::SearchExtractFile(pPAPERSINFO pPapers, std::string strPa
 				pPaper->strStudentInfo = strPaperName;
 				pPaper->pModel = _pModel_;
 				pPaper->pPapers = pPapers;
-				pPaper->pSrcDlg = this;
+				pPaper->pSrcDlg = m_pDlg;
 				pPapers->lPaper.push_back(pPaper);
 			}
 			pPapers->nTotalPics++;						//图片数增加一张

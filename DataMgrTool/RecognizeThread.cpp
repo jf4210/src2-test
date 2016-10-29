@@ -354,6 +354,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 	if (pPapers->nRecogPics == (pPapers->lPaper.size() + pPapers->lIssue.size()))
 	{
 		(static_cast<CDialog*>(pPaper->pSrcDlg))->SendMessage(MSG_RECOG_COMPLETE, (WPARAM)pPaper, (LPARAM)pPapers);		//PostMessageW
+
 // 		USES_CONVERSION;
 // 		CString strMsg;
 // 		if (pPapers->lIssue.size() == 0)
@@ -361,6 +362,30 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 // 		else
 // 			strMsg.Format(_T("%s识别出问题试卷\r\n"), A2T(pPapers->strPapersName.c_str()));
 // 		(static_cast<CDataMgrToolDlg*>(pPaper->pSrcDlg))->showMsg(strMsg);
+
+		//写文件
+		SavePapersInfo(pPapers);
+		//压缩
+		std::string strNewPapersSaveDir = (static_cast<CDataMgrToolDlg*>(pPaper->pSrcDlg))->m_strPkgPath + "\\newPkg";
+		try
+		{
+			Poco::File fileDir(CMyCodeConvert::Gb2312ToUtf8(strNewPapersSaveDir));
+			if (!fileDir.exists())
+				fileDir.createDirectories();
+		}
+		catch (Poco::Exception& exc)
+		{
+		}
+
+		std::string strNewPapersSavePath = strNewPapersSaveDir + "\\" + pPapers->strPapersName;
+		pCOMPRESSTASK pTask = new COMPRESSTASK;
+		pTask->strCompressFileName = pPapers->strSrcPapersFileName;
+		pTask->strExtName = ".pkg";
+		pTask->strSavePath = strNewPapersSavePath;
+		pTask->strSrcFilePath = pPapers->strPapersPath;
+		g_fmCompressLock.lock();
+		g_lCompressTask.push_back(pTask);
+		g_fmCompressLock.unlock();
 	}
 }
 

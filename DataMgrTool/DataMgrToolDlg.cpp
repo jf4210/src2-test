@@ -18,10 +18,16 @@ RECOGTASKLIST		g_lRecogTask;	//识别任务列表
 CLog g_Log;
 int	g_nExitFlag;
 CString				g_strCurrentPath;
-std::string _strEncryptPwd_ = "yklxTest";
+std::string		_strEncryptPwd_ = "yklxTest";
+std::string		_strSessionName_;
 
 Poco::FastMutex			g_fmDecompressLock;		//解压文件列表锁
 DECOMPRESSTASKLIST		g_lDecompressTask;		//解压文件列表
+
+Poco::FastMutex			g_fmCompressLock;		//压缩文件列表锁
+COMPRESSTASKLIST		g_lCompressTask;		//解压文件列表
+
+Poco::Event				g_eCompressThreadExit;
 
 Poco::FastMutex		g_fmPapers;		//操作试卷袋列表的任务锁
 PAPERS_LIST			g_lPapers;		//所有的试卷袋信息
@@ -81,7 +87,8 @@ END_MESSAGE_MAP()
 
 
 CDataMgrToolDlg::CDataMgrToolDlg(CWnd* pParent /*=NULL*/)
-	: CDialogEx(CDataMgrToolDlg::IDD, pParent)
+: CDialogEx(CDataMgrToolDlg::IDD, pParent)
+, m_pCompressObj(NULL), m_pCompressThread(NULL)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -278,6 +285,22 @@ void CDataMgrToolDlg::OnDestroy()
 		_pModel_ = NULL;
 	}
 
+
+	g_fmCompressLock.lock();
+	COMPRESSTASKLIST::iterator itCompress = g_lCompressTask.begin();
+	for (; itCompress != g_lCompressTask.end();)
+	{
+		pCOMPRESSTASK pTask = *itCompress;
+		itCompress = g_lCompressTask.erase(itCompress);
+		SAFE_RELEASE(pTask);
+	}
+	g_fmCompressLock.unlock();
+	m_pCompressThread->join();
+	SAFE_RELEASE(m_pCompressObj);
+	g_eCompressThreadExit.wait();
+	SAFE_RELEASE(m_pCompressThread);
+	g_Log.LogOut("压缩处理线程释放完毕.");
+
 	g_fmPapers.lock();			//释放试卷袋列表
 	PAPERS_LIST::iterator itPapers = g_lPapers.begin();
 	for (; itPapers != g_lPapers.end();)
@@ -349,6 +372,9 @@ void CDataMgrToolDlg::InitConfig()
 	Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strUtf8Path));
 	int nRecogThreads = pConf->getInt("Recog.threads", 2);
 
+	m_pCompressThread = new Poco::Thread;
+	m_pCompressObj = new CCompressThread(this);
+	m_pCompressThread->start(*m_pCompressObj);
 
 	m_pRecogThread = new Poco::Thread[nRecogThreads];
 	for (int i = 0; i < nRecogThreads; i++)
@@ -557,7 +583,21 @@ LRESULT CDataMgrToolDlg::MsgRecogComplete(WPARAM wParam, LPARAM lParam)
 	USES_CONVERSION;
 	CString strMsg;
 	if (pPapers->lIssue.size() == 0)
-		strMsg.Format(_T("%s识别完成\r\n"), A2T(pPapers->strPapersName.c_str()));
+	{
+		int nModelOmrCount = 0;
+		for (int k = 0; k < _pModel_->vecPaperModel.size(); k++)
+			nModelOmrCount += _pModel_->vecPaperModel[k]->lOMR2.size();
+
+		int nPapersCount = pPapers->lPaper.size() + pPapers->lIssue.size();
+		int nOmrCount = nModelOmrCount * nPapersCount;
+
+		char szStatisticsInfo[300] = { 0 };
+		sprintf_s(szStatisticsInfo, "\n统计信息: omrDoubt = %.2f(%d/%d), omrNull = %.2f(%d/%d), zkzhNull = %.2f(%d/%d)\n", (float)pPapers->nOmrDoubt / nOmrCount, pPapers->nOmrDoubt, nOmrCount, \
+				  (float)pPapers->nOmrNull / nOmrCount, pPapers->nOmrNull, nOmrCount, \
+				  (float)pPapers->nSnNull / nPapersCount, pPapers->nSnNull, nPapersCount);
+
+		strMsg.Format(_T("%s识别完成\r\n%s\r\n"), A2T(pPapers->strPapersName.c_str()), A2T(szStatisticsInfo));
+	}
 	else
 		strMsg.Format(_T("%s识别出问题试卷\r\n"), A2T(pPapers->strPapersName.c_str()));
 	showMsg(strMsg);

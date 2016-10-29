@@ -6,6 +6,7 @@
 #include "global.h"
 #include "DecompressThread.h"
 #include "RecognizeThread.h"
+#include "CompressThread.h"
 
 // CDataMgrToolDlg ¶Ô»°¿ò
 class CDataMgrToolDlg : public CDialogEx
@@ -54,6 +55,10 @@ private:
 
 	Poco::Thread*	m_pRecogThread;
 	std::vector<CRecognizeThread*> m_vecRecogThreadObj;
+
+
+	Poco::Thread* m_pCompressThread;
+	CCompressThread* m_pCompressObj;
 
 	void InitParam();
 	void InitConfig();

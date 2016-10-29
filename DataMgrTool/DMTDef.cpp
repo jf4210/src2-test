@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "DMTDef.h"
 
+#include "miniunz/minizip.c"
 
 
 
@@ -1027,6 +1028,149 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 }
 
 
+bool FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat)
+{
+	if (lFix.size() < 3)
+		return false;
+
+	clock_t start, end;
+	start = clock();
+	char szTmpLog[400] = { 0 };
+
+	std::vector<cv::Point2f> vecFixPt;
+	RECTLIST::iterator itCP = lModelFix.begin();
+	for (; itCP != lModelFix.end(); itCP++)
+	{
+		cv::Point2f pt;
+#if 0
+		pt.x = itCP->rt.x;
+		pt.y = itCP->rt.y;
+#else
+		pt.x = itCP->rt.x + itCP->rt.width / 2;
+		pt.y = itCP->rt.y + itCP->rt.height / 2;
+#endif
+		vecFixPt.push_back(pt);
+	}
+	std::vector<cv::Point2f> vecFixNewPt;
+	RECTLIST::iterator itCP2 = lFix.begin();
+	for (; itCP2 != lFix.end(); itCP2++)
+	{
+		cv::Point2f pt;
+#if 0
+		pt.x = itCP2->rt.x;
+		pt.y = itCP2->rt.y;
+#else
+		pt.x = itCP2->rt.x + itCP2->rt.width / 2;
+		pt.y = itCP2->rt.y + itCP2->rt.height / 2;
+#endif
+		vecFixNewPt.push_back(pt);
+	}
+
+	cv::Point2f srcTri[3];
+	cv::Point2f dstTri[3];
+	cv::Mat warp_mat(2, 3, CV_32FC1);
+	cv::Mat warp_dst, warp_rotate_dst;
+	for (int i = 0; i < vecFixPt.size(); i++)
+	{
+		srcTri[i] = vecFixNewPt[i];
+		dstTri[i] = vecFixPt[i];
+	}
+
+	//	warp_dst = Mat::zeros(matCompPic.rows, matCompPic.cols, matCompPic.type());
+	warp_mat = cv::getAffineTransform(srcTri, dstTri);
+	cv::warpAffine(matCompPic, matCompPic, warp_mat, matCompPic.size(), 1, 0, cv::Scalar(255, 255, 255));
+
+#if 1	//计算逆矩阵，计算相对模板的原坐标
+	cv::Mat warp_mat2(2, 3, CV_32FC1);
+	inverseMat = cv::getAffineTransform(dstTri, srcTri);
+#endif
+
+	// 	RECTLIST::iterator itCP3 = lFix.begin();
+	// 	for (; itCP3 != lFix.end(); itCP3++)
+	// 	{
+	// 		cv::Point2f pt;
+	// 
+	// 		pt.x = warp_mat.ptr<double>(0)[0] * itCP3->rt.x + warp_mat.ptr<double>(0)[1] * itCP3->rt.y + warp_mat.ptr<double>(0)[2];
+	// 		pt.y = warp_mat.ptr<double>(1)[0] * itCP3->rt.x + warp_mat.ptr<double>(1)[1] * itCP3->rt.y + warp_mat.ptr<double>(1)[2];
+	// 		itCP3->rt.x = pt.x;
+	// 		itCP3->rt.y = pt.y;
+	// 	}
+
+	end = clock();
+	sprintf_s(szTmpLog, "图像变换时间: %d, ptMod1(%.2f,%.2f), ptMod2(%.2f,%.2f), ptMod3(%.2f,%.2f), pt1(%.2f,%.2f), pt2(%.2f,%.2f), pt3(%.2f,%.2f)\n", end - start, \
+			  vecFixPt[0].x, vecFixPt[0].y, vecFixPt[1].x, vecFixPt[1].y, vecFixPt[2].x, vecFixPt[2].y, vecFixNewPt[0].x, vecFixNewPt[0].y, vecFixNewPt[1].x, vecFixNewPt[1].y, vecFixNewPt[2].x, vecFixNewPt[2].y);
+	g_Log.LogOut(szTmpLog);
+	TRACE(szTmpLog);
+
+	return true;
+}
+
+bool FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat)
+{
+	if (lFix.size() < 4)
+		return false;
+
+	clock_t start, end;
+	start = clock();
+	char szTmpLog[400] = { 0 };
+
+	std::vector<cv::Point2f> vecFixPt;
+	RECTLIST::iterator itCP = lModelFix.begin();
+	for (; itCP != lModelFix.end(); itCP++)
+	{
+		cv::Point2f pt;
+		pt.x = itCP->rt.x + itCP->rt.width / 2;
+		pt.y = itCP->rt.y + itCP->rt.height / 2;
+		vecFixPt.push_back(pt);
+	}
+	std::vector<cv::Point2f> vecFixNewPt;
+	RECTLIST::iterator itCP2 = lFix.begin();
+	for (; itCP2 != lFix.end(); itCP2++)
+	{
+		cv::Point2f pt;
+		pt.x = itCP2->rt.x + itCP2->rt.width / 2;
+		pt.y = itCP2->rt.y + itCP2->rt.height / 2;
+		vecFixNewPt.push_back(pt);
+	}
+
+	cv::Point2f srcTri[4];
+	cv::Point2f dstTri[4];
+	cv::Mat warp_mat(2, 3, CV_32FC1);
+	cv::Mat warp_dst, warp_rotate_dst;
+	for (int i = 0; i < vecFixPt.size(); i++)
+	{
+		srcTri[i] = vecFixNewPt[i];
+		dstTri[i] = vecFixPt[i];
+	}
+
+	//	warp_dst = Mat::zeros(matCompPic.rows, matCompPic.cols, matCompPic.type());
+	warp_mat = cv::getPerspectiveTransform(srcTri, dstTri);
+	cv::warpPerspective(matCompPic, matCompPic, warp_mat, matCompPic.size(), 1, 0, cv::Scalar(255, 255, 255));
+
+	end = clock();
+	sprintf_s(szTmpLog, "图像变换时间: %d, ptMod1(%.2f,%.2f), ptMod2(%.2f,%.2f), ptMod3(%.2f,%.2f), ptMod4(%.2f,%.2f), pt1(%.2f,%.2f), pt2(%.2f,%.2f), pt3(%.2f,%.2f), pt4(%.2f,%.2f)\n", end - start, \
+			  vecFixPt[0].x, vecFixPt[0].y, vecFixPt[1].x, vecFixPt[1].y, vecFixPt[2].x, vecFixPt[2].y, vecFixPt[3].x, vecFixPt[3].y, \
+			  vecFixNewPt[0].x, vecFixNewPt[0].y, vecFixNewPt[1].x, vecFixNewPt[1].y, vecFixNewPt[2].x, vecFixNewPt[2].y, vecFixNewPt[3].x, vecFixNewPt[3].y);
+	g_Log.LogOut(szTmpLog);
+	TRACE(szTmpLog);
+
+	return true;
+}
+
+
+bool PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat)
+{
+	if (lFix.size() != lModelFix.size())
+		return false;
+
+	if (lFix.size() == 3)
+		FixWarpAffine(nPic, matCompPic, lFix, lModelFix, inverseMat);
+	else if (lFix.size() == 4)
+		FixwarpPerspective(nPic, matCompPic, lFix, lModelFix, inverseMat);
+
+	return true;
+}
+
 
 //================ 条码 =============================
 //zbar接口
@@ -1715,5 +1859,379 @@ pMODEL LoadModelFile(CString strModelPath)
 	}
 
 	return pModel;
+}
+
+bool ZipFile(std::string& strSavePath, std::string& strSrcDir, std::string strExtName /*= ".pkg"*/)
+{
+	bool bResult = true;
+	std::string strZipName = strSavePath + strExtName;
+
+	try
+	{
+		Poco::File zipModel(CMyCodeConvert::Gb2312ToUtf8(strZipName));
+		if (zipModel.exists())
+			zipModel.remove(true);
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strErr = "压缩文件(" + strZipName + ")判断异常: " + exc.message();
+		g_Log.LogOutError(strErr);
+	}
+
+	clock_t startTime, endTime;
+	startTime = clock();
+	std::string strLog = "开始文件压缩: " + strZipName;
+	g_Log.LogOut(strLog);
+//	std::cout << strLog << std::endl;
+
+	zipFile zf = NULL;
+#ifdef USEWIN32IOAPI
+	zlib_filefunc64_def ffunc = { 0 };
+#endif
+	char *zipfilename = const_cast<char*>(strZipName.c_str());
+	const char* password = NULL;
+	password = "static";
+
+	void* buf = NULL;
+	int size_buf = WRITEBUFFERSIZE;
+	int err = 0;
+	int errclose = 0;
+
+	int opt_overwrite = APPEND_STATUS_CREATE;
+	int opt_compress_level = Z_DEFAULT_COMPRESSION;
+
+	buf = (void*)malloc(size_buf);
+	if (buf == NULL)
+	{
+		printf("Error allocating memory\n");
+		return ZIP_INTERNALERROR;
+	}
+
+#ifdef USEWIN32IOAPI
+	fill_win32_filefunc64A(&ffunc);
+	zf = zipOpen2_64(zipfilename, opt_overwrite, NULL, &ffunc);
+#else
+	zf = zipOpen64(zipfilename, opt_overwrite);
+#endif
+
+	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(strSrcDir);
+	Poco::DirectoryIterator it(strUtf8Path);
+	Poco::DirectoryIterator end;
+	while (it != end)
+	{
+		Poco::Path p(it->path());
+		std::string strFilePath = CMyCodeConvert::Utf8ToGb2312(it->path());
+		if (it->isFile())
+		{
+			Poco::File modelFile(it->path());
+
+			FILE *fin = NULL;
+			int size_read = 0;
+			const char* filenameinzip = strFilePath.c_str();
+			const char *savefilenameinzip;
+			zip_fileinfo zi = { 0 };
+			unsigned long crcFile = 0;
+			int zip64 = 0;
+
+			/* Get information about the file on disk so we can store it in zip */
+			filetime(filenameinzip, &zi.tmz_date, &zi.dosDate);
+
+			std::string strName = CMyCodeConvert::Utf8ToGb2312(p.getFileName());
+			savefilenameinzip = strName.c_str();
+
+			/* Add to zip file */
+			err = zipOpenNewFileInZip3_64(zf, savefilenameinzip, &zi,
+										  NULL, 0, NULL, 0, NULL /* comment*/,
+										  (opt_compress_level != 0) ? Z_DEFLATED : 0,
+										  opt_compress_level, 0,
+										  -MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY,
+										  password, crcFile, zip64);
+
+			if (err != ZIP_OK)
+				printf("error in opening %s in zipfile (%d)\n", filenameinzip, err);
+			else
+			{
+				fin = FOPEN_FUNC(filenameinzip, "rb");
+				if (fin == NULL)
+				{
+					err = ZIP_ERRNO;
+					printf("error in opening %s for reading\n", filenameinzip);
+				}
+			}
+
+			if (err == ZIP_OK)
+			{
+				/* Read contents of file and write it to zip */
+				do
+				{
+					size_read = (int)fread(buf, 1, size_buf, fin);
+					if ((size_read < size_buf) && (feof(fin) == 0))
+					{
+						printf("error in reading %s\n", filenameinzip);
+						err = ZIP_ERRNO;
+					}
+
+					if (size_read > 0)
+					{
+						err = zipWriteInFileInZip(zf, buf, size_read);
+						if (err < 0)
+							printf("error in writing %s in the zipfile (%d)\n", filenameinzip, err);
+					}
+				} while ((err == ZIP_OK) && (size_read > 0));
+			}
+
+			if (fin)
+				fclose(fin);
+
+			if (err < 0)
+			{
+				err = ZIP_ERRNO;
+				strLog = "压缩文件失败(" + strName + ")";
+				g_Log.LogOutError(strLog);
+			}
+			else
+			{
+				err = zipCloseFileInZip(zf);
+				if (err != ZIP_OK)
+					printf("error in closing %s in the zipfile (%d)\n", filenameinzip, err);
+			}
+		}
+		it++;
+	}
+
+	errclose = zipClose(zf, NULL);
+	if (errclose != ZIP_OK)
+		printf("error in closing %s (%d)\n", zipfilename, errclose);
+
+	free(buf);
+
+	endTime = clock();
+	strLog = Poco::format("文件压缩完成: %s, 时间: %dms", strZipName, (int)(endTime - startTime));
+	g_Log.LogOut(strLog);
+//	std::cout << strLog << std::endl;
+	return bResult;
+}
+
+bool SavePapersInfo(pPAPERSINFO pPapers)
+{
+	Poco::JSON::Array jsnPaperArry;
+	PAPER_LIST::iterator itNomarlPaper = pPapers->lPaper.begin();
+	for (; itNomarlPaper != pPapers->lPaper.end(); itNomarlPaper++)
+	{
+		Poco::JSON::Object jsnPaper;
+		jsnPaper.set("name", (*itNomarlPaper)->strStudentInfo);
+		jsnPaper.set("zkzh", (*itNomarlPaper)->strSN);
+		jsnPaper.set("qk", (*itNomarlPaper)->nQKFlag);
+
+		Poco::JSON::Array jsnSnDetailArry;
+		SNLIST::iterator itSn = (*itNomarlPaper)->lSnResult.begin();
+		for (; itSn != (*itNomarlPaper)->lSnResult.end(); itSn++)
+		{
+			Poco::JSON::Object jsnSnItem;
+			jsnSnItem.set("sn", (*itSn)->nItem);
+			jsnSnItem.set("val", (*itSn)->nRecogVal);
+
+			Poco::JSON::Object jsnSnPosition;
+			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
+			for (; itRect != (*itSn)->lSN.end(); itRect++)
+			{
+				jsnSnPosition.set("x", itRect->rt.x);
+				jsnSnPosition.set("y", itRect->rt.y);
+				jsnSnPosition.set("w", itRect->rt.width);
+				jsnSnPosition.set("h", itRect->rt.height);
+			}
+			jsnSnItem.set("position", jsnSnPosition);
+			jsnSnDetailArry.add(jsnSnItem);
+		}
+		jsnPaper.set("snDetail", jsnSnDetailArry);
+
+		Poco::JSON::Array jsnOmrArry;
+		OMRRESULTLIST::iterator itOmr = (*itNomarlPaper)->lOmrResult.begin();
+		for (; itOmr != (*itNomarlPaper)->lOmrResult.end(); itOmr++)
+		{
+			Poco::JSON::Object jsnOmr;
+			jsnOmr.set("th", itOmr->nTH);
+			jsnOmr.set("type", itOmr->nSingle + 1);
+			jsnOmr.set("value", itOmr->strRecogVal);
+			jsnOmr.set("doubt", itOmr->nDoubt);
+			Poco::JSON::Array jsnPositionArry;
+			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
+			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
+			{
+				Poco::JSON::Object jsnItem;
+				char szVal[5] = { 0 };
+				sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+				jsnItem.set("val", szVal);
+				jsnItem.set("x", itRect->rt.x);
+				jsnItem.set("y", itRect->rt.y);
+				jsnItem.set("w", itRect->rt.width);
+				jsnItem.set("h", itRect->rt.height);
+				jsnPositionArry.add(jsnItem);
+			}
+			jsnOmr.set("position", jsnPositionArry);
+			jsnOmrArry.add(jsnOmr);
+		}
+		jsnPaper.set("omr", jsnOmrArry);
+
+		Poco::JSON::Array jsnElectOmrArry;
+		ELECTOMR_LIST::iterator itElectOmr = (*itNomarlPaper)->lElectOmrResult.begin();
+		for (; itElectOmr != (*itNomarlPaper)->lElectOmrResult.end(); itElectOmr++)
+		{
+			Poco::JSON::Object jsnElectOmr;
+			jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
+			jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
+			jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
+			jsnElectOmr.set("value", itElectOmr->strRecogResult);
+			Poco::JSON::Array jsnPositionArry;
+			RECTLIST::iterator itRect = itElectOmr->lItemInfo.begin();
+			for (; itRect != itElectOmr->lItemInfo.end(); itRect++)
+			{
+				Poco::JSON::Object jsnItem;
+				char szVal[5] = { 0 };
+				sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+				jsnItem.set("val", szVal);
+				jsnItem.set("x", itRect->rt.x);
+				jsnItem.set("y", itRect->rt.y);
+				jsnItem.set("w", itRect->rt.width);
+				jsnItem.set("h", itRect->rt.height);
+				jsnPositionArry.add(jsnItem);
+			}
+			jsnElectOmr.set("position", jsnPositionArry);
+			jsnElectOmrArry.add(jsnElectOmr);
+		}
+		jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
+		jsnPaperArry.add(jsnPaper);
+	}
+	PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
+	for (; itIssuePaper != pPapers->lIssue.end(); itIssuePaper++)
+	{
+		Poco::JSON::Object jsnPaper;
+		jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
+		jsnPaper.set("zkzh", (*itIssuePaper)->strSN);
+		jsnPaper.set("qk", (*itIssuePaper)->nQKFlag);
+
+		Poco::JSON::Array jsnSnDetailArry;
+		SNLIST::iterator itSn = (*itIssuePaper)->lSnResult.begin();
+		for (; itSn != (*itIssuePaper)->lSnResult.end(); itSn++)
+		{
+			Poco::JSON::Object jsnSnItem;
+			jsnSnItem.set("sn", (*itSn)->nItem);
+			jsnSnItem.set("val", (*itSn)->nRecogVal);
+
+			Poco::JSON::Object jsnSnPosition;
+			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
+			for (; itRect != (*itSn)->lSN.end(); itRect++)
+			{
+				jsnSnPosition.set("x", itRect->rt.x);
+				jsnSnPosition.set("y", itRect->rt.y);
+				jsnSnPosition.set("w", itRect->rt.width);
+				jsnSnPosition.set("h", itRect->rt.height);
+			}
+			jsnSnItem.set("position", jsnSnPosition);
+			jsnSnDetailArry.add(jsnSnItem);
+		}
+		jsnPaper.set("snDetail", jsnSnDetailArry);
+
+		Poco::JSON::Array jsnOmrArry;
+		OMRRESULTLIST::iterator itOmr = (*itIssuePaper)->lOmrResult.begin();
+		for (; itOmr != (*itIssuePaper)->lOmrResult.end(); itOmr++)
+		{
+			Poco::JSON::Object jsnOmr;
+			jsnOmr.set("th", itOmr->nTH);
+			jsnOmr.set("type", itOmr->nSingle + 1);
+			jsnOmr.set("value", itOmr->strRecogVal);
+			jsnOmr.set("doubt", itOmr->nDoubt);
+			Poco::JSON::Array jsnPositionArry;
+			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
+			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
+			{
+				Poco::JSON::Object jsnItem;
+				char szVal[5] = { 0 };
+				sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+				jsnItem.set("val", szVal);
+				jsnItem.set("x", itRect->rt.x);
+				jsnItem.set("y", itRect->rt.y);
+				jsnItem.set("w", itRect->rt.width);
+				jsnItem.set("h", itRect->rt.height);
+				jsnPositionArry.add(jsnItem);
+			}
+			jsnOmr.set("position", jsnPositionArry);
+			jsnOmrArry.add(jsnOmr);
+		}
+		jsnPaper.set("omr", jsnOmrArry);
+
+		Poco::JSON::Array jsnElectOmrArry;
+		ELECTOMR_LIST::iterator itElectOmr = (*itIssuePaper)->lElectOmrResult.begin();
+		for (; itElectOmr != (*itIssuePaper)->lElectOmrResult.end(); itElectOmr++)
+		{
+			Poco::JSON::Object jsnElectOmr;
+			jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
+			jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
+			jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
+			jsnElectOmr.set("value", itElectOmr->strRecogResult);
+			Poco::JSON::Array jsnPositionArry;
+			RECTLIST::iterator itRect = itElectOmr->lItemInfo.begin();
+			for (; itRect != itElectOmr->lItemInfo.end(); itRect++)
+			{
+				Poco::JSON::Object jsnItem;
+				char szVal[5] = { 0 };
+				sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+				jsnItem.set("val", szVal);
+				jsnItem.set("x", itRect->rt.x);
+				jsnItem.set("y", itRect->rt.y);
+				jsnItem.set("w", itRect->rt.width);
+				jsnItem.set("h", itRect->rt.height);
+				jsnPositionArry.add(jsnItem);
+			}
+			jsnElectOmr.set("position", jsnPositionArry);
+			jsnElectOmrArry.add(jsnElectOmr);
+		}
+		jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
+		jsnPaperArry.add(jsnPaper);
+	}
+	//写试卷袋信息到文件
+	std::string strUploader = pPapers->strUploader;
+	std::string sEzs = pPapers->strEzs;
+	Poco::JSON::Object jsnFileData;
+	jsnFileData.set("examId", pPapers->nExamID);
+	jsnFileData.set("subjectId", pPapers->nSubjectID);
+	jsnFileData.set("uploader", pPapers->strUploader);
+	jsnFileData.set("ezs", sEzs);
+	jsnFileData.set("nTeacherId", pPapers->nTeacherId);
+	jsnFileData.set("nUserId", pPapers->nUserId);
+	jsnFileData.set("scanNum", pPapers->nPaperCount);		//扫描的学生数量
+	jsnFileData.set("detail", jsnPaperArry);
+
+	jsnFileData.set("nOmrDoubt", pPapers->nOmrDoubt);
+	jsnFileData.set("nOmrNull", pPapers->nOmrNull);
+	jsnFileData.set("nSnNull", pPapers->nSnNull);
+	std::stringstream jsnString;
+	jsnFileData.stringify(jsnString, 0);
+
+
+	std::string strFileData;
+	if (!encString(jsnString.str(), strFileData))
+		strFileData = jsnString.str();
+
+	char szExamInfoPath[MAX_PATH] = { 0 };
+	sprintf_s(szExamInfoPath, "%s\\papersInfo.dat", pPapers->strPapersPath.c_str());
+
+	try
+	{
+		std::string strUtf8PapersInfoFilePath = CMyCodeConvert::Gb2312ToUtf8(szExamInfoPath);
+		Poco::File papersInfoFile(strUtf8PapersInfoFilePath);
+		if (papersInfoFile.exists())
+			papersInfoFile.remove(true);
+	}
+	catch (Poco::Exception& exc)
+	{
+		g_Log.LogOutError("删除文件失败(" + pPapers->strPapersName + ")");
+	}
+
+	ofstream out(szExamInfoPath);
+	out << strFileData.c_str();
+	out.close();
+
+	return true;
 }
 
