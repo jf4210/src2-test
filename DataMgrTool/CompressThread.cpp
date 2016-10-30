@@ -52,11 +52,11 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 	if (!bResult)
 	{
 		bWarn = true;
-		strInfo.Format(_T("压缩%s失败"), A2T(pTask->strCompressFileName.c_str()));
+		strInfo.Format(_T("压缩%s失败\r\n"), A2T(pTask->strCompressFileName.c_str()));
 	}
 	else
 	{
-		strInfo.Format(_T("压缩%s成功"), A2T(pTask->strCompressFileName.c_str()));
+		strInfo.Format(_T("压缩%s成功\r\n"), A2T(pTask->strCompressFileName.c_str()));
 		
 		//删除源文件夹
 		try

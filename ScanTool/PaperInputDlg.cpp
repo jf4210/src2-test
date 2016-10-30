@@ -817,6 +817,7 @@ void CPaperInputDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lPaperCtrl.GetItemData(pNMItemActivate->iItem);
 	m_nCurrItemPaper = pNMItemActivate->iItem;
 	m_pCurrentShowPaper = pPaper;
+	m_nCurrItemPaperList = m_nCurrItemPaper;
 
 	PaintRecognisedRect(pPaper);
 
@@ -2065,7 +2066,7 @@ void CPaperInputDlg::OnBnClickedBtnTest()
 			continue;
 
 		char szStatisticsInfo[300] = { 0 };
-		sprintf_s(szStatisticsInfo, "\n统计信息: omrDoubt = %.2f(%d/%d), omrNull = %.2f(%d/%d), zkzhNull = %.2f(%d/%d)\n", (float)(*itPapers)->nOmrDoubt / nOmrCount, (*itPapers)->nOmrDoubt, nOmrCount, \
+		sprintf_s(szStatisticsInfo, "\n%s统计信息: omrDoubt = %.2f(%d/%d), omrNull = %.2f(%d/%d), zkzhNull = %.2f(%d/%d)\n", (*itPapers)->strPapersName.c_str(), (float)(*itPapers)->nOmrDoubt / nOmrCount, (*itPapers)->nOmrDoubt, nOmrCount, \
 				  (float)(*itPapers)->nOmrNull / nOmrCount, (*itPapers)->nOmrNull, nOmrCount, \
 				  (float)(*itPapers)->nSnNull / nPapersCount, (*itPapers)->nSnNull, nPapersCount);
 		strStatisticsLog.append(szStatisticsInfo);
