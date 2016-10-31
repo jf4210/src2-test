@@ -35,6 +35,8 @@ extern pMODEL _pModel_;
 
 extern std::string		_strSessionName_;
 
+extern std::map<std::string, std::string> answerMap;
+
 extern int		_nCannyKernel_;			//轮廓化核因子
 
 extern int		g_nRecogGrayMin;		//灰度点(除空白点,OMR外)计算灰度的最小考试范围
@@ -52,7 +54,7 @@ extern double	_dDiffExit_Head_;
 
 typedef struct _DecompressTask_
 {
-	int nTaskType;				//1-普通解压，2-区分试卷包到不同目录, 3-重新识别OMR和SN, 4-解压模板
+	int nTaskType;				//1-普通解压，2-区分试卷包到不同目录, 3-重新识别OMR和SN, 4-加载模板, 5-识别试卷包并统计识别正确率比例
 	std::string strFileBaseName;
 	std::string strSrcFileName;
 	std::string strFilePath;
@@ -150,9 +152,12 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	int			nUserId;			//用户ID
 
 	//++统计信息
-	int		nOmrDoubt;				//OMR怀疑的数量
-	int		nOmrNull;				//OMR识别为空的数量
-	int		nSnNull;				//准考证号识别为空的数量
+	int		nOmrDoubt;				//OMR怀疑的数量					客户端传递的
+	int		nOmrNull;				//OMR识别为空的数量				客户端传递的
+	int		nSnNull;				//准考证号识别为空的数量		客户端传递的
+
+	int		nOmrError_1;			//根据学生答案，第1种识别方法识别错误的值		统计时用
+	int		nOmrError_2;			//根据学生答案，第1种识别方法识别错误的值		统计时用
 
 	Poco::FastMutex	fmOmrStatistics;//omr统计锁
 	Poco::FastMutex fmSnStatistics; //zkzh统计锁
@@ -191,6 +196,8 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 		nSubjectID = -1;
 		nTeacherId = -1;
 		nUserId = -1;
+		nOmrError_1 = 0;
+		nOmrError_2 = 0;
 	}
 	~_PapersInfo_()
 	{

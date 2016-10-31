@@ -259,19 +259,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 	char szSN[30] = { 0 };
 	sprintf_s(szSN, "SN(%s), ", pPaper->strSN.c_str());
 	strPaperLog.append(szSN);
-
-// 	int nOmrCount = 0;
-// 	for (int k = 0; k < pModelInfo->pModel->vecPaperModel.size(); k++)
-// 	{
-// 		nOmrCount += pModelInfo->pModel->vecPaperModel[k]->lOMR2.size();
-// 	}
-// 	int nPapersCount = (static_cast<pPAPERSINFO>(pPaper->pPapers))->lPaper.size() + (static_cast<pPAPERSINFO>(pPaper->pPapers))->lIssue.size();
-// 	char szStatisticsInfo[300] = { 0 };
-// 	sprintf_s(szStatisticsInfo, "\n统计信息: omrDoubt = %.2f(%d/%d), omrNull = %.2f(%d/%d), zkzhNull = %.2f(%d/%d)\n", (float)(static_cast<pPAPERSINFO>(pPaper->pPapers))->nOmrDoubt / nOmrCount, (static_cast<pPAPERSINFO>(pPaper->pPapers))->nOmrDoubt, nOmrCount, \
-// 			  (float)(static_cast<pPAPERSINFO>(pPaper->pPapers))->nOmrNull / nOmrCount, (static_cast<pPAPERSINFO>(pPaper->pPapers))->nOmrNull, nOmrCount, \
-// 			  (float)(static_cast<pPAPERSINFO>(pPaper->pPapers))->nSnNull / nPapersCount, (static_cast<pPAPERSINFO>(pPaper->pPapers))->nSnNull, nPapersCount);
-// 	strPaperLog.append(szStatisticsInfo);
-
+	
 	OMRRESULTLIST::iterator itOmr = pPaper->lOmrResult.begin();
 	for (; itOmr != pPaper->lOmrResult.end(); itOmr++)
 	{

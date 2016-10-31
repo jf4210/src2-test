@@ -16,6 +16,8 @@ public:
 
 
 	void SearchExtractFile(pPAPERSINFO pPapers, std::string strPath);
+
+	bool calcStatistics(pPAPERSINFO pPapers);
 private:
 	void* m_pDlg;
 };

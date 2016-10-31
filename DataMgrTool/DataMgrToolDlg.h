@@ -26,12 +26,10 @@ public:
 	CMFCEditBrowseCtrl m_mfcEdit_Decompress;
 
 	CMFCEditBrowseCtrl m_mfcEdit_Encrypt;
-	CMFCEditBrowseCtrl m_mfcEdit_Decrypt;
 
 	CString		m_strRarPath;
 	CString		m_strDecompressPath;
 	CString		m_strEncryptPath;
-	CString		m_strDecryptPath;
 
 	CEdit		m_edit_Msg;
 	CString		m_strMsg;
@@ -79,4 +77,6 @@ public:
 	afx_msg void OnBnClickedBtnClear();
 	afx_msg void OnBnClickedBtnRecogpkg();
 	afx_msg void OnBnClickedBtnRerecogpkg();
+	afx_msg void OnBnClickedBtnStudentanswer();
+	afx_msg void OnBnClickedBtnStatistics();
 };

@@ -94,7 +94,7 @@
       <Filter>global</Filter>
     </ClInclude>
     <ClInclude Include="CompressThread.h">
-      <Filter>头文件</Filter>
+      <Filter>压缩解压</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -141,7 +141,7 @@
       <Filter>识别</Filter>
     </ClCompile>
     <ClCompile Include="CompressThread.cpp">
-      <Filter>源文件</Filter>
+      <Filter>压缩解压</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

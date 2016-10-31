@@ -11,6 +11,8 @@
 #define new DEBUG_NEW
 #endif
 
+//答案容器
+std::map<std::string, std::string> answerMap;
 
 Poco::FastMutex		g_fmRecog;		//识别线程获取任务锁
 RECOGTASKLIST		g_lRecogTask;	//识别任务列表
@@ -102,8 +104,6 @@ void CDataMgrToolDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_DecompressDir, m_mfcEdit_Decompress);
 	DDX_Text(pDX, IDC_MFCEDITBROWSE_Encrypt_Src, m_strEncryptPath);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_Encrypt_Src, m_mfcEdit_Encrypt);
-	DDX_Text(pDX, IDC_MFCEDITBROWSE_DecryptDir, m_strDecryptPath);
-	DDX_Control(pDX, IDC_MFCEDITBROWSE_DecryptDir, m_mfcEdit_Decrypt);
 	DDX_Text(pDX, IDC_EDIT_Msg, m_strMsg);
 	DDX_Control(pDX, IDC_EDIT_Msg, m_edit_Msg);
 
@@ -128,6 +128,8 @@ BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_ReRecogPKG, &CDataMgrToolDlg::OnBnClickedBtnRerecogpkg)
 	ON_MESSAGE(MSG_ERR_RECOG, &CDataMgrToolDlg::MsgRecogErr)
 	ON_MESSAGE(MSG_RECOG_COMPLETE, &CDataMgrToolDlg::MsgRecogComplete)
+	ON_BN_CLICKED(IDC_BTN_StudentAnswer, &CDataMgrToolDlg::OnBnClickedBtnStudentanswer)
+	ON_BN_CLICKED(IDC_BTN_Statistics, &CDataMgrToolDlg::OnBnClickedBtnStatistics)
 END_MESSAGE_MAP()
 
 
@@ -592,9 +594,9 @@ LRESULT CDataMgrToolDlg::MsgRecogComplete(WPARAM wParam, LPARAM lParam)
 		int nOmrCount = nModelOmrCount * nPapersCount;
 
 		char szStatisticsInfo[300] = { 0 };
-		sprintf_s(szStatisticsInfo, "\n统计信息: omrDoubt = %.2f(%d/%d), omrNull = %.2f(%d/%d), zkzhNull = %.2f(%d/%d)\n", (float)pPapers->nOmrDoubt / nOmrCount, pPapers->nOmrDoubt, nOmrCount, \
-				  (float)pPapers->nOmrNull / nOmrCount, pPapers->nOmrNull, nOmrCount, \
-				  (float)pPapers->nSnNull / nPapersCount, pPapers->nSnNull, nPapersCount);
+		sprintf_s(szStatisticsInfo, "\n统计信息: omrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), zkzhNull = %.2f%%(%d/%d)\n", (float)pPapers->nOmrDoubt / nOmrCount * 100, pPapers->nOmrDoubt, nOmrCount, \
+				  (float)pPapers->nOmrNull / nOmrCount * 100, pPapers->nOmrNull, nOmrCount, \
+				  (float)pPapers->nSnNull / nPapersCount * 100, pPapers->nSnNull, nPapersCount);
 
 		strMsg.Format(_T("%s识别完成\r\n%s\r\n"), A2T(pPapers->strPapersName.c_str()), A2T(szStatisticsInfo));
 	}
@@ -604,3 +606,84 @@ LRESULT CDataMgrToolDlg::MsgRecogComplete(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
+
+
+void CDataMgrToolDlg::OnBnClickedBtnStudentanswer()
+{
+	CString strFile = _T("");
+	CFileDialog    dlgFile(TRUE, NULL, NULL, OFN_HIDEREADONLY, _T("Text Files (*.txt)|*.txt|All Files (*.*)|*.*||"), NULL);
+
+	if (dlgFile.DoModal())
+	{
+		strFile = dlgFile.GetPathName();
+	}
+
+	std::ifstream fin(strFile/*szPath*/, std::ios::in);
+	if (!fin)
+	{
+		TRACE("Open file %s failed.\n", strFile);
+		return;
+	}
+
+	if (answerMap.size())
+		answerMap.clear();
+
+	int nCount = 0;
+	std::string strLine;
+	std::stringstream ss;
+	while (getline(fin, strLine))
+	{
+		ss.clear();
+		ss.str(strLine);
+
+
+		std::string strPkgName;
+		std::string strStudentName;
+		std::string strItem;
+		std::string strAnswer;
+		ss >> strPkgName >> strStudentName >> strItem >> strAnswer;
+		answerMap.insert(std::pair<std::string, std::string>(strPkgName + ":" + strStudentName + ":" + strItem, strAnswer));
+		nCount++;
+	}
+	CString strInfo = _T("\r\n加载学生答案完成\r\n");
+	showMsg(strInfo);
+}
+
+
+void CDataMgrToolDlg::OnBnClickedBtnStatistics()
+{
+	UpdateData(TRUE);
+	USES_CONVERSION;
+
+	CString strDecompressDir = m_strPkgPath + "\\tmpDecompress";
+	try
+	{
+		std::string strPkgPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strPkgPath));
+		Poco::DirectoryIterator it(strPkgPath);
+		Poco::DirectoryIterator end;
+		while (it != end)
+		{
+			Poco::Path p(it->path());
+			if (it->isFile() && p.getExtension() == "pkg")
+			{
+				std::string strFileName = p.getFileName();
+				std::string strExtion = p.getExtension();
+
+				pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+				pDecompressTask->nTaskType = 5;
+				pDecompressTask->strFilePath = CMyCodeConvert::Utf8ToGb2312(p.toString());
+				pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
+				pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(p.getFileName());
+				pDecompressTask->strDecompressDir = T2A(strDecompressDir);
+
+				g_fmDecompressLock.lock();
+				g_lDecompressTask.push_back(pDecompressTask);
+				g_fmDecompressLock.unlock();
+			}
+			it++;
+		}
+	}
+	catch (Poco::Exception& exc)
+	{
+	}
+}

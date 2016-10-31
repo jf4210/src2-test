@@ -87,7 +87,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	std::string strOutDir = CMyCodeConvert::Gb2312ToUtf8(pTask->strDecompressDir + "\\" + pTask->strFileBaseName);
 
 	pPAPERSINFO pPapers = NULL;
-	if (pTask->nTaskType == 3)
+	if (pTask->nTaskType == 3 || pTask->nTaskType == 5)
 	{
 		pPapers = new PAPERSINFO;
 		pPapers->strPapersName = pTask->strFileBaseName;
@@ -161,7 +161,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	}
 	CHDIR(pTask->strDecompressDir.c_str());		//切换回解压根目录，否则删除压缩文件夹失败
 
-	if (pTask->nTaskType == 3)
+	if (pTask->nTaskType == 3 || pTask->nTaskType == 5)
 	{
 		SearchExtractFile(pPapers, pPapers->strPapersPath);
 
@@ -243,6 +243,27 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		strMsg.Format(_T("模板加载(%s)完成\r\n"), A2T(pTask->strSrcFileName.c_str()));
 		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
 	}
+	else if (pTask->nTaskType == 5)
+	{
+		//读取试卷袋文件夹里面的文件获取试卷袋信息
+		std::string strPapersFilePath = strOutDir + "\\papersInfo.dat";
+		bool bResult_Data = GetFileData(CMyCodeConvert::Utf8ToGb2312(strPapersFilePath), pPapers);
+		
+		calcStatistics(pPapers);
+
+		//删除源文件夹
+		try
+		{
+			Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
+			if (srcFileDir.exists())
+				srcFileDir.remove(true);
+		}
+		catch (Poco::Exception& exc)
+		{
+			std::string strErr = "删除文件夹(" + pPapers->strPapersPath + ")失败: " + exc.message();
+			g_Log.LogOutError(strErr);
+		}
+	}
 
 #endif
 }
@@ -319,15 +340,15 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERSINFO pPapers
 		result = parser.parse(strFileData);		//strJsnData
 		Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
 
-// 		int nOmrDoubt = -1;
-// 		int nOmrNull = -1;
-// 		int nSnNull = -1;
-// 		if (objData->has("nOmrDoubt"))
-// 			nOmrDoubt = objData->get("nOmrDoubt").convert<int>();
-// 		if (objData->has("nOmrNull"))
-// 			nOmrNull = objData->get("nOmrNull").convert<int>();
-// 		if (objData->has("nSnNull"))
-// 			nSnNull = objData->get("nSnNull").convert<int>();
+		int nOmrDoubt = -1;
+		int nOmrNull = -1;
+		int nSnNull = -1;
+		if (objData->has("nOmrDoubt"))
+			nOmrDoubt = objData->get("nOmrDoubt").convert<int>();
+		if (objData->has("nOmrNull"))
+			nOmrNull = objData->get("nOmrNull").convert<int>();
+		if (objData->has("nSnNull"))
+			nSnNull = objData->get("nSnNull").convert<int>();
 
 		int nExamId = objData->get("examId").convert<int>();
 		int nSubjectId = objData->get("subjectId").convert<int>();
@@ -341,7 +362,7 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERSINFO pPapers
 			pPapers->strDesc = objData->get("desc").convert<std::string>();
 		}
 
-#if 0
+#if 1
 		bool bFindDeff = false;
 		std::string strStudentList_Src;
 		std::string strStudentList_Decompress;
@@ -353,7 +374,7 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERSINFO pPapers
 
 			pST_PaperInfo pPaper = NULL;
 			PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
-			for (int j = 0; itPaper != pPapers->lPaper.end(); itPaper++)
+			for (int j = 0; itPaper != pPapers->lPaper.end(); j++, itPaper++)
 			{
 				strStudentList_Decompress.append((*itPaper)->strStudentInfo + " ");
 				if ((*itPaper)->strStudentInfo == strStudentInfo)
@@ -364,56 +385,49 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERSINFO pPapers
 			}
 			if (pPaper)
 			{
-				pPaper->strZkzh = jsnPaperObj->get("zkzh").convert<std::string>();
-				pPaper->nQkFlag = jsnPaperObj->get("qk").convert<int>();
+				pPaper->strStudentInfo = jsnPaperObj->get("name").convert<std::string>();
+				pPaper->strSN = jsnPaperObj->get("zkzh").convert<std::string>();
+				pPaper->nQKFlag = jsnPaperObj->get("qk").convert<int>();
 
 				Poco::JSON::Array::Ptr jsnSnArry = jsnPaperObj->getArray("snDetail");
-				Poco::JSON::Object jsnSn;
-				jsnSn.set("examId", nExamId);
-				jsnSn.set("subjectId", nSubjectId);
-				jsnSn.set("userId", nUserId);
-				jsnSn.set("teacherId", nTeacherId);
-				jsnSn.set("zkzh", pPaper->strZkzh);
-				jsnSn.set("papers", pPapers->strPapersName);
-				if (pPaper->strZkzh != "")
-					jsnSn.set("doubt", 0);
-				else
-					jsnSn.set("doubt", 1);
-				jsnSn.set("detail", jsnSnArry);
-				std::stringstream jsnSnString;
-				jsnSn.stringify(jsnSnString, 0);
-				pPaper->strSnDetail = jsnSnString.str();
+				for (int k = 0; k < jsnSnArry->size(); k++)
+				{
+					Poco::JSON::Object::Ptr jsnSnObj = jsnSnArry->getObject(k);
+					pSN_ITEM pSnItem = new SN_ITEM;
+					pSnItem->nItem = jsnSnObj->get("sn").convert<int>();
+					pSnItem->nRecogVal = jsnSnObj->get("val").convert<int>();
+					pPaper->lSnResult.push_back(pSnItem);
+				}
 
 				Poco::JSON::Array::Ptr jsnOmrArry = jsnPaperObj->getArray("omr");
-				Poco::JSON::Object jsnOmr;
-				jsnOmr.set("examId", nExamId);
-				jsnOmr.set("subjectId", nSubjectId);
-				jsnOmr.set("userId", nUserId);
-				jsnOmr.set("teacherId", nTeacherId);
-				jsnOmr.set("zkzh", pPaper->strZkzh);
-				jsnOmr.set("papers", pPapers->strPapersName);
-				jsnOmr.set("omr", jsnOmrArry);
-				std::stringstream jsnOmrString;
-				jsnOmr.stringify(jsnOmrString, 0);
-				pPaper->strOmrDetail = jsnOmrString.str();
+				for (int k = 0; k < jsnOmrArry->size(); k++)
+				{
+					Poco::JSON::Object::Ptr jsnOmrObj = jsnOmrArry->getObject(k);
+					OMR_RESULT omrResult;
+					omrResult.nTH = jsnOmrObj->get("th").convert<int>();
+					omrResult.nSingle = jsnOmrObj->get("type").convert<int>() - 1;
+					omrResult.strRecogVal = jsnOmrObj->get("value").convert<std::string>();
+					if (jsnOmrObj->has("value2"))
+						omrResult.strRecogVal = jsnOmrObj->get("value2").convert<std::string>();
+					omrResult.nDoubt = jsnOmrObj->get("doubt").convert<int>();
+					pPaper->lOmrResult.push_back(omrResult);
+				}
+
+
 
 				if (jsnPaperObj->has("electOmr"))
 				{
-					//*************	注意：这里需要和后端确认，现在还不行	********************
-
 					Poco::JSON::Array::Ptr jsnElectOmrArry = jsnPaperObj->getArray("electOmr");
-					Poco::JSON::Object jsnElectOmr;
-					jsnElectOmr.set("examId", nExamId);
-					jsnElectOmr.set("subjectId", nSubjectId);
-					jsnElectOmr.set("userId", nUserId);
-					jsnElectOmr.set("teacherId", nTeacherId);
-					jsnElectOmr.set("zkzh", pPaper->strZkzh);
-					jsnElectOmr.set("papers", pPapers->strPapersName);
-					jsnElectOmr.set("electOmr", jsnElectOmrArry);
-					std::stringstream jsnElectOmrString;
-					jsnElectOmr.stringify(jsnElectOmrString, 0);
-					pPaper->strElectOmrDetail = jsnElectOmrString.str();
-					pPaper->nHasElectOmr = 1;
+					for (int k = 0; k < jsnElectOmrArry->size(); k++)
+					{
+						Poco::JSON::Object::Ptr jsnElectOmrObj = jsnElectOmrArry->getObject(k);
+						ELECTOMR_QUESTION electOmrResult;
+						electOmrResult.sElectOmrGroupInfo.nGroupID = jsnElectOmrObj->get("th").convert<int>();
+						electOmrResult.sElectOmrGroupInfo.nAllCount = jsnElectOmrObj->get("allItems").convert<int>();
+						electOmrResult.sElectOmrGroupInfo.nRealCount = jsnElectOmrObj->get("realItem").convert<int>();
+						electOmrResult.strRecogResult = jsnElectOmrObj->get("value").convert<std::string>();
+						pPaper->lElectOmrResult.push_back(electOmrResult);
+					}
 				}
 			}
 			else
@@ -427,12 +441,17 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERSINFO pPapers
 			std::string strLog;
 			strLog = "出现OMR和SN号信息与学生试卷不一致的情况，详情: 源(" + strStudentList_Src + ")未发现, 解压后(" + strStudentList_Decompress + ")";
 			g_Log.LogOutError(strLog);
+			USES_CONVERSION;
+			CString strMsg;
+			strMsg.Format(_T("解压(%s)完成\r\n"), A2T(strLog.c_str()));
+			((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
 			return false;
 		}
 #endif
-// 		pPapers->nOmrDoubt = nOmrDoubt;
-// 		pPapers->nOmrNull = nOmrNull;
-// 		pPapers->nSnNull = nSnNull;
+		pPapers->nOmrDoubt = nOmrDoubt;
+		pPapers->nOmrNull = nOmrNull;
+		pPapers->nSnNull = nSnNull;
+
 		pPapers->nExamID = nExamId;
 		pPapers->nSubjectID = nSubjectId;
 		pPapers->nTeacherId = nTeacherId;
@@ -510,5 +529,67 @@ void CDecompressThread::SearchExtractFile(pPAPERSINFO pPapers, std::string strPa
 		}
 		it++;
 	}
+}
+
+bool CDecompressThread::calcStatistics(pPAPERSINFO pPapers)
+{
+	std::stringstream ss;
+	int nOmrCount = 0;
+
+	//omr统计
+	PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
+	for (; itPaper != pPapers->lPaper.end(); itPaper++)
+	{
+		pST_PaperInfo pPaper = *itPaper;
+		nOmrCount += pPaper->lOmrResult.size();
+
+		OMRRESULTLIST::iterator itOmr = pPaper->lOmrResult.begin();
+		for (int i = 1; itOmr != pPaper->lOmrResult.end(); i++, itOmr++)
+		{
+			ss.clear();
+			ss << pPapers->strPapersName << ":" << pPaper->strStudentInfo << ":" << i;
+			std::map<std::string, std::string>::iterator itAnswer = answerMap.find(ss.str());
+			if (itAnswer != answerMap.end())
+			{
+				if (itOmr->strRecogVal != itAnswer->second)
+					pPapers->nOmrError_1++;
+				if (itOmr->strRecogVal2 != itAnswer->second)
+					pPapers->nOmrError_2++;
+			}
+		}
+	}
+	PAPER_LIST::iterator itPaper2 = pPapers->lIssue.begin();
+	for (; itPaper2 != pPapers->lIssue.end(); itPaper2++)
+	{
+		pST_PaperInfo pPaper = *itPaper2;
+		nOmrCount += pPaper->lOmrResult.size();
+
+		OMRRESULTLIST::iterator itOmr = pPaper->lOmrResult.begin();
+		for (int i = 1; itOmr != pPaper->lOmrResult.end(); i++, itOmr++)
+		{
+			ss.clear();
+			ss << pPapers->strPapersName << ":" << pPaper->strStudentInfo << ":" << i;
+			std::map<std::string, std::string>::iterator itAnswer = answerMap.find(ss.str());
+			if (itAnswer != answerMap.end())
+			{
+				if (itOmr->strRecogVal != itAnswer->second)
+					pPapers->nOmrError_1++;
+				if (itOmr->strRecogVal2 != itAnswer->second)
+					pPapers->nOmrError_2++;
+			}
+		}
+	}
+
+
+	USES_CONVERSION;
+	CString strMsg;
+
+	char szStatisticsInfo[300] = { 0 };
+	sprintf_s(szStatisticsInfo, "\n统计信息: omrError1 = %.2f%%(%d/%d), omrError2 = %.2f%%(%d/%d)\n", (float)pPapers->nOmrError_1 / nOmrCount * 100, pPapers->nOmrError_1, nOmrCount, \
+			  (float)pPapers->nOmrError_2 / nOmrCount * 100, pPapers->nOmrError_2, nOmrCount);
+
+	strMsg.Format(_T("%s识别完成\r\n%s\r\n"), A2T(pPapers->strPapersName.c_str()), A2T(szStatisticsInfo));
+	((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
+	return true;
 }
 
