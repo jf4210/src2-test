@@ -52,6 +52,13 @@ double	_dCompThread_Head_ = 1.0;
 double	_dDiffThread_Head_ = 0.085;
 double	_dDiffExit_Head_ = 0.15;
 
+//统计信息
+Poco::FastMutex _fmErrorStatistics_;
+int		_nErrorStatistics1_ = 0;	//第一种方法识别错误数
+int		_nErrorStatistics2_ = 0;	//第二种方法识别错误数
+int		_nDoubtStatistics = 0;		//识别怀疑总数
+int		_nNullStatistics = 0;		//识别为空总数
+int		_nAllStatistics_ = 0;		//统计总数
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -130,6 +137,8 @@ BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
 	ON_MESSAGE(MSG_RECOG_COMPLETE, &CDataMgrToolDlg::MsgRecogComplete)
 	ON_BN_CLICKED(IDC_BTN_StudentAnswer, &CDataMgrToolDlg::OnBnClickedBtnStudentanswer)
 	ON_BN_CLICKED(IDC_BTN_Statistics, &CDataMgrToolDlg::OnBnClickedBtnStatistics)
+	ON_BN_CLICKED(IDC_BTN_StatisticsResult, &CDataMgrToolDlg::OnBnClickedBtnStatisticsresult)
+	ON_BN_CLICKED(IDC_BTN_ClearStatistics, &CDataMgrToolDlg::OnBnClickedBtnClearstatistics)
 END_MESSAGE_MAP()
 
 
@@ -167,13 +176,6 @@ BOOL CDataMgrToolDlg::OnInitDialog()
 	InitConfig();
 	InitParam();
 
-	m_pDecompressThread = new Poco::Thread[1];
-	for (int i = 0; i < 1; i++)
-	{
-		CDecompressThread* pObj = new CDecompressThread(this);
-		m_pDecompressThread[i].start(*pObj);
-		m_vecDecompressThreadObj.push_back(pObj);
-	}
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -245,7 +247,7 @@ void CDataMgrToolDlg::OnDestroy()
 		itDecObj = m_vecDecompressThreadObj.erase(itDecObj);
 	}
 
-	for (int i = 0; i < 1; i++)
+	for (int i = 0; i < m_vecDecompressThreadObj.size(); i++)
 	{
 		m_pDecompressThread[i].join();
 	}
@@ -373,6 +375,16 @@ void CDataMgrToolDlg::InitConfig()
 	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(T2A(strConfigPath));
 	Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strUtf8Path));
 	int nRecogThreads = pConf->getInt("Recog.threads", 2);
+	int nDecompressThreads = pConf->getInt("Decompress.threads", 1);
+
+
+	m_pDecompressThread = new Poco::Thread[nDecompressThreads];
+	for (int i = 0; i < nDecompressThreads; i++)
+	{
+		CDecompressThread* pObj = new CDecompressThread(this);
+		m_pDecompressThread[i].start(*pObj);
+		m_vecDecompressThreadObj.push_back(pObj);
+	}
 
 	m_pCompressThread = new Poco::Thread;
 	m_pCompressObj = new CCompressThread(this);
@@ -448,7 +460,7 @@ void CDataMgrToolDlg::OnBnClickedMfcbuttonDecrypt()
 
 void CDataMgrToolDlg::showMsg(CString& strMsg)
 {
-	if (m_strMsg.GetLength() > 4000)
+	if (m_strMsg.GetLength() > 10000)
 		m_strMsg.Empty();
 
 	m_strMsg.Append(strMsg);
@@ -584,6 +596,32 @@ LRESULT CDataMgrToolDlg::MsgRecogComplete(WPARAM wParam, LPARAM lParam)
 
 	USES_CONVERSION;
 	CString strMsg;
+	std::stringstream ss;
+
+	if (answerMap.size() > 0)
+	{
+		int nOmrCount = 0;
+		PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
+		for (; itPaper != pPapers->lPaper.end(); itPaper++)
+		{
+			pST_PaperInfo pPaper = *itPaper;
+			nOmrCount += pPaper->lOmrResult.size();
+		}
+		PAPER_LIST::iterator itPaper2 = pPapers->lIssue.begin();
+		for (; itPaper2 != pPapers->lIssue.end(); itPaper2++)
+		{
+			pST_PaperInfo pPaper = *itPaper2;
+			nOmrCount += pPaper->lOmrResult.size();
+		}
+		ss.str("");
+		char szStatisticsInfo[300] = { 0 };
+		sprintf_s(szStatisticsInfo, "\n识别错误信息统计: omrError1 = %.2f%%(%d/%d), omrError2 = %.2f%%(%d/%d)\n", (float)pPapers->nOmrError_1 / nOmrCount * 100, pPapers->nOmrError_1, nOmrCount, \
+				  (float)pPapers->nOmrError_2 / nOmrCount * 100, pPapers->nOmrError_2, nOmrCount);
+
+		ss << "\r\n----------\r\n" << pPapers->strPapersName << "结果正确率统计完成:\r\n" << szStatisticsInfo << "\r\n----------\r\n";
+	}
+	
+
 	if (pPapers->lIssue.size() == 0)
 	{
 		int nModelOmrCount = 0;
@@ -598,10 +636,10 @@ LRESULT CDataMgrToolDlg::MsgRecogComplete(WPARAM wParam, LPARAM lParam)
 				  (float)pPapers->nOmrNull / nOmrCount * 100, pPapers->nOmrNull, nOmrCount, \
 				  (float)pPapers->nSnNull / nPapersCount * 100, pPapers->nSnNull, nPapersCount);
 
-		strMsg.Format(_T("%s识别完成\r\n%s\r\n"), A2T(pPapers->strPapersName.c_str()), A2T(szStatisticsInfo));
+		strMsg.Format(_T("\r\n=======>>>>>>>>>>\r\n%s识别完成\r\n%s\r\n%s=======<<<<<<<<<<\r\n"), A2T(pPapers->strPapersName.c_str()), A2T(szStatisticsInfo), A2T(ss.str().c_str()));
 	}
 	else
-		strMsg.Format(_T("%s识别出问题试卷\r\n"), A2T(pPapers->strPapersName.c_str()));
+		strMsg.Format(_T("\r\n%s识别出问题试卷\r\n"), A2T(pPapers->strPapersName.c_str()));
 	showMsg(strMsg);
 	return TRUE;
 }
@@ -686,4 +724,36 @@ void CDataMgrToolDlg::OnBnClickedBtnStatistics()
 	catch (Poco::Exception& exc)
 	{
 	}
+}
+
+
+void CDataMgrToolDlg::OnBnClickedBtnStatisticsresult()
+{
+	USES_CONVERSION;
+	CString strMsg;
+
+	char szStatisticsInfo[300] = { 0 };
+	sprintf_s(szStatisticsInfo, "\n所有试卷袋识别错误信息统计:\r\ndoubt = %.2f%%(%d/%d), null = %.2f%%(%d/%d), omrError1 = %.2f%%(%d/%d), omrError2 = %.2f%%(%d/%d)\n", (float)_nDoubtStatistics / _nAllStatistics_ * 100, _nDoubtStatistics, _nAllStatistics_, \
+			  (float)_nNullStatistics / _nAllStatistics_ * 100, _nNullStatistics, _nAllStatistics_, \
+			  (float)_nErrorStatistics1_ / _nAllStatistics_ * 100, _nErrorStatistics1_, _nAllStatistics_, \
+			  (float)_nErrorStatistics2_ / _nAllStatistics_ * 100, _nErrorStatistics2_, _nAllStatistics_);
+	strMsg.Format(_T("\r\n***********************\r\n%s\r\n***********************\r\n"), A2T(szStatisticsInfo));
+	showMsg(strMsg);
+	g_Log.LogOut(T2A(strMsg));
+}
+
+
+void CDataMgrToolDlg::OnBnClickedBtnClearstatistics()
+{
+	_fmErrorStatistics_.lock();
+	_nErrorStatistics1_ = 0;
+	_nErrorStatistics2_ = 0;
+	_nDoubtStatistics = 0;
+	_nNullStatistics = 0;
+	_nAllStatistics_ = 0;
+	_fmErrorStatistics_.unlock();
+
+	CString strMsg;
+	strMsg.Format(_T("\r\n统计结果已清零\r\n"));
+	showMsg(strMsg);
 }

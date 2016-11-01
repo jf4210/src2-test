@@ -11,13 +11,13 @@ public:
 	virtual void run();
 
 	void HandleTask(pDECOMPRESSTASK pTask);
-	void GetFileData(std::string strFilePath, int& nExamID, int& nSubjectID);
 	bool GetFileData(std::string strFilePath, pPAPERSINFO pPapers);
+	bool GetFileData2(std::string strFilePath, pPAPERSINFO pPapers);
 
 
 	void SearchExtractFile(pPAPERSINFO pPapers, std::string strPath);
 
-	bool calcStatistics(pPAPERSINFO pPapers);
+//	bool calcStatistics(pPAPERSINFO pPapers);
 private:
 	void* m_pDlg;
 };

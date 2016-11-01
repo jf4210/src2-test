@@ -2237,3 +2237,84 @@ bool SavePapersInfo(pPAPERSINFO pPapers)
 	return true;
 }
 
+std::string calcStatistics(pPAPERSINFO pPapers)
+{
+	std::stringstream ss;
+	int nOmrCount = 0;
+// 	if (answerMap.size() == 0)
+// 		return "";
+
+	std::string strErrorInfo1;
+	std::string strErrorInfo2;
+	//omr统计
+	PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
+	for (; itPaper != pPapers->lPaper.end(); itPaper++)
+	{
+		pST_PaperInfo pPaper = *itPaper;
+		nOmrCount += pPaper->lOmrResult.size();
+
+		OMRRESULTLIST::iterator itOmr = pPaper->lOmrResult.begin();
+		for (int i = 1; itOmr != pPaper->lOmrResult.end(); i++, itOmr++)
+		{
+			ss.str("");
+			ss << pPapers->strPapersName << ":" << pPaper->strStudentInfo << ":" << i;
+			std::string strTmp = ss.str();
+			std::map<std::string, std::string>::iterator itAnswer = answerMap.find(ss.str());
+			if (itAnswer != answerMap.end())
+			{
+				if (itOmr->strRecogVal != itAnswer->second)
+				{
+					pPapers->nOmrError_1++;
+					strErrorInfo1.append(ss.str() + "-" + itOmr->strRecogVal + "   R=" + itAnswer->second + "\n");
+				}
+				if (itOmr->strRecogVal2 != itAnswer->second)
+				{
+					pPapers->nOmrError_2++;
+					strErrorInfo2.append(ss.str() + "-" + itOmr->strRecogVal2 + "   R=" + itAnswer->second + "\n");
+				}
+			}
+		}
+	}
+	PAPER_LIST::iterator itPaper2 = pPapers->lIssue.begin();
+	for (; itPaper2 != pPapers->lIssue.end(); itPaper2++)
+	{
+		pST_PaperInfo pPaper = *itPaper2;
+		nOmrCount += pPaper->lOmrResult.size();
+
+		OMRRESULTLIST::iterator itOmr = pPaper->lOmrResult.begin();
+		for (int i = 1; itOmr != pPaper->lOmrResult.end(); i++, itOmr++)
+		{
+			ss.str("");
+			ss << pPapers->strPapersName << ":" << pPaper->strStudentInfo << ":" << i;
+			std::map<std::string, std::string>::iterator itAnswer = answerMap.find(ss.str());
+			if (itAnswer != answerMap.end())
+			{
+				if (itOmr->strRecogVal != itAnswer->second)
+					pPapers->nOmrError_1++;
+				if (itOmr->strRecogVal2 != itAnswer->second)
+					pPapers->nOmrError_2++;
+			}
+		}
+	}
+
+	ss.str("");
+	char szStatisticsInfo[300] = { 0 };
+	sprintf_s(szStatisticsInfo, "\n识别错误信息统计: omrError1 = %.2f%%(%d/%d), omrError2 = %.2f%%(%d/%d)\n", (float)pPapers->nOmrError_1 / nOmrCount * 100, pPapers->nOmrError_1, nOmrCount, \
+			  (float)pPapers->nOmrError_2 / nOmrCount * 100, pPapers->nOmrError_2, nOmrCount);
+
+	ss << "\r\n-------------------\r\n"<< pPapers->strPapersName << "结果正确率统计完成:\r\n" << szStatisticsInfo << "\r\n-------------------\r\n\r\n";
+
+	_fmErrorStatistics_.lock();
+	_nErrorStatistics1_ += pPapers->nOmrError_1;
+	_nErrorStatistics2_ += pPapers->nOmrError_2;
+	_nDoubtStatistics += pPapers->nOmrDoubt;
+	_nNullStatistics += pPapers->nOmrNull;
+	_nAllStatistics_ += nOmrCount;
+	_fmErrorStatistics_.unlock();
+
+	std::string strLog;
+	strLog = "识别错误详情1: \n" + strErrorInfo1 + "\n错误详情2: " + strErrorInfo2 + "\n";
+	g_Log.LogOut(strLog);
+	return ss.str();
+}
+

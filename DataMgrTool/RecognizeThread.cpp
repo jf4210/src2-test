@@ -341,6 +341,8 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 	pPapers->fmRecogCompleteOK.unlock();
 	if (pPapers->nRecogPics == (pPapers->lPaper.size() + pPapers->lIssue.size()))
 	{
+		calcStatistics(pPapers);
+
 		(static_cast<CDialog*>(pPaper->pSrcDlg))->SendMessage(MSG_RECOG_COMPLETE, (WPARAM)pPaper, (LPARAM)pPapers);		//PostMessageW
 
 // 		USES_CONVERSION;
@@ -353,6 +355,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 
 		//Ð´ÎÄ¼þ
 		SavePapersInfo(pPapers);
+		
 		//Ñ¹Ëõ
 		std::string strNewPapersSaveDir = (static_cast<CDataMgrToolDlg*>(pPaper->pSrcDlg))->m_strPkgPath + "\\newPkg";
 		try

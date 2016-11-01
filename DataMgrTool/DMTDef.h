@@ -11,6 +11,7 @@
 #ifdef _DEBUG
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
+	#define DecompressTest		//解压测试，多线程解压
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -300,3 +301,15 @@ std::string GetQR(cv::Mat img, std::string& strTypeName);
 
 bool ZipFile(std::string& strSavePath, std::string& strSrcDir, std::string strExtName = ".pkg");
 bool SavePapersInfo(pPAPERSINFO pPapers);
+
+
+//统计信息
+//统计信息
+extern Poco::FastMutex _fmErrorStatistics_;
+extern int		_nErrorStatistics1_;	//第一种方法识别错误数
+extern int		_nErrorStatistics2_;	//第二种方法识别错误数
+extern int		_nDoubtStatistics;		//识别怀疑总数
+extern int		_nNullStatistics;		//识别为空总数
+extern int		_nAllStatistics_;		//统计总数
+std::string calcStatistics(pPAPERSINFO pPapers);
+//--

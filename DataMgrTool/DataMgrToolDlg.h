@@ -79,4 +79,6 @@ public:
 	afx_msg void OnBnClickedBtnRerecogpkg();
 	afx_msg void OnBnClickedBtnStudentanswer();
 	afx_msg void OnBnClickedBtnStatistics();
+	afx_msg void OnBnClickedBtnStatisticsresult();
+	afx_msg void OnBnClickedBtnClearstatistics();
 };
