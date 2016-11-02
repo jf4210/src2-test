@@ -2318,3 +2318,114 @@ std::string calcStatistics(pPAPERSINFO pPapers)
 	return ss.str();
 }
 
+
+inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
+{
+	cv::cvtColor(matSrcRoi, matSrcRoi, CV_BGR2GRAY);
+	cv::GaussianBlur(matSrcRoi, matSrcRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);
+	SharpenImage(matSrcRoi, matSrcRoi, rc.nSharpKernel);
+
+	const int channels[1] = { 0 };
+	const float* ranges[1];
+	const int histSize[1] = { 1 };
+	float hranges[2];
+	if (rc.eCPType != WHITE_CP)
+	{
+		hranges[0] = 0;
+		hranges[1] = static_cast<float>(rc.nThresholdValue);
+		ranges[0] = hranges;
+	}
+	else
+	{
+		hranges[0] = static_cast<float>(rc.nThresholdValue);
+		hranges[1] = 255;	//255			//256时可统计完全空白的点，即RGB值为255的完全空白点;255时只能统计到RGB为254的值，255的值统计不到
+		ranges[0] = hranges;
+	}
+	cv::MatND src_hist;
+	cv::calcHist(&matSrcRoi, 1, channels, cv::Mat(), src_hist, 1, histSize, ranges, false);
+
+	rc.fStandardValue = src_hist.at<float>(0);
+	rc.fStandardArea = rc.rt.area();
+	rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea;
+
+
+
+	cv::MatND src_hist2;
+	const int histSize2[1] = { 256 };	//rc.nThresholdValue - g_nRecogGrayMin
+	const float* ranges2[1];
+	float hranges2[2];
+	hranges2[0] = 0;
+	hranges2[1] = 255;
+	ranges2[0] = hranges2;
+	cv::calcHist(&matSrcRoi, 1, channels, cv::Mat(), src_hist2, 1, histSize2, ranges2, true, false);
+	int nCount = 0;
+	for (int i = 0; i < 256; i++)
+	{
+		nCount += i * src_hist2.at<float>(i);
+	}
+	rc.fStandardMeanGray = nCount / rc.fStandardArea;
+	return true;
+}
+
+bool InitModelRecog(pMODEL pModel, std::string strModelPath)
+{
+	bool bResult = true;
+	std::string strLog;
+
+	for (int i = 0; i < pModel->vecPaperModel.size(); i++)
+	{
+		std::string strModelPicPath = strModelPath + "\\" + pModel->vecPaperModel[i]->strModelPicName;
+
+		cv::Mat matSrc = cv::imread(strModelPicPath);
+
+		pPAPERMODEL pPicModel = pModel->vecPaperModel[i];
+
+		if (pModel->nZkzhType == 1)
+		{
+			SNLIST::iterator itSN = pPicModel->lSNInfo.begin();
+			for (; itSN != pPicModel->lSNInfo.end(); itSN++)
+			{
+				pSN_ITEM pSNItem = *itSN;
+				RECTLIST::iterator itSNItem = pSNItem->lSN.begin();
+				for (; itSNItem != pSNItem->lSN.end(); itSNItem++)
+				{
+					itSNItem->nThresholdValue = _nSN_;
+					
+					cv::Mat matComp = matSrc(itSNItem->rt);
+					RecogGrayValue(matComp, *itSNItem);
+				}
+			}
+		}
+		OMRLIST::iterator itOmr = pPicModel->lOMR2.begin();
+		for (; itOmr != pPicModel->lOMR2.end(); itOmr++)
+		{
+			RECTLIST::iterator itOmrItem = itOmr->lSelAnswer.begin();
+			for (; itOmrItem != itOmr->lSelAnswer.end(); itOmrItem++)
+			{
+				itOmrItem->nThresholdValue = _nOMR_;
+
+				cv::Mat matComp = matSrc(itOmrItem->rt);
+				RecogGrayValue(matComp, *itOmrItem);
+			}
+		}
+
+		ELECTOMR_LIST::iterator itElectOmr = pPicModel->lElectOmr.begin();
+		for (; itElectOmr != pPicModel->lElectOmr.end(); itElectOmr++)
+		{
+			RECTLIST::iterator itOmrItem = itElectOmr->lItemInfo.begin();
+			for (; itOmrItem != itElectOmr->lItemInfo.end(); itOmrItem++)
+			{
+				itOmrItem->nThresholdValue = _nOMR_;
+				
+				cv::Mat matComp = matSrc(itOmrItem->rt);
+				RecogGrayValue(matComp, *itOmrItem);
+			}
+		}
+	}
+
+	strLog = "模板图片校验信息识别完成";
+	g_Log.LogOut(strLog);
+	std::cout << strLog << std::endl;
+	return bResult;
+}
+

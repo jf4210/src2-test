@@ -81,4 +81,6 @@ public:
 	afx_msg void OnBnClickedBtnStatistics();
 	afx_msg void OnBnClickedBtnStatisticsresult();
 	afx_msg void OnBnClickedBtnClearstatistics();
+	afx_msg void OnBnClickedChkReadparam();
+	afx_msg void OnBnClickedBtnLoadparam();
 };

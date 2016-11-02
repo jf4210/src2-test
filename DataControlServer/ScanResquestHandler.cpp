@@ -234,32 +234,6 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 			}
 			return bResult;
 		}
-		else if (pTask->strMsg == "setElectOmrInfo")
-		{
-			strSendData = strInput;
-
-			Poco::JSON::Object::Ptr objResult = object->getObject("status");
-			bResult = objResult->get("success").convert<bool>();
-			if (!bResult)
-			{
-				ret = RESULT_ELECTOMR_MODEL_FAIL;
-				std::string strMsg;
-				if (!objResult->isNull("msg"))
-				{
-					strMsg = CMyCodeConvert::Utf8ToGb2312(objResult->get("msg").convert<std::string>());
-				}
-				std::string strLog = "通知后端考试科目的选做题模板信息失败，失败原因: " + strMsg;
-				g_Log.LogOutError(strLog);
-				std::cout << strLog << std::endl;
-			}
-			else
-			{
-				ret = RESULT_SUCCESS;
-				std::string strLog = Poco::format("通知后端考试科目(%d_%d)的选做题模板信息成功", pTask->nExamID, pTask->nSubjectID);
-				g_Log.LogOut(strLog);
-				std::cout << strLog << std::endl;
-			}
-		}
 		else if (pTask->strMsg == "createModel")
 		{
 			Poco::JSON::Object::Ptr objResult = object->getObject("status");

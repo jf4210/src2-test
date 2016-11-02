@@ -175,13 +175,40 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				strLog.append(szIndex);
 				strLog.append("的信息，可以发送此模板的信息");
 				g_Log.LogOut(strLog);
+
+				pST_MODELINFO pStModelInfo = new ST_MODELINFO;
+				memcpy(pStModelInfo, &stModelInfo, sizeof(stModelInfo));
+
+				pMODELINFO pModelInfo = new MODELINFO;
+				pModelInfo->nExamID = stModelInfo.nExamID;
+				pModelInfo->nSubjectID = stModelInfo.nSubjectID;
+				pModelInfo->strName = stModelInfo.szModelName;
+				pModelInfo->pUploadModelInfo = pStModelInfo;
+				pModelInfo->pUser = pUser;
+
+				_mapModelLock_.lock();
+				_mapModel_.insert(MAP_MODEL::value_type(szIndex, pModelInfo));
+				_mapModelLock_.unlock();
+
+				strLog = "添加新的模板信息，等待接收模板文件";
+				strLog.append(stModelInfo.szModelName);
+				g_Log.LogOut(strLog);
 			}
 			else
 			{
 				pMODELINFO pModelInfo = itFind->second;
-				if (pModelInfo->strMd5 != stModelInfo.szMD5)		//文件未修改，不需要重新发送
+				if (pModelInfo->strMd5 != stModelInfo.szMD5)		//文件有修改，需要重新发送
 				{
 					bNeedSend = true;
+
+
+					pST_MODELINFO pStModelInfo = new ST_MODELINFO;
+					memcpy(pStModelInfo, &stModelInfo, sizeof(stModelInfo));
+
+					SAFE_RELEASE(pModelInfo->pUploadModelInfo);
+					pModelInfo->pUploadModelInfo = pStModelInfo;
+					pModelInfo->pUser = pUser;
+
 
 					std::string strLog = "模板信息映射表中";
 					strLog.append(szIndex);
@@ -194,10 +221,12 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			{
 				pUser->SendResponesInfo(USER_RESPONSE_MODELINFO, RESULT_SETMODELINFO_SEND, (char*)&stModelInfo, sizeof(stModelInfo));
 
+				
 				#ifdef TEST_MODE
 				return 1;
 				#endif
 
+		#if 0				//需要先解压后提交图片MD5再去后端设置信息
 				Poco::JSON::Object jsnModel;
 				jsnModel.set("examId", stModelInfo.nExamID);
 				jsnModel.set("subjectId", stModelInfo.nSubjectID);
@@ -217,6 +246,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				g_fmScanReq.lock();
 				g_lScanReq.push_back(pTask);
 				g_fmScanReq.unlock();
+		#endif
 			}
 			else
 				pUser->SendResult(USER_RESPONSE_MODELINFO, RESULT_SETMODELINFO_NO);
@@ -360,33 +390,6 @@ int CUserMgr::HandleHeader(CMission* pMission)
 					pUser->SendResult(USER_RESPONSE_CREATE_MODEL, RESULT_CREATE_MODEL_NONEED);
 			}
 		#endif
-		}
-		break;
-	case USER_ELECTOMR_MODEL:
-		{
-			ST_UPLOAD_ELECTOMR stModelInfo = *(pST_UPLOAD_ELECTOMR)(pMission->m_pMissionData + HEAD_SIZE);
-			std::string strJsnData;
-			char szJsnData[2048] = { 0 };
-			strncpy_s(szJsnData, pMission->m_pMissionData + HEAD_SIZE + sizeof(ST_UPLOAD_ELECTOMR), header.uPackSize - sizeof(ST_UPLOAD_ELECTOMR));
-
-			std::cout << szJsnData << std::endl;
-
-			char szIndex[50] = { 0 };
-			sprintf(szIndex, "%d_%d", stModelInfo.nExamID, stModelInfo.nSubjectID);
-
-			//++向后端提交选做题模板信息	************* 注意：这里需要和后端确认，目前还不清楚后端接口	******************
-
-			/*std::string strEzs = stModelInfo.szEzs;
-			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
-			pTask->strUri = SysSet.m_strBackUri + "/scanTemplate";
-			pTask->pUser = pUser;
-			pTask->strEzs = "ezs=" + strEzs;
-			pTask->strMsg = "setElectOmrInfo";
-			pTask->strRequest = szJsnData;
-			g_fmScanReq.lock();
-			g_lScanReq.push_back(pTask);
-			g_fmScanReq.unlock();*/
-			//--
 		}
 		break;
 	default:

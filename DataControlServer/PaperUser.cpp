@@ -178,12 +178,13 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 
 								std::string strLog;
 
+								pMODELINFO pModelInfo = NULL;
 								char szIndex[50] = { 0 };
 								sprintf(szIndex, "%s_%s", strExamID.c_str(), strSubjectID.c_str());
 								MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
 								if (itFind == _mapModel_.end())
 								{
-									pMODELINFO pModelInfo = new MODELINFO;
+									pModelInfo = new MODELINFO;
 									pModelInfo->nExamID = atoi(strExamID.c_str());
 									pModelInfo->nSubjectID = atoi(strSubjectID.c_str());
 									pModelInfo->strName = m_szFileName;
@@ -199,7 +200,7 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 								}
 								else
 								{
-									pMODELINFO pModelInfo = itFind->second;
+									pModelInfo = itFind->second;
 									pModelInfo->strName = m_szFileName;
 									pModelInfo->strPath = strModelNewPath;
 									pModelInfo->strMd5 = m_szAnswerMd5;
@@ -209,6 +210,18 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 								}
 								g_Log.LogOut(strLog);
 								std::cout << strLog << std::endl;
+
+								//++模板上传完成后，需要解压，向zimg提交图片给后端
+								pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+								pDecompressTask->nType = 2;
+								pDecompressTask->strFilePath = strModelNewPath;
+								pDecompressTask->strFileBaseName = m_szFileName;
+								pDecompressTask->strFileBaseName = pDecompressTask->strFileBaseName.substr(0, nPos);	//pDecompressTask->strFileBaseName.length() - 4
+								pDecompressTask->strSrcFileName = m_szFileName;
+								g_fmDecompressLock.lock();
+								g_lDecompressTask.push_back(pDecompressTask);
+								g_fmDecompressLock.unlock();
+								//--
 							}
 							catch (Poco::Exception &exc)
 							{

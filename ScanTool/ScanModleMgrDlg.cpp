@@ -536,73 +536,7 @@ void CScanModleMgrDlg::OnBnClickedBtnuploadmodel()
 	CString modelPath = g_strCurrentPath + _T("Model");
 	modelPath = modelPath + _T("\\") + A2T(m_pModel->strModelName.c_str()) + _T(".mod");
 	setUploadModelInfo(m_pModel->strModelName, modelPath, atoi(strExamID.c_str()), atoi(strSubjectID.c_str()), strElectOmrInfo);
-
-	//如果有选做题，选做题信息通过命令通道通知服务器提交后端
-// 	if (m_pModel->nHasElectOmr)
-// 	{
-// 		Poco::JSON::Object jsnDataObj;
-// 		Poco::JSON::Array jsnElectOmrArry;
-// 		for (int i = 0; i < m_pModel->vecPaperModel.size(); i++)
-// 		{
-// 			Poco::JSON::Object jsnPaperElectOmrObj;
-// 			Poco::JSON::Array jsnPaperElectOmrArry;		//单页试卷上的选做题信息
-// 			ELECTOMR_LIST::iterator itElectOmr = m_pModel->vecPaperModel[i]->lElectOmr.begin();
-// 			for (; itElectOmr != m_pModel->vecPaperModel[i]->lElectOmr.end(); itElectOmr++)
-// 			{
-// 				Poco::JSON::Object jsnElectOmr;
-// 				jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
-// 				jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
-// 				jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
-// 				Poco::JSON::Array jsnPositionArry;
-// 				RECTLIST::iterator itRect = itElectOmr->lItemInfo.begin();
-// 				for (; itRect != itElectOmr->lItemInfo.end(); itRect++)
-// 				{
-// 					Poco::JSON::Object jsnItem;
-// 					char szVal[5] = { 0 };
-// 					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
-// 					jsnItem.set("val", szVal);
-// 					jsnItem.set("x", itRect->rt.x);
-// 					jsnItem.set("y", itRect->rt.y);
-// 					jsnItem.set("w", itRect->rt.width);
-// 					jsnItem.set("h", itRect->rt.height);
-// 					jsnPositionArry.add(jsnItem);
-// 				}
-// 				jsnElectOmr.set("position", jsnPositionArry);
-// 				jsnPaperElectOmrArry.add(jsnElectOmr);
-// 			}
-// 			jsnPaperElectOmrObj.set("paperId", i + 1);
-// 			jsnPaperElectOmrObj.set("electOmr", jsnPaperElectOmrArry);
-// 			jsnElectOmrArry.add(jsnPaperElectOmrObj);
-// 		}
-// 		jsnDataObj.set("examId", atoi(strExamID.c_str()));
-// 		jsnDataObj.set("subjectId", atoi(strSubjectID.c_str()));
-// 		jsnDataObj.set("userId", nUserId);
-// 		jsnDataObj.set("teacherId", nTeacherId);
-// 		jsnDataObj.set("modelElectOmr", jsnElectOmrArry);
-// 
-// 		std::stringstream jsnOmrString;
-// 		jsnDataObj.stringify(jsnOmrString, 0);
-// 
-// 		ST_CMD_HEADER stHead;
-// 		stHead.usCmd = USER_ELECTOMR_MODEL;
-// 		stHead.uPackSize = sizeof(ST_EXAM_INFO);
-// 		ST_UPLOAD_ELECTOMR stElectOmrInfo;
-// 		ZeroMemory(&stElectOmrInfo, sizeof(ST_EXAM_INFO));
-// 		strcpy(stElectOmrInfo.szEzs, T2A(strEzs));
-// 		stElectOmrInfo.nExamID = atoi(strExamID.c_str());
-// 		stElectOmrInfo.nSubjectID = atoi(strSubjectID.c_str());
-// 
-// 		pTCP_TASK pTcpTask = new TCP_TASK;
-// 		pTcpTask->usCmd = USER_ELECTOMR_MODEL;
-// 		pTcpTask->nPkgLen = sizeof(ST_UPLOAD_ELECTOMR) + jsnOmrString.str().length();
-// 		memcpy(pTcpTask->szSendBuf, (char*)&stElectOmrInfo, sizeof(ST_UPLOAD_ELECTOMR));
-// 		memcpy(pTcpTask->szSendBuf + sizeof(ST_UPLOAD_ELECTOMR), jsnOmrString.str().c_str(), jsnOmrString.str().length());
-// 		g_fmTcpTaskLock.lock();
-// 		g_lTcpTask.push_back(pTcpTask);
-// 		g_fmTcpTaskLock.unlock();
-// 	}	
-	//--
-
+	
 	AfxMessageBox(_T("添加上传任务完成，后台操作中。。。"));
 }
 

@@ -82,6 +82,17 @@ void CSendToHttpThread::run()
 						pTask->pPapers->fmTask.unlock();
 						checkTaskStatus(pTask->pPapers);
 					}
+					else if (pTask->nTaskType == 6)
+					{
+						strEraseInfo = "Erase task(发送模板图片给zimg): ";
+						strEraseInfo.append((*it)->pPic->strFileName);
+
+						pTask->pPic->bUpLoadFlag = false;
+						pTask->pPapers->fmNum.lock();
+						pTask->pPapers->nUpLoadFail++;
+						GenerateResult(pTask->pPapers, pTask);
+						pTask->pPapers->fmNum.unlock();
+					}
 					g_Log.LogOutError(strEraseInfo);
 					std::cout << strEraseInfo << std::endl;
 
@@ -113,7 +124,7 @@ void CSendToHttpThread::run()
 
 			if (!doRequest(session, request, uri, pTask))
 			{
-				if (pTask->nTaskType == 1)
+				if (pTask->nTaskType == 1 || pTask->nTaskType == 6)
 				{
 					std::string strLog = "Open file fail: " + pTask->pPic->strFilePath;
 					g_Log.LogOutError(strLog);
@@ -167,7 +178,7 @@ void CSendToHttpThread::run()
 
 				if (!ParseResult(strResultStatus, pTask))
 				{		//返回的数据解析失败
-					if (pTask->nTaskType == 1)
+					if (pTask->nTaskType == 1 || pTask->nTaskType == 6)
 					{
 						pTask->pPic->bUpLoadFlag = false;
 						pTask->pPapers->fmNum.lock();
@@ -188,7 +199,7 @@ void CSendToHttpThread::run()
 				}
 				else
 				{
-					if (pTask->nTaskType == 1)
+					if (pTask->nTaskType == 1 || pTask->nTaskType == 6)
 					{
 						pTask->pPic->bUpLoadFlag = true;
 						pTask->pPapers->fmNum.lock();
@@ -241,7 +252,7 @@ void CSendToHttpThread::run()
 			{
 				std::string strLog;
 				int nCode = response.getStatus();
-				if (pTask->nTaskType == 1)
+				if (pTask->nTaskType == 1 || pTask->nTaskType == 6)
 				{
 					strLog = "send file fail: " + pTask->pPic->strFileName + "\tErrCode: " + response.getReason() + "\tPath: " + pTask->pPic->strFilePath;
 					g_Log.LogOutError(strLog);
@@ -414,7 +425,7 @@ bool CSendToHttpThread::doRequest(Poco::Net::HTTPClientSession& session, Poco::N
 	request.set("Accept-Encoding", "gzip");	//gzip	//text/html
 
 	std::string strBody;
-	if (pTask->nTaskType == 1)
+	if (pTask->nTaskType == 1 || pTask->nTaskType == 6)
 	{
 		std::ifstream fin(pTask->pPic->strFilePath, std::ifstream::binary);
 		if (!fin)	return false;
@@ -461,7 +472,7 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 		result = parser.parse(strInput);
 		Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
 		
-		if (pTask->nTaskType == 1)
+		if (pTask->nTaskType == 1 || pTask->nTaskType == 6)
 		{
 			bResult = object->get("ret").convert<bool>();
 			if (bResult)
@@ -744,6 +755,101 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 {
 	if (pPapers->nUpLoadSuccess + pPapers->nUpLoadFail != pPapers->nTotalPics)
 		return false;
+
+	if (pTask->nTaskType == 6)	//模板图片上传完成
+	{
+		pMODELINFO pModelInfo = NULL;
+		char szIndex[50] = { 0 };
+		sprintf(szIndex, "%d_%d", pPapers->nExamID, pPapers->nSubjectID);
+		MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
+		if (itFind != _mapModel_.end())
+		{
+			pModelInfo = itFind->second;
+		}
+		if (pModelInfo)
+		{
+			Poco::JSON::Array arryModelPics;
+			LIST_PAPER_INFO::iterator itPaper = pPapers->lPaper.begin();
+			for (int i = 1; itPaper != pPapers->lPaper.end(); i++, itPaper++)
+			{
+				pPAPER_INFO pPaper = *itPaper;
+				LIST_PIC_DETAIL::iterator itPic = pPaper->lPic.begin();
+				for (; itPic != pPaper->lPic.end(); itPic++)
+				{
+					pPIC_DETAIL pPic = *itPic;
+					Poco::JSON::Object objPic;
+					objPic.set("paperId", i);
+					objPic.set("w", pPic->nPicW);
+					objPic.set("h", pPic->nPicH);
+					objPic.set("md5", pPic->strHashVal);
+					arryModelPics.add(objPic);
+				}
+			}
+			
+			Poco::JSON::Object jsnModel;
+			jsnModel.set("examId", pModelInfo->pUploadModelInfo->nExamID);
+			jsnModel.set("subjectId", pModelInfo->pUploadModelInfo->nSubjectID);
+			jsnModel.set("tmplateName", pModelInfo->pUploadModelInfo->szModelName);
+			jsnModel.set("paper", arryModelPics);
+			jsnModel.set("modelElectOmr", pModelInfo->pUploadModelInfo->szElectOmr);
+
+			std::stringstream jsnString;
+			jsnModel.stringify(jsnString, 0);
+
+			std::string strEzs = pModelInfo->pUploadModelInfo->szEzs;
+			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
+			pTask->strUri = SysSet.m_strBackUri + "/scanTemplate";
+			pTask->pUser = pModelInfo->pUser;
+			pTask->strEzs = "ezs=" + strEzs;
+			pTask->strMsg = "setScanModel";
+			pTask->strRequest = jsnString.str();
+			g_fmScanReq.lock();
+			g_lScanReq.push_back(pTask);
+			g_fmScanReq.unlock();
+		}
+		else
+		{
+			std::string strLog = Poco::format("(%d_%d)模板图片上传zimg完成，对应的模板信息为空，不能向后端设置模板信息", pPapers->nExamID, pPapers->nSubjectID);
+			g_Log.LogOutError(strLog);
+		}
+
+
+		//删除解压的文件夹
+		try
+		{
+			Poco::File papersDir(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
+			if (papersDir.exists())
+			{
+				papersDir.remove(true);
+
+				std::string strLog = "删除模板解压文件夹(" + pPapers->strPapersPath + ")成功";
+				g_Log.LogOut(strLog);
+				std::cout << strLog << std::endl;
+			}
+		}
+		catch (Poco::Exception& exc)
+		{
+			std::string strErr = "删除模板解压文件夹(" + pPapers->strPapersPath + ")失败: " + exc.message();
+			g_Log.LogOutError(strErr);
+		}
+		
+		g_fmPapers.lock();
+		LIST_PAPERS_DETAIL::iterator itPapers = g_lPapers.begin();
+		for (; itPapers != g_lPapers.end();)
+		{
+			if (*itPapers == pPapers)
+			{
+				SAFE_RELEASE(*itPapers);
+				itPapers = g_lPapers.erase(itPapers);
+				break;
+			}
+			else
+				itPapers++;
+		}
+		g_fmPapers.unlock();
+
+		return true;
+	}
 
 //	std::cout << "上传成功 + 失败数量 = " << pPapers->nUpLoadSuccess + pPapers->nUpLoadFail << std::endl;
 	std::string strLog = "试卷袋(" + pPapers->strPapersName +")图片上传服务器完成，开始进行重复图像校验。";

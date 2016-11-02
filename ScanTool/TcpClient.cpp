@@ -353,9 +353,6 @@ void CTcpClient::HandleCmd()
 		break;
 		}
 	}
-	else if (pstHead->usCmd == USER_RESPONSE_ELECTOMR_MODEL)
-	{
-	}
 }
 
 void CTcpClient::HandleTask(pTCP_TASK pTask)

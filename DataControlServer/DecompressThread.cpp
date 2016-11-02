@@ -344,6 +344,16 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	}
 	CHDIR(CMyCodeConvert::Utf8ToGb2312(SysSet.m_strDecompressPath).c_str());		//切换回解压根目录，否则删除压缩文件夹失败
 
+	if (pTask->nType == 2)
+	{
+		UploadModelPic(pPapers, pPapers->strPapersPath);
+
+		g_fmPapers.lock();
+		g_lPapers.push_back(pPapers);
+		g_fmPapers.unlock();
+		return;
+	}
+
 	SearchExtractFile(pPapers, pPapers->strPapersPath);
 #endif
 
@@ -351,6 +361,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	pPapers->lPaper.sort(SortByPaper);
 
 	//读取试卷袋文件夹里面的文件获取试卷袋信息
+
 	std::string strPapersFilePath = strOutDir + "\\papersInfo.dat";
 	bool bResult_Data = GetFileData(strPapersFilePath, pPapers);
 	if (!bResult_Data)
@@ -619,6 +630,88 @@ void CDecompressThread::SearchExtractFile(pPAPERS_DETAIL pPapers, std::string st
 			pPapers->nTotalPics++;						//图片数增加一张
 		}
 		it++;
+	}
+}
+
+void CDecompressThread::UploadModelPic(pPAPERS_DETAIL pPapers, std::string strPath)
+{
+	std::string strJsnModelPath = strPath + "\\model.dat";
+
+
+	std::string strJsnData;
+	std::ifstream in(strJsnModelPath);
+	if (!in)
+		return ;
+
+	std::string strJsnLine;
+	while (!in.eof())
+	{
+		getline(in, strJsnLine);					//不过滤空格
+		strJsnData.append(strJsnLine);
+	}
+
+	in.close();
+
+	std::string strFileData;
+	if (!decString(strJsnData, strFileData))
+		strFileData = strJsnData;
+
+	Poco::JSON::Parser parser;
+	Poco::Dynamic::Var result;
+	try
+	{
+		result = parser.parse(strFileData);		//strJsnData
+		Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
+
+		pPapers->nExamID = objData->get("nExamId").convert<int>();
+		pPapers->nSubjectID = objData->get("nSubjectId").convert<int>();
+
+		Poco::JSON::Array::Ptr arrayPapers = objData->getArray("paperInfo");
+		for (int i = 0; i < arrayPapers->size(); i++)
+		{
+			Poco::JSON::Object::Ptr jsnPaperObj = arrayPapers->getObject(i);
+
+			pPAPER_INFO pPaper = new PAPER_INFO;		//模板图片以一张图片当成一个学生来放
+			pPapers->lPaper.push_back(pPaper);
+
+			int nID = jsnPaperObj->get("paperNum").convert<int>() + 1;		//id 从0开始
+			pPaper->strName = Poco::format("S%d", nID);
+
+			pPIC_DETAIL pPic = new PIC_DETAIL;
+			pPic->nPicW = jsnPaperObj->get("picW").convert<int>();
+			pPic->nPicH = jsnPaperObj->get("picH").convert<int>();
+			pPic->strFileName = CMyCodeConvert::Utf8ToGb2312(jsnPaperObj->get("modelPicName").convert<std::string>());;
+			pPic->strFilePath = pPapers->strPapersPath + "\\" + pPic->strFileName;
+			pPaper->lPic.push_back(pPic);
+			pPapers->nTotalPics++;
+		}
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strLog = "在解压完模板后，解析模板信息并上传模板图片时，模板文件信息解析失败，" + exc.displayText();
+		g_Log.LogOutError(strLog);
+	}
+
+	pPapers->lPaper.sort(SortByPaper);
+
+	LIST_PAPER_INFO::iterator itPaper = pPapers->lPaper.begin();
+	for (; itPaper != pPapers->lPaper.end(); itPaper++)
+	{
+		pPAPER_INFO pPaper = *itPaper;
+		LIST_PIC_DETAIL::iterator itPic = pPaper->lPic.begin();
+		for (; itPic != pPaper->lPic.end(); itPic++)
+		{
+			pPIC_DETAIL pPic = *itPic;
+
+			pSEND_HTTP_TASK pHttpTask = new SEND_HTTP_TASK;
+			pHttpTask->nTaskType = 6;
+			pHttpTask->pPic = pPic;
+			pHttpTask->pPapers = pPapers;
+			pHttpTask->strUri = SysSet.m_strUpLoadHttpUri;
+			g_fmHttpSend.lock();
+			g_lHttpSend.push_back(pHttpTask);
+			g_fmHttpSend.unlock();
+		}
 	}
 }
 

@@ -38,6 +38,9 @@ extern std::string		_strSessionName_;
 
 extern std::map<std::string, std::string> answerMap;
 
+
+extern bool		_nUseNewParam_;			//是否使用新的参数重新识别模板
+
 extern int		_nCannyKernel_;			//轮廓化核因子
 
 extern int		g_nRecogGrayMin;		//灰度点(除空白点,OMR外)计算灰度的最小考试范围
@@ -51,6 +54,9 @@ extern double	_dDiffExit_Fix_;
 extern double	_dCompThread_Head_;
 extern double	_dDiffThread_Head_;
 extern double	_dDiffExit_Head_;
+
+extern int		_nOMR_;		//重新识别模板时，用来识别OMR的密度值的阀值
+extern int		_nSN_;		//重新识别模板时，用来识别ZKZH的密度值的阀值
 
 
 typedef struct _DecompressTask_
@@ -262,6 +268,7 @@ bool decString(std::string& strSrc, std::string& strDst);
 void SharpenImage(const cv::Mat &image, cv::Mat &result, int nSharpKernel);
 
 pMODEL	LoadModelFile(CString strModelPath);		//加载模板文件
+bool	InitModelRecog(pMODEL pModel, std::string strModelPath);				//重新识别模板各校验点和OMR的灰度
 bool	SortByArea(cv::Rect& rt1, cv::Rect& rt2);		//按面积排序
 bool	SortByPositionX(RECTINFO& rc1, RECTINFO& rc2);
 bool	SortByPositionY(RECTINFO& rc1, RECTINFO& rc2);

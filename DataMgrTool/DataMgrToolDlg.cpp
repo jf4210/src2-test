@@ -36,6 +36,7 @@ PAPERS_LIST			g_lPapers;		//所有的试卷袋信息
 
 pMODEL _pModel_ = NULL;
 
+bool	_nUseNewParam_ = false;			//是否使用新的参数重新识别模板
 
 int		_nCannyKernel_ = 90;		//轮廓化核因子
 
@@ -51,6 +52,9 @@ double	_dDiffExit_Fix_ = 0.3;
 double	_dCompThread_Head_ = 1.0;
 double	_dDiffThread_Head_ = 0.085;
 double	_dDiffExit_Head_ = 0.15;
+
+int		_nOMR_ = 230;		//重新识别模板时，用来识别OMR的密度值的阀值
+int		_nSN_ = 200;		//重新识别模板时，用来识别ZKZH的密度值的阀值
 
 //统计信息
 Poco::FastMutex _fmErrorStatistics_;
@@ -139,6 +143,8 @@ BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_Statistics, &CDataMgrToolDlg::OnBnClickedBtnStatistics)
 	ON_BN_CLICKED(IDC_BTN_StatisticsResult, &CDataMgrToolDlg::OnBnClickedBtnStatisticsresult)
 	ON_BN_CLICKED(IDC_BTN_ClearStatistics, &CDataMgrToolDlg::OnBnClickedBtnClearstatistics)
+	ON_BN_CLICKED(IDC_CHK_ReadParam, &CDataMgrToolDlg::OnBnClickedChkReadparam)
+	ON_BN_CLICKED(IDC_BTN_LoadParam, &CDataMgrToolDlg::OnBnClickedBtnLoadparam)
 END_MESSAGE_MAP()
 
 
@@ -175,7 +181,10 @@ BOOL CDataMgrToolDlg::OnInitDialog()
 
 	InitConfig();
 	InitParam();
-
+	
+	_nUseNewParam_ = false;
+	((CButton*)GetDlgItem(IDC_CHK_ReadParam))->SetCheck(0);
+	GetDlgItem(IDC_BTN_LoadParam)->EnableWindow(FALSE);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -337,6 +346,9 @@ void CDataMgrToolDlg::InitParam()
 		_dCompThread_Head_ = pConf->getDouble("RecogOmrSn_Head.fCompTread", 1.2);
 		_dDiffThread_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffThread", 0.085);
 		_dDiffExit_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffExit", 0.15);
+		
+		_nOMR_ = pConf->getInt("MakeModel_Threshold.omr", 230);
+		_nSN_ = pConf->getInt("MakeModel_Threshold.sn", 200);
 
 		strLog = "读取识别灰度参数完成";
 	}
@@ -755,5 +767,30 @@ void CDataMgrToolDlg::OnBnClickedBtnClearstatistics()
 
 	CString strMsg;
 	strMsg.Format(_T("\r\n统计结果已清零\r\n"));
+	showMsg(strMsg);
+}
+
+
+void CDataMgrToolDlg::OnBnClickedChkReadparam()
+{
+	if (((CButton*)GetDlgItem(IDC_CHK_ReadParam))->GetCheck())
+	{
+		_nUseNewParam_ = true;
+//		((CButton*)GetDlgItem(IDC_CHK_ReadParam))->SetCheck(0);
+		GetDlgItem(IDC_BTN_LoadParam)->EnableWindow(TRUE);
+	}
+	else
+	{
+		_nUseNewParam_ = false;
+//		((CButton*)GetDlgItem(IDC_CHK_ReadParam))->SetCheck(1);
+		GetDlgItem(IDC_BTN_LoadParam)->EnableWindow(FALSE);
+	}
+}
+
+
+void CDataMgrToolDlg::OnBnClickedBtnLoadparam()
+{
+	InitParam();
+	CString strMsg = _T("加载参数完成\r\n");
 	showMsg(strMsg);
 }

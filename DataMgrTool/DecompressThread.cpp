@@ -194,12 +194,10 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		pPapers->strSrcPapersFileName = pTask->strSrcFileName;
 
 		std::string strPapersFilePath = strOutDir + "\\papersInfo.dat";
-		int nExamID = 0;
-		int nSubjectID = 0;
 		GetFileData(strPapersFilePath, pPapers);
 
-		std::string strNewPkgDir = Poco::format("%s\\%d_%d", CMyCodeConvert::Gb2312ToUtf8(pTask->strDecompressDir), nExamID, nSubjectID);
-		std::string strNewPkgPath = Poco::format("%s\\%d_%d\\%s", CMyCodeConvert::Gb2312ToUtf8(pTask->strDecompressDir), nExamID, nSubjectID, pTask->strSrcFileName);
+		std::string strNewPkgDir = Poco::format("%s\\%d_%d", CMyCodeConvert::Gb2312ToUtf8(pTask->strDecompressDir), pPapers->nExamID, pPapers->nSubjectID);
+		std::string strNewPkgPath = Poco::format("%s\\%d_%d\\%s", CMyCodeConvert::Gb2312ToUtf8(pTask->strDecompressDir), pPapers->nExamID, pPapers->nSubjectID, pTask->strSrcFileName);
 		try
 		{
 			Poco::File copyDir(strNewPkgDir);
@@ -252,6 +250,8 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 
 		std::string strModelPath = CMyCodeConvert::Utf8ToGb2312(strOutDir);
 		_pModel_ = LoadModelFile(A2T(strModelPath.c_str()));
+		if (_nUseNewParam_)
+			InitModelRecog(_pModel_, strOutDir);
 
 		strMsg.Format(_T("模板加载(%s)完成\r\n"), A2T(pTask->strSrcFileName.c_str()));
 		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);

@@ -13,7 +13,7 @@
 //#include "TypeDef.h"
 
 #ifdef _DEBUG
-	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
+//	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
 //	#define TEST_FILE_PRESSURE	//文件上传压力测试
 #endif
 
@@ -47,6 +47,8 @@ typedef struct _ModelInfo_
 	int		nExamID;
 	int		nSubjectID;
 	pMODEL		pModel;
+	pST_MODELINFO pUploadModelInfo;			//请求上传模板时上传的模板信息
+	CNetUser* pUser;
 	std::string strMd5;
 	std::string strName;
 	std::string strPath;
@@ -55,6 +57,13 @@ typedef struct _ModelInfo_
 		nExamID = 0;
 		nSubjectID = 0;
 		pModel = NULL;
+		pUploadModelInfo = NULL;
+		pUser = NULL;
+	}
+	~_ModelInfo_()
+	{
+		SAFE_RELEASE(pModel);
+		SAFE_RELEASE(pUploadModelInfo);
 	}
 }MODELINFO,*pMODELINFO;
 
@@ -65,11 +74,13 @@ extern	MAP_MODEL	_mapModel_;
 typedef struct _DecompressTask_
 {
 	int		nTimes;			//解压的次数
+	int		nType;			//解压类型，1-试卷袋pkg包，2-模板mod
 	std::string strFileBaseName;
 	std::string strSrcFileName;
 	std::string strFilePath;
 	_DecompressTask_()
 	{
+		nType = 1;
 		nTimes = 0;
 	}
 }DECOMPRESSTASK, *pDECOMPRESSTASK;
@@ -83,12 +94,16 @@ extern DECOMPRESSTASKLIST		g_lDecompressTask;		//解压文件列表
 typedef struct _Pic_
 {
 	bool		bUpLoadFlag;		//上传http服务器成功标志
+	int			nPicW;				//图片宽，设置模板信息的时候有用
+	int			nPicH;				//图片高，设置模板信息的时候有用
 	std::string strFileName;
 	std::string strFilePath;
 	std::string strHashVal;			//上传http后返回的hash
 	_Pic_()
 	{
 		bUpLoadFlag = false;
+		nPicW = 0;
+		nPicH = 0;
 	}
 }PIC_DETAIL, *pPIC_DETAIL;
 typedef std::list<pPIC_DETAIL> LIST_PIC_DETAIL;
@@ -187,7 +202,7 @@ extern LIST_PAPERS_DETAIL	g_lPapers;		//试卷袋列表
 
 typedef struct _SendHttpTask_
 {
-	int			nTaskType;			//任务类型: 1-给img服务器提交图片，2-给后端提交图片数据, 3-提交OMR，4-提交ZKZH，5-提交选做题信息
+	int			nTaskType;			//任务类型: 1-给img服务器提交图片，2-给后端提交图片数据, 3-提交OMR，4-提交ZKZH，5-提交选做题信息, 6-模板图片提交zimg服务器
 	int			nSendFlag;			//发送标示，1：发送失败1次，2：发送失败2次...
 	Poco::Timestamp sTime;			//创建任务时间，用于发送失败时延时发送
 	pPIC_DETAIL pPic;
