@@ -911,7 +911,7 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 
 	if (nNum == 0)
 		nNum = TWCPP_ANYCOUNT;
-	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution))
+	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, g_bShowScanSrcUI))
 	{
 		TRACE("扫描失败\n");
 	}
@@ -2172,15 +2172,22 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	if (!bHasElectOmr)
 		m_pModel->nHasElectOmr = 0;
 
+	SetCursor(LoadCursor(NULL, IDC_WAIT));
+	
 	CString modelPath = g_strCurrentPath + _T("Model");
 	modelPath = modelPath + _T("\\") + A2T(m_pModel->strModelName.c_str());
 	if (SaveModelFile(m_pModel))
 	{
 		ZipFile(modelPath, modelPath, _T(".mod"));
-		AfxMessageBox(_T("保存完成!"));
+		if (m_pModel->nHasElectOmr)
+			AfxMessageBox(_T("保存完成，此模板存在选做题信息，请上传服务器！！！"));
+		else
+			AfxMessageBox(_T("保存完成!"));
 	}
 	else
 		AfxMessageBox(_T("保存失败"));
+	
+	SetCursor(LoadCursor(NULL, IDC_ARROW));
 }
 
 bool CMakeModelDlg::SaveModelFile(pMODEL pModel)

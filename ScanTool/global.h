@@ -64,6 +64,7 @@
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define TEST_DATA
 //	#define TEST_SCAN
+	#define  TEST_SCAN2			//测试纸张大小控制
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -163,6 +164,8 @@ extern bool				g_bFileConnect;		//文件通道连接
 
 extern bool				g_bCmdNeedConnect;	//命令通道是否需要重连，用于通道地址信息修改的情况
 extern bool				g_bFileNeedConnect;	//文件通道是否需要重连，用于通道地址信息修改的情况
+
+extern bool				g_bShowScanSrcUI;	//是否显示原始扫描界面
 
 #if 1
 typedef struct _PicInfo_				//图片信息

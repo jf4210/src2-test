@@ -520,7 +520,7 @@ BOOL CTwain::EnableSource(BOOL showUI)
 Called to acquire images from the source. parameter numImages i the
 numberof images that you an handle concurrently
 */
-BOOL CTwain::Acquire(int numImages,TW_UINT16 duplex,TW_UINT16 size,TW_UINT16 pixel,TW_UINT16 resolution)
+BOOL CTwain::Acquire(int numImages, TW_UINT16 duplex, TW_UINT16 size, TW_UINT16 pixel, TW_UINT16 resolution, BOOL bShowUI)
 {
 	if(DSOpen() || OpenSource())
 	{
@@ -538,7 +538,7 @@ BOOL CTwain::Acquire(int numImages,TW_UINT16 duplex,TW_UINT16 size,TW_UINT16 pix
 		ret_value=SetResolution(ICAP_YRESOLUTION,resolution);
 		if(SetImageCount(numImages))
 		{
-			if(EnableSource(FALSE))
+			if (EnableSource(bShowUI))
 			{
 				return TRUE;
 			}

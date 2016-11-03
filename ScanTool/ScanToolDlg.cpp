@@ -28,6 +28,8 @@ bool				g_bFileConnect = false;		//文件通道连接
 bool				g_bCmdNeedConnect = false;	//命令通道是否需要重连，用于通道地址信息修改的情况
 bool				g_bFileNeedConnect = false;	//文件通道是否需要重连，用于通道地址信息修改的情况
 
+bool				g_bShowScanSrcUI = false;	//是否显示原始扫描界面
+
 int					g_nExitFlag = 0;
 CString				g_strCurrentPath;
 std::string			g_strPaperSavePath;	//试卷扫描后保存的总路径
@@ -544,6 +546,7 @@ void CScanToolDlg::InitConfig()
 	Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strUtf8Path));
 	int nRecogThreads = pConf->getInt("Recog.threads", 2);
 	g_nManulUploadFile = pConf->getInt("UploadFile.manul", 0);
+	g_bShowScanSrcUI = pConf->getBool("Scan.bShowUI", false);
 	std::string strFileServerIP	= pConf->getString("Server.fileIP");
 	int			nFileServerPort	= pConf->getInt("Server.filePort", 19980);
 	m_strCmdServerIP				= pConf->getString("Server.cmdIP");
@@ -1114,6 +1117,19 @@ void CScanToolDlg::OnBnClickedBtnScan()
 #ifndef TEST_SCAN
 	m_Source = m_scanSourceArry.GetAt(nScanSrc);
 #endif
+
+
+#ifdef TEST_SCAN2
+	int nDuplex = nDuplexDef;		//单双面,0-单面,1-双面
+	int nSize = nScanCount;							//1-A4
+	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
+	int nResolution = 200;					//dpi: 72, 150, 200, 300
+
+	int nNum = 0;
+	m_nDuplex = nDuplex;
+
+	nNum = TWCPP_ANYCOUNT;
+#else
 	int nDuplex = nDuplexDef;		//单双面,0-单面,1-双面
 	int nSize = 1;							//1-A4
 	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
@@ -1136,6 +1152,8 @@ void CScanToolDlg::OnBnClickedBtnScan()
 
 	if (nNum == 0)
 		nNum = TWCPP_ANYCOUNT;
+#endif
+
 #ifdef TEST_SCAN
 	if (!Acquire(nNum))	//TWCPP_ANYCOUNT
 	{
@@ -1152,7 +1170,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		m_nScanStatus = 2;
 	}
 #else
-	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution))	//TWCPP_ANYCOUNT
+	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, g_bShowScanSrcUI))	//TWCPP_ANYCOUNT
 	{
 		m_comboModel.EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_Scan)->EnableWindow(TRUE);

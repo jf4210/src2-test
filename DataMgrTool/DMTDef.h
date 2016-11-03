@@ -11,7 +11,6 @@
 #ifdef _DEBUG
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
-	#define DecompressTest		//解压测试，多线程解压
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -25,6 +24,7 @@
 #define  MSG_ERR_RECOG		(WM_USER + 110)
 #define  MSG_RECOG_COMPLETE	(WM_USER + 111)
 
+#define DecompressTest		//解压测试，多线程解压
 
 extern CLog g_Log;
 extern int	g_nExitFlag;
