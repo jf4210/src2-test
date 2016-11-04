@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CScanCtrlDlg, CDialog)
 
 CScanCtrlDlg::CScanCtrlDlg(SCANSRCARRY& srcArry, CWnd* pParent /*=NULL*/)
 : CDialog(CScanCtrlDlg::IDD, pParent)
-, m_nStudentNum(0), sourceArry(srcArry), m_nCurrScanSrc(0), m_nCurrDuplex(0)
+, m_nStudentNum(0), sourceArry(srcArry), m_nCurrScanSrc(0), m_nCurrDuplex(0), m_bAdvancedSetting(false)
 {
 
 }
@@ -34,6 +34,7 @@ BEGIN_MESSAGE_MAP(CScanCtrlDlg, CDialog)
 	ON_CBN_SELCHANGE(IDC_COMBO_SCANSRC, &CScanCtrlDlg::OnCbnSelchangeComboScansrc)
 	ON_CBN_SELCHANGE(IDC_COMBO_DUPLEX, &CScanCtrlDlg::OnCbnSelchangeComboDuplex)
 	ON_BN_CLICKED(IDC_BTN_Scan, &CScanCtrlDlg::OnBnClickedBtnScan)
+	ON_BN_CLICKED(IDC_BTN_Advanced, &CScanCtrlDlg::OnBnClickedBtnAdvanced)
 END_MESSAGE_MAP()
 
 BOOL CScanCtrlDlg::OnInitDialog()
@@ -131,4 +132,11 @@ void CScanCtrlDlg::OnBnClickedBtnScan()
 	WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "scanDuplex", szRet);
 
 	OnOK();
+}
+
+
+void CScanCtrlDlg::OnBnClickedBtnAdvanced()
+{
+	m_bAdvancedSetting = true;
+	OnBnClickedBtnScan();
 }

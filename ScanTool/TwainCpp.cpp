@@ -532,10 +532,12 @@ BOOL CTwain::Acquire(int numImages, TW_UINT16 duplex, TW_UINT16 size, TW_UINT16 
 			duplex = FALSE;
 		BOOL ret_value = SetOneValueCapability(CAP_DUPLEXENABLED, TWTY_BOOL, duplex);	//µ¥Ë«ÃæÉ¨Ãè¿ØÖÆ	//duplex, TRUE
 
+
 		ret_value=SetCapability(ICAP_SUPPORTEDSIZES,size,TRUE);
 		ret_value=SetCapability(ICAP_PIXELTYPE,pixel,TRUE);
 		ret_value=SetResolution(ICAP_XRESOLUTION,resolution);
 		ret_value=SetResolution(ICAP_YRESOLUTION,resolution);
+
 		if(SetImageCount(numImages))
 		{
 			if (EnableSource(bShowUI))
@@ -547,13 +549,13 @@ BOOL CTwain::Acquire(int numImages, TW_UINT16 duplex, TW_UINT16 size, TW_UINT16 
 	return FALSE;
 }
 
-BOOL CTwain::Acquire(int numImages /*= 1*/)
+BOOL CTwain::Acquire(int numImages /*= 1*/, BOOL bShowUI)
 {
 	if (DSOpen() || OpenSource())
 	{
 		if (SetImageCount(numImages))
 		{
-			if (EnableSource())
+			if (EnableSource(bShowUI))
 			{
 				return TRUE;
 			}

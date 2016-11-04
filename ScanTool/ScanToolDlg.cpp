@@ -270,21 +270,19 @@ BOOL CScanToolDlg::OnInitDialog()
 		{
 			AfxMessageBox(_T("Unable to load Twain Driver."));
 		}
-#ifdef TEST_SCAN
-		memset(&m_Source, 0, sizeof(m_Source));
-		if (!SourceSelected())
-		{
-			SelectDefaultSource();
-		}
 
-		if (CallTwainProc(&m_AppId, NULL, DG_CONTROL, DAT_IDENTITY, MSG_USERSELECT, &m_Source))
-		{
-			m_bSourceSelected = TRUE;
-		}
-	#else
+// 		memset(&m_Source, 0, sizeof(m_Source));
+// 		if (!SourceSelected())
+// 		{
+// 			SelectDefaultSource();
+// 		}
+// 
+// 		if (CallTwainProc(&m_AppId, NULL, DG_CONTROL, DAT_IDENTITY, MSG_USERSELECT, &m_Source))
+// 		{
+// 			m_bSourceSelected = TRUE;
+// 		}
 
 		ScanSrcInit();
-	#endif
 	}
 
 	RegisterHotKey(GetSafeHwnd(), 1001, NULL, VK_F1);//F1键
@@ -1012,7 +1010,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		return;
 
 	m_bF1Enable = FALSE;
-#ifndef TEST_SCAN
+
 	if (!m_bTwainInit)
 	{
 		m_bTwainInit = InitTwain(m_hWnd);
@@ -1023,7 +1021,6 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		m_scanSourceArry.RemoveAll();
 		ScanSrcInit();
 	}
-#endif
 
 #ifndef TO_WHTY
 	BOOL bLogin = FALSE;
@@ -1114,10 +1111,14 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	}
 	m_nScanStatus = 1;
 
-#ifndef TEST_SCAN
-	m_Source = m_scanSourceArry.GetAt(nScanSrc);
-#endif
 
+	m_Source = m_scanSourceArry.GetAt(nScanSrc);
+
+
+	bool bShowScanSrcUI = g_bShowScanSrcUI;
+
+	if (dlg.m_bAdvancedSetting)
+		bShowScanSrcUI = true;
 
 #ifdef TEST_SCAN2
 	int nDuplex = nDuplexDef;		//单双面,0-单面,1-双面
@@ -1154,8 +1155,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		nNum = TWCPP_ANYCOUNT;
 #endif
 
-#ifdef TEST_SCAN
-	if (!Acquire(nNum))	//TWCPP_ANYCOUNT
+	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, bShowScanSrcUI))	//TWCPP_ANYCOUNT
 	{
 		m_comboModel.EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_Scan)->EnableWindow(TRUE);
@@ -1169,22 +1169,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(_T(""));
 		m_nScanStatus = 2;
 	}
-#else
-	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, g_bShowScanSrcUI))	//TWCPP_ANYCOUNT
-	{
-		m_comboModel.EnableWindow(TRUE);
-		GetDlgItem(IDC_BTN_Scan)->EnableWindow(TRUE);
-		GetDlgItem(IDC_BTN_ScanAll)->EnableWindow(TRUE);
-		GetDlgItem(IDC_BTN_ScanModule)->EnableWindow(TRUE);
-		GetDlgItem(IDC_BTN_ModelMgr)->EnableWindow(TRUE);
-		GetDlgItem(IDC_BTN_InputPaper)->EnableWindow(TRUE);
-		GetDlgItem(IDC_BTN_UpLoadPapers)->EnableWindow(TRUE);
-		GetDlgItem(IDC_BTN_UploadMgr)->EnableWindow(TRUE);
-		GetDlgItem(IDC_BTN_ReBack)->EnableWindow(TRUE);
-		GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(_T(""));
-		m_nScanStatus = 2;
-	}
-#endif
+
 	m_bF1Enable = TRUE;
 }
 
@@ -1301,7 +1286,7 @@ void CScanToolDlg::OnBnClickedBtnScanall()
 
 	if (nNum == 0)
 		nNum = TWCPP_ANYCOUNT;
-	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution))	//TWCPP_ANYCOUNT
+	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, g_bShowScanSrcUI))	//TWCPP_ANYCOUNT
 	{
 		m_comboModel.EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_Scan)->EnableWindow(TRUE);

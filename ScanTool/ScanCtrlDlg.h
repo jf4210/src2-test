@@ -23,6 +23,8 @@ public:
 	CComboBox	m_comboDuplex;		//单双面下拉
 	int		m_nStudentNum;		//学生数量
 
+	bool	m_bAdvancedSetting;	//是否进行高级设置
+
 	SCANSRCARRY& sourceArry;
 	int			m_nCurrScanSrc;		//当前选择的扫描仪源
 	int			m_nCurrDuplex;		//当前选择的单双面
@@ -35,4 +37,5 @@ public:
 	afx_msg void OnCbnSelchangeComboScansrc();
 	afx_msg void OnCbnSelchangeComboDuplex();
 	afx_msg void OnBnClickedBtnScan();
+	afx_msg void OnBnClickedBtnAdvanced();
 };

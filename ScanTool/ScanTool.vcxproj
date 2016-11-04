@@ -230,7 +230,10 @@
   <ItemGroup>
     <Image Include="..\..\..\..\code\终端管理平台\TerminalPlatform\Debug\skin\btnDecoderNormal.bmp" />
     <Image Include="res\bitmap1.bmp" />
+    <Image Include="res\icon1.ico" />
     <Image Include="res\ScanTool.ico" />
+    <Image Include="res\setting.ico" />
+    <Image Include="res\settings.png" />
     <Image Include="res\横向1.png" />
     <Image Include="res\横向2.png" />
     <Image Include="res\横向3.png" />

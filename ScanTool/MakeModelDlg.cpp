@@ -900,6 +900,28 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 
 	m_Source = m_scanSourceArry.GetAt(dlg.m_nCurrScanSrc);
 	int nDuplex = dlg.m_nCurrDuplex;		//µ¥Ë«Ãæ,0-µ¥Ãæ,1-Ë«Ãæ
+
+	bool bShowScanSrcUI = g_bShowScanSrcUI;
+
+	if (dlg.m_bAdvancedSetting)
+	{
+		bShowScanSrcUI = true;
+		if (!Acquire(TWCPP_ANYCOUNT, bShowScanSrcUI))
+		{
+			TRACE("É¨ÃèÊ§°Ü\n");
+		}
+		GetDlgItem(IDC_BTN_ScanModel)->EnableWindow(TRUE);
+		return;
+	}
+
+#ifdef TEST_SCAN2
+	int nSize = dlg.m_nStudentNum;							//1-A4
+	int nPixel = 2;							//0-ºÚ°×£¬1-»Ò¶È£¬2-²ÊÉ«
+	int nResolution = 200;					//dpi: 72, 150, 200, 300
+	
+	int nNum = 0;
+	nNum = TWCPP_ANYCOUNT;
+#else
 	int nSize = 1;							//1-A4
 	int nPixel = 2;							//0-ºÚ°×£¬1-»Ò¶È£¬2-²ÊÉ«
 	int nResolution = 200;					//dpi: 72, 150, 200, 300
@@ -911,7 +933,8 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 
 	if (nNum == 0)
 		nNum = TWCPP_ANYCOUNT;
-	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, g_bShowScanSrcUI))
+#endif
+	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, bShowScanSrcUI))
 	{
 		TRACE("É¨ÃèÊ§°Ü\n");
 	}
