@@ -351,6 +351,8 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			pTask->nExamID = stModelInfo.nExamID;
 			pTask->nSubjectID = stModelInfo.nSubjectID;
 			pTask->strEzs = stModelInfo.szEzs;
+			pTask->strExamName = stModelInfo.szExamName;
+			pTask->strSubjectName = stModelInfo.szSubjectName;
 
 			g_fmScanReq.lock();
 			g_lScanReq.push_back(pTask);

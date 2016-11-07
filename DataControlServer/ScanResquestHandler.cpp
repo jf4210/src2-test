@@ -253,8 +253,9 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 			}
 			else
 			{
-				char szIndex[50] = { 0 };
-				sprintf(szIndex, "%d_%d", pTask->nExamID, pTask->nSubjectID);
+				char szIndex[150] = { 0 };
+//				sprintf(szIndex, "%d_%d", pTask->nExamID, pTask->nSubjectID);
+				sprintf(szIndex, "%s_%s_N_%d_%d", pTask->strExamName.c_str(), pTask->strSubjectName.c_str(), pTask->nExamID, pTask->nSubjectID);
 				std::string strModelPath = SysSet.m_strModelSavePath + "\\";
 				strModelPath.append(szIndex);
 				strModelPath.append(".mod");
@@ -275,10 +276,11 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 				else
 				{
 					//删除本地可能已经存在的模板
-					char szIndex[50] = { 0 };
-					sprintf(szIndex, "%d_%d", pTask->nExamID, pTask->nSubjectID);
+					char szModelName[150] = { 0 };
+//					sprintf(szModelName, "%d_%d", pTask->nExamID, pTask->nSubjectID);
+					sprintf(szModelName, "%s_%s_N_%d_%d", pTask->strExamName.c_str(), pTask->strSubjectName.c_str(), pTask->nExamID, pTask->nSubjectID);
 					std::string strModelPath = SysSet.m_strModelSavePath + "\\";
-					strModelPath.append(szIndex);
+					strModelPath.append(szModelName);
 					strModelPath.append(".mod");
 					try
 					{
