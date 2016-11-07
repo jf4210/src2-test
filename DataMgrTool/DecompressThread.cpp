@@ -326,6 +326,7 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERSINFO pPapers
 		pPapers->nTeacherId = nTeacherId;
 		pPapers->nUserId = nUserId;
 		pPapers->nTotalPaper = nStudentNum;
+		pPapers->nPaperCount = nStudentNum;
 		pPapers->strUploader = strUploader;
 		pPapers->strEzs = strEzs;		//"ezs=" + strEzs;
 
@@ -489,6 +490,7 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 		pPapers->nTeacherId = nTeacherId;
 		pPapers->nUserId = nUserId;
 		pPapers->nTotalPaper = nStudentNum;
+		pPapers->nPaperCount = nStudentNum;
 		pPapers->strUploader = strUploader;
 		pPapers->strEzs = strEzs;		//"ezs=" + strEzs;
 

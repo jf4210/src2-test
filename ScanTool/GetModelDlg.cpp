@@ -15,7 +15,7 @@ IMPLEMENT_DYNAMIC(CGetModelDlg, CDialog)
 
 CGetModelDlg::CGetModelDlg(CString strIP, int nPort, CWnd* pParent /*=NULL*/)
 : CDialog(CGetModelDlg::IDD, pParent)
-, m_strExamTypeName(_T("")), m_strGradeName(_T("")), m_SubjectID(0), m_nExamID(0), m_strScanModelName(_T(""))
+, m_strExamTypeName(_T("")), m_strGradeName(_T("")), m_SubjectID(0), m_nExamID(0), m_strScanModelName(_T("")), m_strExamName(_T("")), m_strSubjectName(_T(""))
 , m_strServerIP(strIP)
 , m_nServerPort(nPort)
 , m_nRecvLen(0)
@@ -91,10 +91,13 @@ void CGetModelDlg::OnCbnSelchangeComboExamname()
 		{
 			m_SubjectID = itSub->nSubjID;
 			m_strScanModelName = A2T(itSub->strModelName.c_str());
+			m_strSubjectName = itSub->strSubjName.c_str();
 		}
 	}
 	m_comboSubject.SetCurSel(0);
 
+
+	m_strExamName = pExamInfo->strExamName.c_str();
 	m_nExamID = pExamInfo->nExamID;
 	m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
 	m_strGradeName = pExamInfo->strGradeName.c_str();
@@ -118,6 +121,7 @@ void CGetModelDlg::OnCbnSelchangeComboSubjectname()
 		if (i == n2)
 		{
 			m_SubjectID = itSub->nSubjID;
+			m_strSubjectName = itSub->strSubjName.c_str();
 			m_strScanModelName = A2T(itSub->strModelName.c_str());
 		}
 	}
@@ -593,6 +597,7 @@ void CGetModelDlg::InitUI()
 	for (; itExam != g_lExamList.end(); itExam++)
 	{
 		CString strName = A2T(itExam->strExamName.c_str());
+		m_strExamName = strName;
 
 		int nCount = m_comboExamName.GetCount();
 		m_comboExamName.InsertString(nCount, strName);
@@ -619,6 +624,7 @@ void CGetModelDlg::InitUI()
 			if (i == 0)
 			{
 				m_SubjectID = itSub->nSubjID;
+				m_strSubjectName = itSub->strSubjName.c_str();
 				m_strScanModelName = A2T(itSub->strModelName.c_str());
 			}
 		}
@@ -655,6 +661,11 @@ void CGetModelDlg::OnBnClickedBtnCreatemodel()
 	stModelInfo.nExamID = m_nExamID;
 	stModelInfo.nSubjectID = m_SubjectID;
 	strcpy(stModelInfo.szEzs, T2A(strEzs));
+
+	std::string strTmp = T2A(m_strExamName);
+	strncpy(stModelInfo.szExamName, strTmp.c_str(), strTmp.length());
+	strTmp = T2A(m_strSubjectName);
+	strncpy(stModelInfo.szSubjectName, strTmp.c_str(), strTmp.length());
 
 	Poco::Net::SocketAddress sa(T2A(m_strServerIP), m_nServerPort);
 	m_ss.close();

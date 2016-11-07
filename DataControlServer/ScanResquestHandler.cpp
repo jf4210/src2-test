@@ -450,6 +450,8 @@ int CScanResquestHandler::modelHandle(pSCAN_REQ_TASK pTask, Poco::JSON::Object::
 	
 	char szIndex[50] = { 0 };
 	sprintf(szIndex, "%d_%d", pTask->nExamID, pTask->nSubjectID);
+// 	char szModelName[150] = { 0 };
+// 	sprintf(szModelName, "%s_%s_N_%d_%d", pTask->nExamID, pTask->nSubjectID);
 	pMODELINFO pModelInfo = NULL;
 	MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
 	if (itFind != _mapModel_.end())
@@ -489,8 +491,8 @@ int CScanResquestHandler::modelHandle(pSCAN_REQ_TASK pTask, Poco::JSON::Object::
 		{
 			pModelInfo->strName = szIndex;
 			pModelInfo->strName.append(".mod");
-			pModelInfo->strPath = CMyCodeConvert::Gb2312ToUtf8(strModelPath + ".mod");
-			pModelInfo->strMd5 = calcFileMd5(pModelInfo->strPath);
+			pModelInfo->strPath = strModelPath + ".mod";
+			pModelInfo->strMd5 = calcFileMd5(CMyCodeConvert::Gb2312ToUtf8(pModelInfo->strPath));
 
 			std::string strLog;
 			Poco::File modelDir(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
@@ -506,7 +508,7 @@ int CScanResquestHandler::modelHandle(pSCAN_REQ_TASK pTask, Poco::JSON::Object::
 			Poco::JSON::Object jsnModel;
 			jsnModel.set("examId", pTask->nExamID);
 			jsnModel.set("subjectId", pTask->nSubjectID);
-			jsnModel.set("tmplateName", pModelInfo->strName);
+			jsnModel.set("tmplateName", CMyCodeConvert::Gb2312ToUtf8(pModelInfo->strName));
 
 			std::stringstream jsnString;
 			jsnModel.stringify(jsnString, 0);

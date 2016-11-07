@@ -64,6 +64,7 @@
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define TEST_DATA
 	#define  TEST_SCAN2			//测试纸张大小控制
+	#define	 TEST_MODEL_NAME	//模板名称测试
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法

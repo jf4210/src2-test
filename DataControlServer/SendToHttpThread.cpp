@@ -885,6 +885,10 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 		std::string strErrorPath = strErrorDir + "\\" + CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersFileName);
 		try
 		{
+			Poco::File fileErrDir(strErrorDir);
+			if (!fileErrDir.exists())
+				fileErrDir.createDirectories();
+
 			Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersPath));
 			filePapers.moveTo(strErrorPath);
 			std::string strLog = "试卷袋(" + pPapers->strSrcPapersFileName + ")存在问题，需要人工检查";

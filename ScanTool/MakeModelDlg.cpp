@@ -914,15 +914,7 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 		return;
 	}
 
-#ifdef TEST_SCAN2
-	int nSize = dlg.m_nStudentNum;							//1-A4
-	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
-	int nResolution = 200;					//dpi: 72, 150, 200, 300
-	
-	int nNum = 0;
-	nNum = TWCPP_ANYCOUNT;
-#else
-	int nSize = 1;							//1-A4
+	int nSize = 1;							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3
 	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
 	int nResolution = 200;					//dpi: 72, 150, 200, 300
 
@@ -933,7 +925,7 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 
 	if (nNum == 0)
 		nNum = TWCPP_ANYCOUNT;
-#endif
+
 	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, bShowScanSrcUI))
 	{
 		TRACE("扫描失败\n");
@@ -2077,8 +2069,12 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	}
 	else
 	{
-		char szModelName[30] = { 0 };
+		char szModelName[150] = { 0 };
+	#ifdef TEST_MODEL_NAME
+		sprintf_s(szModelName, "%s_%s_N_%d_%d", T2A(dlg.m_strExamName), T2A(dlg.m_strSubjectName), dlg.m_nExamID, dlg.m_SubjectID);
+	#else
 		sprintf_s(szModelName, "%d_%d", dlg.m_nExamID, dlg.m_SubjectID);
+	#endif
 		char szModelDesc[300] = { 0 };
 		sprintf_s(szModelDesc, "考试名称: %s\r\n科目: %s\r\n年级: %s\r\n考试类型名称: %s", T2A(dlg.m_strExamName), T2A(dlg.m_strSubjectName), T2A(dlg.m_strGradeName), T2A(dlg.m_strExamTypeName));
 		m_pModel->nExamID		= dlg.m_nExamID;

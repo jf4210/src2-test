@@ -196,7 +196,7 @@ void CScanModleMgrDlg::OnBnClickedBtnDlmodel()
 		return;
 	}
 #endif
-	
+
 
 	USES_CONVERSION;
 	CGetModelDlg dlg(A2T(g_strCmdIP.c_str()), g_nCmdPort);
@@ -527,11 +527,37 @@ void CScanModleMgrDlg::OnBnClickedBtnuploadmodel()
 
 	int nPos = 0;
 	int nOldPos = 0;
+	std::string strExamID;
+	std::string strSubjectID;
+#ifdef TEST_MODEL_NAME
+
+	nPos = strModelName.find("_N_");
+
+	if (nPos != std::string::npos)
+	{
+		int nPos2 = strModelName.find("_", nPos + 3);
+
+		strExamID = strModelName.substr(nPos + 3, nPos2 - nPos - 3);
+		nOldPos = nPos2;
+		nPos2 = strModelName.find(".", nPos2 + 1);
+		strSubjectID = strModelName.substr(nOldPos + 1, nPos2 - nOldPos - 1);
+	}
+	else
+	{
+		nPos = strModelName.find("_");
+		strExamID = strModelName.substr(0, nPos);
+		nOldPos = nPos;
+		nPos = strModelName.find(".", nPos + 1);
+		strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+	}
+	
+#else
 	nPos = strModelName.find("_");
-	std::string strExamID = strModelName.substr(0, nPos);
+	strExamID = strModelName.substr(0, nPos);
 	nOldPos = nPos;
 	nPos = strModelName.find(".", nPos + 1);
-	std::string strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+	strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+#endif
 
 	CString modelPath = g_strCurrentPath + _T("Model");
 	modelPath = modelPath + _T("\\") + A2T(m_pModel->strModelName.c_str()) + _T(".mod");

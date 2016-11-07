@@ -67,22 +67,37 @@ protected:
 					//在_mapModel_中把本地文件信息插入
 
 					std::string strModelName = strName;
+					std::string strExamID;
+					std::string strSubjectID;
 					int nPos = 0;
 					int nOldPos = 0;
-					nPos = strModelName.find("_");
-					std::string strExamID = strModelName.substr(0, nPos);
-					nOldPos = nPos;
-					nPos = strModelName.find(".", nPos + 1);
-					std::string strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+					nPos = strModelName.find("_N_");
+					if (nPos != std::string::npos)	//新模板名称
+					{
+						int nPos2 = strModelName.find("_", nPos + 3);
 
+						strExamID = strModelName.substr(nPos + 3, nPos2 - nPos - 3);
+						nOldPos = nPos2;
+						nPos2 = strModelName.find(".", nPos2 + 1);
+						strSubjectID = strModelName.substr(nOldPos + 1, nPos2 - nOldPos - 1);
+					}
+					else
+					{
+						nPos = strModelName.find("_");
+						strExamID = strModelName.substr(0, nPos);
+						nOldPos = nPos;
+						nPos = strModelName.find(".", nPos + 1);
+						strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+					}
+					
 					char szIndex[50] = { 0 };
 					sprintf(szIndex, "%s_%s", strExamID.c_str(), strSubjectID.c_str());
 
 					pMODELINFO pModelInfo = new MODELINFO;
 					pModelInfo->nExamID = atoi(strExamID.c_str());
 					pModelInfo->nSubjectID = atoi(strSubjectID.c_str());
-					pModelInfo->strName = strName;
-					pModelInfo->strPath = strPath;
+					pModelInfo->strName = CMyCodeConvert::Utf8ToGb2312(strName);
+					pModelInfo->strPath = CMyCodeConvert::Utf8ToGb2312(strPath);
 					pModelInfo->strMd5 = calcFileMd5(strPath);
 
 					_mapModelLock_.lock();
@@ -166,7 +181,7 @@ protected:
 		Poco::UnicodeConverter::toUTF16(szTitle, wstrTitle);
 		SetConsoleTitle(wstrTitle.c_str());
 #endif
-
+		
 		try
 		{
 			Poco::File decompressDir(SysSet.m_strDecompressPath);
