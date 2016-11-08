@@ -1120,19 +1120,8 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	if (dlg.m_bAdvancedSetting)
 		bShowScanSrcUI = true;
 
-#ifdef TEST_SCAN2
 	int nDuplex = nDuplexDef;		//单双面,0-单面,1-双面
-	int nSize = nScanCount;							//1-A4
-	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
-	int nResolution = 200;					//dpi: 72, 150, 200, 300
-
-	int nNum = 0;
-	m_nDuplex = nDuplex;
-
-	nNum = TWCPP_ANYCOUNT;
-#else
-	int nDuplex = nDuplexDef;		//单双面,0-单面,1-双面
-	int nSize = 1;							//1-A4
+	int nSize = 1;							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3
 	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
 	int nResolution = 200;					//dpi: 72, 150, 200, 300
 	
@@ -1153,7 +1142,6 @@ void CScanToolDlg::OnBnClickedBtnScan()
 
 	if (nNum == 0)
 		nNum = TWCPP_ANYCOUNT;
-#endif
 
 	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, bShowScanSrcUI))	//TWCPP_ANYCOUNT
 	{
@@ -2388,7 +2376,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	int nExamID = 0;
 	int nSubjectID = 0;
 #ifndef TO_WHTY
-	CPapersInfoSaveDlg dlg(m_pPapersInfo);
+	CPapersInfoSaveDlg dlg(m_pPapersInfo, m_pModel);
 	if (dlg.DoModal() != IDOK)
 	{
 		m_bF2Enable = TRUE;

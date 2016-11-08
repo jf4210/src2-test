@@ -8,7 +8,7 @@ class CPapersInfoSaveDlg : public CDialog
 	DECLARE_DYNAMIC(CPapersInfoSaveDlg)
 
 public:
-	CPapersInfoSaveDlg(pPAPERSINFO pPapers, CWnd* pParent = NULL);   // 标准构造函数
+	CPapersInfoSaveDlg(pPAPERSINFO pPapers, pMODEL pModel, CWnd* pParent = NULL);   // 标准构造函数
 	virtual ~CPapersInfoSaveDlg();
 
 // 对话框数据
@@ -28,6 +28,7 @@ public:
 	int			m_SubjectID;
 private:
 	pPAPERSINFO m_pPapers;
+	pMODEL		m_pModel;
 	CExamInfoDlg* m_pExamInfoDlg;
 	void	InitUI(int nShow);
 	void	InitCtrlPosition();

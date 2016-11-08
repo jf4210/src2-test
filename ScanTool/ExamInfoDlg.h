@@ -1,5 +1,5 @@
 #pragma once
-
+#include "modelinfo.h"
 
 // CExamInfoDlg ¶Ô»°¿ò
 
@@ -22,6 +22,7 @@ public:
 	CString		m_strGradeName;
 	int			m_SubjectID;
 
+	bool	InitShow(pMODEL pModel);
 private:
 	BOOL InitData();
 	void InitUI();

@@ -13,7 +13,7 @@
 //#include "TypeDef.h"
 
 #ifdef _DEBUG
-//	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
+	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
 //	#define TEST_FILE_PRESSURE	//文件上传压力测试
 #endif
 
@@ -234,6 +234,8 @@ typedef struct _ScanReqTask_
 	std::string strEzs;
 	std::string strUser;
 	std::string strPwd;
+	std::string strExamName;
+	std::string strSubjectName;
 	_ScanReqTask_()
 	{
 		pUser = NULL;

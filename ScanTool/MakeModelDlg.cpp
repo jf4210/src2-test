@@ -914,15 +914,7 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 		return;
 	}
 
-#ifdef TEST_SCAN2
-	int nSize = dlg.m_nStudentNum;							//1-A4
-	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
-	int nResolution = 200;					//dpi: 72, 150, 200, 300
-	
-	int nNum = 0;
-	nNum = TWCPP_ANYCOUNT;
-#else
-	int nSize = 1;							//1-A4
+	int nSize = 1;							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3
 	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
 	int nResolution = 200;					//dpi: 72, 150, 200, 300
 
@@ -933,7 +925,7 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 
 	if (nNum == 0)
 		nNum = TWCPP_ANYCOUNT;
-#endif
+
 	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, bShowScanSrcUI))
 	{
 		TRACE("扫描失败\n");
@@ -2077,8 +2069,12 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	}
 	else
 	{
-		char szModelName[30] = { 0 };
+		char szModelName[150] = { 0 };
+	#ifdef TEST_MODEL_NAME
+		sprintf_s(szModelName, "%s_%s_N_%d_%d", T2A(dlg.m_strExamName), T2A(dlg.m_strSubjectName), dlg.m_nExamID, dlg.m_SubjectID);
+	#else
 		sprintf_s(szModelName, "%d_%d", dlg.m_nExamID, dlg.m_SubjectID);
+	#endif
 		char szModelDesc[300] = { 0 };
 		sprintf_s(szModelDesc, "考试名称: %s\r\n科目: %s\r\n年级: %s\r\n考试类型名称: %s", T2A(dlg.m_strExamName), T2A(dlg.m_strSubjectName), T2A(dlg.m_strGradeName), T2A(dlg.m_strExamTypeName));
 		m_pModel->nExamID		= dlg.m_nExamID;
@@ -2202,10 +2198,18 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	if (SaveModelFile(m_pModel))
 	{
 		ZipFile(modelPath, modelPath, _T(".mod"));
+
+	#if 1
+		//直接上传模板
+		CString strModelFullPath = modelPath + _T(".mod");
+		UploadModel(strModelFullPath, m_pModel);
+		AfxMessageBox(_T("保存完成!"));
+	#else
 		if (m_pModel->nHasElectOmr)
 			AfxMessageBox(_T("保存完成，此模板存在选做题信息，请上传服务器！！！"));
 		else
 			AfxMessageBox(_T("保存完成!"));
+	#endif
 	}
 	else
 		AfxMessageBox(_T("保存失败"));
@@ -6041,4 +6045,90 @@ void CMakeModelDlg::RecogFixWithHead(int i)
 			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_1);
 		}
 	}
+}
+
+bool CMakeModelDlg::UploadModel(CString strModelPath, pMODEL pModel)
+{
+	if (pModel->nSaveMode == 1)
+		return true;
+
+	//++选做题的模板信息随模板信息上传
+	std::string strElectOmrInfo;
+	if (pModel->nHasElectOmr)
+	{
+		Poco::JSON::Object jsnDataObj;
+		Poco::JSON::Array jsnElectOmrArry;
+		for (int i = 0; i < pModel->vecPaperModel.size(); i++)
+		{
+			Poco::JSON::Object jsnPaperElectOmrObj;
+			Poco::JSON::Array jsnPaperElectOmrArry;		//单页试卷上的选做题信息
+			ELECTOMR_LIST::iterator itElectOmr = pModel->vecPaperModel[i]->lElectOmr.begin();
+			for (; itElectOmr != pModel->vecPaperModel[i]->lElectOmr.end(); itElectOmr++)
+			{
+				Poco::JSON::Object jsnElectOmr;
+				jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
+				jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
+				jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
+				Poco::JSON::Array jsnPositionArry;
+				RECTLIST::iterator itRect = itElectOmr->lItemInfo.begin();
+				for (; itRect != itElectOmr->lItemInfo.end(); itRect++)
+				{
+					Poco::JSON::Object jsnItem;
+					char szVal[5] = { 0 };
+					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+					jsnItem.set("val", szVal);
+					jsnItem.set("x", itRect->rt.x);
+					jsnItem.set("y", itRect->rt.y);
+					jsnItem.set("w", itRect->rt.width);
+					jsnItem.set("h", itRect->rt.height);
+					jsnPositionArry.add(jsnItem);
+				}
+				jsnElectOmr.set("position", jsnPositionArry);
+				jsnPaperElectOmrArry.add(jsnElectOmr);
+			}
+			jsnPaperElectOmrObj.set("paperId", i + 1);
+			jsnPaperElectOmrObj.set("electOmr", jsnPaperElectOmrArry);
+			jsnElectOmrArry.add(jsnPaperElectOmrObj);
+		}
+		//		jsnDataObj.set("modelElectOmr", jsnElectOmrArry);
+
+		std::stringstream jsnOmrString;
+		jsnElectOmrArry.stringify(jsnOmrString, 0);
+		strElectOmrInfo = jsnOmrString.str();
+	}
+
+	USES_CONVERSION;
+	std::string strPath = T2A(strModelPath);
+	std::string strMd5;
+
+	strMd5 = calcFileMd5(strPath);
+
+	ST_MODELINFO stModelInfo;
+	ZeroMemory(&stModelInfo, sizeof(ST_MODELINFO));
+	stModelInfo.nExamID = pModel->nExamID;
+	stModelInfo.nSubjectID = pModel->nSubjectID;
+
+	sprintf_s(stModelInfo.szModelName, "%s.mod", pModel->strModelName.c_str());
+	strncpy(stModelInfo.szMD5, strMd5.c_str(), strMd5.length());
+	strncpy(stModelInfo.szElectOmr, strElectOmrInfo.c_str(), strElectOmrInfo.length());
+
+#ifdef SHOW_GUIDEDLG
+	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
+
+	sprintf_s(stModelInfo.szUserNo, "%s", T2A(pDlg->m_strUserName));
+	sprintf_s(stModelInfo.szEzs, "%s", T2A(pDlg->m_strEzs));
+#else
+	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();	//GetParent();
+
+	sprintf_s(stModelInfo.szUserNo, "%s", T2A(pDlg->m_strUserName));
+	sprintf_s(stModelInfo.szEzs, "%s", T2A(pDlg->m_strEzs));
+#endif
+
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_SETMODELINFO;
+	pTcpTask->nPkgLen = sizeof(ST_MODELINFO);
+	memcpy(pTcpTask->szSendBuf, (char*)&stModelInfo, sizeof(ST_MODELINFO));
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
 }

@@ -284,7 +284,7 @@ void CTcpClient::HandleCmd()
 						subjectInfo.nSubjCode = objSubject->get("code").convert<int>();
 						subjectInfo.strSubjName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("name").convert<std::string>());
 						if (!objSubject->isNull("scanTemplateName"))
-							subjectInfo.strModelName = objSubject->get("scanTemplateName").convert<std::string>();
+							subjectInfo.strModelName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("scanTemplateName").convert<std::string>());
 
 						examInfo.lSubjects.push_back(subjectInfo);
 					}

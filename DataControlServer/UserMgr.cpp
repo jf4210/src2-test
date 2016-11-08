@@ -197,6 +197,15 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			else
 			{
 				pMODELINFO pModelInfo = itFind->second;
+				try
+				{
+					Poco::File modelFile(CMyCodeConvert::Gb2312ToUtf8(pModelInfo->strPath));
+					if (!modelFile.exists())
+						pModelInfo->strMd5 = "";
+				}
+				catch (Poco::Exception&exc)
+				{
+				}
 				if (pModelInfo->strMd5 != stModelInfo.szMD5)		//文件有修改，需要重新发送
 				{
 					bNeedSend = true;
@@ -215,6 +224,8 @@ int CUserMgr::HandleHeader(CMission* pMission)
 					strLog.append("的文件MD5与需要上传的文件MD5信息不一致，可以发送此模板的信息");
 					g_Log.LogOut(strLog);
 				}
+				else
+					std::cout << "文件未修改，不需要重传" << std::endl;
 			}
 
 			if (bNeedSend)
@@ -274,7 +285,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			}
 			if (bNeedDown)
 			{
-				Poco::File fileModel(pModelInfo->strPath);
+				Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(pModelInfo->strPath));
 				stModelInfo.nModelSize = static_cast<int>(fileModel.getSize());
 				pUser->SendResponesInfo(USER_RESPONSE_NEEDDOWN, RESULT_DOWNMODEL_OK, (char*)&stModelInfo, sizeof(stModelInfo));
 			}
@@ -351,6 +362,8 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			pTask->nExamID = stModelInfo.nExamID;
 			pTask->nSubjectID = stModelInfo.nSubjectID;
 			pTask->strEzs = stModelInfo.szEzs;
+			pTask->strExamName = stModelInfo.szExamName;
+			pTask->strSubjectName = stModelInfo.szSubjectName;
 
 			g_fmScanReq.lock();
 			g_lScanReq.push_back(pTask);

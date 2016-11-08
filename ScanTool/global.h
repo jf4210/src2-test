@@ -64,6 +64,9 @@
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define TEST_DATA
 	#define  TEST_SCAN2			//测试纸张大小控制
+	#define	 TEST_MODEL_NAME	//模板名称测试
+#else	//release版本
+	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -95,7 +98,9 @@
 	//#define SHOW_MODELMAKE_MAINDLG		//是否在主界面上显示模板制作按钮
 	//#define SHOW_COMBOLIST_MAINDLG		//是否在主界面上显示下拉列表控件
 	//#define SHOW_SCANALL_MAINDLG			//是否在主界面上显示整袋扫描按钮
-	#define SHOW_PAPERINPUT_MAINDLG			//是否在主界面上显示试卷导入按钮
+	#ifndef PUBLISH_VERSION
+		#define SHOW_PAPERINPUT_MAINDLG			//是否在主界面上显示试卷导入按钮
+	#endif
 #elif defined (TO_WHTY)
 	//#define SHOW_LOGIN_MAINDLG			//是否在主界面上显示登录按钮
 	//#define SHOW_MODELMGR_MAINDLG			//是否在主界面上显示模板管理按钮
@@ -109,7 +114,9 @@
 	//#define SHOW_MODELMAKE_MAINDLG		//是否在主界面上显示模板制作按钮
 	//#define SHOW_COMBOLIST_MAINDLG		//是否在主界面上显示下拉列表控件
 	//#define SHOW_SCANALL_MAINDLG			//是否在主界面上显示整袋扫描按钮
-	#define SHOW_PAPERINPUT_MAINDLG			//是否在主界面上显示试卷导入按钮
+	#ifndef PUBLISH_VERSION
+		#define SHOW_PAPERINPUT_MAINDLG			//是否在主界面上显示试卷导入按钮
+	#endif
 #endif
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)

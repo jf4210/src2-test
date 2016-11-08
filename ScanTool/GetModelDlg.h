@@ -22,9 +22,11 @@ public:
 	CComboBox	m_comboSubject;
 
 	int			m_nExamID;
+	CString		m_strExamName;
 	CString		m_strExamTypeName;
 	CString		m_strGradeName;
 	int			m_SubjectID;
+	CString		m_strSubjectName;
 	CString		m_strScanModelName;
 
 

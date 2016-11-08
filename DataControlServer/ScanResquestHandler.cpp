@@ -253,8 +253,9 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 			}
 			else
 			{
-				char szIndex[50] = { 0 };
-				sprintf(szIndex, "%d_%d", pTask->nExamID, pTask->nSubjectID);
+				char szIndex[150] = { 0 };
+//				sprintf(szIndex, "%d_%d", pTask->nExamID, pTask->nSubjectID);
+				sprintf(szIndex, "%s_%s_N_%d_%d", pTask->strExamName.c_str(), pTask->strSubjectName.c_str(), pTask->nExamID, pTask->nSubjectID);
 				std::string strModelPath = SysSet.m_strModelSavePath + "\\";
 				strModelPath.append(szIndex);
 				strModelPath.append(".mod");
@@ -275,10 +276,11 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 				else
 				{
 					//删除本地可能已经存在的模板
-					char szIndex[50] = { 0 };
-					sprintf(szIndex, "%d_%d", pTask->nExamID, pTask->nSubjectID);
+					char szModelName[150] = { 0 };
+//					sprintf(szModelName, "%d_%d", pTask->nExamID, pTask->nSubjectID);
+					sprintf(szModelName, "%s_%s_N_%d_%d", pTask->strExamName.c_str(), pTask->strSubjectName.c_str(), pTask->nExamID, pTask->nSubjectID);
 					std::string strModelPath = SysSet.m_strModelSavePath + "\\";
-					strModelPath.append(szIndex);
+					strModelPath.append(szModelName);
 					strModelPath.append(".mod");
 					try
 					{
@@ -450,6 +452,8 @@ int CScanResquestHandler::modelHandle(pSCAN_REQ_TASK pTask, Poco::JSON::Object::
 	
 	char szIndex[50] = { 0 };
 	sprintf(szIndex, "%d_%d", pTask->nExamID, pTask->nSubjectID);
+// 	char szModelName[150] = { 0 };
+// 	sprintf(szModelName, "%s_%s_N_%d_%d", pTask->nExamID, pTask->nSubjectID);
 	pMODELINFO pModelInfo = NULL;
 	MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
 	if (itFind != _mapModel_.end())
@@ -460,12 +464,14 @@ int CScanResquestHandler::modelHandle(pSCAN_REQ_TASK pTask, Poco::JSON::Object::
 		
 		//创建基本模板
 		std::vector<std::vector<int>> vecSheets;
-		pMODEL pModel = CreateModel(object, pTask->nExamID, pTask->nSubjectID, vecSheets);
+		pMODEL pModel = CreateModel(object, pTask, vecSheets);
 		pModelInfo->pModel = pModel;
 
 		//下载PDF
+		char szModelName[150] = { 0 };
+		sprintf(szModelName, "%s_%s_N_%d_%d", pTask->strExamName.c_str(), pTask->strSubjectName.c_str(), pTask->nExamID, pTask->nSubjectID);
 		std::string strModelPath = SysSet.m_strModelSavePath + "\\";
-		strModelPath.append(szIndex);
+		strModelPath.append(szModelName);
 		try
 		{
 			Poco::File modelDir(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
@@ -487,10 +493,10 @@ int CScanResquestHandler::modelHandle(pSCAN_REQ_TASK pTask, Poco::JSON::Object::
 		if (bResult) bResult = ZipModel(pModel, strModelPath);
 		if (bResult)
 		{
-			pModelInfo->strName = szIndex;
+			pModelInfo->strName = szModelName;
 			pModelInfo->strName.append(".mod");
-			pModelInfo->strPath = CMyCodeConvert::Gb2312ToUtf8(strModelPath + ".mod");
-			pModelInfo->strMd5 = calcFileMd5(pModelInfo->strPath);
+			pModelInfo->strPath = strModelPath + ".mod";
+			pModelInfo->strMd5 = calcFileMd5(CMyCodeConvert::Gb2312ToUtf8(pModelInfo->strPath));
 
 			std::string strLog;
 			Poco::File modelDir(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
@@ -506,7 +512,7 @@ int CScanResquestHandler::modelHandle(pSCAN_REQ_TASK pTask, Poco::JSON::Object::
 			Poco::JSON::Object jsnModel;
 			jsnModel.set("examId", pTask->nExamID);
 			jsnModel.set("subjectId", pTask->nSubjectID);
-			jsnModel.set("tmplateName", pModelInfo->strName);
+			jsnModel.set("tmplateName", CMyCodeConvert::Gb2312ToUtf8(pModelInfo->strName));
 
 			std::stringstream jsnString;
 			jsnModel.stringify(jsnString, 0);
@@ -871,7 +877,7 @@ bool GetQK(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 	return true;
 }
 
-pMODEL CScanResquestHandler::CreateModel(Poco::JSON::Object::Ptr object, int nExamID, int nSubjectID, std::vector<std::vector<int>>& vecSheets)
+pMODEL CScanResquestHandler::CreateModel(Poco::JSON::Object::Ptr object, pSCAN_REQ_TASK pTask, std::vector<std::vector<int>>& vecSheets)
 {
 	pMODEL pModel = NULL;
 	Poco::JSON::Array::Ptr arrySheets = object->getArray("sheets");
@@ -912,9 +918,9 @@ pMODEL CScanResquestHandler::CreateModel(Poco::JSON::Object::Ptr object, int nEx
 			{
 				Poco::JSON::Object::Ptr objCurSubject = objSubject->getObject("curSubject");
 //				pModel->strModelName = CMyCodeConvert::Utf8ToGb2312(objCurSubject->get("name").convert<std::string>());		//使用考试ID和科目ID做模板名称
-				char szIndex[30] = { 0 };
-				sprintf(szIndex, "%d_%d", nExamID, nSubjectID);
-				pModel->strModelName = szIndex;
+				char szModelName[150] = { 0 };
+				sprintf(szModelName, "%s_%s_N_%d_%d", pTask->strExamName.c_str(), pTask->strSubjectName.c_str(), pTask->nExamID, pTask->nSubjectID);
+				pModel->strModelName = szModelName;
 			}
 
 			std::string strName = Poco::format("model%d.jpg", vecPage[i]);

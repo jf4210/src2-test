@@ -20,7 +20,12 @@ CScanModleMgrDlg::CScanModleMgrDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	, m_pShowModelInfoDlg(NULL), m_pModel(NULL), m_nCurModelItem(-1)
 	, m_pOldModel(pModel), m_strCurModelName(_T(""))
 {
-
+	EnableToolTips(TRUE);
+	m_ListTip.Create(this);
+	m_ListTip.SetMaxTipWidth(500);
+	m_ListTip.SetTipTextColor(RGB(255, 0, 0));//设置提示字体颜色
+	m_ListTip.SetTipBkColor(RGB(255, 255, 255));//设置提示背景颜色
+	m_ListTip.Activate(TRUE);
 }
 
 CScanModleMgrDlg::~CScanModleMgrDlg()
@@ -57,6 +62,7 @@ BEGIN_MESSAGE_MAP(CScanModleMgrDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_MakeModel, &CScanModleMgrDlg::OnBnClickedBtnMakemodel)
 	ON_BN_CLICKED(IDCANCEL, &CScanModleMgrDlg::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_BTN_uploadModel, &CScanModleMgrDlg::OnBnClickedBtnuploadmodel)
+	ON_NOTIFY(LVN_HOTTRACK, IDC_LIST_Model, &CScanModleMgrDlg::OnLvnHotTrackListModel)
 END_MESSAGE_MAP()
 
 BOOL CScanModleMgrDlg::OnInitDialog()
@@ -84,7 +90,7 @@ void CScanModleMgrDlg::InitUI()
 
 	m_ModelListCtrl.SetExtendedStyle(m_ModelListCtrl.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_ModelListCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36);
-	m_ModelListCtrl.InsertColumn(1, _T("模板名称"), LVCFMT_CENTER, 170);
+	m_ModelListCtrl.InsertColumn(1, _T("模板名称"), LVCFMT_CENTER, 160);
 
 	m_pShowModelInfoDlg = new CShowModelInfoDlg(this);
 	m_pShowModelInfoDlg->Create(CShowModelInfoDlg::IDD, this);
@@ -196,7 +202,7 @@ void CScanModleMgrDlg::OnBnClickedBtnDlmodel()
 		return;
 	}
 #endif
-	
+
 
 	USES_CONVERSION;
 	CGetModelDlg dlg(A2T(g_strCmdIP.c_str()), g_nCmdPort);
@@ -416,6 +422,8 @@ void CScanModleMgrDlg::OnBnClickedBtnMakemodel()
 
 	if (m_pModel != dlg.m_pModel)
 	{
+		if (dlg.m_pModel)
+			TRACE("\n\n这是新建的模板\n\n");
 		SAFE_RELEASE(dlg.m_pModel);
 	}
 	OnBnClickedBtnRefresh();
@@ -527,11 +535,37 @@ void CScanModleMgrDlg::OnBnClickedBtnuploadmodel()
 
 	int nPos = 0;
 	int nOldPos = 0;
+	std::string strExamID;
+	std::string strSubjectID;
+#ifdef TEST_MODEL_NAME
+
+	nPos = strModelName.find("_N_");
+
+	if (nPos != std::string::npos)
+	{
+		int nPos2 = strModelName.find("_", nPos + 3);
+
+		strExamID = strModelName.substr(nPos + 3, nPos2 - nPos - 3);
+		nOldPos = nPos2;
+		nPos2 = strModelName.find(".", nPos2 + 1);
+		strSubjectID = strModelName.substr(nOldPos + 1, nPos2 - nOldPos - 1);
+	}
+	else
+	{
+		nPos = strModelName.find("_");
+		strExamID = strModelName.substr(0, nPos);
+		nOldPos = nPos;
+		nPos = strModelName.find(".", nPos + 1);
+		strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+	}
+	
+#else
 	nPos = strModelName.find("_");
-	std::string strExamID = strModelName.substr(0, nPos);
+	strExamID = strModelName.substr(0, nPos);
 	nOldPos = nPos;
 	nPos = strModelName.find(".", nPos + 1);
-	std::string strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+	strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+#endif
 
 	CString modelPath = g_strCurrentPath + _T("Model");
 	modelPath = modelPath + _T("\\") + A2T(m_pModel->strModelName.c_str()) + _T(".mod");
@@ -576,4 +610,45 @@ void CScanModleMgrDlg::setUploadModelInfo(std::string& strName, CString& strMode
 	g_fmTcpTaskLock.lock();
 	g_lTcpTask.push_back(pTcpTask);
 	g_fmTcpTaskLock.unlock();
+}
+
+BOOL CScanModleMgrDlg::PreTranslateMessage(MSG* pMsg)
+{
+	switch (pMsg->message)
+	{
+		case WM_MOUSEMOVE:
+			m_ListTip.RelayEvent(pMsg);
+	}
+	return CDialog::PreTranslateMessage(pMsg);
+}
+
+
+
+
+void CScanModleMgrDlg::OnLvnHotTrackListModel(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	
+// 	CRect   rect;
+// 	m_ModelListCtrl.GetWindowRect(rect);
+// 	CPoint   point;
+// 	GetCursorPos(&point);
+// 	point.x = point.x - rect.left;
+// 	point.y = point.y - rect.top;
+// 
+// 	LVHITTESTINFO   LVHTestInfo;
+// 	LVHTestInfo.pt = point;
+// 	m_ModelListCtrl.HitTest(&LVHTestInfo);
+// 	int	m_nRow = LVHTestInfo.iItem;   //行数
+// 	m_ModelListCtrl.SubItemHitTest(&LVHTestInfo);
+// 	int m_nCol = LVHTestInfo.iSubItem;  //列数
+
+	CString stritem;
+//	stritem = m_ModelListCtrl.GetItemText(m_nRow, m_nCol);
+	stritem = m_ModelListCtrl.GetItemText(pNMLV->iItem, pNMLV->iSubItem);
+	m_ListTip.AddTool(GetDlgItem(IDC_LIST_Model), stritem);
+	// 显示提示框   
+	m_ListTip.Pop();
+
+	*pResult = 0;
 }

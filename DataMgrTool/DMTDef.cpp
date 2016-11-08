@@ -2201,7 +2201,7 @@ bool SavePapersInfo(pPAPERSINFO pPapers)
 	jsnFileData.set("ezs", sEzs);
 	jsnFileData.set("nTeacherId", pPapers->nTeacherId);
 	jsnFileData.set("nUserId", pPapers->nUserId);
-	jsnFileData.set("scanNum", pPapers->nPaperCount);		//扫描的学生数量
+	jsnFileData.set("scanNum", pPapers->nTotalPaper);		//扫描的学生数量
 	jsnFileData.set("detail", jsnPaperArry);
 
 	jsnFileData.set("nOmrDoubt", pPapers->nOmrDoubt);
