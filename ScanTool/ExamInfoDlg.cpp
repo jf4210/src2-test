@@ -270,3 +270,64 @@ void CExamInfoDlg::OnCbnSelchangeComboSubjectname()
 
 	UpdateData(FALSE);
 }
+
+bool CExamInfoDlg::InitShow(pMODEL pModel)
+{
+	if (!pModel)
+		return false;
+
+	if (g_lExamList.size() == 0)
+	{
+		UpdateData(FALSE);
+		return false;
+	}
+
+	int nExamShowItem = 0;
+	int nSubjectShowItem = 0;
+
+	USES_CONVERSION;
+	EXAM_LIST::iterator itExam = g_lExamList.begin();
+	for (; itExam != g_lExamList.end(); itExam++)
+	{
+		CString strName = A2T(itExam->strExamName.c_str());
+
+		int nCount = m_comboExamName.GetCount();
+		m_comboExamName.InsertString(nCount, strName);
+
+		m_comboExamName.SetItemDataPtr(nCount, (void*)&(*itExam));
+
+		if (itExam->nExamID == pModel->nExamID)
+			nExamShowItem = nCount;
+	}
+	m_comboExamName.SetCurSel(nExamShowItem);
+
+	EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemDataPtr(nExamShowItem);
+	if (pExamInfo)
+	{
+		m_comboSubject.ResetContent();
+		SUBJECT_LIST::iterator itSub = pExamInfo->lSubjects.begin();
+		for (int i = 0; itSub != pExamInfo->lSubjects.end(); itSub++, i++)
+		{
+			EXAM_SUBJECT* pSubject = &(*itSub);
+			CString strSubjectName = A2T(itSub->strSubjName.c_str());
+
+			int nCount = m_comboSubject.GetCount();
+			m_comboSubject.InsertString(nCount, strSubjectName);
+			m_comboSubject.SetItemDataPtr(nCount, pSubject);
+
+			if (pSubject->nSubjID == pModel->nSubjectID)
+			{
+				m_SubjectID = itSub->nSubjID;
+			}
+		}
+		m_comboSubject.SetCurSel(m_SubjectID);
+
+		m_nExamID = pExamInfo->nExamID;
+		m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
+		m_strGradeName = pExamInfo->strGradeName.c_str();
+	}
+
+	UpdateData(FALSE);
+
+	return true;
+}

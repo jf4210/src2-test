@@ -2198,10 +2198,18 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	if (SaveModelFile(m_pModel))
 	{
 		ZipFile(modelPath, modelPath, _T(".mod"));
+
+	#if 1
+		//直接上传模板
+		CString strModelFullPath = modelPath + _T(".mod");
+		UploadModel(strModelFullPath, m_pModel);
+		AfxMessageBox(_T("保存完成!"));
+	#else
 		if (m_pModel->nHasElectOmr)
 			AfxMessageBox(_T("保存完成，此模板存在选做题信息，请上传服务器！！！"));
 		else
 			AfxMessageBox(_T("保存完成!"));
+	#endif
 	}
 	else
 		AfxMessageBox(_T("保存失败"));
@@ -6037,4 +6045,90 @@ void CMakeModelDlg::RecogFixWithHead(int i)
 			m_vecPaperModelInfo[i]->vecRtSel.push_back(rcFixSel_1);
 		}
 	}
+}
+
+bool CMakeModelDlg::UploadModel(CString strModelPath, pMODEL pModel)
+{
+	if (pModel->nSaveMode == 1)
+		return true;
+
+	//++选做题的模板信息随模板信息上传
+	std::string strElectOmrInfo;
+	if (pModel->nHasElectOmr)
+	{
+		Poco::JSON::Object jsnDataObj;
+		Poco::JSON::Array jsnElectOmrArry;
+		for (int i = 0; i < pModel->vecPaperModel.size(); i++)
+		{
+			Poco::JSON::Object jsnPaperElectOmrObj;
+			Poco::JSON::Array jsnPaperElectOmrArry;		//单页试卷上的选做题信息
+			ELECTOMR_LIST::iterator itElectOmr = pModel->vecPaperModel[i]->lElectOmr.begin();
+			for (; itElectOmr != pModel->vecPaperModel[i]->lElectOmr.end(); itElectOmr++)
+			{
+				Poco::JSON::Object jsnElectOmr;
+				jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
+				jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
+				jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
+				Poco::JSON::Array jsnPositionArry;
+				RECTLIST::iterator itRect = itElectOmr->lItemInfo.begin();
+				for (; itRect != itElectOmr->lItemInfo.end(); itRect++)
+				{
+					Poco::JSON::Object jsnItem;
+					char szVal[5] = { 0 };
+					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+					jsnItem.set("val", szVal);
+					jsnItem.set("x", itRect->rt.x);
+					jsnItem.set("y", itRect->rt.y);
+					jsnItem.set("w", itRect->rt.width);
+					jsnItem.set("h", itRect->rt.height);
+					jsnPositionArry.add(jsnItem);
+				}
+				jsnElectOmr.set("position", jsnPositionArry);
+				jsnPaperElectOmrArry.add(jsnElectOmr);
+			}
+			jsnPaperElectOmrObj.set("paperId", i + 1);
+			jsnPaperElectOmrObj.set("electOmr", jsnPaperElectOmrArry);
+			jsnElectOmrArry.add(jsnPaperElectOmrObj);
+		}
+		//		jsnDataObj.set("modelElectOmr", jsnElectOmrArry);
+
+		std::stringstream jsnOmrString;
+		jsnElectOmrArry.stringify(jsnOmrString, 0);
+		strElectOmrInfo = jsnOmrString.str();
+	}
+
+	USES_CONVERSION;
+	std::string strPath = T2A(strModelPath);
+	std::string strMd5;
+
+	strMd5 = calcFileMd5(strPath);
+
+	ST_MODELINFO stModelInfo;
+	ZeroMemory(&stModelInfo, sizeof(ST_MODELINFO));
+	stModelInfo.nExamID = pModel->nExamID;
+	stModelInfo.nSubjectID = pModel->nSubjectID;
+
+	sprintf_s(stModelInfo.szModelName, "%s.mod", pModel->strModelName.c_str());
+	strncpy(stModelInfo.szMD5, strMd5.c_str(), strMd5.length());
+	strncpy(stModelInfo.szElectOmr, strElectOmrInfo.c_str(), strElectOmrInfo.length());
+
+#ifdef SHOW_GUIDEDLG
+	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
+
+	sprintf_s(stModelInfo.szUserNo, "%s", T2A(pDlg->m_strUserName));
+	sprintf_s(stModelInfo.szEzs, "%s", T2A(pDlg->m_strEzs));
+#else
+	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();	//GetParent();
+
+	sprintf_s(stModelInfo.szUserNo, "%s", T2A(pDlg->m_strUserName));
+	sprintf_s(stModelInfo.szEzs, "%s", T2A(pDlg->m_strEzs));
+#endif
+
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_SETMODELINFO;
+	pTcpTask->nPkgLen = sizeof(ST_MODELINFO);
+	memcpy(pTcpTask->szSendBuf, (char*)&stModelInfo, sizeof(ST_MODELINFO));
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
 }

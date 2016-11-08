@@ -151,6 +151,7 @@ public:
 
 	bool		m_bShiftKeyDown;	//shift按键是否按下
 
+
 	//扫描
 	BOOL m_bTwainInit;
 	CString		m_strScanSavePath;
@@ -169,6 +170,7 @@ private:
 	void InitCtrlPosition();
 	void InitConf();
 	void InitParam();
+	bool UploadModel(CString strModelPath, pMODEL pModel);		//上传模板文件
 
 	void UpdataCPList();
 	CPType GetComboSelCpType();

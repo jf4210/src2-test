@@ -154,7 +154,8 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 						if (strName.find(".mod") != std::string::npos)
 						{
 							Poco::File filePath(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strModelSavePath));
-							filePath.createDirectories();
+							if (!filePath.exists())
+								filePath.createDirectories();
 
 							std::string strModelNewPath = SysSet.m_strModelSavePath + "\\";
 							strModelNewPath.append(m_szFileName);
@@ -168,13 +169,34 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 								modelPicPath.moveTo(strUtf8ModelPath);
 
 								std::string strModelName = m_szFileName;
+								std::string strExamID;
+								std::string strSubjectID;
 								int nPos = 0;
 								int nOldPos = 0;
-								nPos = strModelName.find("_");
-								std::string strExamID = strModelName.substr(0, nPos);
-								nOldPos = nPos;
-								nPos = strModelName.find(".", nPos + 1);
-								std::string strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+								nPos = strModelName.find("_N_");
+								if (nPos != std::string::npos)	//ÐÂÄ£°åÃû³Æ
+								{
+									int nPos2 = strModelName.find("_", nPos + 3);
+
+									strExamID = strModelName.substr(nPos + 3, nPos2 - nPos - 3);
+									nOldPos = nPos2;
+									nPos2 = strModelName.find(".", nPos2 + 1);
+									strSubjectID = strModelName.substr(nOldPos + 1, nPos2 - nOldPos - 1);
+								}
+								else
+								{
+									nPos = strModelName.find("_");
+									strExamID = strModelName.substr(0, nPos);
+									nOldPos = nPos;
+									nPos = strModelName.find(".", nPos + 1);
+									strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+								}
+
+// 								nPos = strModelName.find("_");
+// 								std::string strExamID = strModelName.substr(0, nPos);
+// 								nOldPos = nPos;
+// 								nPos = strModelName.find(".", nPos + 1);
+// 								std::string strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
 
 								std::string strLog;
 

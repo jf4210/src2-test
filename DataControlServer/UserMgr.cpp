@@ -197,6 +197,15 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			else
 			{
 				pMODELINFO pModelInfo = itFind->second;
+				try
+				{
+					Poco::File modelFile(CMyCodeConvert::Gb2312ToUtf8(pModelInfo->strPath));
+					if (!modelFile.exists())
+						pModelInfo->strMd5 = "";
+				}
+				catch (Poco::Exception&exc)
+				{
+				}
 				if (pModelInfo->strMd5 != stModelInfo.szMD5)		//文件有修改，需要重新发送
 				{
 					bNeedSend = true;
@@ -215,6 +224,8 @@ int CUserMgr::HandleHeader(CMission* pMission)
 					strLog.append("的文件MD5与需要上传的文件MD5信息不一致，可以发送此模板的信息");
 					g_Log.LogOut(strLog);
 				}
+				else
+					std::cout << "文件未修改，不需要重传" << std::endl;
 			}
 
 			if (bNeedSend)

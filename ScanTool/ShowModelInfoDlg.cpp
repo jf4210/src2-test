@@ -15,7 +15,10 @@ CShowModelInfoDlg::CShowModelInfoDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CShowModelInfoDlg::IDD, pParent)
 	, m_nNameSize(26), m_nDesSize(24), m_strModelName(_T("")), m_strModelDesc(_T(""))
 {
-
+	EnableToolTips(TRUE);
+	m_toolTip.Create(this);
+	m_toolTip.SetMaxTipWidth(500);
+	m_toolTip.Activate(TRUE);
 }
 
 CShowModelInfoDlg::~CShowModelInfoDlg()
@@ -159,6 +162,9 @@ void CShowModelInfoDlg::ShowModelInfo(pMODEL pModel, int nFlag /*= 0*/)
 	m_strModelName = A2T(pModel->strModelName.c_str());
 	m_strModelDesc = A2T(pModel->strModelDesc.c_str());
 
+
+	m_toolTip.AddTool(GetDlgItem(IDC_STATIC_ModelName), m_strModelName);
+
 	if (nFlag > 0)
 	{
 		USES_CONVERSION;
@@ -199,17 +205,24 @@ void CShowModelInfoDlg::ShowModelInfo(pMODEL pModel, int nFlag /*= 0*/)
 
 BOOL CShowModelInfoDlg::PreTranslateMessage(MSG* pMsg)
 {
-	if (pMsg->message == WM_KEYDOWN)
+	switch (pMsg->message)
 	{
-		if (pMsg->wParam == VK_ESCAPE)
-		{
-			return TRUE;
-		}
-		if (pMsg->wParam == VK_RETURN)
-		{
-			return TRUE;
-		}
-		return TRUE;
+		case WM_MOUSEMOVE:
+			m_toolTip.RelayEvent(pMsg);
+			break;
+		case WM_KEYDOWN:
+			{
+				if (pMsg->wParam == VK_ESCAPE)
+				{
+					return TRUE;
+				}
+				if (pMsg->wParam == VK_RETURN)
+				{
+					return TRUE;
+				}
+				return TRUE;
+			}
+			break;
 	}
 	return CDialog::PreTranslateMessage(pMsg);
 }

@@ -30,6 +30,7 @@ private:
 	CFont			m_fontStatus_Name;		//字体
 	CFont			m_fontStatus_Des;		//字体
 	COLORREF		m_colorStatus;			//字体颜色
+	CToolTipCtrl	m_toolTip;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

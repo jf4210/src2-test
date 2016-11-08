@@ -11,9 +11,9 @@
 
 IMPLEMENT_DYNAMIC(CPapersInfoSaveDlg, CDialog)
 
-CPapersInfoSaveDlg::CPapersInfoSaveDlg(pPAPERSINFO pPapers, CWnd* pParent /*=NULL*/)
+CPapersInfoSaveDlg::CPapersInfoSaveDlg(pPAPERSINFO pPapers, pMODEL pModel, CWnd* pParent /*=NULL*/)
 	: CDialog(CPapersInfoSaveDlg::IDD, pParent)
-	, m_nPaperCount(0), m_strPapersName(_T("")), m_strPapersDetail(_T("")), m_pPapers(pPapers)
+	, m_nPaperCount(0), m_strPapersName(_T("")), m_strPapersDetail(_T("")), m_pPapers(pPapers), m_pModel(pModel)
 	, m_strExamTypeName(_T("")), m_strGradeName(_T("")), m_SubjectID(0), m_nExamID(0)
 	, m_pExamInfoDlg(NULL)
 {
@@ -63,6 +63,7 @@ BOOL CPapersInfoSaveDlg::OnInitDialog()
 	m_pExamInfoDlg = new CExamInfoDlg(this);
 	m_pExamInfoDlg->Create(CExamInfoDlg::IDD, this);
 	m_pExamInfoDlg->ShowWindow(SW_SHOW);
+	m_pExamInfoDlg->InitShow(m_pModel);
 
 	MoveWindow(0, 0, 450, 350);
 	CenterWindow();

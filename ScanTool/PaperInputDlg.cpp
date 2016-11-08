@@ -1172,7 +1172,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 #endif
 	
 
-	CPapersInfoSaveDlg dlg(pPapers);
+	CPapersInfoSaveDlg dlg(pPapers, m_pModel);
 	if (dlg.DoModal() != IDOK)
 		return;
 

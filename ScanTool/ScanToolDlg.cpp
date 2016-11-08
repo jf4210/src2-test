@@ -2376,7 +2376,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	int nExamID = 0;
 	int nSubjectID = 0;
 #ifndef TO_WHTY
-	CPapersInfoSaveDlg dlg(m_pPapersInfo);
+	CPapersInfoSaveDlg dlg(m_pPapersInfo, m_pModel);
 	if (dlg.DoModal() != IDOK)
 	{
 		m_bF2Enable = TRUE;

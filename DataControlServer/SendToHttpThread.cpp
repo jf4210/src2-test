@@ -627,20 +627,22 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				g_fmHttpSend.unlock();
 
 				//++提交选做题信息	*************	注意：这里还不行，需要和后端确认	********************
+				if (bHasElectOmr)
+				{
+					pTask->pPapers->fmTask.lock();
+					pTask->pPapers->nTaskCounts++;			//electOmr
+					pTask->pPapers->fmTask.unlock();
 
-// 				pTask->pPapers->fmTask.lock();
-// 				pTask->pPapers->nTaskCounts++;			//electOmr
-// 				pTask->pPapers->fmTask.unlock();
-// 
-// 				pSEND_HTTP_TASK pElectOmrTask = new SEND_HTTP_TASK;
-// 				pElectOmrTask->nTaskType = 5;
-// 				pElectOmrTask->strResult = jsnElectOmrString.str();
-// 				pElectOmrTask->pPapers = pTask->pPapers;
-// 				pElectOmrTask->strEzs = pTask->pPapers->strEzs;
-// 				pElectOmrTask->strUri = SysSet.m_strBackUri + "/electOmr";
-// 				g_fmHttpSend.lock();
-// 				g_lHttpSend.push_back(pElectOmrTask);
-// 				g_fmHttpSend.unlock();
+					pSEND_HTTP_TASK pElectOmrTask = new SEND_HTTP_TASK;
+					pElectOmrTask->nTaskType = 5;
+					pElectOmrTask->strResult = jsnElectOmrString.str();
+					pElectOmrTask->pPapers = pTask->pPapers;
+					pElectOmrTask->strEzs = pTask->pPapers->strEzs;
+					pElectOmrTask->strUri = SysSet.m_strBackUri + "/choosetitleinfo";
+					g_fmHttpSend.lock();
+					g_lHttpSend.push_back(pElectOmrTask);
+					g_fmHttpSend.unlock();
+				}				
 				//--
 
 				strLog = "ZKZH信息如下: " + jsnSnString.str();
@@ -670,8 +672,8 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				std::string strLog = "提交OMR信息给后端失败(试卷袋:" + pTask->pPapers->strPapersName;
 				strLog.append(")，失败原因: " + strMsg);
 				strLog.append("\t发送失败次数: ");
-				strLog.append("\n发送数据: " + pTask->strResult);
 				strLog.append(szCount);
+				strLog.append("\n发送的数据: " + pTask->strResult);
 				g_Log.LogOutError(strLog);
 				std::cout << strLog << std::endl;
 			}
@@ -692,8 +694,8 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				std::string strLog = "提交ZKZH信息给后端失败(试卷袋:" + pTask->pPapers->strPapersName;
 				strLog.append(")，失败原因: " + strMsg);
 				strLog.append("\t发送失败次数: ");
-				strLog.append("\n发送数据: " + pTask->strResult);
 				strLog.append(szCount);
+				strLog.append("\n发送的数据: " + pTask->strResult);
 				g_Log.LogOutError(strLog);
 				std::cout << strLog << std::endl;
 			}
@@ -714,8 +716,8 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				std::string strLog = "提交选做题信息给后端失败(试卷袋:" + pTask->pPapers->strPapersName;
 				strLog.append(")，失败原因: " + strMsg);
 				strLog.append("\t发送失败次数: ");
-				strLog.append("\n发送数据: " + pTask->strResult);
 				strLog.append(szCount);
+				strLog.append("\n发送的数据: " + pTask->strResult);
 				g_Log.LogOutError(strLog);
 				std::cout << strLog << std::endl;
 			}
@@ -789,12 +791,15 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 			Poco::JSON::Object jsnModel;
 			jsnModel.set("examId", pModelInfo->pUploadModelInfo->nExamID);
 			jsnModel.set("subjectId", pModelInfo->pUploadModelInfo->nSubjectID);
-			jsnModel.set("tmplateName", pModelInfo->pUploadModelInfo->szModelName);
+			jsnModel.set("tmplateName", CMyCodeConvert::Gb2312ToUtf8(pModelInfo->pUploadModelInfo->szModelName));
 			jsnModel.set("paper", arryModelPics);
 			jsnModel.set("modelElectOmr", pModelInfo->pUploadModelInfo->szElectOmr);
 
 			std::stringstream jsnString;
 			jsnModel.stringify(jsnString, 0);
+
+			std::string strLog = "提交模板图片给zimg服务器完成，数据: " + jsnString.str();
+			g_Log.LogOut(strLog);
 
 			std::string strEzs = pModelInfo->pUploadModelInfo->szEzs;
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
@@ -972,57 +977,7 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 // 	std::cout << "********** 提交给后端数据: **********\n" << std::endl;
 // 	std::cout << jsnString.str() << std::endl;
 // 	std::cout << "****************************************" << std::endl;
-
-
-	//for test 2016.10.24	图像有错乱的问题，单独处理
-#if 0
-	std::string strJsnModel = SysSet.m_strCurrentDir + "\\md5.txt";
-
-	std::string strMd5Data;
-	std::ifstream in(strJsnModel);
-	if (!in)
-		return NULL;
-
-	std::string strJsnLine;
-	while (!in.eof())
-	{
-		getline(in, strJsnLine);					//不过滤空格
-		strMd5Data.append(strJsnLine);
-	}
-	in.close();
-
-
-	std::string strData;
-	LIST_PAPER_INFO::iterator it3 = pPapers->lPaper.begin();
-	for (; it3 != pPapers->lPaper.end(); it3++)
-	{
-		pPAPER_INFO pPaper = *it3;
-		LIST_PIC_DETAIL::iterator itPic = pPaper->lPic.begin();
-		for (; itPic != pPaper->lPic.end(); itPic++)
-		{
-			pPIC_DETAIL pPic = *itPic;
-
-			if (strMd5Data.find(pPaper->strMd5Key) != std::string::npos)
-			{
-				char szInfo[200] = { 0 };
-				sprintf_s(szInfo, "UPDATE ks_studentanswersheetimage SET address='%s' WHERE subjectId=12 AND studentKey='%s' AND picName='%s';\r\n", \
-						  pPic->strHashVal.c_str(), pPaper->strMd5Key.c_str(), pPic->strFileName.c_str());
-				strData.append(szInfo);				
-			}	
-		}
-	}
-
-	std::string strJsnFile = SysSet.m_strCurrentDir;
-	strJsnFile += "\\update.txt";
-	ofstream out(CMyCodeConvert::Utf8ToGb2312(strJsnFile));
-	if (!out)	return false;
-	out << strData.c_str();
-	out.close();
-
-	return true;
-	//--
-#endif
-
+	
 #if 1
 	pSEND_HTTP_TASK pNewTask = new SEND_HTTP_TASK;
 	pNewTask->nTaskType = 2;
