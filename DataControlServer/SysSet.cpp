@@ -27,6 +27,7 @@ bool CSysSet::Load(std::string& strConfPath)
 	m_nBackupPapers		= pConf->getInt("Sys.bPapersBackup", 0);
 	m_strPapersBackupPath	= pConf->getString("Sys.papersBackupPath");
 	m_nUpLoadOmrData = pConf->getInt("Sys.bUpOmrData", 1);
+	m_nVerServerPort = pConf->getInt("VerServerInfo.port", 19991);
 
 	m_nHandleCmdThreads = pConf->getInt("Cmd.sendThreads", 2);
 	m_nSendHttpThreads	= pConf->getInt("UpHttp.sendThreads", 2);
@@ -37,5 +38,6 @@ bool CSysSet::Load(std::string& strConfPath)
 	m_strBackUri		= pConf->getString("UpHttp.backUri");
 	m_strEncryptPwd		= pConf->getString("Sys.encryptPwd", "yklxTest");
 	m_strSessionName	= pConf->getString("Sys.sessionName", "ezs");
+	m_strVerServerIP	= pConf->getString("VerServerInfo.addr", "116.211.105.45");
 	return true;
 }

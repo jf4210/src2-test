@@ -405,6 +405,15 @@ int CUserMgr::HandleHeader(CMission* pMission)
 		#endif
 		}
 		break;
+	case GET_VERSERVER_ADDR:
+		{
+			std::stringstream ss;
+			ss << SysSet.m_strVerServerIP << ":" << SysSet.m_nVerServerPort;
+			std::string strVerAddr = ss.str();
+			pUser->SendResponesInfo(RESPONSE_GET_VERSERVER_ADDR, RESULT_SUCCESS, (char*)strVerAddr.c_str(), strVerAddr.length());
+			std::cout << "回复版本服务器地址信息:" << strVerAddr << std::endl;
+		}
+		break;
 	default:
 		bFind = FALSE;
 		break;

@@ -18,6 +18,7 @@ public:
 	int m_nPaperUpLoadPort;
 	// 指令通道监听端口
 	int m_nCmdPort;
+	int m_nVerServerPort;	//版本控制服务器的地址信息
 
 	int m_nHandleCmdThreads;	//处理接收到的网络命令线程
 	int m_nDecompressThreads;
@@ -39,8 +40,9 @@ public:
 	string m_strErrorPkg;			//gb2312	错误试卷包，指无法继续处理的包，如图片有重复等
 	string m_strUpLoadHttpUri;
 	string m_strBackUri;
-	string m_strEncryptPwd;	//扫描端进行文件加密解密的密码
+	string m_strEncryptPwd;		//扫描端进行文件加密解密的密码
 	string m_strSessionName;	//提交数据给后端时的cookie字段的名称，默认ezs
+	string m_strVerServerIP;	//版本控制服务器的地址信息
 };
 
 #define SysSet CSysSet::GetRef()

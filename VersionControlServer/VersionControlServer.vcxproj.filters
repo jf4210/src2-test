@@ -1,0 +1,135 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="命令管理">
+      <UniqueIdentifier>{649d7b22-d9e7-4f86-815c-f6999217b7e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="转码">
+      <UniqueIdentifier>{eaea1fab-aed3-49a8-b6bb-ca51f083f3f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="global">
+      <UniqueIdentifier>{cb160ad5-0178-4d3a-9104-2a3079ad0bcb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LOG">
+      <UniqueIdentifier>{36f5cf6d-b4c5-46ba-877d-85ba46fa6b0b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ListMission.cpp">
+      <Filter>命令管理</Filter>
+    </ClCompile>
+    <ClCompile Include="ListUser.cpp">
+      <Filter>命令管理</Filter>
+    </ClCompile>
+    <ClCompile Include="Mission.cpp">
+      <Filter>命令管理</Filter>
+    </ClCompile>
+    <ClCompile Include="MissionFactory.cpp">
+      <Filter>命令管理</Filter>
+    </ClCompile>
+    <ClCompile Include="MissionHandleMgr.cpp">
+      <Filter>命令管理</Filter>
+    </ClCompile>
+    <ClCompile Include="MissionMgr.cpp">
+      <Filter>命令管理</Filter>
+    </ClCompile>
+    <ClCompile Include="NetCmdMgr.cpp">
+      <Filter>命令管理</Filter>
+    </ClCompile>
+    <ClCompile Include="NetIoBuffer.cpp">
+      <Filter>命令管理</Filter>
+    </ClCompile>
+    <ClCompile Include="NetIoSendBuffer.cpp">
+      <Filter>命令管理</Filter>
+    </ClCompile>
+    <ClCompile Include="NetUser.cpp">
+      <Filter>命令管理</Filter>
+    </ClCompile>
+    <ClCompile Include="UserMgr.cpp">
+      <Filter>命令管理</Filter>
+    </ClCompile>
+    <ClCompile Include="MyCodeConvert.cpp">
+      <Filter>转码</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="VCSDef.cpp">
+      <Filter>global</Filter>
+    </ClCompile>
+    <ClCompile Include="Log.cpp">
+      <Filter>LOG</Filter>
+    </ClCompile>
+    <ClCompile Include="SysSet.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ListMission.h">
+      <Filter>命令管理</Filter>
+    </ClInclude>
+    <ClInclude Include="ListUser.h">
+      <Filter>命令管理</Filter>
+    </ClInclude>
+    <ClInclude Include="Mission.h">
+      <Filter>命令管理</Filter>
+    </ClInclude>
+    <ClInclude Include="MissionFactory.h">
+      <Filter>命令管理</Filter>
+    </ClInclude>
+    <ClInclude Include="MissionHandleMgr.h">
+      <Filter>命令管理</Filter>
+    </ClInclude>
+    <ClInclude Include="MissionMgr.h">
+      <Filter>命令管理</Filter>
+    </ClInclude>
+    <ClInclude Include="NetCmdMgr.h">
+      <Filter>命令管理</Filter>
+    </ClInclude>
+    <ClInclude Include="NetIoBuffer.h">
+      <Filter>命令管理</Filter>
+    </ClInclude>
+    <ClInclude Include="NetIoSendBuffer.h">
+      <Filter>命令管理</Filter>
+    </ClInclude>
+    <ClInclude Include="NetUser.h">
+      <Filter>命令管理</Filter>
+    </ClInclude>
+    <ClInclude Include="UserMgr.h">
+      <Filter>命令管理</Filter>
+    </ClInclude>
+    <ClInclude Include="MyCodeConvert.h">
+      <Filter>转码</Filter>
+    </ClInclude>
+    <ClInclude Include="NetOperatorDll.h">
+      <Filter>global</Filter>
+    </ClInclude>
+    <ClInclude Include="VCSDef.h">
+      <Filter>global</Filter>
+    </ClInclude>
+    <ClInclude Include="global.h">
+      <Filter>global</Filter>
+    </ClInclude>
+    <ClInclude Include="Log.h">
+      <Filter>LOG</Filter>
+    </ClInclude>
+    <ClInclude Include="SysSet.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\Net_Cmd_Protocol_Ver.h">
+      <Filter>global</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
