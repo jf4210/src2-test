@@ -465,6 +465,7 @@ void CDataMgrToolDlg::OnBnClickedMfcbuttonDecrypt()
 	if (!decString(strJsnData, strFileData))
 		strFileData = strJsnData;
 
+	int n = strFileData.length();
 	CString strMsg = _T("");
 	strMsg.Format(_T("-------------------\r\n%s\r\n-------------------\r\n"), A2T(strFileData.c_str()));
 	showMsg(strMsg);
