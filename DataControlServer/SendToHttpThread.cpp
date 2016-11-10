@@ -770,6 +770,12 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 		}
 		if (pModelInfo)
 		{
+			if (!pModelInfo->pUploadModelInfo)
+			{
+				std::string strLog = "模板不能设置，模板信息为空";
+				g_Log.LogOutError(strLog);
+				return false;
+			}
 			Poco::JSON::Array arryModelPics;
 			LIST_PAPER_INFO::iterator itPaper = pPapers->lPaper.begin();
 			for (int i = 1; itPaper != pPapers->lPaper.end(); i++, itPaper++)
@@ -787,22 +793,36 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 					arryModelPics.add(objPic);
 				}
 			}
-			
+			Poco::JSON::Parser parserElectOmr;
+			Poco::Dynamic::Var resultElectOmr;
+			Poco::JSON::Array::Ptr electOmrArry;
+
+			try
+			{
+				resultElectOmr = parserElectOmr.parse(pModelInfo->pUploadModelInfo->szElectOmr);
+				electOmrArry = resultElectOmr.extract<Poco::JSON::Array::Ptr>();
+			}
+			catch (...)
+			{
+			}
 			Poco::JSON::Object jsnModel;
 			jsnModel.set("examId", pModelInfo->pUploadModelInfo->nExamID);
 			jsnModel.set("subjectId", pModelInfo->pUploadModelInfo->nSubjectID);
 			jsnModel.set("tmplateName", CMyCodeConvert::Gb2312ToUtf8(pModelInfo->pUploadModelInfo->szModelName));
 			jsnModel.set("paper", arryModelPics);
-			jsnModel.set("modelElectOmr", pModelInfo->pUploadModelInfo->szElectOmr);
+			if (strlen(pModelInfo->pUploadModelInfo->szElectOmr) > 0)
+				jsnModel.set("modelElectOmr", electOmrArry);	//pModelInfo->pUploadModelInfo->szElectOmr
 
 			std::stringstream jsnString;
 			jsnModel.stringify(jsnString, 0);
 
-			std::string strLog = "提交模板图片给zimg服务器完成，数据: " + jsnString.str();
+			std::string strLog = "提交模板图片给zimg服务器完成，设置模板名称，提交给后端的数据: " + jsnString.str();
 			g_Log.LogOut(strLog);
 
 			std::string strEzs = pModelInfo->pUploadModelInfo->szEzs;
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
+			pTask->nExamID = pModelInfo->nExamID;
+			pTask->nSubjectID = pModelInfo->nSubjectID;
 			pTask->strUri = SysSet.m_strBackUri + "/scanTemplate";
 			pTask->pUser = pModelInfo->pUser;
 			pTask->strEzs = "ezs=" + strEzs;
@@ -817,7 +837,6 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 			std::string strLog = Poco::format("(%d_%d)模板图片上传zimg完成，对应的模板信息为空，不能向后端设置模板信息", pPapers->nExamID, pPapers->nSubjectID);
 			g_Log.LogOutError(strLog);
 		}
-
 
 		//删除解压的文件夹
 		try
@@ -837,7 +856,8 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 			std::string strErr = "删除模板解压文件夹(" + pPapers->strPapersPath + ")失败: " + exc.message();
 			g_Log.LogOutError(strErr);
 		}
-		
+
+#if 0
 		g_fmPapers.lock();
 		LIST_PAPERS_DETAIL::iterator itPapers = g_lPapers.begin();
 		for (; itPapers != g_lPapers.end();)
@@ -852,7 +872,7 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 				itPapers++;
 		}
 		g_fmPapers.unlock();
-
+#endif
 		return true;
 	}
 

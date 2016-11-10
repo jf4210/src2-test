@@ -1,10 +1,13 @@
 #pragma once
 #include <string>
 #include <list>
+#include <map>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include "Net_Cmd_Protocol.h"
 #include "Net_Cmd_Protocol_Ver.h"
+#include "md5.h"
 
 #if 0
 #include "Poco/Runnable.h"
@@ -82,6 +85,11 @@ typedef std::list<pST_FILEINFO> LIST_FILEINFO;
 extern HANDLE			g_hMutex_Conn;
 extern LIST_FILEINFO	g_VerServerFileList;
 
+typedef std::list<std::string> LIST_NEED_DOWNLOAD;
+extern LIST_NEED_DOWNLOAD	g_DownLoadFileList;
+typedef std::map<std::string, pST_FILEINFO> MAP_FILEINFO;
+extern MAP_FILEINFO		g_LocalFileMap;
+
 
 //×Ô¶¯Æô¶¯
 BOOL StartUp();
@@ -90,3 +98,4 @@ void UnInitNetWork();
 BOOL ConnectServer(SOCKET& sock, CString& strIP, int& nPort);
 DWORD WINAPI MyWork(LPVOID lParam);
 
+BOOL GetLocalFileList();

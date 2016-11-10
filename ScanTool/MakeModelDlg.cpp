@@ -6066,6 +6066,7 @@ bool CMakeModelDlg::UploadModel(CString strModelPath, pMODEL pModel)
 			for (; itElectOmr != pModel->vecPaperModel[i]->lElectOmr.end(); itElectOmr++)
 			{
 				Poco::JSON::Object jsnElectOmr;
+				jsnElectOmr.set("paperId", i + 1);
 				jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
 				jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
 				jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
@@ -6084,17 +6085,14 @@ bool CMakeModelDlg::UploadModel(CString strModelPath, pMODEL pModel)
 					jsnPositionArry.add(jsnItem);
 				}
 				jsnElectOmr.set("position", jsnPositionArry);
-				jsnPaperElectOmrArry.add(jsnElectOmr);
+				jsnElectOmrArry.add(jsnElectOmr);
 			}
-			jsnPaperElectOmrObj.set("paperId", i + 1);
-			jsnPaperElectOmrObj.set("electOmr", jsnPaperElectOmrArry);
-			jsnElectOmrArry.add(jsnPaperElectOmrObj);
 		}
-		//		jsnDataObj.set("modelElectOmr", jsnElectOmrArry);
 
 		std::stringstream jsnOmrString;
 		jsnElectOmrArry.stringify(jsnOmrString, 0);
 		strElectOmrInfo = jsnOmrString.str();
+		TRACE("%s\n", strElectOmrInfo.c_str());
 	}
 
 	USES_CONVERSION;

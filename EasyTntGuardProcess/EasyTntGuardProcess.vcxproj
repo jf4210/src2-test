@@ -107,6 +107,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\common\md5.h" />
     <ClInclude Include="..\..\common\Net_Cmd_Protocol.h" />
     <ClInclude Include="..\..\common\Net_Cmd_Protocol_Ver.h" />
     <ClInclude Include="EasyTntGuardProcess.h" />
@@ -118,6 +119,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\common\md5.cpp" />
     <ClCompile Include="EasyTntGuardProcess.cpp" />
     <ClCompile Include="EasyTntGuardProcessDlg.cpp" />
     <ClCompile Include="GPDef.cpp" />

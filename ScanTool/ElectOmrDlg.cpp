@@ -309,6 +309,7 @@ void ElectOmrDlg::InitUI()
 
 		m_nAllCount = m_vecElectOmrInfoReal[0]->nAllCount;
 		m_nRealItem = m_vecElectOmrInfoReal[0]->nRealCount;
+		m_pCurrentGroup = m_vecElectOmrInfoReal[0];
 	}
 	else
 	{

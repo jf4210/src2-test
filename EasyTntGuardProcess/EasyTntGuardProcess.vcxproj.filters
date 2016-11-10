@@ -54,6 +54,9 @@
     <ClInclude Include="..\..\common\Net_Cmd_Protocol_Ver.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\common\md5.h">
+      <Filter>common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EasyTntGuardProcess.cpp">
@@ -70,6 +73,9 @@
     </ClCompile>
     <ClCompile Include="MyCodeConvert.cpp">
       <Filter>转码</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\md5.cpp">
+      <Filter>common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

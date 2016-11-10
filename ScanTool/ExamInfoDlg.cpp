@@ -305,6 +305,7 @@ bool CExamInfoDlg::InitShow(pMODEL pModel)
 	if (pExamInfo)
 	{
 		m_comboSubject.ResetContent();
+		int nShowItem = 0;
 		SUBJECT_LIST::iterator itSub = pExamInfo->lSubjects.begin();
 		for (int i = 0; itSub != pExamInfo->lSubjects.end(); itSub++, i++)
 		{
@@ -318,9 +319,10 @@ bool CExamInfoDlg::InitShow(pMODEL pModel)
 			if (pSubject->nSubjID == pModel->nSubjectID)
 			{
 				m_SubjectID = itSub->nSubjID;
+				nShowItem = i;
 			}
 		}
-		m_comboSubject.SetCurSel(m_SubjectID);
+		m_comboSubject.SetCurSel(nShowItem);
 
 		m_nExamID = pExamInfo->nExamID;
 		m_strExamTypeName = pExamInfo->strExamTypeName.c_str();

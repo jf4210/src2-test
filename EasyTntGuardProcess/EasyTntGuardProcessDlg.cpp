@@ -23,6 +23,8 @@ SOCKET	g_sock = INVALID_SOCKET;
 
 HANDLE			g_hMutex_Conn;
 LIST_FILEINFO	g_VerServerFileList;
+LIST_NEED_DOWNLOAD	g_DownLoadFileList;
+MAP_FILEINFO	g_LocalFileMap;
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -215,6 +217,14 @@ void CEasyTntGuardProcessDlg::OnDestroy()
 		pST_FILEINFO pFileInfo = *it;
 		SAFE_RELEASE(pFileInfo);
 		it = g_VerServerFileList.erase(it);
+	}
+
+	MAP_FILEINFO::iterator itMap = g_LocalFileMap.begin();
+	for (; itMap != g_LocalFileMap.end();)
+	{
+		pST_FILEINFO pFileInfo = itMap->second;
+		SAFE_RELEASE(pFileInfo);
+		itMap = g_LocalFileMap.erase(itMap);
 	}
 }
 

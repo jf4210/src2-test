@@ -313,7 +313,11 @@ int CUserMgr::HandleHeader(CMission* pMission)
  				std::string strFileData;
 
 				std::ifstream fin(pModelInfo->strPath, std::ifstream::binary);
-				if (!fin)	return false;
+				if (!fin)
+				{
+					pUser->SendResult(USER_RESPONSE_DOWNMODEL, RESULT_ERROR_FILEIO);
+					return false;
+				}
 				std::stringstream buffer;
 				buffer << fin.rdbuf();
 				strFileData = buffer.str();

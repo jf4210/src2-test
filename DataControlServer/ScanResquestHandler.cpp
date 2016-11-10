@@ -142,8 +142,8 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 	bool bResult = false;
 	int ret = 0;
 	std::string strSendData;
-	std::string strUtf8 = CMyCodeConvert::Utf8ToGb2312(strInput);
-	std::string strLog = "收到后端数据: " + strUtf8;
+	std::string strGb2312 = CMyCodeConvert::Utf8ToGb2312(strInput);
+	std::string strLog = "收到后端数据: " + strGb2312;
 	g_Log.LogOut(strLog);
 
 	Poco::JSON::Parser parser;
@@ -405,7 +405,7 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 	{
 		std::string strErrInfo;
 		strErrInfo.append("Error when parse json: ");
-		strErrInfo.append(jsone.message() + "\tData:" + strUtf8);
+		strErrInfo.append(jsone.message() + "\tData:" + strGb2312);
 		g_Log.LogOutError(strErrInfo);
 		strSendData = "异常失败";
 		std::cout << strErrInfo << std::endl;
@@ -414,7 +414,7 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 	{
 		std::string strErrInfo;
 		strErrInfo.append("Error: ");
-		strErrInfo.append(exc.message() + "\tData:" + strUtf8);
+		strErrInfo.append(exc.message() + "\tData:" + strGb2312);
 		g_Log.LogOutError(strErrInfo);
 		strSendData = "异常失败";
 		std::cout << strErrInfo << std::endl;
@@ -422,7 +422,7 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 	catch (...)
 	{
 		std::string strErrInfo;
-		strErrInfo.append("Unknown error.\tData:" + strUtf8);
+		strErrInfo.append("Unknown error.\tData:" + strGb2312);
 		g_Log.LogOutError(strErrInfo);
 		strSendData = "异常失败";
 		std::cout << strErrInfo << std::endl;
