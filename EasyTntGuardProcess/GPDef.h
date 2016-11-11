@@ -9,6 +9,7 @@
 #include "Net_Cmd_Protocol_Ver.h"
 #include "md5.h"
 
+#include <io.h>
 #if 0
 #include "Poco/Runnable.h"
 #include "Poco/Exception.h"
@@ -56,6 +57,7 @@
 
 #include "MyCodeConvert.h"
 
+#define MSG_NOTIFY_UPDATE	(WM_APP + 101)
 
 #define MCASTPORT 19970				//绑定的本地端口号。
 #define BUFSIZE 1024				//接收数据缓冲大小。
@@ -99,3 +101,7 @@ BOOL ConnectServer(SOCKET& sock, CString& strIP, int& nPort);
 DWORD WINAPI MyWork(LPVOID lParam);
 
 BOOL GetLocalFileList();
+
+
+BOOL CheckProcessExist(CString &str);
+BOOL UpdateFile(BOOL& bReplace);

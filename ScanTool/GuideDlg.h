@@ -32,6 +32,7 @@ private:
 	void InitConf();
 	void InitLog();
 	void InitCtrlPosition();
+	LRESULT MSG_UpdateNotify(WPARAM wParam, LPARAM lParam);
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö

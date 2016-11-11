@@ -3,7 +3,7 @@
 
 #define MAX_TCPBUF_LEN			102400		//100K
 #define MAX_SENDPACK_LEN		4096		//每次发送4K
-#define MAX_SENBUF_LEN			10485760	//发送缓冲区最大的空间10M
+#define MAX_SENBUF_LEN			20971520	//发送缓冲区最大的空间10M
 class CNetIoBuffer
 {
 public:

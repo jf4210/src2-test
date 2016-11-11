@@ -2,6 +2,7 @@
 #include "GPDef.h"
 #include <io.h>
 
+#include <Tlhelp32.h>
 
 struct sockaddr_in local;
 struct sockaddr_in serverAddr;
@@ -90,8 +91,10 @@ BOOL ConnectServer(SOCKET& sock, CString& strIP, int& nPort)
 	if (SOCKET_ERROR == connect(sock, (SOCKADDR *)&serverAddr, sizeof(SOCKADDR)))
 	{
 		DWORD dwResult = WSAGetLastError();
+		TRACE("连接服务器%s:%d失败\n", T2A(strIP), nPort);
 		return FALSE;
 	}
+	TRACE("连接服务器%s:%d成功\n", T2A(strIP), nPort);
 
 	return TRUE;
 }
@@ -139,6 +142,9 @@ BOOL GetVerServerAddr()
 	}
 	if (!bGetVerServerAddr)
 		return FALSE;
+
+	TRACE("获取版本服务器地址信息成功\n");
+
 	return TRUE;
 }
 
@@ -152,6 +158,7 @@ BOOL GetLocalFileList()
 		it = g_LocalFileMap.erase(it);
 	}
 
+	TRACE("开始获取本地文件列表。。。\n");
 	USES_CONVERSION;
 	CFileFind ff;
 	BOOL bFind = ff.FindFile(g_strAppPath + _T("*"), 0);
@@ -173,6 +180,10 @@ BOOL GetLocalFileList()
 					continue;
 				else if (ff2.IsArchived())	//!ff2.IsDirectory()
 				{
+					CString strName = ff2.GetFileName();
+					if (strName.Find(_T(".pkg")) != -1 || strName.Find(_T(".typkg")) != -1 || strName.Find(_T(".mod")) != -1)
+						continue;
+
 					pST_FILEINFO pFileInfo = new ST_FILEINFO;
 					pFileInfo->strFileName = T2A(strDirName + _T("\\") + ff2.GetFileName());
 					pFileInfo->strFilePath = T2A(ff2.GetFilePath());
@@ -185,6 +196,10 @@ BOOL GetLocalFileList()
 		}
 		else
 		{
+			CString strName = ff.GetFileName();
+			if (strName.Find(_T(".Log")) != -1)
+				continue;
+
 			pST_FILEINFO pFileInfo = new ST_FILEINFO;
 			pFileInfo->strFileName = T2A(ff.GetFileName());
 			pFileInfo->strFilePath = T2A(ff.GetFilePath());
@@ -195,6 +210,7 @@ BOOL GetLocalFileList()
 		}
 	}
 
+	TRACE("获取本地文件列表成功\n");
 	return TRUE;
 }
 
@@ -208,6 +224,7 @@ BOOL GetFileList()
 		it = g_VerServerFileList.erase(it);
 	}
 
+	TRACE("开始获取版本服务器文件列表。。。\n");
 	//从版本控制服务器获取列表
 	ST_CMD_HEADER header;
 	header.usCmd = GET_FILELIST;
@@ -255,6 +272,7 @@ BOOL GetFileList()
 				p = p1 + 1;
 				p1 = strstr(p, "_");
 			}
+			TRACE("获取版本服务器文件列表成功\n");
 		}
 		else
 			TRACE("文件列表为空，不需要更新");
@@ -280,6 +298,7 @@ BOOL GetDownLoadFileList()
 		else
 			g_DownLoadFileList.push_back(pFileInfo->strFileName);
 	}
+	TRACE("生成下载文件列表完成\n");
 	return TRUE;
 }
 
@@ -302,7 +321,7 @@ BOOL DownLoadFile(std::string& strName)
 	}
 
 	char szRecvBuf[1024] = { 0 };
-	int recvLen = recv(g_sock, szRecvBuf, HEAD_SIZE, 0);
+	int recvLen = recv(g_sock, szRecvBuf, sizeof(ST_CMD_HEADERTOVER), 0);
 	if (recvLen <= 0)
 	{
 		g_bConnect = FALSE;
@@ -313,74 +332,144 @@ BOOL DownLoadFile(std::string& strName)
 
 	BOOL bRecvResult = TRUE;
 	pStCmdHeader pHeader = (pStCmdHeader)szRecvBuf;
-	int nWantLen = pHeader->uPackSize;
-	int nRecvLen = HEAD_SIZE;
-	char* pData = new char[nWantLen + HEAD_SIZE];
-	memcpy(pData, szRecvBuf, HEAD_SIZE);
-	while (nWantLen > 0)
+	if (pHeader->usCmd == RESPONSE_GET_FILE)
 	{
-		int recvLen = recv(g_sock, pData + nRecvLen, nWantLen, 0);
-		if (recvLen <= 0)
+		if (pHeader->usResult == RESULT_SUCCESS)
+		{
+			int nWantLen = pHeader->uPackSize;
+			int nRecvLen = HEAD_SIZE;
+			char* pData = new char[nWantLen + HEAD_SIZE];
+			memcpy(pData, szRecvBuf, HEAD_SIZE);
+			while (nWantLen > 0)
+			{
+				int recvLen = recv(g_sock, pData + nRecvLen, nWantLen, 0);
+				if (recvLen <= 0)
+				{
+					bRecvResult = FALSE;
+					break;
+				}
+
+				nRecvLen += recvLen;
+				nWantLen -= recvLen;
+			}
+			if (!bRecvResult)
+			{
+				SAFE_RELEASE_ARRY(pData);
+				g_bConnect = FALSE;
+				closesocket(g_sock);
+				g_sock = INVALID_SOCKET;
+				return FALSE;
+			}
+
+			USES_CONVERSION;
+			CString strUpdatePath = g_strAppPath + _T("updateVersion\\");
+			DWORD dwAttr = GetFileAttributesA(T2A(strUpdatePath));
+			if (dwAttr == 0xFFFFFFFF)
+				CreateDirectoryA(T2A(strUpdatePath), NULL);
+
+			CString strFilePath = strUpdatePath + A2T(strName.c_str());
+			try
+			{
+				if (_access(T2A(strFilePath), 0) == 0)
+				{
+					remove(T2A(strFilePath));
+					TRACE("移除已存在文件: %s\n", T2A(strFilePath));
+				}
+			}
+			catch (...)
+			{
+				TRACE("移除文件(%s)异常\n", strFilePath);
+				SAFE_RELEASE_ARRY(pData);
+				g_bConnect = FALSE;
+				closesocket(g_sock);
+				g_sock = INVALID_SOCKET;
+				return FALSE;
+			}
+
+			ofstream out(strFilePath, std::ios::binary);
+			if (!out)
+			{
+				TRACE("打开文件进行读写(%s)失败\n", T2A(strFilePath));
+				SAFE_RELEASE_ARRY(pData);
+				g_bConnect = FALSE;
+				closesocket(g_sock);
+				g_sock = INVALID_SOCKET;
+				return FALSE;
+			}
+			std::stringstream buffer;
+			buffer.write(pData + HEAD_SIZE, pHeader->uPackSize);
+			int n = buffer.str().length();
+			out << buffer.str();
+			out.close();
+
+			TRACE("文件下载完成：%s\n", T2A(strFilePath));
+			SAFE_RELEASE_ARRY(pData);
+		}
+		else
 		{
 			bRecvResult = FALSE;
-			break;
 		}
-
-		nRecvLen += recvLen;
-		nWantLen -= recvLen;
 	}
 	if (!bRecvResult)
 	{
-		SAFE_RELEASE_ARRY(pData);
 		g_bConnect = FALSE;
 		closesocket(g_sock);
 		g_sock = INVALID_SOCKET;
 		return FALSE;
 	}
+	return TRUE;
+}
 
+BOOL DownLoadAllFile()
+{
 	USES_CONVERSION;
-	CString strUpdatePath = g_strAppPath + _T("updateVersion\\");
-	DWORD dwAttr = GetFileAttributesA(T2A(strUpdatePath));
-	if (dwAttr == 0xFFFFFFFF)
-		CreateDirectoryA(T2A(strUpdatePath), NULL);
+	int nFailTimes = 0;
+	BOOL bUpdateError = FALSE;
 
-	CString strFilePath = strUpdatePath + A2T(strName.c_str());
-	try
+	while (g_DownLoadFileList.size() > 0)
 	{
-		if (_access(T2A(strFilePath), 0) == 0)
+		std::string strDLName = g_DownLoadFileList.front();
+
+		BOOL bDLFile = DownLoadFile(strDLName);
+		if (!bDLFile)
 		{
-			remove(T2A(strFilePath));
-			TRACE("移除已存在文件: %s\n", T2A(strFilePath));
+			bUpdateError = TRUE;
+			break;
+		}
+
+		bool bFind = false;
+		LIST_FILEINFO::iterator it = g_VerServerFileList.begin();
+		for (; it != g_VerServerFileList.end(); it++)
+		{
+			pST_FILEINFO pFileInfo = *it;
+			if (pFileInfo->strFileName == strDLName)
+			{
+				bFind = true;
+				CString strNewFilePath = g_strAppPath + _T("updateVersion\\") + A2T(strDLName.c_str());
+				char *pMd5 = MD5File(T2A(strNewFilePath));
+				if (pFileInfo->strMd5 == pMd5)
+				{
+					nFailTimes = 0;
+					g_DownLoadFileList.pop_front();
+				}
+				else
+					nFailTimes++;
+				break;
+			}
+		}
+		if (!bFind) nFailTimes++;
+		if (nFailTimes >= 10)		//同一文件下载超过10次
+		{
+			bUpdateError = TRUE;
+			TRACE("下载文件%s失败次数超过10次，退出重来\n", strDLName.c_str());
+			break;
 		}
 	}
-	catch (...)
+	if (bUpdateError)
 	{
-		TRACE("移除文件(%s)异常\n", T2A(strFilePath));
-		SAFE_RELEASE_ARRY(pData);
-		g_bConnect = FALSE;
-		closesocket(g_sock);
-		g_sock = INVALID_SOCKET;
-		return FALSE;
-	}	
-
-	ofstream out(strFilePath, std::ios::binary);
-	if (!out)
-	{
-		TRACE("打开文件进行读写(%s)失败\n", T2A(strFilePath));
-		SAFE_RELEASE_ARRY(pData);
-		g_bConnect = FALSE;
-		closesocket(g_sock);
-		g_sock = INVALID_SOCKET;
+		TRACE("下载所有新版本文件失败\n");
 		return FALSE;
 	}
-	std::stringstream buffer;
-	buffer.write(pData + HEAD_SIZE, pHeader->uPackSize);
-	int n = buffer.str().length();
-	out << buffer.str();
-	out.close();
-
-	TRACE("文件下载完成：%s\n", T2A(strFilePath));
-	SAFE_RELEASE_ARRY(pData);
 	return TRUE;
 }
 
@@ -430,29 +519,191 @@ DWORD WINAPI MyWork(LPVOID lParam)
 			
 			BOOL bGetLocalFileList = GetLocalFileList();
 			BOOL bGetDownloadFileList = GetDownLoadFileList();
-
-			BOOL bUpdateError = FALSE;
-			while (g_DownLoadFileList.size() > 0)
-			{
-				std::string strDLName = g_DownLoadFileList.front();
-				
-				BOOL bDLFile = DownLoadFile(strDLName);
-				if (!bDLFile)
-				{
-					bUpdateError = TRUE;
-					break;
-				}
-				g_DownLoadFileList.pop_front();
-			}
-			if (bUpdateError)
+			BOOL bDownloadAllFile = DownLoadAllFile();
+			if (!bDownloadAllFile)
 			{
 				g_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 				continue;
 			}
 			TRACE("新版本文件下载完成\n");
-			Sleep(1 * 10 * 1000);
+
+			//替换文件
+			BOOL bReplace = FALSE;
+			BOOL bResult = FALSE;
+			int nReplaceTimes = 0;
+			while (!bReplace && nReplaceTimes < 10)
+			{
+				bResult = UpdateFile(bReplace);
+				if (!bResult)
+					break;
+				nReplaceTimes++;
+				if (!bResult)
+					Sleep(10 * 1000);
+			}
+			if (!bResult)
+			{
+				TRACE("替换文件失败\n");
+				continue;
+			}
+
+			TRACE("替换文件成功\n");
+
+
+			Sleep(1 * 60 * 1000);
 		}
 	}
 	
 	return 0;
+}
+
+BOOL ReplaceFile()
+{
+	CString strNewVersionPath = g_strAppPath + _T("updateVersion\\");
+	DWORD dwAttr = GetFileAttributes(strNewVersionPath);
+	if (dwAttr == 0xFFFFFFFF)
+		return FALSE;
+
+	USES_CONVERSION;
+	TRACE("开始替换程序\n");
+	CFileFind ff;
+	BOOL bFind = ff.FindFile(strNewVersionPath + _T("*"), 0);
+	while (bFind)
+	{
+		bFind = ff.FindNextFileW();
+		if (ff.GetFileName() == _T(".") || ff.GetFileName() == _T(".."))
+			continue;
+		else if (ff.IsDirectory())
+		{
+			CString strDstPath = g_strAppPath + ff.GetFileName();
+			DWORD dwAttr = GetFileAttributes(strDstPath);
+			if (dwAttr != 0xFFFFFFFF)
+			{
+				CString strSrcPath = ff.GetFilePath();
+				CFileFind ff2;
+				BOOL bFind2 = ff2.FindFile(ff.GetFilePath() + _T("\\*"), 0);
+				while (bFind2)
+				{
+					bFind2 = ff2.FindNextFileW();
+					if (ff2.GetFileName() == _T(".") || ff2.GetFileName() == _T(".."))
+						continue;
+					else
+					{
+						CString strSrcPath2 = ff2.GetFilePath();
+						CString strDstPath2 = strDstPath + _T("\\") + ff2.GetFileName();
+						if (_access(T2A(strDstPath2), 0) == 0)
+						{
+							remove(T2A(strDstPath2));
+							TRACE("移除已存在文件: %s\n", T2A(strDstPath2));
+						}
+
+						BOOL bMoveResult = MoveFile(ff2.GetFilePath(), strDstPath2);
+						if (!bMoveResult)
+						{
+							int nError = GetLastError();
+							TRACE("移动文件失败%s\n", T2A(ff2.GetFilePath()));
+						}
+					}
+				}
+			}
+			else
+			{
+				BOOL bMoveResult = MoveFile(ff.GetFilePath(), strDstPath);
+				if (!bMoveResult)
+				{
+					TRACE("移动文件夹失败%s\n", ff.GetFilePath());
+				}
+			}
+		}
+		else
+		{
+			CString strDstPath = g_strAppPath + ff.GetFileName();
+			if (_access(T2A(strDstPath), 0) == 0)
+			{
+				remove(T2A(strDstPath));
+				TRACE("移除已存在文件: %s\n", T2A(strDstPath));
+			}
+
+			BOOL bMoveResult = MoveFile(ff.GetFilePath(), strDstPath);
+			if (!bMoveResult)
+			{
+				int nError = GetLastError();
+				TRACE("移动文件失败%s\n", ff.GetFilePath());
+			}
+		}
+	}
+	return TRUE;
+}
+
+BOOL CheckProcessExist(CString &str, int& nProcessID)
+{
+	BOOL bResult;
+	CString strTemp, strProcessName;
+	HANDLE hSnapshot;               //内存进程的“快照”句柄      
+	PROCESSENTRY32 ProcessEntry;    //描述进程的结构   
+	//输入要结束的进程名称    
+	strProcessName = str/*m_strProcessName*/;
+	strProcessName.MakeLower();
+	//返回内存所有进程的快照。参数为TH32CS_SNAPPROCESS取有的进程,忽略参数2；    
+	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	//获取要的进程名称对应的所有进程ID    
+	ProcessEntry.dwSize = sizeof(PROCESSENTRY32);
+	bResult = Process32First(hSnapshot, &ProcessEntry);//获取第一个进程 
+	int processcount = 0;
+	while (bResult)
+	{
+		//判断是否为要结束的进程    
+		strTemp.Format(_T("%s"), ProcessEntry.szExeFile);
+		strTemp.MakeLower();
+		if (strTemp == strProcessName)
+		{
+			nProcessID = ProcessEntry.th32ProcessID;
+			processcount++;
+			return TRUE;
+		}
+		//获取下一个进程    
+		bResult = Process32Next(hSnapshot, &ProcessEntry);
+	}
+	return FALSE;
+}
+
+BOOL UpdateFile(BOOL& bReplace)
+{
+	USES_CONVERSION;
+	CString strProcessName = _T("");
+	strProcessName.Format(_T("ScanTool.exe"));
+	int nExeProcessID = 0;
+	if (!CheckProcessExist(strProcessName, nExeProcessID))
+	{
+		bReplace = ReplaceFile();
+	}
+	else
+	{
+		//程序在运行
+		TRACE("程序正在运行");
+
+		CString str = _T("YKLX-ScanTool*");
+		TCHAR strTitle[MAX_PATH] = { 0 };
+		HWND hwnd = NULL;
+		HWND AfterHwnd = NULL;
+		while (true)
+		{
+			hwnd = ::FindWindowEx(NULL, AfterHwnd, _T("#32770"), NULL);
+			if (!hwnd)
+				break;
+			else
+			{
+				if (::GetWindowText(hwnd, strTitle, MAX_PATH))
+				{
+					if (StrStr(strTitle, str) != 0)
+					{
+						PostMessage(hwnd, MSG_NOTIFY_UPDATE, NULL, NULL);
+					}
+				}
+			}
+			AfterHwnd = hwnd;
+		}
+
+		return FALSE;
+	}
+	return FALSE;
 }

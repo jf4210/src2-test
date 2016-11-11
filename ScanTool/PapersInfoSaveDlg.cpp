@@ -145,6 +145,13 @@ void CPapersInfoSaveDlg::OnBnClickedOk()
 			return;
 		}
 	}
+	else
+	{
+		if (m_pModel->nSaveMode == 1)
+		{
+			AfxMessageBox(_T("当前扫描模板为属于本地临时模板，请确定上传的考试、科目信息正确!!!\r\n\r\n(若希望不显示此通知，请将扫描模板保存成联网模式，然后再用联网模式的模板扫描试卷 ^_^)"));
+		}
+	}
 
 	USES_CONVERSION;
 	if (m_pPapers)

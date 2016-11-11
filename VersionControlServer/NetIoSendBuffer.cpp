@@ -38,6 +38,7 @@ int CNetIoSendBuffer::AddData(const char* pData, int nDataLen)
 		UnLock();
 //		g_Log.LogOut(LOG_SERIOUS,"待发送数据太多");
 		g_Log.LogOut("待发送数据太多");
+		std::cout << "待发送数据太多" << std::endl;
 		return 0;
 	}
 	if (nDataLen+m_nDataSize>m_dwBufTotalLength)

@@ -133,7 +133,7 @@ BOOL CEasyTntGuardProcessDlg::OnInitDialog()
 	{
 		return FALSE;
 	}
-
+	
 	DWORD dwThreadID;
 	m_hThread = CreateThread(NULL, 0, MyWork, NULL, 0, &dwThreadID);
 	if (NULL == m_hThread)

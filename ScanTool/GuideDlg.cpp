@@ -71,6 +71,14 @@ BOOL CGuideDlg::OnInitDialog()
 	return TRUE;
 }
 
+LRESULT CGuideDlg::MSG_UpdateNotify(WPARAM wParam, LPARAM lParam)
+{
+	if (MessageBox(_T("有新版本可用，是否升级?"), _T("升级通知"), MB_YESNO) != IDYES)
+		return FALSE;
+
+	return TRUE;
+}
+
 void CGuideDlg::InitCtrlPosition()
 {
 	CRect rcClient;
@@ -211,7 +219,7 @@ void CGuideDlg::InitConf()
 void CGuideDlg::InitLog()
 {
 	USES_CONVERSION;
-	std::string strLogPath = CMyCodeConvert::Gb2312ToUtf8(T2A(g_strCurrentPath + _T("ScanTool.log")));
+	std::string strLogPath = CMyCodeConvert::Gb2312ToUtf8(T2A(g_strCurrentPath + _T("ScanTool.Log")));
 	Poco::AutoPtr<Poco::PatternFormatter> pFormatter(new Poco::PatternFormatter("%L%Y-%m-%d %H:%M:%S.%F %q:%t"));
 	Poco::AutoPtr<Poco::FormattingChannel> pFCFile(new Poco::FormattingChannel(pFormatter));
 	Poco::AutoPtr<Poco::FileChannel> pFileChannel(new Poco::FileChannel(strLogPath));

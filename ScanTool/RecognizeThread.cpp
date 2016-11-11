@@ -667,7 +667,9 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				RECTINFO rcTmp = rcFix;
 				rcTmp.rt = RectCompList[i];
 				Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
-				if (rcTmp.fRealArea / rcTmp.fStandardArea > 0.7 && rcTmp.fRealDensity / rcTmp.fStandardDensity > 0.6)
+				float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
+				float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
+				if (fArea > 0.7 && fArea < 1.5 && fDensity > 0.6)
 				{
 					rtFix = RectCompList[i];
 					break;
