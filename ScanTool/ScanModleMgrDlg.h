@@ -1,5 +1,6 @@
 #pragma once
 #include "ShowModelInfoDlg.h"
+#include "MakeModelDlg.h"
 
 // CScanModleMgrDlg ¶Ô»°¿ò
 
@@ -24,6 +25,7 @@ private:
 	int					m_nCurModelItem;
 	CString				m_strCurModelName;
 	CToolTipCtrl		m_ListTip;
+	CMakeModelDlg*		m_pMakeModelDlg;
 private:
 	void InitUI();
 	void InitCtrlPosition();

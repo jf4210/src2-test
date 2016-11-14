@@ -1201,7 +1201,7 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	int nCount = 0;
 	for (int i = 0; i < 256; i++)
 	{
-		TRACE("i = %d, val = %f\n", i, src_hist2.at<float>(i));
+//		TRACE("i = %d, val = %f\n", i, src_hist2.at<float>(i));
 		nCount += i * src_hist2.at<float>(i);
 	}
 	rc.fStandardMeanGray = nCount / rc.fStandardArea;
@@ -4854,7 +4854,7 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 		{
 			dy = rcList_XY[i].y - rcList_XY[i - 1].y;
 
-			if (dy > 6)
+			if (dy > 9)
 			{
 				y++;
 				x = 0;

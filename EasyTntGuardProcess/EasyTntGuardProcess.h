@@ -23,7 +23,8 @@ public:
 // ÷ÿ–¥
 public:
 	virtual BOOL InitInstance();
-
+	
+	BOOL FirstInstance();
 //  µœ÷
 
 	DECLARE_MESSAGE_MAP()

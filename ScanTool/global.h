@@ -84,6 +84,7 @@
 
 #define USES_GETTHRESHOLD_ZTFB	//使用正态分布方式获取校验点的阀值，未定义时使用固定阀值进行二值化查找矩形
 #define USES_FILE_ENC			//是否对文件使用加密
+#define MSG_NOTIFY_UPDATE (WM_APP + 101)
 
 #ifndef TO_WHTY
 	#define USES_PWD_ZIP_UNZIP		//是否使用密码解压缩
@@ -121,8 +122,9 @@
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 
-#define SOFT_VERSION	_T("1.1024 for WHSZ")
+#define SOFT_VERSION	_T("1.1024")
 #define SYS_BASE_NAME	_T("YKLX-ScanTool")
+#define SYS_GUIDE_NAME	_T("GuideDlg")
 
 
 #define MAX_DLG_WIDTH	1024
@@ -449,3 +451,6 @@ std::string GetQRInBinImg(cv::Mat binImg, std::string& strTypeName);
 //main function
 std::string GetQR(cv::Mat img, std::string& strTypeName);
 //--------------------------------------------------------
+
+
+BOOL CheckProcessExist(CString &str);

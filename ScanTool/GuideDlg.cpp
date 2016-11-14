@@ -44,6 +44,7 @@ BEGIN_MESSAGE_MAP(CGuideDlg, CDialog)
 	ON_NOTIFY(NM_CLICK, IDC_SYSLINK_Setting, &CGuideDlg::OnNMClickSyslinkSetting)
 	ON_WM_CLOSE()
 	ON_NOTIFY(NM_CLICK, IDC_SYSLINK_Login, &CGuideDlg::OnNMClickSyslinkLogin)
+	ON_MESSAGE(MSG_NOTIFY_UPDATE, CGuideDlg::MSG_UpdateNotify)
 END_MESSAGE_MAP()
 
 BOOL CGuideDlg::OnInitDialog()
@@ -52,7 +53,7 @@ BOOL CGuideDlg::OnInitDialog()
 
 	USES_CONVERSION;
 	CString strTitle = _T("");
-	strTitle.Format(_T("%s %s"), SYS_BASE_NAME, SOFT_VERSION);
+	strTitle.Format(_T("%s %s %s"), SYS_BASE_NAME, SYS_GUIDE_NAME, SOFT_VERSION);
 	SetWindowText(strTitle);
 
 	m_pShowScannerInfoDlg = new CScanerInfoDlg(this);
@@ -75,7 +76,10 @@ LRESULT CGuideDlg::MSG_UpdateNotify(WPARAM wParam, LPARAM lParam)
 {
 	if (MessageBox(_T("有新版本可用，是否升级?"), _T("升级通知"), MB_YESNO) != IDYES)
 		return FALSE;
-
+	
+	if (m_pModel != m_pScanDlg->m_pModel)
+		SAFE_RELEASE(m_pModel);
+	DestroyWindow();
 	return TRUE;
 }
 

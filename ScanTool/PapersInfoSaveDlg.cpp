@@ -135,7 +135,7 @@ void CPapersInfoSaveDlg::OnBnClickedOk()
 		m_strGradeName = m_pExamInfoDlg->m_strGradeName;
 		m_strExamTypeName = m_pExamInfoDlg->m_strExamTypeName;
 		UpdateData(FALSE);
-	}	
+	}
 
 	if (g_lExamList.size() == 0)
 	{
@@ -150,6 +150,19 @@ void CPapersInfoSaveDlg::OnBnClickedOk()
 		if (m_pModel->nSaveMode == 1)
 		{
 			AfxMessageBox(_T("当前扫描模板为属于本地临时模板，请确定上传的考试、科目信息正确!!!\r\n\r\n(若希望不显示此通知，请将扫描模板保存成联网模式，然后再用联网模式的模板扫描试卷 ^_^)"));
+		}
+		else
+		{
+			if (m_nExamID != m_pModel->nExamID)
+			{
+				if (MessageBox(_T("当前选择的 考试 信息与模板不一致，是否强制提交？"), _T("警告"), MB_YESNO) != IDYES)
+					return;
+			}
+			else if (m_SubjectID != m_pModel->nSubjectID)
+			{
+				if (MessageBox(_T("当前选择的 科目 信息与模板不一致，是否强制提交？"), _T("警告"), MB_YESNO) != IDYES)
+					return;
+			}
 		}
 	}
 

@@ -61,6 +61,9 @@ BOOL CEasyTntGuardProcessApp::InitInstance()
 	// 激活“Windows Native”视觉管理器，以便在 MFC 控件中启用主题
 	CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows));
 
+
+	if (!FirstInstance())
+		return FALSE;
 	// 标准初始化
 	// 如果未使用这些功能并希望减小
 	// 最终可执行文件的大小，则应移除下列
@@ -98,5 +101,30 @@ BOOL CEasyTntGuardProcessApp::InitInstance()
 	// 由于对话框已关闭，所以将返回 FALSE 以便退出应用程序，
 	//  而不是启动应用程序的消息泵。
 	return FALSE;
+}
+
+BOOL CEasyTntGuardProcessApp::FirstInstance()
+{
+	TCHAR strTitle[MAX_PATH] = { 0 };
+	HWND hwnd = NULL;
+	HWND AfterHwnd = NULL;
+	while (true)
+	{
+		hwnd = ::FindWindowEx(NULL, AfterHwnd, _T("#32770"), NULL);
+		if (!hwnd)
+			break;
+		else
+		{
+			if (::GetWindowText(hwnd, strTitle, MAX_PATH))
+			{
+				if (StrStr(strTitle, _T("EasyTntGuardProcess")) != 0)
+				{
+					return FALSE;
+				}
+			}
+		}
+		AfterHwnd = hwnd;
+	}
+	return TRUE;
 }
 

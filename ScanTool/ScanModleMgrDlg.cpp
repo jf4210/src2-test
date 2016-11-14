@@ -19,6 +19,7 @@ CScanModleMgrDlg::CScanModleMgrDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	: CDialog(CScanModleMgrDlg::IDD, pParent)
 	, m_pShowModelInfoDlg(NULL), m_pModel(NULL), m_nCurModelItem(-1)
 	, m_pOldModel(pModel), m_strCurModelName(_T(""))
+	, m_pMakeModelDlg(NULL)
 {
 	EnableToolTips(TRUE);
 	m_ListTip.Create(this);
@@ -31,6 +32,7 @@ CScanModleMgrDlg::CScanModleMgrDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 CScanModleMgrDlg::~CScanModleMgrDlg()
 {
 	SAFE_RELEASE(m_pShowModelInfoDlg);
+	SAFE_RELEASE(m_pMakeModelDlg);
 
 	for (int i = 0; i < m_vecModel.size(); i++)
 	{
@@ -414,6 +416,26 @@ void CScanModleMgrDlg::OnBnClickedBtnMakemodel()
 	pDlg->m_bTwainInit = FALSE;
 #endif
 
+#if 0
+	SAFE_RELEASE(m_pMakeModelDlg);
+
+	m_pMakeModelDlg = new CMakeModelDlg(m_pModel);
+	m_pMakeModelDlg->Create(CMakeModelDlg::IDD, this);
+	m_pMakeModelDlg->ShowWindow(SW_SHOW);
+//	m_pMakeModelDlg->DoModal();
+
+	if (!m_pModel)	//如果模板不为空，说明之前已经有模板了，不需要使用新模板
+		m_pModel = m_pMakeModelDlg->m_pModel;
+
+	if (m_pModel != m_pMakeModelDlg->m_pModel)
+	{
+		if (m_pMakeModelDlg->m_pModel)
+			TRACE("\n\n这是新建的模板\n\n");
+		SAFE_RELEASE(m_pMakeModelDlg->m_pModel);
+	}
+
+	SAFE_RELEASE(m_pMakeModelDlg);
+#else
 	CMakeModelDlg dlg(m_pModel);
 	dlg.DoModal();
 
@@ -426,6 +448,7 @@ void CScanModleMgrDlg::OnBnClickedBtnMakemodel()
 			TRACE("\n\n这是新建的模板\n\n");
 		SAFE_RELEASE(dlg.m_pModel);
 	}
+#endif
 	OnBnClickedBtnRefresh();
 }
 

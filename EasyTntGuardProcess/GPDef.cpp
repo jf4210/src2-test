@@ -141,7 +141,12 @@ BOOL GetVerServerAddr()
 			bGetVerServerAddr = TRUE;
 	}
 	if (!bGetVerServerAddr)
+	{
+		g_bConnect = FALSE;
+		closesocket(g_sock);
+		g_sock = INVALID_SOCKET;
 		return FALSE;
+	}
 
 	TRACE("获取版本服务器地址信息成功\n");
 
@@ -150,6 +155,7 @@ BOOL GetVerServerAddr()
 
 BOOL GetLocalFileList()
 {
+	g_mutex_LFM.Lock();
 	MAP_FILEINFO::iterator it = g_LocalFileMap.begin();
 	for (; it != g_LocalFileMap.end();)
 	{
@@ -157,6 +163,7 @@ BOOL GetLocalFileList()
 		SAFE_RELEASE(pFileInfo);
 		it = g_LocalFileMap.erase(it);
 	}
+	g_mutex_LFM.Unlock();
 
 	TRACE("开始获取本地文件列表。。。\n");
 	USES_CONVERSION;
@@ -190,7 +197,9 @@ BOOL GetLocalFileList()
 					char *pMd5 = MD5File(T2A(ff2.GetFilePath()));
 					pFileInfo->strMd5 = pMd5;
 
+					g_mutex_LFM.Lock();
 					g_LocalFileMap.insert(MAP_FILEINFO::value_type(pFileInfo->strFileName, pFileInfo));
+					g_mutex_LFM.Unlock();
 				}
 			}
 		}
@@ -206,7 +215,9 @@ BOOL GetLocalFileList()
 			char *pMd5 = MD5File(T2A(ff.GetFilePath()));
 			pFileInfo->strMd5 = pMd5;
 
+			g_mutex_LFM.Lock();
 			g_LocalFileMap.insert(MAP_FILEINFO::value_type(pFileInfo->strFileName, pFileInfo));
+			g_mutex_LFM.Unlock();
 		}
 	}
 
@@ -216,6 +227,7 @@ BOOL GetLocalFileList()
 
 BOOL GetFileList()
 {
+	g_mutex_VSFL.Lock();
 	LIST_FILEINFO::iterator it = g_VerServerFileList.begin();
 	for (; it != g_VerServerFileList.end();)
 	{
@@ -223,6 +235,7 @@ BOOL GetFileList()
 		SAFE_RELEASE(pFileInfo);
 		it = g_VerServerFileList.erase(it);
 	}
+	g_mutex_VSFL.Unlock();
 
 	TRACE("开始获取版本服务器文件列表。。。\n");
 	//从版本控制服务器获取列表
@@ -267,7 +280,9 @@ BOOL GetFileList()
 				pST_FILEINFO pFileInfo = new ST_FILEINFO;
 				pFileInfo->strFileName = szFileName;
 				pFileInfo->strMd5 = szMd5;
+				g_mutex_VSFL.Lock();
 				g_VerServerFileList.push_back(pFileInfo);
+				g_mutex_VSFL.Unlock();
 
 				p = p1 + 1;
 				p1 = strstr(p, "_");
@@ -282,7 +297,9 @@ BOOL GetFileList()
 
 BOOL GetDownLoadFileList()
 {
+	g_mutex_DFL.Lock();
 	g_DownLoadFileList.clear();
+	g_mutex_DFL.Unlock();
 
 	LIST_FILEINFO::iterator it = g_VerServerFileList.begin();
 	for (; it != g_VerServerFileList.end(); it++)
@@ -293,10 +310,18 @@ BOOL GetDownLoadFileList()
 		{
 			pST_FILEINFO pLocalFile = itMap->second;
 			if (pFileInfo->strMd5 != pLocalFile->strMd5)
+			{
+				g_mutex_DFL.Lock();
 				g_DownLoadFileList.push_back(pFileInfo->strFileName);
+				g_mutex_DFL.Unlock();
+			}
 		}
 		else
+		{
+			g_mutex_DFL.Lock();
 			g_DownLoadFileList.push_back(pFileInfo->strFileName);
+			g_mutex_DFL.Unlock();
+		}
 	}
 	TRACE("生成下载文件列表完成\n");
 	return TRUE;
@@ -450,7 +475,9 @@ BOOL DownLoadAllFile()
 				if (pFileInfo->strMd5 == pMd5)
 				{
 					nFailTimes = 0;
+					g_mutex_DFL.Lock();
 					g_DownLoadFileList.pop_front();
+					g_mutex_DFL.Unlock();
 				}
 				else
 					nFailTimes++;
@@ -484,10 +511,26 @@ DWORD WINAPI MyWork(LPVOID lParam)
 	int nServerPort = g_nInitServerPort;
 	while (bContinue)
 	{
+		if (nConnectFailTimes > 10)
+		{
+			//重新读取配置文件，重头开始
+			TRACE("重新读取配置文件，重新请求版本信息\n");
+			ReadConf();
+			if (g_sock != INVALID_SOCKET)
+			{
+				closesocket(g_sock);
+				g_sock = INVALID_SOCKET;
+			}
+			g_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+			g_bConnect = FALSE;
+			strServerIP = g_strInitServerIP;
+			nServerPort = g_nInitServerPort;
+		}
 		if (!g_bConnect)
 		{
 			if (!ConnectServer(g_sock, strServerIP, nServerPort))
 			{
+				nConnectFailTimes++;
 				g_bConnect = FALSE;
 				Sleep(1000 * 30);
 				continue;
@@ -496,10 +539,15 @@ DWORD WINAPI MyWork(LPVOID lParam)
 		}
 
 		if (!bGetVerServerAddr && !GetVerServerAddr())
+		{
+			nConnectFailTimes++;
+			Sleep(INTERVAL_TIME);
 			continue;
+		}
 
 		if (!bGetVerServerAddr)
 		{
+			nConnectFailTimes = 0;
 			bGetVerServerAddr = TRUE;
 			strServerIP = g_strVerServerIP;
 			nServerPort = g_nVerServerPort;
@@ -513,7 +561,9 @@ DWORD WINAPI MyWork(LPVOID lParam)
 			BOOL bGetVerServerFileList = GetFileList();
 			if (!bGetVerServerFileList)
 			{
+				nConnectFailTimes++;
 				g_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+				Sleep(INTERVAL_TIME);
 				continue;
 			}
 			
@@ -522,7 +572,27 @@ DWORD WINAPI MyWork(LPVOID lParam)
 			BOOL bDownloadAllFile = DownLoadAllFile();
 			if (!bDownloadAllFile)
 			{
+				nConnectFailTimes++;
+				if (g_sock != INVALID_SOCKET)
+				{
+					closesocket(g_sock);
+					g_sock = INVALID_SOCKET;
+				}
+				g_bConnect = FALSE;
 				g_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+				continue;
+			}
+			if (g_DownLoadFileList.size() == 0)
+			{
+				//没有需要更新的文件
+				nConnectFailTimes = 0;
+				closesocket(g_sock);
+				g_sock = INVALID_SOCKET;
+
+				Sleep(CHECK_UPDATE_TIME);
+
+				g_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+				g_bConnect = FALSE;
 				continue;
 			}
 			TRACE("新版本文件下载完成\n");
@@ -534,7 +604,7 @@ DWORD WINAPI MyWork(LPVOID lParam)
 			while (!bReplace && nReplaceTimes < 10)
 			{
 				bResult = UpdateFile(bReplace);
-				if (!bResult)
+				if (bResult && bReplace)
 					break;
 				nReplaceTimes++;
 				if (!bResult)
@@ -543,13 +613,14 @@ DWORD WINAPI MyWork(LPVOID lParam)
 			if (!bResult)
 			{
 				TRACE("替换文件失败\n");
+				nConnectFailTimes++;
 				continue;
 			}
 
 			TRACE("替换文件成功\n");
 
-
-			Sleep(1 * 60 * 1000);
+			nConnectFailTimes = 0;
+			Sleep(CHECK_UPDATE_TIME);
 		}
 	}
 	
@@ -675,35 +746,62 @@ BOOL UpdateFile(BOOL& bReplace)
 	if (!CheckProcessExist(strProcessName, nExeProcessID))
 	{
 		bReplace = ReplaceFile();
+		g_bShowUpdateMsg = TRUE;
+		return TRUE;
 	}
 	else
 	{
 		//程序在运行
-		TRACE("程序正在运行");
-
-		CString str = _T("YKLX-ScanTool*");
-		TCHAR strTitle[MAX_PATH] = { 0 };
-		HWND hwnd = NULL;
-		HWND AfterHwnd = NULL;
-		while (true)
+		TRACE("程序正在运行\n");
+		if (g_bShowUpdateMsg)
 		{
-			hwnd = ::FindWindowEx(NULL, AfterHwnd, _T("#32770"), NULL);
-			if (!hwnd)
-				break;
-			else
+			CString str = _T("YKLX-ScanTool GuideDlg");
+			TCHAR strTitle[MAX_PATH] = { 0 };
+			HWND hwnd = NULL;
+			HWND AfterHwnd = NULL;
+			while (true)
 			{
-				if (::GetWindowText(hwnd, strTitle, MAX_PATH))
+				hwnd = ::FindWindowEx(NULL, AfterHwnd, _T("#32770"), NULL);
+				if (!hwnd)
+					break;
+				else
 				{
-					if (StrStr(strTitle, str) != 0)
+					if (::GetWindowText(hwnd, strTitle, MAX_PATH))
 					{
-						PostMessage(hwnd, MSG_NOTIFY_UPDATE, NULL, NULL);
+						if (StrStr(strTitle, str) != 0)
+						{
+							TRACE("开始通知扫描程序有版本更新\n");
+							DWORD dwResult = SendMessage(hwnd, MSG_NOTIFY_UPDATE, NULL, NULL);
+							TRACE("发送消息完成, %d\n", dwResult);
+							if (dwResult == 1)
+							{
+								bReplace = ReplaceFile();
+								g_bShowUpdateMsg = TRUE;
+								return TRUE;
+							}
+							else
+								g_bShowUpdateMsg = FALSE;
+						}
 					}
 				}
+				AfterHwnd = hwnd;
 			}
-			AfterHwnd = hwnd;
 		}
-
-		return FALSE;
 	}
 	return FALSE;
+}
+
+void ReadConf()
+{
+	TCHAR	szPath[MAX_PATH] = { 0 };
+	GetModuleFileName(NULL, szPath, MAX_PATH);
+
+	CString str = szPath;
+	g_strAppPath = str.Left(str.ReverseFind('\\') + 1);
+	CString strConfigPath = g_strAppPath + _T("config.ini");
+
+	TCHAR szServerAddr[50] = { 0 };
+	GetPrivateProfileString(_T("Server"), _T("cmdIP"), _T("116.211.105.45"), szServerAddr, 50, strConfigPath);
+	g_nInitServerPort = GetPrivateProfileInt(_T("Server"), _T("cmdPort"), 19991, strConfigPath);
+	g_strInitServerIP = szServerAddr;
 }

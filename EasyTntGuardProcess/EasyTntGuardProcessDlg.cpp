@@ -22,10 +22,14 @@ BOOL	g_bConnect = FALSE;
 SOCKET	g_sock = INVALID_SOCKET;
 
 HANDLE			g_hMutex_Conn;
+CMutex			g_mutex_VSFL;
+CMutex			g_mutex_LFM;
+CMutex			g_mutex_DFL;
 LIST_FILEINFO	g_VerServerFileList;
 LIST_NEED_DOWNLOAD	g_DownLoadFileList;
 MAP_FILEINFO	g_LocalFileMap;
 
+BOOL		g_bShowUpdateMsg = TRUE;		//是否通知扫描程序进行版本更新，如果第一次打开扫描软件，提示时选择不更新，那么在扫描软件运行期间一直不提示，直到软件有关闭
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
 class CAboutDlg : public CDialogEx
@@ -112,6 +116,7 @@ BOOL CEasyTntGuardProcessDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
+	SetWindowText(_T("EasyTntGuardProcess"));
 
 	//后台运行
 	ModifyStyleEx(WS_EX_APPWINDOW, WS_EX_TOOLWINDOW);

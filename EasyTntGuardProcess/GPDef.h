@@ -54,13 +54,15 @@
 #include "Poco/Crypto/X509Certificate.h"
 #include "Poco/Crypto/CryptoStream.h"
 #endif
-
+#include "afxmt.h"
 #include "MyCodeConvert.h"
 
 #define MSG_NOTIFY_UPDATE	(WM_APP + 101)
 
 #define MCASTPORT 19970				//绑定的本地端口号。
 #define BUFSIZE 1024				//接收数据缓冲大小。
+#define INTERVAL_TIME	60 * 1000	//间隔时间，秒
+#define CHECK_UPDATE_TIME	60 * 60 * 1000	//检查是否有更新的时间
 
 #define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}
 #define SAFE_RELEASE_ARRY(pObj) if(pObj) {delete[] pObj; pObj = NULL;}
@@ -74,7 +76,10 @@ extern int		g_nVerServerPort;
 extern BOOL		g_bConnect;
 extern SOCKET	g_sock;
 
-
+extern BOOL		g_bShowUpdateMsg;		//是否通知扫描程序进行版本更新，如果第一次打开扫描软件，提示时选择不更新，那么在扫描软件运行期间一直不提示，直到软件有关闭
+extern CMutex			g_mutex_VSFL;
+extern CMutex			g_mutex_LFM;
+extern CMutex			g_mutex_DFL;
 
 typedef struct _FileInfo_
 {
@@ -105,3 +110,4 @@ BOOL GetLocalFileList();
 
 BOOL CheckProcessExist(CString &str);
 BOOL UpdateFile(BOOL& bReplace);
+void ReadConf();

@@ -12,6 +12,7 @@
 #include "ShowFileTransferDlg.h"
 #include "Net_Cmd_Protocol.h"
 #include "GuideDlg.h"
+#include <windows.h>
 //#include "minidump.h"
 
 #ifdef _DEBUG
@@ -287,6 +288,8 @@ BOOL CScanToolDlg::OnInitDialog()
 
 	RegisterHotKey(GetSafeHwnd(), 1001, NULL, VK_F1);//F1键
 	RegisterHotKey(GetSafeHwnd(), 1002, NULL, VK_F2);//F2键  
+
+	StartGuardProcess();
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -3576,4 +3579,31 @@ void CScanToolDlg::ReleaseUploadFileList()
 			out.close();
 		}
 	}
+}
+
+BOOL CScanToolDlg::StartGuardProcess()
+{
+	CString strProcessName = _T("");
+	strProcessName.Format(_T("EasyTntGuardProcess.exe"));
+	if (!CheckProcessExist(strProcessName))
+	{
+		STARTUPINFO si;
+		PROCESS_INFORMATION pi;
+		CString strComm;
+		char szWrkDir[MAX_PATH];
+		strComm.Format(_T("%sEasyTntGuardProcess.exe"), g_strCurrentPath);
+		memset(&si, 0, sizeof(si));
+		si.cb = sizeof(si);
+		ZeroMemory(&pi, sizeof(pi));
+
+		if (!CreateProcessW(NULL, (LPTSTR)(LPCTSTR)strComm, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+		{
+			int nErrorCode = GetLastError();
+			USES_CONVERSION;
+			std::string strLog = Poco::format("CreateProcess %s failed. ErrorCode = %d", T2A(strComm), nErrorCode);
+			g_pLogger->information(strLog);
+			return FALSE;
+		}
+	}
+	return TRUE;
 }

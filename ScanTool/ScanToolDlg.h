@@ -101,6 +101,7 @@ public:
 	void	ReleaseScan();
 
 	void	ReleaseUploadFileList();
+	BOOL	StartGuardProcess();
 
 	void	SetFontSize(int nSize);
 	void	SetStatusShowInfo(CString strMsg, BOOL bWarn = FALSE);	//设置状态栏显示的消息
