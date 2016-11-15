@@ -464,5 +464,8 @@
     <Image Include="res\scanner.ico">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="res\ScanTool.ico">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>
