@@ -127,7 +127,7 @@ CScanToolDlg::CScanToolDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	, m_nDuplex(1), m_bF1Enable(FALSE), m_bF2Enable(FALSE)
 	, m_pCompressObj(NULL), m_pCompressThread(NULL)
 {
-	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);// IDR_MAINFRAME
 }
 
 void CScanToolDlg::DoDataExchange(CDataExchange* pDX)
