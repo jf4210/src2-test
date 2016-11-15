@@ -126,7 +126,7 @@ BOOL CEasyTntGuardProcessDlg::OnInitDialog()
 	wp.showCmd = SW_HIDE;
 	SetWindowPlacement(&wp);
 
-	ShowWindow(SW_MINIMIZE);
+//	ShowWindow(SW_MINIMIZE);
 
 	InitConf();
 
@@ -216,6 +216,11 @@ void CEasyTntGuardProcessDlg::OnDestroy()
 		m_hThread = NULL;
 	}
 
+	g_mutex_DFL.Lock();
+	g_DownLoadFileList.clear();
+	g_mutex_DFL.Unlock();
+
+	g_mutex_VSFL.Lock();
 	LIST_FILEINFO::iterator it = g_VerServerFileList.begin();
 	for (; it != g_VerServerFileList.end();)
 	{
@@ -223,7 +228,9 @@ void CEasyTntGuardProcessDlg::OnDestroy()
 		SAFE_RELEASE(pFileInfo);
 		it = g_VerServerFileList.erase(it);
 	}
+	g_mutex_VSFL.Unlock();
 
+	g_mutex_LFM.Lock();
 	MAP_FILEINFO::iterator itMap = g_LocalFileMap.begin();
 	for (; itMap != g_LocalFileMap.end();)
 	{
@@ -231,6 +238,7 @@ void CEasyTntGuardProcessDlg::OnDestroy()
 		SAFE_RELEASE(pFileInfo);
 		itMap = g_LocalFileMap.erase(itMap);
 	}
+	g_mutex_LFM.Unlock();
 }
 
 void CEasyTntGuardProcessDlg::InitConf()

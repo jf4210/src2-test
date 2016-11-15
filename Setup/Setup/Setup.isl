@@ -339,27 +339,28 @@
 		<col def="S0">ISDotNetInstallerArgsCommit</col>
 		<col def="S0">ISDotNetInstallerArgsUninstall</col>
 		<col def="S0">ISDotNetInstallerArgsRollback</col>
+		<row><td>EasyTntGuardProcess.exe</td><td>{D84507E2-6A01-416E-955A-B3A78662B015}</td><td>INSTALLDIR</td><td>2</td><td/><td>easytntguardprocess.exe</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>ISX_DEFAULTCOMPONENT</td><td>{B0EB6213-5778-46CE-8F9A-87CE2FC4C749}</td><td>INSTALLDIR</td><td>2</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>ISX_DEFAULTCOMPONENT1</td><td>{84FC0211-13F9-4170-B158-F403CBE07796}</td><td>WindowsFolder</td><td>2</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>ISX_DEFAULTCOMPONENT2</td><td>{267BF69B-85A0-4074-9EB3-DB6B63C182A0}</td><td>RES</td><td>2</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>NetCtrl.dll</td><td>{7DBAD616-8E0F-4D30-A400-F411DFAB4A35}</td><td>INSTALLDIR</td><td>2</td><td/><td>netctrl.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>PocoFoundation.dll</td><td>{C59116BD-D3E4-4078-A4F0-A5E9FD802EC4}</td><td>INSTALLDIR</td><td>2</td><td/><td>pocofoundation.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>PocoJSON.dll</td><td>{7E6E6C0B-EB31-458D-B30F-F14B8389DB86}</td><td>INSTALLDIR</td><td>2</td><td/><td>pocojson.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>PocoNet.dll</td><td>{8A6DF06F-C6CB-4E1B-BB6F-86CBF97165BF}</td><td>INSTALLDIR</td><td>2</td><td/><td>poconet.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>PocoUtil.dll</td><td>{FC030B6E-766B-40A4-B6C4-610D3AF59616}</td><td>INSTALLDIR</td><td>2</td><td/><td>pocoutil.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>PocoXML.dll</td><td>{F0851A3C-F36F-4C9B-A638-E2BCC3E9276D}</td><td>INSTALLDIR</td><td>2</td><td/><td>pocoxml.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>PocoZip.dll</td><td>{351DDACB-E621-4B9E-8201-0A2D881A3446}</td><td>INSTALLDIR</td><td>2</td><td/><td>pocozip.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>ScanTool.exe</td><td>{4DD58682-C7B6-4927-98A1-5ADCF1E46BE1}</td><td>INSTALLDIR</td><td>2</td><td/><td>scantool.exe</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>libeay32.dll</td><td>{62520DC0-3C85-45A5-A182-7AE6CF6FBF53}</td><td>INSTALLDIR</td><td>2</td><td/><td>libeay32.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>libiconv_2.dll</td><td>{4C069D22-FE86-4C44-86D2-DEB238A741AD}</td><td>INSTALLDIR</td><td>2</td><td/><td>libiconv_2.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>libmupdf.dll</td><td>{BF75D527-AB43-4A2E-AF68-D2815A2B8963}</td><td>INSTALLDIR</td><td>2</td><td/><td>libmupdf.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>libzbar_0.dll</td><td>{65DE324B-58A0-400E-822D-795128A127FD}</td><td>INSTALLDIR</td><td>2</td><td/><td>libzbar_0.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>mfc120u.dll</td><td>{63D3622E-731B-4FB3-ABB7-5C019F1F0346}</td><td>INSTALLDIR</td><td>2</td><td/><td>mfc120u.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>msvcp120.dll</td><td>{2FDB8818-D3E8-4A0F-A84B-E4202707DE78}</td><td>INSTALLDIR</td><td>2</td><td/><td>msvcp120.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>msvcr120.dll</td><td>{8C13E61B-9AE5-492A-9818-CADA180BDBCE}</td><td>INSTALLDIR</td><td>2</td><td/><td>msvcr120.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>opencv_world310.dll</td><td>{70180EBD-F49D-4047-95CB-58B589A4431A}</td><td>INSTALLDIR</td><td>2</td><td/><td>opencv_world310.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>ssleay32.dll</td><td>{46B0F0E3-A344-4F16-90C0-8EA437A7EEA5}</td><td>INSTALLDIR</td><td>2</td><td/><td>ssleay32.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>zlib1.dll</td><td>{34889C6C-48D6-4D1F-BD55-EDDCC0E18A0A}</td><td>INSTALLDIR</td><td>2</td><td/><td>zlib1.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>NetCtrl.dll</td><td>{DC3AC32F-8EA4-47F3-8724-68EF446720F3}</td><td>INSTALLDIR</td><td>2</td><td/><td>netctrl.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>PocoFoundation.dll</td><td>{ADDAEE9E-A462-4B5C-8FF5-A77750E65BF9}</td><td>INSTALLDIR</td><td>2</td><td/><td>pocofoundation.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>PocoJSON.dll</td><td>{0B986858-5A6B-4A4D-8DDC-B9EB4CD4A24E}</td><td>INSTALLDIR</td><td>2</td><td/><td>pocojson.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>PocoNet.dll</td><td>{7C33271D-4EE6-4645-BDD3-AF20FDB81B1C}</td><td>INSTALLDIR</td><td>2</td><td/><td>poconet.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>PocoUtil.dll</td><td>{C42C54C7-5943-4449-B265-6538530F175C}</td><td>INSTALLDIR</td><td>2</td><td/><td>pocoutil.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>PocoXML.dll</td><td>{15EAB180-15F5-49AF-9EB7-003AAEE7C842}</td><td>INSTALLDIR</td><td>2</td><td/><td>pocoxml.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>PocoZip.dll</td><td>{13F508EF-6D0B-4BFC-93AE-4F488CD01C65}</td><td>INSTALLDIR</td><td>2</td><td/><td>pocozip.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>ScanTool.exe</td><td>{6C1F26F9-5990-4863-93DD-9D3696E5468A}</td><td>INSTALLDIR</td><td>2</td><td/><td>scantool.exe</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>libeay32.dll</td><td>{176FFC12-C4CE-486E-8DE5-0589AC0D4CA8}</td><td>INSTALLDIR</td><td>2</td><td/><td>libeay32.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>libiconv_2.dll</td><td>{5F31958B-7180-4372-AEAC-A25B66A60C1D}</td><td>INSTALLDIR</td><td>2</td><td/><td>libiconv_2.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>libmupdf.dll</td><td>{5A276CD2-8527-49AA-8421-A05531D82CF9}</td><td>INSTALLDIR</td><td>2</td><td/><td>libmupdf.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>libzbar_0.dll</td><td>{355EEF1C-6AD5-4877-8129-06F2565ECA7C}</td><td>INSTALLDIR</td><td>2</td><td/><td>libzbar_0.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>mfc120u.dll</td><td>{64BDE33A-7B8D-4C39-AFE7-D9FF11187847}</td><td>INSTALLDIR</td><td>2</td><td/><td>mfc120u.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>msvcp120.dll</td><td>{3B76612A-893C-4A3B-9045-D5BCBC7802DB}</td><td>INSTALLDIR</td><td>2</td><td/><td>msvcp120.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>msvcr120.dll</td><td>{C30EF9AA-FD0A-4419-A570-DAB4994C00EC}</td><td>INSTALLDIR</td><td>2</td><td/><td>msvcr120.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>opencv_world310.dll</td><td>{FB8A27CF-FB5F-4B6F-90F0-D90D9A80C600}</td><td>INSTALLDIR</td><td>2</td><td/><td>opencv_world310.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>ssleay32.dll</td><td>{9EB839D4-0731-4746-8ABB-A26909A3035F}</td><td>INSTALLDIR</td><td>2</td><td/><td>ssleay32.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>zlib1.dll</td><td>{6CF76419-33E3-4327-AF80-318DD063773A}</td><td>INSTALLDIR</td><td>2</td><td/><td>zlib1.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 	</table>
 
 	<table name="Condition">
@@ -1068,6 +1069,7 @@
 	<table name="CreateFolder">
 		<col key="yes" def="s72">Directory_</col>
 		<col key="yes" def="s72">Component_</col>
+		<row><td>INSTALLDIR</td><td>EasyTntGuardProcess.exe</td></row>
 		<row><td>INSTALLDIR</td><td>ISX_DEFAULTCOMPONENT</td></row>
 		<row><td>INSTALLDIR</td><td>ISX_DEFAULTCOMPONENT1</td></row>
 		<row><td>INSTALLDIR</td><td>ISX_DEFAULTCOMPONENT2</td></row>
@@ -1906,6 +1908,7 @@
 	<table name="FeatureComponents">
 		<col key="yes" def="s38">Feature_</col>
 		<col key="yes" def="s72">Component_</col>
+		<row><td>AlwaysInstall</td><td>EasyTntGuardProcess.exe</td></row>
 		<row><td>AlwaysInstall</td><td>ISX_DEFAULTCOMPONENT</td></row>
 		<row><td>AlwaysInstall</td><td>ISX_DEFAULTCOMPONENT1</td></row>
 		<row><td>AlwaysInstall</td><td>ISX_DEFAULTCOMPONENT2</td></row>
@@ -1950,6 +1953,7 @@
 		<row><td>File.png6</td><td>ISX_DEFAULTCOMPONENT2</td><td>竖直3.png</td><td>0</td><td/><td/><td/><td>1</td><td>E:\myWorkspace\yklx\bin\release-scan\res\竖直3.png</td><td>1</td><td/></row>
 		<row><td>File.png7</td><td>ISX_DEFAULTCOMPONENT2</td><td>竖直4.png</td><td>0</td><td/><td/><td/><td>1</td><td>E:\myWorkspace\yklx\bin\release-scan\res\竖直4.png</td><td>1</td><td/></row>
 		<row><td>config.ini</td><td>ISX_DEFAULTCOMPONENT</td><td>config.ini</td><td>0</td><td/><td/><td/><td>1</td><td>E:\myWorkspace\yklx\bin\release-scan\config.ini</td><td>1</td><td/></row>
+		<row><td>easytntguardprocess.exe</td><td>EasyTntGuardProcess.exe</td><td>EASYTN~1.EXE|EasyTntGuardProcess.exe</td><td>0</td><td/><td/><td/><td>1</td><td>E:\myWorkspace\yklx\bin\release-scan\EasyTntGuardProcess.exe</td><td>1</td><td/></row>
 		<row><td>libeay32.dll</td><td>libeay32.dll</td><td>libeay32.dll</td><td>0</td><td/><td/><td/><td>1</td><td>E:\myWorkspace\yklx\bin\release-scan\libeay32.dll</td><td>1</td><td/></row>
 		<row><td>libiconv_2.dll</td><td>libiconv_2.dll</td><td>LIBICO~1.DLL|libiconv-2.dll</td><td>0</td><td/><td/><td/><td>1</td><td>E:\myWorkspace\yklx\bin\release-scan\libiconv-2.dll</td><td>1</td><td/></row>
 		<row><td>libmupdf.dll</td><td>libmupdf.dll</td><td>libmupdf.dll</td><td>0</td><td/><td/><td/><td>1</td><td>E:\myWorkspace\yklx\bin\release-scan\libmupdf.dll</td><td>1</td><td/></row>
@@ -1967,6 +1971,7 @@
 		<row><td>pocoxml.dll</td><td>PocoXML.dll</td><td>PocoXML.dll</td><td>0</td><td/><td/><td/><td>1</td><td>E:\myWorkspace\yklx\bin\release-scan\PocoXML.dll</td><td>1</td><td/></row>
 		<row><td>pocozip.dll</td><td>PocoZip.dll</td><td>PocoZip.dll</td><td>0</td><td/><td/><td/><td>1</td><td>E:\myWorkspace\yklx\bin\release-scan\PocoZip.dll</td><td>1</td><td/></row>
 		<row><td>scantool.exe</td><td>ScanTool.exe</td><td>ScanTool.exe</td><td>0</td><td/><td/><td/><td>1</td><td>E:\myWorkspace\yklx\bin\release-scan\ScanTool.exe</td><td>1</td><td/></row>
+		<row><td>scantool.log</td><td>ISX_DEFAULTCOMPONENT</td><td>ScanTool.log</td><td>0</td><td/><td/><td/><td>1</td><td>E:\myWorkspace\yklx\bin\release-scan\ScanTool.log</td><td>1</td><td/></row>
 		<row><td>sn1.png</td><td>ISX_DEFAULTCOMPONENT2</td><td>SN1.png</td><td>0</td><td/><td/><td/><td>1</td><td>E:\myWorkspace\yklx\bin\release-scan\res\SN1.png</td><td>1</td><td/></row>
 		<row><td>sn2.png</td><td>ISX_DEFAULTCOMPONENT2</td><td>SN2.png</td><td>0</td><td/><td/><td/><td>1</td><td>E:\myWorkspace\yklx\bin\release-scan\res\SN2.png</td><td>1</td><td/></row>
 		<row><td>sn3.png</td><td>ISX_DEFAULTCOMPONENT2</td><td>SN3.png</td><td>0</td><td/><td/><td/><td>1</td><td>E:\myWorkspace\yklx\bin\release-scan\res\SN3.png</td><td>1</td><td/></row>
@@ -2114,27 +2119,28 @@
 		<col def="S0">FTPLocation</col>
 		<col def="S0">HTTPLocation</col>
 		<col def="S0">Miscellaneous</col>
+		<row><td>EasyTntGuardProcess.exe</td><td/><td/><td>_E6FB2F9E_2A55_4157_83FE_CA633AB568E0_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>ISX_DEFAULTCOMPONENT</td><td/><td/><td>_DEBA3E92_990A_4C1F_BB9B_2350C74D1179_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>ISX_DEFAULTCOMPONENT1</td><td/><td/><td>_25ED0529_A744_449B_B5AA_E7E78BDCDFD5_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>ISX_DEFAULTCOMPONENT2</td><td/><td/><td>_D5626126_AAD1_4BF6_B4B9_4A02A65541C6_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>NetCtrl.dll</td><td/><td/><td>_616F82F8_5F40_4926_BEBB_2AC25B5BDEB5_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>PocoFoundation.dll</td><td/><td/><td>_0447B157_A0BB_4DD8_AED2_4838E250BED5_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>PocoJSON.dll</td><td/><td/><td>_A111BFC2_4EDD_4749_9D46_34756EDB4E9A_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>PocoNet.dll</td><td/><td/><td>_ECDF74AF_07C4_40D1_A877_C9C2BDAB0DFC_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>PocoUtil.dll</td><td/><td/><td>_95903250_B97F_42BD_8127_79E3BDF19CF0_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>PocoXML.dll</td><td/><td/><td>_4CDC0CF1_89FC_458E_B888_54CB3C194F03_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>PocoZip.dll</td><td/><td/><td>_871BD175_E30A_4DA3_BE22_9045BA81F315_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>ScanTool.exe</td><td/><td/><td>_F5E254F6_2DF6_4922_9725_F0F339B1EBC4_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>libeay32.dll</td><td/><td/><td>_C80DA08B_FA6D_4667_8B50_9F484A711162_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>libiconv_2.dll</td><td/><td/><td>_B94DB09E_39E4_49E1_B765_F9B19224B411_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>libmupdf.dll</td><td/><td/><td>_8DF37F80_B5B9_4577_929A_35FAB4E3762C_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>libzbar_0.dll</td><td/><td/><td>_33542179_5800_40C3_939E_1261A0F7AA71_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>mfc120u.dll</td><td/><td/><td>_53B5AA2C_809E_4B87_8B33_F52DA61AA4DC_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>msvcp120.dll</td><td/><td/><td>_9B023306_6E14_4547_BF98_6B903B552179_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>msvcr120.dll</td><td/><td/><td>_DF48DF29_BB7F_4571_95D5_3DA3F4558D40_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>opencv_world310.dll</td><td/><td/><td>_880F610D_3C0C_4647_80B2_BA14C7D14C85_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>ssleay32.dll</td><td/><td/><td>_E6859907_AAFB_48BF_B13C_0F9F2B9EC51B_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>zlib1.dll</td><td/><td/><td>_08968123_9FCC_4E2C_B4D4_7BB217E431EC_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>NetCtrl.dll</td><td/><td/><td>_8A6436C6_405F_447D_BB0A_4B624E871249_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>PocoFoundation.dll</td><td/><td/><td>_468E8DCA_A871_41D4_9BE7_0C615A720491_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>PocoJSON.dll</td><td/><td/><td>_518C4045_047F_4283_9AFC_D6F98FD3E110_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>PocoNet.dll</td><td/><td/><td>_CED9BFFE_0983_4240_8782_EAFB1D1EE054_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>PocoUtil.dll</td><td/><td/><td>_C2B80988_47AE_4CCE_A7A1_24465E6E11AA_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>PocoXML.dll</td><td/><td/><td>_87D71AC3_0901_4280_8D65_30223210E88B_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>PocoZip.dll</td><td/><td/><td>_BFFC70CB_96DE_4562_921B_2F848FC1C439_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>ScanTool.exe</td><td/><td/><td>_E86FE438_B5DA_4B41_B73D_27C9CA2B1506_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>libeay32.dll</td><td/><td/><td>_18DA9A9E_0671_4D99_83F6_EDFB346C58A6_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>libiconv_2.dll</td><td/><td/><td>_7185F794_36FD_409F_9203_8E0039D3D4D0_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>libmupdf.dll</td><td/><td/><td>_32626627_9549_4D59_8984_EDA4719A5DB4_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>libzbar_0.dll</td><td/><td/><td>_553AF3A6_D000_44B9_BD1F_42110820D391_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>mfc120u.dll</td><td/><td/><td>_4D8FBCC9_23A5_46C4_B507_5BA2CF9745D4_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>msvcp120.dll</td><td/><td/><td>_3F695B8C_A619_4048_BBBE_5EA904B1A9BF_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>msvcr120.dll</td><td/><td/><td>_BA73D513_102E_4B22_A963_72FD3A760DFA_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>opencv_world310.dll</td><td/><td/><td>_7821B7D5_6794_4F03_83B9_D8F23CC31580_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>ssleay32.dll</td><td/><td/><td>_0B8504E9_9BBE_4E8F_98C7_35B0075891E0_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>zlib1.dll</td><td/><td/><td>_C89D8D38_7B0D_450C_B516_7F114F91F6CC_FILTER</td><td/><td/><td/><td/></row>
 	</table>
 
 	<table name="ISCustomActionReference">
@@ -2727,7 +2733,7 @@
 		<col def="I2">Encoded</col>
 		<col def="S0">Comment</col>
 		<col def="I4">TimeStamp</col>
-		<row><td>COMPANY_NAME</td><td>2052</td><td>easyTNT</td><td>0</td><td/><td>-584818932</td></row>
+		<row><td>COMPANY_NAME</td><td>2052</td><td>easyTNT</td><td>0</td><td/><td>2107950160</td></row>
 		<row><td>DN_AlwaysInstall</td><td>2052</td><td>始终安装</td><td>0</td><td/><td>-1532701078</td></row>
 		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_COLOR</td><td>2052</td><td>系统颜色设置不足以运行 [ProductName]。</td><td>0</td><td/><td>-1532701078</td></row>
 		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_OS</td><td>2052</td><td>操作系统不足以运行 [ProductName]。</td><td>0</td><td/><td>-1532701078</td></row>
@@ -3544,6 +3550,14 @@
 		<row><td>IDS_SHORTCUT_DISPLAY_NAME2</td><td>2052</td><td>ScanTool</td><td>0</td><td/><td>-584800404</td></row>
 		<row><td>IDS_SHORTCUT_DISPLAY_NAME3</td><td>1033</td><td/><td>0</td><td/><td>-584803826</td></row>
 		<row><td>IDS_SHORTCUT_DISPLAY_NAME3</td><td>2052</td><td>ScanTool.exe</td><td>0</td><td/><td>-584801554</td></row>
+		<row><td>IDS_SHORTCUT_DISPLAY_NAME4</td><td>1033</td><td/><td>0</td><td/><td>2107903854</td></row>
+		<row><td>IDS_SHORTCUT_DISPLAY_NAME4</td><td>2052</td><td>LAUNCH~1.EXE|Launch EasyTntGuardProcess.exe</td><td>0</td><td/><td>2107903854</td></row>
+		<row><td>IDS_SHORTCUT_DISPLAY_NAME5</td><td>1033</td><td/><td>0</td><td/><td>2107960496</td></row>
+		<row><td>IDS_SHORTCUT_DISPLAY_NAME5</td><td>2052</td><td>LAUNCH~1.EXE|Launch EasyTntGuardProcess.exe</td><td>0</td><td/><td>2107960496</td></row>
+		<row><td>IDS_SHORTCUT_DISPLAY_NAME6</td><td>1033</td><td/><td>0</td><td/><td>2107901136</td></row>
+		<row><td>IDS_SHORTCUT_DISPLAY_NAME6</td><td>2052</td><td>LAUNCH~1.EXE|Launch ScanTool.exe</td><td>0</td><td/><td>2107901136</td></row>
+		<row><td>IDS_SHORTCUT_DISPLAY_NAME7</td><td>1033</td><td/><td>0</td><td/><td>2107927792</td></row>
+		<row><td>IDS_SHORTCUT_DISPLAY_NAME7</td><td>2052</td><td>LAUNCH~1.EXE|Launch ScanTool.exe</td><td>0</td><td/><td>2107927792</td></row>
 		<row><td>IDS_SQLBROWSE_INTRO</td><td>2052</td><td>从以下服务器列表中选择要连接的数据库服务器。</td><td>0</td><td/><td>-1532701078</td></row>
 		<row><td>IDS_SQLBROWSE_INTRO_DB</td><td>2052</td><td>从以下的编录名称列表中，选择您希望将其作为目标的数据库编录。</td><td>0</td><td/><td>-1532701078</td></row>
 		<row><td>IDS_SQLBROWSE_INTRO_TEMPLATE</td><td>2052</td><td>[IS_SQLBROWSE_INTRO]</td><td>0</td><td/><td>-1532701078</td></row>
@@ -3833,14 +3847,16 @@
 		<row><td>IDS__TargetReq_DESC_RAM</td><td>2052</td><td>对于运行 [ProductName] 内存量不足。</td><td>0</td><td/><td>-1532701078</td></row>
 		<row><td>IDS__TargetReq_DESC_RESOLUTION</td><td>2052</td><td>对于运行 [ProductName] 屏幕分辨率不足。</td><td>0</td><td/><td>-1532701078</td></row>
 		<row><td>ID_STRING1</td><td>2052</td><td/><td>0</td><td/><td>-1532701078</td></row>
-		<row><td>ID_STRING2</td><td>2052</td><td>http://www.easyTNT.com</td><td>0</td><td/><td>-584818932</td></row>
+		<row><td>ID_STRING2</td><td>2052</td><td>http://www.easyTNT.com</td><td>0</td><td/><td>2107950160</td></row>
 		<row><td>ID_STRING3</td><td>1033</td><td>easyTNT</td><td>0</td><td/><td>-1532739413</td></row>
-		<row><td>ID_STRING3</td><td>2052</td><td>easyTNT</td><td>0</td><td/><td>-584818932</td></row>
+		<row><td>ID_STRING3</td><td>2052</td><td>easyTNT</td><td>0</td><td/><td>2107950160</td></row>
 		<row><td>ID_STRING4</td><td>2052</td><td>LAUNCH~1.EXE|Launch ScanTool.exe</td><td>0</td><td/><td>-1532701078</td></row>
 		<row><td>ID_STRING5</td><td>1033</td><td>LAUNCH~1.EXE|Launch ScanTool.exe</td><td>0</td><td/><td>-584822932</td></row>
 		<row><td>ID_STRING5</td><td>2052</td><td>LAUNCH~1.EXE|Launch ScanTool.exe</td><td>0</td><td/><td>-584822932</td></row>
 		<row><td>ID_STRING6</td><td>1033</td><td>LAUNCH~1.EXE|Launch ScanTool.exe</td><td>0</td><td/><td>-584819986</td></row>
 		<row><td>ID_STRING6</td><td>2052</td><td>LAUNCH~1.EXE|Launch ScanTool.exe</td><td>0</td><td/><td>-584819986</td></row>
+		<row><td>ID_STRING7</td><td>1033</td><td>LAUNCH~1.EXE|Launch ScanTool.exe</td><td>0</td><td/><td>2107931888</td></row>
+		<row><td>ID_STRING7</td><td>2052</td><td>LAUNCH~1.EXE|Launch ScanTool.exe</td><td>0</td><td/><td>2107931888</td></row>
 		<row><td>IIDS_UITEXT_FeatureUninstalled</td><td>2052</td><td>系统将不安装此功能。</td><td>0</td><td/><td>-1532701078</td></row>
 	</table>
 
@@ -3955,10 +3971,13 @@
 		<col def="S255">ISBuildSourcePath</col>
 		<col def="I2">ISIconIndex</col>
 		<row><td>ARPPRODUCTICON.exe</td><td/><td>&lt;ISProductFolder&gt;\redist\Language Independent\OS Independent\setupicon.ico</td><td>0</td></row>
+		<row><td>EasyTntGuardProces_90A2B2EFEAB14F488D2394B107AAD0A7.exe</td><td/><td>E:\myWorkspace\yklx\bin\release\EasyTntGuardProcess.exe</td><td>0</td></row>
+		<row><td>ScanTool.exe1_535E07FFF27F4A2AA36F95504ACF2E2B.exe</td><td/><td>E:\myWorkspace\yklx\bin\release-scan\ScanTool.exe</td><td>0</td></row>
 		<row><td>ScanTool.exe1_629780871606400C8062B866A8EA2835.exe</td><td/><td>E:\myWorkspace\yklx\bin\release-scan\ScanTool.exe</td><td>0</td></row>
 		<row><td>ScanTool.exe1_A67931F3121E4B17BA7F87BCA8975C91.exe</td><td/><td>E:\myWorkspace\yklx\bin\release\ScanTool.exe</td><td>0</td></row>
 		<row><td>ScanTool.exe1_C94EABB07D4C4978B7E4D78577980962.exe</td><td/><td>E:\myWorkspace\yklx\bin\release-scan\ScanTool.exe</td><td>0</td></row>
 		<row><td>ScanTool.exe_1B8591606D32463F961F8B3FB6FE42AA.exe</td><td/><td>E:\myWorkspace\yklx\bin\release-scan\ScanTool.exe</td><td>0</td></row>
+		<row><td>ScanTool.exe_3EB6610D31224283985CE6DAE5FD124C.exe</td><td/><td>E:\myWorkspace\yklx\bin\release-scan\ScanTool.exe</td><td>0</td></row>
 		<row><td>ScanTool.exe_4422BDC380C54BC8A3FC03DF0A51B2D7.exe</td><td/><td>E:\myWorkspace\yklx\bin\release\ScanTool.exe</td><td>0</td></row>
 		<row><td>ScanTool.exe_9CFC4456B7C3416898A28CCE6430B958.exe</td><td/><td>E:\myWorkspace\yklx\bin\release-scan\ScanTool.exe</td><td>0</td></row>
 	</table>
@@ -4075,8 +4094,8 @@
 		<col def="S0">Value</col>
 		<row><td>ActiveLanguage</td><td>2052</td></row>
 		<row><td>Comments</td><td/></row>
-		<row><td>CurrentMedia</td><td dt:dt="bin.base64" md5="6d78a46bf2c52ee27034bbcad20f7f95">
-QwBEAF8AUgBPAE0AAQBFAHgAcAByAGUAcwBzAA==
+		<row><td>CurrentMedia</td><td dt:dt="bin.base64" md5="de9f554a3bc05c12be9c31b998217995">
+UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 			</td></row>
 		<row><td>DefaultProductConfiguration</td><td>Express</td></row>
 		<row><td>EnableSwidtag</td><td>1</td></row>
@@ -4628,8 +4647,8 @@ QwBEAF8AUgBPAE0AAQBFAHgAcAByAGUAcwBzAA==
 		<col def="S255">ISComments</col>
 		<col def="S255">ISShortcutName</col>
 		<col def="I4">ISAttributes</col>
-		<row><td>ScanTool.exe</td><td>scantool1</td><td>##IDS_SHORTCUT_DISPLAY_NAME3##</td><td>ScanTool.exe</td><td>AlwaysInstall</td><td/><td/><td/><td>ScanTool.exe_9CFC4456B7C3416898A28CCE6430B958.exe</td><td>1</td><td>1</td><td>INSTALLDIR</td><td/><td/><td/><td/><td/><td/><td/></row>
-		<row><td>ScanTool.exe1</td><td>DesktopFolder</td><td>##IDS_SHORTCUT_DISPLAY_NAME3##</td><td>ScanTool.exe</td><td>AlwaysInstall</td><td/><td/><td/><td>ScanTool.exe1_C94EABB07D4C4978B7E4D78577980962.exe</td><td>1</td><td>1</td><td>INSTALLDIR</td><td/><td/><td/><td/><td/><td/><td/></row>
+		<row><td>ScanTool.exe</td><td>scantool1</td><td>##IDS_SHORTCUT_DISPLAY_NAME7##</td><td>ScanTool.exe</td><td>AlwaysInstall</td><td/><td/><td/><td>ScanTool.exe_3EB6610D31224283985CE6DAE5FD124C.exe</td><td>1</td><td>1</td><td>INSTALLDIR</td><td/><td/><td/><td/><td/><td/><td/></row>
+		<row><td>ScanTool.exe1</td><td>DesktopFolder</td><td>##IDS_SHORTCUT_DISPLAY_NAME7##</td><td>ScanTool.exe</td><td>AlwaysInstall</td><td/><td/><td/><td>ScanTool.exe1_535E07FFF27F4A2AA36F95504ACF2E2B.exe</td><td>1</td><td>1</td><td>INSTALLDIR</td><td/><td/><td/><td/><td/><td/><td/></row>
 	</table>
 
 	<table name="Signature">

@@ -24,7 +24,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			LIST_FILEINFO::iterator it = g_lFileInfo.begin();
 			for (; it != g_lFileInfo.end(); it++)
 			{
-				std::string strFileInfo = (*it)->strFileName + ":" + (*it)->strMd5 + "_";
+				std::string strFileInfo = (*it)->strFileName + ":" + (*it)->strMd5 + "__";
 				strData.append(strFileInfo);
 			}
 
@@ -65,7 +65,19 @@ int CUserMgr::HandleHeader(CMission* pMission)
 
 			int nLen = strFileData.length();
 			std::cout << "发送文件: "<< strFileName <<"   长度: " << nLen << std::endl;
-			pUser->SendResponesInfo(RESPONSE_GET_FILE, RESULT_SUCCESS, (char*)strFileData.c_str(), strFileData.length());
+			if (!pUser->SendResponesInfo(RESPONSE_GET_FILE, RESULT_SUCCESS, (char*)strFileData.c_str(), strFileData.length()))
+			{
+				pUser->SendResult(RESPONSE_GET_FILE, RESULT_ERROR_SEND);
+			}
+		}
+		break;
+		case RESULT_UPDATA:
+		{
+			char szResult[500] = { 0 };
+			memcpy(szResult, pMission->m_pMissionData + HEAD_SIZE, header.uPackSize);
+			std::stringstream ss;
+			ss << "客户端(" << pUser->m_pIPAddress << ":" << pUser->m_wPort << ")升级结果: " << szResult;
+			std::cout << ss.str() << std::endl;
 		}
 		break;
 	default:

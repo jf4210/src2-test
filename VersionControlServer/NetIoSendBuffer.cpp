@@ -32,7 +32,7 @@ int CNetIoSendBuffer::AddData(const char* pData, int nDataLen)
 	}
 
 	DWORD dwLen=nDataLen+m_nDataSize;
-	if (dwLen>MAX_SENBUF_LEN)
+	if (dwLen>MAX_SENBUF_LEN * 1.4)
 	{
 
 		UnLock();

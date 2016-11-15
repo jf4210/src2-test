@@ -160,8 +160,15 @@ BOOL GetLocalFileList()
 	for (; it != g_LocalFileMap.end();)
 	{
 		pST_FILEINFO pFileInfo = it->second;
-		SAFE_RELEASE(pFileInfo);
-		it = g_LocalFileMap.erase(it);
+		if (_access(pFileInfo->strFilePath.c_str(), 0) != 0)
+		{
+			SAFE_RELEASE(pFileInfo);
+			it = g_LocalFileMap.erase(it);
+		}
+		else
+			it++;
+// 		SAFE_RELEASE(pFileInfo);
+// 		it = g_LocalFileMap.erase(it);
 	}
 	g_mutex_LFM.Unlock();
 
@@ -177,6 +184,9 @@ BOOL GetLocalFileList()
 		else if (ff.IsDirectory())
 		{
 			CString strDirName = ff.GetFileName();
+			if (strDirName == _T("updateVersion"))
+				continue;
+
 			CString strPath = ff.GetFilePath();
 			CFileFind ff2;
 			BOOL bFind2 = ff2.FindFile(ff.GetFilePath() + _T("\\*"));
@@ -189,6 +199,10 @@ BOOL GetLocalFileList()
 				{
 					CString strName = ff2.GetFileName();
 					if (strName.Find(_T(".pkg")) != -1 || strName.Find(_T(".typkg")) != -1 || strName.Find(_T(".mod")) != -1)
+						continue;
+
+					MAP_FILEINFO::iterator itFile = g_LocalFileMap.find(T2A(strDirName + _T("\\") + ff2.GetFileName()));
+					if (itFile != g_LocalFileMap.end())
 						continue;
 
 					pST_FILEINFO pFileInfo = new ST_FILEINFO;
@@ -207,6 +221,10 @@ BOOL GetLocalFileList()
 		{
 			CString strName = ff.GetFileName();
 			if (strName.Find(_T(".Log")) != -1)
+				continue;
+
+			MAP_FILEINFO::iterator itFile = g_LocalFileMap.find(T2A(ff.GetFileName()));
+			if (itFile != g_LocalFileMap.end())
 				continue;
 
 			pST_FILEINFO pFileInfo = new ST_FILEINFO;
@@ -268,7 +286,7 @@ BOOL GetFileList()
 		if (pHeader->usResult == RESULT_SUCCESS)
 		{
 			char* p = szRecvBuf + HEAD_SIZE;
-			char* p1 = strstr(p, "_");
+			char* p1 = strstr(p, "__");
 			while (p1 != NULL)
 			{
 				char* p2 = strstr(p, ":");
@@ -284,8 +302,8 @@ BOOL GetFileList()
 				g_VerServerFileList.push_back(pFileInfo);
 				g_mutex_VSFL.Unlock();
 
-				p = p1 + 1;
-				p1 = strstr(p, "_");
+				p = p1 + 2;
+				p1 = strstr(p, "__");
 			}
 			TRACE("获取版本服务器文件列表成功\n");
 		}
@@ -392,6 +410,15 @@ BOOL DownLoadFile(std::string& strName)
 			if (dwAttr == 0xFFFFFFFF)
 				CreateDirectoryA(T2A(strUpdatePath), NULL);
 
+			int nPos = strName.find("\\");
+			if (nPos != std::string::npos)
+			{
+				CString strSubDir = strUpdatePath + A2T(strName.substr(0, nPos).c_str());
+				DWORD dwAttr = GetFileAttributesA(T2A(strSubDir));
+				if (dwAttr == 0xFFFFFFFF)
+					CreateDirectoryA(T2A(strSubDir), NULL);
+			}
+
 			CString strFilePath = strUpdatePath + A2T(strName.c_str());
 			try
 			{
@@ -432,6 +459,10 @@ BOOL DownLoadFile(std::string& strName)
 		}
 		else
 		{
+			if (pHeader->usResult == RESULT_ERROR_SEND)
+				TRACE("服务器发送文件时发送出错\n");
+			else if (pHeader->usResult == RESULT_ERROR_FILEIO)
+				TRACE("服务器读取需要发送的文件时发生读写错误\n");
 			bRecvResult = FALSE;
 		}
 	}
@@ -450,6 +481,20 @@ BOOL DownLoadAllFile()
 	USES_CONVERSION;
 	int nFailTimes = 0;
 	BOOL bUpdateError = FALSE;
+
+	CString strFilePath = g_strAppPath + _T("updateVersion");
+	try
+	{
+		if (_access(T2A(strFilePath), 0) == 0)
+		{
+			remove(T2A(strFilePath));
+			TRACE("移除版本存放文件夹: %s\n", T2A(strFilePath));
+		}
+	}
+	catch (...)
+	{
+		TRACE("移除版本存放文件夹(%s)异常\n", strFilePath);
+	}
 
 	while (g_DownLoadFileList.size() > 0)
 	{
@@ -500,6 +545,27 @@ BOOL DownLoadAllFile()
 	return TRUE;
 }
 
+BOOL SendUpdataResult(std::string& strResult)
+{
+	//从版本控制服务器获取列表
+	ST_CMD_HEADER header;
+	header.usCmd = RESULT_UPDATA;
+	header.uPackSize = strResult.length();
+
+	char szSendBuf[500] = { 0 };
+	memcpy(szSendBuf, (char*)&header, HEAD_SIZE);
+	memcpy(szSendBuf + HEAD_SIZE, strResult.c_str(), strResult.length());
+	int sendLen = send(g_sock, szSendBuf, HEAD_SIZE + strResult.length(), 0);
+	if (sendLen == SOCKET_ERROR)
+	{
+		g_bConnect = FALSE;
+		closesocket(g_sock);
+		g_sock = INVALID_SOCKET;
+		return FALSE;
+	}
+	return TRUE;
+}
+
 DWORD WINAPI MyWork(LPVOID lParam)
 {
 	char recvbuf[BUFSIZE] = { 0 };
@@ -511,7 +577,7 @@ DWORD WINAPI MyWork(LPVOID lParam)
 	int nServerPort = g_nInitServerPort;
 	while (bContinue)
 	{
-		if (nConnectFailTimes > 10)
+		if (nConnectFailTimes >= 4)
 		{
 			//重新读取配置文件，重头开始
 			TRACE("重新读取配置文件，重新请求版本信息\n");
@@ -525,6 +591,7 @@ DWORD WINAPI MyWork(LPVOID lParam)
 			g_bConnect = FALSE;
 			strServerIP = g_strInitServerIP;
 			nServerPort = g_nInitServerPort;
+			bGetVerServerAddr = FALSE;
 		}
 		if (!g_bConnect)
 		{
@@ -533,6 +600,7 @@ DWORD WINAPI MyWork(LPVOID lParam)
 				nConnectFailTimes++;
 				g_bConnect = FALSE;
 				Sleep(1000 * 30);
+				g_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 				continue;
 			}
 			g_bConnect = TRUE;
@@ -541,7 +609,14 @@ DWORD WINAPI MyWork(LPVOID lParam)
 		if (!bGetVerServerAddr && !GetVerServerAddr())
 		{
 			nConnectFailTimes++;
+			if (g_sock != INVALID_SOCKET)
+			{
+				closesocket(g_sock);
+				g_sock = INVALID_SOCKET;
+			}
+			g_bConnect = FALSE;
 			Sleep(INTERVAL_TIME);
+			g_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 			continue;
 		}
 
@@ -562,29 +637,28 @@ DWORD WINAPI MyWork(LPVOID lParam)
 			if (!bGetVerServerFileList)
 			{
 				nConnectFailTimes++;
-				g_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-				Sleep(INTERVAL_TIME);
-				continue;
-			}
-			
-			BOOL bGetLocalFileList = GetLocalFileList();
-			BOOL bGetDownloadFileList = GetDownLoadFileList();
-			BOOL bDownloadAllFile = DownLoadAllFile();
-			if (!bDownloadAllFile)
-			{
-				nConnectFailTimes++;
 				if (g_sock != INVALID_SOCKET)
 				{
 					closesocket(g_sock);
 					g_sock = INVALID_SOCKET;
 				}
 				g_bConnect = FALSE;
+				Sleep(INTERVAL_TIME);
 				g_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 				continue;
 			}
+			
+			BOOL bGetLocalFileList = GetLocalFileList();
+			BOOL bGetDownloadFileList = GetDownLoadFileList();
+			
 			if (g_DownLoadFileList.size() == 0)
 			{
 				//没有需要更新的文件
+				TRACE("没有需要更新的文件\n");
+				std::string strResult = "没有需要更新的文件";
+				SendUpdataResult(strResult);
+				Sleep(1000);
+
 				nConnectFailTimes = 0;
 				closesocket(g_sock);
 				g_sock = INVALID_SOCKET;
@@ -595,7 +669,35 @@ DWORD WINAPI MyWork(LPVOID lParam)
 				g_bConnect = FALSE;
 				continue;
 			}
+
+			bool bSetupPkg = false;		//是否是单个安装文件
+			if (g_DownLoadFileList.size() == 1)
+			{
+				std::string strDLName = g_DownLoadFileList.front();
+				if (strDLName == "setup.exe")
+					bSetupPkg = true;
+			}
+
+			BOOL bDownloadAllFile = DownLoadAllFile();
+			if (!bDownloadAllFile)
+			{
+				std::string strResult = "下载所有版本文件失败";
+				SendUpdataResult(strResult);
+				Sleep(1000);
+
+				nConnectFailTimes++;
+				if (g_sock != INVALID_SOCKET)
+				{
+					closesocket(g_sock);
+					g_sock = INVALID_SOCKET;
+				}
+				g_bConnect = FALSE;
+				g_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+				continue;
+			}
 			TRACE("新版本文件下载完成\n");
+			std::string strResult = "新版本文件下载完成";
+			SendUpdataResult(strResult);
 
 			//替换文件
 			BOOL bReplace = FALSE;
@@ -603,24 +705,47 @@ DWORD WINAPI MyWork(LPVOID lParam)
 			int nReplaceTimes = 0;
 			while (!bReplace && nReplaceTimes < 10)
 			{
-				bResult = UpdateFile(bReplace);
+				bResult = UpdateFile(bReplace, bSetupPkg);
 				if (bResult && bReplace)
 					break;
 				nReplaceTimes++;
 				if (!bResult)
 					Sleep(10 * 1000);
 			}
-			if (!bResult)
+			if (!bReplace)
 			{
 				TRACE("替换文件失败\n");
+				std::string strResult = "替换文件失败";
+				SendUpdataResult(strResult);
+				Sleep(1000);
+
 				nConnectFailTimes++;
+				if (g_sock != INVALID_SOCKET)
+				{
+					closesocket(g_sock);
+					g_sock = INVALID_SOCKET;
+				}
+				g_bConnect = FALSE;
+				Sleep(INTERVAL_TIME);
+				g_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 				continue;
 			}
 
 			TRACE("替换文件成功\n");
+			strResult = "升级成功";
+			SendUpdataResult(strResult);
+			Sleep(1000);
+
 
 			nConnectFailTimes = 0;
+			if (g_sock != INVALID_SOCKET)
+			{
+				closesocket(g_sock);
+				g_sock = INVALID_SOCKET;
+			}
+			g_bConnect = FALSE;
 			Sleep(CHECK_UPDATE_TIME);
+			g_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		}
 	}
 	
@@ -673,6 +798,33 @@ BOOL ReplaceFile()
 							int nError = GetLastError();
 							TRACE("移动文件失败%s\n", T2A(ff2.GetFilePath()));
 						}
+						else
+						{
+							bool bFind = false;
+							std::string strMd5;
+							CString strName = ff.GetFileName() + _T("\\") + ff2.GetFileName();
+							LIST_FILEINFO::iterator it = g_VerServerFileList.begin();
+							for (; it != g_VerServerFileList.end(); it++)
+							{
+								pST_FILEINFO pFileInfo = *it;
+								if (pFileInfo->strFileName == T2A(strName))
+								{
+									bFind = true;
+									strMd5 = pFileInfo->strMd5;
+								}
+							}
+							if (bFind)
+							{
+								g_mutex_LFM.Lock();
+								MAP_FILEINFO::iterator itFile = g_LocalFileMap.find(T2A(strName));
+								if (itFile != g_LocalFileMap.end())
+								{
+									pST_FILEINFO pFile = itFile->second;
+									pFile->strMd5 = strMd5;
+								}
+								g_mutex_LFM.Unlock();
+							}
+						}
 					}
 				}
 			}
@@ -699,6 +851,32 @@ BOOL ReplaceFile()
 			{
 				int nError = GetLastError();
 				TRACE("移动文件失败%s\n", ff.GetFilePath());
+			}
+			else
+			{
+				bool bFind = false;
+				std::string strMd5;
+				LIST_FILEINFO::iterator it = g_VerServerFileList.begin();
+				for (; it != g_VerServerFileList.end(); it++)
+				{
+					pST_FILEINFO pFileInfo = *it;
+					if (pFileInfo->strFileName == T2A(ff.GetFileName()))
+					{
+						bFind = true;
+						strMd5 = pFileInfo->strMd5;
+					}
+				}
+				if (bFind)
+				{
+					g_mutex_LFM.Lock();
+					MAP_FILEINFO::iterator itFile = g_LocalFileMap.find(T2A(ff.GetFileName()));
+					if (itFile != g_LocalFileMap.end())
+					{
+						pST_FILEINFO pFile = itFile->second;
+						pFile->strMd5 = strMd5;
+					}
+					g_mutex_LFM.Unlock();
+				}				
 			}
 		}
 	}
@@ -737,7 +915,7 @@ BOOL CheckProcessExist(CString &str, int& nProcessID)
 	return FALSE;
 }
 
-BOOL UpdateFile(BOOL& bReplace)
+BOOL UpdateFile(BOOL& bReplace, bool bSetupPkg)
 {
 	USES_CONVERSION;
 	CString strProcessName = _T("");
@@ -777,6 +955,27 @@ BOOL UpdateFile(BOOL& bReplace)
 							{
 								bReplace = ReplaceFile();
 								g_bShowUpdateMsg = TRUE;
+
+								if (bReplace)
+								{
+									if (bSetupPkg)
+										strProcessName = "setup.exe";
+
+									STARTUPINFO si;
+									PROCESS_INFORMATION pi;
+									CString strComm;
+									char szWrkDir[MAX_PATH];
+									strComm.Format(_T("%s%s"), g_strAppPath, strProcessName);
+									memset(&si, 0, sizeof(si));
+									si.cb = sizeof(si);
+									ZeroMemory(&pi, sizeof(pi));
+
+									if (!CreateProcessW(NULL, (LPTSTR)(LPCTSTR)strComm, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+									{
+										int nErrorCode = GetLastError();
+									}
+								}
+
 								return TRUE;
 							}
 							else
