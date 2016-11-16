@@ -232,6 +232,7 @@
     <Image Include="res\bitmap1.bmp" />
     <Image Include="res\icon1.ico" />
     <Image Include="res\scanner.ico" />
+    <Image Include="res\ScanTool.ico" />
     <Image Include="res\setting.ico" />
     <Image Include="res\settings.png" />
     <Image Include="res\横向1.png" />
