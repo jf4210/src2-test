@@ -28,6 +28,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScanToolStart", "ScanToolSt
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EasyTntGuardProcess", "EasyTntGuardProcess\EasyTntGuardProcess.vcxproj", "{00DEFE83-4D1D-4F03-961C-6A9F0FB25721}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Uninstall", "Uninstall\Uninstall.vcxproj", "{2B3E6022-BF03-4A0E-99E9-4E48715BE6FF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		CD_ROM|Win32 = CD_ROM|Win32
@@ -145,6 +147,16 @@ Global
 		{00DEFE83-4D1D-4F03-961C-6A9F0FB25721}.Release|Win32.Build.0 = Release|Win32
 		{00DEFE83-4D1D-4F03-961C-6A9F0FB25721}.SingleImage|Win32.ActiveCfg = Release|Win32
 		{00DEFE83-4D1D-4F03-961C-6A9F0FB25721}.SingleImage|Win32.Build.0 = Release|Win32
+		{2B3E6022-BF03-4A0E-99E9-4E48715BE6FF}.CD_ROM|Win32.ActiveCfg = Release|Win32
+		{2B3E6022-BF03-4A0E-99E9-4E48715BE6FF}.CD_ROM|Win32.Build.0 = Release|Win32
+		{2B3E6022-BF03-4A0E-99E9-4E48715BE6FF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2B3E6022-BF03-4A0E-99E9-4E48715BE6FF}.Debug|Win32.Build.0 = Debug|Win32
+		{2B3E6022-BF03-4A0E-99E9-4E48715BE6FF}.DVD-5|Win32.ActiveCfg = Debug|Win32
+		{2B3E6022-BF03-4A0E-99E9-4E48715BE6FF}.DVD-5|Win32.Build.0 = Debug|Win32
+		{2B3E6022-BF03-4A0E-99E9-4E48715BE6FF}.Release|Win32.ActiveCfg = Release|Win32
+		{2B3E6022-BF03-4A0E-99E9-4E48715BE6FF}.Release|Win32.Build.0 = Release|Win32
+		{2B3E6022-BF03-4A0E-99E9-4E48715BE6FF}.SingleImage|Win32.ActiveCfg = Release|Win32
+		{2B3E6022-BF03-4A0E-99E9-4E48715BE6FF}.SingleImage|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

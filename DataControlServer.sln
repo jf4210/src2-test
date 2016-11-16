@@ -9,8 +9,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DataMgrTool", "DataMgrTool\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VersionControlServer", "VersionControlServer\VersionControlServer.vcxproj", "{FDBD348A-4559-4FBC-B685-76F307469FFF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NetOperatorDll", "NetOperatorDll\NetOperatorDll\NetOperatorDll.vcxproj", "{EFDE3C03-67C1-4F67-A4CB-36B233C529DA}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -29,10 +27,6 @@ Global
 		{FDBD348A-4559-4FBC-B685-76F307469FFF}.Debug|Win32.Build.0 = Debug|Win32
 		{FDBD348A-4559-4FBC-B685-76F307469FFF}.Release|Win32.ActiveCfg = Release|Win32
 		{FDBD348A-4559-4FBC-B685-76F307469FFF}.Release|Win32.Build.0 = Release|Win32
-		{EFDE3C03-67C1-4F67-A4CB-36B233C529DA}.Debug|Win32.ActiveCfg = Debug|Win32
-		{EFDE3C03-67C1-4F67-A4CB-36B233C529DA}.Debug|Win32.Build.0 = Debug|Win32
-		{EFDE3C03-67C1-4F67-A4CB-36B233C529DA}.Release|Win32.ActiveCfg = Release|Win32
-		{EFDE3C03-67C1-4F67-A4CB-36B233C529DA}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -122,7 +122,7 @@
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 
-#define SOFT_VERSION	_T("1.1024")
+#define SOFT_VERSION	_T("1.1116")
 #define SYS_BASE_NAME	_T("YKLX-ScanTool")
 #define SYS_GUIDE_NAME	_T("GuideDlg")
 

@@ -89,8 +89,8 @@ void CExamInfoDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_COMBO_ExamName)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_COMBO_ExamName)->MoveWindow(nCurrentLeft, nCurrentTop, 2 * nStaticW, nStaticH);
-		nCurrentLeft = nCurrentLeft + 2 * nStaticW + 5 * nGap;
+		GetDlgItem(IDC_COMBO_ExamName)->MoveWindow(nCurrentLeft, nCurrentTop, 3 * nStaticW, nStaticH);
+		nCurrentLeft = nCurrentLeft + 3 * nStaticW + 5 * nGap;
 	}
 	if (GetDlgItem(IDC_STATIC_SubjectName)->GetSafeHwnd())
 	{
@@ -99,7 +99,7 @@ void CExamInfoDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_COMBO_SubjectName)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_COMBO_SubjectName)->MoveWindow(nCurrentLeft, nCurrentTop, 2 * nStaticW, nStaticH);
+		GetDlgItem(IDC_COMBO_SubjectName)->MoveWindow(nCurrentLeft, nCurrentTop, 1 * nStaticW, nStaticH);
 		nCurrentLeft = nLeft_Group;
 		nCurrentTop = nCurrentTop + nStaticH + nGap * 3;
 	}
