@@ -35,6 +35,7 @@ int					g_nExitFlag = 0;
 CString				g_strCurrentPath;
 std::string			g_strPaperSavePath;	//试卷扫描后保存的总路径
 std::string			g_strModelSavePath;
+std::string			g_strPaperBackupPath;	//试卷发送完成后的备份路径
 Poco::Logger*		g_pLogger;
 Poco::FastMutex		g_fmRecog;		//识别线程获取任务锁
 RECOGTASKLIST		g_lRecogTask;	//识别任务列表
@@ -538,8 +539,11 @@ void CScanToolDlg::InitConfig()
 #endif
 
 	g_strPaperSavePath = CMyCodeConvert::Gb2312ToUtf8(T2A(g_strCurrentPath + _T("Paper\\")));	//存放扫描试卷的路径
+	g_strPaperBackupPath = CMyCodeConvert::Gb2312ToUtf8(T2A(g_strCurrentPath + _T("Paper\\Pkg_Backup\\")));
 	Poco::File filePaperPath(g_strPaperSavePath);
 	filePaperPath.createDirectories();
+	Poco::File pkgBackupPath(g_strPaperBackupPath);
+	pkgBackupPath.createDirectories();
 
 	CString strConfigPath = g_strCurrentPath;
 	strConfigPath.Append(_T("config.ini"));
@@ -2857,6 +2861,30 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 void CScanToolDlg::InitFileUpLoadList()
 {
 	USES_CONVERSION;
+
+#if 1
+	CString strSearchPath = A2T(CMyCodeConvert::Utf8ToGb2312(g_strPaperSavePath).c_str());
+	CFileFind ff;
+	BOOL bFind = ff.FindFile(strSearchPath + _T("*"), 0);
+	while (bFind)
+	{
+		bFind = ff.FindNextFileW();
+		if (ff.GetFileName() == _T(".") || ff.GetFileName() == _T(".."))
+			continue;
+		else if (ff.IsArchived())
+		{
+			if (ff.GetFileName().Find(PAPERS_EXT_NAME) >= 0)
+			{
+				pSENDTASK pTask = new SENDTASK;
+				pTask->strFileName = T2A(ff.GetFileName());
+				pTask->strPath = T2A(ff.GetFilePath());
+				g_fmSendLock.lock();
+				g_lSendTask.push_back(pTask);
+				g_fmSendLock.unlock();
+			}
+		}
+	}
+#else
 	std::string strFilePath = T2A(g_strCurrentPath + _T("tmpFileList.dat"));
 	
 	std::ifstream in(strFilePath);
@@ -2915,6 +2943,7 @@ void CScanToolDlg::InitFileUpLoadList()
 		strErrInfo.append(exc.message());
 		g_pLogger->information(strErrInfo);
 	}
+#endif
 }
 
 void CScanToolDlg::InitParam()

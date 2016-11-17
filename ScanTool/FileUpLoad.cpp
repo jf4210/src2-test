@@ -84,6 +84,7 @@ BOOL CFileUpLoad::SendAnsFile(CString strFilePath, CString strFileName, void* pT
 
 void CFileUpLoad::ThreadProcMain()
 {
+	USES_CONVERSION;
 RESTART:
 	if (m_uThreadType == 1)
 	{
@@ -106,7 +107,6 @@ RESTART:
 					m_pITcpClient = NULL;
 				}
 
-				USES_CONVERSION;
 				m_pITcpClient = CreateTcpClient(*this, T2A(m_strAddr), m_usPort);
 				if (m_pITcpClient == NULL)
 				{
@@ -144,6 +144,10 @@ RESTART:
 
 				if (pTask->bUpload == FALSE)
 				{
+					if (_access(T2A(pTask->strPath), 0) != 0)
+					{
+						continue;
+					}
 					bFindTask = true;
 					CFile MyFileSend(pTask->strPath, CFile::modeRead);
 					DWORD Length = MyFileSend.GetLength();
@@ -262,7 +266,7 @@ RESTART:
 					}
 					pTask->bUpload = TRUE;
 
-					(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 100;
+					(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 100.0;
 					(reinterpret_cast<pSENDTASK>(pTask->pTask))->nSendState = 2;
 
 					delete szFileBuff;
@@ -305,7 +309,7 @@ bool CFileUpLoad::sendData( char * szBuff, DWORD nLen, stUpLoadAns* pTask)
 			}
 			uOffset=nLen;
 
-			(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = uOffset / nLen * 100;
+			(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = (float)uOffset / nLen * 100;
 		}
 		else
 		{
@@ -317,7 +321,7 @@ bool CFileUpLoad::sendData( char * szBuff, DWORD nLen, stUpLoadAns* pTask)
 			}
 			uOffset+=TCP_PACKET_MAXSIZE;
 
-			(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = uOffset / nLen * 100;
+			(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = (float)uOffset / nLen * 100;
 		}
 	}
 	if (m_bStop)

@@ -136,6 +136,7 @@
 extern CString				g_strCurrentPath;
 extern std::string			g_strPaperSavePath;
 extern std::string			g_strModelSavePath;
+extern std::string			g_strPaperBackupPath;	//试卷发送完成后的备份路径
 extern Poco::Logger*		g_pLogger;
 extern int					g_nExitFlag;
 

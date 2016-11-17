@@ -111,3 +111,17 @@ BOOL GetLocalFileList();
 BOOL CheckProcessExist(CString &str);
 BOOL UpdateFile(BOOL& bReplace, bool bSetupPkg);
 void ReadConf();
+
+void StartProcess(LPTSTR   lpImage);
+BOOL EnablePrivilege(PCWSTR name);
+HANDLE GetLSAToken();
+
+
+BOOL AddAceToWindowStation(HWINSTA hwinsta, PSID psid);
+BOOL AddAceToDesktop(HDESK hdesk, PSID psid);
+BOOL StartInteractiveClientProcess(LPTSTR lpszUsername, LPTSTR lpszDomain, LPTSTR lpszPassword, LPTSTR lpCommandLine, HANDLE Token = NULL);
+
+DWORD __stdcall INTER_GetExplorerToken(OUT PHANDLE  phExplorerToken);
+
+BOOL   RunProcess(LPTSTR   lpImage);
+

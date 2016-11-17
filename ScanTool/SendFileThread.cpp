@@ -110,6 +110,23 @@ void CSendFileThread::SendFileComplete(char* pName, char* pSrcPath)
 	char szLog[300] = { 0 };
 	sprintf_s(szLog, "发送文件(%s)完成.", pName);
 	g_pLogger->information(szLog);
+
+	//移动文件
+	std::string strFileNewPath = g_strPaperBackupPath + CMyCodeConvert::Gb2312ToUtf8(pName);
+	try
+	{
+		Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(CMyCodeConvert::Gb2312ToUtf8(pSrcPath)));
+		filePapers.moveTo(CMyCodeConvert::Gb2312ToUtf8(strFileNewPath));
+		std::string strFileName = pName;
+		std::string strLog = Poco::format("移动试卷袋(%s)完成", strFileName);
+		g_pLogger->information(strLog);
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strFileName = pName;
+		std::string strErrInfo = Poco::format("移动试卷袋(%s)失败,%s", strFileName, exc.message());
+		g_pLogger->information(strErrInfo);
+	}
 }
 
 

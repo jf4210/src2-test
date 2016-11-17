@@ -139,6 +139,25 @@ BOOL CEasyTntGuardProcessDlg::OnInitDialog()
 		return FALSE;
 	}
 	
+#if 1
+	CString strComm;
+	strComm.Format(_T("%ssetup.exe"), g_strAppPath);
+	
+	USES_CONVERSION;
+	SHELLEXECUTEINFOA TempInfo = {0};	
+
+	TempInfo.cbSize = sizeof(SHELLEXECUTEINFOA);
+	TempInfo.fMask = 0;
+	TempInfo.hwnd = NULL;
+	TempInfo.lpVerb = "runas";
+	TempInfo.lpFile = T2A(strComm);
+	TempInfo.lpParameters = "";
+	TempInfo.lpDirectory = T2A(g_strAppPath);
+	TempInfo.nShow = SW_NORMAL;
+
+	::ShellExecuteExA(&TempInfo);
+	TRACE("Ö´ÐÐShellExecuteExAÍê³É\n");
+#else
 	DWORD dwThreadID;
 	m_hThread = CreateThread(NULL, 0, MyWork, NULL, 0, &dwThreadID);
 	if (NULL == m_hThread)
@@ -146,7 +165,7 @@ BOOL CEasyTntGuardProcessDlg::OnInitDialog()
 		TRACE0("CreateThread failed\n");
 		return FALSE;
 	}
-
+#endif
 
 	ShowWindow(FALSE);
 

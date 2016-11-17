@@ -368,6 +368,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	{
 		std::string strLog = Poco::format("试卷袋(%s),解压后数据不一致，需要重新解压,已解压次数%d", pPapers->strPapersName, pTask->nTimes + 1);
 		g_Log.LogOutError(strLog);
+		std::cout << strLog << std::endl;
 		SAFE_RELEASE(pPapers);
 
 		Poco::Thread::sleep(500);
