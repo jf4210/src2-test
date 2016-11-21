@@ -26,10 +26,14 @@ public:
 	CMFCEditBrowseCtrl m_mfcEdit_Decompress;
 
 	CMFCEditBrowseCtrl m_mfcEdit_Encrypt;
+	CMFCEditBrowseCtrl m_mfcEdit_RePkg;
+	CMFCEditBrowseCtrl m_mfcEdit_RePkg_SavePath;
 
 	CString		m_strRarPath;
 	CString		m_strDecompressPath;
 	CString		m_strEncryptPath;
+	CString		m_strRePkgPath;
+	CString		m_strRePkg_SavePath;
 
 	CEdit		m_edit_Msg;
 	CString		m_strMsg;
@@ -83,4 +87,5 @@ public:
 	afx_msg void OnBnClickedBtnClearstatistics();
 	afx_msg void OnBnClickedChkReadparam();
 	afx_msg void OnBnClickedBtnLoadparam();
+	afx_msg void OnBnClickedMfcbuttonRepkg();
 };

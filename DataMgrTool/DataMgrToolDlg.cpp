@@ -115,6 +115,10 @@ void CDataMgrToolDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_DecompressDir, m_mfcEdit_Decompress);
 	DDX_Text(pDX, IDC_MFCEDITBROWSE_Encrypt_Src, m_strEncryptPath);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_Encrypt_Src, m_mfcEdit_Encrypt);
+	DDX_Control(pDX, IDC_MFCEDITBROWSE_RePkg, m_mfcEdit_RePkg);
+	DDX_Text(pDX, IDC_MFCEDITBROWSE_RePkg, m_strRePkgPath);
+	DDX_Control(pDX, IDC_MFCEDITBROWSE_RePkgSavePath, m_mfcEdit_RePkg_SavePath);
+	DDX_Text(pDX, IDC_MFCEDITBROWSE_RePkgSavePath, m_strRePkg_SavePath);
 	DDX_Text(pDX, IDC_EDIT_Msg, m_strMsg);
 	DDX_Control(pDX, IDC_EDIT_Msg, m_edit_Msg);
 
@@ -145,6 +149,7 @@ BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_ClearStatistics, &CDataMgrToolDlg::OnBnClickedBtnClearstatistics)
 	ON_BN_CLICKED(IDC_CHK_ReadParam, &CDataMgrToolDlg::OnBnClickedChkReadparam)
 	ON_BN_CLICKED(IDC_BTN_LoadParam, &CDataMgrToolDlg::OnBnClickedBtnLoadparam)
+	ON_BN_CLICKED(IDC_MFCBUTTON_RePkg, &CDataMgrToolDlg::OnBnClickedMfcbuttonRepkg)
 END_MESSAGE_MAP()
 
 
@@ -471,6 +476,26 @@ void CDataMgrToolDlg::OnBnClickedMfcbuttonDecrypt()
 	showMsg(strMsg);
 }
 
+void CDataMgrToolDlg::OnBnClickedMfcbuttonRepkg()
+{
+	UpdateData(TRUE);
+	USES_CONVERSION;
+
+	CString _strPkgName = m_strRePkgPath.Right(m_strRePkgPath.GetLength() - m_strRePkgPath.ReverseFind('\\') - 1);
+	string strPkgName = T2A(_strPkgName);
+	string strSavePath = T2A(m_strRePkg_SavePath);
+
+	std::string strNewPapersSavePath = strSavePath + "\\" + strPkgName;
+	pCOMPRESSTASK pTask = new COMPRESSTASK;
+	pTask->strCompressFileName = strPkgName;
+	pTask->strExtName = ".pkg";
+	pTask->strSavePath = strNewPapersSavePath;
+	pTask->strSrcFilePath = T2A(m_strRePkgPath);
+	g_fmCompressLock.lock();
+	g_lCompressTask.push_back(pTask);
+	g_fmCompressLock.unlock();
+}
+
 void CDataMgrToolDlg::showMsg(CString& strMsg)
 {
 	if (m_strMsg.GetLength() > 10000)
@@ -795,3 +820,4 @@ void CDataMgrToolDlg::OnBnClickedBtnLoadparam()
 	CString strMsg = _T("加载参数完成\r\n");
 	showMsg(strMsg);
 }
+

@@ -22,7 +22,12 @@ CGetModelDlg::CGetModelDlg(CString strIP, int nPort, CWnd* pParent /*=NULL*/)
 , m_nWantLen(0)
 , m_pFileRecv(NULL)
 {
-
+	EnableToolTips(TRUE);
+	m_Tip.Create(this);
+	m_Tip.SetMaxTipWidth(500);
+	m_Tip.SetTipTextColor(RGB(255, 0, 0));//设置提示字体颜色
+	m_Tip.SetTipBkColor(RGB(255, 255, 255));//设置提示背景颜色
+	m_Tip.Activate(TRUE);
 }
 
 CGetModelDlg::~CGetModelDlg()
@@ -61,6 +66,11 @@ BOOL CGetModelDlg::OnInitDialog()
 	USES_CONVERSION;
 
 	InitUI();
+//	m_Tip.AddTool(GetDlgItem(IDC_COMBO_ExamName), m_strExamName);
+// 	m_comboExamName.SetEditTooltip(TRUE);
+ 	m_comboExamName.SetListTooltip(TRUE, TRUE, TRUE);
+	m_comboExamName.AdjustDroppedWidth();
+//	m_comboExamName.SetMode(CComboBoxExt::MODE_AUTOCOMPLETE);
 
 	return TRUE;
 }
@@ -101,6 +111,9 @@ void CGetModelDlg::OnCbnSelchangeComboExamname()
 	m_nExamID = pExamInfo->nExamID;
 	m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
 	m_strGradeName = pExamInfo->strGradeName.c_str();
+
+	m_Tip.AddTool(GetDlgItem(IDC_COMBO_ExamName), m_strExamName);
+
 	UpdateData(FALSE);
 }
 
@@ -594,13 +607,15 @@ void CGetModelDlg::InitUI()
 
 	m_comboExamName.ResetContent();
 	EXAM_LIST::iterator itExam = g_lExamList.begin();
-	for (; itExam != g_lExamList.end(); itExam++)
+	for (int i = 0; itExam != g_lExamList.end(); itExam++, i++)
 	{
 		CString strName = A2T(itExam->strExamName.c_str());
-		m_strExamName = strName;
+		if (i == 0)
+			m_strExamName = strName;
 
 		int nCount = m_comboExamName.GetCount();
 		m_comboExamName.InsertString(nCount, strName);
+//		m_comboExamName.InsertStringWithInfo(nCount, strName, strName);
 
 		m_comboExamName.SetItemDataPtr(nCount, (void*)&(*itExam));
 	}
@@ -708,4 +723,14 @@ void CGetModelDlg::OnBnClickedBtnCreatemodel()
 	}
 
 	GetDlgItem(IDC_BTN_CREATEMODEL)->EnableWindow(TRUE);
+}
+
+BOOL CGetModelDlg::PreTranslateMessage(MSG* pMsg)
+{
+	switch (pMsg->message)
+	{
+		case WM_MOUSEMOVE:
+			m_Tip.RelayEvent(pMsg);
+	}
+	return CDialog::PreTranslateMessage(pMsg);
 }

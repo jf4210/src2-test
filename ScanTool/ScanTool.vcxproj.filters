@@ -112,6 +112,9 @@
     <Filter Include="解压缩">
       <UniqueIdentifier>{e55841e4-0bda-49ea-8fab-0481fd5a6a59}</UniqueIdentifier>
     </Filter>
+    <Filter Include="下拉列表">
+      <UniqueIdentifier>{a81bb5fb-e0ee-4101-b5c0-d3ebf5b926f0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -261,6 +264,12 @@
     <ClInclude Include="CompressThread.h">
       <Filter>解压缩</Filter>
     </ClInclude>
+    <ClInclude Include="ComboBoxExt.h">
+      <Filter>下拉列表</Filter>
+    </ClInclude>
+    <ClInclude Include="ComboBoxExtList.h">
+      <Filter>下拉列表</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
@@ -385,6 +394,12 @@
     </ClCompile>
     <ClCompile Include="CompressThread.cpp">
       <Filter>解压缩</Filter>
+    </ClCompile>
+    <ClCompile Include="ComboBoxExt.cpp">
+      <Filter>下拉列表</Filter>
+    </ClCompile>
+    <ClCompile Include="ComboBoxExtList.cpp">
+      <Filter>下拉列表</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -1,6 +1,8 @@
 #pragma once
 #include "global.h"
 #include "Net_Cmd_Protocol.h"
+
+#include "ComboBoxExt.h"
 // CGetModelDlg 对话框
 
 #define DEFAULT_RECVBUFF	1024*1024*2
@@ -18,8 +20,8 @@ public:
 
 public:
 	CProgressCtrl	m_progress;
-	CComboBox	m_comboExamName;
-	CComboBox	m_comboSubject;
+	CComboBoxExt	m_comboExamName;
+	CComboBoxExt	m_comboSubject;
 
 	int			m_nExamID;
 	CString		m_strExamName;
@@ -42,10 +44,12 @@ private:
 	int			m_nWantLen; 
 	char		m_szRecvBuff[1024];
 	char*		m_pFileRecv;
+
+	CToolTipCtrl m_Tip;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();
-
+	BOOL	PreTranslateMessage(MSG* pMsg);
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnCbnSelchangeComboExamname();

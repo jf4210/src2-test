@@ -73,7 +73,6 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 	}
 
 	static_cast<CDataMgrToolDlg*>(m_pDlg)->showMsg(strInfo);
-
 }
 
 void CCompressThread::setDlg(void * pDlg)
