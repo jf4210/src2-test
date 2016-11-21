@@ -61,8 +61,8 @@
 
 #define MCASTPORT 19970				//绑定的本地端口号。
 #define BUFSIZE 1024				//接收数据缓冲大小。
-#define INTERVAL_TIME	10 * 1000	//间隔时间，秒60 * 1000
-#define CHECK_UPDATE_TIME	30 * 1000	//检查是否有更新的时间60 * 60 * 1000
+#define INTERVAL_TIME	1 * 60 * 1000	//间隔时间，秒60 * 1000
+#define CHECK_UPDATE_TIME	60 * 60 * 1000	//检查是否有更新的时间60 * 60 * 1000
 
 #define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}
 #define SAFE_RELEASE_ARRY(pObj) if(pObj) {delete[] pObj; pObj = NULL;}
@@ -97,6 +97,9 @@ extern LIST_NEED_DOWNLOAD	g_DownLoadFileList;
 typedef std::map<std::string, pST_FILEINFO> MAP_FILEINFO;
 extern MAP_FILEINFO		g_LocalFileMap;
 
+
+
+BOOL DeleteDirectory(char* psDirName);
 
 //自动启动
 BOOL StartUp();

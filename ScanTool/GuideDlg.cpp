@@ -69,6 +69,10 @@ BOOL CGuideDlg::OnInitDialog()
 	CenterWindow();
 //	ShowWindow(SW_SHOW);
 
+
+	if (CheckNewVersion())
+		return FALSE;
+
 	return TRUE;
 }
 
@@ -81,6 +85,84 @@ LRESULT CGuideDlg::MSG_UpdateNotify(WPARAM wParam, LPARAM lParam)
 		SAFE_RELEASE(m_pModel);
 	DestroyWindow();
 	return TRUE;
+}
+
+BOOL CGuideDlg::CheckNewVersion()
+{
+	USES_CONVERSION;
+	CString strVerPath = g_strCurrentPath + _T("newSetupPkg\\");
+	Poco::File verPath(CMyCodeConvert::Gb2312ToUtf8(T2A(strVerPath)));
+	if (verPath.exists())
+	{
+		CString strNewSetupFile = strVerPath + _T("setup.exe");
+		Poco::File newSetupFile(CMyCodeConvert::Gb2312ToUtf8(T2A(strNewSetupFile)));
+		if (newSetupFile.exists())
+		{
+			TCHAR buf[MAX_PATH];
+			GetTempPathW(MAX_PATH, buf);
+
+			CString strTmpPath = _T("");
+			strTmpPath.Format(_T("%ssetup.exe"), buf);
+
+			try
+			{
+				CString strCheckPath = g_strCurrentPath + _T("\\setup.exe");
+				Poco::File checkFile(CMyCodeConvert::Gb2312ToUtf8(T2A(strCheckPath)));
+				if (checkFile.exists())
+					checkFile.remove(true);
+				newSetupFile.copyTo(CMyCodeConvert::Gb2312ToUtf8(T2A(g_strCurrentPath)));
+
+				newSetupFile.moveTo(CMyCodeConvert::Gb2312ToUtf8(T2A(strTmpPath)));
+
+				SHELLEXECUTEINFOA TempInfo = { 0 };
+
+				TempInfo.cbSize = sizeof(SHELLEXECUTEINFOA);
+				TempInfo.fMask = 0;
+				TempInfo.hwnd = NULL;
+				TempInfo.lpVerb = "runas";
+				TempInfo.lpFile = T2A(strTmpPath);
+				TempInfo.lpParameters = "";
+				TempInfo.lpDirectory = T2A(buf);
+				TempInfo.nShow = SW_NORMAL;
+				TempInfo.hInstApp = NULL;
+
+				int nResult = ::ShellExecuteExA(&TempInfo);
+
+				//运行卸载程序
+				CString strKillExe = g_strCurrentPath + _T("Uninstall.exe");
+				Poco::File killFile(CMyCodeConvert::Gb2312ToUtf8(T2A(strKillExe)));
+				if (killFile.exists())
+				{
+					SHELLEXECUTEINFOA TempInfo2 = { 0 };
+
+					TempInfo2.cbSize = sizeof(SHELLEXECUTEINFOA);
+					TempInfo2.fMask = 0;
+					TempInfo2.hwnd = NULL;
+					TempInfo2.lpVerb = "runas";
+					TempInfo2.lpFile = T2A(strKillExe);
+					TempInfo2.lpParameters = "";
+					TempInfo2.lpDirectory = T2A(g_strCurrentPath);
+					TempInfo2.nShow = SW_HIDE;
+					TempInfo2.hInstApp = NULL;
+
+					int nResult = ::ShellExecuteExA(&TempInfo2);
+				}
+
+				return TRUE;
+			}
+			catch (Poco::Exception& exc)
+			{
+				std::string strLog = "移动新版安装文件到系统临时目录失败";
+				g_pLogger->information(strLog);
+			}
+		}
+		else
+		{
+			verPath.remove(true);
+		}
+	}
+
+	return FALSE;
 }
 
 void CGuideDlg::InitCtrlPosition()

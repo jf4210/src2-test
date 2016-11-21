@@ -26,7 +26,7 @@
 // 	#define USE_POCO_UNZIP			//给武汉天喻信息使用,不使用加密压缩
 // #endif
 
-#define SOFT_VERSION "DataControlServer V1.0"
+#define SOFT_VERSION "DataControlServer V1.1118"
 
 
 #define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}

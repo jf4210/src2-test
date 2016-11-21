@@ -139,24 +139,35 @@ BOOL CEasyTntGuardProcessDlg::OnInitDialog()
 		return FALSE;
 	}
 	
-#if 1
+#if 0
 	CString strComm;
-	strComm.Format(_T("%ssetup.exe"), g_strAppPath);
+	strComm.Format(_T("%snewSetupPkg\\setup.exe"), g_strAppPath);
+//	strComm.Format(_T("%s\\ScanTool.exe"), g_strAppPath);
 	
 	USES_CONVERSION;
 	SHELLEXECUTEINFOA TempInfo = {0};	
 
 	TempInfo.cbSize = sizeof(SHELLEXECUTEINFOA);
-	TempInfo.fMask = 0;
+	TempInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
 	TempInfo.hwnd = NULL;
 	TempInfo.lpVerb = "runas";
 	TempInfo.lpFile = T2A(strComm);
 	TempInfo.lpParameters = "";
 	TempInfo.lpDirectory = T2A(g_strAppPath);
 	TempInfo.nShow = SW_NORMAL;
+	TempInfo.hInstApp = NULL;
 
-	::ShellExecuteExA(&TempInfo);
-	TRACE("执行ShellExecuteExA完成\n");
+	int nResult = ::ShellExecuteExA(&TempInfo);
+
+	TRACE("执行ShellExecuteExA完成1, nResult = %d\n", nResult);
+	WaitForSingleObject(TempInfo.hProcess,INFINITE);
+	TRACE("执行ShellExecuteExA完成2\n");
+	CString strVerExePath = g_strAppPath + _T("newSetupPkg\\");
+	BOOL bDel = DeleteDirectory(T2A(strVerExePath));
+	if (bDel)
+		TRACE("移除版本存放文件夹: %s\n", T2A(strVerExePath));
+	else
+		TRACE("移除版本存放文件夹(%s)失败\n", T2A(strVerExePath));
 #else
 	DWORD dwThreadID;
 	m_hThread = CreateThread(NULL, 0, MyWork, NULL, 0, &dwThreadID);

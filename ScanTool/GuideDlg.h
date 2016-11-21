@@ -32,6 +32,9 @@ private:
 	void InitConf();
 	void InitLog();
 	void InitCtrlPosition();
+
+	BOOL	CheckNewVersion();		//检测是否存在新版本
+
 	LRESULT MSG_UpdateNotify(WPARAM wParam, LPARAM lParam);
 
 protected:

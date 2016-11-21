@@ -12,6 +12,42 @@
 struct sockaddr_in local;
 struct sockaddr_in serverAddr;
 
+BOOL DeleteDirectory(char* psDirName)
+{
+	USES_CONVERSION;
+	CFileFind tempFind;
+	char sTempFileFind[_MAX_PATH] = { 0 };
+	sprintf(sTempFileFind, "%s//*.*", psDirName);
+	BOOL IsFinded = tempFind.FindFile(A2T(sTempFileFind));
+	while (IsFinded)
+	{
+		IsFinded = tempFind.FindNextFile();
+		if (!tempFind.IsDots())
+		{
+			char sFoundFileName[_MAX_PATH] = { 0 };
+			strcpy(sFoundFileName, T2A(tempFind.GetFileName().GetBuffer(200)));
+			if (tempFind.IsDirectory())
+			{
+				char sTempDir[_MAX_PATH] = { 0 };
+				sprintf(sTempDir, "%s//%s", psDirName, sFoundFileName);
+				DeleteDirectory(sTempDir);
+			}
+			else
+			{
+				char sTempFileName[_MAX_PATH] = { 0 };
+				sprintf(sTempFileName, "%s//%s", psDirName, sFoundFileName);
+				DeleteFile(A2T(sTempFileName));
+			}
+		}
+	}
+	tempFind.Close();
+	if (!RemoveDirectory(A2T(psDirName)))
+	{
+		return FALSE;
+	}
+	return TRUE;
+}
+
 BOOL StartUp()
 {
 	//写入注册表,开机自启动 
@@ -221,6 +257,7 @@ BOOL GetLocalFileList()
 					g_mutex_LFM.Unlock();
 				}
 			}
+			ff2.Close();
 		}
 		else
 		{
@@ -243,6 +280,7 @@ BOOL GetLocalFileList()
 			g_mutex_LFM.Unlock();
 		}
 	}
+	ff.Close();
 
 	TRACE("获取本地文件列表成功\n");
 	return TRUE;
@@ -332,7 +370,9 @@ BOOL GetDownLoadFileList()
 		if (itMap != g_LocalFileMap.end())
 		{
 			pST_FILEINFO pLocalFile = itMap->second;
-			if (pFileInfo->strMd5 != pLocalFile->strMd5)
+
+			//守护进程不进行升级，如果需要升级，只能通过setup.exe的方式升级
+			if (pFileInfo->strMd5 != pLocalFile->strMd5 && pFileInfo->strFileName.find("EasyTntGuardProcess.exe") == std::string::npos)	
 			{
 				g_mutex_DFL.Lock();
 				g_DownLoadFileList.push_back(pFileInfo->strFileName);
@@ -488,18 +528,23 @@ BOOL DownLoadAllFile()
 	BOOL bUpdateError = FALSE;
 
 	CString strFilePath = g_strAppPath + _T("updateVersion");
-	try
-	{
-		if (_access(T2A(strFilePath), 0) == 0)
-		{
-			remove(T2A(strFilePath));
-			TRACE("移除版本存放文件夹: %s\n", T2A(strFilePath));
-		}
-	}
-	catch (...)
-	{
-		TRACE("移除版本存放文件夹(%s)异常\n", strFilePath);
-	}
+	BOOL bDel = DeleteDirectory(T2A(strFilePath));
+	if (bDel)
+		TRACE("移除版本存放文件夹: %s\n", T2A(strFilePath));
+	else
+		TRACE("移除版本存放文件夹(%s)失败\n", T2A(strFilePath));
+// 	try
+// 	{
+// 		if (_access(T2A(strFilePath), 0) == 0)
+// 		{
+// 			remove(T2A(strFilePath));
+// 			TRACE("移除版本存放文件夹: %s\n", T2A(strFilePath));
+// 		}
+// 	}
+// 	catch (...)
+// 	{
+// 		TRACE("移除版本存放文件夹(%s)异常\n", strFilePath);
+// 	}
 
 	while (g_DownLoadFileList.size() > 0)
 	{
@@ -849,7 +894,12 @@ BOOL ReplaceFile(bool bSetupPkg)
 			if (bSetupPkg)
 			{
 				CString strSetupPkgPath = g_strAppPath + _T("\\newSetupPkg\\");
-
+				DWORD dwAttr = GetFileAttributesA(T2A(strSetupPkgPath));
+				if (dwAttr == 0xFFFFFFFF)
+				{
+					CreateDirectoryA(T2A(strSetupPkgPath), NULL);
+				}
+				strDstPath = strSetupPkgPath + ff.GetFileName();
 			}
 			else
 				strDstPath = g_strAppPath + ff.GetFileName();
@@ -973,25 +1023,64 @@ BOOL UpdateFile(BOOL& bReplace, bool bSetupPkg)
 
 								if (bReplace)
 								{
-									if (bSetupPkg)
-										strProcessName = "setup.exe";
-#if 1
+									ULONG fMask = 0;
 									CString strComm;
-									strComm.Format(_T("%s%s"), g_strAppPath, strProcessName);
-									
+									CString strDir;
+									if (bSetupPkg)
+									{
+										strProcessName = "newSetupPkg\\setup.exe";
+										fMask = SEE_MASK_NOCLOSEPROCESS;				//直到调用的进程运行接收才返回
+
+										TCHAR buf[MAX_PATH];
+										GetTempPathW(MAX_PATH, buf);
+
+										//将此安装文件移动到临时目录
+										CString strTmpPath = _T("");
+										strTmpPath.Format(_T("%ssetup.exe"), buf);
+										if (_access(T2A(strTmpPath), 0) == 0)
+											remove(T2A(strTmpPath));
+										CString strTmpPath2 = _T("");
+										strTmpPath2.Format(_T("%ssetup.exe"), g_strAppPath);
+										if (_access(T2A(strTmpPath2), 0) == 0)
+											remove(T2A(strTmpPath2));
+										CopyFile(strProcessName, strTmpPath2, FALSE);
+
+										if (MoveFile(strProcessName, strTmpPath))
+										{
+											strComm = strTmpPath;
+											strDir = buf;
+										}
+									}
+									else
+									{
+										strComm.Format(_T("%s%s"), g_strAppPath, strProcessName);
+										strDir = g_strAppPath;
+									}
+#if 1									
 									SHELLEXECUTEINFOA TempInfo = {0};	
 
 									TempInfo.cbSize = sizeof(SHELLEXECUTEINFOA);
-									TempInfo.fMask = 0;
+									TempInfo.fMask = fMask;
 									TempInfo.hwnd = NULL;
 									TempInfo.lpVerb = "runas";
 									TempInfo.lpFile = T2A(strComm);
 									TempInfo.lpParameters = "";
-									TempInfo.lpDirectory = T2A(g_strAppPath);
+									TempInfo.lpDirectory = T2A(strDir);
 									TempInfo.nShow = SW_NORMAL;
 
 									::ShellExecuteExA(&TempInfo);
-									TRACE("执行ShellExecuteExA完成\n");
+									TRACE("执行ShellExecuteExA完成1\n");
+									if(bSetupPkg)
+									{
+										WaitForSingleObject(TempInfo.hProcess,INFINITE);
+										TRACE("执行ShellExecuteExA完成2\n");
+										CString strVerExePath = g_strAppPath + _T("newSetupPkg\\");
+										BOOL bDel = DeleteDirectory(T2A(strVerExePath));
+										if (bDel)
+											TRACE("移除版本存放文件夹: %s\n", T2A(strVerExePath));
+										else
+											TRACE("移除版本存放文件夹(%s)失败\n", T2A(strVerExePath));
+									}
 #else
 									STARTUPINFO si;
 									PROCESS_INFORMATION pi;
