@@ -112,10 +112,14 @@ void CSendFileThread::SendFileComplete(char* pName, char* pSrcPath)
 	g_pLogger->information(szLog);
 
 	//移动文件
+	std::string strName = pName;
+	if (strName.find(".mod") != std::string::npos)
+		return;
+
 	std::string strFileNewPath = g_strPaperBackupPath + CMyCodeConvert::Gb2312ToUtf8(pName);
 	try
 	{
-		Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(CMyCodeConvert::Gb2312ToUtf8(pSrcPath)));
+		Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pSrcPath));
 		filePapers.moveTo(CMyCodeConvert::Gb2312ToUtf8(strFileNewPath));
 		std::string strFileName = pName;
 		std::string strLog = Poco::format("移动试卷袋(%s)完成", strFileName);

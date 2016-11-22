@@ -778,6 +778,11 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 #else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
 #endif
+			//去除干扰信息，先膨胀后腐蚀还原, 可去除一些线条干扰
+			Mat element_Anticlutter = getStructuringElement(MORPH_RECT, Size(_nAnticlutterKernel_, _nAnticlutterKernel_));	//Size(6, 6)	普通空白框可识别		Size(3, 3)
+			dilate(matCompRoi, matCompRoi, element_Anticlutter);
+			erode(matCompRoi, matCompRoi, element_Anticlutter);
+
 			cv::Canny(matCompRoi, matCompRoi, 0, rc.nCannyKernel, 5);	//_nCannyKernel_
 			Mat element = getStructuringElement(MORPH_RECT, Size(rc.nDilateKernel, rc.nDilateKernel));	//Size(6, 6)	普通空白框可识别		Size(3, 3)
 			dilate(matCompRoi, matCompRoi, element);
@@ -936,7 +941,7 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				RECTINFO rcTmp = rcHead1;
 				rcTmp.rt = RectCompList[i];
 				Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
-				if (rcTmp.fRealArea / rcTmp.fStandardArea < 0.8 || rcTmp.fRealDensity / rcTmp.fStandardDensity < 0.8)
+				if (rcTmp.fRealArea / rcTmp.fStandardArea < 0.75 || rcTmp.fRealDensity / rcTmp.fStandardDensity < 0.8)
 				{
 					itHead = RectCompList.erase(itHead);
 					i = i - 1;
@@ -1070,6 +1075,11 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 #else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
 #endif
+			//去除干扰信息，先膨胀后腐蚀还原, 可去除一些线条干扰
+			Mat element_Anticlutter = getStructuringElement(MORPH_RECT, Size(_nAnticlutterKernel_, _nAnticlutterKernel_));	//Size(6, 6)	普通空白框可识别		Size(3, 3)
+			dilate(matCompRoi, matCompRoi, element_Anticlutter);
+			erode(matCompRoi, matCompRoi, element_Anticlutter);
+
 			cv::Canny(matCompRoi, matCompRoi, 0, rc.nCannyKernel, 5);	//_nCannyKernel_
 			Mat element = getStructuringElement(MORPH_RECT, Size(rc.nDilateKernel, rc.nDilateKernel));	//Size(6, 6)	普通空白框可识别		Size(3, 3)
 			dilate(matCompRoi, matCompRoi, element);
@@ -1227,7 +1237,7 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				RECTINFO rcTmp = rcHead1;
 				rcTmp.rt = RectCompList[i];
 				Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
-				if (rcTmp.fRealArea / rcTmp.fStandardArea < 0.8 || rcTmp.fRealDensity / rcTmp.fStandardDensity < 0.8)
+				if (rcTmp.fRealArea / rcTmp.fStandardArea < 0.7 || rcTmp.fRealDensity / rcTmp.fStandardDensity < 0.8)
 				{
 					itHead = RectCompList.erase(itHead);
 					i = i - 1;
@@ -2187,7 +2197,7 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 			cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 			//图片二值化
-			threshold(matCompRoi, matCompRoi, 240, 255, THRESH_BINARY_INV);				//200, 255
+			threshold(matCompRoi, matCompRoi, _nThreshold_Recog2_, 255, THRESH_BINARY_INV);				//200, 255
 
 			IplImage ipl_img(matCompRoi);
 
@@ -2253,7 +2263,7 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 		//图片二值化
-		threshold(matCompRoi, matCompRoi, 240, 255, THRESH_BINARY_INV);				//200, 255
+		threshold(matCompRoi, matCompRoi, _nThreshold_Recog2_, 255, THRESH_BINARY_INV);				//200, 255
 
 		//这里进行开闭运算
 		//确定腐蚀和膨胀核的大小

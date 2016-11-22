@@ -152,6 +152,7 @@ RESTART:
 					CFile MyFileSend(pTask->strPath, CFile::modeRead);
 					DWORD Length = MyFileSend.GetLength();
 					char	*szFileBuff = NULL;
+					std::string strAnsName = T2A(pTask->strAnsName);
 					try
 					{
 						szFileBuff = new char[Length];
@@ -159,7 +160,7 @@ RESTART:
 					catch (...)
 					{
 						char szLog[100] = { 0 };
-						sprintf_s(szLog, "上传文件(%s)时内存申请失败，需要重新尝试。", pTask->strAnsName);
+						sprintf_s(szLog, "上传文件(%s)时内存申请失败，需要重新尝试。", strAnsName);
 						g_pLogger->information(szLog);
 						Sleep(500);
 						continue;
@@ -171,14 +172,13 @@ RESTART:
 
 					TRACE0("start send ans file\n");
 					char szLog[300] = { 0 };
-					sprintf_s(szLog, "开始上传文件: %s", pTask->strAnsName);
+					sprintf_s(szLog, "开始上传文件: %s", T2A(pTask->strAnsName));
 					g_pLogger->information(szLog);
 					//上传文件
 					ST_CMD_HEADER stHead;
 					stHead.usCmd = REQUEST_UPLOADANS;
 					stHead.uPackSize = sizeof(ST_FILE_INFO)+Length;
 					ST_FILE_INFO stAnsInfo;
-					USES_CONVERSION;
 					strcpy(stAnsInfo.szFileName, T2A(pTask->strAnsName));
 
 					char *pMd5 = MD5File(T2A(pTask->strPath));
@@ -189,7 +189,7 @@ RESTART:
 				RESENDHEAD:
 					if (m_bStop)
 					{
-						sprintf_s(szLog, "发送文件(%s)时检测到系统退出标志，停止发送数据", pTask->strAnsName);
+						sprintf_s(szLog, "发送文件(%s)时检测到系统退出标志，停止发送数据", T2A(pTask->strAnsName));
 						g_pLogger->information(szLog);
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
 						delete szFileBuff;
@@ -214,7 +214,7 @@ RESTART:
 							bRecvResult = true;
 							break;
 						case WAIT_TIMEOUT:
-							sprintf_s(szLog, "文件头数据发送完成，接收服务器回复命令失败(%s)失败1, 需要重传", pTask->strAnsName);
+							sprintf_s(szLog, "文件头数据发送完成，接收服务器回复命令失败(%s)失败1, 需要重传", T2A(pTask->strAnsName));
 							g_pLogger->information(szLog);
 							break;
 					}
@@ -226,7 +226,7 @@ RESTART:
 					ResetEvent(m_hSendReadyEvent);
 					if (m_bReadyOK == FALSE)
 					{
-						sprintf_s(szLog, "上传文件(%s)的反馈信息失败，重传", pTask->strAnsName);
+						sprintf_s(szLog, "上传文件(%s)的反馈信息失败，重传", T2A(pTask->strAnsName));
 						g_pLogger->information(szLog);
 
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
@@ -251,14 +251,14 @@ RESTART:
 							bRecvResult = true;
 							break;
 						case WAIT_TIMEOUT:
-							sprintf_s(szLog, "文件数据发送完成，接收服务器回复命令失败(%s)失败2", pTask->strAnsName);
+							sprintf_s(szLog, "文件数据发送完成，接收服务器回复命令失败(%s)失败2", T2A(pTask->strAnsName));
 							g_pLogger->information(szLog);
 							break;
 					}
 					ResetEvent(m_hSendDoneEvent);
 					if (m_bSendOK == FALSE)
 					{
-						sprintf_s(szLog, "上传文件(%s)失败，重传", pTask->strAnsName);
+						sprintf_s(szLog, "上传文件(%s)失败，重传", T2A(pTask->strAnsName));
 						g_pLogger->information(szLog);
 
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;

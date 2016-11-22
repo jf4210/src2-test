@@ -262,7 +262,7 @@ BOOL GetLocalFileList()
 		else
 		{
 			CString strName = ff.GetFileName();
-			if (strName.Find(_T(".Log")) != -1)
+			if (strName.Find(_T(".Log")) != -1 || strName.Find(_T(".log")) != -1)
 				continue;
 
 			MAP_FILEINFO::iterator itFile = g_LocalFileMap.find(T2A(ff.GetFileName()));

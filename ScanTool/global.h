@@ -66,6 +66,7 @@
 	#define  TEST_SCAN2			//测试纸张大小控制
 	#define	 TEST_MODEL_NAME	//模板名称测试
 #else	//release版本
+	#define	 TEST_MODEL_NAME	//模板名称测试
 	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
 #endif
 #ifndef WarpAffine_TEST
@@ -152,7 +153,9 @@ extern double	_dDiffExit_Fix_;
 extern double	_dCompThread_Head_;
 extern double	_dDiffThread_Head_;
 extern double	_dDiffExit_Head_;
+extern int		_nThreshold_Recog2_;	//第2中识别方法的二值化阀值
 
+extern int		_nAnticlutterKernel_;	//识别同步头时防干扰膨胀腐蚀的核因子
 
 extern int		_nGauseKernel_;			//高斯变换核因子
 extern int		_nSharpKernel_;			//锐化核因子

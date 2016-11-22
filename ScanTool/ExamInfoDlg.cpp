@@ -48,6 +48,11 @@ BOOL CExamInfoDlg::OnInitDialog()
 	InitUI();
 	InitData();
 
+	m_comboExamName.SetListTooltip(TRUE, TRUE, TRUE);
+	m_comboExamName.AdjustDroppedWidth();
+	m_comboSubject.SetListTooltip(TRUE, TRUE, TRUE);
+	m_comboSubject.AdjustDroppedWidth();
+
 	return TRUE;
 }
 

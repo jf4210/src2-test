@@ -1,6 +1,6 @@
 #pragma once
 #include "modelinfo.h"
-
+#include "ComboBoxExt.h"
 // CExamInfoDlg 对话框
 
 class CExamInfoDlg : public CDialog
@@ -14,8 +14,8 @@ public:
 // 对话框数据
 	enum { IDD = IDD_EXAMINFODLG };
 
-	CComboBox	m_comboExamName;
-	CComboBox	m_comboSubject;
+	CComboBoxExt	m_comboExamName;
+	CComboBoxExt	m_comboSubject;
 
 	int			m_nExamID;
 	CString		m_strExamTypeName;

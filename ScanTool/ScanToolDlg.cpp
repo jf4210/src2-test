@@ -64,7 +64,9 @@ double	_dDiffExit_Fix_ = 0.3;
 double	_dCompThread_Head_ = 1.0;
 double	_dDiffThread_Head_ = 0.085;
 double	_dDiffExit_Head_ = 0.15;
+int		_nThreshold_Recog2_ = 240;	//第2中识别方法的二值化阀值
 
+int		_nAnticlutterKernel_ = 4;	//识别同步头时防干扰膨胀腐蚀的核因子
 int		_nGauseKernel_ = 5;			//高斯变换核因子
 int		_nSharpKernel_ = 5;			//锐化核因子
 int		_nCannyKernel_ = 90;		//轮廓化核因子
@@ -2966,6 +2968,8 @@ void CScanToolDlg::InitParam()
 		_dCompThread_Head_ = pConf->getDouble("RecogOmrSn_Head.fCompTread", 1.2);
 		_dDiffThread_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffThread", 0.085);
 		_dDiffExit_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffExit", 0.15);
+
+		_nThreshold_Recog2_ = pConf->getInt("RecogOmrSn_Fun2.nThreshold_Fun2", 240);
 		
 		strLog = "读取识别灰度参数完成";
 	}

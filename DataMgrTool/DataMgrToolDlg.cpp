@@ -38,6 +38,7 @@ pMODEL _pModel_ = NULL;
 
 bool	_nUseNewParam_ = false;			//是否使用新的参数重新识别模板
 
+int		_nAnticlutterKernel_ = 4;	//识别同步头时防干扰膨胀腐蚀的核因子
 int		_nCannyKernel_ = 90;		//轮廓化核因子
 
 int		g_nRecogGrayMin = 0;			//灰度点(除空白点,OMR外)计算灰度的最小考试范围
@@ -52,6 +53,7 @@ double	_dDiffExit_Fix_ = 0.3;
 double	_dCompThread_Head_ = 1.0;
 double	_dDiffThread_Head_ = 0.085;
 double	_dDiffExit_Head_ = 0.15;
+int		_nThreshold_Recog2_ = 240;	//第2中识别方法的二值化阀值
 
 int		_nOMR_ = 230;		//重新识别模板时，用来识别OMR的密度值的阀值
 int		_nSN_ = 200;		//重新识别模板时，用来识别ZKZH的密度值的阀值
@@ -351,7 +353,9 @@ void CDataMgrToolDlg::InitParam()
 		_dCompThread_Head_ = pConf->getDouble("RecogOmrSn_Head.fCompTread", 1.2);
 		_dDiffThread_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffThread", 0.085);
 		_dDiffExit_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffExit", 0.15);
-		
+
+		_nThreshold_Recog2_ = pConf->getInt("RecogOmrSn_Fun2.nThreshold_Fun2", 240);
+
 		_nOMR_ = pConf->getInt("MakeModel_Threshold.omr", 230);
 		_nSN_ = pConf->getInt("MakeModel_Threshold.sn", 200);
 
