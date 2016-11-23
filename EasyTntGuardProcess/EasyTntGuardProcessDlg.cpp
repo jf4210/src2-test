@@ -132,7 +132,7 @@ BOOL CEasyTntGuardProcessDlg::OnInitDialog()
 
 	g_hMutex_Conn = CreateMutex(NULL, FALSE, L"VerServerFileList");
 
-//	StartUp();
+	StartUp();
 	
 	if (!InitNetWork())
 	{

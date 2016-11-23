@@ -1,6 +1,6 @@
 #pragma once
 #include "global.h"
-
+#include "ComboBoxExt.h"
 
 // CModelSaveDlg ¶Ô»°¿ò
 
@@ -18,8 +18,8 @@ public:
 	CString		m_strModelName;
 //	CString		m_strModelDesc;
 
-	CComboBox	m_comboExamName;
-	CComboBox	m_comboSubject;
+	CComboBoxExt	m_comboExamName;
+	CComboBoxExt	m_comboSubject;
 
 	int			m_nExamID;
 	CString		m_strExamName;

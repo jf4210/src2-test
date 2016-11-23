@@ -597,6 +597,7 @@ void CTwain::TranslateMessage(TW_EVENT& twEvent)
 			{
 				CloseDS();
 			}
+			ScanDone(1);
 			break;
 	default:
 		TRACE("TranslateMessage --> default, twEvent.TWMessage = %d.\n", twEvent.TWMessage);

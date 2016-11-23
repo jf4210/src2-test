@@ -847,6 +847,7 @@ BOOL ReplaceFile(bool bSetupPkg)
 						{
 							int nError = GetLastError();
 							TRACE("移动文件失败%s\n", T2A(ff2.GetFilePath()));
+							return FALSE;
 						}
 						else
 						{
@@ -884,6 +885,7 @@ BOOL ReplaceFile(bool bSetupPkg)
 				if (!bMoveResult)
 				{
 					TRACE("移动文件夹失败%s\n", ff.GetFilePath());
+					return FALSE;
 				}
 			}
 		}
@@ -916,6 +918,7 @@ BOOL ReplaceFile(bool bSetupPkg)
 			{
 				int nError = GetLastError();
 				TRACE("移动文件失败%s\n", ff.GetFilePath());
+				return FALSE;
 			}
 			else
 			{
@@ -1018,6 +1021,9 @@ BOOL UpdateFile(BOOL& bReplace, bool bSetupPkg)
 							TRACE("发送消息完成, %d\n", dwResult);
 							if (dwResult == 1)
 							{
+								if (!bSetupPkg)
+									Sleep(2 * 1000);		//等待程序退出
+
 								bReplace = ReplaceFile(bSetupPkg);
 								g_bShowUpdateMsg = TRUE;
 
@@ -1050,6 +1056,8 @@ BOOL UpdateFile(BOOL& bReplace, bool bSetupPkg)
 											strComm = strTmpPath;
 											strDir = buf;
 										}
+										else
+											return FALSE;
 									}
 									else
 									{

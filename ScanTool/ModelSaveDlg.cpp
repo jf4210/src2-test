@@ -121,6 +121,11 @@ BOOL CModelSaveDlg::OnInitDialog()
 		m_strModelName		= A2T(m_pModel->strModelName.c_str());
 	}	
 
+//	m_comboExamName.SetListTooltip(TRUE, TRUE, TRUE);
+	m_comboExamName.AdjustDroppedWidth();
+//	m_comboSubject.SetListTooltip(TRUE, TRUE, TRUE);
+	m_comboSubject.AdjustDroppedWidth();
+
 	UpdateData(FALSE);
 	return TRUE;
 }

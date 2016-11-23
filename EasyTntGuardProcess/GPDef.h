@@ -10,59 +10,23 @@
 #include "md5.h"
 
 #include <io.h>
-#if 0
-#include "Poco/Runnable.h"
-#include "Poco/Exception.h"
 
-#include "Poco/AutoPtr.h"  
-#include "Poco/Logger.h"
-#include "Poco/PatternFormatter.h"
-#include "Poco/FormattingChannel.h"
-#include "Poco/FileChannel.h"
-#include "Poco/Message.h"
-
-#include "Poco/DirectoryIterator.h"
-#include "Poco/File.h"
-#include "Poco/Path.h"
-
-#include "Poco/JSON/JSON.h"
-#include "Poco/JSON/Parser.h"
-#include "Poco/Dynamic/Var.h"
-#include "Poco/JSON/Object.h"
-
-#include "Poco/AutoPtr.h"  
-#include "Poco/Util/IniFileConfiguration.h" 
-
-#include "Poco/Random.h"
-
-#include "Poco/MD5Engine.h"
-#include "Poco/DigestStream.h"
-#include "Poco/StreamCopier.h"
-
-#include "Poco/LocalDateTime.h"
-
-#include "Poco/Net/HTTPClientSession.h"
-#include "Poco/Net/HTTPRequest.h"
-#include "Poco/Net/HTTPResponse.h"
-#include "Poco/URI.h"
-#include "Poco/Net/NetException.h"
-#include "Poco/Net/TCPServer.h"
-
-#include "Poco/Crypto/CipherFactory.h"
-#include "Poco/Crypto/Cipher.h"
-#include "Poco/Crypto/CipherKey.h"
-#include "Poco/Crypto/X509Certificate.h"
-#include "Poco/Crypto/CryptoStream.h"
-#endif
 #include "afxmt.h"
 #include "MyCodeConvert.h"
+
+#ifdef _DEBUG
+	#define INTERVAL_TIME	30 * 1000	//间隔时间，秒60 * 1000
+	#define CHECK_UPDATE_TIME	1 * 60 * 1000	//检查是否有更新的时间60 * 60 * 1000
+#else
+#define INTERVAL_TIME	1 * 60 * 1000	//间隔时间，秒1 * 60 * 1000
+#define CHECK_UPDATE_TIME	60 * 60 * 1000	//检查是否有更新的时间60 * 60 * 1000
+#endif
 
 #define MSG_NOTIFY_UPDATE	(WM_APP + 101)
 
 #define MCASTPORT 19970				//绑定的本地端口号。
 #define BUFSIZE 1024				//接收数据缓冲大小。
-#define INTERVAL_TIME	1 * 60 * 1000	//间隔时间，秒60 * 1000
-#define CHECK_UPDATE_TIME	60 * 60 * 1000	//检查是否有更新的时间60 * 60 * 1000
+
 
 #define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}
 #define SAFE_RELEASE_ARRY(pObj) if(pObj) {delete[] pObj; pObj = NULL;}

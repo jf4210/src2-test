@@ -68,11 +68,11 @@ BOOL CGetModelDlg::OnInitDialog()
 	InitUI();
 //	m_Tip.AddTool(GetDlgItem(IDC_COMBO_ExamName), m_strExamName);
 // 	m_comboExamName.SetEditTooltip(TRUE);
- 	m_comboExamName.SetListTooltip(TRUE, TRUE, TRUE);
-	m_comboExamName.SetMode(CComboBoxExt::MODE_STANDARD);
+// 	m_comboExamName.SetListTooltip(TRUE, TRUE, TRUE);
+// 	m_comboExamName.SetMode(CComboBoxExt::MODE_STANDARD);
 	m_comboExamName.AdjustDroppedWidth();
 //	m_comboExamName.SetMode(CComboBoxExt::MODE_AUTOCOMPLETE);
-	m_comboSubject.SetListTooltip(TRUE, TRUE, TRUE);
+//	m_comboSubject.SetListTooltip(TRUE, TRUE, TRUE);
 	m_comboSubject.AdjustDroppedWidth();
 
 	return TRUE;
