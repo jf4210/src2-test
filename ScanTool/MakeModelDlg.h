@@ -7,6 +7,8 @@
 #include "TwainCpp.h"
 #include "SNInfoSetDlg.h"
 #include "ElectOmrDlg.h"
+
+#include "ScanThread.h"
 // CMakeModelDlg 对话框
 
 
@@ -151,6 +153,8 @@ public:
 
 	bool		m_bShiftKeyDown;	//shift按键是否按下
 
+
+	CScanThread m_scanThread;
 
 	//扫描
 	BOOL m_bTwainInit;

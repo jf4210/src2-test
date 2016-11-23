@@ -18,7 +18,7 @@
 #include "ShowModelInfoDlg.h"
 #include "ScanerInfoDlg.h"
 #include "CompressThread.h"
-
+#include "ScanThread.h"
 // CScanToolDlg ¶Ô»°¿ò
 class CScanToolDlg : public CDialogEx, public CTwain
 {

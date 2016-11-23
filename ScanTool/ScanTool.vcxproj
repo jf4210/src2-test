@@ -157,6 +157,7 @@
     <ClInclude Include="ScanCtrlDlg.h" />
     <ClInclude Include="ScanerInfoDlg.h" />
     <ClInclude Include="ScanModleMgrDlg.h" />
+    <ClInclude Include="ScanThread.h" />
     <ClInclude Include="ScanTool.h" />
     <ClInclude Include="ScanToolDlg.h" />
     <ClInclude Include="SendFileThread.h" />
@@ -210,6 +211,7 @@
     <ClCompile Include="ScanCtrlDlg.cpp" />
     <ClCompile Include="ScanerInfoDlg.cpp" />
     <ClCompile Include="ScanModleMgrDlg.cpp" />
+    <ClCompile Include="ScanThread.cpp" />
     <ClCompile Include="ScanTool.cpp" />
     <ClCompile Include="ScanToolDlg.cpp" />
     <ClCompile Include="SendFileThread.cpp" />

@@ -65,6 +65,7 @@
 	#define TEST_DATA
 	#define  TEST_SCAN2			//测试纸张大小控制
 	#define	 TEST_MODEL_NAME	//模板名称测试
+	#define	 TEST_SCAN_THREAD	//扫描线程测试
 #else	//release版本
 	#define	 TEST_MODEL_NAME	//模板名称测试
 	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”

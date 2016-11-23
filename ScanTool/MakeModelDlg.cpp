@@ -262,6 +262,10 @@ BOOL CMakeModelDlg::OnInitDialog()
 		SetWindowText(strTitle);
 	}
 
+#ifdef TEST_SCAN_THREAD
+	m_scanThread.CreateThread();
+#endif
+
 	return TRUE;
 }
 void CMakeModelDlg::OnTcnSelchangeTabModelpic(NMHDR *pNMHDR, LRESULT *pResult)
@@ -878,6 +882,12 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 
 		m_strScanSavePath = Dir;
 	}
+
+#ifdef TEST_SCAN_THREAD
+	m_scanThread.Create(CScanThread::IDD, this);
+	m_scanThread.PostThreadMessage(MSG_START_SCAN, NULL, NULL);
+	
+#else
 	// µ÷ÓÃTWAIN ³õÊ¼»¯É¨ÃèÉèÖÃ
 	ReleaseTwain();
 	m_bTwainInit = FALSE;
@@ -931,6 +941,7 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 		TRACE("É¨ÃèÊ§°Ü\n");
 	}
 	GetDlgItem(IDC_BTN_ScanModel)->EnableWindow(TRUE);
+#endif
 }
 
 void CMakeModelDlg::OnBnClickedBtnNew()
