@@ -62,8 +62,6 @@
 #ifdef _DEBUG
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
-	#define TEST_DATA
-	#define  TEST_SCAN2			//测试纸张大小控制
 	#define	 TEST_MODEL_NAME	//模板名称测试
 	#define	 TEST_SCAN_THREAD	//扫描线程测试
 #else	//release版本

@@ -263,6 +263,7 @@ BOOL CMakeModelDlg::OnInitDialog()
 	}
 
 #ifdef TEST_SCAN_THREAD
+//	m_scanThread.Create(CScanThread::IDD, this);
 	m_scanThread.CreateThread();
 #endif
 
@@ -884,7 +885,8 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 	}
 
 #ifdef TEST_SCAN_THREAD
-	m_scanThread.Create(CScanThread::IDD, this);
+//	m_scanThread.Create(CScanThread::IDD, this);
+	m_scanThread.setScanPath(m_strScanSavePath);
 	m_scanThread.PostThreadMessage(MSG_START_SCAN, NULL, NULL);
 	
 #else
@@ -1170,11 +1172,7 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	cv::cvtColor(matSrcRoi, matSrcRoi, CV_BGR2GRAY);
 	cv::GaussianBlur(matSrcRoi, matSrcRoi, cv::Size(m_nGaussKernel, m_nGaussKernel), 0, 0);
 	sharpenImage1(matSrcRoi, matSrcRoi);
-
-#ifdef TEST_DATA	//for test
-//	threshold(matSrcRoi, matSrcRoi, rc.nThresholdValue, 255, THRESH_BINARY);
-#endif
-
+	
 	const int channels[1] = { 0 };
 	const float* ranges[1];
 	const int histSize[1] = { 1 };

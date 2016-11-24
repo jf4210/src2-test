@@ -25,6 +25,9 @@
     <Filter Include="LOG">
       <UniqueIdentifier>{36f5cf6d-b4c5-46ba-877d-85ba46fa6b0b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="dump">
+      <UniqueIdentifier>{861c0a8a-5858-4c6d-961a-d7f0e1632b85}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ListMission.cpp">
@@ -74,6 +77,9 @@
     </ClCompile>
     <ClCompile Include="SysSet.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="crash_dumper_w32.cpp">
+      <Filter>dump</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -130,6 +136,9 @@
     </ClInclude>
     <ClInclude Include="..\..\common\Net_Cmd_Protocol_Ver.h">
       <Filter>global</Filter>
+    </ClInclude>
+    <ClInclude Include="crash_dumper_w32.h">
+      <Filter>dump</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

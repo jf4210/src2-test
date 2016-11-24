@@ -3,6 +3,7 @@
 #include "NetOperatorDll.h"
 #include "VCSDef.h"
 #include "NetCmdMgr.h"
+#include "crash_dumper_w32.h"
 
 
 int		g_nExitFlag = 0;
@@ -95,10 +96,14 @@ protected:
 		CNetCmdMgr* m_pNetCmdMgr = new CNetCmdMgr;
 
 		bool bResult = m_pNetCmdMgr->StartWork((char*)SysSet.m_sLocalIP.c_str(), SysSet.m_nCmdPort);
+		std::string strLog;
 		if (bResult)
-			g_Log.LogOut("StartCmdChannel success.");
+			strLog = "StartCmdChannel success.";
 		else
-			g_Log.LogOut("StartCmdChannel fail.");
+			strLog = "StartCmdChannel fail.";
+
+		g_Log.LogOut(strLog);
+		std::cout << strLog << std::endl;
 
 		std::cout << "版本控制服务器启动完成" << std::endl;
 		waitForTerminationRequest();
