@@ -12,8 +12,8 @@
 
 class CScanThread : public CWinThread, public CTwain/*, public CWnd*/
 {
-	DECLARE_DYNAMIC(CScanThread)
-//	DECLARE_DYNCREATE(CScanThread)
+//	DECLARE_DYNAMIC(CScanThread)
+	DECLARE_DYNCREATE(CScanThread)
 
 public:
 	CScanThread();

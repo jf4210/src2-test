@@ -287,6 +287,9 @@ BOOL CTwain::ProcessMessage(MSG msg)
 
 		twRC = CallDSMEntry(&m_AppId,&m_Source,DG_CONTROL,DAT_EVENT,MSG_PROCESSEVENT,(TW_MEMREF)&twEvent);
 
+		if (twRC != TWRC_DSEVENT)
+			return FALSE;
+
 		//  CallTwainProc(&m_AppId,&m_Source,DG_CONTROL,DAT_EVENT,MSG_PROCESSEVENT,(TW_MEMREF)&twEvent);
 		//  if(GetRC() != TWRC_NOTDSEVENT)
 		//  {
@@ -300,7 +303,8 @@ BOOL CTwain::ProcessMessage(MSG msg)
 		//  }
 
 		// tell the caller what happened
-		return (twRC == TWRC_DSEVENT);           // returns TRUE or FALSE
+//		return (twRC == TWRC_DSEVENT);           // returns TRUE or FALSE
+		return TRUE;
 #else
 	TW_EVENT twEvent;
 		twEvent.pEvent = (TW_MEMREF)&msg;

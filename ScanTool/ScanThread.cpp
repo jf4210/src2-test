@@ -9,8 +9,8 @@
 
 // CScanThread
 
-IMPLEMENT_DYNAMIC(CScanThread, CWinThread)
-//IMPLEMENT_DYNCREATE(CScanThread, CWinThread)
+//IMPLEMENT_DYNAMIC(CScanThread, CWinThread)
+IMPLEMENT_DYNCREATE(CScanThread, CWinThread)
 
 CScanThread::CScanThread()
 : m_bTwainInit(FALSE), m_pWnd(NULL)
@@ -35,6 +35,7 @@ END_MESSAGE_MAP()
 
 BOOL CScanThread::InitInstance()
 {
+//	m_bAutoDelete = TRUE;
 	CFrameWnd* pWnd = new CFrameWnd;
 	pWnd->Create(NULL, L"CWinThread Test");
 	pWnd->ShowWindow(SW_HIDE);
@@ -55,14 +56,15 @@ void CScanThread::setScanPath(CString& strPath)
 
 BOOL CScanThread::PreTranslateMessage(MSG* pMsg)
 {
-	ProcessMessage(*pMsg);
+	if (ProcessMessage(*pMsg))
+		return TRUE;
 	return CWinThread::PreTranslateMessage(pMsg);
 }
 
 void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 {
 	// 调用TWAIN 初始化扫描设置
-	ReleaseTwain();
+//	ReleaseTwain();
 	if (!m_bTwainInit)
 	{
 		m_bTwainInit = InitTwain(m_pMainWnd->GetSafeHwnd());	//m_hWnd
@@ -74,6 +76,35 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		ScanSrcInit();
 	}
 
+#if 0
+	m_Source = m_scanSourceArry.GetAt(2);
+	int nDuplex = 0;		//单双面,0-单面,1-双面
+
+	bool bShowScanSrcUI = g_bShowScanSrcUI;
+
+	if (1)
+	{
+		bShowScanSrcUI = true;
+		if (!Acquire(TWCPP_ANYCOUNT, bShowScanSrcUI))
+		{
+			TRACE("扫描失败\n");
+		}
+		//		GetDlgItem(IDC_BTN_ScanModel)->EnableWindow(TRUE);
+		return;
+	}
+
+	int nSize = 1;							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3
+	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
+	int nResolution = 200;					//dpi: 72, 150, 200, 300
+
+	int nNum = 0;
+
+	if (nDuplex == 1)
+		nNum *= 2;
+
+	if (nNum == 0)
+		nNum = TWCPP_ANYCOUNT;
+#else
 	CScanCtrlDlg dlg(m_scanSourceArry);
 	if (dlg.DoModal() != IDOK)
 		return;
@@ -108,6 +139,15 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	if (nNum == 0)
 		nNum = TWCPP_ANYCOUNT;
 
+	#if 1
+		dlg.EndModalLoop(1);
+	#else
+		dlg.m_nFlags &= ~WF_CONTINUEMODAL;
+		::EndDialog(dlg.m_hWnd, IDCANCEL);
+	#endif
+
+#endif
+	TRACE("开始扫描\n");
 	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, bShowScanSrcUI))
 	{
 		TRACE("扫描失败\n");
