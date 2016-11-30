@@ -46,6 +46,7 @@ public:
 	CString		m_strRecogPath;
 	CString		m_strModelPath;
 
+	CStatusBarCtrl	m_statusBar;
 
 	void	showMsg(CString& strMsg);
 

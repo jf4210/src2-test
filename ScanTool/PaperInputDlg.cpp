@@ -675,12 +675,12 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				i++;
 
 				//2016.8.29 for test
-// 				static int j = 0;
-// 				if (i % m_pModel->nPicNum == 0)
-// 					j = 0;
-// 				Mat mtPic = imread(CMyCodeConvert::Utf8ToGb2312(strNewFilePath));
-// 				CheckOrientation(mtPic, j);
-// 				j++;
+				static int j = 0;
+				if ((i - 1) % m_pModel->nPicNum == 0)
+					j = 0;
+				Mat mtPic = imread(CMyCodeConvert::Utf8ToGb2312(strNewFilePath));
+				CheckOrientation(mtPic, j);
+				j++;
 				//--
 			}
 
@@ -1652,6 +1652,11 @@ int GetRects1(cv::Mat& matSrc, cv::Rect rt, pMODEL pModel, int nPic, int nOrient
 #else
 		threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
 #endif
+		//去除干扰信息，先膨胀后腐蚀还原, 可去除一些线条干扰
+		Mat element_Anticlutter = getStructuringElement(MORPH_RECT, Size(_nAnticlutterKernel_, _nAnticlutterKernel_));	//Size(6, 6)	普通空白框可识别		Size(3, 3)
+		dilate(matCompRoi, matCompRoi, element_Anticlutter);
+		erode(matCompRoi, matCompRoi, element_Anticlutter);
+
 		cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
 		Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(6, 6)	普通空白框可识别
 		dilate(matCompRoi, matCompRoi, element);

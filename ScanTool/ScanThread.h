@@ -5,10 +5,14 @@
 #include "TwainCpp.h"
 #include "DIB.h"
 #include "bmp2ipl.h"
+
+
+#include "ScanCtrlDlg.h"
 // CScanThread
 
 #define MSG_START_SCAN	(WM_APP + 201)
 
+#define TEST_DLG
 
 class CScanThread : public CWinThread, public CTwain/*, public CWnd*/
 {
@@ -38,7 +42,11 @@ public:
 	void ScanDone(int nStatus);
 
 private:
-	CFrameWnd* m_pWnd;
+	CFrameWnd* m_pTwainWnd;
+
+#ifdef TEST_DLG
+	CScanCtrlDlg*	m_pScanCtrlDlg;
+#endif
 
 public:
 	virtual BOOL InitInstance();

@@ -155,6 +155,7 @@ public:
 
 
 	CScanThread m_scanThread;
+	CScanThread* m_pScanThread;
 
 	//ษจร่
 	BOOL m_bTwainInit;

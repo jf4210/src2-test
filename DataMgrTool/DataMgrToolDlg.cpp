@@ -419,6 +419,18 @@ void CDataMgrToolDlg::InitConfig()
 
 		m_vecRecogThreadObj.push_back(pRecogObj);
 	}
+
+	//statusBar
+	m_statusBar.Create(WS_CHILD | WS_VISIBLE | SBT_OWNERDRAW, CRect(0, 0, 0, 0), this, 0);
+	int strPartDim[3] = { 100, 200, -1 }; //分割数量
+	m_statusBar.SetParts(3, strPartDim);
+
+	//设置状态栏文本
+	m_statusBar.SetText(_T("分栏一"), 0, 0);
+	m_statusBar.SetText(_T("分栏二"), 1, 0);
+	m_statusBar.SetText(_T("分栏三"), 2, 0);
+	//下面是在状态栏中加入图标
+	m_statusBar.SetIcon(1, SetIcon(AfxGetApp()->LoadIcon(IDR_MAINFRAME), FALSE));//为第二个分栏中加的图标
 }
 
 void CDataMgrToolDlg::OnBnClickedMfcbuttonDecompress()

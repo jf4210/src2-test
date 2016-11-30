@@ -3158,6 +3158,11 @@ int GetRects(cv::Mat& matSrc, cv::Rect rt, pMODEL pModel, int nPic, int nOrienta
 #else
 		threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
 #endif
+		//去除干扰信息，先膨胀后腐蚀还原, 可去除一些线条干扰
+		Mat element_Anticlutter = getStructuringElement(MORPH_RECT, Size(_nAnticlutterKernel_, _nAnticlutterKernel_));	//Size(6, 6)	普通空白框可识别		Size(3, 3)
+		dilate(matCompRoi, matCompRoi, element_Anticlutter);
+		erode(matCompRoi, matCompRoi, element_Anticlutter);
+
 		cv::Canny(matCompRoi, matCompRoi, 0, 90, 5);
 		Mat element = getStructuringElement(MORPH_RECT, Size(3, 3));	//Size(6, 6)	普通空白框可识别
 		dilate(matCompRoi, matCompRoi, element);

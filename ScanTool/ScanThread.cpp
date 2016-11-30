@@ -5,7 +5,7 @@
 #include "ScanTool.h"
 #include "ScanThread.h"
 
-#include "ScanCtrlDlg.h"
+//#include "ScanCtrlDlg.h"
 
 // CScanThread
 
@@ -13,19 +13,17 @@
 IMPLEMENT_DYNCREATE(CScanThread, CWinThread)
 
 CScanThread::CScanThread()
-: m_bTwainInit(FALSE), m_pWnd(NULL)
+: m_bTwainInit(FALSE), m_pTwainWnd(NULL)
+#ifdef TEST_DLG
+, m_pScanCtrlDlg(NULL)
+#endif
 {
 
 }
 
 CScanThread::~CScanThread()
 {
-	if (m_pWnd)
-	{
-		m_pWnd->DestroyWindow();
-		delete m_pWnd;
-		m_pWnd = NULL;
-	}
+	SAFE_RELEASE(m_pTwainWnd);
 }
 
 
@@ -36,16 +34,34 @@ END_MESSAGE_MAP()
 BOOL CScanThread::InitInstance()
 {
 //	m_bAutoDelete = TRUE;
-	CFrameWnd* pWnd = new CFrameWnd;
-	pWnd->Create(NULL, L"CWinThread Test");
-	pWnd->ShowWindow(SW_HIDE);
-	pWnd->UpdateWindow();
-	m_pMainWnd = pWnd;
+// 	CFrameWnd* pWnd = new CFrameWnd;
+// 	pWnd->Create(NULL, L"CWinThread Test");
+// 	pWnd->ShowWindow(SW_HIDE);
+// 	pWnd->UpdateWindow();
+// 	m_pMainWnd = pWnd;
+
+	m_pTwainWnd = new CFrameWnd;
+	m_pTwainWnd->Create(NULL, L"CWinThread Test");
+	m_pTwainWnd->ShowWindow(SW_HIDE);
+	m_pTwainWnd->UpdateWindow();
+	m_pMainWnd = m_pTwainWnd;
+
+
+#ifdef TEST_DLG
+	m_pScanCtrlDlg = new CScanCtrlDlg(m_scanSourceArry, m_pMainWnd);
+// 	m_pScanCtrlDlg->Create(CScanCtrlDlg::IDD, m_pMainWnd);
+//  	m_pScanCtrlDlg->ShowWindow(SW_HIDE);
+//	m_pMainWnd = m_pScanCtrlDlg;
+#endif
+
 	return TRUE;
 }
 
 int CScanThread::ExitInstance()
 {
+#ifdef TEST_DLG
+	SAFE_RELEASE(m_pScanCtrlDlg);
+#endif
 	return CWinThread::ExitInstance();
 }
 
@@ -67,7 +83,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 //	ReleaseTwain();
 	if (!m_bTwainInit)
 	{
-		m_bTwainInit = InitTwain(m_pMainWnd->GetSafeHwnd());	//m_hWnd
+		m_bTwainInit = InitTwain(m_pTwainWnd->GetSafeHwnd());	//m_pMainWnd->GetSafeHwnd()
 		if (!IsValidDriver())
 		{
 			AfxMessageBox(_T("Unable to load Twain Driver."));
@@ -76,7 +92,14 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		ScanSrcInit();
 	}
 
-#if 0
+#if 1
+#ifdef TEST_DLG
+// 	if(m_pScanCtrlDlg)
+// 		m_pScanCtrlDlg->ShowWindow(SW_SHOW);
+	if (m_pScanCtrlDlg->DoModal() != IDOK)
+		return;
+#endif
+
 	m_Source = m_scanSourceArry.GetAt(2);
 	int nDuplex = 0;		//单双面,0-单面,1-双面
 
@@ -105,9 +128,13 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	if (nNum == 0)
 		nNum = TWCPP_ANYCOUNT;
 #else
-	CScanCtrlDlg dlg(m_scanSourceArry);
+	CScanCtrlDlg dlg(m_scanSourceArry, m_pMainWnd);
 	if (dlg.DoModal() != IDOK)
+	{
+		dlg.m_nFlags &= ~WF_CONTINUEMODAL;
+		dlg.EndDialog(IDCANCEL);
 		return;
+	}
 
 //	GetDlgItem(IDC_BTN_ScanModel)->EnableWindow(FALSE);
 
@@ -140,10 +167,12 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		nNum = TWCPP_ANYCOUNT;
 
 	#if 1
-		dlg.EndModalLoop(1);
+//		dlg.EndModalLoop(1);
+//		dlg.PostMessage(WM_QUIT);
+//		dlg.CloseWindow();
 	#else
-		dlg.m_nFlags &= ~WF_CONTINUEMODAL;
-		::EndDialog(dlg.m_hWnd, IDCANCEL);
+//		dlg.m_nFlags &= ~WF_CONTINUEMODAL;
+//		::EndDialog(dlg.m_hWnd, IDOK);
 	#endif
 
 #endif

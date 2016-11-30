@@ -32,7 +32,7 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_pCurRectInfo(NULL), m_ptFixCP(0,0)
 	, m_bFistHTracker(true), m_bFistVTracker(true), m_bFistSNTracker(true)
 	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL), m_pSNInfoDlg(NULL), m_pElectOmrDlg(NULL)
-	, m_bShiftKeyDown(false)
+	, m_bShiftKeyDown(false), m_pScanThread(NULL)
 {
 	InitParam();
 }
@@ -263,7 +263,6 @@ BOOL CMakeModelDlg::OnInitDialog()
 	}
 
 #ifdef TEST_SCAN_THREAD
-//	m_scanThread.Create(CScanThread::IDD, this);
 	m_scanThread.CreateThread();
 #endif
 
@@ -885,9 +884,13 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 	}
 
 #ifdef TEST_SCAN_THREAD
-//	m_scanThread.Create(CScanThread::IDD, this);
 	m_scanThread.setScanPath(m_strScanSavePath);
 	m_scanThread.PostThreadMessage(MSG_START_SCAN, NULL, NULL);
+
+// 	if(m_pScanThread)
+// 	{
+// 		m_pScanThread->
+// 	}
 	
 #else
 	// 调用TWAIN 初始化扫描设置
