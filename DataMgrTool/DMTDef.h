@@ -49,6 +49,14 @@ extern int		g_nRecogGrayMax_White;	//空白点校验点计算灰度的最大考试范围
 extern int		g_nRecogGrayMin_OMR;	//OMR计算灰度的最小考试范围
 extern int		g_RecogGrayMax_OMR;		//OMR计算灰度的最大考试范围
 
+
+extern double	_dOmrThresholdPercent_Fix_;		//定点模式OMR识别可认为是选中的标准百分比
+extern double	_dSnThresholdPercent_Fix_;		//定点模式SN识别可认为是选中的标准百分比
+extern double	_dQKThresholdPercent_Fix_;		//定点模式QK识别可认为是选中的标准百分比
+extern double	_dOmrThresholdPercent_Head_;	//同步头模式OMR识别可认为是选中的标准百分比
+extern double	_dSnThresholdPercent_Head_;		//同步头模式SN识别可认为是选中的标准百分比
+extern double	_dQKThresholdPercent_Head_;		//同步头模式QK识别可认为是选中的标准百分比
+
 extern double	_dCompThread_Fix_;
 extern double	_dDiffThread_Fix_;
 extern double	_dDiffExit_Fix_;
@@ -59,6 +67,15 @@ extern int		_nThreshold_Recog2_;	//第2中识别方法的二值化阀值
 
 extern int		_nOMR_;		//重新识别模板时，用来识别OMR的密度值的阀值
 extern int		_nSN_;		//重新识别模板时，用来识别ZKZH的密度值的阀值
+
+extern int		_nDecompress_;	//解压试卷袋数量
+extern int		_nRecog_;		//识别试卷数量
+extern int		_nRecogPapers_;	//识别试卷袋
+extern int		_nCompress_;	//压缩试卷袋数量
+extern Poco::FastMutex _fmDecompress_;
+extern Poco::FastMutex _fmRecog_;
+extern Poco::FastMutex _fmRecogPapers_;
+extern Poco::FastMutex _fmCompress_;
 
 
 typedef struct _DecompressTask_

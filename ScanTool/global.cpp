@@ -1027,6 +1027,23 @@ int GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, RECT
 	return nFind;
 }
 
+//快速平方根算法
+float SquareRootFloat(float number)
+{
+	long i;
+	float x, y;
+	const float f = 1.5F;
+	x = number * 0.5F;
+	y = number;
+	i = *(long *)&y;
+	i = 0x5f3759df - (i >> 1); //魔术数        
+	y = *(float *)&i;
+	y = y * (f - (x * y * y));        //迭代1    1/sqrt(number)    
+	y = y * (f - (x * y * y));        //迭代2    1/sqrt(number)   
+	//y    = y * ( f - ( x * y * y ) );        //迭代3    1/sqrt(number)，如需要更高的精度请迭代多次   
+	return number * y;
+}
+
 void GetMaxMin(cv::Point2f ptChk, cv::Point2f ptA, cv::Point2f ptB, cv::Point2f ptC, cv::Point2f ptD, cv::Point2f ptA0, cv::Point2f ptB0, cv::Point2f ptC0, cv::Point2f ptD0, cv::Point2f pt[], cv::Point2f pt2[])
 {
 	long double da = sqrt(pow(ptChk.x - ptA.x, 2) + pow(ptChk.y - ptA.y, 2));

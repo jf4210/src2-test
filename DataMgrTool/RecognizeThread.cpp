@@ -43,6 +43,10 @@ void CRecognizeThread::run()
 
 		HandleTask(pTask);
 
+		_fmRecog_.lock();
+		_nRecog_++;
+		_fmRecog_.unlock();
+
 		delete pTask;
 		pTask = NULL;
 	}
@@ -380,6 +384,10 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		g_fmCompressLock.lock();
 		g_lCompressTask.push_back(pTask);
 		g_fmCompressLock.unlock();
+
+		_fmRecogPapers_.lock();
+		_nRecogPapers_++;
+		_fmRecogPapers_.unlock();
 	}
 }
 

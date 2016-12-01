@@ -2380,6 +2380,16 @@ bool InitModelRecog(pMODEL pModel, std::string strModelPath)
 
 		pPAPERMODEL pPicModel = pModel->vecPaperModel[i];
 
+		RECTLIST::iterator itQK = pPicModel->lQK_CP.begin();
+		for (; itQK != pPicModel->lQK_CP.end(); itQK++)
+		{
+			pRECTINFO pQKItem = &(*itQK);
+			if (pModel->nHasHead)
+				itQK->fStandardValuePercent = _dQKThresholdPercent_Head_;
+			else
+				itQK->fStandardValuePercent = _dQKThresholdPercent_Fix_;
+		}
+
 		if (pModel->nZkzhType == 1)
 		{
 			SNLIST::iterator itSN = pPicModel->lSNInfo.begin();
@@ -2389,6 +2399,11 @@ bool InitModelRecog(pMODEL pModel, std::string strModelPath)
 				RECTLIST::iterator itSNItem = pSNItem->lSN.begin();
 				for (; itSNItem != pSNItem->lSN.end(); itSNItem++)
 				{
+					if (pModel->nHasHead)
+						itSNItem->fStandardValuePercent = _dSnThresholdPercent_Head_;
+					else
+						itSNItem->fStandardValuePercent = _dSnThresholdPercent_Fix_;
+
 					itSNItem->nThresholdValue = _nSN_;
 					
 					cv::Mat matComp = matSrc(itSNItem->rt);
@@ -2402,6 +2417,11 @@ bool InitModelRecog(pMODEL pModel, std::string strModelPath)
 			RECTLIST::iterator itOmrItem = itOmr->lSelAnswer.begin();
 			for (; itOmrItem != itOmr->lSelAnswer.end(); itOmrItem++)
 			{
+				if (pModel->nHasHead)
+					itOmrItem->fStandardValuePercent = _dOmrThresholdPercent_Head_;
+				else
+					itOmrItem->fStandardValuePercent = _dOmrThresholdPercent_Fix_;
+
 				itOmrItem->nThresholdValue = _nOMR_;
 
 				cv::Mat matComp = matSrc(itOmrItem->rt);
@@ -2415,6 +2435,11 @@ bool InitModelRecog(pMODEL pModel, std::string strModelPath)
 			RECTLIST::iterator itOmrItem = itElectOmr->lItemInfo.begin();
 			for (; itOmrItem != itElectOmr->lItemInfo.end(); itOmrItem++)
 			{
+				if (pModel->nHasHead)
+					itOmrItem->fStandardValuePercent = _dOmrThresholdPercent_Head_;
+				else
+					itOmrItem->fStandardValuePercent = _dOmrThresholdPercent_Fix_;
+
 				itOmrItem->nThresholdValue = _nOMR_;
 				
 				cv::Mat matComp = matSrc(itOmrItem->rt);

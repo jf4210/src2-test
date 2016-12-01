@@ -46,6 +46,12 @@ int		g_nRecogGrayMax_White = 255;	//空白点校验点计算灰度的最大考试范围
 int		g_nRecogGrayMin_OMR = 0;		//OMR计算灰度的最小考试范围
 int		g_RecogGrayMax_OMR = 235;		//OMR计算灰度的最大考试范围
 
+double	_dOmrThresholdPercent_Fix_;		//定点模式OMR识别可认为是选中的标准百分比
+double	_dSnThresholdPercent_Fix_;		//定点模式SN识别可认为是选中的标准百分比
+double	_dQKThresholdPercent_Fix_;		//定点模式QK识别可认为是选中的标准百分比
+double	_dOmrThresholdPercent_Head_;	//同步头模式OMR识别可认为是选中的标准百分比
+double	_dSnThresholdPercent_Head_;		//同步头模式SN识别可认为是选中的标准百分比
+double	_dQKThresholdPercent_Head_;		//同步头模式QK识别可认为是选中的标准百分比
 
 double	_dCompThread_Fix_ = 1.2;
 double	_dDiffThread_Fix_ = 0.2;
@@ -65,6 +71,15 @@ int		_nErrorStatistics2_ = 0;	//第二种方法识别错误数
 int		_nDoubtStatistics = 0;		//识别怀疑总数
 int		_nNullStatistics = 0;		//识别为空总数
 int		_nAllStatistics_ = 0;		//统计总数
+
+int		_nDecompress_ = 0;	//解压试卷袋数量
+int		_nRecog_ = 0;		//识别试卷数量
+int		_nRecogPapers_ = 0;	//识别试卷袋
+int		_nCompress_ = 0;	//压缩试卷袋数量
+Poco::FastMutex _fmDecompress_;	
+Poco::FastMutex _fmRecog_;
+Poco::FastMutex _fmRecogPapers_;
+Poco::FastMutex _fmCompress_;
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -152,6 +167,7 @@ BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_CHK_ReadParam, &CDataMgrToolDlg::OnBnClickedChkReadparam)
 	ON_BN_CLICKED(IDC_BTN_LoadParam, &CDataMgrToolDlg::OnBnClickedBtnLoadparam)
 	ON_BN_CLICKED(IDC_MFCBUTTON_RePkg, &CDataMgrToolDlg::OnBnClickedMfcbuttonRepkg)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -192,6 +208,8 @@ BOOL CDataMgrToolDlg::OnInitDialog()
 	_nUseNewParam_ = false;
 	((CButton*)GetDlgItem(IDC_CHK_ReadParam))->SetCheck(0);
 	GetDlgItem(IDC_BTN_LoadParam)->EnableWindow(FALSE);
+
+	SetTimer(TIMER_UPDATE_STARTBAR, 1000, NULL);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -249,6 +267,7 @@ HCURSOR CDataMgrToolDlg::OnQueryDragIcon()
 void CDataMgrToolDlg::OnDestroy()
 {
 	CDialogEx::OnDestroy();
+	KillTimer(TIMER_UPDATE_STARTBAR);
 
 	g_nExitFlag = 1;
 	std::vector<CDecompressThread*>::iterator itDecObj = m_vecDecompressThreadObj.begin();
@@ -359,6 +378,15 @@ void CDataMgrToolDlg::InitParam()
 		_nOMR_ = pConf->getInt("MakeModel_Threshold.omr", 230);
 		_nSN_ = pConf->getInt("MakeModel_Threshold.sn", 200);
 
+
+		_dQKThresholdPercent_Fix_ = pConf->getDouble("MakeModel_RecogPercent_Fix.qk", 1.5);
+		_dOmrThresholdPercent_Fix_ = pConf->getDouble("MakeModel_RecogPercent_Fix.omr", 1.5);
+		_dSnThresholdPercent_Fix_ = pConf->getDouble("MakeModel_RecogPercent_Fix.sn", 1.5);
+
+		_dQKThresholdPercent_Head_ = pConf->getDouble("MakeModel_RecogPercent_Head.qk", 1.5);
+		_dOmrThresholdPercent_Head_ = pConf->getDouble("MakeModel_RecogPercent_Head.omr", 1.5);
+		_dSnThresholdPercent_Head_ = pConf->getDouble("MakeModel_RecogPercent_Head.sn", 1.5);
+
 		strLog = "读取识别灰度参数完成";
 	}
 	catch (Poco::Exception& exc)
@@ -421,16 +449,61 @@ void CDataMgrToolDlg::InitConfig()
 	}
 
 	//statusBar
+#if 1
+	static UINT indicators[] =
+	{
+		ID_INDICATOR_CAPS,             //CAP lock indicator.
+		ID_INDICATOR_NUM,              //NUM lock indicator.
+		ID_INDICATOR_CAPS,             //CAP lock indicator.
+		ID_INDICATOR_NUM,              //NUM lock indicator.
+		ID_INDICATOR_CAPS,             //CAP lock indicator.
+		ID_INDICATOR_NUM,              //NUM lock indicator.
+		ID_INDICATOR_CAPS,             //CAP lock indicator.
+		ID_INDICATOR_NUM,              //NUM lock indicator.
+	};
+	if (!m_wndStatusBar.Create(this) || !m_wndStatusBar.SetIndicators(indicators, sizeof(indicators) / sizeof(UINT)))
+	{
+		TRACE0("Failed to create statusbarn");
+		return;         // fail to create
+	}
+	UINT nID = 0;        //控制状态栏里面的分栏
+	m_wndStatusBar.SetPaneInfo(0, nID, SBPS_NORMAL, 100);              //返回值存nID中
+	m_wndStatusBar.SetPaneText(0, _T("解压试卷袋"));
+	m_wndStatusBar.SetPaneInfo(1, nID, SBPS_NORMAL, 50);
+	m_wndStatusBar.SetPaneText(1, _T(""));
+	m_wndStatusBar.SetPaneInfo(2, nID, SBPS_NORMAL, 100);
+	m_wndStatusBar.SetPaneText(2, _T("识别试卷"));
+	m_wndStatusBar.SetPaneInfo(3, nID, SBPS_POPOUT, 50);
+	m_wndStatusBar.SetPaneText(3, _T(""));
+	m_wndStatusBar.SetPaneInfo(4, nID, SBPS_NORMAL, 100);
+	m_wndStatusBar.SetPaneText(4, _T("识别试卷袋"));
+	m_wndStatusBar.SetPaneInfo(5, nID, SBPS_POPOUT, 50);
+	m_wndStatusBar.SetPaneText(5, _T(""));
+	m_wndStatusBar.SetPaneInfo(6, nID, SBPS_POPOUT, 100);
+	m_wndStatusBar.SetPaneText(6, _T("压缩试卷袋"));
+	m_wndStatusBar.SetPaneInfo(7, nID, SBPS_POPOUT, 50);
+	m_wndStatusBar.SetPaneText(7, _T(""));
+	//               SetPaneInfo()函数的第三个参数的可选项如下：
+	//               The following indicator styles are supported:
+	//                           SBPS_NOBORDERS               No 3-D border around the pane.
+	//                           SBPS_POPOUT                        Reverse border so that text "pops out."
+	//                           SBPS_DISABLED                     Do not draw text.
+	//                           SBPS_STRETCH                      Stretch pane to fill unused space. Only one pane per status bar can have thisstyle.
+	//                           SBPS_NORMAL                        No stretch, borders, or pop-out.
+	//----------------让这个状态栏最终显示在对话框中-------------
+	RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST, 0);
+#else
 	m_statusBar.Create(WS_CHILD | WS_VISIBLE | SBT_OWNERDRAW, CRect(0, 0, 0, 0), this, 0);
-	int strPartDim[3] = { 100, 200, -1 }; //分割数量
-	m_statusBar.SetParts(3, strPartDim);
+	int strPartDim[6] = { 80, 130, 210, 260, 340, -1 }; //分割数量
+	m_statusBar.SetParts(6, strPartDim);
 
 	//设置状态栏文本
-	m_statusBar.SetText(_T("分栏一"), 0, 0);
-	m_statusBar.SetText(_T("分栏二"), 1, 0);
-	m_statusBar.SetText(_T("分栏三"), 2, 0);
+	m_statusBar.SetText(_T("解压试卷袋:"), 0, 0);
+	m_statusBar.SetText(_T("识别试卷:"), 2, 0);
+	m_statusBar.SetText(_T("压缩试卷袋:"), 4, 0);
 	//下面是在状态栏中加入图标
-	m_statusBar.SetIcon(1, SetIcon(AfxGetApp()->LoadIcon(IDR_MAINFRAME), FALSE));//为第二个分栏中加的图标
+//	m_statusBar.SetIcon(1, SetIcon(AfxGetApp()->LoadIcon(IDR_MAINFRAME), FALSE));//为第二个分栏中加的图标
+#endif
 }
 
 void CDataMgrToolDlg::OnBnClickedMfcbuttonDecompress()
@@ -807,6 +880,19 @@ void CDataMgrToolDlg::OnBnClickedBtnClearstatistics()
 	_nAllStatistics_ = 0;
 	_fmErrorStatistics_.unlock();
 
+	_fmDecompress_.lock();
+	_nDecompress_ = 0;
+	_fmDecompress_.unlock();
+	_fmRecog_.lock();
+	_nRecog_ = 0;
+	_fmRecog_.unlock();
+	_fmRecogPapers_.lock();
+	_nRecogPapers_ = 0;
+	_fmRecogPapers_.unlock();
+	_fmCompress_.lock();
+	_nCompress_ = 0;
+	_fmCompress_.unlock();
+
 	CString strMsg;
 	strMsg.Format(_T("\r\n统计结果已清零\r\n"));
 	showMsg(strMsg);
@@ -837,3 +923,22 @@ void CDataMgrToolDlg::OnBnClickedBtnLoadparam()
 	showMsg(strMsg);
 }
 
+
+
+void CDataMgrToolDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	if (nIDEvent == TIMER_UPDATE_STARTBAR)
+	{
+		CString strTmp;
+		strTmp.Format(_T("%d"), _nDecompress_);
+		m_wndStatusBar.SetPaneText(1, strTmp);
+		strTmp.Format(_T("%d"), _nRecog_);
+		m_wndStatusBar.SetPaneText(3, strTmp);
+		strTmp.Format(_T("%d"), _nRecogPapers_);
+		m_wndStatusBar.SetPaneText(5, strTmp);
+		strTmp.Format(_T("%d"), _nCompress_);
+		m_wndStatusBar.SetPaneText(7, strTmp);
+	}
+
+	CDialogEx::OnTimer(nIDEvent);
+}

@@ -67,6 +67,10 @@ void CDecompressThread::run()
 
 		HandleTask(pTask);
 
+		_fmDecompress_.lock();
+		_nDecompress_++;
+		_fmDecompress_.unlock();
+
 		delete pTask;
 		pTask = NULL;
 	}

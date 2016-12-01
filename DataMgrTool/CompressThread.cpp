@@ -35,6 +35,10 @@ void CCompressThread::run()
 
 		HandleTask(pTask);
 
+		_fmCompress_.lock();
+		_nCompress_++;
+		_fmCompress_.unlock();
+
 		delete pTask;
 		pTask = NULL;
 	}

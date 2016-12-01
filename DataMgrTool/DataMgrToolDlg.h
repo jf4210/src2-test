@@ -8,6 +8,9 @@
 #include "RecognizeThread.h"
 #include "CompressThread.h"
 
+
+#define TIMER_UPDATE_STARTBAR	1000
+
 // CDataMgrToolDlg ¶Ô»°¿ò
 class CDataMgrToolDlg : public CDialogEx
 {
@@ -47,6 +50,7 @@ public:
 	CString		m_strModelPath;
 
 	CStatusBarCtrl	m_statusBar;
+	CStatusBar		m_wndStatusBar;
 
 	void	showMsg(CString& strMsg);
 
@@ -89,4 +93,5 @@ public:
 	afx_msg void OnBnClickedChkReadparam();
 	afx_msg void OnBnClickedBtnLoadparam();
 	afx_msg void OnBnClickedMfcbuttonRepkg();
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 };
