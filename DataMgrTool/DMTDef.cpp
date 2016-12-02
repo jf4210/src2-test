@@ -2302,7 +2302,7 @@ std::string calcStatistics(pPAPERSINFO pPapers)
 	sprintf_s(szStatisticsInfo, "\n识别错误信息统计: omrError1 = %.2f%%(%d/%d), omrError2 = %.2f%%(%d/%d)\n", (float)pPapers->nOmrError_1 / nOmrCount * 100, pPapers->nOmrError_1, nOmrCount, \
 			  (float)pPapers->nOmrError_2 / nOmrCount * 100, pPapers->nOmrError_2, nOmrCount);
 
-	ss << "\r\n-------------------\r\n"<< pPapers->strPapersName << "结果正确率统计完成:\r\n" << szStatisticsInfo << "\r\n-------------------\r\n\r\n";
+	ss << "\r\n\t-------------------\r\n\t"<< pPapers->strPapersName << "结果正确率统计完成:\r\n\t" << szStatisticsInfo << "\r\n\t-------------------\r\n\r\n";
 
 	_fmErrorStatistics_.lock();
 	_nErrorStatistics1_ += pPapers->nOmrError_1;
@@ -2313,8 +2313,11 @@ std::string calcStatistics(pPAPERSINFO pPapers)
 	_fmErrorStatistics_.unlock();
 
 	std::string strLog;
-	strLog = "识别错误详情1: \n" + strErrorInfo1 + "\n错误详情2: " + strErrorInfo2 + "\n";
-	g_Log.LogOut(strLog);
+	if (strErrorInfo1.length() > 0 || strErrorInfo2.length() > 0)
+	{
+		strLog = "试卷袋[" + pPapers->strPapersName + "]识别错误详情1: \n" + strErrorInfo1 + "\n错误详情2: " + strErrorInfo2 + "\n";
+		g_Log.LogOut(strLog);
+	}
 	return ss.str();
 }
 

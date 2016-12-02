@@ -264,7 +264,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 	int nDoubtCount = 0;
 	int nEqualCount = 0;
 
-	char szSN[30] = { 0 };
+	char szSN[100] = { 0 };
 	sprintf_s(szSN, "SN(%s), ", pPaper->strSN.c_str());
 	strPaperLog.append(szSN);
 
@@ -851,16 +851,17 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			}
 			else
 			{
-				float fOffset = 0.3;
-				nMid_minW = rcSecond.rt.width * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
-				nMid_maxW = rcSecond.rt.width * (1 + fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
-				nMid_minH = rcSecond.rt.height * (1 - fOffset);		//同上
-				nMid_maxH = rcSecond.rt.height * (1 + fOffset);		//同上
+				float fOffset_mid = 0.4;
+				nMid_minW = rcSecond.rt.width * (1 - fOffset_mid);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nMid_maxW = rcSecond.rt.width * (1 + fOffset_mid);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nMid_minH = rcSecond.rt.height * (1 - fOffset_mid);		//同上
+				nMid_maxH = rcSecond.rt.height * (1 + fOffset_mid);		//同上
 
-				nHead_minW = rcFist.rt.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
-				nHead_maxW = rcFist.rt.width * (1 + fOffset);		//同上
-				nHead_minH = rcFist.rt.height * (1 - fOffset);		//同上
-				nHead_maxH = rcFist.rt.height * (1 + fOffset);		//同上
+				float fOffset_Head = 0.3;
+				nHead_minW = rcFist.rt.width * (1 - fOffset_Head);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nHead_maxW = rcFist.rt.width * (1 + fOffset_Head);		//同上
+				nHead_minH = rcFist.rt.height * (1 - fOffset_Head);		//同上
+				nHead_maxH = rcFist.rt.height * (1 + fOffset_Head);		//同上
 			}
 #endif
 
@@ -1148,16 +1149,17 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			}
 			else
 			{
-				float fOffset = 0.3;
-				nMid_minW = rcSecond.rt.width * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
-				nMid_maxW = rcSecond.rt.width * (1 + fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
-				nMid_minH = rcSecond.rt.height * (1 - fOffset);		//同上
-				nMid_maxH = rcSecond.rt.height * (1 + fOffset);		//同上
+				float fOffset_mid = 0.4;
+				nMid_minW = rcSecond.rt.width * (1 - fOffset_mid);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nMid_maxW = rcSecond.rt.width * (1 + fOffset_mid);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nMid_minH = rcSecond.rt.height * (1 - fOffset_mid);		//同上
+				nMid_maxH = rcSecond.rt.height * (1 + fOffset_mid);		//同上
 
-				nHead_minW = rcFist.rt.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
-				nHead_maxW = rcFist.rt.width * (1 + fOffset);		//同上
-				nHead_minH = rcFist.rt.height * (1 - fOffset);		//同上
-				nHead_maxH = rcFist.rt.height * (1 + fOffset);		//同上
+				float fOffset_Head = 0.3;
+				nHead_minW = rcFist.rt.width * (1 - fOffset_Head);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
+				nHead_maxW = rcFist.rt.width * (1 + fOffset_Head);		//同上
+				nHead_minH = rcFist.rt.height * (1 - fOffset_Head);		//同上
+				nHead_maxH = rcFist.rt.height * (1 + fOffset_Head);		//同上
 			}
 #endif
 			int nYSum = 0;
@@ -2928,6 +2930,36 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 
 				string strTypeName;
 				string strResult = GetQR(matCompRoi, strTypeName);
+
+				#ifdef WH_CCBKS		//武汉楚才杯，单独进行json解析
+					std::string strZkzh;
+					std::string strLog1;
+					Poco::JSON::Parser parser;
+					Poco::Dynamic::Var result;
+					try
+					{
+						result = parser.parse(strResult);		//strJsnData
+						Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
+
+						strZkzh = objData->get("zkzh").convert<std::string>();
+					}
+					catch (Poco::Exception& exc)
+					{
+						strLog1 = "识别二维码json解析异常\n";
+					}
+
+					if (strZkzh != "")
+						strLog1 = "识别准考证号完成(" + strZkzh + "), 图片名: " + pPic->strPicName;
+					else
+					{
+						strLog1 = "识别准考证号失败, 图片名:" + pPic->strPicName;
+						bResult = false;
+					}
+					(static_cast<pST_PaperInfo>(pPic->pPaper))->strSN = strZkzh;
+					g_pLogger->information(strLog1);
+					return bResult;
+				#endif
+
 				std::string strLog;
 				if (strResult != "")
 					strLog = "识别准考证号完成(" + strResult + "), 图片名: " + pPic->strPicName;

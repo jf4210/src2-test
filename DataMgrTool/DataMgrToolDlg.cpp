@@ -745,7 +745,7 @@ LRESULT CDataMgrToolDlg::MsgRecogComplete(WPARAM wParam, LPARAM lParam)
 		sprintf_s(szStatisticsInfo, "\n识别错误信息统计: omrError1 = %.2f%%(%d/%d), omrError2 = %.2f%%(%d/%d)\n", (float)pPapers->nOmrError_1 / nOmrCount * 100, pPapers->nOmrError_1, nOmrCount, \
 				  (float)pPapers->nOmrError_2 / nOmrCount * 100, pPapers->nOmrError_2, nOmrCount);
 
-		ss << "\r\n----------\r\n" << pPapers->strPapersName << "结果正确率统计完成:\r\n" << szStatisticsInfo << "\r\n----------\r\n";
+		ss << "\r\n\t----------\r\n\t" << pPapers->strPapersName << "结果正确率统计完成:\r\n\t" << szStatisticsInfo << "\r\n\t----------\r\n";
 	}
 	
 
@@ -763,10 +763,10 @@ LRESULT CDataMgrToolDlg::MsgRecogComplete(WPARAM wParam, LPARAM lParam)
 				  (float)pPapers->nOmrNull / nOmrCount * 100, pPapers->nOmrNull, nOmrCount, \
 				  (float)pPapers->nSnNull / nPapersCount * 100, pPapers->nSnNull, nPapersCount);
 
-		strMsg.Format(_T("\r\n=======>>>>>>>>>>\r\n%s识别完成\r\n%s\r\n%s=======<<<<<<<<<<\r\n"), A2T(pPapers->strPapersName.c_str()), A2T(szStatisticsInfo), A2T(ss.str().c_str()));
+		strMsg.Format(_T("\r\n==================\r\n%s识别完成\r\n%s\r\n%s\r\n"), A2T(pPapers->strPapersName.c_str()), A2T(szStatisticsInfo), A2T(ss.str().c_str()));
 	}
 	else
-		strMsg.Format(_T("\r\n%s识别出问题试卷\r\n"), A2T(pPapers->strPapersName.c_str()));
+		strMsg.Format(_T("\r\n****************\r\n%s识别出问题试卷, 问题卷数量=%d\r\n"), A2T(pPapers->strPapersName.c_str()), pPapers->lIssue.size());
 	showMsg(strMsg);
 	return TRUE;
 }

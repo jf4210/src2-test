@@ -80,6 +80,8 @@
 #ifndef TO_WHTY
 	#define SHOW_GUIDEDLG				//显示引导界面,易考乐学自己用，显示引导界面.******** 此处不定义，则直接显示主界面	***********
 #endif
+
+#define WH_CCBKS	//武汉楚才杯考试专用
 //+++++++++++++++++++++++++++
 
 #define USES_GETTHRESHOLD_ZTFB	//使用正态分布方式获取校验点的阀值，未定义时使用固定阀值进行二值化查找矩形
@@ -122,7 +124,7 @@
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 
-#define SOFT_VERSION	_T("1.1118")
+#define SOFT_VERSION	_T("1.1202 for CCB")
 #define SYS_BASE_NAME	_T("YKLX-ScanTool")
 #define SYS_GUIDE_NAME	_T("GuideDlg")
 
