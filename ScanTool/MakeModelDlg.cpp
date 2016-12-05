@@ -163,7 +163,8 @@ BOOL CMakeModelDlg::OnInitDialog()
 			pPaperModel->bFirstV = false;
 			pPaperModel->rtHTracker = m_pModel->vecPaperModel[i]->rtHTracker;
 			pPaperModel->rtVTracker = m_pModel->vecPaperModel[i]->rtVTracker;
-			pPaperModel->rtSNTracker = m_pModel->vecPaperModel[i]->rtSNTracker;
+//			pPaperModel->rtSNTracker = m_pModel->vecPaperModel[i]->rtSNTracker;
+			pPaperModel->rcSNTracker = m_pModel->vecPaperModel[i]->rcSNTracker;
 
 			RECTLIST::iterator itSelHTracker = m_pModel->vecPaperModel[i]->lSelHTracker.begin();
 			for (; itSelHTracker != m_pModel->vecPaperModel[i]->lSelHTracker.end(); itSelHTracker++)
@@ -2192,7 +2193,8 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 		//--
 		pPaperModel->rtHTracker = m_vecPaperModelInfo[i]->rtHTracker;
 		pPaperModel->rtVTracker = m_vecPaperModelInfo[i]->rtVTracker;
-		pPaperModel->rtSNTracker = m_vecPaperModelInfo[i]->rtSNTracker;
+//		pPaperModel->rtSNTracker = m_vecPaperModelInfo[i]->rtSNTracker;
+		pPaperModel->rcSNTracker = m_vecPaperModelInfo[i]->rcSNTracker;
 
 		pPaperModel->nPicW = m_vecPaperModelInfo[i]->nPicW;
 		pPaperModel->nPicH = m_vecPaperModelInfo[i]->nPicH;
@@ -2671,10 +2673,11 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		jsnPaperObj.set("rtVTracker.y", pModel->vecPaperModel[i]->rtVTracker.y);
 		jsnPaperObj.set("rtVTracker.width", pModel->vecPaperModel[i]->rtVTracker.width);
 		jsnPaperObj.set("rtVTracker.height", pModel->vecPaperModel[i]->rtVTracker.height);
-		jsnPaperObj.set("rtSNTracker.x", pModel->vecPaperModel[i]->rtSNTracker.x);
-		jsnPaperObj.set("rtSNTracker.y", pModel->vecPaperModel[i]->rtSNTracker.y);
-		jsnPaperObj.set("rtSNTracker.width", pModel->vecPaperModel[i]->rtSNTracker.width);
-		jsnPaperObj.set("rtSNTracker.height", pModel->vecPaperModel[i]->rtSNTracker.height);
+		jsnPaperObj.set("rtSNTracker.x", pModel->vecPaperModel[i]->rcSNTracker.rt.x);
+		jsnPaperObj.set("rtSNTracker.y", pModel->vecPaperModel[i]->rcSNTracker.rt.y);
+		jsnPaperObj.set("rtSNTracker.width", pModel->vecPaperModel[i]->rcSNTracker.rt.width);
+		jsnPaperObj.set("rtSNTracker.height", pModel->vecPaperModel[i]->rcSNTracker.rt.height);
+		jsnPaperObj.set("rtSNTracker.nRecogFlag", pModel->vecPaperModel[i]->rcSNTracker.nRecogFlag);
 		
 		jsnPicModel.add(jsnPaperObj);
 	}
@@ -3738,8 +3741,19 @@ void CMakeModelDlg::UpdataCPList()
 // 			m_ptSNTracker2 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols, 90);
 // 			m_bFistSNTracker = false;
 // 		}
-		m_ptSNTracker1 = m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.tl();
-		m_ptSNTracker2 = m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.br();
+// 		m_ptSNTracker1 = m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.tl();
+// 		m_ptSNTracker2 = m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.br();
+		m_ptSNTracker1 = m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt.tl();
+		m_ptSNTracker2 = m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt.br();
+		SNLIST::iterator itSN = m_vecPaperModelInfo[m_nCurrTabSel]->lSN.begin();
+		if (itSN != m_vecPaperModelInfo[m_nCurrTabSel]->lSN.end())
+		{
+			RECTLIST::iterator itSnDetail = (*itSN)->lSN.begin();
+			if (itSnDetail != (*itSN)->lSN.end())
+			{
+				m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.nRecogFlag = itSnDetail->nRecogFlag;
+			}
+		}
 		m_pModelPicShow->m_picShow.setSNTrackerPosition(m_ptSNTracker1, m_ptSNTracker2);
 	}
 	else
@@ -4788,10 +4802,16 @@ LRESULT CMakeModelDlg::SNTrackerChange(WPARAM wParam, LPARAM lParam)
 
 	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
 		return true;
-	m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.x = m_ptSNTracker1.x;
-	m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.y = m_ptSNTracker1.y;
-	m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.width = m_ptSNTracker2.x - m_ptSNTracker1.x;
-	m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.height = m_ptSNTracker2.y - m_ptSNTracker1.y;
+// 	m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.x = m_ptSNTracker1.x;
+// 	m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.y = m_ptSNTracker1.y;
+// 	m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.width = m_ptSNTracker2.x - m_ptSNTracker1.x;
+// 	m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.height = m_ptSNTracker2.y - m_ptSNTracker1.y;
+	m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt.x = m_ptSNTracker1.x;
+	m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt.y = m_ptSNTracker1.y;
+	m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt.width = m_ptSNTracker2.x - m_ptSNTracker1.x;
+	m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt.height = m_ptSNTracker2.y - m_ptSNTracker1.y;
+	
+	m_pSNInfoDlg->ShowUI(m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.nRecogFlag);
 	return true;
 }
 
@@ -4954,7 +4974,8 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 
 	int nX = rcList_X[0].width * 0.2 + 0.5;		//判断属于同一列的X轴偏差
 	int nY = rcList_X[0].height * 0.3 + 0.5;	//判断属于同一行的Y轴偏差
-
+	if (nX < 9) nX = 9;
+	if (nY < 9) nY = 9;
 
 
 //	TRACE("-----------------\n");
@@ -5006,7 +5027,7 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 		{
 			dy = rcList_XY[i].y - rcList_XY[i - 1].y;
 
-			if (dy > 6)
+			if (dy > 9)
 			{
 				y++;
 				x = 0;
@@ -5341,7 +5362,8 @@ void CMakeModelDlg::OnBnClickedBtnuploadmodel()
 
 		pPaperModel->rtHTracker = m_pModel->vecPaperModel[i]->rtHTracker;
 		pPaperModel->rtVTracker = m_pModel->vecPaperModel[i]->rtVTracker;
-		pPaperModel->rtSNTracker = m_pModel->vecPaperModel[i]->rtSNTracker;
+//		pPaperModel->rtSNTracker = m_pModel->vecPaperModel[i]->rtSNTracker;
+		pPaperModel->rcSNTracker = m_pModel->vecPaperModel[i]->rcSNTracker;
 
 		RECTLIST::iterator itSelHTracker = m_pModel->vecPaperModel[i]->lSelHTracker.begin();
 		for (; itSelHTracker != m_pModel->vecPaperModel[i]->lSelHTracker.end(); itSelHTracker++)

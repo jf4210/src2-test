@@ -304,7 +304,7 @@ bool	PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModel
 //----------------	OMR识别灰度差值比较	------------------
 typedef struct
 {
-	char szVal[4];
+	char szVal[10];
 	float fFirst;
 	float fSecond;
 	float fDiff;

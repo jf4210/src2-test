@@ -350,10 +350,12 @@ pMODEL LoadModelFile(CString strModelPath)
 			paperModelInfo->rtVTracker.y = jsnPaperObj->get("rtVTracker.y").convert<int>();
 			paperModelInfo->rtVTracker.width = jsnPaperObj->get("rtVTracker.width").convert<int>();
 			paperModelInfo->rtVTracker.height = jsnPaperObj->get("rtVTracker.height").convert<int>();
-			paperModelInfo->rtSNTracker.x = jsnPaperObj->get("rtSNTracker.x").convert<int>();
-			paperModelInfo->rtSNTracker.y = jsnPaperObj->get("rtSNTracker.y").convert<int>();
-			paperModelInfo->rtSNTracker.width = jsnPaperObj->get("rtSNTracker.width").convert<int>();
-			paperModelInfo->rtSNTracker.height = jsnPaperObj->get("rtSNTracker.height").convert<int>();
+			paperModelInfo->rcSNTracker.rt.x = jsnPaperObj->get("rtSNTracker.x").convert<int>();
+			paperModelInfo->rcSNTracker.rt.y = jsnPaperObj->get("rtSNTracker.y").convert<int>();
+			paperModelInfo->rcSNTracker.rt.width = jsnPaperObj->get("rtSNTracker.width").convert<int>();
+			paperModelInfo->rcSNTracker.rt.height = jsnPaperObj->get("rtSNTracker.height").convert<int>();
+			if (jsnPaperObj->has("rtSNTracker.nRecogFlag"))
+				paperModelInfo->rcSNTracker.nRecogFlag = jsnPaperObj->get("rtSNTracker.nRecogFlag").convert<int>();
 
 			Poco::JSON::Array::Ptr arraySelHTracker = jsnPaperObj->getArray("hTrackerRect");
 			Poco::JSON::Array::Ptr arraySelVTracker = jsnPaperObj->getArray("vTrackerRect");
@@ -2483,7 +2485,9 @@ bool GetZkzh(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 		}
 		ptZkzh1 += cv::Point(2, 2);			//×¼¿¼Ö¤ÏðÆ¤½îËõ·Å£¬·ÀÖ¹Ñ¡¿òÌ«´ó
 		ptZkzh2 -= cv::Point(2, 2);			//×¼¿¼Ö¤ÏðÆ¤½îËõ·Å£¬·ÀÖ¹Ñ¡¿òÌ«´ó
-		pPaperModel->rtSNTracker = cv::Rect(ptZkzh1, ptZkzh2);
+//		pPaperModel->rtSNTracker = cv::Rect(ptZkzh1, ptZkzh2);
+		pPaperModel->rcSNTracker.rt = cv::Rect(ptZkzh1, ptZkzh2);
+		pPaperModel->rcSNTracker.nRecogFlag = 10;
 	}
 	return true;
 }

@@ -26,7 +26,8 @@ typedef struct _PaperModelInfo_
 	cv::Mat		matDstImg;			//显示图像的Mat
 	cv::Rect	rtHTracker;
 	cv::Rect	rtVTracker;
-	cv::Rect	rtSNTracker;
+//	cv::Rect	rtSNTracker;
+	RECTINFO	rcSNTracker;
 	SNLIST		lSN;
 	std::vector<RECTINFO> vecHTracker;	//水平橡皮筋区域
 	std::vector<RECTINFO> vecVTracker;	//垂直橡皮筋区域

@@ -66,10 +66,10 @@
       <OutputFile>..\..\bin\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\lib\x86</AdditionalLibraryDirectories>
       <AdditionalDependencies>opencv_world310d.lib;libzbar-0.lib;zdll.lib;libeay32.lib;ssleay32.lib</AdditionalDependencies>
-      <HeapReserveSize>50000000</HeapReserveSize>
-      <HeapCommitSize>50000000</HeapCommitSize>
-      <StackReserveSize>50000000</StackReserveSize>
-      <StackCommitSize>50000000</StackCommitSize>
+      <HeapReserveSize>30000000</HeapReserveSize>
+      <HeapCommitSize>30000000</HeapCommitSize>
+      <StackReserveSize>30000000</StackReserveSize>
+      <StackCommitSize>30000000</StackCommitSize>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -100,10 +100,10 @@
       <AdditionalLibraryDirectories>..\..\lib\x86</AdditionalLibraryDirectories>
       <OutputFile>..\..\bin\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalDependencies>opencv_world310.lib;libzbar-0.lib;zdll.lib</AdditionalDependencies>
-      <HeapReserveSize>50000000</HeapReserveSize>
-      <HeapCommitSize>50000000</HeapCommitSize>
-      <StackReserveSize>50000000</StackReserveSize>
-      <StackCommitSize>50000000</StackCommitSize>
+      <HeapReserveSize>30000000</HeapReserveSize>
+      <HeapCommitSize>30000000</HeapCommitSize>
+      <StackReserveSize>30000000</StackReserveSize>
+      <StackCommitSize>30000000</StackCommitSize>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>

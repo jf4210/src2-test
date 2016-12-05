@@ -449,7 +449,7 @@ void CDataMgrToolDlg::InitConfig()
 	}
 
 	//statusBar
-#if 1
+#if 0
 	static UINT indicators[] =
 	{
 		ID_INDICATOR_CAPS,             //CAP lock indicator.
@@ -461,6 +461,7 @@ void CDataMgrToolDlg::InitConfig()
 		ID_INDICATOR_CAPS,             //CAP lock indicator.
 		ID_INDICATOR_NUM,              //NUM lock indicator.
 	};
+
 	if (!m_wndStatusBar.Create(this) || !m_wndStatusBar.SetIndicators(indicators, sizeof(indicators) / sizeof(UINT)))
 	{
 		TRACE0("Failed to create statusbarn");
@@ -494,13 +495,14 @@ void CDataMgrToolDlg::InitConfig()
 	RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST, 0);
 #else
 	m_statusBar.Create(WS_CHILD | WS_VISIBLE | SBT_OWNERDRAW, CRect(0, 0, 0, 0), this, 0);
-	int strPartDim[6] = { 80, 130, 210, 260, 340, -1 }; //分割数量
-	m_statusBar.SetParts(6, strPartDim);
+	int strPartDim[8] = { 80, 130, 210, 260, 340, 390, 480, -1 }; //分割数量
+	m_statusBar.SetParts(8, strPartDim);
 
 	//设置状态栏文本
 	m_statusBar.SetText(_T("解压试卷袋:"), 0, 0);
 	m_statusBar.SetText(_T("识别试卷:"), 2, 0);
-	m_statusBar.SetText(_T("压缩试卷袋:"), 4, 0);
+	m_statusBar.SetText(_T("识别试卷袋:"), 4, 0);
+	m_statusBar.SetText(_T("压缩试卷袋:"), 6, 0);
 	//下面是在状态栏中加入图标
 //	m_statusBar.SetIcon(1, SetIcon(AfxGetApp()->LoadIcon(IDR_MAINFRAME), FALSE));//为第二个分栏中加的图标
 #endif
@@ -652,9 +654,11 @@ void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
 	CString strDecompressDir = m_strPkgPath + "\\tmpDecompress";
 	try
 	{
-		int nPos1 = m_strModelPath.ReverseFind('\\');
-		int nPos2 = m_strModelPath.ReverseFind('.');
 		std::string strModelPath = T2A(m_strModelPath);
+
+		int nPos1 = strModelPath.rfind('\\');
+		int nPos2 = strModelPath.rfind('.');
+
 		std::string strBaseName = strModelPath.substr(nPos1 + 1, nPos2 - nPos1 - 1);
 		std::string strSrcName = strModelPath.substr(nPos1 + 1, strModelPath.length() - nPos1 - 1);
 
@@ -930,14 +934,28 @@ void CDataMgrToolDlg::OnTimer(UINT_PTR nIDEvent)
 	if (nIDEvent == TIMER_UPDATE_STARTBAR)
 	{
 		CString strTmp;
-		strTmp.Format(_T("%d"), _nDecompress_);
-		m_wndStatusBar.SetPaneText(1, strTmp);
-		strTmp.Format(_T("%d"), _nRecog_);
-		m_wndStatusBar.SetPaneText(3, strTmp);
-		strTmp.Format(_T("%d"), _nRecogPapers_);
-		m_wndStatusBar.SetPaneText(5, strTmp);
-		strTmp.Format(_T("%d"), _nCompress_);
-		m_wndStatusBar.SetPaneText(7, strTmp);
+		if (m_wndStatusBar.GetSafeHwnd())
+		{
+			strTmp.Format(_T("%d"), _nDecompress_);
+			m_wndStatusBar.SetPaneText(1, strTmp);
+			strTmp.Format(_T("%d"), _nRecog_);
+			m_wndStatusBar.SetPaneText(3, strTmp);
+			strTmp.Format(_T("%d"), _nRecogPapers_);
+			m_wndStatusBar.SetPaneText(5, strTmp);
+			strTmp.Format(_T("%d"), _nCompress_);
+			m_wndStatusBar.SetPaneText(7, strTmp);
+		}
+		else
+		{
+			strTmp.Format(_T("%d"), _nDecompress_);
+			m_statusBar.SetText(strTmp, 1, 0);
+			strTmp.Format(_T("%d"), _nRecog_);
+			m_statusBar.SetText(strTmp, 3, 0);
+			strTmp.Format(_T("%d"), _nRecogPapers_);
+			m_statusBar.SetText(strTmp, 5, 0);
+			strTmp.Format(_T("%d"), _nCompress_);
+			m_statusBar.SetText(strTmp, 7, 0);
+		}
 	}
 
 	CDialogEx::OnTimer(nIDEvent);

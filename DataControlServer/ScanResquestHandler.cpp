@@ -757,7 +757,9 @@ bool GetZkzh(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel, pMODEL pMod
 			}
 			ptZkzh1 += cv::Point(2, 2);			//×¼¿¼Ö¤ÏðÆ¤½îËõ·Å£¬·ÀÖ¹Ñ¡¿òÌ«´ó
 			ptZkzh2 -= cv::Point(2, 2);			//×¼¿¼Ö¤ÏðÆ¤½îËõ·Å£¬·ÀÖ¹Ñ¡¿òÌ«´ó
-			pPaperModel->rtSNTracker = cv::Rect(ptZkzh1, ptZkzh2);
+//			pPaperModel->rtSNTracker = cv::Rect(ptZkzh1, ptZkzh2);
+			pPaperModel->rcSNTracker.rt = cv::Rect(ptZkzh1, ptZkzh2);
+			pPaperModel->rcSNTracker.nRecogFlag = 10;
 		}
 		else if (objBaseInfo->has("studentCode"))
 		{
@@ -770,7 +772,8 @@ bool GetZkzh(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel, pMODEL pMod
 
 			ptZkzh1 += cv::Point(2, 2);			//×¼¿¼Ö¤ÏðÆ¤½îËõ·Å£¬·ÀÖ¹Ñ¡¿òÌ«´ó
 			ptZkzh2 -= cv::Point(2, 2);			//×¼¿¼Ö¤ÏðÆ¤½îËõ·Å£¬·ÀÖ¹Ñ¡¿òÌ«´ó
-			pPaperModel->rtSNTracker = cv::Rect(ptZkzh1, ptZkzh2);
+			//			pPaperModel->rtSNTracker = cv::Rect(ptZkzh1, ptZkzh2);
+			pPaperModel->rcSNTracker.rt = cv::Rect(ptZkzh1, ptZkzh2);
 			
 			pSN_ITEM pSnItem = new SN_ITEM;
 			pSnItem->nItem = 0;
@@ -1954,10 +1957,11 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 		jsnPaperObj.set("rtVTracker.y", pModel->vecPaperModel[i]->rtVTracker.y);
 		jsnPaperObj.set("rtVTracker.width", pModel->vecPaperModel[i]->rtVTracker.width);
 		jsnPaperObj.set("rtVTracker.height", pModel->vecPaperModel[i]->rtVTracker.height);
-		jsnPaperObj.set("rtSNTracker.x", pModel->vecPaperModel[i]->rtSNTracker.x);
-		jsnPaperObj.set("rtSNTracker.y", pModel->vecPaperModel[i]->rtSNTracker.y);
-		jsnPaperObj.set("rtSNTracker.width", pModel->vecPaperModel[i]->rtSNTracker.width);
-		jsnPaperObj.set("rtSNTracker.height", pModel->vecPaperModel[i]->rtSNTracker.height);
+		jsnPaperObj.set("rtSNTracker.x", pModel->vecPaperModel[i]->rcSNTracker.rt.x);
+		jsnPaperObj.set("rtSNTracker.y", pModel->vecPaperModel[i]->rcSNTracker.rt.y);
+		jsnPaperObj.set("rtSNTracker.width", pModel->vecPaperModel[i]->rcSNTracker.rt.width);
+		jsnPaperObj.set("rtSNTracker.height", pModel->vecPaperModel[i]->rcSNTracker.rt.height);
+		jsnPaperObj.set("rtSNTracker.nRecogFlag", pModel->vecPaperModel[i]->rcSNTracker.nRecogFlag);
 
 		jsnPicModel.add(jsnPaperObj);
 	}

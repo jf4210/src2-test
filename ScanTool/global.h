@@ -66,7 +66,7 @@
 //	#define	 TEST_SCAN_THREAD	//扫描线程测试
 #else	//release版本
 	#define	 TEST_MODEL_NAME	//模板名称测试
-	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
+//	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -81,7 +81,7 @@
 	#define SHOW_GUIDEDLG				//显示引导界面,易考乐学自己用，显示引导界面.******** 此处不定义，则直接显示主界面	***********
 #endif
 
-#define WH_CCBKS	//武汉楚才杯考试专用
+//#define WH_CCBKS	//武汉楚才杯考试专用
 //+++++++++++++++++++++++++++
 
 #define USES_GETTHRESHOLD_ZTFB	//使用正态分布方式获取校验点的阀值，未定义时使用固定阀值进行二值化查找矩形
