@@ -263,7 +263,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 	int nDoubtCount = 0;
 	int nEqualCount = 0;
 
-	char szSN[30] = { 0 };
+	char szSN[100] = { 0 };
 	sprintf_s(szSN, "SN(%s), ", pPaper->strSN.c_str());
 	strPaperLog.append(szSN);
 	
@@ -416,9 +416,6 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 		cv::GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//_nGauseKernel_
 		SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
 
-#ifdef TEST_DATA	//for test
-//		threshold(matCompRoi, matCompRoi, rc.nThresholdValue, 255, THRESH_BINARY);
-#endif
 		const int channels[1] = { 0 };
 		const float* ranges[1];
 		const int histSize[1] = { 1 };

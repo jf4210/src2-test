@@ -792,7 +792,6 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			//提取轮廓  
 			cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-#if 1
 			//模板图像的水平同步头平均长宽
 			RECTLIST::iterator itBegin = pModelInfo->pModel->vecPaperModel[nPic]->lH_Head.begin();
 			RECTINFO rcFist = *itBegin;
@@ -890,20 +889,6 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			}
 			cvReleaseMemStorage(&storage);
 //			int nYMean = nYSum / RectCompList.size();
-#else
-			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
-			{
-				CvRect aRect = cvBoundingRect(contour, 0);
-				Rect rm = aRect;
-				rm.x = rm.x + rc.rt.x;
-				rm.y = rm.y + rc.rt.y;
-				if (rm.width < 10 || rm.height < 7 || rm.width > 70 || rm.height > 50 || rm.area() < 70)
-				{
-					continue;
-				}
-				RectCompList.push_back(rm);
-			}
-#endif
 		}
 		catch (cv::Exception& exc)
 		{
@@ -1128,7 +1113,6 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				nHead_maxW = rcFist.rt.width + nHeadInterW;
 				nHead_minH = rcFist.rt.height - nHeadInterH;
 				nHead_maxH = rcFist.rt.height + nHeadInterH;
-
 // 				float fOffset = 0.1;
 // 				float fPer_W, fPer_H;	//模板第二个点与第一个点的宽、高的比例，用于最小值控制
 // 				fPer_W = 0.5;
@@ -1162,7 +1146,7 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				nHead_maxH = rcFist.rt.height * (1 + fOffset_Head);		//同上
 			}
 #endif
-			int nYSum = 0;
+			int nXMidSum = 0;	//x轴中线坐标总和
 			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
 			{
 				CvRect aRect = cvBoundingRect(contour, 0);
@@ -1183,10 +1167,29 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 					}
 				}
 				RectCompList.push_back(rm);
-				nYSum += rm.y;
+				nXMidSum += (rm.x + rm.width / 2);
 			}
 			cvReleaseMemStorage(&storage);
-//			int nYMean = nYSum / RectCompList.size();
+			int nXMean = nXMidSum / RectCompList.size();
+
+			//根据坐标位置过滤
+// 			int nDeviation = 10;
+// 			int xMin = nXMean - (rcFist.rt.width / 2 + nDeviation);
+// 			int xMax = nXMean + (rcFist.rt.width / 2 + nDeviation);
+// 			TRACE("垂直同步头中线X = %d, 偏差[%d,%d]\n", nXMean, xMin, xMax);
+// 			std::vector<Rect>::iterator itHead = RectCompList.begin();
+// 			for (int i = 0; itHead != RectCompList.end(); i++)
+// 			{
+// 				if(itHead->x < xMin || itHead->x > xMax)
+// 					itHead = RectCompList.erase(itHead);
+// 				else if(itHead->x > nXMean && itHead->br().x > xMax)
+// 					itHead = RectCompList.erase(itHead);
+// 				else
+// 					itHead++;
+// 			}
+
+
+
 #else
 			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
 			{

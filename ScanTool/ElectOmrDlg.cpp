@@ -191,8 +191,13 @@ void ElectOmrDlg::OnBnClickedBtnDel()
 	//********	注意：如果有已经属于此组的选做题，则不能删除，需要先将那些属于此组的选项删除，然后才能删除此组信息
 	CMakeModelDlg* pDlg = (CMakeModelDlg*)GetParent();
 
-
-	pELECTOMRGROUPINFO pElectOmr = (pELECTOMRGROUPINFO)m_comboGroup.GetItemDataPtr(m_comboGroup.GetCurSel());
+	int nItem = m_comboGroup.GetCurSel();
+	if (nItem < 0)
+	{
+		AfxMessageBox(_T("请先新建选项组"));
+		return;
+	}
+	pELECTOMRGROUPINFO pElectOmr = (pELECTOMRGROUPINFO)m_comboGroup.GetItemDataPtr(nItem);
 
 	bool bFind = false;
 	for (int i = 0; i < pDlg->m_vecPaperModelInfo[pDlg->m_nCurrTabSel]->vecElectOmr.size(); i++)
@@ -208,7 +213,6 @@ void ElectOmrDlg::OnBnClickedBtnDel()
 		AfxMessageBox(_T("请先清除属于此组选做题的选项"));
 		return;
 	}
-
 
 	m_comboGroup.DeleteString(m_comboGroup.GetCurSel());
 
@@ -227,7 +231,6 @@ void ElectOmrDlg::OnBnClickedBtnDel()
 	m_comboGroup.SetCurSel(-1);
 }
 
-
 void ElectOmrDlg::OnBnClickedBtnSave()
 {
 	UpdateData(TRUE);
@@ -237,6 +240,11 @@ void ElectOmrDlg::OnBnClickedBtnSave()
 		return;
 	}
 	int nItem = m_comboGroup.GetCurSel();
+	if (nItem < 0)
+	{
+		AfxMessageBox(_T("请先新建选项组"));
+		return;
+	}
 	pELECTOMRGROUPINFO pElectOmr = (pELECTOMRGROUPINFO)m_comboGroup.GetItemDataPtr(nItem);
 
 	pElectOmr->nAllCount = m_nAllCount;

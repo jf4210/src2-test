@@ -120,7 +120,7 @@ void CSendFileThread::SendFileComplete(char* pName, char* pSrcPath)
 	try
 	{
 		Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pSrcPath));
-		filePapers.moveTo(CMyCodeConvert::Gb2312ToUtf8(strFileNewPath));
+		filePapers.moveTo(strFileNewPath);
 		std::string strFileName = pName;
 		std::string strLog = Poco::format("ÒÆ¶¯ÊÔ¾í´ü(%s)Íê³É", strFileName);
 		g_pLogger->information(strLog);

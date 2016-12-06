@@ -129,6 +129,7 @@ CScanToolDlg::CScanToolDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	, m_pShowModelInfoDlg(NULL), m_pShowScannerInfoDlg(NULL)
 	, m_nDuplex(1), m_bF1Enable(FALSE), m_bF2Enable(FALSE)
 	, m_pCompressObj(NULL), m_pCompressThread(NULL)
+	, m_nCurrentScanCount(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);// IDR_MAINFRAME
 }
@@ -213,6 +214,27 @@ BOOL CScanToolDlg::OnInitDialog()
 	InitParam();
 	InitFileUpLoadList();
 	
+	//for test
+	CString strTmp = _T("E:\\myWorkspace\\yklx\\bin\\楚才杯程序\\release-scan\\Paper\\300150170_78-80_20161121085027.pkg");
+	char * pSrcPath = T2A(strTmp);
+	CString strTmp2 = _T("E:\\myWorkspace\\yklx\\bin\\楚才杯程序\\release-scan\\Paper\\22222.pkg");
+
+	try
+	{
+		Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pSrcPath));
+		filePapers.moveTo(CMyCodeConvert::Gb2312ToUtf8(T2A(strTmp2)));
+//		std::string strFileName = pName;
+		std::string strLog = "移动试卷袋完成";
+		g_pLogger->information(strLog);
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strFileName = "11111111111111";
+		std::string strErrInfo = Poco::format("移动试卷袋(%s)失败,%s", strFileName, exc.message());
+		g_pLogger->information(strErrInfo);
+	}
+	//--
+
 // 	Poco::LocalDateTime dtNow;
 // 	std::string strData;
 // 	Poco::format(strData, "%4d-%2d-%2d %2d:%2d", dtNow.year(), dtNow.month(), dtNow.day(), dtNow.hour(), dtNow.minute());
@@ -1058,7 +1080,6 @@ void CScanToolDlg::OnBnClickedBtnScan()
 
 	int nScanSrc = 0;
 	int nDuplexDef = 1;
-	int nScanCount = 0;
 
 	CScanCtrlDlg dlg(m_scanSourceArry);
 	if (dlg.DoModal() != IDOK)
@@ -1069,7 +1090,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 
 	nScanSrc = dlg.m_nCurrScanSrc;
 	nDuplexDef = dlg.m_nCurrDuplex;
-	nScanCount = dlg.m_nStudentNum;
+	m_nCurrentScanCount = dlg.m_nStudentNum;
 	
 	m_comboModel.EnableWindow(FALSE);
 	GetDlgItem(IDC_BTN_Scan)->EnableWindow(FALSE);
@@ -1137,7 +1158,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	int nNum = 0;
 	if (nDuplex == 0)
 	{
-		nNum = nScanCount * m_nModelPicNums;
+		nNum = m_nCurrentScanCount * m_nModelPicNums;
 	}
 	else
 	{
@@ -1145,7 +1166,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		if (nModelPics % 2)
 			nModelPics++;
 
-		nNum = nScanCount * nModelPics;
+		nNum = m_nCurrentScanCount * nModelPics;
 	}
 	m_nDuplex = nDuplex;
 
@@ -1756,9 +1777,14 @@ void CScanToolDlg::ScanDone(int nStatus)
 
 	USES_CONVERSION;
 	CString strMsg = _T("");
-	if (nStatus == 1)
+	if (nStatus == 1 && (m_nCurrentScanCount == 0 || m_pPapersInfo->nPaperCount == m_nCurrentScanCount))
 	{
 		strMsg = _T("扫描完成");
+		m_nScanStatus = 3;
+	}
+	else if (nStatus == 1 && (m_nCurrentScanCount != 0 && m_pPapersInfo->nPaperCount != m_nCurrentScanCount))
+	{
+		strMsg = _T("扫描结束，扫描数量与输入试卷数量不一致，请检查!!!");
 		m_nScanStatus = 3;
 	}
 	else

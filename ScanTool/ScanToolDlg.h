@@ -79,6 +79,8 @@ public:
 	std::string		m_strCmdServerIP;
 	int				m_nCmdPort;
 
+	int				m_nCurrentScanCount;	//当前扫描需要扫描试卷数量
+
 	BOOL			m_bLogin;
 	CString			m_strUserName;
 	CString			m_strNickName;
