@@ -2658,14 +2658,45 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	strInfo.Format(_T("正在保存%s..."), A2T(szZipName));
 	SetStatusShowInfo(strInfo, bWarn);
 #if 1
+	//临时目录改名，以便压缩时继续扫描
+	std::string strSrcPicDirPath;
+	try
+	{
+		Poco::File tmpPath(CMyCodeConvert::Gb2312ToUtf8(m_strCurrPicSavePath));
+
+		char szCompressDirPath[MAX_PATH] = { 0 };
+		sprintf_s(szCompressDirPath, "%sPaper\\%s", T2A(g_strCurrentPath), szZipName);
+		strSrcPicDirPath = szCompressDirPath;
+		std::string strUtf8NewPath = CMyCodeConvert::Gb2312ToUtf8(strSrcPicDirPath);
+
+		tmpPath.renameTo(strUtf8NewPath);
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strLog = "临时文件夹重命名失败(" + exc.message() + "): ";
+		strLog.append(m_strCurrPicSavePath);
+		g_pLogger->information(strLog);
+		strSrcPicDirPath = m_strCurrPicSavePath;
+	}
+
+
 	pCOMPRESSTASK pTask = new COMPRESSTASK;
 	pTask->strCompressFileName = szZipName;
 	pTask->strExtName = T2A(PAPERS_EXT_NAME);
 	pTask->strSavePath = szPapersSavePath;
-	pTask->strSrcFilePath = m_strCurrPicSavePath;
+	pTask->strSrcFilePath = strSrcPicDirPath;
 	g_fmCompressLock.lock();
 	g_lCompressTask.push_back(pTask);
 	g_fmCompressLock.unlock();
+
+// 	pCOMPRESSTASK pTask = new COMPRESSTASK;
+// 	pTask->strCompressFileName = szZipName;
+// 	pTask->strExtName = T2A(PAPERS_EXT_NAME);
+// 	pTask->strSavePath = szPapersSavePath;
+// 	pTask->strSrcFilePath = m_strCurrPicSavePath;
+// 	g_fmCompressLock.lock();
+// 	g_lCompressTask.push_back(pTask);
+// 	g_fmCompressLock.unlock();
 #else
 	if (!ZipFile(A2T(m_strCurrPicSavePath.c_str()), A2T(szPapersSavePath), PAPERS_EXT_NAME))
 	{
