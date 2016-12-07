@@ -39,5 +39,6 @@ bool CSysSet::Load(std::string& strConfPath)
 	m_strEncryptPwd		= pConf->getString("Sys.encryptPwd", "yklxTest");
 	m_strSessionName	= pConf->getString("Sys.sessionName", "ezs");
 	m_strVerServerIP	= pConf->getString("VerServerInfo.addr", "116.211.105.45");
+	m_strPicWwwNetAddr	= pConf->getString("UpHttp.picWwwNetAddr", "");
 	return true;
 }

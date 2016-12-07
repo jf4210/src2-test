@@ -214,27 +214,6 @@ BOOL CScanToolDlg::OnInitDialog()
 	InitParam();
 	InitFileUpLoadList();
 	
-	//for test
-	CString strTmp = _T("E:\\myWorkspace\\yklx\\bin\\楚才杯程序\\release-scan\\Paper\\300150170_78-80_20161121085027.pkg");
-	char * pSrcPath = T2A(strTmp);
-	CString strTmp2 = _T("E:\\myWorkspace\\yklx\\bin\\楚才杯程序\\release-scan\\Paper\\22222.pkg");
-
-	try
-	{
-		Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pSrcPath));
-		filePapers.moveTo(CMyCodeConvert::Gb2312ToUtf8(T2A(strTmp2)));
-//		std::string strFileName = pName;
-		std::string strLog = "移动试卷袋完成";
-		g_pLogger->information(strLog);
-	}
-	catch (Poco::Exception& exc)
-	{
-		std::string strFileName = "11111111111111";
-		std::string strErrInfo = Poco::format("移动试卷袋(%s)失败,%s", strFileName, exc.message());
-		g_pLogger->information(strErrInfo);
-	}
-	//--
-
 // 	Poco::LocalDateTime dtNow;
 // 	std::string strData;
 // 	Poco::format(strData, "%4d-%2d-%2d %2d:%2d", dtNow.year(), dtNow.month(), dtNow.day(), dtNow.hour(), dtNow.minute());
@@ -1780,12 +1759,19 @@ void CScanToolDlg::ScanDone(int nStatus)
 	if (nStatus == 1 && (m_nCurrentScanCount == 0 || m_pPapersInfo->nPaperCount == m_nCurrentScanCount))
 	{
 		strMsg = _T("扫描完成");
-		m_nScanStatus = 3;
+		if (m_nScanStatus != 2)
+			m_nScanStatus = 3;
 	}
 	else if (nStatus == 1 && (m_nCurrentScanCount != 0 && m_pPapersInfo->nPaperCount != m_nCurrentScanCount))
 	{
 		strMsg = _T("扫描结束，扫描数量与输入试卷数量不一致，请检查!!!");
-		m_nScanStatus = 3;
+
+		if (m_nScanStatus != 2)
+			m_nScanStatus = 3;
+	}
+	else if (nStatus == -5)
+	{
+		strMsg = _T("扫描已取消");
 	}
 	else
 	{

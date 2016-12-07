@@ -287,8 +287,8 @@ BOOL CTwain::ProcessMessage(MSG msg)
 
 		twRC = CallDSMEntry(&m_AppId,&m_Source,DG_CONTROL,DAT_EVENT,MSG_PROCESSEVENT,(TW_MEMREF)&twEvent);
 
-		if (twRC != TWRC_DSEVENT)
-			return FALSE;
+// 		if (twRC != TWRC_DSEVENT)
+// 			return FALSE;
 
 		//  CallTwainProc(&m_AppId,&m_Source,DG_CONTROL,DAT_EVENT,MSG_PROCESSEVENT,(TW_MEMREF)&twEvent);
 		//  if(GetRC() != TWRC_NOTDSEVENT)
@@ -601,7 +601,7 @@ void CTwain::TranslateMessage(TW_EVENT& twEvent)
 			{
 				CloseDS();
 			}
-			ScanDone(1);
+			ScanDone(-5);
 			break;
 	default:
 		TRACE("TranslateMessage --> default, twEvent.TWMessage = %d.\n", twEvent.TWMessage);

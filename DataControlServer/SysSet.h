@@ -43,6 +43,7 @@ public:
 	string m_strEncryptPwd;		//扫描端进行文件加密解密的密码
 	string m_strSessionName;	//提交数据给后端时的cookie字段的名称，默认ezs
 	string m_strVerServerIP;	//版本控制服务器的地址信息
+	string m_strPicWwwNetAddr;	//图片的外网访问地址
 };
 
 #define SysSet CSysSet::GetRef()

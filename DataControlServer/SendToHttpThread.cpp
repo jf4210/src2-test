@@ -809,6 +809,7 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 			jsnModel.set("examId", pModelInfo->pUploadModelInfo->nExamID);
 			jsnModel.set("subjectId", pModelInfo->pUploadModelInfo->nSubjectID);
 			jsnModel.set("tmplateName", CMyCodeConvert::Gb2312ToUtf8(pModelInfo->pUploadModelInfo->szModelName));
+			jsnModel.set("netAddr", SysSet.m_strPicWwwNetAddr);
 			jsnModel.set("paper", arryModelPics);
 			if (strlen(pModelInfo->pUploadModelInfo->szElectOmr) > 0)
 				jsnModel.set("modelElectOmr", electOmrArry);	//pModelInfo->pUploadModelInfo->szElectOmr
@@ -941,6 +942,7 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 	jsnPapers.set("subjectId", pPapers->nSubjectID);
 	jsnPapers.set("teacherId", pPapers->nTeacherId);
 	jsnPapers.set("userId", pPapers->nUserId);
+	jsnPapers.set("netAddr", SysSet.m_strPicWwwNetAddr);
 	Poco::JSON::Array  paperArry;
 
 	LIST_PAPER_INFO::iterator it2 = pPapers->lPaper.begin();
