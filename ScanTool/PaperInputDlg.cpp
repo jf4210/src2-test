@@ -1416,6 +1416,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	strInfo.Format(_T("ÕýÔÚ±£´æ%s..."), A2T(szZipName));
 #if 1
 	pCOMPRESSTASK pTask = new COMPRESSTASK;
+	pTask->bDelSrcDir = false;
 	pTask->strCompressFileName = szZipName;
 	pTask->strExtName = T2A(PAPERS_EXT_NAME);
 	pTask->strSavePath = szPapersSavePath;

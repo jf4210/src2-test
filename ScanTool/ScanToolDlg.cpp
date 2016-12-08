@@ -1518,7 +1518,7 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 {
 // 	clock_t start, end;
 // 	start = clock();
-
+	USES_CONVERSION;
 	
 	if (m_nDuplex)	//如果是双面扫描，需要判断模板为奇数时舍弃最后一张图片的情况
 	{
@@ -1539,7 +1539,15 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 
 
 	CDIB dib;
-	dib.CreateFromHandle(hBitmap, bits);
+	if (!dib.CreateFromHandle(hBitmap, bits))
+	{
+		_bTwainContinue = FALSE;
+		m_nScanStatus = 2;
+		std::string strLog = "获取图像时分配内存失败";
+		g_pLogger->information(strLog);
+		SetStatusShowInfo(A2T(strLog.c_str()), TRUE);
+		return;
+	}
 
 	BITMAPFILEHEADER bFile;
 	::ZeroMemory(&bFile, sizeof(bFile));
@@ -1548,7 +1556,6 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 	bFile.bfOffBits = sizeof(BITMAPINFOHEADER) + dib.GetPaletteSize()*sizeof(RGBQUAD) + sizeof(BITMAPFILEHEADER);
 
 	bool bTmp = false;
-	USES_CONVERSION;
 	unsigned char *pBits = NULL;
 	try
 	{
@@ -2638,7 +2645,8 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 
 	//试卷袋压缩
 	char szPapersSavePath[MAX_PATH] = { 0 };
-	char szZipName[50] = { 0 };
+	char szZipName[60] = { 0 };
+	char szZipBaseName[50] = { 0 };
 	if (bLogin)
 	{
 		Poco::LocalDateTime now;
@@ -2646,11 +2654,13 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		sprintf_s(szTime, "%d%02d%02d%02d%02d%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
 
 		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s", T2A(g_strCurrentPath), T2A(strUser), nExamID, nSubjectID, szTime);
+		sprintf_s(szZipBaseName, "%s_%d-%d_%s", T2A(strUser), nExamID, nSubjectID, szTime);
 		sprintf_s(szZipName, "%s_%d-%d_%s%s", T2A(strUser), nExamID, nSubjectID, szTime, T2A(PAPERS_EXT_NAME));	//%s_%s.pkg
 	}
 	else
 	{
 		sprintf_s(szPapersSavePath, "%sPaper\\%s", T2A(g_strCurrentPath), m_pPapersInfo->strPapersName.c_str());
+		sprintf_s(szZipBaseName, "%s", m_pPapersInfo->strPapersName.c_str());
 		sprintf_s(szZipName, "%s%s", m_pPapersInfo->strPapersName.c_str(), T2A(PAPERS_EXT_NAME));
 	}
 	CString strInfo;
@@ -2663,9 +2673,9 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	try
 	{
 		Poco::File tmpPath(CMyCodeConvert::Gb2312ToUtf8(m_strCurrPicSavePath));
-
+		
 		char szCompressDirPath[MAX_PATH] = { 0 };
-		sprintf_s(szCompressDirPath, "%sPaper\\%s", T2A(g_strCurrentPath), szZipName);
+		sprintf_s(szCompressDirPath, "%sPaper\\%s", T2A(g_strCurrentPath), szZipBaseName);
 		strSrcPicDirPath = szCompressDirPath;
 		std::string strUtf8NewPath = CMyCodeConvert::Gb2312ToUtf8(strSrcPicDirPath);
 
@@ -2678,8 +2688,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		g_pLogger->information(strLog);
 		strSrcPicDirPath = m_strCurrPicSavePath;
 	}
-
-
+		
 	pCOMPRESSTASK pTask = new COMPRESSTASK;
 	pTask->strCompressFileName = szZipName;
 	pTask->strExtName = T2A(PAPERS_EXT_NAME);
@@ -2688,6 +2697,10 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	g_fmCompressLock.lock();
 	g_lCompressTask.push_back(pTask);
 	g_fmCompressLock.unlock();
+
+	SAFE_RELEASE(m_pPapersInfo);
+	m_lcPicture.DeleteAllItems();
+	m_pCurrentShowPaper = NULL;
 
 // 	pCOMPRESSTASK pTask = new COMPRESSTASK;
 // 	pTask->strCompressFileName = szZipName;
@@ -2908,24 +2921,27 @@ void CScanToolDlg::InitFileUpLoadList()
 	USES_CONVERSION;
 
 #if 1
-	CString strSearchPath = A2T(CMyCodeConvert::Utf8ToGb2312(g_strPaperSavePath).c_str());
-	CFileFind ff;
-	BOOL bFind = ff.FindFile(strSearchPath + _T("*"), 0);
-	while (bFind)
+	if (g_nManulUploadFile == 1)
 	{
-		bFind = ff.FindNextFileW();
-		if (ff.GetFileName() == _T(".") || ff.GetFileName() == _T(".."))
-			continue;
-		else if (ff.IsArchived())
+		CString strSearchPath = A2T(CMyCodeConvert::Utf8ToGb2312(g_strPaperSavePath).c_str());
+		CFileFind ff;
+		BOOL bFind = ff.FindFile(strSearchPath + _T("*"), 0);
+		while (bFind)
 		{
-			if (ff.GetFileName().Find(PAPERS_EXT_NAME) >= 0)
+			bFind = ff.FindNextFileW();
+			if (ff.GetFileName() == _T(".") || ff.GetFileName() == _T(".."))
+				continue;
+			else if (ff.IsArchived())
 			{
-				pSENDTASK pTask = new SENDTASK;
-				pTask->strFileName = T2A(ff.GetFileName());
-				pTask->strPath = T2A(ff.GetFilePath());
-				g_fmSendLock.lock();
-				g_lSendTask.push_back(pTask);
-				g_fmSendLock.unlock();
+				if (ff.GetFileName().Find(PAPERS_EXT_NAME) >= 0)
+				{
+					pSENDTASK pTask = new SENDTASK;
+					pTask->strFileName = T2A(ff.GetFileName());
+					pTask->strPath = T2A(ff.GetFilePath());
+					g_fmSendLock.lock();
+					g_lSendTask.push_back(pTask);
+					g_fmSendLock.unlock();
+				}
 			}
 		}
 	}

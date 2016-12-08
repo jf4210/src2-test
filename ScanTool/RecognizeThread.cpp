@@ -558,9 +558,14 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 #else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
 #endif
+			//去除干扰信息，先膨胀后腐蚀还原, 可去除一些线条干扰
+			Mat element_Anticlutter = getStructuringElement(MORPH_RECT, Size(_nAnticlutterKernel_, _nAnticlutterKernel_));	//Size(6, 6)	普通空白框可识别		Size(3, 3)
+			dilate(matCompRoi, matCompRoi, element_Anticlutter);
+			erode(matCompRoi, matCompRoi, element_Anticlutter);
+
 			cv::Canny(matCompRoi, matCompRoi, 0, rc.nCannyKernel, 5);	//_nCannyKernel_
-// 			Mat element = getStructuringElement(MORPH_RECT, Size(rc.nDilateKernel, rc.nDilateKernel));	//Size(6, 6)	普通空白框可识别	Size(_nDilateKernel_, _nDilateKernel_)
-// 			dilate(matCompRoi, matCompRoi, element);
+			Mat element = getStructuringElement(MORPH_RECT, Size(rc.nDilateKernel, rc.nDilateKernel));	//Size(6, 6)	普通空白框可识别	Size(_nDilateKernel_, _nDilateKernel_)
+			dilate(matCompRoi, matCompRoi, element);
 
 #if 1
 			//		std::vector<std::vector<cv::Point> > vecContours;		//轮廓信息存储
@@ -666,7 +671,7 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
 				float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
 				float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
-				if (fArea > 0.7 && fArea < 1.5 && fDensity > 0.6)
+				if (fArea > 0.7 && fArea < 1.5 && fDensity > 0.85)	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
 				{
 					rtFix = RectCompList[i];
 					break;

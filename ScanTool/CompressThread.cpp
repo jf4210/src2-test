@@ -58,9 +58,9 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 	else
 	{
 		strInfo.Format(_T("保存%s成功"), A2T(pTask->strCompressFileName.c_str()));
-		SAFE_RELEASE(((CScanToolDlg*)m_pDlg)->m_pPapersInfo);
-		((CScanToolDlg*)m_pDlg)->m_lcPicture.DeleteAllItems();
-		((CScanToolDlg*)m_pDlg)->m_pCurrentShowPaper = NULL;
+// 		SAFE_RELEASE(((CScanToolDlg*)m_pDlg)->m_pPapersInfo);
+// 		((CScanToolDlg*)m_pDlg)->m_lcPicture.DeleteAllItems();
+// 		((CScanToolDlg*)m_pDlg)->m_pCurrentShowPaper = NULL;
 	}
 	((CScanToolDlg*)m_pDlg)->SetStatusShowInfo(strInfo, bWarn);
 
@@ -82,6 +82,25 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 		g_fmSendLock.unlock();
 	}
 	((CScanToolDlg*)m_pDlg)->m_bF2Enable = TRUE;
+
+	//源文件夹删除
+	if (pTask->bDelSrcDir)
+	{
+		try
+		{
+			Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pTask->strSrcFilePath));
+			if (srcFileDir.exists())
+				srcFileDir.remove(true);
+
+			strLog = "文件[" + pTask->strCompressFileName + "]压缩完成，源文件夹删除成功";
+			g_pLogger->information(strLog);
+		}
+		catch (Poco::Exception& exc)
+		{
+			std::string strErr = "文件[" + pTask->strCompressFileName + "]压缩完成，删除源文件夹(" + pTask->strSrcFilePath + ")失败: " + exc.message();
+			g_pLogger->information(strErr);
+		}
+	}	
 }
 
 void CCompressThread::setDlg(void * pDlg)

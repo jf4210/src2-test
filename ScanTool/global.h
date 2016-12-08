@@ -124,7 +124,7 @@
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 
-#define SOFT_VERSION	_T("1.1207 for CCB")
+#define SOFT_VERSION	_T("1.1208 for CCB")
 #define SYS_BASE_NAME	_T("YKLX-ScanTool")
 #define SYS_GUIDE_NAME	_T("GuideDlg")
 
@@ -379,10 +379,15 @@ extern EXAM_LIST	g_lExamList;
 
 typedef struct _CompressTask_
 {
+	bool	bDelSrcDir;				//自动删除原文件夹
 	std::string strSrcFilePath;
 	std::string strCompressFileName;
 	std::string strSavePath;
 	std::string strExtName;
+	_CompressTask_()
+	{
+		bDelSrcDir = true;
+	}
 }COMPRESSTASK, *pCOMPRESSTASK;
 typedef std::list<pCOMPRESSTASK> COMPRESSTASKLIST;	//识别任务列表
 
