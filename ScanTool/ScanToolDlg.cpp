@@ -2921,7 +2921,7 @@ void CScanToolDlg::InitFileUpLoadList()
 	USES_CONVERSION;
 
 #if 1
-	if (g_nManulUploadFile == 1)
+	if (g_nManulUploadFile != 1)
 	{
 		CString strSearchPath = A2T(CMyCodeConvert::Utf8ToGb2312(g_strPaperSavePath).c_str());
 		CFileFind ff;

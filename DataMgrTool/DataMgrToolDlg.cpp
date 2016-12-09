@@ -202,6 +202,11 @@ BOOL CDataMgrToolDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
+	USES_CONVERSION;
+	CString strTitle = _T("");
+	strTitle.Format(_T("%s %s"), SYS_BASE_NAME, SOFT_VERSION);
+	SetWindowText(strTitle);
+
 	InitConfig();
 	InitParam();
 	

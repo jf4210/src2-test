@@ -2970,6 +2970,37 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 
 				string strTypeName;
 				string strResult = GetQR(matCompRoi, strTypeName);
+
+
+#ifdef WH_CCBKS		//武汉楚才杯，单独进行json解析
+				std::string strZkzh;
+				std::string strLog1;
+				Poco::JSON::Parser parser;
+				Poco::Dynamic::Var result;
+				try
+				{
+					result = parser.parse(strResult);		//strJsnData
+					Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
+
+					strZkzh = objData->get("zkzh").convert<std::string>();
+				}
+				catch (Poco::Exception& exc)
+				{
+					strLog1 = "识别二维码json解析异常\n";
+				}
+
+				if (strZkzh != "")
+					strLog1 = "识别准考证号完成(" + strZkzh + "), 图片名: " + pPic->strPicName;
+				else
+				{
+					strLog1 = "识别准考证号失败, 图片名:" + pPic->strPicName;
+					bResult = false;
+				}
+				(static_cast<pST_PaperInfo>(pPic->pPaper))->strSN = strZkzh;
+				g_Log.LogOut(strLog1);
+				return bResult;
+#endif
+
 				std::string strLog;
 				if (strResult != "")
 					strLog = "识别准考证号完成(" + strResult + "), 图片名: " + pPic->strPicName;
