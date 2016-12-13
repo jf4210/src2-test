@@ -213,6 +213,7 @@ BOOL CScanToolDlg::OnInitDialog()
 	InitConfig();
 	InitParam();
 	InitFileUpLoadList();
+	InitCompressList();
 	
 // 	Poco::LocalDateTime dtNow;
 // 	std::string strData;
@@ -2645,8 +2646,8 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 
 	//ÊÔ¾í´üÑ¹Ëõ
 	char szPapersSavePath[MAX_PATH] = { 0 };
-	char szZipName[60] = { 0 };
-	char szZipBaseName[50] = { 0 };
+	char szZipName[100] = { 0 };
+	char szZipBaseName[90] = { 0 };
 	if (bLogin)
 	{
 		Poco::LocalDateTime now;
@@ -2675,7 +2676,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		Poco::File tmpPath(CMyCodeConvert::Gb2312ToUtf8(m_strCurrPicSavePath));
 		
 		char szCompressDirPath[MAX_PATH] = { 0 };
-		sprintf_s(szCompressDirPath, "%sPaper\\%s", T2A(g_strCurrentPath), szZipBaseName);
+		sprintf_s(szCompressDirPath, "%sPaper\\%s_ToCompress", T2A(g_strCurrentPath), szZipBaseName);
 		strSrcPicDirPath = szCompressDirPath;
 		std::string strUtf8NewPath = CMyCodeConvert::Gb2312ToUtf8(strSrcPicDirPath);
 
@@ -2688,7 +2689,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		g_pLogger->information(strLog);
 		strSrcPicDirPath = m_strCurrPicSavePath;
 	}
-		
+	
 	pCOMPRESSTASK pTask = new COMPRESSTASK;
 	pTask->strCompressFileName = szZipName;
 	pTask->strExtName = T2A(PAPERS_EXT_NAME);
@@ -3005,6 +3006,44 @@ void CScanToolDlg::InitFileUpLoadList()
 		g_pLogger->information(strErrInfo);
 	}
 #endif
+}
+
+void CScanToolDlg::InitCompressList()
+{
+	USES_CONVERSION;
+
+	CString strSearchPath = A2T(CMyCodeConvert::Utf8ToGb2312(g_strPaperSavePath).c_str());
+	CFileFind ff;
+	BOOL bFind = ff.FindFile(strSearchPath + _T("*"), 0);
+	while (bFind)
+	{
+		bFind = ff.FindNextFileW();
+		if (ff.GetFileName() == _T(".") || ff.GetFileName() == _T(".."))
+			continue;
+		else if (ff.IsDirectory())
+		{
+			int nPos = -1;
+			if ((nPos = ff.GetFileName().Find(_T("_ToCompress"))) >= 0)
+			{
+				CString strFileName = ff.GetFileName();
+				CString strBaseZipName = strFileName.Left(nPos);
+				CString strZipName = strBaseZipName;
+				strZipName.Append(PAPERS_EXT_NAME);
+				CString strSrcDirPath = ff.GetFilePath();
+				CString strSavePath = g_strCurrentPath + _T("Paper\\") + strBaseZipName;
+
+				char szZipName[100] = { 0 };
+				pCOMPRESSTASK pTask = new COMPRESSTASK;
+				pTask->strCompressFileName = T2A(strZipName);
+				pTask->strExtName = T2A(PAPERS_EXT_NAME);
+				pTask->strSavePath = T2A(strSavePath);
+				pTask->strSrcFilePath = T2A(strSrcDirPath);
+				g_fmCompressLock.lock();
+				g_lCompressTask.push_back(pTask);
+				g_fmCompressLock.unlock();
+			}
+		}
+	}
 }
 
 void CScanToolDlg::InitParam()

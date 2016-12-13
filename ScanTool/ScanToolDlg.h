@@ -97,6 +97,7 @@ public:
 	void	InitCtrlPosition();
 	void	InitParam();
 	void	InitFileUpLoadList();
+	void	InitCompressList();
 
 	void	InitShow(pMODEL pModel);
 	void	InitScan();

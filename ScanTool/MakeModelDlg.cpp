@@ -1327,7 +1327,7 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 		CvRect aRect = cvBoundingRect(contour, 0);
 		Rect rm = aRect;
 
-		if (rm.width < 10 || rm.height < 7 || rm.width > 80 || rm.height > 80 || rm.area() < 40 || rm.area() > 6400)
+		if (rm.width < 10 || rm.height < 7 || rm.width > 90 || rm.height > 90 || rm.area() < 40 || rm.area() > 8100)
 		{//10,7
 			TRACE("过滤矩形:(%d,%d,%d,%d), 面积: %d\n", rm.x, rm.y, rm.width, rm.height, rm.area());
 			g_pLogger->information("过滤矩形:(%d,%d,%d,%d), 面积: %d\n", rm.x, rm.y, rm.width, rm.height, rm.area());
@@ -3521,13 +3521,13 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 					RECTINFO rc = *itSNRect;
 					rt = rc.rt;
 
-					cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+					cv::rectangle(tmp, rt, CV_RGB(255, 255, 0), 2);	//CV_RGB(255, 0, 0)
 
 					char szAnswerVal[10] = { 0 };
 					sprintf_s(szAnswerVal, "%d_%d", rc.nTH, rc.nSnVal);
 					
-					cv::putText(tmp, szAnswerVal, Point(rt.x + rt.width / 10, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
-					cv::rectangle(tmp2, rt, CV_RGB(50, 200, 150), -1);
+					cv::putText(tmp, szAnswerVal, Point(rt.x + rt.width / 10, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(0, 0, 255));	//CV_FONT_HERSHEY_COMPLEX	Scalar(255, 0, 0) Point(rt.x + rt.width / 10, rt.y + rt.height / 2)
+					cv::rectangle(tmp2, rt, CV_RGB(50, 200, 150), -1);	//CV_RGB(50, 200, 150)
 				}
 			}
 		}
@@ -3548,7 +3548,7 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 					sprintf_s(szAnswerVal, "%d%c", rc.nTH, rc.nAnswer + 65);
 					if (rc.nSingle == 0)
 					{
-						cv::putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
+						cv::putText(tmp, szAnswerVal, Point(rt.x + rt.width / 5, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX	Scalar(255, 0, 0)
 						cv::rectangle(tmp2, rt, CV_RGB(50, 255, 100), -1);
 					}
 					else
@@ -4425,6 +4425,11 @@ BOOL CMakeModelDlg::DeleteRectInfo(CPType eType, int nItem)
 		it = m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.begin() + nItem;
 		if (it != m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.end())
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.erase(it);
+		break;
+	case SN:
+		if (m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.size() < 0)
+			return FALSE;
+
 		break;
 	case OMR:
 		//******************	单独处理，OMR的删除，需要将整题的选项都删除	***********************************

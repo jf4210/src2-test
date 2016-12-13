@@ -2994,7 +2994,7 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 				else
 				{
 					strLog1 = "识别准考证号失败, 图片名:" + pPic->strPicName;
-					bResult = false;
+//					bResult = false;
 				}
 				(static_cast<pST_PaperInfo>(pPic->pPaper))->strSN = strZkzh;
 				g_Log.LogOut(strLog1);
@@ -3007,7 +3007,7 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 				else
 				{
 					strLog = "识别准考证号失败, 图片名:" + pPic->strPicName;
-					bResult = false;
+//					bResult = false;
 				}
 				(static_cast<pST_PaperInfo>(pPic->pPaper))->strSN = strResult;
 				g_Log.LogOut(strLog);

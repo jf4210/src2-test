@@ -1391,7 +1391,8 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	//试卷袋压缩
 	char szPapersSrcPath[MAX_PATH] = { 0 };
 	char szPapersSavePath[MAX_PATH] = { 0 };
-	char szZipName[50] = { 0 };
+	char szZipName[100] = { 0 };
+	char szZipBaseName[90] = { 0 };
 	if (bLogin)
 	{
 		Poco::LocalDateTime now;
@@ -1403,24 +1404,48 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 // 		sprintf_s(szZipName, "%s_%s%s", T2A(strUser), szTime, T2A(PAPERS_EXT_NAME));
 
 		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s", T2A(g_strCurrentPath), T2A(strUser), dlg.m_nExamID, dlg.m_SubjectID, szTime);
+		sprintf_s(szZipBaseName, "%s_%d-%d_%s", T2A(strUser), dlg.m_nExamID, dlg.m_SubjectID, szTime);
 		sprintf_s(szZipName, "%s_%d-%d_%s%s", T2A(strUser), dlg.m_nExamID, dlg.m_SubjectID, szTime, T2A(PAPERS_EXT_NAME));	//%s_%s.pkg
 	}
 	else
 	{
 		sprintf_s(szPapersSrcPath, "%s\\%s", T2A(m_strPapersPath), pPapers->strPapersName.c_str());
 		sprintf_s(szPapersSavePath, "%sPaper\\%s", T2A(g_strCurrentPath), pPapers->strPapersName.c_str());
+		sprintf_s(szZipBaseName, "%s", pPapers->strPapersName.c_str());
 		sprintf_s(szZipName, "%s%s", pPapers->strPapersName.c_str(), T2A(PAPERS_EXT_NAME));
 	}
 	CString strInfo;
 	bool bWarn = false;
 	strInfo.Format(_T("正在保存%s..."), A2T(szZipName));
 #if 1
+	//临时目录改名，以便压缩时继续扫描
+	std::string strSrcPicDirPath;
+	std::string strPicPath = szPapersSrcPath;
+	try
+	{
+		Poco::File tmpPath(CMyCodeConvert::Gb2312ToUtf8(strPicPath));
+
+		char szCompressDirPath[MAX_PATH] = { 0 };
+		sprintf_s(szCompressDirPath, "%sPaper\\%s_ToCompress", T2A(g_strCurrentPath), szZipBaseName);
+		strSrcPicDirPath = szCompressDirPath;
+		std::string strUtf8NewPath = CMyCodeConvert::Gb2312ToUtf8(strSrcPicDirPath);
+
+		tmpPath.renameTo(strUtf8NewPath);
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strLog = "临时文件夹重命名失败(" + exc.message() + "): ";
+		strLog.append(strPicPath);
+		g_pLogger->information(strLog);
+		strSrcPicDirPath = strPicPath;
+	}
+
 	pCOMPRESSTASK pTask = new COMPRESSTASK;
 	pTask->bDelSrcDir = false;
 	pTask->strCompressFileName = szZipName;
 	pTask->strExtName = T2A(PAPERS_EXT_NAME);
 	pTask->strSavePath = szPapersSavePath;
-	pTask->strSrcFilePath = szPapersSrcPath;
+	pTask->strSrcFilePath = strSrcPicDirPath;
 	g_fmCompressLock.lock();
 	g_lCompressTask.push_back(pTask);
 	g_fmCompressLock.unlock();
