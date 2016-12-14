@@ -902,7 +902,7 @@ void CPaperInputDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			cv::Rect rt = (*itPicFix).rt;
 
 			char szCP[20] = { 0 };
-			sprintf_s(szCP, "F%d", j);
+			sprintf_s(szCP, "R_F%d", j);
 			putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));	//CV_FONT_HERSHEY_COMPLEX
 			rectangle(tmp, rt, CV_RGB(0, 255, 0), 2);
 			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
@@ -1037,7 +1037,7 @@ void CPaperInputDlg::PaintIssueRect(pST_PaperInfo pPaper)
 //				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				char szCP[20] = { 0 };
-				sprintf_s(szCP, "F%d", j);
+				sprintf_s(szCP, "R_F%d", j);
 				putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));	//CV_FONT_HERSHEY_COMPLEX
 				rectangle(tmp, rt, CV_RGB(0, 255, 0), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
@@ -1381,8 +1381,9 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	strFileData = jsnString.str();
 #endif
 
-	char szExamInfoPath[MAX_PATH] = { 0 };
-	sprintf_s(szExamInfoPath, "%s\\%s\\papersInfo.dat", T2A(m_strPapersPath), pPapers->strPapersName.c_str());
+	char szExamInfoPath[MAX_PATH] = { 0 }; 
+//	sprintf_s(szExamInfoPath, "%s\\%s\\papersInfo.dat", T2A(m_strPapersPath), pPapers->strPapersName.c_str());
+	sprintf_s(szExamInfoPath, "%sPaper\\%s\\papersInfo.dat", T2A(g_strCurrentPath), T2A(m_strPapersName));
 	ofstream out(szExamInfoPath);
 	out << strFileData.c_str();
 	out.close();
@@ -1399,9 +1400,8 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		char szTime[50] = { 0 };
 		sprintf_s(szTime, "%d%02d%02d%02d%02d%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
 
-		sprintf_s(szPapersSrcPath, "%s\\%s", T2A(m_strPapersPath), pPapers->strPapersName.c_str());
-// 		sprintf_s(szPapersSavePath, "%sPaper\\%s_%s", T2A(g_strCurrentPath), T2A(strUser), szTime);
-// 		sprintf_s(szZipName, "%s_%s%s", T2A(strUser), szTime, T2A(PAPERS_EXT_NAME));
+//		sprintf_s(szPapersSrcPath, "%s\\%s", T2A(m_strPapersPath), pPapers->strPapersName.c_str());
+		sprintf_s(szPapersSrcPath, "%sPaper\\%s", T2A(g_strCurrentPath), T2A(m_strPapersName));
 
 		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s", T2A(g_strCurrentPath), T2A(strUser), dlg.m_nExamID, dlg.m_SubjectID, szTime);
 		sprintf_s(szZipBaseName, "%s_%d-%d_%s", T2A(strUser), dlg.m_nExamID, dlg.m_SubjectID, szTime);
@@ -1409,7 +1409,8 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	}
 	else
 	{
-		sprintf_s(szPapersSrcPath, "%s\\%s", T2A(m_strPapersPath), pPapers->strPapersName.c_str());
+//		sprintf_s(szPapersSrcPath, "%s\\%s", T2A(m_strPapersPath), pPapers->strPapersName.c_str());
+		sprintf_s(szPapersSrcPath, "%sPaper\\%s", T2A(g_strCurrentPath), T2A(m_strPapersName));
 		sprintf_s(szPapersSavePath, "%sPaper\\%s", T2A(g_strCurrentPath), pPapers->strPapersName.c_str());
 		sprintf_s(szZipBaseName, "%s", pPapers->strPapersName.c_str());
 		sprintf_s(szZipName, "%s%s", pPapers->strPapersName.c_str(), T2A(PAPERS_EXT_NAME));
@@ -1441,7 +1442,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	}
 
 	pCOMPRESSTASK pTask = new COMPRESSTASK;
-	pTask->bDelSrcDir = false;
+//	pTask->bDelSrcDir = false;
 	pTask->strCompressFileName = szZipName;
 	pTask->strExtName = T2A(PAPERS_EXT_NAME);
 	pTask->strSavePath = szPapersSavePath;

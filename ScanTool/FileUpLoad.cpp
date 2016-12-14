@@ -149,6 +149,51 @@ RESTART:
 						continue;
 					}
 					bFindTask = true;
+#if 1
+					char	*szFileBuff = NULL;
+					std::string strAnsName = T2A(pTask->strAnsName);
+					DWORD Length = 0;
+					try
+					{
+						CFile MyFileSend(pTask->strPath, CFile::modeRead);
+						Length = MyFileSend.GetLength();
+						
+						szFileBuff = new char[Length];
+						
+
+						MyFileSend.Seek(0, CFile::begin);
+						MyFileSend.Read(szFileBuff, Length);
+						MyFileSend.Close();
+					}
+					catch (CMemoryException* e)
+					{
+						char szLog[100] = { 0 };
+						sprintf_s(szLog, "上传文件(%s)时内存申请失败，需要重新尝试。", strAnsName);
+						g_pLogger->information(szLog);
+						Sleep(500);
+						continue;
+					}
+					catch (CFileException* e)
+					{
+						CString strErr = _T("");
+						UINT uErr;
+						e->GetErrorMessage((LPTSTR)(LPCTSTR)strErr, uErr);
+						char szLog[300] = { 0 };
+						sprintf_s(szLog, "上传文件(%s)时发生文件异常，需要重新尝试。%s", strAnsName, T2A(strErr));
+						g_pLogger->information(szLog);
+						Sleep(500);
+						continue;
+					}
+					catch (...)
+					{
+						char szLog[100] = { 0 };
+						sprintf_s(szLog, "上传文件(%s)时发生异常，需要重新尝试。", strAnsName);
+						g_pLogger->information(szLog);
+						Sleep(500);
+						continue;
+					}
+					
+#else
 					CFile MyFileSend(pTask->strPath, CFile::modeRead);
 					DWORD Length = MyFileSend.GetLength();
 					char	*szFileBuff = NULL;
@@ -169,7 +214,7 @@ RESTART:
 					MyFileSend.Seek(0, CFile::begin);
 					MyFileSend.Read(szFileBuff, Length);
 					MyFileSend.Close();
-
+#endif
 					TRACE0("start send ans file\n");
 					char szLog[300] = { 0 };
 					sprintf_s(szLog, "开始上传文件: %s", T2A(pTask->strAnsName));

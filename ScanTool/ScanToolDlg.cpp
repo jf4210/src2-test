@@ -1130,6 +1130,9 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	if (dlg.m_bAdvancedSetting)
 		bShowScanSrcUI = true;
 
+	//计算模板的dpi
+
+
 	int nDuplex = nDuplexDef;		//单双面,0-单面,1-双面
 	int nSize = 1;							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3
 	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
@@ -1980,7 +1983,7 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 //			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 			char szCP[20] = { 0 };
-			sprintf_s(szCP, "FIX%d", j);
+			sprintf_s(szCP, "R_F%d", j);
 			putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));	//CV_FONT_HERSHEY_COMPLEX
 			rectangle(tmp, rt, CV_RGB(0, 255, 0), 2);
 			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
@@ -1994,7 +1997,7 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 				//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				char szCP[20] = { 0 };
-				sprintf_s(szCP, "FIX%d", j);
+				sprintf_s(szCP, "M_F%d", j);
 				putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
 				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
@@ -2190,7 +2193,7 @@ int CScanToolDlg::PaintIssueRect(pST_PaperInfo pPaper)
 //				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
 
 				char szCP[20] = { 0 };
-				sprintf_s(szCP, "FIX%d", j);
+				sprintf_s(szCP, "R_F%d", j);
 				putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));	//CV_FONT_HERSHEY_COMPLEX
 				rectangle(tmp, rt, CV_RGB(0, 255, 0), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
@@ -2205,7 +2208,7 @@ int CScanToolDlg::PaintIssueRect(pST_PaperInfo pPaper)
 					//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 					char szCP[20] = { 0 };
-					sprintf_s(szCP, "FIX%d", j);
+					sprintf_s(szCP, "M_F%d", j);
 					putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
 					rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 					rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
