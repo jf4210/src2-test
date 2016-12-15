@@ -1667,13 +1667,24 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 			rcFixRt.nCannyKernel = m_nCannyKernel;
 			rcFixRt.nDilateKernel = m_nDilateKernel;
 
-			rcFixRt.rt = RectCompList[0];
+			bool bFind = false;
+			for (int i = 0; i < RectCompList.size(); i++)
+			{
+				rcFixRt.rt = RectCompList[i];
 
-			Rect rtTmp = RectCompList[0];
-			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
-			rcFixRt.nThresholdValue = m_nFixVal;
-			rcFixRt.fStandardValuePercent = m_fFixThresholdPercent;
-			RecogGrayValue(matSrcModel, rcFixRt);
+				Rect rtTmp = RectCompList[i];
+				Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+				rcFixRt.nThresholdValue = m_nFixVal;
+				rcFixRt.fStandardValuePercent = m_fFixThresholdPercent;
+				RecogGrayValue(matSrcModel, rcFixRt);
+				if (rcFixRt.fStandardDensity > 0.4)
+				{
+					bFind = true;
+					break;
+				}
+			}
+			if (!bFind)
+				return bResult;
 
 			if (m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.size() < 4)
 			{
@@ -2692,6 +2703,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	jsnModel.set("hasHead", pModel->nHasHead);					//是否有同步头
 	jsnModel.set("hasElectOmr", pModel->nHasElectOmr);			//是否有选做题
 	jsnModel.set("nZkzhType", pModel->nZkzhType);				//准考证号识别类型
+	jsnModel.set("nScanDpi", pModel->nScanDpi);					//扫描的dpi设置
  
 // 	jsnModel.set("gaussKernel", pModel->nGaussKernel);
 // 	jsnModel.set("sharpKernel", pModel->nSharpKernel);

@@ -47,6 +47,7 @@ CDecompressThread::~CDecompressThread()
 
 void CDecompressThread::run()
 {
+	eExit.reset();
 	while (!g_nExitFlag)
 	{
 		pDECOMPRESSTASK pTask = NULL;
@@ -74,6 +75,7 @@ void CDecompressThread::run()
 		delete pTask;
 		pTask = NULL;
 	}
+	eExit.set();
 }
 
 void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
@@ -485,9 +487,9 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 			return false;
 		}
 #endif
-		pPapers->nOmrDoubt = nOmrDoubt;
-		pPapers->nOmrNull = nOmrNull;
-		pPapers->nSnNull = nSnNull;
+		pPapers->nPkgOmrDoubt = nOmrDoubt;
+		pPapers->nPkgOmrNull = nOmrNull;
+		pPapers->nPkgSnNull = nSnNull;
 
 		pPapers->nExamID = nExamId;
 		pPapers->nSubjectID = nSubjectId;

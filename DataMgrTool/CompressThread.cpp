@@ -10,11 +10,12 @@ CCompressThread::CCompressThread(void* pDlg) :m_pDlg(pDlg)
 
 CCompressThread::~CCompressThread()
 {
-	g_eCompressThreadExit.set();
+//	g_eCompressThreadExit.set();
 }
 
 void CCompressThread::run()
 {
+	eExit.reset();
 	while (!g_nExitFlag)
 	{
 		pCOMPRESSTASK pTask = NULL;
@@ -42,6 +43,7 @@ void CCompressThread::run()
 		delete pTask;
 		pTask = NULL;
 	}
+	eExit.set();
 }
 
 void CCompressThread::HandleTask(pCOMPRESSTASK pTask)

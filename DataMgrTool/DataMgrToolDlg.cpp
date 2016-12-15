@@ -68,9 +68,11 @@ int		_nSN_ = 200;		//重新识别模板时，用来识别ZKZH的密度值的阀值
 Poco::FastMutex _fmErrorStatistics_;
 int		_nErrorStatistics1_ = 0;	//第一种方法识别错误数
 int		_nErrorStatistics2_ = 0;	//第二种方法识别错误数
-int		_nDoubtStatistics = 0;		//识别怀疑总数
-int		_nNullStatistics = 0;		//识别为空总数
+int		_nDoubtStatistics_ = 0;		//识别怀疑总数
+int		_nOmrNullStatistics_ = 0;		//识别为空总数
 int		_nAllStatistics_ = 0;		//统计总数
+int		_nPkgDoubtStatistics_ = 0;		//原始试卷包识别怀疑总数
+int		_nPkgOmrNullStatistics_ = 0;	//原始试卷包识别为空总数
 
 int		_nDecompress_ = 0;	//解压试卷袋数量
 int		_nRecog_ = 0;		//识别试卷数量
@@ -275,6 +277,12 @@ void CDataMgrToolDlg::OnDestroy()
 	KillTimer(TIMER_UPDATE_STARTBAR);
 
 	g_nExitFlag = 1;
+
+	for (int i = 0; i < m_vecDecompressThreadObj.size(); i++)
+	{
+		m_vecDecompressThreadObj[i]->eExit.wait();
+		m_pDecompressThread[i].join();
+	}
 	std::vector<CDecompressThread*>::iterator itDecObj = m_vecDecompressThreadObj.begin();
 	for (; itDecObj != m_vecDecompressThreadObj.end();)
 	{
@@ -285,11 +293,6 @@ void CDataMgrToolDlg::OnDestroy()
 			pObj = NULL;
 		}
 		itDecObj = m_vecDecompressThreadObj.erase(itDecObj);
-	}
-
-	for (int i = 0; i < m_vecDecompressThreadObj.size(); i++)
-	{
-		m_pDecompressThread[i].join();
 	}
 	delete[] m_pDecompressThread;
 
@@ -339,9 +342,10 @@ void CDataMgrToolDlg::OnDestroy()
 		SAFE_RELEASE(pTask);
 	}
 	g_fmCompressLock.unlock();
+	m_pCompressObj->eExit.wait();
 	m_pCompressThread->join();
 	SAFE_RELEASE(m_pCompressObj);
-	g_eCompressThreadExit.wait();
+//	g_eCompressThreadExit.wait();
 	SAFE_RELEASE(m_pCompressThread);
 	g_Log.LogOut("压缩处理线程释放完毕.");
 
@@ -768,11 +772,16 @@ LRESULT CDataMgrToolDlg::MsgRecogComplete(WPARAM wParam, LPARAM lParam)
 		int nOmrCount = nModelOmrCount * nPapersCount;
 
 		char szStatisticsInfo[300] = { 0 };
-		sprintf_s(szStatisticsInfo, "\n统计信息: omrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), zkzhNull = %.2f%%(%d/%d)\n", (float)pPapers->nOmrDoubt / nOmrCount * 100, pPapers->nOmrDoubt, nOmrCount, \
+		sprintf_s(szStatisticsInfo, "\n新识别信息: omrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), zkzhNull = %.2f%%(%d/%d)\n", (float)pPapers->nOmrDoubt / nOmrCount * 100, pPapers->nOmrDoubt, nOmrCount, \
 				  (float)pPapers->nOmrNull / nOmrCount * 100, pPapers->nOmrNull, nOmrCount, \
 				  (float)pPapers->nSnNull / nPapersCount * 100, pPapers->nSnNull, nPapersCount);
 
-		strMsg.Format(_T("\r\n==================\r\n%s识别完成\r\n%s\r\n%s\r\n"), A2T(pPapers->strPapersName.c_str()), A2T(szStatisticsInfo), A2T(ss.str().c_str()));
+		char szPkgStatisticsInfo[300] = { 0 };
+		sprintf_s(szPkgStatisticsInfo, "\n原始包信息: omrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), zkzhNull = %.2f%%(%d/%d)\n", (float)pPapers->nPkgOmrDoubt / nOmrCount * 100, pPapers->nPkgOmrDoubt, nOmrCount, \
+				  (float)pPapers->nPkgOmrNull / nOmrCount * 100, pPapers->nPkgOmrNull, nOmrCount, \
+				  (float)pPapers->nPkgSnNull / nPapersCount * 100, pPapers->nPkgSnNull, nPapersCount);
+
+		strMsg.Format(_T("\r\n==================\r\n%s识别完成\r\n%s\r\n%s\r\n%s\r\n"), A2T(pPapers->strPapersName.c_str()), A2T(szStatisticsInfo), A2T(ss.str().c_str()), A2T(szPkgStatisticsInfo));
 	}
 	else
 		strMsg.Format(_T("\r\n****************\r\n%s识别出问题试卷, 问题卷数量=%d\r\n"), A2T(pPapers->strPapersName.c_str()), pPapers->lIssue.size());
@@ -869,8 +878,8 @@ void CDataMgrToolDlg::OnBnClickedBtnStatisticsresult()
 	CString strMsg;
 
 	char szStatisticsInfo[300] = { 0 };
-	sprintf_s(szStatisticsInfo, "\n所有试卷袋识别错误信息统计:\r\ndoubt = %.2f%%(%d/%d), null = %.2f%%(%d/%d), omrError1 = %.2f%%(%d/%d), omrError2 = %.2f%%(%d/%d)\n", (float)_nDoubtStatistics / _nAllStatistics_ * 100, _nDoubtStatistics, _nAllStatistics_, \
-			  (float)_nNullStatistics / _nAllStatistics_ * 100, _nNullStatistics, _nAllStatistics_, \
+	sprintf_s(szStatisticsInfo, "\n所有试卷袋识别错误信息统计:\r\ndoubt = %.2f%%(%d/%d), null = %.2f%%(%d/%d), omrError1 = %.2f%%(%d/%d), omrError2 = %.2f%%(%d/%d)\n", (float)_nDoubtStatistics_ / _nAllStatistics_ * 100, _nDoubtStatistics_, _nAllStatistics_, \
+			  (float)_nOmrNullStatistics_ / _nAllStatistics_ * 100, _nOmrNullStatistics_, _nAllStatistics_, \
 			  (float)_nErrorStatistics1_ / _nAllStatistics_ * 100, _nErrorStatistics1_, _nAllStatistics_, \
 			  (float)_nErrorStatistics2_ / _nAllStatistics_ * 100, _nErrorStatistics2_, _nAllStatistics_);
 	strMsg.Format(_T("\r\n***********************\r\n%s\r\n***********************\r\n"), A2T(szStatisticsInfo));
@@ -884,8 +893,8 @@ void CDataMgrToolDlg::OnBnClickedBtnClearstatistics()
 	_fmErrorStatistics_.lock();
 	_nErrorStatistics1_ = 0;
 	_nErrorStatistics2_ = 0;
-	_nDoubtStatistics = 0;
-	_nNullStatistics = 0;
+	_nDoubtStatistics_ = 0;
+	_nOmrNullStatistics_ = 0;
 	_nAllStatistics_ = 0;
 	_fmErrorStatistics_.unlock();
 

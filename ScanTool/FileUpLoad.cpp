@@ -159,7 +159,6 @@ RESTART:
 						Length = MyFileSend.GetLength();
 						
 						szFileBuff = new char[Length];
-						
 
 						MyFileSend.Seek(0, CFile::begin);
 						MyFileSend.Read(szFileBuff, Length);
@@ -179,7 +178,7 @@ RESTART:
 						UINT uErr;
 						e->GetErrorMessage((LPTSTR)(LPCTSTR)strErr, uErr);
 						char szLog[300] = { 0 };
-						sprintf_s(szLog, "上传文件(%s)时发生文件异常，需要重新尝试。%s", strAnsName, T2A(strErr));
+						sprintf_s(szLog, "上传文件(%s)时发生文件异常，需要重新尝试。%s", strAnsName, strErr);
 						g_pLogger->information(szLog);
 						Sleep(500);
 						continue;

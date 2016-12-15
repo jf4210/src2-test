@@ -313,6 +313,8 @@ pMODEL LoadModelFile(CString strModelPath)
 			pModel->nHasElectOmr = objData->get("hasElectOmr").convert<int>();
 		if (objData->has("nZkzhType"))
 			pModel->nZkzhType = objData->get("nZkzhType").convert<int>();
+		if (objData->has("nScanDpi"))
+			pModel->nScanDpi = objData->get("nScanDpi").convert<int>();
 
 // 		if (objData->has("gaussKernel"))
 // 			pModel->nGaussKernel = objData->get("gaussKernel").convert<int>();

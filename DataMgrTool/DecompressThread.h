@@ -18,6 +18,7 @@ public:
 	void SearchExtractFile(pPAPERSINFO pPapers, std::string strPath);
 
 //	bool calcStatistics(pPAPERSINFO pPapers);
+	Poco::Event eExit;
 private:
 	void* m_pDlg;
 };

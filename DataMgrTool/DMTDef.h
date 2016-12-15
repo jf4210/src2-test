@@ -26,9 +26,9 @@
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION	_T("1.1209 for 楚才杯")
+#define SOFT_VERSION	_T("1.1209")
 #define SYS_BASE_NAME	_T("YKLX-DMT")
-#define WH_CCBKS		//武汉楚才杯专用，解析二维码需要json解析
+//#define WH_CCBKS		//武汉楚才杯专用，解析二维码需要json解析
 
 extern CLog g_Log;
 extern int	g_nExitFlag;
@@ -182,9 +182,13 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	int			nUserId;			//用户ID
 
 	//++统计信息
-	int		nOmrDoubt;				//OMR怀疑的数量					客户端传递的
-	int		nOmrNull;				//OMR识别为空的数量				客户端传递的
-	int		nSnNull;				//准考证号识别为空的数量		客户端传递的
+	int		nPkgOmrDoubt;				//OMR怀疑的数量					客户端传递的
+	int		nPkgOmrNull;				//OMR识别为空的数量				客户端传递的
+	int		nPkgSnNull;				//准考证号识别为空的数量		客户端传递的
+
+	int		nOmrDoubt;				//OMR怀疑的数量					
+	int		nOmrNull;				//OMR识别为空的数量				
+	int		nSnNull;				//准考证号识别为空的数量		
 
 	int		nOmrError_1;			//根据学生答案，第1种识别方法识别错误的值		统计时用
 	int		nOmrError_2;			//根据学生答案，第1种识别方法识别错误的值		统计时用
@@ -228,6 +232,9 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 		nUserId = -1;
 		nOmrError_1 = 0;
 		nOmrError_2 = 0;
+		nPkgOmrDoubt = 0;
+		nPkgOmrNull = 0;
+		nPkgSnNull = 0;
 	}
 	~_PapersInfo_()
 	{
@@ -338,8 +345,10 @@ bool SavePapersInfo(pPAPERSINFO pPapers);
 extern Poco::FastMutex _fmErrorStatistics_;
 extern int		_nErrorStatistics1_;	//第一种方法识别错误数
 extern int		_nErrorStatistics2_;	//第二种方法识别错误数
-extern int		_nDoubtStatistics;		//识别怀疑总数
-extern int		_nNullStatistics;		//识别为空总数
+extern int		_nDoubtStatistics_;		//识别怀疑总数
+extern int		_nOmrNullStatistics_;		//识别为空总数
 extern int		_nAllStatistics_;		//统计总数
+extern int		_nPkgDoubtStatistics_;	//原始试卷包识别怀疑总数
+extern int		_nPkgOmrNullStatistics_;	//原始试卷包识别为空总数
 std::string calcStatistics(pPAPERSINFO pPapers);
 //--

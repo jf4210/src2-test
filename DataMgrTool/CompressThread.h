@@ -11,6 +11,8 @@ public:CCompressThread(void* pDlg);
 
 	   void HandleTask(pCOMPRESSTASK pTask);
 	   void setDlg(void * pDlg);
+	   
+	   Poco::Event eExit;
 private:
 	void* m_pDlg;
 };

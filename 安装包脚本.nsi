@@ -75,6 +75,7 @@ Section "MainSection" SEC01
   File "release-scan\EasyTntGuardProcess.exe"
   File "release-scan\config.ini"
   File "release-scan\Uninstall.exe"
+  File /r "release-scan\res"
 SectionEnd
 
 Section -AdditionalIcons
@@ -185,6 +186,7 @@ Section Uninstall
   Delete "$INSTDIR\zlib1.dll"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir /r "$INSTDIR\newSetupPkg"
+  RMDir /r "$INSTDIR\res"
 
   Delete "$SMPROGRAMS\ScanTool\Uninstall.lnk"
   Delete "$DESKTOP\ScanTool.lnk"
