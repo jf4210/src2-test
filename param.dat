@@ -2,7 +2,7 @@
 gauseKernel=5
 sharpKernel=5
 cannyKernel=90
-delateKernel_sn=6
+delateKernel_sn=3
 delateKernel=6
 eRodeKernel=2
 
@@ -21,10 +21,10 @@ qk=150
 gray=150
 ；定点二值化识别阀值	计算灰度值用
 fix=150
-；OMR二值化识别阀值	计算灰度值用
-omr=230
+；OMR二值化识别阀值	计算灰度值用230
+omr=180
 ；准考证号二值化识别阀值	计算灰度值用
-sn=200
+sn=180
 
 
 [MakeModel_RecogPercent_Common]
@@ -44,9 +44,9 @@ sn=1.5
 
 [MakeModel_RecogPercent_Head]
 ;识别校验点的密度，同步头模式
-qk=1.2
-omr=1.2
-sn=1.2
+qk=1.5
+omr=1.5
+sn=1.5
 
 [RecogGray]
 ;识别灰度值
@@ -56,3 +56,20 @@ gray_Min=0
 white_Max=256
 omr_Min=0
 omr_Max=235
+
+
+[RecogOmrSn_Fix]
+fCompTread = 1.2
+fDiffThread=0.2
+fDiffExit=0.3
+
+[RecogOmrSn_Head]
+fCompTread = 1.2
+fDiffThread=0.2
+fDiffExit=0.3
+
+[RecogOmrSn_Fun2]
+;第二种识别方法的阀值
+nThreshold_Fun2=220
+
+
