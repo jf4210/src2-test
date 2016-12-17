@@ -2315,11 +2315,17 @@ std::string calcStatistics(pPAPERSINFO pPapers)
 	_fmErrorStatistics_.lock();
 	_nErrorStatistics1_ += pPapers->nOmrError_1;
 	_nErrorStatistics2_ += pPapers->nOmrError_2;
-	_nDoubtStatistics_ += pPapers->nOmrDoubt;
+	_nOmrDoubtStatistics_ += pPapers->nOmrDoubt;
 	_nOmrNullStatistics_ += pPapers->nOmrNull;
-	_nAllStatistics_ += nOmrCount;
-	_nPkgDoubtStatistics_ += pPapers->nPkgOmrDoubt;
-	_nPkgOmrNullStatistics_ += pPapers->nPkgOmrNull;
+	_nAllOmrStatistics_ += nOmrCount;
+	_nAllSnStatistics_ += pPapers->nPaperCount;
+	_nSnNullStatistics_ += pPapers->nSnNull;
+	if (pPapers->nPkgOmrDoubt >= 0)
+		_nPkgDoubtStatistics_ += pPapers->nPkgOmrDoubt;
+	if (pPapers->nPkgOmrNull >= 0)
+		_nPkgOmrNullStatistics_ += pPapers->nPkgOmrNull;
+	if (pPapers->nPkgSnNull >= 0)
+		_nPkgSnNullStatistics_ += pPapers->nPkgSnNull;
 	_fmErrorStatistics_.unlock();
 
 	std::string strLog;

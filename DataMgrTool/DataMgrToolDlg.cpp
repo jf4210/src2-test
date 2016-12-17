@@ -68,11 +68,14 @@ int		_nSN_ = 200;		//重新识别模板时，用来识别ZKZH的密度值的阀值
 Poco::FastMutex _fmErrorStatistics_;
 int		_nErrorStatistics1_ = 0;	//第一种方法识别错误数
 int		_nErrorStatistics2_ = 0;	//第二种方法识别错误数
-int		_nDoubtStatistics_ = 0;		//识别怀疑总数
-int		_nOmrNullStatistics_ = 0;		//识别为空总数
-int		_nAllStatistics_ = 0;		//统计总数
+int		_nOmrDoubtStatistics_ = 0;	//识别怀疑总数
+int		_nOmrNullStatistics_ = 0;	//识别为空总数
+int		_nSnNullStatistics_ = 0;	//SN识别为空总数
+int		_nAllOmrStatistics_ = 0;		//OMR统计总数
+int		_nAllSnStatistics_ = 0;			//SN统计总数
 int		_nPkgDoubtStatistics_ = 0;		//原始试卷包识别怀疑总数
 int		_nPkgOmrNullStatistics_ = 0;	//原始试卷包识别为空总数
+int		_nPkgSnNullStatistics_ = 0;		//原始试卷包中SN识别为空总数
 
 int		_nDecompress_ = 0;	//解压试卷袋数量
 int		_nRecog_ = 0;		//识别试卷数量
@@ -772,16 +775,16 @@ LRESULT CDataMgrToolDlg::MsgRecogComplete(WPARAM wParam, LPARAM lParam)
 		int nOmrCount = nModelOmrCount * nPapersCount;
 
 		char szStatisticsInfo[300] = { 0 };
-		sprintf_s(szStatisticsInfo, "\n新识别信息: omrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), zkzhNull = %.2f%%(%d/%d)\n", (float)pPapers->nOmrDoubt / nOmrCount * 100, pPapers->nOmrDoubt, nOmrCount, \
+		sprintf_s(szStatisticsInfo, "新识别信息: omrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), zkzhNull = %.2f%%(%d/%d)\n", (float)pPapers->nOmrDoubt / nOmrCount * 100, pPapers->nOmrDoubt, nOmrCount, \
 				  (float)pPapers->nOmrNull / nOmrCount * 100, pPapers->nOmrNull, nOmrCount, \
 				  (float)pPapers->nSnNull / nPapersCount * 100, pPapers->nSnNull, nPapersCount);
 
 		char szPkgStatisticsInfo[300] = { 0 };
-		sprintf_s(szPkgStatisticsInfo, "\n原始包信息: omrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), zkzhNull = %.2f%%(%d/%d)\n", (float)pPapers->nPkgOmrDoubt / nOmrCount * 100, pPapers->nPkgOmrDoubt, nOmrCount, \
+		sprintf_s(szPkgStatisticsInfo, "原始包信息: omrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), zkzhNull = %.2f%%(%d/%d)\n", (float)pPapers->nPkgOmrDoubt / nOmrCount * 100, pPapers->nPkgOmrDoubt, nOmrCount, \
 				  (float)pPapers->nPkgOmrNull / nOmrCount * 100, pPapers->nPkgOmrNull, nOmrCount, \
 				  (float)pPapers->nPkgSnNull / nPapersCount * 100, pPapers->nPkgSnNull, nPapersCount);
 
-		strMsg.Format(_T("\r\n==================\r\n%s识别完成\r\n%s\r\n%s\r\n%s\r\n"), A2T(pPapers->strPapersName.c_str()), A2T(szStatisticsInfo), A2T(ss.str().c_str()), A2T(szPkgStatisticsInfo));
+		strMsg.Format(_T("\r\n==================\r\n%s识别完成\r\n%s\r\n%s\r\n%s\r\n\r\n"), A2T(pPapers->strPapersName.c_str()), A2T(szStatisticsInfo), A2T(ss.str().c_str()), A2T(szPkgStatisticsInfo));
 	}
 	else
 		strMsg.Format(_T("\r\n****************\r\n%s识别出问题试卷, 问题卷数量=%d\r\n"), A2T(pPapers->strPapersName.c_str()), pPapers->lIssue.size());
@@ -878,10 +881,14 @@ void CDataMgrToolDlg::OnBnClickedBtnStatisticsresult()
 	CString strMsg;
 
 	char szStatisticsInfo[300] = { 0 };
-	sprintf_s(szStatisticsInfo, "\n所有试卷袋识别错误信息统计:\r\ndoubt = %.2f%%(%d/%d), null = %.2f%%(%d/%d), omrError1 = %.2f%%(%d/%d), omrError2 = %.2f%%(%d/%d)\n", (float)_nDoubtStatistics_ / _nAllStatistics_ * 100, _nDoubtStatistics_, _nAllStatistics_, \
-			  (float)_nOmrNullStatistics_ / _nAllStatistics_ * 100, _nOmrNullStatistics_, _nAllStatistics_, \
-			  (float)_nErrorStatistics1_ / _nAllStatistics_ * 100, _nErrorStatistics1_, _nAllStatistics_, \
-			  (float)_nErrorStatistics2_ / _nAllStatistics_ * 100, _nErrorStatistics2_, _nAllStatistics_);
+	sprintf_s(szStatisticsInfo, "\n所有试卷袋识别错误信息统计:\r\nomrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), snNull = %.2f%%(%d/%d), omrError1 = %.2f%%(%d/%d), omrError2 = %.2f%%(%d/%d)\r\n原始试卷袋统计: omrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), snNull = %.2f%%(%d/%d)\n", (float)_nOmrDoubtStatistics_ / _nAllOmrStatistics_ * 100, _nOmrDoubtStatistics_, _nAllOmrStatistics_, \
+			  (float)_nOmrNullStatistics_ / _nAllOmrStatistics_ * 100, _nOmrNullStatistics_, _nAllOmrStatistics_, \
+			  (float)_nSnNullStatistics_ / _nAllSnStatistics_ * 100, _nSnNullStatistics_, _nAllSnStatistics_, \
+			  (float)_nErrorStatistics1_ / _nAllOmrStatistics_ * 100, _nErrorStatistics1_, _nAllOmrStatistics_, \
+			  (float)_nErrorStatistics2_ / _nAllOmrStatistics_ * 100, _nErrorStatistics2_, _nAllOmrStatistics_, \
+			  (float)_nPkgDoubtStatistics_ / _nAllOmrStatistics_ * 100, _nPkgDoubtStatistics_, _nAllOmrStatistics_, \
+			  (float)_nPkgOmrNullStatistics_ / _nAllOmrStatistics_ * 100, _nPkgOmrNullStatistics_, _nAllOmrStatistics_, \
+			  (float)_nPkgSnNullStatistics_ / _nAllSnStatistics_ * 100, _nPkgSnNullStatistics_, _nAllSnStatistics_);
 	strMsg.Format(_T("\r\n***********************\r\n%s\r\n***********************\r\n"), A2T(szStatisticsInfo));
 	showMsg(strMsg);
 	g_Log.LogOut(T2A(strMsg));
@@ -893,9 +900,9 @@ void CDataMgrToolDlg::OnBnClickedBtnClearstatistics()
 	_fmErrorStatistics_.lock();
 	_nErrorStatistics1_ = 0;
 	_nErrorStatistics2_ = 0;
-	_nDoubtStatistics_ = 0;
+	_nOmrDoubtStatistics_ = 0;
 	_nOmrNullStatistics_ = 0;
-	_nAllStatistics_ = 0;
+	_nAllOmrStatistics_ = 0;
 	_fmErrorStatistics_.unlock();
 
 	_fmDecompress_.lock();

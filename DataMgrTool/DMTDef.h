@@ -232,9 +232,9 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 		nUserId = -1;
 		nOmrError_1 = 0;
 		nOmrError_2 = 0;
-		nPkgOmrDoubt = 0;
-		nPkgOmrNull = 0;
-		nPkgSnNull = 0;
+		nPkgOmrDoubt = -1;
+		nPkgOmrNull = -1;
+		nPkgSnNull = -1;
 	}
 	~_PapersInfo_()
 	{
@@ -345,10 +345,13 @@ bool SavePapersInfo(pPAPERSINFO pPapers);
 extern Poco::FastMutex _fmErrorStatistics_;
 extern int		_nErrorStatistics1_;	//第一种方法识别错误数
 extern int		_nErrorStatistics2_;	//第二种方法识别错误数
-extern int		_nDoubtStatistics_;		//识别怀疑总数
+extern int		_nOmrDoubtStatistics_;		//识别怀疑总数
 extern int		_nOmrNullStatistics_;		//识别为空总数
-extern int		_nAllStatistics_;		//统计总数
+extern int		_nSnNullStatistics_;	//SN识别为空总数
+extern int		_nAllOmrStatistics_;		//统计总数
+extern int		_nAllSnStatistics_;			//SN统计总数
 extern int		_nPkgDoubtStatistics_;	//原始试卷包识别怀疑总数
 extern int		_nPkgOmrNullStatistics_;	//原始试卷包识别为空总数
+extern int		_nPkgSnNullStatistics_;		//原始试卷包中SN识别为空总数
 std::string calcStatistics(pPAPERSINFO pPapers);
 //--

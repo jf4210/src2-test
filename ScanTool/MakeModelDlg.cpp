@@ -6159,6 +6159,17 @@ bool CMakeModelDlg::UploadModel(CString strModelPath, pMODEL pModel)
 
 	sprintf_s(stModelInfo.szModelName, "%s.mod", pModel->strModelName.c_str());
 	strncpy(stModelInfo.szMD5, strMd5.c_str(), strMd5.length());
+
+	if (strElectOmrInfo.length() > sizeof(stModelInfo.szElectOmr))
+	{
+		char szLog[200] = { 0 };
+		CString strErr;
+		sprintf_s(szLog, "选做题信息长度(%d)超过发送结构体的存储空间(%d),无法进行后续提交操作", strElectOmrInfo.length(), sizeof(stModelInfo.szElectOmr));
+		g_pLogger->information(szLog);
+		AfxMessageBox(_T("选择题信息太多，无法操作！"));
+		return false;
+	}
+
 	strncpy(stModelInfo.szElectOmr, strElectOmrInfo.c_str(), strElectOmrInfo.length());
 
 #ifdef SHOW_GUIDEDLG
@@ -6180,4 +6191,5 @@ bool CMakeModelDlg::UploadModel(CString strModelPath, pMODEL pModel)
 	g_fmTcpTaskLock.lock();
 	g_lTcpTask.push_back(pTcpTask);
 	g_fmTcpTaskLock.unlock();
+	return true;
 }

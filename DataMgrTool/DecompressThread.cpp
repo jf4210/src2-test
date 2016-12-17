@@ -286,6 +286,10 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 			std::string strErr = "É¾³ýÎÄ¼þ¼Ð(" + pPapers->strPapersPath + ")Ê§°Ü: " + exc.message();
 			g_Log.LogOutError(strErr);
 		}
+
+		_fmRecogPapers_.lock();
+		_nRecogPapers_++;
+		_fmRecogPapers_.unlock();
 	}
 
 #endif

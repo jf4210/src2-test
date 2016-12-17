@@ -72,10 +72,10 @@ void CLog::SetFileName(std::string& strLogFileName)
 	Poco::AutoPtr<Poco::FileChannel> pFileChannel(new Poco::FileChannel(strLogFileName));
 	pFCFile->setChannel(pFileChannel);
 	pFCFile->open();
-	pFCFile->setProperty("rotation", "5 M");
+	pFCFile->setProperty("rotation", "20 M");
 	pFCFile->setProperty("archive", "timestamp");
 	pFCFile->setProperty("compress", "true");
-	pFCFile->setProperty("purgeCount", "5");
+//	pFCFile->setProperty("purgeCount", "10");
 	//	Poco::Logger& appLogger = Poco::Logger::create("ScanTool", pFCFile, Poco::Message::PRIO_INFORMATION);
 	m_pLogger = &(Poco::Logger::create("DCS", pFCFile, Poco::Message::PRIO_INFORMATION));
 }
