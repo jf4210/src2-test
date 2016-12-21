@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(ElectOmrDlg, CDialog)
 
 ElectOmrDlg::ElectOmrDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(ElectOmrDlg::IDD, pParent)
-	, m_nCurrentSel(-1), m_nAllCount(0), m_nRealItem(0), m_pCurrentGroup(NULL)
+	, m_nCurrentSel(-1), m_nAllCount(0), m_nRealItem(0), m_pCurrentGroup(NULL), m_nCurrPaperId(0)
 {
 
 }
@@ -158,7 +158,7 @@ BOOL ElectOmrDlg::PreTranslateMessage(MSG* pMsg)
 
 void ElectOmrDlg::OnBnClickedBtnNew()
 {
-	int nGroupId = 0;
+	int nGroupId = (m_nCurrPaperId + 1) * 100;
 	for (int i = 0; i < m_vecElectOmrInfoAll.size(); i++)
 		if (m_vecElectOmrInfoAll[i]->nGroupID > nGroupId)
 			nGroupId = m_vecElectOmrInfoAll[i]->nGroupID;
@@ -276,7 +276,7 @@ void ElectOmrDlg::OnCbnSelchangeComboGroup()
 	UpdateData(FALSE);
 }
 
-void ElectOmrDlg::InitGroupInfo(std::vector<ELECTOMR_QUESTION>& vecElectOmr)
+void ElectOmrDlg::InitGroupInfo(std::vector<ELECTOMR_QUESTION>& vecElectOmr, int nPaperId)
 {
 	for (int i = 0; i < m_vecElectOmrInfoAll.size(); i++)
 	{
@@ -287,6 +287,8 @@ void ElectOmrDlg::InitGroupInfo(std::vector<ELECTOMR_QUESTION>& vecElectOmr)
 	m_vecElectOmrInfoReal.clear();
 	m_comboGroup.ResetContent();
 
+	m_nCurrPaperId = nPaperId;
+
 	for (int i = 0; i < vecElectOmr.size(); i++)
 	{
 		pELECTOMRGROUPINFO pElectOmr = new ELECTOMRGROUPINFO;
@@ -296,6 +298,20 @@ void ElectOmrDlg::InitGroupInfo(std::vector<ELECTOMR_QUESTION>& vecElectOmr)
 		m_vecElectOmrInfoAll.push_back(pElectOmr);
 		m_vecElectOmrInfoReal.push_back(pElectOmr);
 	}
+	InitUI();
+}
+
+void ElectOmrDlg::ReleaseData()
+{
+	for (int i = 0; i < m_vecElectOmrInfoAll.size(); i++)
+	{
+		pELECTOMRGROUPINFO pElectOmr = m_vecElectOmrInfoAll[i];
+		SAFE_RELEASE(pElectOmr);
+	}
+	m_vecElectOmrInfoAll.clear();
+	m_vecElectOmrInfoReal.clear();
+	m_comboGroup.ResetContent();
+
 	InitUI();
 }
 

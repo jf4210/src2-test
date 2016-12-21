@@ -13,7 +13,7 @@
 //#include "TypeDef.h"
 
 #ifdef _DEBUG
-	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
+//	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
 //	#define TEST_FILE_PRESSURE	//文件上传压力测试
 #endif
 
@@ -26,7 +26,7 @@
 // 	#define USE_POCO_UNZIP			//给武汉天喻信息使用,不使用加密压缩
 // #endif
 
-#define SOFT_VERSION "DataControlServer V1.1118"
+#define SOFT_VERSION "DataControlServer V1.1219"
 
 
 #define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}

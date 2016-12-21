@@ -584,6 +584,7 @@ bool GetHeader(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 
 	int nPaperType = 1;		//纸张类型：A3-1，A4-2
 	nPaperType = objHeader->get("sheetType").convert<int>();
+	pPaperModel->nPaperType = nPaperType;
 
 	//同步头
 	std::vector<RECTPOS> vecHeader_H;
@@ -953,6 +954,10 @@ pMODEL CScanResquestHandler::CreateModel(Poco::JSON::Object::Ptr object, pSCAN_R
 
 			//添加试卷模板到总模板
 			pModel->vecPaperModel.push_back(pPaperModel);
+			if (pPaperModel->nPaperType == 1)				//A3用150dpi扫描
+				pModel->nScanDpi = 150;
+			else if (pPaperModel->nPaperType == 2)			//A4用200dpi扫描
+				pModel->nScanDpi = 200;
 		}
 		pModel->nPicNum = arryData->size();
 		pModel->nType = 1;
@@ -1976,6 +1981,7 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 	jsnModel.set("hasHead", pModel->nHasHead);					//是否有同步头
 	jsnModel.set("hasElectOmr", pModel->nHasElectOmr);			//是否有选做题
 	jsnModel.set("nZkzhType", pModel->nZkzhType);				//准考证号识别类型
+	jsnModel.set("nScanDpi", pModel->nScanDpi);					//扫描的dpi设置
 
 	jsnModel.set("nExamId", pModel->nExamID);
 	jsnModel.set("nSubjectId", pModel->nSubjectID);

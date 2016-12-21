@@ -25,10 +25,12 @@ public:
 	int		m_nCurrentSel;
 	pELECTOMRGROUPINFO	m_pCurrentGroup;
 
+	int		m_nCurrPaperId;	//当前页面ID
 
 	bool checkValid();		//检测当前组信息是否是有效的信息 
 	void showUI(int nGroup);
-	void InitGroupInfo(std::vector<ELECTOMR_QUESTION>& vecElectOmr);
+	void InitGroupInfo(std::vector<ELECTOMR_QUESTION>& vecElectOmr, int nPaperId);
+	void ReleaseData();
 private:
 	void InitCtrlPosition();
 	void InitUI();

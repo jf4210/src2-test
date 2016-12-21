@@ -196,7 +196,8 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 // 								std::string strExamID = strModelName.substr(0, nPos);
 // 								nOldPos = nPos;
 // 								nPos = strModelName.find(".", nPos + 1);
-// 								std::string strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+// 								std::string strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+
 
 								std::string strLog;
 

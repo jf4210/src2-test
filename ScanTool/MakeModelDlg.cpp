@@ -930,6 +930,12 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 		return;
 	}
 
+// 	BOOL ret_value = FALSE;
+// 	int nTestX = 0, nTestY = 0;
+// 	ret_value = GetCapability(ICAP_XRESOLUTION, nTestX);
+// 	ret_value = GetCapability(ICAP_YRESOLUTION, nTestY);
+
+
 	int nSize = 1;							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3
 	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
 	int nResolution = 200;					//dpi: 72, 150, 200, 300
@@ -1160,6 +1166,8 @@ void CMakeModelDlg::OnBnClickedBtnReset()
 		if (m_eCurCPType == ELECT_OMR || m_eCurCPType == UNKNOWN)
 		{
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.clear();
+			if (m_pElectOmrDlg)
+				m_pElectOmrDlg->ReleaseData();
 		}
 	}
 }
@@ -2704,7 +2712,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	jsnModel.set("hasElectOmr", pModel->nHasElectOmr);			//是否有选做题
 	jsnModel.set("nZkzhType", pModel->nZkzhType);				//准考证号识别类型
 	jsnModel.set("nScanDpi", pModel->nScanDpi);					//扫描的dpi设置
- 
+
 // 	jsnModel.set("gaussKernel", pModel->nGaussKernel);
 // 	jsnModel.set("sharpKernel", pModel->nSharpKernel);
 // 	jsnModel.set("cannyKernel", pModel->nCannyKernel);
@@ -3681,7 +3689,7 @@ void CMakeModelDlg::InitShowSnOmrDlg(CPType eType)
 
 		if (!m_pModel || m_vecPaperModelInfo.size() <= m_nCurrTabSel)
 			return;
-		m_pElectOmrDlg->InitGroupInfo(m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr);
+		m_pElectOmrDlg->InitGroupInfo(m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr, m_nCurrTabSel);
 	}
 	else
 	{
@@ -4439,7 +4447,7 @@ BOOL CMakeModelDlg::DeleteRectInfo(CPType eType, int nItem)
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.erase(it);
 		break;
 	case SN:
-		if (m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.size() < 0)
+		if (m_vecPaperModelInfo[m_nCurrTabSel]->lSN.size() < 0)
 			return FALSE;
 
 		break;
@@ -5528,11 +5536,19 @@ void CMakeModelDlg::SetImage(HANDLE hBitmap, int bits)
 	cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
 //	cv::Mat matTest3 = matTest2.clone();
 
-
+	std::string strLog;
 	std::string strPicName = szPicPath;
-	imwrite(strPicName, matTest2);
+	try
+	{
+		imwrite(strPicName, matTest2);
+		strLog = "Get model pic: " + strPicName;
+	}
+	catch (...)
+	{
+		AfxMessageBox(_T("写文件失败"));
+		strLog = "Get model pic: " + strPicName + " failed.";
+	}
 
-	std::string strLog = "Get model pic: " + strPicName;
 	g_pLogger->information(strLog);
 
 	cvReleaseImage(&pIpl2);

@@ -51,10 +51,10 @@ void InitConfig()
 	Poco::AutoPtr<Poco::FileChannel> pFileChannel(new Poco::FileChannel(strLogPath));
 	pFCFile->setChannel(pFileChannel);
 	pFCFile->open();
-	pFCFile->setProperty("rotation", "1 M");
+	pFCFile->setProperty("rotation", "20 M");
 	pFCFile->setProperty("archive", "timestamp");
 	pFCFile->setProperty("compress", "true");
-	pFCFile->setProperty("purgeCount", "5");
+	pFCFile->setProperty("purgeCount", "10");
 	
 	Poco::Logger& appLogger = Poco::Logger::create(strName, pFCFile, Poco::Message::PRIO_INFORMATION);
 	_pLogger_ = &appLogger;
