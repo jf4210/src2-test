@@ -1178,7 +1178,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 
 	Poco::JSON::Array jsnPaperArry;
 	PAPER_LIST::iterator itNomarlPaper = pPapers->lPaper.begin();
-	for (; itNomarlPaper != pPapers->lPaper.end(); itNomarlPaper++)
+	for (int i = 0; itNomarlPaper != pPapers->lPaper.end(); itNomarlPaper++, i++)
 	{
 		Poco::JSON::Object jsnPaper;
 		jsnPaper.set("name", (*itNomarlPaper)->strStudentInfo);
@@ -1241,6 +1241,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		for (; itElectOmr != (*itNomarlPaper)->lElectOmrResult.end(); itElectOmr++)
 		{
 			Poco::JSON::Object jsnElectOmr;
+			jsnElectOmr.set("paperId", i + 1);
 			jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
 			jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
 			jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
@@ -1266,7 +1267,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		jsnPaperArry.add(jsnPaper);
 	}
 	PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
-	for (; itIssuePaper != pPapers->lIssue.end(); itIssuePaper++)
+	for (int j = 0; itIssuePaper != pPapers->lIssue.end(); itIssuePaper++, j++)
 	{
 		Poco::JSON::Object jsnPaper;
 		jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
@@ -1329,6 +1330,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		for (; itElectOmr != (*itIssuePaper)->lElectOmrResult.end(); itElectOmr++)
 		{
 			Poco::JSON::Object jsnElectOmr;
+			jsnElectOmr.set("paperId", j + 1);
 			jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
 			jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
 			jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);

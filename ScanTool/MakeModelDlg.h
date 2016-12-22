@@ -249,4 +249,5 @@ public:
 	afx_msg void OnBnClickedBtnScanmodel();
 	afx_msg void OnDestroy();
 	afx_msg void OnNMHoverListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedBtnAdvancedsetting();
 };

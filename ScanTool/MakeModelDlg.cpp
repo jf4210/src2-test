@@ -14,6 +14,7 @@
 #include "ScanCtrlDlg.h"
 #include "Net_Cmd_Protocol.h"
 #include "./pdf2jpg/MuPDFConvert.h"
+#include "AdvancedSetDlg.h"
 
 using namespace std;
 using namespace cv;
@@ -110,6 +111,7 @@ BEGIN_MESSAGE_MAP(CMakeModelDlg, CDialog)
 	ON_MESSAGE(WM_CV_ShiftUp, &CMakeModelDlg::ShiftKeyUp)
 	ON_WM_DESTROY()
 	ON_NOTIFY(NM_HOVER, IDC_LIST_CheckPoint, &CMakeModelDlg::OnNMHoverListCheckpoint)
+	ON_BN_CLICKED(IDC_BTN_AdvancedSetting, &CMakeModelDlg::OnBnClickedBtnAdvancedsetting)
 END_MESSAGE_MAP()
 
 // CMakeModelDlg 消息处理程序
@@ -496,10 +498,10 @@ void CMakeModelDlg::InitCtrlPosition()
 		GetDlgItem(IDC_BTN_SAVE)->MoveWindow(nLeftGap, nCurrentTop, nBtnWidth, nBtnHeigh);
 //		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
 	}
-#if 0
-	if (GetDlgItem(IDC_BTN_uploadModel)->GetSafeHwnd())
+#if 1
+	if (GetDlgItem(IDC_BTN_AdvancedSetting)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_BTN_uploadModel)->MoveWindow(nLeftGap + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeigh);
+		GetDlgItem(IDC_BTN_AdvancedSetting)->MoveWindow(nLeftGap + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeigh);
 		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
 	}
 #endif
@@ -5556,6 +5558,9 @@ void CMakeModelDlg::SetImage(HANDLE hBitmap, int bits)
 
 void CMakeModelDlg::ScanDone(int nStatus)
 {
+	if (nStatus < 0)
+		return;
+
 	TRACE("扫描完成\n");
 	AfxMessageBox(_T("扫描完成"));
 	CString strSelect = _T("/root,");
@@ -6208,4 +6213,14 @@ bool CMakeModelDlg::UploadModel(CString strModelPath, pMODEL pModel)
 	g_lTcpTask.push_back(pTcpTask);
 	g_fmTcpTaskLock.unlock();
 	return true;
+}
+
+
+void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
+{
+	CAdvancedSetDlg dlg(m_pModel);
+	if (dlg.DoModal() != IDOK)
+		return;
+
+	m_pModel->nScanDpi = dlg.m_nScanDpi;
 }

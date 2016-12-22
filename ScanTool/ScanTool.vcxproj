@@ -126,6 +126,7 @@
     <ClInclude Include="..\..\common\Net_Cmd_Protocol.h" />
     <ClInclude Include="..\..\common\unzip.h" />
     <ClInclude Include="..\..\common\zip.h" />
+    <ClInclude Include="AdvancedSetDlg.h" />
     <ClInclude Include="bmp2ipl.h" />
     <ClInclude Include="ComboBoxExt.h" />
     <ClInclude Include="ComboBoxExtList.h" />
@@ -176,6 +177,7 @@
     <ClCompile Include="..\..\common\md5.cpp" />
     <ClCompile Include="..\..\common\unzip.cpp" />
     <ClCompile Include="..\..\common\zip.cpp" />
+    <ClCompile Include="AdvancedSetDlg.cpp" />
     <ClCompile Include="bmp2ipl.cpp" />
     <ClCompile Include="ComboBoxExt.cpp" />
     <ClCompile Include="ComboBoxExtList.cpp" />

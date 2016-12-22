@@ -118,6 +118,9 @@
     <Filter Include="扫描线程">
       <UniqueIdentifier>{30fcb582-70a2-420e-ae99-418de9b02375}</UniqueIdentifier>
     </Filter>
+    <Filter Include="模板制作窗口%2a%2a%2a\高级参数设置">
+      <UniqueIdentifier>{0183217b-9242-4436-9a49-10ddc384e379}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -276,6 +279,9 @@
     <ClInclude Include="ScanThread.h">
       <Filter>扫描线程</Filter>
     </ClInclude>
+    <ClInclude Include="AdvancedSetDlg.h">
+      <Filter>模板制作窗口%2a%2a%2a\高级参数设置</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
@@ -409,6 +415,9 @@
     </ClCompile>
     <ClCompile Include="ScanThread.cpp">
       <Filter>扫描线程</Filter>
+    </ClCompile>
+    <ClCompile Include="AdvancedSetDlg.cpp">
+      <Filter>模板制作窗口%2a%2a%2a\高级参数设置</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

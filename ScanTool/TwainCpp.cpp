@@ -541,6 +541,14 @@ BOOL CTwain::Acquire(int numImages, TW_UINT16 duplex, TW_UINT16 size, TW_UINT16 
 		ret_value=SetResolution(ICAP_XRESOLUTION,resolution);
 		ret_value=SetResolution(ICAP_YRESOLUTION,resolution);
 
+		TW_UINT16 nCut = 1;
+		ret_value = SetCapability(ICAP_AUTOMATICBORDERDETECTION, nCut, TRUE);
+		
+		TW_UINT16 nCut = 1;
+		BOOL ret_value = SetCapability(ICAP_AUTOMATICBORDERDETECTION, nCut, TRUE);	//自动裁剪
+
+		TW_UINT16 nRotate = 1;
+		ret_value = SetCapability(ICAP_AUTOMATICDESKEW, nRotate, TRUE);		//自动纠偏
 
 // 		TW_UINT32 nTestX = 0, nTestY = 0;
 // 		ret_value = GetCapability(ICAP_XRESOLUTION, nTestX);
@@ -561,6 +569,21 @@ BOOL CTwain::Acquire(int numImages /*= 1*/, BOOL bShowUI)
 {
 	if (DSOpen() || OpenSource())
 	{
+
+		TW_UINT16 nCut = 1;
+		BOOL ret_value = SetCapability(ICAP_AUTOMATICBORDERDETECTION, nCut, TRUE);	//自动裁剪
+
+		TW_UINT16 nRotate = 1;
+		ret_value = SetCapability(ICAP_AUTOMATICDESKEW, nRotate, TRUE);		//自动纠偏
+
+	#if 0
+		TW_UINT16 nBright = (135 - 128) / 0.125;
+		ret_value = SetCapability(ICAP_BRIGHTNESS, nBright, TRUE);		//亮度调节
+
+		TW_UINT16 nContrast = (135 - 128) / 0.125;
+		ret_value = SetCapability(ICAP_CONTRAST, nContrast, TRUE);		//对比度调节
+	#endif
+
 		if (SetImageCount(numImages))
 		{
 			if (EnableSource(bShowUI))

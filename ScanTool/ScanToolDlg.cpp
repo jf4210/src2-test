@@ -1783,6 +1783,9 @@ void CScanToolDlg::ScanDone(int nStatus)
 	else if (nStatus == -5)
 	{
 		strMsg = _T("É¨ÃèÒÑÈ¡Ïû");
+
+		if (m_nScanStatus != 2)
+			m_nScanStatus = 3;
 	}
 	else
 	{
@@ -2438,7 +2441,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	USES_CONVERSION;
 	Poco::JSON::Array jsnPaperArry;
 	PAPER_LIST::iterator itNomarlPaper = m_pPapersInfo->lPaper.begin();
-	for (; itNomarlPaper != m_pPapersInfo->lPaper.end(); itNomarlPaper++)
+	for (int i = 0; itNomarlPaper != m_pPapersInfo->lPaper.end(); itNomarlPaper++, i++)
 	{
 		Poco::JSON::Object jsnPaper;
 		jsnPaper.set("name", (*itNomarlPaper)->strStudentInfo);
@@ -2501,6 +2504,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		for (; itElectOmr != (*itNomarlPaper)->lElectOmrResult.end(); itElectOmr++)
 		{
 			Poco::JSON::Object jsnElectOmr;
+			jsnElectOmr.set("paperId", i + 1);
 			jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
 			jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
 			jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
@@ -2526,7 +2530,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		jsnPaperArry.add(jsnPaper);
 	}
 	PAPER_LIST::iterator itIssuePaper = m_pPapersInfo->lIssue.begin();
-	for (; itIssuePaper != m_pPapersInfo->lIssue.end(); itIssuePaper++)
+	for (int j = 0; itIssuePaper != m_pPapersInfo->lIssue.end(); itIssuePaper++, j++)
 	{
 		Poco::JSON::Object jsnPaper;
 		jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
@@ -2589,6 +2593,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		for (; itElectOmr != (*itIssuePaper)->lElectOmrResult.end(); itElectOmr++)
 		{
 			Poco::JSON::Object jsnElectOmr;
+			jsnElectOmr.set("paperId", j + 1);
 			jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
 			jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
 			jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
