@@ -938,7 +938,7 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 // 	ret_value = GetCapability(ICAP_YRESOLUTION, nTestY);
 
 
-	int nSize = 1;							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3
+	int nSize = TWSS_NONE;							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3
 	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
 	int nResolution = 200;					//dpi: 72, 150, 200, 300
 
@@ -2714,6 +2714,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	jsnModel.set("hasElectOmr", pModel->nHasElectOmr);			//是否有选做题
 	jsnModel.set("nZkzhType", pModel->nZkzhType);				//准考证号识别类型
 	jsnModel.set("nScanDpi", pModel->nScanDpi);					//扫描的dpi设置
+	jsnModel.set("nScanAutoCut", pModel->nAutoCut);				//扫描仪是否自动裁剪，超长卡不能裁剪
 
 // 	jsnModel.set("gaussKernel", pModel->nGaussKernel);
 // 	jsnModel.set("sharpKernel", pModel->nSharpKernel);
@@ -6223,4 +6224,5 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 		return;
 
 	m_pModel->nScanDpi = dlg.m_nScanDpi;
+	m_pModel->nAutoCut = dlg.m_nAutoCut;
 }

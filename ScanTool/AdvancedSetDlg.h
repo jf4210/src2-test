@@ -16,7 +16,10 @@ public:
 
 public:
 	CComboBox	m_combo_ScanDpi;
+	CButton		m_chkAutoCut;
 	int			m_nScanDpi;
+	int			m_nAutoCut;		//ÊÇ·ñ×Ô¶¯²Ã¼ô
+
 private:
 	pMODEL		m_pModel;
 
@@ -28,4 +31,6 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnCbnSelchangeComboScandpi();
+	afx_msg void OnBnClickedOk();
+	afx_msg void OnBnClickedChkAutocut();
 };

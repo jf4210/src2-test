@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CAdvancedSetDlg, CDialog)
 
 CAdvancedSetDlg::CAdvancedSetDlg(pMODEL	pModel, CWnd* pParent /*=NULL*/)
 	: CDialog(CAdvancedSetDlg::IDD, pParent)
-	, m_pModel(pModel), m_nScanDpi(200)
+	, m_pModel(pModel), m_nScanDpi(200), m_nAutoCut(1)
 {
 
 }
@@ -26,6 +26,7 @@ void CAdvancedSetDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_COMBO_ScanDpi, m_combo_ScanDpi);
+	DDX_Control(pDX, IDC_CHK_AutoCut, m_chkAutoCut);
 }
 
 
@@ -40,6 +41,8 @@ BOOL CAdvancedSetDlg::OnInitDialog()
 
 BEGIN_MESSAGE_MAP(CAdvancedSetDlg, CDialog)
 	ON_CBN_SELCHANGE(IDC_COMBO_ScanDpi, &CAdvancedSetDlg::OnCbnSelchangeComboScandpi)
+	ON_BN_CLICKED(IDOK, &CAdvancedSetDlg::OnBnClickedOk)
+	ON_BN_CLICKED(IDC_CHK_AutoCut, &CAdvancedSetDlg::OnBnClickedChkAutocut)
 END_MESSAGE_MAP()
 
 
@@ -54,6 +57,8 @@ void CAdvancedSetDlg::InitData()
 	if (!m_pModel)
 	{
 		m_combo_ScanDpi.SetCurSel(1);
+		m_chkAutoCut.SetCheck(FALSE);
+		m_nAutoCut = 0;
 		return;
 	}
 
@@ -71,6 +76,9 @@ void CAdvancedSetDlg::InitData()
 		m_combo_ScanDpi.SetCurSel(2);
 	}
 
+	m_nAutoCut = m_pModel->nAutoCut;
+	m_chkAutoCut.SetCheck(m_nAutoCut);
+
 	return;
 }
 
@@ -83,4 +91,15 @@ void CAdvancedSetDlg::OnCbnSelchangeComboScandpi()
 	CString strDpi = _T("");
 	m_combo_ScanDpi.GetLBText(m_combo_ScanDpi.GetCurSel(), strDpi);
 	m_nScanDpi = atoi(T2A(strDpi));
+}
+
+
+void CAdvancedSetDlg::OnBnClickedOk()
+{
+	CDialog::OnOK();
+}
+
+void CAdvancedSetDlg::OnBnClickedChkAutocut()
+{
+	m_nAutoCut = m_chkAutoCut.GetCheck();
 }

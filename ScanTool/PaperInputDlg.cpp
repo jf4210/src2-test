@@ -1428,6 +1428,13 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	{
 		Poco::File tmpPath(CMyCodeConvert::Gb2312ToUtf8(strPicPath));
 
+		if (!tmpPath.exists())
+		{
+			std::string strErr = Poco::format("文件夹(%s)不存在。不能添加到压缩队列", strPicPath);
+			g_pLogger->information(strErr);
+			return;
+		}
+
 		char szCompressDirPath[MAX_PATH] = { 0 };
 		sprintf_s(szCompressDirPath, "%sPaper\\%s_ToCompress", T2A(g_strCurrentPath), szZipBaseName);
 		strSrcPicDirPath = szCompressDirPath;

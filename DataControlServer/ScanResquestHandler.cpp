@@ -1982,6 +1982,7 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 	jsnModel.set("hasElectOmr", pModel->nHasElectOmr);			//是否有选做题
 	jsnModel.set("nZkzhType", pModel->nZkzhType);				//准考证号识别类型
 	jsnModel.set("nScanDpi", pModel->nScanDpi);					//扫描的dpi设置
+	jsnModel.set("nScanAutoCut", pModel->nAutoCut);				//扫描仪是否自动裁剪，超长卡不能裁剪
 
 	jsnModel.set("nExamId", pModel->nExamID);
 	jsnModel.set("nSubjectId", pModel->nSubjectID);

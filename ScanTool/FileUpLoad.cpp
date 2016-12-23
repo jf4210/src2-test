@@ -167,7 +167,7 @@ RESTART:
 					catch (CMemoryException* e)
 					{
 						char szLog[100] = { 0 };
-						sprintf_s(szLog, "上传文件(%s)时内存申请失败，需要重新尝试。", strAnsName);
+						sprintf_s(szLog, "上传文件(%s)时内存申请失败，需要重新尝试。", strAnsName.c_str());
 						g_pLogger->information(szLog);
 						Sleep(500);
 						continue;
@@ -178,7 +178,7 @@ RESTART:
 						UINT uErr;
 						e->GetErrorMessage((LPTSTR)(LPCTSTR)strErr, uErr);
 						char szLog[300] = { 0 };
-						sprintf_s(szLog, "上传文件(%s)时发生文件异常，需要重新尝试。%s", strAnsName, strErr);
+						sprintf_s(szLog, "上传文件(%s)时发生文件异常，需要重新尝试。%s", strAnsName.c_str(), strErr);
 						g_pLogger->information(szLog);
 						Sleep(500);
 						continue;
@@ -186,7 +186,7 @@ RESTART:
 					catch (...)
 					{
 						char szLog[100] = { 0 };
-						sprintf_s(szLog, "上传文件(%s)时发生异常，需要重新尝试。", strAnsName);
+						sprintf_s(szLog, "上传文件(%s)时发生异常，需要重新尝试。", strAnsName.c_str());
 						g_pLogger->information(szLog);
 						Sleep(500);
 						continue;

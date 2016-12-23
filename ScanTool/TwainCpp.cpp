@@ -524,7 +524,7 @@ BOOL CTwain::EnableSource(BOOL showUI)
 Called to acquire images from the source. parameter numImages i the
 numberof images that you an handle concurrently
 */
-BOOL CTwain::Acquire(int numImages, TW_UINT16 duplex, TW_UINT16 size, TW_UINT16 pixel, TW_UINT16 resolution, BOOL bShowUI)
+BOOL CTwain::Acquire(int numImages, TW_UINT16 duplex, TW_UINT16 size, TW_UINT16 pixel, TW_UINT16 resolution, BOOL bShowUI, int nAutoCut)
 {
 	if(DSOpen() || OpenSource())
 	{
@@ -540,12 +540,8 @@ BOOL CTwain::Acquire(int numImages, TW_UINT16 duplex, TW_UINT16 size, TW_UINT16 
 		ret_value=SetCapability(ICAP_PIXELTYPE,pixel,TRUE);
 		ret_value=SetResolution(ICAP_XRESOLUTION,resolution);
 		ret_value=SetResolution(ICAP_YRESOLUTION,resolution);
-
-		TW_UINT16 nCut = 1;
-		ret_value = SetCapability(ICAP_AUTOMATICBORDERDETECTION, nCut, TRUE);
 		
-		TW_UINT16 nCut = 1;
-		BOOL ret_value = SetCapability(ICAP_AUTOMATICBORDERDETECTION, nCut, TRUE);	//自动裁剪
+		ret_value = SetCapability(ICAP_AUTOMATICBORDERDETECTION, nAutoCut, TRUE);	//自动裁剪
 
 		TW_UINT16 nRotate = 1;
 		ret_value = SetCapability(ICAP_AUTOMATICDESKEW, nRotate, TRUE);		//自动纠偏

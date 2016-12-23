@@ -201,9 +201,23 @@ bool ZipFile(CString strSrcPath, CString strDstPath, CString strExtName /*= _T("
 	pPwd = s_szZipPwd;
 #endif
 
-	HZIP hz = CreateZip(zipName, pPwd);
 //	std::string strModelPath = T2A(strSrcPath);
 	std::string strUtf8ModelPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strSrcPath));
+	try
+	{
+		Poco::File p2(strUtf8ModelPath);	//T2A(zipName)
+		if (!p2.exists())
+		{
+			std::string strErr = Poco::format("需要压缩的原文件夹(%s)不存在。", T2A(strSrcPath));
+			g_pLogger->information(strErr);
+			return false;
+		}
+	}
+	catch (cv::Exception)
+	{
+	}
+
+	HZIP hz = CreateZip(zipName, pPwd);
 
 	Poco::DirectoryIterator it(strUtf8ModelPath);	//strModelPath
 	Poco::DirectoryIterator end;
@@ -315,6 +329,8 @@ pMODEL LoadModelFile(CString strModelPath)
 			pModel->nZkzhType = objData->get("nZkzhType").convert<int>();
 		if (objData->has("nScanDpi"))
 			pModel->nScanDpi = objData->get("nScanDpi").convert<int>();
+		if (objData->has("nScanAutoCut"))
+			pModel->nAutoCut = objData->get("nScanAutoCut").convert<int>();
 
 // 		if (objData->has("gaussKernel"))
 // 			pModel->nGaussKernel = objData->get("gaussKernel").convert<int>();

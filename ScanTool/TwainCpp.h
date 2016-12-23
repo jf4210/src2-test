@@ -45,7 +45,7 @@ public:
 	TW_STATUS GetStatus() const { return m_Status; };
 
 	BOOL SetImageCount(TW_INT16 nCount = 1);
-	BOOL Acquire(int numImages, TW_UINT16 duplex, TW_UINT16 size, TW_UINT16 pixel, TW_UINT16 resolution, BOOL bShowUI = FALSE);
+	BOOL Acquire(int numImages, TW_UINT16 duplex, TW_UINT16 size, TW_UINT16 pixel, TW_UINT16 resolution, BOOL bShowUI = FALSE, int nAutoCut = 1);
 	BOOL Acquire(int numImages = -1, BOOL bShowUI = FALSE);
 protected:
 	BOOL CallTwainProc(pTW_IDENTITY pOrigin,pTW_IDENTITY pDest,

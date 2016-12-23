@@ -1134,7 +1134,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 
 
 	int nDuplex = nDuplexDef;		//单双面,0-单面,1-双面
-	int nSize = 1;							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3
+	int nSize = TWSS_NONE;					//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3
 	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
 	int nResolution = m_pModel->nScanDpi;	//dpi: 72, 150, 200, 300
 	
@@ -1156,7 +1156,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	if (nNum == 0)
 		nNum = TWCPP_ANYCOUNT;
 
-	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, bShowScanSrcUI))	//TWCPP_ANYCOUNT
+	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, bShowScanSrcUI, m_pModel->nAutoCut))	//TWCPP_ANYCOUNT
 	{
 		m_comboModel.EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_Scan)->EnableWindow(TRUE);
@@ -1287,7 +1287,7 @@ void CScanToolDlg::OnBnClickedBtnScanall()
 
 	if (nNum == 0)
 		nNum = TWCPP_ANYCOUNT;
-	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, g_bShowScanSrcUI))	//TWCPP_ANYCOUNT
+	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, g_bShowScanSrcUI, m_pModel->nAutoCut))	//TWCPP_ANYCOUNT
 	{
 		m_comboModel.EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_Scan)->EnableWindow(TRUE);
