@@ -18,8 +18,8 @@
 	#define INTERVAL_TIME	30 * 1000	//间隔时间，秒60 * 1000
 	#define CHECK_UPDATE_TIME	1 * 60 * 1000	//检查是否有更新的时间60 * 60 * 1000
 #else
-#define INTERVAL_TIME	1 * 60 * 1000	//间隔时间，秒1 * 60 * 1000
-#define CHECK_UPDATE_TIME	60 * 60 * 1000	//检查是否有更新的时间60 * 60 * 1000
+	#define INTERVAL_TIME	1 * 60 * 1000	//间隔时间，秒1 * 60 * 1000
+	#define CHECK_UPDATE_TIME	60 * 60 * 1000	//检查是否有更新的时间60 * 60 * 1000
 #endif
 
 #define MSG_NOTIFY_UPDATE	(WM_APP + 101)

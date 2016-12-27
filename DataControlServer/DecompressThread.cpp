@@ -384,31 +384,31 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	}
 
 #ifdef TEST_MODE
-	if (SysSet.m_nBackupPapers)
-	{
-		Poco::LocalDateTime now;
-		//			std::string strBackupDir = Poco::format("%s\\%04d-%02d-%02d", CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strPapersBackupPath), now.year(), now.month(), now.day());
-		std::string strBackupDir = Poco::format("%s\\%04d-%02d-%02d\\%d_%d\\%s", CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strPapersBackupPath), now.year(), now.month(), now.day(), pPapers->nExamID, pPapers->nSubjectID, pPapers->strUploader);
-		std::string strBackupPath = strBackupDir + "\\" + CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersFileName);
-		try
-		{
-			Poco::File backupDir(strBackupDir);
-			if (!backupDir.exists())
-				backupDir.createDirectories();
-
-			Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersPath));
-			filePapers.moveTo(strBackupPath);
-			std::string strLog = "备份试卷袋文件(" + pPapers->strSrcPapersFileName + ")完成";
-			g_Log.LogOut(strLog);
-			std::cout << strLog << std::endl;
-		}
-		catch (Poco::Exception& exc)
-		{
-			std::string strErrInfo = Poco::format("备份试卷袋(%s)失败,%s", pPapers->strSrcPapersPath, exc.message());
-			g_Log.LogOutError(strErrInfo);
-			std::cout << strErrInfo << std::endl;
-		}
-	}
+// 	if (SysSet.m_nBackupPapers)
+// 	{
+// 		Poco::LocalDateTime now;
+// 		//			std::string strBackupDir = Poco::format("%s\\%04d-%02d-%02d", CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strPapersBackupPath), now.year(), now.month(), now.day());
+// 		std::string strBackupDir = Poco::format("%s\\%04d-%02d-%02d\\%d_%d\\%s", CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strPapersBackupPath), now.year(), now.month(), now.day(), pPapers->nExamID, pPapers->nSubjectID, pPapers->strUploader);
+// 		std::string strBackupPath = strBackupDir + "\\" + CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersFileName);
+// 		try
+// 		{
+// 			Poco::File backupDir(strBackupDir);
+// 			if (!backupDir.exists())
+// 				backupDir.createDirectories();
+// 
+// 			Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersPath));
+// 			filePapers.moveTo(strBackupPath);
+// 			std::string strLog = "备份试卷袋文件(" + pPapers->strSrcPapersFileName + ")完成";
+// 			g_Log.LogOut(strLog);
+// 			std::cout << strLog << std::endl;
+// 		}
+// 		catch (Poco::Exception& exc)
+// 		{
+// 			std::string strErrInfo = Poco::format("备份试卷袋(%s)失败,%s", pPapers->strSrcPapersPath, exc.message());
+// 			g_Log.LogOutError(strErrInfo);
+// 			std::cout << strErrInfo << std::endl;
+// 		}
+// 	}
 #else
 	LIST_PAPER_INFO::iterator itPaper = pPapers->lPaper.begin();
 	for (; itPaper != pPapers->lPaper.end(); itPaper++)

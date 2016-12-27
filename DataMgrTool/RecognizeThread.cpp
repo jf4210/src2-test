@@ -1935,15 +1935,23 @@ bool CRecognizeThread::RecogElectOmr(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 		float fDiffExit = 0;			//灰度的梯度递减太快时，可以认为后面选项没有填涂，此时的灰度梯度阀值
 		if (pModelInfo->pModel->nHasHead)
 		{
-			fCompThread = 1.0;
-			fDiffThread = 0.085;
-			fDiffExit = 0.15;
+			fCompThread = _dCompThread_Head_;
+			fDiffThread = _dDiffThread_Head_;
+			fDiffExit = _dDiffExit_Head_;
+
+			// 			fCompThread = 1.0;
+			// 			fDiffThread = 0.085;
+			// 			fDiffExit = 0.15;
 		}
 		else
 		{
-			fCompThread = 1.2;
-			fDiffThread = 0.2;
-			fDiffExit = 0.3;
+			fCompThread = _dCompThread_Fix_;
+			fDiffThread = _dDiffThread_Fix_;
+			fDiffExit = _dDiffExit_Fix_;
+
+			// 			fCompThread = 1.2;
+			// 			fDiffThread = 0.2;
+			// 			fDiffExit = 0.3;
 		}
 
 		int nFlag = -1;
@@ -1993,7 +2001,19 @@ bool CRecognizeThread::RecogElectOmr(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 			strRecogAnswer1.append(szVal);
 		}
 #endif
-		
+		std::string strRecogAnswer2 = strRecogAnswer1;		//目前第二种方法不可用
+		int nDoubt = 0;
+		if (strRecogAnswer1 == "" && strRecogAnswer2 == "")
+			nDoubt = 2;
+		else
+		{
+			if (strRecogAnswer1 == strRecogAnswer2)
+				nDoubt = 0;
+			else
+				nDoubt = 1;
+		}
+
+		omrResult.nDoubt = nDoubt;
 		omrResult.strRecogResult = strRecogAnswer1;
 		(static_cast<pST_PaperInfo>(pPic->pPaper))->lElectOmrResult.push_back(omrResult);
 

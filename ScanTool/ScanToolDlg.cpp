@@ -1134,7 +1134,14 @@ void CScanToolDlg::OnBnClickedBtnScan()
 
 
 	int nDuplex = nDuplexDef;		//单双面,0-单面,1-双面
-	int nSize = TWSS_NONE;					//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3
+	int nSize = TWSS_NONE;					//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3, TWSS_NONE-自定义
+	if (m_pModel->nScanSize == 1)
+		nSize = TWSS_A4LETTER;
+	else if (m_pModel->nScanSize == 2)
+		nSize = TWSS_A3;
+	else
+		nSize = TWSS_NONE;
+
 	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
 	int nResolution = m_pModel->nScanDpi;	//dpi: 72, 150, 200, 300
 	
@@ -2505,6 +2512,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		{
 			Poco::JSON::Object jsnElectOmr;
 			jsnElectOmr.set("paperId", i + 1);
+			jsnElectOmr.set("doubt", itElectOmr->nDoubt);
 			jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
 			jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
 			jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
@@ -2594,6 +2602,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		{
 			Poco::JSON::Object jsnElectOmr;
 			jsnElectOmr.set("paperId", j + 1);
+			jsnElectOmr.set("doubt", itElectOmr->nDoubt);
 			jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
 			jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
 			jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);

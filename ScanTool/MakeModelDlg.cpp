@@ -910,7 +910,7 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 		ScanSrcInit();
 	}
 
-	CScanCtrlDlg dlg(m_scanSourceArry);
+	CScanCtrlDlg dlg(m_scanSourceArry, true);
 	if (dlg.DoModal() != IDOK)
 		return;
 
@@ -921,6 +921,7 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 
 	bool bShowScanSrcUI = g_bShowScanSrcUI;
 
+#if 0
 	if (dlg.m_bAdvancedSetting)
 	{
 		bShowScanSrcUI = true;
@@ -931,16 +932,28 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 		GetDlgItem(IDC_BTN_ScanModel)->EnableWindow(TRUE);
 		return;
 	}
-
-// 	BOOL ret_value = FALSE;
-// 	int nTestX = 0, nTestY = 0;
-// 	ret_value = GetCapability(ICAP_XRESOLUTION, nTestX);
-// 	ret_value = GetCapability(ICAP_YRESOLUTION, nTestY);
+#endif
 
 
-	int nSize = TWSS_NONE;							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3
+	int nSize = TWSS_NONE;							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3	TWSS_NONE-定制
 	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
 	int nResolution = 200;					//dpi: 72, 150, 200, 300
+
+	if (dlg.m_nCurrPaperSize == 0)
+	{
+		nSize = TWSS_A4LETTER;
+		nResolution = 200;
+	}
+	else if (dlg.m_nCurrPaperSize == 1)
+	{
+		nSize = TWSS_A3;
+		nResolution = 150;
+	}
+	else
+	{
+		nSize = TWSS_NONE;
+		nResolution = 150;
+	}
 
 	int nNum = dlg.m_nStudentNum;
 
@@ -949,6 +962,9 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 
 	if (nNum == 0)
 		nNum = TWCPP_ANYCOUNT;
+
+	if (dlg.m_bAdvancedSetting)
+		bShowScanSrcUI = true;
 
 	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, bShowScanSrcUI))
 	{
@@ -2714,6 +2730,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	jsnModel.set("hasElectOmr", pModel->nHasElectOmr);			//是否有选做题
 	jsnModel.set("nZkzhType", pModel->nZkzhType);				//准考证号识别类型
 	jsnModel.set("nScanDpi", pModel->nScanDpi);					//扫描的dpi设置
+	jsnModel.set("nScanSize", pModel->nScanSize);				//扫描用的纸张类型，1-a4, 2-a3, 3-定制
 	jsnModel.set("nScanAutoCut", pModel->nAutoCut);				//扫描仪是否自动裁剪，超长卡不能裁剪
 
 // 	jsnModel.set("gaussKernel", pModel->nGaussKernel);
@@ -6225,4 +6242,10 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 
 	m_pModel->nScanDpi = dlg.m_nScanDpi;
 	m_pModel->nAutoCut = dlg.m_nAutoCut;
+	if (dlg.m_nScanPaperSize == 0)
+		m_pModel->nScanSize = 1;
+	else if (dlg.m_nScanPaperSize == 1)
+		m_pModel->nScanSize = 2;
+	else
+		m_pModel->nScanSize = 3;
 }

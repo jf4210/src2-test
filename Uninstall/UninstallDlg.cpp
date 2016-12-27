@@ -107,8 +107,22 @@ BOOL CUninstallDlg::OnInitDialog()
 	
 	CString strProcessName = _T("ScanTool.exe");
 	KillProcess(strProcessName);
+
+	Sleep(1000);
+	int nProcessID = 0;
+	if (CheckProcessExist(strProcessName, nProcessID))
+	{
+		KillProcess(strProcessName);
+	}
+
 	strProcessName = _T("EasyTntGuardProcess.exe");
 	KillProcess(strProcessName);
+
+	Sleep(1000);
+	if (CheckProcessExist(strProcessName, nProcessID))
+	{
+		KillProcess(strProcessName);
+	}
 
 	OnOK();
 

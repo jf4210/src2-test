@@ -1242,6 +1242,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		{
 			Poco::JSON::Object jsnElectOmr;
 			jsnElectOmr.set("paperId", i + 1);
+			jsnElectOmr.set("doubt", itElectOmr->nDoubt);
 			jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
 			jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
 			jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
@@ -1331,6 +1332,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		{
 			Poco::JSON::Object jsnElectOmr;
 			jsnElectOmr.set("paperId", j + 1);
+			jsnElectOmr.set("doubt", itElectOmr->nDoubt);
 			jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
 			jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
 			jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);

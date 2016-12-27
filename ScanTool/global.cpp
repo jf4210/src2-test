@@ -331,6 +331,8 @@ pMODEL LoadModelFile(CString strModelPath)
 			pModel->nScanDpi = objData->get("nScanDpi").convert<int>();
 		if (objData->has("nScanAutoCut"))
 			pModel->nAutoCut = objData->get("nScanAutoCut").convert<int>();
+		if (objData->has("nScanSize"))
+			pModel->nScanSize = objData->get("nScanSize").convert<int>();
 
 // 		if (objData->has("gaussKernel"))
 // 			pModel->nGaussKernel = objData->get("gaussKernel").convert<int>();

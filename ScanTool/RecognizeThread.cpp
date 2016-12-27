@@ -76,9 +76,11 @@ bool CRecognizeThread::HandleTask(pRECOGTASK pTask)
 		g_pLogger->information(strLog);
 
 		pModelInfo->pModel = pTask->pPaper->pModel;		//pTask->pModel;
+	#if 0	//可以不需要
 		bool bResult = LoadModel(pModelInfo);
 		if (!bResult)
 			return bResult;
+	#endif
 	}
 	else
 		pModelInfo = it->second;
@@ -663,6 +665,7 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 					break;
 				}
 			}
+			bool bFind = false;
 			//通过灰度值来判断
 			for (int i = 0; i < RectCompList.size(); i++)
 			{
@@ -673,20 +676,26 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
 				if (fArea > 0.7 && fArea < 1.5 && fDensity > 0.85)	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
 				{
+					bFind = true;
 					rtFix = RectCompList[i];
 					break;
 				}
 			}
-			m_ptFixCP.x = static_cast<int>(rtFix.x + rtFix.width / 2 + 0.5 + rc.rt.x);
-			m_ptFixCP.y = static_cast<int>(rtFix.y + rtFix.height / 2 + 0.5 + rc.rt.y);
+			if (!bFind)
+				bFindRect = true;
+			else
+			{
+				m_ptFixCP.x = static_cast<int>(rtFix.x + rtFix.width / 2 + 0.5 + rc.rt.x);
+				m_ptFixCP.y = static_cast<int>(rtFix.y + rtFix.height / 2 + 0.5 + rc.rt.y);
 
-// 			rtFix.x = rtFix.x + rc.rt.x;
-// 			rtFix.y = rtFix.y + rc.rt.y;
+				// 			rtFix.x = rtFix.x + rc.rt.x;
+				// 			rtFix.y = rtFix.y + rc.rt.y;
 
-			RECTINFO rcFixInfo = rc;
-			rcFixInfo.rt = rtFix;
-			pPic->lFix.push_back(rcFixInfo);
-			TRACE("定点矩形: (%d,%d,%d,%d)\n", rtFix.x, rtFix.y, rtFix.width, rtFix.height);
+				RECTINFO rcFixInfo = rc;
+				rcFixInfo.rt = rtFix;
+				pPic->lFix.push_back(rcFixInfo);
+				TRACE("定点矩形: (%d,%d,%d,%d)\n", rtFix.x, rtFix.y, rtFix.width, rtFix.height);
+			}
 		}
 		if (bFindRect)
 		{
@@ -1903,15 +1912,23 @@ bool CRecognizeThread::RecogElectOmr(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 		float fDiffExit = 0;			//灰度的梯度递减太快时，可以认为后面选项没有填涂，此时的灰度梯度阀值
 		if (pModelInfo->pModel->nHasHead)
 		{
-			fCompThread = 1.0;
-			fDiffThread = 0.085;
-			fDiffExit = 0.15;
+			fCompThread = _dCompThread_Head_;
+			fDiffThread = _dDiffThread_Head_;
+			fDiffExit = _dDiffExit_Head_;
+
+			// 			fCompThread = 1.0;
+			// 			fDiffThread = 0.085;
+			// 			fDiffExit = 0.15;
 		}
 		else
 		{
-			fCompThread = 1.2;
-			fDiffThread = 0.2;
-			fDiffExit = 0.3;
+			fCompThread = _dCompThread_Fix_;
+			fDiffThread = _dDiffThread_Fix_;
+			fDiffExit = _dDiffExit_Fix_;
+
+			// 			fCompThread = 1.2;
+			// 			fDiffThread = 0.2;
+			// 			fDiffExit = 0.3;
 		}
 
 		int nFlag = -1;
@@ -1962,6 +1979,19 @@ bool CRecognizeThread::RecogElectOmr(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 		}
 #endif
 		
+		std::string strRecogAnswer2 = strRecogAnswer1;		//目前第二种方法不可用
+		int nDoubt = 0;
+		if (strRecogAnswer1 == "" && strRecogAnswer2 == "")
+			nDoubt = 2;
+		else
+		{
+			if (strRecogAnswer1 == strRecogAnswer2)
+				nDoubt = 0;
+			else
+				nDoubt = 1;
+		}
+
+		omrResult.nDoubt = nDoubt;
 		omrResult.strRecogResult = strRecogAnswer1;
 		(static_cast<pST_PaperInfo>(pPic->pPaper))->lElectOmrResult.push_back(omrResult);
 
@@ -2991,6 +3021,62 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 	return bResult;
 }
 
+bool CRecognizeThread::RecogVal_ElectOmr2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pELECTOMR_QUESTION pOmrQuestion, OMR_RESULT& omrResult)
+{
+	try
+	{
+		RECTLIST::iterator itOmrItem = pOmrQuestion->lItemInfo.begin();
+		for (; itOmrItem != pOmrQuestion->lItemInfo.end(); itOmrItem++)
+		{
+			RECTINFO rc = *itOmrItem;
+
+			cv::Point pt1, pt2;
+			pt1 = rc.rt.tl() - cv::Point(3, 3);
+			pt2 = rc.rt.br() + cv::Point(3, 3);
+			Mat matCompRoi;
+			matCompRoi = matCompPic(cv::Rect(pt1, pt2));
+			cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+			//图片二值化
+			threshold(matCompRoi, matCompRoi, _nThreshold_Recog2_, 255, THRESH_BINARY_INV);				//200, 255
+
+			//这里进行开闭运算
+			//确定腐蚀和膨胀核的大小
+			Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(4, 4)
+			//腐蚀操作
+			erode(matCompRoi, matCompRoi, element);
+
+			IplImage ipl_img2(matCompRoi);
+
+			//the parm. for cvFindContours  
+			CvMemStorage* storage2 = cvCreateMemStorage(0);
+			CvSeq* contour2 = 0;
+
+			//提取轮廓  
+			cvFindContours(&ipl_img2, storage2, &contour2, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+			std::vector<Rect>RectCompList;
+			for (int iteratorIdx = 0; contour2 != 0; contour2 = contour2->h_next, iteratorIdx++)
+			{
+				CvRect aRect = cvBoundingRect(contour2, 0);
+				cv::Rect rm = aRect;
+				rm.x += pt1.x;
+				rm.y += pt1.y;
+
+				RectCompList.push_back(rm);
+			}
+			cvReleaseMemStorage(&storage2);
+		}
+	}
+	catch (cv::Exception& exc)
+	{
+		char szLog[300] = { 0 };
+		sprintf_s(szLog, "CRecognizeThread::RecogVal_ElectOmr2 error. detail: %s\n", exc.msg);
+		g_pLogger->information(szLog);
+		TRACE(szLog);
+	}
+	return true;
+}
 
 
 

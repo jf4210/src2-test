@@ -968,12 +968,12 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 			int nPos2 = pPic->strFileName.rfind(".");
 			std::string strNum = pPic->strFileName.substr(nPos1 + 1, nPos2 - nPos1 - 1);
 			
-			char szTmp[20] = { 0 };
+			char szTmp[60] = { 0 };
 			sprintf(szTmp, "%s", strNum.c_str());
-			char szLetter[20] = { 0 };
+			char szLetter[60] = { 0 };
 			sscanf(szTmp, "%[A-Za-z]", szLetter);
 			int nLenLetter = strlen(szLetter);
-			char szNum[15] = { 0 };
+			char szNum[60] = { 0 };
 			memmove(szNum, szTmp + nLenLetter, strlen(szTmp) - nLenLetter);
 			int nSN = atoi(szNum);
 

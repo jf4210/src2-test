@@ -955,9 +955,15 @@ pMODEL CScanResquestHandler::CreateModel(Poco::JSON::Object::Ptr object, pSCAN_R
 			//添加试卷模板到总模板
 			pModel->vecPaperModel.push_back(pPaperModel);
 			if (pPaperModel->nPaperType == 1)				//A3用150dpi扫描
+			{
 				pModel->nScanDpi = 150;
+				pModel->nScanSize = 2;
+			}
 			else if (pPaperModel->nPaperType == 2)			//A4用200dpi扫描
+			{
 				pModel->nScanDpi = 200;
+				pModel->nScanSize = 1;
+			}
 		}
 		pModel->nPicNum = arryData->size();
 		pModel->nType = 1;
@@ -1982,6 +1988,7 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 	jsnModel.set("hasElectOmr", pModel->nHasElectOmr);			//是否有选做题
 	jsnModel.set("nZkzhType", pModel->nZkzhType);				//准考证号识别类型
 	jsnModel.set("nScanDpi", pModel->nScanDpi);					//扫描的dpi设置
+	jsnModel.set("nScanSize", pModel->nScanSize);				//扫描用的纸张类型，1-a4, 2-a3, 3-定制
 	jsnModel.set("nScanAutoCut", pModel->nAutoCut);				//扫描仪是否自动裁剪，超长卡不能裁剪
 
 	jsnModel.set("nExamId", pModel->nExamID);

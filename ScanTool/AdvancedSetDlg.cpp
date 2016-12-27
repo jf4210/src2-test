@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CAdvancedSetDlg, CDialog)
 
 CAdvancedSetDlg::CAdvancedSetDlg(pMODEL	pModel, CWnd* pParent /*=NULL*/)
 	: CDialog(CAdvancedSetDlg::IDD, pParent)
-	, m_pModel(pModel), m_nScanDpi(200), m_nAutoCut(1)
+	, m_pModel(pModel), m_nScanDpi(200), m_nAutoCut(1), m_nScanPaperSize(1)
 {
 
 }
@@ -26,6 +26,7 @@ void CAdvancedSetDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_COMBO_ScanDpi, m_combo_ScanDpi);
+	DDX_Control(pDX, IDC_COMBO_PaperSize, m_combo_PaperSize);
 	DDX_Control(pDX, IDC_CHK_AutoCut, m_chkAutoCut);
 }
 
@@ -43,6 +44,7 @@ BEGIN_MESSAGE_MAP(CAdvancedSetDlg, CDialog)
 	ON_CBN_SELCHANGE(IDC_COMBO_ScanDpi, &CAdvancedSetDlg::OnCbnSelchangeComboScandpi)
 	ON_BN_CLICKED(IDOK, &CAdvancedSetDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDC_CHK_AutoCut, &CAdvancedSetDlg::OnBnClickedChkAutocut)
+	ON_CBN_SELCHANGE(IDC_COMBO_PaperSize, &CAdvancedSetDlg::OnCbnSelchangeComboPapersize)
 END_MESSAGE_MAP()
 
 
@@ -54,9 +56,15 @@ void CAdvancedSetDlg::InitData()
 	m_combo_ScanDpi.AddString(_T("150"));
 	m_combo_ScanDpi.AddString(_T("200"));
 
+	m_combo_PaperSize.ResetContent();
+	m_combo_PaperSize.AddString(_T("A4"));
+	m_combo_PaperSize.AddString(_T("A3"));
+	m_combo_PaperSize.AddString(_T("¶¨ÖÆ"));
+
 	if (!m_pModel)
 	{
 		m_combo_ScanDpi.SetCurSel(1);
+		m_combo_PaperSize.SetCurSel(0);
 		m_chkAutoCut.SetCheck(FALSE);
 		m_nAutoCut = 0;
 		return;
@@ -74,6 +82,22 @@ void CAdvancedSetDlg::InitData()
 		strTmp.Format(_T("%d"), m_pModel->nScanDpi);
 		m_combo_ScanDpi.AddString(strTmp);
 		m_combo_ScanDpi.SetCurSel(2);
+	}
+
+	if (m_pModel->nScanSize == 1)
+	{
+		m_combo_PaperSize.SetCurSel(0);
+		m_nScanPaperSize = 0;
+	}
+	else if (m_pModel->nScanSize == 2)
+	{
+		m_combo_PaperSize.SetCurSel(1);
+		m_nScanPaperSize = 1;
+	}
+	else
+	{
+		m_combo_PaperSize.SetCurSel(2);
+		m_nScanPaperSize = 2;
 	}
 
 	m_nAutoCut = m_pModel->nAutoCut;
@@ -102,4 +126,13 @@ void CAdvancedSetDlg::OnBnClickedOk()
 void CAdvancedSetDlg::OnBnClickedChkAutocut()
 {
 	m_nAutoCut = m_chkAutoCut.GetCheck();
+}
+
+
+void CAdvancedSetDlg::OnCbnSelchangeComboPapersize()
+{
+	if (m_combo_PaperSize.GetCurSel() < 0 || m_pModel == NULL)
+		return;
+
+	m_nScanPaperSize = m_combo_PaperSize.GetCurSel();
 }

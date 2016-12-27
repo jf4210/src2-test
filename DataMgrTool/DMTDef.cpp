@@ -2081,6 +2081,7 @@ bool SavePapersInfo(pPAPERSINFO pPapers)
 		for (; itElectOmr != (*itNomarlPaper)->lElectOmrResult.end(); itElectOmr++)
 		{
 			Poco::JSON::Object jsnElectOmr;
+			jsnElectOmr.set("doubt", itElectOmr->nDoubt);
 			jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
 			jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
 			jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
@@ -2169,6 +2170,7 @@ bool SavePapersInfo(pPAPERSINFO pPapers)
 		for (; itElectOmr != (*itIssuePaper)->lElectOmrResult.end(); itElectOmr++)
 		{
 			Poco::JSON::Object jsnElectOmr;
+			jsnElectOmr.set("doubt", itElectOmr->nDoubt);
 			jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
 			jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
 			jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
