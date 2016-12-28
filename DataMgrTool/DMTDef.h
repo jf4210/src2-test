@@ -11,6 +11,7 @@
 #ifdef _DEBUG
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
+	#define PrintAllOmrVal		//打印所有OMR选项值
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -321,6 +322,7 @@ typedef struct
 	float fDiff;
 }ST_ITEM_DIFF, *pST_ITEM_DIFF;
 bool	SortByItemDiff(ST_ITEM_DIFF& item1, ST_ITEM_DIFF& item2);
+bool	SortByItemDensity(pRECTINFO item1, pRECTINFO item2);
 bool	SortByItemGray(pRECTINFO item1, pRECTINFO item2);
 //--------------------------------------------------------
 

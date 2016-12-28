@@ -326,7 +326,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		//++++++++	test	++++++++
 		std::vector<pRECTINFO> vecItemsDesc;
 		std::vector<ST_ITEM_DIFF> vecOmrItemDiff;
-		calcOmrDiffVal(itOmr->lSelAnswer, vecItemsDesc, vecOmrItemDiff);
+		calcOmrDensityDiffVal(itOmr->lSelAnswer, vecItemsDesc, vecOmrItemDiff);
 		strcat_s(szItemInfo, "\n[");
 		for (int i = 0; i < vecOmrItemDiff.size(); i++)
 		{
@@ -1688,7 +1688,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		std::string strRecogAnswer1;
 		std::vector<pRECTINFO> vecItemsDesc;
 		std::vector<ST_ITEM_DIFF> vecOmrItemDiff;
-		calcOmrDiffVal(omrResult.lSelAnswer, vecItemsDesc, vecOmrItemDiff);
+		calcOmrDensityDiffVal(omrResult.lSelAnswer, vecItemsDesc, vecOmrItemDiff);
 
 		float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
 		float fDiffThread = 0.0;		//选项可能填涂的可能灰度梯度阀值
@@ -1905,7 +1905,7 @@ bool CRecognizeThread::RecogElectOmr(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 		std::string strRecogAnswer1;
 		std::vector<pRECTINFO> vecItemsDesc;
 		std::vector<ST_ITEM_DIFF> vecOmrItemDiff;
-		calcOmrDiffVal(omrResult.lItemInfo, vecItemsDesc, vecOmrItemDiff);
+		calcOmrDensityDiffVal(omrResult.lItemInfo, vecItemsDesc, vecOmrItemDiff);
 
 		float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
 		float fDiffThread = 0.0;		//选项可能填涂的可能灰度梯度阀值
@@ -2552,7 +2552,7 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 	return bResult;
 }
 
-int CRecognizeThread::calcOmrDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemDiff)
+int CRecognizeThread::calcOmrDensityDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemDiff)
 {
 #if 1	//下面将所有选项识别灰度值降序排列并相邻比较
 	RECTLIST::iterator itItem = rectList.begin();
@@ -2560,7 +2560,7 @@ int CRecognizeThread::calcOmrDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>&
 	{
 		vecItemsDesc.push_back(&(*itItem));
 	}
-	std::sort(vecItemsDesc.begin(), vecItemsDesc.end(), SortByItemGray);
+	std::sort(vecItemsDesc.begin(), vecItemsDesc.end(), SortByItemDensity);
 
 	for (int i = 0; i < vecItemsDesc.size(); i++)
 	{
@@ -2603,7 +2603,7 @@ int CRecognizeThread::calcSnDiffVal(pSN_ITEM pSn, std::vector<pRECTINFO>& vecIte
 	{
 		vecItemsDesc.push_back(&(*itItem));
 	}
-	std::sort(vecItemsDesc.begin(), vecItemsDesc.end(), SortByItemGray);
+	std::sort(vecItemsDesc.begin(), vecItemsDesc.end(), SortByItemDensity);
 
 	for (int i = 0; i < vecItemsDesc.size(); i++)
 	{

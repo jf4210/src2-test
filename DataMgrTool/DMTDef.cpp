@@ -261,9 +261,14 @@ bool SortByItemDiff(ST_ITEM_DIFF& item1, ST_ITEM_DIFF& item2)
 	return abs(item1.fDiff) > abs(item2.fDiff) ? true : false;
 }
 
-bool SortByItemGray(pRECTINFO item1, pRECTINFO item2)
+bool SortByItemDensity(pRECTINFO item1, pRECTINFO item2)
 {
 	return item1->fRealValuePercent > item2->fRealValuePercent ? true : false;
+}
+
+bool SortByItemGray(pRECTINFO item1, pRECTINFO item2)
+{
+	return item1->fRealMeanGray < item2->fRealMeanGray ? true : false;
 }
 
 void SharpenImage(const cv::Mat &image, cv::Mat &result, int nSharpKernel)

@@ -65,6 +65,7 @@ BEGIN_MESSAGE_MAP(CScanModleMgrDlg, CDialog)
 	ON_BN_CLICKED(IDCANCEL, &CScanModleMgrDlg::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_BTN_uploadModel, &CScanModleMgrDlg::OnBnClickedBtnuploadmodel)
 	ON_NOTIFY(LVN_HOTTRACK, IDC_LIST_Model, &CScanModleMgrDlg::OnLvnHotTrackListModel)
+	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 BOOL CScanModleMgrDlg::OnInitDialog()
@@ -92,11 +93,16 @@ void CScanModleMgrDlg::InitUI()
 
 	m_ModelListCtrl.SetExtendedStyle(m_ModelListCtrl.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_ModelListCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36);
-	m_ModelListCtrl.InsertColumn(1, _T("模板名称"), LVCFMT_CENTER, 160);
+	m_ModelListCtrl.InsertColumn(1, _T("模板名称"), LVCFMT_CENTER, 360);
 
 	m_pShowModelInfoDlg = new CShowModelInfoDlg(this);
 	m_pShowModelInfoDlg->Create(CShowModelInfoDlg::IDD, this);
 	m_pShowModelInfoDlg->ShowWindow(SW_SHOW);
+
+	int sx = 830;
+	int sy = 600;
+	MoveWindow(0, 0, sx, sy);
+	CenterWindow();
 
 	InitCtrlPosition();
 }
@@ -108,12 +114,108 @@ void CScanModleMgrDlg::InitCtrlPosition()
 	int cx = rcClient.right;
 	int cy = rcClient.bottom;
 
-	int nGap = 2;
-	int nLeftGag = 2;
+	int nGap = 5;	//控件的间隔
+	int nTopGap = 10;	//距离上边边缘的间隔
+	int nBottomGap = 5;	//距离下边边缘的间隔
+	int nLeftGap = 5;	//距离左边边缘的间隔
+	int nRightGap = 5;	//距离右边边缘的间隔
+	int nBtnHeigh = 30;
+	int	nBtnWidth = (cx / 2 - nLeftGap - nGap * 2) / 3;
 
+	int nStaticWidth = 60;
+	int nStaticHeight = 20;		//校验点类型Static控件高度
+	int nCurrentTop = nTopGap;
+	int nCurrentLeft = nLeftGap;
+
+// 	if (m_pShowModelInfoDlg && m_pShowModelInfoDlg->GetSafeHwnd())
+// 	{
+// 		m_pShowModelInfoDlg->MoveWindow(250, 12, 250, 235);
+// 	}
+	if (GetDlgItem(IDC_STATIC_CurModel)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_CurModel)->MoveWindow(nCurrentLeft, nCurrentTop, nStaticWidth, nStaticHeight);
+		nCurrentLeft = nCurrentLeft + nStaticWidth + nGap;
+	}
+	if (GetDlgItem(IDC_EDIT_CurModel)->GetSafeHwnd())
+	{
+		int nEditW = cx / 2 - nLeftGap - nStaticWidth - nGap;
+		GetDlgItem(IDC_EDIT_CurModel)->MoveWindow(nCurrentLeft, nCurrentTop, nEditW, nStaticHeight);
+		nCurrentLeft = nLeftGap;
+		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
+	}
+
+	if (GetDlgItem(IDC_STATIC_List)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_List)->MoveWindow(nCurrentLeft, nCurrentTop, nStaticWidth + 20, nStaticHeight);
+		nCurrentLeft = nLeftGap;
+		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
+	}
+
+	if (GetDlgItem(IDC_LIST_Model)->GetSafeHwnd())
+	{
+		int nListW = cx / 2 - nLeftGap;
+		int nListH = cy - nTopGap - nBottomGap - nStaticHeight - nGap - nStaticHeight - nGap - (nBtnHeigh + nGap + nBtnHeigh) - nGap;
+		GetDlgItem(IDC_LIST_Model)->MoveWindow(nCurrentLeft, nCurrentTop, nListW, nListH);
+		nCurrentLeft = nLeftGap;
+		nCurrentTop = nCurrentTop + nListH + nGap;
+	}
+
+	if (GetDlgItem(IDC_BTN_AddModel)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_AddModel)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnWidth, nBtnHeigh);
+		nCurrentLeft = nCurrentLeft + nBtnWidth + nGap;
+	}
+	if (GetDlgItem(IDC_BTN_DLModel)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_DLModel)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnWidth, nBtnHeigh);
+		nCurrentLeft = nCurrentLeft + nBtnWidth + nGap;
+	}
+	if (GetDlgItem(IDC_BTN_MakeModel)->GetSafeHwnd())
+	{
+		int nBtnH = nBtnHeigh * 2 + nGap;
+		GetDlgItem(IDC_BTN_MakeModel)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnWidth, nBtnH);
+		nCurrentLeft = nLeftGap;
+		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
+	}
+	if (GetDlgItem(IDC_BTN_DelModel)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_DelModel)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnWidth, nBtnHeigh);
+		nCurrentLeft = nCurrentLeft + nBtnWidth + nGap;
+	}
+	if (GetDlgItem(IDC_BTN_uploadModel)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_uploadModel)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnWidth, nBtnHeigh);
+		nCurrentLeft = nCurrentLeft + nBtnWidth + nGap;
+	}
+
+	//右半边
+	nCurrentLeft = cx / 2 + nGap;
+	nCurrentTop = nTopGap;
 	if (m_pShowModelInfoDlg && m_pShowModelInfoDlg->GetSafeHwnd())
 	{
-		m_pShowModelInfoDlg->MoveWindow(250, 12, 250, 235);
+		int nW = cx / 2 - nGap - nRightGap;
+		int nH = cy - nTopGap - nBottomGap - nBtnHeigh * 2 - nGap - nGap;
+		m_pShowModelInfoDlg->MoveWindow(nCurrentLeft, nCurrentTop, nW, nH);
+		nCurrentTop = nCurrentTop + nH + nGap;
+	}
+
+	nCurrentLeft = cx / 2 + nLeftGap + 10;
+	nCurrentTop = cy - nBottomGap - nBtnHeigh;
+	int nBtnW2 = (cx - nCurrentLeft - nGap * 2 - nRightGap - 10) / 3;
+	if (GetDlgItem(IDC_BTN_Refresh)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_Refresh)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW2, nBtnHeigh);
+		nCurrentLeft = nCurrentLeft + nBtnW2 + nGap;
+	}
+	if (GetDlgItem(IDOK)->GetSafeHwnd())
+	{
+		GetDlgItem(IDOK)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW2, nBtnHeigh);
+		nCurrentLeft = nCurrentLeft + nBtnW2 + nGap;
+	}
+	if (GetDlgItem(IDCANCEL)->GetSafeHwnd())
+	{
+		GetDlgItem(IDCANCEL)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW2, nBtnHeigh);
+		nCurrentLeft = nCurrentLeft + nBtnW2 + nGap;
 	}
 }
 
@@ -672,4 +774,12 @@ void CScanModleMgrDlg::OnLvnHotTrackListModel(NMHDR *pNMHDR, LRESULT *pResult)
 	m_ListTip.Pop();
 
 	*pResult = 0;
+}
+
+
+void CScanModleMgrDlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialog::OnSize(nType, cx, cy);
+
+	InitCtrlPosition();
 }

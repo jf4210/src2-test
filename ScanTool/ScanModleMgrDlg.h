@@ -47,4 +47,5 @@ public:
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedBtnuploadmodel();
 	afx_msg void OnLvnHotTrackListModel(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 };

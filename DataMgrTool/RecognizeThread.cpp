@@ -284,8 +284,14 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		else
 			strcpy_s(szSingle, "多");
 		
+		int nPrintOmrVal = 0;
+	#ifdef PrintAllOmrVal
+		nPrintOmrVal = true;
+	#else
+		nPrintOmrVal = itOmr->nDoubt;
+	#endif
 		char szItemInfo[2000] = { 0 };
-		if (itOmr->nDoubt)	//itOmr->nDoubt
+		if (nPrintOmrVal)	//itOmr->nDoubt
 		{
 			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
 			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
@@ -298,6 +304,25 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 				strcat_s(szItemInfo, szTmp);
 			}
 			strcat_s(szItemInfo, "\n");
+		#if 1
+			RECTLIST::iterator itRect2 = itOmr->lSelAnswer.begin();
+			for (; itRect2 != itOmr->lSelAnswer.end(); itRect2++)
+			{
+				char szTmp[200] = { 0 };
+				sprintf_s(szTmp, "%c,密度=%.3f/%.3f, ", itRect2->nAnswer + 65, \
+						  itRect2->fRealDensity, itRect2->fStandardDensity);
+				strcat_s(szItemInfo, szTmp);
+			}
+			strcat_s(szItemInfo, "\n");
+			RECTLIST::iterator itRect3 = itOmr->lSelAnswer.begin();
+			for (; itRect3 != itOmr->lSelAnswer.end(); itRect3++)
+			{
+				char szTmp[200] = { 0 };
+				sprintf_s(szTmp, "%c,灰度=%.3f(%.3f-%.3f), ", itRect3->nAnswer + 65, \
+						  itRect3->fRealMeanGray - itRect3->fStandardMeanGray, itRect3->fRealMeanGray, itRect3->fStandardMeanGray);
+				strcat_s(szItemInfo, szTmp);
+			}
+		#else
 			RECTLIST::iterator itRect2 = itOmr->lSelAnswer.begin();
 			for (; itRect2 != itOmr->lSelAnswer.end(); itRect2++)
 			{
@@ -306,24 +331,38 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 						  itRect2->fRealDensity, itRect2->fStandardDensity, itRect2->fRealMeanGray - itRect2->fStandardMeanGray, itRect2->fRealMeanGray, itRect2->fStandardMeanGray);
 				strcat_s(szItemInfo, szTmp);
 			}
+		#endif
 		}
 
 		//++++++++	test	++++++++
-		std::vector<pRECTINFO> vecItemsDesc;
-		std::vector<ST_ITEM_DIFF> vecOmrItemDiff;
-		calcOmrDiffVal(itOmr->lSelAnswer, vecItemsDesc, vecOmrItemDiff);
+		std::vector<pRECTINFO> vecItemsDensityDesc;
+		std::vector<ST_ITEM_DIFF> vecOmrItemDensityDiff;
+		calcOmrDensityDiffVal(itOmr->lSelAnswer, vecItemsDensityDesc, vecOmrItemDensityDiff);
 		strcat_s(szItemInfo, "\n[");
-		for (int i = 0; i < vecOmrItemDiff.size(); i++)
+		for (int i = 0; i < vecOmrItemDensityDiff.size(); i++)
 		{
 			char szTmp[40] = { 0 };
-			sprintf_s(szTmp, "%s:%.5f ", vecOmrItemDiff[i].szVal, vecOmrItemDiff[i].fDiff);
+			sprintf_s(szTmp, "%s:%.5f ", vecOmrItemDensityDiff[i].szVal, vecOmrItemDensityDiff[i].fDiff);
+			strcat_s(szItemInfo, szTmp);
+		}
+		strcat_s(szItemInfo, "]");
+
+
+		std::vector<pRECTINFO> vecItemsGrayDesc;
+		std::vector<ST_ITEM_DIFF> vecOmrItemGrayDiff;
+		calcOmrGrayDiffVal(itOmr->lSelAnswer, vecItemsGrayDesc, vecOmrItemGrayDiff);
+		strcat_s(szItemInfo, "\n[");
+		for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
+		{
+			char szTmp[40] = { 0 };
+			sprintf_s(szTmp, "%s:%.3f ", vecOmrItemGrayDiff[i].szVal, vecOmrItemGrayDiff[i].fDiff);
 			strcat_s(szItemInfo, szTmp);
 		}
 		strcat_s(szItemInfo, "]");
 		//--------------------------
 		
 		char szOmrItem[2060] = { 0 };
-		if (itOmr->nDoubt)
+		if (nPrintOmrVal)	//itOmr->nDoubt
 			sprintf_s(szOmrItem, "%d(%s):%s ---%s Doubt(%d)\t==>%s\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal2.c_str(), itOmr->nDoubt, szItemInfo);
 		else
 			sprintf_s(szOmrItem, "%d(%s):%s ---%s Doubt(%d)\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal2.c_str(), itOmr->nDoubt);
@@ -491,21 +530,40 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 			break;
 		}
 
-
+	#if 0		//第三种OMR识别方法测试
+		int nMaxVal = 100;
 		MatND src_hist2;
-		const int histSize2[1] = { 256 };	//rc.nThresholdValue - g_nRecogGrayMin
+		const int histSize2[1] = { nMaxVal };	//rc.nThresholdValue - g_nRecogGrayMin		256
 		const float* ranges2[1];
 		float hranges2[2];
 		hranges2[0] = 0;
-		hranges2[1] = 255;
+		hranges2[1] = nMaxVal - 1;			//255
 		ranges2[0] = hranges2;
 		cv::calcHist(&matCompRoi, 1, channels, Mat(), src_hist2, 1, histSize2, ranges2, true, false);
 		int nCount = 0;
-		for (int i = 0; i < 256; i++)
+		int nArea = 0;
+		for (int i = 0; i < nMaxVal; i++)	//256
+		{
+			nArea += src_hist2.at<float>(i);
+			nCount += i * src_hist2.at<float>(i);
+		}
+		rc.fRealMeanGray = (float)nCount / nArea;
+	#else
+		MatND src_hist2;
+		const int histSize2[1] = { 256 };	//rc.nThresholdValue - g_nRecogGrayMin		256
+		const float* ranges2[1];
+		float hranges2[2];
+		hranges2[0] = 0;
+		hranges2[1] = 255;			//255
+		ranges2[0] = hranges2;
+		cv::calcHist(&matCompRoi, 1, channels, Mat(), src_hist2, 1, histSize2, ranges2, true, false);
+		int nCount = 0;
+		for (int i = 0; i < 256; i++)	//256
 		{
 			nCount += i * src_hist2.at<float>(i);
 		}
 		rc.fRealMeanGray = nCount / rc.fRealArea;
+	#endif
 	}
 	catch (cv::Exception &exc)
 	{
@@ -1711,7 +1769,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		std::string strRecogAnswer1;
 		std::vector<pRECTINFO> vecItemsDesc;
 		std::vector<ST_ITEM_DIFF> vecOmrItemDiff;
-		calcOmrDiffVal(omrResult.lSelAnswer, vecItemsDesc, vecOmrItemDiff);
+		calcOmrDensityDiffVal(omrResult.lSelAnswer, vecItemsDesc, vecOmrItemDiff);
 
 		float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
 		float fDiffThread = 0.0;		//选项可能填涂的可能灰度梯度阀值
@@ -1928,7 +1986,7 @@ bool CRecognizeThread::RecogElectOmr(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 		std::string strRecogAnswer1;
 		std::vector<pRECTINFO> vecItemsDesc;
 		std::vector<ST_ITEM_DIFF> vecOmrItemDiff;
-		calcOmrDiffVal(omrResult.lItemInfo, vecItemsDesc, vecOmrItemDiff);
+		calcOmrDensityDiffVal(omrResult.lItemInfo, vecItemsDesc, vecOmrItemDiff);
 
 		float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
 		float fDiffThread = 0.0;		//选项可能填涂的可能灰度梯度阀值
@@ -2574,15 +2632,15 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 	return bResult;
 }
 
-int CRecognizeThread::calcOmrDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemDiff)
+int CRecognizeThread::calcOmrDensityDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemDiff)
 {
-#if 1	//下面将所有选项识别灰度值降序排列并相邻比较
+#if 1	//下面将所有选项识别密度值降序排列并相邻比较
 	RECTLIST::iterator itItem = rectList.begin();
 	for (; itItem != rectList.end(); itItem++)
 	{
 		vecItemsDesc.push_back(&(*itItem));
 	}
-	std::sort(vecItemsDesc.begin(), vecItemsDesc.end(), SortByItemGray);
+	std::sort(vecItemsDesc.begin(), vecItemsDesc.end(), SortByItemDensity);
 
 	for (int i = 0; i < vecItemsDesc.size(); i++)
 	{
@@ -2597,7 +2655,7 @@ int CRecognizeThread::calcOmrDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>&
 			vecOmrItemDiff.push_back(stDiff);
 		}
 	}
-#else	//下面是整题所有选项的两两识别灰度值的比较并按降序排列
+#else	//下面是整题所有选项的两两识别密度值的比较并按降序排列
 	RECTLIST::iterator itFirst = rectList.begin();
 	for (; itFirst != rectList.end(); itFirst++)
 	{
@@ -2625,7 +2683,7 @@ int CRecognizeThread::calcSnDiffVal(pSN_ITEM pSn, std::vector<pRECTINFO>& vecIte
 	{
 		vecItemsDesc.push_back(&(*itItem));
 	}
-	std::sort(vecItemsDesc.begin(), vecItemsDesc.end(), SortByItemGray);
+	std::sort(vecItemsDesc.begin(), vecItemsDesc.end(), SortByItemDensity);
 
 	for (int i = 0; i < vecItemsDesc.size(); i++)
 	{
@@ -2643,6 +2701,30 @@ int CRecognizeThread::calcSnDiffVal(pSN_ITEM pSn, std::vector<pRECTINFO>& vecIte
 	return 1;
 }
 
+int CRecognizeThread::calcOmrGrayDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemGrayDiff)
+{
+	RECTLIST::iterator itItem = rectList.begin();
+	for (; itItem != rectList.end(); itItem++)
+	{
+		vecItemsDesc.push_back(&(*itItem));
+	}
+	std::sort(vecItemsDesc.begin(), vecItemsDesc.end(), SortByItemGray);
+
+	for (int i = 0; i < vecItemsDesc.size(); i++)
+	{
+		int j = i + 1;
+		if (j < vecItemsDesc.size())
+		{
+			ST_ITEM_DIFF stDiff;
+			sprintf_s(stDiff.szVal, "%c%c", (char)(vecItemsDesc[i]->nAnswer + 65), (char)(vecItemsDesc[j]->nAnswer + 65));
+			stDiff.fDiff = abs(vecItemsDesc[i]->fRealMeanGray - vecItemsDesc[j]->fRealMeanGray);
+			stDiff.fFirst = vecItemsDesc[i]->fRealMeanGray;
+			stDiff.fSecond = vecItemsDesc[j]->fRealMeanGray;
+			vecOmrItemGrayDiff.push_back(stDiff);
+		}
+	}
+	return 1;
+}
 bool CRecognizeThread::Recog2(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bResult_Recog = false;

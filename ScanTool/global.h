@@ -448,7 +448,7 @@ typedef struct
 	float fDiff;
 }ST_ITEM_DIFF, *pST_ITEM_DIFF;
 bool	SortByItemDiff(ST_ITEM_DIFF& item1, ST_ITEM_DIFF& item2);
-bool	SortByItemGray(pRECTINFO item1, pRECTINFO item2);
+bool	SortByItemDensity(pRECTINFO item1, pRECTINFO item2);
 //--------------------------------------------------------
 
 //----------------	二维码、条码识别	------------------

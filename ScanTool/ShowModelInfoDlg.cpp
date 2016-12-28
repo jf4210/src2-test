@@ -60,14 +60,14 @@ void CShowModelInfoDlg::InitCtrlPosition()
 
 	int nCurrentTop = 0;
 	int nStaticW = 40;
-	int nStaticH = 25;
+	int nStaticH = 20;
 	if (GetDlgItem(IDC_STATIC_ModelTips)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_STATIC_ModelTips)->MoveWindow(nLeftGap, nTopGap, nStaticW, nStaticH);
 	}
 	if (GetDlgItem(IDC_STATIC_ModelName)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_STATIC_ModelName)->MoveWindow(nLeftGap + nGap + nStaticW, nTopGap, cx - nLeftGap - nStaticW - nGap, nStaticH);
+		GetDlgItem(IDC_STATIC_ModelName)->MoveWindow(nLeftGap + nGap + nStaticW, nTopGap, cx - nLeftGap - nStaticW - nGap, nStaticH + 5);
 		nCurrentTop = nTopGap + nStaticH + nGap;
 	}
 	if (GetDlgItem(IDC_STATIC_DescTips)->GetSafeHwnd())

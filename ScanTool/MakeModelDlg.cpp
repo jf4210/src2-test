@@ -942,17 +942,17 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 	if (dlg.m_nCurrPaperSize == 0)
 	{
 		nSize = TWSS_A4LETTER;
-		nResolution = 200;
+//		nResolution = 200;
 	}
 	else if (dlg.m_nCurrPaperSize == 1)
 	{
 		nSize = TWSS_A3;
-		nResolution = 150;
+//		nResolution = 150;
 	}
 	else
 	{
 		nSize = TWSS_NONE;
-		nResolution = 150;
+//		nResolution = 150;
 	}
 
 	int nNum = dlg.m_nStudentNum;
@@ -1240,7 +1240,7 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	int nCount = 0;
 	for (int i = 0; i < 256; i++)
 	{
-//		TRACE("i = %d, val = %f\n", i, src_hist2.at<float>(i));
+		TRACE("i = %d, val = %f\n", i, src_hist2.at<float>(i));
 		nCount += i * src_hist2.at<float>(i);
 	}
 	rc.fStandardMeanGray = nCount / rc.fStandardArea;
