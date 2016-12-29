@@ -11,7 +11,8 @@
 #ifdef _DEBUG
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
-	#define PrintAllOmrVal		//打印所有OMR选项值
+//	#define PrintAllOmrVal		//打印所有OMR选项值
+	#define Test_RecogOmr3		//第3种OMR识别方法测试
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法

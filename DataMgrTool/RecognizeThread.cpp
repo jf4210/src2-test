@@ -145,7 +145,8 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 
 		int nCount = pModelInfo->pModel->vecPaperModel[i]->lH_Head.size() + pModelInfo->pModel->vecPaperModel[i]->lV_Head.size() + pModelInfo->pModel->vecPaperModel[i]->lABModel.size()
 			+ pModelInfo->pModel->vecPaperModel[i]->lCourse.size() + pModelInfo->pModel->vecPaperModel[i]->lQK_CP.size() + pModelInfo->pModel->vecPaperModel[i]->lGray.size()
-			+ pModelInfo->pModel->vecPaperModel[i]->lWhite.size() + pModelInfo->pModel->vecPaperModel[i]->lSNInfo.size();
+			+ pModelInfo->pModel->vecPaperModel[i]->lWhite.size() + pModelInfo->pModel->vecPaperModel[i]->lSNInfo.size() + pModelInfo->pModel->vecPaperModel[i]->lOMR2.size()
+			+ pModelInfo->pModel->vecPaperModel[i]->lElectOmr.size();
 		if (!nCount)	//如果当前模板试卷没有校验点就不需要进行试卷打开操作，直接下一张试卷
 			continue;
 
@@ -530,8 +531,8 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 			break;
 		}
 
-	#if 0		//第三种OMR识别方法测试
-		int nMaxVal = 100;
+	#if 1		//第三种OMR识别方法测试
+		int nMaxVal = 256;
 		MatND src_hist2;
 		const int histSize2[1] = { nMaxVal };	//rc.nThresholdValue - g_nRecogGrayMin		256
 		const float* ranges2[1];
@@ -1771,9 +1772,9 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		std::vector<ST_ITEM_DIFF> vecOmrItemDiff;
 		calcOmrDensityDiffVal(omrResult.lSelAnswer, vecItemsDesc, vecOmrItemDiff);
 
-		float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
-		float fDiffThread = 0.0;		//选项可能填涂的可能灰度梯度阀值
-		float fDiffExit = 0;			//灰度的梯度递减太快时，可以认为后面选项没有填涂，此时的灰度梯度阀值
+		float fCompThread = 0.0;		//密度间隔达到要求时，第一个选项的密度必须达到的要求
+		float fDiffThread = 0.0;		//选项可能填涂的可能密度梯度阀值
+		float fDiffExit = 0;			//密度的梯度递减太快时，可以认为后面选项没有填涂，此时的密度梯度阀值
 		if (pModelInfo->pModel->nHasHead)
 		{
 			fCompThread = _dCompThread_Head_;
@@ -1845,10 +1846,17 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 
 
 #if 1
+#ifdef Test_RecogOmr3
+		//++ test	测试整题选项进行二值化识别
+		RecogVal_Omr3(nPic, matCompPic, pPic, pModelInfo, omrResult);
+		//--
+		std::string strRecogAnswer2 = omrResult.strRecogVal3;
+	#else
 		//++ test	测试整题选项进行二值化识别
 		RecogVal_Omr2(nPic, matCompPic, pPic, pModelInfo, omrResult);
 		//--
 		std::string strRecogAnswer2 = omrResult.strRecogVal2;
+	#endif
 #else
 		std::string strRecogAnswer2;
 		for (int i = 0; i < vecVal_threshold.size(); i++)
@@ -3126,6 +3134,71 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 	return bResult;
 }
 
+bool CRecognizeThread::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, OMR_RESULT& omrResult)
+{
+	std::string strRecogAnswer;
+	std::vector<pRECTINFO> vecItemsGrayDesc;
+	std::vector<ST_ITEM_DIFF> vecOmrItemGrayDiff;
+	calcOmrGrayDiffVal(omrResult.lSelAnswer, vecItemsGrayDesc, vecOmrItemGrayDiff);
+
+	float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
+	float fDiffThread = 0.0;		//选项可能填涂的可能灰度梯度阀值
+	float fDiffExit = 0;			//灰度的梯度递减太快时，可以认为后面选项没有填涂，此时的灰度梯度阀值
+	if (pModelInfo->pModel->nHasHead)
+	{
+		fCompThread = 170;
+		fDiffThread = 25;
+		fDiffExit = 50;
+	}
+	else
+	{
+		fCompThread = 170;
+		fDiffThread = 10;
+		fDiffExit = 30;
+	}
+
+	int nFlag = -1;
+	float fThreld = 0.0;
+	for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
+	{
+		if ((vecOmrItemGrayDiff[i].fDiff >= fDiffThread && vecOmrItemGrayDiff[i].fFirst < fCompThread))
+		{
+			nFlag = i;
+			fThreld = vecOmrItemGrayDiff[i].fFirst;
+			if (vecOmrItemGrayDiff[i].fDiff > fDiffExit)	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
+				break;
+		}
+	}
+	if (nFlag >= 0)
+	{
+		RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
+		for (; itItem != omrResult.lSelAnswer.end(); itItem++)
+		{
+			if (itItem->fRealMeanGray <= fThreld)
+			{
+				char szVal[2] = { 0 };
+				sprintf_s(szVal, "%c", itItem->nAnswer + 65);
+				strRecogAnswer.append(szVal);
+			}
+		}
+	}
+	else
+	{
+// 		RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
+// 		RECTLIST::reverse_iterator itRItem = omrResult.lSelAnswer.rbegin();
+// 
+// 		if (itRItem->fRealMeanGray)
+
+// 		for (int i = 0; i < vecVal_calcHist.size(); i++)
+// 		{
+// 			char szVal[5] = { 0 };
+// 			sprintf_s(szVal, "%c", vecVal_calcHist[i] + 65);
+// 			strRecogAnswer.append(szVal);
+// 		}
+	}
+	omrResult.strRecogVal3 = strRecogAnswer;
+	return true;
+}
 
 
 

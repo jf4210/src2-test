@@ -1238,12 +1238,15 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	ranges2[0] = hranges2;
 	cv::calcHist(&matSrcRoi, 1, channels, Mat(), src_hist2, 1, histSize2, ranges2, true, false);
 	int nCount = 0;
+	int nArea = 0;
 	for (int i = 0; i < 256; i++)
 	{
-		TRACE("i = %d, val = %f\n", i, src_hist2.at<float>(i));
+//		TRACE("i = %d, val = %f\n", i, src_hist2.at<float>(i));
+		nArea += src_hist2.at<float>(i);
 		nCount += i * src_hist2.at<float>(i);
 	}
-	rc.fStandardMeanGray = nCount / rc.fStandardArea;
+	rc.fStandardMeanGray = (float)nCount / nArea;
+//	rc.fStandardMeanGray = nCount / rc.fStandardArea;
 
 	return true;
 }

@@ -66,7 +66,7 @@
 //	#define	 TEST_SCAN_THREAD	//扫描线程测试
 #else	//release版本
 	#define	 TEST_MODEL_NAME	//模板名称测试
-	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
+//	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -124,7 +124,7 @@
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 
-#define SOFT_VERSION	_T("1.1227")
+#define SOFT_VERSION	_T("1.1229")
 #define SYS_BASE_NAME	_T("YKLX-ScanTool")
 #define SYS_GUIDE_NAME	_T("GuideDlg")
 
