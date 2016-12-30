@@ -303,8 +303,8 @@ BOOL CTwain::ProcessMessage(MSG msg)
 		//  }
 
 		// tell the caller what happened
-//		return (twRC == TWRC_DSEVENT);           // returns TRUE or FALSE
-		return TRUE;
+		return (twRC == TWRC_DSEVENT);           // returns TRUE or FALSE
+//		return TRUE;
 #else
 	TW_EVENT twEvent;
 		twEvent.pEvent = (TW_MEMREF)&msg;
@@ -533,8 +533,11 @@ BOOL CTwain::Acquire(int numImages, TW_UINT16 duplex, TW_UINT16 size, TW_UINT16 
 		if (duplex == 1)
 			duplex = TRUE;
 		else
-			duplex = FALSE;
+			duplex = FALSE;	// CAP_DUPLEX
 		BOOL ret_value = SetOneValueCapability(CAP_DUPLEXENABLED, TWTY_BOOL, duplex);	//µ¥Ë«ÃæÉ¨Ãè¿ØÖÆ	//duplex, TRUE
+
+
+//		ret_value = SetCapability(CAP_DUPLEX, duplex, TRUE);
 
 		ret_value=SetCapability(ICAP_SUPPORTEDSIZES,size,TRUE);
 		ret_value=SetCapability(ICAP_PIXELTYPE,pixel,TRUE);

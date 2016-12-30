@@ -1829,7 +1829,8 @@ BOOL CScanToolDlg::PreTranslateMessage(MSG* pMsg)
 // 		}
 // 	}
 
-	ProcessMessage(*pMsg);
+	if (ProcessMessage(*pMsg))
+		return TRUE;
 
 #ifdef SHOW_GUIDEDLG
 	if (pMsg->message == WM_KEYDOWN)

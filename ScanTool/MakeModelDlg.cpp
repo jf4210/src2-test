@@ -4501,7 +4501,9 @@ BOOL CMakeModelDlg::DeleteRectInfo(CPType eType, int nItem)
 
 BOOL CMakeModelDlg::PreTranslateMessage(MSG* pMsg)
 {
-	ProcessMessage(*pMsg);
+//	ProcessMessage(*pMsg);
+	if (ProcessMessage(*pMsg))
+		return TRUE;
 	return CDialog::PreTranslateMessage(pMsg);
 }
 void CMakeModelDlg::OnLvnKeydownListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult)
