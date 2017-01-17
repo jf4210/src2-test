@@ -165,6 +165,8 @@ typedef struct _Papers_
 	int		nOmrNull;				//OMR识别为空的数量
 	int		nSnNull;				//准考证号识别为空的数量
 	//--
+	int		nResultSendState;		//试卷袋的图片MD5地址提交、OMR、准考证号、选做题结果发送给后端EZS的完成状态，
+									//0-未完成，1-图片地址提交完成，2-OMR结果提交完成，3-ZKZH提交完成，4-选做题信息提交完成
 
 	std::string	strUploader;		//上传者
 	std::string strEzs;				//上传给后端服务器用，--cookie
