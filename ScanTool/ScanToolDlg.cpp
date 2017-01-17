@@ -2695,10 +2695,6 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		sprintf_s(szZipBaseName, "%s", m_pPapersInfo->strPapersName.c_str());
 		sprintf_s(szZipName, "%s%s", m_pPapersInfo->strPapersName.c_str(), T2A(PAPERS_EXT_NAME));
 	}
-	CString strInfo;
-	bool bWarn = false;
-	strInfo.Format(_T("正在保存%s..."), A2T(szZipName));
-	SetStatusShowInfo(strInfo, bWarn);
 
 	//临时目录改名，以便压缩时继续扫描
 	std::string strSrcPicDirPath;
@@ -2745,6 +2741,11 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	g_fmCompressLock.lock();
 	g_lCompressTask.push_back(pTask);
 	g_fmCompressLock.unlock();
+
+	CString strInfo;
+	bool bWarn = false;
+	strInfo.Format(_T("正在保存%s..."), A2T(szZipName));
+	SetStatusShowInfo(strInfo, bWarn);
 
 	SAFE_RELEASE(m_pPapersInfo);
 	m_lcPicture.DeleteAllItems();

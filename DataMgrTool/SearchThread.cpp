@@ -41,7 +41,7 @@ void CSearchThread::run()
 		if (_SearchPathList_.size() == 0)
 		{
 			USES_CONVERSION; char szCompare[10] = { 0 };
-			sprintf_s(szCompare, "%d-%d", _pModel_->nExamID, _pModel_->nSubjectID);
+			sprintf_s(szCompare, "_%d-%d_", _pModel_->nExamID, _pModel_->nSubjectID);
 
 			CString strMsg;
 			strMsg.Format(_T("%s模板对应的试卷包识别完成\r\n"), A2T(szCompare));

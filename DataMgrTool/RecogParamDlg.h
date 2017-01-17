@@ -20,6 +20,7 @@ public:
 	int		m_nChkElectOmr;
 	CString		m_strEzsAddr;
 
+	int		m_nHandleResult;
 protected:
 	virtual BOOL OnInitDialog();
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
@@ -30,4 +31,6 @@ public:
 	afx_msg void OnBnClickedChkOmr();
 	afx_msg void OnBnClickedChkElecomr();
 	afx_msg void OnBnClickedOk();
+	afx_msg void OnBnClickedRadioCompresspkg();
+	afx_msg void OnBnClickedRadioSendezs();
 };
