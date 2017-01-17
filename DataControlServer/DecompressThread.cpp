@@ -648,6 +648,7 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 				//**********************************************************************************************
 
 				//**********************************************************************************************
+			#if 0
 				if ((nExamId == 4 && nSubjectId == 4))
 				{
 					LIST_PIC_DETAIL::iterator itPic = pObj->lPic.begin();
@@ -663,7 +664,7 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 							itPic++;
 					}
 				}
-				
+			#endif
 				itPaper++;
 			}
 		}
