@@ -55,10 +55,11 @@ BOOL CModelSaveDlg::OnInitDialog()
 	if (g_lExamList.size() > 0)
 	{
 		EXAM_LIST::iterator itExam = g_lExamList.begin();
-		for (; itExam != g_lExamList.end(); itExam++)
+		for (int i = 0; itExam != g_lExamList.end(); itExam++, i++)
 		{
 			CString strName = A2T(itExam->strExamName.c_str());
-			m_strExamName = strName;
+			if (i == 0)
+				m_strExamName = strName;
 
 			int nCount = m_comboExamName.GetCount();
 			m_comboExamName.InsertString(nCount, strName);

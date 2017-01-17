@@ -1021,6 +1021,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		return;
 
 	m_bF1Enable = FALSE;
+	m_bF2Enable = FALSE;
 
 	if (!m_bTwainInit)
 	{
@@ -1046,6 +1047,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		if (MessageBox(_T("未登录，图像不能保存，是否继续扫描？"), _T("警告"), MB_YESNO) != IDYES)
 		{
 			m_bF1Enable = TRUE;
+			m_bF2Enable = TRUE;
 			return;
 		}
 	}
@@ -1054,6 +1056,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	{
 		AfxMessageBox(_T("未设置扫描模板，请在模板设置界面选择扫描模板"));	//模板解析错误
 		m_bF1Enable = TRUE;
+		m_bF2Enable = TRUE;
 		return;
 	}
 #endif	
@@ -1065,6 +1068,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	if (dlg.DoModal() != IDOK)
 	{
 		m_bF1Enable = TRUE;
+		m_bF2Enable = TRUE;
 		return;
 	}
 
@@ -1179,6 +1183,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	}
 
 	m_bF1Enable = TRUE;
+	m_bF2Enable = TRUE;
 }
 
 void CScanToolDlg::OnBnClickedBtnScanall()
@@ -2367,10 +2372,12 @@ LRESULT CScanToolDlg::MsgRecogErr(WPARAM wParam, LPARAM lParam)
 void CScanToolDlg::OnBnClickedBtnUploadpapers()
 {
 	m_bF2Enable = FALSE;
+	m_bF1Enable = FALSE;
 	if (!m_pPapersInfo)
 	{
 		AfxMessageBox(_T("没有试卷袋信息"));
 		m_bF2Enable = TRUE;
+		m_bF1Enable = TRUE;
 		return;
 	}
 
@@ -2378,6 +2385,8 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	if (nUnRecogCount > 0)
 	{
 		AfxMessageBox(_T("请稍后，图像正在识别！"));
+		m_bF2Enable = TRUE;
+		m_bF1Enable = TRUE;
 		return;
 	}
 
@@ -2406,6 +2415,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	{
 		AfxMessageBox(_T("没有登录，不能上传，请先登录!"));
 		m_bF2Enable = TRUE;
+		m_bF1Enable = TRUE;
 		return;
 	}
 #endif
@@ -2413,6 +2423,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	{
 		AfxMessageBox(_T("存在识别异常试卷，不能上传，请先处理异常试卷"));
 		m_bF2Enable = TRUE;
+		m_bF1Enable = TRUE;
 		return;
 	}
 
@@ -2423,6 +2434,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	if (dlg.DoModal() != IDOK)
 	{
 		m_bF2Enable = TRUE;
+		m_bF1Enable = TRUE;
 		return;
 	}
 
@@ -2432,6 +2444,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	if (MessageBox(_T("是否上传当前扫描卷?"), _T("提示"), MB_YESNO) != IDYES)
 	{
 		m_bF2Enable = TRUE;
+		m_bF1Enable = TRUE;
 		return;
 	}
 
@@ -2686,7 +2699,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	bool bWarn = false;
 	strInfo.Format(_T("正在保存%s..."), A2T(szZipName));
 	SetStatusShowInfo(strInfo, bWarn);
-#if 1
+
 	//临时目录改名，以便压缩时继续扫描
 	std::string strSrcPicDirPath;
 	try
@@ -2699,6 +2712,9 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		std::string strUtf8NewPath = CMyCodeConvert::Gb2312ToUtf8(strSrcPicDirPath);
 
 		tmpPath.renameTo(strUtf8NewPath);
+
+		m_bF2Enable = TRUE;
+		m_bF1Enable = TRUE;
 	}
 	catch (Poco::Exception& exc)
 	{
@@ -2706,6 +2722,19 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		strLog.append(m_strCurrPicSavePath);
 		g_pLogger->information(strLog);
 		strSrcPicDirPath = m_strCurrPicSavePath;
+
+		m_bF2Enable = FALSE;
+		m_bF1Enable = FALSE;
+
+		//******************	注意	*******************
+
+		//*************************************************
+
+		//*************************************************
+
+		//这里保存有问题，会发生错乱
+
+		//*************************************************
 	}
 	
 	pCOMPRESSTASK pTask = new COMPRESSTASK;
@@ -2720,50 +2749,6 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	SAFE_RELEASE(m_pPapersInfo);
 	m_lcPicture.DeleteAllItems();
 	m_pCurrentShowPaper = NULL;
-
-// 	pCOMPRESSTASK pTask = new COMPRESSTASK;
-// 	pTask->strCompressFileName = szZipName;
-// 	pTask->strExtName = T2A(PAPERS_EXT_NAME);
-// 	pTask->strSavePath = szPapersSavePath;
-// 	pTask->strSrcFilePath = m_strCurrPicSavePath;
-// 	g_fmCompressLock.lock();
-// 	g_lCompressTask.push_back(pTask);
-// 	g_fmCompressLock.unlock();
-#else
-	if (!ZipFile(A2T(m_strCurrPicSavePath.c_str()), A2T(szPapersSavePath), PAPERS_EXT_NAME))
-	{
-		bWarn = true;
-		strInfo.Format(_T("保存%s失败"), A2T(szZipName));
-	}
-	else
-	{
-		end = clock();
-		strInfo.Format(_T("保存%s成功"), A2T(szZipName));
-		SAFE_RELEASE(m_pPapersInfo);
-		m_lcPicture.DeleteAllItems();
-		m_pCurrentShowPaper = NULL;
-	}
-	SetStatusShowInfo(strInfo, bWarn);
-
-	if (bWarn)
-	{
-		m_bF2Enable = TRUE;
-		return;
-	}
-
-	//添加上传列表，	******************		需要进行鉴权操作	***************	
-	#if 1
-		char szFileFullPath[300] = { 0 };
-		sprintf_s(szFileFullPath, "%s%s", szPapersSavePath, T2A(PAPERS_EXT_NAME));
-		pSENDTASK pTask = new SENDTASK;
-		pTask->strFileName	= szZipName;
-		pTask->strPath = szFileFullPath;
-		g_fmSendLock.lock();
-		g_lSendTask.push_back(pTask);
-		g_fmSendLock.unlock();
-	#endif
-	m_bF2Enable = TRUE;
-#endif
 }
 
 LRESULT CScanToolDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)

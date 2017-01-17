@@ -116,6 +116,12 @@ void CSendToHttpThread::run()
 				std::cout << "post Omr 数据给后端服务器" << std::endl;
 			else if (pTask->nTaskType == 4)
 				std::cout << "post ZKZH 数据给后端服务器" << std::endl;
+			else if (pTask->nTaskType == 7)
+			{
+				std::cout << "post Omr、ZKZH、选做题 数据给后端服务器" << std::endl;
+				HandleOmrTask(pTask);
+				continue;
+			}
 
 			Poco::URI uri(pTask->strUri);				//pTask->strUri
 			Poco::Net::HTTPClientSession session;
@@ -517,6 +523,11 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 			}
 			else
 			{
+				if (SysSet.m_nUpLoadOmrData)
+				{
+					HandleOmrTask(pTask);
+				}
+				#if 0
 				std::string strLog = "开始提交OMR、ZKZH、选做题信息(" + pTask->pPapers->strPapersName + ")";
 				g_Log.LogOut(strLog);
 				bool bHasElectOmr = false;
@@ -527,7 +538,7 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				std::stringstream jsnOmrString;
 				std::stringstream jsnElectOmrString;
 				LIST_PAPER_INFO::iterator it = pTask->pPapers->lPaper.begin();
-				for (; it != pTask->pPapers->lPaper.end(); it++)
+				for (int i = 1; it != pTask->pPapers->lPaper.end(); it++, i++)
 				{
 					pPAPER_INFO pPaper = *it;
 
@@ -543,11 +554,22 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 					}
 					catch (Poco::JSON::JSONException& jsone)
 					{
+						char szItem[20] = { 0 };
+						sprintf_s(szItem, "%d --- ", i);
 						std::string strErrInfo;
 						strErrInfo.append("Error when parse SN: ");
+						strErrInfo.append(szItem);
 						strErrInfo.append(jsone.message() + "\tData:" + pPaper->strSnDetail);
 						g_Log.LogOutError(strErrInfo);
-						std::cout << strErrInfo << std::endl;
+						std::string strShowInfo;
+						if (strErrInfo.length() > 1000)
+						{
+							strShowInfo = strErrInfo.substr(0, 1000);
+							strShowInfo.append("...");
+						}
+						else
+							strShowInfo = strErrInfo;
+						std::cout << strShowInfo << std::endl;
 					}
 
 					Poco::JSON::Parser parserOmr;
@@ -562,11 +584,22 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 					}
 					catch (Poco::JSON::JSONException& jsone)
 					{
+						char szItem[20] = { 0 };
+						sprintf_s(szItem, "%d --- ", i);
 						std::string strErrInfo;
 						strErrInfo.append("Error when parse Omr: ");
+						strErrInfo.append(szItem);
 						strErrInfo.append(jsone.message() + "\tData:" + pPaper->strOmrDetail);
 						g_Log.LogOutError(strErrInfo);
-						std::cout << strErrInfo << std::endl;
+						std::string strShowInfo;
+						if (strErrInfo.length() > 1000)
+						{
+							strShowInfo = strErrInfo.substr(0, 1000);
+							strShowInfo.append("...");
+						}
+						else
+							strShowInfo = strErrInfo;
+						std::cout << strShowInfo << std::endl;
 					}
 
 					if (pPaper->nHasElectOmr)
@@ -584,11 +617,22 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 						}
 						catch (Poco::JSON::JSONException& jsone)
 						{
+							char szItem[20] = { 0 };
+							sprintf_s(szItem, "%d --- ", i);
 							std::string strErrInfo;
 							strErrInfo.append("Error when parse ElectOmr: ");
+							strErrInfo.append(szItem);
 							strErrInfo.append(jsone.message() + "\tData:" + pPaper->strElectOmrDetail);
 							g_Log.LogOutError(strErrInfo);
-							std::cout << strErrInfo << std::endl;
+							std::string strShowInfo;
+							if (strErrInfo.length() > 1000)
+							{
+								strShowInfo = strErrInfo.substr(0, 1000);
+								strShowInfo.append("...");
+							}
+							else
+								strShowInfo = strErrInfo;
+							std::cout << strShowInfo << std::endl;
 						}
 					}					
 				}
@@ -654,6 +698,7 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 					strLog = "选做题信息如下: " + jsnElectOmrString.str();
 					g_Log.LogOut(strLog);
 				}
+				#endif
 			}
 		}
 		else if (pTask->nTaskType == 3)
@@ -675,7 +720,15 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				strLog.append(szCount);
 				strLog.append("\n发送的数据: " + pTask->strResult);
 				g_Log.LogOutError(strLog);
-				std::cout << strLog << std::endl;
+				std::string strShowInfo;
+				if (strLog.length() > 1000)
+				{
+					strShowInfo = strLog.substr(0, 1000);
+					strShowInfo.append("...");
+				}
+				else
+					strShowInfo = strLog;
+				std::cout << strShowInfo << std::endl;
 			}
 		}
 		else if (pTask->nTaskType == 4)
@@ -697,7 +750,15 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				strLog.append(szCount);
 				strLog.append("\n发送的数据: " + pTask->strResult);
 				g_Log.LogOutError(strLog);
-				std::cout << strLog << std::endl;
+				std::string strShowInfo;
+				if (strLog.length() > 1000)
+				{
+					strShowInfo = strLog.substr(0, 1000);
+					strShowInfo.append("...");
+				}
+				else
+					strShowInfo = strLog;
+				std::cout << strShowInfo << std::endl;
 			}
 		}
 		else if (pTask->nTaskType == 5)
@@ -719,7 +780,15 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				strLog.append(szCount);
 				strLog.append("\n发送的数据: " + pTask->strResult);
 				g_Log.LogOutError(strLog);
-				std::cout << strLog << std::endl;
+				std::string strShowInfo;
+				if (strLog.length() > 1000)
+				{
+					strShowInfo = strLog.substr(0, 1000);
+					strShowInfo.append("...");
+				}
+				else
+					strShowInfo = strLog;
+				std::cout << strShowInfo << std::endl;
 			}
 		}
 	}
@@ -1124,5 +1193,186 @@ bool CSendToHttpThread::checkPicAddr(std::string& strPicAddr, pPAPERS_DETAIL pPa
 		_mapPicAddrLock_.unlock();
 	}
 	return true;
+}
+
+void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
+{
+	std::string strLog = "开始提交OMR、ZKZH、选做题信息(" + pTask->pPapers->strPapersName + ")";
+	g_Log.LogOut(strLog);
+	bool bHasElectOmr = false;
+	Poco::JSON::Array snArry;
+	Poco::JSON::Array omrArry;
+	Poco::JSON::Array electOmrArry;
+	std::stringstream jsnSnString;
+	std::stringstream jsnOmrString;
+	std::stringstream jsnElectOmrString;
+	LIST_PAPER_INFO::iterator it = pTask->pPapers->lPaper.begin();
+	for (int i = 1; it != pTask->pPapers->lPaper.end(); it++, i++)
+	{
+		pPAPER_INFO pPaper = *it;
+
+		if (pPaper->strMd5Key.empty())
+		{
+			std::string strStudentInfo = pTask->pPapers->strPapersName + "_" + pPaper->strName;
+			std::string strStudentKey = calcMd5(strStudentInfo);
+			pPaper->strMd5Key = strStudentKey;
+		}
+
+		Poco::JSON::Parser parserSN;
+		Poco::Dynamic::Var resultSN;
+		try
+		{
+			resultSN = parserSN.parse(pPaper->strSnDetail);
+			Poco::JSON::Object::Ptr snObj = resultSN.extract<Poco::JSON::Object::Ptr>();
+
+			snObj->set("studentKey", pPaper->strMd5Key);
+			snArry.add(snObj);
+		}
+		catch (Poco::JSON::JSONException& jsone)
+		{
+			char szItem[20] = { 0 };
+			sprintf_s(szItem, "%d --- ", i);
+			std::string strErrInfo;
+			strErrInfo.append("Error when parse SN: ");
+			strErrInfo.append(szItem);
+			strErrInfo.append(jsone.message() + "\tData:" + pPaper->strSnDetail);
+			g_Log.LogOutError(strErrInfo);
+			std::string strShowInfo;
+			if (strErrInfo.length() > 1000)
+			{
+				strShowInfo = strErrInfo.substr(0, 1000);
+				strShowInfo.append("...");
+			}
+			else
+				strShowInfo = strErrInfo;
+			std::cout << strShowInfo << std::endl;
+		}
+
+		Poco::JSON::Parser parserOmr;
+		Poco::Dynamic::Var resultOmr;
+		try
+		{
+			resultOmr = parserOmr.parse(pPaper->strOmrDetail);
+			Poco::JSON::Object::Ptr omrObj = resultOmr.extract<Poco::JSON::Object::Ptr>();
+
+			omrObj->set("studentKey", pPaper->strMd5Key);
+			omrArry.add(omrObj);
+		}
+		catch (Poco::JSON::JSONException& jsone)
+		{
+			char szItem[20] = { 0 };
+			sprintf_s(szItem, "%d --- ", i);
+			std::string strErrInfo;
+			strErrInfo.append("Error when parse Omr: ");
+			strErrInfo.append(szItem);
+			strErrInfo.append(jsone.message() + "\tData:" + pPaper->strOmrDetail);
+			g_Log.LogOutError(strErrInfo);
+			std::string strShowInfo;
+			if (strErrInfo.length() > 1000)
+			{
+				strShowInfo = strErrInfo.substr(0, 1000);
+				strShowInfo.append("...");
+			}
+			else
+				strShowInfo = strErrInfo;
+			std::cout << strShowInfo << std::endl;
+		}
+
+		if (pPaper->nHasElectOmr)
+		{
+			bHasElectOmr = true;
+			Poco::JSON::Parser parserElectOmr;
+			Poco::Dynamic::Var resultElectOmr;
+			try
+			{
+				resultElectOmr = parserElectOmr.parse(pPaper->strElectOmrDetail);
+				Poco::JSON::Object::Ptr electOmrObj = resultElectOmr.extract<Poco::JSON::Object::Ptr>();
+
+				electOmrObj->set("studentKey", pPaper->strMd5Key);
+				electOmrArry.add(electOmrObj);
+			}
+			catch (Poco::JSON::JSONException& jsone)
+			{
+				char szItem[20] = { 0 };
+				sprintf_s(szItem, "%d --- ", i);
+				std::string strErrInfo;
+				strErrInfo.append("Error when parse ElectOmr: ");
+				strErrInfo.append(szItem);
+				strErrInfo.append(jsone.message() + "\tData:" + pPaper->strElectOmrDetail);
+				g_Log.LogOutError(strErrInfo);
+				std::string strShowInfo;
+				if (strErrInfo.length() > 1000)
+				{
+					strShowInfo = strErrInfo.substr(0, 1000);
+					strShowInfo.append("...");
+				}
+				else
+					strShowInfo = strErrInfo;
+				std::cout << strShowInfo << std::endl;
+			}
+		}
+	}
+
+	snArry.stringify(jsnSnString, 0);
+	omrArry.stringify(jsnOmrString, 0);
+	if (bHasElectOmr)
+		electOmrArry.stringify(jsnElectOmrString, 0);
+
+	pTask->pPapers->fmTask.lock();
+	pTask->pPapers->nTaskCounts++;			//zkzh
+	pTask->pPapers->fmTask.unlock();
+
+	pSEND_HTTP_TASK pSnTask = new SEND_HTTP_TASK;
+	pSnTask->nTaskType = 4;
+	pSnTask->strResult = jsnSnString.str();
+	pSnTask->pPapers = pTask->pPapers;
+	pSnTask->strEzs = pTask->pPapers->strEzs;
+	pSnTask->strUri = SysSet.m_strBackUri + "/zkzh";
+	g_fmHttpSend.lock();
+	g_lHttpSend.push_back(pSnTask);
+	g_fmHttpSend.unlock();
+
+	pTask->pPapers->fmTask.lock();
+	pTask->pPapers->nTaskCounts++;			//omr
+	pTask->pPapers->fmTask.unlock();
+
+	pSEND_HTTP_TASK pOmrTask = new SEND_HTTP_TASK;
+	pOmrTask->nTaskType = 3;
+	pOmrTask->strResult = jsnOmrString.str();
+	pOmrTask->pPapers = pTask->pPapers;
+	pOmrTask->strEzs = pTask->pPapers->strEzs;
+	pOmrTask->strUri = SysSet.m_strBackUri + "/omr";
+	g_fmHttpSend.lock();
+	g_lHttpSend.push_back(pOmrTask);
+	g_fmHttpSend.unlock();
+
+	//++提交选做题信息	*************	注意：这里还不行，需要和后端确认	********************
+	if (bHasElectOmr)
+	{
+		pTask->pPapers->fmTask.lock();
+		pTask->pPapers->nTaskCounts++;			//electOmr
+		pTask->pPapers->fmTask.unlock();
+
+		pSEND_HTTP_TASK pElectOmrTask = new SEND_HTTP_TASK;
+		pElectOmrTask->nTaskType = 5;
+		pElectOmrTask->strResult = jsnElectOmrString.str();
+		pElectOmrTask->pPapers = pTask->pPapers;
+		pElectOmrTask->strEzs = pTask->pPapers->strEzs;
+		pElectOmrTask->strUri = SysSet.m_strBackUri + "/choosetitleinfo";
+		g_fmHttpSend.lock();
+		g_lHttpSend.push_back(pElectOmrTask);
+		g_fmHttpSend.unlock();
+	}
+	//--
+
+	strLog = "ZKZH信息如下: " + jsnSnString.str();
+	g_Log.LogOut(strLog);
+	strLog = "OMR信息如下: " + jsnOmrString.str();
+	g_Log.LogOut(strLog);
+	if (bHasElectOmr)
+	{
+		strLog = "选做题信息如下: " + jsnElectOmrString.str();
+		g_Log.LogOut(strLog);
+	}
 }
 

@@ -70,12 +70,27 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 			Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pTask->strSrcFilePath));
 			if (srcFileDir.exists())
 				srcFileDir.remove(true);
+
 		}
 		catch (Poco::Exception& exc)
 		{
 			std::string strErr = "É¾³ýÎÄ¼þ¼Ð(" + pTask->strSrcFilePath + ")Ê§°Ü: " + exc.message();
 			g_Log.LogOutError(strErr);
 		}
+
+	#if 0
+		try
+		{
+			Poco::File srcPkgFile(CMyCodeConvert::Gb2312ToUtf8(pTask->pPapers->strSrcPapersPath));
+			if (srcPkgFile.exists())
+				srcPkgFile.remove(true);
+		}
+		catch (Poco::Exception& exc)
+		{
+			std::string strErr = "É¾³ýÔ­Ê¼Ñ¹Ëõ°ü(" + pTask->pPapers->strSrcPapersPath + ")Ê§°Ü: " + exc.message();
+			g_Log.LogOutError(strErr);
+		}
+	#endif
 	}
 
 	static_cast<CDataMgrToolDlg*>(m_pDlg)->showMsg(strInfo);

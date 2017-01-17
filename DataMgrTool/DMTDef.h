@@ -5,6 +5,14 @@
 
 #include "zbar.h"   
 
+//****************************************************************
+//****************************************************************
+//****************************************************************
+#define	DATE_LIMIT		//日期限制，过了一定时间不让用
+//****************************************************************
+//****************************************************************
+//****************************************************************
+
 
 //#define PIC_RECTIFY_TEST	//图像旋转纠正测试
 #define WarpAffine_TEST		//仿射变换测试
@@ -12,7 +20,6 @@
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 //	#define PrintAllOmrVal		//打印所有OMR选项值
-	#define Test_RecogOmr3		//第3种OMR识别方法测试
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -21,16 +28,23 @@
 	#endif
 #endif
 
+#define Test_RecogOmr3			//第3种OMR识别方法测试
+#define Test_SendRecogResult	//直接在试卷袋识别完成时发送识别结果给后端服务器
+
 #define USES_GETTHRESHOLD_ZTFB	//使用正态分布方式获取校验点的阀值，未定义时使用固定阀值进行二值化查找矩形
 
 #define  MSG_ERR_RECOG		(WM_USER + 110)
 #define  MSG_RECOG_COMPLETE	(WM_USER + 111)
+#define  MSG_SENDRESULT_STATE (WM_USER + 112)
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION	_T("1.1227")
+#define SOFT_VERSION	_T("1.60115-7-T")
 #define SYS_BASE_NAME	_T("YKLX-DMT")
 //#define WH_CCBKS		//武汉楚才杯专用，解析二维码需要json解析
+
+#define CHK_NUM		//將試卷袋中不在參數文件列表中的文件从试卷袋信息中剔除
+//#define WIN_THREAD_TEST		//使用window线程，不用poco创建线程
 
 extern CLog g_Log;
 extern int	g_nExitFlag;
@@ -70,6 +84,10 @@ extern double	_dCompThread_Head_;
 extern double	_dDiffThread_Head_;
 extern double	_dDiffExit_Head_;
 extern int		_nThreshold_Recog2_;	//第2中识别方法的二值化阀值
+extern double	_dCompThread_3_;		//第三种识别方法
+extern double	_dDiffThread_3_;
+extern double	_dDiffExit_3_;
+extern double	_dAnswerSure_;		//可以确认是答案的最大灰度
 
 extern int		_nOMR_;		//重新识别模板时，用来识别OMR的密度值的阀值
 extern int		_nSN_;		//重新识别模板时，用来识别ZKZH的密度值的阀值
@@ -83,6 +101,9 @@ extern Poco::FastMutex _fmRecog_;
 extern Poco::FastMutex _fmRecogPapers_;
 extern Poco::FastMutex _fmCompress_;
 
+extern double	_dDoubtPer_;
+
+extern std::string		g_strUploadUri;		//识别结果提交的uri地址
 
 typedef struct _DecompressTask_
 {
@@ -101,6 +122,33 @@ typedef std::list<pDECOMPRESSTASK> DECOMPRESSTASKLIST;	//识别任务列表
 extern Poco::FastMutex			g_fmDecompressLock;		//解压文件列表锁
 extern DECOMPRESSTASKLIST		g_lDecompressTask;		//解压文件列表
 
+
+//----------------------------------------------
+
+typedef struct  _StSearchTash_
+{
+	std::string strSearchPath;
+}ST_SEARCH, *pST_SEARCH;
+
+typedef std::list<pST_SEARCH>	L_SearchTask;
+
+typedef struct  _StPkgInfo_
+{
+	std::string strFileName;
+	std::string strFilePath;
+}ST_PKG_INFO, *pST_PKG_INFO;
+
+typedef std::list<pST_PKG_INFO>	L_PKGINFO;
+
+extern int g_nExitFlag;
+extern	Poco::FastMutex	_fmAddPkg_;
+extern	L_PKGINFO		_PkgInfoList_;
+extern	Poco::Event		_E_StartSearch_;
+extern	std::string		_strPkgSearchPath_;
+
+extern	Poco::FastMutex	_fmSearchPathList_;
+extern	L_SearchTask	_SearchPathList_;
+//----------------------------------------------
 
 
 typedef struct _PicInfo_				//图片信息
@@ -131,12 +179,21 @@ typedef std::list<pST_PicInfo> PIC_LIST;	//图片列表定义
 typedef struct _PaperInfo_
 {
 	bool		bIssuePaper;		//是否是问题试卷
+	int			nChkFlag;		//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不進行圖片识别
 	int			nQKFlag;			//缺考标识
 	pMODEL		pModel;				//识别此学生试卷所用的模板
 	void*		pPapers;			//所属的试卷袋信息
 	void*		pSrcDlg;			//来源，来自哪个窗口，扫描or导入试卷窗口
 	std::string strStudentInfo;		//学生信息	
 	std::string strSN;
+	std::string strMd5Key;
+
+
+	//++
+	int		nOmrDoubt;				//OMR怀疑的数量
+	int		nOmrNull;				//OMR识别为空的数量
+	int		nSnNull;				//准考证号识别为空的数量
+	//--
 
 	SNLIST				lSnResult;
 	OMRRESULTLIST		lOmrResult;			//OMRRESULTLIST
@@ -144,6 +201,7 @@ typedef struct _PaperInfo_
 	PIC_LIST	lPic;
 	_PaperInfo_()
 	{
+		nChkFlag = 0;
 		bIssuePaper = false;
 		nQKFlag = 0;
 		pModel = NULL;
@@ -199,6 +257,12 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	Poco::FastMutex fmSnStatistics; //zkzh统计锁
 	//--
 
+
+	Poco::FastMutex	fmTask;			//对提交后端数据的任务(即:nTaskCounts)计数操作的锁
+	int			nTaskCounts;		//该试卷袋的任务数，在提交完图片后，需要给后端提交图片数据、准考证号、OMR、选做题信息
+									//该数据可以用来在试卷袋的所有任务处理完毕后进行试卷袋删除操作
+
+
 	int		nRecogPics;				//已经识别完成的数量
 	Poco::FastMutex fmRecogCompleteOK; //上面的锁
 
@@ -214,11 +278,12 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	std::string	strUploader;		//上传者
 	std::string strEzs;				//上传给后端服务器用，--cookie
 	std::string strDesc;			//从试卷袋文件夹读取
-
+	
 	PAPER_LIST	lPaper;					//此试卷袋中试卷列表
 	PAPER_LIST	lIssue;					//此试卷袋中识别有问题的试卷列表
 	_PapersInfo_()
 	{
+		nTaskCounts = 0;
 		nTotalPics = 0;
 		nPaperCount = 0;
 		nRecogErrCount = 0;
@@ -266,10 +331,15 @@ typedef std::list<pPAPERSINFO> PAPERS_LIST;		//试卷袋列表
 
 typedef struct _CompressTask_
 {
+	pPAPERSINFO	pPapers;
 	std::string strSrcFilePath;
 	std::string strCompressFileName;
 	std::string strSavePath;
 	std::string strExtName;
+	_CompressTask_()
+	{
+		pPapers = NULL;
+	}
 }COMPRESSTASK, *pCOMPRESSTASK;
 typedef std::list<pCOMPRESSTASK> COMPRESSTASKLIST;	//识别任务列表
 
@@ -277,6 +347,55 @@ extern Poco::FastMutex			g_fmCompressLock;		//压缩文件列表锁
 extern COMPRESSTASKLIST			g_lCompressTask;		//解压文件列表
 
 extern Poco::Event			g_eCompressThreadExit;
+
+
+typedef struct _RecogResult_
+{
+	int			nTaskType;			//任务类型: 1-给img服务器提交图片，2-给后端提交图片数据, 3-提交OMR，4-提交ZKZH，5-提交选做题信息, 6-模板图片提交zimg服务器, 7-试卷袋只提交OMR、SN、选做信息
+	int			nSendFlag;			//发送标示，1：发送失败1次，2：发送失败2次...
+	Poco::Timestamp sTime;			//创建任务时间，用于发送失败时延时发送
+	pPAPERSINFO pPapers;
+	std::string strUri;
+	std::string strResult;			//发送考场信息给后端服务器，当nTaskType = 2时有用
+	std::string strEzs;				//当nTaskType = 2时有用
+	_RecogResult_()
+	{
+		nTaskType = 0;
+		nSendFlag = 0;
+		pPapers = NULL;
+	}
+}ST_RECOG_RESULT_TASK, *p_ST_RECOG_RESULT_TASK;
+typedef std::list<p_ST_RECOG_RESULT_TASK> RECOG_RESULT_LIST;
+
+extern	Poco::FastMutex			g_fmReSult;		//发送线程获取任务锁
+extern	RECOG_RESULT_LIST		g_lResultTask;	//发送任务列表
+
+
+
+typedef struct _SendHttpTask_
+{
+	int			nTaskType;			//任务类型: 1-给img服务器提交图片，2-给后端提交图片数据, 3-提交OMR，4-提交ZKZH，5-提交选做题信息, 6-模板图片提交zimg服务器, 7-试卷袋只提交OMR、SN、选做信息
+	int			nSendFlag;			//发送标示，1：发送失败1次，2：发送失败2次...
+	Poco::Timestamp sTime;			//创建任务时间，用于发送失败时延时发送
+	pST_PicInfo pPic;
+	pPAPERSINFO pPapers;
+	std::string strUri;
+	std::string strResult;			//发送考场信息给后端服务器，当nTaskType = 2时有用
+	std::string strEzs;				//当nTaskType = 2时有用
+	_SendHttpTask_()
+	{
+		nTaskType = 0;
+		nSendFlag = 0;
+		pPic = NULL;
+		pPapers = NULL;
+	}
+}SEND_HTTP_TASK, *pSEND_HTTP_TASK;
+typedef std::list<pSEND_HTTP_TASK> LIST_SEND_HTTP;
+
+extern Poco::FastMutex		g_fmHttpSend;
+extern LIST_SEND_HTTP		g_lHttpSend;		//发送HTTP任务列表
+
+
 
 typedef struct _RecogTask_
 {

@@ -55,6 +55,11 @@ void CDecompressThread::run()
 		DECOMPRESSTASKLIST::iterator it = g_lDecompressTask.begin();
 		for (; it != g_lDecompressTask.end();)
 		{
+			if (g_lRecogTask.size() > 200)
+			{
+				Poco::Thread::sleep(10000);
+				continue;
+			}
 			pTask = *it;
 			it = g_lDecompressTask.erase(it);
 			break;
@@ -69,7 +74,7 @@ void CDecompressThread::run()
 		HandleTask(pTask);
 
 		_fmDecompress_.lock();
-		_nDecompress_++;
+		_nDecompress_--;
 		_fmDecompress_.unlock();
 
 		delete pTask;
@@ -86,8 +91,13 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	std::ifstream inp(pTask->strFilePath.c_str(), std::ios::binary);
 	if (!inp)
 	{
-		strLog = "打开试卷包文件失败";
+		strLog = "打开文件文件(" + pTask->strSrcFileName + ")失败";
 		g_Log.LogOutError(strLog);
+
+		strLog.append("\r\n");
+		USES_CONVERSION;
+		CString strMsg = A2T(strLog.c_str());
+		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
 		return;
 	}
 	std::string strOutDir = CMyCodeConvert::Gb2312ToUtf8(pTask->strDecompressDir + "\\" + pTask->strFileBaseName);
@@ -136,6 +146,11 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		std::string strLog = "打开压缩文件失败:" + pTask->strFilePath;
 		g_Log.LogOutError(strLog);
 		std::cout << strLog << std::endl;
+
+		strLog.append("\r\n");
+		USES_CONVERSION;
+		CString strMsg = A2T(strLog.c_str());
+		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
 		return;
 	}
 	int ret = 0;
@@ -169,6 +184,11 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		strLog.append(")失败, 路径: " + pTask->strFilePath);
 		g_Log.LogOutError(strLog);
 		std::cout << strLog << std::endl;
+
+		strLog.append("\r\n");
+		USES_CONVERSION;
+		CString strMsg = A2T(strLog.c_str());
+		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
 		return;
 	}
 #ifndef DecompressTest
@@ -232,6 +252,56 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		std::string strPapersFilePath = strOutDir + "\\papersInfo.dat";
 		bool bResult_Data = GetFileData(CMyCodeConvert::Utf8ToGb2312(strPapersFilePath), pPapers);
 
+		//***************************************************
+		//***************************************************
+		//***************************************************
+		//***************************************************
+
+		if (pPapers->nExamID != _pModel_->nExamID || pPapers->nSubjectID != _pModel_->nSubjectID)
+		{
+			std::string strErr = "试卷包" + pPapers->strPapersName + "考试ID和科目ID与识别模板不一致，不需要再次识别\r\n";
+			g_Log.LogOut(strErr);
+
+			CString strMsg = A2T(strErr.c_str());
+			((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
+
+			_fmRecogPapers_.lock();
+			_nRecogPapers_++;
+			_fmRecogPapers_.unlock();
+
+			_fmCompress_.lock();
+			_nCompress_++;
+			_fmCompress_.unlock();
+
+			return;
+		}
+
+		//		如果怀疑比例低于1%，不进行识别
+		if (pPapers->nPkgOmrDoubt + pPapers->nPkgOmrNull + pPapers->nPkgSnNull < 5)
+		{
+			std::string strErr = "试卷包" + pPapers->strPapersName + "怀疑、omr空、准考证空总数 < 5，不需要再次识别\r\n";
+			g_Log.LogOut(strErr);
+
+			CString strMsg = A2T(strErr.c_str());
+			((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
+
+			_fmRecogPapers_.lock();
+			_nRecogPapers_++;
+			_fmRecogPapers_.unlock();
+
+			_fmCompress_.lock();
+			_nCompress_++;
+			_fmCompress_.unlock();
+
+			return;
+		}
+
+
+		//***************************************************
+		//***************************************************
+		//***************************************************
+		//***************************************************
+
 		//添加到识别任务列表
 		PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
 		for (; itPaper != pPapers->lPaper.end(); itPaper++)
@@ -261,6 +331,10 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 
 		strMsg.Format(_T("模板加载(%s)完成\r\n"), A2T(pTask->strSrcFileName.c_str()));
 		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
+
+		pST_SEARCH pTask = new ST_SEARCH;
+		pTask->strSearchPath = _strPkgSearchPath_;
+		_SearchPathList_.push_back(pTask);
 	}
 	else if (pTask->nTaskType == 5)
 	{
@@ -319,6 +393,16 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERSINFO pPapers
 		result = parser.parse(strFileData);		//strJsnData
 		Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
 
+		int nOmrDoubt = -1;
+		int nOmrNull = -1;
+		int nSnNull = -1;
+		if (objData->has("nOmrDoubt"))
+			nOmrDoubt = objData->get("nOmrDoubt").convert<int>();
+		if (objData->has("nOmrNull"))
+			nOmrNull = objData->get("nOmrNull").convert<int>();
+		if (objData->has("nSnNull"))
+			nSnNull = objData->get("nSnNull").convert<int>();
+
 		int nExamID = objData->get("examId").convert<int>();
 		int nSubjectID = objData->get("subjectId").convert<int>();
 		int nTeacherId = objData->get("nTeacherId").convert<int>();
@@ -331,6 +415,10 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERSINFO pPapers
 			pPapers->strDesc = objData->get("desc").convert<std::string>();
 		}
 
+		pPapers->nPkgOmrDoubt = nOmrDoubt;
+		pPapers->nPkgOmrNull = nOmrNull;
+		pPapers->nPkgSnNull = nSnNull;
+
 		pPapers->nExamID = nExamID;
 		pPapers->nSubjectID = nSubjectID;
 		pPapers->nTeacherId = nTeacherId;
@@ -339,6 +427,48 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERSINFO pPapers
 		pPapers->nPaperCount = nStudentNum;
 		pPapers->strUploader = strUploader;
 		pPapers->strEzs = strEzs;		//"ezs=" + strEzs;
+
+
+	#ifdef CHK_NUM		//將試卷袋中不在參數文件列表中的文件刪除
+		Poco::JSON::Array::Ptr jsnDetailArry = objData->getArray("detail");
+		for (int i = 0; i < jsnDetailArry->size(); i++)
+		{
+			Poco::JSON::Object::Ptr jsnPaperObj = jsnDetailArry->getObject(i);
+			std::string strStudentInfo = jsnPaperObj->get("name").convert<std::string>();
+
+			pST_PaperInfo pPaper = NULL;
+			PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
+			for (int j = 0; itPaper != pPapers->lPaper.end(); itPaper++)
+			{
+				if ((*itPaper)->strStudentInfo == strStudentInfo)
+				{
+					pPaper = *itPaper;
+					break;
+				}
+			}
+			if (pPaper)
+			{
+				pPaper->nChkFlag = 1;	//此图片合法，在参数文件中可以找到
+			}
+		}
+		//将不在试卷袋参数文件中存在的图片都删除，不往图片服务器提交
+		std::string strErrStudent;
+		PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
+		for (int j = 0; itPaper != pPapers->lPaper.end();)
+		{
+			pST_PaperInfo pObj = *itPaper;
+			if (pObj->nChkFlag == 0)
+			{
+				pPapers->nTotalPics -= pObj->lPic.size();
+				SAFE_RELEASE(pObj);
+				itPaper = pPapers->lPaper.erase(itPaper);
+			}
+			else
+				itPaper++;
+		}
+	#endif
+		//--
+
 
 		return true;
 	}
@@ -554,6 +684,7 @@ void CDecompressThread::SearchExtractFile(pPAPERSINFO pPapers, std::string strPa
 				if ((*it)->strStudentInfo == strPaperName)
 				{
 					(*it)->lPic.push_back(pPic);
+					pPic->pPaper = *it;
 					bFind = true;
 					break;
 				}

@@ -6,16 +6,40 @@
 #include "DataMgrTool.h"
 #include "DataMgrToolDlg.h"
 #include "afxdialogex.h"
+#include "RecogParamDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+//------------------------------------
+Poco::Event		_E_StartSearch_;
+std::string		_strPkgSearchPath_;
+
+Poco::FastMutex	_fmSearchPathList_;
+L_SearchTask	_SearchPathList_;
+
+Poco::FastMutex	_fmAddPkg_;
+L_PKGINFO		_PkgInfoList_;
+
+
+std::string		_strComparePkgInfo_;
+//------------------------------------
+
 //答案容器
 std::map<std::string, std::string> answerMap;
 
+Poco::FastMutex			g_fmReSult;		//发送线程获取任务锁
+RECOG_RESULT_LIST		g_lResultTask;	//发送任务列表
+
 Poco::FastMutex		g_fmRecog;		//识别线程获取任务锁
 RECOGTASKLIST		g_lRecogTask;	//识别任务列表
+
+
+Poco::FastMutex			g_fmHttpSend;
+LIST_SEND_HTTP			g_lHttpSend;			//发送HTTP任务列表
+
+std::string		g_strUploadUri;		//识别结果提交的uri地址
 
 CLog g_Log;
 int	g_nExitFlag;
@@ -60,6 +84,11 @@ double	_dCompThread_Head_ = 1.0;
 double	_dDiffThread_Head_ = 0.085;
 double	_dDiffExit_Head_ = 0.15;
 int		_nThreshold_Recog2_ = 240;	//第2中识别方法的二值化阀值
+double	_dCompThread_3_ = 170;		//第三种识别方法
+double	_dDiffThread_3_ = 20;
+double	_dDiffExit_3_ = 50;
+double	_dAnswerSure_ = 100;		//可以确认是答案的最大灰度
+
 
 int		_nOMR_ = 230;		//重新识别模板时，用来识别OMR的密度值的阀值
 int		_nSN_ = 200;		//重新识别模板时，用来识别ZKZH的密度值的阀值
@@ -85,6 +114,8 @@ Poco::FastMutex _fmDecompress_;
 Poco::FastMutex _fmRecog_;
 Poco::FastMutex _fmRecogPapers_;
 Poco::FastMutex _fmCompress_;
+
+double	_dDoubtPer_ = 0.0;	//重新识别时，新识别的试卷袋的怀疑率超过此阀值时，将此试卷袋压缩到另一个目录
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -123,7 +154,7 @@ END_MESSAGE_MAP()
 
 CDataMgrToolDlg::CDataMgrToolDlg(CWnd* pParent /*=NULL*/)
 : CDialogEx(CDataMgrToolDlg::IDD, pParent)
-, m_pCompressObj(NULL), m_pCompressThread(NULL)
+, /*m_pCompressObj(NULL),*/ m_pCompressThread(NULL)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -151,6 +182,8 @@ void CDataMgrToolDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_RecogDir, m_mfcEdit_RecogDir);
 	DDX_Text(pDX, IDC_MFCEDITBROWSE_ModelPath, m_strModelPath);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_ModelPath, m_mfcEdit_ModelPath);
+
+	DDX_Text(pDX, IDC_EDIT_Per, _dDoubtPer_);
 }
 
 BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
@@ -165,6 +198,7 @@ BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_ReRecogPKG, &CDataMgrToolDlg::OnBnClickedBtnRerecogpkg)
 	ON_MESSAGE(MSG_ERR_RECOG, &CDataMgrToolDlg::MsgRecogErr)
 	ON_MESSAGE(MSG_RECOG_COMPLETE, &CDataMgrToolDlg::MsgRecogComplete)
+	ON_MESSAGE(MSG_SENDRESULT_STATE, &CDataMgrToolDlg::MsgSendResultState)
 	ON_BN_CLICKED(IDC_BTN_StudentAnswer, &CDataMgrToolDlg::OnBnClickedBtnStudentanswer)
 	ON_BN_CLICKED(IDC_BTN_Statistics, &CDataMgrToolDlg::OnBnClickedBtnStatistics)
 	ON_BN_CLICKED(IDC_BTN_StatisticsResult, &CDataMgrToolDlg::OnBnClickedBtnStatisticsresult)
@@ -281,6 +315,35 @@ void CDataMgrToolDlg::OnDestroy()
 
 	g_nExitFlag = 1;
 
+	//搜索pkg文件线程退出
+	_fmSearchPathList_.lock();
+	L_SearchTask::iterator itSearch = _SearchPathList_.begin();
+	for (; itSearch != _SearchPathList_.end();)
+	{
+		pST_SEARCH pTask = *itSearch;
+		itSearch = _SearchPathList_.erase(itSearch);
+		SAFE_RELEASE(pTask);
+	}
+	_fmSearchPathList_.unlock();
+	m_pSearchPkgThread->join();
+	SAFE_RELEASE(m_pSearchPkgObj);
+	SAFE_RELEASE(m_pSearchPkgThread);
+
+	//发送识别结果线程退出
+	g_fmHttpSend.lock();
+	LIST_SEND_HTTP::iterator itHttp = g_lHttpSend.begin();
+	for (; itHttp != g_lHttpSend.end();)
+	{
+		pSEND_HTTP_TASK pTask = *itHttp;
+		itHttp = g_lHttpSend.erase(itHttp);
+		SAFE_RELEASE(pTask);
+	}
+	g_fmHttpSend.unlock();
+	m_pHttpThread->join();
+	SAFE_RELEASE(m_pHttpObj);
+	SAFE_RELEASE(m_pHttpThread);
+
+	//解压线程退出
 	for (int i = 0; i < m_vecDecompressThreadObj.size(); i++)
 	{
 		m_vecDecompressThreadObj[i]->eExit.wait();
@@ -299,14 +362,14 @@ void CDataMgrToolDlg::OnDestroy()
 	}
 	delete[] m_pDecompressThread;
 
-
+	//识别线程退出
 	g_fmRecog.lock();			//释放未处理完的识别任务列表
 	RECOGTASKLIST::iterator itRecog = g_lRecogTask.begin();
 	for (; itRecog != g_lRecogTask.end();)
 	{
 		pRECOGTASK pRecogTask = *itRecog;
-		SAFE_RELEASE(pRecogTask);
 		itRecog = g_lRecogTask.erase(itRecog);
+		SAFE_RELEASE(pRecogTask);
 	}
 	g_fmRecog.unlock();
 
@@ -319,8 +382,8 @@ void CDataMgrToolDlg::OnDestroy()
 	for (; itRecogObj != m_vecRecogThreadObj.end();)
 	{
 		CRecognizeThread* pObj = *itRecogObj;
-		SAFE_RELEASE(pObj);
 		itRecogObj = m_vecRecogThreadObj.erase(itRecogObj);
+		SAFE_RELEASE(pObj);
 	}
 	if (m_pRecogThread)
 	{
@@ -335,7 +398,7 @@ void CDataMgrToolDlg::OnDestroy()
 		_pModel_ = NULL;
 	}
 
-
+	//压缩pkg文件线程退出
 	g_fmCompressLock.lock();
 	COMPRESSTASKLIST::iterator itCompress = g_lCompressTask.begin();
 	for (; itCompress != g_lCompressTask.end();)
@@ -345,11 +408,24 @@ void CDataMgrToolDlg::OnDestroy()
 		SAFE_RELEASE(pTask);
 	}
 	g_fmCompressLock.unlock();
-	m_pCompressObj->eExit.wait();
-	m_pCompressThread->join();
-	SAFE_RELEASE(m_pCompressObj);
-//	g_eCompressThreadExit.wait();
-	SAFE_RELEASE(m_pCompressThread);
+
+	for (int i = 0; i < m_vecCompressThreadObj.size(); i++)
+	{
+		m_vecCompressThreadObj[i]->eExit.wait();
+		m_pCompressThread[i].join();
+	}
+	std::vector<CCompressThread*>::iterator itCompObj = m_vecCompressThreadObj.begin();
+	for (; itCompObj != m_vecCompressThreadObj.end();)
+	{
+		CCompressThread* pObj = *itCompObj;
+		if (pObj)
+		{
+			delete pObj;
+			pObj = NULL;
+		}
+		itCompObj = m_vecCompressThreadObj.erase(itCompObj);
+	}
+	delete[] m_pCompressThread;
 	g_Log.LogOut("压缩处理线程释放完毕.");
 
 	g_fmPapers.lock();			//释放试卷袋列表
@@ -357,8 +433,8 @@ void CDataMgrToolDlg::OnDestroy()
 	for (; itPapers != g_lPapers.end();)
 	{
 		pPAPERSINFO pPapersTask = *itPapers;
-		SAFE_RELEASE(pPapersTask);
 		itPapers = g_lPapers.erase(itPapers);
+		SAFE_RELEASE(pPapersTask);
 	}
 	g_fmPapers.unlock();
 }
@@ -366,9 +442,16 @@ void CDataMgrToolDlg::OnDestroy()
 
 void CDataMgrToolDlg::InitParam()
 {
+	USES_CONVERSION;
 	std::string strLog;
-	std::string strFile = g_strCurrentPath + "param.dat";
-	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(strFile);
+// 	std::string strFile = g_strCurrentPath + "param.dat";
+// 	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(strFile);
+
+// 	std::string strFile = T2A(g_strCurrentPath);
+// 	strFile.append("param.dat");
+	CString strFile = g_strCurrentPath;
+	strFile.Append(_T("param.dat"));
+	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(T2A(strFile));
 	try
 	{
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strUtf8Path));
@@ -386,6 +469,12 @@ void CDataMgrToolDlg::InitParam()
 		_dDiffExit_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffExit", 0.15);
 
 		_nThreshold_Recog2_ = pConf->getInt("RecogOmrSn_Fun2.nThreshold_Fun2", 240);
+
+		_dCompThread_3_ = pConf->getDouble("RecogOmrSn_Fun3.fCompTread", 170);
+		_dDiffThread_3_ = pConf->getDouble("RecogOmrSn_Fun3.fDiffThread", 20);
+		_dDiffExit_3_ = pConf->getDouble("RecogOmrSn_Fun3.fDiffExit", 50);
+		_dAnswerSure_ = pConf->getDouble("RecogOmrSn_Fun3.fAnswerSure", 100);
+
 
 		_nOMR_ = pConf->getInt("MakeModel_Threshold.omr", 230);
 		_nSN_ = pConf->getInt("MakeModel_Threshold.sn", 200);
@@ -431,14 +520,37 @@ void CDataMgrToolDlg::InitConfig()
 	std::string strLogPath = g_strCurrentPath + "DMT.Log";
 	g_Log.SetFileName(strLogPath);
 
+#ifdef DATE_LIMIT
+	Poco::LocalDateTime tNow;
+	if (tNow.year() > 2017 || tNow.month() > 1)
+		return;
+#endif
+
+
 	CString strConfigPath = g_strCurrentPath;
 	strConfigPath.Append(_T("DMT_config.ini"));
 	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(T2A(strConfigPath));
 	Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strUtf8Path));
 	int nRecogThreads = pConf->getInt("Recog.threads", 2);
 	int nDecompressThreads = pConf->getInt("Decompress.threads", 1);
+	int nCompressThreads = pConf->getInt("Compress.threads", 1);
+	g_strUploadUri = pConf->getString("UpLoadResult.Uri");
 
+	m_pSearchPkgThread = new Poco::Thread;
+	m_pSearchPkgObj = new CSearchThread(this);
+	m_pSearchPkgThread->start(*m_pSearchPkgObj);
+	m_pSearchPkgThread->setPriority(Poco::Thread::PRIO_HIGH);
 
+#ifdef Test_SendRecogResult
+	m_pHttpThread = new Poco::Thread;
+	m_pHttpObj = new CSendToHttpThread(this);
+	m_pHttpThread->start(*m_pHttpObj);
+	m_pHttpThread->setPriority(Poco::Thread::PRIO_HIGH);
+#endif
+	
+#ifdef WIN_THREAD_TEST
+
+#else
 	m_pDecompressThread = new Poco::Thread[nDecompressThreads];
 	for (int i = 0; i < nDecompressThreads; i++)
 	{
@@ -447,18 +559,23 @@ void CDataMgrToolDlg::InitConfig()
 		m_vecDecompressThreadObj.push_back(pObj);
 	}
 
-	m_pCompressThread = new Poco::Thread;
-	m_pCompressObj = new CCompressThread(this);
-	m_pCompressThread->start(*m_pCompressObj);
+	m_pCompressThread = new Poco::Thread[nCompressThreads];
+	for (int i = 0; i < nCompressThreads; i++)
+	{
+		CCompressThread* pObj = new CCompressThread(this);
+		m_pCompressThread[i].start(*pObj); 
+		m_vecCompressThreadObj.push_back(pObj);
+	}
 
 	m_pRecogThread = new Poco::Thread[nRecogThreads];
 	for (int i = 0; i < nRecogThreads; i++)
 	{
 		CRecognizeThread* pRecogObj = new CRecognizeThread;
 		m_pRecogThread[i].start(*pRecogObj);
-
+		m_pRecogThread[i].setPriority(Poco::Thread::PRIO_HIGH);
 		m_vecRecogThreadObj.push_back(pRecogObj);
 	}
+#endif
 
 	//statusBar
 #if 0
@@ -663,9 +780,20 @@ void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
 	UpdateData(TRUE);
 	USES_CONVERSION;
 
+	CRecogParamDlg dlg;
+	if (dlg.DoModal() != IDOK)
+		return;
+
 	CString strDecompressDir = m_strPkgPath + "\\tmpDecompress";
 	try
 	{
+		CString strNewPkgSavePath = m_strPkgPath + "\\newPkg";
+		CString strNewPkg_HighErrSavePath = m_strPkgPath + "\\newPkg_HighError";
+		//先将目录删除
+
+
+		//
+
 		std::string strModelPath = T2A(m_strModelPath);
 
 		int nPos1 = strModelPath.rfind('\\');
@@ -683,6 +811,11 @@ void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
 		pDecompressTask->strSrcFileName = strSrcName;
 		pDecompressTask->strDecompressDir = strBasePath;
 
+
+		_fmDecompress_.lock();
+		_nDecompress_++;
+		_fmDecompress_.unlock();
+
 		g_fmDecompressLock.lock();
 		g_lDecompressTask.push_back(pDecompressTask);
 		g_fmDecompressLock.unlock();
@@ -690,6 +823,12 @@ void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
 
 
 		std::string strPkgPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strPkgPath));
+		_strPkgSearchPath_ = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strPkgPath));
+	#if 1
+// 		pST_SEARCH pTask = new ST_SEARCH;
+// 		pTask->strSearchPath = CMyCodeConvert::Gb2312ToUtf8(strPkgPath);
+// 		_SearchPathList_.push_back(pTask);
+	#else
 		Poco::DirectoryIterator it(strPkgPath);
 		Poco::DirectoryIterator end;
 		while (it != end)
@@ -713,6 +852,7 @@ void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
 			}
 			it++;
 		}
+	#endif
 	}
 	catch (Poco::Exception& exc)
 	{
@@ -792,6 +932,22 @@ LRESULT CDataMgrToolDlg::MsgRecogComplete(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
+
+LRESULT CDataMgrToolDlg::MsgSendResultState(WPARAM wParam, LPARAM lParam)
+{
+//	pST_PaperInfo pPaper = (pST_PaperInfo)wParam;
+	int nState = (int)wParam;
+	pPAPERSINFO   pPapers = (pPAPERSINFO)lParam;
+
+	USES_CONVERSION;
+	CString strMsg;
+	if (nState == 0)
+		strMsg.Format(_T("(%s)发送识别结果给后端服务器失败\r\n"), A2T(pPapers->strPapersName.c_str()));
+	else
+		strMsg.Format(_T("(%s)发送识别结果给后端服务器成功\r\n"), A2T(pPapers->strPapersName.c_str()));
+	showMsg(strMsg);
+	return TRUE;
+}
 
 
 void CDataMgrToolDlg::OnBnClickedBtnStudentanswer()

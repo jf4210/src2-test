@@ -26,7 +26,9 @@
 // 	#define USE_POCO_UNZIP			//给武汉天喻信息使用,不使用加密压缩
 // #endif
 
-#define SOFT_VERSION "DataControlServer V1.1227"
+#define DecompressTest		//解压测试，多线程解压
+
+#define SOFT_VERSION "DataControlServer V1.60111"
 
 
 #define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}
@@ -111,6 +113,7 @@ typedef std::list<pPIC_DETAIL> LIST_PIC_DETAIL;
 //试卷,针对考生
 typedef struct _Paper_
 {
+	int			nChkFlag;	//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不往zimg图像服务器提交
 	int			nQkFlag;	//缺考标识,0-未缺考, 1-缺考
 	int			nHasElectOmr;	//是否有多选题
 	std::string strName;	//识别出来的考生名称S1、S2、。。。
@@ -126,6 +129,7 @@ typedef struct _Paper_
 // 	OMRRESULTLIST		lOmrResult;
 	_Paper_()
 	{
+		nChkFlag = 0;
 		nQkFlag = 0;
 		nHasElectOmr = 0;
 	}
@@ -202,7 +206,7 @@ extern LIST_PAPERS_DETAIL	g_lPapers;		//试卷袋列表
 
 typedef struct _SendHttpTask_
 {
-	int			nTaskType;			//任务类型: 1-给img服务器提交图片，2-给后端提交图片数据, 3-提交OMR，4-提交ZKZH，5-提交选做题信息, 6-模板图片提交zimg服务器
+	int			nTaskType;			//任务类型: 1-给img服务器提交图片，2-给后端提交图片数据, 3-提交OMR，4-提交ZKZH，5-提交选做题信息, 6-模板图片提交zimg服务器, 7-试卷袋只提交OMR、SN、选做信息
 	int			nSendFlag;			//发送标示，1：发送失败1次，2：发送失败2次...
 	Poco::Timestamp sTime;			//创建任务时间，用于发送失败时延时发送
 	pPIC_DETAIL pPic;

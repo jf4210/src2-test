@@ -21,7 +21,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
-    <UseOfMfc>Static</UseOfMfc>
+    <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -58,7 +58,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\include;..\..\common</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -137,9 +137,13 @@
     <ClInclude Include="miniunz\zlib.h" />
     <ClInclude Include="MyCodeConvert.h" />
     <ClInclude Include="RecognizeThread.h" />
+    <ClInclude Include="RecogParamDlg.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="SearchThread.h" />
+    <ClInclude Include="SendToHttpThread.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="ThreadMgr.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CompressThread.cpp" />
@@ -186,10 +190,14 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="RecognizeThread.cpp" />
+    <ClCompile Include="RecogParamDlg.cpp" />
+    <ClCompile Include="SearchThread.cpp" />
+    <ClCompile Include="SendToHttpThread.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ThreadMgr.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DataMgrTool.rc" />

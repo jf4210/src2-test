@@ -7,7 +7,8 @@
 #include "DecompressThread.h"
 #include "RecognizeThread.h"
 #include "CompressThread.h"
-
+#include "SendToHttpThread.h"
+#include "SearchThread.h"
 
 #define TIMER_UPDATE_STARTBAR	1000
 
@@ -56,16 +57,25 @@ public:
 
 	LRESULT MsgRecogErr(WPARAM wParam, LPARAM lParam);
 	LRESULT MsgRecogComplete (WPARAM wParam, LPARAM lParam);
+	LRESULT MsgSendResultState(WPARAM wParam, LPARAM lParam);
 private:
 	Poco::Thread* m_pDecompressThread;
 	std::vector<CDecompressThread*> m_vecDecompressThreadObj;
+
+	Poco::Thread* m_pCompressThread;
+	std::vector<CCompressThread*> m_vecCompressThreadObj;
 
 	Poco::Thread*	m_pRecogThread;
 	std::vector<CRecognizeThread*> m_vecRecogThreadObj;
 
 
-	Poco::Thread* m_pCompressThread;
-	CCompressThread* m_pCompressObj;
+	Poco::Thread* m_pSearchPkgThread;
+	CSearchThread* m_pSearchPkgObj;
+
+#ifdef Test_SendRecogResult
+	Poco::Thread* m_pHttpThread;
+	CSendToHttpThread* m_pHttpObj;
+#endif
 
 	void InitParam();
 	void InitConfig();

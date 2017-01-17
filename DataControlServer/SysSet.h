@@ -27,6 +27,7 @@ public:
 	int m_nSendTimes;		//发送失败后重发次数
 	int m_nIntervalTime;	//发送失败的间隔时间
 	int m_nBackupPapers;	//是否备份试卷袋原始文件
+	int	m_nUpPicData;		//是否上传图片信息给Zimg服务器
 	int m_nUpLoadOmrData;	//在上传完ZIMG信息后，是否上传OMR、ZKZH、选做题信息
 
 	//心跳监测间隔，单位秒

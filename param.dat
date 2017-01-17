@@ -2,8 +2,8 @@
 gauseKernel=5
 sharpKernel=5
 cannyKernel=90
-delateKernel_sn=3
-delateKernel=6
+delateKernel_sn=1
+delateKernel=5
 eRodeKernel=2
 
 [MakeModel_Threshold]
@@ -38,9 +38,9 @@ white=0.75
 
 [MakeModel_RecogPercent_Fix]
 ;识别校验点的密度，定点模式
-qk=1.5
-omr=1.5
-sn=1.5
+qk=1.4
+omr=1.4
+sn=1.4
 
 [MakeModel_RecogPercent_Head]
 ;识别校验点的密度，同步头模式
@@ -59,7 +59,7 @@ omr_Max=235
 
 
 [RecogOmrSn_Fix]
-fCompTread = 1.2
+fCompTread = 1.1
 fDiffThread=0.2
 fDiffExit=0.3
 
@@ -70,6 +70,12 @@ fDiffExit=0.3
 
 [RecogOmrSn_Fun2]
 ;第二种识别方法的阀值
-nThreshold_Fun2=220
+nThreshold_Fun2=200
 
+[RecogOmrSn_Fun3]
+;第三种识别方法的阀值
+fCompTread = 180
+fDiffThread=15
+fDiffExit=50
+fAnswerSure=120
 

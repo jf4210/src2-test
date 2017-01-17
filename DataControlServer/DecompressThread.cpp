@@ -321,6 +321,8 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 // 		decompressDir.remove(true);
 // 	decompressDir.createDirectories();
 
+	
+#ifndef DecompressTest
 	if (CHDIR(pPapers->strPapersPath.c_str()))
 	{
 		std::string strLog = "切换目录失败:" + pPapers->strPapersPath;
@@ -328,7 +330,12 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		std::cout << strLog << std::endl;
 		return;
 	}
-	ret = do_extract_all(uf, opt_do_extract_withoutpath, opt_overwrite, password);
+#else
+	std::string strBaseDir = CMyCodeConvert::Utf8ToGb2312(strOutDir);
+	char szBaseDir[256] = { 0 };
+	strncpy_s(szBaseDir, strBaseDir.c_str(), strBaseDir.length());
+#endif
+	ret = do_extract_all(uf, opt_do_extract_withoutpath, opt_overwrite, password, szBaseDir);
 	unzClose(uf);
 
 	if (ret != 0)
@@ -342,7 +349,10 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		std::cout << strLog << std::endl;
 		return;
 	}
+	
+#ifndef DecompressTest
 	CHDIR(CMyCodeConvert::Utf8ToGb2312(SysSet.m_strDecompressPath).c_str());		//切换回解压根目录，否则删除压缩文件夹失败
+#endif
 
 	if (pTask->nType == 2)
 	{
@@ -410,24 +420,36 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 // 		}
 // 	}
 #else
-	LIST_PAPER_INFO::iterator itPaper = pPapers->lPaper.begin();
-	for (; itPaper != pPapers->lPaper.end(); itPaper++)
+	if (SysSet.m_nUpPicData)
 	{
-		pPAPER_INFO pPaper = *itPaper;
-		LIST_PIC_DETAIL::iterator itPic = pPaper->lPic.begin();
-		for (; itPic != pPaper->lPic.end(); itPic++)
+		LIST_PAPER_INFO::iterator itPaper = pPapers->lPaper.begin();
+		for (; itPaper != pPapers->lPaper.end(); itPaper++)
 		{
-			pPIC_DETAIL pPic = *itPic;
+			pPAPER_INFO pPaper = *itPaper;
+			LIST_PIC_DETAIL::iterator itPic = pPaper->lPic.begin();
+			for (; itPic != pPaper->lPic.end(); itPic++)
+			{
+				pPIC_DETAIL pPic = *itPic;
 
-			pSEND_HTTP_TASK pHttpTask = new SEND_HTTP_TASK;
-			pHttpTask->nTaskType = 1;
-			pHttpTask->pPic = pPic;
-			pHttpTask->pPapers = pPapers;
-			pHttpTask->strUri = SysSet.m_strUpLoadHttpUri;
-			g_fmHttpSend.lock();
-			g_lHttpSend.push_back(pHttpTask);
-			g_fmHttpSend.unlock();
+				pSEND_HTTP_TASK pHttpTask = new SEND_HTTP_TASK;
+				pHttpTask->nTaskType = 1;
+				pHttpTask->pPic = pPic;
+				pHttpTask->pPapers = pPapers;
+				pHttpTask->strUri = SysSet.m_strUpLoadHttpUri;
+				g_fmHttpSend.lock();
+				g_lHttpSend.push_back(pHttpTask);
+				g_fmHttpSend.unlock();
+			}
 		}
+	}
+	else
+	{
+		pSEND_HTTP_TASK pHttpTask = new SEND_HTTP_TASK;
+		pHttpTask->nTaskType = 7;
+		pHttpTask->pPapers = pPapers;
+		g_fmHttpSend.lock();
+		g_lHttpSend.push_back(pHttpTask);
+		g_fmHttpSend.unlock();
 	}
 #endif
 	
@@ -438,8 +460,13 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 
 bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPapers)
 {
+	std::string strUtf8Path = CMyCodeConvert::Utf8ToGb2312(strFilePath);
 	std::string strJsnData;
-	std::ifstream in(strFilePath);
+	std::ifstream in(strUtf8Path);
+
+	if (!in)
+		return false;
+
 	std::string strJsnLine;
 	while (!in.eof())
 	{
@@ -503,6 +530,7 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 			}
 			if (pPaper)
 			{
+				pPaper->nChkFlag = 1;	//此图片合法，在参数文件中可以找到
 				pPaper->strZkzh = jsnPaperObj->get("zkzh").convert<std::string>();
 				pPaper->nQkFlag = jsnPaperObj->get("qk").convert<int>();
 
@@ -566,7 +594,7 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 					jsnElectOmr.stringify(jsnElectOmrString, 0);
 					pPaper->strElectOmrDetail = jsnElectOmrString.str();
 					pPaper->nHasElectOmr = 1;
-				}				
+				}
 			}
 			else
 			{
@@ -581,6 +609,70 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 			g_Log.LogOutError(strLog);
 			return false;
 		}
+
+		//将不在试卷袋参数文件中存在的图片都删除，不往图片服务器提交
+		std::string strErrStudent;
+		LIST_PAPER_INFO::iterator itPaper = pPapers->lPaper.begin();
+		for (int j = 0; itPaper != pPapers->lPaper.end();)
+		{
+			pPAPER_INFO pObj = *itPaper;
+			if (pObj->nChkFlag == 0)
+			{
+				strErrStudent.append(pObj->strName + " ");
+				pPapers->nTotalPics -= pObj->lPic.size();
+				SAFE_RELEASE(pObj);
+				itPaper = pPapers->lPaper.erase(itPaper);
+			}
+			else
+			{
+				//**********************************************************************************************
+
+				//**********************************************************************************************
+
+				//**********************************************************************************************
+
+				//**********************************************************************************************
+
+				//***********************************	注意	************************************************
+
+				//针对肇庆考试，高一高二物理4-4，3-5科目为单页，将试卷袋中多的试卷删除
+
+				//**********************************************************************************************
+
+				//**********************************************************************************************
+
+				//**********************************************************************************************
+
+				//**********************************************************************************************
+
+				//**********************************************************************************************
+
+				//**********************************************************************************************
+				if ((nExamId == 4 && nSubjectId == 4))
+				{
+					LIST_PIC_DETAIL::iterator itPic = pObj->lPic.begin();
+					for (int j = 0; itPic != pObj->lPic.end(); j++)
+					{
+						pPIC_DETAIL pPicObj = *itPic;
+						if (j != 0)
+						{
+							SAFE_RELEASE(pPicObj);
+							itPic = pObj->lPic.erase(itPic);
+						}
+						else
+							itPic++;
+					}
+				}
+				
+				itPaper++;
+			}
+		}
+		if (strErrStudent.length() > 0)
+		{
+			std::string strErrStudentInfo = "试卷袋(" + pPapers->strPapersName + ")中以下学生多了，不在试卷袋记录信息中，这些学生图像将不会提交图像服务器：" + strErrStudent;
+			g_Log.LogOutError(strErrStudentInfo);
+		}
+		//--
 
 		pPapers->nOmrDoubt	= nOmrDoubt;
 		pPapers->nOmrNull	= nOmrNull;
@@ -662,7 +754,6 @@ void CDecompressThread::SearchExtractFile(pPAPERS_DETAIL pPapers, std::string st
 void CDecompressThread::UploadModelPic(pPAPERS_DETAIL pPapers, std::string strPath)
 {
 	std::string strJsnModelPath = strPath + "\\model.dat";
-
 
 	std::string strJsnData;
 	std::ifstream in(strJsnModelPath);

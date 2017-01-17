@@ -290,7 +290,7 @@ int do_list(unzFile uf)
     return 0;
 }
 
-int do_extract_currentfile(unzFile uf, int opt_extract_without_path, int* popt_overwrite, const char *password)
+int do_extract_currentfile(unzFile uf, int opt_extract_without_path, int* popt_overwrite, const char *password, char* pBaseDir)
 {
     unz_file_info64 file_info = {0};
     FILE* fout = NULL;
@@ -310,6 +310,20 @@ int do_extract_currentfile(unzFile uf, int opt_extract_without_path, int* popt_o
         printf("error %d with zipfile in unzGetCurrentFileInfo\n",err);
         return err;
     }
+
+#if 1	//多线程解压测试
+	char fileFullName[300] = { 0 };
+	p = pBaseDir + strlen(pBaseDir) - 1;
+	if (*p != '\\')
+	{
+		*(p + 1) = '\\';
+		*(p + 2) = '\0';
+	}
+	int n = strlen(pBaseDir);
+	strncpy(fileFullName, pBaseDir, strlen(pBaseDir));
+	strncat(fileFullName, filename_inzip, strlen(filename_inzip));
+	strncpy(filename_inzip, fileFullName, strlen(fileFullName));
+#endif
 
     p = filename_withoutpath = filename_inzip;
     while (*p != 0)
@@ -426,7 +440,7 @@ int do_extract_currentfile(unzFile uf, int opt_extract_without_path, int* popt_o
     return err;
 }
 
-int do_extract_all(unzFile uf, int opt_extract_without_path, int opt_overwrite, const char *password)
+int do_extract_all(unzFile uf, int opt_extract_without_path, int opt_overwrite, const char *password, char* pBaseDir)
 {
     int err = unzGoToFirstFile(uf);
     if (err != UNZ_OK)
@@ -437,7 +451,7 @@ int do_extract_all(unzFile uf, int opt_extract_without_path, int opt_overwrite, 
 
     do
     {
-		err = do_extract_currentfile(uf, opt_extract_without_path, &opt_overwrite, password);
+		err = do_extract_currentfile(uf, opt_extract_without_path, &opt_overwrite, password, pBaseDir);
         if (err != UNZ_OK)
             break;
         err = unzGoToNextFile(uf);
@@ -453,14 +467,14 @@ int do_extract_all(unzFile uf, int opt_extract_without_path, int opt_overwrite, 
 }
 
 int do_extract_onefile(unzFile uf, const char* filename, int opt_extract_without_path, int opt_overwrite,
-					   const char* password)
+					   const char* password, char* pBaseDir)
 {
     if (unzLocateFile(uf, filename, NULL) != UNZ_OK)
     {
         printf("file %s not found in the zipfile\n", filename);
         return 2;
     }
-    if (do_extract_currentfile(uf, opt_extract_without_path, &opt_overwrite, password) == UNZ_OK)
+	if (do_extract_currentfile(uf, opt_extract_without_path, &opt_overwrite, password, pBaseDir) == UNZ_OK)
         return 0;
     return 1;
 }

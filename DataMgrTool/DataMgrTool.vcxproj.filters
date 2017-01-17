@@ -31,6 +31,18 @@
     <Filter Include="压缩解压\miniz">
       <UniqueIdentifier>{df0a32e2-e15b-4caa-8ece-d986c64b8aa3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="线程">
+      <UniqueIdentifier>{75a09e38-93ca-4f17-b732-6cfd729d1e4a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="发送结果">
+      <UniqueIdentifier>{22efa2d3-7fea-4a67-9254-0af77b9572ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="识别参数设置窗口">
+      <UniqueIdentifier>{38797d3c-5dbd-4d48-ab46-774c3bc48b60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="搜索目录pkg">
+      <UniqueIdentifier>{89cba1f0-51d6-4b33-86c2-2c54dec1d1ae}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -96,6 +108,18 @@
     <ClInclude Include="CompressThread.h">
       <Filter>压缩解压</Filter>
     </ClInclude>
+    <ClInclude Include="ThreadMgr.h">
+      <Filter>线程</Filter>
+    </ClInclude>
+    <ClInclude Include="SendToHttpThread.h">
+      <Filter>发送结果</Filter>
+    </ClInclude>
+    <ClInclude Include="RecogParamDlg.h">
+      <Filter>识别参数设置窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="SearchThread.h">
+      <Filter>搜索目录pkg</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataMgrTool.cpp">
@@ -142,6 +166,18 @@
     </ClCompile>
     <ClCompile Include="CompressThread.cpp">
       <Filter>压缩解压</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadMgr.cpp">
+      <Filter>线程</Filter>
+    </ClCompile>
+    <ClCompile Include="SendToHttpThread.cpp">
+      <Filter>发送结果</Filter>
+    </ClCompile>
+    <ClCompile Include="RecogParamDlg.cpp">
+      <Filter>识别参数设置窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="SearchThread.cpp">
+      <Filter>搜索目录pkg</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
