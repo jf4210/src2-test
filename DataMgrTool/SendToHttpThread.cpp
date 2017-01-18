@@ -629,53 +629,60 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 	if (bHasElectOmr)
 		electOmrArry.stringify(jsnElectOmrString, 0);
 
-
-	pTask->pPapers->fmTask.lock();
-	pTask->pPapers->nTaskCounts++;			//zkzh
-	pTask->pPapers->fmTask.unlock();
-
-	pSEND_HTTP_TASK pSnTask = new SEND_HTTP_TASK;
-	pSnTask->nTaskType = 4;
-	pSnTask->strResult = jsnSnString.str();
-	pSnTask->pPapers = pTask->pPapers;
-	pSnTask->strEzs = pTask->pPapers->strEzs;
-	pSnTask->strUri = g_strUploadUri + "/zkzh";
-	g_fmHttpSend.lock();
-	g_lHttpSend.push_back(pSnTask);
-	g_fmHttpSend.unlock();
-
-	pTask->pPapers->fmTask.lock();
-	pTask->pPapers->nTaskCounts++;			//omr
-	pTask->pPapers->fmTask.unlock();
-
-	pSEND_HTTP_TASK pOmrTask = new SEND_HTTP_TASK;
-	pOmrTask->nTaskType = 3;
-	pOmrTask->strResult = jsnOmrString.str();
-	pOmrTask->pPapers = pTask->pPapers;
-	pOmrTask->strEzs = pTask->pPapers->strEzs;
-	pOmrTask->strUri = g_strUploadUri + "/omr";
-	g_fmHttpSend.lock();
-	g_lHttpSend.push_back(pOmrTask);
-	g_fmHttpSend.unlock();
-
-	//++提交选做题信息	*************	注意：这里还不行，需要和后端确认	********************
-	if (bHasElectOmr)
+	if (pTask->bSendZkzh)
 	{
 		pTask->pPapers->fmTask.lock();
-		pTask->pPapers->nTaskCounts++;			//electOmr
+		pTask->pPapers->nTaskCounts++;			//zkzh
 		pTask->pPapers->fmTask.unlock();
 
-		pSEND_HTTP_TASK pElectOmrTask = new SEND_HTTP_TASK;
-		pElectOmrTask->nTaskType = 5;
-		pElectOmrTask->strResult = jsnElectOmrString.str();
-		pElectOmrTask->pPapers = pTask->pPapers;
-		pElectOmrTask->strEzs = pTask->pPapers->strEzs;
-		pElectOmrTask->strUri = g_strUploadUri + "/choosetitleinfo";
+		pSEND_HTTP_TASK pSnTask = new SEND_HTTP_TASK;
+		pSnTask->nTaskType = 4;
+		pSnTask->strResult = jsnSnString.str();
+		pSnTask->pPapers = pTask->pPapers;
+		pSnTask->strEzs = pTask->pPapers->strEzs;
+		pSnTask->strUri = g_strUploadUri + "/zkzh";
 		g_fmHttpSend.lock();
-		g_lHttpSend.push_back(pElectOmrTask);
+		g_lHttpSend.push_back(pSnTask);
 		g_fmHttpSend.unlock();
 	}
-	//--
+	
+	if (pTask->bSendOmr)
+	{
+		pTask->pPapers->fmTask.lock();
+		pTask->pPapers->nTaskCounts++;			//omr
+		pTask->pPapers->fmTask.unlock();
+
+		pSEND_HTTP_TASK pOmrTask = new SEND_HTTP_TASK;
+		pOmrTask->nTaskType = 3;
+		pOmrTask->strResult = jsnOmrString.str();
+		pOmrTask->pPapers = pTask->pPapers;
+		pOmrTask->strEzs = pTask->pPapers->strEzs;
+		pOmrTask->strUri = g_strUploadUri + "/omr";
+		g_fmHttpSend.lock();
+		g_lHttpSend.push_back(pOmrTask);
+		g_fmHttpSend.unlock();
+	}
+	
+
+	if (pTask->bSendElectOmr)
+	{
+		if (bHasElectOmr)
+		{
+			pTask->pPapers->fmTask.lock();
+			pTask->pPapers->nTaskCounts++;			//electOmr
+			pTask->pPapers->fmTask.unlock();
+
+			pSEND_HTTP_TASK pElectOmrTask = new SEND_HTTP_TASK;
+			pElectOmrTask->nTaskType = 5;
+			pElectOmrTask->strResult = jsnElectOmrString.str();
+			pElectOmrTask->pPapers = pTask->pPapers;
+			pElectOmrTask->strEzs = pTask->pPapers->strEzs;
+			pElectOmrTask->strUri = g_strUploadUri + "/choosetitleinfo";
+			g_fmHttpSend.lock();
+			g_lHttpSend.push_back(pElectOmrTask);
+			g_fmHttpSend.unlock();
+		}
+	}
 
 	strLog = "ZKZH信息如下: " + jsnSnString.str();
 	g_Log.LogOut(strLog);

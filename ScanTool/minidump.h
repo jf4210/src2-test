@@ -168,7 +168,7 @@ LONG WINAPI UnhandledExceptionFilterEx(struct _EXCEPTION_POINTERS *pException)
 	//--
 
 	// TODO: MiniDumpWriteDump  
-	FatalAppExit(-1, _T("Fatal Error"));
+	FatalAppExit(-1, _T("系统遇到问题，需要重启！"));
 
 	return EXCEPTION_CONTINUE_SEARCH;
 }

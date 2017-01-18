@@ -9,7 +9,7 @@ public:
 	~CSearchThread();
 
 	virtual void run();
-	void HandleTask(std::string strPath);
+	void HandleTask(pST_SEARCH pTask);
 
 private:
 	void* m_pDlg;

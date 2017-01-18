@@ -36,7 +36,7 @@ void CSearchThread::run()
 			continue;
 		}
 
-		HandleTask(pTask->strSearchPath);
+		HandleTask(pTask);
 
 		if (_SearchPathList_.size() == 0)
 		{
@@ -46,6 +46,7 @@ void CSearchThread::run()
 			CString strMsg;
 			strMsg.Format(_T("%s模板对应的试卷包识别完成\r\n"), A2T(szCompare));
 			((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
+			TRACE("%s\n", strMsg);
 		}
 
 		delete pTask;
@@ -54,17 +55,18 @@ void CSearchThread::run()
 	
 }
 
-void CSearchThread::HandleTask(std::string strPath)
+void CSearchThread::HandleTask(pST_SEARCH pTask)
 {
 	try
 	{
 //		std::string strPkgPath = CMyCodeConvert::Gb2312ToUtf8(_strPkgSearchPath_);
-		std::string strDecompressDir = CMyCodeConvert::Utf8ToGb2312(strPath) + "\\tmpDecompress";
+		std::string strDecompressDir = CMyCodeConvert::Utf8ToGb2312(pTask->strSearchPath) + "\\tmpDecompress";
+		TRACE("搜索目录: %s\n", CMyCodeConvert::Utf8ToGb2312(pTask->strSearchPath).c_str());
 
 		char szCompare[10] = { 0 };
 		sprintf_s(szCompare, "%d-%d", _pModel_->nExamID, _pModel_->nSubjectID);
 
-		Poco::DirectoryIterator it(strPath);
+		Poco::DirectoryIterator it(pTask->strSearchPath);
 		Poco::DirectoryIterator end;
 		while (it != end)
 		{
@@ -80,6 +82,12 @@ void CSearchThread::HandleTask(std::string strPath)
 				pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
 				pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(p.getFileName());
 				pDecompressTask->strDecompressDir = strDecompressDir;
+				pDecompressTask->bRecogOmr = pTask->bRecogOmr;
+				pDecompressTask->bRecogZkzh = pTask->bRecogZkzh;
+				pDecompressTask->bRecogElectOmr = pTask->bRecogElectOmr;
+				pDecompressTask->bSendEzs = pTask->bSendEzs;
+				pDecompressTask->nNoNeedRecogVal = pTask->nNoNeedRecogVal;
+
 				
 				_fmDecompress_.lock();
 				_nDecompress_++;
@@ -92,9 +100,15 @@ void CSearchThread::HandleTask(std::string strPath)
 			else if (it->isDirectory())
 			{
 				_fmSearchPathList_.lock();
-				pST_SEARCH pTask = new ST_SEARCH;
-				pTask->strSearchPath = p.toString();
-				_SearchPathList_.push_back(pTask);
+				pST_SEARCH pDirTask = new ST_SEARCH;
+				pDirTask->strSearchPath = p.toString();
+				pDirTask->bRecogOmr = pTask->bRecogOmr;
+				pDirTask->bRecogZkzh = pTask->bRecogZkzh;
+				pDirTask->bRecogElectOmr = pTask->bRecogElectOmr;
+				pDirTask->bSendEzs = pTask->bSendEzs;
+				pDirTask->nNoNeedRecogVal = pTask->nNoNeedRecogVal;
+
+				_SearchPathList_.push_back(pDirTask);
 				_fmSearchPathList_.unlock();
 			}
 			it++;

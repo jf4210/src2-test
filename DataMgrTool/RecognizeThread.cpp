@@ -408,15 +408,21 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		_nRecogPapers_++;
 		_fmRecogPapers_.unlock();
 
-	#ifdef Test_SendRecogResult
-		pSEND_HTTP_TASK pRecogResultTask = new SEND_HTTP_TASK;
-		pRecogResultTask->nTaskType = 7;
-		pRecogResultTask->pPapers = pPapers;
-		g_fmHttpSend.lock();
-		g_lHttpSend.push_back(pRecogResultTask);
-		g_fmHttpSend.unlock();
-		return;
-	#endif
+//	#ifdef Test_SendRecogResult
+		if (pPapers->bSendEzs)
+		{
+			pSEND_HTTP_TASK pRecogResultTask = new SEND_HTTP_TASK;
+			pRecogResultTask->nTaskType = 7;
+			pRecogResultTask->pPapers = pPapers;
+			pRecogResultTask->bSendOmr = pPapers->bRecogOmr;
+			pRecogResultTask->bSendZkzh = pPapers->bRecogZkzh;
+			pRecogResultTask->bSendElectOmr = pPapers->bRecogElectOmr;
+			g_fmHttpSend.lock();
+			g_lHttpSend.push_back(pRecogResultTask);
+			g_fmHttpSend.unlock();
+			return;
+		}
+//	#endif
 
 		//п╢нд╪Ч
 		SavePapersInfo(pPapers);

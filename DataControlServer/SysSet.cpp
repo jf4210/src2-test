@@ -28,7 +28,9 @@ bool CSysSet::Load(std::string& strConfPath)
 	m_strPapersBackupPath	= pConf->getString("Sys.papersBackupPath");
 	m_nUpPicData	 = pConf->getInt("Sys.bUpPic", 1);
 	m_nUpLoadOmrData = pConf->getInt("Sys.bUpOmrData", 1);
-	m_nVerServerPort = pConf->getInt("VerServerInfo.port", 19991);
+	m_nUpLoadZKZH		= pConf->getInt("Sys.bUpZkzh", 1);
+	m_nUpLoadElectOmr	= pConf->getInt("Sys.bUpElectOmr", 1);
+	m_nVerServerPort	= pConf->getInt("VerServerInfo.port", 19991);
 
 	m_nHandleCmdThreads = pConf->getInt("Cmd.sendThreads", 2);
 	m_nSendHttpThreads	= pConf->getInt("UpHttp.sendThreads", 2);

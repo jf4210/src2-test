@@ -256,7 +256,6 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		//***************************************************
 		//***************************************************
 		//***************************************************
-
 		if (pPapers->nExamID != _pModel_->nExamID || pPapers->nSubjectID != _pModel_->nSubjectID)
 		{
 			std::string strErr = "试卷包" + pPapers->strPapersName + "考试ID和科目ID与识别模板不一致，不需要再次识别\r\n";
@@ -273,14 +272,32 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 			_nCompress_++;
 			_fmCompress_.unlock();
 
+			//删除源文件夹
+			try
+			{
+				Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
+				if (srcFileDir.exists())
+					srcFileDir.remove(true);
+
+			}
+			catch (Poco::Exception& exc)
+			{
+				std::string strErr = "删除文件夹(" + pPapers->strPapersPath + ")失败: " + exc.message();
+				g_Log.LogOutError(strErr);
+			}
 			return;
 		}
 
 		//		如果怀疑比例低于1%，不进行识别
-		if (pPapers->nPkgOmrDoubt + pPapers->nPkgOmrNull + pPapers->nPkgSnNull < 5)
+		if (pTask->nNoNeedRecogVal > 0 && pPapers->nPkgOmrDoubt + pPapers->nPkgOmrNull + pPapers->nPkgSnNull < pTask->nNoNeedRecogVal)
 		{
-			std::string strErr = "试卷包" + pPapers->strPapersName + "怀疑、omr空、准考证空总数 < 5，不需要再次识别\r\n";
+			int nReal = pPapers->nPkgOmrDoubt + pPapers->nPkgOmrNull + pPapers->nPkgSnNull;
+			std::stringstream ss;
+			ss << "试卷包" << pPapers->strPapersName << "(" << pPapers->nTotalPaper << ")中怀疑(" << pPapers->nPkgOmrDoubt << ")、omr空(" << pPapers->nPkgOmrNull
+				<< ")、准考证空(" << pPapers->nPkgSnNull << ")总数 = " << nReal << "，低于重识别阀值(" << pTask->nNoNeedRecogVal << ")不需要再次识别\r\n";
+			std::string strErr = ss.str();
 			g_Log.LogOut(strErr);
+			ss.str("");
 
 			CString strMsg = A2T(strErr.c_str());
 			((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
@@ -293,14 +310,30 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 			_nCompress_++;
 			_fmCompress_.unlock();
 
+			//删除源文件夹
+			try
+			{
+				Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
+				if (srcFileDir.exists())
+					srcFileDir.remove(true);
+
+			}
+			catch (Poco::Exception& exc)
+			{
+				std::string strErr = "删除文件夹(" + pPapers->strPapersPath + ")失败: " + exc.message();
+				g_Log.LogOutError(strErr);
+			}
 			return;
 		}
+		//***************************************************
+		//***************************************************
+		//***************************************************
+		//***************************************************
 
-
-		//***************************************************
-		//***************************************************
-		//***************************************************
-		//***************************************************
+		pPapers->bRecogOmr = pTask->bRecogOmr;
+		pPapers->bRecogZkzh = pTask->bRecogZkzh;
+		pPapers->bRecogElectOmr = pTask->bRecogElectOmr;
+		pPapers->bSendEzs = pTask->bSendEzs;
 
 		//添加到识别任务列表
 		PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
@@ -310,7 +343,6 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 			pTask->pPaper = *itPaper;
 			g_lRecogTask.push_back(pTask);
 		}
-
 	}
 	else if (pTask->nTaskType == 4)
 	{
@@ -332,9 +364,15 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		strMsg.Format(_T("模板加载(%s)完成\r\n"), A2T(pTask->strSrcFileName.c_str()));
 		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
 
-		pST_SEARCH pTask = new ST_SEARCH;
-		pTask->strSearchPath = _strPkgSearchPath_;
-		_SearchPathList_.push_back(pTask);
+		pST_SEARCH pDirTask = new ST_SEARCH;
+		pDirTask->strSearchPath = _strPkgSearchPath_;
+		pDirTask->bRecogOmr		= pTask->bRecogOmr;
+		pDirTask->bRecogZkzh	= pTask->bRecogZkzh;
+		pDirTask->bRecogElectOmr = pTask->bRecogElectOmr;
+		pDirTask->bSendEzs		= pTask->bSendEzs;
+		pDirTask->nNoNeedRecogVal = pTask->nNoNeedRecogVal;
+
+		_SearchPathList_.push_back(pDirTask);
 	}
 	else if (pTask->nTaskType == 5)
 	{

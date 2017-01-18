@@ -107,6 +107,14 @@ extern std::string		g_strUploadUri;		//识别结果提交的uri地址
 
 typedef struct _DecompressTask_
 {
+	//---------	参数传递，标识这次的解压任务需要识别的项目 --------
+	bool bRecogOmr;			//识别OMR
+	bool bRecogZkzh;		//识别准考证号
+	bool bRecogElectOmr;	//识别选做题
+	bool bSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩
+	int	 nNoNeedRecogVal;	////试卷袋不识别阀值：omr怀疑 + omr空 + SN空总数大于此阀值才进行重识别
+	//---------
+
 	int nTaskType;				//1-普通解压，2-区分试卷包到不同目录, 3-重新识别OMR和SN, 4-加载模板, 5-识别试卷包并统计识别正确率比例
 	std::string strFileBaseName;
 	std::string strSrcFileName;
@@ -115,6 +123,11 @@ typedef struct _DecompressTask_
 	_DecompressTask_()
 	{
 		nTaskType = 1;
+		bRecogElectOmr = true;
+		bRecogOmr = true;
+		bRecogZkzh = true;
+		bSendEzs = false;
+		nNoNeedRecogVal = 0;
 	}
 }DECOMPRESSTASK, *pDECOMPRESSTASK;
 typedef std::list<pDECOMPRESSTASK> DECOMPRESSTASKLIST;	//识别任务列表
@@ -127,7 +140,22 @@ extern DECOMPRESSTASKLIST		g_lDecompressTask;		//解压文件列表
 
 typedef struct  _StSearchTash_
 {
+	//---------	参数传递，标识这次的解压任务需要识别的项目 --------
+	bool bRecogOmr;			//识别OMR
+	bool bRecogZkzh;		//识别准考证号
+	bool bRecogElectOmr;	//识别选做题
+	bool bSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩
+	int	 nNoNeedRecogVal;	////试卷袋不识别阀值：omr怀疑 + omr空 + SN空总数大于此阀值才进行重识别
+	//---------
 	std::string strSearchPath;
+	_StSearchTash_()
+	{
+		bRecogElectOmr = true;
+		bRecogOmr = true;
+		bRecogZkzh = true;
+		bSendEzs = false;
+		nNoNeedRecogVal = 0;
+	}
 }ST_SEARCH, *pST_SEARCH;
 
 typedef std::list<pST_SEARCH>	L_SearchTask;
@@ -231,6 +259,11 @@ typedef std::list<pST_PaperInfo> PAPER_LIST;	//试卷列表
 
 typedef struct _PapersInfo_				//试卷袋信息结构体
 {
+	bool	bRecogOmr;			//直接发送识别结果时，是否发送OMR
+	bool	bRecogZkzh;			//直接发送识别结果时，是否发送准考证号
+	bool	bRecogElectOmr;		//直接发送识别结果时，是否发送选做题
+	bool	bSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩
+
 	int		nPaperCount;				//试卷袋中试卷总数量(学生数)
 	int		nRecogErrCount;				//识别错误试卷数量
 	int		nTotalPics;
@@ -283,6 +316,10 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	PAPER_LIST	lIssue;					//此试卷袋中识别有问题的试卷列表
 	_PapersInfo_()
 	{
+		bRecogOmr = true;
+		bRecogZkzh = true;
+		bRecogElectOmr = true;
+		bSendEzs = false;
 		nTaskCounts = 0;
 		nTotalPics = 0;
 		nPaperCount = 0;
@@ -374,6 +411,10 @@ extern	RECOG_RESULT_LIST		g_lResultTask;	//发送任务列表
 
 typedef struct _SendHttpTask_
 {
+	bool	bSendOmr;			//直接发送识别结果时，是否发送OMR
+	bool	bSendZkzh;		//直接发送识别结果时，是否发送准考证号
+	bool	bSendElectOmr;	//直接发送识别结果时，是否发送选做题
+
 	int			nTaskType;			//任务类型: 1-给img服务器提交图片，2-给后端提交图片数据, 3-提交OMR，4-提交ZKZH，5-提交选做题信息, 6-模板图片提交zimg服务器, 7-试卷袋只提交OMR、SN、选做信息
 	int			nSendFlag;			//发送标示，1：发送失败1次，2：发送失败2次...
 	Poco::Timestamp sTime;			//创建任务时间，用于发送失败时延时发送
@@ -384,6 +425,9 @@ typedef struct _SendHttpTask_
 	std::string strEzs;				//当nTaskType = 2时有用
 	_SendHttpTask_()
 	{
+		bSendOmr = true;
+		bSendZkzh = true;
+		bSendElectOmr = true;
 		nTaskType = 0;
 		nSendFlag = 0;
 		pPic = NULL;

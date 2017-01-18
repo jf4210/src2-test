@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CRecogParamDlg, CDialog)
 
 CRecogParamDlg::CRecogParamDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CRecogParamDlg::IDD, pParent)
-	, m_nChkSN(1), m_nChkElectOmr(1), m_nChkOmr(1), m_nHandleResult(0)
+	, m_nChkSN(1), m_nChkElectOmr(1), m_nChkOmr(1), m_nHandleResult(0), m_nNoRecogVal(0)
 {
 
 }
@@ -26,6 +26,7 @@ void CRecogParamDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_EDIT_EZS, m_strEzsAddr);
+	DDX_Text(pDX, IDC_EDIT_NoRecog, m_nNoRecogVal);
 }
 
 
@@ -51,15 +52,15 @@ BOOL CRecogParamDlg::OnInitDialog()
 
 	if (m_nHandleResult == 0)
 	{
-		((CButton*)GetDlgItem(IDC_RADIO_CompressPKG))->SetCheck(0);
-		((CButton*)GetDlgItem(IDC_RADIO_SendEZS))->SetCheck(1);
-		GetDlgItem(IDC_EDIT_EZS)->EnableWindow(TRUE);
-	}
-	else
-	{
 		((CButton*)GetDlgItem(IDC_RADIO_CompressPKG))->SetCheck(1);
 		((CButton*)GetDlgItem(IDC_RADIO_SendEZS))->SetCheck(0);
 		GetDlgItem(IDC_EDIT_EZS)->EnableWindow(FALSE);
+	}
+	else
+	{
+		((CButton*)GetDlgItem(IDC_RADIO_CompressPKG))->SetCheck(0);
+		((CButton*)GetDlgItem(IDC_RADIO_SendEZS))->SetCheck(1);
+		GetDlgItem(IDC_EDIT_EZS)->EnableWindow(TRUE);
 	}
 
 	UpdateData(FALSE);
@@ -75,13 +76,11 @@ void CRecogParamDlg::OnBnClickedChkSn()
 {
 	if (((CButton*)GetDlgItem(IDC_CHK_SN))->GetCheck())
 	{
-		((CButton*)GetDlgItem(IDC_CHK_SN))->SetCheck(0);
-		m_nChkSN = 0;
+		m_nChkSN = 1;
 	}
 	else
 	{
-		((CButton*)GetDlgItem(IDC_CHK_SN))->SetCheck(1);
-		m_nChkSN = 1;
+		m_nChkSN = 0;
 	}
 }
 
@@ -90,13 +89,11 @@ void CRecogParamDlg::OnBnClickedChkOmr()
 {
 	if (((CButton*)GetDlgItem(IDC_CHK_OMR))->GetCheck())
 	{
-		((CButton*)GetDlgItem(IDC_CHK_OMR))->SetCheck(0);
-		m_nChkOmr = 0;
+		m_nChkOmr = 1;
 	}
 	else
 	{
-		((CButton*)GetDlgItem(IDC_CHK_OMR))->SetCheck(1);
-		m_nChkOmr = 1;
+		m_nChkOmr = 0;
 	}
 }
 
@@ -105,13 +102,11 @@ void CRecogParamDlg::OnBnClickedChkElecomr()
 {
 	if (((CButton*)GetDlgItem(IDC_CHK_ElecOmr))->GetCheck())
 	{
-		((CButton*)GetDlgItem(IDC_CHK_ElecOmr))->SetCheck(0);
-		m_nChkElectOmr = 0;
+		m_nChkElectOmr = 1;
 	}
 	else
 	{
-		((CButton*)GetDlgItem(IDC_CHK_ElecOmr))->SetCheck(1);
-		m_nChkElectOmr = 1;
+		m_nChkElectOmr = 0;
 	}
 }
 
@@ -121,6 +116,12 @@ void CRecogParamDlg::OnBnClickedOk()
 	UpdateData(TRUE);
 	USES_CONVERSION;
 	g_strUploadUri = T2A(m_strEzsAddr);
+	if (m_nHandleResult == 0)
+	{
+		m_nChkElectOmr = 1;
+		m_nChkOmr = 1;
+		m_nChkSN = 1;
+	}
 
 	CDialog::OnOK();
 }
@@ -132,6 +133,13 @@ void CRecogParamDlg::OnBnClickedRadioCompresspkg()
 // 	((CButton*)GetDlgItem(IDC_RADIO_SendEZS))->SetCheck(0);
 	GetDlgItem(IDC_EDIT_EZS)->EnableWindow(FALSE);
 	m_nHandleResult = 0;
+
+	m_nChkElectOmr = 1;
+	m_nChkOmr = 1;
+	m_nChkSN = 1;
+	((CButton*)GetDlgItem(IDC_CHK_SN))->SetCheck(1);
+	((CButton*)GetDlgItem(IDC_CHK_OMR))->SetCheck(1);
+	((CButton*)GetDlgItem(IDC_CHK_ElecOmr))->SetCheck(1);
 }
 
 

@@ -18,9 +18,10 @@ public:
 	int		m_nChkSN;
 	int		m_nChkOmr;
 	int		m_nChkElectOmr;
+	int		m_nNoRecogVal;		//试卷袋不识别阀值：omr怀疑 + omr空 + SN空总数大于此阀值才进行重识别
 	CString		m_strEzsAddr;
 
-	int		m_nHandleResult;
+	int		m_nHandleResult;	//0-使用压缩包方式，1-直接发送结果给ezs
 protected:
 	virtual BOOL OnInitDialog();
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持

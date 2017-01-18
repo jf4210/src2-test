@@ -14,7 +14,7 @@
 
 //------------------------------------
 Poco::Event		_E_StartSearch_;
-std::string		_strPkgSearchPath_;
+std::string		_strPkgSearchPath_;		//试卷袋搜索路径
 
 Poco::FastMutex	_fmSearchPathList_;
 L_SearchTask	_SearchPathList_;
@@ -810,6 +810,11 @@ void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
 		pDecompressTask->strFileBaseName = strBaseName;
 		pDecompressTask->strSrcFileName = strSrcName;
 		pDecompressTask->strDecompressDir = strBasePath;
+		pDecompressTask->bRecogOmr = dlg.m_nChkOmr;				//进行参数传递
+		pDecompressTask->bRecogZkzh = dlg.m_nChkSN;				//进行参数传递
+		pDecompressTask->bRecogElectOmr = dlg.m_nChkElectOmr;	//进行参数传递
+		pDecompressTask->bSendEzs = dlg.m_nHandleResult;		//参数传递
+		pDecompressTask->nNoNeedRecogVal = dlg.m_nNoRecogVal;	//....
 
 
 		_fmDecompress_.lock();
