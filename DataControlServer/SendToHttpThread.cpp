@@ -215,12 +215,22 @@ void CSendToHttpThread::run()
 					}
 					else if (pTask->nTaskType == 2)
 					{
+						//将结果状态右起第1位置1
+						pTask->pPapers->fmResultState.lock();
+						pTask->pPapers->nResultSendState = pTask->pPapers->nResultSendState | 1;
+						pTask->pPapers->fmResultState.unlock();
+
 						std::string strLog = "发送试卷袋图片信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: " + pTask->strResult;
 						g_Log.LogOut(strLog);
 						std::cout << "post papers result info success, papersName: " << pTask->pPapers->strPapersName << std::endl;
 					}
 					else if (pTask->nTaskType == 3)
 					{
+						//将结果状态右起第2位置1
+						pTask->pPapers->fmResultState.lock();
+						pTask->pPapers->nResultSendState = pTask->pPapers->nResultSendState | (1<<1);
+						pTask->pPapers->fmResultState.unlock();
+
 						std::string strLog = "发送OMR信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: " + pTask->strResult;
 						g_Log.LogOut(strLog);
 						std::cout << "post papers OMR result info success, papersName: " << pTask->pPapers->strPapersName << std::endl;
@@ -232,6 +242,11 @@ void CSendToHttpThread::run()
 					}
 					else if (pTask->nTaskType == 4)
 					{
+						//将结果状态右起第3位置1
+						pTask->pPapers->fmResultState.lock();
+						pTask->pPapers->nResultSendState = pTask->pPapers->nResultSendState | (1 << 2);
+						pTask->pPapers->fmResultState.unlock();
+
 						std::string strLog = "发送ZKZH信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: " + pTask->strResult;
 						g_Log.LogOut(strLog);
 						std::cout << "post papers ZKZH result info success, papersName: " << pTask->pPapers->strPapersName << std::endl;
@@ -243,6 +258,11 @@ void CSendToHttpThread::run()
 					}
 					else if (pTask->nTaskType == 5)
 					{
+						//将结果状态右起第4位置1
+						pTask->pPapers->fmResultState.lock();
+						pTask->pPapers->nResultSendState = pTask->pPapers->nResultSendState | (1 << 3);
+						pTask->pPapers->fmResultState.unlock();
+
 						std::string strLog = "发送选做题信息给后端成功, 试卷袋名: " + pTask->pPapers->strPapersName + "\tdetail: " + pTask->strResult;
 						g_Log.LogOut(strLog);
 						std::cout << "post papers ElectOmr result info success, papersName: " << pTask->pPapers->strPapersName << std::endl;
@@ -322,44 +342,6 @@ void CSendToHttpThread::run()
 			{
 				strErrorInfo.append("\tPapersName: " + pTask->pPapers->strPapersName);
 				strErrorInfo.append("\tPath: " + pTask->pPapers->strPapersPath);
-
-
-				//++ test
-// 				bool bHasElectOmr = false;
-// 				Poco::JSON::Array electOmrArry;
-// 				std::stringstream jsnElectOmrString;
-// 				LIST_PAPER_INFO::iterator it = pTask->pPapers->lPaper.begin();
-// 				for (; it != pTask->pPapers->lPaper.end(); it++)
-// 				{
-// 					pPAPER_INFO pPaper = *it;
-// 					if (pPaper->nHasElectOmr)
-// 					{
-// 						bHasElectOmr = true;
-// 						Poco::JSON::Parser parserElectOmr;
-// 						Poco::Dynamic::Var resultElectOmr;
-// 						try
-// 						{
-// 							resultElectOmr = parserElectOmr.parse(pPaper->strElectOmrDetail);
-// 							Poco::JSON::Object::Ptr electOmrObj = resultElectOmr.extract<Poco::JSON::Object::Ptr>();
-// 
-// 							electOmrObj->set("studentKey", pPaper->strMd5Key);
-// 							electOmrArry.add(electOmrObj);
-// 						}
-// 						catch (Poco::JSON::JSONException& jsone)
-// 						{
-// 							std::string strErrInfo;
-// 							strErrInfo.append("Error when parse ElectOmr: ");
-// 							strErrInfo.append(jsone.message() + "\tData:" + pPaper->strElectOmrDetail);
-// 							g_Log.LogOutError(strErrInfo);
-// 							std::cout << strErrInfo << std::endl;
-// 						}
-// 					}
-// 				}
-// 				if (bHasElectOmr)
-// 					electOmrArry.stringify(jsnElectOmrString, 0);
-// 				std::string strTmp = jsnElectOmrString.str();
-// 				g_Log.LogOut(strTmp);
-				//--
 			}			
 
 			std::cout << "\n";
@@ -711,6 +693,11 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				if (!objResult->isNull("msg"))
 				{
 					strMsg = CMyCodeConvert::Utf8ToGb2312(objResult->get("msg").convert<std::string>());
+					if (strMsg.length() > 1000)
+					{
+						strMsg = strMsg.substr(0, 1000);
+						strMsg.append("...");
+					}
 				}
 				char szCount[5] = { 0 };
 				sprintf(szCount, "%d", pTask->nSendFlag);
@@ -741,6 +728,11 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				if (!objResult->isNull("msg"))
 				{
 					strMsg = CMyCodeConvert::Utf8ToGb2312(objResult->get("msg").convert<std::string>());
+					if (strMsg.length() > 1000)
+					{
+						strMsg = strMsg.substr(0, 1000);
+						strMsg.append("...");
+					}
 				}
 				char szCount[5] = { 0 };
 				sprintf(szCount, "%d", pTask->nSendFlag);
@@ -771,6 +763,11 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				if (!objResult->isNull("msg"))
 				{
 					strMsg = CMyCodeConvert::Utf8ToGb2312(objResult->get("msg").convert<std::string>());
+					if (strMsg.length() > 1000)
+					{
+						strMsg = strMsg.substr(0, 1000);
+						strMsg.append("...");
+					}
 				}
 				char szCount[5] = { 0 };
 				sprintf(szCount, "%d", pTask->nSendFlag);
@@ -992,7 +989,7 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 		}
 		catch (Poco::Exception& exc)
 		{
-			std::string strErr = "移动错误试卷袋(" + pPapers->strPapersPath + ")失败，此试卷袋存在重复图像，需要人工检查: " + exc.message();
+			std::string strErr = "移动错误试卷袋(" + pPapers->strPapersPath + ")失败，此试卷袋存在重复图像或者图像地址为空，需要人工检查: " + exc.message();
 			g_Log.LogOutError(strErr);
 		}
 		return false;
@@ -1001,7 +998,7 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 	strLog = "试卷袋(" + pPapers->strPapersName + ")图像重复校验完成，开始提交后端。";
 	g_Log.LogOut(strLog);
 	std::cout << strLog << std::endl;
-
+	
 	Poco::JSON::Object jsnPapers;
 	jsnPapers.set("papers", CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersName));
 	jsnPapers.set("papersDesc", CMyCodeConvert::Gb2312ToUtf8(pPapers->strDesc));
@@ -1117,6 +1114,22 @@ void CSendToHttpThread::checkTaskStatus(pPAPERS_DETAIL pPapers)
 			g_Log.LogOutError(strErr);
 		}
 
+		//++检查图片地址、OMR、ZKZH、选做题信息是否都提交成功，没有提交成功的将此信息记录到文本文件，下次重启时自动重新提交
+		int nPushPicSucc = pPapers->nResultSendState & 1;
+		int nPushOmrSucc = pPapers->nResultSendState >> 1 & 1;
+		int nPushZkzhSucc = pPapers->nResultSendState >> 2 & 1;
+		int nPushElectOmrSucc = pPapers->nResultSendState >> 3 & 1;
+		if (!nPushPicSucc)
+		{
+		}
+		if (!nPushOmrSucc)
+		{
+			//***************	需要在启动时进行检测 2017.1.19	*******************************
+			std::string strFilePath = SysSet.m_strReSendPkg + pPapers->strPapersName + "_#_omr.txt";
+
+		}
+		//--
+
 		if (SysSet.m_nBackupPapers)
 		{
 			Poco::LocalDateTime now;
@@ -1179,6 +1192,13 @@ void CSendToHttpThread::checkTaskStatus(pPAPERS_DETAIL pPapers)
 
 bool CSendToHttpThread::checkPicAddr(std::string& strPicAddr, pPAPERS_DETAIL pPapers, pPIC_DETAIL pPic)
 {
+	if (strPicAddr.empty())
+	{
+		std::string strLog = "检测到正要提交的图片地址为空(" + pPapers->strPapersName + ":" + pPic->strFileName + ")";
+		g_Log.LogOutError(strLog);
+		return false;
+	}
+
 	MAP_PIC_ADDR::iterator it = _mapPicAddr_.find(strPicAddr);
 	if (it != _mapPicAddr_.end())
 	{
@@ -1323,6 +1343,7 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 		pTask->pPapers->fmTask.lock();
 		pTask->pPapers->nTaskCounts++;			//zkzh
 		pTask->pPapers->fmTask.unlock();
+		pTask->pPapers->strSendZkzhResult = jsnSnString.str();	//将结果信息保存到试卷袋结构体中，以防异常错误时需要重新计算 2017.1.19
 
 		pSEND_HTTP_TASK pSnTask = new SEND_HTTP_TASK;
 		pSnTask->nTaskType = 4;
@@ -1340,6 +1361,7 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 		pTask->pPapers->fmTask.lock();
 		pTask->pPapers->nTaskCounts++;			//omr
 		pTask->pPapers->fmTask.unlock();
+		pTask->pPapers->strSendOmrResult = jsnOmrString.str();	//将结果信息保存到试卷袋结构体中，以防异常错误时需要重新计算 2017.1.19
 
 		pSEND_HTTP_TASK pOmrTask = new SEND_HTTP_TASK;
 		pOmrTask->nTaskType = 3;
@@ -1360,6 +1382,7 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 			pTask->pPapers->fmTask.lock();
 			pTask->pPapers->nTaskCounts++;			//electOmr
 			pTask->pPapers->fmTask.unlock();
+			pTask->pPapers->strSendElectOmrResult = jsnElectOmrString.str();	//将结果信息保存到试卷袋结构体中，以防异常错误时需要重新计算 2017.1.19
 
 			pSEND_HTTP_TASK pElectOmrTask = new SEND_HTTP_TASK;
 			pElectOmrTask->nTaskType = 5;

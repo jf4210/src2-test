@@ -153,6 +153,9 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 
 		(*itPic)->bRecoged = true;
 
+		if (i >= pModelInfo->pModel->vecPaperModel.size())
+			continue;
+
 		int nCount = pModelInfo->pModel->vecPaperModel[i]->lH_Head.size() + pModelInfo->pModel->vecPaperModel[i]->lV_Head.size() + pModelInfo->pModel->vecPaperModel[i]->lABModel.size()
 			+ pModelInfo->pModel->vecPaperModel[i]->lCourse.size() + pModelInfo->pModel->vecPaperModel[i]->lQK_CP.size() + pModelInfo->pModel->vecPaperModel[i]->lGray.size()
 			+ pModelInfo->pModel->vecPaperModel[i]->lWhite.size() + pModelInfo->pModel->vecPaperModel[i]->lSNInfo.size() + pModelInfo->pModel->vecPaperModel[i]->lOMR2.size()
@@ -162,16 +165,39 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 
 		std::string strPicFileName = (*itPic)->strPicName;
 		Mat matCompSrcPic;
-		try
+		bool bOpenSucc = false;
+		for (int i = 0; i < 3; i++)
 		{
-			matCompSrcPic = imread((*itPic)->strPicPath);			//imread((*itPic)->strPicPath);
+			if (!bOpenSucc)
+			{
+				try
+				{
+					matCompSrcPic = imread((*itPic)->strPicPath);			//imread((*itPic)->strPicPath);
+					bOpenSucc = true;
+					break;
+				}
+				catch (cv::Exception& exc)
+				{
+					Sleep(500);
+				}
+			}			
 		}
-		catch (cv::Exception& exc)
+		if (!bOpenSucc)
 		{
-			std::string strLog = "打开文件失败2: " + exc.msg;
+			std::string strLog = "几次打开文件都失败2: " + (*itPic)->strPicPath;
 			g_pLogger->information(strLog);
 			continue;
 		}
+// 		try
+// 		{
+// 			matCompSrcPic = imread((*itPic)->strPicPath);			//imread((*itPic)->strPicPath);
+// 		}
+// 		catch (cv::Exception& exc)
+// 		{
+// 			std::string strLog = "打开文件失败2: " + exc.msg;
+// 			g_pLogger->information(strLog);
+// 			continue;
+// 		}
 		
 #ifdef PIC_RECTIFY_TEST	//图像旋转纠正测试
 		Mat matDst;

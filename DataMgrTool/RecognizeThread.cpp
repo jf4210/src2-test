@@ -155,16 +155,39 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 
 		std::string strPicFileName = (*itPic)->strPicName;
 		Mat matCompSrcPic;
-		try
+		bool bOpenSucc = false;
+		for (int i = 0; i < 3; i++)
 		{
-			matCompSrcPic = imread((*itPic)->strPicPath);			//imread((*itPic)->strPicPath);
+			if (!bOpenSucc)
+			{
+				try
+				{
+					matCompSrcPic = imread((*itPic)->strPicPath);			//imread((*itPic)->strPicPath);
+					bOpenSucc = true;
+					break;
+				}
+				catch (cv::Exception& exc)
+				{
+					Sleep(500);
+				}
+			}
 		}
-		catch (cv::Exception& exc)
+		if (!bOpenSucc)
 		{
-			std::string strLog = "打开文件失败2: " + exc.msg;
+			std::string strLog = "几次打开文件都失败2: " + (*itPic)->strPicPath;
 			g_Log.LogOut(strLog);
 			continue;
 		}
+// 		try
+// 		{
+// 			matCompSrcPic = imread((*itPic)->strPicPath);			//imread((*itPic)->strPicPath);
+// 		}
+// 		catch (cv::Exception& exc)
+// 		{
+// 			std::string strLog = "打开文件失败2: " + exc.msg;
+// 			g_Log.LogOut(strLog);
+// 			continue;
+// 		}
 		
 #ifdef PIC_RECTIFY_TEST	//图像旋转纠正测试
 		Mat matDst;
@@ -408,7 +431,6 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		_nRecogPapers_++;
 		_fmRecogPapers_.unlock();
 
-//	#ifdef Test_SendRecogResult
 		if (pPapers->bSendEzs)
 		{
 			pSEND_HTTP_TASK pRecogResultTask = new SEND_HTTP_TASK;
@@ -422,7 +444,6 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			g_fmHttpSend.unlock();
 			return;
 		}
-//	#endif
 
 		//写文件
 		SavePapersInfo(pPapers);

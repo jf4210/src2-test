@@ -2459,6 +2459,18 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	clock_t start, end;
 	start = clock();
 
+	//******************	注意	*******************
+
+	//*************************************************
+
+	//*************************************************
+
+	//	这里看需不需要进行OMR数组为空的检查，如果为空，需要重新识别或者整袋重扫	2017.1.19
+
+	//*************************************************
+
+	//*************************************************
+
 	USES_CONVERSION;
 	Poco::JSON::Array jsnPaperArry;
 	PAPER_LIST::iterator itNomarlPaper = m_pPapersInfo->lPaper.begin();
@@ -2551,96 +2563,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
 		jsnPaperArry.add(jsnPaper);
 	}
-	PAPER_LIST::iterator itIssuePaper = m_pPapersInfo->lIssue.begin();
-	for (int j = 0; itIssuePaper != m_pPapersInfo->lIssue.end(); itIssuePaper++, j++)
-	{
-		Poco::JSON::Object jsnPaper;
-		jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
-		jsnPaper.set("zkzh", (*itIssuePaper)->strSN);
-		jsnPaper.set("qk", (*itIssuePaper)->nQKFlag);
-
-		Poco::JSON::Array jsnSnDetailArry;
-		SNLIST::iterator itSn = (*itIssuePaper)->lSnResult.begin();
-		for (; itSn != (*itIssuePaper)->lSnResult.end(); itSn++)
-		{
-			Poco::JSON::Object jsnSnItem;
-			jsnSnItem.set("sn", (*itSn)->nItem);
-			jsnSnItem.set("val", (*itSn)->nRecogVal);
-
-			Poco::JSON::Object jsnSnPosition;
-			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
-			for (; itRect != (*itSn)->lSN.end(); itRect++)
-			{
-				jsnSnPosition.set("x", itRect->rt.x);
-				jsnSnPosition.set("y", itRect->rt.y);
-				jsnSnPosition.set("w", itRect->rt.width);
-				jsnSnPosition.set("h", itRect->rt.height);
-			}
-			jsnSnItem.set("position", jsnSnPosition);
-			jsnSnDetailArry.add(jsnSnItem);
-		}
-		jsnPaper.set("snDetail", jsnSnDetailArry);
-
-		Poco::JSON::Array jsnOmrArry;
-		OMRRESULTLIST::iterator itOmr = (*itIssuePaper)->lOmrResult.begin();
-		for (; itOmr != (*itIssuePaper)->lOmrResult.end(); itOmr++)
-		{
-			Poco::JSON::Object jsnOmr;
-			jsnOmr.set("th", itOmr->nTH);
-			jsnOmr.set("type", itOmr->nSingle + 1);
-			jsnOmr.set("value", itOmr->strRecogVal);
-			jsnOmr.set("value2", itOmr->strRecogVal2);
-			jsnOmr.set("doubt", itOmr->nDoubt);
-			Poco::JSON::Array jsnPositionArry;
-			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
-			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
-			{
-				Poco::JSON::Object jsnItem;
-				char szVal[5] = { 0 };
-				sprintf_s(szVal, "%c", itRect->nAnswer + 65);
-				jsnItem.set("val", szVal);
-				jsnItem.set("x", itRect->rt.x);
-				jsnItem.set("y", itRect->rt.y);
-				jsnItem.set("w", itRect->rt.width);
-				jsnItem.set("h", itRect->rt.height);
-				jsnPositionArry.add(jsnItem);
-			}
-			jsnOmr.set("position", jsnPositionArry);
-			jsnOmrArry.add(jsnOmr);
-		}
-		jsnPaper.set("omr", jsnOmrArry);
-		
-		Poco::JSON::Array jsnElectOmrArry;
-		ELECTOMR_LIST::iterator itElectOmr = (*itIssuePaper)->lElectOmrResult.begin();
-		for (; itElectOmr != (*itIssuePaper)->lElectOmrResult.end(); itElectOmr++)
-		{
-			Poco::JSON::Object jsnElectOmr;
-			jsnElectOmr.set("paperId", j + 1);
-			jsnElectOmr.set("doubt", itElectOmr->nDoubt);
-			jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
-			jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
-			jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
-			jsnElectOmr.set("value", itElectOmr->strRecogResult);
-			Poco::JSON::Array jsnPositionArry;
-			RECTLIST::iterator itRect = itElectOmr->lItemInfo.begin();
-			for (; itRect != itElectOmr->lItemInfo.end(); itRect++)
-			{
-				Poco::JSON::Object jsnItem;
-				char szVal[5] = { 0 };
-				sprintf_s(szVal, "%c", itRect->nAnswer + 65);
-				jsnItem.set("val", szVal);
-				jsnItem.set("x", itRect->rt.x);
-				jsnItem.set("y", itRect->rt.y);
-				jsnItem.set("w", itRect->rt.width);
-				jsnItem.set("h", itRect->rt.height);
-				jsnPositionArry.add(jsnItem);
-			}
-			jsnElectOmr.set("position", jsnPositionArry);
-			jsnElectOmrArry.add(jsnElectOmr);
-		}
-		jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
-		jsnPaperArry.add(jsnPaper);
-	}
+	
 	//写试卷袋信息到文件
 	std::string strUploader = CMyCodeConvert::Gb2312ToUtf8(T2A(strUser));
 	std::string sEzs = T2A(strEzs);

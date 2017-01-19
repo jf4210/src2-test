@@ -193,9 +193,22 @@ void CShowModelInfoDlg::ShowModelInfo(pMODEL pModel, int nFlag /*= 0*/)
 		char szElectOmr[30] = { 0 };
 		sprintf_s(szElectOmr, "选做题: %s\r\n", szElectOmrVal);
 
+		char szPaperType[30] = { 0 };
+		if (pModel->nScanSize == 1)
+			sprintf_s(szPaperType, "纸张类型: A4\r\n");
+		else if (pModel->nScanSize == 2)
+			sprintf_s(szPaperType, "纸张类型: A3\r\n");
+		else
+			sprintf_s(szPaperType, "纸张类型: 定制类型\r\n");
+		char szScanDpi[30] = { 0 };
+		sprintf_s(szScanDpi, "扫描分辨率: %ddpi\r\n", pModel->nScanDpi);
+
 		strExamInfo.Append(A2T(szHead));
 		strExamInfo.Append(A2T(szExamInfo));
 		strExamInfo.Append(A2T(szElectOmr));
+		strExamInfo.Append(A2T("\r\n"));
+		strExamInfo.Append(A2T(szPaperType));
+		strExamInfo.Append(A2T(szScanDpi));
 		m_strModelDesc.Append(A2T("\r\n"));
 		m_strModelDesc.Append(strExamInfo);
 	}

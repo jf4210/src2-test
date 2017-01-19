@@ -165,8 +165,15 @@ typedef struct _Papers_
 	int		nOmrNull;				//OMR识别为空的数量
 	int		nSnNull;				//准考证号识别为空的数量
 	//--
+	Poco::FastMutex fmResultState;	//对nResultSendState结果状态修改的锁
 	int		nResultSendState;		//试卷袋的图片MD5地址提交、OMR、准考证号、选做题结果发送给后端EZS的完成状态，
-									//0-未完成，1-图片地址提交完成，2-OMR结果提交完成，3-ZKZH提交完成，4-选做题信息提交完成
+									//采用位标识，从右往左数，第1位--图片地址提交完成，第2位--OMR结果提交完成，第3位--ZKZH提交完成，第4位--选做题信息提交完成
+
+	//++	将需要发送的OMR、ZKZH、选做题信息都保存下来，在发生错误需要记录文件时，省去重新取值的过程	2017.1.19
+	std::string strSendOmrResult;
+	std::string strSendZkzhResult;
+	std::string strSendElectOmrResult;
+	//--
 
 	std::string	strUploader;		//上传者
 	std::string strEzs;				//上传给后端服务器用，--cookie
@@ -188,6 +195,10 @@ typedef struct _Papers_
 		nUpLoadSuccess = 0;
 		nTotalPaper = 0;
 		nQk = 0;
+		nOmrDoubt = 0;
+		nOmrNull = 0;
+		nSnNull = 0;
+		nResultSendState = 0;
 	}
 	~_Papers_()
 	{

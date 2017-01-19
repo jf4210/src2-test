@@ -93,13 +93,13 @@ void CScanModleMgrDlg::InitUI()
 
 	m_ModelListCtrl.SetExtendedStyle(m_ModelListCtrl.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_ModelListCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36);
-	m_ModelListCtrl.InsertColumn(1, _T("模板名称"), LVCFMT_CENTER, 360);
+	m_ModelListCtrl.InsertColumn(1, _T("模板名称"), LVCFMT_CENTER, 370);
 
 	m_pShowModelInfoDlg = new CShowModelInfoDlg(this);
 	m_pShowModelInfoDlg->Create(CShowModelInfoDlg::IDD, this);
 	m_pShowModelInfoDlg->ShowWindow(SW_SHOW);
 
-	int sx = 830;
+	int sx = 850;
 	int sy = 600;
 	MoveWindow(0, 0, sx, sy);
 	CenterWindow();
