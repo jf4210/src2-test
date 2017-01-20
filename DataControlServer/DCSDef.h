@@ -169,7 +169,8 @@ typedef struct _Papers_
 	int		nResultSendState;		//试卷袋的图片MD5地址提交、OMR、准考证号、选做题结果发送给后端EZS的完成状态，
 									//采用位标识，从右往左数，第1位--图片地址提交完成，第2位--OMR结果提交完成，第3位--ZKZH提交完成，第4位--选做题信息提交完成
 
-	//++	将需要发送的OMR、ZKZH、选做题信息都保存下来，在发生错误需要记录文件时，省去重新取值的过程	2017.1.19
+	//++	将需要发送的试卷袋图片地址信息、OMR、ZKZH、选做题信息都保存下来，在发生错误需要记录文件时，省去重新取值的过程	2017.1.19
+	std::string strSendPicsAddrResult;
 	std::string strSendOmrResult;
 	std::string strSendZkzhResult;
 	std::string strSendElectOmrResult;

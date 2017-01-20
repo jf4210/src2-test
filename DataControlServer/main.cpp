@@ -155,6 +155,67 @@ protected:
 		}		
 	}
 
+	std::string GetFileData(std::string& strPath)
+	{
+		std::string strJsnData;
+		std::ifstream in(strPath);
+		if (!in)
+			return NULL;
+
+		std::string strJsnLine;
+		while (!in.eof())
+		{
+			getline(in, strJsnLine);					//不过滤空格
+			strJsnData.append(strJsnLine);
+		}
+		in.close();
+		return strJsnData;
+	}
+
+	//启动时，检测重新发送文件夹中是否有文件，有的话需要重新生成对应的任务列表
+	void  InitReSendInfo()
+	{
+		bool bFind = false;
+		std::string strLog = "添加上次关闭发送失败需要重新上传的信息:";
+		std::string strFilePath = CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strReSendPkg);
+		Poco::DirectoryIterator it(strFilePath);
+		Poco::DirectoryIterator end;
+		while (it != end)
+		{
+			Poco::Path p(it->path());
+			if (it->isFile())
+			{
+				std::string strBaseName = p.getBaseName();
+				if (p.getExtension() == "txt")
+				{
+					bFind = true;
+					int nPos = -1;
+					if ((nPos = strBaseName.find("_#_pics")) != std::string::npos)
+					{
+						//读文件
+						std::string strResult = GetFileData(CMyCodeConvert::Utf8ToGb2312(p.toString()));
+
+						pSEND_HTTP_TASK pNewTask = new SEND_HTTP_TASK;
+						pNewTask->nTaskType = 2;
+						pNewTask->strResult = strResult;
+						pNewTask->pPapers = pPapers;		//检查图片地址、OMR、ZKZH、选做题信息是否都提交成功，没有提交成功的将此信息记录到文本文件，下次重启时自动重新提交
+						pNewTask->strEzs = pPapers->strEzs;
+						pNewTask->strUri = SysSet.m_strBackUri + "/studentAnswerSheet";
+						g_fmHttpSend.lock();
+						g_lHttpSend.push_back(pNewTask);
+						g_fmHttpSend.unlock();
+					}
+				}
+			}
+			it++;
+		}
+		if (bFind)
+		{
+			g_Log.LogOut(strLog);
+			std::cout << strLog << std::endl;
+		}
+	}
+
 	int main(const std::vector < std::string > & args) 
 	{
 		Poco::Net::HTTPStreamFactory::registerFactory();

@@ -1067,6 +1067,8 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 // 	std::cout << "****************************************" << std::endl;
 	
 #if 1
+	pPapers->strSendPicsAddrResult = jsnString.str();
+
 	pSEND_HTTP_TASK pNewTask = new SEND_HTTP_TASK;
 	pNewTask->nTaskType = 2;
 	pNewTask->strResult = jsnString.str();
@@ -1119,14 +1121,50 @@ void CSendToHttpThread::checkTaskStatus(pPAPERS_DETAIL pPapers)
 		int nPushOmrSucc = pPapers->nResultSendState >> 1 & 1;
 		int nPushZkzhSucc = pPapers->nResultSendState >> 2 & 1;
 		int nPushElectOmrSucc = pPapers->nResultSendState >> 3 & 1;
+		try
+		{
+			Poco::File backupDir(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strReSendPkg));
+			if (!backupDir.exists())
+				backupDir.createDirectories();
+		}
+		catch (Poco::Exception& exc)
+		{
+			std::string strErrInfo = Poco::format("创建试卷袋重传文件夹(%s)失败,%s", SysSet.m_strReSendPkg, exc.message());
+			g_Log.LogOutError(strErrInfo);
+			std::cout << strErrInfo << std::endl;
+		}
+
 		if (!nPushPicSucc)
 		{
+			std::string strFilePath = SysSet.m_strReSendPkg + pPapers->strPapersName + "_#_pics.txt";
+			ofstream out(strFilePath);
+			out << pPapers->strSendPicsAddrResult.c_str();
+			out.close();
 		}
-		if (!nPushOmrSucc)
+		else	//以下情况只有在图片地址信息提交成功时才可能发生，因为只有在提交图片地址成功后，才发送OMR、ZKZH、选做信息
 		{
-			//***************	需要在启动时进行检测 2017.1.19	*******************************
-			std::string strFilePath = SysSet.m_strReSendPkg + pPapers->strPapersName + "_#_omr.txt";
-
+			if (!nPushOmrSucc)
+			{
+				//***************	需要在启动时进行检测 2017.1.19	*******************************
+				std::string strFilePath = SysSet.m_strReSendPkg + pPapers->strPapersName + "_#_omr.txt";
+				ofstream out(strFilePath);
+				out << pPapers->strSendOmrResult.c_str();
+				out.close();
+			}
+			if (!nPushZkzhSucc)
+			{
+				std::string strFilePath = SysSet.m_strReSendPkg + pPapers->strPapersName + "_#_zkzh.txt";
+				ofstream out(strFilePath);
+				out << pPapers->strSendZkzhResult.c_str();
+				out.close();
+			}
+			if (!nPushElectOmrSucc)
+			{
+				std::string strFilePath = SysSet.m_strReSendPkg + pPapers->strPapersName + "_#_electOmr.txt";
+				ofstream out(strFilePath);
+				out << pPapers->strSendElectOmrResult.c_str();
+				out.close();
+			}
 		}
 		//--
 

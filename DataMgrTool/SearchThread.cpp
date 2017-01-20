@@ -48,7 +48,7 @@ void CSearchThread::run()
 			((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
 			TRACE("%s\n", strMsg);
 		}
-
+		
 		delete pTask;
 		pTask = NULL;
 	}
