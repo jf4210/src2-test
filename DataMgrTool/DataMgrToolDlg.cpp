@@ -522,7 +522,7 @@ void CDataMgrToolDlg::InitConfig()
 
 #ifdef DATE_LIMIT
 	Poco::LocalDateTime tNow;
-	if (tNow.year() > 2017 || tNow.month() > 1)
+	if (tNow.year() > 2017 || tNow.month() > 2)
 		return;
 #endif
 
