@@ -1134,12 +1134,14 @@ void CSendToHttpThread::checkTaskStatus(pPAPERS_DETAIL pPapers)
 			std::cout << strErrInfo << std::endl;
 		}
 
+		bool bMoveFlag = false;		//试卷袋被移动标识
 		if (!nPushPicSucc)
 		{
 			std::string strFilePath = SysSet.m_strReSendPkg + pPapers->strPapersName + "_#_pics.txt";
 			ofstream out(strFilePath);
 			out << pPapers->strSendPicsAddrResult.c_str();
 			out.close();
+			bMoveFlag = true;
 		}
 		else	//以下情况只有在图片地址信息提交成功时才可能发生，因为只有在提交图片地址成功后，才发送OMR、ZKZH、选做信息
 		{
@@ -1150,6 +1152,7 @@ void CSendToHttpThread::checkTaskStatus(pPAPERS_DETAIL pPapers)
 				ofstream out(strFilePath);
 				out << pPapers->strSendOmrResult.c_str();
 				out.close();
+				bMoveFlag = true;
 			}
 			if (!nPushZkzhSucc)
 			{
@@ -1157,6 +1160,7 @@ void CSendToHttpThread::checkTaskStatus(pPAPERS_DETAIL pPapers)
 				ofstream out(strFilePath);
 				out << pPapers->strSendZkzhResult.c_str();
 				out.close();
+				bMoveFlag = true;
 			}
 			if (!nPushElectOmrSucc)
 			{
@@ -1164,50 +1168,59 @@ void CSendToHttpThread::checkTaskStatus(pPAPERS_DETAIL pPapers)
 				ofstream out(strFilePath);
 				out << pPapers->strSendElectOmrResult.c_str();
 				out.close();
+				bMoveFlag = true;
 			}
 		}
 		//--
 
-		if (SysSet.m_nBackupPapers)
+		if (bMoveFlag)
 		{
-			Poco::LocalDateTime now;
-//			std::string strBackupDir = Poco::format("%s\\%04d-%02d-%02d", CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strPapersBackupPath), now.year(), now.month(), now.day());
-			std::string strBackupDir = Poco::format("%s\\%04d-%02d-%02d\\%d_%d\\%s", CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strPapersBackupPath), now.year(), now.month(), now.day(), pPapers->nExamID, pPapers->nSubjectID, pPapers->strUploader);
-			std::string strBackupPath = strBackupDir + "\\" + CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersFileName);
-			try
-			{
-				Poco::File backupDir(strBackupDir);
-				if (!backupDir.exists())
-					backupDir.createDirectories();
-
-				Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersPath));
-				filePapers.moveTo(strBackupPath);
-				std::string strLog = "备份试卷袋文件(" + pPapers->strSrcPapersFileName + ")完成";
-				g_Log.LogOut(strLog);
-				std::cout << strLog << std::endl;
-			}
-			catch (Poco::Exception& exc)
-			{
-				std::string strErrInfo = Poco::format("备份试卷袋(%s)失败,%s", pPapers->strSrcPapersPath, exc.message());
-				g_Log.LogOutError(strErrInfo);
-				std::cout << strErrInfo << std::endl;
-			}
+			//文件移动到重发送目录的根目录下
+			std::string strMovePath = SysSet.m_strReSendPkg + pPapers->strSrcPapersFileName;
+			MovePkg(pPapers, strMovePath);
 		}
 		else
 		{
-			try
+			if (SysSet.m_nBackupPapers)
 			{
-				Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersPath));
-				filePapers.remove(true);
-				std::string strLog = "删除试卷袋文件(" + pPapers->strSrcPapersFileName + ")完成";
-				g_Log.LogOut(strLog);
-				std::cout << strLog << std::endl;
+				Poco::LocalDateTime now;
+				std::string strBackupDir = Poco::format("%s\\%04d-%02d-%02d\\%d_%d\\%s", CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strPapersBackupPath), now.year(), now.month(), now.day(), pPapers->nExamID, pPapers->nSubjectID, pPapers->strUploader);
+				std::string strBackupPath = strBackupDir + "\\" + CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersFileName);
+				try
+				{
+					Poco::File backupDir(strBackupDir);
+					if (!backupDir.exists())
+						backupDir.createDirectories();
+
+					Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersPath));
+					filePapers.moveTo(strBackupPath);
+					std::string strLog = "备份试卷袋文件(" + pPapers->strSrcPapersFileName + ")完成";
+					g_Log.LogOut(strLog);
+					std::cout << strLog << std::endl;
+				}
+				catch (Poco::Exception& exc)
+				{
+					std::string strErrInfo = Poco::format("备份试卷袋(%s)失败,%s", pPapers->strSrcPapersPath, exc.message());
+					g_Log.LogOutError(strErrInfo);
+					std::cout << strErrInfo << std::endl;
+				}
 			}
-			catch (Poco::Exception& exc)
+			else
 			{
-				std::string strErrInfo = Poco::format("删除试卷袋(%s)失败,%s", pPapers->strSrcPapersPath, exc.message());
-				g_Log.LogOutError(strErrInfo);
-				std::cout << strErrInfo << std::endl;
+				try
+				{
+					Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersPath));
+					filePapers.remove(true);
+					std::string strLog = "删除试卷袋文件(" + pPapers->strSrcPapersFileName + ")完成";
+					g_Log.LogOut(strLog);
+					std::cout << strLog << std::endl;
+				}
+				catch (Poco::Exception& exc)
+				{
+					std::string strErrInfo = Poco::format("删除试卷袋(%s)失败,%s", pPapers->strSrcPapersPath, exc.message());
+					g_Log.LogOutError(strErrInfo);
+					std::cout << strErrInfo << std::endl;
+				}
 			}
 		}
 
@@ -1445,5 +1458,39 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 		strLog = "选做题信息如下: " + jsnElectOmrString.str();
 		g_Log.LogOut(strLog);
 	}
+}
+
+bool CSendToHttpThread::MovePkg(pPAPERS_DETAIL pPapers, std::string& strMovePath)
+{
+	bool bResult = false;
+	std::string strFullPath = CMyCodeConvert::Gb2312ToUtf8(strMovePath);
+	try
+	{
+		Poco::File reSendDir(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strReSendPkg));
+		if (!reSendDir.exists())
+			reSendDir.createDirectories();
+
+		Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersPath));
+		if (!filePapers.exists())
+		{
+			std::string strLog = "试卷袋文件(" + pPapers->strSrcPapersFileName + ")不存在，可能已经被移除";
+			g_Log.LogOutError(strLog);
+			std::cout << strLog << std::endl;
+			bResult = false;
+			return bResult;
+		}
+		filePapers.moveTo(strFullPath);
+		std::string strLog = "移动试卷袋文件(" + pPapers->strSrcPapersFileName + ")完成";
+		g_Log.LogOut(strLog);
+		std::cout << strLog << std::endl;
+		bResult = true;
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strErrInfo = Poco::format("移动试卷袋(%s)失败,%s", pPapers->strSrcPapersPath, exc.message());
+		g_Log.LogOutError(strErrInfo);
+		std::cout << strErrInfo << std::endl;
+	}
+	return bResult;
 }
 

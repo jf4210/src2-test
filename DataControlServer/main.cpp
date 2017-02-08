@@ -172,7 +172,7 @@ protected:
 		return strJsnData;
 	}
 
-	//启动时，检测重新发送文件夹中是否有文件，有的话需要重新生成对应的任务列表
+	//启动时，检测重新发送文件夹中是否有文件，有的话需要重新生成对应的任务列表，放入解压线程中操作
 	void  InitReSendInfo()
 	{
 		bool bFind = false;
@@ -194,6 +194,26 @@ protected:
 					{
 						//读文件
 						std::string strResult = GetFileData(CMyCodeConvert::Utf8ToGb2312(p.toString()));
+
+						//++将此文件对应的试卷袋放入解压队列
+						std::string strPkgPath = strFilePath + strBaseName + ".pkg";
+						Poco::File pkgFile(strPkgPath);
+						if (!pkgFile.exists())
+						{
+
+							continue;
+						}
+
+						pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+						pDecompressTask->strFilePath = CMyCodeConvert::Utf8ToGb2312(p.toString());
+						pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
+						pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(p.getFileName());
+						pDecompressTask->nType = 3;
+
+						g_fmDecompressLock.lock();
+						g_lDecompressTask.push_back(pDecompressTask);
+						g_fmDecompressLock.unlock();
+						//--
 
 						pSEND_HTTP_TASK pNewTask = new SEND_HTTP_TASK;
 						pNewTask->nTaskType = 2;

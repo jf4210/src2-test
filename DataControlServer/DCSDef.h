@@ -76,7 +76,8 @@ extern	MAP_MODEL	_mapModel_;
 typedef struct _DecompressTask_
 {
 	int		nTimes;			//解压的次数
-	int		nType;			//解压类型，1-试卷袋pkg包，2-模板mod
+	int		nType;			//解压类型，1-试卷袋pkg包，2-模板mod，3-单独解压papersInfo.dat，然后发送图像地址信息，
+							//4-单独解压papersInfo.dat，然后发送OMR，5-单独解压papersInfo.dat，然后发送ZKZH，6-单独解压papersInfo.dat，然后发送选做信息
 	std::string strFileBaseName;
 	std::string strSrcFileName;
 	std::string strFilePath;

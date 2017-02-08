@@ -184,6 +184,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		}
 		if (!bOpenSucc)
 		{
+			HandleWithErrPaper(pPaper);
 			std::string strLog = "几次打开文件都失败2: " + (*itPic)->strPicPath;
 			g_pLogger->information(strLog);
 			continue;
@@ -236,44 +237,45 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		if(!bResult) bFind = true;
 		if (bFind)
 		{
-			pPaper->bIssuePaper = true;				//标识此学生试卷属于问题试卷
-			pPAPERSINFO pPapers = static_cast<pPAPERSINFO>(pPaper->pPapers);
-
-			pPapers->fmlPaper.lock();
-			PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
-			for (; itPaper != pPapers->lPaper.end();)
-			{
-				if (*itPaper == pPaper)
-				{
-					itPaper = pPapers->lPaper.erase(itPaper);
-					break;
-				}
-				else
-					itPaper++;
-			}
-			pPapers->fmlPaper.unlock();
-
-			pPapers->fmlIssue.lock();
-			bool bFind = false;
-			PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
-			for (; itIssuePaper != pPapers->lIssue.end();)
-			{
-				if (*itIssuePaper == pPaper)
-				{
-					bFind = true;
-					break;
-				}
-				else
-					itIssuePaper++;
-			}
-			if (!bFind)
-			{
-				pPapers->lIssue.push_back(pPaper);
-				pPapers->nRecogErrCount++;
-			}
-			pPapers->fmlIssue.unlock();
-
-			(static_cast<CDialog*>(pPaper->pSrcDlg))->SendMessage(MSG_ERR_RECOG, (WPARAM)pPaper, (LPARAM)pPapers);		//PostMessageW
+			HandleWithErrPaper(pPaper);
+// 			pPaper->bIssuePaper = true;				//标识此学生试卷属于问题试卷
+// 			pPAPERSINFO pPapers = static_cast<pPAPERSINFO>(pPaper->pPapers);
+// 
+// 			pPapers->fmlPaper.lock();
+// 			PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
+// 			for (; itPaper != pPapers->lPaper.end();)
+// 			{
+// 				if (*itPaper == pPaper)
+// 				{
+// 					itPaper = pPapers->lPaper.erase(itPaper);
+// 					break;
+// 				}
+// 				else
+// 					itPaper++;
+// 			}
+// 			pPapers->fmlPaper.unlock();
+// 
+// 			pPapers->fmlIssue.lock();
+// 			bool bFind = false;
+// 			PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
+// 			for (; itIssuePaper != pPapers->lIssue.end();)
+// 			{
+// 				if (*itIssuePaper == pPaper)
+// 				{
+// 					bFind = true;
+// 					break;
+// 				}
+// 				else
+// 					itIssuePaper++;
+// 			}
+// 			if (!bFind)
+// 			{
+// 				pPapers->lIssue.push_back(pPaper);
+// 				pPapers->nRecogErrCount++;
+// 			}
+// 			pPapers->fmlIssue.unlock();
+// 
+// 			(static_cast<CDialog*>(pPaper->pSrcDlg))->SendMessage(MSG_ERR_RECOG, (WPARAM)pPaper, (LPARAM)pPapers);		//PostMessageW
 			break;									//找到这张试卷有问题点，不进行下一张试卷的检测
 		}	
 		
@@ -3105,5 +3107,46 @@ bool CRecognizeThread::RecogVal_ElectOmr2(int nPic, cv::Mat& matCompPic, pST_Pic
 	return true;
 }
 
+void CRecognizeThread::HandleWithErrPaper(pST_PaperInfo pPaper)
+{
+	pPaper->bIssuePaper = true;				//标识此学生试卷属于问题试卷
+	pPAPERSINFO pPapers = static_cast<pPAPERSINFO>(pPaper->pPapers);
+
+	pPapers->fmlPaper.lock();
+	PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
+	for (; itPaper != pPapers->lPaper.end();)
+	{
+		if (*itPaper == pPaper)
+		{
+			itPaper = pPapers->lPaper.erase(itPaper);
+			break;
+		}
+		else
+			itPaper++;
+	}
+	pPapers->fmlPaper.unlock();
+
+	pPapers->fmlIssue.lock();
+	bool bFind = false;
+	PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
+	for (; itIssuePaper != pPapers->lIssue.end();)
+	{
+		if (*itIssuePaper == pPaper)
+		{
+			bFind = true;
+			break;
+		}
+		else
+			itIssuePaper++;
+	}
+	if (!bFind)
+	{
+		pPapers->lIssue.push_back(pPaper);
+		pPapers->nRecogErrCount++;
+	}
+	pPapers->fmlIssue.unlock();
+
+	(static_cast<CDialog*>(pPaper->pSrcDlg))->SendMessage(MSG_ERR_RECOG, (WPARAM)pPaper, (LPARAM)pPapers);		//PostMessageW
+}
 
 
