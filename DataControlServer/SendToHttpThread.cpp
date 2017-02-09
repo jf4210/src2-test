@@ -328,8 +328,21 @@ void CSendToHttpThread::run()
 		catch (Poco::Exception& exc)
 		{
 			std::string strErrorInfo;
-			char szFailTimes[30] = { 0 };
-			sprintf(szFailTimes, " --- Send fail times : %d", pTask->nSendFlag);
+			char szSendType[30] = { 0 };
+			if (pTask->nTaskType == 1)
+				sprintf_s(szSendType, "(试卷图片)");
+			else if (pTask->nTaskType == 2)
+				sprintf_s(szSendType, "(图片地址)");
+			else if (pTask->nTaskType == 3)
+				sprintf_s(szSendType, "(OMR)");
+			else if (pTask->nTaskType == 4)
+				sprintf_s(szSendType, "(ZKZH)");
+			else if (pTask->nTaskType == 5)
+				sprintf_s(szSendType, "(选做题)");
+			else if (pTask->nTaskType == 6)
+				sprintf_s(szSendType, "(模板图片)");
+			char szFailTimes[100] = { 0 };
+			sprintf(szFailTimes, " --- %s Send fail times : %d", szSendType, pTask->nSendFlag);
 
 			strErrorInfo.append(exc.displayText());
 			strErrorInfo.append(szFailTimes);
@@ -379,6 +392,10 @@ void CSendToHttpThread::run()
 			else if (pTask->nTaskType == 4)
 			{
 				strErrorInfo.append("**** Unknown error ***\t提交ZKZH异常");
+			}
+			else if (pTask->nTaskType == 5)
+			{
+				strErrorInfo.append("**** Unknown error ***\t提交选做题信息异常");
 			}
 
 			std::cout << "\n";

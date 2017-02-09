@@ -28,7 +28,7 @@
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION "DataControlServer V1.60111"
+#define SOFT_VERSION "DataControlServer V1.70209-1"
 
 
 #define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}
@@ -81,6 +81,7 @@ typedef struct _DecompressTask_
 	std::string strFileBaseName;
 	std::string strSrcFileName;
 	std::string strFilePath;
+	std::string strTransferData;	//透传数据
 	_DecompressTask_()
 	{
 		nType = 1;

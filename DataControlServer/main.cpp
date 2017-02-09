@@ -160,7 +160,7 @@ protected:
 		std::string strJsnData;
 		std::ifstream in(strPath);
 		if (!in)
-			return NULL;
+			return "";
 
 		std::string strJsnLine;
 		while (!in.eof())
@@ -196,34 +196,37 @@ protected:
 						std::string strResult = GetFileData(CMyCodeConvert::Utf8ToGb2312(p.toString()));
 
 						//++将此文件对应的试卷袋放入解压队列
-						std::string strPkgPath = strFilePath + strBaseName + ".pkg";
+						std::string strPkgBaseName = strBaseName.substr(0, nPos);
+						std::string strPkgPath = strFilePath + strPkgBaseName + ".pkg";
 						Poco::File pkgFile(strPkgPath);
 						if (!pkgFile.exists())
 						{
-
+							strLog.append(strPkgBaseName + ".pkg(未发现" + ")");
 							continue;
 						}
 
-						pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
-						pDecompressTask->strFilePath = CMyCodeConvert::Utf8ToGb2312(p.toString());
-						pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
-						pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(p.getFileName());
-						pDecompressTask->nType = 3;
+						strLog.append(strPkgBaseName + ".pkg ");
 
-						g_fmDecompressLock.lock();
-						g_lDecompressTask.push_back(pDecompressTask);
-						g_fmDecompressLock.unlock();
+						if (strResult != "")
+						{
+							pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+							pDecompressTask->strFilePath = CMyCodeConvert::Utf8ToGb2312(strPkgPath);
+							pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(strPkgBaseName);
+							pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(strPkgBaseName + ".pkg");
+							pDecompressTask->nType = 3;
+							pDecompressTask->strTransferData = strResult;
+
+							g_fmDecompressLock.lock();
+							g_lDecompressTask.push_back(pDecompressTask);
+							g_fmDecompressLock.unlock();
+						}
+						else
+						{
+							std::string strErrInfo = "试卷袋(" + strPkgBaseName + ")需要提交的图片地址数据为空，不进行提交操作\n";
+							strLog.append(strErrInfo);
+							std::cout << strErrInfo << std::endl;
+						}
 						//--
-
-						pSEND_HTTP_TASK pNewTask = new SEND_HTTP_TASK;
-						pNewTask->nTaskType = 2;
-						pNewTask->strResult = strResult;
-						pNewTask->pPapers = pPapers;		//检查图片地址、OMR、ZKZH、选做题信息是否都提交成功，没有提交成功的将此信息记录到文本文件，下次重启时自动重新提交
-						pNewTask->strEzs = pPapers->strEzs;
-						pNewTask->strUri = SysSet.m_strBackUri + "/studentAnswerSheet";
-						g_fmHttpSend.lock();
-						g_lHttpSend.push_back(pNewTask);
-						g_fmHttpSend.unlock();
 					}
 				}
 			}
@@ -232,7 +235,7 @@ protected:
 		if (bFind)
 		{
 			g_Log.LogOut(strLog);
-			std::cout << strLog << std::endl;
+//			std::cout << strLog << std::endl;
 		}
 	}
 
@@ -306,6 +309,7 @@ protected:
 
 		InitModelInfo();
 		InitPapersList();
+		InitReSendInfo();
 
 		std::vector<CDecompressThread*> vecDecompressThreadObj;
 		Poco::Thread* pDecompressThread = new Poco::Thread[SysSet.m_nDecompressThreads];

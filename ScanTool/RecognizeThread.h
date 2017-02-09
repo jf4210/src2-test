@@ -50,6 +50,9 @@ public:
 
 	int calcSnDiffVal(pSN_ITEM pSn, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemDiff);
 	int calcOmrDensityDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemDiff);
+
+	void HandleWithErrPaper(pST_PaperInfo pPaper);	//处理识别错误的试卷
+
 	Poco::Event		eExit;
 private:
 	std::map<pMODEL, pMODELINFO> _mapModel;		//本线程已经读取的模板列表，防止同样的模板多次读取浪费时间
