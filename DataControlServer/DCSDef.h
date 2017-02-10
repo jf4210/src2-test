@@ -36,6 +36,10 @@
 extern CLog g_Log;
 extern int	g_nExitFlag;
 
+typedef std::map<std::string, pPAPERS_DETAIL> MAP_RESEND_PKG;
+extern Poco::FastMutex	_mapResendPkgLock_;
+extern MAP_RESEND_PKG _mapResendPkg_;
+
 typedef std::map<std::string, std::string> MAP_PIC_ADDR;
 extern Poco::FastMutex _mapPicAddrLock_;
 extern MAP_PIC_ADDR _mapPicAddr_;

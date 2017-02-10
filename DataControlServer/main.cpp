@@ -32,6 +32,9 @@ MAP_MODEL	_mapModel_;				//模板信息
 Poco::FastMutex _mapPicAddrLock_;
 MAP_PIC_ADDR	_mapPicAddr_;
 
+Poco::FastMutex	_mapResendPkgLock_;
+MAP_RESEND_PKG	_mapResendPkg_;		//需要重新发送数据包映射关系，防止多次解压，比如一个试卷包可能出现OMR、ZHZH、选做都提交失败的情况，此时包只有一个，只需要解压一次
+
 class DCS : public Poco::Util::ServerApplication
 {
 protected:
@@ -175,7 +178,7 @@ protected:
 	//启动时，检测重新发送文件夹中是否有文件，有的话需要重新生成对应的任务列表，放入解压线程中操作
 	void  InitReSendInfo()
 	{
-		bool bFind = false;
+//		bool bFind = false;
 		std::string strLog = "添加上次关闭发送失败需要重新上传的信息:";
 		std::string strFilePath = CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strReSendPkg);
 		Poco::DirectoryIterator it(strFilePath);
@@ -188,45 +191,79 @@ protected:
 				std::string strBaseName = p.getBaseName();
 				if (p.getExtension() == "txt")
 				{
-					bFind = true;
+					bool bFind = false;
 					int nPos = -1;
+					std::string strPkgBaseName;
+					std::string strPkgPath;
+					std::string strTxtData;
+					pDECOMPRESSTASK pDecompressTask = NULL;
 					if ((nPos = strBaseName.find("_#_pics")) != std::string::npos)
 					{
-						//读文件
-						std::string strResult = GetFileData(CMyCodeConvert::Utf8ToGb2312(p.toString()));
+						bFind = true;
+						strTxtData = GetFileData(CMyCodeConvert::Utf8ToGb2312(p.toString()));
 
-						//++将此文件对应的试卷袋放入解压队列
+						strPkgBaseName = strBaseName.substr(0, nPos);
+						strPkgPath = strFilePath + strPkgBaseName + ".pkg";
+						Poco::File pkgFile(strPkgPath);
+						if (!pkgFile.exists())
+						{
+							strLog.append(strPkgBaseName + ".pkg(提交图片地址-未发现此包)");
+							continue;
+						}
+						
+						if (strTxtData != "")
+						{
+							strLog.append(strPkgBaseName + ".pkg(提交图片地址) ");
+
+							pDecompressTask = new DECOMPRESSTASK;
+							pDecompressTask->nType = 3;
+						}
+						else
+						{
+							std::string strErrInfo = "\n试卷袋(" + strPkgBaseName + ")需要提交的图片地址数据为空，不进行提交操作\n";
+							strLog.append(strErrInfo);
+							std::cout << strErrInfo << std::endl;
+						}
+					}
+					else if ((nPos = strBaseName.find("_#_omr")) != std::string::npos)
+					{
+						bFind = true;
+						strTxtData = GetFileData(CMyCodeConvert::Utf8ToGb2312(p.toString()));
+
 						std::string strPkgBaseName = strBaseName.substr(0, nPos);
 						std::string strPkgPath = strFilePath + strPkgBaseName + ".pkg";
 						Poco::File pkgFile(strPkgPath);
 						if (!pkgFile.exists())
 						{
-							strLog.append(strPkgBaseName + ".pkg(未发现" + ")");
+							strLog.append(strPkgBaseName + ".pkg(提交OMR-未发现此包)");
 							continue;
 						}
 
-						strLog.append(strPkgBaseName + ".pkg ");
-
-						if (strResult != "")
+						if (strTxtData != "")
 						{
-							pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
-							pDecompressTask->strFilePath = CMyCodeConvert::Utf8ToGb2312(strPkgPath);
-							pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(strPkgBaseName);
-							pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(strPkgBaseName + ".pkg");
-							pDecompressTask->nType = 3;
-							pDecompressTask->strTransferData = strResult;
+							strLog.append(strPkgBaseName + ".pkg(提交OMR) ");
 
-							g_fmDecompressLock.lock();
-							g_lDecompressTask.push_back(pDecompressTask);
-							g_fmDecompressLock.unlock();
+							pDecompressTask = new DECOMPRESSTASK;
+							pDecompressTask->nType = 4;
 						}
 						else
 						{
-							std::string strErrInfo = "试卷袋(" + strPkgBaseName + ")需要提交的图片地址数据为空，不进行提交操作\n";
+							std::string strErrInfo = "\n试卷袋(" + strPkgBaseName + ")需要提交的OMR数据为空，不进行提交操作\n";
 							strLog.append(strErrInfo);
 							std::cout << strErrInfo << std::endl;
 						}
-						//--
+					}
+
+					if (bFind)
+					{
+						pDecompressTask->strFilePath = CMyCodeConvert::Utf8ToGb2312(strPkgPath);
+						pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(strPkgBaseName);
+						pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(strPkgBaseName + ".pkg");
+						pDecompressTask->strTransferData = strTxtData;
+
+						g_fmDecompressLock.lock();
+						g_lDecompressTask.push_back(pDecompressTask);
+						g_fmDecompressLock.unlock();
 					}
 				}
 			}

@@ -261,115 +261,139 @@ void CDecompressThread::run()
 
 void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 {
-	std::string strLog = "获得试卷包解压任务: " + pTask->strFilePath;
-	g_Log.LogOut(strLog);
-
-	std::ifstream inp(pTask->strFilePath.c_str(), std::ios::binary);
-	if (!inp)
-	{
-		strLog = "打开试卷包文件失败";
-		g_Log.LogOutError(strLog);
-		return;
-	}
 	std::string strOutDir = SysSet.m_strDecompressPath + "\\" + CMyCodeConvert::Gb2312ToUtf8(pTask->strFileBaseName);
 
-	pPAPERS_DETAIL pPapers = new PAPERS_DETAIL;
-	pPapers->strPapersName = pTask->strFileBaseName;
-	pPapers->strPapersPath = CMyCodeConvert::Utf8ToGb2312(strOutDir);
-	pPapers->strSrcPapersPath = pTask->strFilePath;
-	pPapers->strSrcPapersFileName = pTask->strSrcFileName;
-
-	Poco::File decompressDir(strOutDir);
-	if (decompressDir.exists())
-		decompressDir.remove(true);
-	decompressDir.createDirectories();
-
-#ifdef USE_POCO_UNZIP
-	Poco::Zip::Decompress dec(inp, strOutDir);
-	DecompressHandler handler(pPapers);
-	dec.EError += Poco::Delegate<DecompressHandler, std::pair<const Poco::Zip::ZipLocalFileHeader, const std::string> >(&handler, &DecompressHandler::onError);
-	dec.EOk += Poco::Delegate<DecompressHandler, std::pair<const Poco::Zip::ZipLocalFileHeader, const Poco::Path> >(&handler, &DecompressHandler::onOk);
-	dec.decompressAllFiles();
-	dec.EError -= Poco::Delegate<DecompressHandler, std::pair<const Poco::Zip::ZipLocalFileHeader, const std::string> >(&handler, &DecompressHandler::onError);
-	dec.EOk -= Poco::Delegate<DecompressHandler, std::pair<const Poco::Zip::ZipLocalFileHeader, const Poco::Path> >(&handler, &DecompressHandler::onOk);
-#else
-	unzFile uf = NULL;
-
-	#ifdef USEWIN32IOAPI
-	zlib_filefunc64_def ffunc;
-	fill_win32_filefunc64A(&ffunc);
-	uf = unzOpen2_64(pTask->strFilePath.c_str(), &ffunc);
-	#else
-	uf = unzOpen64(pTask->strFilePath.c_str());
-	#endif
-
-	if (uf == NULL)
+	bool bNeedDecompress = true;
+	pPAPERS_DETAIL pPapers = NULL;
+	if (pTask->nType >= 3)
 	{
-		std::string strLog = "打开压缩文件失败:" + pPapers->strPapersPath;
-		g_Log.LogOutError(strLog);
-		std::cout << strLog << std::endl;
-		return;
-	}
-	int ret = 0;
-	int opt_do_extract_withoutpath = 0;
-	int opt_overwrite = 1;
-	const char *password = NULL;
-	password = "static";
+		_mapResendPkgLock_.lock();
+		MAP_RESEND_PKG::iterator itPkg = _mapResendPkg_.find(pTask->strFileBaseName);
+		if (itPkg == _mapResendPkg_.end())
+		{
+			pPapers = new PAPERS_DETAIL;
+			pPapers->strPapersName = pTask->strFileBaseName;
+			pPapers->strPapersPath = CMyCodeConvert::Utf8ToGb2312(strOutDir);
+			pPapers->strSrcPapersPath = pTask->strFilePath;
+			pPapers->strSrcPapersFileName = pTask->strSrcFileName;
 
-// 	Poco::File decompressDir(strOutDir);
-// 	if (decompressDir.exists())
-// 		decompressDir.remove(true);
-// 	decompressDir.createDirectories();
-
-	
-#ifndef DecompressTest
-	if (CHDIR(pPapers->strPapersPath.c_str()))
-	{
-		std::string strLog = "切换目录失败:" + pPapers->strPapersPath;
-		g_Log.LogOutError(strLog);
-		std::cout << strLog << std::endl;
-		return;
+			_mapResendPkg_.insert(std::pair<std::string, pPAPERS_DETAIL>(pTask->strFileBaseName, pPapers));
+		}
+		else
+		{
+			pPapers = itPkg->second;
+			bNeedDecompress = false;
+		}
+		_mapResendPkgLock_.unlock();
 	}
-#else
-	std::string strBaseDir = CMyCodeConvert::Utf8ToGb2312(strOutDir);
-	char szBaseDir[256] = { 0 };
-	strncpy_s(szBaseDir, strBaseDir.c_str(), strBaseDir.length());
-#endif
-	if (pTask->nType <= 2)
-		ret = do_extract_all(uf, opt_do_extract_withoutpath, opt_overwrite, password, szBaseDir);
 	else
-		ret = do_extract_onefile(uf, "papersInfo.dat", opt_do_extract_withoutpath, opt_overwrite, password, szBaseDir);
-	unzClose(uf);
-
-	if (ret != 0)
 	{
-		//************	注意：解压失败需要再次尝试	*************************
-
-		std::string strLog = "解压试卷包(";
-		strLog.append(pPapers->strPapersName);
-		strLog.append(")失败, 路径: " + pPapers->strPapersPath);
-		g_Log.LogOutError(strLog);
-		std::cout << strLog << std::endl;
-		return;
+		pPapers = new PAPERS_DETAIL;
+		pPapers->strPapersName = pTask->strFileBaseName;
+		pPapers->strPapersPath = CMyCodeConvert::Utf8ToGb2312(strOutDir);
+		pPapers->strSrcPapersPath = pTask->strFilePath;
+		pPapers->strSrcPapersFileName = pTask->strSrcFileName;
 	}
 	
-#ifndef DecompressTest
-	CHDIR(CMyCodeConvert::Utf8ToGb2312(SysSet.m_strDecompressPath).c_str());		//切换回解压根目录，否则删除压缩文件夹失败
-#endif
-
-	if (pTask->nType == 2)
+	if (bNeedDecompress)
 	{
-		UploadModelPic(pPapers, pPapers->strPapersPath);
+		std::string strLog = "获得试卷包解压任务: " + pTask->strFilePath;
+		g_Log.LogOut(strLog);
+		std::ifstream inp(pTask->strFilePath.c_str(), std::ios::binary);
+		if (!inp)
+		{
+			strLog = "打开试卷包文件失败";
+			g_Log.LogOutError(strLog);
+			return;
+		}
 
-		g_fmPapers.lock();
-		g_lPapers.push_back(pPapers);
-		g_fmPapers.unlock();
-		return;
+		Poco::File decompressDir(strOutDir);
+		if (decompressDir.exists())
+			decompressDir.remove(true);
+		decompressDir.createDirectories();
+
+	#ifdef USE_POCO_UNZIP
+		Poco::Zip::Decompress dec(inp, strOutDir);
+		DecompressHandler handler(pPapers);
+		dec.EError += Poco::Delegate<DecompressHandler, std::pair<const Poco::Zip::ZipLocalFileHeader, const std::string> >(&handler, &DecompressHandler::onError);
+		dec.EOk += Poco::Delegate<DecompressHandler, std::pair<const Poco::Zip::ZipLocalFileHeader, const Poco::Path> >(&handler, &DecompressHandler::onOk);
+		dec.decompressAllFiles();
+		dec.EError -= Poco::Delegate<DecompressHandler, std::pair<const Poco::Zip::ZipLocalFileHeader, const std::string> >(&handler, &DecompressHandler::onError);
+		dec.EOk -= Poco::Delegate<DecompressHandler, std::pair<const Poco::Zip::ZipLocalFileHeader, const Poco::Path> >(&handler, &DecompressHandler::onOk);
+	#else
+		unzFile uf = NULL;
+
+		#ifdef USEWIN32IOAPI
+		zlib_filefunc64_def ffunc;
+		fill_win32_filefunc64A(&ffunc);
+		uf = unzOpen2_64(pTask->strFilePath.c_str(), &ffunc);
+		#else
+		uf = unzOpen64(pTask->strFilePath.c_str());
+		#endif
+
+		if (uf == NULL)
+		{
+			std::string strLog = "打开压缩文件失败:" + pPapers->strPapersPath;
+			g_Log.LogOutError(strLog);
+			std::cout << strLog << std::endl;
+			return;
+		}
+		int ret = 0;
+		int opt_do_extract_withoutpath = 0;
+		int opt_overwrite = 1;
+		const char *password = NULL;
+		password = "static";
+
+		#ifndef DecompressTest
+		if (CHDIR(pPapers->strPapersPath.c_str()))
+		{
+			std::string strLog = "切换目录失败:" + pPapers->strPapersPath;
+			g_Log.LogOutError(strLog);
+			std::cout << strLog << std::endl;
+			return;
+		}
+		#else
+		std::string strBaseDir = CMyCodeConvert::Utf8ToGb2312(strOutDir);
+		char szBaseDir[256] = { 0 };
+		strncpy_s(szBaseDir, strBaseDir.c_str(), strBaseDir.length());
+		#endif
+		if (pTask->nType <= 2)
+			ret = do_extract_all(uf, opt_do_extract_withoutpath, opt_overwrite, password, szBaseDir);
+		else
+			ret = do_extract_onefile(uf, "papersInfo.dat", opt_do_extract_withoutpath, opt_overwrite, password, szBaseDir);
+		unzClose(uf);
+
+		if (ret != 0)
+		{
+			//************	注意：解压失败需要再次尝试	*************************
+
+			std::string strLog = "解压试卷包(";
+			strLog.append(pPapers->strPapersName);
+			strLog.append(")失败, 路径: " + pPapers->strPapersPath);
+			g_Log.LogOutError(strLog);
+			std::cout << strLog << std::endl;
+			return;
+		}
+
+		#ifndef DecompressTest
+		CHDIR(CMyCodeConvert::Utf8ToGb2312(SysSet.m_strDecompressPath).c_str());		//切换回解压根目录，否则删除压缩文件夹失败
+		#endif
+
+		if (pTask->nType == 2)
+		{
+			UploadModelPic(pPapers, pPapers->strPapersPath);
+
+			g_fmPapers.lock();
+			g_lPapers.push_back(pPapers);
+			g_fmPapers.unlock();
+			return;
+		}
+
+		if (pTask->nType <= 2)
+			SearchExtractFile(pPapers, pPapers->strPapersPath);
+	#endif
 	}
 	
-	if (pTask->nType <= 2)
-		SearchExtractFile(pPapers, pPapers->strPapersPath);
-#endif
 
 	//解压完成
 	pPapers->lPaper.sort(SortByPaper);
@@ -474,11 +498,31 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		g_lHttpSend.push_back(pNewTask);
 		g_fmHttpSend.unlock();
 	}
+	else if (pTask->nType == 4)
+	{
+		pPapers->fmTask.lock();
+		pPapers->nTaskCounts++;			//omr
+		pPapers->fmTask.unlock();
+		pPapers->strSendOmrResult = pTask->strTransferData;	//将结果信息保存到试卷袋结构体中，以防异常错误时需要重新计算 2017.1.19
+
+		pSEND_HTTP_TASK pOmrTask = new SEND_HTTP_TASK;
+		pOmrTask->nTaskType = 3;
+		pOmrTask->strResult = pTask->strTransferData;
+		pOmrTask->pPapers = pPapers;
+		pOmrTask->strEzs = pPapers->strEzs;
+		pOmrTask->strUri = SysSet.m_strBackUri + "/omr";
+		g_fmHttpSend.lock();
+		g_lHttpSend.push_back(pOmrTask);
+		g_fmHttpSend.unlock();
+	}
 #endif
 	
-	g_fmPapers.lock();
-	g_lPapers.push_back(pPapers);
-	g_fmPapers.unlock();
+	if (bNeedDecompress)
+	{
+		g_fmPapers.lock();
+		g_lPapers.push_back(pPapers);
+		g_fmPapers.unlock();
+	}
 }
 
 bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPapers, pDECOMPRESSTASK pTask)
