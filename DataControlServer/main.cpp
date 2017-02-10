@@ -199,7 +199,6 @@ protected:
 					pDECOMPRESSTASK pDecompressTask = NULL;
 					if ((nPos = strBaseName.find("_#_pics")) != std::string::npos)
 					{
-						bFind = true;
 						strTxtData = GetFileData(CMyCodeConvert::Utf8ToGb2312(p.toString()));
 
 						strPkgBaseName = strBaseName.substr(0, nPos);
@@ -215,6 +214,7 @@ protected:
 						{
 							strLog.append(strPkgBaseName + ".pkg(提交图片地址) ");
 
+							bFind = true;
 							pDecompressTask = new DECOMPRESSTASK;
 							pDecompressTask->nType = 3;
 						}
@@ -227,11 +227,10 @@ protected:
 					}
 					else if ((nPos = strBaseName.find("_#_omr")) != std::string::npos)
 					{
-						bFind = true;
 						strTxtData = GetFileData(CMyCodeConvert::Utf8ToGb2312(p.toString()));
 
-						std::string strPkgBaseName = strBaseName.substr(0, nPos);
-						std::string strPkgPath = strFilePath + strPkgBaseName + ".pkg";
+						strPkgBaseName = strBaseName.substr(0, nPos);
+						strPkgPath = strFilePath + strPkgBaseName + ".pkg";
 						Poco::File pkgFile(strPkgPath);
 						if (!pkgFile.exists())
 						{
@@ -243,12 +242,69 @@ protected:
 						{
 							strLog.append(strPkgBaseName + ".pkg(提交OMR) ");
 
+							bFind = true;
 							pDecompressTask = new DECOMPRESSTASK;
 							pDecompressTask->nType = 4;
 						}
 						else
 						{
 							std::string strErrInfo = "\n试卷袋(" + strPkgBaseName + ")需要提交的OMR数据为空，不进行提交操作\n";
+							strLog.append(strErrInfo);
+							std::cout << strErrInfo << std::endl;
+						}
+					}
+					else if ((nPos = strBaseName.find("_#_zkzh")) != std::string::npos)
+					{
+						strTxtData = GetFileData(CMyCodeConvert::Utf8ToGb2312(p.toString()));
+
+						strPkgBaseName = strBaseName.substr(0, nPos);
+						strPkgPath = strFilePath + strPkgBaseName + ".pkg";
+						Poco::File pkgFile(strPkgPath);
+						if (!pkgFile.exists())
+						{
+							strLog.append(strPkgBaseName + ".pkg(提交ZKZH-未发现此包)");
+							continue;
+						}
+
+						if (strTxtData != "")
+						{
+							strLog.append(strPkgBaseName + ".pkg(提交ZKZH) ");
+
+							bFind = true;
+							pDecompressTask = new DECOMPRESSTASK;
+							pDecompressTask->nType = 5;
+						}
+						else
+						{
+							std::string strErrInfo = "\n试卷袋(" + strPkgBaseName + ")需要提交的ZKZH数据为空，不进行提交操作\n";
+							strLog.append(strErrInfo);
+							std::cout << strErrInfo << std::endl;
+						}
+					}
+					else if ((nPos = strBaseName.find("_#_electOmr")) != std::string::npos)
+					{
+						strTxtData = GetFileData(CMyCodeConvert::Utf8ToGb2312(p.toString()));
+
+						strPkgBaseName = strBaseName.substr(0, nPos);
+						strPkgPath = strFilePath + strPkgBaseName + ".pkg";
+						Poco::File pkgFile(strPkgPath);
+						if (!pkgFile.exists())
+						{
+							strLog.append(strPkgBaseName + ".pkg(提交选做题-未发现此包)");
+							continue;
+						}
+
+						if (strTxtData != "")
+						{
+							strLog.append(strPkgBaseName + ".pkg(提交选做题) ");
+
+							bFind = true;
+							pDecompressTask = new DECOMPRESSTASK;
+							pDecompressTask->nType = 6;
+						}
+						else
+						{
+							std::string strErrInfo = "\n试卷袋(" + strPkgBaseName + ")需要提交的选做题数据为空，不进行提交操作\n";
 							strLog.append(strErrInfo);
 							std::cout << strErrInfo << std::endl;
 						}
@@ -260,6 +316,7 @@ protected:
 						pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(strPkgBaseName);
 						pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(strPkgBaseName + ".pkg");
 						pDecompressTask->strTransferData = strTxtData;
+						pDecompressTask->strTransferFilePath = p.toString();
 
 						g_fmDecompressLock.lock();
 						g_lDecompressTask.push_back(pDecompressTask);
@@ -269,11 +326,9 @@ protected:
 			}
 			it++;
 		}
-		if (bFind)
-		{
-			g_Log.LogOut(strLog);
-//			std::cout << strLog << std::endl;
-		}
+		
+		g_Log.LogOut(strLog);
+		std::cout << strLog << std::endl;
 	}
 
 	int main(const std::vector < std::string > & args) 

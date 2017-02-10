@@ -357,7 +357,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		char szBaseDir[256] = { 0 };
 		strncpy_s(szBaseDir, strBaseDir.c_str(), strBaseDir.length());
 		#endif
-		if (pTask->nType <= 2)
+		if (pTask->nType <= 3)
 			ret = do_extract_all(uf, opt_do_extract_withoutpath, opt_overwrite, password, szBaseDir);
 		else
 			ret = do_extract_onefile(uf, "papersInfo.dat", opt_do_extract_withoutpath, opt_overwrite, password, szBaseDir);
@@ -389,38 +389,36 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 			return;
 		}
 
-		if (pTask->nType <= 2)
+		if (pTask->nType <= 3)
 			SearchExtractFile(pPapers, pPapers->strPapersPath);
 	#endif
-	}
-	
+		//解压完成
+		pPapers->lPaper.sort(SortByPaper);
 
-	//解压完成
-	pPapers->lPaper.sort(SortByPaper);
+		//读取试卷袋文件夹里面的文件获取试卷袋信息
 
-	//读取试卷袋文件夹里面的文件获取试卷袋信息
+		std::string strPapersFilePath = strOutDir + "\\papersInfo.dat";
+		bool bResult_Data = GetFileData(strPapersFilePath, pPapers, pTask);
+		if (!bResult_Data)
+		{
+			std::string strLog = Poco::format("试卷袋(%s),解压后数据不一致，需要重新解压,已解压次数%d", pPapers->strPapersName, pTask->nTimes + 1);
+			g_Log.LogOutError(strLog);
+			std::cout << strLog << std::endl;
+			SAFE_RELEASE(pPapers);
 
-	std::string strPapersFilePath = strOutDir + "\\papersInfo.dat";
-	bool bResult_Data = GetFileData(strPapersFilePath, pPapers, pTask);
-	if (!bResult_Data)
-	{
-		std::string strLog = Poco::format("试卷袋(%s),解压后数据不一致，需要重新解压,已解压次数%d", pPapers->strPapersName, pTask->nTimes + 1);
-		g_Log.LogOutError(strLog);
-		std::cout << strLog << std::endl;
-		SAFE_RELEASE(pPapers);
-
-		Poco::Thread::sleep(500);
-		pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
-		pDecompressTask->nTimes = pTask->nTimes + 1;
-		pDecompressTask->strFilePath = pTask->strFilePath;
-		pDecompressTask->strFileBaseName = pTask->strFileBaseName;
-		pDecompressTask->strSrcFileName = pTask->strSrcFileName;
-		pDecompressTask->nType = pTask->nType;
-		pDecompressTask->strTransferData = pTask->strTransferData;
-		g_fmDecompressLock.lock();
-		g_lDecompressTask.push_back(pDecompressTask);
-		g_fmDecompressLock.unlock();
-		return;
+			Poco::Thread::sleep(500);
+			pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+			pDecompressTask->nTimes = pTask->nTimes + 1;
+			pDecompressTask->strFilePath = pTask->strFilePath;
+			pDecompressTask->strFileBaseName = pTask->strFileBaseName;
+			pDecompressTask->strSrcFileName = pTask->strSrcFileName;
+			pDecompressTask->nType = pTask->nType;
+			pDecompressTask->strTransferData = pTask->strTransferData;
+			g_fmDecompressLock.lock();
+			g_lDecompressTask.push_back(pDecompressTask);
+			g_fmDecompressLock.unlock();
+			return;
+		}
 	}
 
 #ifdef TEST_MODE
@@ -476,6 +474,10 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		}
 		else
 		{
+			pPapers->fmResultState.lock();
+			pPapers->nResultSendState = pPapers->nResultSendState | 1;	//将图片地址上传位置设置为上传成功，因为进入到此步骤时说明地址已经提交成功
+			pPapers->fmResultState.unlock();
+
 			pSEND_HTTP_TASK pHttpTask = new SEND_HTTP_TASK;
 			pHttpTask->nTaskType = 7;
 			pHttpTask->pPapers = pPapers;
@@ -497,9 +499,17 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		g_fmHttpSend.lock();
 		g_lHttpSend.push_back(pNewTask);
 		g_fmHttpSend.unlock();
+
+		Poco::File fSrc(pTask->strTransferFilePath);
+		if (fSrc.exists())
+			fSrc.remove();
 	}
 	else if (pTask->nType == 4)
 	{
+		pPapers->fmResultState.lock();
+		pPapers->nResultSendState = pPapers->nResultSendState | 1;	//将图片地址上传位置设置为上传成功，因为进入到此步骤时说明地址已经提交成功
+		pPapers->fmResultState.unlock();
+
 		pPapers->fmTask.lock();
 		pPapers->nTaskCounts++;			//omr
 		pPapers->fmTask.unlock();
@@ -514,6 +524,60 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		g_fmHttpSend.lock();
 		g_lHttpSend.push_back(pOmrTask);
 		g_fmHttpSend.unlock();
+
+		Poco::File fSrc(pTask->strTransferFilePath);
+		if (fSrc.exists())
+			fSrc.remove();
+	}
+	else if (pTask->nType == 5)
+	{
+		pPapers->fmResultState.lock();
+		pPapers->nResultSendState = pPapers->nResultSendState | 1;	//将图片地址上传位置设置为上传成功，因为进入到此步骤时说明地址已经提交成功
+		pPapers->fmResultState.unlock();
+
+		pPapers->fmTask.lock();
+		pPapers->nTaskCounts++;			//zkzh
+		pPapers->fmTask.unlock();
+		pPapers->strSendZkzhResult = pTask->strTransferData;	//将结果信息保存到试卷袋结构体中，以防异常错误时需要重新计算 2017.1.19
+
+		pSEND_HTTP_TASK pSnTask = new SEND_HTTP_TASK;
+		pSnTask->nTaskType = 4;
+		pSnTask->strResult = pTask->strTransferData;
+		pSnTask->pPapers = pPapers;
+		pSnTask->strEzs = pPapers->strEzs;
+		pSnTask->strUri = SysSet.m_strBackUri + "/zkzh";
+		g_fmHttpSend.lock();
+		g_lHttpSend.push_back(pSnTask);
+		g_fmHttpSend.unlock();
+
+		Poco::File fSrc(pTask->strTransferFilePath);
+		if (fSrc.exists())
+			fSrc.remove();
+	}
+	else if (pTask->nType == 6)
+	{
+		pPapers->fmResultState.lock();
+		pPapers->nResultSendState = pPapers->nResultSendState | 1;	//将图片地址上传位置设置为上传成功，因为进入到此步骤时说明地址已经提交成功
+		pPapers->fmResultState.unlock();
+
+		pPapers->fmTask.lock();
+		pPapers->nTaskCounts++;			//electOmr
+		pPapers->fmTask.unlock();
+		pPapers->strSendElectOmrResult = pTask->strTransferData;	//将结果信息保存到试卷袋结构体中，以防异常错误时需要重新计算 2017.1.19
+
+		pSEND_HTTP_TASK pElectOmrTask = new SEND_HTTP_TASK;
+		pElectOmrTask->nTaskType = 5;
+		pElectOmrTask->strResult = pTask->strTransferData;
+		pElectOmrTask->pPapers = pPapers;
+		pElectOmrTask->strEzs = pPapers->strEzs;
+		pElectOmrTask->strUri = SysSet.m_strBackUri + "/choosetitleinfo";
+		g_fmHttpSend.lock();
+		g_lHttpSend.push_back(pElectOmrTask);
+		g_fmHttpSend.unlock();
+
+		Poco::File fSrc(pTask->strTransferFilePath);
+		if (fSrc.exists())
+			fSrc.remove();
 	}
 #endif
 	
@@ -575,7 +639,7 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 		std::string strUploader = objData->get("uploader").convert<std::string>();
 		std::string strEzs	= objData->get("ezs").convert<std::string>();
 
-		if (pTask->nType <= 2)
+		if (pTask->nType <= 3)
 		{
 			bool bFindDeff = false;
 			std::string strStudentList_Src;

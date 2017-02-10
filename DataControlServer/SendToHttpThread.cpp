@@ -990,7 +990,7 @@ void CSendToHttpThread::checkTaskStatus(pPAPERS_DETAIL pPapers)
 		}
 		else	//以下情况只有在图片地址信息提交成功时才可能发生，因为只有在提交图片地址成功后，才发送OMR、ZKZH、选做信息
 		{
-			if (!nPushOmrSucc)
+			if (!nPushOmrSucc && !pPapers->strSendOmrResult.empty())
 			{
 				//***************	需要在启动时进行检测 2017.1.19	*******************************
 				std::string strFilePath = SysSet.m_strReSendPkg + pPapers->strPapersName + "_#_omr.txt";
@@ -999,7 +999,7 @@ void CSendToHttpThread::checkTaskStatus(pPAPERS_DETAIL pPapers)
 				out.close();
 				bMoveFlag = true;
 			}
-			if (!nPushZkzhSucc)
+			if (!nPushZkzhSucc && !pPapers->strSendZkzhResult.empty())
 			{
 				std::string strFilePath = SysSet.m_strReSendPkg + pPapers->strPapersName + "_#_zkzh.txt";
 				ofstream out(strFilePath);
@@ -1007,7 +1007,7 @@ void CSendToHttpThread::checkTaskStatus(pPAPERS_DETAIL pPapers)
 				out.close();
 				bMoveFlag = true;
 			}
-			if (!nPushElectOmrSucc)
+			if (!nPushElectOmrSucc && !pPapers->strSendElectOmrResult.empty())
 			{
 				std::string strFilePath = SysSet.m_strReSendPkg + pPapers->strPapersName + "_#_electOmr.txt";
 				ofstream out(strFilePath);

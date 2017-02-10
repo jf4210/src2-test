@@ -36,10 +36,6 @@
 extern CLog g_Log;
 extern int	g_nExitFlag;
 
-typedef std::map<std::string, pPAPERS_DETAIL> MAP_RESEND_PKG;
-extern Poco::FastMutex	_mapResendPkgLock_;
-extern MAP_RESEND_PKG _mapResendPkg_;
-
 typedef std::map<std::string, std::string> MAP_PIC_ADDR;
 extern Poco::FastMutex _mapPicAddrLock_;
 extern MAP_PIC_ADDR _mapPicAddr_;
@@ -80,12 +76,13 @@ extern	MAP_MODEL	_mapModel_;
 typedef struct _DecompressTask_
 {
 	int		nTimes;			//解压的次数
-	int		nType;			//解压类型，1-试卷袋pkg包，2-模板mod，3-单独解压papersInfo.dat，然后发送图像地址信息，
+	int		nType;			//解压类型，1-试卷袋pkg包，2-模板mod，3-单独解压papersInfo.dat，然后发送图像地址信息，此时需要完全解压，因为后面在发送成功后需要提交OMR等信息
 							//4-单独解压papersInfo.dat，然后发送OMR，5-单独解压papersInfo.dat，然后发送ZKZH，6-单独解压papersInfo.dat，然后发送选做信息
 	std::string strFileBaseName;
 	std::string strSrcFileName;
 	std::string strFilePath;
-	std::string strTransferData;	//透传数据
+	std::string strTransferData;		//透传数据
+	std::string strTransferFilePath;	//透传数据，TXT文件路径, utf8
 	_DecompressTask_()
 	{
 		nType = 1;
@@ -271,6 +268,10 @@ typedef std::list<pSCAN_REQ_TASK> LIST_SCAN_REQ;
 
 extern Poco::FastMutex		g_fmScanReq;
 extern LIST_SCAN_REQ		g_lScanReq;		//扫描端请求任务列表
+
+typedef std::map<std::string, pPAPERS_DETAIL> MAP_RESEND_PKG;
+extern Poco::FastMutex	_mapResendPkgLock_;
+extern MAP_RESEND_PKG _mapResendPkg_;
 
 bool encString(std::string& strSrc, std::string& strDst);
 bool decString(std::string& strSrc, std::string& strDst);
