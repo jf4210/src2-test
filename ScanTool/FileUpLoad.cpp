@@ -258,7 +258,7 @@ RESTART:
 							bRecvResult = true;
 							break;
 						case WAIT_TIMEOUT:
-							sprintf_s(szLog, "文件头数据发送完成，接收服务器回复命令失败(%s)失败1, 需要重传", T2A(pTask->strAnsName));
+							sprintf_s(szLog, "文件头数据发送完成，接收服务器回复命令失败(%s)失败(5s超时), 需要重传", T2A(pTask->strAnsName));
 							g_pLogger->information(szLog);
 							break;
 					}
@@ -295,7 +295,7 @@ RESTART:
 							bRecvResult = true;
 							break;
 						case WAIT_TIMEOUT:
-							sprintf_s(szLog, "文件数据发送完成，接收服务器回复命令失败(%s)失败2", T2A(pTask->strAnsName));
+							sprintf_s(szLog, "文件数据发送完成，接收服务器回复命令失败(%s)失败(10s超时)", T2A(pTask->strAnsName));
 							g_pLogger->information(szLog);
 							break;
 					}

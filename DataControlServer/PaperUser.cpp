@@ -56,10 +56,16 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 			//Í·ÐÅÏ¢
 			ST_CMD_HEADER header = *(ST_CMD_HEADER*)m_PacketBuf;
 			if (header.usVerifyCode != VERIFYCODE)
+			{
+				m_pTcpContext->ReleaseConnections();
 				return;
+			}
 
 			if (header.usCmd != REQUEST_UPLOADANS)
+			{
+				m_pTcpContext->ReleaseConnections();
 				return;
+			}
 
 			ST_FILE_INFO AnswerInfo = *(ST_FILE_INFO*)(m_PacketBuf + HEAD_SIZE);
 			strcpy_s(m_szFileName, AnswerInfo.szFileName);
@@ -192,13 +198,6 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 									strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
 								}
 
-// 								nPos = strModelName.find("_");
-// 								std::string strExamID = strModelName.substr(0, nPos);
-// 								nOldPos = nPos;
-// 								nPos = strModelName.find(".", nPos + 1);
-// 								std::string strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
-
-
 								std::string strLog;
 
 								pMODELINFO pModelInfo = NULL;
@@ -293,16 +292,7 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 								g_fmDecompressLock.lock();
 								g_lDecompressTask.push_back(pDecompressTask);
 								g_fmDecompressLock.unlock();
-							}
-							
-// 							pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
-// 							pDecompressTask->strFilePath = m_szFilePath;
-// 							pDecompressTask->strFileName = m_szFileName;
-//							int nPos = pDecompressTask->strFileName.rfind('.');
-// 							pDecompressTask->strFileName = pDecompressTask->strFileName.substr(0, nPos);	//pDecompressTask->strFileName.length() - 4
-// 							g_fmDecompressLock.lock();
-// 							g_lDecompressTask.push_back(pDecompressTask);
-// 							g_fmDecompressLock.unlock();
+							}							
 							#else
 							Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
 							if (fileList.exists())

@@ -67,8 +67,11 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 	if (bWarn)
 	{
 		((CScanToolDlg*)m_pDlg)->m_bF2Enable = TRUE;
+//		((CScanToolDlg*)m_pDlg)->m_bLastPkgSaveOK = FALSE;
 		return;
 	}
+
+//	((CScanToolDlg*)m_pDlg)->m_bLastPkgSaveOK = TRUE;
 
 	if (g_nManulUploadFile != 1)
 	{

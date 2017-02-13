@@ -129,7 +129,7 @@ CScanToolDlg::CScanToolDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	, m_pShowModelInfoDlg(NULL), m_pShowScannerInfoDlg(NULL)
 	, m_nDuplex(1), m_bF1Enable(FALSE), m_bF2Enable(FALSE)
 	, m_pCompressObj(NULL), m_pCompressThread(NULL)
-	, m_nCurrentScanCount(0)
+	, m_nCurrentScanCount(0), m_bLastPkgSaveOK(TRUE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);// IDR_MAINFRAME
 }
@@ -2608,9 +2608,12 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		char szTime[50] = { 0 };
 		sprintf_s(szTime, "%d%02d%02d%02d%02d%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
 
-		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s", T2A(g_strCurrentPath), T2A(strUser), nExamID, nSubjectID, szTime);
-		sprintf_s(szZipBaseName, "%s_%d-%d_%s", T2A(strUser), nExamID, nSubjectID, szTime);
-		sprintf_s(szZipName, "%s_%d-%d_%s%s", T2A(strUser), nExamID, nSubjectID, szTime, T2A(PAPERS_EXT_NAME));	//%s_%s.pkg
+		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s_%d", T2A(g_strCurrentPath), T2A(strUser), nExamID, nSubjectID, szTime, m_pPapersInfo->nPaperCount);
+		sprintf_s(szZipBaseName, "%s_%d-%d_%s_%d", T2A(strUser), nExamID, nSubjectID, szTime, m_pPapersInfo->nPaperCount);
+		sprintf_s(szZipName, "%s_%d-%d_%s_%d%s", T2A(strUser), nExamID, nSubjectID, szTime, m_pPapersInfo->nPaperCount, T2A(PAPERS_EXT_NAME));
+// 		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s", T2A(g_strCurrentPath), T2A(strUser), nExamID, nSubjectID, szTime);
+// 		sprintf_s(szZipBaseName, "%s_%d-%d_%s", T2A(strUser), nExamID, nSubjectID, szTime);
+// 		sprintf_s(szZipName, "%s_%d-%d_%s%s", T2A(strUser), nExamID, nSubjectID, szTime, T2A(PAPERS_EXT_NAME));
 	}
 	else
 	{

@@ -90,6 +90,7 @@ public:
 	int				m_nUserId;
 	BOOL			m_bF1Enable;
 	BOOL			m_bF2Enable;
+	BOOL			m_bLastPkgSaveOK;		//扫描的上一代试卷是否保存成功
 public:
 	void	InitUI();
 	void	InitTab();

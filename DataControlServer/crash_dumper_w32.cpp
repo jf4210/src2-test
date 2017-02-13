@@ -43,7 +43,12 @@ LONG WINAPI CrashDumper::ExceptionFilter(struct _EXCEPTION_POINTERS* ExceptionIn
 
 		if (GetModuleFileName(NULL, szPath, sizeof(szPath)))
 		{
+			SYSTEMTIME sys;
+			GetLocalTime(&sys);
+			TCHAR szTime[30] = { 0 };
+			swprintf_s(szTime, _T("%d%-02d-%02d-%02d-%02d-%02d"), sys.wYear, sys.wMonth, sys.wDay, sys.wHour, sys.wMinute, sys.wSecond);
 			std::tstring strDumpFileName = szPath;
+			strDumpFileName += szTime;
 			strDumpFileName += TEXT(".dmp");
 
 			HANDLE hFile = CreateFile(strDumpFileName.c_str(), FILE_ALL_ACCESS, 0, NULL, CREATE_ALWAYS, NULL, NULL);
@@ -68,14 +73,12 @@ LONG WINAPI CrashDumper::ExceptionFilter(struct _EXCEPTION_POINTERS* ExceptionIn
 		CloseHandle(hProcess);
 	}
 	
-	if (bDumpOK)
-	{
-// 		std::string strLog = "程序崩溃了，Dump已经生成";
-// 		g_Log.LogOutError(strLog);
-		MessageBox(NULL, TEXT("本程序遇到未处理的异常，MiniDump文件已经生成在程序的运行目录。"), TEXT("提示"), MB_OK);
-	}
-	else
-		MessageBox(NULL, TEXT("本程序遇到未处理的异常，生成MiniDump文件失败。"), TEXT("提示"), MB_OK);
+// 	if (bDumpOK)
+// 	{
+// 		MessageBox(NULL, TEXT("本程序遇到未处理的异常，MiniDump文件已经生成在程序的运行目录。"), TEXT("提示"), MB_OK);
+// 	}
+// 	else
+// 		MessageBox(NULL, TEXT("本程序遇到未处理的异常，生成MiniDump文件失败。"), TEXT("提示"), MB_OK);
 
 	return EXCEPTION_EXECUTE_HANDLER;
 }

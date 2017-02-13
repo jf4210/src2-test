@@ -72,7 +72,7 @@ BOOL CShowFileTransferDlg::OnInitDialog()
 	}
 	UpdateData(FALSE);
 
-	SetTimer(TIMER_PROCESS, 1000, NULL);
+	SetTimer(TIMER_PROCESS, 2000, NULL);
 
 	return TRUE;
 }
