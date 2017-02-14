@@ -210,7 +210,6 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				{
 					bNeedSend = true;
 
-
 					pST_MODELINFO pStModelInfo = new ST_MODELINFO;
 					memcpy(pStModelInfo, &stModelInfo, sizeof(stModelInfo));
 

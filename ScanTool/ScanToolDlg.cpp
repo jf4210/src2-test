@@ -156,6 +156,7 @@ BEGIN_MESSAGE_MAP(CScanToolDlg, CDialogEx)
 	ON_WM_DESTROY()
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_Picture, &CScanToolDlg::OnNMDblclkListPicture)
 	ON_MESSAGE(MSG_ERR_RECOG, &CScanToolDlg::MsgRecogErr)
+	ON_MESSAGE(MSG_ZKZH_RECOG, &CScanToolDlg::MsgZkzhRecog)
 	ON_MESSAGE(WM_CV_LBTNDOWN, &CScanToolDlg::RoiLBtnDown)
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BTN_UpLoadPapers, &CScanToolDlg::OnBnClickedBtnUploadpapers)
@@ -1134,9 +1135,6 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	if (dlg.m_bAdvancedSetting)
 		bShowScanSrcUI = true;
 
-	//计算模板的dpi
-
-
 	int nDuplex = nDuplexDef;		//单双面,0-单面,1-双面
 	int nSize = TWSS_NONE;					//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3, TWSS_NONE-自定义
 	if (m_pModel->nScanSize == 1)
@@ -1146,7 +1144,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	else
 		nSize = TWSS_NONE;
 
-	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
+	int nPixel = m_pModel->nScanType;		//0-黑白，1-灰度，2-彩色
 	int nResolution = m_pModel->nScanDpi;	//dpi: 72, 150, 200, 300
 	
 	int nNum = 0;
@@ -1588,6 +1586,7 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 		sprintf_s(szErrInfo, "获取内存失败。");
 		SetStatusShowInfo(A2T(szErrInfo), TRUE);
 		g_pLogger->information(szErrInfo);
+		return;
 	}
 
 	memcpy(pBits, &bFile, sizeof(BITMAPFILEHEADER));
@@ -1707,6 +1706,9 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 			char szCount[10] = { 0 };
 			sprintf_s(szCount, "%d", nCount + 1);
 			m_lcPicture.InsertItem(nCount, NULL);
+//			m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szStudentName));
+//			m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(szStudentName));
+
 			m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 			m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(szStudentName));
 			m_lcPicture.SetItemData(nCount, (DWORD_PTR)m_pPaper);
@@ -1806,6 +1808,18 @@ void CScanToolDlg::ScanDone(int nStatus)
 		m_nScanCount = 0;
 		m_nScanStatus = 2;
 	}
+
+	//显示所有识别完成的准考证号
+	int nCount = m_lcPicture.GetItemCount();
+	for (int i = 0; i < nCount; i++)
+	{
+		pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(i);
+		if (pItemPaper)
+		{
+			m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
+		}
+	}
+
 	SetStatusShowInfo(strMsg, bWarn);
 }
 
@@ -2366,6 +2380,26 @@ LRESULT CScanToolDlg::MsgRecogErr(WPARAM wParam, LPARAM lParam)
 	char szErrInfo[200] = { 0 };
 	sprintf_s(szErrInfo, "考生 %s 第%d页识别出错误校验点", pPaper->strStudentInfo.c_str(), nIssuePaper + 1);
 	SetStatusShowInfo(A2T(szErrInfo), TRUE);
+	return TRUE;
+}
+
+LRESULT CScanToolDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
+{
+	pST_PaperInfo pPaper = (pST_PaperInfo)wParam;
+	pPAPERSINFO   pPapers = (pPAPERSINFO)lParam;
+
+	USES_CONVERSION;
+	int nCount = m_lcPicture.GetItemCount();
+	for (int i = 0; i < nCount; i++)
+	{
+		pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(i);
+		if (pItemPaper == pPaper)
+		{
+			m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+			break;
+		}
+	}
+
 	return TRUE;
 }
 

@@ -1001,7 +1001,7 @@ void CMakeModelDlg::OnBnClickedBtnNew()
 	m_pModel->nABModel = dlg.m_bABPaperModel;
 	m_pModel->nHasHead = dlg.m_bHasHead;
 	InitConf();
-
+	
 	for (int i = 0; i < m_nModelPicNums; i++)
 	{
 		pPaperModelInfo paperMode = new PaperModelInfo;
@@ -1031,6 +1031,46 @@ void CMakeModelDlg::OnBnClickedBtnNew()
 		
 		paperMode->nPicW = matImg.cols;
 		paperMode->nPicH = matImg.rows;
+
+		//试卷纸张类型判断
+		int nL, nW;
+		if (matImg.cols > matImg.rows)
+		{
+			nL = matImg.cols;
+			nW = matImg.rows;
+		}
+		else
+		{
+			nL = matImg.rows;
+			nW = matImg.cols;
+		}
+		if (i == 0)
+		{
+			if (nW > 1350 && nW < 1800)
+			{
+				if (nL > 2000 && nL < 2500)
+				{
+					m_pModel->nScanDpi = 200;
+					m_pModel->nScanSize = 1;	//A4
+				}
+			}
+			else if (nW > 2000 && nW < 2500)
+			{
+				if (nL > 2850 && nL < 3450)
+				{
+					m_pModel->nScanDpi = 200;
+					m_pModel->nScanSize = 2;	//A3
+				}
+			}
+// 			else if (nW > 1450 && nW < 1900)
+// 			{
+// 				if (nL > 2150 && nL < 2600)
+// 				{
+// 					m_pModel->nScanDpi = 150;
+// 					m_pModel->nScanSize = 2;	//A3
+// 				}
+// 			}
+		}
 	}
 	SetWindowTextW(_T("*未保存模板*"));
 }
@@ -2734,6 +2774,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	jsnModel.set("nZkzhType", pModel->nZkzhType);				//准考证号识别类型
 	jsnModel.set("nScanDpi", pModel->nScanDpi);					//扫描的dpi设置
 	jsnModel.set("nScanSize", pModel->nScanSize);				//扫描用的纸张类型，1-a4, 2-a3, 3-定制
+	jsnModel.set("nScanType", pModel->nScanType);				//扫描模式：1-灰度扫描，2-彩色扫描
 	jsnModel.set("nScanAutoCut", pModel->nAutoCut);				//扫描仪是否自动裁剪，超长卡不能裁剪
 
 // 	jsnModel.set("gaussKernel", pModel->nGaussKernel);
@@ -6253,4 +6294,5 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 		m_pModel->nScanSize = 2;
 	else
 		m_pModel->nScanSize = 3;
+	m_pModel->nScanType = dlg.m_nScanType;
 }

@@ -200,6 +200,11 @@ void CShowModelInfoDlg::ShowModelInfo(pMODEL pModel, int nFlag /*= 0*/)
 			sprintf_s(szPaperType, "纸张类型: A3\r\n");
 		else
 			sprintf_s(szPaperType, "纸张类型: 定制类型\r\n");
+		char szScanType[30] = { 0 };
+		if (pModel->nScanType == 1)
+			sprintf_s(szScanType, "扫描类型: 灰度扫描\r\n");
+		else
+			sprintf_s(szScanType, "扫描类型: 彩色扫描\r\n");
 		char szScanDpi[30] = { 0 };
 		sprintf_s(szScanDpi, "扫描分辨率: %ddpi\r\n", pModel->nScanDpi);
 
@@ -208,6 +213,7 @@ void CShowModelInfoDlg::ShowModelInfo(pMODEL pModel, int nFlag /*= 0*/)
 		strExamInfo.Append(A2T(szElectOmr));
 		strExamInfo.Append(A2T("\r\n"));
 		strExamInfo.Append(A2T(szPaperType));
+		strExamInfo.Append(A2T(szScanType));
 		strExamInfo.Append(A2T(szScanDpi));
 		m_strModelDesc.Append(A2T("\r\n"));
 		m_strModelDesc.Append(strExamInfo);

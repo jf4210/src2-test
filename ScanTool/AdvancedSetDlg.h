@@ -17,9 +17,11 @@ public:
 public:
 	CComboBox	m_combo_ScanDpi;
 	CComboBox	m_combo_PaperSize;
+	CComboBox	m_combo_ScanType;
 	CButton		m_chkAutoCut;
 	int			m_nScanDpi;
 	int			m_nScanPaperSize;
+	int			m_nScanType;
 	int			m_nAutoCut;		//ÊÇ·ñ×Ô¶¯²Ã¼ô
 
 private:
@@ -36,4 +38,5 @@ public:
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedChkAutocut();
 	afx_msg void OnCbnSelchangeComboPapersize();
+	afx_msg void OnCbnSelchangeComboScantype();
 };

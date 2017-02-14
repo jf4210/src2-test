@@ -154,14 +154,10 @@ void CModelInfoDlg::OnBnClickedBtnAdd()
 	if (dlg.DoModal() != IDOK)
 		return;
 
-	TRACE("*************1\n\n");
-
 	MODELPATH st;
 	st.strName = dlg.GetFileName();
 	st.strPath = dlg.GetPathName();
 	m_vecPath.push_back(st);
-
-	TRACE("*************2\n\n");
 
 	USES_CONVERSION;
 	int nItem = m_vecPath.size() - 1;

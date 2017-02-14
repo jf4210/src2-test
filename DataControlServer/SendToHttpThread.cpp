@@ -769,22 +769,6 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 			g_Log.LogOutError(strErr);
 		}
 
-#if 0
-		g_fmPapers.lock();
-		LIST_PAPERS_DETAIL::iterator itPapers = g_lPapers.begin();
-		for (; itPapers != g_lPapers.end();)
-		{
-			if (*itPapers == pPapers)
-			{
-				SAFE_RELEASE(*itPapers);
-				itPapers = g_lPapers.erase(itPapers);
-				break;
-			}
-			else
-				itPapers++;
-		}
-		g_fmPapers.unlock();
-#endif
 		return true;
 	}
 

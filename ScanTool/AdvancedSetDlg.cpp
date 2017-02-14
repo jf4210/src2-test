@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CAdvancedSetDlg, CDialog)
 
 CAdvancedSetDlg::CAdvancedSetDlg(pMODEL	pModel, CWnd* pParent /*=NULL*/)
 	: CDialog(CAdvancedSetDlg::IDD, pParent)
-	, m_pModel(pModel), m_nScanDpi(200), m_nAutoCut(1), m_nScanPaperSize(1)
+	, m_pModel(pModel), m_nScanDpi(200), m_nAutoCut(1), m_nScanPaperSize(1), m_nScanType(2)
 {
 
 }
@@ -28,6 +28,7 @@ void CAdvancedSetDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_ScanDpi, m_combo_ScanDpi);
 	DDX_Control(pDX, IDC_COMBO_PaperSize, m_combo_PaperSize);
 	DDX_Control(pDX, IDC_CHK_AutoCut, m_chkAutoCut);
+	DDX_Control(pDX, IDC_COMBO_ScanType, m_combo_ScanType);
 }
 
 
@@ -45,6 +46,7 @@ BEGIN_MESSAGE_MAP(CAdvancedSetDlg, CDialog)
 	ON_BN_CLICKED(IDOK, &CAdvancedSetDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDC_CHK_AutoCut, &CAdvancedSetDlg::OnBnClickedChkAutocut)
 	ON_CBN_SELCHANGE(IDC_COMBO_PaperSize, &CAdvancedSetDlg::OnCbnSelchangeComboPapersize)
+	ON_CBN_SELCHANGE(IDC_COMBO_ScanType, &CAdvancedSetDlg::OnCbnSelchangeComboScantype)
 END_MESSAGE_MAP()
 
 
@@ -60,6 +62,10 @@ void CAdvancedSetDlg::InitData()
 	m_combo_PaperSize.AddString(_T("A4"));
 	m_combo_PaperSize.AddString(_T("A3"));
 	m_combo_PaperSize.AddString(_T("定制"));
+
+	m_combo_ScanType.ResetContent();
+	m_combo_ScanType.AddString(_T("灰度扫描"));
+	m_combo_ScanType.AddString(_T("彩色扫描"));
 
 	if (!m_pModel)
 	{
@@ -100,6 +106,17 @@ void CAdvancedSetDlg::InitData()
 		m_nScanPaperSize = 2;
 	}
 
+	if (m_pModel->nScanType == 1)
+	{
+		m_combo_ScanType.SetCurSel(0);
+		m_nScanType = 1;
+	}
+	else
+	{
+		m_combo_ScanType.SetCurSel(1);
+		m_nScanType = 2;
+	}
+
 	m_nAutoCut = m_pModel->nAutoCut;
 	m_chkAutoCut.SetCheck(m_nAutoCut);
 
@@ -135,4 +152,13 @@ void CAdvancedSetDlg::OnCbnSelchangeComboPapersize()
 		return;
 
 	m_nScanPaperSize = m_combo_PaperSize.GetCurSel();
+}
+
+
+void CAdvancedSetDlg::OnCbnSelchangeComboScantype()
+{
+	if (m_combo_ScanType.GetCurSel() < 0 || m_pModel == NULL)
+		return;
+
+	m_nScanType = m_combo_ScanType.GetCurSel() + 1;
 }
