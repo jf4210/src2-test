@@ -121,6 +121,12 @@
     <Filter Include="模板制作窗口%2a%2a%2a\高级参数设置">
       <UniqueIdentifier>{0183217b-9242-4436-9a49-10ddc384e379}</UniqueIdentifier>
     </Filter>
+    <Filter Include="List控件">
+      <UniqueIdentifier>{59675bc6-1abf-4efa-a35a-464cedbabe8a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="修改ZKZH窗口">
+      <UniqueIdentifier>{c4463d02-bc32-4844-95c4-37bdb17f455c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -282,6 +288,9 @@
     <ClInclude Include="AdvancedSetDlg.h">
       <Filter>模板制作窗口%2a%2a%2a\高级参数设置</Filter>
     </ClInclude>
+    <ClInclude Include="ModifyZkzhDlg.h">
+      <Filter>修改ZKZH窗口</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
@@ -418,6 +427,9 @@
     </ClCompile>
     <ClCompile Include="AdvancedSetDlg.cpp">
       <Filter>模板制作窗口%2a%2a%2a\高级参数设置</Filter>
+    </ClCompile>
+    <ClCompile Include="ModifyZkzhDlg.cpp">
+      <Filter>修改ZKZH窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

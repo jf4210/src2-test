@@ -33,7 +33,7 @@
 #include <afxcontrolbars.h>     // 功能区和控件条的 MFC 支持
 
 
-
+//#pragma comment(linker,"/ignore:4089")	
 
 #ifdef _DEBUG
 #pragma comment(lib,"../../lib/debug/NetCtrl.lib")
@@ -53,5 +53,4 @@
 #pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
 #endif
-
 

@@ -54,8 +54,8 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include;.\picCtrl;..\..\common;.\pdf2jpg\mupdf</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;XLISTCTRLLIB_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\include;.\picCtrl;..\..\common;.\pdf2jpg\mupdf;./XListCtrl</AdditionalIncludeDirectories>
       <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Link>
@@ -68,6 +68,8 @@
       <HeapReserveSize>20000000</HeapReserveSize>
       <ProgramDatabaseFile>..\..\bin\$(Configuration)\$(TargetName).pdb</ProgramDatabaseFile>
       <HeapCommitSize>20000000</HeapCommitSize>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -90,8 +92,8 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include;.\picCtrl;..\..\common;.\pdf2jpg\mupdf</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>XLISTCTRLLIB_STATIC;WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\include;.\picCtrl;..\..\common;.\pdf2jpg\mupdf;./XListCtrl</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -143,6 +145,7 @@
     <ClInclude Include="minidump.h" />
     <ClInclude Include="ModelInfoDlg.h" />
     <ClInclude Include="ModelSaveDlg.h" />
+    <ClInclude Include="ModifyZkzhDlg.h" />
     <ClInclude Include="MyCodeConvert.h" />
     <ClInclude Include="OmrInfoDlg.h" />
     <ClInclude Include="PaperInputDlg.h" />
@@ -193,6 +196,7 @@
     <ClCompile Include="MakeModelDlg.cpp" />
     <ClCompile Include="ModelInfoDlg.cpp" />
     <ClCompile Include="ModelSaveDlg.cpp" />
+    <ClCompile Include="ModifyZkzhDlg.cpp" />
     <ClCompile Include="MyCodeConvert.cpp" />
     <ClCompile Include="OmrInfoDlg.cpp" />
     <ClCompile Include="PaperInputDlg.cpp" />

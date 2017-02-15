@@ -19,6 +19,8 @@
 #include "ScanerInfoDlg.h"
 #include "CompressThread.h"
 #include "ScanThread.h"
+#include "ModifyZkzhDlg.h"
+//#include "XListCtrl.h"
 // CScanToolDlg ¶Ô»°¿ò
 class CScanToolDlg : public CDialogEx, public CTwain
 {
