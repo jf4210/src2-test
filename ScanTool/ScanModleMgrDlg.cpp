@@ -322,14 +322,12 @@ void CScanModleMgrDlg::OnNMDblclkListModel(NMHDR *pNMHDR, LRESULT *pResult)
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	*pResult = 0;
 	USES_CONVERSION;
-
-	m_ModelListCtrl.SetItemState(m_nCurModelItem, 0, LVIS_DROPHILITED);
-
-	m_nCurModelItem = pNMItemActivate->iItem;
-	if (m_nCurModelItem < 0)
+	if (pNMItemActivate->iItem < 0)
 		return;
 
-	m_ModelListCtrl.SetItemState(m_nCurModelItem, LVIS_DROPHILITED, LVIS_DROPHILITED);
+	m_ModelListCtrl.SetItemState(m_nCurModelItem, 0, LVIS_DROPHILITED);		//使上一次的高亮显示行取消高亮
+	m_nCurModelItem = pNMItemActivate->iItem;
+	m_ModelListCtrl.SetItemState(m_nCurModelItem, LVIS_DROPHILITED, LVIS_DROPHILITED);		//高亮显示一行
 
 	pMODEL pModel = NULL;
 	pModel = (pMODEL)m_ModelListCtrl.GetItemData(m_nCurModelItem);

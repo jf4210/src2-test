@@ -291,6 +291,48 @@
     <ClInclude Include="ModifyZkzhDlg.h">
       <Filter>修改ZKZH窗口</Filter>
     </ClInclude>
+    <ClInclude Include="XListCtrl\XListCtrl.h">
+      <Filter>List控件</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\AdvComboBox.h">
+      <Filter>List控件</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\AdvComboEdit.h">
+      <Filter>List控件</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\DropListBox.h">
+      <Filter>List控件</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\DropScrollBar.h">
+      <Filter>List控件</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\DropWnd.h">
+      <Filter>List控件</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\SortCStringArray.h">
+      <Filter>List控件</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\VisualStylesXP.h">
+      <Filter>List控件</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\XCombo.h">
+      <Filter>List控件</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\XComboList.h">
+      <Filter>List控件</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\XEdit.h">
+      <Filter>List控件</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\XHeaderCtrl.h">
+      <Filter>List控件</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\XListMemDC.h">
+      <Filter>List控件</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\XTrace.h">
+      <Filter>List控件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
@@ -431,6 +473,39 @@
     <ClCompile Include="ModifyZkzhDlg.cpp">
       <Filter>修改ZKZH窗口</Filter>
     </ClCompile>
+    <ClCompile Include="XListCtrl\AdvComboBox.cpp">
+      <Filter>List控件</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\AdvComboEdit.cpp">
+      <Filter>List控件</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\DropListBox.cpp">
+      <Filter>List控件</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\DropScrollBar.cpp">
+      <Filter>List控件</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\DropWnd.cpp">
+      <Filter>List控件</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\VisualStylesXP.cpp">
+      <Filter>List控件</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\XCombo.cpp">
+      <Filter>List控件</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\XComboList.cpp">
+      <Filter>List控件</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\XEdit.cpp">
+      <Filter>List控件</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\XHeaderCtrl.cpp">
+      <Filter>List控件</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\XListCtrl.cpp">
+      <Filter>List控件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ScanTool.rc">
@@ -511,6 +586,9 @@
     </Image>
     <Image Include="res\ScanTool.ico">
       <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="XListCtrl\checkboxes.bmp">
+      <Filter>List控件</Filter>
     </Image>
   </ItemGroup>
 </Project>

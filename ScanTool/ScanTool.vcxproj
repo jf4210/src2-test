@@ -175,6 +175,20 @@
     <ClInclude Include="THSetDlg.h" />
     <ClInclude Include="twain.h" />
     <ClInclude Include="TwainCpp.h" />
+    <ClInclude Include="XListCtrl\AdvComboBox.h" />
+    <ClInclude Include="XListCtrl\AdvComboEdit.h" />
+    <ClInclude Include="XListCtrl\DropListBox.h" />
+    <ClInclude Include="XListCtrl\DropScrollBar.h" />
+    <ClInclude Include="XListCtrl\DropWnd.h" />
+    <ClInclude Include="XListCtrl\SortCStringArray.h" />
+    <ClInclude Include="XListCtrl\VisualStylesXP.h" />
+    <ClInclude Include="XListCtrl\XCombo.h" />
+    <ClInclude Include="XListCtrl\XComboList.h" />
+    <ClInclude Include="XListCtrl\XEdit.h" />
+    <ClInclude Include="XListCtrl\XHeaderCtrl.h" />
+    <ClInclude Include="XListCtrl\XListCtrl.h" />
+    <ClInclude Include="XListCtrl\XListMemDC.h" />
+    <ClInclude Include="XListCtrl\XTrace.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\common\md5.cpp" />
@@ -232,6 +246,17 @@
     <ClCompile Include="Thread.cpp" />
     <ClCompile Include="THSetDlg.cpp" />
     <ClCompile Include="TwainCpp.cpp" />
+    <ClCompile Include="XListCtrl\AdvComboBox.cpp" />
+    <ClCompile Include="XListCtrl\AdvComboEdit.cpp" />
+    <ClCompile Include="XListCtrl\DropListBox.cpp" />
+    <ClCompile Include="XListCtrl\DropScrollBar.cpp" />
+    <ClCompile Include="XListCtrl\DropWnd.cpp" />
+    <ClCompile Include="XListCtrl\VisualStylesXP.cpp" />
+    <ClCompile Include="XListCtrl\XCombo.cpp" />
+    <ClCompile Include="XListCtrl\XComboList.cpp" />
+    <ClCompile Include="XListCtrl\XEdit.cpp" />
+    <ClCompile Include="XListCtrl\XHeaderCtrl.cpp" />
+    <ClCompile Include="XListCtrl\XListCtrl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ScanTool.rc" />
@@ -255,6 +280,7 @@
     <Image Include="res\竖直2.png" />
     <Image Include="res\竖直3.png" />
     <Image Include="res\竖直4.png" />
+    <Image Include="XListCtrl\checkboxes.bmp" />
     <Image Include="横向1.png" />
     <Image Include="横向2.png" />
     <Image Include="横向3.png" />

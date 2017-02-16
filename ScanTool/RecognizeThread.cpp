@@ -2942,7 +2942,7 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		sprintf_s(szLog, "识别准考证号完成(%s), 图片名: %s\n", (static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.c_str(), pPic->strPicName.c_str());
 		g_pLogger->information(szLog);
 		TRACE(szLog);
-//		(static_cast<CDialog*>((static_cast<pST_PaperInfo>(pPic->pPaper))->pSrcDlg))->SendMessage(MSG_ZKZH_RECOG, (WPARAM)pPic->pPaper, NULL);
+		(static_cast<CDialog*>((static_cast<pST_PaperInfo>(pPic->pPaper))->pSrcDlg))->SendMessage(MSG_ZKZH_RECOG, (WPARAM)pPic->pPaper, NULL);
 	}
 	if (!bRecogAll)
 	{
