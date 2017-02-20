@@ -1652,6 +1652,9 @@ BOOL CXListCtrl::SetCurSel(int nItem, BOOL bEnsureVisible /*= FALSE*/)
 	BOOL bRet = SetItemState(nItem, LVIS_FOCUSED | LVIS_SELECTED,
 		LVIS_FOCUSED | LVIS_SELECTED);
 
+// 	SetFocus();
+// 	BOOL bRet = SetItemState(nItem, LVIS_DROPHILITED, LVIS_DROPHILITED);
+
 	//+++
 	if (bEnsureVisible)
 		EnsureVisible(nItem, FALSE);

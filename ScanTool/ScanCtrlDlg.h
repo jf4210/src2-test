@@ -10,7 +10,7 @@ class CScanCtrlDlg : public CDialog
 	DECLARE_DYNAMIC(CScanCtrlDlg)
 
 public:
-	CScanCtrlDlg(SCANSRCARRY& srcArry, bool bShowPaperSize = false, CWnd* pParent = NULL);   // 标准构造函数
+	CScanCtrlDlg(SCANSRCARRY& srcArry, bool bShowPaperSize = false, bool bShowScanCount = true, CWnd* pParent = NULL);   // 标准构造函数
 	virtual ~CScanCtrlDlg();
 
 // 对话框数据
@@ -32,7 +32,8 @@ public:
 	int			m_nCurrPaperSize;	//当前纸张类型
 
 private:
-	bool	m_bShowPaperSize;
+	bool	m_bShowPaperSize;		//是否显示A3/A4下拉框
+	bool	m_bShowScanCount;		//是否显示扫描数量编辑框
 	void	InitCtrlPosition();
 protected:
 	virtual BOOL OnInitDialog();
