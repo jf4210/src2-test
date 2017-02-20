@@ -2878,6 +2878,44 @@ void CScanToolDlg::ShowPaperByItem(int nItem)
 void CScanToolDlg::OnBnClickedBtnUploadmgr()
 {
 	//++ test
+	if (NULL == m_pPapersInfo)
+	{
+		m_pPapersInfo = new PAPERSINFO();
+
+		USES_CONVERSION;
+		for (int i = 0; i < 4; i++)
+		{
+			int nStudentId = i / m_nModelPicNums + 1;
+			int nOrder = i % m_nModelPicNums + 1;
+			char szPicName[50] = { 0 };
+			char szPicPath[MAX_PATH] = { 0 };
+			sprintf_s(szPicName, "S%d_%d.jpg", nStudentId, nOrder);
+			sprintf_s(szPicPath, "%sPaper\\TestPic\\S%d_%d.jpg", T2A(g_strCurrentPath), nStudentId, nOrder);
+			pST_PicInfo pPic = new ST_PicInfo;
+			pPic->strPicName = szPicName;
+			pPic->strPicPath = szPicPath;
+
+			if (nOrder == 1)
+			{
+				char szStudentName[30] = { 0 };
+				sprintf_s(szStudentName, "S%d", nStudentId);
+				m_pPaper = new ST_PaperInfo;
+				m_pPaper->strStudentInfo = szStudentName;
+				m_pPaper->pModel = m_pModel;
+				m_pPaper->pPapers = m_pPapersInfo;
+				m_pPaper->pSrcDlg = this;
+				m_pPaper->lPic.push_back(pPic);
+
+				m_pPapersInfo->fmlPaper.lock();
+				m_pPapersInfo->lPaper.push_back(m_pPaper);
+				m_pPapersInfo->fmlPaper.unlock();
+			}
+			else
+				m_pPaper->lPic.push_back(pPic);
+		}
+	}
+
+
 	CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo);
 	zkzhDlg.DoModal();
 	//--

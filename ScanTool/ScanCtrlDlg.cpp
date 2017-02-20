@@ -11,10 +11,10 @@
 
 IMPLEMENT_DYNAMIC(CScanCtrlDlg, CDialog)
 
-CScanCtrlDlg::CScanCtrlDlg(SCANSRCARRY& srcArry, bool bShowPaperSize, CWnd* pParent /*=NULL*/)
+CScanCtrlDlg::CScanCtrlDlg(SCANSRCARRY& srcArry, bool bShowPaperSize, bool bShowScanCount, CWnd* pParent /*=NULL*/)
 : CDialog(CScanCtrlDlg::IDD, pParent)
 , m_nStudentNum(0), sourceArry(srcArry), m_nCurrScanSrc(0), m_nCurrDuplex(0), m_bAdvancedSetting(false), m_nCurrPaperSize(0)
-, m_bShowPaperSize(bShowPaperSize)
+, m_bShowPaperSize(bShowPaperSize), m_bShowScanCount(bShowScanCount)
 {
 
 }
@@ -102,17 +102,20 @@ void CScanCtrlDlg::InitCtrlPosition()
 		}
 	}	
 
-	if (GetDlgItem(IDC_STATIC_COUNT)->GetSafeHwnd())
+	if (m_bShowScanCount)
 	{
-		GetDlgItem(IDC_STATIC_COUNT)->MoveWindow(nCurrentLeft, nCurrentTop, nStaticWidth, nStaticHeight);
-		nCurrentLeft = nCurrentLeft + nStaticWidth + nGap;
-	}
-	if (GetDlgItem(IDC_EDIT_TiKaNum)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_EDIT_TiKaNum)->MoveWindow(nCurrentLeft, nCurrentTop, nCommoboxWidth, nStaticHeight);
-		nCurrentLeft = nLeftGap;
-		nCurrentTop += nStaticHeight + nGap;
-	}
+		if (GetDlgItem(IDC_STATIC_COUNT)->GetSafeHwnd())
+		{
+			GetDlgItem(IDC_STATIC_COUNT)->MoveWindow(nCurrentLeft, nCurrentTop, nStaticWidth, nStaticHeight);
+			nCurrentLeft = nCurrentLeft + nStaticWidth + nGap;
+		}
+		if (GetDlgItem(IDC_EDIT_TiKaNum)->GetSafeHwnd())
+		{
+			GetDlgItem(IDC_EDIT_TiKaNum)->MoveWindow(nCurrentLeft, nCurrentTop, nCommoboxWidth, nStaticHeight);
+			nCurrentLeft = nLeftGap;
+			nCurrentTop += nStaticHeight + nGap;
+		}
+	}	
 
 	nCurrentLeft = (cx - nGap - nBtnWidth * 2) / 2;
 	if (GetDlgItem(IDC_BTN_Scan)->GetSafeHwnd())
@@ -176,12 +179,22 @@ bool CScanCtrlDlg::InitUI()
 
 	int sx = 300;
 	int sy = 200;
+	if (!m_bShowScanCount)
+	{
+		GetDlgItem(IDC_STATIC_COUNT)->ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_EDIT_TiKaNum)->ShowWindow(SW_HIDE);
+	}
 	if (!m_bShowPaperSize)
 	{
 		GetDlgItem(IDC_STATIC_PaperSize)->ShowWindow(SW_HIDE);
 		m_comboModelPaperSize.ShowWindow(SW_HIDE);
 	}
-	else
+	if (!m_bShowScanCount && !m_bShowPaperSize)
+	{
+		sx = 300;
+		sy = 170;
+	}
+	else if (m_bShowScanCount && m_bShowPaperSize)
 	{
 		sx = 300;
 		sy = 230;

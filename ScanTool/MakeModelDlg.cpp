@@ -910,7 +910,7 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 		ScanSrcInit();
 	}
 
-	CScanCtrlDlg dlg(m_scanSourceArry, true);
+	CScanCtrlDlg dlg(m_scanSourceArry, true, false);
 	if (dlg.DoModal() != IDOK)
 		return;
 

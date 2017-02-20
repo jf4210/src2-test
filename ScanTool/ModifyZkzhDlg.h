@@ -28,6 +28,9 @@ public:
 	pPAPERSINFO		m_pPapers;
 	pST_PaperInfo	m_pCurrentShowPaper;
 	int				m_nCurrentSelItem;		//当前选择的项
+
+	CString			m_strCurZkzh;
+	COLORREF		crOldText, crOldBackground;
 private:
 	void	InitUI();
 	void	InitTab();
@@ -36,6 +39,7 @@ private:
 
 	void	ShowPaperByItem(int nItem);
 	void	ShowPaperZkzhPosition(pST_PaperInfo pPaper);
+	BOOL	PreTranslateMessage(MSG* pMsg);
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();
@@ -47,4 +51,5 @@ public:
 	afx_msg void OnTcnSelchangeTabZkzhpic(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMDblclkListZkzh(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMHoverListZkzh(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedBtnSave();
 };
