@@ -2878,8 +2878,8 @@ void CScanToolDlg::ShowPaperByItem(int nItem)
 void CScanToolDlg::OnBnClickedBtnUploadmgr()
 {
 	//++ test
-	CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo);
-	zkzhDlg.DoModal();
+// 	CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo);
+// 	zkzhDlg.DoModal();
 	//--
 	CShowFileTransferDlg dlg;
 	dlg.DoModal();
