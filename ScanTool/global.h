@@ -64,6 +64,7 @@
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define	 TEST_MODEL_NAME	//模板名称测试
 //	#define	 TEST_SCAN_THREAD	//扫描线程测试
+	#define Test_Data			//测试数据，测试模式
 #else	//release版本
 	#define	 TEST_MODEL_NAME	//模板名称测试
 	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
@@ -210,6 +211,8 @@ typedef std::list<pST_PicInfo> PIC_LIST;	//图片列表定义
 typedef struct _PaperInfo_
 {
 	bool		bIssuePaper;		//是否是问题试卷
+	bool		bModifyZKZH;		//准考证号人工修改标识
+	bool		bRecogComplete;		//该学生已经识别完成
 	int			nQKFlag;			//缺考标识
 	pMODEL		pModel;				//识别此学生试卷所用的模板
 	void*		pPapers;			//所属的试卷袋信息
@@ -224,6 +227,8 @@ typedef struct _PaperInfo_
 	_PaperInfo_()
 	{
 		bIssuePaper = false;
+		bModifyZKZH = false;
+		bRecogComplete = false;
 		nQKFlag = 0;
 		pModel = NULL;
 		pPapers = NULL;

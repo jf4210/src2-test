@@ -86,6 +86,7 @@ bool CRecognizeThread::HandleTask(pRECOGTASK pTask)
 		pModelInfo = it->second;
 
 	PaperRecognise(pTask->pPaper, pModelInfo);
+	pTask->pPaper->bRecogComplete = true;
 
 	return true;
 }
@@ -2823,20 +2824,12 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			fCompThread = _dCompThread_Head_;
 			fDiffThread = _dDiffThread_Head_;
 			fDiffExit = _dDiffExit_Head_;
-
-// 			fCompThread = 1.0;
-// 			fDiffThread = 0.085;
-// 			fDiffExit = 0.15;
 		}
 		else
 		{
 			fCompThread = _dCompThread_Fix_;
 			fDiffThread = _dDiffThread_Fix_;
 			fDiffExit = _dDiffExit_Fix_;
-
-// 			fCompThread = 1.2;
-// 			fDiffThread = 0.2;
-// 			fDiffExit = 0.3;
 		}
 
 		int nFlag = -1;

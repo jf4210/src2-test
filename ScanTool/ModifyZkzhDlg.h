@@ -45,6 +45,7 @@ protected:
 	virtual BOOL OnInitDialog();
 
 	afx_msg LRESULT OnEditEnd(WPARAM, LPARAM);
+	afx_msg LRESULT OnLBtnDownEdit(WPARAM, LPARAM);
 
 	DECLARE_MESSAGE_MAP()
 public:

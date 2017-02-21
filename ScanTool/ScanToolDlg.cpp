@@ -129,7 +129,7 @@ CScanToolDlg::CScanToolDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	, m_pShowModelInfoDlg(NULL), m_pShowScannerInfoDlg(NULL)
 	, m_nDuplex(1), m_bF1Enable(FALSE), m_bF2Enable(FALSE)
 	, m_pCompressObj(NULL), m_pCompressThread(NULL)
-	, m_nCurrentScanCount(0), m_bLastPkgSaveOK(TRUE)
+	, m_nCurrentScanCount(0), m_bLastPkgSaveOK(TRUE), m_bModifySN(TRUE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);// IDR_MAINFRAME
 }
@@ -169,6 +169,7 @@ BEGIN_MESSAGE_MAP(CScanToolDlg, CDialogEx)
 	ON_WM_CLOSE()
 	ON_BN_CLICKED(IDC_BTN_ReBack, &CScanToolDlg::OnBnClickedBtnReback)
 	ON_WM_HOTKEY()
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -557,6 +558,7 @@ void CScanToolDlg::InitConfig()
 	int nRecogThreads = pConf->getInt("Recog.threads", 2);
 	g_nManulUploadFile = pConf->getInt("UploadFile.manul", 0);
 	g_bShowScanSrcUI = pConf->getBool("Scan.bShowUI", false);
+	m_bModifySN = pConf->getBool("Scan.bModifySN", false);
 	std::string strFileServerIP	= pConf->getString("Server.fileIP");
 	int			nFileServerPort	= pConf->getInt("Server.filePort", 19980);
 	m_strCmdServerIP				= pConf->getString("Server.cmdIP");
@@ -1061,7 +1063,6 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		return;
 	}
 #endif	
-
 	int nScanSrc = 0;
 	int nDuplexDef = 1;
 
@@ -1821,6 +1822,7 @@ void CScanToolDlg::ScanDone(int nStatus)
 	}
 
 	SetStatusShowInfo(strMsg, bWarn);
+	SetTimer(TIMER_CheckRecogComplete, 100, NULL);
 }
 
 void CScanToolDlg::SetStatusShowInfo(CString strMsg, BOOL bWarn /*= FALSE*/)
@@ -2399,7 +2401,6 @@ LRESULT CScanToolDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 			break;
 		}
 	}
-
 	return TRUE;
 }
 
@@ -2878,6 +2879,7 @@ void CScanToolDlg::ShowPaperByItem(int nItem)
 void CScanToolDlg::OnBnClickedBtnUploadmgr()
 {
 	//++ test
+#ifdef Test_Data
 	if (NULL == m_pPapersInfo)
 	{
 		m_pPapersInfo = new PAPERSINFO();
@@ -2918,6 +2920,7 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 
 	CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo);
 	zkzhDlg.DoModal();
+#endif
 	//--
 	CShowFileTransferDlg dlg;
 	dlg.DoModal();
@@ -3666,7 +3669,6 @@ int CScanToolDlg::CheckOrientation(cv::Mat& matSrc, int n)
 
 void CScanToolDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 {
-	// TODO:  在此添加消息处理程序代码和/或调用默认值
 	if (nHotKeyId == 1001)	//F1
 	{
 		if (m_bF1Enable && m_nScanStatus != 1)		//扫描中不进行快捷键响应
@@ -3678,6 +3680,47 @@ void CScanToolDlg::OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2)
 			OnBnClickedBtnUploadpapers();
 	}
 	__super::OnHotKey(nHotKeyId, nKey1, nKey2);
+}
+
+void CScanToolDlg::OnTimer(UINT nIDEvent)
+{
+	if (nIDEvent == TIMER_CheckRecogComplete)
+	{
+		bool bRecogComplete = true;
+		bool bNeedShowZkzhDlg = false;
+		for (auto p : m_pPapersInfo->lPaper)
+		{
+			if (!p->bRecogComplete)
+			{
+				bRecogComplete = false;
+				break;
+			}
+			if (p->strSN.empty())
+				bNeedShowZkzhDlg = true;
+		}
+		if (bRecogComplete)
+		{
+			USES_CONVERSION;
+			if (m_nScanStatus == 3 && m_bModifySN && bNeedShowZkzhDlg)
+			{
+				KillTimer(TIMER_CheckRecogComplete);
+				CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo);
+				zkzhDlg.DoModal();
+
+				//显示所有识别完成的准考证号
+				int nCount = m_lcPicture.GetItemCount();
+				for (int i = 0; i < nCount; i++)
+				{
+					pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(i);
+					if (pItemPaper)
+					{
+						m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
+					}
+				}
+			}			
+		}
+	}
+	CDialog::OnTimer(nIDEvent);
 }
 
 void CScanToolDlg::ReleaseUploadFileList()

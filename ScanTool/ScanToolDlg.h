@@ -22,6 +22,9 @@
 #include "ModifyZkzhDlg.h"
 //#include "XListCtrl.h"
 // CScanToolDlg 对话框
+
+#define TIMER_CheckRecogComplete	200
+
 class CScanToolDlg : public CDialogEx, public CTwain
 {
 // 构造
@@ -93,6 +96,7 @@ public:
 	BOOL			m_bF1Enable;
 	BOOL			m_bF2Enable;
 	BOOL			m_bLastPkgSaveOK;		//扫描的上一代试卷是否保存成功
+	bool			m_bModifySN;			//扫描完成后，是否将为识别的准考证号进行人工修正
 public:
 	void	InitUI();
 	void	InitTab();
@@ -172,4 +176,5 @@ public:
 	afx_msg void OnClose();
 	afx_msg void OnBnClickedBtnReback();
 	afx_msg void OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2);
+	afx_msg void OnTimer(UINT nIDEvent);
 };

@@ -36,6 +36,7 @@ static char THIS_FILE[] = __FILE__;
 XLISTCTRLLIBDLLEXPORT UINT WM_XLISTCTRL_COMBO_SELECTION  = ::RegisterWindowMessage(_T("WM_XLISTCTRL_COMBO_SELECTION"));
 XLISTCTRLLIBDLLEXPORT UINT WM_XLISTCTRL_EDIT_END         = ::RegisterWindowMessage(_T("WM_XLISTCTRL_EDIT_END"));
 XLISTCTRLLIBDLLEXPORT UINT WM_XLISTCTRL_CHECKBOX_CLICKED = ::RegisterWindowMessage(_T("WM_XLISTCTRL_CHECKBOX_CLICKED"));
+XLISTCTRLLIBDLLEXPORT UINT WM_XLISTCTRL_LBUTTONDOWN_EDIT_CLICKED = ::RegisterWindowMessage(_T("WM_XLISTCTRL_LBUTTONDOWN_EDIT_CLICKED"));
 
 /////////////////////////////////////////////////////////////////////////////
 // CXListCtrl
@@ -797,6 +798,14 @@ void CXListCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 			{
 				CListCtrl::OnLButtonDown(nFlags, point);
 				DrawEdit(nItem, nSubItem);
+				//++2017.2.21 liujf		在编辑框上左键按下的事件
+				CWnd *pWnd = GetParent();
+				if (!pWnd)
+					pWnd = GetOwner();
+				if (pWnd && ::IsWindow(pWnd->m_hWnd))
+					pWnd->SendMessage(WM_XLISTCTRL_LBUTTONDOWN_EDIT_CLICKED,
+					nItem, nSubItem);
+				//--
 			}
 		}
 	}
