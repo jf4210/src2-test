@@ -387,6 +387,10 @@ protected:
 			Poco::File errorPkgDir(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strErrorPkg));
 			if (!errorPkgDir.exists())
 				errorPkgDir.createDirectories();
+
+			Poco::File reSendDir(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strReSendPkg));
+			if (!reSendDir.exists())
+				reSendDir.createDirectories();
 		}
 		catch (Poco::Exception& exc)
 		{

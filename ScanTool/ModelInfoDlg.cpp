@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CModelInfoDlg, CDialog)
 
 CModelInfoDlg::CModelInfoDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CModelInfoDlg::IDD, pParent)
-	, m_nPaperNum(2), m_bABPaperModel(FALSE), m_bHasHead(TRUE), m_nCurrentItem(-1)
+	, m_nPaperNum(2), m_bABPaperModel(FALSE), m_bHasHead(FALSE), m_nCurrentItem(-1)
 {
 
 }

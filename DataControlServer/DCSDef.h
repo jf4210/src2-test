@@ -28,7 +28,7 @@
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION "DataControlServer V1.70209-1"
+#define SOFT_VERSION "DataControlServer V1.70222-1"
 
 
 #define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}
