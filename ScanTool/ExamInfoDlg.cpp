@@ -291,6 +291,8 @@ bool CExamInfoDlg::InitShow(pMODEL pModel)
 	int nSubjectShowItem = 0;
 
 	USES_CONVERSION;
+	m_comboExamName.ResetContent();
+	m_comboSubject.ResetContent();
 	EXAM_LIST::iterator itExam = g_lExamList.begin();
 	for (; itExam != g_lExamList.end(); itExam++)
 	{
