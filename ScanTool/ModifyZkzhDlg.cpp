@@ -316,7 +316,7 @@ void CModifyZkzhDlg::ShowPaperZkzhPosition(pST_PaperInfo pPaper)
 		if (pPaper->pModel)
 			pt = pPaper->pModel->vecPaperModel[i]->rcSNTracker.rt.tl() - cv::Point(100, 100);
 
-		m_vecPicShow[i]->ShowPic(matImg, pt);
+		m_vecPicShow[i]->ShowPic(matImg, pt, 0.8);
 	}
 }
 

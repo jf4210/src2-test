@@ -240,7 +240,7 @@ void CPicShow::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	m_picShow.ShowImage_Rect_roi(m_src_img, pt);
 }
 
-void CPicShow::ShowPic(cv::Mat& imgMat, cv::Point pt /*= cv::Point(0,0)*/)
+void CPicShow::ShowPic(cv::Mat& imgMat, cv::Point pt /*= cv::Point(0,0)*/, float fShowPer)
 {
 	CRect rcDlg;
 	this->GetClientRect(&rcDlg);
@@ -249,7 +249,79 @@ void CPicShow::ShowPic(cv::Mat& imgMat, cv::Point pt /*= cv::Point(0,0)*/)
 	m_picShow.GetClientRect(&m_client);
 	m_picWidth  = imgMat.cols;
 	m_picHeight = imgMat.rows;
+#if 1
+	if (m_fScale == 1)
+	{
+		float fScale1 = (float)m_picWidth / (float)m_client.Width();
+		float fScale2 = (float)m_picHeight / (float)m_client.Height();
+		m_fScale = fScale1 > fScale2 ? fScale2 : fScale1;
+	}	
 
+	m_fScale *= fShowPer;
+	int nPageH, nPageV;
+	if (m_picWidth < m_client.Width())
+		nPageH = m_picWidth;
+	else
+		nPageH = m_client.Width() * m_fScale;
+	if (m_picHeight < m_client.Height())
+		nPageV = m_picHeight;
+	else
+		nPageV = m_client.Height() * m_fScale;
+
+	int nWidthMax = m_picWidth;
+	int nHeightMax = m_picHeight;
+
+	if (pt.x < 0)
+		pt.x = 0;
+	if (pt.y < 0)
+		pt.y = 0;
+
+	if (m_client.Width() > m_picWidth)
+	{
+		pt.x = (m_client.Width() - m_picWidth) / 2;
+	}
+	else
+	{
+		if (pt.x + m_client.Width() > nWidthMax)
+			pt.x = nWidthMax - m_client.Width();
+	}
+	if (m_client.Height() > m_picHeight)
+	{
+		pt.y = (m_client.Height() - m_picHeight) / 2;
+	}
+	else
+	{
+		if (pt.y + m_client.Height() > nHeightMax)
+			pt.y = nHeightMax - m_client.Height();
+	}	
+
+	m_iX = pt.x;
+	m_iY = pt.y;
+
+	if (m_picWidth >= m_client.Width())
+	{
+		SCROLLINFO info;
+		info.cbSize = sizeof(SCROLLINFO);
+		info.fMask = SIF_ALL;
+		info.nMin = 0;
+		info.nMax = nWidthMax;
+		info.nPage = nPageH;
+		info.nPos = pt.x;
+		m_scrollBarH.SetScrollInfo(&info);
+	}
+
+	if (m_picHeight >= m_client.Height())
+	{
+		SCROLLINFO info;
+		info.cbSize = sizeof(SCROLLINFO);
+		info.fMask = SIF_ALL;
+		info.nMin = 0;
+		info.nMax = nHeightMax;
+		info.nPage = nPageV;
+		info.nPos = pt.y;
+		m_scrollBarV.SetScrollInfo(&info);
+	}
+#else
 	int nPageH, nPageV;
 	if (m_picWidth < m_client.Width())
 		nPageH = m_picWidth;
@@ -262,7 +334,7 @@ void CPicShow::ShowPic(cv::Mat& imgMat, cv::Point pt /*= cv::Point(0,0)*/)
 
 	int nWidthMax = m_picWidth;
 	int nHeightMax = m_picHeight;
-
+	
 	if (pt.x < 0)
 		pt.x = 0;
 	if (pt.y < 0)
@@ -272,17 +344,9 @@ void CPicShow::ShowPic(cv::Mat& imgMat, cv::Point pt /*= cv::Point(0,0)*/)
 	if (pt.y + m_client.Height() > nHeightMax)
 		pt.y = nHeightMax - m_client.Height();
 
-	if (pt.x == 0 && pt.y == 0)
-	{
-		pt.x = m_iX;
-		pt.y = m_iY;
-	}
-	else
-	{
-		m_iX = pt.x;
-		m_iY = pt.y;
-	}
-	
+	m_iX = pt.x;
+	m_iY = pt.y;
+
 	if (m_picWidth >= m_client.Width())
 	{
 		SCROLLINFO info;
@@ -290,7 +354,7 @@ void CPicShow::ShowPic(cv::Mat& imgMat, cv::Point pt /*= cv::Point(0,0)*/)
 		info.fMask = SIF_ALL;
 		info.nMin = 0;
 		info.nMax = nWidthMax;
-		info.nPage = nPageH;			//m_client.Width();
+		info.nPage = nPageH;
 		info.nPos = pt.x;
 		m_scrollBarH.SetScrollInfo(&info);
 	}
@@ -302,14 +366,14 @@ void CPicShow::ShowPic(cv::Mat& imgMat, cv::Point pt /*= cv::Point(0,0)*/)
 		info.fMask = SIF_ALL;
 		info.nMin = 0;
 		info.nMax = nHeightMax;
-		info.nPage = nPageV;			//m_client.Height();
+		info.nPage = nPageV;
 		info.nPos = pt.y;
 		m_scrollBarV.SetScrollInfo(&info);
 	}
-
+#endif
 	m_src_img = imgMat;
 //	cv::Point pt(0, 0);
-	m_picShow.ShowImage_rect(m_src_img, pt);
+	m_picShow.ShowImage_rect(m_src_img, pt, m_fScale);
 }
 
 LRESULT CPicShow::CvPaint(WPARAM wParam, LPARAM lParam)

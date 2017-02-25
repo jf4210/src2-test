@@ -437,7 +437,7 @@ void CV_picture::ShowImage_Rect_roi(cv::Mat &src, cv::Point pt, int method)
 	}
 }
 //显示图像的指定区域，对大图像，图片控件不足以显示完全，用此函数显示指定起点的区域
-void CV_picture::ShowImage_rect(cv::Mat &src, cv::Point pt)
+void CV_picture::ShowImage_rect(cv::Mat &src, cv::Point pt, float fScale)
 {
 	try
 	{
@@ -445,6 +445,7 @@ void CV_picture::ShowImage_rect(cv::Mat &src, cv::Point pt)
 		this->GetWindowRect(&m_rect_win);
 
 		m_dst_img = src + 0;
+		m_fRoi_scale = fScale;
 
 		int nRoiW = m_rect.Width() * m_fRoi_scale;
 		int nRoiH = m_rect.Height() * m_fRoi_scale;
@@ -471,14 +472,33 @@ void CV_picture::ShowImage_rect(cv::Mat &src, cv::Point pt)
 				nRoiH = m_dst_img.rows - pt.y;
 		}
 		
-		//	m_rect_roi = Rect(pt.x, pt.y, m_rect.Width(), m_rect.Height());
+#if 0
+		m_rect_roi = Rect(pt.x, pt.y, nRoiW, nRoiH);
+		m_rect_roi_center.x = pt.x + (float)m_rect_roi.width / 2.0f + 0.5f;
+		m_rect_roi_center.y = pt.y + (float)m_rect_roi.height / 2.0f + 0.5f;
+		if (m_dst_img.cols < m_rect.Width() || m_dst_img.rows < m_rect.Height())
+		{
+//			ResizeImage(m_dst_img, m_rect, m_drawing, 0);
+			Mat dst_img = Mat(m_rect.Height(), m_rect.Width(), m_dst_img.type());
+			dst_img = 0;
+			m_dst_roi = dst_img(m_rect_roi);
+			m_drawing = m_dst_roi + 0;
+		}
+		else
+		{
+			m_dst_roi = m_dst_img(m_rect_roi);
+			m_drawing = m_dst_roi + 0;
+		}
+
+//		m_drawing = m_dst_roi + 0;
+#else
 		m_rect_roi = Rect(pt.x, pt.y, nRoiW, nRoiH);
 		m_rect_roi_center.x = pt.x + (float)m_rect_roi.width / 2.0f + 0.5f;
 		m_rect_roi_center.y = pt.y + (float)m_rect_roi.height / 2.0f + 0.5f;
 		m_dst_roi = m_dst_img(m_rect_roi);
 
 		m_drawing = m_dst_roi + 0;
-
+#endif
 		if (m_bShowRectTracker_H)
 		{
 			int nX1 = (int)((float)(m_ptHTracker1.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
@@ -547,7 +567,7 @@ void CV_picture::ResizeImage(Mat &img,CRect rect,Mat &dst_img,int method)
 		// 读取图片的宽和高
 		int h = img.rows;
 		int w = img.cols;
-		int nw, nh;
+		int nw = 0, nh = 0;
 
 		//	TRACE("ResizeImage: img(%d,%d)，rect(%d,%d),dst_img(%d,%d), method=%d.\n", img.cols, img.rows, rect.Width(),rect.Height(),dst_img.cols,dst_img.rows,method);
 

@@ -36,7 +36,7 @@ public:
 	float m_fScale;		//当前图像的缩放比
 
 	void SetShowTracker(bool bShowH, bool bShowV, bool bShowSN);		//显示橡皮筋类
-	void ShowPic(cv::Mat& imgMat, cv::Point pt = cv::Point(0,0));
+	void ShowPic(cv::Mat& imgMat, cv::Point pt = cv::Point(0,0), float fShowPer = 1.0);
 	LRESULT CvPaint(WPARAM wParam, LPARAM lParam);
 	LRESULT RoiLbtnUp(WPARAM wParam, LPARAM lParam);
 	LRESULT RoiLbtnDown(WPARAM wParam, LPARAM lParam);
