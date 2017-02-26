@@ -295,8 +295,16 @@ void CPicShow::ShowPic(cv::Mat& imgMat, cv::Point pt /*= cv::Point(0,0)*/, float
 			pt.y = nHeightMax - m_client.Height();
 	}	
 
-	m_iX = pt.x;
-	m_iY = pt.y;
+	if (pt.x == 0 && pt.y == 0)
+	{
+		pt.x = m_iX;
+		pt.y = m_iY;
+	}
+	else
+	{
+		m_iX = pt.x;
+		m_iY = pt.y;
+	}
 
 	if (m_picWidth >= m_client.Width())
 	{
@@ -344,8 +352,16 @@ void CPicShow::ShowPic(cv::Mat& imgMat, cv::Point pt /*= cv::Point(0,0)*/, float
 	if (pt.y + m_client.Height() > nHeightMax)
 		pt.y = nHeightMax - m_client.Height();
 
-	m_iX = pt.x;
-	m_iY = pt.y;
+	if (pt.x == 0 && pt.y == 0)
+	{
+		pt.x = m_iX;
+		pt.y = m_iY;
+	}
+	else
+	{
+		m_iX = pt.x;
+		m_iY = pt.y;
+	}
 
 	if (m_picWidth >= m_client.Width())
 	{

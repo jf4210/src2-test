@@ -156,7 +156,7 @@ BOOL CMakeModelDlg::OnInitDialog()
 
 			Mat src_img;
 			src_img = m_vecPaperModelInfo[i]->matDstImg;
-			m_vecPicShow[i]->ShowPic(src_img);
+			m_vecPicShow[i]->ShowPic(src_img, cv::Point(0,0), 1.0);
 
 			pPaperModel->nPicW = src_img.cols;
 			pPaperModel->nPicH = src_img.rows;

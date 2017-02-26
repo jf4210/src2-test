@@ -1822,7 +1822,8 @@ void CScanToolDlg::ScanDone(int nStatus)
 	}
 
 	SetStatusShowInfo(strMsg, bWarn);
-	SetTimer(TIMER_CheckRecogComplete, 100, NULL);
+	if (m_bModifySN)
+		SetTimer(TIMER_CheckRecogComplete, 100, NULL);
 }
 
 void CScanToolDlg::SetStatusShowInfo(CString strMsg, BOOL bWarn /*= FALSE*/)
@@ -3717,7 +3718,9 @@ void CScanToolDlg::OnTimer(UINT nIDEvent)
 						m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
 					}
 				}
-			}			
+			}
+			else
+				KillTimer(TIMER_CheckRecogComplete);
 		}
 	}
 	CDialog::OnTimer(nIDEvent);
