@@ -126,7 +126,7 @@
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 #define  MSG_ZKZH_RECOG (WM_USER + 111)		//在准考证号识别完成时通知UI线程修改试卷列表，显示已经识别的ZKZH		2017.2.14
 
-#define SOFT_VERSION	_T("1.700227-1")
+#define SOFT_VERSION	_T("1.700227-3")
 #define SYS_BASE_NAME	_T("YKLX-ScanTool")
 #define SYS_GUIDE_NAME	_T("GuideDlg")
 
@@ -448,7 +448,7 @@ bool InitModelRecog(pMODEL pModel);		//初始化制卷工具模板的识别参数
 //----------------	OMR识别灰度差值比较	------------------
 typedef struct
 {
-	char szVal[4];
+	char szVal[10];
 	float fFirst;
 	float fSecond;
 	float fDiff;

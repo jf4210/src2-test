@@ -2396,7 +2396,7 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 					{
 						if (RectCompList[i].tl().y < itItem->rt.br().y && RectCompList[i].br().y > itItem->rt.tl().y && itItem->fRealValuePercent > fThreod)	//灰度值必须大于1.0才认为有填涂
 						{
-							char szVal[2] = { 0 };
+							char szVal[5] = { 0 };
 							sprintf_s(szVal, "%c", itItem->nAnswer + 65);
 // 							if (strTmpVal.find(szVal) == std::string::npos)
 // 								strTmpVal.append(szVal);
@@ -2464,7 +2464,7 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 					{
 						if (RectCompList[i].tl().x < itItem->rt.br().x && RectCompList[i].br().x > itItem->rt.tl().x && itItem->fRealValuePercent > fThreod)	//灰度值必须大于1.0才认为有填涂
 						{
-							char szVal[2] = { 0 };
+							char szVal[5] = { 0 };
 							sprintf_s(szVal, "%c", itItem->nAnswer + 65);
 // 							if (strTmpVal.find(szVal) == std::string::npos)
 // 								strTmpVal.append(szVal);
@@ -2518,7 +2518,7 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 							
 							if (itItem->fRealValuePercent > fThreod)	//灰度值必须大于1.0才认为有填涂
 							{
-								char szVal[2] = { 0 };
+								char szVal[5] = { 0 };
 								sprintf_s(szVal, "%c", itItem->nAnswer + 65);
 								if (strRecogAnswer.find(szVal) == std::string::npos)
 									strRecogAnswer.append(szVal);
@@ -2539,7 +2539,7 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 					{
 						if (RectCompList[i].tl().y < itItem->rt.br().y && RectCompList[i].br().y > itItem->rt.tl().y && itItem->fRealValuePercent > fThreod)	//灰度值必须大于1.0才认为有填涂
 						{
-							char szVal[2] = { 0 };
+							char szVal[5] = { 0 };
 							sprintf_s(szVal, "%d", itItem->nSnVal);
 
 							if (strRecogAnswer.find(szVal) == std::string::npos)
@@ -2559,7 +2559,7 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 					{
 						if (RectCompList[i].tl().x < itItem->rt.br().x && RectCompList[i].br().x > itItem->rt.tl().x && itItem->fRealValuePercent > fThreod)	//灰度值必须大于1.0才认为有填涂
 						{
-							char szVal[2] = { 0 };
+							char szVal[5] = { 0 };
 							sprintf_s(szVal, "%d", itItem->nSnVal);
 
 							if (strRecogAnswer.find(szVal) == std::string::npos)
