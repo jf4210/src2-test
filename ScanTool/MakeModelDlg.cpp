@@ -2319,12 +2319,23 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	if (dwAttr == 0xFFFFFFFF)
 	{
 		CreateDirectoryA(T2A(modelPath), NULL);
+		{
+			std::string strLog = "创建文件夹失败: " + std::string(T2A(modelPath));
+			g_pLogger->information(strLog);
+			return false;
+		}
 	}
 	modelPath = modelPath + _T("\\") + A2T(pModel->strModelName.c_str());
 	dwAttr = GetFileAttributesA(T2A(modelPath));
 	if (dwAttr == 0xFFFFFFFF)
 	{
 		dwAttr = CreateDirectoryA(T2A(modelPath), NULL);
+		if (!dwAttr)
+		{
+			std::string strLog = "创建文件夹失败: " + std::string(T2A(modelPath));
+			g_pLogger->information(strLog);
+			return false;
+		}
 	}
 
 	Poco::JSON::Object jsnModel;
