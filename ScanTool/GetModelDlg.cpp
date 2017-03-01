@@ -147,16 +147,18 @@ void CGetModelDlg::OnCbnSelchangeComboSubjectname()
 
 void CGetModelDlg::OnBnClickedBtnDown()
 {
+	EnableBtn(FALSE);
+
 	m_progress.SetPos(0);
 	USES_CONVERSION;
 	Poco::Net::SocketAddress sa(T2A(m_strServerIP), m_nServerPort);
 	m_ss.close();
 
-	GetDlgItem(IDC_BTN_DOWN)->EnableWindow(FALSE);
 	try
 	{
 		Poco::Timespan ts(5, 0);
 		m_ss.connect(sa);
+		m_ss.setNoDelay(true);
 		m_ss.setReceiveTimeout(ts);
 
 		CString strUser = _T("");
@@ -210,6 +212,7 @@ void CGetModelDlg::OnBnClickedBtnDown()
 			memset(m_szRecvBuff, 0, sizeof(m_szRecvBuff));
 			m_nRecvLen = 0;
 			m_nWantLen = 0;
+			EnableBtn(TRUE);
 			return;
 		}
 		else if (nResult == 1)
@@ -226,12 +229,19 @@ void CGetModelDlg::OnBnClickedBtnDown()
 			m_ss.sendBytes(szSendBuf, HEAD_SIZE + stHead2.uPackSize);
 
 			int nRecvResult = RecvFile(&stModelInfo);
-			if (nRecvResult)
+			if (nRecvResult > 0)
 			{
 				std::string strLog = "下载模板成功: ";
 				strLog.append(stModelInfo.szModelName);
 				g_pLogger->information(strLog);
 				AfxMessageBox(_T("下载成功"));
+			}
+			else
+			{
+				std::string strLog = "下载模板失败: ";
+				strLog.append(stModelInfo.szModelName);
+				g_pLogger->information(strLog);
+				AfxMessageBox(_T("下载模板失败"));
 			}
 		}
 
@@ -244,7 +254,7 @@ void CGetModelDlg::OnBnClickedBtnDown()
 		AfxMessageBox(_T("连接服务器失败"));
 	}
 
-	GetDlgItem(IDC_BTN_DOWN)->EnableWindow(TRUE);
+	EnableBtn(TRUE);
 }
 
 int CGetModelDlg::RecvData()
@@ -291,7 +301,7 @@ int CGetModelDlg::RecvData()
 	}
 	catch (Poco::Exception& exc)
 	{
-		std::string strLog = "接收数据异常 ==> " + exc.displayText();
+		std::string strLog = "接收数据异常(CGetModelDlg) ==> " + exc.displayText();
 		TRACE(strLog.c_str());
 		g_pLogger->information(strLog);
 		return 0;
@@ -460,7 +470,7 @@ int CGetModelDlg::RecvFile(pST_DOWN_MODEL pModelInfo)
 		std::string strLog = "接收模板文件异常 ==> " + exc.displayText();
 		TRACE(strLog.c_str());
 		g_pLogger->information(strLog);
-		return 0;
+		return -1;
 	}
 #else
 	int nCount = 0;
@@ -563,6 +573,8 @@ void CGetModelDlg::OnBnClickedBtnExit()
 
 void CGetModelDlg::OnBnClickedBtnRefreshexam()
 {
+	EnableBtn(FALSE);
+
 	USES_CONVERSION;
 	CString strEzs = _T("");
 #ifdef SHOW_GUIDEDLG
@@ -573,8 +585,18 @@ void CGetModelDlg::OnBnClickedBtnRefreshexam()
 	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();//GetParent();
 	strEzs = pDlg->m_strEzs;
 #endif
+	g_lfmExamList.lock();
 	g_lExamList.clear();
-	GetDlgItem(IDC_BTN_DOWN)->EnableWindow(FALSE);
+	g_lfmExamList.unlock();
+	m_comboExamName.ResetContent();
+	m_comboSubject.ResetContent();
+	m_nExamID = 0;
+	m_SubjectID = 0;
+	m_strExamTypeName = _T("");
+	m_strGradeName = _T("");
+	m_strScanModelName = _T("");
+	UpdateData(FALSE);
+	Invalidate();
 
 	ST_CMD_HEADER stHead;
 	stHead.usCmd = USER_GETEXAMINFO;
@@ -592,14 +614,14 @@ void CGetModelDlg::OnBnClickedBtnRefreshexam()
 	g_fmTcpTaskLock.unlock();
 
 	int nCount = 0;
-	while (nCount < 3 && g_lExamList.size() == 0)
+	while (nCount < 5 && g_lExamList.size() == 0)
 	{
 		Sleep(1000);
 		nCount++;
 	}
 
+	EnableBtn(TRUE);
 	InitUI();
-	GetDlgItem(IDC_BTN_DOWN)->EnableWindow(TRUE);
 }
 
 void CGetModelDlg::InitUI()
@@ -736,4 +758,12 @@ BOOL CGetModelDlg::PreTranslateMessage(MSG* pMsg)
 			m_Tip.RelayEvent(pMsg);
 	}
 	return CDialog::PreTranslateMessage(pMsg);
+}
+
+void CGetModelDlg::EnableBtn(BOOL bShow)
+{
+	GetDlgItem(IDC_BTN_DOWN)->EnableWindow(bShow);
+	GetDlgItem(IDC_BTN_RefreshExam)->EnableWindow(bShow);
+	GetDlgItem(IDC_BTN_CREATEMODEL)->EnableWindow(bShow);
+//	GetDlgItem(IDC_BTN_Exit)->EnableWindow(bShow);
 }

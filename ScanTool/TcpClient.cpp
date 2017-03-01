@@ -249,9 +249,8 @@ void CTcpClient::HandleCmd()
 					break;
 				}
 
-
 				Poco::JSON::Array::Ptr arryObj = examObj->getArray("exams");
-
+				g_lfmExamList.lock();
 				for (int i = 0; i < arryObj->size(); i++)
 				{
 					Poco::JSON::Object::Ptr objExamInfo = arryObj->getObject(i);
@@ -290,6 +289,7 @@ void CTcpClient::HandleCmd()
 					}
 					g_lExamList.push_back(examInfo);
 				}
+				g_lfmExamList.unlock();
 			}
 			catch (Poco::JSON::JSONException& jsone)
 			{

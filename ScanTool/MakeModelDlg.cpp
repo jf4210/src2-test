@@ -4935,9 +4935,31 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 	int nWInterval = 0;						//矩形间的X轴平均间隔
 	int nHInterval = 0;						//矩形间的Y轴平均间隔
 
+#if 1
+	int nX, nY;
+	switch (m_pSNInfoDlg->m_nCurrentSNVal)
+	{
+		case 10:	//1010
+			nX = rcList_X[0].width * 0.2 + 0.5;		//判断属于同一列的X轴偏差
+			nY = rcList_X[0].height * 0.3 + 0.5;	//判断属于同一行的Y轴偏差
+			break;
+		case 9:		//1001
+			nX = rcList_X[0].width * 0.2 + 0.5;		//判断属于同一列的X轴偏差
+			nY = rcList_X[0].height * 0.3 + 0.5;	//判断属于同一行的Y轴偏差
+			break;
+		case 6:		//0110
+			nY = rcList_X[0].width * 0.2 + 0.5;		//判断属于同一列的X轴偏差
+			nX = rcList_X[0].height * 0.3 + 0.5;	//判断属于同一行的Y轴偏差
+			break;
+		case 5:		//0101
+			nY = rcList_X[0].width * 0.2 + 0.5;		//判断属于同一列的X轴偏差
+			nX = rcList_X[0].height * 0.3 + 0.5;	//判断属于同一行的Y轴偏差
+			break;
+	}
+#else
 	int nX = rcList_X[0].width * 0.2 + 0.5;		//判断属于同一列的X轴偏差
 	int nY = rcList_X[0].height * 0.3 + 0.5;	//判断属于同一行的Y轴偏差
-
+#endif
 
 	std::sort(rcList_XY.begin(), rcList_XY.end(), SortByPositionXYInterval);
 

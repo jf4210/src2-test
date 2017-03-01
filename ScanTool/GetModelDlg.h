@@ -36,6 +36,7 @@ public:
 	int			RecvData();
 	int			RecvFile(pST_DOWN_MODEL pModelInfo);
 	void		InitUI();
+	void		EnableBtn(BOOL bShow);
 private:
 	CString		m_strServerIP;
 	int			m_nServerPort;

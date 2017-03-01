@@ -67,7 +67,7 @@
 //	#define Test_Data			//测试数据，测试模式
 #else	//release版本
 	#define	 TEST_MODEL_NAME	//模板名称测试
-	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
+//	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -126,7 +126,7 @@
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 #define  MSG_ZKZH_RECOG (WM_USER + 111)		//在准考证号识别完成时通知UI线程修改试卷列表，显示已经识别的ZKZH		2017.2.14
 
-#define SOFT_VERSION	_T("1.700227-3")
+#define SOFT_VERSION	_T("1.700227-4-Pri")
 #define SYS_BASE_NAME	_T("YKLX-ScanTool")
 #define SYS_GUIDE_NAME	_T("GuideDlg")
 
@@ -380,6 +380,7 @@ typedef struct _examInfo_
 }EXAMINFO, *pEXAMINFO;
 typedef std::list<EXAMINFO> EXAM_LIST;
 
+extern Poco::FastMutex	g_lfmExamList;
 extern EXAM_LIST	g_lExamList;
 
 

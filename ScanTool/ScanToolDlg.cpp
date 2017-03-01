@@ -49,6 +49,7 @@ SENDTASKLIST		g_lSendTask;	//上传文件任务列表
 Poco::FastMutex		g_fmTcpTaskLock;
 TCP_TASKLIST		g_lTcpTask;		//tcp任务列表
 
+Poco::FastMutex		g_lfmExamList;
 EXAM_LIST			g_lExamList;	//当前账号对应的考试列表
 
 Poco::FastMutex		g_fmCompressLock;		//压缩文件列表锁
