@@ -675,7 +675,9 @@ void CScanToolDlg::InitUI()
 	m_pShowScannerInfoDlg->ShowWindow(SW_SHOW);
 
 #ifdef TO_WHTY
-	m_pShowScannerInfoDlg->ShowWindow(SW_HIDE);
+	#ifndef SHOW_LOGIN_MAINDLG
+		m_pShowScannerInfoDlg->ShowWindow(SW_HIDE);
+	#endif
 #endif
 #ifndef SHOW_SCANALL_MAINDLG
 	GetDlgItem(IDC_BTN_ScanAll)->ShowWindow(SW_HIDE);
@@ -1063,6 +1065,17 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		m_bF2Enable = TRUE;
 		return;
 	}
+#else
+	#ifdef SHOW_LOGIN_MAINDLG
+		BOOL bLogin = m_bLogin;
+		if (!bLogin)
+		{
+			AfxMessageBox(_T("Î´µÇÂ¼£¬ÇëÏÈµÇÂ¼"));
+			m_bF1Enable = TRUE;
+			m_bF2Enable = TRUE;
+			return;
+		}
+	#endif
 #endif	
 	int nScanSrc = 0;
 	int nDuplexDef = 1;

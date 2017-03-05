@@ -77,7 +77,7 @@
 #endif
 
 //+++++++++	选择版本 ++++++++++++++++++
-//#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
+#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
 #ifndef TO_WHTY
 	#define SHOW_GUIDEDLG				//显示引导界面,易考乐学自己用，显示引导界面.******** 此处不定义，则直接显示主界面	***********
 #endif
@@ -106,7 +106,7 @@
 		#define SHOW_PAPERINPUT_MAINDLG			//是否在主界面上显示试卷导入按钮
 	#endif
 #elif defined (TO_WHTY)
-	//#define SHOW_LOGIN_MAINDLG			//是否在主界面上显示登录按钮
+	#define SHOW_LOGIN_MAINDLG			//是否在主界面上显示登录按钮
 	//#define SHOW_MODELMGR_MAINDLG			//是否在主界面上显示模板管理按钮
 	//#define SHOW_MODELMAKE_MAINDLG		//是否在主界面上显示模板制作按钮
 	//#define SHOW_COMBOLIST_MAINDLG		//是否在主界面上显示下拉列表控件

@@ -99,7 +99,9 @@ void CLoginDlg::OnBnClickedBtnLogin()
 		CString strResult = _T("");
 		if (RecvData(strResult))
 		{
+//		#ifndef TO_WHTY			//天喻版不需要获取考试信息
 			GetExamInfo();
+//		#endif
 			WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "login", T2A(m_strUserName));
 			AfxMessageBox(_T("登录成功"));	//登录成功，获取考试信息失败
 			CDialog::OnOK();
