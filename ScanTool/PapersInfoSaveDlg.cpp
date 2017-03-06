@@ -59,11 +59,14 @@ BOOL CPapersInfoSaveDlg::OnInitDialog()
 	}
 #if 1
 	InitUI(SW_HIDE);
-#ifndef TO_WHTY
+//#ifndef TO_WHTY			//天喻版本也需要考试列表
+#if 1
 	m_pExamInfoDlg = new CExamInfoDlg(this);
 	m_pExamInfoDlg->Create(CExamInfoDlg::IDD, this);
 	m_pExamInfoDlg->ShowWindow(SW_SHOW);
 	m_pExamInfoDlg->InitShow(m_pModel);
+
+	GetDlgItem(IDC_EDIT_PapersName)->EnableWindow(FALSE);
 
 	MoveWindow(0, 0, 450, 350);
 	CenterWindow();
@@ -147,6 +150,7 @@ void CPapersInfoSaveDlg::OnBnClickedOk()
 	}
 	else
 	{
+	#ifndef TO_WHTY
 		if (m_pModel->nSaveMode == 1)
 		{
 			AfxMessageBox(_T("当前扫描模板为属于本地临时模板，请确定上传的考试、科目信息正确!!!\r\n\r\n(若希望不显示此通知，请将扫描模板保存成联网模式，然后再用联网模式的模板扫描试卷 ^_^)"));
@@ -164,6 +168,7 @@ void CPapersInfoSaveDlg::OnBnClickedOk()
 					return;
 			}
 		}
+	#endif
 	}
 
 	USES_CONVERSION;

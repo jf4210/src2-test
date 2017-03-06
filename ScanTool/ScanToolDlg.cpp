@@ -1040,6 +1040,10 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		ScanSrcInit();
 	}
 
+	int nScanSize = 1;
+	int nScanType = 2;
+	int nScanDpi = 200;
+	int nAutoCut = 1;
 #ifndef TO_WHTY
 	BOOL bLogin = FALSE;
 #ifdef SHOW_GUIDEDLG
@@ -1065,6 +1069,10 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		m_bF2Enable = TRUE;
 		return;
 	}
+	nScanSize = m_pModel->nScanSize;
+	nScanType = m_pModel->nScanType;
+	nScanDpi = m_pModel->nScanDpi;
+	nAutoCut = m_pModel->nAutoCut;
 #else
 	#ifdef SHOW_LOGIN_MAINDLG
 		BOOL bLogin = m_bLogin;
@@ -1152,15 +1160,15 @@ void CScanToolDlg::OnBnClickedBtnScan()
 
 	int nDuplex = nDuplexDef;		//单双面,0-单面,1-双面
 	int nSize = TWSS_NONE;					//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3, TWSS_NONE-自定义
-	if (m_pModel->nScanSize == 1)
+	if (nScanSize == 1)
 		nSize = TWSS_A4LETTER;
-	else if (m_pModel->nScanSize == 2)
+	else if (nScanSize == 2)
 		nSize = TWSS_A3;
 	else
 		nSize = TWSS_NONE;
 
-	int nPixel = m_pModel->nScanType;		//0-黑白，1-灰度，2-彩色
-	int nResolution = m_pModel->nScanDpi;	//dpi: 72, 150, 200, 300
+	int nPixel = nScanType;		//0-黑白，1-灰度，2-彩色
+	int nResolution = nScanDpi;	//dpi: 72, 150, 200, 300
 	
 	int nNum = 0;
 	if (nDuplex == 0)
@@ -1180,7 +1188,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	if (nNum == 0)
 		nNum = TWCPP_ANYCOUNT;
 
-	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, bShowScanSrcUI, m_pModel->nAutoCut))	//TWCPP_ANYCOUNT
+	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, bShowScanSrcUI, nAutoCut))	//TWCPP_ANYCOUNT
 	{
 		m_comboModel.EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_Scan)->EnableWindow(TRUE);
@@ -2479,7 +2487,8 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 
 	int nExamID = 0;
 	int nSubjectID = 0;
-#ifndef TO_WHTY
+//#ifndef TO_WHTY
+#if 1
 	CPapersInfoSaveDlg dlg(m_pPapersInfo, m_pModel);
 	if (dlg.DoModal() != IDOK)
 	{
