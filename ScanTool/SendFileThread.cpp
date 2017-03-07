@@ -90,14 +90,14 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 	Poco::File fileSrcPath(strUtf8);
 	if (!fileSrcPath.exists())
 	{
-		char szLog[300] = { 0 };
+		char szLog[500] = { 0 };
 		sprintf_s(szLog, "发送文件(%s)失败,路径不存在: %s", pTask->strFileName.c_str(), pTask->strPath.c_str());
 		g_pLogger->information(szLog);
 		TRACE(szLog);
 		return;
 	}
 
-	char szLog[300] = { 0 };
+	char szLog[500] = { 0 };
 	sprintf_s(szLog, "添加发送文件任务: %s, path: %s", pTask->strFileName.c_str(), pTask->strPath.c_str());
 	g_pLogger->information(szLog);
 

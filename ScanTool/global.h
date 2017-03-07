@@ -77,7 +77,7 @@
 #endif
 
 //+++++++++	选择版本 ++++++++++++++++++
-//#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
+#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
 #ifndef TO_WHTY
 	#define SHOW_GUIDEDLG				//显示引导界面,易考乐学自己用，显示引导界面.******** 此处不定义，则直接显示主界面	***********
 #endif
@@ -126,7 +126,11 @@
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 #define  MSG_ZKZH_RECOG (WM_USER + 111)		//在准考证号识别完成时通知UI线程修改试卷列表，显示已经识别的ZKZH		2017.2.14
 
-#define SOFT_VERSION	_T("1.70227-4-Pri")
+#ifndef TO_WHTY
+	#define SOFT_VERSION	_T("1.70227-4-Pri")
+#else
+	#define SOFT_VERSION	_T("2.1-0307")
+#endif
 #define SYS_BASE_NAME	_T("YKLX-ScanTool")
 #define SYS_GUIDE_NAME	_T("GuideDlg")
 
@@ -362,7 +366,7 @@ extern SENDTASKLIST			g_lSendTask;
 typedef struct _ExamSubjects_
 {
 	int			nSubjID;		//考试科目ID
-	int			nSubjCode;		//考试科目代码
+//	int			nSubjCode;		//考试科目代码
 	std::string strSubjName;	//考试科目名称
 	std::string strModelName;	//扫描所用模板名称
 }EXAM_SUBJECT, *pEXAM_SUBJECT;

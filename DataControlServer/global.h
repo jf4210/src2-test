@@ -59,6 +59,7 @@
 #include "Poco/Crypto/CipherKey.h"
 #include "Poco/Crypto/X509Certificate.h"
 #include "Poco/Crypto/CryptoStream.h"
+#include "Poco/SHA1Engine.h"
 
 #include "Poco/Checksum.h"
 

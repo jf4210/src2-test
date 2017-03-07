@@ -358,7 +358,9 @@ void CScanToolDlg::OnDestroy()
 	UnregisterHotKey(GetSafeHwnd(), 1001);//注销F2键  
 	UnregisterHotKey(GetSafeHwnd(), 1002);//注销Alt+1键  
 
+	g_lfmExamList.lock();
 	g_lExamList.clear();
+	g_lfmExamList.unlock();
 	g_nExitFlag = 1;
 	ReleaseTwain();
 	g_pLogger->information("ReleaseTwain() complete.");
@@ -975,7 +977,9 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 		CLoginDlg dlg(A2T(m_strCmdServerIP.c_str()), m_nCmdPort);
 		if (dlg.DoModal() != IDOK)
 		{
+			g_lfmExamList.lock();
 			g_lExamList.clear();
+			g_lfmExamList.unlock();
 			m_bLogin = FALSE;
 			m_strUserName = _T("");
 			m_strNickName = _T("");
@@ -1009,7 +1013,9 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 		g_fmTcpTaskLock.unlock();
 
 
+		g_lfmExamList.lock();
 		g_lExamList.clear();
+		g_lfmExamList.unlock();
 		m_bLogin = FALSE;
 		m_strUserName = _T("");
 		m_strNickName = _T("");
@@ -1832,6 +1838,7 @@ void CScanToolDlg::ScanDone(int nStatus)
 		m_nScanStatus = 2;
 	}
 
+#ifndef TO_WHTY
 	//显示所有识别完成的准考证号
 	int nCount = m_lcPicture.GetItemCount();
 	for (int i = 0; i < nCount; i++)
@@ -1842,6 +1849,7 @@ void CScanToolDlg::ScanDone(int nStatus)
 			m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
 		}
 	}
+#endif
 
 	SetStatusShowInfo(strMsg, bWarn);
 	if (m_bModifySN)
@@ -1915,6 +1923,26 @@ void CScanToolDlg::OnNMDblclkListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 	m_nCurrItemPaperList = pNMItemActivate->iItem;
 #if 1
 	ShowPaperByItem(m_nCurrItemPaperList);
+
+	//双击为空的准考证号时显示准考证号修改窗口
+	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(m_nCurrItemPaperList);
+	if (m_bModifySN && m_pModel && pItemPaper && (pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH))
+	{
+		CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo);
+		zkzhDlg.DoModal();
+
+		//显示所有识别完成的准考证号
+		USES_CONVERSION;
+		int nCount = m_lcPicture.GetItemCount();
+		for (int i = 0; i < nCount; i++)
+		{
+			pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(i);
+			if (pItemPaper)
+			{
+				m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
+			}
+		}
+	}
 #else
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcPicture.GetItemData(pNMItemActivate->iItem);
 
@@ -2412,6 +2440,8 @@ LRESULT CScanToolDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 {
 	pST_PaperInfo pPaper = (pST_PaperInfo)wParam;
 	pPAPERSINFO   pPapers = (pPAPERSINFO)lParam;
+	if (!m_bModifySN)
+		return FALSE;
 
 	USES_CONVERSION;
 	int nCount = m_lcPicture.GetItemCount();

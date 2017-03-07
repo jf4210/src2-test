@@ -96,7 +96,7 @@ public:
 	BOOL			m_bF1Enable;
 	BOOL			m_bF2Enable;
 	BOOL			m_bLastPkgSaveOK;		//扫描的上一代试卷是否保存成功
-	bool			m_bModifySN;			//扫描完成后，是否将为识别的准考证号进行人工修正
+	bool			m_bModifySN;			//扫描完成后，是否将未识别的准考证号进行人工修正
 public:
 	void	InitUI();
 	void	InitTab();

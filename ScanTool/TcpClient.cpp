@@ -193,7 +193,8 @@ bool CTcpClient::receiveData()
 	if (bGetCmd)
 	{
 		HandleCmd();
-		memmove(m_pRecvBuff, m_pRecvBuff + _nRecvLen, _nRecvLen);
+//		memmove(m_pRecvBuff, m_pRecvBuff + _nRecvLen, _nRecvLen);
+		memset(m_pRecvBuff, 0, strlen(m_pRecvBuff));
 		_nRecvLen = 0;
 		_nWantLen = 0;
 	}
@@ -280,7 +281,7 @@ void CTcpClient::HandleCmd()
 						Poco::JSON::Object::Ptr objSubject = arrySubjects->getObject(j);
 						EXAM_SUBJECT subjectInfo;
 						subjectInfo.nSubjID = objSubject->get("id").convert<int>();
-						subjectInfo.nSubjCode = objSubject->get("code").convert<int>();
+//						subjectInfo.nSubjCode = objSubject->get("code").convert<int>();
 						subjectInfo.strSubjName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("name").convert<std::string>());
 						if (!objSubject->isNull("scanTemplateName"))
 							subjectInfo.strModelName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("scanTemplateName").convert<std::string>());

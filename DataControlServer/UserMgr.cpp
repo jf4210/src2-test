@@ -65,6 +65,37 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			return 1;
 			#endif
 
+		#ifdef TO_WHTY
+			//¼ÆËãsha1Ç©Ãû
+// 			std::string strTest = "abcdefage24appKey000001formatxmllocalezh_CNmethoduser.createsessionIdAAAAsex1userNametomsonv1.0abcdef";
+// 			Poco::SHA1Engine engine;
+// 			engine.update(strTest);
+// 			std::string strSHA1 = Poco::DigestEngine::digestToHex(engine.digest());
+			std::string strAppKey = "SP0000000TEST";
+			std::string strAppValue = "63d4311d46714a39-a54cf2b0537a79b6TEST";
+			std::string strMsgFormat = "json";
+			std::string strMethod = "login111";
+			std::string strPwd = LoginInfo.szPWD;
+			std::string strUser = LoginInfo.szUserNo;
+//			std::string strSha1Src = Poco::format("%sappKey%sformat%smethod%spassword%susername%s%s", strAppValue, strAppKey, strMsgFormat, strMethod, strPwd, strUser, strAppValue);
+			std::string strSha1Src = Poco::format("%sappKey%smethod%spassword%susername%s%s", strAppValue, strAppKey, strMethod, strPwd, strUser, strAppValue);
+			Poco::SHA1Engine engine;
+			engine.update(strSha1Src);
+			std::string strSHA1 = Poco::DigestEngine::digestToHex(engine.digest());
+
+			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
+			pTask->strUri		= SysSet.m_strBackUri + "/login";
+			pTask->pUser		= pUser;
+			pTask->strMsg		= "login2Ty";
+			pTask->strUser		= LoginInfo.szUserNo;
+			pTask->strPwd		= LoginInfo.szPWD;
+			char szAppkey[50] = { 0 };
+			char szSign[50] = { 0 };
+			char szMethod[30] = { 0 };
+			char szTmp[500] = { 0 };
+			sprintf(szTmp, "appKey=SP0000000TEST&messageFormat=json&method=login111&password=%s&username=%s&v=1.0", szAppkey, szMethod, LoginInfo.szPWD, LoginInfo.szUserNo, szSign);
+			pTask->strUri		= Poco::format("%s%s", SysSet.m_strBackUri, szTmp);
+		#else
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
 			pTask->strUri		= SysSet.m_strBackUri + "/login";
 			pTask->pUser		= pUser;
@@ -74,6 +105,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			char szTmp[200] = { 0 };
 			sprintf(szTmp, "username=%s&password=%s", LoginInfo.szUserNo, LoginInfo.szPWD);
 			pTask->strRequest = szTmp;
+		#endif
 			g_fmScanReq.lock();
 			g_lScanReq.push_back(pTask);
 			g_fmScanReq.unlock();

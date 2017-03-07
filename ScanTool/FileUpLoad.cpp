@@ -132,7 +132,12 @@ RESTART:
 	{
 		while (m_bUpLoad)
 		{
-			if (!m_bConnect) goto RESTART;
+			if (!m_bConnect)
+			{
+				m_uThreadType = 1;
+				g_bFileConnect = false;
+				goto RESTART;
+			}
 			bool bFindTask = false;
 			std::list<stUpLoadAns*>::iterator it = m_listFile.begin();
 			for (; it != m_listFile.end(); it++)
@@ -231,6 +236,15 @@ RESTART:
 					memcpy(m_szSendBuf, &stHead, HEAD_SIZE);
 					memcpy(m_szSendBuf + HEAD_SIZE, &stAnsInfo, sizeof(ST_FILE_INFO));
 				RESENDHEAD:
+					ResetEvent(m_hSendReadyEvent);
+					ResetEvent(m_hSendDoneEvent);
+					if (!m_bConnect)
+					{
+						delete szFileBuff;
+						m_uThreadType = 1;
+						g_bFileConnect = false;
+						break;
+					}
 					if (m_bStop)
 					{
 						sprintf_s(szLog, "发送文件(%s)时检测到系统退出标志，停止发送数据", T2A(pTask->strAnsName));
@@ -247,6 +261,7 @@ RESTART:
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
 						delete szFileBuff;
 
+						m_bConnect = FALSE;
 						break;
 					}
 //					DWORD dwResult1 = WaitForSingleObject(m_hSendReadyEvent, INFINITE);
@@ -265,6 +280,7 @@ RESTART:
 					if (!bRecvResult)
 					{
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
+						m_bConnect = FALSE;
 						goto RESENDHEAD;
 					}
 					ResetEvent(m_hSendReadyEvent);
@@ -274,6 +290,7 @@ RESTART:
 						g_pLogger->information(szLog);
 
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
+						m_bConnect = FALSE;
 						goto RESENDHEAD;
 					}
 					if (!sendData(szFileBuff, Length, pTask))
@@ -284,6 +301,7 @@ RESTART:
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
 						delete szFileBuff;
 
+						m_bConnect = FALSE;
 						break;
 					}
 //					DWORD dwResult = WaitForSingleObject(m_hSendDoneEvent, INFINITE);
@@ -299,6 +317,12 @@ RESTART:
 							g_pLogger->information(szLog);
 							break;
 					}
+					if (!bRecvResult)
+					{
+						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
+						m_bConnect = FALSE;
+						goto RESENDHEAD;
+					}
 					ResetEvent(m_hSendDoneEvent);
 					if (m_bSendOK == FALSE)
 					{
@@ -306,6 +330,7 @@ RESTART:
 						g_pLogger->information(szLog);
 
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
+						m_bConnect = FALSE;
 						goto RESENDHEAD;
 					}
 					pTask->bUpload = TRUE;
@@ -337,7 +362,7 @@ BOOL CFileUpLoad::InitUpLoadTcp(CString strAddr,USHORT usPort)
 bool CFileUpLoad::sendData( char * szBuff, DWORD nLen, stUpLoadAns* pTask)
 {
 	ULONG uOffset = 0;
-	if(m_pITcpClient == NULL)
+	if(m_pITcpClient == NULL || m_bConnect == FALSE)
 		return false;
 
 	bool bResult = true;

@@ -21,15 +21,18 @@
 //#define USE_POCO_UNZIP			//使用poco解压缩zip文件,解压无加密文件
 
 
-// //#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
-// #ifdef TO_WHTY
-// 	#define USE_POCO_UNZIP			//给武汉天喻信息使用,不使用加密压缩
-// #endif
+#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
+#ifdef TO_WHTY
+	#define USE_POCO_UNZIP			//给武汉天喻信息使用,不使用加密压缩
+#endif
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION "DataControlServer V1.70222-1"
-
+#ifndef TO_WHTY
+	#define SOFT_VERSION "DataControlServer V1.70222-1"
+#else
+	#define SOFT_VERSION "DataControlServer for TY V2.1-0307"
+#endif
 
 #define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}
 

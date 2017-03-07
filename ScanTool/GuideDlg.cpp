@@ -453,7 +453,9 @@ void CGuideDlg::OnBnClickedBtnLogin()
 		CLoginDlg dlg(A2T(g_strCmdIP.c_str()), g_nCmdPort);
 		if (dlg.DoModal() != IDOK)
 		{
+			g_lfmExamList.lock();
 			g_lExamList.clear();
+			g_lfmExamList.unlock();
 			m_bLogin = FALSE;
 			m_strUserName = _T("");
 			m_strNickName = _T("");
@@ -486,7 +488,9 @@ void CGuideDlg::OnBnClickedBtnLogin()
 		g_lTcpTask.push_back(pTcpTask);
 		g_fmTcpTaskLock.unlock();
 
+		g_lfmExamList.lock();
 		g_lExamList.clear();
+		g_lfmExamList.unlock();
 		m_bLogin = FALSE;
 		m_strUserName = _T("");
 		m_strNickName = _T("");
