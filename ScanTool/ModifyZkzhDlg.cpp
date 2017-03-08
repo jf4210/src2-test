@@ -277,7 +277,7 @@ void CModifyZkzhDlg::ShowPaperByItem(int nItem)
 
 void CModifyZkzhDlg::ShowPaperZkzhPosition(pST_PaperInfo pPaper)
 {
-	if (NULL == pPaper)
+	if (NULL == pPaper || NULL == m_pModel)
 		return;
 
 	PIC_LIST::iterator itPic = pPaper->lPic.begin();

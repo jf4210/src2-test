@@ -20,6 +20,7 @@ public:
 	CString		m_strEzs;
 	CString		m_strUser;
 	CString		m_strNickName;
+	CString		m_strPersonId;		//ÌìÓ÷×¨ÓÃ
 	int			m_nTeacherId;
 	int			m_nUserId;
 

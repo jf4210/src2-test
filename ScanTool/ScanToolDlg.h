@@ -91,6 +91,7 @@ public:
 	CString			m_strNickName;
 	CString			m_strPwd;
 	CString			m_strEzs;
+	CString			m_strPersonId;			//天喻专用，登录后命名用personID
 	int				m_nTeacherId;
 	int				m_nUserId;
 	BOOL			m_bF1Enable;

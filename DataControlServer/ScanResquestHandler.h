@@ -21,5 +21,8 @@ public:
 	bool InitModelRecog(pMODEL pModel);
 	bool SaveModel(pMODEL pModel, std::string& strModelPath);
 	int ZipModel(pMODEL pModel, std::string& strModelPath);
+
+	void LoginMultiPlatform4Ty();
+	void GetUserInfo4Ty(std::string& strSessionId, pSCAN_REQ_TASK pOldTask);		//天喻版本获取用户信息
 };
 

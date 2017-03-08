@@ -64,7 +64,7 @@
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define	 TEST_MODEL_NAME	//模板名称测试
 //	#define	 TEST_SCAN_THREAD	//扫描线程测试
-//	#define Test_Data			//测试数据，测试模式
+	#define Test_Data			//测试数据，测试模式
 #else	//release版本
 	#define	 TEST_MODEL_NAME	//模板名称测试
 //	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”

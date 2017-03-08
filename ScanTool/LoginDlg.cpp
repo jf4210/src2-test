@@ -18,6 +18,7 @@ CLoginDlg::CLoginDlg(CString strIP, int nPort, CWnd* pParent /*=NULL*/)
 	, m_strPwd(_T(""))
 	, m_strUser(_T(""))
 	, m_strNickName(_T(""))
+	, m_strPersonId(_T(""))
 	, m_strServerIP(strIP)
 	, m_nServerPort(nPort)
 	, m_nRecvLen(0)
@@ -65,6 +66,10 @@ BOOL CLoginDlg::OnInitDialog()
 	}
 	SAFE_RELEASE_ARRY(ret);
 
+#ifdef Test_Data
+	m_strPwd = _T("11223344");
+#endif
+
 	UpdateData(FALSE);
 
 	return TRUE;
@@ -79,7 +84,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 	Poco::Net::SocketAddress sa(T2A(m_strServerIP), m_nServerPort);
 	try
 	{
-		Poco::Timespan ts(6, 0);
+		Poco::Timespan ts(10, 0);
 		m_ss.connect(sa);
 		m_ss.setReceiveTimeout(ts);
 
@@ -187,10 +192,16 @@ int CLoginDlg::RecvData(CString& strResultInfo)
 				{
 					result = parser.parse(pstResult->szUserInfo);
 					Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
-
+				#ifdef TO_WHTY
+					std::string strPersonId = object->get("personid").convert<std::string>();
+					std::string strNickName = CMyCodeConvert::Utf8ToGb2312(object->get("name").convert<std::string>());
+					std::string strUserName = object->get("account").convert<std::string>();
+					m_strPersonId = strPersonId.c_str();
+				#else
 					std::string strUserName = object->get("name").convert<std::string>();
 					Poco::JSON::Object::Ptr objDetail = object->getObject("detail");
 					std::string strNickName = CMyCodeConvert::Utf8ToGb2312(objDetail->get("nickName").convert<std::string>());
+				#endif
 					m_strUser		= strUserName.c_str();
 					m_strNickName	= strNickName.c_str();
 				}

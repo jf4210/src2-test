@@ -77,24 +77,23 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			std::string strMethod = "login111";
 			std::string strPwd = LoginInfo.szPWD;
 			std::string strUser = LoginInfo.szUserNo;
-//			std::string strSha1Src = Poco::format("%sappKey%sformat%smethod%spassword%susername%s%s", strAppValue, strAppKey, strMsgFormat, strMethod, strPwd, strUser, strAppValue);
-			std::string strSha1Src = Poco::format("%sappKey%smethod%spassword%susername%s%s", strAppValue, strAppKey, strMethod, strPwd, strUser, strAppValue);
+			std::string strSha1Src = Poco::format("%sappKey%smessageFormat%smethod%spassword%susername%sv1.0%s", strAppValue, strAppKey, strMsgFormat, strMethod, strPwd, strUser, strAppValue);
+//			std::string strSha1Src = Poco::format("%sappKey%smethod%spassword%susername%sv1.0%s", strAppValue, strAppKey, strMethod, strPwd, strUser, strAppValue);
 			Poco::SHA1Engine engine;
 			engine.update(strSha1Src);
 			std::string strSHA1 = Poco::DigestEngine::digestToHex(engine.digest());
+			std::string strSHA1_Up = Poco::toUpper(strSHA1);
+			std::string strUriValue = Poco::format("/router?appKey=%s&messageFormat=%s&method=%s&password=%s&sign=%s&username=%s&v=1.0", strAppKey, strMsgFormat, strMethod, strPwd, strSHA1_Up, strUser);
+//			std::string strUriValue = Poco::format("/router?appKey=%s&method=%s&password=%s&sign=%s&username=%s&v=1.0", strAppKey, strMethod, strPwd, strSHA1_Up, strUser);
 
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
-			pTask->strUri		= SysSet.m_strBackUri + "/login";
+			pTask->strUri		= SysSet.m_strBackUri + strUriValue;
 			pTask->pUser		= pUser;
 			pTask->strMsg		= "login2Ty";
 			pTask->strUser		= LoginInfo.szUserNo;
 			pTask->strPwd		= LoginInfo.szPWD;
-			char szAppkey[50] = { 0 };
-			char szSign[50] = { 0 };
-			char szMethod[30] = { 0 };
-			char szTmp[500] = { 0 };
-			sprintf(szTmp, "appKey=SP0000000TEST&messageFormat=json&method=login111&password=%s&username=%s&v=1.0", szAppkey, szMethod, LoginInfo.szPWD, LoginInfo.szUserNo, szSign);
-			pTask->strUri		= Poco::format("%s%s", SysSet.m_strBackUri, szTmp);
+			std::string strLog = Poco::format("ÌìÓ÷µÇÂ¼: src_SHA1 = %s\nSHA1 = %s\nuri = %s", strSha1Src, strSHA1_Up, pTask->strUri);
+			g_Log.LogOut(strLog);
 		#else
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
 			pTask->strUri		= SysSet.m_strBackUri + "/login";

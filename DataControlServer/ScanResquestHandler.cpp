@@ -114,7 +114,7 @@ void CScanResquestHandler::HandleTask(pSCAN_REQ_TASK pTask)
 		else
 		{
 //			std::string strLog = "发送数据:" + pTask->strRequest + "\t\t后端数据返回错误,不是200 OK";
-			std::string strLog = Poco::format("发送数据: %s\t\t后端数据返回错误,不是200 OK,返回http代码: %d", pTask->strRequest, response.getStatus());
+			std::string strLog = Poco::format("发送数据: %s\t\t后端数据返回错误,不是200 OK,返回http代码: %d", pTask->strRequest, (int)response.getStatus());
 			g_Log.LogOut(strLog);
 			std::cout << strLog << std::endl;
 		}
@@ -204,6 +204,85 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 			{
 				ret = RESULT_LOGIN_FAIL;
 				strSendData = strResult;
+			}
+		}
+		else if (pTask->strMsg == "login2Ty")
+		{
+			std::string strResult = object->get("result").convert<std::string>();
+			if (strResult == "000000")		//用户只在单平台存在的返回
+			{
+				std::string strSessionId = object->get("sessionId").convert<std::string>();
+				GetUserInfo4Ty(strSessionId, pTask);
+				return true;
+			}
+			else if (strResult == "301000")		//用户在多个平台的返回
+			{
+				Poco::JSON::Array::Ptr jsnDetailArry = object->getArray("platList");
+				std::stringstream jsnString;
+				jsnDetailArry->stringify(jsnString, 0);
+
+				//发送平台信息给客户端
+				ret = RESULT_LOGIN_PLATFORM_TY;
+				std::string strPlatform = jsnString.str();
+				pTask->pUser->SendResponesInfo(USER_RESPONSE_LOGIN, ret, (char*)jsnString.str().c_str(), jsnString.str().length());
+				return true;
+			}
+			else
+			{
+				std::string strResult = object->get("msg").convert<std::string>();
+				strResult = CMyCodeConvert::Utf8ToGb2312(strResult);
+				ret = RESULT_LOGIN_FAIL;
+				strSendData = strResult;
+			}
+		}
+		else if (pTask->strMsg == "getUserInfo4Ty")
+		{
+			if (object->has("name"))	//有name说明获取用户信息成功
+			{
+				std::string strName = object->get("name").convert<std::string>();
+				std::string strPersonId = object->get("personid").convert<std::string>();
+				std::string strAccount = object->get("account").convert<std::string>();
+
+				ret = RESULT_SUCCESS;
+				int nTeacher = -1;
+				int nUserID = -1;
+
+				Poco::JSON::Object jsUserInfo;
+				jsUserInfo.set("personid", strPersonId);
+				jsUserInfo.set("name", strName);
+				jsUserInfo.set("account", strAccount);
+				std::stringstream jsnString;
+				jsUserInfo.stringify(jsnString, 0);
+
+				ST_LOGIN_RESULT stResult;
+				ZeroMemory(&stResult, sizeof(stResult));
+				stResult.nTeacherId = nTeacher;
+				stResult.nUserId = nUserID;
+				strncpy(stResult.szUserInfo, jsnString.str().c_str(), jsnString.str().length());
+
+				char szLoginResult[1024] = { 0 };
+				memcpy(szLoginResult, (char*)&stResult, sizeof(stResult));
+
+				pTask->pUser->UpdateLogonInfo((char*)pTask->strUser.c_str(), (char*)pTask->strPwd.c_str());
+
+				_mapUserLock_.lock();
+				MAP_USER::iterator itFind = _mapUser_.find(pTask->strUser);
+				if (itFind == _mapUser_.end())
+				{
+					_mapUser_.insert(MAP_USER::value_type(pTask->strUser, pTask->pUser));
+				}
+				else
+				{
+					//重复登录提醒，
+					itFind->second = pTask->pUser;
+				}
+				_mapUserLock_.unlock();
+
+				pTask->pUser->SendResponesInfo(USER_RESPONSE_LOGIN, ret, szLoginResult, sizeof(stResult));
+				return bResult;
+			}
+			else
+			{
 			}
 		}
 		else if (pTask->strMsg == "ezs")
@@ -431,6 +510,10 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 
 	int nCmd = 0;
 	if (pTask->strMsg == "login")
+		nCmd = USER_RESPONSE_LOGIN;
+	else if (pTask->strMsg == "login2Ty")
+		nCmd = USER_RESPONSE_LOGIN;
+	else if (pTask->strMsg == "getUserInfo4Ty")
 		nCmd = USER_RESPONSE_LOGIN;
 	else if (pTask->strMsg == "ezs")
 		nCmd = USER_RESPONSE_EXAMINFO;
@@ -2166,4 +2249,33 @@ int CScanResquestHandler::ZipModel(pMODEL pModel, std::string& strModelPath)
 	g_Log.LogOut(strLog);
 	std::cout << strLog << std::endl;
 	return bResult;
+}
+
+void CScanResquestHandler::GetUserInfo4Ty(std::string& strSessionId, pSCAN_REQ_TASK pOldTask)
+{
+	std::string strAppKey = "SP0000000TEST";
+	std::string strAppValue = "63d4311d46714a39-a54cf2b0537a79b6TEST";
+	std::string strMsgFormat = "json";
+	std::string strMethod = "getAamUser";
+	std::string strSha1Src = Poco::format("%sappKey%smessageFormat%smethod%ssessionId%sv1.0%s", strAppValue, strAppKey, strMsgFormat, strMethod, strSessionId, strAppValue);
+//	std::string strSha1Src = Poco::format("%sappKey%smethod%ssession%sv1.0%s", strAppValue, strAppKey, strMethod, strSessionId, strAppValue);
+	Poco::SHA1Engine engine;
+	engine.update(strSha1Src);
+	std::string strSHA1 = Poco::DigestEngine::digestToHex(engine.digest());
+	std::string strSHA1_Up = Poco::toUpper(strSHA1);
+	std::string strUriValue = Poco::format("/router?appKey=%s&messageFormat=%s&method=%s&sessionId=%s&sign=%s&v=1.0", strAppKey, strMsgFormat, strMethod, strSessionId, strSHA1_Up);
+//	std::string strUriValue = Poco::format("/router?appKey=%s&method=%s&session=%s&sign=%s&v=1.0", strAppKey, strMethod, strSessionId, strSHA1_Up);
+
+	pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
+	pTask->strUri = SysSet.m_strBackUri + strUriValue;
+	pTask->strMsg = "getUserInfo4Ty";
+	pTask->pUser = pOldTask->pUser;
+	pTask->strUser = pOldTask->strUser;
+	pTask->strPwd = pOldTask->strPwd;
+	std::string strLog = Poco::format("天喻获取用户信息: src_SHA1 = %s\nSHA1 = %s\nuri = %s", strSha1Src, strSHA1_Up, pTask->strUri);
+	g_Log.LogOut(strLog);
+
+	g_fmScanReq.lock();
+	g_lScanReq.push_back(pTask);
+	g_fmScanReq.unlock();
 }

@@ -985,6 +985,7 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 			m_strNickName = _T("");
 			m_strEzs = _T("");
 			m_strPwd = _T("");
+			m_strPersonId = _T("");
 			m_nTeacherId = -1;
 			m_nUserId = -1;
 			GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("登录"));
@@ -996,6 +997,7 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 			m_strNickName = dlg.m_strNickName;
 			m_strPwd = dlg.m_strPwd;
 			m_strEzs = dlg.m_strEzs;
+			m_strPersonId = dlg.m_strPersonId;
 			m_nTeacherId = dlg.m_nTeacherId;
 			m_nUserId = dlg.m_nUserId;
 			GetDlgItem(IDC_BTN_Login)->SetWindowTextW(_T("注销"));
@@ -1019,6 +1021,7 @@ void CScanToolDlg::OnBnClickedBtnLogin()
 		m_bLogin = FALSE;
 		m_strUserName = _T("");
 		m_strNickName = _T("");
+		m_strPersonId = _T("");
 		m_strPwd = _T("");
 		m_strEzs = _T("");
 		m_nTeacherId = -1;
@@ -2492,7 +2495,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	nUserId = pDlg->m_nUserId;
 #else
 	bLogin = m_bLogin;
-	strUser = m_strUserName;
+	strUser = m_strPersonId;		//m_strUserName		//使用personId代替用户名命名试卷袋，天喻专用
 	strEzs = m_strEzs;
 	nTeacherId = m_nTeacherId;
 	nUserId = m_nUserId;
