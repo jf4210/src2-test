@@ -122,6 +122,7 @@ bool CTcpClient::receiveData()
 	if (!m_pRecvBuff)
 	{
 		m_pRecvBuff = new char[1024 + HEAD_SIZE];
+		_nRecvBuffSize = 1024 + HEAD_SIZE;
 	}
 	try
 	{
@@ -142,10 +143,12 @@ bool CTcpClient::receiveData()
 					}
 					else
 					{
-						if (pstHead->uPackSize > 1024)
+						if (pstHead->uPackSize > 1024)	//1024
 						{
 							char* pOld = m_pRecvBuff;
-							m_pRecvBuff = new char[pstHead->uPackSize + HEAD_SIZE];
+							m_pRecvBuff = new char[pstHead->uPackSize + HEAD_SIZE + 1];
+							m_pRecvBuff[pstHead->uPackSize + HEAD_SIZE] = '\0';
+							_nRecvBuffSize = pstHead->uPackSize + HEAD_SIZE + 1;
 							memcpy(m_pRecvBuff, pOld, _nRecvLen);
 							SAFE_RELEASE_ARRY(pOld);
 						}
@@ -194,7 +197,7 @@ bool CTcpClient::receiveData()
 	{
 		HandleCmd();
 //		memmove(m_pRecvBuff, m_pRecvBuff + _nRecvLen, _nRecvLen);
-		memset(m_pRecvBuff, 0, strlen(m_pRecvBuff));
+		ZeroMemory(m_pRecvBuff, _nRecvBuffSize);
 		_nRecvLen = 0;
 		_nWantLen = 0;
 	}
@@ -256,7 +259,11 @@ void CTcpClient::HandleCmd()
 				{
 					Poco::JSON::Object::Ptr objExamInfo = arryObj->getObject(i);
 					EXAMINFO examInfo;
+				#ifndef TO_WHTY
 					examInfo.nExamID = objExamInfo->get("id").convert<int>();
+				#else
+					examInfo.strExamID = objExamInfo->get("id").convert<std::string>();
+				#endif
 					examInfo.strExamName = CMyCodeConvert::Utf8ToGb2312(objExamInfo->get("name").convert<std::string>());
 
 					if (!objExamInfo->isNull("examType"))

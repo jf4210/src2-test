@@ -2,6 +2,16 @@
 #include "global.h"
 
 // CLoginDlg 对话框
+// #ifdef TO_WHTY
+// typedef struct stPlatformInfo
+// {
+// 	std::string strPlatformUrl;
+// 	std::string strPlatformCode;
+// 	std::string strPlatformName;
+// 	std::string strEncryption;
+// }ST_PLATFORMINFO, *pST_PLATFORMINFO;
+// typedef std::vector<ST_PLATFORMINFO> VEC_PLATFORM_TY;
+// #endif
 
 class CLoginDlg : public CDialog
 {
@@ -35,9 +45,16 @@ public:
 	int		RecvData(CString& strResultInfo);
 	int		GetExamInfo();
 
+#ifdef TO_WHTY
+	VEC_PLATFORM_TY _vecPlatformList;
+	void	LoginPlatform4TY(pST_PLATFORMINFO p);
+#endif
+
+
 private:
 	CString		m_strServerIP;
 	int			m_nServerPort;
+	int			nRecvBuffSize;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog(); 

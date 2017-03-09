@@ -30,7 +30,11 @@ void CPapersInfoSaveDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_PapersName, m_strPapersName);
 	DDX_Text(pDX, IDC_EDIT_PaperCount, m_nPaperCount);
 	DDX_Text(pDX, IDC_EDIT_PapersDetail, m_strPapersDetail);
+#ifndef TO_WHTY
 	DDX_Text(pDX, IDC_EDIT_ExamID, m_nExamID);
+#else
+	DDX_Text(pDX, IDC_EDIT_ExamID, m_strExamID);
+#endif
 	DDX_Text(pDX, IDC_EDIT_ExamTypeName, m_strExamTypeName);
 	DDX_Text(pDX, IDC_EDIT_GradeName, m_strGradeName);
 	DDX_Text(pDX, IDC_EDIT_SubjectID, m_SubjectID);
@@ -117,7 +121,11 @@ BOOL CPapersInfoSaveDlg::OnInitDialog()
 		}
 		m_comboSubject.SetCurSel(0);
 
+	#ifndef TO_WHTY
 		m_nExamID = pExamInfo->nExamID;
+	#else
+		m_strExamID = pExamInfo->strExamID.c_str();
+	#endif
 		m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
 		m_strGradeName = pExamInfo->strGradeName.c_str();
 	}
@@ -133,7 +141,11 @@ void CPapersInfoSaveDlg::OnBnClickedOk()
 
 	if (m_pExamInfoDlg)
 	{
+#ifndef TO_WHTY
 		m_nExamID = m_pExamInfoDlg->m_nExamID;
+#else
+		m_strExamID = m_pExamInfoDlg->m_strExamID;
+#endif
 		m_SubjectID = m_pExamInfoDlg->m_SubjectID;
 		m_strGradeName = m_pExamInfoDlg->m_strGradeName;
 		m_strExamTypeName = m_pExamInfoDlg->m_strExamTypeName;
@@ -206,7 +218,11 @@ void CPapersInfoSaveDlg::OnCbnSelchangeComboExamname()
 	}
 	m_comboSubject.SetCurSel(0);
 
+#ifndef TO_WHTY
 	m_nExamID = pExamInfo->nExamID;
+#else
+	m_strExamID = pExamInfo->strExamID.c_str();
+#endif
 	m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
 	m_strGradeName = pExamInfo->strGradeName.c_str();
 	UpdateData(FALSE);

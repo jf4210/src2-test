@@ -14,7 +14,7 @@ IMPLEMENT_DYNAMIC(CExamInfoDlg, CDialog)
 
 CExamInfoDlg::CExamInfoDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CExamInfoDlg::IDD, pParent)
-	, m_strExamTypeName(_T("")), m_strGradeName(_T("")), m_SubjectID(0), m_nExamID(0)
+	, m_strExamTypeName(_T("")), m_strGradeName(_T("")), m_SubjectID(0), m_nExamID(0), m_strExamID(_T(""))
 {
 
 }
@@ -26,7 +26,11 @@ CExamInfoDlg::~CExamInfoDlg()
 void CExamInfoDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
+#ifndef TO_WHTY
 	DDX_Text(pDX, IDC_EDIT_ExamID, m_nExamID);
+#else
+	DDX_Text(pDX, IDC_EDIT_ExamID, m_strExamID);
+#endif
 	DDX_Text(pDX, IDC_EDIT_ExamTypeName, m_strExamTypeName);
 	DDX_Text(pDX, IDC_EDIT_GradeName, m_strGradeName);
 	DDX_Text(pDX, IDC_EDIT_SubjectID, m_SubjectID);
@@ -210,7 +214,11 @@ BOOL CExamInfoDlg::InitData()
 		}
 		m_comboSubject.SetCurSel(0);
 
+#ifndef TO_WHTY
 		m_nExamID = pExamInfo->nExamID;
+#else
+		m_strExamID = pExamInfo->strExamID.c_str();
+#endif
 		m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
 		m_strGradeName = pExamInfo->strGradeName.c_str();
 	}
@@ -246,7 +254,11 @@ void CExamInfoDlg::OnCbnSelchangeComboExamname()
 	}
 	m_comboSubject.SetCurSel(0);
 
+#ifndef TO_WHTY
 	m_nExamID = pExamInfo->nExamID;
+#else
+	m_strExamID = pExamInfo->strExamID.c_str();
+#endif
 	m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
 	m_strGradeName = pExamInfo->strGradeName.c_str();
 	UpdateData(FALSE);
@@ -331,7 +343,11 @@ bool CExamInfoDlg::InitShow(pMODEL pModel)
 		}
 		m_comboSubject.SetCurSel(nShowItem);
 
+#ifndef TO_WHTY
 		m_nExamID = pExamInfo->nExamID;
+#else
+		m_strExamID = pExamInfo->strExamID.c_str();
+#endif
 		m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
 		m_strGradeName = pExamInfo->strGradeName.c_str();
 	}

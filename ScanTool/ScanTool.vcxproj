@@ -63,11 +63,11 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\..\bin\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalDependencies>libzbar-0.lib;opencv_world310d.lib;libeay32.lib;ssleay32.lib;libmupdf.lib</AdditionalDependencies>
-      <StackReserveSize>20000000</StackReserveSize>
-      <StackCommitSize>20000000</StackCommitSize>
-      <HeapReserveSize>20000000</HeapReserveSize>
+      <StackReserveSize>30000000</StackReserveSize>
+      <StackCommitSize>30000000</StackCommitSize>
+      <HeapReserveSize>30000000</HeapReserveSize>
       <ProgramDatabaseFile>..\..\bin\$(Configuration)\$(TargetName).pdb</ProgramDatabaseFile>
-      <HeapCommitSize>20000000</HeapCommitSize>
+      <HeapCommitSize>30000000</HeapCommitSize>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
     </Link>
@@ -146,6 +146,7 @@
     <ClInclude Include="ModelInfoDlg.h" />
     <ClInclude Include="ModelSaveDlg.h" />
     <ClInclude Include="ModifyZkzhDlg.h" />
+    <ClInclude Include="MultiPlatform4TYDlg.h" />
     <ClInclude Include="MyCodeConvert.h" />
     <ClInclude Include="OmrInfoDlg.h" />
     <ClInclude Include="PaperInputDlg.h" />
@@ -211,6 +212,7 @@
     <ClCompile Include="ModelInfoDlg.cpp" />
     <ClCompile Include="ModelSaveDlg.cpp" />
     <ClCompile Include="ModifyZkzhDlg.cpp" />
+    <ClCompile Include="MultiPlatform4TYDlg.cpp" />
     <ClCompile Include="MyCodeConvert.cpp" />
     <ClCompile Include="OmrInfoDlg.cpp" />
     <ClCompile Include="PaperInputDlg.cpp" />

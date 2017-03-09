@@ -178,7 +178,7 @@ protected:
 	//启动时，检测重新发送文件夹中是否有文件，有的话需要重新生成对应的任务列表，放入解压线程中操作
 	void  InitReSendInfo()
 	{
-//		bool bFind = false;
+		bool bFindData = false;
 		std::string strLog = "添加上次关闭发送失败需要重新上传的信息:";
 		std::string strFilePath = CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strReSendPkg);
 		Poco::DirectoryIterator it(strFilePath);
@@ -312,6 +312,7 @@ protected:
 
 					if (bFind)
 					{
+						bFindData = true;
 						pDecompressTask->strFilePath = CMyCodeConvert::Utf8ToGb2312(strPkgPath);
 						pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(strPkgBaseName);
 						pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(strPkgBaseName + ".pkg");
@@ -326,7 +327,8 @@ protected:
 			}
 			it++;
 		}
-		
+		if (!bFindData)
+			strLog.append("无数据");
 		g_Log.LogOut(strLog);
 		std::cout << strLog << std::endl;
 	}

@@ -2501,6 +2501,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	nUserId = m_nUserId;
 #endif
 
+	USES_CONVERSION;
 #ifndef TO_WHTY
 	if (!bLogin)
 	{
@@ -2520,8 +2521,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 
 	int nExamID = 0;
 	int nSubjectID = 0;
-//#ifndef TO_WHTY
-#if 1
+#ifndef TO_WHTY
 	CPapersInfoSaveDlg dlg(m_pPapersInfo, m_pModel);
 	if (dlg.DoModal() != IDOK)
 	{
@@ -2533,6 +2533,17 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	nExamID = dlg.m_nExamID;
 	nSubjectID = dlg.m_SubjectID;
 #else
+	#if 1
+		CPapersInfoSaveDlg dlg(m_pPapersInfo, m_pModel);
+		if (dlg.DoModal() != IDOK)
+		{
+			m_bF2Enable = TRUE;
+			m_bF1Enable = TRUE;
+			return;
+		}
+		std::string strExamID = T2A(dlg.m_strExamID);
+		nSubjectID = dlg.m_SubjectID;
+	#else
 	if (MessageBox(_T("是否上传当前扫描卷?"), _T("提示"), MB_YESNO) != IDYES)
 	{
 		m_bF2Enable = TRUE;
@@ -2546,6 +2557,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	char szPapersName[50] = { 0 };
 	sprintf_s(szPapersName, "%d%02d%02d%02d%02d%02d-%05d", nowTime.year(), nowTime.month(), nowTime.day(), nowTime.hour(), nowTime.minute(), nowTime.second(), rm.next(99999));
 	m_pPapersInfo->strPapersName = szPapersName;
+	#endif
 #endif
 
 	clock_t start, end;
@@ -2563,7 +2575,6 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 
 	//*************************************************
 
-	USES_CONVERSION;
 	Poco::JSON::Array jsnPaperArry;
 	PAPER_LIST::iterator itNomarlPaper = m_pPapersInfo->lPaper.begin();
 	for (int i = 0; itNomarlPaper != m_pPapersInfo->lPaper.end(); itNomarlPaper++, i++)
@@ -2660,7 +2671,9 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	std::string strUploader = CMyCodeConvert::Gb2312ToUtf8(T2A(strUser));
 	std::string sEzs = T2A(strEzs);
 	Poco::JSON::Object jsnFileData;
+#ifndef TO_WHTY
 	jsnFileData.set("examId", nExamID);
+#endif
 	jsnFileData.set("subjectId", nSubjectID);
 	jsnFileData.set("uploader", strUploader);
 	jsnFileData.set("ezs", sEzs);
@@ -2691,21 +2704,24 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	//
 
 	//试卷袋压缩
-	char szPapersSavePath[MAX_PATH] = { 0 };
-	char szZipName[100] = { 0 };
-	char szZipBaseName[90] = { 0 };
+	char szPapersSavePath[500] = { 0 };
+	char szZipName[210] = { 0 };
+	char szZipBaseName[200] = { 0 };
 	if (bLogin)
 	{
 		Poco::LocalDateTime now;
 		char szTime[50] = { 0 };
 		sprintf_s(szTime, "%d%02d%02d%02d%02d%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
 
+#ifndef TO_WHTY
 		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s_%d", T2A(g_strCurrentPath), T2A(strUser), nExamID, nSubjectID, szTime, m_pPapersInfo->nPaperCount);
 		sprintf_s(szZipBaseName, "%s_%d-%d_%s_%d", T2A(strUser), nExamID, nSubjectID, szTime, m_pPapersInfo->nPaperCount);
 		sprintf_s(szZipName, "%s_%d-%d_%s_%d%s", T2A(strUser), nExamID, nSubjectID, szTime, m_pPapersInfo->nPaperCount, T2A(PAPERS_EXT_NAME));
-// 		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s", T2A(g_strCurrentPath), T2A(strUser), nExamID, nSubjectID, szTime);
-// 		sprintf_s(szZipBaseName, "%s_%d-%d_%s", T2A(strUser), nExamID, nSubjectID, szTime);
-// 		sprintf_s(szZipName, "%s_%d-%d_%s%s", T2A(strUser), nExamID, nSubjectID, szTime, T2A(PAPERS_EXT_NAME));
+#else
+		sprintf_s(szPapersSavePath, "%sPaper\\%s_%s_%d_%s_%d", T2A(g_strCurrentPath), T2A(strUser), strExamID.c_str(), nSubjectID, szTime, m_pPapersInfo->nPaperCount);
+		sprintf_s(szZipBaseName, "%s_%s_%d_%s_%d", T2A(strUser), strExamID.c_str(), nSubjectID, szTime, m_pPapersInfo->nPaperCount);
+		sprintf_s(szZipName, "%s_%s_%d_%s_%d%s", T2A(strUser), strExamID.c_str(), nSubjectID, szTime, m_pPapersInfo->nPaperCount, T2A(PAPERS_EXT_NAME));
+#endif
 	}
 	else
 	{
@@ -2720,7 +2736,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	{
 		Poco::File tmpPath(CMyCodeConvert::Gb2312ToUtf8(m_strCurrPicSavePath));
 		
-		char szCompressDirPath[MAX_PATH] = { 0 };
+		char szCompressDirPath[500] = { 0 };
 		sprintf_s(szCompressDirPath, "%sPaper\\%s_ToCompress", T2A(g_strCurrentPath), szZipBaseName);
 		strSrcPicDirPath = szCompressDirPath;
 		std::string strUtf8NewPath = CMyCodeConvert::Gb2312ToUtf8(strSrcPicDirPath);

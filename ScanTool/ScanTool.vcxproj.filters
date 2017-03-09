@@ -127,6 +127,9 @@
     <Filter Include="修改ZKZH窗口">
       <UniqueIdentifier>{c4463d02-bc32-4844-95c4-37bdb17f455c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="登录\天喻多平台登录选择框">
+      <UniqueIdentifier>{2d2e6470-0f1c-4e22-9683-e96c56e2242e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -333,6 +336,9 @@
     <ClInclude Include="XListCtrl\XTrace.h">
       <Filter>List控件</Filter>
     </ClInclude>
+    <ClInclude Include="MultiPlatform4TYDlg.h">
+      <Filter>登录\天喻多平台登录选择框</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
@@ -505,6 +511,9 @@
     </ClCompile>
     <ClCompile Include="XListCtrl\XListCtrl.cpp">
       <Filter>List控件</Filter>
+    </ClCompile>
+    <ClCompile Include="MultiPlatform4TYDlg.cpp">
+      <Filter>登录\天喻多平台登录选择框</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

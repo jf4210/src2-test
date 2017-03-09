@@ -24,5 +24,6 @@ private:
 	Poco::Net::StreamSocket m_ss;
 	char	m_szRecvBuff[1024];
 	char*	m_pRecvBuff;
+	int		_nRecvBuffSize;
 };
 

@@ -77,7 +77,7 @@
 #endif
 
 //+++++++++	选择版本 ++++++++++++++++++
-#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
+//#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
 #ifndef TO_WHTY
 	#define SHOW_GUIDEDLG				//显示引导界面,易考乐学自己用，显示引导界面.******** 此处不定义，则直接显示主界面	***********
 #endif
@@ -129,7 +129,7 @@
 #ifndef TO_WHTY
 	#define SOFT_VERSION	_T("1.70227-4-Pri")
 #else
-	#define SOFT_VERSION	_T("2.1-0307")
+	#define SOFT_VERSION	_T("2.1-0309")
 #endif
 #define SYS_BASE_NAME	_T("YKLX-ScanTool")
 #define SYS_GUIDE_NAME	_T("GuideDlg")
@@ -377,6 +377,9 @@ typedef struct _examInfo_
 	int			nExamID;			//考试ID
 	int			nExamGrade;			//年级
 	int			nExamState;			//考试状态
+#ifdef TO_WHTY
+	std::string	strExamID;			//天喻版本, 考试ID
+#endif
 	std::string strExamName;		//考试名称
 	std::string strExamTypeName;	//考试类型名称
 	std::string strGradeName;		//年级名称
@@ -409,6 +412,15 @@ extern Poco::Event			g_eTcpThreadExit;
 extern Poco::Event			g_eSendFileThreadExit;
 extern Poco::Event			g_eFileUpLoadThreadExit;
 extern Poco::Event			g_eCompressThreadExit;
+
+typedef struct stPlatformInfo
+{
+	std::string strPlatformUrl;
+	std::string strPlatformCode;
+	std::string strPlatformName;
+	std::string strEncryption;
+}ST_PLATFORMINFO, *pST_PLATFORMINFO;
+typedef std::vector<pST_PLATFORMINFO> VEC_PLATFORM_TY;
 
 int		GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, RECTINFO*& pRc);
 bool	ZipFile(CString strSrcPath, CString strDstPath, CString strExtName = _T(".zip"));
