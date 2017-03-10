@@ -35,6 +35,54 @@ MAP_PIC_ADDR	_mapPicAddr_;
 Poco::FastMutex	_mapResendPkgLock_;
 MAP_RESEND_PKG	_mapResendPkg_;		//需要重新发送数据包映射关系，防止多次解压，比如一个试卷包可能出现OMR、ZHZH、选做都提交失败的情况，此时包只有一个，只需要解压一次
 
+//========================================
+int		g_nRecogGrayMin = 0;			//灰度点(除空白点,OMR外)计算灰度的最小考试范围
+int		g_nRecogGrayMax_White = 255;	//空白点校验点计算灰度的最大考试范围
+// int		g_nRecogGrayMin_OMR = 0;		//OMR计算灰度的最小考试范围
+// int		g_RecogGrayMax_OMR = 235;		//OMR计算灰度的最大考试范围
+
+float	_fFixThresholdPercent_ = 0.8;
+float	_fHeadThresholdPercent_ = 0.75;	//同步头达到阀值的比例
+float	_fABModelThresholdPercent_ = 0.75;
+float	_fCourseThresholdPercent_ = 0.75;
+float	_fGrayThresholdPercent_ = 0.75;
+float	_fWhiteThresholdPercent_ = 0.75;
+
+double	_dOmrThresholdPercent_Fix_;		//定点模式OMR识别可认为是选中的标准百分比
+double	_dSnThresholdPercent_Fix_;		//定点模式SN识别可认为是选中的标准百分比
+double	_dQKThresholdPercent_Fix_;		//定点模式QK识别可认为是选中的标准百分比
+double	_dOmrThresholdPercent_Head_;	//同步头模式OMR识别可认为是选中的标准百分比
+double	_dSnThresholdPercent_Head_;		//同步头模式SN识别可认为是选中的标准百分比
+double	_dQKThresholdPercent_Head_;		//同步头模式QK识别可认为是选中的标准百分比
+
+// double	_dCompThread_Fix_ = 1.2;
+// double	_dDiffThread_Fix_ = 0.2;
+// double	_dDiffExit_Fix_ = 0.3;
+// double	_dCompThread_Head_ = 1.0;
+// double	_dDiffThread_Head_ = 0.085;
+// double	_dDiffExit_Head_ = 0.15;
+// int		_nThreshold_Recog2_ = 240;	//第2中识别方法的二值化阀值
+// double	_dCompThread_3_ = 170;		//第三种识别方法
+// double	_dDiffThread_3_ = 20;
+// double	_dDiffExit_3_ = 50;
+// double	_dAnswerSure_ = 100;		//可以确认是答案的最大灰度
+
+int		_nGaussKernel_ = 5;
+int		_nSharpKernel_ = 5;
+int		_nCannyKernel_ = 90;
+int		_nDilateKernel_ = 3;
+int		_nErodeKernel_ = 2;
+int		_nFixVal_ = 150;
+int		_nHeadVal_ = 136;				//水平垂直同步头的阀值
+int		_nABModelVal_ = 150;
+int		_nCourseVal_ = 150;
+int		_nQK_CPVal_ = 150;
+int		_nGrayVal_ = 150;
+int		_nWhiteVal_ = 150;
+int		_nOMR_ = 230;		//重新识别模板时，用来识别OMR的密度值的阀值
+int		_nSN_ = 200;		//重新识别模板时，用来识别ZKZH的密度值的阀值
+//========================================
+
 class DCS : public Poco::Util::ServerApplication
 {
 protected:
@@ -333,6 +381,77 @@ protected:
 		std::cout << strLog << std::endl;
 	}
 
+	void InitParam()
+	{
+		std::string strCurrentPath = config().getString("application.dir");
+		std::string strParamPath = strCurrentPath + "param.dat";
+		std::string strLog;
+		try
+		{
+			Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strParamPath));
+
+			g_nRecogGrayMin = pConf->getInt("RecogGray.gray_Min", 0);
+			g_nRecogGrayMax_White = pConf->getInt("RecogGray.white_Max", 255);
+// 			g_nRecogGrayMin_OMR = pConf->getInt("RecogGray.omr_Min", 0);
+// 			g_RecogGrayMax_OMR = pConf->getInt("RecogGray.omr_Max", 235);
+
+			_fHeadThresholdPercent_ = pConf->getDouble("MakeModel_RecogPercent_Common.head", 0.75);
+			_fABModelThresholdPercent_ = pConf->getDouble("MakeModel_RecogPercent_Common.abModel", 0.75);
+			_fCourseThresholdPercent_ = pConf->getDouble("MakeModel_RecogPercent_Common.course", 0.75);
+			_fFixThresholdPercent_ = pConf->getDouble("MakeModel_RecogPercent_Common.fix", 0.8);
+			_fGrayThresholdPercent_ = pConf->getDouble("MakeModel_RecogPercent_Common.gray", 0.75);
+			_fWhiteThresholdPercent_ = pConf->getDouble("MakeModel_RecogPercent_Common.white", 0.75);
+
+// 			_dCompThread_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fCompTread", 1.2);
+// 			_dDiffThread_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fDiffThread", 0.2);
+// 			_dDiffExit_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fDiffExit", 0.3);
+// 			_dCompThread_Head_ = pConf->getDouble("RecogOmrSn_Head.fCompTread", 1.2);
+// 			_dDiffThread_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffThread", 0.085);
+// 			_dDiffExit_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffExit", 0.15);
+// 			_nThreshold_Recog2_ = pConf->getInt("RecogOmrSn_Fun2.nThreshold_Fun2", 240);
+// 			_dCompThread_3_ = pConf->getDouble("RecogOmrSn_Fun3.fCompTread", 170);
+// 			_dDiffThread_3_ = pConf->getDouble("RecogOmrSn_Fun3.fDiffThread", 20);
+// 			_dDiffExit_3_ = pConf->getDouble("RecogOmrSn_Fun3.fDiffExit", 50);
+// 			_dAnswerSure_ = pConf->getDouble("RecogOmrSn_Fun3.fAnswerSure", 100);
+			
+			_nGaussKernel_ = pConf->getInt("MakeModel_Recog.gauseKernel", 5);
+			_nSharpKernel_ = pConf->getInt("MakeModel_Recog.sharpKernel", 5);
+			_nCannyKernel_ = pConf->getInt("MakeModel_Recog.cannyKernel", 90);
+			_nDilateKernel_ = pConf->getInt("MakeModel_Recog.delateKernel", 3);
+			_nErodeKernel_ = pConf->getInt("MakeModel_Recog.eRodeKernel", 2);
+
+			_nWhiteVal_ = pConf->getInt("MakeModel_Threshold.white", 225);
+			_nHeadVal_ = pConf->getInt("MakeModel_Threshold.head", 136);
+			_nABModelVal_ = pConf->getInt("MakeModel_Threshold.abModel", 150);
+			_nCourseVal_ = pConf->getInt("MakeModel_Threshold.course", 150);
+			_nQK_CPVal_ = pConf->getInt("MakeModel_Threshold.qk", 150);
+			_nGrayVal_ = pConf->getInt("MakeModel_Threshold.gray", 150);
+			_nFixVal_ = pConf->getInt("MakeModel_Threshold.fix", 150);
+			_nOMR_ = pConf->getInt("MakeModel_Threshold.omr", 230);
+			_nSN_ = pConf->getInt("MakeModel_Threshold.sn", 200);
+			
+			_dQKThresholdPercent_Fix_ = pConf->getDouble("MakeModel_RecogPercent_Fix.qk", 1.5);
+			_dOmrThresholdPercent_Fix_ = pConf->getDouble("MakeModel_RecogPercent_Fix.omr", 1.5);
+			_dSnThresholdPercent_Fix_ = pConf->getDouble("MakeModel_RecogPercent_Fix.sn", 1.5);
+
+			_dQKThresholdPercent_Head_ = pConf->getDouble("MakeModel_RecogPercent_Head.qk", 1.5);
+			_dOmrThresholdPercent_Head_ = pConf->getDouble("MakeModel_RecogPercent_Head.omr", 1.5);
+			_dSnThresholdPercent_Head_ = pConf->getDouble("MakeModel_RecogPercent_Head.sn", 1.5);
+
+			strLog = "读取参数完成";
+		}
+		catch (Poco::Exception& exc)
+		{
+			strLog = "读取参数失败，使用默认参数 " + CMyCodeConvert::Utf8ToGb2312(exc.displayText());
+			g_nRecogGrayMin = 0;
+			g_nRecogGrayMax_White = 255;
+// 			g_nRecogGrayMin_OMR = 0;
+// 			g_RecogGrayMax_OMR = 235;
+		}
+		g_Log.LogOut(strLog);
+		std::cout << strLog << std::endl;
+	}
+
 	int main(const std::vector < std::string > & args) 
 	{
 		Poco::Net::HTTPStreamFactory::registerFactory();
@@ -352,6 +471,8 @@ protected:
 		SysSet.m_strRecvFilePath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath + "tmpFileRecv\\");
 		SysSet.m_strErrorPkg = CMyCodeConvert::Utf8ToGb2312(strCurrentPath + "errorPkg\\");
 		SysSet.m_strReSendPkg = CMyCodeConvert::Utf8ToGb2312(strCurrentPath + "ReSendInfo\\");
+
+		InitParam();
 		
 #ifdef POCO_OS_FAMILY_WINDOWS
 		char szTitle[150] = { 0 };

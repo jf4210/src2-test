@@ -695,7 +695,7 @@ void CGetModelDlg::OnBnClickedBtnCreatemodel()
 
 	ST_CMD_HEADER stHead;
 	stHead.usCmd = USER_NEED_CREATE_MODEL;
-	stHead.uPackSize = sizeof(ST_EXAM_INFO);
+	stHead.uPackSize = sizeof(ST_CREATE_MODEL);
 	ST_CREATE_MODEL stModelInfo;
 	ZeroMemory(&stModelInfo, sizeof(ST_CREATE_MODEL));
 	stModelInfo.nExamID = m_nExamID;

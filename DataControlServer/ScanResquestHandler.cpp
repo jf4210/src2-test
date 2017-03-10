@@ -372,112 +372,6 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 					}
 					ret = modelHandle(pTask, object);
 				}
-				#if 0
-				clock_t start, end;
-				start = clock();
-
-				std::vector<std::vector<int>> vecSheets;
-				pMODEL pModel = CreateModel(object, pTask->nExamID, pTask->nSubjectID, vecSheets);
-
-				char szIndex[50] = { 0 };
-				sprintf(szIndex, "%d_%d", pTask->nExamID, pTask->nSubjectID);
-				pMODELINFO pModelInfo = NULL;
-				MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
-				if (itFind != _mapModel_.end())
-				{
-					pModelInfo = itFind->second;
-					if (pModelInfo->pModel)
-						SAFE_RELEASE(pModelInfo->pModel);
-					pModelInfo->pModel = pModel;
-
-					//下载PDF
-					std::string strModelPath = SysSet.m_strModelSavePath + "\\";
-					strModelPath.append(szIndex);
-					try
-					{
-						Poco::File modelDir(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
-						if (modelDir.exists())
-							modelDir.remove(true);
-
-						modelDir.createDirectories();
-					}
-					catch (Poco::Exception& exc)
-					{
-						std::string strErr = "模板路径(" + strModelPath + ")判断异常: " + exc.message();
-						g_Log.LogOutError(strErr);
-					}
-
-					bool bResult = GetPdf(object, strModelPath);
-					if(bResult)	bResult = Pdf2Jpg(strModelPath, vecSheets);
-					if (bResult) bResult = InitModelRecog(pModel);
-					if (bResult) bResult = SaveModel(pModel, strModelPath);
-					if (bResult) bResult = ZipModel(pModel, strModelPath);
-					if (bResult)
-					{
-						pModelInfo->strName = szIndex;
-						pModelInfo->strName.append(".mod");
-						pModelInfo->strPath = CMyCodeConvert::Gb2312ToUtf8(strModelPath + ".mod");
-						pModelInfo->strMd5 = calcFileMd5(pModelInfo->strPath);
-
-						std::string strLog;
-						Poco::File modelDir(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
-						if (modelDir.exists())
-						{
-							modelDir.remove(true);
-							strLog = "模板文件夹(" + strModelPath + ")移除完成";
-							g_Log.LogOut(strLog);
-							std::cout << strLog << std::endl;
-						}
-
-						//设置后端数据库中扫描模板的名称
-						Poco::JSON::Object jsnModel;
-						jsnModel.set("examId", pTask->nExamID);
-						jsnModel.set("subjectId", pTask->nSubjectID);
-						jsnModel.set("tmplateName", pModelInfo->strName);
-
-						std::stringstream jsnString;
-						jsnModel.stringify(jsnString, 0);
-
-						std::string strEzs = pTask->strEzs;
-						pSCAN_REQ_TASK pNewTask = new SCAN_REQ_TASK;
-						pNewTask->nExamID = pTask->nExamID;
-						pNewTask->nSubjectID = pTask->nSubjectID;
-						pNewTask->strUri = SysSet.m_strBackUri + "/scanTemplate";
-						pNewTask->pUser = pTask->pUser;
-						pNewTask->strEzs = "ezs=" + strEzs;
-						pNewTask->strMsg = "setScanModel";
-						pNewTask->strRequest = jsnString.str();
-						g_fmScanReq.lock();
-						g_lScanReq.push_back(pNewTask);
-						g_fmScanReq.unlock();
-						g_Log.LogOut("设置科目扫描模板名称任务以发出。");
-
-						end = clock();
-						strLog = Poco::format("模板生成全程完成，耗时(%dms)", (int)(end - start));
-						g_Log.LogOut(strLog);
-						std::cout << strLog << std::endl;
-
-						ret = RESULT_CREATE_MODEL_SUCCESS;
-					}
-					else
-					{
-						ret = RESULT_CREATE_MODEL_FAIL;
-						//删除模板列表中预存的模板信息
-						_mapModelLock_.lock();
-						char szIndex[50] = { 0 };
-						sprintf(szIndex, "%d_%d", pTask->nExamID, pTask->nSubjectID);
-						pMODELINFO pModelInfo = NULL;
-						MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
-						if (itFind != _mapModel_.end())
-							_mapModel_.erase(itFind);
-						_mapModelLock_.unlock();
-
-						SAFE_RELEASE(pModel);
-					}
-				}
-				else
-					SAFE_RELEASE(pModel);
-				#endif
 			}
 		}
 	}
@@ -791,6 +685,51 @@ bool GetHeader(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 	return true;
 }
 
+bool GetFixPoint(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
+{
+	Poco::JSON::Object::Ptr objHeader = objTK->getObject("syncHeader");
+	Poco::JSON::Object::Ptr objAnchorPoint = objTK->getObject("anchorPoint");
+
+	int nPaperType = 1;		//纸张类型：A3-1，A4-2
+	nPaperType = objHeader->get("sheetType").convert<int>();
+	pPaperModel->nPaperType = nPaperType;
+
+	//定点
+	std::vector<RECTPOS> vecFixPoint;
+	//获取定点中的同步头信息
+	Poco::JSON::Array::Ptr arryItems = objAnchorPoint->getArray("items");
+	for (int j = 0; j < arryItems->size(); j++)
+	{
+		Poco::JSON::Object::Ptr objItem = arryItems->getObject(j);
+		int nHor = objItem->get("horIndex").convert<int>();
+		int nVer = objItem->get("verIndex").convert<int>();
+		RECTPOS rc;
+		rc.rt.x = objItem->get("x").convert<int>() + 0.5;
+		rc.rt.y = objItem->get("y").convert<int>() + 0.5;
+		rc.rt.width = objItem->get("width").convert<int>() + 0.5;
+		rc.rt.height = objItem->get("height").convert<int>() + 0.5;
+		rc.nIndex = j;
+		vecFixPoint.push_back(rc);
+
+		cv::Point pt1, pt2;
+		pt1 = rc.rt.tl() - cv::Point(80, 80);
+		pt2 = rc.rt.br() + cv::Point(80, 80);
+		RECTINFO rcFixSel;
+		rcFixSel.rt = cv::Rect(pt1, pt2);
+		pPaperModel->lSelFixRoi.push_back(rcFixSel);
+	}
+
+	//设置定点
+	for (auto p : vecFixPoint)
+	{
+		RECTINFO rc;
+		rc.eCPType = Fix_CP;
+		rc.rt = p.rt;
+		pPaperModel->lFix.push_back(rc);
+	}
+	return true;
+}
+
 bool GetZkzh(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel, pMODEL pModel)
 {
 	cv::Point ptZkzh1, ptZkzh2;
@@ -881,16 +820,16 @@ bool GetOMR(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 	for (int m = 0; m < arryElement->size(); m++)
 	{
 		Poco::JSON::Object::Ptr objElement = arryElement->getObject(m);
-		Poco::JSON::Object::Ptr objItem = objElement->getObject("item");
-		int nOrientation = objElement->get("orientation").convert<int>();
-		int nRecogFlag;
-		if (nOrientation == 1)
-			nRecogFlag = 26;
-		else
-			nRecogFlag = 42;
+		Poco::JSON::Object::Ptr objItem = objElement->getObject("item");		
 		int nQuestionType = objElement->get("type").convert<int>();
 		if (nQuestionType == 11)	//11表示选择题
 		{
+			int nOrientation = objElement->get("orientation").convert<int>();
+			int nRecogFlag;
+			if (nOrientation == 1)
+				nRecogFlag = 26;
+			else
+				nRecogFlag = 42;
 			Poco::JSON::Array::Ptr arryQuestions = objItem->getArray("questions");
 			for (int n = 0; n < arryQuestions->size(); n++)
 			{
@@ -920,7 +859,31 @@ bool GetOMR(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 				}
 				pPaperModel->lOMR2.push_back(omrItem);
 			}
-		}		
+		}
+		else if (nQuestionType == 16)	//选做题
+		{
+			ELECTOMR_QUESTION sElectOmrQuestion;
+			sElectOmrQuestion.sElectOmrGroupInfo.nAllCount = objItem->get("totalNum").convert<int>();
+			sElectOmrQuestion.sElectOmrGroupInfo.nRealCount = objItem->get("chooseNum").convert<int>();
+			sElectOmrQuestion.sElectOmrGroupInfo.nGroupID = (pPaperModel->nPaper + 1) * 100 + m;		//******************************	这里要改成201,202这样的，加上页数，属于第几页的信息
+
+			Poco::JSON::Array::Ptr arryOptions = objItem->getArray("options");
+			for (int k = 0; k < arryOptions->size(); k++)
+			{
+				Poco::JSON::Object::Ptr objOptions = arryOptions->getObject(k);
+				RECTINFO rc;
+				rc.eCPType = ELECT_OMR;
+				rc.rt.x = objOptions->get("x").convert<int>();
+				rc.rt.y = objOptions->get("y").convert<int>();
+				rc.rt.width = objOptions->get("width").convert<int>();
+				rc.rt.height = objOptions->get("height").convert<int>();
+				rc.nHItem = objOptions->get("horIndex").convert<int>();
+				rc.nVItem = objOptions->get("verIndex").convert<int>();
+				rc.nTH = objOptions->get("num").convert<int>();
+				sElectOmrQuestion.lItemInfo.push_back(rc);
+			}
+			pPaperModel->lElectOmr.push_back(sElectOmrQuestion);
+		}
 	}
 	return true;
 }
@@ -1018,7 +981,10 @@ pMODEL CScanResquestHandler::CreateModel(Poco::JSON::Object::Ptr object, pSCAN_R
 			pPaperModel->strModelPicName = strName;	//图片名称，目前不知道，考虑从PDF直接转图片然后命名			//**********	test	*****************
 
 			//同步头
-			GetHeader(objTK, pPaperModel);
+			if (pModel->nHasHead)
+				GetHeader(objTK, pPaperModel);
+			else		//定点
+				GetFixPoint(objTK, pPaperModel);
 
 			//准考证号
 			GetZkzh(objTK, pPaperModel, pModel);
@@ -1040,7 +1006,7 @@ pMODEL CScanResquestHandler::CreateModel(Poco::JSON::Object::Ptr object, pSCAN_R
 			pModel->vecPaperModel.push_back(pPaperModel);
 			if (pPaperModel->nPaperType == 1)				//A3用150dpi扫描
 			{
-				pModel->nScanDpi = 150;
+				pModel->nScanDpi = 200;
 				pModel->nScanSize = 2;
 			}
 			else if (pPaperModel->nPaperType == 2)			//A4用200dpi扫描
@@ -1093,7 +1059,7 @@ bool CScanResquestHandler::GetPdf(Poco::JSON::Object::Ptr object, std::string& s
 			{
 				std::string strErr = "下载PDF试卷(" + strUri + ")失败: " + exc.message();
 				g_Log.LogOutError(strErr);
-				std::cout << strLog << std::endl;
+				std::cout << strErr << std::endl;
 				bResult = false;
 			}			
 		}
@@ -1426,14 +1392,14 @@ inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	float hranges[2];
 	if (rc.eCPType != WHITE_CP)
 	{
-		hranges[0] = 0;
+		hranges[0] = g_nRecogGrayMin;
 		hranges[1] = static_cast<float>(rc.nThresholdValue);
 		ranges[0] = hranges;
 	}
 	else
 	{
 		hranges[0] = static_cast<float>(rc.nThresholdValue);
-		hranges[1] = 255;	//255			//256时可统计完全空白的点，即RGB值为255的完全空白点;255时只能统计到RGB为254的值，255的值统计不到
+		hranges[1] = g_nRecogGrayMax_White;	//255			//256时可统计完全空白的点，即RGB值为255的完全空白点;255时只能统计到RGB为254的值，255的值统计不到
 		ranges[0] = hranges;
 	}
 	cv::MatND src_hist;
@@ -1478,35 +1444,50 @@ bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 		pPAPERMODEL pPicModel = pModel->vecPaperModel[i];
 
 		//++ test	识别模板的同步头大小
-		RECTLIST::iterator itBegin = pPicModel->lH_Head.begin();
-		RECTINFO rcFist = *itBegin;
-		RECTLIST::reverse_iterator itLast = pPicModel->lH_Head.rbegin();
-		RECTINFO rcLast = *(itLast);
-		RECTINFO rcH_Tracker;
-		cv::Point pt1, pt2;
-		pt1 = rcFist.rt.tl() - cv::Point(15, 15);
-		pt2 = rcLast.rt.br() + cv::Point(15, 15);
-		rcH_Tracker.rt = cv::Rect(pt1, pt2);
-		pPicModel->lH_Head.clear();
-		RecogHHead(i, matSrc, pPicModel, rcH_Tracker);
+		if (pModel->nHasHead)
+		{
+			RECTLIST::iterator itBegin = pPicModel->lH_Head.begin();
+			RECTINFO rcFist = *itBegin;
+			RECTLIST::reverse_iterator itLast = pPicModel->lH_Head.rbegin();
+			RECTINFO rcLast = *(itLast);
+			RECTINFO rcH_Tracker;
+			cv::Point pt1, pt2;
+			pt1 = rcFist.rt.tl() - cv::Point(15, 15);
+			pt2 = rcLast.rt.br() + cv::Point(15, 15);
+			rcH_Tracker.rt = cv::Rect(pt1, pt2);
+			pPicModel->lH_Head.clear();
+			RecogHHead(i, matSrc, pPicModel, rcH_Tracker);
 
-		itBegin = pPicModel->lV_Head.begin();
-		itLast = pPicModel->lV_Head.rbegin();
-		rcFist = *itBegin;
-		rcLast = *itLast;
-		RECTINFO rcV_Tracker;
-		pt1 = rcFist.rt.tl() - cv::Point(15, 15);
-		pt2 = rcLast.rt.br() + cv::Point(15, 15);
-		rcV_Tracker.rt = cv::Rect(pt1, pt2);
-		pPicModel->lV_Head.clear();
-		RecogVHead(i, matSrc, pPicModel, rcV_Tracker);
+			itBegin = pPicModel->lV_Head.begin();
+			itLast = pPicModel->lV_Head.rbegin();
+			rcFist = *itBegin;
+			rcLast = *itLast;
+			RECTINFO rcV_Tracker;
+			pt1 = rcFist.rt.tl() - cv::Point(15, 15);
+			pt2 = rcLast.rt.br() + cv::Point(15, 15);
+			rcV_Tracker.rt = cv::Rect(pt1, pt2);
+			pPicModel->lV_Head.clear();
+			RecogVHead(i, matSrc, pPicModel, rcV_Tracker);
+		}		
 		//--
+		for (auto rcFix : pPicModel->lFix)
+		{
+			rcFix.nThresholdValue = _nFixVal_;
+			rcFix.fStandardValuePercent = _fFixThresholdPercent_;
+			
+			rcFix.nGaussKernel = _nGaussKernel_;
+			rcFix.nSharpKernel = _nSharpKernel_;
+			rcFix.nCannyKernel = _nCannyKernel_;
+			rcFix.nDilateKernel = _nDilateKernel_;
 
+			cv::Mat matComp = matSrc(rcFix.rt);
+			RecogGrayValue(matComp, rcFix);
+		}
 		RECTLIST::iterator itHead_H = pPicModel->lH_Head.begin();
 		for (; itHead_H != pPicModel->lH_Head.end(); itHead_H++)
 		{
-			itHead_H->nThresholdValue = 150;
-			itHead_H->fStandardValuePercent = 0.75;
+			itHead_H->nThresholdValue = _nHeadVal_;
+			itHead_H->fStandardValuePercent = _fHeadThresholdPercent_;
 
 			cv::Mat matComp = matSrc(itHead_H->rt);
 			RecogGrayValue(matComp, *itHead_H);
@@ -1514,8 +1495,8 @@ bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 		RECTLIST::iterator itHead_V = pPicModel->lV_Head.begin();
 		for (; itHead_V != pPicModel->lV_Head.end(); itHead_V++)
 		{
-			itHead_V->nThresholdValue = 150;
-			itHead_V->fStandardValuePercent = 0.75;
+			itHead_V->nThresholdValue = _nHeadVal_;
+			itHead_V->fStandardValuePercent = _fHeadThresholdPercent_;
 
 			cv::Mat matComp = matSrc(itHead_V->rt);
 			RecogGrayValue(matComp, *itHead_V);
@@ -1523,15 +1504,16 @@ bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 		RECTLIST::iterator itABModel = pPicModel->lABModel.begin();
 		for (; itABModel != pPicModel->lABModel.end(); itABModel++)
 		{
-			itABModel->nThresholdValue = 150;
-			itABModel->fStandardValuePercent = 0.75;
-			
-			itABModel->nGaussKernel = 5;
-			itABModel->nSharpKernel = 5;
-			itABModel->nCannyKernel = 90;
-			itABModel->nDilateKernel = 3;
+			itABModel->nThresholdValue = _nABModelVal_;
+			itABModel->fStandardValuePercent = _fABModelThresholdPercent_;
 
-			GetPositionByHead(pPicModel, itABModel->nHItem, itABModel->nVItem, itABModel->rt);
+			itABModel->nGaussKernel = _nGaussKernel_;
+			itABModel->nSharpKernel = _nSharpKernel_;
+			itABModel->nCannyKernel = _nCannyKernel_;
+			itABModel->nDilateKernel = _nDilateKernel_;
+
+			if (pModel->nHasHead)
+				GetPositionByHead(pPicModel, itABModel->nHItem, itABModel->nVItem, itABModel->rt);
 
 			cv::Mat matComp = matSrc(itABModel->rt);
 			RecogGrayValue(matComp, *itABModel);
@@ -1539,15 +1521,16 @@ bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 		RECTLIST::iterator itCourse = pPicModel->lCourse.begin();
 		for (; itCourse != pPicModel->lCourse.end(); itCourse++)
 		{
-			itCourse->nThresholdValue = 150;
-			itCourse->fStandardValuePercent = 0.75;
+			itCourse->nThresholdValue = _nCourseVal_;
+			itCourse->fStandardValuePercent = _fCourseThresholdPercent_;
 
-			itCourse->nGaussKernel = 5;
-			itCourse->nSharpKernel = 5;
-			itCourse->nCannyKernel = 90;
-			itCourse->nDilateKernel = 3;
+			itCourse->nGaussKernel = _nGaussKernel_;
+			itCourse->nSharpKernel = _nSharpKernel_;
+			itCourse->nCannyKernel = _nCannyKernel_;
+			itCourse->nDilateKernel = _nDilateKernel_;
 
-			GetPositionByHead(pPicModel, itCourse->nHItem, itCourse->nVItem, itCourse->rt);
+			if (pModel->nHasHead)
+				GetPositionByHead(pPicModel, itCourse->nHItem, itCourse->nVItem, itCourse->rt);
 
 			cv::Mat matComp = matSrc(itCourse->rt);
 			RecogGrayValue(matComp, *itCourse);
@@ -1555,15 +1538,19 @@ bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 		RECTLIST::iterator itQK = pPicModel->lQK_CP.begin();
 		for (; itQK != pPicModel->lQK_CP.end(); itQK++)
 		{
-			itQK->nThresholdValue = 150;
-			itQK->fStandardValuePercent = 0.75;
+			itQK->nThresholdValue = _nQK_CPVal_;
+			if (pModel->nHasHead)
+				itQK->fStandardValuePercent = _dQKThresholdPercent_Head_;
+			else
+				itQK->fStandardValuePercent = _dQKThresholdPercent_Fix_;
 
-			itQK->nGaussKernel = 5;
-			itQK->nSharpKernel = 5;
-			itQK->nCannyKernel = 90;
-			itQK->nDilateKernel = 3;
+			itQK->nGaussKernel = _nGaussKernel_;
+			itQK->nSharpKernel = _nSharpKernel_;
+			itQK->nCannyKernel = _nCannyKernel_;
+			itQK->nDilateKernel = _nDilateKernel_;
 
-			GetPositionByHead(pPicModel, itQK->nHItem, itQK->nVItem, itQK->rt);
+			if (pModel->nHasHead)
+				GetPositionByHead(pPicModel, itQK->nHItem, itQK->nVItem, itQK->rt);
 
 			cv::Mat matComp = matSrc(itQK->rt);
 			RecogGrayValue(matComp, *itQK);
@@ -1571,15 +1558,16 @@ bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 		RECTLIST::iterator itGray = pPicModel->lGray.begin();
 		for (; itGray != pPicModel->lGray.end(); itGray++)
 		{
-			itGray->nThresholdValue = 150;
-			itGray->fStandardValuePercent = 0.75;
+			itGray->nThresholdValue = _nGrayVal_;
+			itGray->fStandardValuePercent = _fGrayThresholdPercent_;
 
-			itGray->nGaussKernel = 5;
-			itGray->nSharpKernel = 5;
-			itGray->nCannyKernel = 90;
-			itGray->nDilateKernel = 3;
+			itGray->nGaussKernel = _nGaussKernel_;
+			itGray->nSharpKernel = _nSharpKernel_;
+			itGray->nCannyKernel = _nCannyKernel_;
+			itGray->nDilateKernel = _nDilateKernel_;
 
-			GetPositionByHead(pPicModel, itGray->nHItem, itGray->nVItem, itGray->rt);
+			if (pModel->nHasHead)
+				GetPositionByHead(pPicModel, itGray->nHItem, itGray->nVItem, itGray->rt);
 
 			cv::Mat matComp = matSrc(itGray->rt);
 			RecogGrayValue(matComp, *itGray);
@@ -1587,15 +1575,16 @@ bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 		RECTLIST::iterator itWhite = pPicModel->lWhite.begin();
 		for (; itWhite != pPicModel->lWhite.end(); itWhite++)
 		{
-			itWhite->nThresholdValue = 225;
-			itWhite->fStandardValuePercent = 0.75;
+			itWhite->nThresholdValue = _nWhiteVal_;
+			itWhite->fStandardValuePercent = _fWhiteThresholdPercent_;
 
-			itWhite->nGaussKernel = 5;
-			itWhite->nSharpKernel = 5;
-			itWhite->nCannyKernel = 90;
-			itWhite->nDilateKernel = 3;
+			itWhite->nGaussKernel = _nGaussKernel_;
+			itWhite->nSharpKernel = _nSharpKernel_;
+			itWhite->nCannyKernel = _nCannyKernel_;
+			itWhite->nDilateKernel = _nDilateKernel_;
 
-			GetPositionByHead(pPicModel, itWhite->nHItem, itWhite->nVItem, itWhite->rt);
+			if (pModel->nHasHead)
+				GetPositionByHead(pPicModel, itWhite->nHItem, itWhite->nVItem, itWhite->rt);
 
 			cv::Mat matComp = matSrc(itWhite->rt);
 			RecogGrayValue(matComp, *itWhite);
@@ -1609,15 +1598,19 @@ bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 				RECTLIST::iterator itSNItem = pSNItem->lSN.begin();
 				for (; itSNItem != pSNItem->lSN.end(); itSNItem++)
 				{
-					itSNItem->nThresholdValue = 200;
-					itSNItem->fStandardValuePercent = 1.1;
+					itSNItem->nThresholdValue = _nSN_;
+					if (pModel->nHasHead)
+						itSNItem->fStandardValuePercent = _dSnThresholdPercent_Head_;
+					else
+						itSNItem->fStandardValuePercent = _dSnThresholdPercent_Fix_;
 
-					itSNItem->nGaussKernel = 5;
-					itSNItem->nSharpKernel = 5;
-					itSNItem->nCannyKernel = 90;
-					itSNItem->nDilateKernel = 3;
+					itSNItem->nGaussKernel = _nGaussKernel_;
+					itSNItem->nSharpKernel = _nSharpKernel_;
+					itSNItem->nCannyKernel = _nCannyKernel_;
+					itSNItem->nDilateKernel = _nDilateKernel_;
 
-					GetPositionByHead(pPicModel, itSNItem->nHItem, itSNItem->nVItem, itSNItem->rt);
+					if (pModel->nHasHead)
+						GetPositionByHead(pPicModel, itSNItem->nHItem, itSNItem->nVItem, itSNItem->rt);
 
 					cv::Mat matComp = matSrc(itSNItem->rt);
 					RecogGrayValue(matComp, *itSNItem);
@@ -1630,15 +1623,19 @@ bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 			RECTLIST::iterator itOmrItem = itOmr->lSelAnswer.begin();
 			for (; itOmrItem != itOmr->lSelAnswer.end(); itOmrItem++)
 			{
-				itOmrItem->nThresholdValue = 235;
-				itOmrItem->fStandardValuePercent = 1.1;
+				itOmrItem->nThresholdValue = _nOMR_;
+				if (pModel->nHasHead)
+					itOmrItem->fStandardValuePercent = _dOmrThresholdPercent_Head_;
+				else
+					itOmrItem->fStandardValuePercent = _dOmrThresholdPercent_Fix_;
 
-				itOmrItem->nGaussKernel = 5;
-				itOmrItem->nSharpKernel = 5;
-				itOmrItem->nCannyKernel = 90;
-				itOmrItem->nDilateKernel = 3;
+				itOmrItem->nGaussKernel = _nGaussKernel_;
+				itOmrItem->nSharpKernel = _nSharpKernel_;
+				itOmrItem->nCannyKernel = _nCannyKernel_;
+				itOmrItem->nDilateKernel = _nDilateKernel_;
 
-				GetPositionByHead(pPicModel, itOmrItem->nHItem, itOmrItem->nVItem, itOmrItem->rt);
+				if (pModel->nHasHead)
+					GetPositionByHead(pPicModel, itOmrItem->nHItem, itOmrItem->nVItem, itOmrItem->rt);
 
 				cv::Mat matComp = matSrc(itOmrItem->rt);
 				RecogGrayValue(matComp, *itOmrItem);
@@ -1654,12 +1651,13 @@ bool CScanResquestHandler::InitModelRecog(pMODEL pModel)
 				itOmrItem->nThresholdValue = 235;
 				itOmrItem->fStandardValuePercent = 1.1;
 
-				itOmrItem->nGaussKernel = 5;
-				itOmrItem->nSharpKernel = 5;
-				itOmrItem->nCannyKernel = 90;
-				itOmrItem->nDilateKernel = 3;
+				itOmrItem->nGaussKernel = _nGaussKernel_;
+				itOmrItem->nSharpKernel = _nSharpKernel_;
+				itOmrItem->nCannyKernel = _nCannyKernel_;
+				itOmrItem->nDilateKernel = _nDilateKernel_;
 
-				GetPositionByHead(pPicModel, itOmrItem->nHItem, itOmrItem->nVItem, itOmrItem->rt);
+				if (pModel->nHasHead)
+					GetPositionByHead(pPicModel, itOmrItem->nHItem, itOmrItem->nVItem, itOmrItem->rt);
 
 				cv::Mat matComp = matSrc(itOmrItem->rt);
 				RecogGrayValue(matComp, *itOmrItem);
@@ -1711,6 +1709,9 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itFix->nThresholdValue);
 			jsnObj.set("standardValPercent", itFix->fStandardValuePercent);
 			jsnObj.set("standardVal", itFix->fStandardValue);
+			jsnObj.set("standardArea", itFix->fStandardArea);
+			jsnObj.set("standardDensity", itFix->fStandardDensity);
+			jsnObj.set("standardMeanGray", itFix->fStandardMeanGray);
 
 			jsnObj.set("gaussKernel", itFix->nGaussKernel);
 			jsnObj.set("sharpKernel", itFix->nSharpKernel);
@@ -1730,6 +1731,9 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itHHead->nThresholdValue);
 			jsnObj.set("standardValPercent", itHHead->fStandardValuePercent);
 			jsnObj.set("standardVal", itHHead->fStandardValue);
+			jsnObj.set("standardArea", itHHead->fStandardArea);
+			jsnObj.set("standardDensity", itHHead->fStandardDensity);
+			jsnObj.set("standardMeanGray", itHHead->fStandardMeanGray);
 
 			jsnObj.set("gaussKernel", itHHead->nGaussKernel);
 			jsnObj.set("sharpKernel", itHHead->nSharpKernel);
@@ -1749,6 +1753,9 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itVHead->nThresholdValue);
 			jsnObj.set("standardValPercent", itVHead->fStandardValuePercent);
 			jsnObj.set("standardVal", itVHead->fStandardValue);
+			jsnObj.set("standardArea", itVHead->fStandardArea);
+			jsnObj.set("standardDensity", itVHead->fStandardDensity);
+			jsnObj.set("standardMeanGray", itVHead->fStandardMeanGray);
 
 			jsnObj.set("gaussKernel", itVHead->nGaussKernel);
 			jsnObj.set("sharpKernel", itVHead->nSharpKernel);
@@ -1770,6 +1777,9 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itABModel->nThresholdValue);
 			jsnObj.set("standardValPercent", itABModel->fStandardValuePercent);
 			jsnObj.set("standardVal", itABModel->fStandardValue);
+			jsnObj.set("standardArea", itABModel->fStandardArea);
+			jsnObj.set("standardDensity", itABModel->fStandardDensity);
+			jsnObj.set("standardMeanGray", itABModel->fStandardMeanGray);
 
 			jsnObj.set("gaussKernel", itABModel->nGaussKernel);
 			jsnObj.set("sharpKernel", itABModel->nSharpKernel);
@@ -1791,6 +1801,9 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itCourse->nThresholdValue);
 			jsnObj.set("standardValPercent", itCourse->fStandardValuePercent);
 			jsnObj.set("standardVal", itCourse->fStandardValue);
+			jsnObj.set("standardArea", itCourse->fStandardArea);
+			jsnObj.set("standardDensity", itCourse->fStandardDensity);
+			jsnObj.set("standardMeanGray", itCourse->fStandardMeanGray);
 
 			jsnObj.set("gaussKernel", itCourse->nGaussKernel);
 			jsnObj.set("sharpKernel", itCourse->nSharpKernel);
@@ -1812,6 +1825,9 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itQKCP->nThresholdValue);
 			jsnObj.set("standardValPercent", itQKCP->fStandardValuePercent);
 			jsnObj.set("standardVal", itQKCP->fStandardValue);
+			jsnObj.set("standardArea", itQKCP->fStandardArea);
+			jsnObj.set("standardDensity", itQKCP->fStandardDensity);
+			jsnObj.set("standardMeanGray", itQKCP->fStandardMeanGray);
 
 			jsnObj.set("gaussKernel", itQKCP->nGaussKernel);
 			jsnObj.set("sharpKernel", itQKCP->nSharpKernel);
@@ -1833,6 +1849,9 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itGrayCP->nThresholdValue);
 			jsnObj.set("standardValPercent", itGrayCP->fStandardValuePercent);
 			jsnObj.set("standardVal", itGrayCP->fStandardValue);
+			jsnObj.set("standardArea", itGrayCP->fStandardArea);
+			jsnObj.set("standardDensity", itGrayCP->fStandardDensity);
+			jsnObj.set("standardMeanGray", itGrayCP->fStandardMeanGray);
 
 			jsnObj.set("gaussKernel", itGrayCP->nGaussKernel);
 			jsnObj.set("sharpKernel", itGrayCP->nSharpKernel);
@@ -1854,6 +1873,9 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("thresholdValue", itWhiteCP->nThresholdValue);
 			jsnObj.set("standardValPercent", itWhiteCP->fStandardValuePercent);
 			jsnObj.set("standardVal", itWhiteCP->fStandardValue);
+			jsnObj.set("standardArea", itWhiteCP->fStandardArea);
+			jsnObj.set("standardDensity", itWhiteCP->fStandardDensity);
+			jsnObj.set("standardMeanGray", itWhiteCP->fStandardMeanGray);
 
 			jsnObj.set("gaussKernel", itWhiteCP->nGaussKernel);
 			jsnObj.set("sharpKernel", itWhiteCP->nSharpKernel);
@@ -1941,6 +1963,9 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 				jsnObj.set("thresholdValue", itOmrSel->nThresholdValue);
 				jsnObj.set("standardValPercent", itOmrSel->fStandardValuePercent);
 				jsnObj.set("standardVal", itOmrSel->fStandardValue);
+				jsnObj.set("standardArea", itOmrSel->fStandardArea);
+				jsnObj.set("standardDensity", itOmrSel->fStandardDensity);
+				jsnObj.set("standardMeanGray", itOmrSel->fStandardMeanGray);
 
 				jsnObj.set("gaussKernel", itOmrSel->nGaussKernel);
 				jsnObj.set("sharpKernel", itOmrSel->nSharpKernel);
@@ -1977,6 +2002,9 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 				jsnObj.set("thresholdValue", itSnDetail->nThresholdValue);
 				jsnObj.set("standardValPercent", itSnDetail->fStandardValuePercent);
 				jsnObj.set("standardVal", itSnDetail->fStandardValue);
+				jsnObj.set("standardArea", itSnDetail->fStandardArea);
+				jsnObj.set("standardDensity", itSnDetail->fStandardDensity);
+				jsnObj.set("standardMeanGray", itSnDetail->fStandardMeanGray);
 
 				jsnObj.set("gaussKernel", itSnDetail->nGaussKernel);
 				jsnObj.set("sharpKernel", itSnDetail->nSharpKernel);
@@ -2012,6 +2040,9 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 				jsnObj.set("thresholdValue", itOmrSel->nThresholdValue);
 				jsnObj.set("standardValPercent", itOmrSel->fStandardValuePercent);
 				jsnObj.set("standardVal", itOmrSel->fStandardValue);
+				jsnObj.set("standardArea", itOmrSel->fStandardArea);
+				jsnObj.set("standardDensity", itOmrSel->fStandardDensity);
+				jsnObj.set("standardMeanGray", itOmrSel->fStandardMeanGray);
 
 				jsnObj.set("gaussKernel", itOmrSel->nGaussKernel);
 				jsnObj.set("sharpKernel", itOmrSel->nSharpKernel);

@@ -29,7 +29,7 @@
 #define DecompressTest		//解压测试，多线程解压
 
 #ifndef TO_WHTY
-	#define SOFT_VERSION "DataControlServer V1.70222-1"
+	#define SOFT_VERSION "DataControlServer V1.70310-1"
 #else
 	#define SOFT_VERSION "DataControlServer for TY V2.1-0309"
 #endif
@@ -38,6 +38,54 @@
 
 extern CLog g_Log;
 extern int	g_nExitFlag;
+
+//===========================
+extern int		g_nRecogGrayMin;		//灰度点(除空白点,OMR外)计算灰度的最小考试范围
+extern int		g_nRecogGrayMax_White;	//空白点校验点计算灰度的最大考试范围
+// extern int		g_nRecogGrayMin_OMR;	//OMR计算灰度的最小考试范围
+// extern int		g_RecogGrayMax_OMR;		//OMR计算灰度的最大考试范围
+
+extern float	_fFixThresholdPercent_;
+extern float	_fHeadThresholdPercent_;	//同步头达到阀值的比例
+extern float	_fABModelThresholdPercent_;
+extern float	_fCourseThresholdPercent_;
+extern float	_fGrayThresholdPercent_;
+extern float	_fWhiteThresholdPercent_;
+
+extern double	_dOmrThresholdPercent_Fix_;		//定点模式OMR识别可认为是选中的标准百分比
+extern double	_dSnThresholdPercent_Fix_;		//定点模式SN识别可认为是选中的标准百分比
+extern double	_dQKThresholdPercent_Fix_;		//定点模式QK识别可认为是选中的标准百分比
+extern double	_dOmrThresholdPercent_Head_;	//同步头模式OMR识别可认为是选中的标准百分比
+extern double	_dSnThresholdPercent_Head_;		//同步头模式SN识别可认为是选中的标准百分比
+extern double	_dQKThresholdPercent_Head_;		//同步头模式QK识别可认为是选中的标准百分比
+
+// extern double	_dCompThread_Fix_;
+// extern double	_dDiffThread_Fix_;
+// extern double	_dDiffExit_Fix_;
+// extern double	_dCompThread_Head_;
+// extern double	_dDiffThread_Head_;
+// extern double	_dDiffExit_Head_;
+// extern int		_nThreshold_Recog2_;	//第2中识别方法的二值化阀值
+// extern double	_dCompThread_3_;		//第三种识别方法
+// extern double	_dDiffThread_3_;
+// extern double	_dDiffExit_3_;
+// extern double	_dAnswerSure_;		//可以确认是答案的最大灰度
+
+extern int		_nGaussKernel_;
+extern int		_nSharpKernel_;
+extern int		_nCannyKernel_;
+extern int		_nDilateKernel_;
+extern int		_nErodeKernel_;
+extern int		_nFixVal_;
+extern int		_nHeadVal_;				//水平垂直同步头的阀值
+extern int		_nABModelVal_;
+extern int		_nCourseVal_;
+extern int		_nQK_CPVal_;
+extern int		_nGrayVal_;
+extern int		_nWhiteVal_;
+extern int		_nOMR_;		//重新识别模板时，用来识别OMR的密度值的阀值
+extern int		_nSN_;		//重新识别模板时，用来识别ZKZH的密度值的阀值
+//===========================
 
 typedef std::map<std::string, std::string> MAP_PIC_ADDR;
 extern Poco::FastMutex _mapPicAddrLock_;
