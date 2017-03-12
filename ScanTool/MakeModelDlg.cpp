@@ -4387,6 +4387,16 @@ void CMakeModelDlg::RecognizeRectTracker()
 				m_vecPaperModelInfo[m_nCurrTabSel]->lSN.push_back(pSnItem);
 			}
 		}
+#ifdef Test_TraceLog
+		for (auto pstItem : m_vecPaperModelInfo[m_nCurrTabSel]->lSN)
+		{
+			std::string strRectVal;
+			for (auto rc : pstItem->lSN)
+				strRectVal.append(Poco::format("项(%d) 面积: %f, 密度: %f, val: %f, valPer: %f; ", rc.nSnVal, (double)rc.fStandardArea, (double)rc.fStandardDensity, (double)rc.fStandardValue, (double)rc.fStandardValuePercent));
+			std::string strRectLog = Poco::format("矩形题号: %d, %s", pstItem->nItem, strRectVal);
+			TRACE("%s\n", strRectLog.c_str());
+		}
+#endif
 	}
 	
 	SortRect();
