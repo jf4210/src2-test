@@ -98,6 +98,7 @@ public:
 	BOOL			m_bF2Enable;
 	BOOL			m_bLastPkgSaveOK;		//扫描的上一代试卷是否保存成功
 	bool			m_bModifySN;			//扫描完成后，是否将未识别的准考证号进行人工修正
+	int				m_nDoubleScan;			//是否是双面扫描	//单双面,0-单面,1-双面
 public:
 	void	InitUI();
 	void	InitTab();
@@ -145,7 +146,9 @@ public:
 	void SetImage(HANDLE hBitmap, int bits);
 	void ScanDone(int nStatus);
 
-	int CheckOrientation(cv::Mat& matSrc, int n);
+	int		CheckOrientation4Fix(cv::Mat& matSrc, int n);	//定点模式下的方向
+	int		CheckOrientation4Head(cv::Mat& matSrc, int n);	//同步头模式下的方向
+	int		CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan);
 // 实现
 protected:
 	HICON m_hIcon;

@@ -928,6 +928,25 @@ bool GetQK(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
 	return true;
 }
 
+bool GetGray(Poco::JSON::Object::Ptr objTK, pPAPERMODEL pPaperModel)
+{
+	Poco::JSON::Object::Ptr objPageNum = objTK->getObject("pageNum");
+	Poco::JSON::Array::Ptr arryItems = objPageNum->getArray("items");
+	for (int k = 0; k < arryItems->size(); k++)
+	{
+		Poco::JSON::Object::Ptr objItem = arryItems->getObject(k);
+		RECTINFO rcGray;
+		rcGray.eCPType = GRAY_CP;
+		rcGray.rt.x = objItem->get("x").convert<int>();
+		rcGray.rt.y = objItem->get("y").convert<int>();
+		rcGray.rt.width = objItem->get("width").convert<int>();
+		rcGray.rt.height = objItem->get("height").convert<int>();
+		rcGray.nHItem = objItem->get("horIndex").convert<int>();
+		rcGray.nVItem = objItem->get("verIndex").convert<int>();
+		pPaperModel->lGray.push_back(rcGray);
+	}
+	return true;
+}
 pMODEL CScanResquestHandler::CreateModel(Poco::JSON::Object::Ptr object, pSCAN_REQ_TASK pTask, std::vector<std::vector<int>>& vecSheets)
 {
 	pMODEL pModel = NULL;
@@ -998,7 +1017,8 @@ pMODEL CScanResquestHandler::CreateModel(Poco::JSON::Object::Ptr object, pSCAN_R
 			//添加缺考点
 			GetQK(objTK, pPaperModel);
 
-			//添加灰度点
+			//添加灰度点,通过页码点来设置	**********************************************************************************
+			GetGray(objTK, pPaperModel);
 
 			//添加白校验点
 

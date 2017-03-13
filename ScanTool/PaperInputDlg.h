@@ -53,7 +53,9 @@ private:
 // 	bool	UnZipModel(CString strZipPath);
 // 	pMODEL	LoadModelFile(CString strModelPath);			//加载模板文件
 
-	int		CheckOrientation(cv::Mat& matSrc, int n);	//检测图片方向
+	int		CheckOrientation4Fix(cv::Mat& matSrc, int n);	//定点模式下的方向
+	int		CheckOrientation4Head(cv::Mat& matSrc, int n);	//同步头模式下的方向
+	int		CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan);	//检测图片方向
 
 	void	PaintRecognisedRect(pST_PaperInfo pPaper);		//画已识别的矩形
 	void	PaintIssueRect(pST_PaperInfo pPaper);			//画出已识别出来的问题矩形位置

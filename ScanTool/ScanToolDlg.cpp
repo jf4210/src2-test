@@ -1095,7 +1095,6 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	#endif
 #endif	
 	int nScanSrc = 0;
-	int nDuplexDef = 1;
 
 	CScanCtrlDlg dlg(m_scanSourceArry);
 	if (dlg.DoModal() != IDOK)
@@ -1106,7 +1105,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	}
 
 	nScanSrc = dlg.m_nCurrScanSrc;
-	nDuplexDef = dlg.m_nCurrDuplex;
+	m_nDoubleScan = dlg.m_nCurrDuplex;
 	m_nCurrentScanCount = dlg.m_nStudentNum;
 	
 	m_comboModel.EnableWindow(FALSE);
@@ -1167,7 +1166,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	if (dlg.m_bAdvancedSetting)
 		bShowScanSrcUI = true;
 
-	int nDuplex = nDuplexDef;		//单双面,0-单面,1-双面
+	int nDuplex = m_nDoubleScan;		//单双面,0-单面,1-双面
 	int nSize = TWSS_NONE;					//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3, TWSS_NONE-自定义
 	if (nScanSize == 1)
 		nSize = TWSS_A4LETTER;
@@ -1664,9 +1663,9 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 		cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
 
 		//++ 2016.8.26 判断扫描图片方向，并进行旋转
-		if (m_pModel && m_pModel->nType)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
+		if (m_pModel /*&& m_pModel->nType*/)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
 		{
-			int nResult = CheckOrientation(matTest2, nOrder - 1);
+			int nResult = CheckOrientation(matTest2, nOrder - 1, m_nDoubleScan == 0 ? false : true);
 			switch (nResult)	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
 			{
 				case 1:	break;
@@ -3256,10 +3255,10 @@ void CScanToolDlg::OnBnClickedBtnReback()
 	m_bF2Enable = FALSE;
 }
 
-void sharpenImage1(const cv::Mat &image, cv::Mat &result)
+void sharpenImage1(const cv::Mat &image, cv::Mat &result, int nKernel)
 {
 	//创建并初始化滤波模板
-	cv::Mat kernel(3, 3, CV_32F, cv::Scalar(0));
+	cv::Mat kernel(nKernel, nKernel, CV_32F, cv::Scalar(0));
 	kernel.at<float>(1, 1) = 5;
 	kernel.at<float>(0, 1) = -1.0;
 	kernel.at<float>(1, 0) = -1.0;
@@ -3295,7 +3294,7 @@ int GetRects(cv::Mat& matSrc, cv::Rect rt, pMODEL pModel, int nPic, int nOrienta
 		cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 		GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
-		sharpenImage1(matCompRoi, matCompRoi);
+		sharpenImage1(matCompRoi, matCompRoi, 3);
 
 #ifdef USES_GETTHRESHOLD_ZTFB
 		const int channels[1] = { 0 };
@@ -3527,8 +3526,462 @@ cv::Rect GetRectByOrientation(cv::Rect& rtPic, cv::Rect rt, int nOrientation)
 	return rtResult;
 }
 
-int CScanToolDlg::CheckOrientation(cv::Mat& matSrc, int n)
+float GetRtDensity1(cv::Mat& matSrc, cv::Rect rt, RECTINFO rcMod)
 {
+	Mat matCompRoi;
+	matCompRoi = matSrc(rt);
+	cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+	cv::GaussianBlur(matCompRoi, matCompRoi, cv::Size(rcMod.nGaussKernel, rcMod.nGaussKernel), 0, 0);
+	sharpenImage1(matCompRoi, matCompRoi, rcMod.nSharpKernel);
+
+	const int channels[1] = { 0 };
+	const float* ranges[1];
+	const int histSize[1] = { 1 };
+	float hranges[2];
+	hranges[0] = g_nRecogGrayMin;
+	hranges[1] = static_cast<float>(rcMod.nThresholdValue);
+	ranges[0] = hranges;
+
+	MatND src_hist;
+	cv::calcHist(&matCompRoi, 1, channels, Mat(), src_hist, 1, histSize, ranges, false);
+
+	float fRealVal = src_hist.at<float>(0);
+	float fRealArea = rt.area();
+	float fRealDensity = fRealVal / fRealArea;
+
+	return fRealVal;
+}
+
+int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
+{
+	bool bFind = false;
+	int nResult = 1;	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+
+	if (m_pModel->nHasHead)
+		return nResult;
+
+	const float fMinPer = 0.5;		//识别矩形数/模板矩形数 低于最小值，认为不合格
+	const float fMaxPer = 1.5;		//识别矩形数/模板矩形数 超过最大值，认为不合格
+	const float fMidPer = 0.8;
+
+	cv::Rect rtModelPic;
+	rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+	rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+	cv::Rect rtSrcPic;
+	rtSrcPic.width = matSrc.cols;
+	rtSrcPic.height = matSrc.rows;
+
+	int nModelPicPersent = rtModelPic.width / rtModelPic.height;	//0||1
+	int nSrcPicPercent = matSrc.cols / matSrc.rows;
+
+	cv::Rect rt1 = m_pModel->vecPaperModel[n]->rtHTracker;
+	cv::Rect rt2 = m_pModel->vecPaperModel[n]->rtVTracker;
+	TRACE("水平橡皮筋:(%d,%d,%d,%d), 垂直橡皮筋(%d,%d,%d,%d)\n", rt1.x, rt1.y, rt1.width, rt1.height, rt2.x, rt2.y, rt2.width, rt2.height);
+
+	float fFirst_H, fFirst_V, fSecond_H, fSecond_V;
+	fFirst_H = fFirst_V = fSecond_H = fSecond_V = 0.0;
+	if (nModelPicPersent == nSrcPicPercent)	//与模板图片方向一致，需判断正向还是反向一致
+	{
+		TRACE("与模板图片方向一致\n");
+		for (int i = 1; i <= 4; i = i + 3)
+		{
+			TRACE("查灰度校验点\n");
+			bool bContinue = false;
+			int nRtCount = 0;
+			for (auto rcGray : m_pModel->vecPaperModel[n]->lGray)
+			{
+				cv::Rect rt = GetRectByOrientation(rtModelPic, rcGray.rt, i);
+				float fRealVal = GetRtDensity1(matSrc, rt, rcGray);				//密度是否达到要求
+				float fPer = fRealVal / rcGray.fStandardValue;
+				if (fPer <= 0.5)			//密度连模板的一半都没有直接退出判断
+				{
+					bContinue = true;
+					break;
+				}
+				if (fPer > rcGray.fStandardValuePercent)
+					++nRtCount;
+			}
+			if (bContinue)
+				continue;
+
+			TRACE("科目校验点\n");
+			bContinue = false;
+			for (auto rcSubject : m_pModel->vecPaperModel[n]->lCourse)
+			{
+				cv::Rect rt = GetRectByOrientation(rtModelPic, rcSubject.rt, i);
+				float fRealVal = GetRtDensity1(matSrc, rt, rcSubject);				//密度是否达到要求
+				float fPer = fRealVal / rcSubject.fStandardValue;
+				if (fPer <= 0.5)			//密度连模板的一半都没有直接退出判断
+				{
+					bContinue = true;
+					break;
+				}
+				if (fPer > rcSubject.fStandardValuePercent)
+					++nRtCount;
+			}
+			if (bContinue)
+				continue;
+
+			//判断总数
+			int nAllCount = m_pModel->vecPaperModel[n]->lGray.size() + m_pModel->vecPaperModel[n]->lCourse.size();
+			if (nAllCount <= 2)
+			{
+				if (nRtCount >= nAllCount)
+				{
+					bFind = true;
+					nResult = i;
+					break;
+				}
+			}
+			else
+			{
+				if (nRtCount >= nAllCount * 0.9)
+				{
+					bFind = true;
+					nResult = i;
+					break;
+				}
+			}
+		}
+
+		if (!bFind)
+		{
+			TRACE("无法判断图片方向\n");
+			g_pLogger->information("无法判断图片方向");
+			nResult = 1;
+		}
+	}
+	else	//与模板图片方向不一致，需判断向右旋转90还是向左旋转90
+	{
+		TRACE("与模板图片方向不一致\n");
+		for (int i = 2; i <= 3; i++)
+		{
+			TRACE("查灰度校验点\n");
+			bool bContinue = false;
+			int nRtCount = 0;
+			for (auto rcGray : m_pModel->vecPaperModel[n]->lGray)
+			{
+				cv::Rect rt = GetRectByOrientation(rtModelPic, rcGray.rt, i);
+				float fRealVal = GetRtDensity1(matSrc, rt, rcGray);				//密度是否达到要求
+				float fPer = fRealVal / rcGray.fStandardValue;
+				if (fPer <= 0.5)			//密度连模板的一半都没有直接退出判断
+				{
+					bContinue = true;
+					break;
+				}
+				if (fPer > rcGray.fStandardValuePercent)
+					++nRtCount;
+			}
+			if (bContinue)
+				continue;
+
+			TRACE("科目校验点\n");
+			bContinue = false;
+			for (auto rcSubject : m_pModel->vecPaperModel[n]->lCourse)
+			{
+				cv::Rect rt = GetRectByOrientation(rtModelPic, rcSubject.rt, i);
+				float fRealVal = GetRtDensity1(matSrc, rt, rcSubject);				//密度是否达到要求
+				float fPer = fRealVal / rcSubject.fStandardValue;
+				if (fPer <= 0.5)			//密度连模板的一半都没有直接退出判断
+				{
+					bContinue = true;
+					break;
+				}
+				if (fPer > rcSubject.fStandardValuePercent)
+					++nRtCount;
+			}
+			if (bContinue)
+				continue;
+
+			//判断总数
+			int nAllCount = m_pModel->vecPaperModel[n]->lGray.size() + m_pModel->vecPaperModel[n]->lCourse.size();
+			if (nAllCount <= 2)
+			{
+				if (nRtCount >= nAllCount)
+				{
+					bFind = true;
+					nResult = i;
+					break;
+				}
+			}
+			else
+			{
+				if (nRtCount >= nAllCount * 0.9)
+				{
+					bFind = true;
+					nResult = i;
+					break;
+				}
+			}
+		}
+
+		if (!bFind)
+		{
+			TRACE("无法判断图片方向\n");
+			g_pLogger->information("无法判断图片方向");
+			nResult = 1;
+		}
+	}
+	return nResult;
+}
+
+int CScanToolDlg::CheckOrientation4Head(cv::Mat& matSrc, int n)
+{
+	bool bFind = false;
+	int nResult = 1;	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+
+	if (!m_pModel->nHasHead)
+		return nResult;
+
+	const float fMinPer = 0.5;		//识别矩形数/模板矩形数 低于最小值，认为不合格
+	const float fMaxPer = 1.5;		//识别矩形数/模板矩形数 超过最大值，认为不合格
+	const float fMidPer = 0.8;
+
+	cv::Rect rtModelPic;
+	rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+	rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+	cv::Rect rtSrcPic;
+	rtSrcPic.width = matSrc.cols;
+	rtSrcPic.height = matSrc.rows;
+
+	int nModelPicPersent = rtModelPic.width / rtModelPic.height;	//0||1
+	int nSrcPicPercent = matSrc.cols / matSrc.rows;
+
+	cv::Rect rt1 = m_pModel->vecPaperModel[n]->rtHTracker;
+	cv::Rect rt2 = m_pModel->vecPaperModel[n]->rtVTracker;
+	TRACE("水平橡皮筋:(%d,%d,%d,%d), 垂直橡皮筋(%d,%d,%d,%d)\n", rt1.x, rt1.y, rt1.width, rt1.height, rt2.x, rt2.y, rt2.width, rt2.height);
+
+	float fFirst_H, fFirst_V, fSecond_H, fSecond_V;
+	fFirst_H = fFirst_V = fSecond_H = fSecond_V = 0.0;
+	if (nModelPicPersent == nSrcPicPercent)	//与模板图片方向一致，需判断正向还是反向一致
+	{
+		TRACE("与模板图片方向一致\n");
+		for (int i = 1; i <= 4; i = i + 3)
+		{
+			TRACE("查水平同步头\n");
+			cv::Rect rtH = GetRectByOrientation(rtModelPic, m_pModel->vecPaperModel[n]->rtHTracker, i);
+			int nHead_H = GetRects(matSrc, rtH, m_pModel, n, i, 1);		//查水平同步头数量
+			int nSum_H = m_pModel->vecPaperModel[n]->lH_Head.size();
+
+			float fSimilarity_H = (float)nHead_H / nSum_H;
+			if (fSimilarity_H < fMinPer || fSimilarity_H > fMaxPer)
+				continue;
+
+			if (i == 1)
+				fFirst_H = fSimilarity_H;
+			else
+				fSecond_H = fSimilarity_H;
+
+			TRACE("查垂直同步头\n");
+			cv::Rect rtH2 = GetRectByOrientation(rtModelPic, m_pModel->vecPaperModel[n]->rtVTracker, i);
+			int nHead_V = GetRects(matSrc, rtH2, m_pModel, n, i, 2);		//查垂直同步头数量
+			int nSum_V = m_pModel->vecPaperModel[n]->lV_Head.size();
+
+			float fSimilarity_V = (float)nHead_V / nSum_V;
+
+			char szLog[300] = { 0 };
+			sprintf_s(szLog, "rtH = (%d,%d,%d,%d), rtH2 = (%d,%d,%d,%d),\nnHead_H = %d, nHead_V = %d, nSum_H = %d, nSum_V = %d, H=%.2f, V=%.2f\n", rtH.tl().x, rtH.tl().y, rtH.width, rtH.height, rtH2.tl().x, rtH2.tl().y, rtH2.width, rtH2.height, \
+					  nHead_H, nHead_V, nSum_H, nSum_V, fSimilarity_H, fSimilarity_V);
+			g_pLogger->information(szLog);
+			TRACE(szLog);
+
+			if (fSimilarity_H > fMidPer)
+			{
+				if (fSimilarity_V < fMinPer || fSimilarity_V > fMaxPer)
+					continue;
+
+				if (fSimilarity_V > fMidPer)
+				{
+					bFind = true;
+					nResult = i;
+					break;
+				}
+				else    //fSimilarity_V in [0.5,0.8]	有可能，再进行进一步判断
+				{
+					if (i == 1)
+						fFirst_V = fSimilarity_V;
+					else
+						fSecond_V = fSimilarity_V;
+				}
+			}
+			else	//fSimilarity_H in [0.5,0.8]	有可能，再进行进一步判断
+			{
+				if (fSimilarity_V < fMinPer || fSimilarity_V > fMaxPer)
+					continue;
+
+				if (i == 1)
+					fFirst_V = fSimilarity_V;
+				else
+					fSecond_V = fSimilarity_V;
+			}
+		}
+
+		if (!bFind)
+		{
+			if (fFirst_H > fSecond_H && fFirst_V > fSecond_V)
+			{
+				nResult = 1;
+			}
+			else if (fFirst_H < fSecond_H && fFirst_V < fSecond_V)
+			{
+				nResult = 4;
+			}
+			else
+			{
+				TRACE("无法判断图片方向\n");
+				g_pLogger->information("无法判断图片方向");
+				nResult = 1;
+			}
+		}
+	}
+	else	//与模板图片方向不一致，需判断向右旋转90还是向左旋转90
+	{
+		TRACE("与模板图片方向不一致\n");
+		for (int i = 2; i <= 3; i++)
+		{
+			TRACE("查水平同步头\n");
+			cv::Rect rtH = GetRectByOrientation(rtModelPic, m_pModel->vecPaperModel[n]->rtHTracker, i);
+			int nHead_H = GetRects(matSrc, rtH, m_pModel, n, i, 1);		//查水平同步头数量
+			int nSum_H = m_pModel->vecPaperModel[n]->lH_Head.size();
+
+			float fSimilarity_H = (float)nHead_H / nSum_H;
+			if (fSimilarity_H < fMinPer || fSimilarity_H > fMaxPer)
+				continue;
+
+			if (i == 2)
+				fFirst_H = fSimilarity_H;
+			else
+				fSecond_H = fSimilarity_H;
+
+			TRACE("查垂直同步头\n");
+			cv::Rect rtH2 = GetRectByOrientation(rtModelPic, m_pModel->vecPaperModel[n]->rtVTracker, i);
+			int nHead_V = GetRects(matSrc, rtH2, m_pModel, n, i, 2);		//查垂直同步头数量
+			int nSum_V = m_pModel->vecPaperModel[n]->lV_Head.size();
+
+			float fSimilarity_V = (float)nHead_V / nSum_V;
+
+			char szLog[300] = { 0 };
+			sprintf_s(szLog, "rtH = (%d,%d,%d,%d), rtH2 = (%d,%d,%d,%d),\nnHead_H = %d, nHead_V = %d, nSum_H = %d, nSum_V = %d, H=%.2f, V=%.2f\n", rtH.tl().x, rtH.tl().y, rtH.width, rtH.height, rtH2.tl().x, rtH2.tl().y, rtH2.width, rtH2.height, \
+					  nHead_H, nHead_V, nSum_H, nSum_V, fSimilarity_H, fSimilarity_V);
+			g_pLogger->information(szLog);
+			TRACE(szLog);
+
+			if (fSimilarity_H > fMidPer)
+			{
+				if (fSimilarity_V < fMinPer || fSimilarity_V > fMaxPer)
+					continue;
+
+				if (fSimilarity_V > fMidPer)
+				{
+					bFind = true;
+					nResult = i;
+					break;
+				}
+				else    //fSimilarity_V in [0.5,0.8]	有可能，再进行进一步判断
+				{
+					if (i == 2)
+						fFirst_V = fSimilarity_V;
+					else
+						fSecond_V = fSimilarity_V;
+				}
+			}
+			else	//fSimilarity_H in [0.5,0.8]	有可能，再进行进一步判断
+			{
+				if (fSimilarity_V < fMinPer || fSimilarity_V > fMaxPer)
+					continue;
+
+				if (i == 2)
+					fFirst_V = fSimilarity_V;
+				else
+					fSecond_V = fSimilarity_V;
+			}
+		}
+
+		if (!bFind)
+		{
+			if (fFirst_H > fSecond_H && fFirst_V > fSecond_V)
+			{
+				nResult = 2;
+			}
+			else if (fFirst_H < fSecond_H && fFirst_V < fSecond_V)
+			{
+				nResult = 3;
+			}
+			else
+			{
+				TRACE("无法判断图片方向\n");
+				g_pLogger->information("无法判断图片方向");
+				nResult = 1;
+			}
+		}
+	}
+	return nResult;
+}
+
+int CScanToolDlg::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
+{
+#if 1
+	clock_t start, end;
+	start = clock();
+
+	//*********************************
+	//*********	测试结论 **************
+	//前提：双面扫描
+	//1、正面不需要旋转 ==> 反面也不需要旋转
+	//2、正面需要右转90度 ==> 反面需要左转90度
+	//3、正面需要左转90度 ==> 反面需要右转90度
+	//4、正面需要旋转180度 ==> 反面也需要旋转180度
+	//*********************************
+	int nResult = 1;	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+	static int nFristOrientation = 1;
+	if (bDoubleScan && n % 2 != 0)	//双面扫描, 且属于双面扫描的第二面的情况
+	{
+		if (nFristOrientation == 1) nResult = 1;
+		else if (nFristOrientation == 2) nResult = 3;
+		else if (nFristOrientation == 3) nResult = 2;
+		else if (nFristOrientation == 4) nResult = 4;
+		end = clock();
+		TRACE("判断旋转方向时间: %dms\n", end - start);
+
+		std::string strDirection;
+		switch (nResult)
+		{
+			case 1: strDirection = "正向，不需要旋转"; break;
+			case 2: strDirection = "右旋90"; break;
+			case 3: strDirection = "左旋90"; break;
+			case 4: strDirection = "右旋180"; break;
+		}
+		std::string strLog = "双面扫描第二面，根据第一面方向判断结果：" + strDirection;
+		g_pLogger->information(strLog);
+		TRACE("%s\n", strLog.c_str());
+		return nResult;
+	}
+
+	if (m_pModel->nHasHead)
+		nResult = CheckOrientation4Head(matSrc, n);
+	else
+		nResult = CheckOrientation4Fix(matSrc, n);
+
+	if (bDoubleScan && n % 2 == 0)		//双面扫描，且属于扫描的第一面
+		nFristOrientation = nResult;
+
+	end = clock();
+	TRACE("判断旋转方向时间: %dms\n", end - start);
+
+	std::string strDirection;
+	switch (nResult)
+	{
+		case 1: strDirection = "正向，不需要旋转"; break;
+		case 2: strDirection = "右旋90"; break;
+		case 3: strDirection = "左旋90"; break;
+		case 4: strDirection = "右旋180"; break;
+	}
+	std::string strLog = "方向判断结果：" + strDirection;
+	g_pLogger->information(strLog);
+	TRACE("%s\n", strLog.c_str());
+
+	return nResult;
+#else
 	clock_t start, end;
 	start = clock();
 
@@ -3737,6 +4190,7 @@ int CScanToolDlg::CheckOrientation(cv::Mat& matSrc, int n)
 	TRACE("%s\n", strLog.c_str());
 
 	return nResult;
+#endif
 }
 
 
