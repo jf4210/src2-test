@@ -1663,7 +1663,7 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 		cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
 
 		//++ 2016.8.26 判断扫描图片方向，并进行旋转
-		if (m_pModel /*&& m_pModel->nType*/)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
+		if (m_pModel/* && m_pModel->nType*/)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
 		{
 			int nResult = CheckOrientation(matTest2, nOrder - 1, m_nDoubleScan == 0 ? false : true);
 			switch (nResult)	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
@@ -1842,20 +1842,22 @@ void CScanToolDlg::ScanDone(int nStatus)
 
 #ifndef TO_WHTY
 	//显示所有识别完成的准考证号
-	int nCount = m_lcPicture.GetItemCount();
-	for (int i = 0; i < nCount; i++)
+	if (m_bModifySN)
 	{
-		pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(i);
-		if (pItemPaper)
+		int nCount = m_lcPicture.GetItemCount();
+		for (int i = 0; i < nCount; i++)
 		{
-			m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
+			pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(i);
+			if (pItemPaper)
+			{
+				m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
+			}
 		}
-	}
+		SetTimer(TIMER_CheckRecogComplete, 100, NULL);
+	}	
 #endif
 
 	SetStatusShowInfo(strMsg, bWarn);
-	if (m_bModifySN)
-		SetTimer(TIMER_CheckRecogComplete, 100, NULL);
 }
 
 void CScanToolDlg::SetStatusShowInfo(CString strMsg, BOOL bWarn /*= FALSE*/)
@@ -3526,7 +3528,7 @@ cv::Rect GetRectByOrientation(cv::Rect& rtPic, cv::Rect rt, int nOrientation)
 	return rtResult;
 }
 
-float GetRtDensity1(cv::Mat& matSrc, cv::Rect rt, RECTINFO rcMod)
+float GetRtDensity(cv::Mat& matSrc, cv::Rect rt, RECTINFO rcMod)
 {
 	Mat matCompRoi;
 	matCompRoi = matSrc(rt);
@@ -3551,6 +3553,219 @@ float GetRtDensity1(cv::Mat& matSrc, cv::Rect rt, RECTINFO rcMod)
 
 	return fRealVal;
 }
+
+bool bGetMaxRect(cv::Mat& matSrc, cv::Rect rt, RECTINFO rcMod, cv::Rect& rtMax)
+{
+	clock_t start, end;
+	start = clock();
+
+	bool bResult = false;
+
+	int nResult = 0;
+	std::vector<Rect>RectCompList;
+	try
+	{
+		if (rt.x < 0) rt.x = 0;
+		if (rt.y < 0) rt.y = 0;
+		if (rt.br().x > matSrc.cols)
+		{
+			rt.width = matSrc.cols - rt.x;
+		}
+		if (rt.br().y > matSrc.rows)
+		{
+			rt.height = matSrc.rows - rt.y;
+		}
+
+		Mat matCompRoi;
+		matCompRoi = matSrc(rt);
+
+		cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+		GaussianBlur(matCompRoi, matCompRoi, cv::Size(rcMod.nGaussKernel, rcMod.nGaussKernel), 0, 0);
+		sharpenImage1(matCompRoi, matCompRoi, rcMod.nSharpKernel);
+
+#ifdef USES_GETTHRESHOLD_ZTFB
+		const int channels[1] = { 0 };
+		const int histSize[1] = { 150 };
+		float hranges[2] = { 0, 150 };
+		const float* ranges[1];
+		ranges[0] = hranges;
+		MatND hist;
+		calcHist(&matCompRoi, 1, channels, Mat(), hist, 1, histSize, ranges);	//histSize, ranges
+
+		int nSum = 0;
+		int nDevSum = 0;
+		int nCount = 0;
+		int nThreshold = 150;
+		for (int h = 0; h < hist.rows; h++)	//histSize
+		{
+			float binVal = hist.at<float>(h);
+
+			nCount += static_cast<int>(binVal);
+			nSum += h*binVal;
+		}
+		if (nCount > 0)
+		{
+			float fMean = (float)nSum / nCount;		//均值
+
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nDevSum += pow(h - fMean, 2)*binVal;
+			}
+			float fStdev = sqrt(nDevSum / nCount);	//标准差
+			nThreshold = fMean + 2 * fStdev;
+			if (fStdev > fMean)
+				nThreshold = fMean + fStdev;
+		}
+		if (nThreshold > 150) nThreshold = 150;
+		threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY);
+
+		// 		int blockSize = 25;		//25
+		// 		int constValue = 10;
+		// 		cv::adaptiveThreshold(matCompRoi, matCompRoi, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, blockSize, constValue);
+#else
+		threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
+#endif
+		//去除干扰信息，先膨胀后腐蚀还原, 可去除一些线条干扰
+		Mat element_Anticlutter = getStructuringElement(MORPH_RECT, Size(_nAnticlutterKernel_, _nAnticlutterKernel_));	//Size(6, 6)	普通空白框可识别		Size(3, 3)
+		dilate(matCompRoi, matCompRoi, element_Anticlutter);
+		erode(matCompRoi, matCompRoi, element_Anticlutter);
+
+		cv::Canny(matCompRoi, matCompRoi, 0, rcMod.nCannyKernel, 5);
+		Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(6, 6)	普通空白框可识别
+		dilate(matCompRoi, matCompRoi, element);
+		IplImage ipl_img(matCompRoi);
+
+		//the parm. for cvFindContours  
+		CvMemStorage* storage = cvCreateMemStorage(0);
+		CvSeq* contour = 0;
+
+		//提取轮廓  
+		cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+#if 0
+		//模板图像的水平同步头平均长宽
+
+		RECTLIST::iterator itBegin;
+		if (nHead == 1)	//检测水平同步头
+			itBegin = pModel->vecPaperModel[nPic]->lH_Head.begin();
+		else if (nHead == 2)
+			itBegin = pModel->vecPaperModel[nPic]->lV_Head.begin();
+		RECTINFO rcFist = *itBegin;
+		RECTINFO rcSecond = *(++itBegin);
+
+		int nMid_minW, nMid_maxW, nMid_minH, nMid_maxH;
+		int nHead_minW, nHead_maxW, nHead_minH, nHead_maxH;
+
+		float fPer_W, fPer_H;	//模板第二个点与第一个点的宽、高的比例，用于最小值控制
+		cv::Rect rtFirst, rtSecond;
+		if (nOrientation == 1 || nOrientation == 4)
+		{
+			rtSecond = rcSecond.rt;
+			rtFirst = rcFist.rt;
+			fPer_W = 0.5;
+			fPer_H = 0.25;
+		}
+		else if (nOrientation == 2 || nOrientation == 3)
+		{
+			rtSecond.width = rcSecond.rt.height;
+			rtSecond.height = rcSecond.rt.width;
+
+			rtFirst.width = rcFist.rt.height;
+			rtFirst.height = rcFist.rt.width;
+			fPer_W = 0.25;
+			fPer_H = 0.5;
+		}
+
+		if (pModel->nType == 1)
+		{
+			int nMid_modelW = rcSecond.rt.width;
+			int nMid_modelH = rcSecond.rt.height;
+			int nMidInterW, nMidInterH, nHeadInterW, nHeadInterH;
+			nMidInterW = 3;
+			nMidInterH = 3;
+			nHeadInterW = 4;
+			nHeadInterH = 4;
+			nMid_minW = nMid_modelW - nMidInterW;
+			nMid_maxW = nMid_modelW + nMidInterW;
+			nMid_minH = nMid_modelH - nMidInterH;
+			nMid_maxH = nMid_modelH + nMidInterH;
+
+			nHead_minW = rcFist.rt.width - nHeadInterW;
+			nHead_maxW = rcFist.rt.width + nHeadInterW;
+			nHead_minH = rcFist.rt.height - nHeadInterH;
+			nHead_maxH = rcFist.rt.height + nHeadInterH;
+		}
+		else
+		{
+			float fOffset = 0.2;
+			nMid_minW = rtSecond.width * (1 - fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nMid_maxW = rtSecond.width * (1 + fOffset);		//中间同步头宽度与模板中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nMid_minH = rtSecond.height * (1 - fOffset);		//同上
+			nMid_maxH = rtSecond.height * (1 + fOffset);		//同上
+
+			nHead_minW = rtFirst.width * (1 - fOffset);		//两端同步头(第一个或最后一个)宽度与两端中间同步头宽度的偏差不超过模板同步头宽度的0.2
+			nHead_maxW = rtFirst.width * (1 + fOffset);		//同上
+			nHead_minH = rtFirst.height * (1 - fOffset);		//同上
+			nHead_maxH = rtFirst.height * (1 + fOffset);		//同上
+		}
+
+		int nYSum = 0;
+		for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
+		{
+			CvRect aRect = cvBoundingRect(contour, 0);
+			Rect rm = aRect;
+			rm.x = rm.x + rt.x;
+			rm.y = rm.y + rt.y;
+
+			if (rm.width < nMid_minW || rm.height < nMid_minH || rm.width > nMid_maxW || rm.height > nMid_maxH)
+			{
+				if (!(rm.width > nHead_minH && rm.width < nHead_maxW && rm.height > nHead_minH && rm.height < nHead_maxH))	//排除第一个或最后一个大的同步头
+				{
+					TRACE("过滤同步头(%d,%d,%d,%d), 要求范围W:[%d,%d], H[%d,%d], 参考大小(%d,%d)\n", rm.x, rm.y, rm.width, rm.height, nMid_minW, nMid_maxW, nMid_minH, nMid_maxH, rcSecond.rt.width, rcSecond.rt.height);
+					continue;
+				}
+				else
+				{
+					TRACE("首尾同步头(即定位点同步头)(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
+				}
+			}
+			RectCompList.push_back(rm);
+			nYSum += rm.y;
+		}
+		cvReleaseMemStorage(&storage);
+#else
+		int nMaxArea = 0;
+		for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
+		{
+			CvRect aRect = cvBoundingRect(contour, 0);
+			Rect rm = aRect;
+			rm.x = rm.x + rt.x;
+			rm.y = rm.y + rt.y;
+			if (rm.area() > nMaxArea)
+			{
+				rtMax = rm;
+				nMaxArea = rm.area();
+			}
+		}
+#endif
+		if (nMaxArea > 0)
+			bResult = true;
+	}
+	catch (cv::Exception& exc)
+	{
+		std::string strLog = "识别校验点矩形异常: " + exc.msg;
+		g_pLogger->information(strLog);
+		TRACE(strLog.c_str());
+		nResult = -1;
+	}
+	end = clock();
+	TRACE("计算矩形数量时间: %d\n", end - start);
+
+	return bResult;
+}
+
 
 int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 {
@@ -3590,16 +3805,32 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			int nRtCount = 0;
 			for (auto rcGray : m_pModel->vecPaperModel[n]->lGray)
 			{
-				cv::Rect rt = GetRectByOrientation(rtModelPic, rcGray.rt, i);
-				float fRealVal = GetRtDensity1(matSrc, rt, rcGray);				//密度是否达到要求
-				float fPer = fRealVal / rcGray.fStandardValue;
-				if (fPer <= 0.5)			//密度连模板的一半都没有直接退出判断
+				//先把矩形面积扩大，如何查矩形，用面积来比较
+				cv::Rect rtChk = cv::Rect(rcGray.rt.tl() - cv::Point(10, 10), rcGray.rt.br() + cv::Point(10, 10));
+				cv::Rect rt = GetRectByOrientation(rtModelPic, rtChk, i);
+				cv::Rect rtReal;
+				if (bGetMaxRect(matSrc, rt, rcGray, rtReal))
+				{
+					float fRealVal = GetRtDensity(matSrc, rtReal, rcGray);				//密度是否达到要求
+					float fDensityPer = fRealVal / rtReal.area();
+					float fPer = fRealVal / rcGray.fStandardValue;
+					if (fDensityPer <= 0.5)			//密度连模板的一半都没有直接退出判断
+					{
+						bContinue = true;
+						break;
+					}
+					if (fDensityPer > rcGray.fStandardValuePercent)
+						++nRtCount;
+					else
+					{
+						TRACE("判断灰度校验点的密度百分比: %f, 低于要求的: %f\n", fPer, rcGray.fStandardValuePercent);
+					}
+				}
+				else
 				{
 					bContinue = true;
 					break;
 				}
-				if (fPer > rcGray.fStandardValuePercent)
-					++nRtCount;
 			}
 			if (bContinue)
 				continue;
@@ -3608,16 +3839,32 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			bContinue = false;
 			for (auto rcSubject : m_pModel->vecPaperModel[n]->lCourse)
 			{
-				cv::Rect rt = GetRectByOrientation(rtModelPic, rcSubject.rt, i);
-				float fRealVal = GetRtDensity1(matSrc, rt, rcSubject);				//密度是否达到要求
-				float fPer = fRealVal / rcSubject.fStandardValue;
-				if (fPer <= 0.5)			//密度连模板的一半都没有直接退出判断
+				//先把矩形面积扩大，如何查矩形，用面积来比较
+				cv::Rect rtChk = cv::Rect(rcSubject.rt.tl() - cv::Point(10, 10), rcSubject.rt.br() + cv::Point(10, 10));
+				cv::Rect rt = GetRectByOrientation(rtModelPic, rtChk, i);
+				cv::Rect rtReal;
+				if (bGetMaxRect(matSrc, rt, rcSubject, rtReal))
+				{
+					float fRealVal = GetRtDensity(matSrc, rtReal, rcSubject);				//密度是否达到要求
+					float fDensityPer = fRealVal / rtReal.area();
+					float fPer = fRealVal / rcSubject.fStandardValue;
+					if (fDensityPer <= 0.5)			//密度连模板的一半都没有直接退出判断
+					{
+						bContinue = true;
+						break;
+					}
+					if (fDensityPer > rcSubject.fStandardValuePercent)
+						++nRtCount;
+					else
+					{
+						TRACE("判断科目校验点的密度百分比: %f, 低于要求的: %f\n", fPer, rcSubject.fStandardValuePercent);
+					}
+				}
+				else
 				{
 					bContinue = true;
 					break;
 				}
-				if (fPer > rcSubject.fStandardValuePercent)
-					++nRtCount;
 			}
 			if (bContinue)
 				continue;
@@ -3661,16 +3908,32 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			int nRtCount = 0;
 			for (auto rcGray : m_pModel->vecPaperModel[n]->lGray)
 			{
-				cv::Rect rt = GetRectByOrientation(rtModelPic, rcGray.rt, i);
-				float fRealVal = GetRtDensity1(matSrc, rt, rcGray);				//密度是否达到要求
-				float fPer = fRealVal / rcGray.fStandardValue;
-				if (fPer <= 0.5)			//密度连模板的一半都没有直接退出判断
+				//先把矩形面积扩大，如何查矩形，用面积来比较
+				cv::Rect rtChk = cv::Rect(rcGray.rt.tl() - cv::Point(10, 10), rcGray.rt.br() + cv::Point(10, 10));
+				cv::Rect rt = GetRectByOrientation(rtModelPic, rtChk, i);
+				cv::Rect rtReal;
+				if (bGetMaxRect(matSrc, rt, rcGray, rtReal))
+				{
+					float fRealVal = GetRtDensity(matSrc, rtReal, rcGray);				//密度是否达到要求
+					float fDensityPer = fRealVal / rtReal.area();
+					float fPer = fRealVal / rcGray.fStandardValue;
+					if (fDensityPer <= 0.5)			//密度连模板的一半都没有直接退出判断
+					{
+						bContinue = true;
+						break;
+					}
+					if (fDensityPer > rcGray.fStandardValuePercent)
+						++nRtCount;
+					else
+					{
+						TRACE("判断灰度校验点的密度百分比: %f, 低于要求的: %f\n", fPer, rcGray.fStandardValuePercent);
+					}
+				}
+				else
 				{
 					bContinue = true;
 					break;
 				}
-				if (fPer > rcGray.fStandardValuePercent)
-					++nRtCount;
 			}
 			if (bContinue)
 				continue;
@@ -3679,16 +3942,32 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			bContinue = false;
 			for (auto rcSubject : m_pModel->vecPaperModel[n]->lCourse)
 			{
-				cv::Rect rt = GetRectByOrientation(rtModelPic, rcSubject.rt, i);
-				float fRealVal = GetRtDensity1(matSrc, rt, rcSubject);				//密度是否达到要求
-				float fPer = fRealVal / rcSubject.fStandardValue;
-				if (fPer <= 0.5)			//密度连模板的一半都没有直接退出判断
+				//先把矩形面积扩大，如何查矩形，用面积来比较
+				cv::Rect rtChk = cv::Rect(rcSubject.rt.tl() - cv::Point(10, 10), rcSubject.rt.br() + cv::Point(10, 10));
+				cv::Rect rt = GetRectByOrientation(rtModelPic, rtChk, i);
+				cv::Rect rtReal;
+				if (bGetMaxRect(matSrc, rt, rcSubject, rtReal))
+				{
+					float fRealVal = GetRtDensity(matSrc, rtReal, rcSubject);				//密度是否达到要求
+					float fDensityPer = fRealVal / rtReal.area();
+					float fPer = fRealVal / rcSubject.fStandardValue;
+					if (fDensityPer <= 0.5)			//密度连模板的一半都没有直接退出判断
+					{
+						bContinue = true;
+						break;
+					}
+					if (fDensityPer > rcSubject.fStandardValuePercent)
+						++nRtCount;
+					else
+					{
+						TRACE("判断科目校验点的密度百分比: %f, 低于要求的: %f\n", fPer, rcSubject.fStandardValuePercent);
+					}
+				}
+				else
 				{
 					bContinue = true;
 					break;
 				}
-				if (fPer > rcSubject.fStandardValuePercent)
-					++nRtCount;
 			}
 			if (bContinue)
 				continue;
