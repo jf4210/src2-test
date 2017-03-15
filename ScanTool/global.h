@@ -54,7 +54,6 @@
 #include "./pdf2jpg/MuPDFConvert.h"
 #include "modelInfo.h"
 
-
 #include "zbar.h"   
 
 //#define PIC_RECTIFY_TEST	//Í¼ÏñÐý×ª¾ÀÕý²âÊÔ

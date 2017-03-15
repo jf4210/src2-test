@@ -3819,7 +3819,7 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 						bContinue = true;
 						break;
 					}
-					if (fDensityPer > rcGray.fStandardValuePercent)
+					if (fDensityPer / rcGray.fStandardDensity > rcGray.fStandardValuePercent)
 						++nRtCount;
 					else
 					{
@@ -3853,7 +3853,7 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 						bContinue = true;
 						break;
 					}
-					if (fDensityPer > rcSubject.fStandardValuePercent)
+					if (fDensityPer / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent)
 						++nRtCount;
 					else
 					{
@@ -3922,7 +3922,7 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 						bContinue = true;
 						break;
 					}
-					if (fDensityPer > rcGray.fStandardValuePercent)
+					if (fDensityPer / rcGray.fStandardDensity > rcGray.fStandardValuePercent)
 						++nRtCount;
 					else
 					{
@@ -3956,7 +3956,7 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 						bContinue = true;
 						break;
 					}
-					if (fDensityPer > rcSubject.fStandardValuePercent)
+					if (fDensityPer / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent)
 						++nRtCount;
 					else
 					{

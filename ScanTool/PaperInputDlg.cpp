@@ -2190,7 +2190,7 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 						bContinue = true;
 						break;
 					}
-					if (fDensityPer > rcGray.fStandardValuePercent)
+					if (fDensityPer / rcGray.fStandardDensity > rcGray.fStandardValuePercent)
 						++nRtCount;
 				}
 				else
@@ -2220,7 +2220,7 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 						bContinue = true;
 						break;
 					}
-					if (fDensityPer > rcSubject.fStandardValuePercent)
+					if (fDensityPer / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent)
 						++nRtCount;
 				}
 				else
@@ -2285,8 +2285,12 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 						bContinue = true;
 						break;
 					}
-					if (fDensityPer > rcGray.fStandardValuePercent)
+					if (fDensityPer / rcGray.fStandardDensity > rcGray.fStandardValuePercent)
 						++nRtCount;
+					else
+					{
+						TRACE("判断灰度校验点的密度百分比: %f, 低于要求的: %f\n", fPer, rcGray.fStandardValuePercent);
+					}
 				}
 				else
 				{
@@ -2315,8 +2319,12 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 						bContinue = true;
 						break;
 					}
-					if (fDensityPer > rcSubject.fStandardValuePercent)
+					if (fDensityPer / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent)
 						++nRtCount;
+					else
+					{
+						TRACE("判断科目校验点的密度百分比: %f, 低于要求的: %f\n", fPer, rcSubject.fStandardValuePercent);
+					}
 				}
 				else
 				{
