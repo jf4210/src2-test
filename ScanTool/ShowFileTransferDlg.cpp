@@ -72,7 +72,7 @@ BOOL CShowFileTransferDlg::OnInitDialog()
 	}
 	UpdateData(FALSE);
 
-	SetTimer(TIMER_PROCESS, 2000, NULL);
+	SetTimer(TIMER_PROCESS, 1000, NULL);
 
 	return TRUE;
 }
@@ -144,6 +144,50 @@ void CShowFileTransferDlg::OnTimer(UINT_PTR nIDEvent)
 
 void CShowFileTransferDlg::ShowFileTransferList()
 {
+#if 1
+	USES_CONVERSION;
+	for (auto item : g_lSendTask)
+	{
+		bool bFind = false;
+		int nCount = m_lFileTranser.GetItemCount();
+		int i = 0;
+		for(; i < nCount; i++)
+		{
+			pSENDTASK pItem = (pSENDTASK)m_lFileTranser.GetItemData(i);
+			if(pItem == item)
+			{
+				bFind = true;
+				break;
+			}
+		}
+
+		char szPercent[10] = { 0 };
+		sprintf_s(szPercent, "%.1f", item->fSendPercent);
+		char szState[20] = { 0 };
+		if (item->nSendState == 0)
+			strcpy_s(szState, "未上传");
+		else if (item->nSendState == 1)
+			strcpy_s(szState, "正在上传");
+		else if (item->nSendState == 2)
+			strcpy_s(szState, "上传成功");
+		else if (item->nSendState == 3)
+			strcpy_s(szState, "上传失败");
+		if(bFind)
+		{
+			m_lFileTranser.SetItemText(i, 0, (LPCTSTR)A2T(item->strFileName.c_str()));
+			m_lFileTranser.SetItemText(i, 1, (LPCTSTR)A2T(szPercent));
+			m_lFileTranser.SetItemText(i, 2, (LPCTSTR)A2T(szState));
+		}
+		else
+		{
+			m_lFileTranser.InsertItem(nCount, NULL);
+			m_lFileTranser.SetItemText(nCount, 0, (LPCTSTR)A2T(item->strFileName.c_str()));
+			m_lFileTranser.SetItemText(nCount, 1, (LPCTSTR)A2T(szPercent));
+			m_lFileTranser.SetItemText(nCount, 2, (LPCTSTR)A2T(szState));
+			m_lFileTranser.SetItemData(nCount, (DWORD_PTR)item);
+		}
+	}
+#else
 	m_lFileTranser.DeleteAllItems();
 
 	USES_CONVERSION;
@@ -167,6 +211,7 @@ void CShowFileTransferDlg::ShowFileTransferList()
 		m_lFileTranser.SetItemText(i, 1, (LPCTSTR)A2T(szPercent));
 		m_lFileTranser.SetItemText(i, 2, (LPCTSTR)A2T(szState));
 	}
+#endif
 }
 
 

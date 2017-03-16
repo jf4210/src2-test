@@ -94,7 +94,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 	Poco::Net::SocketAddress sa(T2A(m_strServerIP), m_nServerPort);
 	try
 	{
-		Poco::Timespan ts(6, 0);
+		Poco::Timespan ts(10, 0);
 		m_ss.connect(sa);
 		m_ss.setReceiveTimeout(ts);
 
