@@ -1064,6 +1064,11 @@ void CDataMgrToolDlg::OnBnClickedBtnClearstatistics()
 	_nOmrDoubtStatistics_ = 0;
 	_nOmrNullStatistics_ = 0;
 	_nAllOmrStatistics_ = 0;
+	_nSnNullStatistics_ = 0;
+	_nAllSnStatistics_ = 0;
+	_nPkgDoubtStatistics_ = 0;
+	_nPkgOmrNullStatistics_ = 0;
+	_nPkgSnNullStatistics_ = 0;
 	_fmErrorStatistics_.unlock();
 
 	_fmDecompress_.lock();

@@ -1232,7 +1232,7 @@ void CMakeModelDlg::OnBnClickedBtnReset()
 
 bool CMakeModelDlg::RecogNewGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 {
-	cv::cvtColor(matSrcRoi, matSrcRoi, CV_BGR2GRAY);
+//	cv::cvtColor(matSrcRoi, matSrcRoi, CV_BGR2GRAY);
 
 	return RecogGrayValue(matSrcRoi, rc);
 }
@@ -2134,6 +2134,13 @@ bool CMakeModelDlg::checkValidity()
 // 				break;
 // 			}
 // 		}
+	}
+
+	//准考证号检查
+	if (m_vecPaperModelInfo[0]->lSN.size() == 0)
+	{
+		AfxMessageBox(_T("第1页准考证号未设置"));
+		bResult = false;
 	}
 
 	return bResult;

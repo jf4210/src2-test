@@ -46,7 +46,7 @@ LONG WINAPI CrashDumper::ExceptionFilter(struct _EXCEPTION_POINTERS* ExceptionIn
 			SYSTEMTIME sys;
 			GetLocalTime(&sys);
 			TCHAR szTime[30] = { 0 };
-			swprintf_s(szTime, _T("%d%-02d-%02d-%02d-%02d-%02d"), sys.wYear, sys.wMonth, sys.wDay, sys.wHour, sys.wMinute, sys.wSecond);
+			swprintf_s(szTime, _T("%d-%02d-%02d-%02d-%02d-%02d"), sys.wYear, sys.wMonth, sys.wDay, sys.wHour, sys.wMinute, sys.wSecond);
 			std::tstring strDumpFileName = szPath;
 			strDumpFileName += szTime;
 			strDumpFileName += TEXT(".dmp");

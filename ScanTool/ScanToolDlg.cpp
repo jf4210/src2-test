@@ -1209,6 +1209,8 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		GetDlgItem(IDC_BTN_ReBack)->EnableWindow(TRUE);
 		GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(_T(""));
 		m_nScanStatus = 2;
+		ReleaseTwain();
+		m_bTwainInit = FALSE;
 	}
 
 	m_bF1Enable = TRUE;
