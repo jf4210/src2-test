@@ -284,7 +284,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 // 	strPaperLog.append(pPaper->strStudentInfo);
 // 	strPaperLog.append(")识别结果: ");
 
-	std::string strPaperLog = "试卷(" + pPaper->strStudentInfo + ")[" + pPapers->strPapersName + "]识别结果: ";
+	std::string strPaperLog = "试卷(" + pPaper->strStudentInfo + ")[" + pPapers->strPapersName + "]识别结果: \n";
 
 	int nNullCount = 0;
 	int nDoubtCount = 0;
@@ -390,9 +390,9 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		
 		char szOmrItem[2060] = { 0 };
 		if (nPrintOmrVal)	//itOmr->nDoubt
-			sprintf_s(szOmrItem, "%d(%s):%s ---%s Doubt(%d)\t==>%s\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal2.c_str(), itOmr->nDoubt, szItemInfo);
+			sprintf_s(szOmrItem, "%d(%s):%s -- %s -- %s Doubt(%d)\t==>%s\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal2.c_str(), itOmr->strRecogVal3.c_str(), itOmr->nDoubt, szItemInfo);
 // 		else
-// 			sprintf_s(szOmrItem, "%d(%s):%s ---%s Doubt(%d)\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal2.c_str(), itOmr->nDoubt);
+// 			sprintf_s(szOmrItem, "%d(%s):%s -- %s -- %s Doubt(%d)\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal2.c_str(), itOmr->strRecogVal3.c_str(), itOmr->nDoubt);
 
 		strPaperLog.append(szOmrItem);
 	}
@@ -1760,6 +1760,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	int nEqualCount = 0;
 	int nNullCount_1 = 0;	//第一种方法识别出的空值
 	int nNullCount_2 = 0;	//第二种方法识别出的空值
+	int nNullCount_3 = 0;	//第三种方法识别出的空值
 
 	bool bRecogAll = true;
 	bool bResult = true;
@@ -1897,7 +1898,6 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	#endif
 
 
-#if 1
 	#ifdef Test_RecogOmr3
 		RecogVal_Omr2(nPic, matCompPic, pPic, pModelInfo, omrResult);
 		RecogVal_Omr3(nPic, matCompPic, pPic, pModelInfo, omrResult);
@@ -1907,6 +1907,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 
 		if (strRecogAnswer1 == "") nNullCount_1++;
 		if (strRecogAnswer2 == "") nNullCount_2++;
+		if (strRecogAnswer3 == "") nNullCount_3++;
 
 		int nDoubt = 0;
 		if (strRecogAnswer1 == "" && (strRecogAnswer2 == "" || strRecogAnswer3 == ""))
@@ -1973,15 +1974,6 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			}
 		}		
 	#endif
-#else
-		std::string strRecogAnswer2;
-		for (int i = 0; i < vecVal_threshold.size(); i++)
-		{
-			char szVal[10] = { 0 };
-			sprintf_s(szVal, "%c", vecVal_threshold[i] + 65);
-			strRecogAnswer2.append(szVal);
-		}
-#endif
 
 		omrResult.nDoubt		= nDoubt;
 		omrResult.strRecogVal	= strRecogAnswer1;
@@ -2007,8 +1999,8 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	if (bResult && nCount)
 	{
 		char szStatistics[150] = { 0 };
-		sprintf_s(szStatistics, "图片(%s)选项总数[%d],空值%d(%.2f%%)[No.1=%d(%.2f%%),No.2=%d(%.2f%%)],怀疑%d(%.2f%%),无怀疑%d(%.2f%%)", pPic->strPicName.c_str(), nCount, nNullCount, (float)nNullCount / nCount * 100, \
-				  nNullCount_1, (float)nNullCount_1 / nCount * 100, nNullCount_2, (float)nNullCount_2 / nCount * 100, \
+		sprintf_s(szStatistics, "图片(%s)选项总数[%d],空值%d(%.2f%%)[No.1=%d(%.2f%%),No.2=%d(%.2f%%), No.3=%d(%.2f%%)],怀疑%d(%.2f%%),无怀疑%d(%.2f%%)", pPic->strPicName.c_str(), nCount, nNullCount, (float)nNullCount / nCount * 100, \
+				  nNullCount_1, (float)nNullCount_1 / nCount * 100, nNullCount_2, (float)nNullCount_2 / nCount * 100, nNullCount_3, (float)nNullCount_3 / nCount * 100,\
 				  nDoubtCount, (float)nDoubtCount / nCount * 100, nEqualCount, (float)nEqualCount / nCount * 100);
 
 		g_Log.LogOut(szStatistics);

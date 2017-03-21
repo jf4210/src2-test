@@ -72,6 +72,7 @@ BOOL CModelSaveDlg::OnInitDialog()
 			if (m_pModel->nExamID == itExam->nExamID)
 			{
 				nExamItem = nCount;
+				m_strExamName = strName;
 			}
 		}
 		m_comboExamName.SetCurSel(nExamItem);

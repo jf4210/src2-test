@@ -219,7 +219,7 @@ void CModifyZkzhDlg::InitData()
 	USES_CONVERSION;
 	for (auto pPaper : m_pPapers->lPaper)
 	{
-		if (pPaper->strSN.empty())
+		if (pPaper->strSN.empty() || pPaper->bModifyZKZH)
 		{
 			//添加进试卷列表控件
 			int nCount = m_lcZkzh.GetItemCount();
