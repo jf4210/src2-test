@@ -6,6 +6,10 @@
 #include "DIB.h"
 #include "bmp2ipl.h"
 
+#ifdef TEST_SCAN_THREAD
+	#include "twain/CommonTWAIN.h"
+	#include "twain/twainapp.h"
+#endif
 
 #include "ScanCtrlDlg.h"
 // CScanThread
@@ -14,7 +18,7 @@
 
 #define TEST_DLG
 
-class CScanThread : public CWinThread, public CTwain/*, public CWnd*/
+class CScanThread : public CWinThread/*, public TwainApp*//*, public CWnd*/
 {
 //	DECLARE_DYNAMIC(CScanThread)
 	DECLARE_DYNCREATE(CScanThread)
@@ -36,10 +40,6 @@ public:
 	CString		m_strScanSavePath;
 	CArray<TW_IDENTITY, TW_IDENTITY> m_scanSourceArry;
 	BOOL ScanSrcInit();
-
-	void CopyImage(HANDLE hBitmap, TW_IMAGEINFO& info);
-	void SetImage(HANDLE hBitmap, int bits);
-	void ScanDone(int nStatus);
 
 private:
 	CFrameWnd* m_pTwainWnd;

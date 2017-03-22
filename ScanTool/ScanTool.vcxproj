@@ -55,14 +55,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;XLISTCTRLLIB_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\include;.\picCtrl;..\..\common;.\pdf2jpg\mupdf;./XListCtrl</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;..\..\include\twain\;.\picCtrl;..\..\common;.\pdf2jpg\mupdf;./XListCtrl</AdditionalIncludeDirectories>
       <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\..\bin\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>libzbar-0.lib;opencv_world310d.lib;libeay32.lib;ssleay32.lib;libmupdf.lib</AdditionalDependencies>
+      <AdditionalDependencies>libzbar-0.lib;opencv_world310d.lib;libeay32.lib;ssleay32.lib;libmupdf.lib;FreeImage.lib</AdditionalDependencies>
       <StackReserveSize>30000000</StackReserveSize>
       <StackCommitSize>30000000</StackCommitSize>
       <HeapReserveSize>30000000</HeapReserveSize>
@@ -149,7 +149,9 @@
     <ClInclude Include="MultiPlatform4TYDlg.h" />
     <ClInclude Include="MyCodeConvert.h" />
     <ClInclude Include="OmrInfoDlg.h" />
+    <ClInclude Include="OmrRecog.h" />
     <ClInclude Include="PaperInputDlg.h" />
+    <ClInclude Include="PapersInfoSave4TyDlg.h" />
     <ClInclude Include="PapersInfoSaveDlg.h" />
     <ClInclude Include="ParamSetDlg.h" />
     <ClInclude Include="pdf2jpg\MuPDFConvert.h" />
@@ -215,7 +217,9 @@
     <ClCompile Include="MultiPlatform4TYDlg.cpp" />
     <ClCompile Include="MyCodeConvert.cpp" />
     <ClCompile Include="OmrInfoDlg.cpp" />
+    <ClCompile Include="OmrRecog.cpp" />
     <ClCompile Include="PaperInputDlg.cpp" />
+    <ClCompile Include="PapersInfoSave4TyDlg.cpp" />
     <ClCompile Include="PapersInfoSaveDlg.cpp" />
     <ClCompile Include="ParamSetDlg.cpp" />
     <ClCompile Include="pdf2jpg\MuPDFConvert.cpp" />

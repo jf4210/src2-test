@@ -2178,6 +2178,61 @@ bool FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST&
 	return true;
 }
 
+bool FixwarpPerspective2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat)
+{
+	if (lFix.size() < 4)
+		return false;
+
+	clock_t start, end;
+	start = clock();
+	char szTmpLog[400] = { 0 };
+
+	std::vector<cv::Point2f> vecFixPt;
+	RECTLIST::iterator itCP = lModelFix.begin();
+	for (; itCP != lModelFix.end(); itCP++)
+	{
+		cv::Point2f pt;
+		pt.x = itCP->rt.x + itCP->rt.width / 2;
+		pt.y = itCP->rt.y + itCP->rt.height / 2;
+		vecFixPt.push_back(pt);
+	}
+	std::vector<cv::Point2f> vecFixNewPt;
+	RECTLIST::iterator itCP2 = lFix.begin();
+	for (; itCP2 != lFix.end(); itCP2++)
+	{
+		cv::Point2f pt;
+		pt.x = itCP2->rt.x + itCP2->rt.width / 2;
+		pt.y = itCP2->rt.y + itCP2->rt.height / 2;
+		vecFixNewPt.push_back(pt);
+	}
+
+	cv::Point2f srcTri[4];
+	cv::Point2f dstTri[4];
+	cv::Mat warp_mat(2, 3, CV_32FC1);
+	cv::Mat warp_dst, warp_rotate_dst;
+	for (int i = 0; i < vecFixPt.size(); i++)
+	{
+		srcTri[i] = vecFixNewPt[i];
+		dstTri[i] = vecFixPt[i];
+	}
+
+	//	warp_dst = Mat::zeros(matCompPic.rows, matCompPic.cols, matCompPic.type());
+	warp_mat = cv::getPerspectiveTransform(srcTri, dstTri);
+	int nMax = matCompPic.cols > matCompPic.rows ? matCompPic.cols : matCompPic.rows;
+//	cv::Mat st(matCompPic.cols, matCompPic.rows, CV_32FC1);
+	cv::Mat st(nMax, nMax, CV_32FC1);
+	cv::warpPerspective(matCompPic, matDstPic, warp_mat, st.size(), 1, 0, cv::Scalar(255, 255, 255));
+
+	end = clock();
+	sprintf_s(szTmpLog, "Í¼Ïñ±ä»»Ê±¼ä: %d, ptMod1(%.2f,%.2f), ptMod2(%.2f,%.2f), ptMod3(%.2f,%.2f), ptMod4(%.2f,%.2f), pt1(%.2f,%.2f), pt2(%.2f,%.2f), pt3(%.2f,%.2f), pt4(%.2f,%.2f)\n", end - start, \
+			  vecFixPt[0].x, vecFixPt[0].y, vecFixPt[1].x, vecFixPt[1].y, vecFixPt[2].x, vecFixPt[2].y, vecFixPt[3].x, vecFixPt[3].y, \
+			  vecFixNewPt[0].x, vecFixNewPt[0].y, vecFixNewPt[1].x, vecFixNewPt[1].y, vecFixNewPt[2].x, vecFixNewPt[2].y, vecFixNewPt[3].x, vecFixNewPt[3].y);
+	g_pLogger->information(szTmpLog);
+	TRACE(szTmpLog);
+
+	return true;
+}
+
 bool PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat)
 {
 	if (lFix.size() != lModelFix.size())
@@ -3139,7 +3194,7 @@ std::string GetQR(cv::Mat img, std::string& strTypeName)
 //===================================================
 
 
-BOOL CheckProcessExist(CString &str)
+BOOL CheckProcessExist(CString &str, int& nProcessID)
 {
 	BOOL bResult;
 	CString strTemp, strProcessName;
@@ -3161,6 +3216,7 @@ BOOL CheckProcessExist(CString &str)
 		strTemp.MakeLower();
 		if (strTemp == strProcessName)
 		{
+			nProcessID = ProcessEntry.th32ProcessID;
 			processcount++;
 			return TRUE;
 		}

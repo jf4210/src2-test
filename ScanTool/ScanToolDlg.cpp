@@ -14,6 +14,7 @@
 #include "GuideDlg.h"
 #include <windows.h>
 //#include "minidump.h"
+#include "PapersInfoSave4TyDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -297,7 +298,9 @@ BOOL CScanToolDlg::OnInitDialog()
 	RegisterHotKey(GetSafeHwnd(), 1001, NULL, VK_F1);//F1键
 	RegisterHotKey(GetSafeHwnd(), 1002, NULL, VK_F2);//F2键  
 
+#ifndef _DEBUG
 	StartGuardProcess();
+#endif
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -1665,7 +1668,7 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 		cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
 
 		//++ 2016.8.26 判断扫描图片方向，并进行旋转
-		if (m_pModel/* && m_pModel->nType*/)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
+		if (m_pModel && m_pModel->nType)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
 		{
 			int nResult = CheckOrientation(matTest2, nOrder - 1, m_nDoubleScan == 0 ? false : true);
 			switch (nResult)	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
@@ -2537,7 +2540,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	nSubjectID = dlg.m_SubjectID;
 #else
 	#if 1
-		CPapersInfoSaveDlg dlg(m_pPapersInfo, m_pModel);
+		CPapersInfoSave4TyDlg dlg;
 		if (dlg.DoModal() != IDOK)
 		{
 			m_bF2Enable = TRUE;
@@ -2545,7 +2548,17 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 			return;
 		}
 		std::string strExamID = T2A(dlg.m_strExamID);
-		nSubjectID = dlg.m_SubjectID;
+		nSubjectID = 0;
+
+// 		CPapersInfoSaveDlg dlg(m_pPapersInfo, m_pModel);
+// 		if (dlg.DoModal() != IDOK)
+// 		{
+// 			m_bF2Enable = TRUE;
+// 			m_bF1Enable = TRUE;
+// 			return;
+// 		}
+// 		std::string strExamID = T2A(dlg.m_strExamID);
+// 		nSubjectID = dlg.m_SubjectID;
 	#else
 	if (MessageBox(_T("是否上传当前扫描卷?"), _T("提示"), MB_YESNO) != IDYES)
 	{
@@ -3821,7 +3834,7 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 						bContinue = true;
 						break;
 					}
-					if (fDensityPer / rcGray.fStandardDensity > rcGray.fStandardValuePercent)
+					if (fDensityPer / rcGray.fStandardDensity > rcGray.fStandardValuePercent && fRealVal / rcGray.fStandardValue > rcGray.fStandardValuePercent)
 						++nRtCount;
 					else
 					{
@@ -3855,7 +3868,7 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 						bContinue = true;
 						break;
 					}
-					if (fDensityPer / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent)
+					if (fDensityPer / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent && fRealVal / rcSubject.fStandardValue > rcSubject.fStandardValuePercent)
 						++nRtCount;
 					else
 					{
@@ -3924,7 +3937,7 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 						bContinue = true;
 						break;
 					}
-					if (fDensityPer / rcGray.fStandardDensity > rcGray.fStandardValuePercent)
+					if (fDensityPer / rcGray.fStandardDensity > rcGray.fStandardValuePercent && fRealVal / rcGray.fStandardValue > rcGray.fStandardValuePercent)
 						++nRtCount;
 					else
 					{
@@ -3958,7 +3971,7 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 						bContinue = true;
 						break;
 					}
-					if (fDensityPer / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent)
+					if (fDensityPer / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent && fRealVal / rcSubject.fStandardValue > rcSubject.fStandardValuePercent)
 						++nRtCount;
 					else
 					{
@@ -4580,7 +4593,44 @@ BOOL CScanToolDlg::StartGuardProcess()
 {
 	CString strProcessName = _T("");
 	strProcessName.Format(_T("EasyTntGuardProcess.exe"));
-	if (!CheckProcessExist(strProcessName))
+	int nProcessID = 0;
+#if 1
+	if (CheckProcessExist(strProcessName, nProcessID))
+	{
+		HANDLE hProcess = 0;
+		DWORD dwExitCode = 0;
+		hProcess = ::OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ | PROCESS_CREATE_THREAD, FALSE, nProcessID);
+
+		LPVOID Param = VirtualAllocEx(hProcess, NULL, sizeof(DWORD), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+		WriteProcessMemory(hProcess, Param, (LPVOID)&dwExitCode, sizeof(DWORD), NULL);
+
+		HANDLE hThread = CreateRemoteThread(hProcess,
+											NULL,
+											NULL,
+											(LPTHREAD_START_ROUTINE)ExitProcess,
+											Param,
+											NULL,
+											NULL);
+	}
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	CString strComm;
+	char szWrkDir[MAX_PATH];
+	strComm.Format(_T("%sEasyTntGuardProcess.exe"), g_strCurrentPath);
+	memset(&si, 0, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
+
+	if (!CreateProcessW(NULL, (LPTSTR)(LPCTSTR)strComm, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+	{
+		int nErrorCode = GetLastError();
+		USES_CONVERSION;
+		std::string strLog = Poco::format("CreateProcess %s failed. ErrorCode = %d", T2A(strComm), nErrorCode);
+		g_pLogger->information(strLog);
+		return FALSE;
+	}
+#else
+	if (!CheckProcessExist(strProcessName, nProcessID))
 	{
 		STARTUPINFO si;
 		PROCESS_INFORMATION pi;
@@ -4600,6 +4650,7 @@ BOOL CScanToolDlg::StartGuardProcess()
 			return FALSE;
 		}
 	}
+#endif
 	return TRUE;
 }
 

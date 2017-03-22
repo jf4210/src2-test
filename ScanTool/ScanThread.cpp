@@ -72,8 +72,8 @@ void CScanThread::setScanPath(CString& strPath)
 
 BOOL CScanThread::PreTranslateMessage(MSG* pMsg)
 {
-	if (ProcessMessage(*pMsg))
-		return TRUE;
+// 	if (ProcessMessage(*pMsg))
+// 		return TRUE;
 	return CWinThread::PreTranslateMessage(pMsg);
 }
 
@@ -83,11 +83,11 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 //	ReleaseTwain();
 	if (!m_bTwainInit)
 	{
-		m_bTwainInit = InitTwain(m_pTwainWnd->GetSafeHwnd());	//m_pMainWnd->GetSafeHwnd()
-		if (!IsValidDriver())
-		{
-			AfxMessageBox(_T("Unable to load Twain Driver."));
-		}
+// 		m_bTwainInit = InitTwain(m_pTwainWnd->GetSafeHwnd());	//m_pMainWnd->GetSafeHwnd()
+// 		if (!IsValidDriver())
+// 		{
+// 			AfxMessageBox(_T("Unable to load Twain Driver."));
+// 		}
 		m_scanSourceArry.RemoveAll();
 		ScanSrcInit();
 	}
@@ -100,7 +100,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		return;
 #endif
 
-	m_Source = m_scanSourceArry.GetAt(2);
+//	m_Source = m_scanSourceArry.GetAt(2);
 	int nDuplex = 0;		//µ•À´√Ê,0-µ•√Ê,1-À´√Ê
 
 	bool bShowScanSrcUI = g_bShowScanSrcUI;
@@ -108,10 +108,10 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	if (1)
 	{
 		bShowScanSrcUI = true;
-		if (!Acquire(TWCPP_ANYCOUNT, bShowScanSrcUI))
-		{
-			TRACE("…®√Ë ß∞‹\n");
-		}
+// 		if (!Acquire(TWCPP_ANYCOUNT, bShowScanSrcUI))
+// 		{
+// 			TRACE("…®√Ë ß∞‹\n");
+// 		}
 		//		GetDlgItem(IDC_BTN_ScanModel)->EnableWindow(TRUE);
 		return;
 	}
@@ -177,117 +177,33 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 
 #endif
 	TRACE("ø™ º…®√Ë\n");
-	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, bShowScanSrcUI))
-	{
-		TRACE("…®√Ë ß∞‹\n");
-	}
+// 	if (!Acquire(nNum, nDuplex, nSize, nPixel, nResolution, bShowScanSrcUI))
+// 	{
+// 		TRACE("…®√Ë ß∞‹\n");
+// 	}
 
 }
 
 BOOL CScanThread::ScanSrcInit()
 {
 	USES_CONVERSION;
-	if (CallTwainProc(&m_AppId, NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETFIRST, &m_Source))
-	{
-		TW_IDENTITY temp_Source = m_Source;
-		m_scanSourceArry.Add(temp_Source);
-		while (CallTwainProc(&m_AppId, NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETNEXT, &m_Source))
-		{
-			TW_IDENTITY temp_Source = m_Source;
-			m_scanSourceArry.Add(temp_Source);
-		}
-		m_bSourceSelected = TRUE;
-	}
-	else
-	{
-		m_bSourceSelected = FALSE;
-	}
-	return m_bSourceSelected;
-}
-
-void CScanThread::CopyImage(HANDLE hBitmap, TW_IMAGEINFO& info)
-{
-	SetImage(hBitmap, info.BitsPerPixel);
-}
-
-void CScanThread::SetImage(HANDLE hBitmap, int bits)
-{
-	CDIB dib;
-	dib.CreateFromHandle(hBitmap, bits);
-
-	BITMAPFILEHEADER bFile;
-	::ZeroMemory(&bFile, sizeof(bFile));
-	memcpy((void *)&bFile.bfType, "BM", 2);
-	bFile.bfSize = dib.GetDIBSize() + sizeof(bFile);
-	bFile.bfOffBits = sizeof(BITMAPINFOHEADER) + dib.GetPaletteSize()*sizeof(RGBQUAD) + sizeof(BITMAPFILEHEADER);
-	unsigned char *pBits = NULL;
-	try
-	{
-		pBits = (unsigned char *)malloc(bFile.bfSize);
-	}
-	catch (...)
-	{
-		char szLog[100] = { 0 };
-		sprintf_s(szLog, "ªÒ»°ƒ⁄¥Ê ß∞‹°£");
-		g_pLogger->information(szLog);
-		return;
-	}
-
-	memcpy(pBits, &bFile, sizeof(BITMAPFILEHEADER));
-	memcpy(pBits + sizeof(BITMAPFILEHEADER), dib.m_pVoid, dib.GetDIBSize());
-
-	BYTE *p = pBits;
-	BITMAPFILEHEADER fheader;
-	memcpy(&fheader, p, sizeof(BITMAPFILEHEADER));
-	BITMAPINFOHEADER bmphdr;
-	p += sizeof(BITMAPFILEHEADER);
-	memcpy(&bmphdr, p, sizeof(BITMAPINFOHEADER));
-	int w = bmphdr.biWidth;
-	int h = bmphdr.biHeight;
-	p = pBits + fheader.bfOffBits;
-
-	int nChannel = (bmphdr.biBitCount == 1) ? 1 : bmphdr.biBitCount / 8;
-	int depth = (bmphdr.biBitCount == 1) ? IPL_DEPTH_1U : IPL_DEPTH_8U;
-	IplImage *pIpl2 = cvCreateImage(cvSize(w, h), depth, nChannel);
-
-	int height;
-	bool isLowerLeft = bmphdr.biHeight > 0;
-	height = (bmphdr.biHeight > 0) ? bmphdr.biHeight : -bmphdr.biHeight;
-	CopyData(pIpl2->imageData, (char*)p, bmphdr.biSizeImage, isLowerLeft, height);
-	free(pBits);
-	pBits = NULL;
-
-	// 	IplImage* pIpl = DIB2IplImage(dib);
-	// 	cv::Mat matTest = cv::cvarrToMat(pIpl);
-	USES_CONVERSION;
-
-
-	static int nModelScan = 1;
-	char szPicPath[MAX_PATH] = { 0 };
-	sprintf_s(szPicPath, "%s\\model%d.jpg", T2A(m_strScanSavePath), nModelScan);
-	nModelScan++;
-
-
-	cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
-	//	cv::Mat matTest3 = matTest2.clone();
-
-
-	std::string strPicName = szPicPath;
-	imwrite(strPicName, matTest2);
-
-	std::string strLog = "Get model pic: " + strPicName;
-	g_pLogger->information(strLog);
-
-	cvReleaseImage(&pIpl2);
-}
-
-void CScanThread::ScanDone(int nStatus)
-{
-	TRACE("…®√ËÕÍ≥…\n");
-//	AfxMessageBox(_T("…®√ËÕÍ≥…"));
-	CString strSelect = _T("/root,");
-	strSelect.Append(m_strScanSavePath);
-	ShellExecute(NULL, _T("open"), _T("explorer.exe"), strSelect, NULL, SW_SHOWNORMAL);
+// 	if (CallTwainProc(&m_AppId, NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETFIRST, &m_Source))
+// 	{
+// 		TW_IDENTITY temp_Source = m_Source;
+// 		m_scanSourceArry.Add(temp_Source);
+// 		while (CallTwainProc(&m_AppId, NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETNEXT, &m_Source))
+// 		{
+// 			TW_IDENTITY temp_Source = m_Source;
+// 			m_scanSourceArry.Add(temp_Source);
+// 		}
+// 		m_bSourceSelected = TRUE;
+// 	}
+// 	else
+// 	{
+// 		m_bSourceSelected = FALSE;
+// 	}
+// 	return m_bSourceSelected;
+	return TRUE;
 }
 
 

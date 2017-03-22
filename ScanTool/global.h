@@ -67,7 +67,7 @@
 	#define Test_TraceLog		//测试日志
 #else	//release版本
 	#define	 TEST_MODEL_NAME	//模板名称测试
-	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
+//	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -128,12 +128,12 @@
 
 #ifndef TO_WHTY
 	#ifdef PUBLISH_VERSION
-		#define SOFT_VERSION	_T("1.70321-1")
+		#define SOFT_VERSION	_T("1.70322-2")
 	#else
-		#define SOFT_VERSION	_T("1.70321-1-Pir")		//-Pri
+		#define SOFT_VERSION	_T("1.70322-2-Pir")		//-Pri
 	#endif
 #else
-	#define SOFT_VERSION	_T("2.1-0309")
+	#define SOFT_VERSION	_T("2.1-0322")
 #endif
 #define SYS_BASE_NAME	_T("YKLX-ScanTool")
 #define SYS_GUIDE_NAME	_T("GuideDlg")
@@ -390,9 +390,7 @@ typedef struct _examInfo_
 	int			nExamID;			//考试ID
 	int			nExamGrade;			//年级
 	int			nExamState;			//考试状态
-#ifdef TO_WHTY
 	std::string	strExamID;			//天喻版本, 考试ID
-#endif
 	std::string strExamName;		//考试名称
 	std::string strExamTypeName;	//考试类型名称
 	std::string strGradeName;		//年级名称
@@ -453,6 +451,7 @@ void	CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int
 bool	PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat);
 bool	FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);		//定点进行仿射变换
 bool	FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//定点透视变换
+bool	FixwarpPerspective2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//4个定点透视变换，对90度旋转图像有效，目标矩形大小为原矩形最大值的正方形
 bool	PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);
 int		WriteRegKey(HKEY root, char * subDir, DWORD regType, char * regKey, char * regValue);
 int		ReadRegKey(HKEY root, char * subDir, DWORD regType, char * regKey, char* & regValue);
@@ -499,4 +498,4 @@ std::string GetQR(cv::Mat img, std::string& strTypeName);
 //--------------------------------------------------------
 
 
-BOOL CheckProcessExist(CString &str);
+BOOL CheckProcessExist(CString &str, int& nProcessID);
