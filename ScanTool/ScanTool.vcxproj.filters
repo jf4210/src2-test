@@ -133,6 +133,9 @@
     <Filter Include="扫描线程\twain">
       <UniqueIdentifier>{385ee612-2adc-47c4-ae73-60b21f2628e5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="修改ZKZH窗口\报名库管理">
+      <UniqueIdentifier>{a1533480-602c-4dc5-989b-a01e55ca1260}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -348,6 +351,9 @@
     <ClInclude Include="PapersInfoSave4TyDlg.h">
       <Filter>试卷袋信息保存</Filter>
     </ClInclude>
+    <ClInclude Include="StudentMgr.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
@@ -529,6 +535,9 @@
     </ClCompile>
     <ClCompile Include="PapersInfoSave4TyDlg.cpp">
       <Filter>试卷袋信息保存</Filter>
+    </ClCompile>
+    <ClCompile Include="StudentMgr.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

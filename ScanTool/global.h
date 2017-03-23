@@ -33,6 +33,7 @@
 #include "Poco/DigestStream.h"
 #include "Poco/StreamCopier.h"
 
+#include "Poco/Stopwatch.h"
 #include "Poco/LocalDateTime.h"
 
 #include "Poco/Net/HTTPClientSession.h"
@@ -47,6 +48,23 @@
 #include "Poco/Crypto/CipherKey.h"
 #include "Poco/Crypto/X509Certificate.h"
 #include "Poco/Crypto/CryptoStream.h"
+
+
+//-------------------------------------
+#include "Poco/Data/Statement.h"
+#include "Poco/Data/RecordSet.h"
+#include "Poco/Data/SQLChannel.h"
+#include "Poco/Data/SessionFactory.h"
+#include "Poco/Data/SQLite/Connector.h"
+#include "Poco/Data/SQLite/Utility.h"
+#include "Poco/Data/SQLite/Notifier.h"
+#include "Poco/Data/SQLite/Connector.h"
+
+#include "Poco/Nullable.h"
+#include "Poco/Data/Transaction.h"
+#include "Poco/Data/DataException.h"
+#include "Poco/Data/SQLite/SQLiteException.h"
+//-------------------------------------
 
 #include "zip.h"
 #include "unzip.h"
@@ -133,7 +151,7 @@
 		#define SOFT_VERSION	_T("1.70322-2-Pir")		//-Pri
 	#endif
 #else
-	#define SOFT_VERSION	_T("2.1-0322")
+	#define SOFT_VERSION	_T("2.1-0323")
 #endif
 #define SYS_BASE_NAME	_T("YKLX-ScanTool")
 #define SYS_GUIDE_NAME	_T("GuideDlg")
@@ -400,6 +418,15 @@ typedef std::list<EXAMINFO> EXAM_LIST;
 
 extern Poco::FastMutex	g_lfmExamList;
 extern EXAM_LIST	g_lExamList;
+
+//报名库学生信息
+typedef struct _studentInfo_
+{
+	std::string strZkzh;
+	std::string strName;		//gb2312
+}ST_STUDENT, *pST_STUDENT;
+typedef std::list<ST_STUDENT> STUDENT_LIST;	//报名库列表
+extern STUDENT_LIST		g_lBmkStudent;	//报名库学生列表
 
 
 typedef struct _CompressTask_

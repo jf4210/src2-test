@@ -16,6 +16,7 @@
 //#include "minidump.h"
 #include "PapersInfoSave4TyDlg.h"
 
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -59,6 +60,8 @@ COMPRESSTASKLIST	g_lCompressTask;		//解压文件列表
 Poco::Event			g_eTcpThreadExit;
 Poco::Event			g_eSendFileThreadExit;
 Poco::Event			g_eCompressThreadExit;
+
+STUDENT_LIST		g_lBmkStudent;	//报名库学生列表
 
 double	_dCompThread_Fix_ = 1.2;
 double	_dDiffThread_Fix_ = 0.2;
@@ -3005,8 +3008,16 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 				m_pPaper->lPic.push_back(pPic);
 		}
 	}
-
-
+	#if 1
+	//报名库测试数据
+	for (int i = 0; i < 10; i++)
+	{
+		ST_STUDENT stData;
+		stData.strZkzh = Poco::format("%u", 1001 + i);
+		stData.strName = "测试";
+		g_lBmkStudent.push_back(stData);
+	}
+	#endif
 	CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo);
 	zkzhDlg.DoModal();
 #endif
