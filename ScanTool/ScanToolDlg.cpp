@@ -135,6 +135,7 @@ CScanToolDlg::CScanToolDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	, m_nDuplex(1), m_bF1Enable(FALSE), m_bF2Enable(FALSE)
 	, m_pCompressObj(NULL), m_pCompressThread(NULL)
 	, m_nCurrentScanCount(0), m_bLastPkgSaveOK(TRUE), m_bModifySN(TRUE)
+	, m_pStudentMgr(NULL)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);// IDR_MAINFRAME
 }
@@ -373,6 +374,7 @@ void CScanToolDlg::OnDestroy()
 
 	SAFE_RELEASE(m_pShowModelInfoDlg);
 	SAFE_RELEASE(m_pShowScannerInfoDlg);
+	SAFE_RELEASE(m_pStudentMgr);
 
 	std::vector<CPicShow*>::iterator itPic = m_vecPicShow.begin();
 	for (; itPic != m_vecPicShow.end();)
@@ -1940,7 +1942,7 @@ void CScanToolDlg::OnNMDblclkListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(m_nCurrItemPaperList);
 	if (m_bModifySN && m_pModel && pItemPaper && (pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH))
 	{
-		CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo);
+		CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr);
 		zkzhDlg.DoModal();
 
 		//显示所有识别完成的准考证号
@@ -3017,8 +3019,19 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 		stData.strName = "测试";
 		g_lBmkStudent.push_back(stData);
 	}
+	if (!m_pStudentMgr)
+	{
+		USES_CONVERSION;
+		m_pStudentMgr = new CStudentMgr();
+		std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+		bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+		std::string strTableName = "student";
+		if(bResult) m_pStudentMgr->InitTable(strTableName);
+		if (bResult) m_pStudentMgr->InsertData(g_lBmkStudent, strTableName);
+		if (!bResult) SAFE_RELEASE(m_pStudentMgr);
+	}
 	#endif
-	CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo);
+	CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr);
 	zkzhDlg.DoModal();
 #endif
 	//--
@@ -4536,7 +4549,7 @@ void CScanToolDlg::OnTimer(UINT nIDEvent)
 			if (m_nScanStatus == 3 && m_bModifySN && bNeedShowZkzhDlg)
 			{
 				KillTimer(TIMER_CheckRecogComplete);
-				CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo);
+				CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr);
 				zkzhDlg.DoModal();
 
 				//显示所有识别完成的准考证号

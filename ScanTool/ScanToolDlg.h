@@ -20,6 +20,7 @@
 #include "CompressThread.h"
 #include "ScanThread.h"
 #include "ModifyZkzhDlg.h"
+#include "StudentMgr.h"
 //#include "XListCtrl.h"
 // CScanToolDlg 对话框
 
@@ -99,6 +100,8 @@ public:
 	BOOL			m_bLastPkgSaveOK;		//扫描的上一代试卷是否保存成功
 	bool			m_bModifySN;			//扫描完成后，是否将未识别的准考证号进行人工修正
 	int				m_nDoubleScan;			//是否是双面扫描	//单双面,0-单面,1-双面
+
+	CStudentMgr*	m_pStudentMgr;			//报名库管理对象
 public:
 	void	InitUI();
 	void	InitTab();

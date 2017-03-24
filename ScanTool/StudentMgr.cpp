@@ -25,7 +25,7 @@ bool CStudentMgr::InitDB(std::string strPath)
 	}
 	catch (Poco::Exception& e)
 	{
-		std::string strErr = "session创建失败(" + e.displayText() + ")";
+		std::string strErr = "DB初始化时session创建失败(" + e.displayText() + ")";
 		g_pLogger->information(strErr);
 	}
 	
@@ -73,6 +73,36 @@ bool CStudentMgr::InsertData(STUDENT_LIST& lData, std::string strTable)
 		sw.stop();
 		std::string strLog = Poco::format("插入报名库数据完成[%uus]", sw.elapsed());
 		g_pLogger->information(strLog);
+	}
+	catch (Poco::Exception& e)
+	{
+		std::string strErr = "报名库InsertData失败(" + e.displayText() + ")";
+		g_pLogger->information(strErr);
+		bResult = false;
+	}
+	return bResult;
+}
+
+bool CStudentMgr::SearchStudent(std::string strKey, int nType, STUDENT_LIST& lResult)
+{
+	bool bResult = false;
+	if (!_session->isConnected())
+		return false;
+
+	try
+	{
+// 		Poco::Stopwatch sw;
+// 		sw.start();
+// 		for (auto obj : lData)
+// 		{
+// 			std::string strSql = Poco::format("INSERT INTO %s VALUES(:ln, :fn)", strTable);
+// 			std::string strZkzh = obj.strZkzh;
+// 			std::string strName = CMyCodeConvert::Gb2312ToUtf8(obj.strName);
+// 			*_session << strSql, use(strZkzh), use(strName), now;
+// 		}
+// 		sw.stop();
+// 		std::string strLog = Poco::format("插入报名库数据完成[%uus]", sw.elapsed());
+// 		g_pLogger->information(strLog);
 	}
 	catch (Poco::Exception& e)
 	{
