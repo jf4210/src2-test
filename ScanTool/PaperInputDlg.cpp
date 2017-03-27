@@ -2146,11 +2146,7 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 
 	if (m_pModel->nHasHead)
 		return nResult;
-
-	const float fMinPer = 0.5;		//识别矩形数/模板矩形数 低于最小值，认为不合格
-	const float fMaxPer = 1.5;		//识别矩形数/模板矩形数 超过最大值，认为不合格
-	const float fMidPer = 0.8;
-
+	
 	cv::Rect rtModelPic;
 	rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
 	rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
@@ -2162,6 +2158,10 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 	int nSrcPicPercent = matSrc.cols / matSrc.rows;
 
 #if 1
+	int nCount = m_pModel->vecPaperModel[n]->lGray.size() + m_pModel->vecPaperModel[n]->lCourse.size();
+	if (nCount == 0)
+		return nResult;
+
 	if (nModelPicPersent == nSrcPicPercent)	//与模板图片方向一致，需判断正向还是反向一致
 	{
 		TRACE("与模板图片方向一致\n");

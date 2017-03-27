@@ -222,7 +222,7 @@ void CModifyZkzhDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_BTN_Search)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_BTN_Search)->MoveWindow(nCurrentLeft, nCurrentTop, 40, nBtnH);
+		GetDlgItem(IDC_BTN_Search)->MoveWindow(nCurrentLeft, nCurrentTop, 60, nBtnH);
 		nCurrentLeft = nLeftGap + nGap;
 		nCurrentTop = nTmpTop + nGap + nGroupH + nGap;
 	}
@@ -585,13 +585,14 @@ void CModifyZkzhDlg::OnBnClickedBtnSearch()
 {
 	UpdateData(TRUE);
 	USES_CONVERSION;
+	m_lcBmk.DeleteAllItems();
 	std::string strKey = T2A(m_strSearchKey);
 	STUDENT_LIST lResult;
 	if (m_pStudentMgr->SearchStudent(strKey, m_nSearchType, lResult))
 	{
 		for (auto obj : lResult)
 		{
-			int nCount = m_lcZkzh.GetItemCount();
+			int nCount = m_lcBmk.GetItemCount();
 			char szCount[10] = { 0 };
 			sprintf_s(szCount, "%d", nCount + 1);
 			m_lcBmk.InsertItem(nCount, NULL);
@@ -616,7 +617,7 @@ void CModifyZkzhDlg::OnNMDblclkListZkzhsearchresult(NMHDR *pNMHDR, LRESULT *pRes
 	
 
 	COLORREF crText, crBackground;
-	m_lcZkzh.GetItemColors(pNMItemActivate->iItem, 2, crText, crBackground);
-	m_lcZkzh.SetItemText(pNMItemActivate->iItem, 2, strZkzh, RGB(255, 0, 0), crBackground);
+	m_lcZkzh.GetItemColors(m_nCurrentSelItem, 2, crText, crBackground);
+	m_lcZkzh.SetItemText(m_nCurrentSelItem, 2, strZkzh, RGB(255, 0, 0), crBackground);
 	
 }

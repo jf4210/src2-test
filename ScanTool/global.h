@@ -64,6 +64,7 @@
 #include "Poco/Data/Transaction.h"
 #include "Poco/Data/DataException.h"
 #include "Poco/Data/SQLite/SQLiteException.h"
+#include "Poco/Data/TypeHandler.h"
 //-------------------------------------
 
 #include "zip.h"
@@ -425,6 +426,85 @@ typedef struct _studentInfo_
 	std::string strZkzh;
 	std::string strName;		//gb2312
 }ST_STUDENT, *pST_STUDENT;
+class CBmkStudent
+{
+	CBmkStudent(){}
+	CBmkStudent(std::string& strZkzh, std::string& strName) :_strZkzh(strZkzh), _strName(strName){}
+	bool operator==(const CBmkStudent& other) const
+	{
+		return _strZkzh == other._strZkzh && _strName == other._strName;
+	}
+
+	bool operator < (const CBmkStudent& p) const
+	{
+		if (_strZkzh < p._strZkzh)
+			return true;
+		if (_strName < p._strName)
+			return true;
+	}
+
+	const std::string& operator () () const
+		/// This method is required so we can extract data to a map!
+	{
+		return _strZkzh;
+	}
+private:
+	std::string _strZkzh;
+	std::string _strName;
+};
+
+
+namespace Poco {
+	namespace Data {
+
+		template <>
+		class TypeHandler<ST_STUDENT>
+		{
+		public:
+			static void bind(std::size_t pos, const ST_STUDENT& obj, AbstractBinder::Ptr pBinder, AbstractBinder::Direction dir)
+			{
+				// the table is defined as Person (LastName VARCHAR(30), FirstName VARCHAR, Address VARCHAR, Age INTEGER(3))
+				poco_assert_dbg(!pBinder.isNull());
+				pBinder->bind(pos++, obj.strZkzh, dir);
+				pBinder->bind(pos++, obj.strName, dir);
+			}
+
+			static void prepare(std::size_t pos, const ST_STUDENT& obj, AbstractPreparator::Ptr pPrepare)
+			{
+				// no-op (SQLite is prepare-less connector)
+			}
+
+			static std::size_t size()
+			{
+				return 2;
+			}
+
+			static void extract(std::size_t pos, ST_STUDENT& obj, const ST_STUDENT& defVal, AbstractExtractor::Ptr pExt)
+			{
+				poco_assert_dbg(!pExt.isNull());
+				std::string strZkzh;
+				std::string strName;
+				int age;
+
+				if (pExt->extract(pos++, strZkzh))
+					obj.strZkzh = strZkzh;
+				else
+					obj.strZkzh = defVal.strName;
+
+				if (pExt->extract(pos++, strName))
+					obj.strName = strName;
+				else
+					obj.strName = defVal.strName;
+			}
+
+		private:
+			TypeHandler();
+			~TypeHandler();
+			TypeHandler(const TypeHandler&);
+			TypeHandler& operator=(const TypeHandler&);
+		};
+	}
+}
 typedef std::list<ST_STUDENT> STUDENT_LIST;	//报名库列表
 extern STUDENT_LIST		g_lBmkStudent;	//报名库学生列表
 

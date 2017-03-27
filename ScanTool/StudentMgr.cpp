@@ -63,6 +63,14 @@ bool CStudentMgr::InsertData(STUDENT_LIST& lData, std::string strTable)
 	{
 		Poco::Stopwatch sw;
 		sw.start();
+#if 1
+		for (auto obj : lData)
+		{
+			std::string strSql = Poco::format("INSERT INTO %s VALUES(:ln, :fn)", strTable);
+			*_session << strSql, use(obj), now;
+			Poco::Data::Statement stmt((*_session << strSql, use(lData)));
+		}
+#else
 		for (auto obj : lData)
 		{
 			std::string strSql = Poco::format("INSERT INTO %s VALUES(:ln, :fn)", strTable);
@@ -70,8 +78,9 @@ bool CStudentMgr::InsertData(STUDENT_LIST& lData, std::string strTable)
 			std::string strName = CMyCodeConvert::Gb2312ToUtf8(obj.strName);
 			*_session << strSql, use(strZkzh), use(strName), now;
 		}
+#endif
 		sw.stop();
-		std::string strLog = Poco::format("插入报名库数据完成[%uus]", sw.elapsed());
+		std::string strLog = Poco::format("插入报名库数据完成[%ius][%uus][%dus]", sw.elapsed(), sw.elapsed(), sw.elapsed());
 		g_pLogger->information(strLog);
 	}
 	catch (Poco::Exception& e)
@@ -91,8 +100,9 @@ bool CStudentMgr::SearchStudent(std::string strKey, int nType, STUDENT_LIST& lRe
 
 	try
 	{
-// 		Poco::Stopwatch sw;
-// 		sw.start();
+		Poco::Stopwatch sw;
+		sw.start();
+	#if 0
 // 		for (auto obj : lData)
 // 		{
 // 			std::string strSql = Poco::format("INSERT INTO %s VALUES(:ln, :fn)", strTable);
@@ -100,9 +110,19 @@ bool CStudentMgr::SearchStudent(std::string strKey, int nType, STUDENT_LIST& lRe
 // 			std::string strName = CMyCodeConvert::Gb2312ToUtf8(obj.strName);
 // 			*_session << strSql, use(strZkzh), use(strName), now;
 // 		}
-// 		sw.stop();
-// 		std::string strLog = Poco::format("插入报名库数据完成[%uus]", sw.elapsed());
-// 		g_pLogger->information(strLog);
+		std::string strTable = "student";
+		std::string strSql = Poco::format("select * from %s where zkzh like '%%%s%%';", strTable, strKey);
+
+	#else
+		std::string strTable = "student";
+		std::string strSql = Poco::format("select * from %s where zkzh like '%%%s%%';", strTable, strKey);
+		Poco::Data::Statement stmt((*_session << strSql, into(lResult)));
+		stmt.execute();
+	#endif
+		sw.stop();
+		bResult = true;
+		std::string strLog = Poco::format("插入报名库数据完成[%Lus]", sw.elapsed());
+		g_pLogger->information(strLog);
 	}
 	catch (Poco::Exception& e)
 	{
