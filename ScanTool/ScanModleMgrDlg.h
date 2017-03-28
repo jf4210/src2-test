@@ -27,6 +27,7 @@ private:
 	CToolTipCtrl		m_ListTip;
 	CMakeModelDlg*		m_pMakeModelDlg;
 private:
+	int	 GetBmkInfo();
 	void InitUI();
 	void InitCtrlPosition();
 	void setUploadModelInfo(std::string& strName, CString& strModelPath, int nExamId, int nSubjectId, std::string& strElectOmrInfo);					//设置上传模板的信息

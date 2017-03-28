@@ -116,6 +116,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 		if (nResult == 1)
 		{
 			GetExamInfo();
+//			GetBmkInfo();
 			WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "login", T2A(m_strUserName));
 			AfxMessageBox(_T("登录成功"));	//登录成功，获取考试信息失败
 			CDialog::OnOK();
@@ -400,9 +401,9 @@ int CLoginDlg::GetExamInfo()
 	m_nRecvLen = 0;
 	m_nWantLen = 0;
 
-	ST_CMD_HEADER stHead;
-	stHead.usCmd = USER_GETEXAMINFO;
-	stHead.uPackSize = sizeof(ST_EXAM_INFO);
+// 	ST_CMD_HEADER stHead;
+// 	stHead.usCmd = USER_GETEXAMINFO;
+// 	stHead.uPackSize = sizeof(ST_EXAM_INFO);
 	ST_EXAM_INFO stExamInfo;
 	ZeroMemory(&stExamInfo, sizeof(ST_EXAM_INFO));
 #ifdef TO_WHTY
@@ -415,6 +416,37 @@ int CLoginDlg::GetExamInfo()
 	pTcpTask->usCmd = USER_GETEXAMINFO;
 	pTcpTask->nPkgLen = sizeof(ST_EXAM_INFO);
 	memcpy(pTcpTask->szSendBuf, (char*)&stExamInfo, sizeof(ST_EXAM_INFO));
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
+
+	return nResult;
+}
+
+int CLoginDlg::GetBmkInfo()
+{
+	USES_CONVERSION;
+	if (!m_bLogin)
+		return 0;
+
+	int nResult = 0;
+//	ZeroMemory(m_szRecvBuff, sizeof(m_szRecvBuff));
+	ZeroMemory(m_pRecvBuff, nRecvBuffSize);
+	m_nRecvLen = 0;
+	m_nWantLen = 0;
+
+	ST_GET_BMK_INFO stGetBmkInfo;
+	ZeroMemory(&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
+#ifdef TO_WHTY
+	strcpy(stGetBmkInfo.szEzs, T2A(m_strPersonId));
+#else
+	strcpy(stGetBmkInfo.szEzs, T2A(m_strEzs));
+#endif
+
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_GET_BMK;
+	pTcpTask->nPkgLen = sizeof(ST_GET_BMK_INFO);
+	memcpy(pTcpTask->szSendBuf, (char*)&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
 	g_fmTcpTaskLock.lock();
 	g_lTcpTask.push_back(pTcpTask);
 	g_fmTcpTaskLock.unlock();

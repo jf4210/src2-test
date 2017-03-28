@@ -314,6 +314,23 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 			}
 			return bResult;
 		}
+		else if (pTask->strMsg == "getBmk")
+		{
+			Poco::JSON::Object::Ptr objResult = object->getObject("status");
+			bResult = objResult->get("success").convert<bool>();
+			std::string strResult = object->get("msg").convert<std::string>();
+			strResult = CMyCodeConvert::Utf8ToGb2312(strResult);
+			if (bResult)
+			{
+				ret = RESULT_GET_BMK_SUCCESS;
+				strSendData = strInput;
+			}
+			else
+			{
+				ret = RESULT_GET_BMK_FAIL;
+				strSendData = strResult;
+			}
+		}
 		else if (pTask->strMsg == "createModel")
 		{
 			Poco::JSON::Object::Ptr objResult = object->getObject("status");

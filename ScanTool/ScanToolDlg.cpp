@@ -1942,6 +1942,13 @@ void CScanToolDlg::OnNMDblclkListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(m_nCurrItemPaperList);
 	if (m_bModifySN && m_pModel && pItemPaper && (pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH))
 	{
+		if (!m_pStudentMgr)
+		{
+			USES_CONVERSION;
+			m_pStudentMgr = new CStudentMgr();
+			std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+			bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+		}
 		CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr);
 		zkzhDlg.DoModal();
 
@@ -3010,15 +3017,15 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 				m_pPaper->lPic.push_back(pPic);
 		}
 	}
-	#if 1
+#if 0
 	//报名库测试数据
-	for (int i = 0; i < 10; i++)
+	g_lBmkStudent.clear();
+	for (int i = 0; i < 10000; i++)
 	{
 		ST_STUDENT stData;
 		stData.strZkzh = Poco::format("%d", 1001 + i);
 		stData.strName = "测试";
 
-//		CBmkStudent stData;
 		g_lBmkStudent.push_back(stData);
 	}
 	SAFE_RELEASE(m_pStudentMgr);
@@ -3029,11 +3036,12 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 		std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
 		bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
 		std::string strTableName = "student";
-		if(bResult) m_pStudentMgr->InitTable(strTableName);
-		if (bResult) m_pStudentMgr->InsertData(g_lBmkStudent, strTableName);
+		if (bResult) bResult = m_pStudentMgr->InitTable(strTableName);
+		if (bResult) bResult = m_pStudentMgr->InsertData(g_lBmkStudent, strTableName);
 		if (!bResult) SAFE_RELEASE(m_pStudentMgr);
 	}
-	#endif
+#endif
+	
 	CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr);
 	zkzhDlg.DoModal();
 #endif
@@ -4766,6 +4774,13 @@ void CScanToolDlg::OnTimer(UINT nIDEvent)
 			if (m_nScanStatus == 3 && m_bModifySN && bNeedShowZkzhDlg)
 			{
 				KillTimer(TIMER_CheckRecogComplete);
+				if (!m_pStudentMgr)
+				{
+					USES_CONVERSION;
+					m_pStudentMgr = new CStudentMgr();
+					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+					bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+				}
 				CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr);
 				zkzhDlg.DoModal();
 

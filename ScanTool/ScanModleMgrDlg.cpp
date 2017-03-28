@@ -84,6 +84,40 @@ BOOL CScanModleMgrDlg::OnInitDialog()
 	return TRUE;
 }
 
+int CScanModleMgrDlg::GetBmkInfo()
+{
+	if (!m_pModel)
+		return 0;
+
+	CString strUser = _T("");
+#ifdef SHOW_GUIDEDLG
+	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
+
+	strUser = pDlg->m_strUserName;
+#else
+	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();
+	strUser = pDlg->m_strUserName;
+#endif
+
+	if (!pDlg->m_bLogin)
+		return 0;
+
+	USES_CONVERSION;
+	ST_GET_BMK_INFO stGetBmkInfo;
+	ZeroMemory(&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
+	stGetBmkInfo.nExamID = m_pModel->nExamID;
+	stGetBmkInfo.nSubjectID = m_pModel->nSubjectID;
+	strcpy(stGetBmkInfo.szEzs, T2A(pDlg->m_strEzs));
+
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_GET_BMK;
+	pTcpTask->nPkgLen = sizeof(ST_GET_BMK_INFO);
+	memcpy(pTcpTask->szSendBuf, (char*)&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
+}
+
 void CScanModleMgrDlg::InitUI()
 {
 	CRect rcClient;
@@ -493,6 +527,8 @@ void CScanModleMgrDlg::OnBnClickedOk()
 	strShow.Format(_T("是否选择\"%s\"为扫描模板?"), A2T(m_pModel->strModelName.c_str()));
 	if (MessageBox(strShow, _T("扫描模板确认"), MB_OKCANCEL) != IDOK)
 		return;
+
+	GetBmkInfo();
 
 	for (int i = 0; i < m_vecModel.size(); i++)
 	{

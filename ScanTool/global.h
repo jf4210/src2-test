@@ -65,6 +65,10 @@
 #include "Poco/Data/DataException.h"
 #include "Poco/Data/SQLite/SQLiteException.h"
 #include "Poco/Data/TypeHandler.h"
+#include "Poco/Data/SQLite/Connector.h"
+#include "Poco/Data/SQLite/Utility.h"
+#include "Poco/Data/SQLite/Notifier.h"
+#include "Poco/Data/SQLite/Connector.h"
 //-------------------------------------
 
 #include "zip.h"
@@ -466,7 +470,7 @@ namespace Poco {
 				// the table is defined as Person (LastName VARCHAR(30), FirstName VARCHAR, Address VARCHAR, Age INTEGER(3))
 				poco_assert_dbg(!pBinder.isNull());
 				pBinder->bind(pos++, obj.strZkzh, dir);
-				pBinder->bind(pos++, obj.strName, dir);
+				pBinder->bind(pos++, CMyCodeConvert::Gb2312ToUtf8(obj.strName), dir);
 			}
 
 			static void prepare(std::size_t pos, const ST_STUDENT& obj, AbstractPreparator::Ptr pPrepare)
@@ -484,15 +488,14 @@ namespace Poco {
 				poco_assert_dbg(!pExt.isNull());
 				std::string strZkzh;
 				std::string strName;
-				int age;
 
 				if (pExt->extract(pos++, strZkzh))
 					obj.strZkzh = strZkzh;
 				else
-					obj.strZkzh = defVal.strName;
+					obj.strZkzh = defVal.strZkzh;
 
 				if (pExt->extract(pos++, strName))
-					obj.strName = strName;
+					obj.strName = CMyCodeConvert::Utf8ToGb2312(strName);
 				else
 					obj.strName = defVal.strName;
 			}

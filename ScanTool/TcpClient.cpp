@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "TcpClient.h"
 #include "Net_Cmd_Protocol.h"
+#include "StudentMgr.h"
 
 //extern Poco::Net::StreamSocket *pSs;
 
@@ -250,7 +251,8 @@ void CTcpClient::HandleCmd()
 					g_pLogger->information(strLog);
 					USES_CONVERSION;
 					AfxMessageBox(A2T(strLog.c_str()));
-					break;
+					SAFE_RELEASE_ARRY(pBuff);
+					return;
 				}
 
 				Poco::JSON::Array::Ptr arryObj = examObj->getArray("exams");
@@ -331,35 +333,95 @@ void CTcpClient::HandleCmd()
 	{
 		switch (pstHead->usResult)
 		{
-		case RESULT_SETMODELINFO_SEND:
-		{
-			pST_MODELINFO pstModelInfo = (pST_MODELINFO)(m_pRecvBuff + HEAD_SIZE);
-			//				   pST_MODELINFO pstModelInfo = (pST_MODELINFO)(m_pRecvBuff + HEAD_SIZE);
-			USES_CONVERSION;
-			std::string strModelPath = T2A(g_strCurrentPath);
-			strModelPath.append("Model\\");
-			strModelPath.append(pstModelInfo->szModelName);
+			case RESULT_SETMODELINFO_SEND:
+			{
+				pST_MODELINFO pstModelInfo = (pST_MODELINFO)(m_pRecvBuff + HEAD_SIZE);
+				//				   pST_MODELINFO pstModelInfo = (pST_MODELINFO)(m_pRecvBuff + HEAD_SIZE);
+				USES_CONVERSION;
+				std::string strModelPath = T2A(g_strCurrentPath);
+				strModelPath.append("Model\\");
+				strModelPath.append(pstModelInfo->szModelName);
 
-			pSENDTASK pTask = new SENDTASK;
-			pTask->strFileName = pstModelInfo->szModelName;
-			pTask->strPath = strModelPath;
-			g_fmSendLock.lock();
-			g_lSendTask.push_back(pTask);
-			g_fmSendLock.unlock();
+				pSENDTASK pTask = new SENDTASK;
+				pTask->strFileName = pstModelInfo->szModelName;
+				pTask->strPath = strModelPath;
+				g_fmSendLock.lock();
+				g_lSendTask.push_back(pTask);
+				g_fmSendLock.unlock();
 
-			std::string strLog = "需要重新发送模板文件: " + strModelPath;
-			TRACE(strLog.c_str());
-			g_pLogger->information(strLog);
+				std::string strLog = "需要重新发送模板文件: " + strModelPath;
+				TRACE(strLog.c_str());
+				g_pLogger->information(strLog);
+			}
+			break;
+			case RESULT_SETMODELINFO_NO:
+			{
+				std::string strLog = "不需要重新发送模板文件";
+				TRACE(strLog.c_str());
+				g_pLogger->information(strLog);
+			}
+			break;
 		}
-		break;
-		case RESULT_SETMODELINFO_NO:
+	}
+	else if (pstHead->usCmd == USER_RESPONSE_GET_BMK)
+	{
+		char* pBuff = new char[pstHead->uPackSize + 1];
+		pBuff[pstHead->uPackSize] = '\0';
+		strncpy(pBuff, m_pRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+		std::string strResult = CMyCodeConvert::Utf8ToGb2312(pBuff);
+		switch (pstHead->usResult)
 		{
-			std::string strLog = "不需要重新发送模板文件";
-			TRACE(strLog.c_str());
-			g_pLogger->information(strLog);
+			case RESULT_GET_BMK_SUCCESS:
+			{
+				Poco::JSON::Parser parser;
+				Poco::Dynamic::Var result;
+				try
+				{
+					result = parser.parse(pBuff);
+					Poco::JSON::Object::Ptr examObj = result.extract<Poco::JSON::Object::Ptr>();
+					Poco::JSON::Array::Ptr arryObj = examObj->getObject("students");
+
+					g_lBmkStudent.clear();
+					for (int i = 0; i < arryObj->size(); i++)
+					{
+						Poco::JSON::Object::Ptr objItem = arryObj->getObject(i);
+						ST_STUDENT stData;
+						stData.strZkzh = objItem->get("zkzh").convert<std::string>();
+						stData.strName = CMyCodeConvert::Utf8ToGb2312(objItem->get("name").convert<std::string>());
+						g_lBmkStudent.push_back(stData);
+					}
+					std::string strLog = Poco::format("获取报名库完成(%d人)", (int)g_lBmkStudent.size());
+					g_pLogger->information(strLog);
+					TRACE(_T("%s\n"), strLog.c_str());
+
+					//插入数据库
+					USES_CONVERSION;
+					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+					CStudentMgr studentMgr;
+					bool bResult = studentMgr.InitDB(strDbPath);
+					std::string strTableName = "student";
+					if (bResult) bResult = studentMgr.InitTable(strTableName);
+					if (bResult) bResult = studentMgr.InsertData(g_lBmkStudent, strTableName);
+				}
+				catch (Poco::JSON::JSONException& jsone)
+				{
+					std::string strErrInfo;
+					strErrInfo.append("Error when parse json(获取报名库): ");
+					strErrInfo.append(jsone.message() + "\tData:" + strResult);
+					g_pLogger->information(strErrInfo);
+					TRACE(_T("%s\n"), strErrInfo.c_str());
+				}
+			}
+			break;
+			case RESULT_GET_BMK_FAIL:
+			{
+				std::string strLog = "报名库下载失败: " + strResult;
+				TRACE(strLog.c_str());
+				g_pLogger->information(strLog);
+			}
+			break;
 		}
-		break;
-		}
+		SAFE_RELEASE_ARRY(pBuff);
 	}
 }
 

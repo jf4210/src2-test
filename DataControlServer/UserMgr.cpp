@@ -501,6 +501,30 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			std::cout << "回复版本服务器地址信息:" << strVerAddr << std::endl;
 		}
 		break;
+	case USER_GET_BMK:
+		{
+			ST_GET_BMK_INFO stGetBmkInfo = *(pStGetBmkInfo)(pMission->m_pMissionData + HEAD_SIZE);
+			std::string strEzs = stGetBmkInfo.szEzs;
+			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
+			pTask->strUri = SysSet.m_strBackUri + "/getStudents";
+			pTask->nExamID = stGetBmkInfo.nExamID;
+			pTask->nSubjectID = stGetBmkInfo.nSubjectID;
+			pTask->pUser = pUser;
+			pTask->strEzs = "ezs=" + strEzs;
+			pTask->strMsg = "getBmk";
+
+			Poco::JSON::Object obj;
+			obj.set("examId", stGetBmkInfo.nExamID);
+			obj.set("subjectId", stGetBmkInfo.nSubjectID);
+			stringstream ss;
+			obj.stringify(ss, 0);
+			pTask->strRequest = ss.str();
+
+			g_fmScanReq.lock();
+			g_lScanReq.push_back(pTask);
+			g_fmScanReq.unlock();
+		}
+		break;
 	default:
 		bFind = FALSE;
 		break;

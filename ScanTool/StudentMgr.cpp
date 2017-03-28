@@ -4,7 +4,7 @@
 using namespace Poco::Data::Keywords;
 using Poco::Data::Session;
 
-CStudentMgr::CStudentMgr() :_session(NULL)
+CStudentMgr::CStudentMgr() :_session(NULL), _mem(NULL)
 {
 	Poco::Data::SQLite::Connector::registerConnector();
 }
@@ -12,6 +12,8 @@ CStudentMgr::CStudentMgr() :_session(NULL)
 
 CStudentMgr::~CStudentMgr()
 {
+	if (!_mem)
+		_mem->close();
 	if (!_session)
 		_session->close();
 	Poco::Data::SQLite::Connector::unregisterConnector();
@@ -21,6 +23,7 @@ bool CStudentMgr::InitDB(std::string strPath)
 {
 	try
 	{
+		_strDbPath = strPath;
 		_session = new Poco::Data::Session(Poco::Data::SQLite::Connector::KEY, strPath);
 	}
 	catch (Poco::Exception& e)
@@ -34,7 +37,7 @@ bool CStudentMgr::InitDB(std::string strPath)
 
 bool CStudentMgr::InitTable(std::string strTableName)
 {
-	if (!_session->isConnected())
+	if (_session && !_session->isConnected())
 		return false;
 
 	try
@@ -56,31 +59,30 @@ bool CStudentMgr::InitTable(std::string strTableName)
 bool CStudentMgr::InsertData(STUDENT_LIST& lData, std::string strTable)
 {
 	bool bResult = false;
-	if (!_session->isConnected())
+	if (_session && !_session->isConnected())
 		return false;
 
 	try
 	{
 		Poco::Stopwatch sw;
 		sw.start();
-#if 1
-		for (auto obj : lData)
-		{
-			std::string strSql = Poco::format("INSERT INTO %s VALUES(:ln, :fn)", strTable);
-			*_session << strSql, use(obj), now;
-			Poco::Data::Statement stmt((*_session << strSql, use(lData)));
-		}
-#else
-		for (auto obj : lData)
-		{
-			std::string strSql = Poco::format("INSERT INTO %s VALUES(:ln, :fn)", strTable);
-			std::string strZkzh = obj.strZkzh;
-			std::string strName = CMyCodeConvert::Gb2312ToUtf8(obj.strName);
-			*_session << strSql, use(strZkzh), use(strName), now;
-		}
-#endif
+
+	#if 1
+		_mem = new Poco::Data::Session(Poco::Data::SQLite::Connector::KEY, ":memory:");
+		Poco::Data::SQLite::Utility::fileToMemory(*_mem, _strDbPath);
+
+		std::string strSql = Poco::format("INSERT INTO %s VALUES(:ln, :fn)", strTable);
+		Poco::Data::Statement stmt((*_mem << strSql, use(lData)));
+		stmt.execute();
+
+		Poco::Data::SQLite::Utility::memoryToFile(_strDbPath, *_mem);
+	#else
+		std::string strSql = Poco::format("INSERT INTO %s VALUES(:ln, :fn)", strTable);
+		Poco::Data::Statement stmt((*_session << strSql, use(lData)));
+		stmt.execute();
+	#endif
 		sw.stop();
-		std::string strLog = Poco::format("插入报名库数据完成[%ius][%uus][%dus]", sw.elapsed(), sw.elapsed(), sw.elapsed());
+		std::string strLog = Poco::format("插入报名库数据完成[%.6fs]", (double)sw.elapsed()/1000000);
 		g_pLogger->information(strLog);
 	}
 	catch (Poco::Exception& e)
@@ -95,38 +97,30 @@ bool CStudentMgr::InsertData(STUDENT_LIST& lData, std::string strTable)
 bool CStudentMgr::SearchStudent(std::string strKey, int nType, STUDENT_LIST& lResult)
 {
 	bool bResult = false;
-	if (!_session->isConnected())
+	if (_session && !_session->isConnected())
 		return false;
 
 	try
 	{
 		Poco::Stopwatch sw;
 		sw.start();
-	#if 0
-// 		for (auto obj : lData)
-// 		{
-// 			std::string strSql = Poco::format("INSERT INTO %s VALUES(:ln, :fn)", strTable);
-// 			std::string strZkzh = obj.strZkzh;
-// 			std::string strName = CMyCodeConvert::Gb2312ToUtf8(obj.strName);
-// 			*_session << strSql, use(strZkzh), use(strName), now;
-// 		}
 		std::string strTable = "student";
-		std::string strSql = Poco::format("select * from %s where zkzh like '%%%s%%';", strTable, strKey);
-
-	#else
-		std::string strTable = "student";
-		std::string strSql = Poco::format("select * from %s where zkzh like '%%%s%%';", strTable, strKey);
+		std::string strSql;
+		if (nType == 1)
+			strSql = Poco::format("select * from %s where name like '%%%s%%';", strTable, CMyCodeConvert::Gb2312ToUtf8(strKey));
+		else
+			strSql = Poco::format("select * from %s where zkzh like '%%%s%%';", strTable, CMyCodeConvert::Gb2312ToUtf8(strKey));
 		Poco::Data::Statement stmt((*_session << strSql, into(lResult)));
+//		Poco::Data::Statement stmt((*_mem << strSql, into(lResult)));
 		stmt.execute();
-	#endif
 		sw.stop();
 		bResult = true;
-		std::string strLog = Poco::format("插入报名库数据完成[%Lus]", sw.elapsed());
+		std::string strLog = Poco::format("查询报名库数据完成[%.3fms]", (double)sw.elapsed()/1000);
 		g_pLogger->information(strLog);
 	}
 	catch (Poco::Exception& e)
 	{
-		std::string strErr = "报名库InsertData失败(" + e.displayText() + ")";
+		std::string strErr = "查询报名库失败(" + e.displayText() + ")";
 		g_pLogger->information(strErr);
 		bResult = false;
 	}

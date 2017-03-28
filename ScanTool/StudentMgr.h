@@ -14,6 +14,8 @@ public:
 	bool SearchStudent(std::string strKey, int nType, STUDENT_LIST& lResult);
 private:
 	std::string strData;
+	std::string _strDbPath;
 	Poco::Data::Session* _session;
+	Poco::Data::Session* _mem;
 };
 

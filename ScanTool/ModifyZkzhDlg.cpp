@@ -570,14 +570,24 @@ void CModifyZkzhDlg::OnBnClickedBtnSave()
 void CModifyZkzhDlg::OnBnClickedRadioSearchzkzh()
 {
 	if (((CButton*)GetDlgItem(IDC_RADIO_SearchZkzh))->GetCheck())
+	{
 		m_nSearchType = 2;
+		m_strSearchKey = _T("");
+		m_lcBmk.DeleteAllItems();
+		UpdateData(FALSE);
+	}
 }
 
 
 void CModifyZkzhDlg::OnBnClickedRadioSearchname()
 {
 	if (((CButton*)GetDlgItem(IDC_RADIO_SearchName))->GetCheck())
+	{
 		m_nSearchType = 1;
+		m_strSearchKey = _T("");
+		m_lcBmk.DeleteAllItems();
+		UpdateData(FALSE);
+	}
 }
 
 
@@ -588,7 +598,7 @@ void CModifyZkzhDlg::OnBnClickedBtnSearch()
 	m_lcBmk.DeleteAllItems();
 	std::string strKey = T2A(m_strSearchKey);
 	STUDENT_LIST lResult;
-	if (m_pStudentMgr->SearchStudent(strKey, m_nSearchType, lResult))
+	if (m_pStudentMgr && m_pStudentMgr->SearchStudent(strKey, m_nSearchType, lResult))
 	{
 		for (auto obj : lResult)
 		{
@@ -601,6 +611,10 @@ void CModifyZkzhDlg::OnBnClickedBtnSearch()
 			m_lcBmk.SetItemText(nCount, 1, (LPCTSTR)A2T(obj.strName.c_str()));
 			m_lcBmk.SetItemText(nCount, 2, (LPCTSTR)A2T(obj.strZkzh.c_str()));
 		}
+	}
+	else
+	{
+		AfxMessageBox(_T("ËÑË÷Ê§°Ü"));
 	}
 }
 

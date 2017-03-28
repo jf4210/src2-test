@@ -345,14 +345,14 @@
     <ClInclude Include="MultiPlatform4TYDlg.h">
       <Filter>登录\天喻多平台登录选择框</Filter>
     </ClInclude>
-    <ClInclude Include="OmrRecog.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="PapersInfoSave4TyDlg.h">
       <Filter>试卷袋信息保存</Filter>
     </ClInclude>
+    <ClInclude Include="OmrRecog.h">
+      <Filter>识别任务处理线程</Filter>
+    </ClInclude>
     <ClInclude Include="StudentMgr.h">
-      <Filter>头文件</Filter>
+      <Filter>修改ZKZH窗口\报名库管理</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -530,14 +530,14 @@
     <ClCompile Include="MultiPlatform4TYDlg.cpp">
       <Filter>登录\天喻多平台登录选择框</Filter>
     </ClCompile>
-    <ClCompile Include="OmrRecog.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="PapersInfoSave4TyDlg.cpp">
       <Filter>试卷袋信息保存</Filter>
     </ClCompile>
+    <ClCompile Include="OmrRecog.cpp">
+      <Filter>识别任务处理线程</Filter>
+    </ClCompile>
     <ClCompile Include="StudentMgr.cpp">
-      <Filter>源文件</Filter>
+      <Filter>修改ZKZH窗口\报名库管理</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
