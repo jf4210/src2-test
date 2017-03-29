@@ -279,7 +279,7 @@ BOOL CScanToolDlg::OnInitDialog()
 	m_bTwainInit = FALSE;
 	if (!m_bTwainInit)
 	{
-		m_bTwainInit = InitTwain(m_hWnd);
+		m_bTwainInit = InitTwain(m_hWnd);	//m_hWnd
 		if (!IsValidDriver())
 		{
 			AfxMessageBox(_T("Unable to load Twain Driver."));
@@ -664,7 +664,8 @@ void CScanToolDlg::InitUI()
 {
 	m_lcPicture.SetExtendedStyle(m_lcPicture.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcPicture.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 40);
-	m_lcPicture.InsertColumn(1, _T("学生信息"), LVCFMT_CENTER, 150);
+	m_lcPicture.InsertColumn(1, _T("学生信息"), LVCFMT_CENTER, 130);
+	m_lcPicture.InsertColumn(2, _T("*"), LVCFMT_CENTER, 20);
 
 	m_lcPaper.SetExtendedStyle(m_lcPaper.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcPaper.InsertColumn(0, _T("试卷名"), LVCFMT_CENTER, 80);
@@ -1961,6 +1962,8 @@ void CScanToolDlg::OnNMDblclkListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 			if (pItemPaper)
 			{
 				m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
+				if (pItemPaper->bModifyZKZH)
+					m_lcPicture.SetItemText(i, 2, _T("*"));
 			}
 		}
 	}
@@ -4792,6 +4795,8 @@ void CScanToolDlg::OnTimer(UINT nIDEvent)
 					if (pItemPaper)
 					{
 						m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
+						if (pItemPaper->bModifyZKZH)
+							m_lcPicture.SetItemText(i, 2, _T("*"));
 					}
 				}
 			}

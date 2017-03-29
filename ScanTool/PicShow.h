@@ -36,7 +36,9 @@ public:
 	float m_fScale;		//当前图像的缩放比
 
 	void SetShowTracker(bool bShowH, bool bShowV, bool bShowSN);		//显示橡皮筋类
-	void ShowPic(cv::Mat& imgMat, cv::Point pt = cv::Point(0,0), float fShowPer = 1.0);
+	void ShowPic(cv::Mat& imgMat, cv::Point pt = cv::Point(0,0), float fShowPer = 1.0, int nDirection = -1);
+	void RotateImg(int nDirection);		//1:针对原始图像需要进行的旋转，正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+	void SetRotateDir(int nDirection);	//1:针对原始图像需要进行的旋转，正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
 	LRESULT CvPaint(WPARAM wParam, LPARAM lParam);
 	LRESULT RoiLbtnUp(WPARAM wParam, LPARAM lParam);
 	LRESULT RoiLbtnDown(WPARAM wParam, LPARAM lParam);
@@ -51,6 +53,9 @@ public:
 	LRESULT ShiftKeyDown(WPARAM wParam, LPARAM lParam);
 	LRESULT ShiftKeyUp(WPARAM wParam, LPARAM lParam);
 private:
+	cv::Point	m_ptBase;
+	int		m_nDirection;		//图像默认显示方向，1:针对原始图像需要进行的旋转，正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+	void RotateImg2(cv::Mat& imgMat, int nDirection = 1);
 	void InitCtrlPosition();
 protected:
 	virtual BOOL OnInitDialog();

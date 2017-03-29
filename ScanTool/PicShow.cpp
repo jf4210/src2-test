@@ -18,7 +18,7 @@ IMPLEMENT_DYNAMIC(CPicShow, CDialog)
 
 CPicShow::CPicShow(CWnd* pParent /*=NULL*/)
 	: CDialog(CPicShow::IDD, pParent)
-	, m_bShowScrolH(TRUE), m_bShowScrolV(TRUE), m_iX(0), m_iY(0), m_fScale(1.0)
+	, m_bShowScrolH(TRUE), m_bShowScrolV(TRUE), m_iX(0), m_iY(0), m_fScale(1.0), m_nDirection(1)
 {
 
 }
@@ -240,13 +240,21 @@ void CPicShow::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	m_picShow.ShowImage_Rect_roi(m_src_img, pt);
 }
 
-void CPicShow::ShowPic(cv::Mat& imgMat, cv::Point pt /*= cv::Point(0,0)*/, float fShowPer)
+void CPicShow::ShowPic(cv::Mat& imgMat, cv::Point pt /*= cv::Point(0,0)*/, float fShowPer /*= 1.0*/, int nDirection /*= -1*/)
 {
 	CRect rcDlg;
 	this->GetClientRect(&rcDlg);
 
 	CRect rcPic;
 	m_picShow.GetClientRect(&m_client);
+
+	int nDirect;
+	if (nDirection == -1)		//默认情况下显示原始图像方向
+		nDirect = m_nDirection;
+	else
+		nDirect = nDirection;
+	RotateImg2(imgMat, nDirect);
+
 	m_picWidth  = imgMat.cols;
 	m_picHeight = imgMat.rows;
 #if 1
@@ -255,6 +263,7 @@ void CPicShow::ShowPic(cv::Mat& imgMat, cv::Point pt /*= cv::Point(0,0)*/, float
 		float fScale1 = (float)m_picWidth / (float)m_client.Width();
 		float fScale2 = (float)m_picHeight / (float)m_client.Height();
 		m_fScale = fScale1 > fScale2 ? fScale2 : fScale1;
+		TRACE("***********原始比例: m_fScale = %f\n", m_fScale);
 	}	
 
 	m_fScale *= fShowPer;
@@ -387,9 +396,106 @@ void CPicShow::ShowPic(cv::Mat& imgMat, cv::Point pt /*= cv::Point(0,0)*/, float
 		m_scrollBarV.SetScrollInfo(&info);
 	}
 #endif
+	m_ptBase = pt;
 	m_src_img = imgMat;
 //	cv::Point pt(0, 0);
 	m_picShow.ShowImage_rect(m_src_img, pt, m_fScale);
+}
+
+void CPicShow::RotateImg2(cv::Mat& imgMat, int nDirection /*= 1*/)
+{
+	switch (nDirection)
+	{
+		case 1:	break;
+		case 2:
+		{
+				  Mat dst;
+				  transpose(imgMat, dst);	//左旋90，镜像 
+				  flip(dst, imgMat, 1);		//右旋90，模板图像需要左旋90，原图即需要右旋90
+		}
+			break;
+		case 3:
+		{
+				  Mat dst;
+				  transpose(imgMat, dst);	//左旋90，镜像 
+				  flip(dst, imgMat, 0);		//左旋90，模板图像需要右旋90，原图即需要左旋90				 
+		}
+			break;
+		case 4:
+		{
+				  Mat dst;
+				  transpose(imgMat, dst);	//左旋90，镜像 
+				  Mat dst2;
+				  flip(dst, dst2, 1);
+				  Mat dst5;
+				  transpose(dst2, dst5);
+				  flip(dst5, imgMat, 1);	//右旋180
+		}
+			break;
+		default: break;
+	}
+}
+
+void CPicShow::RotateImg(int nDirection)
+{
+	switch (nDirection)
+	{
+		case 1:	break;
+		case 2:
+		{
+				  Mat dst;
+				  transpose(m_src_img, dst);	//左旋90，镜像 
+				  flip(dst, m_src_img, 1);		//右旋90，模板图像需要左旋90，原图即需要右旋90
+		}
+			break;
+		case 3:
+		{
+				  Mat dst;
+				  transpose(m_src_img, dst);	//左旋90，镜像 
+				  flip(dst, m_src_img, 0);		//左旋90，模板图像需要右旋90，原图即需要左旋90				 
+		}
+			break;
+		case 4:
+		{
+				  Mat dst;
+				  transpose(m_src_img, dst);	//左旋90，镜像 
+				  Mat dst2;
+				  flip(dst, dst2, 1);
+				  Mat dst5;
+				  transpose(dst2, dst5);
+				  flip(dst5, m_src_img, 1);	//右旋180
+		}
+			break;
+		default: break;
+	}
+//	m_picShow.ShowImage_rect(m_src_img, m_ptBase, m_fScale);
+	ShowPic(m_src_img, m_ptBase);
+}
+
+void CPicShow::SetRotateDir(int nDirection)
+{
+	static int n = 0;
+	if (nDirection == 3)
+		++n;
+	if (nDirection == 2)
+		--n;
+	n = n < 0 ? n + 4: n;
+	switch (n % 4)
+	{
+		case 0:
+			m_nDirection = 1;
+			break;
+		case 1:
+			m_nDirection = 3;
+			break;
+		case 2:
+			m_nDirection = 4;
+			break;
+		case 3:
+			m_nDirection = 2;
+			break;
+	}
+	ShowPic(m_src_img, m_ptBase, 1.0, nDirection);
 }
 
 LRESULT CPicShow::CvPaint(WPARAM wParam, LPARAM lParam)

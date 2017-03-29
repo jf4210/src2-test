@@ -44,6 +44,10 @@ private:
 	void	InitCtrlPosition();
 	void	InitData();
 
+	LRESULT RoiRBtnUp(WPARAM wParam, LPARAM lParam);
+	void	LeftRotate();
+	void	RightRotate();
+
 	void	ShowPaperByItem(int nItem);
 	void	ShowPaperZkzhPosition(pST_PaperInfo pPaper);
 	BOOL	PreTranslateMessage(MSG* pMsg);

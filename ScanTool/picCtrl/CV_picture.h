@@ -128,6 +128,8 @@ public:
 	CRect m_rect_win;
 	//roi区域相对于m_dst_img的缩放比，长宽比与m_dst_img保持一致
 	float m_fRoi_scale;
+	//roi区域缩放最大比，m_fRoi_scale <= m_fRoi_scaleMax
+	float m_fRoi_scaleMax;
 	//roi移动距离与鼠标移动距离的比
 	cv::Point2f m_scale_move;	
 	//roi在m_dst_img中的区域，包含区域大小与相对于m_dst_img的位置

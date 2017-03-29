@@ -67,6 +67,9 @@ BEGIN_MESSAGE_MAP(CModifyZkzhDlg, CDialog)
 	ON_BN_CLICKED(IDC_RADIO_SearchName, &CModifyZkzhDlg::OnBnClickedRadioSearchname)
 	ON_BN_CLICKED(IDC_BTN_Search, &CModifyZkzhDlg::OnBnClickedBtnSearch)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_ZkzhSearchResult, &CModifyZkzhDlg::OnNMDblclkListZkzhsearchresult)
+	ON_MESSAGE(WM_CV_RBTNUP, &CModifyZkzhDlg::RoiRBtnUp)
+	ON_COMMAND(ID_LeftRotate, &CModifyZkzhDlg::LeftRotate)
+	ON_COMMAND(ID_RightRotate, &CModifyZkzhDlg::RightRotate)
 END_MESSAGE_MAP()
 
 
@@ -303,6 +306,33 @@ void CModifyZkzhDlg::InitData()
 			m_lcZkzh.SetEdit(nCount, 2);
 		}
 	}
+}
+
+LRESULT CModifyZkzhDlg::RoiRBtnUp(WPARAM wParam, LPARAM lParam)
+{
+	cv::Point pt = *(cv::Point*)(wParam);
+	//下面的这段代码, 不单单适应于ListCtrl  
+	CMenu menu, *pPopup;
+	menu.LoadMenu(IDR_MENU_Rotation);
+	pPopup = menu.GetSubMenu(0);
+	CPoint myPoint;
+	ClientToScreen(&myPoint);
+	GetCursorPos(&myPoint); //鼠标位置  
+	pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, myPoint.x, myPoint.y, this);//GetParent()
+// 	m_ptRBtnUp = pt;
+	return TRUE;
+}
+
+void CModifyZkzhDlg::LeftRotate()
+{
+	m_vecPicShow[m_nCurrTabSel]->SetRotateDir(3);
+//	m_vecPicShow[m_nCurrTabSel]->RotateImg(3);
+}
+
+void CModifyZkzhDlg::RightRotate()
+{
+	m_vecPicShow[m_nCurrTabSel]->SetRotateDir(2);
+//	m_vecPicShow[m_nCurrTabSel]->RotateImg(2);
 }
 
 void CModifyZkzhDlg::ShowPaperByItem(int nItem)

@@ -379,7 +379,7 @@ void CTcpClient::HandleCmd()
 				{
 					result = parser.parse(pBuff);
 					Poco::JSON::Object::Ptr examObj = result.extract<Poco::JSON::Object::Ptr>();
-					Poco::JSON::Array::Ptr arryObj = examObj->getObject("students");
+					Poco::JSON::Array::Ptr arryObj = examObj->getArray("students");
 
 					g_lBmkStudent.clear();
 					for (int i = 0; i < arryObj->size(); i++)
