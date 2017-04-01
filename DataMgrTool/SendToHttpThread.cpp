@@ -464,7 +464,6 @@ void CSendToHttpThread::checkTaskStatus(pSEND_HTTP_TASK pTask, int nState)
 			Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pTask->pPapers->strPapersPath));
 			if (srcFileDir.exists())
 				srcFileDir.remove(true);
-
 		}
 		catch (Poco::Exception& exc)
 		{

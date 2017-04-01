@@ -37,6 +37,7 @@ BEGIN_MESSAGE_MAP(CRecogParamDlg, CDialog)
 	ON_BN_CLICKED(IDOK, &CRecogParamDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDC_RADIO_CompressPKG, &CRecogParamDlg::OnBnClickedRadioCompresspkg)
 	ON_BN_CLICKED(IDC_RADIO_SendEZS, &CRecogParamDlg::OnBnClickedRadioSendezs)
+	ON_BN_CLICKED(IDC_RADIO_NoCompress, &CRecogParamDlg::OnBnClickedRadioNocompress)
 END_MESSAGE_MAP()
 
 BOOL CRecogParamDlg::OnInitDialog()
@@ -147,4 +148,25 @@ void CRecogParamDlg::OnBnClickedRadioSendezs()
 {
 	GetDlgItem(IDC_EDIT_EZS)->EnableWindow(TRUE);
 	m_nHandleResult = 1;
+
+	m_nChkElectOmr = 1;
+	m_nChkOmr = 1;
+	m_nChkSN = 1;
+	((CButton*)GetDlgItem(IDC_CHK_SN))->SetCheck(1);
+	((CButton*)GetDlgItem(IDC_CHK_OMR))->SetCheck(1);
+	((CButton*)GetDlgItem(IDC_CHK_ElecOmr))->SetCheck(1);
+}
+
+
+void CRecogParamDlg::OnBnClickedRadioNocompress()
+{
+	GetDlgItem(IDC_EDIT_EZS)->EnableWindow(FALSE);
+	m_nHandleResult = 2;
+
+	m_nChkElectOmr = 1;
+	m_nChkOmr = 1;
+	m_nChkSN = 1;
+	((CButton*)GetDlgItem(IDC_CHK_SN))->SetCheck(1);
+	((CButton*)GetDlgItem(IDC_CHK_OMR))->SetCheck(1);
+	((CButton*)GetDlgItem(IDC_CHK_ElecOmr))->SetCheck(1);
 }

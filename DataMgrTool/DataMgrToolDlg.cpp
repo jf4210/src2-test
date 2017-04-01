@@ -813,7 +813,7 @@ void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
 		pDecompressTask->bRecogOmr = dlg.m_nChkOmr;				//进行参数传递
 		pDecompressTask->bRecogZkzh = dlg.m_nChkSN;				//进行参数传递
 		pDecompressTask->bRecogElectOmr = dlg.m_nChkElectOmr;	//进行参数传递
-		pDecompressTask->bSendEzs = dlg.m_nHandleResult;		//参数传递
+		pDecompressTask->nSendEzs = dlg.m_nHandleResult;		//参数传递
 		pDecompressTask->nNoNeedRecogVal = dlg.m_nNoRecogVal;	//....
 
 

@@ -3020,10 +3020,10 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 				m_pPaper->lPic.push_back(pPic);
 		}
 	}
-#if 0
+#if 1
 	//报名库测试数据
 	g_lBmkStudent.clear();
-	for (int i = 0; i < 10000; i++)
+	for (int i = 0; i < 1000; i++)
 	{
 		ST_STUDENT stData;
 		stData.strZkzh = Poco::format("%d", 1001 + i);

@@ -116,7 +116,6 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		g_fmPapers.unlock();
 	}
 	
-
 	Poco::File decompressDir(strOutDir);
 	if (decompressDir.exists())
 		decompressDir.remove(true);
@@ -202,8 +201,6 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		pPapers->lPaper.sort(SortByPaper);
 	}
 	
-
-
 	USES_CONVERSION;
 	if (pTask->nTaskType == 1)
 	{
@@ -278,7 +275,6 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 				Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
 				if (srcFileDir.exists())
 					srcFileDir.remove(true);
-
 			}
 			catch (Poco::Exception& exc)
 			{
@@ -333,7 +329,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		pPapers->bRecogOmr = pTask->bRecogOmr;
 		pPapers->bRecogZkzh = pTask->bRecogZkzh;
 		pPapers->bRecogElectOmr = pTask->bRecogElectOmr;
-		pPapers->bSendEzs = pTask->bSendEzs;
+		pPapers->nSendEzs = pTask->nSendEzs;
 
 		//添加到识别任务列表
 		PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
@@ -369,7 +365,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		pDirTask->bRecogOmr		= pTask->bRecogOmr;
 		pDirTask->bRecogZkzh	= pTask->bRecogZkzh;
 		pDirTask->bRecogElectOmr = pTask->bRecogElectOmr;
-		pDirTask->bSendEzs		= pTask->bSendEzs;
+		pDirTask->nSendEzs		= pTask->nSendEzs;
 		pDirTask->nNoNeedRecogVal = pTask->nNoNeedRecogVal;
 
 		_SearchPathList_.push_back(pDirTask);

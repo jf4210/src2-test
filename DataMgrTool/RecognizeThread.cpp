@@ -431,7 +431,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		_nRecogPapers_++;
 		_fmRecogPapers_.unlock();
 
-		if (pPapers->bSendEzs)
+		if (pPapers->nSendEzs == 1)
 		{
 			pSEND_HTTP_TASK pRecogResultTask = new SEND_HTTP_TASK;
 			pRecogResultTask->nTaskType = 7;
@@ -442,6 +442,22 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			g_fmHttpSend.lock();
 			g_lHttpSend.push_back(pRecogResultTask);
 			g_fmHttpSend.unlock();
+			return;
+		}
+		else if (pPapers->nSendEzs == 2)
+		{
+			//É¾³ýÔ´ÎÄ¼þ¼Ð
+			try
+			{
+				Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
+				if (srcFileDir.exists())
+					srcFileDir.remove(true);
+			}
+			catch (Poco::Exception& exc)
+			{
+				std::string strErr = "É¾³ýÎÄ¼þ¼Ð(" + pPapers->strPapersPath + ")Ê§°Ü: " + exc.message();
+				g_Log.LogOutError(strErr);
+			}
 			return;
 		}
 

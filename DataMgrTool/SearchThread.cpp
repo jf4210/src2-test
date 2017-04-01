@@ -85,7 +85,7 @@ void CSearchThread::HandleTask(pST_SEARCH pTask)
 				pDecompressTask->bRecogOmr = pTask->bRecogOmr;
 				pDecompressTask->bRecogZkzh = pTask->bRecogZkzh;
 				pDecompressTask->bRecogElectOmr = pTask->bRecogElectOmr;
-				pDecompressTask->bSendEzs = pTask->bSendEzs;
+				pDecompressTask->nSendEzs = pTask->nSendEzs;
 				pDecompressTask->nNoNeedRecogVal = pTask->nNoNeedRecogVal;
 
 				
@@ -105,7 +105,7 @@ void CSearchThread::HandleTask(pST_SEARCH pTask)
 				pDirTask->bRecogOmr = pTask->bRecogOmr;
 				pDirTask->bRecogZkzh = pTask->bRecogZkzh;
 				pDirTask->bRecogElectOmr = pTask->bRecogElectOmr;
-				pDirTask->bSendEzs = pTask->bSendEzs;
+				pDirTask->nSendEzs = pTask->nSendEzs;
 				pDirTask->nNoNeedRecogVal = pTask->nNoNeedRecogVal;
 
 				_SearchPathList_.push_back(pDirTask);

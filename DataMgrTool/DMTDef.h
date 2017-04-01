@@ -39,7 +39,7 @@
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION	_T("1.70321-1")
+#define SOFT_VERSION	_T("1.70401-1")
 #define SYS_BASE_NAME	_T("YKLX-DMT")
 //#define WH_CCBKS		//武汉楚才杯专用，解析二维码需要json解析
 
@@ -111,7 +111,7 @@ typedef struct _DecompressTask_
 	bool bRecogOmr;			//识别OMR
 	bool bRecogZkzh;		//识别准考证号
 	bool bRecogElectOmr;	//识别选做题
-	bool bSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩
+	int	 nSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩
 	int	 nNoNeedRecogVal;	////试卷袋不识别阀值：omr怀疑 + omr空 + SN空总数大于此阀值才进行重识别
 	//---------
 
@@ -126,7 +126,7 @@ typedef struct _DecompressTask_
 		bRecogElectOmr = true;
 		bRecogOmr = true;
 		bRecogZkzh = true;
-		bSendEzs = false;
+		nSendEzs = 2;
 		nNoNeedRecogVal = 0;
 	}
 }DECOMPRESSTASK, *pDECOMPRESSTASK;
@@ -144,7 +144,7 @@ typedef struct  _StSearchTash_
 	bool bRecogOmr;			//识别OMR
 	bool bRecogZkzh;		//识别准考证号
 	bool bRecogElectOmr;	//识别选做题
-	bool bSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩
+	int  nSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩		//0-使用压缩包方式，1-直接发送结果给ezs，2-不发送结果也不压缩试卷包，测试模式，看识别率
 	int	 nNoNeedRecogVal;	////试卷袋不识别阀值：omr怀疑 + omr空 + SN空总数大于此阀值才进行重识别
 	//---------
 	std::string strSearchPath;
@@ -153,7 +153,7 @@ typedef struct  _StSearchTash_
 		bRecogElectOmr = true;
 		bRecogOmr = true;
 		bRecogZkzh = true;
-		bSendEzs = false;
+		nSendEzs = 2;
 		nNoNeedRecogVal = 0;
 	}
 }ST_SEARCH, *pST_SEARCH;
@@ -262,7 +262,7 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	bool	bRecogOmr;			//直接发送识别结果时，是否发送OMR
 	bool	bRecogZkzh;			//直接发送识别结果时，是否发送准考证号
 	bool	bRecogElectOmr;		//直接发送识别结果时，是否发送选做题
-	bool	bSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩
+	int		nSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩	//0-使用压缩包方式，1-直接发送结果给ezs，2-不发送结果也不压缩试卷包，测试模式，看识别率
 
 	int		nPaperCount;				//试卷袋中试卷总数量(学生数)
 	int		nRecogErrCount;				//识别错误试卷数量
@@ -319,7 +319,7 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 		bRecogOmr = true;
 		bRecogZkzh = true;
 		bRecogElectOmr = true;
-		bSendEzs = false;
+		nSendEzs = 2;
 		nTaskCounts = 0;
 		nTotalPics = 0;
 		nPaperCount = 0;
