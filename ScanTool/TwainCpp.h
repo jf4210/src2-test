@@ -1,8 +1,11 @@
 #ifndef __TWAINCPP_
 #define __TWAINCPP_
 
+#ifndef TEST_SCAN_THREAD
 #include "Twain.h"
-
+#else
+#include "twain/twain.h"
+#endif
 
 #define TWCPP_ANYCOUNT		(-1)
 #define TWCPP_CANCELTHIS	(1)

@@ -62,7 +62,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\..\bin\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>libzbar-0.lib;opencv_world310d.lib;libeay32.lib;ssleay32.lib;libmupdf.lib</AdditionalDependencies>
+      <AdditionalDependencies>FreeImage.lib;libzbar-0.lib;opencv_world310d.lib;libeay32.lib;ssleay32.lib;libmupdf.lib</AdditionalDependencies>
       <StackReserveSize>30000000</StackReserveSize>
       <StackCommitSize>30000000</StackCommitSize>
       <HeapReserveSize>30000000</HeapReserveSize>

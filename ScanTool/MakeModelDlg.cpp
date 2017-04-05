@@ -33,7 +33,7 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_pCurRectInfo(NULL), m_ptFixCP(0,0)
 	, m_bFistHTracker(true), m_bFistVTracker(true), m_bFistSNTracker(true)
 	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL), m_pSNInfoDlg(NULL), m_pElectOmrDlg(NULL)
-	, m_bShiftKeyDown(false), m_pScanThread(NULL)
+	, m_bShiftKeyDown(false)/*, m_pScanThread(NULL)*/
 {
 	InitParam();
 }
@@ -887,7 +887,7 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 	}
 
 #ifdef TEST_SCAN_THREAD
-	m_scanThread.setScanPath(m_strScanSavePath);
+//	m_scanThread.setScanPath(m_strScanSavePath);
 	m_scanThread.PostThreadMessage(MSG_START_SCAN, NULL, NULL);
 
 // 	if(m_pScanThread)
@@ -920,21 +920,7 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 	int nDuplex = dlg.m_nCurrDuplex;		//单双面,0-单面,1-双面
 
 	bool bShowScanSrcUI = g_bShowScanSrcUI;
-
-#if 0
-	if (dlg.m_bAdvancedSetting)
-	{
-		bShowScanSrcUI = true;
-		if (!Acquire(TWCPP_ANYCOUNT, bShowScanSrcUI))
-		{
-			TRACE("扫描失败\n");
-		}
-		GetDlgItem(IDC_BTN_ScanModel)->EnableWindow(TRUE);
-		return;
-	}
-#endif
-
-
+	
 	int nSize = TWSS_NONE;							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3	TWSS_NONE-定制
 	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
 	int nResolution = 200;					//dpi: 72, 150, 200, 300
@@ -6346,3 +6332,29 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 		m_pModel->nScanSize = 3;
 	m_pModel->nScanType = dlg.m_nScanType;
 }
+
+#ifdef TEST_SCAN_THREAD
+LRESULT CMakeModelDlg::ScanDone(WPARAM wParam, LPARAM lParam)
+{
+	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
+	if (pResult)
+	{
+		TRACE("扫描完成消息。%s\n", pResult->strResult.c_str());
+		delete pResult;
+		pResult = NULL;
+	}
+	return 1;
+}
+
+LRESULT CMakeModelDlg::ScanErr(WPARAM wParam, LPARAM lParam)
+{
+	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
+	if (pResult)
+	{
+		TRACE("扫描错误。%s\n", pResult->strResult.c_str());
+		delete pResult;
+		pResult = NULL;
+	}
+	return 1;
+}
+#endif

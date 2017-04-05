@@ -737,7 +737,7 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 			pTask->nSubjectID = pModelInfo->nSubjectID;
 			pTask->strUri = SysSet.m_strBackUri + "/scanTemplate";
 			pTask->pUser = pModelInfo->pUser;
-			pTask->strEzs = "ezs=" + strEzs;
+			pTask->strEzs = SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
 			pTask->strMsg = "setScanModel";
 			pTask->strRequest = jsnString.str();
 			g_fmScanReq.lock();

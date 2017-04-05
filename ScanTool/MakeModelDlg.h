@@ -154,10 +154,10 @@ public:
 
 	bool		m_bShiftKeyDown;	//shift按键是否按下
 
-
+#ifdef TEST_SCAN_THREAD
 	CScanThread m_scanThread;
 	CScanThread* m_pScanThread;
-
+#endif
 	//扫描
 	BOOL m_bTwainInit;
 	CString		m_strScanSavePath;
@@ -227,6 +227,11 @@ private:
 	void AddRecogSN();							//添加考号识别区域
 
 	void RecogFixWithHead(int i);				//在同步头模式，识别定点信息
+
+#ifdef TEST_SCAN_THREAD
+	LRESULT	ScanDone(WPARAM wParam, LPARAM lParam);
+	LRESULT	ScanErr(WPARAM wParam, LPARAM lParam);
+#endif
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog(); 

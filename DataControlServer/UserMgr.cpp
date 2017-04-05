@@ -228,7 +228,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
 			pTask->strUri = SysSet.m_strBackUri + strUriValue;
 			pTask->pUser  = pUser;
-			pTask->strEzs = "ezs=" + strEzs;
+			pTask->strEzs = SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
 			pTask->strMsg = "ezs";
 
 			std::string strLog = Poco::format("天喻平台，获取考试列表: src_SHA1 = %s\nSHA1 = %s\nuri = %s", strSha1Src, strSHA1_Up, pTask->strUri);
@@ -237,7 +237,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
 			pTask->strUri = SysSet.m_strBackUri + "/examinfo";
 			pTask->pUser  = pUser;
-			pTask->strEzs = "ezs=" + strEzs;
+			pTask->strEzs = SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
 			pTask->strMsg = "ezs";
 		#endif
 			g_fmScanReq.lock();
@@ -510,7 +510,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			pTask->nExamID = stGetBmkInfo.nExamID;
 			pTask->nSubjectID = stGetBmkInfo.nSubjectID;
 			pTask->pUser = pUser;
-			pTask->strEzs = "ezs=" + strEzs;
+			pTask->strEzs = SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
 			pTask->strMsg = "getBmk";
 
 			Poco::JSON::Object obj;

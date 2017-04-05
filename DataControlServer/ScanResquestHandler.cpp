@@ -518,7 +518,7 @@ int CScanResquestHandler::modelHandle(pSCAN_REQ_TASK pTask, Poco::JSON::Object::
 			pNewTask->nSubjectID = pTask->nSubjectID;
 			pNewTask->strUri = SysSet.m_strBackUri + "/scanTemplate";
 			pNewTask->pUser = pTask->pUser;
-			pNewTask->strEzs = "ezs=" + strEzs;
+			pNewTask->strEzs = SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
 			pNewTask->strMsg = "setScanModel";
 			pNewTask->strRequest = jsnString.str();
 			g_fmScanReq.lock();
