@@ -233,20 +233,28 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 					break;
 				}
 			}
+
 			bool bFind = false;
-			//通过灰度值来判断
-			for (int i = 0; i < RectCompList.size(); i++)
+			if (RectCompList.size() == 1)	//只发现一个矩形时，就默认就是定点了
 			{
-				RECTINFO rcTmp = rcFix;
-				rcTmp.rt = RectCompList[i];
-				Recog(nPic, rcTmp, matCompPic, NULL, NULL);
-				float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
-				float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
-				if (fArea > 0.7 && fArea < 1.5 && fDensity > 0.85)	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
+				bFind = true;
+			}
+			else
+			{
+				//通过灰度值来判断
+				for (int i = 0; i < RectCompList.size(); i++)
 				{
-					bFind = true;
-					rtFix = RectCompList[i];
-					break;
+					RECTINFO rcTmp = rcFix;
+					rcTmp.rt = RectCompList[i];
+					Recog(nPic, rcTmp, matCompPic, NULL, NULL);
+					float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
+					float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
+					if (fArea > 0.5 && fArea < 2.0 && fDensity > rcTmp.fStandardValuePercent)	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
+					{
+						bFind = true;
+						rtFix = RectCompList[i];
+						break;
+					}
 				}
 			}
 			if (!bFind)
@@ -254,6 +262,7 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 			else
 			{
 				RECTINFO rcFixInfo = rc;
+				rcFixInfo.nTH = i;			//这是属于模板上定点列表的第几个
 				rcFixInfo.rt = rtFix;
 //				pPic->lFix.push_back(rcFixInfo);
 				rlFix.push_back(rcFixInfo);
@@ -280,6 +289,58 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 bool COmrRecog::RecogRtVal(RECTINFO& rc, cv::Mat& matCompPic)
 {
 	return Recog(0, rc, matCompPic, NULL, NULL);
+}
+
+bool COmrRecog::RecogZkzh(int nPic, cv::Mat& matCompPic, pMODEL	pModel, int nOrientation)
+{
+	bool bResult = false;
+	SNLIST::iterator itSN = pModel->vecPaperModel[nPic]->lSNInfo.begin();
+	for (; itSN != pModel->vecPaperModel[nPic]->lSNInfo.end(); itSN++)
+	{
+		pSN_ITEM pSnItem = *itSN;
+
+		RECTLIST::iterator itSnItem = pSnItem->lSN.begin();
+		for (; itSnItem != pSnItem->lSN.end(); itSnItem++)		//最多一个矩形块，列表中最多只有一个元素
+		{
+			RECTINFO rc = *itSnItem;
+
+			//获取按给定方向旋转图像后的矩形
+			cv::Rect rtModelPic;
+			rtModelPic.width = pModel->vecPaperModel[nPic]->nPicW;
+			rtModelPic.height = pModel->vecPaperModel[nPic]->nPicH;
+			rc.rt = GetRectByOrientation(rtModelPic, rc.rt, nOrientation);
+
+			try
+			{
+				if (rc.rt.x < 0) rc.rt.x = 0;
+				if (rc.rt.y < 0) rc.rt.y = 0;
+				if (rc.rt.br().x > matCompPic.cols)
+					rc.rt.width = matCompPic.cols - rc.rt.x;
+				if (rc.rt.br().y > matCompPic.rows)
+					rc.rt.height = matCompPic.rows - rc.rt.y;
+
+				cv::Mat matCompRoi;
+				matCompRoi = matCompPic(rc.rt);
+
+				cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+				string strTypeName;
+				string strResult = GetQR(matCompRoi, strTypeName);
+
+				std::string strLog;
+				if (strResult != "")
+				{
+					bResult = true;
+				}
+			}
+			catch (cv::Exception& exc)
+			{
+				break;
+			}
+		}
+	}
+
+	return bResult;
 }
 
 bool COmrRecog::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel)

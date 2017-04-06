@@ -1323,7 +1323,7 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 
 		cv::Point ptA, ptB, ptA0, ptB0, ptC0;
 		cv::Point2d ptC;
-#if 1
+
 		if (nPicW != 0 && nPicH != 0)
 		{
 			int nCenterX = nPicW / 2 + 0.5;
@@ -1332,34 +1332,34 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 			{
 				if (rcModelA.rt.y < nCenterY)
 				{
-					ptA0.x = rcModelA.rt.x + rcModelA.rt.width;
-					ptA0.y = rcModelA.rt.y + rcModelA.rt.height;
-					ptA.x = rcA.rt.x + rcA.rt.width;
-					ptA.y = rcA.rt.y + rcA.rt.height;
+					ptA0.x = rcModelA.rt.x + rcModelA.rt.width * 0.8;
+					ptA0.y = rcModelA.rt.y + rcModelA.rt.height * 0.8;
+					ptA.x = rcA.rt.x + rcA.rt.width * 0.8;
+					ptA.y = rcA.rt.y + rcA.rt.height * 0.8;
 				}
 				else
 				{
-					ptA0.x = rcModelA.rt.x + rcModelA.rt.width;
-					ptA0.y = rcModelA.rt.y;
-					ptA.x = rcA.rt.x + rcA.rt.width;
-					ptA.y = rcA.rt.y;
+					ptA0.x = rcModelA.rt.x + rcModelA.rt.width * 0.8;
+					ptA0.y = rcModelA.rt.y + rcModelA.rt.height * 0.2;
+					ptA.x = rcA.rt.x + rcA.rt.width * 0.8;
+					ptA.y = rcA.rt.y + rcA.rt.height * 0.2;
 				}
 			}
 			else
 			{
 				if (rcModelA.rt.y < nCenterY)
 				{
-					ptA0.x = rcModelA.rt.x;
-					ptA0.y = rcModelA.rt.y + rcModelA.rt.height;
-					ptA.x = rcA.rt.x;
-					ptA.y = rcA.rt.y + rcA.rt.height;
+					ptA0.x = rcModelA.rt.x + rcModelA.rt.width * 0.2;
+					ptA0.y = rcModelA.rt.y + rcModelA.rt.height * 0.8;
+					ptA.x = rcA.rt.x + rcA.rt.width * 0.2;
+					ptA.y = rcA.rt.y + rcA.rt.height * 0.8;
 				}
 				else
 				{
-					ptA0.x = rcModelA.rt.x;
-					ptA0.y = rcModelA.rt.y;
-					ptA.x = rcA.rt.x;
-					ptA.y = rcA.rt.y;
+					ptA0.x = rcModelA.rt.x + rcModelA.rt.width * 0.2;
+					ptA0.y = rcModelA.rt.y + rcModelA.rt.height * 0.2;
+					ptA.x = rcA.rt.x + rcA.rt.width * 0.2;
+					ptA.y = rcA.rt.y + rcA.rt.height * 0.2;
 				}
 			}
 
@@ -1367,65 +1367,53 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 			{
 				if (rcModelB.rt.y < nCenterY)
 				{
-					ptB0.x = rcModelB.rt.x + rcModelB.rt.width;
-					ptB0.y = rcModelB.rt.y + rcModelB.rt.height;
-					ptB.x = rcB.rt.x + rcB.rt.width;
-					ptB.y = rcB.rt.y + rcB.rt.height;
+					ptB0.x = rcModelB.rt.x + rcModelB.rt.width * 0.8;
+					ptB0.y = rcModelB.rt.y + rcModelB.rt.height * 0.8;
+					ptB.x = rcB.rt.x + rcB.rt.width * 0.8;
+					ptB.y = rcB.rt.y + rcB.rt.height * 0.8;
 				}
 				else
 				{
-					ptB0.x = rcModelB.rt.x + rcModelB.rt.width;
-					ptB0.y = rcModelB.rt.y;
-					ptB.x = rcB.rt.x + rcB.rt.width;
-					ptB.y = rcB.rt.y;
+					ptB0.x = rcModelB.rt.x + rcModelB.rt.width * 0.8;
+					ptB0.y = rcModelB.rt.y + rcModelB.rt.height * 0.2;
+					ptB.x = rcB.rt.x + rcB.rt.width * 0.8;
+					ptB.y = rcB.rt.y + rcB.rt.height * 0.2;
 				}
 			}
 			else
 			{
 				if (rcModelB.rt.y < nCenterY)
 				{
-					ptB0.x = rcModelB.rt.x;
-					ptB0.y = rcModelB.rt.y + rcModelB.rt.height;
-					ptB.x = rcB.rt.x;
-					ptB.y = rcB.rt.y + rcB.rt.height;
+					ptB0.x = rcModelB.rt.x + rcModelB.rt.width * 0.2;
+					ptB0.y = rcModelB.rt.y + rcModelB.rt.height * 0.8;
+					ptB.x = rcB.rt.x + rcB.rt.width * 0.2;
+					ptB.y = rcB.rt.y + rcB.rt.height * 0.8;
 				}
 				else
 				{
-					ptB0.x = rcModelB.rt.x;
-					ptB0.y = rcModelB.rt.y;
-					ptB.x = rcB.rt.x;
-					ptB.y = rcB.rt.y;
+					ptB0.x = rcModelB.rt.x + rcModelB.rt.width * 0.2;
+					ptB0.y = rcModelB.rt.y + rcModelB.rt.height * 0.2;
+					ptB.x = rcB.rt.x + rcB.rt.width * 0.2;
+					ptB.y = rcB.rt.y + rcB.rt.height * 0.2;
 				}
 			}
 		}
 		else
 		{
-			ptA0.x = rcModelA.rt.x + rcModelA.rt.width;
-			ptA0.y = rcModelA.rt.y + rcModelA.rt.height;
-			ptB0.x = rcModelB.rt.x + rcModelB.rt.width;
-			ptB0.y = rcModelB.rt.y + rcModelB.rt.height;
+			ptA0.x = rcModelA.rt.x + rcModelA.rt.width * 0.8;
+			ptA0.y = rcModelA.rt.y + rcModelA.rt.height * 0.8;
+			ptB0.x = rcModelB.rt.x + rcModelB.rt.width * 0.8;
+			ptB0.y = rcModelB.rt.y + rcModelB.rt.height * 0.8;
 
-			ptA.x = rcA.rt.x + rcA.rt.width;
-			ptA.y = rcA.rt.y + rcA.rt.height;
-			ptB.x = rcB.rt.x + rcB.rt.width;
-			ptB.y = rcB.rt.y + rcB.rt.height;
+			ptA.x = rcA.rt.x + rcA.rt.width * 0.8;
+			ptA.y = rcA.rt.y + rcA.rt.height * 0.8;
+			ptB.x = rcB.rt.x + rcB.rt.width * 0.8;
+			ptB.y = rcB.rt.y + rcB.rt.height * 0.8;
 		}
 		ptC0.x = rt.x;
 		ptC0.y = rt.y;
 		
-#else
-		ptA0.x = rcModelA.rt.x + rcModelA.rt.width / 2 + 0.5;
-		ptA0.y = rcModelA.rt.y + rcModelA.rt.height / 2 + 0.5;
-		ptB0.x = rcModelB.rt.x + rcModelB.rt.width / 2 + 0.5;
-		ptB0.y = rcModelB.rt.y + rcModelB.rt.height / 2 + 0.5;
-		ptC0.x = rt.x;
-		ptC0.y = rt.y;
 
-		ptA.x = rcA.rt.x + rcA.rt.width / 2 + 0.5;
-		ptA.y = rcA.rt.y + rcA.rt.height / 2 + 0.5;
-		ptB.x = rcB.rt.x + rcB.rt.width / 2 + 0.5;
-		ptB.y = rcB.rt.y + rcB.rt.height / 2 + 0.5;
-#endif
 		ptC = TriangleCoordinate(ptA0, ptB0, ptC0, ptA, ptB);
 		rt.x = ptC.x;
 		rt.y = ptC.y;
@@ -2057,19 +2045,44 @@ bool FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lMod
 	clock_t start, end;
 	start = clock();
 	char szTmpLog[400] = { 0 };
+#if 1
+	std::vector<cv::Point2f> vecFixPt;
+	std::vector<cv::Point2f> vecFixNewPt;
+	RECTLIST::iterator itCP2 = lFix.begin();
+	for (; itCP2 != lFix.end(); itCP2++)
+	{
+		cv::Point2f pt;
 
+		pt.x = itCP2->rt.x + itCP2->rt.width / 2;
+		pt.y = itCP2->rt.y + itCP2->rt.height / 2;
+
+		vecFixNewPt.push_back(pt);
+		//获取该定点属于第几个模板定点
+		RECTLIST::iterator itCP = lModelFix.begin();
+		for (int i = 0; itCP != lModelFix.end(); i++, itCP++)
+		{
+			if (i == itCP2->nTH)
+			{
+				cv::Point2f pt2;
+
+				pt2.x = itCP->rt.x + itCP->rt.width / 2;
+				pt2.y = itCP->rt.y + itCP->rt.height / 2;
+
+				vecFixPt.push_back(pt2);
+				break;
+			}
+		}
+	}
+#else
 	std::vector<cv::Point2f> vecFixPt;
 	RECTLIST::iterator itCP = lModelFix.begin();
 	for (; itCP != lModelFix.end(); itCP++)
 	{
 		cv::Point2f pt;
-#if 0
-		pt.x = itCP->rt.x;
-		pt.y = itCP->rt.y;
-#else
+
 		pt.x = itCP->rt.x + itCP->rt.width / 2;
 		pt.y = itCP->rt.y + itCP->rt.height / 2;
-#endif
+
 		vecFixPt.push_back(pt);
 	}
 	std::vector<cv::Point2f> vecFixNewPt;
@@ -2077,16 +2090,13 @@ bool FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lMod
 	for (; itCP2 != lFix.end(); itCP2++)
 	{
 		cv::Point2f pt;
-#if 0
-		pt.x = itCP2->rt.x;
-		pt.y = itCP2->rt.y;
-#else
+
 		pt.x = itCP2->rt.x + itCP2->rt.width / 2;
 		pt.y = itCP2->rt.y + itCP2->rt.height / 2;
-#endif
+
 		vecFixNewPt.push_back(pt);
 	}
-
+#endif
 	cv::Point2f srcTri[3];
 	cv::Point2f dstTri[3];
 	cv::Mat warp_mat(2, 3, CV_32FC1);
@@ -2235,6 +2245,15 @@ bool FixwarpPerspective2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECT
 
 bool PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat)
 {
+#if 1
+	if (lModelFix.size() >= lFix.size())
+	{
+		if (lFix.size() == 3)
+			FixWarpAffine(nPic, matCompPic, lFix, lModelFix, inverseMat);
+		else if (lFix.size() == 4)
+			FixwarpPerspective(nPic, matCompPic, lFix, lModelFix, inverseMat);
+	}
+#else
 	if (lFix.size() != lModelFix.size())
 		return false;
 
@@ -2242,7 +2261,7 @@ bool PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModel
 		FixWarpAffine(nPic, matCompPic, lFix, lModelFix, inverseMat);
 	else if (lFix.size() == 4)
 		FixwarpPerspective(nPic, matCompPic, lFix, lModelFix, inverseMat);
-
+#endif
 	return true;
 }
 

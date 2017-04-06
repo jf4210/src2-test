@@ -3838,6 +3838,42 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 	int nModelPicPersent = rtModelPic.width / rtModelPic.height;	//0||1
 	int nSrcPicPercent = matSrc.cols / matSrc.rows;
 
+	if (m_pModel->nZkzhType == 2)			//使用条码的时候，先通过条码来判断方向
+	{
+		if (nModelPicPersent == nSrcPicPercent)
+		{
+			TRACE("与模板图片方向一致\n");
+			for (int i = 1; i <= 4; i = i + 3)
+			{
+				COmrRecog omrRecogObj;
+				bool bResult = omrRecogObj.RecogZkzh(n, matSrc, m_pModel, i);
+				if (!bResult)
+					continue;
+
+				bFind = true;
+				nResult = i;
+				break;
+			}
+		}
+		else
+		{
+			TRACE("与模板图片方向不一致\n");
+			for (int i = 2; i <= 3; i++)
+			{
+				COmrRecog omrRecogObj;
+				bool bResult = omrRecogObj.RecogZkzh(n, matSrc, m_pModel, i);
+				if (!bResult)
+					continue;
+
+				bFind = true;
+				nResult = i;
+				break;
+			}
+		}
+		if (bFind)
+			return nResult;
+	}
+
 	int nCount = m_pModel->vecPaperModel[n]->lGray.size() + m_pModel->vecPaperModel[n]->lCourse.size();
 	if (nCount == 0)
 		return nResult;
@@ -3853,10 +3889,10 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			bool bResult = omrRecogObj.RecogFixCP(n, matSrc, lFix, m_pModel, i);
 			if (!bResult)
 				continue;
-	#ifdef WarpAffine_TEST
+#ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
 			PicTransfer(0, matSrc, lFix, m_pModel->vecPaperModel[n]->lFix, inverseMat);
-	#endif
+#endif
 
 			TRACE("查灰度校验点\n");
 			bool bContinue = false;
@@ -3953,12 +3989,12 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			bool bResult = omrRecogObj.RecogFixCP(n, matSrc, lFix, m_pModel, i);
 			if (!bResult)
 				continue;
-	#ifdef WarpAffine_TEST
+#ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
 			cv::Mat matDst;
 			FixwarpPerspective2(0, matSrc, matDst, lFix, m_pModel->vecPaperModel[n]->lFix, inverseMat);
-//			PicTransfer(0, matSrc, lFix, m_pModel->vecPaperModel[n]->lFix, inverseMat);
-	#endif
+			//			PicTransfer(0, matSrc, lFix, m_pModel->vecPaperModel[n]->lFix, inverseMat);
+#endif
 
 			TRACE("查灰度校验点\n");
 			bool bContinue = false;
@@ -4855,7 +4891,7 @@ BOOL CScanToolDlg::StartGuardProcess()
 	CString strProcessName = _T("");
 	strProcessName.Format(_T("EasyTntGuardProcess.exe"));
 	int nProcessID = 0;
-#if 1
+#if 0
 	if (CheckProcessExist(strProcessName, nProcessID))
 	{
 		HANDLE hProcess = 0;

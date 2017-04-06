@@ -2158,6 +2158,42 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 	int nSrcPicPercent = matSrc.cols / matSrc.rows;
 
 #if 1
+	if (m_pModel->nZkzhType == 2)			//使用条码的时候，先通过条码来判断方向
+	{
+		if (nModelPicPersent == nSrcPicPercent)
+		{
+			TRACE("与模板图片方向一致\n");
+			for (int i = 1; i <= 4; i = i + 3)
+			{
+				COmrRecog omrRecogObj;
+				bool bResult = omrRecogObj.RecogZkzh(n, matSrc, m_pModel, i);
+				if (!bResult)
+					continue;
+
+				bFind = true;
+				nResult = i;
+				break;
+			}
+		}
+		else
+		{
+			TRACE("与模板图片方向不一致\n");
+			for (int i = 2; i <= 3; i++)
+			{
+				COmrRecog omrRecogObj;
+				bool bResult = omrRecogObj.RecogZkzh(n, matSrc, m_pModel, i);
+				if (!bResult)
+					continue;
+
+				bFind = true;
+				nResult = i;
+				break;
+			}
+		}
+		if (bFind)
+			return nResult;
+	}
+
 	int nCount = m_pModel->vecPaperModel[n]->lGray.size() + m_pModel->vecPaperModel[n]->lCourse.size();
 	if (nCount == 0)
 		return nResult;

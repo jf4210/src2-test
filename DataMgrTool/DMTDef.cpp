@@ -1042,18 +1042,44 @@ bool FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lMod
 	start = clock();
 	char szTmpLog[400] = { 0 };
 
+#if 1
+	std::vector<cv::Point2f> vecFixPt;
+	std::vector<cv::Point2f> vecFixNewPt;
+	RECTLIST::iterator itCP2 = lFix.begin();
+	for (; itCP2 != lFix.end(); itCP2++)
+	{
+		cv::Point2f pt;
+
+		pt.x = itCP2->rt.x + itCP2->rt.width / 2;
+		pt.y = itCP2->rt.y + itCP2->rt.height / 2;
+
+		vecFixNewPt.push_back(pt);
+		//获取该定点属于第几个模板定点
+		RECTLIST::iterator itCP = lModelFix.begin();
+		for (int i = 0; itCP != lModelFix.end(); i++, itCP++)
+		{
+			if (i == itCP2->nTH)
+			{
+				cv::Point2f pt2;
+
+				pt2.x = itCP->rt.x + itCP->rt.width / 2;
+				pt2.y = itCP->rt.y + itCP->rt.height / 2;
+
+				vecFixPt.push_back(pt2);
+				break;
+			}
+		}
+	}
+#else
 	std::vector<cv::Point2f> vecFixPt;
 	RECTLIST::iterator itCP = lModelFix.begin();
 	for (; itCP != lModelFix.end(); itCP++)
 	{
 		cv::Point2f pt;
-#if 0
-		pt.x = itCP->rt.x;
-		pt.y = itCP->rt.y;
-#else
+
 		pt.x = itCP->rt.x + itCP->rt.width / 2;
 		pt.y = itCP->rt.y + itCP->rt.height / 2;
-#endif
+
 		vecFixPt.push_back(pt);
 	}
 	std::vector<cv::Point2f> vecFixNewPt;
@@ -1061,15 +1087,13 @@ bool FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lMod
 	for (; itCP2 != lFix.end(); itCP2++)
 	{
 		cv::Point2f pt;
-#if 0
-		pt.x = itCP2->rt.x;
-		pt.y = itCP2->rt.y;
-#else
+
 		pt.x = itCP2->rt.x + itCP2->rt.width / 2;
 		pt.y = itCP2->rt.y + itCP2->rt.height / 2;
-#endif
+
 		vecFixNewPt.push_back(pt);
 	}
+#endif
 
 	cv::Point2f srcTri[3];
 	cv::Point2f dstTri[3];
@@ -1165,6 +1189,15 @@ bool FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST&
 
 bool PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat)
 {
+#if 1
+	if (lModelFix.size() >= lFix.size())
+	{
+		if (lFix.size() == 3)
+			FixWarpAffine(nPic, matCompPic, lFix, lModelFix, inverseMat);
+		else if (lFix.size() == 4)
+			FixwarpPerspective(nPic, matCompPic, lFix, lModelFix, inverseMat);
+	}
+#else
 	if (lFix.size() != lModelFix.size())
 		return false;
 
@@ -1172,7 +1205,7 @@ bool PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModel
 		FixWarpAffine(nPic, matCompPic, lFix, lModelFix, inverseMat);
 	else if (lFix.size() == 4)
 		FixwarpPerspective(nPic, matCompPic, lFix, lModelFix, inverseMat);
-
+#endif
 	return true;
 }
 

@@ -2089,10 +2089,10 @@ bool CMakeModelDlg::checkValidity()
 	{
 		for (int i = 0; i < m_vecPaperModelInfo.size(); i++)
 		{
-			if (m_vecPaperModelInfo[i]->vecRtFix.size() < 2)
+			if (m_vecPaperModelInfo[i]->vecRtFix.size() < 3)
 			{
 				char szTmp[50] = { 0 };
-				sprintf_s(szTmp, "第 %d 页定点设置数量太少，要求至少2个，建议设置4个", i + 1);
+				sprintf_s(szTmp, "第 %d 页定点设置数量太少，要求至少3个，建议设置4个", i + 1);
 				AfxMessageBox(A2T(szTmp));
 				bResult = false;
 				break;

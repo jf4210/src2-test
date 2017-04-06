@@ -825,30 +825,45 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 					break;
 				}
 			}
-			//通过灰度值来判断
-			for (int i = 0; i < RectCompList.size(); i++)
+
+			bool bFind = false;
+			if (RectCompList.size() == 1)	//只发现一个矩形时，就默认就是定点了
 			{
-				RECTINFO rcTmp = rcFix;
-				rcTmp.rt = RectCompList[i];
-				Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
-				float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
-				float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
-				if (fArea > 0.7 && fArea < 1.5 && fDensity > 0.85)	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
+				bFind = true;
+			}
+			else
+			{
+				//通过灰度值来判断
+				for (int i = 0; i < RectCompList.size(); i++)
 				{
-					rtFix = RectCompList[i];
-					break;
+					RECTINFO rcTmp = rcFix;
+					rcTmp.rt = RectCompList[i];
+					Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
+					float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
+					float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
+					if (fArea > 0.5 && fArea < 2.0 && fDensity > rcTmp.fStandardValuePercent)	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
+					{
+						rtFix = RectCompList[i];
+						break;
+					}
 				}
 			}
-			m_ptFixCP.x = static_cast<int>(rtFix.x + rtFix.width / 2 + 0.5 + rc.rt.x);
-			m_ptFixCP.y = static_cast<int>(rtFix.y + rtFix.height / 2 + 0.5 + rc.rt.y);
+			if (!bFind)
+				bFindRect = true;
+			else
+			{
+				m_ptFixCP.x = static_cast<int>(rtFix.x + rtFix.width / 2 + 0.5 + rc.rt.x);
+				m_ptFixCP.y = static_cast<int>(rtFix.y + rtFix.height / 2 + 0.5 + rc.rt.y);
 
-// 			rtFix.x = rtFix.x + rc.rt.x;
-// 			rtFix.y = rtFix.y + rc.rt.y;
+				// 			rtFix.x = rtFix.x + rc.rt.x;
+				// 			rtFix.y = rtFix.y + rc.rt.y;
 
-			RECTINFO rcFixInfo = rc;
-			rcFixInfo.rt = rtFix;
-			pPic->lFix.push_back(rcFixInfo);
-			TRACE("定点矩形: (%d,%d,%d,%d)\n", rtFix.x, rtFix.y, rtFix.width, rtFix.height);
+				RECTINFO rcFixInfo = rc;
+				rcFixInfo.nTH = i;			//这是属于模板上定点列表的第几个
+				rcFixInfo.rt = rtFix;
+				pPic->lFix.push_back(rcFixInfo);
+				TRACE("定点矩形: (%d,%d,%d,%d)\n", rtFix.x, rtFix.y, rtFix.width, rtFix.height);
+			}
 		}
 		if (bFindRect)
 		{

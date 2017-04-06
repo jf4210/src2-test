@@ -239,44 +239,6 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		if (bFind)
 		{
 			HandleWithErrPaper(pPaper);
-// 			pPaper->bIssuePaper = true;				//标识此学生试卷属于问题试卷
-// 			pPAPERSINFO pPapers = static_cast<pPAPERSINFO>(pPaper->pPapers);
-// 
-// 			pPapers->fmlPaper.lock();
-// 			PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
-// 			for (; itPaper != pPapers->lPaper.end();)
-// 			{
-// 				if (*itPaper == pPaper)
-// 				{
-// 					itPaper = pPapers->lPaper.erase(itPaper);
-// 					break;
-// 				}
-// 				else
-// 					itPaper++;
-// 			}
-// 			pPapers->fmlPaper.unlock();
-// 
-// 			pPapers->fmlIssue.lock();
-// 			bool bFind = false;
-// 			PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
-// 			for (; itIssuePaper != pPapers->lIssue.end();)
-// 			{
-// 				if (*itIssuePaper == pPaper)
-// 				{
-// 					bFind = true;
-// 					break;
-// 				}
-// 				else
-// 					itIssuePaper++;
-// 			}
-// 			if (!bFind)
-// 			{
-// 				pPapers->lIssue.push_back(pPaper);
-// 				pPapers->nRecogErrCount++;
-// 			}
-// 			pPapers->fmlIssue.unlock();
-// 
-// 			(static_cast<CDialog*>(pPaper->pSrcDlg))->SendMessage(MSG_ERR_RECOG, (WPARAM)pPaper, (LPARAM)pPapers);		//PostMessageW
 			break;									//找到这张试卷有问题点，不进行下一张试卷的检测
 		}	
 		
@@ -695,20 +657,28 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 					break;
 				}
 			}
+
 			bool bFind = false;
-			//通过灰度值来判断
-			for (int i = 0; i < RectCompList.size(); i++)
+			if (RectCompList.size() == 1)	//只发现一个矩形时，就默认就是定点了
 			{
-				RECTINFO rcTmp = rcFix;
-				rcTmp.rt = RectCompList[i];
-				Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
-				float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
-				float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
-				if (fArea > 0.7 && fArea < 1.5 && fDensity > 0.85)	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
+				bFind = true;
+			}
+			else
+			{
+				//通过灰度值来判断
+				for (int k = 0; k < RectCompList.size(); k++)
 				{
-					bFind = true;
-					rtFix = RectCompList[i];
-					break;
+					RECTINFO rcTmp = rcFix;
+					rcTmp.rt = RectCompList[k];
+					Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
+					float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
+					float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
+					if (fArea > 0.5 && fArea < 2.0 && fDensity > rcTmp.fStandardValuePercent)	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
+					{
+						bFind = true;
+						rtFix = RectCompList[k];
+						break;
+					}
 				}
 			}
 			if (!bFind)
@@ -722,6 +692,7 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				// 			rtFix.y = rtFix.y + rc.rt.y;
 
 				RECTINFO rcFixInfo = rc;
+				rcFixInfo.nTH = i;			//这是属于模板上定点列表的第几个
 				rcFixInfo.rt = rtFix;
 				pPic->lFix.push_back(rcFixInfo);
 				TRACE("定点矩形: (%d,%d,%d,%d)\n", rtFix.x, rtFix.y, rtFix.width, rtFix.height);
