@@ -3827,7 +3827,7 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 
 	if (m_pModel->nHasHead)
 		return nResult;
-#if 1
+
 	cv::Rect rtModelPic;
 	rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
 	rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
@@ -3887,8 +3887,8 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			RECTLIST lFix;
 			COmrRecog omrRecogObj;
 			bool bResult = omrRecogObj.RecogFixCP(n, matSrc, lFix, m_pModel, i);
-			if (!bResult)
-				continue;
+// 			if (!bResult)
+// 				continue;
 #ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
 			PicTransfer(0, matSrc, lFix, m_pModel->vecPaperModel[n]->lFix, inverseMat);
@@ -3900,6 +3900,8 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			for (auto rcGray : m_pModel->vecPaperModel[n]->lGray)
 			{
 				RECTINFO rcItem = rcGray;
+				GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+
 				if (omrRecogObj.RecogRtVal(rcItem, matSrc))
 				{
 					if (rcItem.fRealDensity / rcGray.fStandardDensity > rcGray.fStandardValuePercent && rcItem.fRealValue / rcGray.fStandardValue > rcGray.fStandardValuePercent)
@@ -3927,6 +3929,8 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			for (auto rcSubject : m_pModel->vecPaperModel[n]->lCourse)
 			{
 				RECTINFO rcItem = rcSubject;
+				GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+
 				if (omrRecogObj.RecogRtVal(rcItem, matSrc))
 				{
 					if (rcItem.fRealDensity / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent && rcItem.fRealValue / rcSubject.fStandardValue > rcSubject.fStandardValuePercent)
@@ -3987,13 +3991,12 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			RECTLIST lFix;
 			COmrRecog omrRecogObj;
 			bool bResult = omrRecogObj.RecogFixCP(n, matSrc, lFix, m_pModel, i);
-			if (!bResult)
-				continue;
+// 			if (!bResult)
+// 				continue;
 #ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
 			cv::Mat matDst;
-			FixwarpPerspective2(0, matSrc, matDst, lFix, m_pModel->vecPaperModel[n]->lFix, inverseMat);
-			//			PicTransfer(0, matSrc, lFix, m_pModel->vecPaperModel[n]->lFix, inverseMat);
+			PicTransfer2(0, matSrc, matDst, lFix, m_pModel->vecPaperModel[n]->lFix, inverseMat);
 #endif
 
 			TRACE("查灰度校验点\n");
@@ -4002,6 +4005,8 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			for (auto rcGray : m_pModel->vecPaperModel[n]->lGray)
 			{
 				RECTINFO rcItem = rcGray;
+				GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+
 				if (omrRecogObj.RecogRtVal(rcItem, matDst))
 				{
 					if (rcItem.fRealDensity / rcGray.fStandardDensity > rcGray.fStandardValuePercent && rcItem.fRealValue / rcGray.fStandardValue > rcGray.fStandardValuePercent)
@@ -4029,6 +4034,8 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			for (auto rcSubject : m_pModel->vecPaperModel[n]->lCourse)
 			{
 				RECTINFO rcItem = rcSubject;
+				GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+
 				if (omrRecogObj.RecogRtVal(rcItem, matDst))
 				{
 					if (rcItem.fRealDensity / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent && rcItem.fRealValue / rcSubject.fStandardValue > rcSubject.fStandardValuePercent)
@@ -4080,230 +4087,7 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			nResult = 1;
 		}
 	}
-#else
-	cv::Rect rtModelPic;
-	rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
-	rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
-	cv::Rect rtSrcPic;
-	rtSrcPic.width = matSrc.cols;
-	rtSrcPic.height = matSrc.rows;
 
-	int nModelPicPersent = rtModelPic.width / rtModelPic.height;	//0||1
-	int nSrcPicPercent = matSrc.cols / matSrc.rows;
-
-	cv::Rect rt1 = m_pModel->vecPaperModel[n]->rtHTracker;
-	cv::Rect rt2 = m_pModel->vecPaperModel[n]->rtVTracker;
-	TRACE("水平橡皮筋:(%d,%d,%d,%d), 垂直橡皮筋(%d,%d,%d,%d)\n", rt1.x, rt1.y, rt1.width, rt1.height, rt2.x, rt2.y, rt2.width, rt2.height);
-
-	float fFirst_H, fFirst_V, fSecond_H, fSecond_V;
-	fFirst_H = fFirst_V = fSecond_H = fSecond_V = 0.0;
-	if (nModelPicPersent == nSrcPicPercent)	//与模板图片方向一致，需判断正向还是反向一致
-	{
-		TRACE("与模板图片方向一致\n");
-		for (int i = 1; i <= 4; i = i + 3)
-		{
-			TRACE("查灰度校验点\n");
-			bool bContinue = false;
-			int nRtCount = 0;
-			for (auto rcGray : m_pModel->vecPaperModel[n]->lGray)
-			{
-				//先把矩形面积扩大，如何查矩形，用面积来比较
-				cv::Rect rtChk = cv::Rect(rcGray.rt.tl() - cv::Point(10, 10), rcGray.rt.br() + cv::Point(10, 10));
-				cv::Rect rt = GetRectByOrientation(rtModelPic, rtChk, i);
-				cv::Rect rtReal;
-				if (bGetMaxRect(matSrc, rt, rcGray, rtReal))
-				{
-					float fRealVal = GetRtDensity(matSrc, rtReal, rcGray);				//密度是否达到要求
-					float fDensityPer = fRealVal / rtReal.area();
-					float fPer = fRealVal / rcGray.fStandardValue;
-					if (fDensityPer <= 0.5)			//密度连模板的一半都没有直接退出判断
-					{
-						bContinue = true;
-						break;
-					}
-					if (fDensityPer / rcGray.fStandardDensity > rcGray.fStandardValuePercent && fRealVal / rcGray.fStandardValue > rcGray.fStandardValuePercent)
-						++nRtCount;
-					else
-					{
-						TRACE("判断灰度校验点的密度百分比: %f, 低于要求的: %f\n", fPer, rcGray.fStandardValuePercent);
-					}
-				}
-				else
-				{
-					bContinue = true;
-					break;
-				}
-			}
-			if (bContinue)
-				continue;
-
-			TRACE("科目校验点\n");
-			bContinue = false;
-			for (auto rcSubject : m_pModel->vecPaperModel[n]->lCourse)
-			{
-				//先把矩形面积扩大，如何查矩形，用面积来比较
-				cv::Rect rtChk = cv::Rect(rcSubject.rt.tl() - cv::Point(10, 10), rcSubject.rt.br() + cv::Point(10, 10));
-				cv::Rect rt = GetRectByOrientation(rtModelPic, rtChk, i);
-				cv::Rect rtReal;
-				if (bGetMaxRect(matSrc, rt, rcSubject, rtReal))
-				{
-					float fRealVal = GetRtDensity(matSrc, rtReal, rcSubject);				//密度是否达到要求
-					float fDensityPer = fRealVal / rtReal.area();
-					float fPer = fRealVal / rcSubject.fStandardValue;
-					if (fDensityPer <= 0.5)			//密度连模板的一半都没有直接退出判断
-					{
-						bContinue = true;
-						break;
-					}
-					if (fDensityPer / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent && fRealVal / rcSubject.fStandardValue > rcSubject.fStandardValuePercent)
-						++nRtCount;
-					else
-					{
-						TRACE("判断科目校验点的密度百分比: %f, 低于要求的: %f\n", fPer, rcSubject.fStandardValuePercent);
-					}
-				}
-				else
-				{
-					bContinue = true;
-					break;
-				}
-			}
-			if (bContinue)
-				continue;
-
-			//判断总数
-			int nAllCount = m_pModel->vecPaperModel[n]->lGray.size() + m_pModel->vecPaperModel[n]->lCourse.size();
-			if (nAllCount <= 2)
-			{
-				if (nRtCount >= nAllCount)
-				{
-					bFind = true;
-					nResult = i;
-					break;
-				}
-			}
-			else
-			{
-				if (nRtCount >= nAllCount * 0.9)
-				{
-					bFind = true;
-					nResult = i;
-					break;
-				}
-			}
-		}
-
-		if (!bFind)
-		{
-			TRACE("无法判断图片方向\n");
-			g_pLogger->information("无法判断图片方向");
-			nResult = 1;
-		}
-	}
-	else	//与模板图片方向不一致，需判断向右旋转90还是向左旋转90
-	{
-		TRACE("与模板图片方向不一致\n");
-		for (int i = 2; i <= 3; i++)
-		{
-			TRACE("查灰度校验点\n");
-			bool bContinue = false;
-			int nRtCount = 0;
-			for (auto rcGray : m_pModel->vecPaperModel[n]->lGray)
-			{
-				//先把矩形面积扩大，如何查矩形，用面积来比较
-				cv::Rect rtChk = cv::Rect(rcGray.rt.tl() - cv::Point(10, 10), rcGray.rt.br() + cv::Point(10, 10));
-				cv::Rect rt = GetRectByOrientation(rtModelPic, rtChk, i);
-				cv::Rect rtReal;
-				if (bGetMaxRect(matSrc, rt, rcGray, rtReal))
-				{
-					float fRealVal = GetRtDensity(matSrc, rtReal, rcGray);				//密度是否达到要求
-					float fDensityPer = fRealVal / rtReal.area();
-					float fPer = fRealVal / rcGray.fStandardValue;
-					if (fDensityPer <= 0.5)			//密度连模板的一半都没有直接退出判断
-					{
-						bContinue = true;
-						break;
-					}
-					if (fDensityPer / rcGray.fStandardDensity > rcGray.fStandardValuePercent && fRealVal / rcGray.fStandardValue > rcGray.fStandardValuePercent)
-						++nRtCount;
-					else
-					{
-						TRACE("判断灰度校验点的密度百分比: %f, 低于要求的: %f\n", fPer, rcGray.fStandardValuePercent);
-					}
-				}
-				else
-				{
-					bContinue = true;
-					break;
-				}
-			}
-			if (bContinue)
-				continue;
-
-			TRACE("科目校验点\n");
-			bContinue = false;
-			for (auto rcSubject : m_pModel->vecPaperModel[n]->lCourse)
-			{
-				//先把矩形面积扩大，如何查矩形，用面积来比较
-				cv::Rect rtChk = cv::Rect(rcSubject.rt.tl() - cv::Point(10, 10), rcSubject.rt.br() + cv::Point(10, 10));
-				cv::Rect rt = GetRectByOrientation(rtModelPic, rtChk, i);
-				cv::Rect rtReal;
-				if (bGetMaxRect(matSrc, rt, rcSubject, rtReal))
-				{
-					float fRealVal = GetRtDensity(matSrc, rtReal, rcSubject);				//密度是否达到要求
-					float fDensityPer = fRealVal / rtReal.area();
-					float fPer = fRealVal / rcSubject.fStandardValue;
-					if (fDensityPer <= 0.5)			//密度连模板的一半都没有直接退出判断
-					{
-						bContinue = true;
-						break;
-					}
-					if (fDensityPer / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent && fRealVal / rcSubject.fStandardValue > rcSubject.fStandardValuePercent)
-						++nRtCount;
-					else
-					{
-						TRACE("判断科目校验点的密度百分比: %f, 低于要求的: %f\n", fPer, rcSubject.fStandardValuePercent);
-					}
-				}
-				else
-				{
-					bContinue = true;
-					break;
-				}
-			}
-			if (bContinue)
-				continue;
-
-			//判断总数
-			int nAllCount = m_pModel->vecPaperModel[n]->lGray.size() + m_pModel->vecPaperModel[n]->lCourse.size();
-			if (nAllCount <= 2)
-			{
-				if (nRtCount >= nAllCount)
-				{
-					bFind = true;
-					nResult = i;
-					break;
-				}
-			}
-			else
-			{
-				if (nRtCount >= nAllCount * 0.9)
-				{
-					bFind = true;
-					nResult = i;
-					break;
-				}
-			}
-		}
-
-		if (!bFind)
-		{
-			TRACE("无法判断图片方向\n");
-			g_pLogger->information("无法判断图片方向");
-			nResult = 1;
-		}
-	}
-#endif
 	return nResult;
 }
 
@@ -4539,10 +4323,11 @@ int CScanToolDlg::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 		return nResult;
 	}
 
+	cv::Mat matCom = matSrc.clone();
 	if (m_pModel->nHasHead)
-		nResult = CheckOrientation4Head(matSrc, n);
+		nResult = CheckOrientation4Head(matCom, n);
 	else
-		nResult = CheckOrientation4Fix(matSrc, n);
+		nResult = CheckOrientation4Fix(matCom, n);
 
 	if (bDoubleScan && n % 2 == 0)		//双面扫描，且属于扫描的第一面
 		nFristOrientation = nResult;

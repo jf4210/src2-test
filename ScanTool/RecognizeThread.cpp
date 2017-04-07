@@ -220,11 +220,34 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		int nPic = i;
 
 		m_ptFixCP = Point(0, 0);
+#if 1
 		bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo);
-#ifdef WarpAffine_TEST
+	#ifdef WarpAffine_TEST
+		cv::Mat	inverseMat(2, 3, CV_32FC1);
+		bResult = PicTransfer(nPic, matCompPic, (*itPic)->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, inverseMat);
+	#endif
+		bResult = RecogHHead(nPic, matCompPic, *itPic, pModelInfo);
+		bResult = RecogVHead(nPic, matCompPic, *itPic, pModelInfo);
+		bResult = RecogABModel(nPic, matCompPic, *itPic, pModelInfo);
+		bResult = RecogCourse(nPic, matCompPic, *itPic, pModelInfo);
+		bResult = RecogQKCP(nPic, matCompPic, *itPic, pModelInfo);
+		bResult = RecogGrayCP(nPic, matCompPic, *itPic, pModelInfo);
+		bResult = RecogWhiteCP(nPic, matCompPic, *itPic, pModelInfo);
+		bResult = RecogSN(nPic, matCompPic, *itPic, pModelInfo);
+		bResult = RecogOMR(nPic, matCompPic, *itPic, pModelInfo);
+		bResult = RecogElectOmr(nPic, matCompPic, *itPic, pModelInfo);
+		if(!bResult) bFind = true;
+		if (bFind)
+		{
+			HandleWithErrPaper(pPaper);
+			break;									//找到这张试卷有问题点，不进行下一张试卷的检测
+		}
+#else
+		bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo);
+	#ifdef WarpAffine_TEST
 		cv::Mat	inverseMat(2, 3, CV_32FC1);
 		if (bResult) bResult = PicTransfer(nPic, matCompPic, (*itPic)->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, inverseMat);
-#endif
+	#endif
 		if(bResult) bResult = RecogHHead(nPic, matCompPic, *itPic, pModelInfo);
 		if(bResult) bResult = RecogVHead(nPic, matCompPic, *itPic, pModelInfo);
 		if(bResult) bResult = RecogABModel(nPic, matCompPic, *itPic, pModelInfo);
@@ -241,7 +264,8 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			HandleWithErrPaper(pPaper);
 			break;									//找到这张试卷有问题点，不进行下一张试卷的检测
 		}	
-		
+#endif
+
 		end_pic = clock();
 		TRACE("试卷 %s 打开时间: %d, 识别总时间: %d\n", strPicFileName.c_str(), end1_pic - start_pic, end_pic - start_pic);
 		char szLog[MAX_PATH] = { 0 };
@@ -634,10 +658,10 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			g_pLogger->information(strLog);
 			TRACE(strLog.c_str());
 
-			bResult = false;						//找到问题点
+//			bResult = false;						//找到问题点
 			pPic->bFindIssue = true;
 			pPic->lIssueRect.push_back(rc);
-			break;
+//			break;
 		}
 		bool bFindRect = false;
 		if(RectCompList.size() == 0)
