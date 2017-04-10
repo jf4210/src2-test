@@ -381,15 +381,15 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 	bool bResult = false;
 	try
 	{
-		if (rc.rt.x < 0) rc.rt.x = 0;
-		if (rc.rt.y < 0) rc.rt.y = 0;
-		if (rc.rt.br().x > matCompPic.cols)
+		if (rt.x < 0) rt.x = 0;
+		if (rt.y < 0) rt.y = 0;
+		if (rt.br().x > matCompPic.cols)
 		{
-			rc.rt.width = matCompPic.cols - rc.rt.x;
+			rt.width = matCompPic.cols - rt.x;
 		}
-		if (rc.rt.br().y > matCompPic.rows)
+		if (rt.br().y > matCompPic.rows)
 		{
-			rc.rt.height = matCompPic.rows - rc.rt.y;
+			rt.height = matCompPic.rows - rt.y;
 		}
 
  		matCompRoi = matCompPic(rt);
@@ -682,29 +682,25 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				}
 			}
 
+			bool bOnlyOne = false;		//只有一个矩形，需要判断面积和灰度，但是比例可以降低
 			bool bFind = false;
-			if (RectCompList.size() == 1)	//只发现一个矩形时，就默认就是定点了
+
+			//通过灰度值来判断
+			for (int k = 0; k < RectCompList.size(); k++)
 			{
-				bFind = true;
-			}
-			else
-			{
-				//通过灰度值来判断
-				for (int k = 0; k < RectCompList.size(); k++)
+				RECTINFO rcTmp = rcFix;
+				rcTmp.rt = RectCompList[k];
+				Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
+				float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
+				float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
+				if ((bOnlyOne && fArea > 0.4 && fArea < 2.5 && fDensity > rcTmp.fStandardValuePercent * 0.9) || (fArea > 0.5 && fArea < 2.0 && fDensity > rcTmp.fStandardValuePercent))	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
 				{
-					RECTINFO rcTmp = rcFix;
-					rcTmp.rt = RectCompList[k];
-					Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
-					float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
-					float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
-					if (fArea > 0.5 && fArea < 2.0 && fDensity > rcTmp.fStandardValuePercent)	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
-					{
-						bFind = true;
-						rtFix = RectCompList[k];
-						break;
-					}
+					bFind = true;
+					rtFix = RectCompList[k];
+					break;
 				}
 			}
+			
 			if (!bFind)
 				bFindRect = true;
 			else
@@ -1434,7 +1430,7 @@ bool CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		bResult = false;						//找到问题点
 		pPic->bFindIssue = true;
 		pPic->lIssueRect.push_back(rc);
-		break;		
+		break;		//发现问题点时，继续判断后面的点，不停止扫描
 	}
 	if (!bResult)
 	{
@@ -1558,7 +1554,7 @@ bool CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		bResult = false;						//找到问题点
 		pPic->bFindIssue = true;
 		pPic->lIssueRect.push_back(rc);
-		break;
+		break;		//发现问题点时，继续判断后面的点，不停止扫描
 	}
 	if (!bResult)
 	{

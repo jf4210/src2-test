@@ -1231,10 +1231,29 @@ inline cv::Point2d TriangleCoordinate(cv::Point ptA, cv::Point ptB, cv::Point pt
 	cv::Point2f Xab;	//向量AB
 	cv::Point2f Xac;	//向量AC
 	Xab.x = ptB.x - ptA.x;
-	Xab.y = ptB.y - ptB.y;
+	Xab.y = ptB.y - ptA.y;
 	Xac.x = ptC.x - ptA.x;
 	Xac.y = ptC.y - ptA.y;
 	dFlag = Xab.x * Xac.y - Xab.y * Xac.x;	//向量AB * 向量AC的叉乘
+
+// 	cv::Point2f Xac;	//向量AC
+// 	cv::Point2f Xbc;	//向量BC
+// 	Xac.x = ptC.x - ptA.x;
+// 	Xac.y = ptC.y - ptA.y;
+// 	Xbc.x = ptC.x - ptA.x;
+// 	Xbc.y = ptB.y - ptB.y;
+// 	dFlag = Xab.x * Xac.y - Xab.y * Xac.x;	//向量AB * 向量AC的叉乘
+// 	cv::Point2f Xab;	//向量AB
+// 	cv::Point2f Xac;	//向量AC
+// 	Xab.x = ptB.x - ptA.x;
+// 	Xab.y = ptB.y - ptB.y;
+// 	Xac.x = ptC.x - ptA.x;
+// 	Xac.y = ptC.y - ptA.y;
+// 	dFlag = Xab.x * Xac.y - Xab.y * Xac.x;	//向量AB * 向量AC的叉乘
+
+
+// 	//通过D = Ax + By + C判断在直线哪一侧，D<0在直线左侧，D>0在直线右侧，D=0在直线上
+// 	long double DptC = A * ptC.x + B * ptC.y + C;
 #else
 	if (ptA.x != ptB.x)
 	{
@@ -1293,6 +1312,13 @@ inline cv::Point2d TriangleCoordinate(cv::Point ptA, cv::Point ptB, cv::Point pt
 	Xa1c2.y = dYc2 - ptNewA.y;
 	long double dNewFlag = Xa1b1.x * Xa1c1.y - Xa1b1.y * Xa1c1.x;	//向量A1B1 * 向量A1C1的叉乘
 	long double dNewFlag2 = Xa1b1.x * Xa1c2.y - Xa1b1.y * Xa1c2.x;	//向量A1B1 * 向量A1C2的叉乘
+
+// 	//通过D = Ax + By + C判断在直线哪一侧，D<0在直线左侧，D>0在直线右侧，D=0在直线上
+// 	long double A1 = ptNewB.y - ptNewA.y;
+// 	long double B1 = ptNewA.x - ptNewB.x;
+// 	long double C1 = ptNewB.x * ptNewA.y - ptNewA.x * ptNewB.y;
+// 	long double DptC1 = A1 * dXc1 + B1 * dYc1 + C1;
+// 	long double DptC2 = A1 * dXc2 + B1 * dYc2 + C1;
 #else
 	long double k_newAB = (double)(ptNewB.y - ptNewA.y) / (ptNewB.x - ptNewA.x);
 	long double dNewFlag = k_newAB*(dXc1 - ptNewA.x) + ptNewA.y - dYc1;

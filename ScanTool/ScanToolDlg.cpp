@@ -3894,13 +3894,49 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			PicTransfer(0, matSrc, lFix, m_pModel->vecPaperModel[n]->lFix, inverseMat);
 #endif
 
+			RECTLIST lModelTmp;
+			if (lFix.size() < 3)
+			{
+				RECTLIST::iterator itFix = lFix.begin();
+				for (auto itFix : lFix)
+				{
+					RECTLIST::iterator itModel = m_pModel->vecPaperModel[n]->lFix.begin();
+					for (int j = 0; itModel != m_pModel->vecPaperModel[n]->lFix.end(); j++, itModel++)
+					{
+						if (j == itFix.nTH)
+						{
+							RECTINFO rcModel = *itModel;
+
+							cv::Rect rtModelPic;
+							rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+							rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+							rcModel.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcModel.rt, i);
+
+							lModelTmp.push_back(rcModel);
+							break;
+						}
+					}
+				}
+			}
+
 			TRACE("查灰度校验点\n");
 			bool bContinue = false;
 			int nRtCount = 0;
 			for (auto rcGray : m_pModel->vecPaperModel[n]->lGray)
 			{
 				RECTINFO rcItem = rcGray;
-				GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+
+				if (lFix.size() < 3)
+				{
+					cv::Rect rtModelPic;
+					rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+					rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+					rcItem.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcItem.rt, i);
+
+					GetPosition(lFix, lModelTmp, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+				}
+				else
+					GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
 
 				if (omrRecogObj.RecogRtVal(rcItem, matSrc))
 				{
@@ -3911,14 +3947,14 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 					else
 					{
 						TRACE("判断灰度校验点的密度百分比: %f, 低于要求的: %f\n", rcItem.fRealValuePercent, rcGray.fStandardValuePercent);
-						bContinue = true;
-						break;
+// 						bContinue = true;
+// 						break;
 					}
 				}
 				else
 				{
-					bContinue = true;
-					break;
+// 					bContinue = true;
+// 					break;
 				}
 			}
 			if (bContinue)
@@ -3929,7 +3965,18 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			for (auto rcSubject : m_pModel->vecPaperModel[n]->lCourse)
 			{
 				RECTINFO rcItem = rcSubject;
-				GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+
+				if (lFix.size() < 3)
+				{
+					cv::Rect rtModelPic;
+					rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+					rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+					rcItem.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcItem.rt, i);
+
+					GetPosition(lFix, lModelTmp, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+				}
+				else
+					GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
 
 				if (omrRecogObj.RecogRtVal(rcItem, matSrc))
 				{
@@ -3940,14 +3987,14 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 					else
 					{
 						TRACE("判断科目校验点的密度百分比: %f, 低于要求的: %f\n", rcItem.fRealValuePercent, rcSubject.fStandardValuePercent);
-						bContinue = true;
-						break;
+// 						bContinue = true;
+// 						break;
 					}
 				}
 				else
 				{
-					bContinue = true;
-					break;
+// 					bContinue = true;
+// 					break;
 				}
 			}
 			if (bContinue)
@@ -3966,7 +4013,7 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			}
 			else
 			{
-				if (nRtCount >= nAllCount * 0.9)
+				if (nRtCount >= (int)(nAllCount * 0.9))
 				{
 					bFind = true;
 					nResult = i;
@@ -3999,13 +4046,51 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			PicTransfer2(0, matSrc, matDst, lFix, m_pModel->vecPaperModel[n]->lFix, inverseMat);
 #endif
 
+			RECTLIST lModelTmp;
+			if (lFix.size() < 3)
+			{
+				matDst = matSrc;
+
+				RECTLIST::iterator itFix = lFix.begin();
+				for (auto itFix : lFix)
+				{
+					RECTLIST::iterator itModel = m_pModel->vecPaperModel[n]->lFix.begin();
+					for (int j = 0; itModel != m_pModel->vecPaperModel[n]->lFix.end(); j++, itModel++)
+					{
+						if (j == itFix.nTH)
+						{
+							RECTINFO rcModel = *itModel;
+
+							cv::Rect rtModelPic;
+							rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+							rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+							rcModel.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcModel.rt, i);
+
+							lModelTmp.push_back(rcModel);
+							break;
+						}
+					}
+				}
+			}
+
 			TRACE("查灰度校验点\n");
 			bool bContinue = false;
 			int nRtCount = 0;
 			for (auto rcGray : m_pModel->vecPaperModel[n]->lGray)
 			{
 				RECTINFO rcItem = rcGray;
-				GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+
+				if (lFix.size() < 3)
+				{
+					cv::Rect rtModelPic;
+					rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+					rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+					rcItem.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcItem.rt, i);
+
+					GetPosition(lFix, lModelTmp, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+				}
+				else
+					GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
 
 				if (omrRecogObj.RecogRtVal(rcItem, matDst))
 				{
@@ -4016,14 +4101,14 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 					else
 					{
 						TRACE("判断灰度校验点的密度百分比: %f, 低于要求的: %f\n", rcItem.fRealValuePercent, rcGray.fStandardValuePercent);
-						bContinue = true;
-						break;
+// 						bContinue = true;
+// 						break;
 					}
 				}
 				else
 				{
-					bContinue = true;
-					break;
+// 					bContinue = true;
+// 					break;
 				}
 			}
 			if (bContinue)
@@ -4034,7 +4119,18 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			for (auto rcSubject : m_pModel->vecPaperModel[n]->lCourse)
 			{
 				RECTINFO rcItem = rcSubject;
-				GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+
+				if (lFix.size() < 3)
+				{
+					cv::Rect rtModelPic;
+					rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+					rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+					rcItem.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcItem.rt, i);
+
+					GetPosition(lFix, lModelTmp, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+				}
+				else
+					GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
 
 				if (omrRecogObj.RecogRtVal(rcItem, matDst))
 				{
@@ -4045,14 +4141,14 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 					else
 					{
 						TRACE("判断科目校验点的密度百分比: %f, 低于要求的: %f\n", rcItem.fRealValuePercent, rcSubject.fStandardValuePercent);
-						bContinue = true;
-						break;
+// 						bContinue = true;
+// 						break;
 					}
 				}
 				else
 				{
-					bContinue = true;
-					break;
+// 					bContinue = true;
+// 					break;
 				}
 			}
 			if (bContinue)
@@ -4071,7 +4167,7 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			}
 			else
 			{
-				if (nRtCount >= nAllCount * 0.9)
+				if (nRtCount >= (int)(nAllCount * 0.9))
 				{
 					bFind = true;
 					nResult = i;
@@ -4082,9 +4178,9 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 
 		if (!bFind)
 		{
-			TRACE("无法判断图片方向\n");
-			g_pLogger->information("无法判断图片方向");
-			nResult = 1;
+			TRACE("无法判断图片方向，采用默认右旋90度的方向\n");
+			g_pLogger->information("无法判断图片方向，采用默认右旋90度的方向");
+			nResult = 2;	//如果出现无法判断图像方向时，默认模板需要右旋90度变成此图像方向，即默认返回方向为右旋90度，因为方向只有右旋90或者左旋90度两种选择，此处不返回默认的1，返回2
 		}
 	}
 

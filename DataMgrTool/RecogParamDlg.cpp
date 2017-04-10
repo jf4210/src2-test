@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CRecogParamDlg, CDialog)
 
 CRecogParamDlg::CRecogParamDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CRecogParamDlg::IDD, pParent)
-	, m_nChkSN(1), m_nChkElectOmr(1), m_nChkOmr(1), m_nHandleResult(0), m_nNoRecogVal(0)
+	, m_nChkSN(1), m_nChkElectOmr(1), m_nChkOmr(1), m_nHandleResult(2), m_nNoRecogVal(0)
 {
 
 }

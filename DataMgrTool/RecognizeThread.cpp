@@ -506,15 +506,15 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 	bool bResult = false;
 	try
 	{
-		if (rc.rt.x < 0) rc.rt.x = 0;
-		if (rc.rt.y < 0) rc.rt.y = 0;
-		if (rc.rt.br().x > matCompPic.cols)
+		if (rt.x < 0) rt.x = 0;
+		if (rt.y < 0) rt.y = 0;
+		if (rt.br().x > matCompPic.cols)
 		{
-			rc.rt.width = matCompPic.cols - rc.rt.x;
+			rt.width = matCompPic.cols - rt.x;
 		}
-		if (rc.rt.br().y > matCompPic.rows)
+		if (rt.br().y > matCompPic.rows)
 		{
-			rc.rt.height = matCompPic.rows - rc.rt.y;
+			rt.height = matCompPic.rows - rt.y;
 		}
 
  		matCompRoi = matCompPic(rt);
@@ -826,28 +826,24 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				}
 			}
 
+			bool bOnlyOne = false;		//只有一个矩形，需要判断面积和灰度，但是比例可以降低
 			bool bFind = false;
-			if (RectCompList.size() == 1)	//只发现一个矩形时，就默认就是定点了
+
+			//通过灰度值来判断
+			for (int i = 0; i < RectCompList.size(); i++)
 			{
-				bFind = true;
-			}
-			else
-			{
-				//通过灰度值来判断
-				for (int i = 0; i < RectCompList.size(); i++)
+				RECTINFO rcTmp = rcFix;
+				rcTmp.rt = RectCompList[i];
+				Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
+				float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
+				float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
+				if ((bOnlyOne && fArea > 0.4 && fArea < 2.5 && fDensity > rcTmp.fStandardValuePercent * 0.9) || (fArea > 0.5 && fArea < 2.0 && fDensity > rcTmp.fStandardValuePercent))	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
 				{
-					RECTINFO rcTmp = rcFix;
-					rcTmp.rt = RectCompList[i];
-					Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
-					float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
-					float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
-					if (fArea > 0.5 && fArea < 2.0 && fDensity > rcTmp.fStandardValuePercent)	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
-					{
-						rtFix = RectCompList[i];
-						break;
-					}
+					rtFix = RectCompList[i];
+					break;
 				}
 			}
+
 			if (!bFind)
 				bFindRect = true;
 			else
