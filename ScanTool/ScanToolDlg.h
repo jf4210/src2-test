@@ -40,9 +40,12 @@ public:
 
 public:
 	CListCtrl		m_lcPicture;			//图片列表控件
-	CListCtrl		m_lcPaper;				//已扫试卷列表控件
+	CListCtrl		m_lProblemPaper;		//问题试卷列表控件
 	CComboBox		m_comboModel;			//模板下拉列表控件
 	CTabCtrl		m_tabPicShowCtrl;		//图片显示控件
+
+	CStatusBar		m_wndStatusBar;
+	CStatusBarCtrl	m_statusBar;
 
 	int				m_nStatusSize;			//状态栏字体大小
 	CFont			m_fontStatus;			//状态栏字体

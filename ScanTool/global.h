@@ -212,6 +212,8 @@ extern bool				g_bCmdNeedConnect;	//命令通道是否需要重连，用于通道地址信息修改的
 extern bool				g_bFileNeedConnect;	//文件通道是否需要重连，用于通道地址信息修改的情况
 
 extern bool				g_bShowScanSrcUI;	//是否显示原始扫描界面
+extern int				g_nOperatingMode;	//操作模式，1--简易模式(遇到问题点不停止扫描)，2-严格模式(遇到问题点时立刻停止扫描)
+
 
 #if 1
 typedef struct _PicInfo_				//图片信息

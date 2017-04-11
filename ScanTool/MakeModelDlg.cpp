@@ -2089,7 +2089,9 @@ bool CMakeModelDlg::checkValidity()
 	{
 		for (int i = 0; i < m_vecPaperModelInfo.size(); i++)
 		{
-			if (m_vecPaperModelInfo[i]->vecRtFix.size() < 3)
+			int nCount = m_vecPaperModelInfo[i]->vecABModel.size() + m_vecPaperModelInfo[i]->vecCourse.size() + m_vecPaperModelInfo[i]->vecElectOmr.size() + m_vecPaperModelInfo[i]->vecGray.size() \
+					+ m_vecPaperModelInfo[i]->vecOmr2.size() + m_vecPaperModelInfo[i]->vecQK_CP.size() + m_vecPaperModelInfo[i]->vecWhite.size() + m_vecPaperModelInfo[i]->lSN.size();
+			if (nCount > 0 && m_vecPaperModelInfo[i]->vecRtFix.size() < 3)
 			{
 				char szTmp[50] = { 0 };
 				sprintf_s(szTmp, "第 %d 页定点设置数量太少，要求至少3个，建议设置4个", i + 1);

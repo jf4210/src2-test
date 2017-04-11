@@ -32,6 +32,7 @@ bool				g_bCmdNeedConnect = false;	//ÃüÁîÍ¨µÀÊÇ·ñÐèÒªÖØÁ¬£¬ÓÃÓÚÍ¨µÀµØÖ·ÐÅÏ¢ÐÞ¸Äµ
 bool				g_bFileNeedConnect = false;	//ÎÄ¼þÍ¨µÀÊÇ·ñÐèÒªÖØÁ¬£¬ÓÃÓÚÍ¨µÀµØÖ·ÐÅÏ¢ÐÞ¸ÄµÄÇé¿ö
 
 bool				g_bShowScanSrcUI = false;	//ÊÇ·ñÏÔÊ¾Ô­Ê¼É¨Ãè½çÃæ
+int					g_nOperatingMode = 2;		//²Ù×÷Ä£Ê½£¬1--¼òÒ×Ä£Ê½(Óöµ½ÎÊÌâµã²»Í£Ö¹É¨Ãè)£¬2-ÑÏ¸ñÄ£Ê½(Óöµ½ÎÊÌâµãÊ±Á¢¿ÌÍ£Ö¹É¨Ãè)
 
 int					g_nExitFlag = 0;
 CString				g_strCurrentPath;
@@ -144,7 +145,7 @@ void CScanToolDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_Picture, m_lcPicture);
-	DDX_Control(pDX, IDC_LIST_Paper, m_lcPaper);
+	DDX_Control(pDX, IDC_LIST_Paper, m_lProblemPaper);
 	DDX_Control(pDX, IDC_COMBO_Model, m_comboModel);
 	DDX_Control(pDX, IDC_TAB_PicShow, m_tabPicShowCtrl);
 }
@@ -217,8 +218,8 @@ BOOL CScanToolDlg::OnInitDialog()
 	strTitle.Format(_T("%s %s"), SYS_BASE_NAME, SOFT_VERSION);
 	SetWindowText(strTitle);
 
-	InitUI();
 	InitConfig();
+	InitUI();
 	InitParam();
 	InitFileUpLoadList();
 	InitCompressList();
@@ -272,7 +273,12 @@ BOOL CScanToolDlg::OnInitDialog()
 	}
 	InitTab();
 
-	m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+	if (m_pShowModelInfoDlg) m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+	if (m_statusBar.GetSafeHwnd() && m_pModel)
+	{
+		CString strModelName = A2T(m_pModel->strModelName.c_str());
+		m_statusBar.SetText(strModelName, 1, 0);
+	}
 
 	// µ÷ÓÃTWAIN ³õÊ¼»¯É¨ÃèÉèÖÃ
 	ReleaseTwain();
@@ -570,6 +576,8 @@ void CScanToolDlg::InitConfig()
 	g_nManulUploadFile = pConf->getInt("UploadFile.manul", 0);
 	g_bShowScanSrcUI = pConf->getBool("Scan.bShowUI", false);
 	m_bModifySN = pConf->getBool("Scan.bModifySN", false);
+	g_nOperatingMode = pConf->getInt("Scan.OperatingMode", 2);
+
 	std::string strFileServerIP	= pConf->getString("Server.fileIP");
 	int			nFileServerPort	= pConf->getInt("Server.filePort", 19980);
 	m_strCmdServerIP				= pConf->getString("Server.cmdIP");
@@ -667,9 +675,9 @@ void CScanToolDlg::InitUI()
 	m_lcPicture.InsertColumn(1, _T("Ñ§ÉúÐÅÏ¢"), LVCFMT_CENTER, 130);
 	m_lcPicture.InsertColumn(2, _T("*"), LVCFMT_CENTER, 20);
 
-	m_lcPaper.SetExtendedStyle(m_lcPaper.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
-	m_lcPaper.InsertColumn(0, _T("ÊÔ¾íÃû"), LVCFMT_CENTER, 80);
-	m_lcPaper.InsertColumn(1, _T("ÉÏ´«×´Ì¬"), LVCFMT_CENTER, 70);
+	m_lProblemPaper.SetExtendedStyle(m_lProblemPaper.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
+	m_lProblemPaper.InsertColumn(0, _T("ÐòºÅ"), LVCFMT_CENTER, 40);
+	m_lProblemPaper.InsertColumn(1, _T("Òì³£Ñ§Éú"), LVCFMT_CENTER, 150);
 
 	SetFontSize(m_nStatusSize);
 
@@ -677,9 +685,27 @@ void CScanToolDlg::InitUI()
 
 	m_nCurrTabSel = 0;
 
-	m_pShowModelInfoDlg = new CShowModelInfoDlg(this);
-	m_pShowModelInfoDlg->Create(CShowModelInfoDlg::IDD, this);
-	m_pShowModelInfoDlg->ShowWindow(SW_SHOW);
+	if (g_nOperatingMode == 2)
+	{
+		m_pShowModelInfoDlg = new CShowModelInfoDlg(this);
+		m_pShowModelInfoDlg->Create(CShowModelInfoDlg::IDD, this);
+		m_pShowModelInfoDlg->ShowWindow(SW_SHOW);
+
+		GetDlgItem(IDC_STATIC_PaperList)->ShowWindow(SW_HIDE);
+		m_lProblemPaper.ShowWindow(SW_HIDE);
+	}
+	else
+	{
+		m_statusBar.Create(WS_CHILD | WS_VISIBLE | SBT_OWNERDRAW, CRect(0, 0, 0, 0), this, 0);
+		int strPartDim[2] = { 80,  -1 }; //·Ö¸îÊýÁ¿
+		m_statusBar.SetParts(2, strPartDim);
+
+		//ÉèÖÃ×´Ì¬À¸ÎÄ±¾
+		m_statusBar.SetText(_T("Ä£°åÃû³Æ:"), 0, 0);
+
+		GetDlgItem(IDC_STATIC_PaperList)->ShowWindow(SW_SHOW);
+		m_lProblemPaper.ShowWindow(SW_SHOW);
+	}
 
 	m_pShowScannerInfoDlg = new CScanerInfoDlg(this);
 	m_pShowScannerInfoDlg->Create(CScanerInfoDlg::IDD, this);
@@ -712,10 +738,6 @@ void CScanToolDlg::InitUI()
 #ifndef SHOW_GUIDEDLG
 	GetDlgItem(IDC_BTN_ReBack)->ShowWindow(SW_HIDE);
 #endif
-	//++ ºóÆÚ¿ÉÒÔÉ¾³ý
-	GetDlgItem(IDC_STATIC_PaperList)->ShowWindow(SW_HIDE);
-	m_lcPaper.ShowWindow(SW_HIDE);
-	//
 
 #if 1
 	CRect rc;
@@ -789,9 +811,12 @@ void CScanToolDlg::InitCtrlPosition()
 		nTopGap = 50;
 
 	const int nLeftGap = 2;		//×ó±ßµÄ¿Õ°×¼ä¸ô
-	const int nBottomGap = 2;	//ÏÂ±ßµÄ¿Õ°×¼ä¸ô
 	const int nRightGap = 2;	//ÓÒ±ßµÄ¿Õ°×¼ä¸ô
 	const int nGap = 2;			//ÆÕÍ¨¿Ø¼þµÄ¼ä¸ô
+
+	int nBottomGap = 2;			//ÏÂ±ßµÄ¿Õ°×¼ä¸ô£¬ÓÃÓÚ·ÅÖÃÏµÍ³×´Ì¬À¸
+	if (g_nOperatingMode == 1)		//¼òµ¥Ä£Ê½Ê±£¬×îÏÂÃæÁô³ö¿Ø¼þ·ÅÖÃÏµÍ³×´Ì¬À¸
+		nBottomGap = 20;
 
 	int nListCtrlWidth = 200;	//Í¼Æ¬ÁÐ±í¿Ø¼þ¿í¶È
 	int nStaticTip = 15;		//ÁÐ±íÌáÊ¾static¿Ø¼þ¸ß¶È
@@ -829,31 +854,38 @@ void CScanToolDlg::InitCtrlPosition()
 		m_lcPicture.MoveWindow(nLeftGap, nCurrentTop, nListCtrlWidth, nPicListHeight);
 		nCurrentTop = nCurrentTop + nPicListHeight + nGap;
 	}
-#if 1
+
+	int nTopTmp = nCurrentTop;
 	if (m_pShowModelInfoDlg && m_pShowModelInfoDlg->GetSafeHwnd())
 	{
 		m_pShowModelInfoDlg->MoveWindow(nLeftGap, nCurrentTop, nListCtrlWidth, nPaperListHeigth);
 		nCurrentTop = nCurrentTop + nPaperListHeigth + nGap;
 	}
-#else
+	//++Òì³£ÊÔ¾íÁÐ±íÎ»ÖÃ´¦ÓÚÄ£°åÐÅÏ¢¿Ø¼þµÄÎ»ÖÃ,	ÑÏ¸ñÄ£Ê½Ê±Òþ²Ø
 	if (GetDlgItem(IDC_STATIC_PaperList)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_STATIC_PaperList)->MoveWindow(nLeftGap, nCurrentTop, nListCtrlWidth, nStaticTip);
-		nCurrentTop = nCurrentTop + nStaticTip + nGap;
+		GetDlgItem(IDC_STATIC_PaperList)->MoveWindow(nLeftGap, nTopTmp, nListCtrlWidth, nStaticTip);
+		nTopTmp = nTopTmp + nStaticTip + nGap;
 	}
-	if (m_lcPaper.GetSafeHwnd())
+	if (m_lProblemPaper.GetSafeHwnd())
 	{
-		m_lcPaper.MoveWindow(nLeftGap, nCurrentTop, nListCtrlWidth, nPaperListHeigth);
-		nCurrentTop = nCurrentTop + nPaperListHeigth + nGap;
+		m_lProblemPaper.MoveWindow(nLeftGap, nTopTmp, nListCtrlWidth, nPaperListHeigth - nStaticTip - nGap);
+		nTopTmp = nTopTmp + nPaperListHeigth - nStaticTip - nGap + nGap;
 	}
-#endif
+	//--
+
 	if (GetDlgItem(IDC_STATIC_SCANCOUNT)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_STATIC_SCANCOUNT)->MoveWindow(nLeftGap, cy - nBottomGap - nStatusHeight, 150, nStatusHeight);
 	}
 	if (GetDlgItem(IDC_STATIC_STATUS)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_STATIC_STATUS)->MoveWindow(nLeftGap + 150, cy - nBottomGap - nStatusHeight, cx - nLeftGap - nRightGap, nStatusHeight);
+		GetDlgItem(IDC_STATIC_STATUS)->MoveWindow(nLeftGap + 150, cy - nBottomGap - nStatusHeight, cx - nLeftGap - 150 - nRightGap, nStatusHeight);
+	}
+	//×´Ì¬À¸
+	if (m_statusBar.GetSafeHwnd())
+	{
+		m_statusBar.MoveWindow(nLeftGap, cy - nBottomGap, cx - nLeftGap - nRightGap, nBottomGap);
 	}
 
 	int nPicShowTabCtrlWidth = cx - nLeftGap - nRightGap - nListCtrlWidth - nGap - nGap;
@@ -1456,7 +1488,13 @@ void CScanToolDlg::OnCbnSelchangeComboModel()
 
 	SAFE_RELEASE(m_pModel);
 	m_pModel = LoadModelFile(strModelPath);
-	m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+	if (m_pShowModelInfoDlg) m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+	if (m_statusBar.GetSafeHwnd() && m_pModel)
+	{
+		USES_CONVERSION;
+		CString strModelName = A2T(m_pModel->strModelName.c_str());
+		m_statusBar.SetText(strModelName, 1, 0);
+	}
 	if (!m_pModel)
 		return;
 
@@ -2906,7 +2944,13 @@ void CScanToolDlg::OnBnClickedBtnModelmgr()
 	{
 		SAFE_RELEASE(m_pModel);
 		m_pModel = modelMgrDlg.m_pModel;
-		m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+		if (m_pShowModelInfoDlg) m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+		if (m_statusBar.GetSafeHwnd() && m_pModel)
+		{
+			USES_CONVERSION;
+			CString strModelName = A2T(m_pModel->strModelName.c_str());
+			m_statusBar.SetText(strModelName, 1, 0);
+		}
 		if (!m_pModel)
 			return;
 
@@ -3254,7 +3298,13 @@ void CScanToolDlg::InitShow(pMODEL pModel)
 	else
 		m_nModelPicNums = 1;
 	InitTab();
-	m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+	if (m_pShowModelInfoDlg) m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+	if (m_statusBar.GetSafeHwnd() && m_pModel)
+	{
+		USES_CONVERSION;
+		CString strModelName = A2T(m_pModel->strModelName.c_str());
+		m_statusBar.SetText(strModelName, 1, 0);
+	}
 
 	SAFE_RELEASE(m_pPapersInfo);
 	m_lcPicture.DeleteAllItems();
