@@ -3067,7 +3067,7 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 #if 1
 	//报名库测试数据
 	g_lBmkStudent.clear();
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 100; i++)
 	{
 		ST_STUDENT stData;
 		stData.strZkzh = Poco::format("%d", 1001 + i);
@@ -3084,8 +3084,8 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 		bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
 		std::string strTableName = "student";
 		if (bResult) bResult = m_pStudentMgr->InitTable(strTableName);
-		if (bResult) bResult = m_pStudentMgr->InsertData(g_lBmkStudent, strTableName);
-		if (!bResult) SAFE_RELEASE(m_pStudentMgr);
+ 		if (bResult) bResult = m_pStudentMgr->InsertData(g_lBmkStudent, strTableName);
+ 		if (!bResult) SAFE_RELEASE(m_pStudentMgr);
 	}
 #endif
 	
@@ -3878,6 +3878,8 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 	if (m_pModel->nHasHead)
 		return nResult;
 
+	std::string strLog;
+
 	cv::Rect rtModelPic;
 	rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
 	rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
@@ -3922,6 +3924,8 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 		}
 		if (bFind)
 			return nResult;
+
+		strLog.append("通过条形码或二维码判断试卷旋转方向失败，下面通过定位点判断\n");
 	}
 
 	int nCount = m_pModel->vecPaperModel[n]->lGray.size() + m_pModel->vecPaperModel[n]->lCourse.size();
@@ -4060,6 +4064,8 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 					nResult = i;
 					break;
 				}
+				std::string strTmpLog = Poco::format("总校验点数=%d, 实际识别校验点数=%d\n", nAllCount, nRtCount);
+				strLog.append(strTmpLog);
 			}
 			else
 			{
@@ -4069,13 +4075,16 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 					nResult = i;
 					break;
 				}
+				std::string strTmpLog = Poco::format("总校验点数=%d, 实际识别校验点数=%d\n", nAllCount, nRtCount);
+				strLog.append(strTmpLog);
 			}
 		}
 
 		if (!bFind)
 		{
 			TRACE("无法判断图片方向\n");
-			g_pLogger->information("无法判断图片方向");
+			strLog.append("无法判断图片方向\n");
+			g_pLogger->information(strLog);
 			nResult = 1;
 		}
 	}
@@ -4214,6 +4223,8 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 					nResult = i;
 					break;
 				}
+				std::string strTmpLog = Poco::format("总校验点数=%d, 实际识别校验点数=%d\n", nAllCount, nRtCount);
+				strLog.append(strTmpLog);
 			}
 			else
 			{
@@ -4223,13 +4234,16 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 					nResult = i;
 					break;
 				}
+				std::string strTmpLog = Poco::format("总校验点数=%d, 实际识别校验点数=%d\n", nAllCount, nRtCount);
+				strLog.append(strTmpLog);
 			}
 		}
 
 		if (!bFind)
 		{
 			TRACE("无法判断图片方向，采用默认右旋90度的方向\n");
-			g_pLogger->information("无法判断图片方向，采用默认右旋90度的方向");
+			strLog.append("无法判断图片方向，采用默认右旋90度的方向\n");
+			g_pLogger->information(strLog);
 			nResult = 2;	//如果出现无法判断图像方向时，默认模板需要右旋90度变成此图像方向，即默认返回方向为右旋90度，因为方向只有右旋90或者左旋90度两种选择，此处不返回默认的1，返回2
 		}
 	}

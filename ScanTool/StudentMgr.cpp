@@ -12,10 +12,18 @@ CStudentMgr::CStudentMgr() :_session(NULL), _mem(NULL)
 
 CStudentMgr::~CStudentMgr()
 {
-	if (!_mem)
+	if (_mem)
+	{
 		_mem->close();
-	if (!_session)
+		delete _mem;
+		_mem = NULL;
+	}
+	if (_session)
+	{
 		_session->close();
+		delete _session;
+		_session = NULL;
+	}
 	Poco::Data::SQLite::Connector::unregisterConnector();
 }
 
@@ -81,6 +89,7 @@ bool CStudentMgr::InsertData(STUDENT_LIST& lData, std::string strTable)
 		Poco::Data::Statement stmt((*_session << strSql, use(lData)));
 		stmt.execute();
 	#endif
+		bResult = true;
 		sw.stop();
 		std::string strLog = Poco::format("插入报名库数据完成[%.6fs]", (double)sw.elapsed()/1000000);
 		g_pLogger->information(strLog);

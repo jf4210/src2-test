@@ -495,6 +495,8 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 // 	if (pModelInfo->pModel->nHasHead != 0)	//有同步头的，不需要进行定点识别
 // 		return bResult;
 
+	clock_t start, end;
+	start = clock();
 	std::string strLog;
 	strLog = Poco::format("图片%s\n", pPic->strPicName);
 
@@ -736,6 +738,9 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 //		g_pLogger->information(szLog);
 		TRACE(szLog);
 	}
+	end = clock();
+	std::string strTime = Poco::format("识别定点时间: %dms\n", (int)(end - start));
+	strLog.append(strTime);
 	g_pLogger->information(strLog);
 	return bResult;
 }
@@ -1385,6 +1390,11 @@ bool CRecognizeThread::RecogABModel(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 bool CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	TRACE("识别科目\n");
+	clock_t start, end;
+	start = clock();
+	std::string strLog;
+	strLog = Poco::format("图片%s\n", pPic->strPicName);
+
 	bool bResult = true;
 	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lCourse.begin();
 	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lCourse.end(); itCP++)
@@ -1420,7 +1430,8 @@ bool CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			{
 				char szLog[MAX_PATH] = { 0 };
 				sprintf_s(szLog, "校验失败, 灰度百分比: %f, 问题点: (%d,%d,%d,%d)\n", rc.fRealValuePercent * 100, rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
-				g_pLogger->information(szLog);
+				strLog.append(szLog);
+//				g_pLogger->information(szLog);
 				TRACE(szLog);
 			}
 		}
@@ -1428,7 +1439,8 @@ bool CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		{
 			char szLog[MAX_PATH] = { 0 };
 			sprintf_s(szLog, "校验失败, 异常结束, 问题点: (%d,%d,%d,%d)\n", rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
-			g_pLogger->information(szLog);
+			strLog.append(szLog);
+//			g_pLogger->information(szLog);
 			TRACE(szLog);
 		}
 		
@@ -1444,9 +1456,14 @@ bool CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 	{
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别科目失败, 图片名: %s\n", pPic->strPicName.c_str());
-		g_pLogger->information(szLog);
+		strLog.append(szLog);
+//		g_pLogger->information(szLog);
 		TRACE(szLog);
 	}
+	end = clock();
+	std::string strTime = Poco::format("识别科目校验点时间: %dms\n", (int)(end - start));
+	strLog.append(strTime);
+	g_pLogger->information(strLog);
 	return bResult;
 }
 
@@ -1515,6 +1532,12 @@ bool CRecognizeThread::RecogQKCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 bool CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	TRACE("识别灰度点\n");
+
+	clock_t start, end;
+	start = clock();
+	std::string strLog;
+	strLog = Poco::format("图片%s\n", pPic->strPicName);
+
 	bool bResult = true;
 	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lGray.begin();
 	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lGray.end(); itCP++)
@@ -1550,7 +1573,8 @@ bool CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			{
 				char szLog[MAX_PATH] = { 0 };
 				sprintf_s(szLog, "校验失败, 灰度百分比: %f, 问题点: (%d,%d,%d,%d)\n", rc.fRealValuePercent * 100, rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
-				g_pLogger->information(szLog);
+				strLog.append(szLog);
+//				g_pLogger->information(szLog);
 				TRACE(szLog);
 			}
 		}
@@ -1558,7 +1582,8 @@ bool CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		{
 			char szLog[MAX_PATH] = { 0 };
 			sprintf_s(szLog, "校验失败, 异常结束, 问题点: (%d,%d,%d,%d)\n", rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
-			g_pLogger->information(szLog);
+			strLog.append(szLog);
+//			g_pLogger->information(szLog);
 			TRACE(szLog);
 		}
 
@@ -1574,9 +1599,14 @@ bool CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 	{
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别灰度校验点失败, 图片名: %s\n", pPic->strPicName.c_str());
-		g_pLogger->information(szLog);
+		strLog.append(szLog);
+//		g_pLogger->information(szLog);
 		TRACE(szLog);
 	}
+	end = clock();
+	std::string strTime = Poco::format("识别灰度校验点时间: %dms\n", (int)(end - start));
+	strLog.append(strTime);
+	g_pLogger->information(strLog);
 	return bResult;
 }
 
@@ -1664,6 +1694,11 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	int nEqualCount = 0;
 	int nNullCount_1 = 0;	//第一种方法识别出的空值
 	int nNullCount_2 = 0;	//第二种方法识别出的空值
+
+	clock_t start, end;
+	start = clock();
+	std::string strLog;
+	strLog = Poco::format("图片%s\n", pPic->strPicName);
 
 	bool bRecogAll = true;
 	bool bResult = true;
@@ -1848,7 +1883,8 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	{
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别OMR失败, 图片名: %s\n", pPic->strPicName.c_str());
-		g_pLogger->information(szLog);
+		strLog.append(szLog);
+//		g_pLogger->information(szLog);
 		TRACE(szLog);
 	}
 
@@ -1866,10 +1902,14 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		sprintf_s(szStatistics, "图片(%s)选项总数[%d],空值%d(%.2f%%)[No.1=%d(%.2f%%),No.2=%d(%.2f%%)],怀疑%d(%.2f%%),无怀疑%d(%.2f%%)", pPic->strPicName.c_str(), nCount, nNullCount, (float)nNullCount / nCount * 100, \
 				  nNullCount_1, (float)nNullCount_1 / nCount * 100, nNullCount_2, (float)nNullCount_2 / nCount * 100, \
 				  nDoubtCount, (float)nDoubtCount / nCount * 100, nEqualCount, (float)nEqualCount / nCount * 100);
-
-		g_pLogger->information(szStatistics);
+		
+		strLog.append(szStatistics);
+//		g_pLogger->information(szStatistics);
 	}	
-
+	end = clock();
+	std::string strTime = Poco::format("识别Omr时间: %dms\n", (int)(end - start));
+	strLog.append(strTime);
+	g_pLogger->information(strLog);
 	return bResult;
 }
 
@@ -2745,6 +2785,9 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 	bool bRecogAll = true;
 	bool bResult = true;
 	std::vector<int> vecSN;
+
+	clock_t start, end;
+	start = clock();
 	std::string strLog;
 	strLog = Poco::format("图片%s\n", pPic->strPicName);
 
@@ -2953,12 +2996,20 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 //		g_pLogger->information(szLog);
 		TRACE(szLog);
 	}
+	end = clock();
+	std::string strTime = Poco::format("识别考号时间: %dms\n", (int)(end - start));
+	strLog.append(strTime);
 	g_pLogger->information(strLog);
 	return bResult;
 }
 
 bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
+	clock_t start, end;
+	start = clock();
+	std::string strLog;
+	strLog = Poco::format("图片%s\n", pPic->strPicName);
+
 	bool bResult = true;
 	SNLIST::iterator itSN = pModelInfo->pModel->vecPaperModel[nPic]->lSNInfo.begin();
 	for (; itSN != pModelInfo->pModel->vecPaperModel[nPic]->lSNInfo.end(); itSN++)
@@ -2992,26 +3043,31 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 				string strTypeName;
 				string strResult = GetQR(matCompRoi, strTypeName);
 
-				std::string strLog;
+				std::string strTmpLog;
 				if (strResult != "")
-					strLog = "识别准考证号完成(" + strResult + "), 图片名: " + pPic->strPicName;
+					strTmpLog = "识别准考证号完成(" + strResult + "), 图片名: " + pPic->strPicName;
 				else
 				{
-					strLog = "识别准考证号失败, 图片名:" + pPic->strPicName;
+					strTmpLog = "识别准考证号失败, 图片名:" + pPic->strPicName;
 //					bResult = false;
 				}
 				(static_cast<pST_PaperInfo>(pPic->pPaper))->strSN = strResult;
-				g_pLogger->information(strLog);
+				strLog.append(strTmpLog);
+//				g_pLogger->information(strLog);
 			}
 			catch (cv::Exception& exc)
 			{
-				std::string strLog = "识别二维码或条码失败(" + pPic->strPicName + "): " + exc.msg;
-				g_pLogger->information(strLog);
+				std::string strTmpLog = "识别二维码或条码失败(" + pPic->strPicName + "): " + exc.msg;
+				strLog.append(strTmpLog);
+//				g_pLogger->information(strLog);
 				break;
 			}
 		}
 	}
-
+	end = clock();
+	std::string strTime = Poco::format("识别考号时间: %dms\n", (int)(end - start));
+	strLog.append(strTime);
+	g_pLogger->information(strLog);
 	return bResult;
 }
 

@@ -77,10 +77,18 @@ END_MESSAGE_MAP()
 
 void CModifyZkzhDlg::InitUI()
 {
+#if 0
+	m_lcZkzh.SetExtendedStyle(m_lcZkzh.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
+	m_lcZkzh.InsertColumn(0, _T("顺序"), LVCFMT_CENTER, 40);
+	m_lcZkzh.InsertColumn(1, _T("学生标识"), LVCFMT_CENTER, 110);
+	m_lcZkzh.InsertColumn(2, _T("准考证号(可编辑)"), LVCFMT_CENTER, 110);
+	m_lcZkzh.InsertColumn(3, _T("重扫标识"), LVCFMT_CENTER, 80);
+#else
 	m_lcZkzh.SetExtendedStyle(m_lcZkzh.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcZkzh.InsertColumn(0, _T("顺序"), LVCFMT_CENTER, 40);
 	m_lcZkzh.InsertColumn(1, _T("学生标识"), LVCFMT_CENTER, 130);
 	m_lcZkzh.InsertColumn(2, _T("准考证号(可编辑)"), LVCFMT_CENTER, 170);
+#endif
 
 	m_lcBmk.SetExtendedStyle(m_lcBmk.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcBmk.InsertColumn(0, _T("顺序"), LVCFMT_CENTER, 40);

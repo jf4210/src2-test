@@ -2147,6 +2147,8 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 	if (m_pModel->nHasHead)
 		return nResult;
 	
+	std::string strLog;
+
 	cv::Rect rtModelPic;
 	rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
 	rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
@@ -2191,6 +2193,8 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 		}
 		if (bFind)
 			return nResult;
+
+		strLog.append("通过条形码或二维码判断试卷旋转方向失败，下面通过定位点判断\n");
 	}
 
 	int nCount = m_pModel->vecPaperModel[n]->lGray.size() + m_pModel->vecPaperModel[n]->lCourse.size();
@@ -2330,6 +2334,8 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 					nResult = i;
 					break;
 				}
+				std::string strTmpLog = Poco::format("总校验点数=%d, 实际识别校验点数=%d\n", nAllCount, nRtCount);
+				strLog.append(strTmpLog);
 			}
 			else
 			{
@@ -2339,13 +2345,16 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 					nResult = i;
 					break;
 				}
+				std::string strTmpLog = Poco::format("总校验点数=%d, 实际识别校验点数=%d\n", nAllCount, nRtCount);
+				strLog.append(strTmpLog);
 			}
 		}
 
 		if (!bFind)
 		{
 			TRACE("无法判断图片方向\n");
-			g_pLogger->information("无法判断图片方向");
+			strLog.append("无法判断图片方向\n");
+			g_pLogger->information(strLog);
 			nResult = 1;
 		}
 	}
@@ -2484,6 +2493,8 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 					nResult = i;
 					break;
 				}
+				std::string strTmpLog = Poco::format("总校验点数=%d, 实际识别校验点数=%d\n", nAllCount, nRtCount);
+				strLog.append(strTmpLog);
 			}
 			else
 			{
@@ -2493,13 +2504,16 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 					nResult = i;
 					break;
 				}
+				std::string strTmpLog = Poco::format("总校验点数=%d, 实际识别校验点数=%d\n", nAllCount, nRtCount);
+				strLog.append(strTmpLog);
 			}
 		}
 
 		if (!bFind)
 		{
 			TRACE("无法判断图片方向，采用默认右旋90度的方向\n");
-			g_pLogger->information("无法判断图片方向，采用默认右旋90度的方向");
+			strLog.append("无法判断图片方向，采用默认右旋90度的方向\n");
+			g_pLogger->information(strLog);
 			nResult = 2;	//如果出现无法判断图像方向时，默认模板需要右旋90度变成此图像方向，即默认返回方向为右旋90度，因为方向只有右旋90或者左旋90度两种选择，此处不返回默认的1，返回2
 		}
 	}
