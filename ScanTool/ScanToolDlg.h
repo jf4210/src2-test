@@ -40,7 +40,7 @@ public:
 
 public:
 	CListCtrl		m_lcPicture;			//图片列表控件
-	CListCtrl		m_lProblemPaper;		//问题试卷列表控件
+	CXListCtrl		m_lProblemPaper;		//问题试卷列表控件
 	CComboBox		m_comboModel;			//模板下拉列表控件
 	CTabCtrl		m_tabPicShowCtrl;		//图片显示控件
 

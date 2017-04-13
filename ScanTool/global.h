@@ -246,12 +246,13 @@ typedef struct _PaperInfo_
 	bool		bIssuePaper;		//是否是问题试卷
 	bool		bModifyZKZH;		//准考证号人工修改标识
 	bool		bRecogComplete;		//该学生已经识别完成
+	bool		bReScan;			//重新扫描标识，在准考证号修改窗口中设置
 	int			nQKFlag;			//缺考标识
 	pMODEL		pModel;				//识别此学生试卷所用的模板
 	void*		pPapers;			//所属的试卷袋信息
 	void*		pSrcDlg;			//来源，来自哪个窗口，扫描or导入试卷窗口
-	std::string strStudentInfo;		//学生信息	
-	std::string strSN;
+	std::string strStudentInfo;		//学生信息, S1、S2、S3...
+	std::string strSN;				//识别出的考号、准考证号
 	
 	SNLIST				lSnResult;
 	OMRRESULTLIST		lOmrResult;			//OMRRESULTLIST
@@ -262,6 +263,7 @@ typedef struct _PaperInfo_
 		bIssuePaper = false;
 		bModifyZKZH = false;
 		bRecogComplete = false;
+		bReScan = false;
 		nQKFlag = 0;
 		pModel = NULL;
 		pPapers = NULL;

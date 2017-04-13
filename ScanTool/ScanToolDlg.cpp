@@ -2004,6 +2004,18 @@ void CScanToolDlg::OnNMDblclkListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 					m_lcPicture.SetItemText(i, 2, _T("*"));
 			}
 		}
+		//显示需要重扫的异常试卷
+		m_lProblemPaper.DeleteAllItems();
+		for (auto pPaper : m_pPapersInfo->lIssue)
+		{
+			int nCount = m_lProblemPaper.GetItemCount();
+			char szCount[10] = { 0 };
+			sprintf_s(szCount, "%d", nCount + 1);
+			m_lProblemPaper.InsertItem(nCount, NULL);
+			m_lProblemPaper.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+			m_lProblemPaper.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
+			m_lProblemPaper.SetItemData(nCount, (DWORD_PTR)pPaper);
+		}
 	}
 #else
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcPicture.GetItemData(pNMItemActivate->iItem);
@@ -3091,6 +3103,23 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 	
 	CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr);
 	zkzhDlg.DoModal();
+
+	USES_CONVERSION;
+	//显示需要重扫的异常试卷
+	m_lProblemPaper.DeleteAllItems();
+	for (auto pPaper : m_pPapersInfo->lIssue)
+	{
+		int nCount = m_lProblemPaper.GetItemCount();
+		char szCount[10] = { 0 };
+		sprintf_s(szCount, "%d", nCount + 1);
+		m_lProblemPaper.InsertItem(nCount, NULL);
+		m_lProblemPaper.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+		m_lProblemPaper.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
+		m_lProblemPaper.SetItemData(nCount, (DWORD_PTR)pPaper);
+		CString strTips = _T("异常试卷，将不会上传，也不会参与评卷。\r\n需要单独找出，后面单独扫描");
+		m_lProblemPaper.SetItemToolTipText(nCount, 0, strTips);
+		m_lProblemPaper.SetItemToolTipText(nCount, 1, strTips);
+	}
 #endif
 	//--
 	CShowFileTransferDlg dlg;
@@ -4779,6 +4808,19 @@ void CScanToolDlg::OnTimer(UINT nIDEvent)
 						if (pItemPaper->bModifyZKZH)
 							m_lcPicture.SetItemText(i, 2, _T("*"));
 					}
+				}
+				USES_CONVERSION;
+				//显示需要重扫的异常试卷
+				m_lProblemPaper.DeleteAllItems();
+				for (auto pPaper : m_pPapersInfo->lIssue)
+				{
+					int nCount = m_lProblemPaper.GetItemCount();
+					char szCount[10] = { 0 };
+					sprintf_s(szCount, "%d", nCount + 1);
+					m_lProblemPaper.InsertItem(nCount, NULL);
+					m_lProblemPaper.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+					m_lProblemPaper.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
+					m_lProblemPaper.SetItemData(nCount, (DWORD_PTR)pPaper);
 				}
 			}
 			else

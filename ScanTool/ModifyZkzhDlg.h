@@ -68,4 +68,5 @@ public:
 	afx_msg void OnBnClickedRadioSearchname();
 	afx_msg void OnBnClickedBtnSearch();
 	afx_msg void OnNMDblclkListZkzhsearchresult(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnClose();
 };
