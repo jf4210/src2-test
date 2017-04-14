@@ -1300,6 +1300,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
 		jsnPaperArry.add(jsnPaper);
 	}
+#if 0	//异常试卷不参与评卷
 	PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
 	for (int j = 0; itIssuePaper != pPapers->lIssue.end(); itIssuePaper++, j++)
 	{
@@ -1390,6 +1391,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
 		jsnPaperArry.add(jsnPaper);
 	}
+#endif
 	//写试卷袋信息到文件
 	std::string strUploader = CMyCodeConvert::Gb2312ToUtf8(T2A(strUser));
 	std::string sEzs = T2A(strEzs);
@@ -1494,6 +1496,8 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	pTask->strExtName = T2A(PAPERS_EXT_NAME);
 	pTask->strSavePath = szPapersSavePath;
 	pTask->strSrcFilePath = strSrcPicDirPath;
+	pTask->pPapersInfo = pPapers;
+	pTask->bReleasePapers = false;			//压缩完后，不用自动释放试卷袋信息，通过外部控制释放
 	g_fmCompressLock.lock();
 	g_lCompressTask.push_back(pTask);
 	g_fmCompressLock.unlock();

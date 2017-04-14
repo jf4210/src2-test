@@ -44,7 +44,7 @@ void CSearchThread::run()
 			sprintf_s(szCompare, "_%d-%d_", _pModel_->nExamID, _pModel_->nSubjectID);
 
 			CString strMsg;
-			strMsg.Format(_T("%s模板对应的试卷包识别完成\r\n"), A2T(szCompare));
+			strMsg.Format(_T("%s模板对应的试卷包搜索完成\r\n"), A2T(szCompare));
 			((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
 			TRACE("%s\n", strMsg);
 		}

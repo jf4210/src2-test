@@ -95,6 +95,8 @@ void CModifyZkzhDlg::InitUI()
 			hditem.iImage = XHEADERCTRL_UNCHECKED_IMAGE;
 		m_lcZkzh.m_HeaderCtrl.SetItem(i, &hditem);
 	}
+	// call EnableToolTips to enable tooltip display
+	m_lcZkzh.EnableToolTips(TRUE);
 #else
 	m_lcZkzh.SetExtendedStyle(m_lcZkzh.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcZkzh.InsertColumn(0, _T("顺序"), LVCFMT_CENTER, 40);
@@ -330,6 +332,14 @@ void CModifyZkzhDlg::InitData()
 
 			m_lcZkzh.SetItemData(nCount, (DWORD_PTR)pPaper);
 			m_lcZkzh.SetEdit(nCount, 2);
+
+			CString strTips = _T("双击显示此考生试卷");
+			m_lcZkzh.SetItemToolTipText(nCount, 0, (LPCTSTR)strTips);
+			m_lcZkzh.SetItemToolTipText(nCount, 1, (LPCTSTR)strTips);
+			strTips = _T("点击修改准考证号");
+			m_lcZkzh.SetItemToolTipText(nCount, 2, (LPCTSTR)strTips);
+			strTips = _T("勾选此项，这份试卷将需要重新扫描");
+			m_lcZkzh.SetItemToolTipText(nCount, 3, (LPCTSTR)strTips);
 		}
 	}
 	for (auto pPaper : m_pPapers->lIssue)
@@ -350,6 +360,14 @@ void CModifyZkzhDlg::InitData()
 
 		m_lcZkzh.SetItemData(nCount, (DWORD_PTR)pPaper);
 		m_lcZkzh.SetEdit(nCount, 2);
+
+		CString strTips = _T("双击显示此考生试卷");
+		m_lcZkzh.SetItemToolTipText(nCount, 0, (LPCTSTR)strTips);
+		m_lcZkzh.SetItemToolTipText(nCount, 1, (LPCTSTR)strTips);
+		strTips = _T("点击修改准考证号");
+		m_lcZkzh.SetItemToolTipText(nCount, 2, (LPCTSTR)strTips);
+		strTips = _T("勾选此项，这份试卷将需要重新扫描");
+		m_lcZkzh.SetItemToolTipText(nCount, 3, (LPCTSTR)strTips);
 	}
 }
 
@@ -714,6 +732,12 @@ void CModifyZkzhDlg::OnNMDblclkListZkzhsearchresult(NMHDR *pNMHDR, LRESULT *pRes
 
 void CModifyZkzhDlg::OnClose()
 {
+	//*******************************
+	//*******************************
+	//		需要提醒准考证号未空的，将不参与评卷
+	//*******************************
+	//*******************************
+
 	int nCount = m_lcZkzh.GetItemCount();
 	for (int i = 0; i < nCount; i++)
 	{

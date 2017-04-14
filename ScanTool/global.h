@@ -90,7 +90,7 @@
 	#define Test_TraceLog		//测试日志
 #else	//release版本
 	#define	 TEST_MODEL_NAME	//模板名称测试
-//	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
+	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -151,9 +151,9 @@
 
 #ifndef TO_WHTY
 	#ifdef PUBLISH_VERSION
-		#define SOFT_VERSION	_T("1.70412-1")
+		#define SOFT_VERSION	_T("1.70414-1")
 	#else
-		#define SOFT_VERSION	_T("1.70412-1-Pir")		//-Pri
+		#define SOFT_VERSION	_T("1.70414-1-Pir")		//-Pri
 	#endif
 #else
 	#define SOFT_VERSION	_T("2.1-0323")
@@ -519,6 +519,8 @@ extern STUDENT_LIST		g_lBmkStudent;	//报名库学生列表
 typedef struct _CompressTask_
 {
 	bool	bDelSrcDir;				//自动删除原文件夹
+	bool	bReleasePapers;			//是否解压完后自动是否试卷袋信息，即释放pPapersInfo内存数据
+	pPAPERSINFO pPapersInfo;		//压缩的试卷袋文件
 	std::string strSrcFilePath;
 	std::string strCompressFileName;
 	std::string strSavePath;
@@ -526,6 +528,12 @@ typedef struct _CompressTask_
 	_CompressTask_()
 	{
 		bDelSrcDir = true;
+		bReleasePapers = true;
+		pPapersInfo = NULL;
+	}
+	~_CompressTask_()
+	{
+		if(bReleasePapers) SAFE_RELEASE(pPapersInfo);
 	}
 }COMPRESSTASK, *pCOMPRESSTASK;
 typedef std::list<pCOMPRESSTASK> COMPRESSTASKLIST;	//识别任务列表

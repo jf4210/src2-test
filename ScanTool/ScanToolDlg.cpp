@@ -679,6 +679,8 @@ void CScanToolDlg::InitUI()
 	m_lProblemPaper.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 40);
 	m_lProblemPaper.InsertColumn(1, _T("异常学生"), LVCFMT_CENTER, 150);
 
+	m_lProblemPaper.EnableToolTips(TRUE);
+
 	SetFontSize(m_nStatusSize);
 
 	USES_CONVERSION;
@@ -1993,6 +1995,23 @@ void CScanToolDlg::OnNMDblclkListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 
 		//显示所有识别完成的准考证号
 		USES_CONVERSION;
+#if 1
+		//重新显示合格试卷
+		m_lcPicture.DeleteAllItems();
+		for (auto pPaper : m_pPapersInfo->lPaper)
+		{
+			int nCount = m_lcPicture.GetItemCount();
+			char szCount[10] = { 0 };
+			sprintf_s(szCount, "%d", nCount + 1);
+			m_lcPicture.InsertItem(nCount, NULL);
+			m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+			m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+			if (pPaper->bModifyZKZH)
+				m_lcPicture.SetItemText(nCount, 2, _T("*"));
+			m_lcPicture.SetItemData(nCount, (DWORD_PTR)pPaper);
+		}
+#else
+		//显示所有识别完成的准考证号
 		int nCount = m_lcPicture.GetItemCount();
 		for (int i = 0; i < nCount; i++)
 		{
@@ -2004,6 +2023,7 @@ void CScanToolDlg::OnNMDblclkListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 					m_lcPicture.SetItemText(i, 2, _T("*"));
 			}
 		}
+#endif
 		//显示需要重扫的异常试卷
 		m_lProblemPaper.DeleteAllItems();
 		for (auto pPaper : m_pPapersInfo->lIssue)
@@ -2015,6 +2035,10 @@ void CScanToolDlg::OnNMDblclkListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 			m_lProblemPaper.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 			m_lProblemPaper.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
 			m_lProblemPaper.SetItemData(nCount, (DWORD_PTR)pPaper);
+
+			CString strTips = _T("异常试卷，将不会上传，也不会参与评卷。 需要单独找出，后面单独扫描");
+			m_lProblemPaper.SetItemToolTipText(nCount, 0, strTips);
+			m_lProblemPaper.SetItemToolTipText(nCount, 1, strTips);
 		}
 	}
 #else
@@ -2542,9 +2566,23 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		m_bF1Enable = TRUE;
 		return;
 	}
-
+	
+	bool bRecogComplete = true;
+#ifndef TO_WHTY
+	for (auto p : m_pPapersInfo->lPaper)
+	{
+		if (!p->bRecogComplete)
+		{
+			bRecogComplete = false;
+			break;
+		}
+	}
+#else
 	int nUnRecogCount = g_lRecogTask.size();
 	if (nUnRecogCount > 0)
+		bRecogComplete = false;
+#endif
+	if (!bRecogComplete)
 	{
 		AfxMessageBox(_T("请稍后，图像正在识别！"));
 		m_bF2Enable = TRUE;
@@ -2582,12 +2620,28 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		return;
 	}
 #endif
+
 	if (m_pPapersInfo->lIssue.size() > 0)
 	{
-		AfxMessageBox(_T("存在识别异常试卷，不能上传，请先处理异常试卷"));
-		m_bF2Enable = TRUE;
-		m_bF1Enable = TRUE;
-		return;
+		if (g_nOperatingMode == 2)
+		{
+			AfxMessageBox(_T("存在识别异常试卷，不能上传，请先处理异常试卷")); 
+			m_bF2Enable = TRUE;
+			m_bF1Enable = TRUE;
+			return;
+		}
+		else
+		{
+			CString strMsg = _T("");
+			strMsg.Format(_T("存在%d份问题试卷，这些试卷需要单独找出扫描，此次将不上传这%d份试卷，是否确定上传?"), m_pPapersInfo->lIssue.size(), m_pPapersInfo->lIssue.size());
+			if (MessageBox(strMsg, _T("警告"), MB_YESNO) != IDYES)
+			{
+				m_bF2Enable = TRUE;
+				m_bF1Enable = TRUE;
+				return;
+			}
+			m_pPapersInfo->nPaperCount = m_pPapersInfo->lPaper.size();		//修改扫描数量，将问题试卷删除，不算到扫描试卷中。
+		}
 	}
 
 	int nExamID = 0;
@@ -2853,6 +2907,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	pTask->strExtName = T2A(PAPERS_EXT_NAME);
 	pTask->strSavePath = szPapersSavePath;
 	pTask->strSrcFilePath = strSrcPicDirPath;
+	pTask->pPapersInfo = m_pPapersInfo;
 	g_fmCompressLock.lock();
 	g_lCompressTask.push_back(pTask);
 	g_fmCompressLock.unlock();
@@ -2862,7 +2917,8 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	strInfo.Format(_T("正在保存%s..."), A2T(szZipName));
 	SetStatusShowInfo(strInfo, bWarn);
 
-	SAFE_RELEASE(m_pPapersInfo);
+//	SAFE_RELEASE(m_pPapersInfo);
+	m_pPapersInfo = NULL;
 	m_lcPicture.DeleteAllItems();
 	m_pCurrentShowPaper = NULL;
 }
@@ -3045,6 +3101,8 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 		m_pPapersInfo = new PAPERSINFO();
 
 		USES_CONVERSION;
+		m_strCurrPicSavePath = T2A(g_strCurrentPath + _T("Paper\\TestPic\\"));
+
 		for (int i = 0; i < 4; i++)
 		{
 			int nStudentId = i / m_nModelPicNums + 1;
@@ -3074,6 +3132,13 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 			}
 			else
 				m_pPaper->lPic.push_back(pPic);
+
+			pPic->pPaper = m_pPaper;
+
+			//添加到识别任务列表
+			pRECOGTASK pTask = new RECOGTASK;
+			pTask->pPaper = m_pPaper;
+			g_lRecogTask.push_back(pTask);
 		}
 	}
 #if 1
@@ -3105,6 +3170,35 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 	zkzhDlg.DoModal();
 
 	USES_CONVERSION;
+#if 1
+	//重新显示合格试卷
+	m_lcPicture.DeleteAllItems();
+	for (auto pPaper : m_pPapersInfo->lPaper)
+	{
+		int nCount = m_lcPicture.GetItemCount();
+		char szCount[10] = { 0 };
+		sprintf_s(szCount, "%d", nCount + 1);
+		m_lcPicture.InsertItem(nCount, NULL);
+		m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+		if (pPaper->bModifyZKZH)
+			m_lcPicture.SetItemText(nCount, 2, _T("*"));
+		m_lcPicture.SetItemData(nCount, (DWORD_PTR)pPaper);
+	}
+#else
+	//显示所有识别完成的准考证号
+	int nCount = m_lcPicture.GetItemCount();
+	for (int i = 0; i < nCount; i++)
+	{
+		pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(i);
+		if (pItemPaper)
+		{
+			m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
+			if (pItemPaper->bModifyZKZH)
+				m_lcPicture.SetItemText(i, 2, _T("*"));
+		}
+	}
+#endif
 	//显示需要重扫的异常试卷
 	m_lProblemPaper.DeleteAllItems();
 	for (auto pPaper : m_pPapersInfo->lIssue)
@@ -3116,7 +3210,8 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 		m_lProblemPaper.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 		m_lProblemPaper.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
 		m_lProblemPaper.SetItemData(nCount, (DWORD_PTR)pPaper);
-		CString strTips = _T("异常试卷，将不会上传，也不会参与评卷。\r\n需要单独找出，后面单独扫描");
+
+		CString strTips = _T("异常试卷，将不会上传，也不会参与评卷。 需要单独找出，后面单独扫描");
 		m_lProblemPaper.SetItemToolTipText(nCount, 0, strTips);
 		m_lProblemPaper.SetItemToolTipText(nCount, 1, strTips);
 	}
@@ -4797,6 +4892,22 @@ void CScanToolDlg::OnTimer(UINT nIDEvent)
 				CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr);
 				zkzhDlg.DoModal();
 
+#if 1
+				//重新显示合格试卷
+				m_lcPicture.DeleteAllItems();
+				for (auto pPaper : m_pPapersInfo->lPaper)
+				{
+					int nCount = m_lcPicture.GetItemCount();
+					char szCount[10] = { 0 };
+					sprintf_s(szCount, "%d", nCount + 1);
+					m_lcPicture.InsertItem(nCount, NULL);
+					m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+					m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+					if (pPaper->bModifyZKZH)
+						m_lcPicture.SetItemText(nCount, 2, _T("*"));
+					m_lcPicture.SetItemData(nCount, (DWORD_PTR)pPaper);
+				}
+#else
 				//显示所有识别完成的准考证号
 				int nCount = m_lcPicture.GetItemCount();
 				for (int i = 0; i < nCount; i++)
@@ -4809,7 +4920,7 @@ void CScanToolDlg::OnTimer(UINT nIDEvent)
 							m_lcPicture.SetItemText(i, 2, _T("*"));
 					}
 				}
-				USES_CONVERSION;
+#endif
 				//显示需要重扫的异常试卷
 				m_lProblemPaper.DeleteAllItems();
 				for (auto pPaper : m_pPapersInfo->lIssue)
@@ -4821,6 +4932,10 @@ void CScanToolDlg::OnTimer(UINT nIDEvent)
 					m_lProblemPaper.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 					m_lProblemPaper.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
 					m_lProblemPaper.SetItemData(nCount, (DWORD_PTR)pPaper);
+
+					CString strTips = _T("异常试卷，将不会上传，也不会参与评卷。 需要单独找出，后面单独扫描");
+					m_lProblemPaper.SetItemToolTipText(nCount, 0, strTips);
+					m_lProblemPaper.SetItemToolTipText(nCount, 1, strTips);
 				}
 			}
 			else
