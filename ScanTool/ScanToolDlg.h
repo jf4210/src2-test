@@ -187,4 +187,5 @@ public:
 	afx_msg void OnBnClickedBtnReback();
 	afx_msg void OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2);
 	afx_msg void OnTimer(UINT nIDEvent);
+	afx_msg void OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult);
 };

@@ -177,6 +177,7 @@ BEGIN_MESSAGE_MAP(CScanToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_ReBack, &CScanToolDlg::OnBnClickedBtnReback)
 	ON_WM_HOTKEY()
 	ON_WM_TIMER()
+	ON_NOTIFY(NM_DBLCLK, IDC_LIST_Paper, &CScanToolDlg::OnNMDblclkListPaper)
 END_MESSAGE_MAP()
 
 
@@ -1990,7 +1991,7 @@ void CScanToolDlg::OnNMDblclkListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 			std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
 			bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
 		}
-		CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr);
+		CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr, pItemPaper);
 		zkzhDlg.DoModal();
 
 		//显示所有识别完成的准考证号
@@ -2106,7 +2107,6 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			for (int j = 0; itHTracker != pPaper->pModel->vecPaperModel[i]->lSelHTracker.end(); itHTracker++, j++)
 			{
 				cv::Rect rt = (*itHTracker).rt;
-				//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				rectangle(tmp, rt, CV_RGB(25, 200, 20), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
@@ -2115,7 +2115,6 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			for (int j = 0; itVTracker != pPaper->pModel->vecPaperModel[i]->lSelVTracker.end(); itVTracker++, j++)
 			{
 				cv::Rect rt = (*itVTracker).rt;
-				//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				rectangle(tmp, rt, CV_RGB(25, 200, 20), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
@@ -2126,7 +2125,6 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		for (int j = 0; itNormal != (*itPic)->lNormalRect.end(); itNormal++, j++)
 		{
 			cv::Rect rt = (*itNormal).rt;
-//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 			char szCP[20] = { 0 };
 			if (itNormal->eCPType == SN || itNormal->eCPType == OMR)
@@ -2146,7 +2144,6 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i]->lSelFixRoi.end(); itSelRoi++, j++)
 			{
 				cv::Rect rt = (*itSelRoi).rt;
-				//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				char szCP[20] = { 0 };
 				// 				sprintf_s(szCP, "FIX%d", j);
@@ -2161,7 +2158,6 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		for (int j = 0; itPicFix != (*itPic)->lFix.end(); itPicFix++, j++)
 		{
 			cv::Rect rt = (*itPicFix).rt;
-//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 			char szCP[20] = { 0 };
 			sprintf_s(szCP, "R_F%d", j);
@@ -2175,7 +2171,6 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[i]->lFix.end(); itFixRect++, j++)
 			{
 				cv::Rect rt = (*itFixRect).rt;
-				//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				char szCP[20] = { 0 };
 				sprintf_s(szCP, "M_F%d", j);
@@ -2357,7 +2352,6 @@ int CScanToolDlg::PaintIssueRect(pST_PaperInfo pPaper)
 				for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i]->lSelFixRoi.end(); itSelRoi++, j++)
 				{
 					cv::Rect rt = (*itSelRoi).rt;
-					//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
 
 					char szCP[20] = { 0 };
 					// 				sprintf_s(szCP, "FIX%d", j);
@@ -2371,7 +2365,6 @@ int CScanToolDlg::PaintIssueRect(pST_PaperInfo pPaper)
 			for (int j = 0; itPicFix != (*itPic)->lFix.end(); itPicFix++, j++)
 			{
 				cv::Rect rt = (*itPicFix).rt;
-//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
 
 				char szCP[20] = { 0 };
 				sprintf_s(szCP, "R_F%d", j);
@@ -2386,7 +2379,6 @@ int CScanToolDlg::PaintIssueRect(pST_PaperInfo pPaper)
 				for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[i]->lFix.end(); itFixRect++, j++)
 				{
 					cv::Rect rt = (*itFixRect).rt;
-					//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 					char szCP[20] = { 0 };
 					sprintf_s(szCP, "M_F%d", j);
@@ -2566,7 +2558,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		m_bF1Enable = TRUE;
 		return;
 	}
-	
+
 	bool bRecogComplete = true;
 #ifndef TO_WHTY
 	for (auto p : m_pPapersInfo->lPaper)
@@ -2625,7 +2617,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	{
 		if (g_nOperatingMode == 2)
 		{
-			AfxMessageBox(_T("存在识别异常试卷，不能上传，请先处理异常试卷")); 
+			AfxMessageBox(_T("存在识别异常试卷，不能上传，请先处理异常试卷"));
 			m_bF2Enable = TRUE;
 			m_bF1Enable = TRUE;
 			return;
@@ -2658,27 +2650,27 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	nExamID = dlg.m_nExamID;
 	nSubjectID = dlg.m_SubjectID;
 #else
-	#if 1
-		CPapersInfoSave4TyDlg dlg;
-		if (dlg.DoModal() != IDOK)
-		{
-			m_bF2Enable = TRUE;
-			m_bF1Enable = TRUE;
-			return;
-		}
-		std::string strExamID = T2A(dlg.m_strExamID);
-		nSubjectID = 0;
+#if 1
+	CPapersInfoSave4TyDlg dlg;
+	if (dlg.DoModal() != IDOK)
+	{
+		m_bF2Enable = TRUE;
+		m_bF1Enable = TRUE;
+		return;
+	}
+	std::string strExamID = T2A(dlg.m_strExamID);
+	nSubjectID = 0;
 
-// 		CPapersInfoSaveDlg dlg(m_pPapersInfo, m_pModel);
-// 		if (dlg.DoModal() != IDOK)
-// 		{
-// 			m_bF2Enable = TRUE;
-// 			m_bF1Enable = TRUE;
-// 			return;
-// 		}
-// 		std::string strExamID = T2A(dlg.m_strExamID);
-// 		nSubjectID = dlg.m_SubjectID;
-	#else
+	// 		CPapersInfoSaveDlg dlg(m_pPapersInfo, m_pModel);
+	// 		if (dlg.DoModal() != IDOK)
+	// 		{
+	// 			m_bF2Enable = TRUE;
+	// 			m_bF1Enable = TRUE;
+	// 			return;
+	// 		}
+	// 		std::string strExamID = T2A(dlg.m_strExamID);
+	// 		nSubjectID = dlg.m_SubjectID;
+#else
 	if (MessageBox(_T("是否上传当前扫描卷?"), _T("提示"), MB_YESNO) != IDYES)
 	{
 		m_bF2Enable = TRUE;
@@ -2692,7 +2684,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	char szPapersName[50] = { 0 };
 	sprintf_s(szPapersName, "%d%02d%02d%02d%02d%02d-%05d", nowTime.year(), nowTime.month(), nowTime.day(), nowTime.hour(), nowTime.minute(), nowTime.second(), rm.next(99999));
 	m_pPapersInfo->strPapersName = szPapersName;
-	#endif
+#endif
 #endif
 
 	clock_t start, end;
@@ -2718,7 +2710,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		jsnPaper.set("name", (*itNomarlPaper)->strStudentInfo);
 		jsnPaper.set("zkzh", (*itNomarlPaper)->strSN);
 		jsnPaper.set("qk", (*itNomarlPaper)->nQKFlag);
-		
+
 		Poco::JSON::Array jsnSnDetailArry;
 		SNLIST::iterator itSn = (*itNomarlPaper)->lSnResult.begin();
 		for (; itSn != (*itNomarlPaper)->lSnResult.end(); itSn++)
@@ -2801,6 +2793,102 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
 		jsnPaperArry.add(jsnPaper);
 	}
+
+	Poco::JSON::Array jsnIssuePaperArry;
+	if (g_nOperatingMode == 1)		//简单模式时，异常试卷也一起上传，做特殊标识
+	{
+		PAPER_LIST::iterator itIssuePaper = m_pPapersInfo->lIssue.begin();
+		int nNomarlCount = m_pPapersInfo->lPaper.size();
+		for (int j = nNomarlCount; itIssuePaper != m_pPapersInfo->lIssue.end(); itIssuePaper++, j++)
+		{
+			Poco::JSON::Object jsnPaper;
+			jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
+			jsnPaper.set("zkzh", (*itIssuePaper)->strSN);
+			jsnPaper.set("qk", (*itIssuePaper)->nQKFlag);
+
+			Poco::JSON::Array jsnSnDetailArry;
+			SNLIST::iterator itSn = (*itIssuePaper)->lSnResult.begin();
+			for (; itSn != (*itIssuePaper)->lSnResult.end(); itSn++)
+			{
+				Poco::JSON::Object jsnSnItem;
+				jsnSnItem.set("sn", (*itSn)->nItem);
+				jsnSnItem.set("val", (*itSn)->nRecogVal);
+
+				Poco::JSON::Object jsnSnPosition;
+				RECTLIST::iterator itRect = (*itSn)->lSN.begin();
+				for (; itRect != (*itSn)->lSN.end(); itRect++)
+				{
+					jsnSnPosition.set("x", itRect->rt.x);
+					jsnSnPosition.set("y", itRect->rt.y);
+					jsnSnPosition.set("w", itRect->rt.width);
+					jsnSnPosition.set("h", itRect->rt.height);
+				}
+				jsnSnItem.set("position", jsnSnPosition);
+				jsnSnDetailArry.add(jsnSnItem);
+			}
+			jsnPaper.set("snDetail", jsnSnDetailArry);
+
+			Poco::JSON::Array jsnOmrArry;
+			OMRRESULTLIST::iterator itOmr = (*itIssuePaper)->lOmrResult.begin();
+			for (; itOmr != (*itIssuePaper)->lOmrResult.end(); itOmr++)
+			{
+				Poco::JSON::Object jsnOmr;
+				jsnOmr.set("th", itOmr->nTH);
+				jsnOmr.set("type", itOmr->nSingle + 1);
+				jsnOmr.set("value", itOmr->strRecogVal);
+				jsnOmr.set("value2", itOmr->strRecogVal2);
+				jsnOmr.set("doubt", itOmr->nDoubt);
+				Poco::JSON::Array jsnPositionArry;
+				RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
+				for (; itRect != itOmr->lSelAnswer.end(); itRect++)
+				{
+					Poco::JSON::Object jsnItem;
+					char szVal[5] = { 0 };
+					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+					jsnItem.set("val", szVal);
+					jsnItem.set("x", itRect->rt.x);
+					jsnItem.set("y", itRect->rt.y);
+					jsnItem.set("w", itRect->rt.width);
+					jsnItem.set("h", itRect->rt.height);
+					jsnPositionArry.add(jsnItem);
+				}
+				jsnOmr.set("position", jsnPositionArry);
+				jsnOmrArry.add(jsnOmr);
+			}
+			jsnPaper.set("omr", jsnOmrArry);
+
+			Poco::JSON::Array jsnElectOmrArry;
+			ELECTOMR_LIST::iterator itElectOmr = (*itIssuePaper)->lElectOmrResult.begin();
+			for (; itElectOmr != (*itIssuePaper)->lElectOmrResult.end(); itElectOmr++)
+			{
+				Poco::JSON::Object jsnElectOmr;
+				jsnElectOmr.set("paperId", j + 1);
+				jsnElectOmr.set("doubt", itElectOmr->nDoubt);
+				jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
+				jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
+				jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
+				jsnElectOmr.set("value", itElectOmr->strRecogResult);
+				Poco::JSON::Array jsnPositionArry;
+				RECTLIST::iterator itRect = itElectOmr->lItemInfo.begin();
+				for (; itRect != itElectOmr->lItemInfo.end(); itRect++)
+				{
+					Poco::JSON::Object jsnItem;
+					char szVal[5] = { 0 };
+					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+					jsnItem.set("val", szVal);
+					jsnItem.set("x", itRect->rt.x);
+					jsnItem.set("y", itRect->rt.y);
+					jsnItem.set("w", itRect->rt.width);
+					jsnItem.set("h", itRect->rt.height);
+					jsnPositionArry.add(jsnItem);
+				}
+				jsnElectOmr.set("position", jsnPositionArry);
+				jsnElectOmrArry.add(jsnElectOmr);
+			}
+			jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
+			jsnIssuePaperArry.add(jsnPaper);
+		}
+	}
 	
 	//写试卷袋信息到文件
 	std::string strUploader = CMyCodeConvert::Gb2312ToUtf8(T2A(strUser));
@@ -2816,6 +2904,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	jsnFileData.set("nUserId", nUserId);
 	jsnFileData.set("scanNum", m_pPapersInfo->nPaperCount);		//扫描的学生数量
 	jsnFileData.set("detail", jsnPaperArry);
+	jsnFileData.set("IssuePaper", jsnIssuePaperArry);			//问题试卷列表，在简单模式下可能存在数据
 
 	jsnFileData.set("nOmrDoubt", m_pPapersInfo->nOmrDoubt);
 	jsnFileData.set("nOmrNull", m_pPapersInfo->nOmrNull);
@@ -3103,7 +3192,7 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 		USES_CONVERSION;
 		m_strCurrPicSavePath = T2A(g_strCurrentPath + _T("Paper\\TestPic\\"));
 
-		for (int i = 0; i < 4; i++)
+		for (int i = 0; i < 40; i++)
 		{
 			int nStudentId = i / m_nModelPicNums + 1;
 			int nOrder = i % m_nModelPicNums + 1;
@@ -5053,3 +5142,60 @@ BOOL CScanToolDlg::StartGuardProcess()
 	return TRUE;
 }
 
+void CScanToolDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	*pResult = 0;
+
+	if (pNMItemActivate->iItem < 0)
+		return;
+
+	ShowPaperByItem(pNMItemActivate->iItem);
+	//双击为空的准考证号时显示准考证号修改窗口
+	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lProblemPaper.GetItemData(pNMItemActivate->iItem);
+	if (g_nOperatingMode == 1 && m_pModel && pItemPaper)
+	{
+		if (!m_pStudentMgr)
+		{
+			USES_CONVERSION;
+			m_pStudentMgr = new CStudentMgr();
+			std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+			bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+		}
+		CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr, pItemPaper);
+		zkzhDlg.DoModal();
+
+		//显示所有识别完成的准考证号
+		USES_CONVERSION;
+		//重新显示合格试卷
+		m_lcPicture.DeleteAllItems();
+		for (auto pPaper : m_pPapersInfo->lPaper)
+		{
+			int nCount = m_lcPicture.GetItemCount();
+			char szCount[10] = { 0 };
+			sprintf_s(szCount, "%d", nCount + 1);
+			m_lcPicture.InsertItem(nCount, NULL);
+			m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+			m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+			if (pPaper->bModifyZKZH)
+				m_lcPicture.SetItemText(nCount, 2, _T("*"));
+			m_lcPicture.SetItemData(nCount, (DWORD_PTR)pPaper);
+		}
+		//显示需要重扫的异常试卷
+		m_lProblemPaper.DeleteAllItems();
+		for (auto pPaper : m_pPapersInfo->lIssue)
+		{
+			int nCount = m_lProblemPaper.GetItemCount();
+			char szCount[10] = { 0 };
+			sprintf_s(szCount, "%d", nCount + 1);
+			m_lProblemPaper.InsertItem(nCount, NULL);
+			m_lProblemPaper.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+			m_lProblemPaper.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
+			m_lProblemPaper.SetItemData(nCount, (DWORD_PTR)pPaper);
+
+			CString strTips = _T("异常试卷，将不会上传，也不会参与评卷。 需要单独找出，后面单独扫描");
+			m_lProblemPaper.SetItemToolTipText(nCount, 0, strTips);
+			m_lProblemPaper.SetItemToolTipText(nCount, 1, strTips);
+		}
+	}
+}

@@ -11,7 +11,7 @@ class CModifyZkzhDlg : public CDialog
 	DECLARE_DYNAMIC(CModifyZkzhDlg)
 
 public:
-	CModifyZkzhDlg(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, CWnd* pParent = NULL);   // 标准构造函数
+	CModifyZkzhDlg(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper = NULL, CWnd* pParent = NULL);   // 标准构造函数
 	virtual ~CModifyZkzhDlg();
 
 // 对话框数据
@@ -38,6 +38,7 @@ public:
 	CListCtrl		m_lcBmk;			//报名库列表控件
 private:
 	CStudentMgr*	m_pStudentMgr;
+	pST_PaperInfo	m_pShowPaper;		//默认显示的试卷
 private:
 	void	InitUI();
 	void	InitTab();

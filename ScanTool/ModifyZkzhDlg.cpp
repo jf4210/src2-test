@@ -11,10 +11,10 @@
 
 IMPLEMENT_DYNAMIC(CModifyZkzhDlg, CDialog)
 
-CModifyZkzhDlg::CModifyZkzhDlg(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, CWnd* pParent /*=NULL*/)
+CModifyZkzhDlg::CModifyZkzhDlg(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper, CWnd* pParent /*=NULL*/)
 	: CDialog(CModifyZkzhDlg::IDD, pParent)
 	, m_pCurrentPicShow(NULL), m_pModel(pModel), m_pPapers(pPapersInfo), m_nModelPicNums(1), m_nCurrTabSel(0), m_pCurrentShowPaper(NULL)
-	, m_nCurrentSelItem(0), m_pStudentMgr(pStuMgr), m_nSearchType(2)
+	, m_nCurrentSelItem(0), m_pStudentMgr(pStuMgr), m_pShowPaper(pShowPaper), m_nSearchType(2)
 {
 
 }
@@ -329,9 +329,11 @@ void CModifyZkzhDlg::InitData()
 			if (pPaper->bReScan) nReScan = 1;
 			m_lcZkzh.SetItemText(nCount, 3, _T("重扫"));
 			m_lcZkzh.SetCheckbox(nCount, 3, nReScan);
-
 			m_lcZkzh.SetItemData(nCount, (DWORD_PTR)pPaper);
 			m_lcZkzh.SetEdit(nCount, 2);
+
+			if (pPaper == m_pShowPaper)
+				m_nCurrentSelItem = nCount;
 
 			CString strTips = _T("双击显示此考生试卷");
 			m_lcZkzh.SetItemToolTipText(nCount, 0, (LPCTSTR)strTips);
@@ -357,9 +359,11 @@ void CModifyZkzhDlg::InitData()
 		if (pPaper->bReScan) nReScan = 1;
 		m_lcZkzh.SetItemText(nCount, 3, _T("重扫"));
 		m_lcZkzh.SetCheckbox(nCount, 3, nReScan);
-
 		m_lcZkzh.SetItemData(nCount, (DWORD_PTR)pPaper);
 		m_lcZkzh.SetEdit(nCount, 2);
+
+		if (pPaper == m_pShowPaper)
+			m_nCurrentSelItem = nCount;
 
 		CString strTips = _T("双击显示此考生试卷");
 		m_lcZkzh.SetItemToolTipText(nCount, 0, (LPCTSTR)strTips);

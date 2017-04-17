@@ -683,20 +683,7 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 					std::stringstream jsnSnString;
 					jsnSn.stringify(jsnSnString, 0);
 					pPaper->strSnDetail = jsnSnString.str();
-					// 				for (int i = 0; i < jsnSnArry->size(); i++)
-					// 				{
-					// 					Poco::JSON::Object::Ptr jsnSnItem = jsnSnArry->getObject(i);
-					// 					Poco::JSON::Object::Ptr jsnSnPosition = jsnSnItem->getObject("position");
-					// 
-					// 					SN_ITEM snItem;
-					// 					snItem.nItem		= jsnSnItem->get("sn").convert<int>();
-					// 					snItem.nRecogVal	= jsnSnItem->get("val").convert<int>();
-					// 					snItem.rt.x			= jsnSnPosition->get("x").convert<int>();
-					// 					snItem.rt.y			= jsnSnPosition->get("y").convert<int>();
-					// 					snItem.rt.width		= jsnSnPosition->get("w").convert<int>();
-					// 					snItem.rt.height	= jsnSnPosition->get("h").convert<int>();
-					// 					pPaper->lSnResult.push_back(snItem);
-					// 				}
+
 					Poco::JSON::Array::Ptr jsnOmrArry = jsnPaperObj->getArray("omr");
 					Poco::JSON::Object jsnOmr;
 					jsnOmr.set("examId", nExamId);

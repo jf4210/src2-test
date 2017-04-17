@@ -649,7 +649,6 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		{
 			std::string strLog2 = Poco::format("识别定点(%d)异常: %s\n", i, exc.msg);
 			strLog.append(strLog2);
-//			g_pLogger->information(strLog2);
 			TRACE(strLog2.c_str());
 
 			pPic->bFindIssue = true;
@@ -735,7 +734,6 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别定点失败, 图片名: %s\n", pPic->strPicName.c_str());
 		strLog.append(szLog);
-//		g_pLogger->information(szLog);
 		TRACE(szLog);
 	}
 	end = clock();
@@ -1431,7 +1429,6 @@ bool CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 				char szLog[MAX_PATH] = { 0 };
 				sprintf_s(szLog, "校验失败, 灰度百分比: %f, 问题点: (%d,%d,%d,%d)\n", rc.fRealValuePercent * 100, rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
 				strLog.append(szLog);
-//				g_pLogger->information(szLog);
 				TRACE(szLog);
 			}
 		}
@@ -1440,7 +1437,6 @@ bool CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			char szLog[MAX_PATH] = { 0 };
 			sprintf_s(szLog, "校验失败, 异常结束, 问题点: (%d,%d,%d,%d)\n", rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
 			strLog.append(szLog);
-//			g_pLogger->information(szLog);
 			TRACE(szLog);
 		}
 		
@@ -1574,7 +1570,6 @@ bool CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 				char szLog[MAX_PATH] = { 0 };
 				sprintf_s(szLog, "校验失败, 灰度百分比: %f, 问题点: (%d,%d,%d,%d)\n", rc.fRealValuePercent * 100, rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
 				strLog.append(szLog);
-//				g_pLogger->information(szLog);
 				TRACE(szLog);
 			}
 		}
@@ -1583,7 +1578,6 @@ bool CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			char szLog[MAX_PATH] = { 0 };
 			sprintf_s(szLog, "校验失败, 异常结束, 问题点: (%d,%d,%d,%d)\n", rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
 			strLog.append(szLog);
-//			g_pLogger->information(szLog);
 			TRACE(szLog);
 		}
 
@@ -1600,7 +1594,6 @@ bool CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别灰度校验点失败, 图片名: %s\n", pPic->strPicName.c_str());
 		strLog.append(szLog);
-//		g_pLogger->information(szLog);
 		TRACE(szLog);
 	}
 	end = clock();
@@ -1884,7 +1877,6 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别OMR失败, 图片名: %s\n", pPic->strPicName.c_str());
 		strLog.append(szLog);
-//		g_pLogger->information(szLog);
 		TRACE(szLog);
 	}
 
@@ -1904,7 +1896,6 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				  nDoubtCount, (float)nDoubtCount / nCount * 100, nEqualCount, (float)nEqualCount / nCount * 100);
 		
 		strLog.append(szStatistics);
-//		g_pLogger->information(szStatistics);
 	}	
 	end = clock();
 	std::string strTime = Poco::format("识别Omr时间: %dms\n", (int)(end - start));
@@ -2925,7 +2916,6 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			}
 			strcat_s(szTmpLog, "]\n");
 			strLog.append(szTmpLog);
-//			g_pLogger->information(szTmpLog);
 		}
 #endif		
 
@@ -2974,7 +2964,6 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别准考证号完成(%s), 图片名: %s\n", (static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.c_str(), pPic->strPicName.c_str());
 		strLog.append(szLog);
-//		g_pLogger->information(szLog);
 		TRACE(szLog);
 		(static_cast<CDialog*>((static_cast<pST_PaperInfo>(pPic->pPaper))->pSrcDlg))->SendMessage(MSG_ZKZH_RECOG, (WPARAM)pPic->pPaper, NULL);
 	}
@@ -2993,7 +2982,6 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别准考证号失败, 图片名: %s\n", pPic->strPicName.c_str());
 		strLog.append(szLog);
-//		g_pLogger->information(szLog);
 		TRACE(szLog);
 	}
 	end = clock();
@@ -3053,13 +3041,11 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 				}
 				(static_cast<pST_PaperInfo>(pPic->pPaper))->strSN = strResult;
 				strLog.append(strTmpLog);
-//				g_pLogger->information(strLog);
 			}
 			catch (cv::Exception& exc)
 			{
 				std::string strTmpLog = "识别二维码或条码失败(" + pPic->strPicName + "): " + exc.msg;
 				strLog.append(strTmpLog);
-//				g_pLogger->information(strLog);
 				break;
 			}
 		}

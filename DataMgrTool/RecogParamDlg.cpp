@@ -55,12 +55,21 @@ BOOL CRecogParamDlg::OnInitDialog()
 	{
 		((CButton*)GetDlgItem(IDC_RADIO_CompressPKG))->SetCheck(1);
 		((CButton*)GetDlgItem(IDC_RADIO_SendEZS))->SetCheck(0);
+		((CButton*)GetDlgItem(IDC_RADIO_NoCompress))->SetCheck(0);
 		GetDlgItem(IDC_EDIT_EZS)->EnableWindow(FALSE);
+	}
+	else if (m_nHandleResult == 1)
+	{
+		((CButton*)GetDlgItem(IDC_RADIO_CompressPKG))->SetCheck(0);
+		((CButton*)GetDlgItem(IDC_RADIO_SendEZS))->SetCheck(1);
+		((CButton*)GetDlgItem(IDC_RADIO_NoCompress))->SetCheck(0);
+		GetDlgItem(IDC_EDIT_EZS)->EnableWindow(TRUE);
 	}
 	else
 	{
 		((CButton*)GetDlgItem(IDC_RADIO_CompressPKG))->SetCheck(0);
-		((CButton*)GetDlgItem(IDC_RADIO_SendEZS))->SetCheck(1);
+		((CButton*)GetDlgItem(IDC_RADIO_SendEZS))->SetCheck(0);
+		((CButton*)GetDlgItem(IDC_RADIO_NoCompress))->SetCheck(1);
 		GetDlgItem(IDC_EDIT_EZS)->EnableWindow(TRUE);
 	}
 

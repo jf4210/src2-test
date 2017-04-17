@@ -620,8 +620,6 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 					pPaper->lOmrResult.push_back(omrResult);
 				}
 
-
-
 				if (jsnPaperObj->has("electOmr"))
 				{
 					Poco::JSON::Array::Ptr jsnElectOmrArry = jsnPaperObj->getArray("electOmr");
