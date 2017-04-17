@@ -494,6 +494,11 @@ BOOL CModifyZkzhDlg::PreTranslateMessage(MSG* pMsg)
 		{
 			return TRUE;
 		}
+		if (pMsg->wParam == VK_ESCAPE)
+		{
+			if (!ReleaseData())
+				return TRUE;
+		}
 	}
 	return CDialog::PreTranslateMessage(pMsg);
 }
@@ -733,16 +738,24 @@ void CModifyZkzhDlg::OnNMDblclkListZkzhsearchresult(NMHDR *pNMHDR, LRESULT *pRes
 	
 }
 
-
-void CModifyZkzhDlg::OnClose()
+bool CModifyZkzhDlg::ReleaseData()
 {
 	//*******************************
 	//*******************************
-	//		需要提醒准考证号未空的，将不参与评卷
+	//		需要提醒准考证号为空的，将不参与评卷
 	//*******************************
 	//*******************************
 
 	int nCount = m_lcZkzh.GetItemCount();
+	for (int i = 0; i < nCount; i++)
+	{
+		pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
+		if (pPaper->strSN.empty())
+		{
+			if (MessageBox(_T("存在准考证号为空的考生，如果不修改，将影响此考生参与后面的评卷，是否忽略？"), _T("警告"), MB_YESNO) != IDYES)
+				return false;
+		}
+	}
 	for (int i = 0; i < nCount; i++)
 	{
 		pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
@@ -764,6 +777,13 @@ void CModifyZkzhDlg::OnClose()
 		}
 		itPaper++;
 	}
+	return true;
+}
+
+void CModifyZkzhDlg::OnClose()
+{
+	if (!ReleaseData())
+		return;
 
 	CDialog::OnClose();
 }

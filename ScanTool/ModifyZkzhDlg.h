@@ -44,6 +44,7 @@ private:
 	void	InitTab();
 	void	InitCtrlPosition();
 	void	InitData();
+	bool	ReleaseData();
 
 	LRESULT RoiRBtnUp(WPARAM wParam, LPARAM lParam);
 	void	LeftRotate();

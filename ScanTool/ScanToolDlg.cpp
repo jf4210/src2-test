@@ -2711,6 +2711,11 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		jsnPaper.set("zkzh", (*itNomarlPaper)->strSN);
 		jsnPaper.set("qk", (*itNomarlPaper)->nQKFlag);
 
+		int nIssueFlag = 0;			//0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
+		if ((*itNomarlPaper)->bModifyZKZH)
+			nIssueFlag = 1;
+		jsnPaper.set("issueFlag", nIssueFlag);
+
 		Poco::JSON::Array jsnSnDetailArry;
 		SNLIST::iterator itSn = (*itNomarlPaper)->lSnResult.begin();
 		for (; itSn != (*itNomarlPaper)->lSnResult.end(); itSn++)
@@ -2794,7 +2799,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		jsnPaperArry.add(jsnPaper);
 	}
 
-	Poco::JSON::Array jsnIssuePaperArry;
+//	Poco::JSON::Array jsnIssuePaperArry;
 	if (g_nOperatingMode == 1)		//简单模式时，异常试卷也一起上传，做特殊标识
 	{
 		PAPER_LIST::iterator itIssuePaper = m_pPapersInfo->lIssue.begin();
@@ -2805,6 +2810,12 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 			jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
 			jsnPaper.set("zkzh", (*itIssuePaper)->strSN);
 			jsnPaper.set("qk", (*itIssuePaper)->nQKFlag);
+			int nIssueFlag = 0;			//0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
+			if ((*itIssuePaper)->strSN.empty())
+				nIssueFlag = 2;
+			if ((*itIssuePaper)->bReScan)		//设置重扫权限更大，放后面设置
+				nIssueFlag = 3;			
+			jsnPaper.set("issueFlag", nIssueFlag);
 
 			Poco::JSON::Array jsnSnDetailArry;
 			SNLIST::iterator itSn = (*itIssuePaper)->lSnResult.begin();
@@ -2886,7 +2897,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 				jsnElectOmrArry.add(jsnElectOmr);
 			}
 			jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
-			jsnIssuePaperArry.add(jsnPaper);
+			jsnPaperArry.add(jsnPaper);						//问题试卷也放入列表中
 		}
 	}
 	
@@ -2904,7 +2915,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	jsnFileData.set("nUserId", nUserId);
 	jsnFileData.set("scanNum", m_pPapersInfo->nPaperCount);		//扫描的学生数量
 	jsnFileData.set("detail", jsnPaperArry);
-	jsnFileData.set("IssuePaper", jsnIssuePaperArry);			//问题试卷列表，在简单模式下可能存在数据
+//	jsnFileData.set("IssuePaper", jsnIssuePaperArry);			//问题试卷列表，在简单模式下可能存在数据
 
 	jsnFileData.set("nOmrDoubt", m_pPapersInfo->nOmrDoubt);
 	jsnFileData.set("nOmrNull", m_pPapersInfo->nOmrNull);

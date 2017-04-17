@@ -507,15 +507,19 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			std::string strEzs = stGetBmkInfo.szEzs;
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
 			pTask->strUri = SysSet.m_strBackUri + "/getStudents";
-			pTask->nExamID = stGetBmkInfo.nExamID;
-			pTask->nSubjectID = stGetBmkInfo.nSubjectID;
+// 			pTask->nExamID = stGetBmkInfo.nExamID;
+// 			pTask->nSubjectID = stGetBmkInfo.nSubjectID;
+			pTask->nExamID = 501;
+			pTask->nSubjectID = 383;
 			pTask->pUser = pUser;
 			pTask->strEzs = SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
 			pTask->strMsg = "getBmk";
 
 			Poco::JSON::Object obj;
-			obj.set("examId", stGetBmkInfo.nExamID);
-			obj.set("subjectId", stGetBmkInfo.nSubjectID);
+// 			obj.set("examId", stGetBmkInfo.nExamID);
+// 			obj.set("subjectId", stGetBmkInfo.nSubjectID);
+			obj.set("examId", 501);
+			obj.set("subjectId", 383);
 			stringstream ss;
 			obj.stringify(ss, 0);
 			pTask->strRequest = ss.str();
