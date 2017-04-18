@@ -52,6 +52,7 @@ private:
 
 	void	ShowPaperByItem(int nItem);
 	void	ShowPaperZkzhPosition(pST_PaperInfo pPaper);
+	void PrintRecogRect(int nPic, pST_PaperInfo pPaper, pST_PicInfo pPic, cv::Mat& matImg);		//打印所有模板上的矩形位置
 	BOOL	PreTranslateMessage(MSG* pMsg);
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持

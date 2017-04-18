@@ -312,8 +312,6 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 				char szTmp[100] = { 0 }; 
 				sprintf_s(szTmp, "%c,识别=%.3f(R/S=%.1f/%.1f),Succ:%d. ", itRect->nAnswer + 65, \
 					itRect->fRealValuePercent, itRect->fRealValue, itRect->fStandardValue, itRect->fRealValuePercent > itRect->fStandardValuePercent);
-// 				sprintf_s(szTmp, "选项=%c, 识别实际比例=%.3f, val=%.2f, 识别标准val=%.2f, 是否成功:%d\t", itRect->nAnswer + 65, \
-// 					itRect->fRealValuePercent, itRect->fRealValue, itRect->fStandardValue, itRect->fRealValuePercent > itRect->fStandardValuePercent);
 				strcat_s(szItemInfo, szTmp);
 			}
 			strcat_s(szItemInfo, "\n");
@@ -358,7 +356,6 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		g_pLogger->information(strCorrectPerInfo);
 	}
 	g_pLogger->information(strPaperLog);
-
 #endif
 }
 

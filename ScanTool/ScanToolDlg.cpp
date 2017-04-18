@@ -1122,6 +1122,17 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		m_bF2Enable = TRUE;
 		return;
 	}
+
+	if (m_nScanStatus == 2 && g_nOperatingMode == 1 && m_pPapersInfo && m_pPapersInfo->lPaper.size() + m_pPapersInfo->lIssue.size() > 0)
+	{
+		if (MessageBox(_T("上一次扫描出现异常，是否< 清空 >当前试卷袋？\r\n\r\n《如果清空，则此袋试卷需要整袋重扫》\r\n《如果不清空，此袋试卷可以先上传》"), _T("注意"), MB_YESNO) != IDYES)
+		{
+			m_bF1Enable = TRUE;
+			m_bF2Enable = TRUE;
+			return;
+		}
+	}
+
 	nScanSize = m_pModel->nScanSize;
 	nScanType = m_pModel->nScanType;
 	nScanDpi = m_pModel->nScanDpi;
@@ -1176,6 +1187,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	if (!m_pPapersInfo)
 	{
 		m_lcPicture.DeleteAllItems();
+		m_lProblemPaper.DeleteAllItems();
 		GetDlgItem(IDC_STATIC_SCANCOUNT)->SetWindowText(_T(""));
 
 		std::string strUtfPath = CMyCodeConvert::Gb2312ToUtf8(szPicTmpPath);
@@ -1203,7 +1215,6 @@ void CScanToolDlg::OnBnClickedBtnScan()
 
 
 	m_Source = m_scanSourceArry.GetAt(nScanSrc);
-
 
 	bool bShowScanSrcUI = g_bShowScanSrcUI;
 
@@ -1321,6 +1332,7 @@ void CScanToolDlg::OnBnClickedBtnScanall()
 	if (!m_pPapersInfo)
 	{
 		m_lcPicture.DeleteAllItems();
+		m_lProblemPaper.DeleteAllItems();
 		GetDlgItem(IDC_STATIC_SCANCOUNT)->SetWindowText(_T(""));
 
 		std::string strUtfPath = CMyCodeConvert::Gb2312ToUtf8(szPicTmpPath);
@@ -1640,7 +1652,7 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 	{
 		_bTwainContinue = FALSE;
 		m_nScanStatus = 2;
-		std::string strLog = "获取图像时分配内存失败";
+		std::string strLog = "获取图像时系统分配内存失败";
 		g_pLogger->information(strLog);
 		SetStatusShowInfo(A2T(strLog.c_str()), TRUE);
 		return;
@@ -1982,7 +1994,7 @@ void CScanToolDlg::OnNMDblclkListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 
 	//双击为空的准考证号时显示准考证号修改窗口
 	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(m_nCurrItemPaperList);
-	if (m_bModifySN && m_pModel && pItemPaper && (pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH))
+	if ((g_nOperatingMode == 1 || m_bModifySN) && m_pModel && pItemPaper && (pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH))
 	{
 		if (!m_pStudentMgr)
 		{
@@ -2152,7 +2164,6 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
 		}
-		
 
 		RECTLIST::iterator itPicFix = (*itPic)->lFix.begin();														//显示识别出来的定点
 		for (int j = 0; itPicFix != (*itPic)->lFix.end(); itPicFix++, j++)
@@ -2810,11 +2821,12 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 			jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
 			jsnPaper.set("zkzh", (*itIssuePaper)->strSN);
 			jsnPaper.set("qk", (*itIssuePaper)->nQKFlag);
+
 			int nIssueFlag = 0;			//0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
 			if ((*itIssuePaper)->strSN.empty())
 				nIssueFlag = 2;
 			if ((*itIssuePaper)->bReScan)		//设置重扫权限更大，放后面设置
-				nIssueFlag = 3;			
+				nIssueFlag = 3;	
 			jsnPaper.set("issueFlag", nIssueFlag);
 
 			Poco::JSON::Array jsnSnDetailArry;
@@ -3241,7 +3253,7 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 			g_lRecogTask.push_back(pTask);
 		}
 	}
-#if 1
+#if 0
 	//报名库测试数据
 	g_lBmkStudent.clear();
 	for (int i = 0; i < 100; i++)
@@ -3252,6 +3264,7 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 
 		g_lBmkStudent.push_back(stData);
 	}
+#endif
 	SAFE_RELEASE(m_pStudentMgr);
 	if (!m_pStudentMgr)
 	{
@@ -3264,7 +3277,6 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
  		if (bResult) bResult = m_pStudentMgr->InsertData(g_lBmkStudent, strTableName);
  		if (!bResult) SAFE_RELEASE(m_pStudentMgr);
 	}
-#endif
 	
 	CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr);
 	zkzhDlg.DoModal();
@@ -4979,7 +4991,7 @@ void CScanToolDlg::OnTimer(UINT nIDEvent)
 		if (bRecogComplete)
 		{
 			USES_CONVERSION;
-			if (m_nScanStatus == 3 && m_bModifySN && bNeedShowZkzhDlg)
+			if (m_nScanStatus == 3 && (g_nOperatingMode == 1 || m_bModifySN) && bNeedShowZkzhDlg)
 			{
 				KillTimer(TIMER_CheckRecogComplete);
 				if (!m_pStudentMgr)
@@ -5164,7 +5176,7 @@ void CScanToolDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	ShowPaperByItem(pNMItemActivate->iItem);
 	//双击为空的准考证号时显示准考证号修改窗口
 	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lProblemPaper.GetItemData(pNMItemActivate->iItem);
-	if (g_nOperatingMode == 1 && m_pModel && pItemPaper)
+	if ((g_nOperatingMode == 1 || m_bModifySN) && m_pModel && pItemPaper)
 	{
 		if (!m_pStudentMgr)
 		{

@@ -666,6 +666,8 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 					pPaper->nChkFlag = 1;	//此图片合法，在参数文件中可以找到
 					pPaper->strZkzh = jsnPaperObj->get("zkzh").convert<std::string>();
 					pPaper->nQkFlag = jsnPaperObj->get("qk").convert<int>();
+					if (jsnPaperObj->has("issueFlag"))
+						pPaper->nIssueFlag = jsnPaperObj->get("issueFlag").convert<int>();
 
 					Poco::JSON::Array::Ptr jsnSnArry = jsnPaperObj->getArray("snDetail");
 					Poco::JSON::Object jsnSn;

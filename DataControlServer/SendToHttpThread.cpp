@@ -772,11 +772,9 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 		return true;
 	}
 
-//	std::cout << "上传成功 + 失败数量 = " << pPapers->nUpLoadSuccess + pPapers->nUpLoadFail << std::endl;
 	std::string strLog = "试卷袋(" + pPapers->strPapersName +")图片上传服务器完成，开始进行重复图像校验。";
 	g_Log.LogOut(strLog);
 	std::cout << strLog << std::endl;
-
 
 	//++图像重复校验
 	bool bResult = true;
@@ -827,6 +825,8 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 	strLog = "试卷袋(" + pPapers->strPapersName + ")图像重复校验完成，开始提交后端。";
 	g_Log.LogOut(strLog);
 	std::cout << strLog << std::endl;
+
+	std::string strShowLog;		//屏幕上显示的信息
 	
 	Poco::JSON::Object jsnPapers;
 	jsnPapers.set("papers", CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersName));
@@ -852,9 +852,11 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 		Poco::JSON::Object jsnPaper;
 		jsnPaper.set("paperName", pPaper->strName);
 		jsnPaper.set("studentKey", strStudentKey);			//考试唯一MD5
+		jsnPaper.set("issueFlag", pPaper->nIssueFlag);		//问题试卷标识，0-正常试卷，完全机器识别正常的，无人工干预，1-正常试卷，扫描员手动修改过，
+															//2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。 //注意，如果没有这个标识，则默认是正常试卷
 		Poco::JSON::Array  picArry;
 
-		std::cout << "---- " << pPaper->strName << " ----" << std::endl;
+		strShowLog = "---- " + pPaper->strName + "----\n";
 		LIST_PIC_DETAIL::iterator itPic = pPaper->lPic.begin();
 		for (; itPic != pPaper->lPic.end(); itPic++)
 		{
@@ -879,9 +881,10 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 			jsnPic.set("hashVal", pPic->strHashVal);
 			picArry.add(jsnPic);
 
-			std::cout << "pic: " << (*itPic)->strFileName << "\tupLoadFlag: "<< (*itPic)->bUpLoadFlag << "\tMD5: "<< (*itPic)->strHashVal << std::endl;
+			std::string strTmp = Poco::format("pic: %s\tupLoadFlag: %d\tMD5: %s\n", (*itPic)->strFileName, (int)(*itPic)->bUpLoadFlag, (*itPic)->strHashVal);
+			strShowLog.append(strTmp);
 		}
-		std::cout << "---------------" << std::endl;
+		strShowLog.append("---------------\n");
 
 		jsnPaper.set("picList", picArry);
 		paperArry.add(jsnPaper);
@@ -891,6 +894,7 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 	std::stringstream jsnString;
 	jsnPapers.stringify(jsnString, 0);
 
+	std::cout << strShowLog << std::endl;
 // 	std::cout << "********** 提交给后端数据: **********\n" << std::endl;
 // 	std::cout << jsnString.str() << std::endl;
 // 	std::cout << "****************************************" << std::endl;

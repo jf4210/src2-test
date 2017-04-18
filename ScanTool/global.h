@@ -433,6 +433,8 @@ typedef struct _studentInfo_
 {
 	std::string strZkzh;
 	std::string strName;		//gb2312
+	std::string strClassroom;	//gb2312
+	std::string strSchool;		//gb2312
 }ST_STUDENT, *pST_STUDENT;
 class CBmkStudent
 {
@@ -440,7 +442,7 @@ class CBmkStudent
 	CBmkStudent(std::string& strZkzh, std::string& strName) :_strZkzh(strZkzh), _strName(strName){}
 	bool operator==(const CBmkStudent& other) const
 	{
-		return _strZkzh == other._strZkzh && _strName == other._strName;
+		return _strZkzh == other._strZkzh && _strName == other._strName && _strClassroom == other._strClassroom && _strSchool == other._strSchool;
 	}
 
 	bool operator < (const CBmkStudent& p) const
@@ -448,6 +450,10 @@ class CBmkStudent
 		if (_strZkzh < p._strZkzh)
 			return true;
 		if (_strName < p._strName)
+			return true;
+		if (_strClassroom < p._strClassroom)
+			return true;
+		if (_strSchool < p._strSchool)
 			return true;
 	}
 
@@ -459,6 +465,8 @@ class CBmkStudent
 private:
 	std::string _strZkzh;
 	std::string _strName;
+	std::string _strClassroom;
+	std::string _strSchool;
 };
 
 
@@ -475,6 +483,8 @@ namespace Poco {
 				poco_assert_dbg(!pBinder.isNull());
 				pBinder->bind(pos++, obj.strZkzh, dir);
 				pBinder->bind(pos++, CMyCodeConvert::Gb2312ToUtf8(obj.strName), dir);
+				pBinder->bind(pos++, CMyCodeConvert::Gb2312ToUtf8(obj.strClassroom), dir);
+				pBinder->bind(pos++, CMyCodeConvert::Gb2312ToUtf8(obj.strSchool), dir);
 			}
 
 			static void prepare(std::size_t pos, const ST_STUDENT& obj, AbstractPreparator::Ptr pPrepare)
@@ -484,7 +494,7 @@ namespace Poco {
 
 			static std::size_t size()
 			{
-				return 2;
+				return 4;
 			}
 
 			static void extract(std::size_t pos, ST_STUDENT& obj, const ST_STUDENT& defVal, AbstractExtractor::Ptr pExt)
@@ -492,6 +502,8 @@ namespace Poco {
 				poco_assert_dbg(!pExt.isNull());
 				std::string strZkzh;
 				std::string strName;
+				std::string strClassroom;
+				std::string strSchool;
 
 				if (pExt->extract(pos++, strZkzh))
 					obj.strZkzh = strZkzh;
@@ -502,6 +514,16 @@ namespace Poco {
 					obj.strName = CMyCodeConvert::Utf8ToGb2312(strName);
 				else
 					obj.strName = defVal.strName;
+
+				if (pExt->extract(pos++, strClassroom))
+					obj.strClassroom = CMyCodeConvert::Utf8ToGb2312(strClassroom);
+				else
+					obj.strClassroom = defVal.strClassroom;
+
+				if (pExt->extract(pos++, strSchool))
+					obj.strSchool = CMyCodeConvert::Utf8ToGb2312(strSchool);
+				else
+					obj.strSchool = defVal.strSchool;
 			}
 
 		private:

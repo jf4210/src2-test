@@ -388,6 +388,10 @@ void CTcpClient::HandleCmd()
 						ST_STUDENT stData;
 						stData.strZkzh = objItem->get("zkzh").convert<std::string>();
 						stData.strName = CMyCodeConvert::Utf8ToGb2312(objItem->get("name").convert<std::string>());
+						if (objItem->has("classRoom"))
+							stData.strClassroom = CMyCodeConvert::Utf8ToGb2312(objItem->get("classRoom").convert<std::string>());
+						if (objItem->has("school"))
+							stData.strSchool = CMyCodeConvert::Utf8ToGb2312(objItem->get("school").convert<std::string>());
 						g_lBmkStudent.push_back(stData);
 					}
 					std::string strLog = Poco::format("获取报名库完成(%d人)", (int)g_lBmkStudent.size());

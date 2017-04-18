@@ -318,8 +318,6 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 		{
 			Poco::JSON::Object::Ptr objResult = object->getObject("status");
 			bResult = objResult->get("success").convert<bool>();
-			std::string strResult = object->get("msg").convert<std::string>();
-			strResult = CMyCodeConvert::Utf8ToGb2312(strResult);
 			if (bResult)
 			{
 				ret = RESULT_GET_BMK_SUCCESS;
@@ -327,6 +325,9 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 			}
 			else
 			{
+				std::string strResult = object->get("msg").convert<std::string>();
+				strResult = CMyCodeConvert::Utf8ToGb2312(strResult);
+
 				ret = RESULT_GET_BMK_FAIL;
 				strSendData = strResult;
 			}
@@ -432,6 +433,8 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 		nCmd = USER_RESPONSE_CREATE_MODEL;
 	else if (pTask->strMsg == "setElectOmrInfo")
 		nCmd = USER_RESPONSE_ELECTOMR_MODEL;
+	else if (pTask->strMsg == "getBmk")
+		nCmd = USER_RESPONSE_GET_BMK;
 
 	if (pTask->pUser)
 		pTask->pUser->SendResponesInfo(nCmd, ret, (char*)strSendData.c_str(), strSendData.length());
