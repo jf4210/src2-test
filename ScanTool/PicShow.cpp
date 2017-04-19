@@ -18,7 +18,7 @@ IMPLEMENT_DYNAMIC(CPicShow, CDialog)
 
 CPicShow::CPicShow(CWnd* pParent /*=NULL*/)
 	: CDialog(CPicShow::IDD, pParent)
-	, m_bShowScrolH(TRUE), m_bShowScrolV(TRUE), m_iX(0), m_iY(0), m_fScale(1.0), m_nDirection(1)
+	, m_bShowScrolH(TRUE), m_bShowScrolV(TRUE), m_iX(0), m_iY(0), m_fScale(1.0), m_nDirection(1), m_nRotateTimes(0)
 {
 
 }
@@ -474,13 +474,12 @@ void CPicShow::RotateImg(int nDirection)
 
 void CPicShow::SetRotateDir(int nDirection)
 {
-	static int n = 0;
 	if (nDirection == 3)
-		++n;
+		++m_nRotateTimes;
 	if (nDirection == 2)
-		--n;
-	n = n < 0 ? n + 4: n;
-	switch (n % 4)
+		--m_nRotateTimes;
+	m_nRotateTimes = m_nRotateTimes < 0 ? m_nRotateTimes + 4 : m_nRotateTimes;
+	switch (m_nRotateTimes % 4)
 	{
 		case 0:
 			m_nDirection = 1;

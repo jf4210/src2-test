@@ -128,7 +128,7 @@ public:
 //	bool	UnZipModel(CString strZipPath);
 //	pMODEL	LoadModelFile(CString strModelPath);			//加载模板文件
 
-	void	ShowPaperByItem(int nItem);
+	void	ShowPaperByItem(int nItem, int nListCtrl = 0);	//nListCtrl = 0 -->从普通试卷列表显示图像，1-->从问题列表显示图像
 	void	ShowRectByPoint(cv::Point pt, pST_PaperInfo pPaper);
 	LRESULT RoiLBtnDown(WPARAM wParam, LPARAM lParam);		//鼠标左键按下的通知
 	LRESULT MsgRecogErr(WPARAM wParam, LPARAM lParam);

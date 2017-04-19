@@ -55,6 +55,7 @@ public:
 private:
 	cv::Point	m_ptBase;
 	int		m_nDirection;		//图像默认显示方向，1:针对原始图像需要进行的旋转，正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+	int		m_nRotateTimes;		//记录往左往右旋转次数
 	void RotateImg2(cv::Mat& imgMat, int nDirection = 1);
 	void InitCtrlPosition();
 protected:

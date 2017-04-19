@@ -3177,13 +3177,18 @@ void CScanToolDlg::OnLvnKeydownListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 	}
 }
 
-void CScanToolDlg::ShowPaperByItem(int nItem)
+void CScanToolDlg::ShowPaperByItem(int nItem, int nListCtrl /*= 0*/)
 {
 	if (nItem < 0)
 		return;
 
-	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcPicture.GetItemData(nItem);
-//	m_nCurrItemPaperList = pNMItemActivate->iItem;
+	pST_PaperInfo pPaper = NULL;
+	if (nListCtrl == 0)
+		pPaper = (pST_PaperInfo)m_lcPicture.GetItemData(nItem);
+	else
+		pPaper = (pST_PaperInfo)m_lProblemPaper.GetItemData(nItem);
+	if (pPaper == NULL)
+		return;
 
 	m_pCurrentShowPaper = pPaper;
 	if (pPaper->bIssuePaper)
@@ -5173,7 +5178,7 @@ void CScanToolDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	if (pNMItemActivate->iItem < 0)
 		return;
 
-	ShowPaperByItem(pNMItemActivate->iItem);
+	ShowPaperByItem(pNMItemActivate->iItem, 1);
 	//双击为空的准考证号时显示准考证号修改窗口
 	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lProblemPaper.GetItemData(pNMItemActivate->iItem);
 	if ((g_nOperatingMode == 1 || m_bModifySN) && m_pModel && pItemPaper)

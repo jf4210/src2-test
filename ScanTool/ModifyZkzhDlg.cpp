@@ -394,13 +394,11 @@ LRESULT CModifyZkzhDlg::RoiRBtnUp(WPARAM wParam, LPARAM lParam)
 void CModifyZkzhDlg::LeftRotate()
 {
 	m_vecPicShow[m_nCurrTabSel]->SetRotateDir(3);
-//	m_vecPicShow[m_nCurrTabSel]->RotateImg(3);
 }
 
 void CModifyZkzhDlg::RightRotate()
 {
 	m_vecPicShow[m_nCurrTabSel]->SetRotateDir(2);
-//	m_vecPicShow[m_nCurrTabSel]->RotateImg(2);
 }
 
 void CModifyZkzhDlg::ShowPaperByItem(int nItem)
@@ -482,7 +480,7 @@ void CModifyZkzhDlg::ShowPaperZkzhPosition(pST_PaperInfo pPaper)
 
 		cv::Point pt(0, 0);
 		if (pPaper->pModel)
-			pt = pPaper->pModel->vecPaperModel[i]->rcSNTracker.rt.tl() - cv::Point(100, 100);
+			pt = pPaper->pModel->vecPaperModel[i]->rcSNTracker.rt.tl() - cv::Point(300, 300);
 
 		m_vecPicShow[i]->ShowPic(matImg, pt);
 	}
@@ -870,6 +868,21 @@ bool CModifyZkzhDlg::ReleaseData()
 			pPaper->bReScan = true;			//设置此试卷需要重新扫描
 		}
 	}
+
+	//如果此试卷已经被修改正常，从问题列表删除
+	PAPER_LIST::iterator itIssue = m_pPapers->lIssue.begin();
+	for (; itIssue != m_pPapers->lIssue.end();)
+	{
+		pST_PaperInfo pPaper = *itIssue;
+		if (!pPaper->strSN.empty() && !pPaper->bReScan)		//考号不空，且不用重扫，则认为属于正常试卷，放入正常列表中，如果原来在问题列表，则移动到正常列表
+		{
+			itIssue = m_pPapers->lIssue.erase(itIssue);
+			m_pPapers->lPaper.push_back(pPaper);
+			continue;
+		}
+		itIssue++;
+	}
+
 	//需要重扫的试卷放入问题试卷列表
 	PAPER_LIST::iterator itPaper = m_pPapers->lPaper.begin();
 	for (; itPaper != m_pPapers->lPaper.end();)
@@ -884,13 +897,6 @@ bool CModifyZkzhDlg::ReleaseData()
 		itPaper++;
 	}
 
-	//***********************************************************
-	//***********************************************************
-
-	//注意：这里需要检查，重问题列表删除，进入正常列表的试卷			2017.4.18
-
-	//***********************************************************
-	//***********************************************************
 	return true;
 }
 

@@ -127,13 +127,14 @@ void CScanModleMgrDlg::InitUI()
 
 	m_ModelListCtrl.SetExtendedStyle(m_ModelListCtrl.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_ModelListCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36);
-	m_ModelListCtrl.InsertColumn(1, _T("模板名称"), LVCFMT_CENTER, 370);
+	m_ModelListCtrl.InsertColumn(1, _T("模板名称"), LVCFMT_CENTER, 400);
+	m_ModelListCtrl.InsertColumn(2, _T("修改时间"), LVCFMT_CENTER, 100);
 
 	m_pShowModelInfoDlg = new CShowModelInfoDlg(this);
 	m_pShowModelInfoDlg->Create(CShowModelInfoDlg::IDD, this);
 	m_pShowModelInfoDlg->ShowWindow(SW_SHOW);
 
-	int sx = 850;
+	int sx = 1000;
 	int sy = 600;
 	MoveWindow(0, 0, sx, sy);
 	CenterWindow();
@@ -161,10 +162,6 @@ void CScanModleMgrDlg::InitCtrlPosition()
 	int nCurrentTop = nTopGap;
 	int nCurrentLeft = nLeftGap;
 
-// 	if (m_pShowModelInfoDlg && m_pShowModelInfoDlg->GetSafeHwnd())
-// 	{
-// 		m_pShowModelInfoDlg->MoveWindow(250, 12, 250, 235);
-// 	}
 	if (GetDlgItem(IDC_STATIC_CurModel)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_STATIC_CurModel)->MoveWindow(nCurrentLeft, nCurrentTop, nStaticWidth, nStaticHeight);
@@ -288,6 +285,9 @@ void CScanModleMgrDlg::OnBnClickedBtnRefresh()
 				m_ModelListCtrl.InsertItem(nCount, NULL);
 				m_ModelListCtrl.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 				m_ModelListCtrl.SetItemText(nCount, 1, (LPCTSTR)A2T(strModelName.c_str()));
+				Poco::DateTime dt(it->getLastModified());
+				std::string strLastModifyTime = Poco::format("%04d-%02d-%02d", dt.year(), dt.month(), dt.day());
+				m_ModelListCtrl.SetItemText(nCount, 2, (LPCTSTR)A2T(strLastModifyTime.c_str()));
 				m_ModelListCtrl.SetItemData(nCount, NULL);
 				
 				if (strModelName == T2A(m_strCurModelName))
@@ -301,10 +301,6 @@ void CScanModleMgrDlg::OnBnClickedBtnRefresh()
 					m_pShowModelInfoDlg->ShowModelInfo(m_pModel, 1);
 				}
 				nCount++;
-// 				CString strModelFilePath = g_strCurrentPath + _T("Model\\") + A2T(strModelName.c_str());
-// 				pMODEL pModel;
-// 				pModel = LoadModelFile(strModelFilePath);
-// 				m_vecModel.push_back(pModel);
 			}
 			it++;
 		}
