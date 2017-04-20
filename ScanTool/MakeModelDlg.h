@@ -7,7 +7,7 @@
 #include "TwainCpp.h"
 #include "SNInfoSetDlg.h"
 #include "ElectOmrDlg.h"
-
+#include "ZipObj.h"
 #include "ScanThread.h"
 // CMakeModelDlg ¶Ô»°¿ò
 

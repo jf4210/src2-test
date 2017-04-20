@@ -258,7 +258,10 @@ BOOL CScanToolDlg::OnInitDialog()
 			m_comboModel.GetLBText(m_ncomboCurrentSel, strModelName);
 			CString strModelPath = g_strCurrentPath + _T("Model\\") + strModelName;
 			CString strModelFullPath = strModelPath + _T(".mod");
-			UnZipFile(strModelFullPath);
+//			UnZipFile(strModelFullPath);
+			CZipObj zipObj;
+			zipObj.setLogger(g_pLogger);
+			zipObj.UnZipFile(strModelFullPath);
 			m_pModel = LoadModelFile(strModelPath);
 		}
 		m_comboModel.SetCurSel(m_ncomboCurrentSel);
@@ -1082,6 +1085,14 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	m_bF1Enable = FALSE;
 	m_bF2Enable = FALSE;
 
+	if (m_pPapersInfo->nPapersType == 1)
+	{
+		SAFE_RELEASE(m_pPapersInfo);
+		m_lcPicture.DeleteAllItems();
+		m_lProblemPaper.DeleteAllItems();
+		GetDlgItem(IDC_STATIC_SCANCOUNT)->SetWindowText(_T(""));
+	}
+
 	if (!m_bTwainInit)
 	{
 		m_bTwainInit = InitTwain(m_hWnd);
@@ -1499,7 +1510,10 @@ void CScanToolDlg::OnCbnSelchangeComboModel()
 	m_comboModel.GetLBText(m_comboModel.GetCurSel(), strModelName);
 	CString strModelPath = g_strCurrentPath + _T("Model\\") + strModelName;
 	CString strModelFullPath = strModelPath + _T(".mod");
-	UnZipFile(strModelFullPath);
+//	UnZipFile(strModelFullPath);
+	CZipObj zipObj;
+	zipObj.setLogger(g_pLogger);
+	zipObj.UnZipFile(strModelFullPath);
 
 	SAFE_RELEASE(m_pModel);
 	m_pModel = LoadModelFile(strModelPath);
@@ -2570,6 +2584,14 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		return;
 	}
 
+	if (m_pPapersInfo->nPapersType == 1)
+	{
+		AfxMessageBox(_T("这是已经打包过的试卷包，不能再次打包上传"));
+		m_bF2Enable = TRUE;
+		m_bF1Enable = TRUE;
+		return;
+	}
+
 	bool bRecogComplete = true;
 #ifndef TO_WHTY
 	for (auto p : m_pPapersInfo->lPaper)
@@ -2810,7 +2832,6 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		jsnPaperArry.add(jsnPaper);
 	}
 
-//	Poco::JSON::Array jsnIssuePaperArry;
 	if (g_nOperatingMode == 1)		//简单模式时，异常试卷也一起上传，做特殊标识
 	{
 		PAPER_LIST::iterator itIssuePaper = m_pPapersInfo->lIssue.begin();
@@ -2927,7 +2948,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	jsnFileData.set("nUserId", nUserId);
 	jsnFileData.set("scanNum", m_pPapersInfo->nPaperCount);		//扫描的学生数量
 	jsnFileData.set("detail", jsnPaperArry);
-//	jsnFileData.set("IssuePaper", jsnIssuePaperArry);			//问题试卷列表，在简单模式下可能存在数据
+	jsnFileData.set("desc", CMyCodeConvert::Gb2312ToUtf8(m_pPapersInfo->strPapersDesc));
 
 	jsnFileData.set("nOmrDoubt", m_pPapersInfo->nOmrDoubt);
 	jsnFileData.set("nOmrNull", m_pPapersInfo->nOmrNull);
@@ -3334,7 +3355,7 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 	}
 #endif
 	//--
-	CShowFileTransferDlg dlg;
+	CShowFileTransferDlg dlg(this);
 	dlg.DoModal();
 }
 

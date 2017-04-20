@@ -136,6 +136,9 @@
     <Filter Include="修改ZKZH窗口\报名库管理">
       <UniqueIdentifier>{a1533480-602c-4dc5-989b-a01e55ca1260}</UniqueIdentifier>
     </Filter>
+    <Filter Include="从Pkg恢复Papers">
+      <UniqueIdentifier>{9965740a-f3ad-49ab-9baf-cf16e57cb201}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -354,6 +357,12 @@
     <ClInclude Include="StudentMgr.h">
       <Filter>修改ZKZH窗口\报名库管理</Filter>
     </ClInclude>
+    <ClInclude Include="ZipObj.h">
+      <Filter>解压缩</Filter>
+    </ClInclude>
+    <ClInclude Include="PkgToPapers.h">
+      <Filter>从Pkg恢复Papers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
@@ -538,6 +547,12 @@
     </ClCompile>
     <ClCompile Include="StudentMgr.cpp">
       <Filter>修改ZKZH窗口\报名库管理</Filter>
+    </ClCompile>
+    <ClCompile Include="ZipObj.cpp">
+      <Filter>解压缩</Filter>
+    </ClCompile>
+    <ClCompile Include="PkgToPapers.cpp">
+      <Filter>从Pkg恢复Papers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

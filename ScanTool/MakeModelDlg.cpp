@@ -2286,19 +2286,15 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	modelPath = modelPath + _T("\\") + A2T(m_pModel->strModelName.c_str());
 	if (SaveModelFile(m_pModel))
 	{
-		ZipFile(modelPath, modelPath, _T(".mod"));
+//		ZipFile(modelPath, modelPath, _T(".mod"));
+		CZipObj zipObj;
+		zipObj.setLogger(g_pLogger);
+		zipObj.ZipFile(modelPath, modelPath, _T(".mod"));
 
-	#if 1
 		//直接上传模板
 		CString strModelFullPath = modelPath + _T(".mod");
 		UploadModel(strModelFullPath, m_pModel);
 		AfxMessageBox(_T("保存完成!"));
-	#else
-		if (m_pModel->nHasElectOmr)
-			AfxMessageBox(_T("保存完成，此模板存在选做题信息，请上传服务器！！！"));
-		else
-			AfxMessageBox(_T("保存完成!"));
-	#endif
 	}
 	else
 		AfxMessageBox(_T("保存失败"));

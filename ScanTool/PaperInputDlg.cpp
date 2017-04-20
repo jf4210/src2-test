@@ -782,7 +782,10 @@ void CPaperInputDlg::OnCbnSelchangeComboModellist()
 	m_comboModel.GetLBText(m_comboModel.GetCurSel(), strModelName);
 	CString strModelPath = g_strCurrentPath + _T("Model\\") + strModelName;
 	CString strModelFullPath = strModelPath + _T(".mod");
-	UnZipFile(strModelFullPath);		//UnZipModel(strModelFullPath);
+//	UnZipFile(strModelFullPath);		//UnZipModel(strModelFullPath);
+	CZipObj zipObj;
+	zipObj.setLogger(g_pLogger);
+	zipObj.UnZipFile(strModelFullPath);
 	if (m_pModel && m_pModel != m_pOldModel)
 	{
 		delete m_pModel;
@@ -1404,6 +1407,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	jsnFileData.set("nUserId", nUserId);
 	jsnFileData.set("scanNum", pPapers->nPaperCount);		//扫描的学生数量
 	jsnFileData.set("detail", jsnPaperArry);
+	jsnFileData.set("desc", CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersDesc));
 
 	jsnFileData.set("nOmrDoubt", pPapers->nOmrDoubt);
 	jsnFileData.set("nOmrNull", pPapers->nOmrNull);
@@ -1460,7 +1464,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	CString strInfo;
 	bool bWarn = false;
 	strInfo.Format(_T("正在保存%s..."), A2T(szZipName));
-#if 1
+
 	//临时目录改名，以便压缩时继续扫描
 	std::string strSrcPicDirPath;
 	std::string strPicPath = szPapersSrcPath;
@@ -1501,30 +1505,6 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	g_fmCompressLock.lock();
 	g_lCompressTask.push_back(pTask);
 	g_fmCompressLock.unlock();
-#else
-	if (!ZipFile(A2T(szPapersSrcPath), A2T(szPapersSavePath), PAPERS_EXT_NAME))
-	{
-		bWarn = true;
-		strInfo.Format(_T("保存%s失败"), A2T(szZipName));
-	}
-	else
-	{
-		end = clock();
-		strInfo.Format(_T("保存%s成功,试卷袋压缩时间: %dms"), A2T(szZipName), end - start);
-//		SAFE_RELEASE(m_pPapersInfo);
-	}
-	AfxMessageBox(strInfo);
-
-	//添加上传列表，	******************		需要进行鉴权操作	***************
-	char szFileFullPath[300] = { 0 };
-	sprintf_s(szFileFullPath, "%s%s", szPapersSavePath, T2A(PAPERS_EXT_NAME));
-	pSENDTASK pTask = new SENDTASK;
-	pTask->strFileName = szZipName;
-	pTask->strPath = szFileFullPath;
-	g_fmSendLock.lock();
-	g_lSendTask.push_back(pTask);
-	g_fmSendLock.unlock();
-#endif
 }
 
 LRESULT CPaperInputDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)

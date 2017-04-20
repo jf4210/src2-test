@@ -86,7 +86,7 @@
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define	 TEST_MODEL_NAME	//模板名称测试
 //	#define	 TEST_SCAN_THREAD	//扫描线程测试
-	#define Test_Data			//测试数据，测试模式
+//	#define Test_Data			//测试数据，测试模式
 	#define Test_TraceLog		//测试日志
 #else	//release版本
 	#define	 TEST_MODEL_NAME	//模板名称测试
@@ -248,6 +248,9 @@ typedef struct _PaperInfo_
 	bool		bRecogComplete;		//该学生已经识别完成
 	bool		bReScan;			//重新扫描标识，在准考证号修改窗口中设置
 	int			nQKFlag;			//缺考标识
+	//++从Pkg恢复Papers时的参数
+	int			nChkFlag;			//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不進行圖片识别
+	//--
 	pMODEL		pModel;				//识别此学生试卷所用的模板
 	void*		pPapers;			//所属的试卷袋信息
 	void*		pSrcDlg;			//来源，来自哪个窗口，扫描or导入试卷窗口
@@ -265,6 +268,7 @@ typedef struct _PaperInfo_
 		bRecogComplete = false;
 		bReScan = false;
 		nQKFlag = 0;
+		nChkFlag = 0;
 		pModel = NULL;
 		pPapers = NULL;
 		pSrcDlg = NULL;
@@ -301,6 +305,7 @@ typedef std::list<pST_PaperInfo> PAPER_LIST;	//试卷列表
 
 typedef struct _PapersInfo_				//试卷袋信息结构体
 {
+	int		nPapersType;				//试卷类型，0-正常创建的试卷袋，在扫描时创建，1-从Pkg恢复到Papers时创建的
 	int		nPaperCount;				//试卷袋中试卷总数量(学生数)
 	int		nRecogErrCount;				//识别错误试卷数量
 
@@ -308,9 +313,15 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	int		nOmrDoubt;				//OMR怀疑的数量
 	int		nOmrNull;				//OMR识别为空的数量
 	int		nSnNull;				//准考证号识别为空的数量
-
 	Poco::FastMutex	fmOmrStatistics;//omr统计锁
 	Poco::FastMutex fmSnStatistics; //zkzh统计锁
+	//--
+
+	//++从Pkg恢复Papers时的参数
+	int			nExamID;			//考试ID
+	int			nSubjectID;			//科目ID
+	int			nTeacherId;			//教师ID
+	int			nUserId;			//用户ID
 	//--
 
 	Poco::FastMutex fmlPaper;			//对试卷列表读写锁
@@ -322,6 +333,7 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	PAPER_LIST	lIssue;					//此试卷袋中识别有问题的试卷列表
 	_PapersInfo_()
 	{
+		nPapersType = 0;
 		nPaperCount = 0;
 		nRecogErrCount = 0;
 		nOmrDoubt = 0;
@@ -542,6 +554,7 @@ typedef struct _CompressTask_
 {
 	bool	bDelSrcDir;				//自动删除原文件夹
 	bool	bReleasePapers;			//是否解压完后自动是否试卷袋信息，即释放pPapersInfo内存数据
+	int		nCompressType;			//压缩类型，1-压缩试卷袋，2-解压试卷袋
 	pPAPERSINFO pPapersInfo;		//压缩的试卷袋文件
 	std::string strSrcFilePath;
 	std::string strCompressFileName;
@@ -551,6 +564,7 @@ typedef struct _CompressTask_
 	{
 		bDelSrcDir = true;
 		bReleasePapers = true;
+		nCompressType = 1;
 		pPapersInfo = NULL;
 	}
 	~_CompressTask_()
@@ -578,8 +592,8 @@ typedef struct stPlatformInfo
 typedef std::vector<pST_PLATFORMINFO> VEC_PLATFORM_TY;
 
 int		GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, RECTINFO*& pRc);
-bool	ZipFile(CString strSrcPath, CString strDstPath, CString strExtName = _T(".zip"));
-bool	UnZipFile(CString strZipPath);
+//bool	ZipFile(CString strSrcPath, CString strDstPath, CString strExtName = _T(".zip"));
+//bool	UnZipFile(CString strZipPath);
 pMODEL	LoadModelFile(CString strModelPath);		//加载模板文件
 bool	SortByArea(cv::Rect& rt1, cv::Rect& rt2);		//按面积排序
 bool	SortByPositionX(RECTINFO& rc1, RECTINFO& rc2);

@@ -158,6 +158,7 @@
     <ClInclude Include="picCtrl\CvvImage.h" />
     <ClInclude Include="picCtrl\CV_picture.h" />
     <ClInclude Include="PicShow.h" />
+    <ClInclude Include="PkgToPapers.h" />
     <ClInclude Include="RecogInfoDlg.h" />
     <ClInclude Include="RecognizeThread.h" />
     <ClInclude Include="Resource.h" />
@@ -193,6 +194,7 @@
     <ClInclude Include="XListCtrl\XListCtrl.h" />
     <ClInclude Include="XListCtrl\XListMemDC.h" />
     <ClInclude Include="XListCtrl\XTrace.h" />
+    <ClInclude Include="ZipObj.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\common\md5.cpp" />
@@ -233,6 +235,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="PicShow.cpp" />
+    <ClCompile Include="PkgToPapers.cpp" />
     <ClCompile Include="RecogInfoDlg.cpp" />
     <ClCompile Include="RecognizeThread.cpp" />
     <ClCompile Include="ScanCtrlDlg.cpp" />
@@ -265,6 +268,7 @@
     <ClCompile Include="XListCtrl\XEdit.cpp" />
     <ClCompile Include="XListCtrl\XHeaderCtrl.cpp" />
     <ClCompile Include="XListCtrl\XListCtrl.cpp" />
+    <ClCompile Include="ZipObj.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ScanTool.rc" />

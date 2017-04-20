@@ -1,8 +1,13 @@
 #pragma once
 #include "ShowModelInfoDlg.h"
 #include "MakeModelDlg.h"
-
 // CScanModleMgrDlg 对话框
+
+typedef struct _ModelFile
+{
+	std::string strModelName;		//gb2312
+	std::string strModifyTime;
+}ST_MODELFILE;
 
 class CScanModleMgrDlg : public CDialog
 {
@@ -22,6 +27,7 @@ private:
 	CListCtrl			m_ModelListCtrl;
 	pMODEL				m_pOldModel;
 	std::vector<pMODEL>	m_vecModel;
+	std::list<ST_MODELFILE> m_lModelFile;	//模板文件列表，按修改时间排序
 	int					m_nCurModelItem;
 	CString				m_strCurModelName;
 	CToolTipCtrl		m_ListTip;
