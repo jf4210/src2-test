@@ -133,6 +133,7 @@ public:
 	LRESULT RoiLBtnDown(WPARAM wParam, LPARAM lParam);		//鼠标左键按下的通知
 	LRESULT MsgRecogErr(WPARAM wParam, LPARAM lParam);
 	LRESULT MsgZkzhRecog(WPARAM wParam, LPARAM lParam);		//准考证号识别完成时的通知
+	LRESULT MsgPkg2PapersOk(WPARAM wParam, LPARAM lParam);
 	void	PaintRecognisedRect(pST_PaperInfo pPaper);
 	int		PaintIssueRect(pST_PaperInfo pPaper);
 

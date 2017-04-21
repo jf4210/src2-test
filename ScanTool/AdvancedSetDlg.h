@@ -19,6 +19,12 @@ public:
 	CComboBox	m_combo_PaperSize;
 	CComboBox	m_combo_ScanType;
 	CButton		m_chkAutoCut;
+
+	CSpinButtonCtrl m_Spin_Zkzh;
+	CSpinButtonCtrl m_Spin_Omr;
+	int			m_nSensitiveZkzh;
+	int			m_nSensitiveOmr;
+
 	int			m_nScanDpi;
 	int			m_nScanPaperSize;
 	int			m_nScanType;
@@ -39,4 +45,7 @@ public:
 	afx_msg void OnBnClickedChkAutocut();
 	afx_msg void OnCbnSelchangeComboPapersize();
 	afx_msg void OnCbnSelchangeComboScantype();
+	afx_msg void OnBnClickedBtnDefParam();
+	afx_msg void OnDeltaposSpinZkzh(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnDeltaposSpinOmr(NMHDR *pNMHDR, LRESULT *pResult);
 };

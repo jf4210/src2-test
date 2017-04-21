@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CAdvancedSetDlg, CDialog)
 
 CAdvancedSetDlg::CAdvancedSetDlg(pMODEL	pModel, CWnd* pParent /*=NULL*/)
 	: CDialog(CAdvancedSetDlg::IDD, pParent)
-	, m_pModel(pModel), m_nScanDpi(200), m_nAutoCut(1), m_nScanPaperSize(1), m_nScanType(2)
+	, m_pModel(pModel), m_nScanDpi(200), m_nAutoCut(1), m_nScanPaperSize(1), m_nScanType(2), m_nSensitiveZkzh(1), m_nSensitiveOmr(5)
 {
 
 }
@@ -29,6 +29,10 @@ void CAdvancedSetDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_PaperSize, m_combo_PaperSize);
 	DDX_Control(pDX, IDC_CHK_AutoCut, m_chkAutoCut);
 	DDX_Control(pDX, IDC_COMBO_ScanType, m_combo_ScanType);
+	DDX_Control(pDX, IDC_SPIN_Zkzh, m_Spin_Zkzh);
+	DDX_Control(pDX, IDC_SPIN_Omr, m_Spin_Omr);
+	DDX_Text(pDX, IDC_EDIT_Sensitivity_ZKZH, m_nSensitiveZkzh);
+	DDX_Text(pDX, IDC_EDIT_Sensitivity_Omr, m_nSensitiveOmr);
 }
 
 
@@ -36,6 +40,10 @@ BOOL CAdvancedSetDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	m_Spin_Zkzh.SetBuddy(GetDlgItem(IDC_EDIT_Sensitivity_ZKZH));
+	m_Spin_Zkzh.SetRange(1, 50);
+	m_Spin_Omr.SetBuddy(GetDlgItem(IDC_EDIT_Sensitivity_Omr));
+	m_Spin_Omr.SetRange(1, 50);
 	InitData();
 
 	return TRUE;
@@ -47,6 +55,9 @@ BEGIN_MESSAGE_MAP(CAdvancedSetDlg, CDialog)
 	ON_BN_CLICKED(IDC_CHK_AutoCut, &CAdvancedSetDlg::OnBnClickedChkAutocut)
 	ON_CBN_SELCHANGE(IDC_COMBO_PaperSize, &CAdvancedSetDlg::OnCbnSelchangeComboPapersize)
 	ON_CBN_SELCHANGE(IDC_COMBO_ScanType, &CAdvancedSetDlg::OnCbnSelchangeComboScantype)
+	ON_BN_CLICKED(IDC_BTN_Def_Param, &CAdvancedSetDlg::OnBnClickedBtnDefParam)
+	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_Zkzh, &CAdvancedSetDlg::OnDeltaposSpinZkzh)
+	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_Omr, &CAdvancedSetDlg::OnDeltaposSpinOmr)
 END_MESSAGE_MAP()
 
 
@@ -161,4 +172,51 @@ void CAdvancedSetDlg::OnCbnSelchangeComboScantype()
 		return;
 
 	m_nScanType = m_combo_ScanType.GetCurSel() + 1;
+}
+
+
+void CAdvancedSetDlg::OnBnClickedBtnDefParam()
+{
+	// TODO:  在此添加控件通知处理程序代码
+}
+
+
+void CAdvancedSetDlg::OnDeltaposSpinZkzh(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMUPDOWN pNMUpDown = reinterpret_cast<LPNMUPDOWN>(pNMHDR);
+	*pResult = 0;
+
+	UpdateData(true);
+	if (pNMUpDown->iDelta == -1) // 如果此值为-1 , 说明点击了Spin的往下的箭头  
+	{
+		m_nSensitiveZkzh--;
+		if (m_nSensitiveZkzh < 1)
+			m_nSensitiveZkzh = 1;
+	}
+	else if (pNMUpDown->iDelta == 1) // 如果此值为1, 说明点击了Spin的往上的箭头  
+	{
+		m_nSensitiveZkzh++;
+	}
+	UpdateData(false);
+}
+
+
+void CAdvancedSetDlg::OnDeltaposSpinOmr(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMUPDOWN pNMUpDown = reinterpret_cast<LPNMUPDOWN>(pNMHDR);
+	*pResult = 0;
+
+	UpdateData(true);
+	CString ss;
+	if (pNMUpDown->iDelta == -1) // 如果此值为-1 , 说明点击了Spin的往下的箭头  
+	{
+		m_nSensitiveOmr--;
+		if (m_nSensitiveOmr < 1)
+			m_nSensitiveOmr = 1;
+	}
+	else if (pNMUpDown->iDelta == 1) // 如果此值为1, 说明点击了Spin的往上的箭头  
+	{
+		m_nSensitiveOmr++;
+	}
+	UpdateData(false);
 }

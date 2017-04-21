@@ -1253,8 +1253,6 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	rc.fStandardArea = rc.rt.area();
 	rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea;
 
-
-
 	MatND src_hist2;
 	const int histSize2[1] = { 256 };	//rc.nThresholdValue - g_nRecogGrayMin
 	const float* ranges2[1];
@@ -1352,8 +1350,10 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 	start = clock();
 	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
 		return false;
-
+	
+	TRACE("****** 1\n");
 	Mat imgResult = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtOri); 
+	TRACE("****** 2\n");
 
 	cvtColor(imgResult, imgResult, CV_BGR2GRAY);
 	GaussianBlur(imgResult, imgResult, cv::Size(m_nGaussKernel, m_nGaussKernel), 0, 0);
@@ -1361,19 +1361,23 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 
 	GetThreshold(imgResult, imgResult);
 
+	TRACE("****** 3\n");
 	cv::Canny(imgResult, imgResult, 0, m_nCannyKernel, 5);
 	Mat element = getStructuringElement(MORPH_RECT, Size(m_nDilateKernel, m_nDilateKernel));	//Size(6, 6)	普通空白框可识别
 	dilate(imgResult, imgResult, element);
 #if 1
+	TRACE("****** 4\n");
 	IplImage ipl_img(imgResult);
 
+	TRACE("****** 5\n");
 	//the parm. for cvFindContours  
 	CvMemStorage* storage = cvCreateMemStorage(0);
 	CvSeq* contour = 0;
 
 	//提取轮廓  
 	cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-	
+
+	TRACE("****** 6\n");
 	Rect rtMax;		//记录最大矩形，识别同步头时用来排除非同步头框
 	bool bResult = false;
 	std::vector<Rect>RectCompList;
@@ -1753,7 +1757,8 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 		}
 	}
 	end = clock();
-//	PaintRecognisedRect();
+	//	PaintRecognisedRect();
+	TRACE("****** 7\n");
 	if (m_eCurCPType != OMR && m_eCurCPType != SN)
 		ShowRectByCPType(m_eCurCPType);
 

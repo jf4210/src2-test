@@ -148,6 +148,7 @@
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 #define  MSG_ZKZH_RECOG (WM_USER + 111)		//тзв╪©╪ж╓╨ей╤╠ПмЙЁий╠м╗ж╙UIоъЁлпч╦дйт╬Мап╠Мё╛отй╬ря╬╜й╤╠П╣дZKZH		2017.2.14
+#define	 MSG_Pkg2Papers_OK (WM_USER + 112)	//╢сpkg╩ж╦╢╣╫PapersмЙЁи
 
 #ifndef TO_WHTY
 	#ifdef PUBLISH_VERSION
@@ -213,7 +214,7 @@ extern bool				g_bFileNeedConnect;	//нд╪Чм╗╣юйг╥ЯпХр╙жьа╛ё╛сцсзм╗╣ю╣ьж╥пео╒пч╦д╣
 
 extern bool				g_bShowScanSrcUI;	//йг╥Яотй╬т╜й╪и╗цХ╫ГцФ
 extern int				g_nOperatingMode;	//╡ывВдёй╫ё╛1--╪Ррвдёй╫(сЖ╣╫нйлБ╣Ц╡╩мёж╧и╗цХ)ё╛2-яо╦Ядёй╫(сЖ╣╫нйлБ╣Цй╠а╒©лмёж╧и╗цХ)
-
+extern int				g_nZkzhNull2Issue;	//й╤╠П╣╫в╪©╪ж╓╨ен╙©уй╠ё╛йг╥Яхон╙йгнйлБйт╬М
 
 #if 1
 typedef struct _PicInfo_				//м╪ф╛пео╒

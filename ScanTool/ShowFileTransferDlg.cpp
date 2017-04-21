@@ -239,6 +239,10 @@ void CShowFileTransferDlg::OnNMRClickListFiletransfer(NMHDR *pNMHDR, LRESULT *pR
 	GetCursorPos(&myPoint); //鼠标位置  
 	pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, myPoint.x, myPoint.y, this);//GetParent()
 #endif
+
+#ifdef TO_WHTY
+	return;
+#endif
 	//下面的这段代码, 不单单适应于ListCtrl  
 	CMenu menu, *pPopup;
 	menu.LoadMenu(IDR_MENU_Pkg2Papers);

@@ -582,25 +582,11 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				if (itSub->isFile())
 				{
 					std::string strOldFileName = pSubFile.getFileName();
-					
-#if 1
+	
 					if (strOldFileName.find("papersInfo.dat") == std::string::npos)
 					{
 						lFileName.push_back(strOldFileName);
 					}
-#else
-					char szNewName[100] = { 0 };
-					sprintf_s(szNewName, "S%d_", i + 1);
-					std::string strNewName = szNewName;
-					std::string strNewFilePath = strSubPaperPath + "\\" + strNewName + strOldFileName;
-					itSub->copyTo(strNewFilePath);
-
-					pRECOGTASK pTask = new RECOGTASK;
-					pTask->nPic = 0;
-					pTask->strPath = strNewFilePath;
-					pTask->pModel = m_pModel;
-					g_lRecogTask.push_back(pTask);
-#endif
 				}
 				itSub++;
 			}
@@ -1221,6 +1207,18 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		jsnPaper.set("zkzh", (*itNomarlPaper)->strSN);
 		jsnPaper.set("qk", (*itNomarlPaper)->nQKFlag);
 
+		int nIssueFlag = 0;			//0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
+		if ((*itNomarlPaper)->strSN.empty() && !(*itNomarlPaper)->bModifyZKZH)
+			nIssueFlag = 2;
+		if ((*itNomarlPaper)->bModifyZKZH)
+			nIssueFlag = 1;
+		jsnPaper.set("issueFlag", nIssueFlag);
+		//++在上传服务器时无用，只在从Pkg恢复Papers时有用
+		jsnPaper.set("modify", (*itNomarlPaper)->bModifyZKZH);	//准考证号修改标识
+		jsnPaper.set("reScan", (*itNomarlPaper)->bReScan);		//重扫标识
+		jsnPaper.set("IssueList", 0);		//标识此考生属于问题列表，在上传服务器时无用，只在从Pkg恢复Papers时有用
+		//--
+
 		Poco::JSON::Array jsnSnDetailArry;
 		SNLIST::iterator itSn = (*itNomarlPaper)->lSnResult.begin();
 		for (; itSn != (*itNomarlPaper)->lSnResult.end(); itSn++)
@@ -1303,51 +1301,65 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
 		jsnPaperArry.add(jsnPaper);
 	}
-#if 0	//异常试卷不参与评卷
-	PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
-	for (int j = 0; itIssuePaper != pPapers->lIssue.end(); itIssuePaper++, j++)
+
+	if (g_nOperatingMode == 1)		//简单模式时，异常试卷也一起上传，做特殊标识
 	{
-		Poco::JSON::Object jsnPaper;
-		jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
-		jsnPaper.set("zkzh", (*itIssuePaper)->strSN);
-		jsnPaper.set("qk", (*itIssuePaper)->nQKFlag);
-
-		Poco::JSON::Array jsnSnDetailArry;
-		SNLIST::iterator itSn = (*itIssuePaper)->lSnResult.begin();
-		for (; itSn != (*itIssuePaper)->lSnResult.end(); itSn++)
+		PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
+		for (int j = 0; itIssuePaper != pPapers->lIssue.end(); itIssuePaper++, j++)
 		{
-			Poco::JSON::Object jsnSnItem;
-			jsnSnItem.set("sn", (*itSn)->nItem);
-			jsnSnItem.set("val", (*itSn)->nRecogVal);
+			Poco::JSON::Object jsnPaper;
+			jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
+			jsnPaper.set("zkzh", (*itIssuePaper)->strSN);
+			jsnPaper.set("qk", (*itIssuePaper)->nQKFlag);
 
-			Poco::JSON::Object jsnSnPosition;
-			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
-			for (; itRect != (*itSn)->lSN.end(); itRect++)
+			int nIssueFlag = 0;			//0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
+			if ((*itIssuePaper)->strSN.empty())
+				nIssueFlag = 2;
+			if ((*itIssuePaper)->bReScan)		//设置重扫权限更大，放后面设置
+				nIssueFlag = 3;
+			jsnPaper.set("issueFlag", nIssueFlag);
+			//++在上传服务器时无用，只在从Pkg恢复Papers时有用
+			jsnPaper.set("modify", (*itIssuePaper)->bModifyZKZH);	//准考证号修改标识
+			jsnPaper.set("reScan", (*itIssuePaper)->bReScan);		//重扫标识
+			jsnPaper.set("IssueList", 1);		//标识此考生属于问题列表，在上传服务器时无用，只在从Pkg恢复Papers时有用
+			//--
+
+			Poco::JSON::Array jsnSnDetailArry;
+			SNLIST::iterator itSn = (*itIssuePaper)->lSnResult.begin();
+			for (; itSn != (*itIssuePaper)->lSnResult.end(); itSn++)
 			{
+				Poco::JSON::Object jsnSnItem;
+				jsnSnItem.set("sn", (*itSn)->nItem);
+				jsnSnItem.set("val", (*itSn)->nRecogVal);
+
+				Poco::JSON::Object jsnSnPosition;
+				RECTLIST::iterator itRect = (*itSn)->lSN.begin();
+				for (; itRect != (*itSn)->lSN.end(); itRect++)
+				{
 					jsnSnPosition.set("x", itRect->rt.x);
 					jsnSnPosition.set("y", itRect->rt.y);
 					jsnSnPosition.set("w", itRect->rt.width);
 					jsnSnPosition.set("h", itRect->rt.height);
+				}
+				jsnSnItem.set("position", jsnSnPosition);
+				jsnSnDetailArry.add(jsnSnItem);
 			}
-			jsnSnItem.set("position", jsnSnPosition);
-			jsnSnDetailArry.add(jsnSnItem);
-		}
-		jsnPaper.set("snDetail", jsnSnDetailArry);
+			jsnPaper.set("snDetail", jsnSnDetailArry);
 
-		Poco::JSON::Array jsnOmrArry;
-		OMRRESULTLIST::iterator itOmr = (*itIssuePaper)->lOmrResult.begin();
-		for (; itOmr != (*itIssuePaper)->lOmrResult.end(); itOmr++)
-		{
-			Poco::JSON::Object jsnOmr;
-			jsnOmr.set("th", itOmr->nTH);
-			jsnOmr.set("type", itOmr->nSingle + 1);
-			jsnOmr.set("value", itOmr->strRecogVal);
-			jsnOmr.set("value2", itOmr->strRecogVal2);
-			jsnOmr.set("doubt", itOmr->nDoubt);
-			Poco::JSON::Array jsnPositionArry;
-			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
-			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
+			Poco::JSON::Array jsnOmrArry;
+			OMRRESULTLIST::iterator itOmr = (*itIssuePaper)->lOmrResult.begin();
+			for (; itOmr != (*itIssuePaper)->lOmrResult.end(); itOmr++)
 			{
+				Poco::JSON::Object jsnOmr;
+				jsnOmr.set("th", itOmr->nTH);
+				jsnOmr.set("type", itOmr->nSingle + 1);
+				jsnOmr.set("value", itOmr->strRecogVal);
+				jsnOmr.set("value2", itOmr->strRecogVal2);
+				jsnOmr.set("doubt", itOmr->nDoubt);
+				Poco::JSON::Array jsnPositionArry;
+				RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
+				for (; itRect != itOmr->lSelAnswer.end(); itRect++)
+				{
 					Poco::JSON::Object jsnItem;
 					char szVal[5] = { 0 };
 					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
@@ -1357,44 +1369,45 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 					jsnItem.set("w", itRect->rt.width);
 					jsnItem.set("h", itRect->rt.height);
 					jsnPositionArry.add(jsnItem);
+				}
+				jsnOmr.set("position", jsnPositionArry);
+				jsnOmrArry.add(jsnOmr);
 			}
-			jsnOmr.set("position", jsnPositionArry);
-			jsnOmrArry.add(jsnOmr);
-		}
-		jsnPaper.set("omr", jsnOmrArry);
+			jsnPaper.set("omr", jsnOmrArry);
 
-		Poco::JSON::Array jsnElectOmrArry;
-		ELECTOMR_LIST::iterator itElectOmr = (*itIssuePaper)->lElectOmrResult.begin();
-		for (; itElectOmr != (*itIssuePaper)->lElectOmrResult.end(); itElectOmr++)
-		{
-			Poco::JSON::Object jsnElectOmr;
-			jsnElectOmr.set("paperId", j + 1);
-			jsnElectOmr.set("doubt", itElectOmr->nDoubt);
-			jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
-			jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
-			jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
-			jsnElectOmr.set("value", itElectOmr->strRecogResult);
-			Poco::JSON::Array jsnPositionArry;
-			RECTLIST::iterator itRect = itElectOmr->lItemInfo.begin();
-			for (; itRect != itElectOmr->lItemInfo.end(); itRect++)
+			Poco::JSON::Array jsnElectOmrArry;
+			ELECTOMR_LIST::iterator itElectOmr = (*itIssuePaper)->lElectOmrResult.begin();
+			for (; itElectOmr != (*itIssuePaper)->lElectOmrResult.end(); itElectOmr++)
 			{
-				Poco::JSON::Object jsnItem;
-				char szVal[5] = { 0 };
-				sprintf_s(szVal, "%c", itRect->nAnswer + 65);
-				jsnItem.set("val", szVal);
-				jsnItem.set("x", itRect->rt.x);
-				jsnItem.set("y", itRect->rt.y);
-				jsnItem.set("w", itRect->rt.width);
-				jsnItem.set("h", itRect->rt.height);
-				jsnPositionArry.add(jsnItem);
+				Poco::JSON::Object jsnElectOmr;
+				jsnElectOmr.set("paperId", j + 1);
+				jsnElectOmr.set("doubt", itElectOmr->nDoubt);
+				jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
+				jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
+				jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
+				jsnElectOmr.set("value", itElectOmr->strRecogResult);
+				Poco::JSON::Array jsnPositionArry;
+				RECTLIST::iterator itRect = itElectOmr->lItemInfo.begin();
+				for (; itRect != itElectOmr->lItemInfo.end(); itRect++)
+				{
+					Poco::JSON::Object jsnItem;
+					char szVal[5] = { 0 };
+					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+					jsnItem.set("val", szVal);
+					jsnItem.set("x", itRect->rt.x);
+					jsnItem.set("y", itRect->rt.y);
+					jsnItem.set("w", itRect->rt.width);
+					jsnItem.set("h", itRect->rt.height);
+					jsnPositionArry.add(jsnItem);
+				}
+				jsnElectOmr.set("position", jsnPositionArry);
+				jsnElectOmrArry.add(jsnElectOmr);
 			}
-			jsnElectOmr.set("position", jsnPositionArry);
-			jsnElectOmrArry.add(jsnElectOmr);
+			jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
+			jsnPaperArry.add(jsnPaper);
 		}
-		jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
-		jsnPaperArry.add(jsnPaper);
 	}
-#endif
+
 	//写试卷袋信息到文件
 	std::string strUploader = CMyCodeConvert::Gb2312ToUtf8(T2A(strUser));
 	std::string sEzs = T2A(strEzs);

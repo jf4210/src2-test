@@ -850,16 +850,20 @@ void CModifyZkzhDlg::OnNMDblclkListZkzhsearchresult(NMHDR *pNMHDR, LRESULT *pRes
 bool CModifyZkzhDlg::ReleaseData()
 {
 	int nCount = m_lcZkzh.GetItemCount();
-	for (int i = 0; i < nCount; i++)
+	if (g_nZkzhNull2Issue == 1)
 	{
-		pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
-		if (pPaper->strSN.empty())
+		for (int i = 0; i < nCount; i++)
 		{
-			if (MessageBox(_T("存在准考证号为空的考生，如果不修改，将影响此考生参与后面的评卷，是否忽略？"), _T("警告"), MB_YESNO) != IDYES)
-				return false;
-			break;
+			pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
+			if (pPaper->strSN.empty())
+			{
+				if (MessageBox(_T("存在准考证号为空的考生，如果不修改，将影响此考生参与后面的评卷，是否忽略？"), _T("警告"), MB_YESNO) != IDYES)
+					return false;
+				break;
+			}
 		}
 	}
+	
 	for (int i = 0; i < nCount; i++)
 	{
 		pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
@@ -874,7 +878,7 @@ bool CModifyZkzhDlg::ReleaseData()
 	for (; itIssue != m_pPapers->lIssue.end();)
 	{
 		pST_PaperInfo pPaper = *itIssue;
-		if (!pPaper->strSN.empty() && !pPaper->bReScan)		//考号不空，且不用重扫，则认为属于正常试卷，放入正常列表中，如果原来在问题列表，则移动到正常列表
+		if ((g_nZkzhNull2Issue == 1 && !pPaper->strSN.empty() || g_nZkzhNull2Issue == 0) && !pPaper->bReScan)		//考号不空，且不用重扫，则认为属于正常试卷，放入正常列表中，如果原来在问题列表，则移动到正常列表
 		{
 			itIssue = m_pPapers->lIssue.erase(itIssue);
 			m_pPapers->lPaper.push_back(pPaper);
@@ -888,7 +892,7 @@ bool CModifyZkzhDlg::ReleaseData()
 	for (; itPaper != m_pPapers->lPaper.end();)
 	{
 		pST_PaperInfo pPaper = *itPaper;
-		if (pPaper->strSN.empty() || pPaper->bReScan)
+		if ((g_nZkzhNull2Issue == 1 && pPaper->strSN.empty()) || pPaper->bReScan)
 		{
 			itPaper = m_pPapers->lPaper.erase(itPaper);
 			m_pPapers->lIssue.push_back(pPaper);

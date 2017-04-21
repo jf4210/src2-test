@@ -33,6 +33,7 @@ bool				g_bFileNeedConnect = false;	//文件通道是否需要重连，用于通道地址信息修改
 
 bool				g_bShowScanSrcUI = false;	//是否显示原始扫描界面
 int					g_nOperatingMode = 2;		//操作模式，1--简易模式(遇到问题点不停止扫描)，2-严格模式(遇到问题点时立刻停止扫描)
+int					g_nZkzhNull2Issue = 0;		//识别到准考证号未空时，是否认为是问题试卷
 
 int					g_nExitFlag = 0;
 CString				g_strCurrentPath;
@@ -164,6 +165,7 @@ BEGIN_MESSAGE_MAP(CScanToolDlg, CDialogEx)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_Picture, &CScanToolDlg::OnNMDblclkListPicture)
 	ON_MESSAGE(MSG_ERR_RECOG, &CScanToolDlg::MsgRecogErr)
 	ON_MESSAGE(MSG_ZKZH_RECOG, &CScanToolDlg::MsgZkzhRecog)
+	ON_MESSAGE(MSG_Pkg2Papers_OK, &CScanToolDlg::MsgPkg2PapersOk)
 	ON_MESSAGE(WM_CV_LBTNDOWN, &CScanToolDlg::RoiLBtnDown)
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BTN_UpLoadPapers, &CScanToolDlg::OnBnClickedBtnUploadpapers)
@@ -525,6 +527,19 @@ void CScanToolDlg::OnDestroy()
 	}
 	g_fmPapers.unlock();
 
+	//删除从Pkg恢复的试卷袋的解压原文件
+	try
+	{
+		CString strOldPkgPath = _T("");
+		strOldPkgPath = g_strCurrentPath + _T("Paper\\Tmp2\\");
+		Poco::File srcOldFileDir(CMyCodeConvert::Gb2312ToUtf8(T2A(strOldPkgPath)));
+		if (srcOldFileDir.exists())
+			srcOldFileDir.remove(true);
+	}
+	catch (Poco::Exception& exc)
+	{
+	}
+
 	SAFE_RELEASE(m_pPapersInfo);
 	g_pLogger->information("试卷袋列表释放完毕.");
 }
@@ -581,6 +596,7 @@ void CScanToolDlg::InitConfig()
 	g_bShowScanSrcUI = pConf->getBool("Scan.bShowUI", false);
 	m_bModifySN = pConf->getBool("Scan.bModifySN", false);
 	g_nOperatingMode = pConf->getInt("Scan.OperatingMode", 2);
+	g_nZkzhNull2Issue = pConf->getInt("Scan.khNull2Issue", 0);
 
 	std::string strFileServerIP	= pConf->getString("Server.fileIP");
 	int			nFileServerPort	= pConf->getInt("Server.filePort", 19980);
@@ -676,12 +692,13 @@ void CScanToolDlg::InitUI()
 {
 	m_lcPicture.SetExtendedStyle(m_lcPicture.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcPicture.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 40);
-	m_lcPicture.InsertColumn(1, _T("学生信息"), LVCFMT_CENTER, 130);
+	m_lcPicture.InsertColumn(1, _T("学生信息"), LVCFMT_CENTER, 120);
 	m_lcPicture.InsertColumn(2, _T("*"), LVCFMT_CENTER, 20);
 
 	m_lProblemPaper.SetExtendedStyle(m_lProblemPaper.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lProblemPaper.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 40);
-	m_lProblemPaper.InsertColumn(1, _T("异常学生"), LVCFMT_CENTER, 150);
+	m_lProblemPaper.InsertColumn(1, _T("异常学生"), LVCFMT_CENTER, 100);
+	m_lProblemPaper.InsertColumn(2, _T("原因"), LVCFMT_LEFT, 100);
 
 	m_lProblemPaper.EnableToolTips(TRUE);
 
@@ -1533,6 +1550,7 @@ void CScanToolDlg::OnCbnSelchangeComboModel()
 	//模板切换后之前的扫描试卷需要清除
 	m_pCurrentShowPaper = NULL;
 	m_lcPicture.DeleteAllItems();
+	m_lProblemPaper.DeleteAllItems();
 	SAFE_RELEASE(m_pPapersInfo);
 }
 
@@ -2061,11 +2079,16 @@ void CScanToolDlg::OnNMDblclkListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 			m_lProblemPaper.InsertItem(nCount, NULL);
 			m_lProblemPaper.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 			m_lProblemPaper.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
+			CString strErrInfo = _T("");
+			if (pPaper->strSN.empty())	strErrInfo = _T("考号为空");
+			if (pPaper->bReScan)	strErrInfo = _T("重扫");
+			m_lProblemPaper.SetItemText(nCount, 2, (LPCTSTR)strErrInfo);
 			m_lProblemPaper.SetItemData(nCount, (DWORD_PTR)pPaper);
 
 			CString strTips = _T("异常试卷，将不会上传，也不会参与评卷。 需要单独找出，后面单独扫描");
 			m_lProblemPaper.SetItemToolTipText(nCount, 0, strTips);
 			m_lProblemPaper.SetItemToolTipText(nCount, 1, strTips);
+			m_lProblemPaper.SetItemToolTipText(nCount, 2, strTips);
 		}
 	}
 #else
@@ -2572,6 +2595,65 @@ LRESULT CScanToolDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
+LRESULT CScanToolDlg::MsgPkg2PapersOk(WPARAM wParam, LPARAM lParam)
+{
+	pPAPERSINFO pPapers = (pPAPERSINFO)wParam;
+
+	if (m_pPapersInfo && m_pPapersInfo->nPapersType == 0)
+	{
+		char szLogInfo[200] = { 0 };
+		sprintf_s(szLogInfo, "恢复试卷袋(%s)失败", pPapers->strPapersName.c_str());
+		SAFE_RELEASE(pPapers);
+		return FALSE;
+	}
+
+	USES_CONVERSION;
+	SAFE_RELEASE(m_pPapersInfo);
+	m_lcPicture.DeleteAllItems();
+	m_lProblemPaper.DeleteAllItems();
+
+	m_pPapersInfo = pPapers;
+	for (auto pPaper : m_pPapersInfo->lPaper)
+	{
+		int nCount = m_lcPicture.GetItemCount();
+		char szCount[10] = { 0 };
+		sprintf_s(szCount, "%d", nCount + 1);
+		m_lcPicture.InsertItem(nCount, NULL);
+		m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+		if (pPaper->bModifyZKZH)
+			m_lcPicture.SetItemText(nCount, 2, _T("*"));
+		m_lcPicture.SetItemData(nCount, (DWORD_PTR)pPaper);
+	}
+	//显示需要重扫的异常试卷
+	m_lProblemPaper.DeleteAllItems();
+	for (auto pPaper : m_pPapersInfo->lIssue)
+	{
+		int nCount = m_lProblemPaper.GetItemCount();
+		char szCount[10] = { 0 };
+		sprintf_s(szCount, "%d", nCount + 1);
+		m_lProblemPaper.InsertItem(nCount, NULL);
+		m_lProblemPaper.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+		m_lProblemPaper.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
+		CString strErrInfo = _T("");
+		if (pPaper->strSN.empty())	strErrInfo = _T("考号为空");
+		if (pPaper->bReScan)	strErrInfo = _T("重扫");
+		m_lProblemPaper.SetItemText(nCount, 2, (LPCTSTR)strErrInfo);
+		m_lProblemPaper.SetItemData(nCount, (DWORD_PTR)pPaper);
+
+		CString strTips = _T("异常试卷，将不会上传，也不会参与评卷。 需要单独找出，后面单独扫描");
+		m_lProblemPaper.SetItemToolTipText(nCount, 0, strTips);
+		m_lProblemPaper.SetItemToolTipText(nCount, 1, strTips);
+		m_lProblemPaper.SetItemToolTipText(nCount, 2, strTips);
+	}
+
+	char szLogInfo[200] = { 0 };
+	sprintf_s(szLogInfo, "从试卷袋(%s)恢复信息完成", pPapers->strPapersName.c_str());
+	SetStatusShowInfo(A2T(szLogInfo));
+
+	return TRUE;
+}
+
 void CScanToolDlg::OnBnClickedBtnUploadpapers()
 {
 	m_bF2Enable = FALSE;
@@ -2745,9 +2827,16 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		jsnPaper.set("qk", (*itNomarlPaper)->nQKFlag);
 
 		int nIssueFlag = 0;			//0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
+		if ((*itNomarlPaper)->strSN.empty() && !(*itNomarlPaper)->bModifyZKZH)
+			nIssueFlag = 2;
 		if ((*itNomarlPaper)->bModifyZKZH)
 			nIssueFlag = 1;
 		jsnPaper.set("issueFlag", nIssueFlag);
+		//++在上传服务器时无用，只在从Pkg恢复Papers时有用
+		jsnPaper.set("modify", (*itNomarlPaper)->bModifyZKZH);	//准考证号修改标识
+		jsnPaper.set("reScan", (*itNomarlPaper)->bReScan);		//重扫标识
+		jsnPaper.set("IssueList", 0);		//标识此考生属于问题列表，在上传服务器时无用，只在从Pkg恢复Papers时有用
+		//--
 
 		Poco::JSON::Array jsnSnDetailArry;
 		SNLIST::iterator itSn = (*itNomarlPaper)->lSnResult.begin();
@@ -2849,6 +2938,11 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 			if ((*itIssuePaper)->bReScan)		//设置重扫权限更大，放后面设置
 				nIssueFlag = 3;	
 			jsnPaper.set("issueFlag", nIssueFlag);
+			//++在上传服务器时无用，只在从Pkg恢复Papers时有用
+			jsnPaper.set("modify", (*itIssuePaper)->bModifyZKZH);	//准考证号修改标识
+			jsnPaper.set("reScan", (*itIssuePaper)->bReScan);		//重扫标识
+			jsnPaper.set("IssueList", 1);		//标识此考生属于问题列表，在上传服务器时无用，只在从Pkg恢复Papers时有用
+			//--
 
 			Poco::JSON::Array jsnSnDetailArry;
 			SNLIST::iterator itSn = (*itIssuePaper)->lSnResult.begin();
@@ -3053,6 +3147,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 //	SAFE_RELEASE(m_pPapersInfo);
 	m_pPapersInfo = NULL;
 	m_lcPicture.DeleteAllItems();
+	m_lProblemPaper.DeleteAllItems();
 	m_pCurrentShowPaper = NULL;
 }
 
@@ -3161,6 +3256,7 @@ void CScanToolDlg::OnBnClickedBtnModelmgr()
 		//模板切换后之前的扫描试卷需要清除
 		m_pCurrentShowPaper = NULL;
 		m_lcPicture.DeleteAllItems();
+		m_lProblemPaper.DeleteAllItems();
 		SAFE_RELEASE(m_pPapersInfo);
 	}
 }
@@ -3347,11 +3443,16 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 		m_lProblemPaper.InsertItem(nCount, NULL);
 		m_lProblemPaper.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 		m_lProblemPaper.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
+		CString strErrInfo = _T("");
+		if (pPaper->strSN.empty())	strErrInfo = _T("考号为空");
+		if (pPaper->bReScan)	strErrInfo = _T("重扫");
+		m_lProblemPaper.SetItemText(nCount, 2, (LPCTSTR)strErrInfo);
 		m_lProblemPaper.SetItemData(nCount, (DWORD_PTR)pPaper);
 
 		CString strTips = _T("异常试卷，将不会上传，也不会参与评卷。 需要单独找出，后面单独扫描");
 		m_lProblemPaper.SetItemToolTipText(nCount, 0, strTips);
 		m_lProblemPaper.SetItemToolTipText(nCount, 1, strTips);
+		m_lProblemPaper.SetItemToolTipText(nCount, 2, strTips);
 	}
 #endif
 	//--
@@ -3570,6 +3671,7 @@ void CScanToolDlg::InitShow(pMODEL pModel)
 
 	SAFE_RELEASE(m_pPapersInfo);
 	m_lcPicture.DeleteAllItems();
+	m_lProblemPaper.DeleteAllItems();
 	m_pCurrentShowPaper = NULL;
 
 	m_comboModel.ResetContent();
@@ -5069,11 +5171,16 @@ void CScanToolDlg::OnTimer(UINT nIDEvent)
 					m_lProblemPaper.InsertItem(nCount, NULL);
 					m_lProblemPaper.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 					m_lProblemPaper.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
+					CString strErrInfo = _T("");
+					if (pPaper->strSN.empty())	strErrInfo = _T("考号为空");
+					if (pPaper->bReScan)	strErrInfo = _T("重扫");
+					m_lProblemPaper.SetItemText(nCount, 2, (LPCTSTR)strErrInfo);
 					m_lProblemPaper.SetItemData(nCount, (DWORD_PTR)pPaper);
 
 					CString strTips = _T("异常试卷，将不会上传，也不会参与评卷。 需要单独找出，后面单独扫描");
 					m_lProblemPaper.SetItemToolTipText(nCount, 0, strTips);
 					m_lProblemPaper.SetItemToolTipText(nCount, 1, strTips);
+					m_lProblemPaper.SetItemToolTipText(nCount, 2, strTips);
 				}
 			}
 			else
@@ -5240,11 +5347,16 @@ void CScanToolDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 			m_lProblemPaper.InsertItem(nCount, NULL);
 			m_lProblemPaper.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 			m_lProblemPaper.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
+			CString strErrInfo = _T("");
+			if (pPaper->strSN.empty())	strErrInfo = _T("考号为空");
+			if (pPaper->bReScan)	strErrInfo = _T("重扫");
+			m_lProblemPaper.SetItemText(nCount, 2, (LPCTSTR)strErrInfo);
 			m_lProblemPaper.SetItemData(nCount, (DWORD_PTR)pPaper);
 
 			CString strTips = _T("异常试卷，将不会上传，也不会参与评卷。 需要单独找出，后面单独扫描");
 			m_lProblemPaper.SetItemToolTipText(nCount, 0, strTips);
 			m_lProblemPaper.SetItemToolTipText(nCount, 1, strTips);
+			m_lProblemPaper.SetItemToolTipText(nCount, 2, strTips);
 		}
 	}
 }

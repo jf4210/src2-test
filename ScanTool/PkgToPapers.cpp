@@ -1,6 +1,157 @@
 #include "stdafx.h"
 #include "PkgToPapers.h"
 
+bool SortbyNumASC2(const std::string& x, const std::string& y)
+{
+	char szX[MAX_PATH] = { 0 };
+	char szY[MAX_PATH] = { 0 };
+	sprintf_s(szX, "%s", x.c_str()/*T2A(x)*/);
+	sprintf_s(szY, "%s", y.c_str()/*T2A(y)*/);
+	int nLenX = x.length();	// x.GetLength();
+	int nLenY = y.length();	// y.GetLength();
+
+	//	TRACE(_T("compare: %s, %s\n"), x, y);
+
+	int nFlag = 0;
+	while (nLenX && nLenY)
+	{
+		char szXPart[MAX_PATH] = { 0 };
+		char szYPart[MAX_PATH] = { 0 };
+		sscanf(szX, "%[A-Za-z]", szXPart);
+		sscanf(szY, "%[A-Za-z]", szYPart);
+		if (strlen(szXPart) && strlen(szYPart))
+		{
+			int nResult = stricmp(szXPart, szYPart);
+			if (nResult == 0)
+			{
+				int nX = strlen(szXPart);
+				int nY = strlen(szYPart);
+				int nXAll = strlen(szX);
+				int nYAll = strlen(szY);
+				memmove(szX, szX + strlen(szXPart), nXAll - nX);
+				memmove(szY, szY + strlen(szYPart), nYAll - nY);
+				szX[nXAll - nX] = '\0';
+				szY[nYAll - nY] = '\0';
+				nLenX = strlen(szX);
+				nLenY = strlen(szY);
+			}
+			else
+			{
+				return nResult < 0 ? true : false;
+			}
+		}
+		else if (strlen(szXPart))
+			return false;
+		else if (strlen(szYPart))
+			return true;
+		else
+		{
+			sscanf(szX, "%[0-9]", szXPart);
+			sscanf(szY, "%[0-9]", szYPart);
+			if (strlen(szXPart) && strlen(szYPart))
+			{
+				int x = atoi(szXPart);
+				int y = atoi(szYPart);
+				if (x == y)
+				{
+					if (strlen(szXPart) == strlen(szYPart))
+					{
+						int nX = strlen(szXPart);
+						int nY = strlen(szYPart);
+						int nXAll = strlen(szX);
+						int nYAll = strlen(szY);
+						memmove(szX, szX + strlen(szXPart), nXAll - nX);
+						memmove(szY, szY + strlen(szYPart), nYAll - nY);
+						szX[nXAll - nX] = '\0';
+						szY[nYAll - nY] = '\0';
+						nLenX = strlen(szX);
+						nLenY = strlen(szY);
+					}
+					else
+					{
+						return strlen(szXPart) > strlen(szYPart);		//大小相同，长度越大越靠前
+					}
+				}
+				else
+					return x < y;
+			}
+			else if (strlen(szXPart))
+				return false;
+			else if (strlen(szYPart))
+				return true;
+			else
+			{
+				sscanf(szX, "%[^0-9A-Za-z]", szXPart);
+				sscanf(szY, "%[^0-9A-Za-z]", szYPart);
+				int nResult = stricmp(szXPart, szYPart);
+				if (nResult == 0)
+				{
+					int nX = strlen(szXPart);
+					int nY = strlen(szYPart);
+					int nXAll = strlen(szX);
+					int nYAll = strlen(szY);
+					memmove(szX, szX + strlen(szXPart), nXAll - nX);
+					memmove(szY, szY + strlen(szYPart), nYAll - nY);
+					szX[nXAll - nX] = '\0';
+					szY[nYAll - nY] = '\0';
+					nLenX = strlen(szX);
+					nLenY = strlen(szY);
+				}
+				else
+				{
+					char* p1 = szXPart;
+					char* p2 = szYPart;
+					while (*p1 != '\0' && *p2 != '\0')
+					{
+						if (*p1 == '-'&& *p2 != '-')
+							return false;
+						else if (*p1 != '-' && *p2 == '-')
+							return true;
+						else if (*p1 == '=' && *p2 != '=')
+							return false;
+						else if (*p1 != '=' && *p2 == '=')
+							return true;
+						else if (*p1 == '+' && *p2 != '+')
+							return false;
+						else if (*p1 != '+' && *p2 == '+')
+							return true;
+						else if (*p1 > *p2)
+							return false;
+						else if (*p1 < *p2)
+							return true;
+						else
+						{
+							p1++;
+							p2++;
+						}
+					}
+					if (*p1 == '\0' && *p2 != '\0')
+					{
+						if (*p2 == ' ')
+							return false;
+						else
+							return true;
+					}
+					else if (*p1 != '\0' && *p2 == '\0')
+					{
+						if (*p1 == ' ')
+							return true;
+						else
+							return false;
+					}
+					//return nResult < 0?true:false;
+				}
+			}
+		}
+	}
+
+	return x.length() < y.length();
+}
+
+bool SortByPaper(const pST_PaperInfo& x, const pST_PaperInfo& y)
+{
+	return SortbyNumASC2(x->strStudentInfo, y->strStudentInfo);
+}
 
 CPkgToPapers::CPkgToPapers()
 {
@@ -19,17 +170,30 @@ pPAPERSINFO CPkgToPapers::Pkg2Papers(std::string strPkgPath)	//gb2312
 	int nPos2 = strPkgPath.rfind('\\');
 	strPkgName = strPkgPath.substr(nPos2 + 1, nPos1 - nPos2 - 1);
 	CString strUnzipBasePath = _T("");
-	strUnzipBasePath = g_strCurrentPath + _T("Paper\\Tmp2\\") + A2T(strPkgName.c_str());
+	strUnzipBasePath = g_strCurrentPath + _T("Paper\\Tmp2\\");
+
+	try
+	{
+		Poco::File p(CMyCodeConvert::Gb2312ToUtf8(T2A(strUnzipBasePath)));
+		p.createDirectories();
+	}
+	catch (...)
+	{
+	}
+
+	CString strUnzipPath = _T("");
+	strUnzipPath = strUnzipBasePath + A2T(strPkgName.c_str());
 
 	CZipObj zipObj;
 	zipObj.setLogger(g_pLogger);
-	zipObj.UnZipFile(A2T(strPkgPath.c_str()), strUnzipBasePath);
+	zipObj.UnZipFile(A2T(strPkgPath.c_str()), strUnzipPath);		//*****************************************************
 
 	pPAPERSINFO pPapers = new PAPERSINFO;
 	pPapers->nPapersType = 1;
 	pPapers->strPapersName = strPkgName;
-	SearchExtractFile(pPapers, T2A(strUnzipBasePath));
-	std::string strPapersFilePath = strUnzipBasePath + "\\papersInfo.dat";
+	SearchExtractFile(pPapers, T2A(strUnzipPath));
+	pPapers->lPaper.sort(SortByPaper);
+	std::string strPapersFilePath = strUnzipPath + "\\papersInfo.dat";
 	if (!GetFileData(strPapersFilePath, pPapers))
 		SAFE_RELEASE(pPapers);
 	return pPapers;
@@ -163,20 +327,18 @@ bool CPkgToPapers::GetFileData(std::string strFilePath, pPAPERSINFO pPapers)
 				int nIssueFlag = 0;
 				if (jsnPaperObj->has("issueFlag"))
 					nIssueFlag = jsnPaperObj->get("issueFlag").convert<int>();
-
-				switch (nIssueFlag)
+				if (jsnPaperObj->has("modify"))
+					pPaper->bModifyZKZH = jsnPaperObj->get("modify").convert<bool>();
+				if (jsnPaperObj->has("reScan"))
+					pPaper->bReScan = jsnPaperObj->get("reScan").convert<bool>();
+				if (jsnPaperObj->has("IssueList"))
 				{
-					case 0:
-						break;
-					case 1:
-						pPaper->bModifyZKZH = true;
-						break;
-					case 2:
-						break;
-					case 3:
-						pPaper->bModifyZKZH = true;
-						pPaper->bReScan = true;
-						break;
+					int nIssueList = jsnPaperObj->get("IssueList").convert<int>();
+					if (nIssueFlag)
+					{
+						pPapers->lPaper.erase(itPaper);
+						pPapers->lIssue.push_back(pPaper);
+					}
 				}
 			}
 		}

@@ -112,13 +112,16 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 	{
 		//从pkg恢复到Papers
 		USES_CONVERSION;
-// 		CString strPkgPath = _T("");
-// 		strPkgPath.Format(_T("%s\\%s"), g_strPaperBackupPath.c_str(), pTask->strCompressFileName.c_str());
+		CString strInfo = _T("");
+		strInfo.Format(_T("正在恢复试卷包(%s), 请稍后..."), A2T(pTask->strCompressFileName.c_str()));
+		((CScanToolDlg*)m_pDlg)->SetStatusShowInfo(strInfo);
+
 		std::string strPkgPath = g_strPaperBackupPath + pTask->strCompressFileName;		//utf8
 		CPkgToPapers pkg2PapersObj;
 		pPAPERSINFO pPapers = pkg2PapersObj.Pkg2Papers(CMyCodeConvert::Utf8ToGb2312(strPkgPath));
 		
 		//消息发送给主线程
+		(static_cast<CScanToolDlg*>(m_pDlg))->SendMessage(MSG_Pkg2Papers_OK, (WPARAM)pPapers, NULL);
 	}
 }
 
