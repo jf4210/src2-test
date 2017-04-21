@@ -196,6 +196,8 @@ void CAdvancedSetDlg::OnDeltaposSpinZkzh(NMHDR *pNMHDR, LRESULT *pResult)
 	else if (pNMUpDown->iDelta == 1) // 如果此值为1, 说明点击了Spin的往上的箭头  
 	{
 		m_nSensitiveZkzh++;
+		if (m_nSensitiveZkzh > 50)
+			m_nSensitiveZkzh = 50;
 	}
 	UpdateData(false);
 }
@@ -217,6 +219,8 @@ void CAdvancedSetDlg::OnDeltaposSpinOmr(NMHDR *pNMHDR, LRESULT *pResult)
 	else if (pNMUpDown->iDelta == 1) // 如果此值为1, 说明点击了Spin的往上的箭头  
 	{
 		m_nSensitiveOmr++;
+		if (m_nSensitiveOmr > 50)
+			m_nSensitiveOmr = 50;
 	}
 	UpdateData(false);
 }
