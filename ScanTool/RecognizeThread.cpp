@@ -2646,7 +2646,7 @@ int CRecognizeThread::calcOmrDensityDiffVal(RECTLIST& rectList, std::vector<pREC
 	return 1;
 }
 
-int CRecognizeThread::calcSnDiffVal(pSN_ITEM pSn, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemDiff)
+int CRecognizeThread::calcSnDensityDiffVal(pSN_ITEM pSn, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemDiff)
 {
 	RECTLIST::iterator itItem = pSn->lSN.begin();
 	for (; itItem != pSn->lSN.end(); itItem++)
@@ -2840,7 +2840,7 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 #if 1	//根据选项差值判断选中
 		std::vector<pRECTINFO> vecItemsDesc;
 		std::vector<ST_ITEM_DIFF> vecSnItemDiff;
-		calcSnDiffVal(pSn, vecItemsDesc, vecSnItemDiff);
+		calcSnDensityDiffVal(pSn, vecItemsDesc, vecSnItemDiff);
 
 		float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
 		float fDiffThread = 0.0;		//选项可能填涂的可能灰度梯度阀值
@@ -2914,11 +2914,6 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			strcat_s(szTmpLog, "]\n");
 			strLog.append(szTmpLog);
 		}
-#endif		
-
-#if 1	//第二种ZKZH识别方法 test
-		std::vector<int> vecItemVal2;
-		RecogVal_Sn2(nPic, matCompPic, pPic, pModelInfo, pSn, vecItemVal2);
 #endif
 
 		if (vecItemVal.size() == 1)
@@ -2928,6 +2923,11 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		}
 		else
 		{
+		#if 1	//第二种ZKZH识别方法 test
+			std::vector<int> vecItemVal2;
+			RecogVal_Sn2(nPic, matCompPic, pPic, pModelInfo, pSn, vecItemVal2);
+		#endif
+
 			if (vecItemVal.size() == 0 && vecItemVal2.size() == 1)
 			{
 				vecSN.push_back(vecItemVal2[0]);
@@ -2962,7 +2962,7 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		sprintf_s(szLog, "识别准考证号完成(%s), 图片名: %s\n", (static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.c_str(), pPic->strPicName.c_str());
 		strLog.append(szLog);
 		TRACE(szLog);
-		(static_cast<CDialog*>((static_cast<pST_PaperInfo>(pPic->pPaper))->pSrcDlg))->SendMessage(MSG_ZKZH_RECOG, (WPARAM)pPic->pPaper, NULL);
+		(static_cast<CDialog*>((static_cast<pST_PaperInfo>(pPic->pPaper))->pSrcDlg))->SendMessage(MSG_ZKZH_RECOG, (WPARAM)pPic->pPaper, (LPARAM)(static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers);
 	}
 	if (!bRecogAll)
 	{

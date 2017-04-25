@@ -305,7 +305,6 @@ void CScanModleMgrDlg::OnBnClickedBtnRefresh()
 			}
 			it++;
 		}
-//		std::sort(m_lModelFile.begin(), m_lModelFile.end(), sortModelFile);
 		m_lModelFile.sort(sortModelFile);
 
 		for(auto modelFile : m_lModelFile)

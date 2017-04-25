@@ -10,6 +10,7 @@
 #include <string.h>
 #include <algorithm>
 #include "OmrRecog.h"
+#include "ModifyZkzhDlg.h"
 
 using namespace cv;
 using namespace std;
@@ -21,7 +22,7 @@ CPaperInputDlg::CPaperInputDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	: CDialog(CPaperInputDlg::IDD, pParent)
 	, m_strPapersPath(_T("")), m_nModelPicNums(1), m_nCurrTabSel(0), m_pCurrentPicShow(NULL), m_pModel(pModel), m_pOldModel(pModel)
 	, m_strModelName(_T("")), m_strPapersName(_T("")), m_strPapersDesc(_T("")), m_nCurrItemPapers(-1), m_nCurrItemPaper(-1)
-	, m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL), m_nCurrItemPaperList(-1)
+	, m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL), m_nCurrItemPaperList(-1), m_pCurrentPapers(NULL), m_pStudentMgr(NULL)
 {
 
 }
@@ -70,9 +71,11 @@ BEGIN_MESSAGE_MAP(CPaperInputDlg, CDialog)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_IssuePaper, &CPaperInputDlg::OnNMDblclkListIssuepaper)
 	ON_MESSAGE(WM_CV_LBTNDOWN, &CPaperInputDlg::RoiLBtnDown)
 	ON_BN_CLICKED(IDC_BTN_SAVE, &CPaperInputDlg::OnBnClickedBtnSave)
+	ON_MESSAGE(MSG_ZKZH_RECOG, &CPaperInputDlg::MsgZkzhRecog)
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BTN_Test, &CPaperInputDlg::OnBnClickedBtnTest)
 	ON_NOTIFY(LVN_KEYDOWN, IDC_LIST_Paper, &CPaperInputDlg::OnLvnKeydownListPaper)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 BOOL CPaperInputDlg::OnInitDialog()
@@ -131,15 +134,20 @@ void CPaperInputDlg::InitUI()
 //	m_lPapersCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 38);
 	m_lPapersCtrl.InsertColumn(0, _T("试卷袋名"), LVCFMT_CENTER, 80);
 	m_lPapersCtrl.InsertColumn(1, _T("数量"), LVCFMT_CENTER, 36);
-	m_lPapersCtrl.InsertColumn(2, _T("状态"), LVCFMT_CENTER, 40);
 
 	m_lPaperCtrl.SetExtendedStyle(m_lPaperCtrl.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
-	m_lPaperCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36);
-	m_lPaperCtrl.InsertColumn(1, _T("试卷名"), LVCFMT_CENTER, 80);
+	m_lPaperCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36); 
+	m_lPaperCtrl.InsertColumn(1, _T("考生"), LVCFMT_CENTER, 36);
+	m_lPaperCtrl.InsertColumn(2, _T("试卷名"), LVCFMT_CENTER, 70);
+	m_lPaperCtrl.InsertColumn(3, _T("*"), LVCFMT_CENTER, 20);
 
 	m_lIssuePaperCtrl.SetExtendedStyle(m_lIssuePaperCtrl.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lIssuePaperCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36);
 	m_lIssuePaperCtrl.InsertColumn(1, _T("试卷名"), LVCFMT_CENTER, 80);
+	m_lIssuePaperCtrl.InsertColumn(2, _T("原因"), LVCFMT_LEFT, 100);
+	m_lIssuePaperCtrl.EnableToolTips(TRUE);
+
+	m_comboModel.AdjustDroppedWidth();
 
 	SetFontSize(m_nStatusSize);
 
@@ -208,7 +216,7 @@ void CPaperInputDlg::InitCtrlPosition()
 		GetDlgItem(IDC_STATIC_PapersTips)->MoveWindow(nLeftGap, nCurrentTop, nLeftCtrlWidth, nStaticHeight);
 		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
 	}
-	int nPapersListWidth = static_cast<int>(nLeftCtrlWidth * 0.55);
+	int nPapersListWidth = static_cast<int>(nLeftCtrlWidth * 0.4);
 	int nIssueListWdith = nLeftCtrlWidth - nPapersListWidth - nGap;
 	if (m_lPapersCtrl.GetSafeHwnd())
 	{
@@ -722,15 +730,22 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 	}
 }
 
+bool sortModelFile2(ST_MODELFILE& st1, ST_MODELFILE& st2)
+{
+	if (st1.strModifyTime > st2.strModifyTime)	return true;
+	else if (st1.strModifyTime == st2.strModifyTime)	return (st1.strModelName >= st2.strModelName ? true : false);
+	else return false;
+}
+
 void CPaperInputDlg::SeachModel()
 {
 	USES_CONVERSION;
 	std::string strModelPath = T2A(g_strCurrentPath + _T("Model"));
-//	g_strModelSavePath = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
 
 	std::string strLog;
 	try
 	{
+		std::list<ST_MODELFILE> lModelFile;
 		std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
 		Poco::DirectoryIterator it(strUtf8Path);
 		Poco::DirectoryIterator end;
@@ -739,13 +754,25 @@ void CPaperInputDlg::SeachModel()
 			Poco::Path p(it->path());
 			if (it->isFile() && p.getExtension() == "mod")
 			{
-//				std::string strModelName = p.getBaseName();
 				std::string strModelName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
-				m_comboModel.AddString(A2T(strModelName.c_str()));
+
+				Poco::DateTime dt(it->getLastModified());
+				std::string strLastModifyTime = Poco::format("%04d-%02d-%02d", dt.year(), dt.month(), dt.day());
+
+				ST_MODELFILE stModelFile;
+				stModelFile.strModelName = strModelName;
+				stModelFile.strModifyTime = strLastModifyTime;
+				lModelFile.push_back(stModelFile);
 			}
 			it++;
 		}
-		//		m_comboModel.SetCurSel(0);
+		lModelFile.sort(sortModelFile2);
+
+		for(auto modelFile : lModelFile)
+		{
+			std::string strModelName = modelFile.strModelName;
+			m_comboModel.AddString(A2T(strModelName.c_str()));
+		}
 		strLog = "搜索模板完成";
 	}
 	catch (Poco::FileException& exc)
@@ -795,38 +822,30 @@ void CPaperInputDlg::OnNMDblclkListPapers(NMHDR *pNMHDR, LRESULT *pResult)
 
 	USES_CONVERSION;
 	pPAPERSINFO pPapers = (pPAPERSINFO)m_lPapersCtrl.GetItemData(pNMItemActivate->iItem);
+	m_pCurrentPapers = pPapers;
 
 	m_nCurrItemPapers = pNMItemActivate->iItem;
 	m_strPapersName = A2T(pPapers->strPapersName.c_str());
 	m_strPapersDesc = A2T(pPapers->strPapersDesc.c_str());
 
-	PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
-	for (int i = 0; itPaper != pPapers->lPaper.end(); i++, itPaper++)
+	ShowPapers(pPapers);
+
+	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+	if (g_nOperatingMode == 1 || pDlg->m_bModifySN)
 	{
-		if (i == 0)
-		{
-			m_strModelName = A2T((*itPaper)->pModel->strModelName.c_str());
-		}
+		KillTimer(TIMER_CheckRecogComplete);
 		int nCount = m_lPaperCtrl.GetItemCount();
-		char szCount[10] = { 0 };
-		sprintf_s(szCount, "%d", nCount + 1);
-		m_lPaperCtrl.InsertItem(nCount, NULL);
-		m_lPaperCtrl.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
-		m_lPaperCtrl.SetItemText(nCount, 1, (LPCTSTR)A2T((*itPaper)->strStudentInfo.c_str()));
-		m_lPaperCtrl.SetItemData(nCount, (DWORD_PTR)(*itPaper));
+		for (int i = 0; i < nCount; i++)
+		{
+			pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lPaperCtrl.GetItemData(i);
+			if (pItemPaper)
+			{
+				m_lPaperCtrl.SetItemText(i, 1, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
+			}
+		}
+		SetTimer(TIMER_CheckRecogComplete, 100, NULL);
 	}
-	//issue paper list
-	PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
-	for (int i = 0; itIssuePaper != pPapers->lIssue.end(); i++, itIssuePaper++)
-	{
-		int nCount = m_lIssuePaperCtrl.GetItemCount();
-		char szCount[10] = { 0 };
-		sprintf_s(szCount, "%d", nCount + 1);
-		m_lIssuePaperCtrl.InsertItem(nCount, NULL);
-		m_lIssuePaperCtrl.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
-		m_lIssuePaperCtrl.SetItemText(nCount, 1, (LPCTSTR)A2T((*itIssuePaper)->strStudentInfo.c_str()));
-		m_lIssuePaperCtrl.SetItemData(nCount, (DWORD_PTR)(*itIssuePaper));
-	}
+
 	UpdateData(FALSE);
 }
 
@@ -835,6 +854,9 @@ void CPaperInputDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	*pResult = 0;
+
+	if (pNMItemActivate->iItem < 0)
+		return;
 
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lPaperCtrl.GetItemData(pNMItemActivate->iItem);
 	m_nCurrItemPaper = pNMItemActivate->iItem;
@@ -852,6 +874,23 @@ void CPaperInputDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	{
 		if (i != 0)
 			m_vecPicShow[i]->ShowWindow(SW_HIDE);
+	}
+
+	//双击为空的准考证号时显示准考证号修改窗口
+	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+	if ((g_nOperatingMode == 1 || pDlg->m_bModifySN) && m_pModel && pPaper && (pPaper->strSN.empty() || pPaper->bModifyZKZH))
+	{
+		if (!m_pStudentMgr)
+		{
+			USES_CONVERSION;
+			m_pStudentMgr = new CStudentMgr();
+			std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+			bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+		}
+		CModifyZkzhDlg zkzhDlg(m_pModel, m_pCurrentPapers, m_pStudentMgr, pPaper);
+		zkzhDlg.DoModal();
+
+		ShowPapers(m_pCurrentPapers);
 	}
 }
 
@@ -1119,6 +1158,9 @@ void CPaperInputDlg::OnNMDblclkListIssuepaper(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	*pResult = 0;
+	
+	if (pNMItemActivate->iItem < 0)
+		return;
 
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lIssuePaperCtrl.GetItemData(pNMItemActivate->iItem);
 	m_pCurrentShowPaper = pPaper;
@@ -1144,6 +1186,23 @@ void CPaperInputDlg::OnNMDblclkListIssuepaper(NMHDR *pNMHDR, LRESULT *pResult)
 		if (i != nIssuePaper)
 			m_vecPicShow[i]->ShowWindow(SW_HIDE);
 	}
+
+	//双击为空的准考证号时显示准考证号修改窗口
+	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+	if ((g_nOperatingMode == 1 || pDlg->m_bModifySN) && m_pModel && pPaper)
+	{
+		if (!m_pStudentMgr)
+		{
+			USES_CONVERSION;
+			m_pStudentMgr = new CStudentMgr();
+			std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+			bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+		}
+		CModifyZkzhDlg zkzhDlg(m_pModel, m_pCurrentPapers, m_pStudentMgr, pPaper);
+		zkzhDlg.DoModal();
+
+		ShowPapers(m_pCurrentPapers);
+	}
 }
 
 void CPaperInputDlg::OnBnClickedBtnSave()
@@ -1161,6 +1220,24 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	{
 		AfxMessageBox(_T("没有试卷袋信息"));
 		return;
+	}
+
+
+	if (pPapers->lIssue.size() > 0)
+	{
+		if (g_nOperatingMode == 2)
+		{
+			AfxMessageBox(_T("存在识别异常试卷，不能上传，请先处理异常试卷"));
+			return;
+		}
+		else
+		{
+			CString strMsg = _T("");
+			strMsg.Format(_T("存在%d份问题试卷，这些试卷需要单独找出扫描，此次将不上传这%d份试卷，是否确定上传?"), pPapers->lIssue.size(), pPapers->lIssue.size());
+			if (MessageBox(strMsg, _T("警告"), MB_YESNO) != IDYES)
+				return;
+			pPapers->nPaperCount = pPapers->lPaper.size();		//修改扫描数量，将问题试卷删除，不算到扫描试卷中。
+		}
 	}
 
 	pPapers->strPapersDesc = T2A(m_strPapersDesc);
@@ -1594,6 +1671,31 @@ int CPaperInputDlg::GetRectInfoByPoint(cv::Point pt, pST_PicInfo pPic, RECTINFO*
 		}
 	}
 	return nFind;
+}
+
+LRESULT CPaperInputDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
+{
+	pST_PaperInfo pPaper = (pST_PaperInfo)wParam;
+	pPAPERSINFO   pPapers = (pPAPERSINFO)lParam;
+	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+	if (g_nOperatingMode != 1 && !pDlg->m_bModifySN)
+		return FALSE;
+
+	if (pPapers != m_pCurrentPapers)
+		return FALSE;
+
+	USES_CONVERSION;
+	int nCount = m_lPaperCtrl.GetItemCount();
+	for (int i = 0; i < nCount; i++)
+	{
+		pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lPaperCtrl.GetItemData(i);
+		if (pItemPaper == pPaper)
+		{
+			m_lPaperCtrl.SetItemText(i, 2, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+			break;
+		}
+	}
+	return TRUE;
 }
 
 void CPaperInputDlg::SetStatusShowInfo(CString strMsg, BOOL bWarn /*= FALSE*/)
@@ -2828,6 +2930,48 @@ void CPaperInputDlg::ShowPaperByItem(int nItem)
 }
 
 
+void CPaperInputDlg::ShowPapers(pPAPERSINFO pPapers)
+{
+	//显示所有识别完成的准考证号
+	USES_CONVERSION;
+	//重新显示合格试卷
+	m_lPaperCtrl.DeleteAllItems();
+	for (auto pPaper : pPapers->lPaper)
+	{
+		int nCount = m_lPaperCtrl.GetItemCount();
+		char szCount[10] = { 0 };
+		sprintf_s(szCount, "%d", nCount + 1);
+		m_lPaperCtrl.InsertItem(nCount, NULL);
+		m_lPaperCtrl.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+		m_lPaperCtrl.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
+		m_lPaperCtrl.SetItemText(nCount, 2, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+		if (pPaper->bModifyZKZH)
+			m_lPaperCtrl.SetItemText(nCount, 3, _T("*"));
+		m_lPaperCtrl.SetItemData(nCount, (DWORD_PTR)pPaper);
+	}
+	//显示需要重扫的异常试卷
+	m_lIssuePaperCtrl.DeleteAllItems();
+	for (auto pPaper : pPapers->lIssue)
+	{
+		int nCount = m_lIssuePaperCtrl.GetItemCount();
+		char szCount[10] = { 0 };
+		sprintf_s(szCount, "%d", nCount + 1);
+		m_lIssuePaperCtrl.InsertItem(nCount, NULL);
+		m_lIssuePaperCtrl.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+		m_lIssuePaperCtrl.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
+		CString strErrInfo = _T("");
+		if (pPaper->strSN.empty())	strErrInfo = _T("考号为空");
+		if (pPaper->bReScan)	strErrInfo = _T("重扫");
+		m_lIssuePaperCtrl.SetItemText(nCount, 2, (LPCTSTR)strErrInfo);
+		m_lIssuePaperCtrl.SetItemData(nCount, (DWORD_PTR)pPaper);
+
+		CString strTips = _T("异常试卷，将不会上传，也不会参与评卷。 需要单独找出，后面单独扫描");
+		m_lIssuePaperCtrl.SetItemToolTipText(nCount, 0, strTips);
+		m_lIssuePaperCtrl.SetItemToolTipText(nCount, 1, strTips);
+		m_lIssuePaperCtrl.SetItemToolTipText(nCount, 2, strTips);
+	}
+}
+
 void CPaperInputDlg::OnLvnKeydownListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMLVKEYDOWN pLVKeyDow = reinterpret_cast<LPNMLVKEYDOWN>(pNMHDR);
@@ -2850,4 +2994,47 @@ void CPaperInputDlg::OnLvnKeydownListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 
 		ShowPaperByItem(m_nCurrItemPaperList);
 	}
+}
+
+
+void CPaperInputDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	if (nIDEvent == TIMER_CheckRecogComplete)
+	{
+		bool bRecogComplete = true;
+		bool bNeedShowZkzhDlg = false;
+		for (auto p : m_pCurrentPapers->lPaper)
+		{
+			if (!p->bRecogComplete)
+			{
+				bRecogComplete = false;
+				break;
+			}
+			if (p->strSN.empty())
+				bNeedShowZkzhDlg = true;
+		}
+		if (bRecogComplete)
+		{
+			USES_CONVERSION;
+			CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+			if ((g_nOperatingMode == 1 || pDlg->m_bModifySN) && bNeedShowZkzhDlg)
+			{
+				KillTimer(TIMER_CheckRecogComplete);
+				if (!m_pStudentMgr)
+				{
+					USES_CONVERSION;
+					m_pStudentMgr = new CStudentMgr();
+					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+					bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+				}
+				CModifyZkzhDlg zkzhDlg(m_pModel, m_pCurrentPapers, m_pStudentMgr);
+				zkzhDlg.DoModal();
+
+				ShowPapers(m_pCurrentPapers);
+			}
+			else
+				KillTimer(TIMER_CheckRecogComplete);
+		}
+	}
+	CDialog::OnTimer(nIDEvent);
 }

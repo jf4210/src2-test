@@ -207,6 +207,7 @@ BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_LoadParam, &CDataMgrToolDlg::OnBnClickedBtnLoadparam)
 	ON_BN_CLICKED(IDC_MFCBUTTON_RePkg, &CDataMgrToolDlg::OnBnClickedMfcbuttonRepkg)
 	ON_WM_TIMER()
+	ON_BN_CLICKED(IDC_BTN_STOP, &CDataMgrToolDlg::OnBnClickedBtnStop)
 END_MESSAGE_MAP()
 
 
@@ -1123,27 +1124,81 @@ void CDataMgrToolDlg::OnTimer(UINT_PTR nIDEvent)
 		CString strTmp;
 		if (m_wndStatusBar.GetSafeHwnd())
 		{
-			strTmp.Format(_T("%d"), _nDecompress_);
+			int nUnDecompressCount	= g_lDecompressTask.size();
+			int nUnRecogCount		= g_lRecogTask.size();
+			int nUnCompressCount	= g_lCompressTask.size();
+			strTmp.Format(_T("%d / %d"), _nDecompress_, nUnDecompressCount);
 			m_wndStatusBar.SetPaneText(1, strTmp);
-			strTmp.Format(_T("%d"), _nRecog_);
+			strTmp.Format(_T("%d / %d"), _nRecog_, nUnRecogCount);
 			m_wndStatusBar.SetPaneText(3, strTmp);
 			strTmp.Format(_T("%d"), _nRecogPapers_);
 			m_wndStatusBar.SetPaneText(5, strTmp);
-			strTmp.Format(_T("%d"), _nCompress_);
+			strTmp.Format(_T("%d / %d"), _nCompress_, nUnCompressCount);
 			m_wndStatusBar.SetPaneText(7, strTmp);
 		}
 		else
 		{
-			strTmp.Format(_T("%d"), _nDecompress_);
+			int nUnDecompressCount = g_lDecompressTask.size();
+			int nUnRecogCount = g_lRecogTask.size();
+			int nUnCompressCount = g_lCompressTask.size();
+			strTmp.Format(_T("%d / %d"), _nDecompress_, nUnDecompressCount);
 			m_statusBar.SetText(strTmp, 1, 0);
-			strTmp.Format(_T("%d"), _nRecog_);
+			strTmp.Format(_T("%d / %d"), _nRecog_, nUnRecogCount);
 			m_statusBar.SetText(strTmp, 3, 0);
 			strTmp.Format(_T("%d"), _nRecogPapers_);
 			m_statusBar.SetText(strTmp, 5, 0);
-			strTmp.Format(_T("%d"), _nCompress_);
+			strTmp.Format(_T("%d / %d"), _nCompress_, nUnCompressCount);
 			m_statusBar.SetText(strTmp, 7, 0);
 		}
 	}
 
 	CDialogEx::OnTimer(nIDEvent);
+}
+
+
+void CDataMgrToolDlg::OnBnClickedBtnStop()
+{
+	pST_SEARCH pSearchPathTask = NULL;
+	_fmSearchPathList_.lock();
+	L_SearchTask::iterator itSearchPathItem = _SearchPathList_.begin();
+	for (; itSearchPathItem != _SearchPathList_.end();)
+	{
+		pSearchPathTask = *itSearchPathItem;
+		itSearchPathItem = _SearchPathList_.erase(itSearchPathItem);
+		SAFE_RELEASE(pSearchPathTask);
+	}
+	_fmSearchPathList_.unlock();
+
+	pDECOMPRESSTASK pDecompressTask = NULL;
+	g_fmDecompressLock.lock();
+	DECOMPRESSTASKLIST::iterator itDecompressItem = g_lDecompressTask.begin();
+	for (; itDecompressItem != g_lDecompressTask.end();)
+	{
+		pDecompressTask = *itDecompressItem;
+		itDecompressItem = g_lDecompressTask.erase(itDecompressItem);
+		SAFE_RELEASE(pDecompressTask);
+	}
+	g_fmDecompressLock.unlock();
+
+	g_fmRecog.lock();
+	pRECOGTASK pRecogTask = NULL;
+	RECOGTASKLIST::iterator itRecogItem = g_lRecogTask.begin();
+	for (; itRecogItem != g_lRecogTask.end();)
+	{
+		pRecogTask = *itRecogItem;
+		itRecogItem = g_lRecogTask.erase(itRecogItem);
+		SAFE_RELEASE(pRecogTask);
+	}
+	g_fmRecog.unlock();
+
+	pCOMPRESSTASK pCompressTask = NULL;
+	g_fmCompressLock.lock();
+	COMPRESSTASKLIST::iterator itCompressItem = g_lCompressTask.begin();
+	for (; itCompressItem != g_lCompressTask.end();)
+	{
+		pCompressTask = *itCompressItem;
+		itCompressItem = g_lCompressTask.erase(itCompressItem);
+		SAFE_RELEASE(pCompressTask);
+	}
+	g_fmCompressLock.unlock();
 }

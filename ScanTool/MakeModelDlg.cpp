@@ -24,7 +24,7 @@ IMPLEMENT_DYNAMIC(CMakeModelDlg, CDialog)
 
 CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	: CDialog(CMakeModelDlg::IDD, pParent)
-	, m_pModelPicShow(NULL), m_nGaussKernel(5), m_nSharpKernel(5), m_nThresholdKernel(150), m_nCannyKernel(90), m_nDilateKernel(6), m_nErodeKernel(2), m_nDilateKernel_Common(6), m_nDilateKernel_Sn(6)
+	, m_pModelPicShow(NULL), m_nGaussKernel(5), m_nSharpKernel(5), m_nThresholdKernel(150), m_nCannyKernel(90), m_nDilateKernel(6), m_nErodeKernel(2), m_nDilateKernel_DefCommon(6), m_nDilateKernel_DefSn(6)
 	, m_pModel(pModel), m_bNewModelFlag(false), m_nModelPicNums(2), m_nCurrTabSel(0), m_bSavedModelFlag(false), m_ncomboCurrentSel(0), m_eCurCPType(UNKNOWN)
 	, m_nCurListCtrlSel(0), m_nStartTH(0)
 	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200)
@@ -1273,6 +1273,39 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 //	rc.fStandardMeanGray = nCount / rc.fStandardArea;
 
 	return true;
+}
+
+void CMakeModelDlg::GetStandardValue(RECTINFO& rc)
+{
+	if (rc.eCPType == SN)
+	{
+		switch (rc.nTH)
+		{
+			case 0:	rc.fStandardValue = 295; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 1:	rc.fStandardValue = 260; rc.fStandardArea = 798; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 2:	rc.fStandardValue = 320; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 3:	rc.fStandardValue = 285; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 4:	rc.fStandardValue = 285; rc.fStandardArea = 798; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 5:	rc.fStandardValue = 295; rc.fStandardArea = 320; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 6:	rc.fStandardValue = 315; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 7:	rc.fStandardValue = 262; rc.fStandardArea = 798; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 8:	rc.fStandardValue = 340; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 9:	rc.fStandardValue = 290; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+		}
+	}
+	else if (rc.eCPType == OMR)
+	{
+		switch (rc.nAnswer)
+		{
+			case 0:	rc.fStandardValue = 282; rc.fStandardArea = 1035; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//A
+			case 1:	rc.fStandardValue = 296; rc.fStandardArea = 1039; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//B
+			case 2:	rc.fStandardValue = 280; rc.fStandardArea = 1035; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//C
+			case 3:	rc.fStandardValue = 296; rc.fStandardArea = 1039; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//D
+			case 4:	rc.fStandardValue = 295; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//E
+			case 5:	rc.fStandardValue = 295; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//F
+			case 6:	rc.fStandardValue = 295; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//G
+		}
+	}
 }
 
 inline void CMakeModelDlg::GetThreshold(cv::Mat& matSrc, cv::Mat& matDst)
@@ -4277,6 +4310,28 @@ void CMakeModelDlg::AddRecogRectToList()
 	m_vecTmp.clear();
 	UpdataCPList();
 	ShowRectByCPType(m_eCurCPType);
+
+#ifdef Test_TraceLog
+	float fMeanArea[4] = { 0 };
+	float fMeanDensity[4] = { 0 };
+	float fMeanVal[4] = { 0 };
+	for (auto pstItem : m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2)
+	{
+		std::string strRectVal;
+		for (auto rc : pstItem.lSelAnswer)
+		{
+			fMeanArea[rc.nAnswer] += rc.fStandardArea;
+			fMeanVal[rc.nAnswer] += rc.fStandardValue;
+			fMeanDensity[rc.nAnswer] += rc.fStandardDensity;
+			strRectVal.append(Poco::format("项(%c) 面积: %f, 密度: %f, val: %f, valPer: %f; ", (char)(rc.nAnswer + 65), (double)rc.fStandardArea, (double)rc.fStandardDensity, (double)rc.fStandardValue, (double)rc.fStandardValuePercent));
+		}
+		std::string strRectLog = Poco::format("矩形题号: %d, %s", pstItem.nTH, strRectVal);
+		TRACE("%s\n", strRectLog.c_str());
+	}
+	int nOmrCount = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.size();
+	for (int i = 0; i < 4; i++)
+		TRACE("OMR平均值信息：%c--平均面积= %f, 平均值= %f, 平均密度= %f\n", i + 65, fMeanArea[i] / nOmrCount, fMeanVal[i] / nOmrCount, fMeanDensity[i] / nOmrCount);
+#endif
 }
 
 void CMakeModelDlg::RecognizeRectTracker()
@@ -4361,7 +4416,8 @@ void CMakeModelDlg::RecognizeRectTracker()
 		if (rt.br().y > m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.rows)
 			rt.height = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.rows - rt.y;
 		Recognise(rt);
-
+		
+		ShowTmpRect();
 		for (int i = 0; i < m_vecTmp.size(); i++)
 		{
 			bool bFind = false;
@@ -4925,12 +4981,12 @@ LRESULT CMakeModelDlg::SNTrackerChange(WPARAM wParam, LPARAM lParam)
 
 void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 {
+	m_vecTmp.clear();
 	if (rcList.size() <= 0)
 		return;
 	int nMaxRow = 1;
 	int nMaxCols = 1;
 
-	m_vecTmp.clear();
 	std::vector<Rect> rcList_X = rcList;
 	std::vector<Rect> rcList_XY = rcList;
 	std::sort(rcList_X.begin(), rcList_X.end(), SortByPositionX2);
@@ -5076,12 +5132,12 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 
 void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 {
+	m_vecTmp.clear();
 	if (rcList.size() <= 0)
 		return;
 	int nMaxRow		= 1;
 	int nMaxCols	= 1;
 
-	m_vecTmp.clear();
 	std::vector<Rect> rcList_X = rcList;
 	std::vector<Rect> rcList_XY = rcList;
 	std::sort(rcList_X.begin(), rcList_X.end(), SortByPositionX2);
@@ -5238,12 +5294,12 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 
 void CMakeModelDlg::GetElectOmrInfo(std::vector<cv::Rect>& rcList)
 {
+	m_vecTmp.clear();
 	if (rcList.size() <= 0)
 		return;
 	int nMaxRow = 1;
 	int nMaxCols = 1;
 
-	m_vecTmp.clear();
 	std::vector<Rect> rcList_X = rcList;
 	std::vector<Rect> rcList_XY = rcList;
 	std::sort(rcList_X.begin(), rcList_X.end(), SortByPositionX2);
@@ -5979,8 +6035,10 @@ void CMakeModelDlg::InitParam()
 		m_nDilateKernel = pConf->getInt("MakeModel_Recog.delateKernel", 6);
 		m_nErodeKernel = pConf->getInt("MakeModel_Recog.eRodeKernel", 2);
 
-		m_nDilateKernel_Sn = pConf->getInt("MakeModel_Recog.delateKernel_sn", 6);
-		m_nDilateKernel_Common = pConf->getInt("MakeModel_Recog.delateKernel", 6);
+		m_nDilateKernel_DefSn = pConf->getInt("MakeModel_Recog.delateKernel_sn", 6);
+		m_nDilateKernel_DefCommon = pConf->getInt("MakeModel_Recog.delateKernel", 6);
+		m_nDilateKernel_Sn = m_nDilateKernel_DefSn;
+		m_nDilateKernel_Common = m_nDilateKernel_DefCommon;
 
 		m_nWhiteVal = pConf->getInt("MakeModel_Threshold.white", 225);
 		m_nHeadVal	= pConf->getInt("MakeModel_Threshold.head", 136);
@@ -6017,6 +6075,8 @@ void CMakeModelDlg::InitParam()
 		m_nDilateKernel = 6;
 		m_nErodeKernel = 2;
 
+		m_nDilateKernel_DefSn = 6;
+		m_nDilateKernel_DefCommon = 6;
 		m_nDilateKernel_Sn = 6;
 		m_nDilateKernel_Common = 6;
 
@@ -6321,7 +6381,12 @@ bool CMakeModelDlg::UploadModel(CString strModelPath, pMODEL pModel)
 
 void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 {
-	CAdvancedSetDlg dlg(m_pModel);
+	ST_SENSITIVE_PARAM stSensitiveParam;
+	stSensitiveParam.nCurrentZkzhSensitivity = m_nDilateKernel_Sn;
+	stSensitiveParam.nCurrentOmrSensitivity = m_nDilateKernel_Common;
+	stSensitiveParam.nDefZkzhSensitivity = m_nDilateKernel_DefSn;
+	stSensitiveParam.nDefOmrSensitivity = m_nDilateKernel_DefCommon;
+	CAdvancedSetDlg dlg(m_pModel, stSensitiveParam);
 	if (dlg.DoModal() != IDOK)
 		return;
 
@@ -6334,6 +6399,20 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	else
 		m_pModel->nScanSize = 3;
 	m_pModel->nScanType = dlg.m_nScanType;
+	m_nDilateKernel_Sn = dlg.m_nSensitiveZkzh;
+	m_nDilateKernel_Common = dlg.m_nSensitiveOmr;
+
+	switch (m_eCurCPType)
+	{
+		case SN:
+		{
+			m_nDilateKernel = m_nDilateKernel_Sn;
+		}
+			break;
+		default:
+			m_nDilateKernel = m_nDilateKernel_Common;
+			break;
+	}
 }
 
 #ifdef TEST_SCAN_THREAD

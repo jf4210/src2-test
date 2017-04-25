@@ -868,9 +868,9 @@ bool CModifyZkzhDlg::ReleaseData()
 	{
 		pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
 		if (m_lcZkzh.GetCheckbox(i, 3))
-		{
 			pPaper->bReScan = true;			//设置此试卷需要重新扫描
-		}
+		else
+			pPaper->bReScan = false;
 	}
 
 	//如果此试卷已经被修改正常，从问题列表删除

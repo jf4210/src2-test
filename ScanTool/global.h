@@ -152,7 +152,7 @@
 
 #ifndef TO_WHTY
 	#ifdef PUBLISH_VERSION
-		#define SOFT_VERSION	_T("2.10420-1")
+		#define SOFT_VERSION	_T("2.10420-3")
 	#else
 		#define SOFT_VERSION	_T("2.10420-1-Pir")		//-Pri
 	#endif
@@ -582,6 +582,13 @@ extern Poco::Event			g_eTcpThreadExit;
 extern Poco::Event			g_eSendFileThreadExit;
 extern Poco::Event			g_eFileUpLoadThreadExit;
 extern Poco::Event			g_eCompressThreadExit;
+
+//模板文件信息
+typedef struct _ModelFile
+{
+	std::string strModelName;		//gb2312
+	std::string strModifyTime;
+}ST_MODELFILE;
 
 typedef struct stPlatformInfo
 {

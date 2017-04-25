@@ -114,7 +114,7 @@ void CScanResquestHandler::HandleTask(pSCAN_REQ_TASK pTask)
 		else
 		{
 //			std::string strLog = "发送数据:" + pTask->strRequest + "\t\t后端数据返回错误,不是200 OK";
-			std::string strLog = Poco::format("发送数据: %s\t\t后端数据返回错误,不是200 OK,返回http代码: %d", pTask->strRequest, (int)response.getStatus());
+			std::string strLog = Poco::format("命令: %s\turi: %s\t发送数据: %s\t\t后端数据返回错误,不是200 OK,返回http代码: %d", pTask->strMsg, pTask->strUri, pTask->strRequest, (int)response.getStatus());
 			g_Log.LogOut(strLog);
 			std::cout << strLog << std::endl;
 		}

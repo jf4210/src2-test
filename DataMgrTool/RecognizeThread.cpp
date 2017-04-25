@@ -3118,11 +3118,6 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			strcat_s(szTmpLog, "]\n");
 			strLog.append(szTmpLog);
 		}
-#endif		
-
-#if 1	//第二种ZKZH识别方法 test
-		std::vector<int> vecItemVal2;
-		RecogVal_Sn2(nPic, matCompPic, pPic, pModelInfo, pSn, vecItemVal2);
 #endif
 
 		if (vecItemVal.size() == 1)
@@ -3132,6 +3127,11 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		}
 		else
 		{
+		#if 1	//第二种ZKZH识别方法 test
+			std::vector<int> vecItemVal2;
+			RecogVal_Sn2(nPic, matCompPic, pPic, pModelInfo, pSn, vecItemVal2);
+		#endif
+
 			if (vecItemVal.size() == 0 && vecItemVal2.size() == 1)
 			{
 				vecSN.push_back(vecItemVal2[0]);

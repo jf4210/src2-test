@@ -13,7 +13,7 @@
 //#include "TypeDef.h"
 
 #ifdef _DEBUG
-	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
+//	#define TEST_MODE	//测试模式，不向后端发送数据，本地模拟操作
 //	#define TEST_FILE_PRESSURE	//文件上传压力测试
 #endif
 
@@ -29,7 +29,7 @@
 #define DecompressTest		//解压测试，多线程解压
 
 #ifndef TO_WHTY
-	#define SOFT_VERSION "DataControlServer V1.70405-1"
+	#define SOFT_VERSION "DataControlServer V1.70424-2"
 #else
 	#define SOFT_VERSION "DataControlServer for TY V2.1-0309"
 #endif

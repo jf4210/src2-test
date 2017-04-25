@@ -125,6 +125,8 @@ public:
 
 	int m_nDilateKernel_Sn;		//ZKZH识别时用的膨胀因子
 	int	m_nDilateKernel_Common;	//通用膨胀核因子，SN时不用
+	int m_nDilateKernel_DefSn;		//ZKZH识别时用的膨胀因子，默认值，从配置文件读取
+	int	m_nDilateKernel_DefCommon;	//通用膨胀核因子，SN时不用，默认值，从配置文件读取
 
 	CString m_strModelPicPath;	
 	HZIP hz;					//压缩
@@ -191,6 +193,7 @@ private:
 	void GetOmrArry(std::vector<cv::Rect>& rcList);	//黑白卡时获取框选的OMR排列数组
 	void GetSNArry(std::vector<cv::Rect>& rcList);	//黑白卡时获取框选的考号排列数组
 	void GetElectOmrInfo(std::vector<cv::Rect>& rcList);	//黑白卡时获取框选的选做题信息
+	void GetStandardValue(RECTINFO& rc);	//获取自建提卡的标准实验值
 
 	inline void GetThreshold(cv::Mat& matSrc, cv::Mat& matDst);			//二值化计算
 //	inline void ShowDetailRectInfo();

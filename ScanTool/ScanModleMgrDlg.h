@@ -3,12 +3,6 @@
 #include "MakeModelDlg.h"
 // CScanModleMgrDlg ¶Ô»°¿ò
 
-typedef struct _ModelFile
-{
-	std::string strModelName;		//gb2312
-	std::string strModifyTime;
-}ST_MODELFILE;
-
 class CScanModleMgrDlg : public CDialog
 {
 	DECLARE_DYNAMIC(CScanModleMgrDlg)

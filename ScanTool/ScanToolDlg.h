@@ -113,6 +113,7 @@ public:
 	void	InitParam();
 	void	InitFileUpLoadList();
 	void	InitCompressList();
+	void	ShowPapers(pPAPERSINFO pPapers);
 
 	void	InitShow(pMODEL pModel);
 	void	InitScan();

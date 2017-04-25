@@ -11,9 +11,9 @@
 
 IMPLEMENT_DYNAMIC(CAdvancedSetDlg, CDialog)
 
-CAdvancedSetDlg::CAdvancedSetDlg(pMODEL	pModel, CWnd* pParent /*=NULL*/)
+CAdvancedSetDlg::CAdvancedSetDlg(pMODEL	pModel, ST_SENSITIVE_PARAM stSensitiveParam, CWnd* pParent /*=NULL*/)
 	: CDialog(CAdvancedSetDlg::IDD, pParent)
-	, m_pModel(pModel), m_nScanDpi(200), m_nAutoCut(1), m_nScanPaperSize(1), m_nScanType(2), m_nSensitiveZkzh(1), m_nSensitiveOmr(5)
+	, m_pModel(pModel), m_nScanDpi(200), m_nAutoCut(1), m_nScanPaperSize(1), m_nScanType(2), _stSensitiveParam(stSensitiveParam)
 {
 
 }
@@ -44,7 +44,12 @@ BOOL CAdvancedSetDlg::OnInitDialog()
 	m_Spin_Zkzh.SetRange(1, 50);
 	m_Spin_Omr.SetBuddy(GetDlgItem(IDC_EDIT_Sensitivity_Omr));
 	m_Spin_Omr.SetRange(1, 50);
+	m_nSensitiveZkzh = _stSensitiveParam.nCurrentZkzhSensitivity;
+	m_nSensitiveOmr = _stSensitiveParam.nCurrentOmrSensitivity;
+	m_nDefSensitiveZkzh = _stSensitiveParam.nDefZkzhSensitivity;
+	m_nDefSensitiveOmr = _stSensitiveParam.nDefOmrSensitivity;
 	InitData();
+	UpdateData(FALSE);
 
 	return TRUE;
 }
@@ -148,6 +153,7 @@ void CAdvancedSetDlg::OnCbnSelchangeComboScandpi()
 
 void CAdvancedSetDlg::OnBnClickedOk()
 {
+	UpdateData(TRUE);
 	CDialog::OnOK();
 }
 
@@ -177,7 +183,9 @@ void CAdvancedSetDlg::OnCbnSelchangeComboScantype()
 
 void CAdvancedSetDlg::OnBnClickedBtnDefParam()
 {
-	// TODO:  在此添加控件通知处理程序代码
+	m_nSensitiveZkzh = m_nDefSensitiveZkzh;
+	m_nSensitiveOmr = m_nDefSensitiveOmr;
+	UpdateData(FALSE);
 }
 
 

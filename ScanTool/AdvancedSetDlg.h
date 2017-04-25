@@ -2,13 +2,27 @@
 #include "modelInfo.h"
 
 // CAdvancedSetDlg 对话框
+typedef struct _SensitiveParam_
+{
+	int nCurrentZkzhSensitivity;
+	int nCurrentOmrSensitivity;
+	int nDefZkzhSensitivity;
+	int nDefOmrSensitivity;
+	_SensitiveParam_()
+	{
+		nCurrentZkzhSensitivity = 2;
+		nCurrentOmrSensitivity = 5;
+		nDefZkzhSensitivity = 2;
+		nDefOmrSensitivity = 5;
+	}
+}ST_SENSITIVE_PARAM;
 
 class CAdvancedSetDlg : public CDialog
 {
 	DECLARE_DYNAMIC(CAdvancedSetDlg)
 
 public:
-	CAdvancedSetDlg(pMODEL	pModel, CWnd* pParent = NULL);   // 标准构造函数
+	CAdvancedSetDlg(pMODEL	pModel, ST_SENSITIVE_PARAM stSensitiveParam, CWnd* pParent = NULL);   // 标准构造函数
 	virtual ~CAdvancedSetDlg();
 
 // 对话框数据
@@ -24,6 +38,8 @@ public:
 	CSpinButtonCtrl m_Spin_Omr;
 	int			m_nSensitiveZkzh;
 	int			m_nSensitiveOmr;
+	int			m_nDefSensitiveZkzh;	//默认考号灵敏度
+	int			m_nDefSensitiveOmr;		//默认Omr灵敏度
 
 	int			m_nScanDpi;
 	int			m_nScanPaperSize;
@@ -32,6 +48,7 @@ public:
 
 private:
 	pMODEL		m_pModel;
+	ST_SENSITIVE_PARAM _stSensitiveParam;
 
 	void	InitData();
 protected:
