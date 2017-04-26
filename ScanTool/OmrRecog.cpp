@@ -86,11 +86,21 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 			GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
 			SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
 
+			int nRealThreshold = 150;
+			RECTLIST::iterator itFix = pModel->vecPaperModel[nPic]->lFix.begin();
+			for (int j = 0; itFix != pModel->vecPaperModel[nPic]->lFix.end(); j++, itFix++)
+			{
+				if (j == i)
+				{
+					nRealThreshold = itFix->nThresholdValue;
+					break;
+				}
+			}
 
 #ifdef USES_GETTHRESHOLD_ZTFB
 			const int channels[1] = { 0 };
-			const int histSize[1] = { 150 };
-			float hranges[2] = { 0, 150 };
+			const int histSize[1] = { nRealThreshold };
+			float hranges[2] = { 0, nRealThreshold };
 			const float* ranges[1];
 			ranges[0] = hranges;
 			cv::MatND hist;
@@ -106,7 +116,7 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 				nCount += static_cast<int>(binVal);
 				nSum += h*binVal;
 			}
-			int nThreshold = 150;
+			int nThreshold = nRealThreshold;
 			if (nCount > 0)
 			{
 				float fMean = (float)nSum / nCount;		//¾ùÖµ
@@ -123,7 +133,7 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 					nThreshold = fMean + fStdev;
 			}
 
-			if (nThreshold > 150) nThreshold = 150;
+			if (nThreshold > nRealThreshold) nThreshold = nRealThreshold;
 			threshold(matCompRoi, matCompRoi, nThreshold, 255, cv::THRESH_BINARY);
 #else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);

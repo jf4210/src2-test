@@ -72,6 +72,10 @@ double	_dCompThread_Head_ = 1.0;
 double	_dDiffThread_Head_ = 0.085;
 double	_dDiffExit_Head_ = 0.15;
 int		_nThreshold_Recog2_ = 240;	//第2中识别方法的二值化阀值
+double	_dCompThread_3_ = 170;		//第三种识别方法
+double	_dDiffThread_3_ = 20;
+double	_dDiffExit_3_ = 50;
+double	_dAnswerSure_ = 100;		//可以确认是答案的最大灰度
 
 int		_nAnticlutterKernel_ = 4;	//识别同步头时防干扰膨胀腐蚀的核因子
 int		_nGauseKernel_ = 5;			//高斯变换核因子
@@ -2996,6 +3000,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	jsnFileData.set("nOmrDoubt", m_pPapersInfo->nOmrDoubt);
 	jsnFileData.set("nOmrNull", m_pPapersInfo->nOmrNull);
 	jsnFileData.set("nSnNull", m_pPapersInfo->nSnNull);
+	jsnFileData.set("RecogMode", g_nOperatingMode);			//识别模式，1-简单模式(遇到问题校验点不停止识别)，2-严格模式
 	std::stringstream jsnString;
 	jsnFileData.stringify(jsnString, 0);
 
@@ -3552,7 +3557,12 @@ void CScanToolDlg::InitParam()
 		_dDiffExit_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffExit", 0.15);
 
 		_nThreshold_Recog2_ = pConf->getInt("RecogOmrSn_Fun2.nThreshold_Fun2", 240);
-		
+
+		_dCompThread_3_ = pConf->getDouble("RecogOmrSn_Fun3.fCompTread", 170);
+		_dDiffThread_3_ = pConf->getDouble("RecogOmrSn_Fun3.fDiffThread", 20);
+		_dDiffExit_3_ = pConf->getDouble("RecogOmrSn_Fun3.fDiffExit", 50);
+		_dAnswerSure_ = pConf->getDouble("RecogOmrSn_Fun3.fAnswerSure", 100);
+
 		strLog = "读取识别灰度参数完成";
 	}
 	catch (Poco::Exception& exc)

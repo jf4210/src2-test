@@ -274,6 +274,7 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	int			nTeacherId;			//教师ID
 	int			nUserId;			//用户ID
 
+	int			nRecogMode;			//识别模式，1-简单模式(遇到问题校验点不停止识别)，2-严格模式
 	//++统计信息
 	int		nPkgOmrDoubt;				//OMR怀疑的数量					客户端传递的
 	int		nPkgOmrNull;				//OMR识别为空的数量				客户端传递的
@@ -328,6 +329,7 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 		nOmrNull = 0;
 		nSnNull = 0;
 		nRecogPics = 0;
+		nRecogMode = 2;
 
 		nTotalPaper = 0;
 		nExamID = -1;

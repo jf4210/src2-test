@@ -86,7 +86,7 @@
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define	 TEST_MODEL_NAME	//模板名称测试
 //	#define	 TEST_SCAN_THREAD	//扫描线程测试
-//	#define Test_Data			//测试数据，测试模式
+	#define Test_Data			//测试数据，测试模式
 	#define Test_TraceLog		//测试日志
 #else	//release版本
 	#define	 TEST_MODEL_NAME	//模板名称测试
@@ -98,6 +98,8 @@
 		#define TriangleCentroid_TEST	//三边质心算法
 	#endif
 #endif
+
+#define Test_RecogOmr3			//第3种OMR识别方法测试
 
 //+++++++++	选择版本 ++++++++++++++++++
 //#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
@@ -189,6 +191,10 @@ extern double	_dCompThread_Head_;
 extern double	_dDiffThread_Head_;
 extern double	_dDiffExit_Head_;
 extern int		_nThreshold_Recog2_;	//第2中识别方法的二值化阀值
+extern double	_dCompThread_3_;		//第三种识别方法
+extern double	_dDiffThread_3_;
+extern double	_dDiffExit_3_;
+extern double	_dAnswerSure_;		//可以确认是答案的最大灰度
 
 extern int		_nAnticlutterKernel_;	//识别同步头时防干扰膨胀腐蚀的核因子
 
@@ -652,6 +658,7 @@ typedef struct
 }ST_ITEM_DIFF, *pST_ITEM_DIFF;
 bool	SortByItemDiff(ST_ITEM_DIFF& item1, ST_ITEM_DIFF& item2);
 bool	SortByItemDensity(pRECTINFO item1, pRECTINFO item2);
+bool	SortByItemGray(pRECTINFO item1, pRECTINFO item2);
 //--------------------------------------------------------
 
 //----------------	二维码、条码识别	------------------

@@ -437,6 +437,9 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERSINFO pPapers
 		if (objData->has("nSnNull"))
 			nSnNull = objData->get("nSnNull").convert<int>();
 
+		if (objData->has("RecogMode"))
+			pPapers->nRecogMode = objData->get("RecogMode").convert<int>();
+
 		int nExamID = objData->get("examId").convert<int>();
 		int nSubjectID = objData->get("subjectId").convert<int>();
 		int nTeacherId = objData->get("nTeacherId").convert<int>();
@@ -556,6 +559,9 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 			nOmrNull = objData->get("nOmrNull").convert<int>();
 		if (objData->has("nSnNull"))
 			nSnNull = objData->get("nSnNull").convert<int>();
+
+		if (objData->has("RecogMode"))
+			pPapers->nRecogMode = objData->get("RecogMode").convert<int>();
 
 		int nExamId = objData->get("examId").convert<int>();
 		int nSubjectId = objData->get("subjectId").convert<int>();

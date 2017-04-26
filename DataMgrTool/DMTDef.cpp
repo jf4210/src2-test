@@ -407,11 +407,46 @@ inline cv::Point2d TriangleCoordinate(cv::Point ptA, cv::Point ptB, cv::Point pt
 	long double a2 = pow(m, 2) * a02;
 	long double b2 = pow(m, 2) * b02;
 	long double dT1 = 2 * b2 * (a2 + c2) - pow(a2 - c2, 2) - pow(b2, 2);
+	//++C到AB直线的距离 
+	long double A = ptB.y - ptA.y;
+	long double B = ptA.x - ptB.x;
+	long double C = ptB.x * ptA.y - ptA.x * ptB.y;
+	long double dC2AB = abs((A * ptC.x + B * ptC.y + C) / sqrt(pow(A, 2) + pow(B, 2)));		//C到AB直线的距离
+	//--
+
 
 	long double k_ab;		//原AB直线斜率
 	long double dDx;			//原C点垂直于AB的D点
 	long double dDy;
 	long double dFlag;		//标识原C点位于AB的上方还是下方
+#if 1	//通过二维向量叉乘判断方向
+	cv::Point2f Xab;	//向量AB
+	cv::Point2f Xac;	//向量AC
+	Xab.x = ptB.x - ptA.x;
+	Xab.y = ptB.y - ptA.y;
+	Xac.x = ptC.x - ptA.x;
+	Xac.y = ptC.y - ptA.y;
+	dFlag = Xab.x * Xac.y - Xab.y * Xac.x;	//向量AB * 向量AC的叉乘
+
+	// 	cv::Point2f Xac;	//向量AC
+	// 	cv::Point2f Xbc;	//向量BC
+	// 	Xac.x = ptC.x - ptA.x;
+	// 	Xac.y = ptC.y - ptA.y;
+	// 	Xbc.x = ptC.x - ptA.x;
+	// 	Xbc.y = ptB.y - ptB.y;
+	// 	dFlag = Xab.x * Xac.y - Xab.y * Xac.x;	//向量AB * 向量AC的叉乘
+	// 	cv::Point2f Xab;	//向量AB
+	// 	cv::Point2f Xac;	//向量AC
+	// 	Xab.x = ptB.x - ptA.x;
+	// 	Xab.y = ptB.y - ptB.y;
+	// 	Xac.x = ptC.x - ptA.x;
+	// 	Xac.y = ptC.y - ptA.y;
+	// 	dFlag = Xab.x * Xac.y - Xab.y * Xac.x;	//向量AB * 向量AC的叉乘
+
+
+	// 	//通过D = Ax + By + C判断在直线哪一侧，D<0在直线左侧，D>0在直线右侧，D=0在直线上
+	// 	long double DptC = A * ptC.x + B * ptC.y + C;
+#else
 	if (ptA.x != ptB.x)
 	{
 		k_ab = (long double)(ptB.y - ptA.y) / (ptB.x - ptA.x);
@@ -425,6 +460,7 @@ inline cv::Point2d TriangleCoordinate(cv::Point ptA, cv::Point ptB, cv::Point pt
 		dDy = ptC.y;
 		dFlag = ptC.x - ptA.x;
 	}
+#endif
 
 	long double dTmp1 = (ptNewA.x - ptNewB.x) * sqrt(2 * b2 * (a2 + c2) - pow(a2 - c2, 2) - pow(b2, 2)) / (2 * c2);
 	long double dTmp2 = (pow(m, 2) * (a02 - b02) * (ptNewB.y - ptNewA.y) - (ptNewA.y + ptNewB.y) * c2) / (2 * c2);
@@ -433,24 +469,53 @@ inline cv::Point2d TriangleCoordinate(cv::Point ptA, cv::Point ptB, cv::Point pt
 	long double dK2 = (long double)(ptNewB.y - ptNewA.y) / (ptNewA.x - ptNewB.x);
 
 	long double dTmp3 = sqrt((pow(dK2, 2) + 1) * pow(m, 2) * a02 - pow(dK2 * ptNewB.y + dK1 - ptNewB.x, 2)) / (pow(dK2, 2) + 1);
-	//	double dTmp3 = sqrt((dK2 * dK2 + 1) * m * m * a02 - (dK2 * ptNewB.y + dK1 - ptNewB.x) * (dK2 * ptNewB.y + dK1 - ptNewB.x)) / (dK2 * dK2 + 1);
 	long double dTmp4 = (dK1 * dK2 - ptNewB.x * dK2 - ptNewB.y) / (pow(dK2, 2) + 1);
-	// 	double dYc1 = dTmp3 - dTmp4;
-	// 	double dXc1 = dK1 + dK2 * dYc1;
-	// 
-	// 	double dYc2 = -dTmp3 - dTmp4;
-	// 	double dXc2 = dK1 + dK2 * dYc2;
 
-	long double dYc1 = dTmp1 - dTmp2;
-	long double dXc1 = dK1 + dK2 * dYc1;
+	long double dYc1;	//新的C点的坐标1
+	long double dXc1;
+	long double dYc2;	//新的C点的坐标2
+	long double dXc2;
+	if (ptNewA.x == ptNewB.x)	//此时dK1, dK2为无限大
+	{
+		dYc1 = dTmp1 - dTmp2;
+		dXc1 = ptNewA.x + dC2AB * m;
 
-	long double dYc2 = -dTmp1 - dTmp2;
-	long double dXc2 = dK1 + dK2 * dYc2;
+		dYc2 = -dTmp1 - dTmp2;
+		dXc2 = ptNewA.x - dC2AB * m;
+	}
+	else
+	{
+		dYc1 = dTmp1 - dTmp2;
+		dXc1 = dK1 + dK2 * dYc1;
 
+		dYc2 = -dTmp1 - dTmp2;
+		dXc2 = dK1 + dK2 * dYc2;
+	}
+	cv::Point2d ptNewC;
+#if 1
+	cv::Point2f Xa1b1;		//向量A1B1
+	cv::Point2f Xa1c1;		//向量A1C1
+	cv::Point2f Xa1c2;		//向量A1C2
+	Xa1b1.x = ptNewB.x - ptNewA.x;
+	Xa1b1.y = ptNewB.y - ptNewA.y;
+	Xa1c1.x = dXc1 - ptNewA.x;
+	Xa1c1.y = dYc1 - ptNewA.y;
+	Xa1c2.x = dXc2 - ptNewA.x;
+	Xa1c2.y = dYc2 - ptNewA.y;
+	long double dNewFlag = Xa1b1.x * Xa1c1.y - Xa1b1.y * Xa1c1.x;	//向量A1B1 * 向量A1C1的叉乘
+	long double dNewFlag2 = Xa1b1.x * Xa1c2.y - Xa1b1.y * Xa1c2.x;	//向量A1B1 * 向量A1C2的叉乘
+
+	// 	//通过D = Ax + By + C判断在直线哪一侧，D<0在直线左侧，D>0在直线右侧，D=0在直线上
+	// 	long double A1 = ptNewB.y - ptNewA.y;
+	// 	long double B1 = ptNewA.x - ptNewB.x;
+	// 	long double C1 = ptNewB.x * ptNewA.y - ptNewA.x * ptNewB.y;
+	// 	long double DptC1 = A1 * dXc1 + B1 * dYc1 + C1;
+	// 	long double DptC2 = A1 * dXc2 + B1 * dYc2 + C1;
+#else
 	long double k_newAB = (double)(ptNewB.y - ptNewA.y) / (ptNewB.x - ptNewA.x);
 	long double dNewFlag = k_newAB*(dXc1 - ptNewA.x) + ptNewA.y - dYc1;
 	long double dNewFlag2 = k_newAB*(dXc2 - ptNewA.x) + ptNewA.y - dYc2;
-	cv::Point2d ptNewC;
+#endif
 	if (dFlag >= 0)
 	{
 		if (dNewFlag >= 0)		//xy坐标要调换，不明白
@@ -525,34 +590,34 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 			{
 				if (rcModelA.rt.y < nCenterY)
 				{
-					ptA0.x = rcModelA.rt.x + rcModelA.rt.width;
-					ptA0.y = rcModelA.rt.y + rcModelA.rt.height;
-					ptA.x = rcA.rt.x + rcA.rt.width;
-					ptA.y = rcA.rt.y + rcA.rt.height;
+					ptA0.x = rcModelA.rt.x + rcModelA.rt.width * 0.8;
+					ptA0.y = rcModelA.rt.y + rcModelA.rt.height * 0.8;
+					ptA.x = rcA.rt.x + rcA.rt.width * 0.8;
+					ptA.y = rcA.rt.y + rcA.rt.height * 0.8;
 				}
 				else
 				{
-					ptA0.x = rcModelA.rt.x + rcModelA.rt.width;
-					ptA0.y = rcModelA.rt.y;
-					ptA.x = rcA.rt.x + rcA.rt.width;
-					ptA.y = rcA.rt.y;
+					ptA0.x = rcModelA.rt.x + rcModelA.rt.width * 0.8;
+					ptA0.y = rcModelA.rt.y + rcModelA.rt.height * 0.2;
+					ptA.x = rcA.rt.x + rcA.rt.width * 0.8;
+					ptA.y = rcA.rt.y + rcA.rt.height * 0.2;
 				}
 			}
 			else
 			{
 				if (rcModelA.rt.y < nCenterY)
 				{
-					ptA0.x = rcModelA.rt.x;
-					ptA0.y = rcModelA.rt.y + rcModelA.rt.height;
-					ptA.x = rcA.rt.x;
-					ptA.y = rcA.rt.y + rcA.rt.height;
+					ptA0.x = rcModelA.rt.x + rcModelA.rt.width * 0.2;
+					ptA0.y = rcModelA.rt.y + rcModelA.rt.height * 0.8;
+					ptA.x = rcA.rt.x + rcA.rt.width * 0.2;
+					ptA.y = rcA.rt.y + rcA.rt.height * 0.8;
 				}
 				else
 				{
-					ptA0.x = rcModelA.rt.x;
-					ptA0.y = rcModelA.rt.y;
-					ptA.x = rcA.rt.x;
-					ptA.y = rcA.rt.y;
+					ptA0.x = rcModelA.rt.x + rcModelA.rt.width * 0.2;
+					ptA0.y = rcModelA.rt.y + rcModelA.rt.height * 0.2;
+					ptA.x = rcA.rt.x + rcA.rt.width * 0.2;
+					ptA.y = rcA.rt.y + rcA.rt.height * 0.2;
 				}
 			}
 
@@ -560,52 +625,51 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 			{
 				if (rcModelB.rt.y < nCenterY)
 				{
-					ptB0.x = rcModelB.rt.x + rcModelB.rt.width;
-					ptB0.y = rcModelB.rt.y + rcModelB.rt.height;
-					ptB.x = rcB.rt.x + rcB.rt.width;
-					ptB.y = rcB.rt.y + rcB.rt.height;
+					ptB0.x = rcModelB.rt.x + rcModelB.rt.width * 0.8;
+					ptB0.y = rcModelB.rt.y + rcModelB.rt.height * 0.8;
+					ptB.x = rcB.rt.x + rcB.rt.width * 0.8;
+					ptB.y = rcB.rt.y + rcB.rt.height * 0.8;
 				}
 				else
 				{
-					ptB0.x = rcModelB.rt.x + rcModelB.rt.width;
-					ptB0.y = rcModelB.rt.y;
-					ptB.x = rcB.rt.x + rcB.rt.width;
-					ptB.y = rcB.rt.y;
+					ptB0.x = rcModelB.rt.x + rcModelB.rt.width * 0.8;
+					ptB0.y = rcModelB.rt.y + rcModelB.rt.height * 0.2;
+					ptB.x = rcB.rt.x + rcB.rt.width * 0.8;
+					ptB.y = rcB.rt.y + rcB.rt.height * 0.2;
 				}
 			}
 			else
 			{
 				if (rcModelB.rt.y < nCenterY)
 				{
-					ptB0.x = rcModelB.rt.x;
-					ptB0.y = rcModelB.rt.y + rcModelB.rt.height;
-					ptB.x = rcB.rt.x;
-					ptB.y = rcB.rt.y + rcB.rt.height;
+					ptB0.x = rcModelB.rt.x + rcModelB.rt.width * 0.2;
+					ptB0.y = rcModelB.rt.y + rcModelB.rt.height * 0.8;
+					ptB.x = rcB.rt.x + rcB.rt.width * 0.2;
+					ptB.y = rcB.rt.y + rcB.rt.height * 0.8;
 				}
 				else
 				{
-					ptB0.x = rcModelB.rt.x;
-					ptB0.y = rcModelB.rt.y;
-					ptB.x = rcB.rt.x;
-					ptB.y = rcB.rt.y;
+					ptB0.x = rcModelB.rt.x + rcModelB.rt.width * 0.2;
+					ptB0.y = rcModelB.rt.y + rcModelB.rt.height * 0.2;
+					ptB.x = rcB.rt.x + rcB.rt.width * 0.2;
+					ptB.y = rcB.rt.y + rcB.rt.height * 0.2;
 				}
 			}
 		}
 		else
 		{
-			ptA0.x = rcModelA.rt.x + rcModelA.rt.width;
-			ptA0.y = rcModelA.rt.y + rcModelA.rt.height;
-			ptB0.x = rcModelB.rt.x + rcModelB.rt.width;
-			ptB0.y = rcModelB.rt.y + rcModelB.rt.height;
+			ptA0.x = rcModelA.rt.x + rcModelA.rt.width * 0.8;
+			ptA0.y = rcModelA.rt.y + rcModelA.rt.height * 0.8;
+			ptB0.x = rcModelB.rt.x + rcModelB.rt.width * 0.8;
+			ptB0.y = rcModelB.rt.y + rcModelB.rt.height * 0.8;
 
-			ptA.x = rcA.rt.x + rcA.rt.width;
-			ptA.y = rcA.rt.y + rcA.rt.height;
-			ptB.x = rcB.rt.x + rcB.rt.width;
-			ptB.y = rcB.rt.y + rcB.rt.height;
+			ptA.x = rcA.rt.x + rcA.rt.width * 0.8;
+			ptA.y = rcA.rt.y + rcA.rt.height * 0.8;
+			ptB.x = rcB.rt.x + rcB.rt.width * 0.8;
+			ptB.y = rcB.rt.y + rcB.rt.height * 0.8;
 		}
 		ptC0.x = rt.x;
 		ptC0.y = rt.y;
-
 #else
 		ptA0.x = rcModelA.rt.x + rcModelA.rt.width / 2 + 0.5;
 		ptA0.y = rcModelA.rt.y + rcModelA.rt.height / 2 + 0.5;
@@ -636,7 +700,28 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 	else if (lModelFix.size() == 3)
 	{
 		if (lFix.size() < 3)
-			return false;
+		{
+			if (lFix.size() > 0)
+			{
+				RECTLIST lModelTmp;
+				RECTLIST::iterator itFix = lFix.begin();
+				for (int i = 0; itFix != lFix.end(); i++, itFix++)
+				{
+					RECTLIST::iterator itModel = lModelFix.begin();
+					for (int j = 0; itModel != lModelFix.end(); j++, itModel++)
+					{
+						if (j == itFix->nTH)
+						{
+							lModelTmp.push_back(*itModel);
+							break;
+						}
+					}
+				}
+				return GetPosition(lFix, lModelTmp, rt, nPicW, nPicH);
+			}
+			else
+				return false;
+		}
 #ifdef WarpAffine_TEST
 		return true;
 #else
@@ -756,7 +841,28 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 	else if (lModelFix.size() == 4)
 	{
 		if (lFix.size() < 4)
-			return false;
+		{
+			if (lFix.size() > 0)
+			{
+				RECTLIST lModelTmp;
+				RECTLIST::iterator itFix = lFix.begin();
+				for (int i = 0; itFix != lFix.end(); i++, itFix++)
+				{
+					RECTLIST::iterator itModel = lModelFix.begin();
+					for (int j = 0; itModel != lModelFix.end(); j++, itModel++)
+					{
+						if (j == itFix->nTH)
+						{
+							lModelTmp.push_back(*itModel);
+							break;
+						}
+					}
+				}
+				return GetPosition(lFix, lModelTmp, rt, nPicW, nPicH);
+			}
+			else
+				return false;
+		}
 #ifdef WarpAffine_TEST
 		return true;
 #else

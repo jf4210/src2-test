@@ -840,7 +840,7 @@ void CPaperInputDlg::OnNMDblclkListPapers(NMHDR *pNMHDR, LRESULT *pResult)
 			pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lPaperCtrl.GetItemData(i);
 			if (pItemPaper)
 			{
-				m_lPaperCtrl.SetItemText(i, 1, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
+				m_lPaperCtrl.SetItemText(i, 2, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
 			}
 		}
 		SetTimer(TIMER_CheckRecogComplete, 100, NULL);
@@ -1502,6 +1502,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	jsnFileData.set("nOmrDoubt", pPapers->nOmrDoubt);
 	jsnFileData.set("nOmrNull", pPapers->nOmrNull);
 	jsnFileData.set("nSnNull", pPapers->nSnNull);
+	jsnFileData.set("RecogMode", g_nOperatingMode);			//识别模式，1-简单模式(遇到问题校验点不停止识别)，2-严格模式
 	std::stringstream jsnString;
 	jsnFileData.stringify(jsnString, 0);
 

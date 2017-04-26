@@ -88,6 +88,11 @@ bool SortByItemDensity(pRECTINFO item1, pRECTINFO item2)
 	return item1->fRealValuePercent > item2->fRealValuePercent ? true : false;
 }
 
+bool SortByItemGray(pRECTINFO item1, pRECTINFO item2)
+{
+	return item1->fRealMeanGray < item2->fRealMeanGray ? true : false;
+}
+
 bool SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2)
 {
 	bool bResult = true;

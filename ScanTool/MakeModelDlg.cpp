@@ -1272,6 +1272,9 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	rc.fStandardMeanGray = (float)nCount / nArea;
 //	rc.fStandardMeanGray = nCount / rc.fStandardArea;
 
+#ifdef Test_Data
+	GetStandardValue(rc);
+#endif
 	return true;
 }
 
@@ -1279,7 +1282,7 @@ void CMakeModelDlg::GetStandardValue(RECTINFO& rc)
 {
 	if (rc.eCPType == SN)
 	{
-		switch (rc.nTH)
+		switch (rc.nSnVal)
 		{
 			case 0:	rc.fStandardValue = 295; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
 			case 1:	rc.fStandardValue = 260; rc.fStandardArea = 798; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
@@ -1310,59 +1313,15 @@ void CMakeModelDlg::GetStandardValue(RECTINFO& rc)
 
 inline void CMakeModelDlg::GetThreshold(cv::Mat& matSrc, cv::Mat& matDst)
 {
+	int nRealThreshold = -1;
 	switch (m_eCurCPType)
 	{
-	case Fix_CP:
-	case H_HEAD:
-	case V_HEAD:
-	case ABMODEL:
-	case COURSE:
-	case QK_CP:
-		{
-#ifdef USES_GETTHRESHOLD_ZTFB	//先计算ROI区域的均值u和标准差p，二值化的阀值取u + 2p，根据正态分布，理论上可以囊括95%以上的范围
-			const int channels[1] = { 0 };
-			const int histSize[1] = { 150 };
-			float hranges[2] = { 0, 150 };
-			const float* ranges[1];
-			ranges[0] = hranges;
-			MatND hist;
-			calcHist(&matSrc, 1, channels, Mat(), hist, 1, histSize, ranges);	//histSize, ranges
-
-			int nSum = 0;
-			int nDevSum = 0;
-			int nCount = 0;
-			for (int h = 0; h < hist.rows; h++)	//histSize
-			{
-				float binVal = hist.at<float>(h);
-
-				nCount += static_cast<int>(binVal);
-				nSum += h*binVal;
-			}
-			int nThreshold = 150;
-			if (nCount > 0)
-			{
-				float fMean = (float)nSum / nCount;		//均值
-
-				for (int h = 0; h < hist.rows; h++)	//histSize
-				{
-					float binVal = hist.at<float>(h);
-
-					nDevSum += pow(h - fMean, 2)*binVal;
-				}
-				float fStdev = sqrt(nDevSum / nCount);	//标准差
-				nThreshold = fMean + 2 * fStdev;
-				if (fStdev > fMean)
-					nThreshold = fMean + fStdev;
-			}
-			else
-				nThreshold = 150;
-			if (nThreshold > 150) nThreshold = 150;
-			threshold(matSrc, matDst, nThreshold, 255, THRESH_BINARY);
-#else
-			threshold(matSrc, matDst, 60, 255, THRESH_BINARY);
-#endif
-		}
-		break;
+	case Fix_CP: nRealThreshold = m_nFixVal; break;
+	case H_HEAD: nRealThreshold = m_nHeadVal; break;
+	case V_HEAD: nRealThreshold = m_nHeadVal; break;
+	case ABMODEL: nRealThreshold = m_nABModelVal; break;
+	case COURSE: nRealThreshold = m_nCourseVal; break;
+	case QK_CP: nRealThreshold = m_nQK_CPVal; break;
 	case GRAY_CP: 
 	case WHITE_CP:
 	case SN:
@@ -1374,6 +1333,52 @@ inline void CMakeModelDlg::GetThreshold(cv::Mat& matSrc, cv::Mat& matDst)
 		cv::Mat local;
 		cv::adaptiveThreshold(matSrc, matDst, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, blockSize, constValue);
 		break;
+	}
+
+	if (nRealThreshold > 0)
+	{
+	#ifdef USES_GETTHRESHOLD_ZTFB	//先计算ROI区域的均值u和标准差p，二值化的阀值取u + 2p，根据正态分布，理论上可以囊括95%以上的范围
+		const int channels[1] = { 0 };
+		const int histSize[1] = { nRealThreshold };
+		float hranges[2] = { 0, nRealThreshold };
+		const float* ranges[1];
+		ranges[0] = hranges;
+		MatND hist;
+		calcHist(&matSrc, 1, channels, Mat(), hist, 1, histSize, ranges);	//histSize, ranges
+
+		int nSum = 0;
+		int nDevSum = 0;
+		int nCount = 0;
+		for (int h = 0; h < hist.rows; h++)	//histSize
+		{
+			float binVal = hist.at<float>(h);
+
+			nCount += static_cast<int>(binVal);
+			nSum += h*binVal;
+		}
+		int nThreshold = nRealThreshold;
+		if (nCount > 0)
+		{
+			float fMean = (float)nSum / nCount;		//均值
+
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nDevSum += pow(h - fMean, 2)*binVal;
+			}
+			float fStdev = sqrt(nDevSum / nCount);	//标准差
+			nThreshold = fMean + 2 * fStdev;
+			if (fStdev > fMean)
+				nThreshold = fMean + fStdev;
+		}
+		else
+			nThreshold = nRealThreshold;
+		if (nThreshold > nRealThreshold) nThreshold = nRealThreshold;
+		threshold(matSrc, matDst, nThreshold, 255, THRESH_BINARY);
+	#else
+		threshold(matSrc, matDst, 60, 255, THRESH_BINARY);
+	#endif
 	}
 }
 
