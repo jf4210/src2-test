@@ -57,7 +57,7 @@ void CDecompressThread::run()
 		{
 			if (g_lRecogTask.size() > 200)
 			{
-				Poco::Thread::sleep(10000);
+				Poco::Thread::sleep(1000);
 				continue;
 			}
 			pTask = *it;
@@ -67,7 +67,7 @@ void CDecompressThread::run()
 		g_fmDecompressLock.unlock();
 		if (NULL == pTask)
 		{
-			Poco::Thread::sleep(200);
+			Poco::Thread::sleep(1000);
 			continue;
 		}
 

@@ -37,7 +37,7 @@ void CRecognizeThread::run()
 		g_fmRecog.unlock();
 		if (NULL == pTask)
 		{
-			Poco::Thread::sleep(100);
+			Poco::Thread::sleep(500);
 			continue;
 		}
 
@@ -1880,6 +1880,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			#endif
 		}
 
+		bool bUnSure1 = false;		//针对第一种算法无法确定的情况，选项全填涂或者全没涂的情况，这里不用阀值直接判断要求最少选项数
 	#if 1
 		std::string strRecogAnswer1;
 		std::vector<pRECTINFO> vecItemsDesc;
@@ -1914,8 +1915,13 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			{
 				nFlag = i;
 				fThreld = vecOmrItemDiff[i].fFirst;
+			#ifdef Test_RecogFirst_NoThreshord
+				if (vecOmrItemDiff[i].fDiff > fDiffExit)	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
+					break;
+			#else
 				if (vecOmrItemDiff[i].fDiff > fDiffExit && i + 1 >= vecVal_calcHist.size())	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
 					break;
+			#endif
 			}
 		}
 		if (nFlag >= 0)
@@ -1933,12 +1939,16 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		}
 		else
 		{
+		#ifdef Test_RecogFirst_NoThreshord
+			bUnSure1 = true;
+		#else
 			for (int i = 0; i < vecVal_calcHist.size(); i++)
 			{
 				char szVal[10] = { 0 };
 				sprintf_s(szVal, "%c", vecVal_calcHist[i] + 65);
 				strRecogAnswer1.append(szVal);
 			}
+		#endif
 		}
 	#else	//一下是直接通过阀值判断是否选中，可用，对填涂不规范并且不清晰的情况不够理想
 		std::string strRecogAnswer1;
@@ -1963,32 +1973,64 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		if (strRecogAnswer3 == "") nNullCount_3++;
 
 		int nDoubt = 0;
-		if (strRecogAnswer1 == "" && (strRecogAnswer2 == "" || strRecogAnswer3 == ""))
+		if (bUnSure1)
 		{
-			nDoubt = 2;
-			nNullCount++;
-
-			(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
-			(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrNull++;
-			(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
-		}
-		else
-		{
-			if (strRecogAnswer1 == strRecogAnswer2 || strRecogAnswer1 == strRecogAnswer3)
+			if (strRecogAnswer2 == "" || strRecogAnswer3 == "")
 			{
-				nDoubt = 0;
-				nEqualCount++;
+				nDoubt = 2;
+				nNullCount++;
+
+				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
+				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrNull++;
+				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
 			}
 			else
 			{
-				nDoubt = 1;
-				nDoubtCount++;
+				if (strRecogAnswer2 == strRecogAnswer3)
+				{
+					nDoubt = 0;
+					nEqualCount++;
+				}
+				else
+				{
+					nDoubt = 1;
+					nDoubtCount++;
+
+					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
+					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrDoubt++;
+					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
+				}
+			}
+		}
+		else
+		{
+			if (strRecogAnswer1 == "" && (strRecogAnswer2 == "" || strRecogAnswer3 == ""))
+			{
+				nDoubt = 2;
+				nNullCount++;
 
 				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
-				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrDoubt++;
+				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrNull++;
 				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
 			}
-		}		
+			else
+			{
+				if (strRecogAnswer1 == strRecogAnswer2 || strRecogAnswer1 == strRecogAnswer3)
+				{
+					nDoubt = 0;
+					nEqualCount++;
+				}
+				else
+				{
+					nDoubt = 1;
+					nDoubtCount++;
+
+					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
+					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrDoubt++;
+					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
+				}
+			}
+		}
 
 	#else
 		//++ test	测试整题选项进行二值化识别
@@ -2512,8 +2554,47 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 		matCompRoi = matCompPic(cv::Rect(ptNew1, ptNew2));
 		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
+		//++先获取均值和标准差，再计算新的二值化阀值	2017.4.27
+		const int channels[1] = { 0 };
+		const int histSize[1] = { _nThreshold_Recog2_ };
+		float hranges[2] = { 0, _nThreshold_Recog2_ };
+		const float* ranges[1];
+		ranges[0] = hranges;
+		MatND hist;
+		calcHist(&matCompRoi, 1, channels, Mat(), hist, 1, histSize, ranges);	//histSize, ranges
+
+		int nSum = 0;
+		int nDevSum = 0;
+		int nCount = 0;
+		for (int h = 0; h < hist.rows; h++)	//histSize
+		{
+			float binVal = hist.at<float>(h);
+
+			nCount += static_cast<int>(binVal);
+			nSum += h*binVal;
+		}
+		int nThreshold = _nThreshold_Recog2_;
+		if (nCount > 0)
+		{
+			float fMean = (float)nSum / nCount;		//均值
+
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nDevSum += pow(h - fMean, 2)*binVal;
+			}
+			float fStdev = sqrt(nDevSum / nCount);
+			nThreshold = fMean + fStdev;
+			if (fStdev > fMean)
+				nThreshold = fMean + fStdev;
+		}
+
+		if (nThreshold > _nThreshold_Recog2_) nThreshold = _nThreshold_Recog2_;
+		//--
+
 		//图片二值化
-		threshold(matCompRoi, matCompRoi, _nThreshold_Recog2_, 255, THRESH_BINARY_INV);				//200, 255
+		threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY_INV);		//_nThreshold_Recog2_		//200, 255
 
 		//这里进行开闭运算
 		//确定腐蚀和膨胀核的大小

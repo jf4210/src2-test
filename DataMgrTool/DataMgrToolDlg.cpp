@@ -557,6 +557,7 @@ void CDataMgrToolDlg::InitConfig()
 	{
 		CDecompressThread* pObj = new CDecompressThread(this);
 		m_pDecompressThread[i].start(*pObj);
+		m_pDecompressThread[i].setPriority(Poco::Thread::PRIO_HIGH);
 		m_vecDecompressThreadObj.push_back(pObj);
 	}
 
@@ -625,7 +626,7 @@ void CDataMgrToolDlg::InitConfig()
 	RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST, 0);
 #else
 	m_statusBar.Create(WS_CHILD | WS_VISIBLE | SBT_OWNERDRAW, CRect(0, 0, 0, 0), this, 0);
-	int strPartDim[8] = { 80, 130, 210, 260, 340, 390, 480, -1 }; //分割数量
+	int strPartDim[8] = { 80, 170, 240, 340, 420, 500, 580, -1 }; //分割数量
 	m_statusBar.SetParts(8, strPartDim);
 
 	//设置状态栏文本

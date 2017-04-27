@@ -32,7 +32,7 @@ void CSearchThread::run()
 		_fmSearchPathList_.unlock();
 		if (NULL == pTask)
 		{
-			Poco::Thread::sleep(200);
+			Poco::Thread::sleep(2000);
 			continue;
 		}
 

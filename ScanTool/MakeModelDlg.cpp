@@ -1273,7 +1273,7 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 //	rc.fStandardMeanGray = nCount / rc.fStandardArea;
 
 #ifdef Test_Data
-	GetStandardValue(rc);
+//	GetStandardValue(rc);
 #endif
 	return true;
 }
@@ -1300,13 +1300,13 @@ void CMakeModelDlg::GetStandardValue(RECTINFO& rc)
 	{
 		switch (rc.nAnswer)
 		{
-			case 0:	rc.fStandardValue = 282; rc.fStandardArea = 1035; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//A
-			case 1:	rc.fStandardValue = 296; rc.fStandardArea = 1039; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//B
-			case 2:	rc.fStandardValue = 280; rc.fStandardArea = 1035; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//C
-			case 3:	rc.fStandardValue = 296; rc.fStandardArea = 1039; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//D
-			case 4:	rc.fStandardValue = 295; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//E
-			case 5:	rc.fStandardValue = 295; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//F
-			case 6:	rc.fStandardValue = 295; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//G
+			case 0:	rc.fStandardValue = 282.980011; rc.fStandardArea = 1036.040039; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//A
+			case 1:	rc.fStandardValue = 301.286652; rc.fStandardArea = 1032.920044; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//B
+			case 2:	rc.fStandardValue = 280.253326; rc.fStandardArea = 1033.773315; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//C
+			case 3:	rc.fStandardValue = 293.640015; rc.fStandardArea = 1036.533325; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//D
+			case 4:	rc.fStandardValue = 277.673340; rc.fStandardArea = 1034.079956; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//E
+			case 5:	rc.fStandardValue = 268.899994; rc.fStandardArea = 1030.706665; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//F
+			case 6:	rc.fStandardValue = 291.893341; rc.fStandardArea = 1035.920044; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//G
 		}
 	}
 }
@@ -4317,9 +4317,9 @@ void CMakeModelDlg::AddRecogRectToList()
 	ShowRectByCPType(m_eCurCPType);
 
 #ifdef Test_TraceLog
-	float fMeanArea[4] = { 0 };
-	float fMeanDensity[4] = { 0 };
-	float fMeanVal[4] = { 0 };
+	float fMeanArea[7] = { 0 };
+	float fMeanDensity[7] = { 0 };
+	float fMeanVal[7] = { 0 };
 	for (auto pstItem : m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2)
 	{
 		std::string strRectVal;
@@ -4334,7 +4334,7 @@ void CMakeModelDlg::AddRecogRectToList()
 		TRACE("%s\n", strRectLog.c_str());
 	}
 	int nOmrCount = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.size();
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < 7; i++)
 		TRACE("OMR平均值信息：%c--平均面积= %f, 平均值= %f, 平均密度= %f\n", i + 65, fMeanArea[i] / nOmrCount, fMeanVal[i] / nOmrCount, fMeanDensity[i] / nOmrCount);
 #endif
 }

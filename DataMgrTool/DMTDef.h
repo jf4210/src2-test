@@ -28,6 +28,10 @@
 	#endif
 #endif
 
+//++ test 2017.4.27
+#define Test_RecogFirst_NoThreshord		//针对第一种算法，不用阀值直接判断要求最少选项数，如达到多少密度比例就让我选项一定填涂
+//--
+
 #define Test_RecogOmr3			//第3种OMR识别方法测试
 #define Test_SendRecogResult	//直接在试卷袋识别完成时发送识别结果给后端服务器
 
@@ -39,7 +43,7 @@
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION	_T("1.70401-1")
+#define SOFT_VERSION	_T("1.70427-3")
 #define SYS_BASE_NAME	_T("YKLX-DMT")
 //#define WH_CCBKS		//武汉楚才杯专用，解析二维码需要json解析
 
