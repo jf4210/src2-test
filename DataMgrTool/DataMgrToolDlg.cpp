@@ -178,6 +178,9 @@ void CDataMgrToolDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_MFCEDITBROWSE_Pkg_DIR, m_strPkgPath);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_Pkg_DIR, m_mfcEdit_PkgDir);
 
+	DDX_Text(pDX, IDC_MFCEDITBROWSE_Pkg_PapersDIR, m_strWatchPaper_PapersDir);
+	DDX_Text(pDX, IDC_EDIT_DecompressPaper, m_strWatchPaper_PaperInfo);
+
 	DDX_Text(pDX, IDC_MFCEDITBROWSE_RecogDir, m_strRecogPath);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_RecogDir, m_mfcEdit_RecogDir);
 	DDX_Text(pDX, IDC_MFCEDITBROWSE_ModelPath, m_strModelPath);
@@ -208,6 +211,8 @@ BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_MFCBUTTON_RePkg, &CDataMgrToolDlg::OnBnClickedMfcbuttonRepkg)
 	ON_WM_TIMER()
 	ON_BN_CLICKED(IDC_BTN_STOP, &CDataMgrToolDlg::OnBnClickedBtnStop)
+	ON_BN_CLICKED(IDC_BTN_DecompressLook, &CDataMgrToolDlg::OnBnClickedBtnDecompresslook)
+	ON_BN_CLICKED(IDC_BTN_WatchPic, &CDataMgrToolDlg::OnBnClickedBtnWatchpic)
 END_MESSAGE_MAP()
 
 
@@ -831,6 +836,9 @@ void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
 
 		std::string strPkgPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strPkgPath));
 		_strPkgSearchPath_ = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strPkgPath));
+
+		m_strWatchPaper_PapersDir = m_strPkgPath;
+		UpdateData(FALSE);
 	#if 1
 // 		pST_SEARCH pTask = new ST_SEARCH;
 // 		pTask->strSearchPath = CMyCodeConvert::Gb2312ToUtf8(strPkgPath);
@@ -1202,4 +1210,94 @@ void CDataMgrToolDlg::OnBnClickedBtnStop()
 		SAFE_RELEASE(pCompressTask);
 	}
 	g_fmCompressLock.unlock();
+}
+
+
+void CDataMgrToolDlg::OnBnClickedBtnDecompresslook()
+{
+	UpdateData(TRUE);
+	USES_CONVERSION;
+
+	std::string strPkgPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strWatchPaper_PapersDir));
+	std::string strPaperInfo = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strWatchPaper_PaperInfo));
+
+	int nPos = strPaperInfo.find(":");
+	if (nPos == std::string::npos)
+	{
+		AfxMessageBox(_T("试卷信息格式不正确，格式为：试卷包名称:考生名称，如demojs001_100-200_20170421140955_13:S2"));
+		return;
+	}
+
+	//++创建文件解压路径
+	CString strTmp = m_strWatchPaper_PapersDir + _T("\\查看试卷-解压路径");
+	std::string strDecompressPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strTmp));
+	try
+	{
+		Poco::File dir(strDecompressPath);
+		dir.createDirectories();
+	}
+	catch (Poco::Exception& e)
+	{
+	}
+	//--
+
+	std::string strPkgName;
+	std::string strPaperName; 
+	strPkgName = strPaperInfo.substr(0, nPos);
+	strPaperName = strPaperInfo.substr(nPos + 1, strPaperInfo.length());
+
+	pST_SEARCH pDirTask = new ST_SEARCH;
+	pDirTask->nSearchType = 2;
+	pDirTask->strSearchPath = strPkgPath;
+	pDirTask->strSearchName = strPkgName;
+	pDirTask->strPaperName = strPaperName;
+	pDirTask->strDecompressPath = CMyCodeConvert::Utf8ToGb2312(strDecompressPath);
+
+	_fmSearchPathList_.lock();
+	_SearchPathList_.push_back(pDirTask);
+	_fmSearchPathList_.unlock();
+}
+
+
+void CDataMgrToolDlg::OnBnClickedBtnWatchpic()
+{
+	UpdateData(TRUE);
+	USES_CONVERSION;
+
+	std::string strPkgPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strWatchPaper_PapersDir));
+	std::string strPaperInfo = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strWatchPaper_PaperInfo));
+
+	int nPos = strPaperInfo.find(":");
+	if (nPos == std::string::npos)
+	{
+		AfxMessageBox(_T("试卷信息格式不正确，格式为：试卷包名称:考生名称，如demojs001_100-200_20170421140955_13:S2"));
+		return;
+	}
+
+	CString strTmp = m_strWatchPaper_PapersDir + _T("\\查看试卷-解压路径\\");
+	std::string strDecompressPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strTmp));
+
+	std::string strPkgName;
+	std::string strPaperName;
+	strPkgName = strPaperInfo.substr(0, nPos);
+	strPaperName = strPaperInfo.substr(nPos + 1, strPaperInfo.length());
+	std::string strPicPath = strDecompressPath + strPkgName + "\\" + strPaperName + "_1.jpg";
+	try
+	{
+		Poco::File picFile(strPicPath);
+		if (!picFile.exists())
+		{
+			CString str = _T("");
+			str.Format(_T("试卷袋图片不存在%s"), A2T(CMyCodeConvert::Utf8ToGb2312(strPicPath).c_str()));
+			AfxMessageBox(str);
+			return;
+		}
+	}
+	catch (Poco::Exception& e)
+	{
+	}
+	std::string strPicPath_gb = CMyCodeConvert::Utf8ToGb2312(strPicPath);
+	cv::Mat matPic = cv::imread(strPicPath_gb);
+	cv::namedWindow("试卷袋图像", 0);
+	cv::imshow("试卷袋图像", matPic);
 }

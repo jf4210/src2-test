@@ -317,6 +317,15 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 						  itRect3->fRealMeanGray - itRect3->fStandardMeanGray, itRect3->fRealMeanGray, itRect3->fStandardMeanGray);
 				strcat_s(szItemInfo, szTmp);
 			}
+			strcat_s(szItemInfo, "\n");
+			RECTLIST::iterator itRect4 = itOmr->lSelAnswer.begin();
+			for (; itRect4 != itOmr->lSelAnswer.end(); itRect4++)
+			{
+				char szTmp[200] = { 0 };
+				sprintf_s(szTmp, "%c,标准差=%.3f(%.3f-%.3f), ", itRect4->nAnswer + 65, \
+						  itRect4->fRealStddev - itRect4->fStandardStddev, itRect4->fRealStddev, itRect4->fStandardStddev);
+				strcat_s(szItemInfo, szTmp);
+			}
 		#else
 			RECTLIST::iterator itRect2 = itOmr->lSelAnswer.begin();
 			for (; itRect2 != itOmr->lSelAnswer.end(); itRect2++)
@@ -567,23 +576,37 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 		}
 
 	#if 1		//第三种OMR识别方法测试
-		int nMaxVal = 256;
-		MatND src_hist2;
-		const int histSize2[1] = { nMaxVal };	//rc.nThresholdValue - g_nRecogGrayMin		256
-		const float* ranges2[1];
-		float hranges2[2];
-		hranges2[0] = 0;
-		hranges2[1] = nMaxVal - 1;			//255
-		ranges2[0] = hranges2;
-		cv::calcHist(&matCompRoi, 1, channels, Mat(), src_hist2, 1, histSize2, ranges2, true, false);
-		int nCount = 0;
-		int nArea = 0;
-		for (int i = 0; i < nMaxVal; i++)	//256
-		{
-			nArea += src_hist2.at<float>(i);
-			nCount += i * src_hist2.at<float>(i);
-		}
-		rc.fRealMeanGray = (float)nCount / nArea;
+		#if 1
+			MatND mean;
+			MatND stddev;
+			meanStdDev(matCompRoi, mean, stddev);
+
+			IplImage *src;
+			src = &IplImage(mean);
+			rc.fRealMeanGray = cvGetReal2D(src, 0, 0);
+
+			IplImage *src2;
+			src2 = &IplImage(stddev);
+			rc.fRealStddev = cvGetReal2D(src2, 0, 0);
+		#else
+			int nMaxVal = 256;
+			MatND src_hist2;
+			const int histSize2[1] = { nMaxVal };	//rc.nThresholdValue - g_nRecogGrayMin		256
+			const float* ranges2[1];
+			float hranges2[2];
+			hranges2[0] = 0;
+			hranges2[1] = nMaxVal - 1;			//255
+			ranges2[0] = hranges2;
+			cv::calcHist(&matCompRoi, 1, channels, Mat(), src_hist2, 1, histSize2, ranges2, true, false);
+			int nCount = 0;
+			int nArea = 0;
+			for (int i = 0; i < nMaxVal; i++)	//256
+			{
+				nArea += src_hist2.at<float>(i);
+				nCount += i * src_hist2.at<float>(i);
+			}
+			rc.fRealMeanGray = (float)nCount / nArea;
+		#endif
 	#else
 		MatND src_hist2;
 		const int histSize2[1] = { 256 };	//rc.nThresholdValue - g_nRecogGrayMin		256
@@ -1972,10 +1995,13 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		if (strRecogAnswer2 == "") nNullCount_2++;
 		if (strRecogAnswer3 == "") nNullCount_3++;
 
+		#ifdef Test_Recog3
+			bUnSure1 = true;
+		#endif
 		int nDoubt = 0;
 		if (bUnSure1)
 		{
-			if (strRecogAnswer2 == "" || strRecogAnswer3 == "")
+			if (strRecogAnswer2 == "" && strRecogAnswer3 == "")
 			{
 				nDoubt = 2;
 				nNullCount++;
@@ -3379,6 +3405,43 @@ bool CRecognizeThread::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 	fDiffThread = _dDiffThread_3_;
 	fDiffExit = _dDiffExit_3_;
 
+#if 1		//灰度差值满足后，加上单项Omr的灰度需要比标准的小
+	int nFlag = -1;
+	float fThreld = 0.0;
+	for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
+	{
+		float fMeanGrayDiff = vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray;
+		if ((vecOmrItemGrayDiff[i].fDiff >= fDiffThread + fMeanGrayDiff))
+		{
+			nFlag = i;
+			fThreld = vecOmrItemGrayDiff[i].fFirst;
+			if (vecOmrItemGrayDiff[i].fDiff > fDiffExit && i + 1 >= vecVal_AnswerSuer.size())	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
+				break;
+		}
+	}
+	if (nFlag >= 0)
+	{
+		RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
+		for (; itItem != omrResult.lSelAnswer.end(); itItem++)
+		{
+			if (itItem->fRealMeanGray <= fThreld)
+			{
+				char szVal[2] = { 0 };
+				sprintf_s(szVal, "%c", itItem->nAnswer + 65);
+				strRecogAnswer.append(szVal);
+			}
+		}
+	}
+	else
+	{
+		for (int i = 0; i < vecVal_AnswerSuer.size(); i++)
+		{
+			char szVal[5] = { 0 };
+			sprintf_s(szVal, "%c", vecVal_AnswerSuer[i] + 65);
+			strRecogAnswer.append(szVal);
+		}
+	}
+#else
 	int nFlag = -1;
 	float fThreld = 0.0;
 	for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
@@ -3413,6 +3476,7 @@ bool CRecognizeThread::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 			strRecogAnswer.append(szVal);
 		}
 	}
+#endif
 	omrResult.strRecogVal3 = strRecogAnswer;
 	return true;
 }

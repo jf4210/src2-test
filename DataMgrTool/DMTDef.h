@@ -19,7 +19,8 @@
 #ifdef _DEBUG
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
-//	#define PrintAllOmrVal		//打印所有OMR选项值
+	#define PrintAllOmrVal		//打印所有OMR选项值
+	#define Test_Recog3		//测试第三种识别方法准确度
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -43,7 +44,7 @@
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION	_T("1.70427-3")
+#define SOFT_VERSION	_T("1.70428-2")
 #define SYS_BASE_NAME	_T("YKLX-DMT")
 //#define WH_CCBKS		//武汉楚才杯专用，解析二维码需要json解析
 
@@ -119,11 +120,12 @@ typedef struct _DecompressTask_
 	int	 nNoNeedRecogVal;	////试卷袋不识别阀值：omr怀疑 + omr空 + SN空总数大于此阀值才进行重识别
 	//---------
 
-	int nTaskType;				//1-普通解压，2-区分试卷包到不同目录, 3-重新识别OMR和SN, 4-加载模板, 5-识别试卷包并统计识别正确率比例
+	int nTaskType;				//1-普通解压，2-区分试卷包到不同目录, 3-重新识别OMR和SN, 4-加载模板, 5-识别试卷包并统计识别正确率比例, 6-解压试卷袋中的特定文件
 	std::string strFileBaseName;
 	std::string strSrcFileName;
 	std::string strFilePath;
 	std::string strDecompressDir;
+	std::string strDecompressPaperFile;		//解压试卷袋中特定的文件，如S1，S2，nTaskType = 6 时有用
 	_DecompressTask_()
 	{
 		nTaskType = 1;
@@ -151,9 +153,16 @@ typedef struct  _StSearchTash_
 	int  nSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩		//0-使用压缩包方式，1-直接发送结果给ezs，2-不发送结果也不压缩试卷包，测试模式，看识别率
 	int	 nNoNeedRecogVal;	////试卷袋不识别阀值：omr怀疑 + omr空 + SN空总数大于此阀值才进行重识别
 	//---------
+	int	 nSearchType;		//1-搜索目录下的所有pkg并进行全解压，2-搜索目录下指定的pkg
 	std::string strSearchPath;
+	//-------------参数传递, 针对nSearchType = 2 时有效
+	std::string strSearchName;	//搜索指定的试卷袋文件，针对nSearchType = 2 时有效
+	std::string strPaperName;	//需要解压试卷袋中的特定试卷文件，针对nSearchType = 2 时有效
+	std::string strDecompressPath;	//文件解压的目的路径，针对nSearchType = 2 时有效
+	//-------------
 	_StSearchTash_()
 	{
+		nSearchType = 1;
 		bRecogElectOmr = true;
 		bRecogOmr = true;
 		bRecogZkzh = true;

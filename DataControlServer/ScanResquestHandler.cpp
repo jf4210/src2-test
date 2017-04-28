@@ -1752,6 +1752,7 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("standardArea", itFix->fStandardArea);
 			jsnObj.set("standardDensity", itFix->fStandardDensity);
 			jsnObj.set("standardMeanGray", itFix->fStandardMeanGray);
+			jsnObj.set("standardStddev", itFix->fStandardStddev);
 
 			jsnObj.set("gaussKernel", itFix->nGaussKernel);
 			jsnObj.set("sharpKernel", itFix->nSharpKernel);
@@ -1774,6 +1775,7 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("standardArea", itHHead->fStandardArea);
 			jsnObj.set("standardDensity", itHHead->fStandardDensity);
 			jsnObj.set("standardMeanGray", itHHead->fStandardMeanGray);
+			jsnObj.set("standardStddev", itHHead->fStandardStddev);
 
 			jsnObj.set("gaussKernel", itHHead->nGaussKernel);
 			jsnObj.set("sharpKernel", itHHead->nSharpKernel);
@@ -1796,6 +1798,7 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("standardArea", itVHead->fStandardArea);
 			jsnObj.set("standardDensity", itVHead->fStandardDensity);
 			jsnObj.set("standardMeanGray", itVHead->fStandardMeanGray);
+			jsnObj.set("standardStddev", itVHead->fStandardStddev);
 
 			jsnObj.set("gaussKernel", itVHead->nGaussKernel);
 			jsnObj.set("sharpKernel", itVHead->nSharpKernel);
@@ -1820,6 +1823,7 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("standardArea", itABModel->fStandardArea);
 			jsnObj.set("standardDensity", itABModel->fStandardDensity);
 			jsnObj.set("standardMeanGray", itABModel->fStandardMeanGray);
+			jsnObj.set("standardStddev", itABModel->fStandardStddev);
 
 			jsnObj.set("gaussKernel", itABModel->nGaussKernel);
 			jsnObj.set("sharpKernel", itABModel->nSharpKernel);
@@ -1844,6 +1848,7 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("standardArea", itCourse->fStandardArea);
 			jsnObj.set("standardDensity", itCourse->fStandardDensity);
 			jsnObj.set("standardMeanGray", itCourse->fStandardMeanGray);
+			jsnObj.set("standardStddev", itCourse->fStandardStddev);
 
 			jsnObj.set("gaussKernel", itCourse->nGaussKernel);
 			jsnObj.set("sharpKernel", itCourse->nSharpKernel);
@@ -1868,6 +1873,7 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("standardArea", itQKCP->fStandardArea);
 			jsnObj.set("standardDensity", itQKCP->fStandardDensity);
 			jsnObj.set("standardMeanGray", itQKCP->fStandardMeanGray);
+			jsnObj.set("standardStddev", itQKCP->fStandardStddev);
 
 			jsnObj.set("gaussKernel", itQKCP->nGaussKernel);
 			jsnObj.set("sharpKernel", itQKCP->nSharpKernel);
@@ -1892,6 +1898,7 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("standardArea", itGrayCP->fStandardArea);
 			jsnObj.set("standardDensity", itGrayCP->fStandardDensity);
 			jsnObj.set("standardMeanGray", itGrayCP->fStandardMeanGray);
+			jsnObj.set("standardStddev", itGrayCP->fStandardStddev);
 
 			jsnObj.set("gaussKernel", itGrayCP->nGaussKernel);
 			jsnObj.set("sharpKernel", itGrayCP->nSharpKernel);
@@ -1916,6 +1923,7 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 			jsnObj.set("standardArea", itWhiteCP->fStandardArea);
 			jsnObj.set("standardDensity", itWhiteCP->fStandardDensity);
 			jsnObj.set("standardMeanGray", itWhiteCP->fStandardMeanGray);
+			jsnObj.set("standardStddev", itWhiteCP->fStandardStddev);
 
 			jsnObj.set("gaussKernel", itWhiteCP->nGaussKernel);
 			jsnObj.set("sharpKernel", itWhiteCP->nSharpKernel);
@@ -2006,6 +2014,7 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 				jsnObj.set("standardArea", itOmrSel->fStandardArea);
 				jsnObj.set("standardDensity", itOmrSel->fStandardDensity);
 				jsnObj.set("standardMeanGray", itOmrSel->fStandardMeanGray);
+				jsnObj.set("standardStddev", itOmrSel->fStandardStddev);
 
 				jsnObj.set("gaussKernel", itOmrSel->nGaussKernel);
 				jsnObj.set("sharpKernel", itOmrSel->nSharpKernel);
@@ -2045,6 +2054,7 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 				jsnObj.set("standardArea", itSnDetail->fStandardArea);
 				jsnObj.set("standardDensity", itSnDetail->fStandardDensity);
 				jsnObj.set("standardMeanGray", itSnDetail->fStandardMeanGray);
+				jsnObj.set("standardStddev", itSnDetail->fStandardStddev);
 
 				jsnObj.set("gaussKernel", itSnDetail->nGaussKernel);
 				jsnObj.set("sharpKernel", itSnDetail->nSharpKernel);
@@ -2083,6 +2093,7 @@ bool CScanResquestHandler::SaveModel(pMODEL pModel, std::string& strModelPath)
 				jsnObj.set("standardArea", itOmrSel->fStandardArea);
 				jsnObj.set("standardDensity", itOmrSel->fStandardDensity);
 				jsnObj.set("standardMeanGray", itOmrSel->fStandardMeanGray);
+				jsnObj.set("standardStddev", itOmrSel->fStandardStddev);
 
 				jsnObj.set("gaussKernel", itOmrSel->nGaussKernel);
 				jsnObj.set("sharpKernel", itOmrSel->nSharpKernel);
