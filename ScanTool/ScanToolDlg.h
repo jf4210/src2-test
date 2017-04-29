@@ -20,6 +20,7 @@
 #include "CompressThread.h"
 #include "ScanThread.h"
 #include "ModifyZkzhDlg.h"
+#include "StudentMgr.h"
 //#include "XListCtrl.h"
 // CScanToolDlg 对话框
 
@@ -39,9 +40,12 @@ public:
 
 public:
 	CListCtrl		m_lcPicture;			//图片列表控件
-	CListCtrl		m_lcPaper;				//已扫试卷列表控件
+	CXListCtrl		m_lProblemPaper;		//问题试卷列表控件
 	CComboBox		m_comboModel;			//模板下拉列表控件
 	CTabCtrl		m_tabPicShowCtrl;		//图片显示控件
+
+	CStatusBar		m_wndStatusBar;
+	CStatusBarCtrl	m_statusBar;
 
 	int				m_nStatusSize;			//状态栏字体大小
 	CFont			m_fontStatus;			//状态栏字体
@@ -99,6 +103,8 @@ public:
 	BOOL			m_bLastPkgSaveOK;		//扫描的上一代试卷是否保存成功
 	bool			m_bModifySN;			//扫描完成后，是否将未识别的准考证号进行人工修正
 	int				m_nDoubleScan;			//是否是双面扫描	//单双面,0-单面,1-双面
+
+	CStudentMgr*	m_pStudentMgr;			//报名库管理对象
 public:
 	void	InitUI();
 	void	InitTab();
@@ -107,6 +113,7 @@ public:
 	void	InitParam();
 	void	InitFileUpLoadList();
 	void	InitCompressList();
+	void	ShowPapers(pPAPERSINFO pPapers);
 
 	void	InitShow(pMODEL pModel);
 	void	InitScan();
@@ -122,11 +129,12 @@ public:
 //	bool	UnZipModel(CString strZipPath);
 //	pMODEL	LoadModelFile(CString strModelPath);			//加载模板文件
 
-	void	ShowPaperByItem(int nItem);
+	void	ShowPaperByItem(int nItem, int nListCtrl = 0);	//nListCtrl = 0 -->从普通试卷列表显示图像，1-->从问题列表显示图像
 	void	ShowRectByPoint(cv::Point pt, pST_PaperInfo pPaper);
 	LRESULT RoiLBtnDown(WPARAM wParam, LPARAM lParam);		//鼠标左键按下的通知
 	LRESULT MsgRecogErr(WPARAM wParam, LPARAM lParam);
 	LRESULT MsgZkzhRecog(WPARAM wParam, LPARAM lParam);		//准考证号识别完成时的通知
+	LRESULT MsgPkg2PapersOk(WPARAM wParam, LPARAM lParam);
 	void	PaintRecognisedRect(pST_PaperInfo pPaper);
 	int		PaintIssueRect(pST_PaperInfo pPaper);
 
@@ -181,4 +189,5 @@ public:
 	afx_msg void OnBnClickedBtnReback();
 	afx_msg void OnHotKey(UINT nHotKeyId, UINT nKey1, UINT nKey2);
 	afx_msg void OnTimer(UINT nIDEvent);
+	afx_msg void OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult);
 };

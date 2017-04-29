@@ -70,7 +70,6 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 			Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pTask->strSrcFilePath));
 			if (srcFileDir.exists())
 				srcFileDir.remove(true);
-
 		}
 		catch (Poco::Exception& exc)
 		{

@@ -30,7 +30,7 @@ void CV_picture::OnInit(int nShowType /*= 0*/, bool bBtnDown /*= true*/)
 	m_ptBeforeMove=Point2f(0);
 
 	//初始化roi相关参数
-	m_fRoi_scale=1;
+	m_fRoi_scale = 1;
 	m_rect_roi=Rect(0,0,m_dst_img.cols,m_dst_img.rows);
 	m_rect_roi_center.x=(float)m_rect_roi.width/2.0f;
 	m_rect_roi_center.y=(float)m_rect_roi.height/2.0f;
@@ -83,7 +83,8 @@ void CV_picture::cvLoadImage(cv::Mat &img)
 	m_rect_roi_center.y=(float)m_rect_roi.height/2.0f;
 	m_MouseDraw_rect=Rect(m_rect_roi_center.x,m_rect_roi_center.y,10,10);
 	m_dst_roi=m_dst_img(m_rect_roi);
-	m_fRoi_scale=1;
+	m_fRoi_scale = 1;
+	m_fRoi_scaleMax = 1;
 }
 
 //往对应图片控件加载原图片，并完成相关初始化（输入为文件路径）
@@ -107,7 +108,8 @@ bool  CV_picture::cvLoadImage(CString &Path)
 	m_rect_roi_center.y=(float)m_rect_roi.height/2.0f;
 	m_MouseDraw_rect=Rect(m_rect_roi_center.x,m_rect_roi_center.y,10,10);
 	m_dst_roi=m_dst_img(m_rect_roi);
-	m_fRoi_scale=1;
+	m_fRoi_scale = 1;
+	m_fRoi_scaleMax = 1;
 
 	return 1;
 }
@@ -130,6 +132,7 @@ void CV_picture::ShowImage(Mat &img,int method)
 	m_MouseDraw_rect=Rect(m_rect_roi_center.x,m_rect_roi_center.y,10,10);
 	m_dst_roi=m_dst_img(m_rect_roi);
 	m_fRoi_scale=1;
+	m_fRoi_scaleMax = 1;
 	//图片大小相同，则直接跳过ResizeImage，将img原样复制到m_drawing减少计算量
 	if (m_dst_img.size!=m_drawing.size)
 	{
@@ -446,6 +449,10 @@ void CV_picture::ShowImage_rect(cv::Mat &src, cv::Point pt, float fScale)
 
 		m_dst_img = src + 0;
 		m_fRoi_scale = fScale;
+
+		float fScale1 = (float)m_dst_img.cols / (float)m_rect.Width();
+		float fScale2 = (float)m_dst_img.rows / (float)m_rect.Height();
+		m_fRoi_scaleMax = fScale1 > fScale2 ? fScale2 : fScale1;
 
 		int nRoiW = m_rect.Width() * m_fRoi_scale;
 		int nRoiH = m_rect.Height() * m_fRoi_scale;
@@ -841,6 +848,7 @@ BOOL CV_picture::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 				sprintf_s(szLog, "缩放比例小于0，m_fRoi_scale = %f, zDelta = %d\n", m_fRoi_scale, zDelta);
 				TRACE(szLog);
 			}
+			m_fRoi_scale = m_fRoi_scale >= m_fRoi_scaleMax ? m_fRoi_scaleMax : m_fRoi_scale;
 
 			//计算当前鼠标相对画板中心的偏移
 			CPoint src_draw_tl = m_rect_win.TopLeft();

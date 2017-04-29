@@ -29,7 +29,7 @@
 #define DecompressTest		//解压测试，多线程解压
 
 #ifndef TO_WHTY
-	#define SOFT_VERSION "DataControlServer V1.70313-1"
+	#define SOFT_VERSION "DataControlServer V1.70424-2"
 #else
 	#define SOFT_VERSION "DataControlServer for TY V2.1-0309"
 #endif
@@ -170,6 +170,7 @@ typedef struct _Paper_
 	int			nChkFlag;	//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不往zimg图像服务器提交
 	int			nQkFlag;	//缺考标识,0-未缺考, 1-缺考
 	int			nHasElectOmr;	//是否有多选题
+	int			nIssueFlag;		//问题标识，0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
 	std::string strName;	//识别出来的考生名称S1、S2、。。。
 	std::string strMd5Key;	//给后端的MD5--密号
 	std::string strZkzh;	//识别出来的考生序列号、准考证号
@@ -186,6 +187,7 @@ typedef struct _Paper_
 		nChkFlag = 0;
 		nQkFlag = 0;
 		nHasElectOmr = 0;
+		nIssueFlag = 0;
 	}
 	~_Paper_()
 	{

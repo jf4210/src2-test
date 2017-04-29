@@ -2,16 +2,6 @@
 #include "global.h"
 
 // CLoginDlg ¶Ô»°¿ò
-// #ifdef TO_WHTY
-// typedef struct stPlatformInfo
-// {
-// 	std::string strPlatformUrl;
-// 	std::string strPlatformCode;
-// 	std::string strPlatformName;
-// 	std::string strEncryption;
-// }ST_PLATFORMINFO, *pST_PLATFORMINFO;
-// typedef std::vector<ST_PLATFORMINFO> VEC_PLATFORM_TY;
-// #endif
 
 class CLoginDlg : public CDialog
 {
@@ -44,6 +34,7 @@ public:
 
 	int		RecvData(CString& strResultInfo);
 	int		GetExamInfo();
+	int		GetBmkInfo();
 
 #ifdef TO_WHTY
 	VEC_PLATFORM_TY _vecPlatformList;

@@ -6,6 +6,7 @@
 #include "ShowFileTransferDlg.h"
 #include "afxdialogex.h"
 #include "global.h"
+#include "ScanToolDlg.h"
 
 #define TIMER_PROCESS	(WM_APP + 201)
 
@@ -13,10 +14,10 @@
 
 IMPLEMENT_DYNAMIC(CShowFileTransferDlg, CDialog)
 
-CShowFileTransferDlg::CShowFileTransferDlg(CWnd* pParent /*=NULL*/)
+CShowFileTransferDlg::CShowFileTransferDlg(void* pDlg, CWnd* pParent /*=NULL*/)
 	: CDialog(CShowFileTransferDlg::IDD, pParent)
 	, m_nCurListItem(-1), m_nStatusSize(27)
-	, m_strFileChannel(_T("")), m_strCmdChannel(_T(""))
+	, m_strFileChannel(_T("")), m_strCmdChannel(_T("")), m_pDlg(pDlg)
 {
 
 }
@@ -39,6 +40,7 @@ BEGIN_MESSAGE_MAP(CShowFileTransferDlg, CDialog)
 	ON_WM_TIMER()
 	ON_NOTIFY(NM_RCLICK, IDC_LIST_FileTransfer, &CShowFileTransferDlg::OnNMRClickListFiletransfer)
 	ON_COMMAND(ID_ReSendFile, &CShowFileTransferDlg::ReSendFile)
+	ON_COMMAND(ID_Pkg2Papers, &CShowFileTransferDlg::PkgToPapers)
 	ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
@@ -72,7 +74,7 @@ BOOL CShowFileTransferDlg::OnInitDialog()
 	}
 	UpdateData(FALSE);
 
-	SetTimer(TIMER_PROCESS, 2000, NULL);
+	SetTimer(TIMER_PROCESS, 1000, NULL);
 
 	return TRUE;
 }
@@ -144,6 +146,50 @@ void CShowFileTransferDlg::OnTimer(UINT_PTR nIDEvent)
 
 void CShowFileTransferDlg::ShowFileTransferList()
 {
+#if 1
+	USES_CONVERSION;
+	for (auto item : g_lSendTask)
+	{
+		bool bFind = false;
+		int nCount = m_lFileTranser.GetItemCount();
+		int i = 0;
+		for(; i < nCount; i++)
+		{
+			pSENDTASK pItem = (pSENDTASK)m_lFileTranser.GetItemData(i);
+			if(pItem == item)
+			{
+				bFind = true;
+				break;
+			}
+		}
+
+		char szPercent[10] = { 0 };
+		sprintf_s(szPercent, "%.1f", item->fSendPercent);
+		char szState[20] = { 0 };
+		if (item->nSendState == 0)
+			strcpy_s(szState, "未上传");
+		else if (item->nSendState == 1)
+			strcpy_s(szState, "正在上传");
+		else if (item->nSendState == 2)
+			strcpy_s(szState, "上传成功");
+		else if (item->nSendState == 3)
+			strcpy_s(szState, "上传失败");
+		if(bFind)
+		{
+			m_lFileTranser.SetItemText(i, 0, (LPCTSTR)A2T(item->strFileName.c_str()));
+			m_lFileTranser.SetItemText(i, 1, (LPCTSTR)A2T(szPercent));
+			m_lFileTranser.SetItemText(i, 2, (LPCTSTR)A2T(szState));
+		}
+		else
+		{
+			m_lFileTranser.InsertItem(nCount, NULL);
+			m_lFileTranser.SetItemText(nCount, 0, (LPCTSTR)A2T(item->strFileName.c_str()));
+			m_lFileTranser.SetItemText(nCount, 1, (LPCTSTR)A2T(szPercent));
+			m_lFileTranser.SetItemText(nCount, 2, (LPCTSTR)A2T(szState));
+			m_lFileTranser.SetItemData(nCount, (DWORD_PTR)item);
+		}
+	}
+#else
 	m_lFileTranser.DeleteAllItems();
 
 	USES_CONVERSION;
@@ -167,6 +213,7 @@ void CShowFileTransferDlg::ShowFileTransferList()
 		m_lFileTranser.SetItemText(i, 1, (LPCTSTR)A2T(szPercent));
 		m_lFileTranser.SetItemText(i, 2, (LPCTSTR)A2T(szState));
 	}
+#endif
 }
 
 
@@ -192,6 +239,18 @@ void CShowFileTransferDlg::OnNMRClickListFiletransfer(NMHDR *pNMHDR, LRESULT *pR
 	GetCursorPos(&myPoint); //鼠标位置  
 	pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, myPoint.x, myPoint.y, this);//GetParent()
 #endif
+
+#ifdef TO_WHTY
+	return;
+#endif
+	//下面的这段代码, 不单单适应于ListCtrl  
+	CMenu menu, *pPopup;
+	menu.LoadMenu(IDR_MENU_Pkg2Papers);
+	pPopup = menu.GetSubMenu(0);
+	CPoint myPoint;
+	ClientToScreen(&myPoint);
+	GetCursorPos(&myPoint); //鼠标位置  
+	pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, myPoint.x, myPoint.y, this);//GetParent()
 }
 
 void CShowFileTransferDlg::ReSendFile()
@@ -204,6 +263,36 @@ void CShowFileTransferDlg::ReSendFile()
 // 	g_fmSendLock.lock();
 // 	g_lSendTask.push_back(pTask);
 // 	g_fmSendLock.unlock();
+}
+
+void CShowFileTransferDlg::PkgToPapers()
+{
+	pSENDTASK pItem = (pSENDTASK)m_lFileTranser.GetItemData(m_nCurListItem);
+
+	if (pItem->nSendState != 2)
+	{
+		AfxMessageBox(_T("上传中，不能查看"));
+		return;
+	}
+	if (((CScanToolDlg*)m_pDlg)->m_nScanStatus == 1)
+	{
+		AfxMessageBox(_T("扫描中，不能查看"));
+		return;
+	}
+	pPAPERSINFO pPapers = ((CScanToolDlg*)m_pDlg)->m_pPapersInfo;
+	if (pPapers != NULL && pPapers->nPapersType == 0)
+	{
+		AfxMessageBox(_T("存在未处理的试卷袋，不能查看"));
+		return;
+	}
+	USES_CONVERSION;
+	pCOMPRESSTASK pTask = new COMPRESSTASK;
+	pTask->nCompressType = 2;
+	pTask->strCompressFileName = pItem->strFileName;
+
+	g_fmCompressLock.lock();
+	g_lCompressTask.push_back(pTask);
+	g_fmCompressLock.unlock();
 }
 
 void CShowFileTransferDlg::SetFontSize(int nSize)

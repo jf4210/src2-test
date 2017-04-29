@@ -19,7 +19,8 @@
 #ifdef _DEBUG
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
-//	#define PrintAllOmrVal		//打印所有OMR选项值
+	#define PrintAllOmrVal		//打印所有OMR选项值
+	#define Test_Recog3		//测试第三种识别方法准确度
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -27,6 +28,10 @@
 		#define TriangleCentroid_TEST	//三边质心算法
 	#endif
 #endif
+
+//++ test 2017.4.27
+#define Test_RecogFirst_NoThreshord		//针对第一种算法，不用阀值直接判断要求最少选项数，如达到多少密度比例就让我选项一定填涂
+//--
 
 #define Test_RecogOmr3			//第3种OMR识别方法测试
 #define Test_SendRecogResult	//直接在试卷袋识别完成时发送识别结果给后端服务器
@@ -39,7 +44,7 @@
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION	_T("1.60227-1")
+#define SOFT_VERSION	_T("1.70428-2")
 #define SYS_BASE_NAME	_T("YKLX-DMT")
 //#define WH_CCBKS		//武汉楚才杯专用，解析二维码需要json解析
 
@@ -111,22 +116,23 @@ typedef struct _DecompressTask_
 	bool bRecogOmr;			//识别OMR
 	bool bRecogZkzh;		//识别准考证号
 	bool bRecogElectOmr;	//识别选做题
-	bool bSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩
+	int	 nSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩
 	int	 nNoNeedRecogVal;	////试卷袋不识别阀值：omr怀疑 + omr空 + SN空总数大于此阀值才进行重识别
 	//---------
 
-	int nTaskType;				//1-普通解压，2-区分试卷包到不同目录, 3-重新识别OMR和SN, 4-加载模板, 5-识别试卷包并统计识别正确率比例
+	int nTaskType;				//1-普通解压，2-区分试卷包到不同目录, 3-重新识别OMR和SN, 4-加载模板, 5-识别试卷包并统计识别正确率比例, 6-解压试卷袋中的特定文件
 	std::string strFileBaseName;
 	std::string strSrcFileName;
 	std::string strFilePath;
 	std::string strDecompressDir;
+	std::string strDecompressPaperFile;		//解压试卷袋中特定的文件，如S1，S2，nTaskType = 6 时有用
 	_DecompressTask_()
 	{
 		nTaskType = 1;
 		bRecogElectOmr = true;
 		bRecogOmr = true;
 		bRecogZkzh = true;
-		bSendEzs = false;
+		nSendEzs = 2;
 		nNoNeedRecogVal = 0;
 	}
 }DECOMPRESSTASK, *pDECOMPRESSTASK;
@@ -144,16 +150,23 @@ typedef struct  _StSearchTash_
 	bool bRecogOmr;			//识别OMR
 	bool bRecogZkzh;		//识别准考证号
 	bool bRecogElectOmr;	//识别选做题
-	bool bSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩
+	int  nSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩		//0-使用压缩包方式，1-直接发送结果给ezs，2-不发送结果也不压缩试卷包，测试模式，看识别率
 	int	 nNoNeedRecogVal;	////试卷袋不识别阀值：omr怀疑 + omr空 + SN空总数大于此阀值才进行重识别
 	//---------
+	int	 nSearchType;		//1-搜索目录下的所有pkg并进行全解压，2-搜索目录下指定的pkg
 	std::string strSearchPath;
+	//-------------参数传递, 针对nSearchType = 2 时有效
+	std::string strSearchName;	//搜索指定的试卷袋文件，针对nSearchType = 2 时有效
+	std::string strPaperName;	//需要解压试卷袋中的特定试卷文件，针对nSearchType = 2 时有效
+	std::string strDecompressPath;	//文件解压的目的路径，针对nSearchType = 2 时有效
+	//-------------
 	_StSearchTash_()
 	{
+		nSearchType = 1;
 		bRecogElectOmr = true;
 		bRecogOmr = true;
 		bRecogZkzh = true;
-		bSendEzs = false;
+		nSendEzs = 2;
 		nNoNeedRecogVal = 0;
 	}
 }ST_SEARCH, *pST_SEARCH;
@@ -207,7 +220,7 @@ typedef std::list<pST_PicInfo> PIC_LIST;	//图片列表定义
 typedef struct _PaperInfo_
 {
 	bool		bIssuePaper;		//是否是问题试卷
-	int			nChkFlag;		//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不進行圖片识别
+	int			nChkFlag;			//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不進行圖片识别
 	int			nQKFlag;			//缺考标识
 	pMODEL		pModel;				//识别此学生试卷所用的模板
 	void*		pPapers;			//所属的试卷袋信息
@@ -262,7 +275,7 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	bool	bRecogOmr;			//直接发送识别结果时，是否发送OMR
 	bool	bRecogZkzh;			//直接发送识别结果时，是否发送准考证号
 	bool	bRecogElectOmr;		//直接发送识别结果时，是否发送选做题
-	bool	bSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩
+	int		nSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩	//0-使用压缩包方式，1-直接发送结果给ezs，2-不发送结果也不压缩试卷包，测试模式，看识别率
 
 	int		nPaperCount;				//试卷袋中试卷总数量(学生数)
 	int		nRecogErrCount;				//识别错误试卷数量
@@ -274,6 +287,7 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	int			nTeacherId;			//教师ID
 	int			nUserId;			//用户ID
 
+	int			nRecogMode;			//识别模式，1-简单模式(遇到问题校验点不停止识别)，2-严格模式
 	//++统计信息
 	int		nPkgOmrDoubt;				//OMR怀疑的数量					客户端传递的
 	int		nPkgOmrNull;				//OMR识别为空的数量				客户端传递的
@@ -319,7 +333,7 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 		bRecogOmr = true;
 		bRecogZkzh = true;
 		bRecogElectOmr = true;
-		bSendEzs = false;
+		nSendEzs = 2;
 		nTaskCounts = 0;
 		nTotalPics = 0;
 		nPaperCount = 0;
@@ -328,6 +342,7 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 		nOmrNull = 0;
 		nSnNull = 0;
 		nRecogPics = 0;
+		nRecogMode = 2;
 
 		nTotalPaper = 0;
 		nExamID = -1;

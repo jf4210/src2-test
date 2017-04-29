@@ -9,6 +9,7 @@
 #include "ScanToolDlg.h"
 #include "GuideDlg.h"
 #include "MakeModelDlg.h"
+#include "ZipObj.h"
 
 
 // CScanModleMgrDlg 对话框
@@ -84,6 +85,40 @@ BOOL CScanModleMgrDlg::OnInitDialog()
 	return TRUE;
 }
 
+int CScanModleMgrDlg::GetBmkInfo()
+{
+	if (!m_pModel)
+		return 0;
+
+	CString strUser = _T("");
+#ifdef SHOW_GUIDEDLG
+	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
+
+	strUser = pDlg->m_strUserName;
+#else
+	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();
+	strUser = pDlg->m_strUserName;
+#endif
+
+	if (!pDlg->m_bLogin)
+		return 0;
+
+	USES_CONVERSION;
+	ST_GET_BMK_INFO stGetBmkInfo;
+	ZeroMemory(&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
+	stGetBmkInfo.nExamID = m_pModel->nExamID;
+	stGetBmkInfo.nSubjectID = m_pModel->nSubjectID;
+	strcpy(stGetBmkInfo.szEzs, T2A(pDlg->m_strEzs));
+
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_GET_BMK;
+	pTcpTask->nPkgLen = sizeof(ST_GET_BMK_INFO);
+	memcpy(pTcpTask->szSendBuf, (char*)&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
+}
+
 void CScanModleMgrDlg::InitUI()
 {
 	CRect rcClient;
@@ -93,13 +128,14 @@ void CScanModleMgrDlg::InitUI()
 
 	m_ModelListCtrl.SetExtendedStyle(m_ModelListCtrl.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_ModelListCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36);
-	m_ModelListCtrl.InsertColumn(1, _T("模板名称"), LVCFMT_CENTER, 370);
+	m_ModelListCtrl.InsertColumn(1, _T("模板名称"), LVCFMT_CENTER, 400);
+	m_ModelListCtrl.InsertColumn(2, _T("修改时间"), LVCFMT_CENTER, 100);
 
 	m_pShowModelInfoDlg = new CShowModelInfoDlg(this);
 	m_pShowModelInfoDlg->Create(CShowModelInfoDlg::IDD, this);
 	m_pShowModelInfoDlg->ShowWindow(SW_SHOW);
 
-	int sx = 850;
+	int sx = 1024;
 	int sy = 600;
 	MoveWindow(0, 0, sx, sy);
 	CenterWindow();
@@ -119,18 +155,18 @@ void CScanModleMgrDlg::InitCtrlPosition()
 	int nBottomGap = 5;	//距离下边边缘的间隔
 	int nLeftGap = 5;	//距离左边边缘的间隔
 	int nRightGap = 5;	//距离右边边缘的间隔
+	int nModelInfoW = cx / 2 - nGap;	//模板详细信息窗口宽度
+	if (nModelInfoW > 450)
+		nModelInfoW = 450;
+	int nLeftW = cx - nLeftGap - nModelInfoW - nGap - nRightGap;	//左半边控件占有的宽度
 	int nBtnHeigh = 30;
-	int	nBtnWidth = (cx / 2 - nLeftGap - nGap * 2) / 3;
+	int	nBtnWidth = (nLeftW - nGap * 2) / 3;		//(cx / 2 - nLeftGap - nGap * 2) / 3;
 
 	int nStaticWidth = 60;
 	int nStaticHeight = 20;		//校验点类型Static控件高度
 	int nCurrentTop = nTopGap;
 	int nCurrentLeft = nLeftGap;
 
-// 	if (m_pShowModelInfoDlg && m_pShowModelInfoDlg->GetSafeHwnd())
-// 	{
-// 		m_pShowModelInfoDlg->MoveWindow(250, 12, 250, 235);
-// 	}
 	if (GetDlgItem(IDC_STATIC_CurModel)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_STATIC_CurModel)->MoveWindow(nCurrentLeft, nCurrentTop, nStaticWidth, nStaticHeight);
@@ -138,7 +174,7 @@ void CScanModleMgrDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_EDIT_CurModel)->GetSafeHwnd())
 	{
-		int nEditW = cx / 2 - nLeftGap - nStaticWidth - nGap;
+		int nEditW = nLeftW - nStaticWidth - nGap;		//cx / 2 - nLeftGap - nStaticWidth - nGap;
 		GetDlgItem(IDC_EDIT_CurModel)->MoveWindow(nCurrentLeft, nCurrentTop, nEditW, nStaticHeight);
 		nCurrentLeft = nLeftGap;
 		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
@@ -153,7 +189,7 @@ void CScanModleMgrDlg::InitCtrlPosition()
 
 	if (GetDlgItem(IDC_LIST_Model)->GetSafeHwnd())
 	{
-		int nListW = cx / 2 - nLeftGap;
+		int nListW = nLeftW;		//cx / 2 - nLeftGap;
 		int nListH = cy - nTopGap - nBottomGap - nStaticHeight - nGap - nStaticHeight - nGap - (nBtnHeigh + nGap + nBtnHeigh) - nGap;
 		GetDlgItem(IDC_LIST_Model)->MoveWindow(nCurrentLeft, nCurrentTop, nListW, nListH);
 		nCurrentLeft = nLeftGap;
@@ -189,17 +225,17 @@ void CScanModleMgrDlg::InitCtrlPosition()
 	}
 
 	//右半边
-	nCurrentLeft = cx / 2 + nGap;
+	nCurrentLeft = cx - nModelInfoW - nRightGap;			//cx / 2 + nGap;
 	nCurrentTop = nTopGap;
 	if (m_pShowModelInfoDlg && m_pShowModelInfoDlg->GetSafeHwnd())
 	{
-		int nW = cx / 2 - nGap - nRightGap;
+//		int nW = cx / 2 - nGap - nRightGap;
 		int nH = cy - nTopGap - nBottomGap - nBtnHeigh * 2 - nGap - nGap;
-		m_pShowModelInfoDlg->MoveWindow(nCurrentLeft, nCurrentTop, nW, nH);
+		m_pShowModelInfoDlg->MoveWindow(nCurrentLeft, nCurrentTop, nModelInfoW, nH);
 		nCurrentTop = nCurrentTop + nH + nGap;
 	}
 
-	nCurrentLeft = cx / 2 + nLeftGap + 10;
+	nCurrentLeft = nCurrentLeft + 10;		//cx / 2 + nLeftGap + 10;
 	nCurrentTop = cy - nBottomGap - nBtnHeigh;
 	int nBtnW2 = (cx - nCurrentLeft - nGap * 2 - nRightGap - 10) / 3;
 	if (GetDlgItem(IDC_BTN_Refresh)->GetSafeHwnd())
@@ -220,6 +256,14 @@ void CScanModleMgrDlg::InitCtrlPosition()
 }
 
 // CScanModleMgrDlg 消息处理程序
+
+bool sortModelFile(ST_MODELFILE& st1, ST_MODELFILE& st2)
+{
+	if (st1.strModifyTime > st2.strModifyTime)	return true;
+	else if (st1.strModifyTime == st2.strModifyTime)	return (st1.strModelName >= st2.strModelName? true:false);
+	else return false;
+}
+
 void CScanModleMgrDlg::OnBnClickedBtnRefresh()
 {
 	m_pShowModelInfoDlg->ShowModelInfo(NULL);
@@ -239,6 +283,8 @@ void CScanModleMgrDlg::OnBnClickedBtnRefresh()
 	int nCount = 0;
 	try
 	{
+	#if 1
+		m_lModelFile.clear();
 		std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
 		Poco::DirectoryIterator it(strUtf8Path);
 		Poco::DirectoryIterator end;
@@ -247,13 +293,63 @@ void CScanModleMgrDlg::OnBnClickedBtnRefresh()
 			Poco::Path p(it->path());
 			if (it->isFile() && p.getExtension() == "mod")
 			{
-				//				std::string strModelName = p.getBaseName();
+				std::string strModelName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
+				
+				Poco::DateTime dt(it->getLastModified());
+				std::string strLastModifyTime = Poco::format("%04d-%02d-%02d", dt.year(), dt.month(), dt.day());
+
+				ST_MODELFILE stModelFile;
+				stModelFile.strModelName = strModelName;
+				stModelFile.strModifyTime = strLastModifyTime;
+				m_lModelFile.push_back(stModelFile);
+			}
+			it++;
+		}
+		m_lModelFile.sort(sortModelFile);
+
+		for(auto modelFile : m_lModelFile)
+		{
+			nCount = m_ModelListCtrl.GetItemCount();
+			char szCount[10] = { 0 };
+			sprintf_s(szCount, "%d", nCount + 1);
+			m_ModelListCtrl.InsertItem(nCount, NULL);
+			m_ModelListCtrl.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+			m_ModelListCtrl.SetItemText(nCount, 1, (LPCTSTR)A2T(modelFile.strModelName.c_str()));
+			m_ModelListCtrl.SetItemText(nCount, 2, (LPCTSTR)A2T(modelFile.strModifyTime.c_str()));
+			m_ModelListCtrl.SetItemData(nCount, NULL);
+
+			if (modelFile.strModelName == T2A(m_strCurModelName))
+			{
+				m_ModelListCtrl.SetItemState(nCount, LVIS_DROPHILITED, LVIS_DROPHILITED);		//高亮显示一行，失去焦点后也一直显示
+				m_nCurModelItem = nCount;			//记录当前高亮显示的行
+
+				CString strModelFilePath = g_strCurrentPath + _T("Model\\") + m_strCurModelName;
+
+				m_pModel = LoadModelFile(strModelFilePath);
+				m_vecModel.push_back(m_pModel);
+				m_pShowModelInfoDlg->ShowModelInfo(m_pModel, 1);
+			}
+		}
+
+		strLog = "搜索模板完成";
+	#else
+		std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
+		Poco::DirectoryIterator it(strUtf8Path);
+		Poco::DirectoryIterator end;
+		while (it != end)
+		{
+			Poco::Path p(it->path());
+			if (it->isFile() && p.getExtension() == "mod")
+			{
 				std::string strModelName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
 				char szCount[10] = { 0 };
 				sprintf_s(szCount, "%d", nCount + 1);
 				m_ModelListCtrl.InsertItem(nCount, NULL);
 				m_ModelListCtrl.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 				m_ModelListCtrl.SetItemText(nCount, 1, (LPCTSTR)A2T(strModelName.c_str()));
+				Poco::DateTime dt(it->getLastModified());
+				std::string strLastModifyTime = Poco::format("%04d-%02d-%02d", dt.year(), dt.month(), dt.day());
+				m_ModelListCtrl.SetItemText(nCount, 2, (LPCTSTR)A2T(strLastModifyTime.c_str()));
 				m_ModelListCtrl.SetItemData(nCount, NULL);
 				
 				if (strModelName == T2A(m_strCurModelName))
@@ -267,14 +363,11 @@ void CScanModleMgrDlg::OnBnClickedBtnRefresh()
 					m_pShowModelInfoDlg->ShowModelInfo(m_pModel, 1);
 				}
 				nCount++;
-// 				CString strModelFilePath = g_strCurrentPath + _T("Model\\") + A2T(strModelName.c_str());
-// 				pMODEL pModel;
-// 				pModel = LoadModelFile(strModelFilePath);
-// 				m_vecModel.push_back(pModel);
 			}
 			it++;
 		}
 		strLog = "搜索模板完成";
+	#endif
 	}
 	catch (Poco::FileException& exc)
 	{
@@ -337,7 +430,10 @@ void CScanModleMgrDlg::OnNMDblclkListModel(NMHDR *pNMHDR, LRESULT *pResult)
 		CString strModelFilePath = g_strCurrentPath + _T("Model\\") + strModelName;
 
 		CString strModelFullPath = strModelFilePath + _T(".mod");
-		UnZipFile(strModelFullPath);
+//		UnZipFile(strModelFullPath);
+		CZipObj zipObj;
+		zipObj.setLogger(g_pLogger);
+		zipObj.UnZipFile(strModelFullPath);
 
 		pModel = LoadModelFile(strModelFilePath);
 		m_vecModel.push_back(pModel);
@@ -493,6 +589,8 @@ void CScanModleMgrDlg::OnBnClickedOk()
 	strShow.Format(_T("是否选择\"%s\"为扫描模板?"), A2T(m_pModel->strModelName.c_str()));
 	if (MessageBox(strShow, _T("扫描模板确认"), MB_OKCANCEL) != IDOK)
 		return;
+
+	GetBmkInfo();
 
 	for (int i = 0; i < m_vecModel.size(); i++)
 	{
@@ -742,9 +840,6 @@ BOOL CScanModleMgrDlg::PreTranslateMessage(MSG* pMsg)
 	}
 	return CDialog::PreTranslateMessage(pMsg);
 }
-
-
-
 
 void CScanModleMgrDlg::OnLvnHotTrackListModel(NMHDR *pNMHDR, LRESULT *pResult)
 {

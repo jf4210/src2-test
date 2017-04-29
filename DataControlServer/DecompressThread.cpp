@@ -666,6 +666,8 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 					pPaper->nChkFlag = 1;	//此图片合法，在参数文件中可以找到
 					pPaper->strZkzh = jsnPaperObj->get("zkzh").convert<std::string>();
 					pPaper->nQkFlag = jsnPaperObj->get("qk").convert<int>();
+					if (jsnPaperObj->has("issueFlag"))
+						pPaper->nIssueFlag = jsnPaperObj->get("issueFlag").convert<int>();
 
 					Poco::JSON::Array::Ptr jsnSnArry = jsnPaperObj->getArray("snDetail");
 					Poco::JSON::Object jsnSn;
@@ -683,20 +685,7 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 					std::stringstream jsnSnString;
 					jsnSn.stringify(jsnSnString, 0);
 					pPaper->strSnDetail = jsnSnString.str();
-					// 				for (int i = 0; i < jsnSnArry->size(); i++)
-					// 				{
-					// 					Poco::JSON::Object::Ptr jsnSnItem = jsnSnArry->getObject(i);
-					// 					Poco::JSON::Object::Ptr jsnSnPosition = jsnSnItem->getObject("position");
-					// 
-					// 					SN_ITEM snItem;
-					// 					snItem.nItem		= jsnSnItem->get("sn").convert<int>();
-					// 					snItem.nRecogVal	= jsnSnItem->get("val").convert<int>();
-					// 					snItem.rt.x			= jsnSnPosition->get("x").convert<int>();
-					// 					snItem.rt.y			= jsnSnPosition->get("y").convert<int>();
-					// 					snItem.rt.width		= jsnSnPosition->get("w").convert<int>();
-					// 					snItem.rt.height	= jsnSnPosition->get("h").convert<int>();
-					// 					pPaper->lSnResult.push_back(snItem);
-					// 				}
+
 					Poco::JSON::Array::Ptr jsnOmrArry = jsnPaperObj->getArray("omr");
 					Poco::JSON::Object jsnOmr;
 					jsnOmr.set("examId", nExamId);
@@ -760,45 +749,13 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 			else
 			{
 				//**********************************************************************************************
-
-				//**********************************************************************************************
-
-				//**********************************************************************************************
-
-				//**********************************************************************************************
-
 				//***********************************	注意	************************************************
 
-				//针对肇庆考试，高一高二物理4-4，3-5科目为单页，将试卷袋中多的试卷删除
+				//有可能存在这种情况：当前考生的试卷有多张，但是试卷有效的只有前面几张或者中间几张
 
 				//**********************************************************************************************
-
 				//**********************************************************************************************
 
-				//**********************************************************************************************
-
-				//**********************************************************************************************
-
-				//**********************************************************************************************
-
-				//**********************************************************************************************
-			#if 0
-				if ((nExamId == 4 && nSubjectId == 4))
-				{
-					LIST_PIC_DETAIL::iterator itPic = pObj->lPic.begin();
-					for (int j = 0; itPic != pObj->lPic.end(); j++)
-					{
-						pPIC_DETAIL pPicObj = *itPic;
-						if (j != 0)
-						{
-							SAFE_RELEASE(pPicObj);
-							itPic = pObj->lPic.erase(itPic);
-						}
-						else
-							itPic++;
-					}
-				}
-			#endif
 				itPaper++;
 			}
 		}

@@ -14,6 +14,8 @@
 #include "GuideDlg.h"
 #include <windows.h>
 //#include "minidump.h"
+#include "PapersInfoSave4TyDlg.h"
+#include "OmrRecog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -30,6 +32,8 @@ bool				g_bCmdNeedConnect = false;	//ÃüÁîÍ¨µÀÊÇ·ñĞèÒªÖØÁ¬£¬ÓÃÓÚÍ¨µÀµØÖ·ĞÅÏ¢ĞŞ¸Äµ
 bool				g_bFileNeedConnect = false;	//ÎÄ¼şÍ¨µÀÊÇ·ñĞèÒªÖØÁ¬£¬ÓÃÓÚÍ¨µÀµØÖ·ĞÅÏ¢ĞŞ¸ÄµÄÇé¿ö
 
 bool				g_bShowScanSrcUI = false;	//ÊÇ·ñÏÔÊ¾Ô­Ê¼É¨Ãè½çÃæ
+int					g_nOperatingMode = 2;		//²Ù×÷Ä£Ê½£¬1--¼òÒ×Ä£Ê½(Óöµ½ÎÊÌâµã²»Í£Ö¹É¨Ãè)£¬2-ÑÏ¸ñÄ£Ê½(Óöµ½ÎÊÌâµãÊ±Á¢¿ÌÍ£Ö¹É¨Ãè)
+int					g_nZkzhNull2Issue = 0;		//Ê¶±ğµ½×¼¿¼Ö¤ºÅÎ´¿ÕÊ±£¬ÊÇ·ñÈÏÎªÊÇÎÊÌâÊÔ¾í
 
 int					g_nExitFlag = 0;
 CString				g_strCurrentPath;
@@ -59,6 +63,8 @@ Poco::Event			g_eTcpThreadExit;
 Poco::Event			g_eSendFileThreadExit;
 Poco::Event			g_eCompressThreadExit;
 
+STUDENT_LIST		g_lBmkStudent;	//±¨Ãû¿âÑ§ÉúÁĞ±í
+
 double	_dCompThread_Fix_ = 1.2;
 double	_dDiffThread_Fix_ = 0.2;
 double	_dDiffExit_Fix_ = 0.3;
@@ -66,6 +72,10 @@ double	_dCompThread_Head_ = 1.0;
 double	_dDiffThread_Head_ = 0.085;
 double	_dDiffExit_Head_ = 0.15;
 int		_nThreshold_Recog2_ = 240;	//µÚ2ÖĞÊ¶±ğ·½·¨µÄ¶şÖµ»¯·§Öµ
+double	_dCompThread_3_ = 170;		//µÚÈıÖÖÊ¶±ğ·½·¨
+double	_dDiffThread_3_ = 20;
+double	_dDiffExit_3_ = 50;
+double	_dAnswerSure_ = 100;		//¿ÉÒÔÈ·ÈÏÊÇ´ğ°¸µÄ×î´ó»Ò¶È
 
 int		_nAnticlutterKernel_ = 4;	//Ê¶±ğÍ¬²½Í·Ê±·À¸ÉÈÅÅòÕÍ¸¯Ê´µÄºËÒò×Ó
 int		_nGauseKernel_ = 5;			//¸ßË¹±ä»»ºËÒò×Ó
@@ -131,6 +141,7 @@ CScanToolDlg::CScanToolDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	, m_nDuplex(1), m_bF1Enable(FALSE), m_bF2Enable(FALSE)
 	, m_pCompressObj(NULL), m_pCompressThread(NULL)
 	, m_nCurrentScanCount(0), m_bLastPkgSaveOK(TRUE), m_bModifySN(TRUE)
+	, m_pStudentMgr(NULL)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);// IDR_MAINFRAME
 }
@@ -139,7 +150,7 @@ void CScanToolDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_Picture, m_lcPicture);
-	DDX_Control(pDX, IDC_LIST_Paper, m_lcPaper);
+	DDX_Control(pDX, IDC_LIST_Paper, m_lProblemPaper);
 	DDX_Control(pDX, IDC_COMBO_Model, m_comboModel);
 	DDX_Control(pDX, IDC_TAB_PicShow, m_tabPicShowCtrl);
 }
@@ -158,6 +169,7 @@ BEGIN_MESSAGE_MAP(CScanToolDlg, CDialogEx)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_Picture, &CScanToolDlg::OnNMDblclkListPicture)
 	ON_MESSAGE(MSG_ERR_RECOG, &CScanToolDlg::MsgRecogErr)
 	ON_MESSAGE(MSG_ZKZH_RECOG, &CScanToolDlg::MsgZkzhRecog)
+	ON_MESSAGE(MSG_Pkg2Papers_OK, &CScanToolDlg::MsgPkg2PapersOk)
 	ON_MESSAGE(WM_CV_LBTNDOWN, &CScanToolDlg::RoiLBtnDown)
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BTN_UpLoadPapers, &CScanToolDlg::OnBnClickedBtnUploadpapers)
@@ -171,6 +183,7 @@ BEGIN_MESSAGE_MAP(CScanToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_ReBack, &CScanToolDlg::OnBnClickedBtnReback)
 	ON_WM_HOTKEY()
 	ON_WM_TIMER()
+	ON_NOTIFY(NM_DBLCLK, IDC_LIST_Paper, &CScanToolDlg::OnNMDblclkListPaper)
 END_MESSAGE_MAP()
 
 
@@ -212,8 +225,8 @@ BOOL CScanToolDlg::OnInitDialog()
 	strTitle.Format(_T("%s %s"), SYS_BASE_NAME, SOFT_VERSION);
 	SetWindowText(strTitle);
 
-	InitUI();
 	InitConfig();
+	InitUI();
 	InitParam();
 	InitFileUpLoadList();
 	InitCompressList();
@@ -251,7 +264,10 @@ BOOL CScanToolDlg::OnInitDialog()
 			m_comboModel.GetLBText(m_ncomboCurrentSel, strModelName);
 			CString strModelPath = g_strCurrentPath + _T("Model\\") + strModelName;
 			CString strModelFullPath = strModelPath + _T(".mod");
-			UnZipFile(strModelFullPath);
+//			UnZipFile(strModelFullPath);
+			CZipObj zipObj;
+			zipObj.setLogger(g_pLogger);
+			zipObj.UnZipFile(strModelFullPath);
 			m_pModel = LoadModelFile(strModelPath);
 		}
 		m_comboModel.SetCurSel(m_ncomboCurrentSel);
@@ -267,14 +283,19 @@ BOOL CScanToolDlg::OnInitDialog()
 	}
 	InitTab();
 
-	m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+	if (m_pShowModelInfoDlg) m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+	if (m_statusBar.GetSafeHwnd() && m_pModel)
+	{
+		CString strModelName = A2T(m_pModel->strModelName.c_str());
+		m_statusBar.SetText(strModelName, 1, 0);
+	}
 
 	// µ÷ÓÃTWAIN ³õÊ¼»¯É¨ÃèÉèÖÃ
 	ReleaseTwain();
 	m_bTwainInit = FALSE;
 	if (!m_bTwainInit)
 	{
-		m_bTwainInit = InitTwain(m_hWnd);
+		m_bTwainInit = InitTwain(m_hWnd);	//m_hWnd
 		if (!IsValidDriver())
 		{
 			AfxMessageBox(_T("Unable to load Twain Driver."));
@@ -297,7 +318,9 @@ BOOL CScanToolDlg::OnInitDialog()
 	RegisterHotKey(GetSafeHwnd(), 1001, NULL, VK_F1);//F1¼ü
 	RegisterHotKey(GetSafeHwnd(), 1002, NULL, VK_F2);//F2¼ü  
 
+#ifndef _DEBUG
 	StartGuardProcess();
+#endif
 	return TRUE;  // ³ı·Ç½«½¹µãÉèÖÃµ½¿Ø¼ş£¬·ñÔò·µ»Ø TRUE
 }
 
@@ -367,6 +390,7 @@ void CScanToolDlg::OnDestroy()
 
 	SAFE_RELEASE(m_pShowModelInfoDlg);
 	SAFE_RELEASE(m_pShowScannerInfoDlg);
+	SAFE_RELEASE(m_pStudentMgr);
 
 	std::vector<CPicShow*>::iterator itPic = m_vecPicShow.begin();
 	for (; itPic != m_vecPicShow.end();)
@@ -507,6 +531,19 @@ void CScanToolDlg::OnDestroy()
 	}
 	g_fmPapers.unlock();
 
+	//É¾³ı´ÓPkg»Ö¸´µÄÊÔ¾í´üµÄ½âÑ¹Ô­ÎÄ¼ş
+	try
+	{
+		CString strOldPkgPath = _T("");
+		strOldPkgPath = g_strCurrentPath + _T("Paper\\Tmp2\\");
+		Poco::File srcOldFileDir(CMyCodeConvert::Gb2312ToUtf8(T2A(strOldPkgPath)));
+		if (srcOldFileDir.exists())
+			srcOldFileDir.remove(true);
+	}
+	catch (Poco::Exception& exc)
+	{
+	}
+
 	SAFE_RELEASE(m_pPapersInfo);
 	g_pLogger->information("ÊÔ¾í´üÁĞ±íÊÍ·ÅÍê±Ï.");
 }
@@ -562,6 +599,9 @@ void CScanToolDlg::InitConfig()
 	g_nManulUploadFile = pConf->getInt("UploadFile.manul", 0);
 	g_bShowScanSrcUI = pConf->getBool("Scan.bShowUI", false);
 	m_bModifySN = pConf->getBool("Scan.bModifySN", false);
+	g_nOperatingMode = pConf->getInt("Scan.OperatingMode", 2);
+	g_nZkzhNull2Issue = pConf->getInt("Scan.khNull2Issue", 0);
+
 	std::string strFileServerIP	= pConf->getString("Server.fileIP");
 	int			nFileServerPort	= pConf->getInt("Server.filePort", 19980);
 	m_strCmdServerIP				= pConf->getString("Server.cmdIP");
@@ -656,11 +696,15 @@ void CScanToolDlg::InitUI()
 {
 	m_lcPicture.SetExtendedStyle(m_lcPicture.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcPicture.InsertColumn(0, _T("ĞòºÅ"), LVCFMT_CENTER, 40);
-	m_lcPicture.InsertColumn(1, _T("Ñ§ÉúĞÅÏ¢"), LVCFMT_CENTER, 150);
+	m_lcPicture.InsertColumn(1, _T("Ñ§ÉúĞÅÏ¢"), LVCFMT_CENTER, 120);
+	m_lcPicture.InsertColumn(2, _T("*"), LVCFMT_CENTER, 20);
 
-	m_lcPaper.SetExtendedStyle(m_lcPaper.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
-	m_lcPaper.InsertColumn(0, _T("ÊÔ¾íÃû"), LVCFMT_CENTER, 80);
-	m_lcPaper.InsertColumn(1, _T("ÉÏ´«×´Ì¬"), LVCFMT_CENTER, 70);
+	m_lProblemPaper.SetExtendedStyle(m_lProblemPaper.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
+	m_lProblemPaper.InsertColumn(0, _T("ĞòºÅ"), LVCFMT_CENTER, 40);
+	m_lProblemPaper.InsertColumn(1, _T("Òì³£Ñ§Éú"), LVCFMT_CENTER, 100);
+	m_lProblemPaper.InsertColumn(2, _T("Ô­Òò"), LVCFMT_LEFT, 100);
+
+	m_lProblemPaper.EnableToolTips(TRUE);
 
 	SetFontSize(m_nStatusSize);
 
@@ -668,9 +712,27 @@ void CScanToolDlg::InitUI()
 
 	m_nCurrTabSel = 0;
 
-	m_pShowModelInfoDlg = new CShowModelInfoDlg(this);
-	m_pShowModelInfoDlg->Create(CShowModelInfoDlg::IDD, this);
-	m_pShowModelInfoDlg->ShowWindow(SW_SHOW);
+	if (g_nOperatingMode == 2)
+	{
+		m_pShowModelInfoDlg = new CShowModelInfoDlg(this);
+		m_pShowModelInfoDlg->Create(CShowModelInfoDlg::IDD, this);
+		m_pShowModelInfoDlg->ShowWindow(SW_SHOW);
+
+		GetDlgItem(IDC_STATIC_PaperList)->ShowWindow(SW_HIDE);
+		m_lProblemPaper.ShowWindow(SW_HIDE);
+	}
+	else
+	{
+		m_statusBar.Create(WS_CHILD | WS_VISIBLE | SBT_OWNERDRAW, CRect(0, 0, 0, 0), this, 0);
+		int strPartDim[2] = { 80,  -1 }; //·Ö¸îÊıÁ¿
+		m_statusBar.SetParts(2, strPartDim);
+
+		//ÉèÖÃ×´Ì¬À¸ÎÄ±¾
+		m_statusBar.SetText(_T("Ä£°åÃû³Æ:"), 0, 0);
+
+		GetDlgItem(IDC_STATIC_PaperList)->ShowWindow(SW_SHOW);
+		m_lProblemPaper.ShowWindow(SW_SHOW);
+	}
 
 	m_pShowScannerInfoDlg = new CScanerInfoDlg(this);
 	m_pShowScannerInfoDlg->Create(CScanerInfoDlg::IDD, this);
@@ -703,10 +765,6 @@ void CScanToolDlg::InitUI()
 #ifndef SHOW_GUIDEDLG
 	GetDlgItem(IDC_BTN_ReBack)->ShowWindow(SW_HIDE);
 #endif
-	//++ ºóÆÚ¿ÉÒÔÉ¾³ı
-	GetDlgItem(IDC_STATIC_PaperList)->ShowWindow(SW_HIDE);
-	m_lcPaper.ShowWindow(SW_HIDE);
-	//
 
 #if 1
 	CRect rc;
@@ -780,9 +838,12 @@ void CScanToolDlg::InitCtrlPosition()
 		nTopGap = 50;
 
 	const int nLeftGap = 2;		//×ó±ßµÄ¿Õ°×¼ä¸ô
-	const int nBottomGap = 2;	//ÏÂ±ßµÄ¿Õ°×¼ä¸ô
 	const int nRightGap = 2;	//ÓÒ±ßµÄ¿Õ°×¼ä¸ô
 	const int nGap = 2;			//ÆÕÍ¨¿Ø¼şµÄ¼ä¸ô
+
+	int nBottomGap = 2;			//ÏÂ±ßµÄ¿Õ°×¼ä¸ô£¬ÓÃÓÚ·ÅÖÃÏµÍ³×´Ì¬À¸
+	if (g_nOperatingMode == 1)		//¼òµ¥Ä£Ê½Ê±£¬×îÏÂÃæÁô³ö¿Ø¼ş·ÅÖÃÏµÍ³×´Ì¬À¸
+		nBottomGap = 20;
 
 	int nListCtrlWidth = 200;	//Í¼Æ¬ÁĞ±í¿Ø¼ş¿í¶È
 	int nStaticTip = 15;		//ÁĞ±íÌáÊ¾static¿Ø¼ş¸ß¶È
@@ -820,31 +881,38 @@ void CScanToolDlg::InitCtrlPosition()
 		m_lcPicture.MoveWindow(nLeftGap, nCurrentTop, nListCtrlWidth, nPicListHeight);
 		nCurrentTop = nCurrentTop + nPicListHeight + nGap;
 	}
-#if 1
+
+	int nTopTmp = nCurrentTop;
 	if (m_pShowModelInfoDlg && m_pShowModelInfoDlg->GetSafeHwnd())
 	{
 		m_pShowModelInfoDlg->MoveWindow(nLeftGap, nCurrentTop, nListCtrlWidth, nPaperListHeigth);
 		nCurrentTop = nCurrentTop + nPaperListHeigth + nGap;
 	}
-#else
+	//++Òì³£ÊÔ¾íÁĞ±íÎ»ÖÃ´¦ÓÚÄ£°åĞÅÏ¢¿Ø¼şµÄÎ»ÖÃ,	ÑÏ¸ñÄ£Ê½Ê±Òş²Ø
 	if (GetDlgItem(IDC_STATIC_PaperList)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_STATIC_PaperList)->MoveWindow(nLeftGap, nCurrentTop, nListCtrlWidth, nStaticTip);
-		nCurrentTop = nCurrentTop + nStaticTip + nGap;
+		GetDlgItem(IDC_STATIC_PaperList)->MoveWindow(nLeftGap, nTopTmp, nListCtrlWidth, nStaticTip);
+		nTopTmp = nTopTmp + nStaticTip + nGap;
 	}
-	if (m_lcPaper.GetSafeHwnd())
+	if (m_lProblemPaper.GetSafeHwnd())
 	{
-		m_lcPaper.MoveWindow(nLeftGap, nCurrentTop, nListCtrlWidth, nPaperListHeigth);
-		nCurrentTop = nCurrentTop + nPaperListHeigth + nGap;
+		m_lProblemPaper.MoveWindow(nLeftGap, nTopTmp, nListCtrlWidth, nPaperListHeigth - nStaticTip - nGap);
+		nTopTmp = nTopTmp + nPaperListHeigth - nStaticTip - nGap + nGap;
 	}
-#endif
+	//--
+
 	if (GetDlgItem(IDC_STATIC_SCANCOUNT)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_STATIC_SCANCOUNT)->MoveWindow(nLeftGap, cy - nBottomGap - nStatusHeight, 150, nStatusHeight);
 	}
 	if (GetDlgItem(IDC_STATIC_STATUS)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_STATIC_STATUS)->MoveWindow(nLeftGap + 150, cy - nBottomGap - nStatusHeight, cx - nLeftGap - nRightGap, nStatusHeight);
+		GetDlgItem(IDC_STATIC_STATUS)->MoveWindow(nLeftGap + 150, cy - nBottomGap - nStatusHeight, cx - nLeftGap - 150 - nRightGap, nStatusHeight);
+	}
+	//×´Ì¬À¸
+	if (m_statusBar.GetSafeHwnd())
+	{
+		m_statusBar.MoveWindow(nLeftGap, cy - nBottomGap, cx - nLeftGap - nRightGap, nBottomGap);
 	}
 
 	int nPicShowTabCtrlWidth = cx - nLeftGap - nRightGap - nListCtrlWidth - nGap - nGap;
@@ -1038,6 +1106,14 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	m_bF1Enable = FALSE;
 	m_bF2Enable = FALSE;
 
+	if (m_pPapersInfo && m_pPapersInfo->nPapersType == 1)
+	{
+		SAFE_RELEASE(m_pPapersInfo);
+		m_lcPicture.DeleteAllItems();
+		m_lProblemPaper.DeleteAllItems();
+		GetDlgItem(IDC_STATIC_SCANCOUNT)->SetWindowText(_T(""));
+	}
+
 	if (!m_bTwainInit)
 	{
 		m_bTwainInit = InitTwain(m_hWnd);
@@ -1078,6 +1154,17 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		m_bF2Enable = TRUE;
 		return;
 	}
+
+	if (m_nScanStatus == 2 && g_nOperatingMode == 1 && m_pPapersInfo && m_pPapersInfo->lPaper.size() + m_pPapersInfo->lIssue.size() > 0)
+	{
+		if (MessageBox(_T("ÉÏÒ»´ÎÉ¨Ãè³öÏÖÒì³££¬ÊÇ·ñ< Çå¿Õ >µ±Ç°ÊÔ¾í´ü£¿\r\n\r\n¡¶Èç¹ûÇå¿Õ£¬Ôò´Ë´üÊÔ¾íĞèÒªÕû´üÖØÉ¨¡·\r\n¡¶Èç¹û²»Çå¿Õ£¬´Ë´üÊÔ¾í¿ÉÒÔÏÈÉÏ´«¡·"), _T("×¢Òâ"), MB_YESNO) != IDYES)
+		{
+			m_bF1Enable = TRUE;
+			m_bF2Enable = TRUE;
+			return;
+		}
+	}
+
 	nScanSize = m_pModel->nScanSize;
 	nScanType = m_pModel->nScanType;
 	nScanDpi = m_pModel->nScanDpi;
@@ -1132,6 +1219,7 @@ void CScanToolDlg::OnBnClickedBtnScan()
 	if (!m_pPapersInfo)
 	{
 		m_lcPicture.DeleteAllItems();
+		m_lProblemPaper.DeleteAllItems();
 		GetDlgItem(IDC_STATIC_SCANCOUNT)->SetWindowText(_T(""));
 
 		std::string strUtfPath = CMyCodeConvert::Gb2312ToUtf8(szPicTmpPath);
@@ -1159,7 +1247,6 @@ void CScanToolDlg::OnBnClickedBtnScan()
 
 
 	m_Source = m_scanSourceArry.GetAt(nScanSrc);
-
 
 	bool bShowScanSrcUI = g_bShowScanSrcUI;
 
@@ -1209,6 +1296,8 @@ void CScanToolDlg::OnBnClickedBtnScan()
 		GetDlgItem(IDC_BTN_ReBack)->EnableWindow(TRUE);
 		GetDlgItem(IDC_STATIC_STATUS)->SetWindowText(_T(""));
 		m_nScanStatus = 2;
+		ReleaseTwain();
+		m_bTwainInit = FALSE;
 	}
 
 	m_bF1Enable = TRUE;
@@ -1275,6 +1364,7 @@ void CScanToolDlg::OnBnClickedBtnScanall()
 	if (!m_pPapersInfo)
 	{
 		m_lcPicture.DeleteAllItems();
+		m_lProblemPaper.DeleteAllItems();
 		GetDlgItem(IDC_STATIC_SCANCOUNT)->SetWindowText(_T(""));
 
 		std::string strUtfPath = CMyCodeConvert::Gb2312ToUtf8(szPicTmpPath);
@@ -1441,11 +1531,20 @@ void CScanToolDlg::OnCbnSelchangeComboModel()
 	m_comboModel.GetLBText(m_comboModel.GetCurSel(), strModelName);
 	CString strModelPath = g_strCurrentPath + _T("Model\\") + strModelName;
 	CString strModelFullPath = strModelPath + _T(".mod");
-	UnZipFile(strModelFullPath);
+//	UnZipFile(strModelFullPath);
+	CZipObj zipObj;
+	zipObj.setLogger(g_pLogger);
+	zipObj.UnZipFile(strModelFullPath);
 
 	SAFE_RELEASE(m_pModel);
 	m_pModel = LoadModelFile(strModelPath);
-	m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+	if (m_pShowModelInfoDlg) m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+	if (m_statusBar.GetSafeHwnd() && m_pModel)
+	{
+		USES_CONVERSION;
+		CString strModelName = A2T(m_pModel->strModelName.c_str());
+		m_statusBar.SetText(strModelName, 1, 0);
+	}
 	if (!m_pModel)
 		return;
 
@@ -1455,6 +1554,7 @@ void CScanToolDlg::OnCbnSelchangeComboModel()
 	//Ä£°åÇĞ»»ºóÖ®Ç°µÄÉ¨ÃèÊÔ¾íĞèÒªÇå³ı
 	m_pCurrentShowPaper = NULL;
 	m_lcPicture.DeleteAllItems();
+	m_lProblemPaper.DeleteAllItems();
 	SAFE_RELEASE(m_pPapersInfo);
 }
 
@@ -1588,7 +1688,7 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 	{
 		_bTwainContinue = FALSE;
 		m_nScanStatus = 2;
-		std::string strLog = "»ñÈ¡Í¼ÏñÊ±·ÖÅäÄÚ´æÊ§°Ü";
+		std::string strLog = "»ñÈ¡Í¼ÏñÊ±ÏµÍ³·ÖÅäÄÚ´æÊ§°Ü";
 		g_pLogger->information(strLog);
 		SetStatusShowInfo(A2T(strLog.c_str()), TRUE);
 		return;
@@ -1663,7 +1763,7 @@ void CScanToolDlg::SetImage(HANDLE hBitmap, int bits)
 		cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
 
 		//++ 2016.8.26 ÅĞ¶ÏÉ¨ÃèÍ¼Æ¬·½Ïò£¬²¢½øĞĞĞı×ª
-		if (m_pModel/* && m_pModel->nType*/)	//Ö»Õë¶ÔÊ¹ÓÃÖÆ¾í¹¤¾ß×Ô¶¯Éú³ÉµÄÄ£°åÊ¹ÓÃĞı×ª¼ì²â¹¦ÄÜ£¬ÒòÎªÖÆ¾í¹¤¾ßµÄÍ¼Æ¬·½Ïò¹Ì¶¨
+		if (m_pModel /*&& m_pModel->nType*/)	//Ö»Õë¶ÔÊ¹ÓÃÖÆ¾í¹¤¾ß×Ô¶¯Éú³ÉµÄÄ£°åÊ¹ÓÃĞı×ª¼ì²â¹¦ÄÜ£¬ÒòÎªÖÆ¾í¹¤¾ßµÄÍ¼Æ¬·½Ïò¹Ì¶¨
 		{
 			int nResult = CheckOrientation(matTest2, nOrder - 1, m_nDoubleScan == 0 ? false : true);
 			switch (nResult)	//1:Õë¶ÔÄ£°åÍ¼ÏñĞèÒª½øĞĞµÄĞı×ª£¬ÕıÏò£¬²»ĞèÒªĞı×ª£¬2£ºÓÒ×ª90(Ä£°åÍ¼ÏñĞı×ª), 3£º×ó×ª90(Ä£°åÍ¼ÏñĞı×ª), 4£ºÓÒ×ª180(Ä£°åÍ¼ÏñĞı×ª)
@@ -1842,7 +1942,7 @@ void CScanToolDlg::ScanDone(int nStatus)
 
 #ifndef TO_WHTY
 	//ÏÔÊ¾ËùÓĞÊ¶±ğÍê³ÉµÄ×¼¿¼Ö¤ºÅ
-	if (m_bModifySN)
+	if (g_nOperatingMode == 1 || m_bModifySN)
 	{
 		int nCount = m_lcPicture.GetItemCount();
 		for (int i = 0; i < nCount; i++)
@@ -1930,22 +2030,19 @@ void CScanToolDlg::OnNMDblclkListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 
 	//Ë«»÷Îª¿ÕµÄ×¼¿¼Ö¤ºÅÊ±ÏÔÊ¾×¼¿¼Ö¤ºÅĞŞ¸Ä´°¿Ú
 	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(m_nCurrItemPaperList);
-	if (m_bModifySN && m_pModel && pItemPaper && (pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH))
+	if ((g_nOperatingMode == 1 || m_bModifySN) && m_pModel && pItemPaper && (pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH))
 	{
-		CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo);
+		if (!m_pStudentMgr)
+		{
+			USES_CONVERSION;
+			m_pStudentMgr = new CStudentMgr();
+			std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+			bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+		}
+		CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr, pItemPaper);
 		zkzhDlg.DoModal();
 
-		//ÏÔÊ¾ËùÓĞÊ¶±ğÍê³ÉµÄ×¼¿¼Ö¤ºÅ
-		USES_CONVERSION;
-		int nCount = m_lcPicture.GetItemCount();
-		for (int i = 0; i < nCount; i++)
-		{
-			pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(i);
-			if (pItemPaper)
-			{
-				m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
-			}
-		}
+		ShowPapers(m_pPapersInfo);
 	}
 #else
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcPicture.GetItemData(pNMItemActivate->iItem);
@@ -2012,7 +2109,6 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			for (int j = 0; itHTracker != pPaper->pModel->vecPaperModel[i]->lSelHTracker.end(); itHTracker++, j++)
 			{
 				cv::Rect rt = (*itHTracker).rt;
-				//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				rectangle(tmp, rt, CV_RGB(25, 200, 20), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
@@ -2021,7 +2117,6 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			for (int j = 0; itVTracker != pPaper->pModel->vecPaperModel[i]->lSelVTracker.end(); itVTracker++, j++)
 			{
 				cv::Rect rt = (*itVTracker).rt;
-				//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				rectangle(tmp, rt, CV_RGB(25, 200, 20), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
@@ -2032,7 +2127,6 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		for (int j = 0; itNormal != (*itPic)->lNormalRect.end(); itNormal++, j++)
 		{
 			cv::Rect rt = (*itNormal).rt;
-//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 			char szCP[20] = { 0 };
 			if (itNormal->eCPType == SN || itNormal->eCPType == OMR)
@@ -2052,7 +2146,6 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i]->lSelFixRoi.end(); itSelRoi++, j++)
 			{
 				cv::Rect rt = (*itSelRoi).rt;
-				//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				char szCP[20] = { 0 };
 				// 				sprintf_s(szCP, "FIX%d", j);
@@ -2061,13 +2154,11 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
 		}
-		
 
 		RECTLIST::iterator itPicFix = (*itPic)->lFix.begin();														//ÏÔÊ¾Ê¶±ğ³öÀ´µÄ¶¨µã
 		for (int j = 0; itPicFix != (*itPic)->lFix.end(); itPicFix++, j++)
 		{
 			cv::Rect rt = (*itPicFix).rt;
-//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 			char szCP[20] = { 0 };
 			sprintf_s(szCP, "R_F%d", j);
@@ -2081,7 +2172,6 @@ void CScanToolDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[i]->lFix.end(); itFixRect++, j++)
 			{
 				cv::Rect rt = (*itFixRect).rt;
-				//			GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 				char szCP[20] = { 0 };
 				sprintf_s(szCP, "M_F%d", j);
@@ -2263,7 +2353,6 @@ int CScanToolDlg::PaintIssueRect(pST_PaperInfo pPaper)
 				for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i]->lSelFixRoi.end(); itSelRoi++, j++)
 				{
 					cv::Rect rt = (*itSelRoi).rt;
-					//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
 
 					char szCP[20] = { 0 };
 					// 				sprintf_s(szCP, "FIX%d", j);
@@ -2277,7 +2366,6 @@ int CScanToolDlg::PaintIssueRect(pST_PaperInfo pPaper)
 			for (int j = 0; itPicFix != (*itPic)->lFix.end(); itPicFix++, j++)
 			{
 				cv::Rect rt = (*itPicFix).rt;
-//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i].lFix, rt);
 
 				char szCP[20] = { 0 };
 				sprintf_s(szCP, "R_F%d", j);
@@ -2292,7 +2380,6 @@ int CScanToolDlg::PaintIssueRect(pST_PaperInfo pPaper)
 				for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[i]->lFix.end(); itFixRect++, j++)
 				{
 					cv::Rect rt = (*itFixRect).rt;
-					//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
 
 					char szCP[20] = { 0 };
 					sprintf_s(szCP, "M_F%d", j);
@@ -2444,7 +2531,7 @@ LRESULT CScanToolDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 {
 	pST_PaperInfo pPaper = (pST_PaperInfo)wParam;
 	pPAPERSINFO   pPapers = (pPAPERSINFO)lParam;
-	if (!m_bModifySN)
+	if (g_nOperatingMode != 1 && !m_bModifySN)
 		return FALSE;
 
 	USES_CONVERSION;
@@ -2461,6 +2548,65 @@ LRESULT CScanToolDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
+LRESULT CScanToolDlg::MsgPkg2PapersOk(WPARAM wParam, LPARAM lParam)
+{
+	pPAPERSINFO pPapers = (pPAPERSINFO)wParam;
+
+	if (m_pPapersInfo && m_pPapersInfo->nPapersType == 0)
+	{
+		char szLogInfo[200] = { 0 };
+		sprintf_s(szLogInfo, "»Ö¸´ÊÔ¾í´ü(%s)Ê§°Ü", pPapers->strPapersName.c_str());
+		SAFE_RELEASE(pPapers);
+		return FALSE;
+	}
+
+	USES_CONVERSION;
+	SAFE_RELEASE(m_pPapersInfo);
+	m_lcPicture.DeleteAllItems();
+	m_lProblemPaper.DeleteAllItems();
+
+	m_pPapersInfo = pPapers;
+	for (auto pPaper : m_pPapersInfo->lPaper)
+	{
+		int nCount = m_lcPicture.GetItemCount();
+		char szCount[10] = { 0 };
+		sprintf_s(szCount, "%d", nCount + 1);
+		m_lcPicture.InsertItem(nCount, NULL);
+		m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+		if (pPaper->bModifyZKZH)
+			m_lcPicture.SetItemText(nCount, 2, _T("*"));
+		m_lcPicture.SetItemData(nCount, (DWORD_PTR)pPaper);
+	}
+	//ÏÔÊ¾ĞèÒªÖØÉ¨µÄÒì³£ÊÔ¾í
+	m_lProblemPaper.DeleteAllItems();
+	for (auto pPaper : m_pPapersInfo->lIssue)
+	{
+		int nCount = m_lProblemPaper.GetItemCount();
+		char szCount[10] = { 0 };
+		sprintf_s(szCount, "%d", nCount + 1);
+		m_lProblemPaper.InsertItem(nCount, NULL);
+		m_lProblemPaper.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+		m_lProblemPaper.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
+		CString strErrInfo = _T("");
+		if (pPaper->strSN.empty())	strErrInfo = _T("¿¼ºÅÎª¿Õ");
+		if (pPaper->bReScan)	strErrInfo = _T("ÖØÉ¨");
+		m_lProblemPaper.SetItemText(nCount, 2, (LPCTSTR)strErrInfo);
+		m_lProblemPaper.SetItemData(nCount, (DWORD_PTR)pPaper);
+
+		CString strTips = _T("Òì³£ÊÔ¾í£¬½«²»»áÉÏ´«£¬Ò²²»»á²ÎÓëÆÀ¾í¡£ ĞèÒªµ¥¶ÀÕÒ³ö£¬ºóÃæµ¥¶ÀÉ¨Ãè");
+		m_lProblemPaper.SetItemToolTipText(nCount, 0, strTips);
+		m_lProblemPaper.SetItemToolTipText(nCount, 1, strTips);
+		m_lProblemPaper.SetItemToolTipText(nCount, 2, strTips);
+	}
+
+	char szLogInfo[200] = { 0 };
+	sprintf_s(szLogInfo, "´ÓÊÔ¾í´ü(%s)»Ö¸´ĞÅÏ¢Íê³É", pPapers->strPapersName.c_str());
+	SetStatusShowInfo(A2T(szLogInfo));
+
+	return TRUE;
+}
+
 void CScanToolDlg::OnBnClickedBtnUploadpapers()
 {
 	m_bF2Enable = FALSE;
@@ -2473,8 +2619,30 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		return;
 	}
 
+	if (m_pPapersInfo->nPapersType == 1)
+	{
+		AfxMessageBox(_T("ÕâÊÇÒÑ¾­´ò°ü¹ıµÄÊÔ¾í°ü£¬²»ÄÜÔÙ´Î´ò°üÉÏ´«"));
+		m_bF2Enable = TRUE;
+		m_bF1Enable = TRUE;
+		return;
+	}
+
+	bool bRecogComplete = true;
+#ifndef TO_WHTY
+	for (auto p : m_pPapersInfo->lPaper)
+	{
+		if (!p->bRecogComplete)
+		{
+			bRecogComplete = false;
+			break;
+		}
+	}
+#else
 	int nUnRecogCount = g_lRecogTask.size();
 	if (nUnRecogCount > 0)
+		bRecogComplete = false;
+#endif
+	if (!bRecogComplete)
 	{
 		AfxMessageBox(_T("ÇëÉÔºó£¬Í¼ÏñÕıÔÚÊ¶±ğ£¡"));
 		m_bF2Enable = TRUE;
@@ -2512,12 +2680,28 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		return;
 	}
 #endif
+
 	if (m_pPapersInfo->lIssue.size() > 0)
 	{
-		AfxMessageBox(_T("´æÔÚÊ¶±ğÒì³£ÊÔ¾í£¬²»ÄÜÉÏ´«£¬ÇëÏÈ´¦ÀíÒì³£ÊÔ¾í"));
-		m_bF2Enable = TRUE;
-		m_bF1Enable = TRUE;
-		return;
+		if (g_nOperatingMode == 2)
+		{
+			AfxMessageBox(_T("´æÔÚÊ¶±ğÒì³£ÊÔ¾í£¬²»ÄÜÉÏ´«£¬ÇëÏÈ´¦ÀíÒì³£ÊÔ¾í"));
+			m_bF2Enable = TRUE;
+			m_bF1Enable = TRUE;
+			return;
+		}
+		else
+		{
+			CString strMsg = _T("");
+			strMsg.Format(_T("´æÔÚ%d·İÎÊÌâÊÔ¾í£¬ÕâĞ©ÊÔ¾íĞèÒªµ¥¶ÀÕÒ³öÉ¨Ãè£¬´Ë´Î½«²»ÉÏ´«Õâ%d·İÊÔ¾í£¬ÊÇ·ñÈ·¶¨ÉÏ´«?"), m_pPapersInfo->lIssue.size(), m_pPapersInfo->lIssue.size());
+			if (MessageBox(strMsg, _T("¾¯¸æ"), MB_YESNO) != IDYES)
+			{
+				m_bF2Enable = TRUE;
+				m_bF1Enable = TRUE;
+				return;
+			}
+			m_pPapersInfo->nPaperCount = m_pPapersInfo->lPaper.size();		//ĞŞ¸ÄÉ¨ÃèÊıÁ¿£¬½«ÎÊÌâÊÔ¾íÉ¾³ı£¬²»Ëãµ½É¨ÃèÊÔ¾íÖĞ¡£
+		}
 	}
 
 	int nExamID = 0;
@@ -2534,17 +2718,27 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	nExamID = dlg.m_nExamID;
 	nSubjectID = dlg.m_SubjectID;
 #else
-	#if 1
-		CPapersInfoSaveDlg dlg(m_pPapersInfo, m_pModel);
-		if (dlg.DoModal() != IDOK)
-		{
-			m_bF2Enable = TRUE;
-			m_bF1Enable = TRUE;
-			return;
-		}
-		std::string strExamID = T2A(dlg.m_strExamID);
-		nSubjectID = dlg.m_SubjectID;
-	#else
+#if 1
+	CPapersInfoSave4TyDlg dlg;
+	if (dlg.DoModal() != IDOK)
+	{
+		m_bF2Enable = TRUE;
+		m_bF1Enable = TRUE;
+		return;
+	}
+	std::string strExamID = T2A(dlg.m_strExamID);
+	nSubjectID = 0;
+
+	// 		CPapersInfoSaveDlg dlg(m_pPapersInfo, m_pModel);
+	// 		if (dlg.DoModal() != IDOK)
+	// 		{
+	// 			m_bF2Enable = TRUE;
+	// 			m_bF1Enable = TRUE;
+	// 			return;
+	// 		}
+	// 		std::string strExamID = T2A(dlg.m_strExamID);
+	// 		nSubjectID = dlg.m_SubjectID;
+#else
 	if (MessageBox(_T("ÊÇ·ñÉÏ´«µ±Ç°É¨Ãè¾í?"), _T("ÌáÊ¾"), MB_YESNO) != IDYES)
 	{
 		m_bF2Enable = TRUE;
@@ -2558,7 +2752,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	char szPapersName[50] = { 0 };
 	sprintf_s(szPapersName, "%d%02d%02d%02d%02d%02d-%05d", nowTime.year(), nowTime.month(), nowTime.day(), nowTime.hour(), nowTime.minute(), nowTime.second(), rm.next(99999));
 	m_pPapersInfo->strPapersName = szPapersName;
-	#endif
+#endif
 #endif
 
 	clock_t start, end;
@@ -2584,7 +2778,19 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		jsnPaper.set("name", (*itNomarlPaper)->strStudentInfo);
 		jsnPaper.set("zkzh", (*itNomarlPaper)->strSN);
 		jsnPaper.set("qk", (*itNomarlPaper)->nQKFlag);
-		
+
+		int nIssueFlag = 0;			//0 - Õı³£ÊÔ¾í£¬ÍêÈ«»úÆ÷Ê¶±ğÕı³£µÄ£¬ÎŞÈË¹¤¸ÉÔ¤£¬1 - Õı³£ÊÔ¾í£¬É¨ÃèÔ±ÊÖ¶¯ĞŞ¸Ä¹ı£¬2-×¼¿¼Ö¤ºÅÎª¿Õ£¬É¨ÃèÔ±Ã»ÓĞĞŞ¸Ä£¬3-É¨ÃèÔ±±êÊ¶ÁËĞèÒªÖØÉ¨µÄÊÔ¾í¡£
+		if ((*itNomarlPaper)->strSN.empty() && !(*itNomarlPaper)->bModifyZKZH)
+			nIssueFlag = 2;
+		if ((*itNomarlPaper)->bModifyZKZH)
+			nIssueFlag = 1;
+		jsnPaper.set("issueFlag", nIssueFlag);
+		//++ÔÚÉÏ´«·şÎñÆ÷Ê±ÎŞÓÃ£¬Ö»ÔÚ´ÓPkg»Ö¸´PapersÊ±ÓĞÓÃ
+		jsnPaper.set("modify", (*itNomarlPaper)->bModifyZKZH);	//×¼¿¼Ö¤ºÅĞŞ¸Ä±êÊ¶
+		jsnPaper.set("reScan", (*itNomarlPaper)->bReScan);		//ÖØÉ¨±êÊ¶
+		jsnPaper.set("IssueList", 0);		//±êÊ¶´Ë¿¼ÉúÊôÓÚÎÊÌâÁĞ±í£¬ÔÚÉÏ´«·şÎñÆ÷Ê±ÎŞÓÃ£¬Ö»ÔÚ´ÓPkg»Ö¸´PapersÊ±ÓĞÓÃ
+		//--
+
 		Poco::JSON::Array jsnSnDetailArry;
 		SNLIST::iterator itSn = (*itNomarlPaper)->lSnResult.begin();
 		for (; itSn != (*itNomarlPaper)->lSnResult.end(); itSn++)
@@ -2667,6 +2873,113 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 		jsnPaper.set("electOmr", jsnElectOmrArry);		//Ñ¡×öÌâ½á¹û
 		jsnPaperArry.add(jsnPaper);
 	}
+
+	if (g_nOperatingMode == 1)		//¼òµ¥Ä£Ê½Ê±£¬Òì³£ÊÔ¾íÒ²Ò»ÆğÉÏ´«£¬×öÌØÊâ±êÊ¶
+	{
+		PAPER_LIST::iterator itIssuePaper = m_pPapersInfo->lIssue.begin();
+		int nNomarlCount = m_pPapersInfo->lPaper.size();
+		for (int j = nNomarlCount; itIssuePaper != m_pPapersInfo->lIssue.end(); itIssuePaper++, j++)
+		{
+			Poco::JSON::Object jsnPaper;
+			jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
+			jsnPaper.set("zkzh", (*itIssuePaper)->strSN);
+			jsnPaper.set("qk", (*itIssuePaper)->nQKFlag);
+
+			int nIssueFlag = 0;			//0 - Õı³£ÊÔ¾í£¬ÍêÈ«»úÆ÷Ê¶±ğÕı³£µÄ£¬ÎŞÈË¹¤¸ÉÔ¤£¬1 - Õı³£ÊÔ¾í£¬É¨ÃèÔ±ÊÖ¶¯ĞŞ¸Ä¹ı£¬2-×¼¿¼Ö¤ºÅÎª¿Õ£¬É¨ÃèÔ±Ã»ÓĞĞŞ¸Ä£¬3-É¨ÃèÔ±±êÊ¶ÁËĞèÒªÖØÉ¨µÄÊÔ¾í¡£
+			if ((*itIssuePaper)->strSN.empty())
+				nIssueFlag = 2;
+			if ((*itIssuePaper)->bReScan)		//ÉèÖÃÖØÉ¨È¨ÏŞ¸ü´ó£¬·ÅºóÃæÉèÖÃ
+				nIssueFlag = 3;	
+			jsnPaper.set("issueFlag", nIssueFlag);
+			//++ÔÚÉÏ´«·şÎñÆ÷Ê±ÎŞÓÃ£¬Ö»ÔÚ´ÓPkg»Ö¸´PapersÊ±ÓĞÓÃ
+			jsnPaper.set("modify", (*itIssuePaper)->bModifyZKZH);	//×¼¿¼Ö¤ºÅĞŞ¸Ä±êÊ¶
+			jsnPaper.set("reScan", (*itIssuePaper)->bReScan);		//ÖØÉ¨±êÊ¶
+			jsnPaper.set("IssueList", 1);		//±êÊ¶´Ë¿¼ÉúÊôÓÚÎÊÌâÁĞ±í£¬ÔÚÉÏ´«·şÎñÆ÷Ê±ÎŞÓÃ£¬Ö»ÔÚ´ÓPkg»Ö¸´PapersÊ±ÓĞÓÃ
+			//--
+
+			Poco::JSON::Array jsnSnDetailArry;
+			SNLIST::iterator itSn = (*itIssuePaper)->lSnResult.begin();
+			for (; itSn != (*itIssuePaper)->lSnResult.end(); itSn++)
+			{
+				Poco::JSON::Object jsnSnItem;
+				jsnSnItem.set("sn", (*itSn)->nItem);
+				jsnSnItem.set("val", (*itSn)->nRecogVal);
+
+				Poco::JSON::Object jsnSnPosition;
+				RECTLIST::iterator itRect = (*itSn)->lSN.begin();
+				for (; itRect != (*itSn)->lSN.end(); itRect++)
+				{
+					jsnSnPosition.set("x", itRect->rt.x);
+					jsnSnPosition.set("y", itRect->rt.y);
+					jsnSnPosition.set("w", itRect->rt.width);
+					jsnSnPosition.set("h", itRect->rt.height);
+				}
+				jsnSnItem.set("position", jsnSnPosition);
+				jsnSnDetailArry.add(jsnSnItem);
+			}
+			jsnPaper.set("snDetail", jsnSnDetailArry);
+
+			Poco::JSON::Array jsnOmrArry;
+			OMRRESULTLIST::iterator itOmr = (*itIssuePaper)->lOmrResult.begin();
+			for (; itOmr != (*itIssuePaper)->lOmrResult.end(); itOmr++)
+			{
+				Poco::JSON::Object jsnOmr;
+				jsnOmr.set("th", itOmr->nTH);
+				jsnOmr.set("type", itOmr->nSingle + 1);
+				jsnOmr.set("value", itOmr->strRecogVal);
+				jsnOmr.set("value2", itOmr->strRecogVal2);
+				jsnOmr.set("doubt", itOmr->nDoubt);
+				Poco::JSON::Array jsnPositionArry;
+				RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
+				for (; itRect != itOmr->lSelAnswer.end(); itRect++)
+				{
+					Poco::JSON::Object jsnItem;
+					char szVal[5] = { 0 };
+					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+					jsnItem.set("val", szVal);
+					jsnItem.set("x", itRect->rt.x);
+					jsnItem.set("y", itRect->rt.y);
+					jsnItem.set("w", itRect->rt.width);
+					jsnItem.set("h", itRect->rt.height);
+					jsnPositionArry.add(jsnItem);
+				}
+				jsnOmr.set("position", jsnPositionArry);
+				jsnOmrArry.add(jsnOmr);
+			}
+			jsnPaper.set("omr", jsnOmrArry);
+
+			Poco::JSON::Array jsnElectOmrArry;
+			ELECTOMR_LIST::iterator itElectOmr = (*itIssuePaper)->lElectOmrResult.begin();
+			for (; itElectOmr != (*itIssuePaper)->lElectOmrResult.end(); itElectOmr++)
+			{
+				Poco::JSON::Object jsnElectOmr;
+				jsnElectOmr.set("paperId", j + 1);
+				jsnElectOmr.set("doubt", itElectOmr->nDoubt);
+				jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
+				jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
+				jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
+				jsnElectOmr.set("value", itElectOmr->strRecogResult);
+				Poco::JSON::Array jsnPositionArry;
+				RECTLIST::iterator itRect = itElectOmr->lItemInfo.begin();
+				for (; itRect != itElectOmr->lItemInfo.end(); itRect++)
+				{
+					Poco::JSON::Object jsnItem;
+					char szVal[5] = { 0 };
+					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+					jsnItem.set("val", szVal);
+					jsnItem.set("x", itRect->rt.x);
+					jsnItem.set("y", itRect->rt.y);
+					jsnItem.set("w", itRect->rt.width);
+					jsnItem.set("h", itRect->rt.height);
+					jsnPositionArry.add(jsnItem);
+				}
+				jsnElectOmr.set("position", jsnPositionArry);
+				jsnElectOmrArry.add(jsnElectOmr);
+			}
+			jsnPaper.set("electOmr", jsnElectOmrArry);		//Ñ¡×öÌâ½á¹û
+			jsnPaperArry.add(jsnPaper);						//ÎÊÌâÊÔ¾íÒ²·ÅÈëÁĞ±íÖĞ
+		}
+	}
 	
 	//Ğ´ÊÔ¾í´üĞÅÏ¢µ½ÎÄ¼ş
 	std::string strUploader = CMyCodeConvert::Gb2312ToUtf8(T2A(strUser));
@@ -2682,10 +2995,12 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	jsnFileData.set("nUserId", nUserId);
 	jsnFileData.set("scanNum", m_pPapersInfo->nPaperCount);		//É¨ÃèµÄÑ§ÉúÊıÁ¿
 	jsnFileData.set("detail", jsnPaperArry);
+	jsnFileData.set("desc", CMyCodeConvert::Gb2312ToUtf8(m_pPapersInfo->strPapersDesc));
 
 	jsnFileData.set("nOmrDoubt", m_pPapersInfo->nOmrDoubt);
 	jsnFileData.set("nOmrNull", m_pPapersInfo->nOmrNull);
 	jsnFileData.set("nSnNull", m_pPapersInfo->nSnNull);
+	jsnFileData.set("RecogMode", g_nOperatingMode);			//Ê¶±ğÄ£Ê½£¬1-¼òµ¥Ä£Ê½(Óöµ½ÎÊÌâĞ£Ñéµã²»Í£Ö¹Ê¶±ğ)£¬2-ÑÏ¸ñÄ£Ê½
 	std::stringstream jsnString;
 	jsnFileData.stringify(jsnString, 0);
 
@@ -2773,6 +3088,7 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	pTask->strExtName = T2A(PAPERS_EXT_NAME);
 	pTask->strSavePath = szPapersSavePath;
 	pTask->strSrcFilePath = strSrcPicDirPath;
+	pTask->pPapersInfo = m_pPapersInfo;
 	g_fmCompressLock.lock();
 	g_lCompressTask.push_back(pTask);
 	g_fmCompressLock.unlock();
@@ -2782,8 +3098,10 @@ void CScanToolDlg::OnBnClickedBtnUploadpapers()
 	strInfo.Format(_T("ÕıÔÚ±£´æ%s..."), A2T(szZipName));
 	SetStatusShowInfo(strInfo, bWarn);
 
-	SAFE_RELEASE(m_pPapersInfo);
+//	SAFE_RELEASE(m_pPapersInfo);
+	m_pPapersInfo = NULL;
 	m_lcPicture.DeleteAllItems();
+	m_lProblemPaper.DeleteAllItems();
 	m_pCurrentShowPaper = NULL;
 }
 
@@ -2876,7 +3194,13 @@ void CScanToolDlg::OnBnClickedBtnModelmgr()
 	{
 		SAFE_RELEASE(m_pModel);
 		m_pModel = modelMgrDlg.m_pModel;
-		m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+		if (m_pShowModelInfoDlg) m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+		if (m_statusBar.GetSafeHwnd() && m_pModel)
+		{
+			USES_CONVERSION;
+			CString strModelName = A2T(m_pModel->strModelName.c_str());
+			m_statusBar.SetText(strModelName, 1, 0);
+		}
 		if (!m_pModel)
 			return;
 
@@ -2886,6 +3210,7 @@ void CScanToolDlg::OnBnClickedBtnModelmgr()
 		//Ä£°åÇĞ»»ºóÖ®Ç°µÄÉ¨ÃèÊÔ¾íĞèÒªÇå³ı
 		m_pCurrentShowPaper = NULL;
 		m_lcPicture.DeleteAllItems();
+		m_lProblemPaper.DeleteAllItems();
 		SAFE_RELEASE(m_pPapersInfo);
 	}
 }
@@ -2923,13 +3248,18 @@ void CScanToolDlg::OnLvnKeydownListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 	}
 }
 
-void CScanToolDlg::ShowPaperByItem(int nItem)
+void CScanToolDlg::ShowPaperByItem(int nItem, int nListCtrl /*= 0*/)
 {
 	if (nItem < 0)
 		return;
 
-	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcPicture.GetItemData(nItem);
-//	m_nCurrItemPaperList = pNMItemActivate->iItem;
+	pST_PaperInfo pPaper = NULL;
+	if (nListCtrl == 0)
+		pPaper = (pST_PaperInfo)m_lcPicture.GetItemData(nItem);
+	else
+		pPaper = (pST_PaperInfo)m_lProblemPaper.GetItemData(nItem);
+	if (pPaper == NULL)
+		return;
 
 	m_pCurrentShowPaper = pPaper;
 	if (pPaper->bIssuePaper)
@@ -2959,7 +3289,9 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 		m_pPapersInfo = new PAPERSINFO();
 
 		USES_CONVERSION;
-		for (int i = 0; i < 4; i++)
+		m_strCurrPicSavePath = T2A(g_strCurrentPath + _T("Paper\\TestPic\\"));
+
+		for (int i = 0; i < 40; i++)
 		{
 			int nStudentId = i / m_nModelPicNums + 1;
 			int nOrder = i % m_nModelPicNums + 1;
@@ -2988,15 +3320,47 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 			}
 			else
 				m_pPaper->lPic.push_back(pPic);
+
+			pPic->pPaper = m_pPaper;
+
+			//Ìí¼Óµ½Ê¶±ğÈÎÎñÁĞ±í
+			pRECOGTASK pTask = new RECOGTASK;
+			pTask->pPaper = m_pPaper;
+			g_lRecogTask.push_back(pTask);
 		}
 	}
+#if 0
+	//±¨Ãû¿â²âÊÔÊı¾İ
+	g_lBmkStudent.clear();
+	for (int i = 0; i < 100; i++)
+	{
+		ST_STUDENT stData;
+		stData.strZkzh = Poco::format("%d", 1001 + i);
+		stData.strName = "²âÊÔ";
 
-
-	CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo);
+		g_lBmkStudent.push_back(stData);
+	}
+#endif
+	SAFE_RELEASE(m_pStudentMgr);
+	if (!m_pStudentMgr)
+	{
+		USES_CONVERSION;
+		m_pStudentMgr = new CStudentMgr();
+		std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+		bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+		std::string strTableName = "student";
+		if (bResult) bResult = m_pStudentMgr->InitTable(strTableName);
+ 		if (bResult) bResult = m_pStudentMgr->InsertData(g_lBmkStudent, strTableName);
+ 		if (!bResult) SAFE_RELEASE(m_pStudentMgr);
+	}
+	
+	CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr);
 	zkzhDlg.DoModal();
+
+	ShowPapers(m_pPapersInfo);
 #endif
 	//--
-	CShowFileTransferDlg dlg;
+	CShowFileTransferDlg dlg(this);
 	dlg.DoModal();
 }
 
@@ -3129,6 +3493,48 @@ void CScanToolDlg::InitCompressList()
 	}
 }
 
+void CScanToolDlg::ShowPapers(pPAPERSINFO pPapers)
+{
+	//ÏÔÊ¾ËùÓĞÊ¶±ğÍê³ÉµÄ×¼¿¼Ö¤ºÅ
+	USES_CONVERSION;
+	//ÖØĞÂÏÔÊ¾ºÏ¸ñÊÔ¾í
+	m_lcPicture.DeleteAllItems();
+	for (auto pPaper : pPapers->lPaper)
+	{
+		int nCount = m_lcPicture.GetItemCount();
+		char szCount[10] = { 0 };
+		sprintf_s(szCount, "%d", nCount + 1);
+		m_lcPicture.InsertItem(nCount, NULL);
+		m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+		if (pPaper->bModifyZKZH)
+			m_lcPicture.SetItemText(nCount, 2, _T("*"));
+		m_lcPicture.SetItemData(nCount, (DWORD_PTR)pPaper);
+	}
+
+	//ÏÔÊ¾ĞèÒªÖØÉ¨µÄÒì³£ÊÔ¾í
+	m_lProblemPaper.DeleteAllItems();
+	for (auto pPaper : pPapers->lIssue)
+	{
+		int nCount = m_lProblemPaper.GetItemCount();
+		char szCount[10] = { 0 };
+		sprintf_s(szCount, "%d", nCount + 1);
+		m_lProblemPaper.InsertItem(nCount, NULL);
+		m_lProblemPaper.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+		m_lProblemPaper.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
+		CString strErrInfo = _T("");
+		if (pPaper->strSN.empty())	strErrInfo = _T("¿¼ºÅÎª¿Õ");
+		if (pPaper->bReScan)	strErrInfo = _T("ÖØÉ¨");
+		m_lProblemPaper.SetItemText(nCount, 2, (LPCTSTR)strErrInfo);
+		m_lProblemPaper.SetItemData(nCount, (DWORD_PTR)pPaper);
+
+		CString strTips = _T("Òì³£ÊÔ¾í£¬½«²»»áÉÏ´«£¬Ò²²»»á²ÎÓëÆÀ¾í¡£ ĞèÒªµ¥¶ÀÕÒ³ö£¬ºóÃæµ¥¶ÀÉ¨Ãè");
+		m_lProblemPaper.SetItemToolTipText(nCount, 0, strTips);
+		m_lProblemPaper.SetItemToolTipText(nCount, 1, strTips);
+		m_lProblemPaper.SetItemToolTipText(nCount, 2, strTips);
+	}
+}
+
 void CScanToolDlg::InitParam()
 {
 	std::string strLog;
@@ -3151,7 +3557,12 @@ void CScanToolDlg::InitParam()
 		_dDiffExit_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffExit", 0.15);
 
 		_nThreshold_Recog2_ = pConf->getInt("RecogOmrSn_Fun2.nThreshold_Fun2", 240);
-		
+
+		_dCompThread_3_ = pConf->getDouble("RecogOmrSn_Fun3.fCompTread", 170);
+		_dDiffThread_3_ = pConf->getDouble("RecogOmrSn_Fun3.fDiffThread", 20);
+		_dDiffExit_3_ = pConf->getDouble("RecogOmrSn_Fun3.fDiffExit", 50);
+		_dAnswerSure_ = pConf->getDouble("RecogOmrSn_Fun3.fAnswerSure", 100);
+
 		strLog = "¶ÁÈ¡Ê¶±ğ»Ò¶È²ÎÊıÍê³É";
 	}
 	catch (Poco::Exception& exc)
@@ -3201,10 +3612,17 @@ void CScanToolDlg::InitShow(pMODEL pModel)
 	else
 		m_nModelPicNums = 1;
 	InitTab();
-	m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+	if (m_pShowModelInfoDlg) m_pShowModelInfoDlg->ShowModelInfo(m_pModel);
+	if (m_statusBar.GetSafeHwnd() && m_pModel)
+	{
+		USES_CONVERSION;
+		CString strModelName = A2T(m_pModel->strModelName.c_str());
+		m_statusBar.SetText(strModelName, 1, 0);
+	}
 
 	SAFE_RELEASE(m_pPapersInfo);
 	m_lcPicture.DeleteAllItems();
+	m_lProblemPaper.DeleteAllItems();
 	m_pCurrentShowPaper = NULL;
 
 	m_comboModel.ResetContent();
@@ -3775,9 +4193,7 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 	if (m_pModel->nHasHead)
 		return nResult;
 
-	const float fMinPer = 0.5;		//Ê¶±ğ¾ØĞÎÊı/Ä£°å¾ØĞÎÊı µÍÓÚ×îĞ¡Öµ£¬ÈÏÎª²»ºÏ¸ñ
-	const float fMaxPer = 1.5;		//Ê¶±ğ¾ØĞÎÊı/Ä£°å¾ØĞÎÊı ³¬¹ı×î´óÖµ£¬ÈÏÎª²»ºÏ¸ñ
-	const float fMidPer = 0.8;
+	std::string strLog;
 
 	cv::Rect rtModelPic;
 	rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
@@ -3789,47 +4205,125 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 	int nModelPicPersent = rtModelPic.width / rtModelPic.height;	//0||1
 	int nSrcPicPercent = matSrc.cols / matSrc.rows;
 
-	cv::Rect rt1 = m_pModel->vecPaperModel[n]->rtHTracker;
-	cv::Rect rt2 = m_pModel->vecPaperModel[n]->rtVTracker;
-	TRACE("Ë®Æ½ÏğÆ¤½î:(%d,%d,%d,%d), ´¹Ö±ÏğÆ¤½î(%d,%d,%d,%d)\n", rt1.x, rt1.y, rt1.width, rt1.height, rt2.x, rt2.y, rt2.width, rt2.height);
+	if (m_pModel->nZkzhType == 2)			//Ê¹ÓÃÌõÂëµÄÊ±ºò£¬ÏÈÍ¨¹ıÌõÂëÀ´ÅĞ¶Ï·½Ïò
+	{
+		if (nModelPicPersent == nSrcPicPercent)
+		{
+			TRACE("ÓëÄ£°åÍ¼Æ¬·½ÏòÒ»ÖÂ\n");
+			for (int i = 1; i <= 4; i = i + 3)
+			{
+				COmrRecog omrRecogObj;
+				bool bResult = omrRecogObj.RecogZkzh(n, matSrc, m_pModel, i);
+				if (!bResult)
+					continue;
 
-	float fFirst_H, fFirst_V, fSecond_H, fSecond_V;
-	fFirst_H = fFirst_V = fSecond_H = fSecond_V = 0.0;
+				bFind = true;
+				nResult = i;
+				break;
+			}
+		}
+		else
+		{
+			TRACE("ÓëÄ£°åÍ¼Æ¬·½Ïò²»Ò»ÖÂ\n");
+			for (int i = 2; i <= 3; i++)
+			{
+				COmrRecog omrRecogObj;
+				bool bResult = omrRecogObj.RecogZkzh(n, matSrc, m_pModel, i);
+				if (!bResult)
+					continue;
+
+				bFind = true;
+				nResult = i;
+				break;
+			}
+		}
+		if (bFind)
+			return nResult;
+
+		strLog.append("Í¨¹ıÌõĞÎÂë»ò¶şÎ¬ÂëÅĞ¶ÏÊÔ¾íĞı×ª·½ÏòÊ§°Ü£¬ÏÂÃæÍ¨¹ı¶¨Î»µãÅĞ¶Ï\n");
+	}
+
+	int nCount = m_pModel->vecPaperModel[n]->lGray.size() + m_pModel->vecPaperModel[n]->lCourse.size();
+	if (nCount == 0)
+		return nResult;
+
 	if (nModelPicPersent == nSrcPicPercent)	//ÓëÄ£°åÍ¼Æ¬·½ÏòÒ»ÖÂ£¬ĞèÅĞ¶ÏÕıÏò»¹ÊÇ·´ÏòÒ»ÖÂ
 	{
 		TRACE("ÓëÄ£°åÍ¼Æ¬·½ÏòÒ»ÖÂ\n");
 		for (int i = 1; i <= 4; i = i + 3)
 		{
+			//ÏÈ²é¶¨µã
+			RECTLIST lFix;
+			COmrRecog omrRecogObj;
+			bool bResult = omrRecogObj.RecogFixCP(n, matSrc, lFix, m_pModel, i);
+// 			if (!bResult)
+// 				continue;
+#ifdef WarpAffine_TEST
+			cv::Mat	inverseMat(2, 3, CV_32FC1);
+			PicTransfer(0, matSrc, lFix, m_pModel->vecPaperModel[n]->lFix, inverseMat);
+#endif
+
+			RECTLIST lModelTmp;
+			if (lFix.size() < 3)
+			{
+				RECTLIST::iterator itFix = lFix.begin();
+				for (auto itFix : lFix)
+				{
+					RECTLIST::iterator itModel = m_pModel->vecPaperModel[n]->lFix.begin();
+					for (int j = 0; itModel != m_pModel->vecPaperModel[n]->lFix.end(); j++, itModel++)
+					{
+						if (j == itFix.nTH)
+						{
+							RECTINFO rcModel = *itModel;
+
+							cv::Rect rtModelPic;
+							rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+							rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+							rcModel.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcModel.rt, i);
+
+							lModelTmp.push_back(rcModel);
+							break;
+						}
+					}
+				}
+			}
+
 			TRACE("²é»Ò¶ÈĞ£Ñéµã\n");
 			bool bContinue = false;
 			int nRtCount = 0;
 			for (auto rcGray : m_pModel->vecPaperModel[n]->lGray)
 			{
-				//ÏÈ°Ñ¾ØĞÎÃæ»ıÀ©´ó£¬ÈçºÎ²é¾ØĞÎ£¬ÓÃÃæ»ıÀ´±È½Ï
-				cv::Rect rtChk = cv::Rect(rcGray.rt.tl() - cv::Point(10, 10), rcGray.rt.br() + cv::Point(10, 10));
-				cv::Rect rt = GetRectByOrientation(rtModelPic, rtChk, i);
-				cv::Rect rtReal;
-				if (bGetMaxRect(matSrc, rt, rcGray, rtReal))
+				RECTINFO rcItem = rcGray;
+
+				if (lFix.size() < 3)
 				{
-					float fRealVal = GetRtDensity(matSrc, rtReal, rcGray);				//ÃÜ¶ÈÊÇ·ñ´ïµ½ÒªÇó
-					float fDensityPer = fRealVal / rtReal.area();
-					float fPer = fRealVal / rcGray.fStandardValue;
-					if (fDensityPer <= 0.5)			//ÃÜ¶ÈÁ¬Ä£°åµÄÒ»°ë¶¼Ã»ÓĞÖ±½ÓÍË³öÅĞ¶Ï
+					cv::Rect rtModelPic;
+					rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+					rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+					rcItem.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcItem.rt, i);
+
+					GetPosition(lFix, lModelTmp, rcItem.rt);		//¸ù¾İÊµ¼Ê¶¨µã¸öÊı»ñÈ¡¾ØĞÎµÄÏà¶ÔÎ»ÖÃ£¬¶¨µãÊıÎª3»ò4Ê±»ñÈ¡µÄÊµ¼ÊÉÏ»¹ÊÇÄ£°åÎ»ÖÃ
+				}
+				else
+					GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//¸ù¾İÊµ¼Ê¶¨µã¸öÊı»ñÈ¡¾ØĞÎµÄÏà¶ÔÎ»ÖÃ£¬¶¨µãÊıÎª3»ò4Ê±»ñÈ¡µÄÊµ¼ÊÉÏ»¹ÊÇÄ£°åÎ»ÖÃ
+
+				if (omrRecogObj.RecogRtVal(rcItem, matSrc))
+				{
+					if (rcItem.fRealDensity / rcGray.fStandardDensity > rcGray.fStandardValuePercent && rcItem.fRealValue / rcGray.fStandardValue > rcGray.fStandardValuePercent)
 					{
-						bContinue = true;
-						break;
-					}
-					if (fDensityPer / rcGray.fStandardDensity > rcGray.fStandardValuePercent)
 						++nRtCount;
+					}
 					else
 					{
-						TRACE("ÅĞ¶Ï»Ò¶ÈĞ£ÑéµãµÄÃÜ¶È°Ù·Ö±È: %f, µÍÓÚÒªÇóµÄ: %f\n", fPer, rcGray.fStandardValuePercent);
+						TRACE("ÅĞ¶Ï»Ò¶ÈĞ£ÑéµãµÄÃÜ¶È°Ù·Ö±È: %f, µÍÓÚÒªÇóµÄ: %f\n", rcItem.fRealValuePercent, rcGray.fStandardValuePercent);
+// 						bContinue = true;
+// 						break;
 					}
 				}
 				else
 				{
-					bContinue = true;
-					break;
+// 					bContinue = true;
+// 					break;
 				}
 			}
 			if (bContinue)
@@ -3839,31 +4333,37 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			bContinue = false;
 			for (auto rcSubject : m_pModel->vecPaperModel[n]->lCourse)
 			{
-				//ÏÈ°Ñ¾ØĞÎÃæ»ıÀ©´ó£¬ÈçºÎ²é¾ØĞÎ£¬ÓÃÃæ»ıÀ´±È½Ï
-				cv::Rect rtChk = cv::Rect(rcSubject.rt.tl() - cv::Point(10, 10), rcSubject.rt.br() + cv::Point(10, 10));
-				cv::Rect rt = GetRectByOrientation(rtModelPic, rtChk, i);
-				cv::Rect rtReal;
-				if (bGetMaxRect(matSrc, rt, rcSubject, rtReal))
+				RECTINFO rcItem = rcSubject;
+
+				if (lFix.size() < 3)
 				{
-					float fRealVal = GetRtDensity(matSrc, rtReal, rcSubject);				//ÃÜ¶ÈÊÇ·ñ´ïµ½ÒªÇó
-					float fDensityPer = fRealVal / rtReal.area();
-					float fPer = fRealVal / rcSubject.fStandardValue;
-					if (fDensityPer <= 0.5)			//ÃÜ¶ÈÁ¬Ä£°åµÄÒ»°ë¶¼Ã»ÓĞÖ±½ÓÍË³öÅĞ¶Ï
+					cv::Rect rtModelPic;
+					rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+					rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+					rcItem.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcItem.rt, i);
+
+					GetPosition(lFix, lModelTmp, rcItem.rt);		//¸ù¾İÊµ¼Ê¶¨µã¸öÊı»ñÈ¡¾ØĞÎµÄÏà¶ÔÎ»ÖÃ£¬¶¨µãÊıÎª3»ò4Ê±»ñÈ¡µÄÊµ¼ÊÉÏ»¹ÊÇÄ£°åÎ»ÖÃ
+				}
+				else
+					GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//¸ù¾İÊµ¼Ê¶¨µã¸öÊı»ñÈ¡¾ØĞÎµÄÏà¶ÔÎ»ÖÃ£¬¶¨µãÊıÎª3»ò4Ê±»ñÈ¡µÄÊµ¼ÊÉÏ»¹ÊÇÄ£°åÎ»ÖÃ
+
+				if (omrRecogObj.RecogRtVal(rcItem, matSrc))
+				{
+					if (rcItem.fRealDensity / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent && rcItem.fRealValue / rcSubject.fStandardValue > rcSubject.fStandardValuePercent)
 					{
-						bContinue = true;
-						break;
-					}
-					if (fDensityPer / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent)
 						++nRtCount;
+					}
 					else
 					{
-						TRACE("ÅĞ¶Ï¿ÆÄ¿Ğ£ÑéµãµÄÃÜ¶È°Ù·Ö±È: %f, µÍÓÚÒªÇóµÄ: %f\n", fPer, rcSubject.fStandardValuePercent);
+						TRACE("ÅĞ¶Ï¿ÆÄ¿Ğ£ÑéµãµÄÃÜ¶È°Ù·Ö±È: %f, µÍÓÚÒªÇóµÄ: %f\n", rcItem.fRealValuePercent, rcSubject.fStandardValuePercent);
+// 						bContinue = true;
+// 						break;
 					}
 				}
 				else
 				{
-					bContinue = true;
-					break;
+// 					bContinue = true;
+// 					break;
 				}
 			}
 			if (bContinue)
@@ -3879,22 +4379,27 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 					nResult = i;
 					break;
 				}
+				std::string strTmpLog = Poco::format("×ÜĞ£ÑéµãÊı=%d, Êµ¼ÊÊ¶±ğĞ£ÑéµãÊı=%d\n", nAllCount, nRtCount);
+				strLog.append(strTmpLog);
 			}
 			else
 			{
-				if (nRtCount >= nAllCount * 0.9)
+				if (nRtCount >= (int)(nAllCount * 0.9))
 				{
 					bFind = true;
 					nResult = i;
 					break;
 				}
+				std::string strTmpLog = Poco::format("×ÜĞ£ÑéµãÊı=%d, Êµ¼ÊÊ¶±ğĞ£ÑéµãÊı=%d\n", nAllCount, nRtCount);
+				strLog.append(strTmpLog);
 			}
 		}
 
 		if (!bFind)
 		{
 			TRACE("ÎŞ·¨ÅĞ¶ÏÍ¼Æ¬·½Ïò\n");
-			g_pLogger->information("ÎŞ·¨ÅĞ¶ÏÍ¼Æ¬·½Ïò");
+			strLog.append("ÎŞ·¨ÅĞ¶ÏÍ¼Æ¬·½Ïò\n");
+			g_pLogger->information(strLog);
 			nResult = 1;
 		}
 	}
@@ -3903,36 +4408,81 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 		TRACE("ÓëÄ£°åÍ¼Æ¬·½Ïò²»Ò»ÖÂ\n");
 		for (int i = 2; i <= 3; i++)
 		{
+			//ÏÈ²é¶¨µã
+			RECTLIST lFix;
+			COmrRecog omrRecogObj;
+			bool bResult = omrRecogObj.RecogFixCP(n, matSrc, lFix, m_pModel, i);
+// 			if (!bResult)
+// 				continue;
+#ifdef WarpAffine_TEST
+			cv::Mat	inverseMat(2, 3, CV_32FC1);
+			cv::Mat matDst;
+			PicTransfer2(0, matSrc, matDst, lFix, m_pModel->vecPaperModel[n]->lFix, inverseMat);
+#endif
+
+			RECTLIST lModelTmp;
+			if (lFix.size() < 3)
+			{
+				matDst = matSrc;
+
+				RECTLIST::iterator itFix = lFix.begin();
+				for (auto itFix : lFix)
+				{
+					RECTLIST::iterator itModel = m_pModel->vecPaperModel[n]->lFix.begin();
+					for (int j = 0; itModel != m_pModel->vecPaperModel[n]->lFix.end(); j++, itModel++)
+					{
+						if (j == itFix.nTH)
+						{
+							RECTINFO rcModel = *itModel;
+
+							cv::Rect rtModelPic;
+							rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+							rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+							rcModel.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcModel.rt, i);
+
+							lModelTmp.push_back(rcModel);
+							break;
+						}
+					}
+				}
+			}
+
 			TRACE("²é»Ò¶ÈĞ£Ñéµã\n");
 			bool bContinue = false;
 			int nRtCount = 0;
 			for (auto rcGray : m_pModel->vecPaperModel[n]->lGray)
 			{
-				//ÏÈ°Ñ¾ØĞÎÃæ»ıÀ©´ó£¬ÈçºÎ²é¾ØĞÎ£¬ÓÃÃæ»ıÀ´±È½Ï
-				cv::Rect rtChk = cv::Rect(rcGray.rt.tl() - cv::Point(10, 10), rcGray.rt.br() + cv::Point(10, 10));
-				cv::Rect rt = GetRectByOrientation(rtModelPic, rtChk, i);
-				cv::Rect rtReal;
-				if (bGetMaxRect(matSrc, rt, rcGray, rtReal))
+				RECTINFO rcItem = rcGray;
+
+				if (lFix.size() < 3)
 				{
-					float fRealVal = GetRtDensity(matSrc, rtReal, rcGray);				//ÃÜ¶ÈÊÇ·ñ´ïµ½ÒªÇó
-					float fDensityPer = fRealVal / rtReal.area();
-					float fPer = fRealVal / rcGray.fStandardValue;
-					if (fDensityPer <= 0.5)			//ÃÜ¶ÈÁ¬Ä£°åµÄÒ»°ë¶¼Ã»ÓĞÖ±½ÓÍË³öÅĞ¶Ï
+					cv::Rect rtModelPic;
+					rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+					rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+					rcItem.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcItem.rt, i);
+
+					GetPosition(lFix, lModelTmp, rcItem.rt);		//¸ù¾İÊµ¼Ê¶¨µã¸öÊı»ñÈ¡¾ØĞÎµÄÏà¶ÔÎ»ÖÃ£¬¶¨µãÊıÎª3»ò4Ê±»ñÈ¡µÄÊµ¼ÊÉÏ»¹ÊÇÄ£°åÎ»ÖÃ
+				}
+				else
+					GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//¸ù¾İÊµ¼Ê¶¨µã¸öÊı»ñÈ¡¾ØĞÎµÄÏà¶ÔÎ»ÖÃ£¬¶¨µãÊıÎª3»ò4Ê±»ñÈ¡µÄÊµ¼ÊÉÏ»¹ÊÇÄ£°åÎ»ÖÃ
+
+				if (omrRecogObj.RecogRtVal(rcItem, matDst))
+				{
+					if (rcItem.fRealDensity / rcGray.fStandardDensity > rcGray.fStandardValuePercent && rcItem.fRealValue / rcGray.fStandardValue > rcGray.fStandardValuePercent)
 					{
-						bContinue = true;
-						break;
-					}
-					if (fDensityPer / rcGray.fStandardDensity > rcGray.fStandardValuePercent)
 						++nRtCount;
+					}
 					else
 					{
-						TRACE("ÅĞ¶Ï»Ò¶ÈĞ£ÑéµãµÄÃÜ¶È°Ù·Ö±È: %f, µÍÓÚÒªÇóµÄ: %f\n", fPer, rcGray.fStandardValuePercent);
+						TRACE("ÅĞ¶Ï»Ò¶ÈĞ£ÑéµãµÄÃÜ¶È°Ù·Ö±È: %f, µÍÓÚÒªÇóµÄ: %f\n", rcItem.fRealValuePercent, rcGray.fStandardValuePercent);
+// 						bContinue = true;
+// 						break;
 					}
 				}
 				else
 				{
-					bContinue = true;
-					break;
+// 					bContinue = true;
+// 					break;
 				}
 			}
 			if (bContinue)
@@ -3942,31 +4492,37 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			bContinue = false;
 			for (auto rcSubject : m_pModel->vecPaperModel[n]->lCourse)
 			{
-				//ÏÈ°Ñ¾ØĞÎÃæ»ıÀ©´ó£¬ÈçºÎ²é¾ØĞÎ£¬ÓÃÃæ»ıÀ´±È½Ï
-				cv::Rect rtChk = cv::Rect(rcSubject.rt.tl() - cv::Point(10, 10), rcSubject.rt.br() + cv::Point(10, 10));
-				cv::Rect rt = GetRectByOrientation(rtModelPic, rtChk, i);
-				cv::Rect rtReal;
-				if (bGetMaxRect(matSrc, rt, rcSubject, rtReal))
+				RECTINFO rcItem = rcSubject;
+
+				if (lFix.size() < 3)
 				{
-					float fRealVal = GetRtDensity(matSrc, rtReal, rcSubject);				//ÃÜ¶ÈÊÇ·ñ´ïµ½ÒªÇó
-					float fDensityPer = fRealVal / rtReal.area();
-					float fPer = fRealVal / rcSubject.fStandardValue;
-					if (fDensityPer <= 0.5)			//ÃÜ¶ÈÁ¬Ä£°åµÄÒ»°ë¶¼Ã»ÓĞÖ±½ÓÍË³öÅĞ¶Ï
+					cv::Rect rtModelPic;
+					rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+					rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+					rcItem.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcItem.rt, i);
+
+					GetPosition(lFix, lModelTmp, rcItem.rt);		//¸ù¾İÊµ¼Ê¶¨µã¸öÊı»ñÈ¡¾ØĞÎµÄÏà¶ÔÎ»ÖÃ£¬¶¨µãÊıÎª3»ò4Ê±»ñÈ¡µÄÊµ¼ÊÉÏ»¹ÊÇÄ£°åÎ»ÖÃ
+				}
+				else
+					GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//¸ù¾İÊµ¼Ê¶¨µã¸öÊı»ñÈ¡¾ØĞÎµÄÏà¶ÔÎ»ÖÃ£¬¶¨µãÊıÎª3»ò4Ê±»ñÈ¡µÄÊµ¼ÊÉÏ»¹ÊÇÄ£°åÎ»ÖÃ
+
+				if (omrRecogObj.RecogRtVal(rcItem, matDst))
+				{
+					if (rcItem.fRealDensity / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent && rcItem.fRealValue / rcSubject.fStandardValue > rcSubject.fStandardValuePercent)
 					{
-						bContinue = true;
-						break;
-					}
-					if (fDensityPer / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent)
 						++nRtCount;
+					}
 					else
 					{
-						TRACE("ÅĞ¶Ï¿ÆÄ¿Ğ£ÑéµãµÄÃÜ¶È°Ù·Ö±È: %f, µÍÓÚÒªÇóµÄ: %f\n", fPer, rcSubject.fStandardValuePercent);
+						TRACE("ÅĞ¶Ï¿ÆÄ¿Ğ£ÑéµãµÄÃÜ¶È°Ù·Ö±È: %f, µÍÓÚÒªÇóµÄ: %f\n", rcItem.fRealValuePercent, rcSubject.fStandardValuePercent);
+// 						bContinue = true;
+// 						break;
 					}
 				}
 				else
 				{
-					bContinue = true;
-					break;
+// 					bContinue = true;
+// 					break;
 				}
 			}
 			if (bContinue)
@@ -3982,25 +4538,31 @@ int CScanToolDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 					nResult = i;
 					break;
 				}
+				std::string strTmpLog = Poco::format("×ÜĞ£ÑéµãÊı=%d, Êµ¼ÊÊ¶±ğĞ£ÑéµãÊı=%d\n", nAllCount, nRtCount);
+				strLog.append(strTmpLog);
 			}
 			else
 			{
-				if (nRtCount >= nAllCount * 0.9)
+				if (nRtCount >= (int)(nAllCount * 0.9))
 				{
 					bFind = true;
 					nResult = i;
 					break;
 				}
+				std::string strTmpLog = Poco::format("×ÜĞ£ÑéµãÊı=%d, Êµ¼ÊÊ¶±ğĞ£ÑéµãÊı=%d\n", nAllCount, nRtCount);
+				strLog.append(strTmpLog);
 			}
 		}
 
 		if (!bFind)
 		{
-			TRACE("ÎŞ·¨ÅĞ¶ÏÍ¼Æ¬·½Ïò\n");
-			g_pLogger->information("ÎŞ·¨ÅĞ¶ÏÍ¼Æ¬·½Ïò");
-			nResult = 1;
+			TRACE("ÎŞ·¨ÅĞ¶ÏÍ¼Æ¬·½Ïò£¬²ÉÓÃÄ¬ÈÏÓÒĞı90¶ÈµÄ·½Ïò\n");
+			strLog.append("ÎŞ·¨ÅĞ¶ÏÍ¼Æ¬·½Ïò£¬²ÉÓÃÄ¬ÈÏÓÒĞı90¶ÈµÄ·½Ïò\n");
+			g_pLogger->information(strLog);
+			nResult = 2;	//Èç¹û³öÏÖÎŞ·¨ÅĞ¶ÏÍ¼Ïñ·½ÏòÊ±£¬Ä¬ÈÏÄ£°åĞèÒªÓÒĞı90¶È±ä³É´ËÍ¼Ïñ·½Ïò£¬¼´Ä¬ÈÏ·µ»Ø·½ÏòÎªÓÒĞı90¶È£¬ÒòÎª·½ÏòÖ»ÓĞÓÒĞı90»òÕß×óĞı90¶ÈÁ½ÖÖÑ¡Ôñ£¬´Ë´¦²»·µ»ØÄ¬ÈÏµÄ1£¬·µ»Ø2
 		}
 	}
+
 	return nResult;
 }
 
@@ -4236,10 +4798,11 @@ int CScanToolDlg::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 		return nResult;
 	}
 
+	cv::Mat matCom = matSrc.clone();
 	if (m_pModel->nHasHead)
-		nResult = CheckOrientation4Head(matSrc, n);
+		nResult = CheckOrientation4Head(matCom, n);
 	else
-		nResult = CheckOrientation4Fix(matSrc, n);
+		nResult = CheckOrientation4Fix(matCom, n);
 
 	if (bDoubleScan && n % 2 == 0)		//Ë«ÃæÉ¨Ãè£¬ÇÒÊôÓÚÉ¨ÃèµÄµÚÒ»Ãæ
 		nFristOrientation = nResult;
@@ -4507,22 +5070,20 @@ void CScanToolDlg::OnTimer(UINT nIDEvent)
 		if (bRecogComplete)
 		{
 			USES_CONVERSION;
-			if (m_nScanStatus == 3 && m_bModifySN && bNeedShowZkzhDlg)
+			if (m_nScanStatus == 3 && (g_nOperatingMode == 1 || m_bModifySN) && bNeedShowZkzhDlg)
 			{
 				KillTimer(TIMER_CheckRecogComplete);
-				CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo);
+				if (!m_pStudentMgr)
+				{
+					USES_CONVERSION;
+					m_pStudentMgr = new CStudentMgr();
+					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+					bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+				}
+				CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr);
 				zkzhDlg.DoModal();
 
-				//ÏÔÊ¾ËùÓĞÊ¶±ğÍê³ÉµÄ×¼¿¼Ö¤ºÅ
-				int nCount = m_lcPicture.GetItemCount();
-				for (int i = 0; i < nCount; i++)
-				{
-					pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(i);
-					if (pItemPaper)
-					{
-						m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
-					}
-				}
+				ShowPapers(m_pPapersInfo);
 			}
 			else
 				KillTimer(TIMER_CheckRecogComplete);
@@ -4578,7 +5139,44 @@ BOOL CScanToolDlg::StartGuardProcess()
 {
 	CString strProcessName = _T("");
 	strProcessName.Format(_T("EasyTntGuardProcess.exe"));
-	if (!CheckProcessExist(strProcessName))
+	int nProcessID = 0;
+#if 0
+	if (CheckProcessExist(strProcessName, nProcessID))
+	{
+		HANDLE hProcess = 0;
+		DWORD dwExitCode = 0;
+		hProcess = ::OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ | PROCESS_CREATE_THREAD, FALSE, nProcessID);
+
+		LPVOID Param = VirtualAllocEx(hProcess, NULL, sizeof(DWORD), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+		WriteProcessMemory(hProcess, Param, (LPVOID)&dwExitCode, sizeof(DWORD), NULL);
+
+		HANDLE hThread = CreateRemoteThread(hProcess,
+											NULL,
+											NULL,
+											(LPTHREAD_START_ROUTINE)ExitProcess,
+											Param,
+											NULL,
+											NULL);
+	}
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	CString strComm;
+	char szWrkDir[MAX_PATH];
+	strComm.Format(_T("%sEasyTntGuardProcess.exe"), g_strCurrentPath);
+	memset(&si, 0, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
+
+	if (!CreateProcessW(NULL, (LPTSTR)(LPCTSTR)strComm, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+	{
+		int nErrorCode = GetLastError();
+		USES_CONVERSION;
+		std::string strLog = Poco::format("CreateProcess %s failed. ErrorCode = %d", T2A(strComm), nErrorCode);
+		g_pLogger->information(strLog);
+		return FALSE;
+	}
+#else
+	if (!CheckProcessExist(strProcessName, nProcessID))
 	{
 		STARTUPINFO si;
 		PROCESS_INFORMATION pi;
@@ -4598,6 +5196,33 @@ BOOL CScanToolDlg::StartGuardProcess()
 			return FALSE;
 		}
 	}
+#endif
 	return TRUE;
 }
 
+void CScanToolDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	*pResult = 0;
+
+	if (pNMItemActivate->iItem < 0)
+		return;
+
+	ShowPaperByItem(pNMItemActivate->iItem, 1);
+	//Ë«»÷Îª¿ÕµÄ×¼¿¼Ö¤ºÅÊ±ÏÔÊ¾×¼¿¼Ö¤ºÅĞŞ¸Ä´°¿Ú
+	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lProblemPaper.GetItemData(pNMItemActivate->iItem);
+	if ((g_nOperatingMode == 1 || m_bModifySN) && m_pModel && pItemPaper)
+	{
+		if (!m_pStudentMgr)
+		{
+			USES_CONVERSION;
+			m_pStudentMgr = new CStudentMgr();
+			std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+			bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+		}
+		CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr, pItemPaper);
+		zkzhDlg.DoModal();
+
+		ShowPapers(m_pPapersInfo);
+	}
+}

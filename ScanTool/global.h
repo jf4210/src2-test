@@ -33,6 +33,7 @@
 #include "Poco/DigestStream.h"
 #include "Poco/StreamCopier.h"
 
+#include "Poco/Stopwatch.h"
 #include "Poco/LocalDateTime.h"
 
 #include "Poco/Net/HTTPClientSession.h"
@@ -47,6 +48,28 @@
 #include "Poco/Crypto/CipherKey.h"
 #include "Poco/Crypto/X509Certificate.h"
 #include "Poco/Crypto/CryptoStream.h"
+
+
+//-------------------------------------
+#include "Poco/Data/Statement.h"
+#include "Poco/Data/RecordSet.h"
+#include "Poco/Data/SQLChannel.h"
+#include "Poco/Data/SessionFactory.h"
+#include "Poco/Data/SQLite/Connector.h"
+#include "Poco/Data/SQLite/Utility.h"
+#include "Poco/Data/SQLite/Notifier.h"
+#include "Poco/Data/SQLite/Connector.h"
+
+#include "Poco/Nullable.h"
+#include "Poco/Data/Transaction.h"
+#include "Poco/Data/DataException.h"
+#include "Poco/Data/SQLite/SQLiteException.h"
+#include "Poco/Data/TypeHandler.h"
+#include "Poco/Data/SQLite/Connector.h"
+#include "Poco/Data/SQLite/Utility.h"
+#include "Poco/Data/SQLite/Notifier.h"
+#include "Poco/Data/SQLite/Connector.h"
+//-------------------------------------
 
 #include "zip.h"
 #include "unzip.h"
@@ -67,7 +90,7 @@
 	#define Test_TraceLog		//测试日志
 #else	//release版本
 	#define	 TEST_MODEL_NAME	//模板名称测试
-//	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
+	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -75,6 +98,8 @@
 		#define TriangleCentroid_TEST	//三边质心算法
 	#endif
 #endif
+
+#define Test_RecogOmr3			//第3种OMR识别方法测试
 
 //+++++++++	选择版本 ++++++++++++++++++
 //#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
@@ -125,11 +150,16 @@
 
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 #define  MSG_ZKZH_RECOG (WM_USER + 111)		//在准考证号识别完成时通知UI线程修改试卷列表，显示已经识别的ZKZH		2017.2.14
+#define	 MSG_Pkg2Papers_OK (WM_USER + 112)	//从pkg恢复到Papers完成
 
 #ifndef TO_WHTY
-	#define SOFT_VERSION	_T("1.70227-4-Pri")
+	#ifdef PUBLISH_VERSION
+		#define SOFT_VERSION	_T("2.10420-3")
+	#else
+		#define SOFT_VERSION	_T("2.10420-1-Pir")		//-Pri
+	#endif
 #else
-	#define SOFT_VERSION	_T("2.1-0309")
+	#define SOFT_VERSION	_T("2.1-0323")
 #endif
 #define SYS_BASE_NAME	_T("YKLX-ScanTool")
 #define SYS_GUIDE_NAME	_T("GuideDlg")
@@ -161,6 +191,10 @@ extern double	_dCompThread_Head_;
 extern double	_dDiffThread_Head_;
 extern double	_dDiffExit_Head_;
 extern int		_nThreshold_Recog2_;	//第2中识别方法的二值化阀值
+extern double	_dCompThread_3_;		//第三种识别方法
+extern double	_dDiffThread_3_;
+extern double	_dDiffExit_3_;
+extern double	_dAnswerSure_;		//可以确认是答案的最大灰度
 
 extern int		_nAnticlutterKernel_;	//识别同步头时防干扰膨胀腐蚀的核因子
 
@@ -185,6 +219,8 @@ extern bool				g_bCmdNeedConnect;	//命令通道是否需要重连，用于通道地址信息修改的
 extern bool				g_bFileNeedConnect;	//文件通道是否需要重连，用于通道地址信息修改的情况
 
 extern bool				g_bShowScanSrcUI;	//是否显示原始扫描界面
+extern int				g_nOperatingMode;	//操作模式，1--简易模式(遇到问题点不停止扫描)，2-严格模式(遇到问题点时立刻停止扫描)
+extern int				g_nZkzhNull2Issue;	//识别到准考证号为空时，是否认为是问题试卷
 
 #if 1
 typedef struct _PicInfo_				//图片信息
@@ -197,7 +233,7 @@ typedef struct _PicInfo_				//图片信息
 	std::string		strPicPath;		//图片路径
 	RECTLIST		lFix;			//定点列表
 	RECTLIST		lNormalRect;	//识别出来的正常点位置
-	RECTLIST		lIssueRect;		//识别出来的问题试卷的问题点位置，只要出现问题点就不进行下一页的识别
+	RECTLIST		lIssueRect;		//识别出来的问题试卷的问题点位置，只要出现问题点就不进行下一页的识别(严格模式)，或者存储已经发行的问题点，但是继续后面的识别(简单模式)
 // 	cv::Mat			matSrc;
 // 	cv::Mat			matDest;
 	_PicInfo_()
@@ -217,12 +253,16 @@ typedef struct _PaperInfo_
 	bool		bIssuePaper;		//是否是问题试卷
 	bool		bModifyZKZH;		//准考证号人工修改标识
 	bool		bRecogComplete;		//该学生已经识别完成
+	bool		bReScan;			//重新扫描标识，在准考证号修改窗口中设置
 	int			nQKFlag;			//缺考标识
+	//++从Pkg恢复Papers时的参数
+	int			nChkFlag;			//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不進行圖片识别
+	//--
 	pMODEL		pModel;				//识别此学生试卷所用的模板
 	void*		pPapers;			//所属的试卷袋信息
 	void*		pSrcDlg;			//来源，来自哪个窗口，扫描or导入试卷窗口
-	std::string strStudentInfo;		//学生信息	
-	std::string strSN;
+	std::string strStudentInfo;		//学生信息, S1、S2、S3...
+	std::string strSN;				//识别出的考号、准考证号
 	
 	SNLIST				lSnResult;
 	OMRRESULTLIST		lOmrResult;			//OMRRESULTLIST
@@ -233,7 +273,9 @@ typedef struct _PaperInfo_
 		bIssuePaper = false;
 		bModifyZKZH = false;
 		bRecogComplete = false;
+		bReScan = false;
 		nQKFlag = 0;
+		nChkFlag = 0;
 		pModel = NULL;
 		pPapers = NULL;
 		pSrcDlg = NULL;
@@ -270,6 +312,7 @@ typedef std::list<pST_PaperInfo> PAPER_LIST;	//试卷列表
 
 typedef struct _PapersInfo_				//试卷袋信息结构体
 {
+	int		nPapersType;				//试卷类型，0-正常创建的试卷袋，在扫描时创建，1-从Pkg恢复到Papers时创建的
 	int		nPaperCount;				//试卷袋中试卷总数量(学生数)
 	int		nRecogErrCount;				//识别错误试卷数量
 
@@ -277,9 +320,15 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	int		nOmrDoubt;				//OMR怀疑的数量
 	int		nOmrNull;				//OMR识别为空的数量
 	int		nSnNull;				//准考证号识别为空的数量
-
 	Poco::FastMutex	fmOmrStatistics;//omr统计锁
 	Poco::FastMutex fmSnStatistics; //zkzh统计锁
+	//--
+
+	//++从Pkg恢复Papers时的参数
+	int			nExamID;			//考试ID
+	int			nSubjectID;			//科目ID
+	int			nTeacherId;			//教师ID
+	int			nUserId;			//用户ID
 	//--
 
 	Poco::FastMutex fmlPaper;			//对试卷列表读写锁
@@ -291,6 +340,7 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	PAPER_LIST	lIssue;					//此试卷袋中识别有问题的试卷列表
 	_PapersInfo_()
 	{
+		nPapersType = 0;
 		nPaperCount = 0;
 		nRecogErrCount = 0;
 		nOmrDoubt = 0;
@@ -386,9 +436,7 @@ typedef struct _examInfo_
 	int			nExamID;			//考试ID
 	int			nExamGrade;			//年级
 	int			nExamState;			//考试状态
-#ifdef TO_WHTY
 	std::string	strExamID;			//天喻版本, 考试ID
-#endif
 	std::string strExamName;		//考试名称
 	std::string strExamTypeName;	//考试类型名称
 	std::string strGradeName;		//年级名称
@@ -399,10 +447,122 @@ typedef std::list<EXAMINFO> EXAM_LIST;
 extern Poco::FastMutex	g_lfmExamList;
 extern EXAM_LIST	g_lExamList;
 
+//报名库学生信息
+typedef struct _studentInfo_
+{
+	std::string strZkzh;
+	std::string strName;		//gb2312
+	std::string strClassroom;	//gb2312
+	std::string strSchool;		//gb2312
+}ST_STUDENT, *pST_STUDENT;
+class CBmkStudent
+{
+	CBmkStudent(){}
+	CBmkStudent(std::string& strZkzh, std::string& strName) :_strZkzh(strZkzh), _strName(strName){}
+	bool operator==(const CBmkStudent& other) const
+	{
+		return _strZkzh == other._strZkzh && _strName == other._strName && _strClassroom == other._strClassroom && _strSchool == other._strSchool;
+	}
+
+	bool operator < (const CBmkStudent& p) const
+	{
+		if (_strZkzh < p._strZkzh)
+			return true;
+		if (_strName < p._strName)
+			return true;
+		if (_strClassroom < p._strClassroom)
+			return true;
+		if (_strSchool < p._strSchool)
+			return true;
+	}
+
+	const std::string& operator () () const
+		/// This method is required so we can extract data to a map!
+	{
+		return _strZkzh;
+	}
+private:
+	std::string _strZkzh;
+	std::string _strName;
+	std::string _strClassroom;
+	std::string _strSchool;
+};
+
+
+namespace Poco {
+	namespace Data {
+
+		template <>
+		class TypeHandler<ST_STUDENT>
+		{
+		public:
+			static void bind(std::size_t pos, const ST_STUDENT& obj, AbstractBinder::Ptr pBinder, AbstractBinder::Direction dir)
+			{
+				// the table is defined as Person (LastName VARCHAR(30), FirstName VARCHAR, Address VARCHAR, Age INTEGER(3))
+				poco_assert_dbg(!pBinder.isNull());
+				pBinder->bind(pos++, obj.strZkzh, dir);
+				pBinder->bind(pos++, CMyCodeConvert::Gb2312ToUtf8(obj.strName), dir);
+				pBinder->bind(pos++, CMyCodeConvert::Gb2312ToUtf8(obj.strClassroom), dir);
+				pBinder->bind(pos++, CMyCodeConvert::Gb2312ToUtf8(obj.strSchool), dir);
+			}
+
+			static void prepare(std::size_t pos, const ST_STUDENT& obj, AbstractPreparator::Ptr pPrepare)
+			{
+				// no-op (SQLite is prepare-less connector)
+			}
+
+			static std::size_t size()
+			{
+				return 4;
+			}
+
+			static void extract(std::size_t pos, ST_STUDENT& obj, const ST_STUDENT& defVal, AbstractExtractor::Ptr pExt)
+			{
+				poco_assert_dbg(!pExt.isNull());
+				std::string strZkzh;
+				std::string strName;
+				std::string strClassroom;
+				std::string strSchool;
+
+				if (pExt->extract(pos++, strZkzh))
+					obj.strZkzh = strZkzh;
+				else
+					obj.strZkzh = defVal.strZkzh;
+
+				if (pExt->extract(pos++, strName))
+					obj.strName = CMyCodeConvert::Utf8ToGb2312(strName);
+				else
+					obj.strName = defVal.strName;
+
+				if (pExt->extract(pos++, strClassroom))
+					obj.strClassroom = CMyCodeConvert::Utf8ToGb2312(strClassroom);
+				else
+					obj.strClassroom = defVal.strClassroom;
+
+				if (pExt->extract(pos++, strSchool))
+					obj.strSchool = CMyCodeConvert::Utf8ToGb2312(strSchool);
+				else
+					obj.strSchool = defVal.strSchool;
+			}
+
+		private:
+			TypeHandler();
+			~TypeHandler();
+			TypeHandler(const TypeHandler&);
+			TypeHandler& operator=(const TypeHandler&);
+		};
+	}
+}
+typedef std::list<ST_STUDENT> STUDENT_LIST;	//报名库列表
+extern STUDENT_LIST		g_lBmkStudent;	//报名库学生列表
+
 
 typedef struct _CompressTask_
 {
 	bool	bDelSrcDir;				//自动删除原文件夹
+	bool	bReleasePapers;			//是否解压完后自动是否试卷袋信息，即释放pPapersInfo内存数据
+	int		nCompressType;			//压缩类型，1-压缩试卷袋，2-解压试卷袋
+	pPAPERSINFO pPapersInfo;		//压缩的试卷袋文件
 	std::string strSrcFilePath;
 	std::string strCompressFileName;
 	std::string strSavePath;
@@ -410,6 +570,13 @@ typedef struct _CompressTask_
 	_CompressTask_()
 	{
 		bDelSrcDir = true;
+		bReleasePapers = true;
+		nCompressType = 1;
+		pPapersInfo = NULL;
+	}
+	~_CompressTask_()
+	{
+		if(bReleasePapers) SAFE_RELEASE(pPapersInfo);
 	}
 }COMPRESSTASK, *pCOMPRESSTASK;
 typedef std::list<pCOMPRESSTASK> COMPRESSTASKLIST;	//识别任务列表
@@ -422,6 +589,13 @@ extern Poco::Event			g_eSendFileThreadExit;
 extern Poco::Event			g_eFileUpLoadThreadExit;
 extern Poco::Event			g_eCompressThreadExit;
 
+//模板文件信息
+typedef struct _ModelFile
+{
+	std::string strModelName;		//gb2312
+	std::string strModifyTime;
+}ST_MODELFILE;
+
 typedef struct stPlatformInfo
 {
 	std::string strPlatformUrl;
@@ -432,8 +606,8 @@ typedef struct stPlatformInfo
 typedef std::vector<pST_PLATFORMINFO> VEC_PLATFORM_TY;
 
 int		GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, RECTINFO*& pRc);
-bool	ZipFile(CString strSrcPath, CString strDstPath, CString strExtName = _T(".zip"));
-bool	UnZipFile(CString strZipPath);
+//bool	ZipFile(CString strSrcPath, CString strDstPath, CString strExtName = _T(".zip"));
+//bool	UnZipFile(CString strZipPath);
 pMODEL	LoadModelFile(CString strModelPath);		//加载模板文件
 bool	SortByArea(cv::Rect& rt1, cv::Rect& rt2);		//按面积排序
 bool	SortByPositionX(RECTINFO& rc1, RECTINFO& rc2);
@@ -449,7 +623,10 @@ void	CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int
 bool	PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat);
 bool	FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);		//定点进行仿射变换
 bool	FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//定点透视变换
+bool	FixWarpAffine2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);		//3个定点仿射变换，对90度旋转图像有效，目标矩形大小为原矩形最大值的正方形
+bool	FixwarpPerspective2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//4个定点透视变换，对90度旋转图像有效，目标矩形大小为原矩形最大值的正方形
 bool	PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);
+bool	PicTransfer2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//针对有3个或者4个定点的变换，而且是对90度图像旋转，目标矩形大小为原矩形最大值的正方形
 int		WriteRegKey(HKEY root, char * subDir, DWORD regType, char * regKey, char * regValue);
 int		ReadRegKey(HKEY root, char * subDir, DWORD regType, char * regKey, char* & regValue);
 bool	encString(std::string& strSrc, std::string& strDst);
@@ -481,6 +658,7 @@ typedef struct
 }ST_ITEM_DIFF, *pST_ITEM_DIFF;
 bool	SortByItemDiff(ST_ITEM_DIFF& item1, ST_ITEM_DIFF& item2);
 bool	SortByItemDensity(pRECTINFO item1, pRECTINFO item2);
+bool	SortByItemGray(pRECTINFO item1, pRECTINFO item2);
 //--------------------------------------------------------
 
 //----------------	二维码、条码识别	------------------
@@ -495,4 +673,4 @@ std::string GetQR(cv::Mat img, std::string& strTypeName);
 //--------------------------------------------------------
 
 
-BOOL CheckProcessExist(CString &str);
+BOOL CheckProcessExist(CString &str, int& nProcessID);

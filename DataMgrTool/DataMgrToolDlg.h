@@ -50,6 +50,9 @@ public:
 	CString		m_strRecogPath;
 	CString		m_strModelPath;
 
+	CString		m_strWatchPaper_PapersDir;		//查看试卷--试卷袋搜索路径
+	CString		m_strWatchPaper_PaperInfo;		//查看试卷--试卷信息，格式(试卷袋名称:试卷编号，12345:S1)
+
 	CStatusBarCtrl	m_statusBar;
 	CStatusBar		m_wndStatusBar;
 
@@ -104,4 +107,7 @@ public:
 	afx_msg void OnBnClickedBtnLoadparam();
 	afx_msg void OnBnClickedMfcbuttonRepkg();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnBnClickedBtnStop();
+	afx_msg void OnBnClickedBtnDecompresslook();
+	afx_msg void OnBnClickedBtnWatchpic();
 };

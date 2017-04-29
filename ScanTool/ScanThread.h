@@ -1,61 +1,88 @@
 #pragma once
-
 #include "global.h"
 #include "MyCodeConvert.h"
-#include "TwainCpp.h"
-#include "DIB.h"
-#include "bmp2ipl.h"
+
+#ifdef TEST_SCAN_THREAD
+	#include "CommonTWAIN.h"		//twain/CommonTWAIN.h
+	#include "twainapp.h"			//twain/twainapp.h
 
 
-#include "ScanCtrlDlg.h"
 // CScanThread
-
 #define MSG_START_SCAN	(WM_APP + 201)
+#define MSG_SCAN_DONE	(WM_APP + 202)
+#define MSG_SCAN_ERR	(WM_APP + 203)
 
-#define TEST_DLG
-
-class CScanThread : public CWinThread, public CTwain/*, public CWnd*/
+typedef struct _tagScanCtrl_
 {
-//	DECLARE_DYNAMIC(CScanThread)
+	bool	bShowUI;		//是否显示原始Twain界面
+	int		nScannerId;
+	int		nScanPixelType;	//0-黑白，1-灰度，2-彩色
+	int		nScanCount;
+	int		nScanDuplexenable;	//单双面扫描
+	int		nScanSize;		//纸张类型
+	int		nScanResolution;	//扫描DPI
+	int		nAutoCut;	//自动裁剪
+	int		nRotate;	//自动纠偏
+	_tagScanCtrl_()
+	{
+		nScannerId = 0;
+		nScanPixelType = 2;
+		nScanCount = 0;
+		nScanDuplexenable = 1;
+		nScanSize = TWSS_A4LETTER;
+		nScanResolution = 200;
+		nAutoCut = 1;
+		nRotate = 1;
+		bShowUI = false;
+	}
+}ST_SCANCTRL, *pST_SCANCTRL;
+
+typedef struct _tagScanResult_
+{
+	bool		bScanOK;
+	int			nState;
+	IplImage*	pIpl2;
+	std::string strResult;
+	_tagScanResult_()
+	{
+		bScanOK = false;
+		nState = 0;
+		pIpl2 = NULL;
+	}
+	~_tagScanResult_()
+	{
+		if (pIpl2)
+		{
+			cvReleaseImage(&pIpl2);
+			pIpl2 = NULL;
+		}
+	}
+}ST_SCAN_RESULT, *pST_SCAN_RESULT;
+
+class CScanThread : public CWinThread, public TwainApp
+{
 	DECLARE_DYNCREATE(CScanThread)
 
 public:
-	CScanThread();
+	CScanThread();           // 动态创建所使用的受保护的构造函数
 	virtual ~CScanThread();
-
-
-//	enum { IDD = IDD_TEST};
-
-	void setScanPath(CString& strPath);
-
-
-	void StartScan(WPARAM wParam, LPARAM lParam);
-
-	//扫描
-	BOOL m_bTwainInit;
-	CString		m_strScanSavePath;
-	CArray<TW_IDENTITY, TW_IDENTITY> m_scanSourceArry;
-	BOOL ScanSrcInit();
-
-	void CopyImage(HANDLE hBitmap, TW_IMAGEINFO& info);
-	void SetImage(HANDLE hBitmap, int bits);
-	void ScanDone(int nStatus);
-
-private:
-	CFrameWnd* m_pTwainWnd;
-
-#ifdef TEST_DLG
-	CScanCtrlDlg*	m_pScanCtrlDlg;
-#endif
 
 public:
 	virtual BOOL InitInstance();
 	virtual int ExitInstance();
 
-protected:
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	void	StartScan(WPARAM wParam, LPARAM lParam);
+	int		Scan();
+	int		GetImgMemory();
+	int		GetImgNative();
+	void	setStop();
+private:
+	bool	m_bStop;
+	std::string ErrCode2Str(int nErr);	//错误代码转字符串
 protected:
 	DECLARE_MESSAGE_MAP()
-};
 
+private:
+};
+#endif
 

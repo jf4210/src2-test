@@ -883,7 +883,8 @@ void CXListCtrl::OnPaint()
 		}
 		rc.top += 10;
 		CString strText;
-		strText = _T("There are no items to show in this view.");
+//		strText = _T("There are no items to show in this view.");
+		strText = _T("");
 
 		COLORREF crText = m_crWindowText;
 		COLORREF crBkgnd = m_crWindow;

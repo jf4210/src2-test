@@ -37,7 +37,7 @@ void CRecognizeThread::run()
 		g_fmRecog.unlock();
 		if (NULL == pTask)
 		{
-			Poco::Thread::sleep(100);
+			Poco::Thread::sleep(500);
 			continue;
 		}
 
@@ -178,16 +178,6 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			g_Log.LogOut(strLog);
 			continue;
 		}
-// 		try
-// 		{
-// 			matCompSrcPic = imread((*itPic)->strPicPath);			//imread((*itPic)->strPicPath);
-// 		}
-// 		catch (cv::Exception& exc)
-// 		{
-// 			std::string strLog = "打开文件失败2: " + exc.msg;
-// 			g_Log.LogOut(strLog);
-// 			continue;
-// 		}
 		
 #ifdef PIC_RECTIFY_TEST	//图像旋转纠正测试
 		Mat matDst;
@@ -208,68 +198,50 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		int nPic = i;
 
 		m_ptFixCP = Point(0, 0);
-		bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo);
-#ifdef WarpAffine_TEST
-		cv::Mat	inverseMat(2, 3, CV_32FC1);
-		if (bResult) bResult = PicTransfer(nPic, matCompPic, (*itPic)->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, inverseMat);
-#endif
-		if(bResult) bResult = RecogHHead(nPic, matCompPic, *itPic, pModelInfo);
-		if(bResult) bResult = RecogVHead(nPic, matCompPic, *itPic, pModelInfo);
-		if(bResult) bResult = RecogABModel(nPic, matCompPic, *itPic, pModelInfo);
-		if(bResult) bResult = RecogCourse(nPic, matCompPic, *itPic, pModelInfo);
-		if(bResult) bResult = RecogQKCP(nPic, matCompPic, *itPic, pModelInfo);
-		if(bResult) bResult = RecogGrayCP(nPic, matCompPic, *itPic, pModelInfo);
-		if(bResult) bResult = RecogWhiteCP(nPic, matCompPic, *itPic, pModelInfo);
-		if (bResult) bResult = RecogSN(nPic, matCompPic, *itPic, pModelInfo);
-		if (bResult) bResult = RecogOMR(nPic, matCompPic, *itPic, pModelInfo);
-		if (bResult) bResult = RecogElectOmr(nPic, matCompPic, *itPic, pModelInfo);
-		if(!bResult) bFind = true;
-		if (bFind)
+
+		pPAPERSINFO pCurrentPapers = static_cast<pPAPERSINFO>(pPaper->pPapers);
+		if (pCurrentPapers->nRecogMode == 1)
 		{
-			pPaper->bIssuePaper = true;				//标识此学生试卷属于问题试卷
-			pPAPERSINFO pPapers = static_cast<pPAPERSINFO>(pPaper->pPapers);
-
-			pPapers->fmlPaper.lock();
-			PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
-			for (; itPaper != pPapers->lPaper.end();)
+			bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
+		#ifdef WarpAffine_TEST
+			cv::Mat	inverseMat(2, 3, CV_32FC1);
+			bResult = PicTransfer(nPic, matCompPic, (*itPic)->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, inverseMat);
+		#endif
+			bResult = RecogHHead(nPic, matCompPic, *itPic, pModelInfo);
+			bResult = RecogVHead(nPic, matCompPic, *itPic, pModelInfo);
+			bResult = RecogABModel(nPic, matCompPic, *itPic, pModelInfo);
+			bResult = RecogCourse(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
+			bResult = RecogQKCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
+			bResult = RecogGrayCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
+			bResult = RecogWhiteCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
+			bResult = RecogSN(nPic, matCompPic, *itPic, pModelInfo);
+			bResult = RecogOMR(nPic, matCompPic, *itPic, pModelInfo);
+			bResult = RecogElectOmr(nPic, matCompPic, *itPic, pModelInfo);
+		}
+		else
+		{
+			bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo);
+		#ifdef WarpAffine_TEST
+			cv::Mat	inverseMat(2, 3, CV_32FC1);
+			if (bResult) bResult = PicTransfer(nPic, matCompPic, (*itPic)->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, inverseMat);
+		#endif
+			if (bResult) bResult = RecogHHead(nPic, matCompPic, *itPic, pModelInfo);
+			if (bResult) bResult = RecogVHead(nPic, matCompPic, *itPic, pModelInfo);
+			if (bResult) bResult = RecogABModel(nPic, matCompPic, *itPic, pModelInfo);
+			if (bResult) bResult = RecogCourse(nPic, matCompPic, *itPic, pModelInfo);
+			if (bResult) bResult = RecogQKCP(nPic, matCompPic, *itPic, pModelInfo);
+			if (bResult) bResult = RecogGrayCP(nPic, matCompPic, *itPic, pModelInfo);
+			if (bResult) bResult = RecogWhiteCP(nPic, matCompPic, *itPic, pModelInfo);
+			if (bResult) bResult = RecogSN(nPic, matCompPic, *itPic, pModelInfo);
+			if (bResult) bResult = RecogOMR(nPic, matCompPic, *itPic, pModelInfo);
+			if (bResult) bResult = RecogElectOmr(nPic, matCompPic, *itPic, pModelInfo);
+			if (!bResult) bFind = true;
+			if (bFind)
 			{
-				if (*itPaper == pPaper)
-				{
-					itPaper = pPapers->lPaper.erase(itPaper);
-					break;
-				}
-				else
-					itPaper++;
+				HandleWithErrPaper(pPaper);
+				break;									//找到这张试卷有问题点，不进行下一张试卷的检测
 			}
-			pPapers->fmlPaper.unlock();
-
-			pPapers->fmlIssue.lock();
-			bool bFind = false;
-			PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
-			for (; itIssuePaper != pPapers->lIssue.end();)
-			{
-				if (*itIssuePaper == pPaper)
-				{
-					bFind = true;
-					break;
-				}
-				else
-					itIssuePaper++;
-			}
-			if (!bFind)
-			{
-				pPapers->lIssue.push_back(pPaper);
-				pPapers->nRecogErrCount++;
-			}
-			pPapers->fmlIssue.unlock();
-
-			(static_cast<CDialog*>(pPaper->pSrcDlg))->SendMessage(MSG_ERR_RECOG, (WPARAM)pPaper, (LPARAM)pPapers);		//PostMessageW
-// 			USES_CONVERSION;
-// 			CString strMsg;
-// 			strMsg.Format(_T("%s:%s识别出异常点\r\n"), A2T(pPapers->strPapersName.c_str()), A2T(pPaper->strStudentInfo.c_str()));
-// 			(static_cast<CDataMgrToolDlg*>(pPaper->pSrcDlg))->showMsg(strMsg);
-			break;									//找到这张试卷有问题点，不进行下一张试卷的检测
-		}	
+		}
 		
 		end_pic = clock();
 		TRACE("试卷 %s 打开时间: %d, 识别总时间: %d\n", strPicFileName.c_str(), end1_pic - start_pic, end_pic - start_pic);
@@ -280,11 +252,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 
 	pPAPERSINFO pPapers = static_cast<pPAPERSINFO>(pPaper->pPapers);
 #if 1	//test log
-// 	std::string strPaperLog = "试卷(";
-// 	strPaperLog.append(pPaper->strStudentInfo);
-// 	strPaperLog.append(")识别结果: ");
-
-	std::string strPaperLog = "试卷(" + pPaper->strStudentInfo + ")[" + pPapers->strPapersName + "]识别结果: ";
+	std::string strPaperLog = "试卷(" + pPaper->strStudentInfo + ")[" + pPapers->strPapersName + "]识别结果: \n";
 
 	int nNullCount = 0;
 	int nDoubtCount = 0;
@@ -349,6 +317,15 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 						  itRect3->fRealMeanGray - itRect3->fStandardMeanGray, itRect3->fRealMeanGray, itRect3->fStandardMeanGray);
 				strcat_s(szItemInfo, szTmp);
 			}
+			strcat_s(szItemInfo, "\n");
+			RECTLIST::iterator itRect4 = itOmr->lSelAnswer.begin();
+			for (; itRect4 != itOmr->lSelAnswer.end(); itRect4++)
+			{
+				char szTmp[200] = { 0 };
+				sprintf_s(szTmp, "%c,标准差=%.3f(%.3f-%.3f), ", itRect4->nAnswer + 65, \
+						  itRect4->fRealStddev - itRect4->fStandardStddev, itRect4->fRealStddev, itRect4->fStandardStddev);
+				strcat_s(szItemInfo, szTmp);
+			}
 		#else
 			RECTLIST::iterator itRect2 = itOmr->lSelAnswer.begin();
 			for (; itRect2 != itOmr->lSelAnswer.end(); itRect2++)
@@ -373,8 +350,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			strcat_s(szItemInfo, szTmp);
 		}
 		strcat_s(szItemInfo, "]");
-
-
+		
 		std::vector<pRECTINFO> vecItemsGrayDesc;
 		std::vector<ST_ITEM_DIFF> vecOmrItemGrayDiff;
 		calcOmrGrayDiffVal(itOmr->lSelAnswer, vecItemsGrayDesc, vecOmrItemGrayDiff);
@@ -390,9 +366,9 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		
 		char szOmrItem[2060] = { 0 };
 		if (nPrintOmrVal)	//itOmr->nDoubt
-			sprintf_s(szOmrItem, "%d(%s):%s ---%s Doubt(%d)\t==>%s\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal2.c_str(), itOmr->nDoubt, szItemInfo);
+			sprintf_s(szOmrItem, "%d(%s):%s -- %s -- %s Doubt(%d)\t==>%s\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal2.c_str(), itOmr->strRecogVal3.c_str(), itOmr->nDoubt, szItemInfo);
 // 		else
-// 			sprintf_s(szOmrItem, "%d(%s):%s ---%s Doubt(%d)\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal2.c_str(), itOmr->nDoubt);
+// 			sprintf_s(szOmrItem, "%d(%s):%s -- %s -- %s Doubt(%d)\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal2.c_str(), itOmr->strRecogVal3.c_str(), itOmr->nDoubt);
 
 		strPaperLog.append(szOmrItem);
 	}
@@ -431,7 +407,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		_nRecogPapers_++;
 		_fmRecogPapers_.unlock();
 
-		if (pPapers->bSendEzs)
+		if (pPapers->nSendEzs == 1)
 		{
 			pSEND_HTTP_TASK pRecogResultTask = new SEND_HTTP_TASK;
 			pRecogResultTask->nTaskType = 7;
@@ -442,6 +418,22 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			g_fmHttpSend.lock();
 			g_lHttpSend.push_back(pRecogResultTask);
 			g_fmHttpSend.unlock();
+			return;
+		}
+		else if (pPapers->nSendEzs == 2)
+		{
+			//删除源文件夹
+			try
+			{
+				Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
+				if (srcFileDir.exists())
+					srcFileDir.remove(true);
+			}
+			catch (Poco::Exception& exc)
+			{
+				std::string strErr = "删除文件夹(" + pPapers->strPapersPath + ")失败: " + exc.message();
+				g_Log.LogOutError(strErr);
+			}
 			return;
 		}
 
@@ -490,15 +482,15 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 	bool bResult = false;
 	try
 	{
-		if (rc.rt.x < 0) rc.rt.x = 0;
-		if (rc.rt.y < 0) rc.rt.y = 0;
-		if (rc.rt.br().x > matCompPic.cols)
+		if (rt.x < 0) rt.x = 0;
+		if (rt.y < 0) rt.y = 0;
+		if (rt.br().x > matCompPic.cols)
 		{
-			rc.rt.width = matCompPic.cols - rc.rt.x;
+			rt.width = matCompPic.cols - rt.x;
 		}
-		if (rc.rt.br().y > matCompPic.rows)
+		if (rt.br().y > matCompPic.rows)
 		{
-			rc.rt.height = matCompPic.rows - rc.rt.y;
+			rt.height = matCompPic.rows - rt.y;
 		}
 
  		matCompRoi = matCompPic(rt);
@@ -584,23 +576,37 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 		}
 
 	#if 1		//第三种OMR识别方法测试
-		int nMaxVal = 256;
-		MatND src_hist2;
-		const int histSize2[1] = { nMaxVal };	//rc.nThresholdValue - g_nRecogGrayMin		256
-		const float* ranges2[1];
-		float hranges2[2];
-		hranges2[0] = 0;
-		hranges2[1] = nMaxVal - 1;			//255
-		ranges2[0] = hranges2;
-		cv::calcHist(&matCompRoi, 1, channels, Mat(), src_hist2, 1, histSize2, ranges2, true, false);
-		int nCount = 0;
-		int nArea = 0;
-		for (int i = 0; i < nMaxVal; i++)	//256
-		{
-			nArea += src_hist2.at<float>(i);
-			nCount += i * src_hist2.at<float>(i);
-		}
-		rc.fRealMeanGray = (float)nCount / nArea;
+		#if 1
+			MatND mean;
+			MatND stddev;
+			meanStdDev(matCompRoi, mean, stddev);
+
+			IplImage *src;
+			src = &IplImage(mean);
+			rc.fRealMeanGray = cvGetReal2D(src, 0, 0);
+
+			IplImage *src2;
+			src2 = &IplImage(stddev);
+			rc.fRealStddev = cvGetReal2D(src2, 0, 0);
+		#else
+			int nMaxVal = 256;
+			MatND src_hist2;
+			const int histSize2[1] = { nMaxVal };	//rc.nThresholdValue - g_nRecogGrayMin		256
+			const float* ranges2[1];
+			float hranges2[2];
+			hranges2[0] = 0;
+			hranges2[1] = nMaxVal - 1;			//255
+			ranges2[0] = hranges2;
+			cv::calcHist(&matCompRoi, 1, channels, Mat(), src_hist2, 1, histSize2, ranges2, true, false);
+			int nCount = 0;
+			int nArea = 0;
+			for (int i = 0; i < nMaxVal; i++)	//256
+			{
+				nArea += src_hist2.at<float>(i);
+				nCount += i * src_hist2.at<float>(i);
+			}
+			rc.fRealMeanGray = (float)nCount / nArea;
+		#endif
 	#else
 		MatND src_hist2;
 		const int histSize2[1] = { 256 };	//rc.nThresholdValue - g_nRecogGrayMin		256
@@ -629,11 +635,16 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 	return bResult;
 }
 
-bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, int nRecogMode /*= 2*/)
 {
 	bool bResult = true;
 // 	if (pModelInfo->pModel->nHasHead != 0)	//有同步头的，不需要进行定点识别
 // 		return bResult;
+
+	clock_t start, end;
+	start = clock();
+	std::string strLog;
+	strLog = Poco::format("图片%s\n", pPic->strPicName);
 
 	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.begin();
 	for (int i = 0; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.end(); i++, itCP++)
@@ -662,11 +673,21 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
 			SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
 
+			int nRealThreshold = 150;
+			RECTLIST::iterator itFix = pModelInfo->pModel->vecPaperModel[nPic]->lFix.begin();
+			for (int j = 0; itFix != pModelInfo->pModel->vecPaperModel[nPic]->lFix.end(); j++, itFix++)
+			{
+				if (j == i)
+				{
+					nRealThreshold = itFix->nThresholdValue;
+					break;
+				}
+			}
 
 #ifdef USES_GETTHRESHOLD_ZTFB
 			const int channels[1] = { 0 };
-			const int histSize[1] = { 150 };
-			float hranges[2] = { 0, 150 };
+			const int histSize[1] = { nRealThreshold };
+			float hranges[2] = { 0, nRealThreshold };
 			const float* ranges[1];
 			ranges[0] = hranges;
 			MatND hist;
@@ -682,7 +703,7 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				nCount += static_cast<int>(binVal);
 				nSum += h*binVal;
 			}
-			int nThreshold = 150;
+			int nThreshold = nRealThreshold;
 			if (nCount > 0)
 			{
 				float fMean = (float)nSum / nCount;		//均值
@@ -699,7 +720,7 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 					nThreshold = fMean + fStdev;
 			}		
 
-			if (nThreshold > 150) nThreshold = 150;
+			if (nThreshold > nRealThreshold) nThreshold = nRealThreshold;
 			threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY);
 #else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
@@ -782,15 +803,20 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		}
 		catch (cv::Exception& exc)
 		{
-			std::string strLog = "识别定点异常: " + exc.msg;
-			g_Log.LogOut(strLog);
-			TRACE(strLog.c_str());
+			std::string strLog2 = Poco::format("识别定点(%d)异常: %s\n", i, exc.msg);
+			strLog.append(strLog2);
+			TRACE(strLog2.c_str());
 
-			bResult = false;						//找到问题点
 			pPic->bFindIssue = true;
 			pPic->lIssueRect.push_back(rc);
-			break;
+			if (nRecogMode == 2)
+			{
+				bResult = false;						//找到问题点
+				break;
+			}
 		}
+
+		std::string strLog2;	//临时日志，记录矩形具体识别结果
 		bool bFindRect = false;
 		if(RectCompList.size() == 0)
 			bFindRect = true;
@@ -809,45 +835,67 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 					break;
 				}
 			}
+
+			bool bOnlyOne = false;		//只有一个矩形，需要判断面积和灰度，但是比例可以降低
+			bool bFind = false;
+
 			//通过灰度值来判断
-			for (int i = 0; i < RectCompList.size(); i++)
+			for (int k = 0; k < RectCompList.size(); k++)
 			{
 				RECTINFO rcTmp = rcFix;
-				rcTmp.rt = RectCompList[i];
+				rcTmp.rt = RectCompList[k];
 				Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
 				float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
 				float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
-				if (fArea > 0.7 && fArea < 1.5 && fDensity > 0.85)	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
+				std::string strTmpLog = Poco::format("第%d个矩形:area=%f, Density=%f\t", k, (double)fArea, (double)fDensity);
+				strLog2.append(strTmpLog);
+				if ((bOnlyOne && fArea > 0.4 && fArea < 2.5 && fDensity > rcTmp.fStandardValuePercent * 0.9) || (fArea > 0.5 && fArea < 2.0 && fDensity > rcTmp.fStandardValuePercent))	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
 				{
-					rtFix = RectCompList[i];
+					bFind = true;
+					rtFix = RectCompList[k];
 					break;
 				}
 			}
-			m_ptFixCP.x = static_cast<int>(rtFix.x + rtFix.width / 2 + 0.5 + rc.rt.x);
-			m_ptFixCP.y = static_cast<int>(rtFix.y + rtFix.height / 2 + 0.5 + rc.rt.y);
+			
+			if (!bFind)
+				bFindRect = true;
+			else
+			{
+				m_ptFixCP.x = static_cast<int>(rtFix.x + rtFix.width / 2 + 0.5 + rc.rt.x);
+				m_ptFixCP.y = static_cast<int>(rtFix.y + rtFix.height / 2 + 0.5 + rc.rt.y);
 
-// 			rtFix.x = rtFix.x + rc.rt.x;
-// 			rtFix.y = rtFix.y + rc.rt.y;
+				// 			rtFix.x = rtFix.x + rc.rt.x;
+				// 			rtFix.y = rtFix.y + rc.rt.y;
 
-			RECTINFO rcFixInfo = rc;
-			rcFixInfo.rt = rtFix;
-			pPic->lFix.push_back(rcFixInfo);
-			TRACE("定点矩形: (%d,%d,%d,%d)\n", rtFix.x, rtFix.y, rtFix.width, rtFix.height);
+				RECTINFO rcFixInfo = rc;
+				rcFixInfo.nTH = i;			//这是属于模板上定点列表的第几个
+				rcFixInfo.rt = rtFix;
+				pPic->lFix.push_back(rcFixInfo);
+				TRACE("定点矩形: (%d,%d,%d,%d)\n", rtFix.x, rtFix.y, rtFix.width, rtFix.height);
+			}
 		}
 		if (bFindRect)
 		{
+			std::string strLog3 = Poco::format("识别定点(%d)失败 -- %s\n", i, strLog2);
+			strLog.append(strLog3);
 			bResult = false;						//找到问题点
 			pPic->bFindIssue = true;
 			pPic->lIssueRect.push_back(rc);
+			if (nRecogMode == 2)
+				break;
 		}
 	}
 	if (!bResult)
 	{
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别定点失败, 图片名: %s\n", pPic->strPicName.c_str());
-		g_Log.LogOut(szLog);
+		strLog.append(szLog);
 		TRACE(szLog);
 	}
+	end = clock();
+	std::string strTime = Poco::format("识别定点时间: %dms\n", (int)(end - start));
+	strLog.append(strTime);
+	g_Log.LogOut(strLog);
 	return bResult;
 }
 
@@ -1313,7 +1361,7 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				nHead_maxH = rcFist.rt.height * (1 + fOffset_Head);		//同上
 			}
 #endif
-			int nYSum = 0;
+			int nXMidSum = 0;	//x轴中线坐标总和
 			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
 			{
 				CvRect aRect = cvBoundingRect(contour, 0);
@@ -1334,10 +1382,10 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 					}
 				}
 				RectCompList.push_back(rm);
-				nYSum += rm.y;
+				nXMidSum += (rm.x + rm.width / 2);
 			}
 			cvReleaseMemStorage(&storage);
-//			int nYMean = nYSum / RectCompList.size();
+			int nXMean = nXMidSum / RectCompList.size();
 #else
 			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
 			{
@@ -1387,7 +1435,7 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				RECTINFO rcTmp = rcHead1;
 				rcTmp.rt = RectCompList[i];
 				Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
-				if (rcTmp.fRealArea / rcTmp.fStandardArea < 0.75 || rcTmp.fRealDensity / rcTmp.fStandardDensity < 0.8)
+				if (rcTmp.fRealArea / rcTmp.fStandardArea < 0.7 || rcTmp.fRealDensity / rcTmp.fStandardDensity < 0.8)
 				{
 					itHead = RectCompList.erase(itHead);
 					i = i - 1;
@@ -1490,9 +1538,14 @@ bool CRecognizeThread::RecogABModel(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 	return bResult;
 }
 
-bool CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+bool CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, int nRecogMode /*= 2*/)
 {
 	TRACE("识别科目\n");
+	clock_t start, end;
+	start = clock();
+	std::string strLog;
+	strLog = Poco::format("图片%s\n", pPic->strPicName);
+
 	bool bResult = true;
 	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lCourse.begin();
 	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lCourse.end(); itCP++)
@@ -1528,7 +1581,7 @@ bool CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			{
 				char szLog[MAX_PATH] = { 0 };
 				sprintf_s(szLog, "校验失败, 灰度百分比: %f, 问题点: (%d,%d,%d,%d)\n", rc.fRealValuePercent * 100, rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
-				g_Log.LogOut(szLog);
+				strLog.append(szLog);
 				TRACE(szLog);
 			}
 		}
@@ -1536,26 +1589,33 @@ bool CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		{
 			char szLog[MAX_PATH] = { 0 };
 			sprintf_s(szLog, "校验失败, 异常结束, 问题点: (%d,%d,%d,%d)\n", rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
-			g_Log.LogOut(szLog);
+			strLog.append(szLog);
 			TRACE(szLog);
 		}
 		
-		bResult = false;						//找到问题点
 		pPic->bFindIssue = true;
 		pPic->lIssueRect.push_back(rc);
-		break;		
+		if (nRecogMode == 2)
+		{
+			bResult = false;						//找到问题点
+			break;		//发现问题点时，继续判断后面的点，不停止扫描
+		}
 	}
 	if (!bResult)
 	{
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别科目失败, 图片名: %s\n", pPic->strPicName.c_str());
-		g_Log.LogOut(szLog);
+		strLog.append(szLog);
 		TRACE(szLog);
 	}
+	end = clock();
+	std::string strTime = Poco::format("识别科目校验点时间: %dms\n", (int)(end - start));
+	strLog.append(strTime);
+	g_Log.LogOut(strLog);
 	return bResult;
 }
 
-bool CRecognizeThread::RecogQKCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+bool CRecognizeThread::RecogQKCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, int nRecogMode /*= 2*/)
 {
 	TRACE("识别缺考\n");
 	bool bResult = true;
@@ -1599,10 +1659,13 @@ bool CRecognizeThread::RecogQKCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 			TRACE(szLog);
 		}
 
-		bResult = false;						//找到问题点
 		pPic->bFindIssue = true;
 		pPic->lIssueRect.push_back(rc);
-		break;
+		if (nRecogMode == 2)
+		{
+			bResult = false;						//找到问题点
+			break;
+		}
 	}
 	if (!bResult)
 	{
@@ -1614,9 +1677,15 @@ bool CRecognizeThread::RecogQKCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 	return bResult;
 }
 
-bool CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+bool CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, int nRecogMode /*= 2*/)
 {
 	TRACE("识别灰度点\n");
+
+	clock_t start, end;
+	start = clock();
+	std::string strLog;
+	strLog = Poco::format("图片%s\n", pPic->strPicName);
+
 	bool bResult = true;
 	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lGray.begin();
 	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lGray.end(); itCP++)
@@ -1652,7 +1721,7 @@ bool CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			{
 				char szLog[MAX_PATH] = { 0 };
 				sprintf_s(szLog, "校验失败, 灰度百分比: %f, 问题点: (%d,%d,%d,%d)\n", rc.fRealValuePercent * 100, rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
-				g_Log.LogOut(szLog);
+				strLog.append(szLog);
 				TRACE(szLog);
 			}
 		}
@@ -1660,26 +1729,33 @@ bool CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		{
 			char szLog[MAX_PATH] = { 0 };
 			sprintf_s(szLog, "校验失败, 异常结束, 问题点: (%d,%d,%d,%d)\n", rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
-			g_Log.LogOut(szLog);
+			strLog.append(szLog);
 			TRACE(szLog);
 		}
 
-		bResult = false;						//找到问题点
 		pPic->bFindIssue = true;
 		pPic->lIssueRect.push_back(rc);
-		break;
+		if (nRecogMode == 2)
+		{
+			bResult = false;						//找到问题点
+			break;
+		}
 	}
 	if (!bResult)
 	{
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别灰度校验点失败, 图片名: %s\n", pPic->strPicName.c_str());
-		g_Log.LogOut(szLog);
+		strLog.append(szLog);
 		TRACE(szLog);
 	}
+	end = clock();
+	std::string strTime = Poco::format("识别灰度校验点时间: %dms\n", (int)(end - start));
+	strLog.append(strTime);
+	g_Log.LogOut(strLog);
 	return bResult;
 }
 
-bool CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+bool CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, int nRecogMode /*= 2*/)
 {
 	bool bResult = true;
 	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lWhite.begin();
@@ -1728,10 +1804,13 @@ bool CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 			TRACE(szLog);
 		}
 
-		bResult = false;						//找到问题点
 		pPic->bFindIssue = true;
 		pPic->lIssueRect.push_back(rc);
-		break;
+		if (nRecogMode == 2)
+		{
+			bResult = false;						//找到问题点
+			break;
+		}
 	}
 	if (!bResult)
 	{
@@ -1760,6 +1839,12 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	int nEqualCount = 0;
 	int nNullCount_1 = 0;	//第一种方法识别出的空值
 	int nNullCount_2 = 0;	//第二种方法识别出的空值
+	int nNullCount_3 = 0;	//第三种方法识别出的空值
+
+	clock_t start, end;
+	start = clock();
+	std::string strLog;
+	strLog = Poco::format("图片%s\n", pPic->strPicName);
 
 	bool bRecogAll = true;
 	bool bResult = true;
@@ -1806,11 +1891,11 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				}
 			}
 
-			bool bResult_Recog2 = RecogVal(nPic, rc, matCompPic, pPic, pModelInfo);
-			if (bResult_Recog2)
-			{
-				vecVal_threshold.push_back(rc.nAnswer);
-			}
+// 			bool bResult_Recog2 = RecogVal(nPic, rc, matCompPic, pPic, pModelInfo);
+// 			if (bResult_Recog2)
+// 			{
+// 				vecVal_threshold.push_back(rc.nAnswer);
+// 			}
 			omrResult.lSelAnswer.push_back(rc);
 
 			#ifdef PaintOmrSnRect	//打印OMR、SN位置
@@ -1818,6 +1903,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			#endif
 		}
 
+		bool bUnSure1 = false;		//针对第一种算法无法确定的情况，选项全填涂或者全没涂的情况，这里不用阀值直接判断要求最少选项数
 	#if 1
 		std::string strRecogAnswer1;
 		std::vector<pRECTINFO> vecItemsDesc;
@@ -1832,20 +1918,12 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			fCompThread = _dCompThread_Head_;
 			fDiffThread = _dDiffThread_Head_;
 			fDiffExit = _dDiffExit_Head_;
-
-			// 			fCompThread = 1.0;
-			// 			fDiffThread = 0.085;
-			// 			fDiffExit = 0.15;
 		}
 		else
 		{
 			fCompThread = _dCompThread_Fix_;
 			fDiffThread = _dDiffThread_Fix_;
 			fDiffExit = _dDiffExit_Fix_;
-
-			// 			fCompThread = 1.2;
-			// 			fDiffThread = 0.2;
-			// 			fDiffExit = 0.3;
 		}
 
 		int nFlag = -1;
@@ -1860,8 +1938,13 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			{
 				nFlag = i;
 				fThreld = vecOmrItemDiff[i].fFirst;
+			#ifdef Test_RecogFirst_NoThreshord
+				if (vecOmrItemDiff[i].fDiff > fDiffExit)	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
+					break;
+			#else
 				if (vecOmrItemDiff[i].fDiff > fDiffExit && i + 1 >= vecVal_calcHist.size())	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
 					break;
+			#endif
 			}
 		}
 		if (nFlag >= 0)
@@ -1879,12 +1962,16 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		}
 		else
 		{
+		#ifdef Test_RecogFirst_NoThreshord
+			bUnSure1 = true;
+		#else
 			for (int i = 0; i < vecVal_calcHist.size(); i++)
 			{
 				char szVal[10] = { 0 };
 				sprintf_s(szVal, "%c", vecVal_calcHist[i] + 65);
 				strRecogAnswer1.append(szVal);
 			}
+		#endif
 		}
 	#else	//一下是直接通过阀值判断是否选中，可用，对填涂不规范并且不清晰的情况不够理想
 		std::string strRecogAnswer1;
@@ -1897,7 +1984,6 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	#endif
 
 
-#if 1
 	#ifdef Test_RecogOmr3
 		RecogVal_Omr2(nPic, matCompPic, pPic, pModelInfo, omrResult);
 		RecogVal_Omr3(nPic, matCompPic, pPic, pModelInfo, omrResult);
@@ -1907,34 +1993,70 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 
 		if (strRecogAnswer1 == "") nNullCount_1++;
 		if (strRecogAnswer2 == "") nNullCount_2++;
+		if (strRecogAnswer3 == "") nNullCount_3++;
 
+		#ifdef Test_Recog3
+			bUnSure1 = true;
+		#endif
 		int nDoubt = 0;
-		if (strRecogAnswer1 == "" && (strRecogAnswer2 == "" || strRecogAnswer3 == ""))
+		if (bUnSure1)
 		{
-			nDoubt = 2;
-			nNullCount++;
-
-			(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
-			(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrNull++;
-			(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
-		}
-		else
-		{
-			if (strRecogAnswer1 == strRecogAnswer2 || strRecogAnswer1 == strRecogAnswer3)
+			if (strRecogAnswer2 == "" && strRecogAnswer3 == "")
 			{
-				nDoubt = 0;
-				nEqualCount++;
+				nDoubt = 2;
+				nNullCount++;
+
+				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
+				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrNull++;
+				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
 			}
 			else
 			{
-				nDoubt = 1;
-				nDoubtCount++;
+				if (strRecogAnswer2 == strRecogAnswer3)
+				{
+					nDoubt = 0;
+					nEqualCount++;
+				}
+				else
+				{
+					nDoubt = 1;
+					nDoubtCount++;
+
+					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
+					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrDoubt++;
+					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
+				}
+			}
+		}
+		else
+		{
+			if (strRecogAnswer1 == "" && (strRecogAnswer2 == "" || strRecogAnswer3 == ""))
+			{
+				nDoubt = 2;
+				nNullCount++;
 
 				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
-				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrDoubt++;
+				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrNull++;
 				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
 			}
-		}		
+			else
+			{
+				if (strRecogAnswer1 == strRecogAnswer2 || strRecogAnswer1 == strRecogAnswer3)
+				{
+					nDoubt = 0;
+					nEqualCount++;
+				}
+				else
+				{
+					nDoubt = 1;
+					nDoubtCount++;
+
+					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
+					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrDoubt++;
+					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
+				}
+			}
+		}
 
 	#else
 		//++ test	测试整题选项进行二值化识别
@@ -1973,15 +2095,6 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			}
 		}		
 	#endif
-#else
-		std::string strRecogAnswer2;
-		for (int i = 0; i < vecVal_threshold.size(); i++)
-		{
-			char szVal[10] = { 0 };
-			sprintf_s(szVal, "%c", vecVal_threshold[i] + 65);
-			strRecogAnswer2.append(szVal);
-		}
-#endif
 
 		omrResult.nDoubt		= nDoubt;
 		omrResult.strRecogVal	= strRecogAnswer1;
@@ -1992,7 +2105,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	{
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别OMR失败, 图片名: %s\n", pPic->strPicName.c_str());
-		g_Log.LogOut(szLog);
+		strLog.append(szLog);
 		TRACE(szLog);
 	}
 
@@ -2007,13 +2120,16 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	if (bResult && nCount)
 	{
 		char szStatistics[150] = { 0 };
-		sprintf_s(szStatistics, "图片(%s)选项总数[%d],空值%d(%.2f%%)[No.1=%d(%.2f%%),No.2=%d(%.2f%%)],怀疑%d(%.2f%%),无怀疑%d(%.2f%%)", pPic->strPicName.c_str(), nCount, nNullCount, (float)nNullCount / nCount * 100, \
-				  nNullCount_1, (float)nNullCount_1 / nCount * 100, nNullCount_2, (float)nNullCount_2 / nCount * 100, \
+		sprintf_s(szStatistics, "图片(%s)选项总数[%d],空值%d(%.2f%%)[No.1=%d(%.2f%%),No.2=%d(%.2f%%), No.3=%d(%.2f%%)],怀疑%d(%.2f%%),无怀疑%d(%.2f%%)", pPic->strPicName.c_str(), nCount, nNullCount, (float)nNullCount / nCount * 100, \
+				  nNullCount_1, (float)nNullCount_1 / nCount * 100, nNullCount_2, (float)nNullCount_2 / nCount * 100, nNullCount_3, (float)nNullCount_3 / nCount * 100,\
 				  nDoubtCount, (float)nDoubtCount / nCount * 100, nEqualCount, (float)nEqualCount / nCount * 100);
 
-		g_Log.LogOut(szStatistics);
+		strLog.append(szStatistics);
 	}	
-
+	end = clock();
+	std::string strTime = Poco::format("识别Omr时间: %dms\n", (int)(end - start));
+	strLog.append(strTime);
+	g_Log.LogOut(strLog);
 	return bResult;
 }
 
@@ -2063,11 +2179,11 @@ bool CRecognizeThread::RecogElectOmr(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 				}
 			}
 
-			bool bResult_Recog2 = RecogVal(nPic, rc, matCompPic, pPic, pModelInfo);
-			if (bResult_Recog2)
-			{
-				vecVal_threshold.push_back(rc.nAnswer);
-			}
+// 			bool bResult_Recog2 = RecogVal(nPic, rc, matCompPic, pPic, pModelInfo);
+// 			if (bResult_Recog2)
+// 			{
+// 				vecVal_threshold.push_back(rc.nAnswer);
+// 			}
 			omrResult.lItemInfo.push_back(rc);
 
 #ifdef PaintOmrSnRect	//打印OMR、SN位置
@@ -2089,20 +2205,12 @@ bool CRecognizeThread::RecogElectOmr(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 			fCompThread = _dCompThread_Head_;
 			fDiffThread = _dDiffThread_Head_;
 			fDiffExit = _dDiffExit_Head_;
-
-			// 			fCompThread = 1.0;
-			// 			fDiffThread = 0.085;
-			// 			fDiffExit = 0.15;
 		}
 		else
 		{
 			fCompThread = _dCompThread_Fix_;
 			fDiffThread = _dDiffThread_Fix_;
 			fDiffExit = _dDiffExit_Fix_;
-
-			// 			fCompThread = 1.2;
-			// 			fDiffThread = 0.2;
-			// 			fDiffExit = 0.3;
 		}
 
 		int nFlag = -1;
@@ -2472,8 +2580,47 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 		matCompRoi = matCompPic(cv::Rect(ptNew1, ptNew2));
 		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
+		//++先获取均值和标准差，再计算新的二值化阀值	2017.4.27
+		const int channels[1] = { 0 };
+		const int histSize[1] = { _nThreshold_Recog2_ };
+		float hranges[2] = { 0, _nThreshold_Recog2_ };
+		const float* ranges[1];
+		ranges[0] = hranges;
+		MatND hist;
+		calcHist(&matCompRoi, 1, channels, Mat(), hist, 1, histSize, ranges);	//histSize, ranges
+
+		int nSum = 0;
+		int nDevSum = 0;
+		int nCount = 0;
+		for (int h = 0; h < hist.rows; h++)	//histSize
+		{
+			float binVal = hist.at<float>(h);
+
+			nCount += static_cast<int>(binVal);
+			nSum += h*binVal;
+		}
+		int nThreshold = _nThreshold_Recog2_;
+		if (nCount > 0)
+		{
+			float fMean = (float)nSum / nCount;		//均值
+
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nDevSum += pow(h - fMean, 2)*binVal;
+			}
+			float fStdev = sqrt(nDevSum / nCount);
+			nThreshold = fMean + fStdev;
+			if (fStdev > fMean)
+				nThreshold = fMean + fStdev;
+		}
+
+		if (nThreshold > _nThreshold_Recog2_) nThreshold = _nThreshold_Recog2_;
+		//--
+
 		//图片二值化
-		threshold(matCompRoi, matCompRoi, _nThreshold_Recog2_, 255, THRESH_BINARY_INV);				//200, 255
+		threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY_INV);		//_nThreshold_Recog2_		//200, 255
 
 		//这里进行开闭运算
 		//确定腐蚀和膨胀核的大小
@@ -2945,6 +3092,12 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 	bool bRecogAll = true;
 	bool bResult = true;
 	std::vector<int> vecSN;
+
+	clock_t start, end;
+	start = clock();
+	std::string strLog;
+	strLog = Poco::format("图片%s\n", pPic->strPicName);
+
 	SNLIST::iterator itSN = pModelInfo->pModel->vecPaperModel[nPic]->lSNInfo.begin();
 	for (; itSN != pModelInfo->pModel->vecPaperModel[nPic]->lSNInfo.end(); itSN++)
 	{
@@ -3016,20 +3169,12 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			fCompThread = _dCompThread_Head_;
 			fDiffThread = _dDiffThread_Head_;
 			fDiffExit = _dDiffExit_Head_;
-
-// 			fCompThread = 1.0;
-// 			fDiffThread = 0.085;
-// 			fDiffExit = 0.15;
 		}
 		else
 		{
 			fCompThread = _dCompThread_Fix_;
 			fDiffThread = _dDiffThread_Fix_;
 			fDiffExit = _dDiffExit_Fix_;
-
-// 			fCompThread = 1.2;
-// 			fDiffThread = 0.2;
-// 			fDiffExit = 0.3;
 		}
 
 		int nFlag = -1;
@@ -3072,27 +3217,22 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		if (vecItemVal.size() != 1)
 		{
 			char szTmpLog[300] = { 0 };
-			for (int i = 0; i < vecItemsDesc.size(); i++)
-			{
-				char szTmp[10] = { 0 };
-				sprintf_s(szTmpLog, "%d=%.3f", vecItemsDesc[i]->nSnVal, vecItemsDesc[i]->fRealValuePercent);
-				strcat_s(szTmpLog, szTmp);
-			}
-			sprintf_s(szTmpLog, "图片%s\n第%d位SN[", pPic->strPicName.c_str(), pSn->nItem);
+// 			for (int i = 0; i < vecItemsDesc.size(); i++)
+// 			{
+// 				char szTmp[10] = { 0 };
+// 				sprintf_s(szTmpLog, "%d=%.3f", vecItemsDesc[i]->nSnVal, vecItemsDesc[i]->fRealValuePercent);
+// 				strcat_s(szTmpLog, szTmp);
+// 			}
+			sprintf_s(szTmpLog, "第%d位SN[", pSn->nItem);
 			for (int i = 0; i < vecSnItemDiff.size(); i++)
 			{
 				char szTmp[15] = { 0 };
 				sprintf_s(szTmp, "%s:%.5f ", vecSnItemDiff[i].szVal, vecSnItemDiff[i].fDiff);
 				strcat_s(szTmpLog, szTmp);
 			}
-			strcat_s(szTmpLog, "]");
-			g_Log.LogOut(szTmpLog);
+			strcat_s(szTmpLog, "]\n");
+			strLog.append(szTmpLog);
 		}
-#endif		
-
-#if 1	//第二种ZKZH识别方法 test
-		std::vector<int> vecItemVal2;
-		RecogVal_Sn2(nPic, matCompPic, pPic, pModelInfo, pSn, vecItemVal2);
 #endif
 
 		if (vecItemVal.size() == 1)
@@ -3102,6 +3242,11 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		}
 		else
 		{
+		#if 1	//第二种ZKZH识别方法 test
+			std::vector<int> vecItemVal2;
+			RecogVal_Sn2(nPic, matCompPic, pPic, pModelInfo, pSn, vecItemVal2);
+		#endif
+
 			if (vecItemVal.size() == 0 && vecItemVal2.size() == 1)
 			{
 				vecSN.push_back(vecItemVal2[0]);
@@ -3126,7 +3271,7 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 					}
 					char szLog[MAX_PATH] = { 0 };
 					sprintf_s(szLog, "识别准考证号第%d位失败,识别出结果%d位(%s), 图片名: %s\n", pSnItem->nItem, vecItemVal.size(), szVal, pPic->strPicName.c_str());
-					g_Log.LogOut(szLog);
+					strLog.append(szLog);
 					TRACE(szLog);
 				}				
 			}
@@ -3142,7 +3287,7 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		}
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别准考证号完成(%s), 图片名: %s\n", (static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.c_str(), pPic->strPicName.c_str());
-		g_Log.LogOut(szLog);
+		strLog.append(szLog);
 		TRACE(szLog);
 	}
 	if (!bRecogAll)
@@ -3159,14 +3304,23 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别准考证号失败, 图片名: %s\n", pPic->strPicName.c_str());
-		g_Log.LogOut(szLog);
+		strLog.append(szLog);
 		TRACE(szLog);
 	}
+	end = clock();
+	std::string strTime = Poco::format("识别考号时间: %dms\n", (int)(end - start));
+	strLog.append(strTime);
+	g_Log.LogOut(strLog);
 	return bResult;
 }
 
 bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
+	clock_t start, end;
+	start = clock();
+	std::string strLog;
+	strLog = Poco::format("图片%s\n", pPic->strPicName);
+
 	bool bResult = true;
 	SNLIST::iterator itSN = pModelInfo->pModel->vecPaperModel[nPic]->lSNInfo.begin();
 	for (; itSN != pModelInfo->pModel->vecPaperModel[nPic]->lSNInfo.end(); itSN++)
@@ -3200,56 +3354,29 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 				string strTypeName;
 				string strResult = GetQR(matCompRoi, strTypeName);
 
-
-#ifdef WH_CCBKS		//武汉楚才杯，单独进行json解析
-				std::string strZkzh;
-				std::string strLog1;
-				Poco::JSON::Parser parser;
-				Poco::Dynamic::Var result;
-				try
-				{
-					result = parser.parse(strResult);		//strJsnData
-					Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
-
-					strZkzh = objData->get("zkzh").convert<std::string>();
-				}
-				catch (Poco::Exception& exc)
-				{
-					strLog1 = "识别二维码json解析异常\n";
-				}
-
-				if (strZkzh != "")
-					strLog1 = "识别准考证号完成(" + strZkzh + "), 图片名: " + pPic->strPicName;
-				else
-				{
-					strLog1 = "识别准考证号失败, 图片名:" + pPic->strPicName;
-//					bResult = false;
-				}
-				(static_cast<pST_PaperInfo>(pPic->pPaper))->strSN = strZkzh;
-				g_Log.LogOut(strLog1);
-				return bResult;
-#endif
-
-				std::string strLog;
+				std::string strTmpLog;
 				if (strResult != "")
-					strLog = "识别准考证号完成(" + strResult + "), 图片名: " + pPic->strPicName;
+					strTmpLog = "识别准考证号完成(" + strResult + "), 图片名: " + pPic->strPicName;
 				else
 				{
-					strLog = "识别准考证号失败, 图片名:" + pPic->strPicName;
+					strTmpLog = "识别准考证号失败, 图片名:" + pPic->strPicName;
 //					bResult = false;
 				}
 				(static_cast<pST_PaperInfo>(pPic->pPaper))->strSN = strResult;
-				g_Log.LogOut(strLog);
+				strLog.append(strTmpLog);
 			}
 			catch (cv::Exception& exc)
 			{
-				std::string strLog = "识别二维码或条码失败(" + pPic->strPicName + "): " + exc.msg;
-				g_Log.LogOut(strLog);
+				std::string strTmpLog = "识别二维码或条码失败(" + pPic->strPicName + "): " + exc.msg;
+				strLog.append(strTmpLog);
 				break;
 			}
 		}
 	}
-
+	end = clock();
+	std::string strTime = Poco::format("识别考号时间: %dms\n", (int)(end - start));
+	strLog.append(strTime);
+	g_Log.LogOut(strLog);
 	return bResult;
 }
 
@@ -3278,6 +3405,43 @@ bool CRecognizeThread::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 	fDiffThread = _dDiffThread_3_;
 	fDiffExit = _dDiffExit_3_;
 
+#if 1		//灰度差值满足后，加上单项Omr的灰度需要比标准的小
+	int nFlag = -1;
+	float fThreld = 0.0;
+	for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
+	{
+		float fMeanGrayDiff = vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray;
+		if ((vecOmrItemGrayDiff[i].fDiff >= fDiffThread + fMeanGrayDiff))
+		{
+			nFlag = i;
+			fThreld = vecOmrItemGrayDiff[i].fFirst;
+			if (vecOmrItemGrayDiff[i].fDiff > fDiffExit && i + 1 >= vecVal_AnswerSuer.size())	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
+				break;
+		}
+	}
+	if (nFlag >= 0)
+	{
+		RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
+		for (; itItem != omrResult.lSelAnswer.end(); itItem++)
+		{
+			if (itItem->fRealMeanGray <= fThreld)
+			{
+				char szVal[2] = { 0 };
+				sprintf_s(szVal, "%c", itItem->nAnswer + 65);
+				strRecogAnswer.append(szVal);
+			}
+		}
+	}
+	else
+	{
+		for (int i = 0; i < vecVal_AnswerSuer.size(); i++)
+		{
+			char szVal[5] = { 0 };
+			sprintf_s(szVal, "%c", vecVal_AnswerSuer[i] + 65);
+			strRecogAnswer.append(szVal);
+		}
+	}
+#else
 	int nFlag = -1;
 	float fThreld = 0.0;
 	for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
@@ -3312,6 +3476,7 @@ bool CRecognizeThread::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 			strRecogAnswer.append(szVal);
 		}
 	}
+#endif
 	omrResult.strRecogVal3 = strRecogAnswer;
 	return true;
 }
@@ -3371,5 +3536,46 @@ bool CRecognizeThread::RecogVal_Sn3(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 	return true;
 }
 
+void CRecognizeThread::HandleWithErrPaper(pST_PaperInfo pPaper)
+{
+	pPaper->bIssuePaper = true;				//标识此学生试卷属于问题试卷
+	pPAPERSINFO pPapers = static_cast<pPAPERSINFO>(pPaper->pPapers);
+
+	pPapers->fmlPaper.lock();
+	PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
+	for (; itPaper != pPapers->lPaper.end();)
+	{
+		if (*itPaper == pPaper)
+		{
+			itPaper = pPapers->lPaper.erase(itPaper);
+			break;
+		}
+		else
+			itPaper++;
+	}
+	pPapers->fmlPaper.unlock();
+
+	pPapers->fmlIssue.lock();
+	bool bFind = false;
+	PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
+	for (; itIssuePaper != pPapers->lIssue.end();)
+	{
+		if (*itIssuePaper == pPaper)
+		{
+			bFind = true;
+			break;
+		}
+		else
+			itIssuePaper++;
+	}
+	if (!bFind)
+	{
+		pPapers->lIssue.push_back(pPaper);
+		pPapers->nRecogErrCount++;
+	}
+	pPapers->fmlIssue.unlock();
+
+	(static_cast<CDialog*>(pPaper->pSrcDlg))->SendMessage(MSG_ERR_RECOG, (WPARAM)pPaper, (LPARAM)pPapers);		//PostMessageW
+}
 
 

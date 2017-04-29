@@ -3,6 +3,9 @@
 #include "PicShow.h"
 #include "MyCodeConvert.h"
 #include "FileUpLoad.h"
+#include "ComboBoxExt.h"
+#include "XListCtrl.h"
+#include "StudentMgr.h"
 // CPaperInputDlg 对话框
 
 class CPaperInputDlg : public CDialog
@@ -19,8 +22,8 @@ public:
 public:
 	CListCtrl	m_lPapersCtrl;		//试卷袋列表
 	CListCtrl	m_lPaperCtrl;		//试卷袋中的试卷列表
-	CListCtrl	m_lIssuePaperCtrl;	//问题试卷列表
-	CComboBox	m_comboModel;		//模板下拉列表
+	CXListCtrl	m_lIssuePaperCtrl;	//问题试卷列表
+	CComboBoxExt	m_comboModel;		//模板下拉列表
 	CTabCtrl	m_tabPicShow;		//图片显示Tab控件
 	CButton		m_btnBroswer;		//浏览按钮
 
@@ -61,15 +64,21 @@ private:
 	void	PaintIssueRect(pST_PaperInfo pPaper);			//画出已识别出来的问题矩形位置
 
 	void	ShowPaperByItem(int nItem);
+	void	ShowPapers(pPAPERSINFO pPapers);
 
 	int				m_nStatusSize;			//状态栏字体大小
 	CFont			m_fontStatus;			//状态栏字体
 	COLORREF		m_colorStatus;			//状态栏字体颜色
 	pST_PaperInfo	m_pCurrentShowPaper;
+	pPAPERSINFO		m_pCurrentPapers;
+
+	CStudentMgr*	m_pStudentMgr;			//报名库管理对象
 
 	void	ShowRectByPoint(cv::Point pt, pST_PaperInfo pPaper);
 	LRESULT RoiLBtnDown(WPARAM wParam, LPARAM lParam);		//鼠标左键按下的通知
 	int		GetRectInfoByPoint(cv::Point pt, pST_PicInfo pPic, RECTINFO*& pRc);
+
+	LRESULT MsgZkzhRecog(WPARAM wParam, LPARAM lParam);		//准考证号识别完成时的通知
 
 	void	SetFontSize(int nSize);
 	void	SetStatusShowInfo(CString strMsg, BOOL bWarn = FALSE);	//设置状态栏显示的消息
@@ -90,4 +99,5 @@ public:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnBnClickedBtnTest();
 	afx_msg void OnLvnKeydownListPaper(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 };

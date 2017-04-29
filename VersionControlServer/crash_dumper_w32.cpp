@@ -72,7 +72,7 @@ LONG WINAPI CrashDumper::ExceptionFilter(struct _EXCEPTION_POINTERS* ExceptionIn
 	{
 // 		std::string strLog = "程序崩溃了，Dump已经生成";
 // 		g_Log.LogOutError(strLog);
-		MessageBox(NULL, TEXT("本程序遇到未处理的异常，MiniDump文件已经生成在程序的运行目录。"), TEXT("提示"), MB_OK);
+//		MessageBox(NULL, TEXT("本程序遇到未处理的异常，MiniDump文件已经生成在程序的运行目录。"), TEXT("提示"), MB_OK);
 	}
 	else
 		MessageBox(NULL, TEXT("本程序遇到未处理的异常，生成MiniDump文件失败。"), TEXT("提示"), MB_OK);

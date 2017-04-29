@@ -24,7 +24,7 @@ IMPLEMENT_DYNAMIC(CMakeModelDlg, CDialog)
 
 CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	: CDialog(CMakeModelDlg::IDD, pParent)
-	, m_pModelPicShow(NULL), m_nGaussKernel(5), m_nSharpKernel(5), m_nThresholdKernel(150), m_nCannyKernel(90), m_nDilateKernel(6), m_nErodeKernel(2), m_nDilateKernel_Common(6), m_nDilateKernel_Sn(6)
+	, m_pModelPicShow(NULL), m_nGaussKernel(5), m_nSharpKernel(5), m_nThresholdKernel(150), m_nCannyKernel(90), m_nDilateKernel(6), m_nErodeKernel(2), m_nDilateKernel_DefCommon(6), m_nDilateKernel_DefSn(6)
 	, m_pModel(pModel), m_bNewModelFlag(false), m_nModelPicNums(2), m_nCurrTabSel(0), m_bSavedModelFlag(false), m_ncomboCurrentSel(0), m_eCurCPType(UNKNOWN)
 	, m_nCurListCtrlSel(0), m_nStartTH(0)
 	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200)
@@ -33,7 +33,7 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_pCurRectInfo(NULL), m_ptFixCP(0,0)
 	, m_bFistHTracker(true), m_bFistVTracker(true), m_bFistSNTracker(true)
 	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL), m_pSNInfoDlg(NULL), m_pElectOmrDlg(NULL)
-	, m_bShiftKeyDown(false), m_pScanThread(NULL)
+	, m_bShiftKeyDown(false)/*, m_pScanThread(NULL)*/
 {
 	InitParam();
 }
@@ -887,7 +887,7 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 	}
 
 #ifdef TEST_SCAN_THREAD
-	m_scanThread.setScanPath(m_strScanSavePath);
+//	m_scanThread.setScanPath(m_strScanSavePath);
 	m_scanThread.PostThreadMessage(MSG_START_SCAN, NULL, NULL);
 
 // 	if(m_pScanThread)
@@ -920,21 +920,7 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 	int nDuplex = dlg.m_nCurrDuplex;		//单双面,0-单面,1-双面
 
 	bool bShowScanSrcUI = g_bShowScanSrcUI;
-
-#if 0
-	if (dlg.m_bAdvancedSetting)
-	{
-		bShowScanSrcUI = true;
-		if (!Acquire(TWCPP_ANYCOUNT, bShowScanSrcUI))
-		{
-			TRACE("扫描失败\n");
-		}
-		GetDlgItem(IDC_BTN_ScanModel)->EnableWindow(TRUE);
-		return;
-	}
-#endif
-
-
+	
 	int nSize = TWSS_NONE;							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3	TWSS_NONE-定制
 	int nPixel = 2;							//0-黑白，1-灰度，2-彩色
 	int nResolution = 200;					//dpi: 72, 150, 200, 300
@@ -1232,7 +1218,7 @@ void CMakeModelDlg::OnBnClickedBtnReset()
 
 bool CMakeModelDlg::RecogNewGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 {
-	cv::cvtColor(matSrcRoi, matSrcRoi, CV_BGR2GRAY);
+//	cv::cvtColor(matSrcRoi, matSrcRoi, CV_BGR2GRAY);
 
 	return RecogGrayValue(matSrcRoi, rc);
 }
@@ -1267,8 +1253,19 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	rc.fStandardArea = rc.rt.area();
 	rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea;
 
+#if 1
+	MatND mean;
+	MatND stddev;
+	meanStdDev(matSrcRoi, mean, stddev);
 
+	IplImage *src;
+	src = &IplImage(mean);
+	rc.fStandardMeanGray = cvGetReal2D(src, 0, 0);
 
+	IplImage *src2;
+	src2 = &IplImage(stddev);
+	rc.fStandardStddev = cvGetReal2D(src2, 0, 0);
+#else
 	MatND src_hist2;
 	const int histSize2[1] = { 256 };	//rc.nThresholdValue - g_nRecogGrayMin
 	const float* ranges2[1];
@@ -1287,65 +1284,58 @@ inline bool CMakeModelDlg::RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	}
 	rc.fStandardMeanGray = (float)nCount / nArea;
 //	rc.fStandardMeanGray = nCount / rc.fStandardArea;
+#endif
 
+#ifdef Test_Data
+//	GetStandardValue(rc);
+#endif
 	return true;
+}
+
+void CMakeModelDlg::GetStandardValue(RECTINFO& rc)
+{
+	if (rc.eCPType == SN)
+	{
+		switch (rc.nSnVal)
+		{
+			case 0:	rc.fStandardValue = 295; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 1:	rc.fStandardValue = 260; rc.fStandardArea = 798; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 2:	rc.fStandardValue = 320; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 3:	rc.fStandardValue = 285; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 4:	rc.fStandardValue = 285; rc.fStandardArea = 798; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 5:	rc.fStandardValue = 295; rc.fStandardArea = 320; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 6:	rc.fStandardValue = 315; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 7:	rc.fStandardValue = 262; rc.fStandardArea = 798; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 8:	rc.fStandardValue = 340; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+			case 9:	rc.fStandardValue = 290; rc.fStandardArea = 756; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;
+		}
+	}
+	else if (rc.eCPType == OMR)
+	{
+		switch (rc.nAnswer)
+		{
+			case 0:	rc.fStandardValue = 282.980011; rc.fStandardArea = 1036.040039; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//A
+			case 1:	rc.fStandardValue = 301.286652; rc.fStandardArea = 1032.920044; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//B
+			case 2:	rc.fStandardValue = 280.253326; rc.fStandardArea = 1033.773315; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//C
+			case 3:	rc.fStandardValue = 293.640015; rc.fStandardArea = 1036.533325; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//D
+			case 4:	rc.fStandardValue = 277.673340; rc.fStandardArea = 1034.079956; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//E
+			case 5:	rc.fStandardValue = 268.899994; rc.fStandardArea = 1030.706665; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//F
+			case 6:	rc.fStandardValue = 291.893341; rc.fStandardArea = 1035.920044; rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea; break;	//G
+		}
+	}
 }
 
 inline void CMakeModelDlg::GetThreshold(cv::Mat& matSrc, cv::Mat& matDst)
 {
+	int nRealThreshold = -1;
 	switch (m_eCurCPType)
 	{
-	case Fix_CP:
-	case H_HEAD:
-	case V_HEAD:
-	case ABMODEL:
-	case COURSE:
-	case QK_CP:
-		{
-#ifdef USES_GETTHRESHOLD_ZTFB	//先计算ROI区域的均值u和标准差p，二值化的阀值取u + 2p，根据正态分布，理论上可以囊括95%以上的范围
-			const int channels[1] = { 0 };
-			const int histSize[1] = { 150 };
-			float hranges[2] = { 0, 150 };
-			const float* ranges[1];
-			ranges[0] = hranges;
-			MatND hist;
-			calcHist(&matSrc, 1, channels, Mat(), hist, 1, histSize, ranges);	//histSize, ranges
-
-			int nSum = 0;
-			int nDevSum = 0;
-			int nCount = 0;
-			for (int h = 0; h < hist.rows; h++)	//histSize
-			{
-				float binVal = hist.at<float>(h);
-
-				nCount += static_cast<int>(binVal);
-				nSum += h*binVal;
-			}
-			int nThreshold = 150;
-			if (nCount > 0)
-			{
-				float fMean = (float)nSum / nCount;		//均值
-
-				for (int h = 0; h < hist.rows; h++)	//histSize
-				{
-					float binVal = hist.at<float>(h);
-
-					nDevSum += pow(h - fMean, 2)*binVal;
-				}
-				float fStdev = sqrt(nDevSum / nCount);	//标准差
-				nThreshold = fMean + 2 * fStdev;
-				if (fStdev > fMean)
-					nThreshold = fMean + fStdev;
-			}
-			else
-				nThreshold = 150;
-			if (nThreshold > 150) nThreshold = 150;
-			threshold(matSrc, matDst, nThreshold, 255, THRESH_BINARY);
-#else
-			threshold(matSrc, matDst, 60, 255, THRESH_BINARY);
-#endif
-		}
-		break;
+	case Fix_CP: nRealThreshold = m_nFixVal; break;
+	case H_HEAD: nRealThreshold = m_nHeadVal; break;
+	case V_HEAD: nRealThreshold = m_nHeadVal; break;
+	case ABMODEL: nRealThreshold = m_nABModelVal; break;
+	case COURSE: nRealThreshold = m_nCourseVal; break;
+	case QK_CP: nRealThreshold = m_nQK_CPVal; break;
 	case GRAY_CP: 
 	case WHITE_CP:
 	case SN:
@@ -1358,6 +1348,52 @@ inline void CMakeModelDlg::GetThreshold(cv::Mat& matSrc, cv::Mat& matDst)
 		cv::adaptiveThreshold(matSrc, matDst, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, blockSize, constValue);
 		break;
 	}
+
+	if (nRealThreshold > 0)
+	{
+	#ifdef USES_GETTHRESHOLD_ZTFB	//先计算ROI区域的均值u和标准差p，二值化的阀值取u + 2p，根据正态分布，理论上可以囊括95%以上的范围
+		const int channels[1] = { 0 };
+		const int histSize[1] = { nRealThreshold };
+		float hranges[2] = { 0, nRealThreshold };
+		const float* ranges[1];
+		ranges[0] = hranges;
+		MatND hist;
+		calcHist(&matSrc, 1, channels, Mat(), hist, 1, histSize, ranges);	//histSize, ranges
+
+		int nSum = 0;
+		int nDevSum = 0;
+		int nCount = 0;
+		for (int h = 0; h < hist.rows; h++)	//histSize
+		{
+			float binVal = hist.at<float>(h);
+
+			nCount += static_cast<int>(binVal);
+			nSum += h*binVal;
+		}
+		int nThreshold = nRealThreshold;
+		if (nCount > 0)
+		{
+			float fMean = (float)nSum / nCount;		//均值
+
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nDevSum += pow(h - fMean, 2)*binVal;
+			}
+			float fStdev = sqrt(nDevSum / nCount);	//标准差
+			nThreshold = fMean + 2 * fStdev;
+			if (fStdev > fMean)
+				nThreshold = fMean + fStdev;
+		}
+		else
+			nThreshold = nRealThreshold;
+		if (nThreshold > nRealThreshold) nThreshold = nRealThreshold;
+		threshold(matSrc, matDst, nThreshold, 255, THRESH_BINARY);
+	#else
+		threshold(matSrc, matDst, 60, 255, THRESH_BINARY);
+	#endif
+	}
 }
 
 bool CMakeModelDlg::Recognise(cv::Rect rtOri)
@@ -1366,8 +1402,10 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 	start = clock();
 	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
 		return false;
-
+	
+	TRACE("****** 1\n");
 	Mat imgResult = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtOri); 
+	TRACE("****** 2\n");
 
 	cvtColor(imgResult, imgResult, CV_BGR2GRAY);
 	GaussianBlur(imgResult, imgResult, cv::Size(m_nGaussKernel, m_nGaussKernel), 0, 0);
@@ -1375,19 +1413,23 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 
 	GetThreshold(imgResult, imgResult);
 
+	TRACE("****** 3\n");
 	cv::Canny(imgResult, imgResult, 0, m_nCannyKernel, 5);
 	Mat element = getStructuringElement(MORPH_RECT, Size(m_nDilateKernel, m_nDilateKernel));	//Size(6, 6)	普通空白框可识别
 	dilate(imgResult, imgResult, element);
 #if 1
+	TRACE("****** 4\n");
 	IplImage ipl_img(imgResult);
 
+	TRACE("****** 5\n");
 	//the parm. for cvFindContours  
 	CvMemStorage* storage = cvCreateMemStorage(0);
 	CvSeq* contour = 0;
 
 	//提取轮廓  
 	cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-	
+
+	TRACE("****** 6\n");
 	Rect rtMax;		//记录最大矩形，识别同步头时用来排除非同步头框
 	bool bResult = false;
 	std::vector<Rect>RectCompList;
@@ -1767,7 +1809,8 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 		}
 	}
 	end = clock();
-//	PaintRecognisedRect();
+	//	PaintRecognisedRect();
+	TRACE("****** 7\n");
 	if (m_eCurCPType != OMR && m_eCurCPType != SN)
 		ShowRectByCPType(m_eCurCPType);
 
@@ -2103,10 +2146,12 @@ bool CMakeModelDlg::checkValidity()
 	{
 		for (int i = 0; i < m_vecPaperModelInfo.size(); i++)
 		{
-			if (m_vecPaperModelInfo[i]->vecRtFix.size() < 2)
+			int nCount = m_vecPaperModelInfo[i]->vecABModel.size() + m_vecPaperModelInfo[i]->vecCourse.size() + m_vecPaperModelInfo[i]->vecElectOmr.size() + m_vecPaperModelInfo[i]->vecGray.size() \
+					+ m_vecPaperModelInfo[i]->vecOmr2.size() + m_vecPaperModelInfo[i]->vecQK_CP.size() + m_vecPaperModelInfo[i]->vecWhite.size() + m_vecPaperModelInfo[i]->lSN.size();
+			if (nCount > 0 && m_vecPaperModelInfo[i]->vecRtFix.size() < 3)
 			{
 				char szTmp[50] = { 0 };
-				sprintf_s(szTmp, "第 %d 页定点设置数量太少，要求至少2个，建议设置4个", i + 1);
+				sprintf_s(szTmp, "第 %d 页定点设置数量太少，要求至少3个，建议设置4个", i + 1);
 				AfxMessageBox(A2T(szTmp));
 				bResult = false;
 				break;
@@ -2134,6 +2179,13 @@ bool CMakeModelDlg::checkValidity()
 // 				break;
 // 			}
 // 		}
+	}
+
+	//准考证号检查
+	if (m_vecPaperModelInfo[0]->lSN.size() == 0)
+	{
+		AfxMessageBox(_T("第1页准考证号未设置"));
+		bResult = false;
 	}
 
 	return bResult;
@@ -2291,19 +2343,15 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	modelPath = modelPath + _T("\\") + A2T(m_pModel->strModelName.c_str());
 	if (SaveModelFile(m_pModel))
 	{
-		ZipFile(modelPath, modelPath, _T(".mod"));
+//		ZipFile(modelPath, modelPath, _T(".mod"));
+		CZipObj zipObj;
+		zipObj.setLogger(g_pLogger);
+		zipObj.ZipFile(modelPath, modelPath, _T(".mod"));
 
-	#if 1
 		//直接上传模板
 		CString strModelFullPath = modelPath + _T(".mod");
 		UploadModel(strModelFullPath, m_pModel);
 		AfxMessageBox(_T("保存完成!"));
-	#else
-		if (m_pModel->nHasElectOmr)
-			AfxMessageBox(_T("保存完成，此模板存在选做题信息，请上传服务器！！！"));
-		else
-			AfxMessageBox(_T("保存完成!"));
-	#endif
 	}
 	else
 		AfxMessageBox(_T("保存失败"));
@@ -2393,6 +2441,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("standardArea", itFix->fStandardArea);
 			jsnObj.set("standardDensity", itFix->fStandardDensity);
 			jsnObj.set("standardMeanGray", itFix->fStandardMeanGray);
+			jsnObj.set("standardStddev", itFix->fStandardStddev);
 
 			jsnObj.set("gaussKernel", itFix->nGaussKernel);
 			jsnObj.set("sharpKernel", itFix->nSharpKernel);
@@ -2415,6 +2464,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("standardArea", itHHead->fStandardArea);
 			jsnObj.set("standardDensity", itHHead->fStandardDensity);
 			jsnObj.set("standardMeanGray", itHHead->fStandardMeanGray);
+			jsnObj.set("standardStddev", itHHead->fStandardStddev);
 
 			jsnObj.set("gaussKernel", itHHead->nGaussKernel);
 			jsnObj.set("sharpKernel", itHHead->nSharpKernel);
@@ -2437,6 +2487,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("standardArea", itVHead->fStandardArea);
 			jsnObj.set("standardDensity", itVHead->fStandardDensity);
 			jsnObj.set("standardMeanGray", itVHead->fStandardMeanGray);
+			jsnObj.set("standardStddev", itVHead->fStandardStddev);
 
 			jsnObj.set("gaussKernel", itVHead->nGaussKernel);
 			jsnObj.set("sharpKernel", itVHead->nSharpKernel);
@@ -2461,6 +2512,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("standardArea", itABModel->fStandardArea);
 			jsnObj.set("standardDensity", itABModel->fStandardDensity);
 			jsnObj.set("standardMeanGray", itABModel->fStandardMeanGray);
+			jsnObj.set("standardStddev", itABModel->fStandardStddev);
 
 			jsnObj.set("gaussKernel", itABModel->nGaussKernel);
 			jsnObj.set("sharpKernel", itABModel->nSharpKernel);
@@ -2485,6 +2537,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("standardArea", itCourse->fStandardArea);
 			jsnObj.set("standardDensity", itCourse->fStandardDensity);
 			jsnObj.set("standardMeanGray", itCourse->fStandardMeanGray);
+			jsnObj.set("standardStddev", itCourse->fStandardStddev);
 
 			jsnObj.set("gaussKernel", itCourse->nGaussKernel);
 			jsnObj.set("sharpKernel", itCourse->nSharpKernel);
@@ -2509,6 +2562,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("standardArea", itQKCP->fStandardArea);
 			jsnObj.set("standardDensity", itQKCP->fStandardDensity);
 			jsnObj.set("standardMeanGray", itQKCP->fStandardMeanGray);
+			jsnObj.set("standardStddev", itQKCP->fStandardStddev);
 
 			jsnObj.set("gaussKernel", itQKCP->nGaussKernel);
 			jsnObj.set("sharpKernel", itQKCP->nSharpKernel);
@@ -2533,6 +2587,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("standardArea", itGrayCP->fStandardArea);
 			jsnObj.set("standardDensity", itGrayCP->fStandardDensity);
 			jsnObj.set("standardMeanGray", itGrayCP->fStandardMeanGray);
+			jsnObj.set("standardStddev", itGrayCP->fStandardStddev);
 
 			jsnObj.set("gaussKernel", itGrayCP->nGaussKernel);
 			jsnObj.set("sharpKernel", itGrayCP->nSharpKernel);
@@ -2557,6 +2612,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("standardArea", itWhiteCP->fStandardArea);
 			jsnObj.set("standardDensity", itWhiteCP->fStandardDensity);
 			jsnObj.set("standardMeanGray", itWhiteCP->fStandardMeanGray);
+			jsnObj.set("standardStddev", itWhiteCP->fStandardStddev);
 
 			jsnObj.set("gaussKernel", itWhiteCP->nGaussKernel);
 			jsnObj.set("sharpKernel", itWhiteCP->nSharpKernel);
@@ -2647,6 +2703,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 				jsnObj.set("standardArea", itOmrSel->fStandardArea);
 				jsnObj.set("standardDensity", itOmrSel->fStandardDensity);
 				jsnObj.set("standardMeanGray", itOmrSel->fStandardMeanGray);
+				jsnObj.set("standardStddev", itOmrSel->fStandardStddev);
 
 				jsnObj.set("gaussKernel", itOmrSel->nGaussKernel);
 				jsnObj.set("sharpKernel", itOmrSel->nSharpKernel);
@@ -2686,6 +2743,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 				jsnObj.set("standardArea", itSnDetail->fStandardArea);
 				jsnObj.set("standardDensity", itSnDetail->fStandardDensity);
 				jsnObj.set("standardMeanGray", itSnDetail->fStandardMeanGray);
+				jsnObj.set("standardStddev", itSnDetail->fStandardStddev);
 
 				jsnObj.set("gaussKernel", itSnDetail->nGaussKernel);
 				jsnObj.set("sharpKernel", itSnDetail->nSharpKernel);
@@ -2724,6 +2782,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 				jsnObj.set("standardArea", itOmrSel->fStandardArea);
 				jsnObj.set("standardDensity", itOmrSel->fStandardDensity);
 				jsnObj.set("standardMeanGray", itOmrSel->fStandardMeanGray);
+				jsnObj.set("standardStddev", itOmrSel->fStandardStddev);
 
 				jsnObj.set("gaussKernel", itOmrSel->nGaussKernel);
 				jsnObj.set("sharpKernel", itOmrSel->nSharpKernel);
@@ -4281,6 +4340,28 @@ void CMakeModelDlg::AddRecogRectToList()
 	m_vecTmp.clear();
 	UpdataCPList();
 	ShowRectByCPType(m_eCurCPType);
+
+#ifdef Test_TraceLog
+	float fMeanArea[7] = { 0 };
+	float fMeanDensity[7] = { 0 };
+	float fMeanVal[7] = { 0 };
+	for (auto pstItem : m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2)
+	{
+		std::string strRectVal;
+		for (auto rc : pstItem.lSelAnswer)
+		{
+			fMeanArea[rc.nAnswer] += rc.fStandardArea;
+			fMeanVal[rc.nAnswer] += rc.fStandardValue;
+			fMeanDensity[rc.nAnswer] += rc.fStandardDensity;
+			strRectVal.append(Poco::format("项(%c) 面积: %f, 密度: %f, val: %f, valPer: %f; ", (char)(rc.nAnswer + 65), (double)rc.fStandardArea, (double)rc.fStandardDensity, (double)rc.fStandardValue, (double)rc.fStandardValuePercent));
+		}
+		std::string strRectLog = Poco::format("矩形题号: %d, %s", pstItem.nTH, strRectVal);
+		TRACE("%s\n", strRectLog.c_str());
+	}
+	int nOmrCount = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.size();
+	for (int i = 0; i < 7; i++)
+		TRACE("OMR平均值信息：%c--平均面积= %f, 平均值= %f, 平均密度= %f\n", i + 65, fMeanArea[i] / nOmrCount, fMeanVal[i] / nOmrCount, fMeanDensity[i] / nOmrCount);
+#endif
 }
 
 void CMakeModelDlg::RecognizeRectTracker()
@@ -4365,7 +4446,8 @@ void CMakeModelDlg::RecognizeRectTracker()
 		if (rt.br().y > m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.rows)
 			rt.height = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.rows - rt.y;
 		Recognise(rt);
-
+		
+		ShowTmpRect();
 		for (int i = 0; i < m_vecTmp.size(); i++)
 		{
 			bool bFind = false;
@@ -4929,12 +5011,12 @@ LRESULT CMakeModelDlg::SNTrackerChange(WPARAM wParam, LPARAM lParam)
 
 void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 {
+	m_vecTmp.clear();
 	if (rcList.size() <= 0)
 		return;
 	int nMaxRow = 1;
 	int nMaxCols = 1;
 
-	m_vecTmp.clear();
 	std::vector<Rect> rcList_X = rcList;
 	std::vector<Rect> rcList_XY = rcList;
 	std::sort(rcList_X.begin(), rcList_X.end(), SortByPositionX2);
@@ -5080,12 +5162,12 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 
 void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 {
+	m_vecTmp.clear();
 	if (rcList.size() <= 0)
 		return;
 	int nMaxRow		= 1;
 	int nMaxCols	= 1;
 
-	m_vecTmp.clear();
 	std::vector<Rect> rcList_X = rcList;
 	std::vector<Rect> rcList_XY = rcList;
 	std::sort(rcList_X.begin(), rcList_X.end(), SortByPositionX2);
@@ -5242,12 +5324,12 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 
 void CMakeModelDlg::GetElectOmrInfo(std::vector<cv::Rect>& rcList)
 {
+	m_vecTmp.clear();
 	if (rcList.size() <= 0)
 		return;
 	int nMaxRow = 1;
 	int nMaxCols = 1;
 
-	m_vecTmp.clear();
 	std::vector<Rect> rcList_X = rcList;
 	std::vector<Rect> rcList_XY = rcList;
 	std::sort(rcList_X.begin(), rcList_X.end(), SortByPositionX2);
@@ -5983,8 +6065,10 @@ void CMakeModelDlg::InitParam()
 		m_nDilateKernel = pConf->getInt("MakeModel_Recog.delateKernel", 6);
 		m_nErodeKernel = pConf->getInt("MakeModel_Recog.eRodeKernel", 2);
 
-		m_nDilateKernel_Sn = pConf->getInt("MakeModel_Recog.delateKernel_sn", 6);
-		m_nDilateKernel_Common = pConf->getInt("MakeModel_Recog.delateKernel", 6);
+		m_nDilateKernel_DefSn = pConf->getInt("MakeModel_Recog.delateKernel_sn", 6);
+		m_nDilateKernel_DefCommon = pConf->getInt("MakeModel_Recog.delateKernel", 6);
+		m_nDilateKernel_Sn = m_nDilateKernel_DefSn;
+		m_nDilateKernel_Common = m_nDilateKernel_DefCommon;
 
 		m_nWhiteVal = pConf->getInt("MakeModel_Threshold.white", 225);
 		m_nHeadVal	= pConf->getInt("MakeModel_Threshold.head", 136);
@@ -6021,6 +6105,8 @@ void CMakeModelDlg::InitParam()
 		m_nDilateKernel = 6;
 		m_nErodeKernel = 2;
 
+		m_nDilateKernel_DefSn = 6;
+		m_nDilateKernel_DefCommon = 6;
 		m_nDilateKernel_Sn = 6;
 		m_nDilateKernel_Common = 6;
 
@@ -6325,7 +6411,12 @@ bool CMakeModelDlg::UploadModel(CString strModelPath, pMODEL pModel)
 
 void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 {
-	CAdvancedSetDlg dlg(m_pModel);
+	ST_SENSITIVE_PARAM stSensitiveParam;
+	stSensitiveParam.nCurrentZkzhSensitivity = m_nDilateKernel_Sn;
+	stSensitiveParam.nCurrentOmrSensitivity = m_nDilateKernel_Common;
+	stSensitiveParam.nDefZkzhSensitivity = m_nDilateKernel_DefSn;
+	stSensitiveParam.nDefOmrSensitivity = m_nDilateKernel_DefCommon;
+	CAdvancedSetDlg dlg(m_pModel, stSensitiveParam);
 	if (dlg.DoModal() != IDOK)
 		return;
 
@@ -6338,4 +6429,44 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	else
 		m_pModel->nScanSize = 3;
 	m_pModel->nScanType = dlg.m_nScanType;
+	m_nDilateKernel_Sn = dlg.m_nSensitiveZkzh;
+	m_nDilateKernel_Common = dlg.m_nSensitiveOmr;
+
+	switch (m_eCurCPType)
+	{
+		case SN:
+		{
+			m_nDilateKernel = m_nDilateKernel_Sn;
+		}
+			break;
+		default:
+			m_nDilateKernel = m_nDilateKernel_Common;
+			break;
+	}
 }
+
+#ifdef TEST_SCAN_THREAD
+LRESULT CMakeModelDlg::ScanDone(WPARAM wParam, LPARAM lParam)
+{
+	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
+	if (pResult)
+	{
+		TRACE("扫描完成消息。%s\n", pResult->strResult.c_str());
+		delete pResult;
+		pResult = NULL;
+	}
+	return 1;
+}
+
+LRESULT CMakeModelDlg::ScanErr(WPARAM wParam, LPARAM lParam)
+{
+	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
+	if (pResult)
+	{
+		TRACE("扫描错误。%s\n", pResult->strResult.c_str());
+		delete pResult;
+		pResult = NULL;
+	}
+	return 1;
+}
+#endif

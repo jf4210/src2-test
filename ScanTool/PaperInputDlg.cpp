@@ -9,6 +9,8 @@
 #include "afxdialogex.h"
 #include <string.h>
 #include <algorithm>
+#include "OmrRecog.h"
+#include "ModifyZkzhDlg.h"
 
 using namespace cv;
 using namespace std;
@@ -20,7 +22,7 @@ CPaperInputDlg::CPaperInputDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	: CDialog(CPaperInputDlg::IDD, pParent)
 	, m_strPapersPath(_T("")), m_nModelPicNums(1), m_nCurrTabSel(0), m_pCurrentPicShow(NULL), m_pModel(pModel), m_pOldModel(pModel)
 	, m_strModelName(_T("")), m_strPapersName(_T("")), m_strPapersDesc(_T("")), m_nCurrItemPapers(-1), m_nCurrItemPaper(-1)
-	, m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL), m_nCurrItemPaperList(-1)
+	, m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL), m_nCurrItemPaperList(-1), m_pCurrentPapers(NULL), m_pStudentMgr(NULL)
 {
 
 }
@@ -69,9 +71,11 @@ BEGIN_MESSAGE_MAP(CPaperInputDlg, CDialog)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_IssuePaper, &CPaperInputDlg::OnNMDblclkListIssuepaper)
 	ON_MESSAGE(WM_CV_LBTNDOWN, &CPaperInputDlg::RoiLBtnDown)
 	ON_BN_CLICKED(IDC_BTN_SAVE, &CPaperInputDlg::OnBnClickedBtnSave)
+	ON_MESSAGE(MSG_ZKZH_RECOG, &CPaperInputDlg::MsgZkzhRecog)
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BTN_Test, &CPaperInputDlg::OnBnClickedBtnTest)
 	ON_NOTIFY(LVN_KEYDOWN, IDC_LIST_Paper, &CPaperInputDlg::OnLvnKeydownListPaper)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 BOOL CPaperInputDlg::OnInitDialog()
@@ -130,15 +134,20 @@ void CPaperInputDlg::InitUI()
 //	m_lPapersCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 38);
 	m_lPapersCtrl.InsertColumn(0, _T("试卷袋名"), LVCFMT_CENTER, 80);
 	m_lPapersCtrl.InsertColumn(1, _T("数量"), LVCFMT_CENTER, 36);
-	m_lPapersCtrl.InsertColumn(2, _T("状态"), LVCFMT_CENTER, 40);
 
 	m_lPaperCtrl.SetExtendedStyle(m_lPaperCtrl.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
-	m_lPaperCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36);
-	m_lPaperCtrl.InsertColumn(1, _T("试卷名"), LVCFMT_CENTER, 80);
+	m_lPaperCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36); 
+	m_lPaperCtrl.InsertColumn(1, _T("考生"), LVCFMT_CENTER, 36);
+	m_lPaperCtrl.InsertColumn(2, _T("试卷名"), LVCFMT_CENTER, 70);
+	m_lPaperCtrl.InsertColumn(3, _T("*"), LVCFMT_CENTER, 20);
 
 	m_lIssuePaperCtrl.SetExtendedStyle(m_lIssuePaperCtrl.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lIssuePaperCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36);
 	m_lIssuePaperCtrl.InsertColumn(1, _T("试卷名"), LVCFMT_CENTER, 80);
+	m_lIssuePaperCtrl.InsertColumn(2, _T("原因"), LVCFMT_LEFT, 100);
+	m_lIssuePaperCtrl.EnableToolTips(TRUE);
+
+	m_comboModel.AdjustDroppedWidth();
 
 	SetFontSize(m_nStatusSize);
 
@@ -207,7 +216,7 @@ void CPaperInputDlg::InitCtrlPosition()
 		GetDlgItem(IDC_STATIC_PapersTips)->MoveWindow(nLeftGap, nCurrentTop, nLeftCtrlWidth, nStaticHeight);
 		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
 	}
-	int nPapersListWidth = static_cast<int>(nLeftCtrlWidth * 0.55);
+	int nPapersListWidth = static_cast<int>(nLeftCtrlWidth * 0.4);
 	int nIssueListWdith = nLeftCtrlWidth - nPapersListWidth - nGap;
 	if (m_lPapersCtrl.GetSafeHwnd())
 	{
@@ -581,25 +590,11 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				if (itSub->isFile())
 				{
 					std::string strOldFileName = pSubFile.getFileName();
-					
-#if 1
+	
 					if (strOldFileName.find("papersInfo.dat") == std::string::npos)
 					{
 						lFileName.push_back(strOldFileName);
 					}
-#else
-					char szNewName[100] = { 0 };
-					sprintf_s(szNewName, "S%d_", i + 1);
-					std::string strNewName = szNewName;
-					std::string strNewFilePath = strSubPaperPath + "\\" + strNewName + strOldFileName;
-					itSub->copyTo(strNewFilePath);
-
-					pRECOGTASK pTask = new RECOGTASK;
-					pTask->nPic = 0;
-					pTask->strPath = strNewFilePath;
-					pTask->pModel = m_pModel;
-					g_lRecogTask.push_back(pTask);
-#endif
 				}
 				itSub++;
 			}
@@ -735,15 +730,22 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 	}
 }
 
+bool sortModelFile2(ST_MODELFILE& st1, ST_MODELFILE& st2)
+{
+	if (st1.strModifyTime > st2.strModifyTime)	return true;
+	else if (st1.strModifyTime == st2.strModifyTime)	return (st1.strModelName >= st2.strModelName ? true : false);
+	else return false;
+}
+
 void CPaperInputDlg::SeachModel()
 {
 	USES_CONVERSION;
 	std::string strModelPath = T2A(g_strCurrentPath + _T("Model"));
-//	g_strModelSavePath = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
 
 	std::string strLog;
 	try
 	{
+		std::list<ST_MODELFILE> lModelFile;
 		std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(strModelPath);
 		Poco::DirectoryIterator it(strUtf8Path);
 		Poco::DirectoryIterator end;
@@ -752,13 +754,25 @@ void CPaperInputDlg::SeachModel()
 			Poco::Path p(it->path());
 			if (it->isFile() && p.getExtension() == "mod")
 			{
-//				std::string strModelName = p.getBaseName();
 				std::string strModelName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
-				m_comboModel.AddString(A2T(strModelName.c_str()));
+
+				Poco::DateTime dt(it->getLastModified());
+				std::string strLastModifyTime = Poco::format("%04d-%02d-%02d", dt.year(), dt.month(), dt.day());
+
+				ST_MODELFILE stModelFile;
+				stModelFile.strModelName = strModelName;
+				stModelFile.strModifyTime = strLastModifyTime;
+				lModelFile.push_back(stModelFile);
 			}
 			it++;
 		}
-		//		m_comboModel.SetCurSel(0);
+		lModelFile.sort(sortModelFile2);
+
+		for(auto modelFile : lModelFile)
+		{
+			std::string strModelName = modelFile.strModelName;
+			m_comboModel.AddString(A2T(strModelName.c_str()));
+		}
 		strLog = "搜索模板完成";
 	}
 	catch (Poco::FileException& exc)
@@ -781,7 +795,10 @@ void CPaperInputDlg::OnCbnSelchangeComboModellist()
 	m_comboModel.GetLBText(m_comboModel.GetCurSel(), strModelName);
 	CString strModelPath = g_strCurrentPath + _T("Model\\") + strModelName;
 	CString strModelFullPath = strModelPath + _T(".mod");
-	UnZipFile(strModelFullPath);		//UnZipModel(strModelFullPath);
+//	UnZipFile(strModelFullPath);		//UnZipModel(strModelFullPath);
+	CZipObj zipObj;
+	zipObj.setLogger(g_pLogger);
+	zipObj.UnZipFile(strModelFullPath);
 	if (m_pModel && m_pModel != m_pOldModel)
 	{
 		delete m_pModel;
@@ -805,38 +822,30 @@ void CPaperInputDlg::OnNMDblclkListPapers(NMHDR *pNMHDR, LRESULT *pResult)
 
 	USES_CONVERSION;
 	pPAPERSINFO pPapers = (pPAPERSINFO)m_lPapersCtrl.GetItemData(pNMItemActivate->iItem);
+	m_pCurrentPapers = pPapers;
 
 	m_nCurrItemPapers = pNMItemActivate->iItem;
 	m_strPapersName = A2T(pPapers->strPapersName.c_str());
 	m_strPapersDesc = A2T(pPapers->strPapersDesc.c_str());
 
-	PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
-	for (int i = 0; itPaper != pPapers->lPaper.end(); i++, itPaper++)
+	ShowPapers(pPapers);
+
+	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+	if (g_nOperatingMode == 1 || pDlg->m_bModifySN)
 	{
-		if (i == 0)
-		{
-			m_strModelName = A2T((*itPaper)->pModel->strModelName.c_str());
-		}
+		KillTimer(TIMER_CheckRecogComplete);
 		int nCount = m_lPaperCtrl.GetItemCount();
-		char szCount[10] = { 0 };
-		sprintf_s(szCount, "%d", nCount + 1);
-		m_lPaperCtrl.InsertItem(nCount, NULL);
-		m_lPaperCtrl.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
-		m_lPaperCtrl.SetItemText(nCount, 1, (LPCTSTR)A2T((*itPaper)->strStudentInfo.c_str()));
-		m_lPaperCtrl.SetItemData(nCount, (DWORD_PTR)(*itPaper));
+		for (int i = 0; i < nCount; i++)
+		{
+			pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lPaperCtrl.GetItemData(i);
+			if (pItemPaper)
+			{
+				m_lPaperCtrl.SetItemText(i, 2, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
+			}
+		}
+		SetTimer(TIMER_CheckRecogComplete, 100, NULL);
 	}
-	//issue paper list
-	PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
-	for (int i = 0; itIssuePaper != pPapers->lIssue.end(); i++, itIssuePaper++)
-	{
-		int nCount = m_lIssuePaperCtrl.GetItemCount();
-		char szCount[10] = { 0 };
-		sprintf_s(szCount, "%d", nCount + 1);
-		m_lIssuePaperCtrl.InsertItem(nCount, NULL);
-		m_lIssuePaperCtrl.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
-		m_lIssuePaperCtrl.SetItemText(nCount, 1, (LPCTSTR)A2T((*itIssuePaper)->strStudentInfo.c_str()));
-		m_lIssuePaperCtrl.SetItemData(nCount, (DWORD_PTR)(*itIssuePaper));
-	}
+
 	UpdateData(FALSE);
 }
 
@@ -845,6 +854,9 @@ void CPaperInputDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	*pResult = 0;
+
+	if (pNMItemActivate->iItem < 0)
+		return;
 
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lPaperCtrl.GetItemData(pNMItemActivate->iItem);
 	m_nCurrItemPaper = pNMItemActivate->iItem;
@@ -862,6 +874,23 @@ void CPaperInputDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	{
 		if (i != 0)
 			m_vecPicShow[i]->ShowWindow(SW_HIDE);
+	}
+
+	//双击为空的准考证号时显示准考证号修改窗口
+	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+	if ((g_nOperatingMode == 1 || pDlg->m_bModifySN) && m_pModel && pPaper && (pPaper->strSN.empty() || pPaper->bModifyZKZH))
+	{
+		if (!m_pStudentMgr)
+		{
+			USES_CONVERSION;
+			m_pStudentMgr = new CStudentMgr();
+			std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+			bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+		}
+		CModifyZkzhDlg zkzhDlg(m_pModel, m_pCurrentPapers, m_pStudentMgr, pPaper);
+		zkzhDlg.DoModal();
+
+		ShowPapers(m_pCurrentPapers);
 	}
 }
 
@@ -1129,6 +1158,9 @@ void CPaperInputDlg::OnNMDblclkListIssuepaper(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	*pResult = 0;
+	
+	if (pNMItemActivate->iItem < 0)
+		return;
 
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lIssuePaperCtrl.GetItemData(pNMItemActivate->iItem);
 	m_pCurrentShowPaper = pPaper;
@@ -1154,6 +1186,23 @@ void CPaperInputDlg::OnNMDblclkListIssuepaper(NMHDR *pNMHDR, LRESULT *pResult)
 		if (i != nIssuePaper)
 			m_vecPicShow[i]->ShowWindow(SW_HIDE);
 	}
+
+	//双击为空的准考证号时显示准考证号修改窗口
+	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+	if ((g_nOperatingMode == 1 || pDlg->m_bModifySN) && m_pModel && pPaper)
+	{
+		if (!m_pStudentMgr)
+		{
+			USES_CONVERSION;
+			m_pStudentMgr = new CStudentMgr();
+			std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+			bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+		}
+		CModifyZkzhDlg zkzhDlg(m_pModel, m_pCurrentPapers, m_pStudentMgr, pPaper);
+		zkzhDlg.DoModal();
+
+		ShowPapers(m_pCurrentPapers);
+	}
 }
 
 void CPaperInputDlg::OnBnClickedBtnSave()
@@ -1171,6 +1220,24 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	{
 		AfxMessageBox(_T("没有试卷袋信息"));
 		return;
+	}
+
+
+	if (pPapers->lIssue.size() > 0)
+	{
+		if (g_nOperatingMode == 2)
+		{
+			AfxMessageBox(_T("存在识别异常试卷，不能上传，请先处理异常试卷"));
+			return;
+		}
+		else
+		{
+			CString strMsg = _T("");
+			strMsg.Format(_T("存在%d份问题试卷，这些试卷需要单独找出扫描，此次将不上传这%d份试卷，是否确定上传?"), pPapers->lIssue.size(), pPapers->lIssue.size());
+			if (MessageBox(strMsg, _T("警告"), MB_YESNO) != IDYES)
+				return;
+			pPapers->nPaperCount = pPapers->lPaper.size();		//修改扫描数量，将问题试卷删除，不算到扫描试卷中。
+		}
 	}
 
 	pPapers->strPapersDesc = T2A(m_strPapersDesc);
@@ -1216,6 +1283,18 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		jsnPaper.set("name", (*itNomarlPaper)->strStudentInfo);
 		jsnPaper.set("zkzh", (*itNomarlPaper)->strSN);
 		jsnPaper.set("qk", (*itNomarlPaper)->nQKFlag);
+
+		int nIssueFlag = 0;			//0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
+		if ((*itNomarlPaper)->strSN.empty() && !(*itNomarlPaper)->bModifyZKZH)
+			nIssueFlag = 2;
+		if ((*itNomarlPaper)->bModifyZKZH)
+			nIssueFlag = 1;
+		jsnPaper.set("issueFlag", nIssueFlag);
+		//++在上传服务器时无用，只在从Pkg恢复Papers时有用
+		jsnPaper.set("modify", (*itNomarlPaper)->bModifyZKZH);	//准考证号修改标识
+		jsnPaper.set("reScan", (*itNomarlPaper)->bReScan);		//重扫标识
+		jsnPaper.set("IssueList", 0);		//标识此考生属于问题列表，在上传服务器时无用，只在从Pkg恢复Papers时有用
+		//--
 
 		Poco::JSON::Array jsnSnDetailArry;
 		SNLIST::iterator itSn = (*itNomarlPaper)->lSnResult.begin();
@@ -1299,50 +1378,65 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
 		jsnPaperArry.add(jsnPaper);
 	}
-	PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
-	for (int j = 0; itIssuePaper != pPapers->lIssue.end(); itIssuePaper++, j++)
+
+	if (g_nOperatingMode == 1)		//简单模式时，异常试卷也一起上传，做特殊标识
 	{
-		Poco::JSON::Object jsnPaper;
-		jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
-		jsnPaper.set("zkzh", (*itIssuePaper)->strSN);
-		jsnPaper.set("qk", (*itIssuePaper)->nQKFlag);
-
-		Poco::JSON::Array jsnSnDetailArry;
-		SNLIST::iterator itSn = (*itIssuePaper)->lSnResult.begin();
-		for (; itSn != (*itIssuePaper)->lSnResult.end(); itSn++)
+		PAPER_LIST::iterator itIssuePaper = pPapers->lIssue.begin();
+		for (int j = 0; itIssuePaper != pPapers->lIssue.end(); itIssuePaper++, j++)
 		{
-			Poco::JSON::Object jsnSnItem;
-			jsnSnItem.set("sn", (*itSn)->nItem);
-			jsnSnItem.set("val", (*itSn)->nRecogVal);
+			Poco::JSON::Object jsnPaper;
+			jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
+			jsnPaper.set("zkzh", (*itIssuePaper)->strSN);
+			jsnPaper.set("qk", (*itIssuePaper)->nQKFlag);
 
-			Poco::JSON::Object jsnSnPosition;
-			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
-			for (; itRect != (*itSn)->lSN.end(); itRect++)
+			int nIssueFlag = 0;			//0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
+			if ((*itIssuePaper)->strSN.empty())
+				nIssueFlag = 2;
+			if ((*itIssuePaper)->bReScan)		//设置重扫权限更大，放后面设置
+				nIssueFlag = 3;
+			jsnPaper.set("issueFlag", nIssueFlag);
+			//++在上传服务器时无用，只在从Pkg恢复Papers时有用
+			jsnPaper.set("modify", (*itIssuePaper)->bModifyZKZH);	//准考证号修改标识
+			jsnPaper.set("reScan", (*itIssuePaper)->bReScan);		//重扫标识
+			jsnPaper.set("IssueList", 1);		//标识此考生属于问题列表，在上传服务器时无用，只在从Pkg恢复Papers时有用
+			//--
+
+			Poco::JSON::Array jsnSnDetailArry;
+			SNLIST::iterator itSn = (*itIssuePaper)->lSnResult.begin();
+			for (; itSn != (*itIssuePaper)->lSnResult.end(); itSn++)
 			{
+				Poco::JSON::Object jsnSnItem;
+				jsnSnItem.set("sn", (*itSn)->nItem);
+				jsnSnItem.set("val", (*itSn)->nRecogVal);
+
+				Poco::JSON::Object jsnSnPosition;
+				RECTLIST::iterator itRect = (*itSn)->lSN.begin();
+				for (; itRect != (*itSn)->lSN.end(); itRect++)
+				{
 					jsnSnPosition.set("x", itRect->rt.x);
 					jsnSnPosition.set("y", itRect->rt.y);
 					jsnSnPosition.set("w", itRect->rt.width);
 					jsnSnPosition.set("h", itRect->rt.height);
+				}
+				jsnSnItem.set("position", jsnSnPosition);
+				jsnSnDetailArry.add(jsnSnItem);
 			}
-			jsnSnItem.set("position", jsnSnPosition);
-			jsnSnDetailArry.add(jsnSnItem);
-		}
-		jsnPaper.set("snDetail", jsnSnDetailArry);
+			jsnPaper.set("snDetail", jsnSnDetailArry);
 
-		Poco::JSON::Array jsnOmrArry;
-		OMRRESULTLIST::iterator itOmr = (*itIssuePaper)->lOmrResult.begin();
-		for (; itOmr != (*itIssuePaper)->lOmrResult.end(); itOmr++)
-		{
-			Poco::JSON::Object jsnOmr;
-			jsnOmr.set("th", itOmr->nTH);
-			jsnOmr.set("type", itOmr->nSingle + 1);
-			jsnOmr.set("value", itOmr->strRecogVal);
-			jsnOmr.set("value2", itOmr->strRecogVal2);
-			jsnOmr.set("doubt", itOmr->nDoubt);
-			Poco::JSON::Array jsnPositionArry;
-			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
-			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
+			Poco::JSON::Array jsnOmrArry;
+			OMRRESULTLIST::iterator itOmr = (*itIssuePaper)->lOmrResult.begin();
+			for (; itOmr != (*itIssuePaper)->lOmrResult.end(); itOmr++)
 			{
+				Poco::JSON::Object jsnOmr;
+				jsnOmr.set("th", itOmr->nTH);
+				jsnOmr.set("type", itOmr->nSingle + 1);
+				jsnOmr.set("value", itOmr->strRecogVal);
+				jsnOmr.set("value2", itOmr->strRecogVal2);
+				jsnOmr.set("doubt", itOmr->nDoubt);
+				Poco::JSON::Array jsnPositionArry;
+				RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
+				for (; itRect != itOmr->lSelAnswer.end(); itRect++)
+				{
 					Poco::JSON::Object jsnItem;
 					char szVal[5] = { 0 };
 					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
@@ -1352,43 +1446,45 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 					jsnItem.set("w", itRect->rt.width);
 					jsnItem.set("h", itRect->rt.height);
 					jsnPositionArry.add(jsnItem);
+				}
+				jsnOmr.set("position", jsnPositionArry);
+				jsnOmrArry.add(jsnOmr);
 			}
-			jsnOmr.set("position", jsnPositionArry);
-			jsnOmrArry.add(jsnOmr);
-		}
-		jsnPaper.set("omr", jsnOmrArry);
+			jsnPaper.set("omr", jsnOmrArry);
 
-		Poco::JSON::Array jsnElectOmrArry;
-		ELECTOMR_LIST::iterator itElectOmr = (*itIssuePaper)->lElectOmrResult.begin();
-		for (; itElectOmr != (*itIssuePaper)->lElectOmrResult.end(); itElectOmr++)
-		{
-			Poco::JSON::Object jsnElectOmr;
-			jsnElectOmr.set("paperId", j + 1);
-			jsnElectOmr.set("doubt", itElectOmr->nDoubt);
-			jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
-			jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
-			jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
-			jsnElectOmr.set("value", itElectOmr->strRecogResult);
-			Poco::JSON::Array jsnPositionArry;
-			RECTLIST::iterator itRect = itElectOmr->lItemInfo.begin();
-			for (; itRect != itElectOmr->lItemInfo.end(); itRect++)
+			Poco::JSON::Array jsnElectOmrArry;
+			ELECTOMR_LIST::iterator itElectOmr = (*itIssuePaper)->lElectOmrResult.begin();
+			for (; itElectOmr != (*itIssuePaper)->lElectOmrResult.end(); itElectOmr++)
 			{
-				Poco::JSON::Object jsnItem;
-				char szVal[5] = { 0 };
-				sprintf_s(szVal, "%c", itRect->nAnswer + 65);
-				jsnItem.set("val", szVal);
-				jsnItem.set("x", itRect->rt.x);
-				jsnItem.set("y", itRect->rt.y);
-				jsnItem.set("w", itRect->rt.width);
-				jsnItem.set("h", itRect->rt.height);
-				jsnPositionArry.add(jsnItem);
+				Poco::JSON::Object jsnElectOmr;
+				jsnElectOmr.set("paperId", j + 1);
+				jsnElectOmr.set("doubt", itElectOmr->nDoubt);
+				jsnElectOmr.set("th", itElectOmr->sElectOmrGroupInfo.nGroupID);
+				jsnElectOmr.set("allItems", itElectOmr->sElectOmrGroupInfo.nAllCount);
+				jsnElectOmr.set("realItem", itElectOmr->sElectOmrGroupInfo.nRealCount);
+				jsnElectOmr.set("value", itElectOmr->strRecogResult);
+				Poco::JSON::Array jsnPositionArry;
+				RECTLIST::iterator itRect = itElectOmr->lItemInfo.begin();
+				for (; itRect != itElectOmr->lItemInfo.end(); itRect++)
+				{
+					Poco::JSON::Object jsnItem;
+					char szVal[5] = { 0 };
+					sprintf_s(szVal, "%c", itRect->nAnswer + 65);
+					jsnItem.set("val", szVal);
+					jsnItem.set("x", itRect->rt.x);
+					jsnItem.set("y", itRect->rt.y);
+					jsnItem.set("w", itRect->rt.width);
+					jsnItem.set("h", itRect->rt.height);
+					jsnPositionArry.add(jsnItem);
+				}
+				jsnElectOmr.set("position", jsnPositionArry);
+				jsnElectOmrArry.add(jsnElectOmr);
 			}
-			jsnElectOmr.set("position", jsnPositionArry);
-			jsnElectOmrArry.add(jsnElectOmr);
+			jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
+			jsnPaperArry.add(jsnPaper);
 		}
-		jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
-		jsnPaperArry.add(jsnPaper);
 	}
+
 	//写试卷袋信息到文件
 	std::string strUploader = CMyCodeConvert::Gb2312ToUtf8(T2A(strUser));
 	std::string sEzs = T2A(strEzs);
@@ -1401,10 +1497,12 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	jsnFileData.set("nUserId", nUserId);
 	jsnFileData.set("scanNum", pPapers->nPaperCount);		//扫描的学生数量
 	jsnFileData.set("detail", jsnPaperArry);
+	jsnFileData.set("desc", CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersDesc));
 
 	jsnFileData.set("nOmrDoubt", pPapers->nOmrDoubt);
 	jsnFileData.set("nOmrNull", pPapers->nOmrNull);
 	jsnFileData.set("nSnNull", pPapers->nSnNull);
+	jsnFileData.set("RecogMode", g_nOperatingMode);			//识别模式，1-简单模式(遇到问题校验点不停止识别)，2-严格模式
 	std::stringstream jsnString;
 	jsnFileData.stringify(jsnString, 0);
 
@@ -1457,7 +1555,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	CString strInfo;
 	bool bWarn = false;
 	strInfo.Format(_T("正在保存%s..."), A2T(szZipName));
-#if 1
+
 	//临时目录改名，以便压缩时继续扫描
 	std::string strSrcPicDirPath;
 	std::string strPicPath = szPapersSrcPath;
@@ -1493,33 +1591,11 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	pTask->strExtName = T2A(PAPERS_EXT_NAME);
 	pTask->strSavePath = szPapersSavePath;
 	pTask->strSrcFilePath = strSrcPicDirPath;
+	pTask->pPapersInfo = pPapers;
+	pTask->bReleasePapers = false;			//压缩完后，不用自动释放试卷袋信息，通过外部控制释放
 	g_fmCompressLock.lock();
 	g_lCompressTask.push_back(pTask);
 	g_fmCompressLock.unlock();
-#else
-	if (!ZipFile(A2T(szPapersSrcPath), A2T(szPapersSavePath), PAPERS_EXT_NAME))
-	{
-		bWarn = true;
-		strInfo.Format(_T("保存%s失败"), A2T(szZipName));
-	}
-	else
-	{
-		end = clock();
-		strInfo.Format(_T("保存%s成功,试卷袋压缩时间: %dms"), A2T(szZipName), end - start);
-//		SAFE_RELEASE(m_pPapersInfo);
-	}
-	AfxMessageBox(strInfo);
-
-	//添加上传列表，	******************		需要进行鉴权操作	***************
-	char szFileFullPath[300] = { 0 };
-	sprintf_s(szFileFullPath, "%s%s", szPapersSavePath, T2A(PAPERS_EXT_NAME));
-	pSENDTASK pTask = new SENDTASK;
-	pTask->strFileName = szZipName;
-	pTask->strPath = szFileFullPath;
-	g_fmSendLock.lock();
-	g_lSendTask.push_back(pTask);
-	g_fmSendLock.unlock();
-#endif
 }
 
 LRESULT CPaperInputDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
@@ -1596,6 +1672,31 @@ int CPaperInputDlg::GetRectInfoByPoint(cv::Point pt, pST_PicInfo pPic, RECTINFO*
 		}
 	}
 	return nFind;
+}
+
+LRESULT CPaperInputDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
+{
+	pST_PaperInfo pPaper = (pST_PaperInfo)wParam;
+	pPAPERSINFO   pPapers = (pPAPERSINFO)lParam;
+	CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+	if (g_nOperatingMode != 1 && !pDlg->m_bModifySN)
+		return FALSE;
+
+	if (pPapers != m_pCurrentPapers)
+		return FALSE;
+
+	USES_CONVERSION;
+	int nCount = m_lPaperCtrl.GetItemCount();
+	for (int i = 0; i < nCount; i++)
+	{
+		pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lPaperCtrl.GetItemData(i);
+		if (pItemPaper == pPaper)
+		{
+			m_lPaperCtrl.SetItemText(i, 2, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+			break;
+		}
+	}
+	return TRUE;
 }
 
 void CPaperInputDlg::SetStatusShowInfo(CString strMsg, BOOL bWarn /*= FALSE*/)
@@ -2145,10 +2246,8 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 
 	if (m_pModel->nHasHead)
 		return nResult;
-
-	const float fMinPer = 0.5;		//识别矩形数/模板矩形数 低于最小值，认为不合格
-	const float fMaxPer = 1.5;		//识别矩形数/模板矩形数 超过最大值，认为不合格
-	const float fMidPer = 0.8;
+	
+	std::string strLog;
 
 	cv::Rect rtModelPic;
 	rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
@@ -2160,73 +2259,166 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 	int nModelPicPersent = rtModelPic.width / rtModelPic.height;	//0||1
 	int nSrcPicPercent = matSrc.cols / matSrc.rows;
 
-	cv::Rect rt1 = m_pModel->vecPaperModel[n]->rtHTracker;
-	cv::Rect rt2 = m_pModel->vecPaperModel[n]->rtVTracker;
-	TRACE("水平橡皮筋:(%d,%d,%d,%d), 垂直橡皮筋(%d,%d,%d,%d)\n", rt1.x, rt1.y, rt1.width, rt1.height, rt2.x, rt2.y, rt2.width, rt2.height);
+	if (m_pModel->nZkzhType == 2)			//使用条码的时候，先通过条码来判断方向
+	{
+		if (nModelPicPersent == nSrcPicPercent)
+		{
+			TRACE("与模板图片方向一致\n");
+			for (int i = 1; i <= 4; i = i + 3)
+			{
+				COmrRecog omrRecogObj;
+				bool bResult = omrRecogObj.RecogZkzh(n, matSrc, m_pModel, i);
+				if (!bResult)
+					continue;
 
-	float fFirst_H, fFirst_V, fSecond_H, fSecond_V;
-	fFirst_H = fFirst_V = fSecond_H = fSecond_V = 0.0;
+				bFind = true;
+				nResult = i;
+				break;
+			}
+		}
+		else
+		{
+			TRACE("与模板图片方向不一致\n");
+			for (int i = 2; i <= 3; i++)
+			{
+				COmrRecog omrRecogObj;
+				bool bResult = omrRecogObj.RecogZkzh(n, matSrc, m_pModel, i);
+				if (!bResult)
+					continue;
+
+				bFind = true;
+				nResult = i;
+				break;
+			}
+		}
+		if (bFind)
+			return nResult;
+
+		strLog.append("通过条形码或二维码判断试卷旋转方向失败，下面通过定位点判断\n");
+	}
+
+	int nCount = m_pModel->vecPaperModel[n]->lGray.size() + m_pModel->vecPaperModel[n]->lCourse.size();
+	if (nCount == 0)
+		return nResult;
+
 	if (nModelPicPersent == nSrcPicPercent)	//与模板图片方向一致，需判断正向还是反向一致
 	{
 		TRACE("与模板图片方向一致\n");
 		for (int i = 1; i <= 4; i = i + 3)
 		{
+			//先查定点
+			RECTLIST lFix;
+			COmrRecog omrRecogObj;
+			bool bResult = omrRecogObj.RecogFixCP(n, matSrc, lFix, m_pModel, i);
+// 			if (!bResult)
+// 				continue;
+
+#ifdef WarpAffine_TEST
+			cv::Mat	inverseMat(2, 3, CV_32FC1);
+			PicTransfer(0, matSrc, lFix, m_pModel->vecPaperModel[n]->lFix, inverseMat);
+#endif
+
+			RECTLIST lModelTmp;
+			if (lFix.size() < 3)
+			{
+				RECTLIST::iterator itFix = lFix.begin();
+				for (auto itFix : lFix)
+				{
+					RECTLIST::iterator itModel = m_pModel->vecPaperModel[n]->lFix.begin();
+					for (int j = 0; itModel != m_pModel->vecPaperModel[n]->lFix.end(); j++, itModel++)
+					{
+						if (j == itFix.nTH)
+						{
+							RECTINFO rcModel = *itModel;
+
+							cv::Rect rtModelPic;
+							rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+							rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+							rcModel.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcModel.rt, i);
+
+							lModelTmp.push_back(rcModel);
+							break;
+						}
+					}
+				}
+			}
+
 			TRACE("查灰度校验点\n");
 			bool bContinue = false;
 			int nRtCount = 0;
 			for (auto rcGray : m_pModel->vecPaperModel[n]->lGray)
 			{
-				//先把矩形面积扩大，如何查矩形，用面积来比较
-				cv::Rect rtChk = cv::Rect(rcGray.rt.tl() - cv::Point(10, 10), rcGray.rt.br() + cv::Point(10, 10));
-				cv::Rect rt = GetRectByOrientation1(rtModelPic, rtChk, i);
-				cv::Rect rtReal;
-				if (bGetMaxRect1(matSrc, rt, rcGray, rtReal))
+				RECTINFO rcItem = rcGray;
+
+				if (lFix.size() < 3)
 				{
-					float fRealVal = GetRtDensity1(matSrc, rtReal, rcGray);				//密度是否达到要求
-					float fDensityPer = fRealVal / rtReal.area();
-					float fPer = fRealVal / rcGray.fStandardValue;
-					if (fDensityPer <= 0.5)			//密度连模板的一半都没有直接退出判断
+					cv::Rect rtModelPic;
+					rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+					rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+					rcItem.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcItem.rt, i);
+
+					GetPosition(lFix, lModelTmp, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+				}
+				else
+					GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+
+				if (omrRecogObj.RecogRtVal(rcItem, matSrc))
+				{
+					if (rcItem.fRealDensity / rcGray.fStandardDensity > rcGray.fStandardValuePercent && rcItem.fRealValue / rcGray.fStandardValue > rcGray.fStandardValuePercent)
 					{
-						bContinue = true;
-						break;
-					}
-					if (fDensityPer / rcGray.fStandardDensity > rcGray.fStandardValuePercent)
 						++nRtCount;
+					}
+					else
+					{
+						TRACE("判断灰度校验点的密度百分比: %f, 低于要求的: %f\n", rcItem.fRealValuePercent, rcGray.fStandardValuePercent);
+// 						bContinue = true;
+// 						break;
+					}
 				}
 				else
 				{
-					bContinue = true;
-					break;
-				}				
+// 					bContinue = true;
+// 					break;
+				}
 			}
 			if (bContinue)
 				continue;
-			
+
 			TRACE("科目校验点\n");
 			bContinue = false;
 			for (auto rcSubject : m_pModel->vecPaperModel[n]->lCourse)
 			{
-				//先把矩形面积扩大，如何查矩形，用面积来比较
-				cv::Rect rtChk = cv::Rect(rcSubject.rt.tl() - cv::Point(10, 10), rcSubject.rt.br() + cv::Point(10, 10));
-				cv::Rect rt = GetRectByOrientation1(rtModelPic, rtChk, i);
-				cv::Rect rtReal;
-				if (bGetMaxRect1(matSrc, rt, rcSubject, rtReal))
+				RECTINFO rcItem = rcSubject;
+
+				if (lFix.size() < 3)
 				{
-					float fRealVal = GetRtDensity1(matSrc, rtReal, rcSubject);				//密度是否达到要求
-					float fDensityPer = fRealVal / rtReal.area();
-					float fPer = fRealVal / rcSubject.fStandardValue;
-					if (fDensityPer <= 0.5)			//密度连模板的一半都没有直接退出判断
+					cv::Rect rtModelPic;
+					rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+					rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+					rcItem.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcItem.rt, i);
+
+					GetPosition(lFix, lModelTmp, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+				}
+				else
+					GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+
+				if (omrRecogObj.RecogRtVal(rcItem, matSrc))
+				{
+					if (rcItem.fRealDensity / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent && rcItem.fRealValue / rcSubject.fStandardValue > rcSubject.fStandardValuePercent)
 					{
-						bContinue = true;
-						break;
-					}
-					if (fDensityPer / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent)
 						++nRtCount;
+					}
+					else
+					{
+						TRACE("判断科目校验点的密度百分比: %f, 低于要求的: %f\n", rcItem.fRealValuePercent, rcSubject.fStandardValuePercent);
+// 						bContinue = true;
+// 						break;
+					}
 				}
 				else
 				{
-					bContinue = true;
-					break;
+// 					bContinue = true;
+// 					break;
 				}
 			}
 			if (bContinue)
@@ -2242,22 +2434,27 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 					nResult = i;
 					break;
 				}
+				std::string strTmpLog = Poco::format("总校验点数=%d, 实际识别校验点数=%d\n", nAllCount, nRtCount);
+				strLog.append(strTmpLog);
 			}
 			else
 			{
-				if (nRtCount >= nAllCount * 0.9)
+				if (nRtCount >= (int)(nAllCount * 0.9))
 				{
 					bFind = true;
 					nResult = i;
 					break;
 				}
+				std::string strTmpLog = Poco::format("总校验点数=%d, 实际识别校验点数=%d\n", nAllCount, nRtCount);
+				strLog.append(strTmpLog);
 			}
 		}
 
 		if (!bFind)
 		{
 			TRACE("无法判断图片方向\n");
-			g_pLogger->information("无法判断图片方向");
+			strLog.append("无法判断图片方向\n");
+			g_pLogger->information(strLog);
 			nResult = 1;
 		}
 	}
@@ -2266,36 +2463,81 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 		TRACE("与模板图片方向不一致\n");
 		for (int i = 2; i <= 3; i++)
 		{
+			//先查定点
+			RECTLIST lFix;
+			COmrRecog omrRecogObj;
+			bool bResult = omrRecogObj.RecogFixCP(n, matSrc, lFix, m_pModel, i);
+// 			if (!bResult)
+// 				continue;
+#ifdef WarpAffine_TEST
+			cv::Mat	inverseMat(2, 3, CV_32FC1);
+			cv::Mat matDst;
+			PicTransfer2(0, matSrc, matDst, lFix, m_pModel->vecPaperModel[n]->lFix, inverseMat);
+#endif
+
+			RECTLIST lModelTmp;
+			if (lFix.size() < 3)
+			{
+				matDst = matSrc;
+
+				RECTLIST::iterator itFix = lFix.begin();
+				for (auto itFix : lFix)
+				{
+					RECTLIST::iterator itModel = m_pModel->vecPaperModel[n]->lFix.begin();
+					for (int j = 0; itModel != m_pModel->vecPaperModel[n]->lFix.end(); j++, itModel++)
+					{
+						if (j == itFix.nTH)
+						{
+							RECTINFO rcModel = *itModel;
+
+							cv::Rect rtModelPic;
+							rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+							rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+							rcModel.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcModel.rt, i);
+
+							lModelTmp.push_back(rcModel);
+							break;
+						}
+					}
+				}
+			}
+
 			TRACE("查灰度校验点\n");
 			bool bContinue = false;
 			int nRtCount = 0;
 			for (auto rcGray : m_pModel->vecPaperModel[n]->lGray)
 			{
-				//先把矩形面积扩大，如何查矩形，用面积来比较
-				cv::Rect rtChk = cv::Rect(rcGray.rt.tl() - cv::Point(10, 10), rcGray.rt.br() + cv::Point(10, 10));
-				cv::Rect rt = GetRectByOrientation1(rtModelPic, rtChk, i);
-				cv::Rect rtReal;
-				if (bGetMaxRect1(matSrc, rt, rcGray, rtReal))
+				RECTINFO rcItem = rcGray;
+
+				if (lFix.size() < 3)
 				{
-					float fRealVal = GetRtDensity1(matSrc, rtReal, rcGray);				//密度是否达到要求
-					float fDensityPer = fRealVal / rtReal.area();
-					float fPer = fRealVal / rcGray.fStandardValue;
-					if (fDensityPer <= 0.5)			//密度连模板的一半都没有直接退出判断
+					cv::Rect rtModelPic;
+					rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+					rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+					rcItem.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcItem.rt, i);
+					
+					GetPosition(lFix, lModelTmp, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+				}
+				else
+					GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+
+				if (omrRecogObj.RecogRtVal(rcItem, matDst))
+				{
+					if (rcItem.fRealDensity / rcGray.fStandardDensity > rcGray.fStandardValuePercent && rcItem.fRealValue / rcGray.fStandardValue > rcGray.fStandardValuePercent)
 					{
-						bContinue = true;
-						break;
-					}
-					if (fDensityPer / rcGray.fStandardDensity > rcGray.fStandardValuePercent)
 						++nRtCount;
+					}
 					else
 					{
-						TRACE("判断灰度校验点的密度百分比: %f, 低于要求的: %f\n", fPer, rcGray.fStandardValuePercent);
+						TRACE("判断灰度校验点的密度百分比: %f, 低于要求的: %f\n", rcItem.fRealValuePercent, rcGray.fStandardValuePercent);
+// 						bContinue = true;
+// 						break;
 					}
 				}
 				else
 				{
-					bContinue = true;
-					break;
+// 					bContinue = true;
+// 					break;
 				}
 			}
 			if (bContinue)
@@ -2305,31 +2547,37 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			bContinue = false;
 			for (auto rcSubject : m_pModel->vecPaperModel[n]->lCourse)
 			{
-				//先把矩形面积扩大，如何查矩形，用面积来比较
-				cv::Rect rtChk = cv::Rect(rcSubject.rt.tl() - cv::Point(10, 10), rcSubject.rt.br() + cv::Point(10, 10));
-				cv::Rect rt = GetRectByOrientation1(rtModelPic, rtChk, i);
-				cv::Rect rtReal;
-				if (bGetMaxRect1(matSrc, rt, rcSubject, rtReal))
+				RECTINFO rcItem = rcSubject;
+
+				if (lFix.size() < 3)
 				{
-					float fRealVal = GetRtDensity1(matSrc, rtReal, rcSubject);				//密度是否达到要求
-					float fDensityPer = fRealVal / rtReal.area();
-					float fPer = fRealVal / rcSubject.fStandardValue;
-					if (fDensityPer <= 0.5)			//密度连模板的一半都没有直接退出判断
+					cv::Rect rtModelPic;
+					rtModelPic.width = m_pModel->vecPaperModel[n]->nPicW;
+					rtModelPic.height = m_pModel->vecPaperModel[n]->nPicH;
+					rcItem.rt = omrRecogObj.GetRectByOrientation(rtModelPic, rcItem.rt, i);
+
+					GetPosition(lFix, lModelTmp, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+				}
+				else
+					GetPosition(lFix, m_pModel->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
+			
+				if (omrRecogObj.RecogRtVal(rcItem, matDst))
+				{
+					if (rcItem.fRealDensity / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent && rcItem.fRealValue / rcSubject.fStandardValue > rcSubject.fStandardValuePercent)
 					{
-						bContinue = true;
-						break;
-					}
-					if (fDensityPer / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent)
 						++nRtCount;
+					}
 					else
 					{
-						TRACE("判断科目校验点的密度百分比: %f, 低于要求的: %f\n", fPer, rcSubject.fStandardValuePercent);
+						TRACE("判断科目校验点的密度百分比: %f, 低于要求的: %f\n", rcItem.fRealValuePercent, rcSubject.fStandardValuePercent);
+// 						bContinue = true;
+// 						break;
 					}
 				}
 				else
 				{
-					bContinue = true;
-					break;
+// 					bContinue = true;
+// 					break;
 				}
 			}
 			if (bContinue)
@@ -2345,23 +2593,28 @@ int CPaperInputDlg::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 					nResult = i;
 					break;
 				}
+				std::string strTmpLog = Poco::format("总校验点数=%d, 实际识别校验点数=%d\n", nAllCount, nRtCount);
+				strLog.append(strTmpLog);
 			}
 			else
 			{
-				if (nRtCount >= nAllCount * 0.9)
+				if (nRtCount >= (int)(nAllCount * 0.9))
 				{
 					bFind = true;
 					nResult = i;
 					break;
 				}
+				std::string strTmpLog = Poco::format("总校验点数=%d, 实际识别校验点数=%d\n", nAllCount, nRtCount);
+				strLog.append(strTmpLog);
 			}
 		}
 
 		if (!bFind)
 		{
-			TRACE("无法判断图片方向\n");
-			g_pLogger->information("无法判断图片方向");
-			nResult = 1;
+			TRACE("无法判断图片方向，采用默认右旋90度的方向\n");
+			strLog.append("无法判断图片方向，采用默认右旋90度的方向\n");
+			g_pLogger->information(strLog);
+			nResult = 2;	//如果出现无法判断图像方向时，默认模板需要右旋90度变成此图像方向，即默认返回方向为右旋90度，因为方向只有右旋90或者左旋90度两种选择，此处不返回默认的1，返回2
 		}
 	}
 	return nResult;
@@ -2598,10 +2851,11 @@ int CPaperInputDlg::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 		return nResult;
 	}
 
+	cv::Mat matCom = matSrc.clone();
 	if (m_pModel->nHasHead)
-		nResult = CheckOrientation4Head(matSrc, n);
+		nResult = CheckOrientation4Head(matCom, n);
 	else
-		nResult = CheckOrientation4Fix(matSrc, n);
+		nResult = CheckOrientation4Fix(matCom, n);
 
 	if (bDoubleScan && n % 2 == 0)		//双面扫描，且属于扫描的第一面
 		nFristOrientation = nResult;
@@ -2677,6 +2931,48 @@ void CPaperInputDlg::ShowPaperByItem(int nItem)
 }
 
 
+void CPaperInputDlg::ShowPapers(pPAPERSINFO pPapers)
+{
+	//显示所有识别完成的准考证号
+	USES_CONVERSION;
+	//重新显示合格试卷
+	m_lPaperCtrl.DeleteAllItems();
+	for (auto pPaper : pPapers->lPaper)
+	{
+		int nCount = m_lPaperCtrl.GetItemCount();
+		char szCount[10] = { 0 };
+		sprintf_s(szCount, "%d", nCount + 1);
+		m_lPaperCtrl.InsertItem(nCount, NULL);
+		m_lPaperCtrl.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+		m_lPaperCtrl.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
+		m_lPaperCtrl.SetItemText(nCount, 2, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+		if (pPaper->bModifyZKZH)
+			m_lPaperCtrl.SetItemText(nCount, 3, _T("*"));
+		m_lPaperCtrl.SetItemData(nCount, (DWORD_PTR)pPaper);
+	}
+	//显示需要重扫的异常试卷
+	m_lIssuePaperCtrl.DeleteAllItems();
+	for (auto pPaper : pPapers->lIssue)
+	{
+		int nCount = m_lIssuePaperCtrl.GetItemCount();
+		char szCount[10] = { 0 };
+		sprintf_s(szCount, "%d", nCount + 1);
+		m_lIssuePaperCtrl.InsertItem(nCount, NULL);
+		m_lIssuePaperCtrl.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+		m_lIssuePaperCtrl.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
+		CString strErrInfo = _T("");
+		if (pPaper->strSN.empty())	strErrInfo = _T("考号为空");
+		if (pPaper->bReScan)	strErrInfo = _T("重扫");
+		m_lIssuePaperCtrl.SetItemText(nCount, 2, (LPCTSTR)strErrInfo);
+		m_lIssuePaperCtrl.SetItemData(nCount, (DWORD_PTR)pPaper);
+
+		CString strTips = _T("异常试卷，将不会上传，也不会参与评卷。 需要单独找出，后面单独扫描");
+		m_lIssuePaperCtrl.SetItemToolTipText(nCount, 0, strTips);
+		m_lIssuePaperCtrl.SetItemToolTipText(nCount, 1, strTips);
+		m_lIssuePaperCtrl.SetItemToolTipText(nCount, 2, strTips);
+	}
+}
+
 void CPaperInputDlg::OnLvnKeydownListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMLVKEYDOWN pLVKeyDow = reinterpret_cast<LPNMLVKEYDOWN>(pNMHDR);
@@ -2699,4 +2995,47 @@ void CPaperInputDlg::OnLvnKeydownListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 
 		ShowPaperByItem(m_nCurrItemPaperList);
 	}
+}
+
+
+void CPaperInputDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	if (nIDEvent == TIMER_CheckRecogComplete)
+	{
+		bool bRecogComplete = true;
+		bool bNeedShowZkzhDlg = false;
+		for (auto p : m_pCurrentPapers->lPaper)
+		{
+			if (!p->bRecogComplete)
+			{
+				bRecogComplete = false;
+				break;
+			}
+			if (p->strSN.empty())
+				bNeedShowZkzhDlg = true;
+		}
+		if (bRecogComplete)
+		{
+			USES_CONVERSION;
+			CScanToolDlg* pDlg = (CScanToolDlg*)GetParent();
+			if ((g_nOperatingMode == 1 || pDlg->m_bModifySN) && bNeedShowZkzhDlg)
+			{
+				KillTimer(TIMER_CheckRecogComplete);
+				if (!m_pStudentMgr)
+				{
+					USES_CONVERSION;
+					m_pStudentMgr = new CStudentMgr();
+					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+					bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+				}
+				CModifyZkzhDlg zkzhDlg(m_pModel, m_pCurrentPapers, m_pStudentMgr);
+				zkzhDlg.DoModal();
+
+				ShowPapers(m_pCurrentPapers);
+			}
+			else
+				KillTimer(TIMER_CheckRecogComplete);
+		}
+	}
+	CDialog::OnTimer(nIDEvent);
 }

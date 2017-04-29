@@ -1,7 +1,6 @@
 #pragma once
 #include "ShowModelInfoDlg.h"
 #include "MakeModelDlg.h"
-
 // CScanModleMgrDlg 对话框
 
 class CScanModleMgrDlg : public CDialog
@@ -22,11 +21,13 @@ private:
 	CListCtrl			m_ModelListCtrl;
 	pMODEL				m_pOldModel;
 	std::vector<pMODEL>	m_vecModel;
+	std::list<ST_MODELFILE> m_lModelFile;	//模板文件列表，按修改时间排序
 	int					m_nCurModelItem;
 	CString				m_strCurModelName;
 	CToolTipCtrl		m_ListTip;
 	CMakeModelDlg*		m_pMakeModelDlg;
 private:
+	int	 GetBmkInfo();
 	void InitUI();
 	void InitCtrlPosition();
 	void setUploadModelInfo(std::string& strName, CString& strModelPath, int nExamId, int nSubjectId, std::string& strElectOmrInfo);					//设置上传模板的信息

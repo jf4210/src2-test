@@ -165,7 +165,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 		{
 			ST_EXAM_INFO stExamInfo = *(pStExamInfo)(pMission->m_pMissionData + HEAD_SIZE);
 			std::string strEzs = stExamInfo.szEzs;
-			std::cout << "get exam info: " << pUser->m_Name <<std::endl;
+			std::cout << "获取考试列表: " << pUser->m_Name <<std::endl;
 
 			#ifdef TEST_MODE
 			Poco::JSON::Object jsnSubject1;
@@ -228,7 +228,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
 			pTask->strUri = SysSet.m_strBackUri + strUriValue;
 			pTask->pUser  = pUser;
-			pTask->strEzs = "ezs=" + strEzs;
+			pTask->strEzs = SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
 			pTask->strMsg = "ezs";
 
 			std::string strLog = Poco::format("天喻平台，获取考试列表: src_SHA1 = %s\nSHA1 = %s\nuri = %s", strSha1Src, strSHA1_Up, pTask->strUri);
@@ -237,7 +237,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
 			pTask->strUri = SysSet.m_strBackUri + "/examinfo";
 			pTask->pUser  = pUser;
-			pTask->strEzs = "ezs=" + strEzs;
+			pTask->strEzs = SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
 			pTask->strMsg = "ezs";
 		#endif
 			g_fmScanReq.lock();
@@ -251,6 +251,9 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			bool bNeedSend = false;
 			char szIndex[50] = { 0 };
 			sprintf(szIndex, "%d_%d", stModelInfo.nExamID, stModelInfo.nSubjectID);
+
+			std::cout << "设置考试模板命令: " << szIndex << std::endl;
+
 			MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
 			if (itFind == _mapModel_.end())
 			{
@@ -353,6 +356,9 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			bool bNeedDown = true;
 			char szIndex[50] = { 0 };
 			sprintf(szIndex, "%d_%d", stModelInfo.nExamID, stModelInfo.nSubjectID);
+
+			std::cout << "请求下载模板命令: " << szIndex << std::endl;
+
 			pMODELINFO pModelInfo = NULL;
 			MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
 			if (itFind == _mapModel_.end())
@@ -383,6 +389,9 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			bool bNeedDown = true;
 			char szIndex[50] = { 0 };
 			sprintf(szIndex, "%d_%d", stModelInfo.nExamID, stModelInfo.nSubjectID);
+
+			std::cout << "开始下载考试模板命令: " << szIndex << std::endl;
+
 			MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
 			if (itFind == _mapModel_.end())
 			{
@@ -428,6 +437,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			char szIndex[50] = { 0 };
 			sprintf(szIndex, "%d_%d", stModelInfo.nExamID, stModelInfo.nSubjectID);
 
+			std::cout << "请求自动创建模板命令: " << szIndex << std::endl;
 		#if 1
 			_mapModelLock_.lock();
 			pMODELINFO pModelInfo = NULL;
@@ -499,6 +509,40 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			std::string strVerAddr = ss.str();
 			pUser->SendResponesInfo(RESPONSE_GET_VERSERVER_ADDR, RESULT_SUCCESS, (char*)strVerAddr.c_str(), strVerAddr.length());
 			std::cout << "回复版本服务器地址信息:" << strVerAddr << std::endl;
+		}
+		break;
+	case USER_GET_BMK:
+		{
+			ST_GET_BMK_INFO stGetBmkInfo = *(pStGetBmkInfo)(pMission->m_pMissionData + HEAD_SIZE);
+
+			std::cout << "请求报名库命令: " << stGetBmkInfo.nExamID << "_" << stGetBmkInfo.nSubjectID << std::endl;
+
+			std::string strEzs = stGetBmkInfo.szEzs;
+			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
+			pTask->strUri = SysSet.m_strBackUri + "/getStudents";
+			pTask->nExamID = stGetBmkInfo.nExamID;
+			pTask->nSubjectID = stGetBmkInfo.nSubjectID;
+// 			pTask->nExamID = 501;
+// 			pTask->nSubjectID = 383;
+
+			char szExamInfo[30] = { 0 };
+			sprintf(szExamInfo, "/%d/%d", stGetBmkInfo.nExamID, stGetBmkInfo.nSubjectID);
+			pTask->strUri.append(szExamInfo);
+
+			pTask->pUser = pUser;
+			pTask->strEzs = SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
+			pTask->strMsg = "getBmk";
+
+			Poco::JSON::Object obj;
+			obj.set("examId", stGetBmkInfo.nExamID);
+			obj.set("subjectId", stGetBmkInfo.nSubjectID);
+			stringstream ss;
+			obj.stringify(ss, 0);
+			pTask->strRequest = ss.str();
+
+			g_fmScanReq.lock();
+			g_lScanReq.push_back(pTask);
+			g_fmScanReq.unlock();
 		}
 		break;
 	default:

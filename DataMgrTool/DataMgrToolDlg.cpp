@@ -178,6 +178,9 @@ void CDataMgrToolDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_MFCEDITBROWSE_Pkg_DIR, m_strPkgPath);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_Pkg_DIR, m_mfcEdit_PkgDir);
 
+	DDX_Text(pDX, IDC_MFCEDITBROWSE_Pkg_PapersDIR, m_strWatchPaper_PapersDir);
+	DDX_Text(pDX, IDC_EDIT_DecompressPaper, m_strWatchPaper_PaperInfo);
+
 	DDX_Text(pDX, IDC_MFCEDITBROWSE_RecogDir, m_strRecogPath);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_RecogDir, m_mfcEdit_RecogDir);
 	DDX_Text(pDX, IDC_MFCEDITBROWSE_ModelPath, m_strModelPath);
@@ -207,6 +210,9 @@ BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_LoadParam, &CDataMgrToolDlg::OnBnClickedBtnLoadparam)
 	ON_BN_CLICKED(IDC_MFCBUTTON_RePkg, &CDataMgrToolDlg::OnBnClickedMfcbuttonRepkg)
 	ON_WM_TIMER()
+	ON_BN_CLICKED(IDC_BTN_STOP, &CDataMgrToolDlg::OnBnClickedBtnStop)
+	ON_BN_CLICKED(IDC_BTN_DecompressLook, &CDataMgrToolDlg::OnBnClickedBtnDecompresslook)
+	ON_BN_CLICKED(IDC_BTN_WatchPic, &CDataMgrToolDlg::OnBnClickedBtnWatchpic)
 END_MESSAGE_MAP()
 
 
@@ -556,6 +562,7 @@ void CDataMgrToolDlg::InitConfig()
 	{
 		CDecompressThread* pObj = new CDecompressThread(this);
 		m_pDecompressThread[i].start(*pObj);
+		m_pDecompressThread[i].setPriority(Poco::Thread::PRIO_HIGH);
 		m_vecDecompressThreadObj.push_back(pObj);
 	}
 
@@ -624,7 +631,7 @@ void CDataMgrToolDlg::InitConfig()
 	RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST, 0);
 #else
 	m_statusBar.Create(WS_CHILD | WS_VISIBLE | SBT_OWNERDRAW, CRect(0, 0, 0, 0), this, 0);
-	int strPartDim[8] = { 80, 130, 210, 260, 340, 390, 480, -1 }; //分割数量
+	int strPartDim[8] = { 80, 170, 240, 340, 420, 500, 580, -1 }; //分割数量
 	m_statusBar.SetParts(8, strPartDim);
 
 	//设置状态栏文本
@@ -813,7 +820,7 @@ void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
 		pDecompressTask->bRecogOmr = dlg.m_nChkOmr;				//进行参数传递
 		pDecompressTask->bRecogZkzh = dlg.m_nChkSN;				//进行参数传递
 		pDecompressTask->bRecogElectOmr = dlg.m_nChkElectOmr;	//进行参数传递
-		pDecompressTask->bSendEzs = dlg.m_nHandleResult;		//参数传递
+		pDecompressTask->nSendEzs = dlg.m_nHandleResult;		//参数传递
 		pDecompressTask->nNoNeedRecogVal = dlg.m_nNoRecogVal;	//....
 
 
@@ -829,6 +836,9 @@ void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
 
 		std::string strPkgPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strPkgPath));
 		_strPkgSearchPath_ = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strPkgPath));
+
+		m_strWatchPaper_PapersDir = m_strPkgPath;
+		UpdateData(FALSE);
 	#if 1
 // 		pST_SEARCH pTask = new ST_SEARCH;
 // 		pTask->strSearchPath = CMyCodeConvert::Gb2312ToUtf8(strPkgPath);
@@ -1064,6 +1074,11 @@ void CDataMgrToolDlg::OnBnClickedBtnClearstatistics()
 	_nOmrDoubtStatistics_ = 0;
 	_nOmrNullStatistics_ = 0;
 	_nAllOmrStatistics_ = 0;
+	_nSnNullStatistics_ = 0;
+	_nAllSnStatistics_ = 0;
+	_nPkgDoubtStatistics_ = 0;
+	_nPkgOmrNullStatistics_ = 0;
+	_nPkgSnNullStatistics_ = 0;
 	_fmErrorStatistics_.unlock();
 
 	_fmDecompress_.lock();
@@ -1118,27 +1133,171 @@ void CDataMgrToolDlg::OnTimer(UINT_PTR nIDEvent)
 		CString strTmp;
 		if (m_wndStatusBar.GetSafeHwnd())
 		{
-			strTmp.Format(_T("%d"), _nDecompress_);
+			int nUnDecompressCount	= g_lDecompressTask.size();
+			int nUnRecogCount		= g_lRecogTask.size();
+			int nUnCompressCount	= g_lCompressTask.size();
+			strTmp.Format(_T("%d / %d"), _nDecompress_, nUnDecompressCount);
 			m_wndStatusBar.SetPaneText(1, strTmp);
-			strTmp.Format(_T("%d"), _nRecog_);
+			strTmp.Format(_T("%d / %d"), _nRecog_, nUnRecogCount);
 			m_wndStatusBar.SetPaneText(3, strTmp);
 			strTmp.Format(_T("%d"), _nRecogPapers_);
 			m_wndStatusBar.SetPaneText(5, strTmp);
-			strTmp.Format(_T("%d"), _nCompress_);
+			strTmp.Format(_T("%d / %d"), _nCompress_, nUnCompressCount);
 			m_wndStatusBar.SetPaneText(7, strTmp);
 		}
 		else
 		{
-			strTmp.Format(_T("%d"), _nDecompress_);
+			int nUnDecompressCount = g_lDecompressTask.size();
+			int nUnRecogCount = g_lRecogTask.size();
+			int nUnCompressCount = g_lCompressTask.size();
+			strTmp.Format(_T("%d / %d"), _nDecompress_, nUnDecompressCount);
 			m_statusBar.SetText(strTmp, 1, 0);
-			strTmp.Format(_T("%d"), _nRecog_);
+			strTmp.Format(_T("%d / %d"), _nRecog_, nUnRecogCount);
 			m_statusBar.SetText(strTmp, 3, 0);
 			strTmp.Format(_T("%d"), _nRecogPapers_);
 			m_statusBar.SetText(strTmp, 5, 0);
-			strTmp.Format(_T("%d"), _nCompress_);
+			strTmp.Format(_T("%d / %d"), _nCompress_, nUnCompressCount);
 			m_statusBar.SetText(strTmp, 7, 0);
 		}
 	}
 
 	CDialogEx::OnTimer(nIDEvent);
+}
+
+
+void CDataMgrToolDlg::OnBnClickedBtnStop()
+{
+	pST_SEARCH pSearchPathTask = NULL;
+	_fmSearchPathList_.lock();
+	L_SearchTask::iterator itSearchPathItem = _SearchPathList_.begin();
+	for (; itSearchPathItem != _SearchPathList_.end();)
+	{
+		pSearchPathTask = *itSearchPathItem;
+		itSearchPathItem = _SearchPathList_.erase(itSearchPathItem);
+		SAFE_RELEASE(pSearchPathTask);
+	}
+	_fmSearchPathList_.unlock();
+
+	pDECOMPRESSTASK pDecompressTask = NULL;
+	g_fmDecompressLock.lock();
+	DECOMPRESSTASKLIST::iterator itDecompressItem = g_lDecompressTask.begin();
+	for (; itDecompressItem != g_lDecompressTask.end();)
+	{
+		pDecompressTask = *itDecompressItem;
+		itDecompressItem = g_lDecompressTask.erase(itDecompressItem);
+		SAFE_RELEASE(pDecompressTask);
+	}
+	g_fmDecompressLock.unlock();
+
+	g_fmRecog.lock();
+	pRECOGTASK pRecogTask = NULL;
+	RECOGTASKLIST::iterator itRecogItem = g_lRecogTask.begin();
+	for (; itRecogItem != g_lRecogTask.end();)
+	{
+		pRecogTask = *itRecogItem;
+		itRecogItem = g_lRecogTask.erase(itRecogItem);
+		SAFE_RELEASE(pRecogTask);
+	}
+	g_fmRecog.unlock();
+
+	pCOMPRESSTASK pCompressTask = NULL;
+	g_fmCompressLock.lock();
+	COMPRESSTASKLIST::iterator itCompressItem = g_lCompressTask.begin();
+	for (; itCompressItem != g_lCompressTask.end();)
+	{
+		pCompressTask = *itCompressItem;
+		itCompressItem = g_lCompressTask.erase(itCompressItem);
+		SAFE_RELEASE(pCompressTask);
+	}
+	g_fmCompressLock.unlock();
+}
+
+
+void CDataMgrToolDlg::OnBnClickedBtnDecompresslook()
+{
+	UpdateData(TRUE);
+	USES_CONVERSION;
+
+	std::string strPkgPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strWatchPaper_PapersDir));
+	std::string strPaperInfo = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strWatchPaper_PaperInfo));
+
+	int nPos = strPaperInfo.find(":");
+	if (nPos == std::string::npos)
+	{
+		AfxMessageBox(_T("试卷信息格式不正确，格式为：试卷包名称:考生名称，如demojs001_100-200_20170421140955_13:S2"));
+		return;
+	}
+
+	//++创建文件解压路径
+	CString strTmp = m_strWatchPaper_PapersDir + _T("\\查看试卷-解压路径");
+	std::string strDecompressPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strTmp));
+	try
+	{
+		Poco::File dir(strDecompressPath);
+		dir.createDirectories();
+	}
+	catch (Poco::Exception& e)
+	{
+	}
+	//--
+
+	std::string strPkgName;
+	std::string strPaperName; 
+	strPkgName = strPaperInfo.substr(0, nPos);
+	strPaperName = strPaperInfo.substr(nPos + 1, strPaperInfo.length());
+
+	pST_SEARCH pDirTask = new ST_SEARCH;
+	pDirTask->nSearchType = 2;
+	pDirTask->strSearchPath = strPkgPath;
+	pDirTask->strSearchName = strPkgName;
+	pDirTask->strPaperName = strPaperName;
+	pDirTask->strDecompressPath = CMyCodeConvert::Utf8ToGb2312(strDecompressPath);
+
+	_fmSearchPathList_.lock();
+	_SearchPathList_.push_back(pDirTask);
+	_fmSearchPathList_.unlock();
+}
+
+
+void CDataMgrToolDlg::OnBnClickedBtnWatchpic()
+{
+	UpdateData(TRUE);
+	USES_CONVERSION;
+
+	std::string strPkgPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strWatchPaper_PapersDir));
+	std::string strPaperInfo = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strWatchPaper_PaperInfo));
+
+	int nPos = strPaperInfo.find(":");
+	if (nPos == std::string::npos)
+	{
+		AfxMessageBox(_T("试卷信息格式不正确，格式为：试卷包名称:考生名称，如demojs001_100-200_20170421140955_13:S2"));
+		return;
+	}
+
+	CString strTmp = m_strWatchPaper_PapersDir + _T("\\查看试卷-解压路径\\");
+	std::string strDecompressPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strTmp));
+
+	std::string strPkgName;
+	std::string strPaperName;
+	strPkgName = strPaperInfo.substr(0, nPos);
+	strPaperName = strPaperInfo.substr(nPos + 1, strPaperInfo.length());
+	std::string strPicPath = strDecompressPath + strPkgName + "\\" + strPaperName + "_1.jpg";
+	try
+	{
+		Poco::File picFile(strPicPath);
+		if (!picFile.exists())
+		{
+			CString str = _T("");
+			str.Format(_T("试卷袋图片不存在%s"), A2T(CMyCodeConvert::Utf8ToGb2312(strPicPath).c_str()));
+			AfxMessageBox(str);
+			return;
+		}
+	}
+	catch (Poco::Exception& e)
+	{
+	}
+	std::string strPicPath_gb = CMyCodeConvert::Utf8ToGb2312(strPicPath);
+	cv::Mat matPic = cv::imread(strPicPath_gb);
+	cv::namedWindow("试卷袋图像", 0);
+	cv::imshow("试卷袋图像", matPic);
 }

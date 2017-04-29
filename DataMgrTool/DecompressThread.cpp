@@ -57,7 +57,7 @@ void CDecompressThread::run()
 		{
 			if (g_lRecogTask.size() > 200)
 			{
-				Poco::Thread::sleep(10000);
+				Poco::Thread::sleep(1000);
 				continue;
 			}
 			pTask = *it;
@@ -67,7 +67,7 @@ void CDecompressThread::run()
 		g_fmDecompressLock.unlock();
 		if (NULL == pTask)
 		{
-			Poco::Thread::sleep(200);
+			Poco::Thread::sleep(1000);
 			continue;
 		}
 
@@ -116,7 +116,6 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		g_fmPapers.unlock();
 	}
 	
-
 	Poco::File decompressDir(strOutDir);
 	if (decompressDir.exists())
 		decompressDir.remove(true);
@@ -172,7 +171,21 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	char szBaseDir[256] = { 0 };
 	strncpy_s(szBaseDir, strBaseDir.c_str(), strBaseDir.length());
 #endif
-	ret = do_extract_all(uf, opt_do_extract_withoutpath, opt_overwrite, password, szBaseDir);
+	if (pTask->nTaskType != 6)
+		ret = do_extract_all(uf, opt_do_extract_withoutpath, opt_overwrite, password, szBaseDir);
+	else
+	{
+		for (int i = 0; i < 5; i++)		//解压考生的所有试卷，如S1，则解压S1_1.jpg,S1_2.jpg....
+		{
+			std::string strFileName = Poco::format("%s_%d.jpg", pTask->strDecompressPaperFile, i + 1);
+			ret = do_extract_onefile(uf, strFileName.c_str(), opt_do_extract_withoutpath, opt_overwrite, password, szBaseDir);
+			if (ret == 2)	//file strFileName not found in the zipfile，考生的所有文件已经都解压出来了，不需要再尝试，默认一个考试试卷不会超过5张
+			{
+				ret = 0;
+				break;
+			}
+		}
+	}
 	unzClose(uf);
 
 	if (ret != 0)
@@ -202,8 +215,6 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		pPapers->lPaper.sort(SortByPaper);
 	}
 	
-
-
 	USES_CONVERSION;
 	if (pTask->nTaskType == 1)
 	{
@@ -278,7 +289,6 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 				Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
 				if (srcFileDir.exists())
 					srcFileDir.remove(true);
-
 			}
 			catch (Poco::Exception& exc)
 			{
@@ -333,7 +343,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		pPapers->bRecogOmr = pTask->bRecogOmr;
 		pPapers->bRecogZkzh = pTask->bRecogZkzh;
 		pPapers->bRecogElectOmr = pTask->bRecogElectOmr;
-		pPapers->bSendEzs = pTask->bSendEzs;
+		pPapers->nSendEzs = pTask->nSendEzs;
 
 		//添加到识别任务列表
 		PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
@@ -369,10 +379,12 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		pDirTask->bRecogOmr		= pTask->bRecogOmr;
 		pDirTask->bRecogZkzh	= pTask->bRecogZkzh;
 		pDirTask->bRecogElectOmr = pTask->bRecogElectOmr;
-		pDirTask->bSendEzs		= pTask->bSendEzs;
+		pDirTask->nSendEzs		= pTask->nSendEzs;
 		pDirTask->nNoNeedRecogVal = pTask->nNoNeedRecogVal;
-
+		
+		_fmSearchPathList_.lock();
 		_SearchPathList_.push_back(pDirTask);
+		_fmSearchPathList_.unlock();
 	}
 	else if (pTask->nTaskType == 5)
 	{
@@ -403,7 +415,12 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		_nRecogPapers_++;
 		_fmRecogPapers_.unlock();
 	}
-
+	else if (pTask->nTaskType == 6)
+	{
+		CString strMsg;
+		strMsg.Format(_T("解压%s:%s完成\r\n"), A2T(pTask->strFileBaseName.c_str()), A2T(pTask->strDecompressPaperFile.c_str()));
+		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
+	}
 #endif
 }
 
@@ -440,6 +457,9 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERSINFO pPapers
 			nOmrNull = objData->get("nOmrNull").convert<int>();
 		if (objData->has("nSnNull"))
 			nSnNull = objData->get("nSnNull").convert<int>();
+
+		if (objData->has("RecogMode"))
+			pPapers->nRecogMode = objData->get("RecogMode").convert<int>();
 
 		int nExamID = objData->get("examId").convert<int>();
 		int nSubjectID = objData->get("subjectId").convert<int>();
@@ -561,6 +581,9 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 		if (objData->has("nSnNull"))
 			nSnNull = objData->get("nSnNull").convert<int>();
 
+		if (objData->has("RecogMode"))
+			pPapers->nRecogMode = objData->get("RecogMode").convert<int>();
+
 		int nExamId = objData->get("examId").convert<int>();
 		int nSubjectId = objData->get("subjectId").convert<int>();
 		int nTeacherId = objData->get("nTeacherId").convert<int>();
@@ -623,8 +646,6 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 					omrResult.nDoubt = jsnOmrObj->get("doubt").convert<int>();
 					pPaper->lOmrResult.push_back(omrResult);
 				}
-
-
 
 				if (jsnPaperObj->has("electOmr"))
 				{

@@ -130,6 +130,15 @@
     <Filter Include="登录\天喻多平台登录选择框">
       <UniqueIdentifier>{2d2e6470-0f1c-4e22-9683-e96c56e2242e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="扫描线程\twain">
+      <UniqueIdentifier>{385ee612-2adc-47c4-ae73-60b21f2628e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="修改ZKZH窗口\报名库管理">
+      <UniqueIdentifier>{a1533480-602c-4dc5-989b-a01e55ca1260}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="从Pkg恢复Papers">
+      <UniqueIdentifier>{9965740a-f3ad-49ab-9baf-cf16e57cb201}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -339,6 +348,21 @@
     <ClInclude Include="MultiPlatform4TYDlg.h">
       <Filter>登录\天喻多平台登录选择框</Filter>
     </ClInclude>
+    <ClInclude Include="PapersInfoSave4TyDlg.h">
+      <Filter>试卷袋信息保存</Filter>
+    </ClInclude>
+    <ClInclude Include="OmrRecog.h">
+      <Filter>识别任务处理线程</Filter>
+    </ClInclude>
+    <ClInclude Include="StudentMgr.h">
+      <Filter>修改ZKZH窗口\报名库管理</Filter>
+    </ClInclude>
+    <ClInclude Include="ZipObj.h">
+      <Filter>解压缩</Filter>
+    </ClInclude>
+    <ClInclude Include="PkgToPapers.h">
+      <Filter>从Pkg恢复Papers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
@@ -514,6 +538,21 @@
     </ClCompile>
     <ClCompile Include="MultiPlatform4TYDlg.cpp">
       <Filter>登录\天喻多平台登录选择框</Filter>
+    </ClCompile>
+    <ClCompile Include="PapersInfoSave4TyDlg.cpp">
+      <Filter>试卷袋信息保存</Filter>
+    </ClCompile>
+    <ClCompile Include="OmrRecog.cpp">
+      <Filter>识别任务处理线程</Filter>
+    </ClCompile>
+    <ClCompile Include="StudentMgr.cpp">
+      <Filter>修改ZKZH窗口\报名库管理</Filter>
+    </ClCompile>
+    <ClCompile Include="ZipObj.cpp">
+      <Filter>解压缩</Filter>
+    </ClCompile>
+    <ClCompile Include="PkgToPapers.cpp">
+      <Filter>从Pkg恢复Papers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

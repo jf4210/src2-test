@@ -7,7 +7,7 @@
 #include "TwainCpp.h"
 #include "SNInfoSetDlg.h"
 #include "ElectOmrDlg.h"
-
+#include "ZipObj.h"
 #include "ScanThread.h"
 // CMakeModelDlg 对话框
 
@@ -125,6 +125,8 @@ public:
 
 	int m_nDilateKernel_Sn;		//ZKZH识别时用的膨胀因子
 	int	m_nDilateKernel_Common;	//通用膨胀核因子，SN时不用
+	int m_nDilateKernel_DefSn;		//ZKZH识别时用的膨胀因子，默认值，从配置文件读取
+	int	m_nDilateKernel_DefCommon;	//通用膨胀核因子，SN时不用，默认值，从配置文件读取
 
 	CString m_strModelPicPath;	
 	HZIP hz;					//压缩
@@ -154,10 +156,10 @@ public:
 
 	bool		m_bShiftKeyDown;	//shift按键是否按下
 
-
+#ifdef TEST_SCAN_THREAD
 	CScanThread m_scanThread;
 	CScanThread* m_pScanThread;
-
+#endif
 	//扫描
 	BOOL m_bTwainInit;
 	CString		m_strScanSavePath;
@@ -191,6 +193,7 @@ private:
 	void GetOmrArry(std::vector<cv::Rect>& rcList);	//黑白卡时获取框选的OMR排列数组
 	void GetSNArry(std::vector<cv::Rect>& rcList);	//黑白卡时获取框选的考号排列数组
 	void GetElectOmrInfo(std::vector<cv::Rect>& rcList);	//黑白卡时获取框选的选做题信息
+	void GetStandardValue(RECTINFO& rc);	//获取自建提卡的标准实验值
 
 	inline void GetThreshold(cv::Mat& matSrc, cv::Mat& matDst);			//二值化计算
 //	inline void ShowDetailRectInfo();
@@ -227,6 +230,11 @@ private:
 	void AddRecogSN();							//添加考号识别区域
 
 	void RecogFixWithHead(int i);				//在同步头模式，识别定点信息
+
+#ifdef TEST_SCAN_THREAD
+	LRESULT	ScanDone(WPARAM wParam, LPARAM lParam);
+	LRESULT	ScanErr(WPARAM wParam, LPARAM lParam);
+#endif
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog(); 

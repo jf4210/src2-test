@@ -8,7 +8,7 @@ class CShowFileTransferDlg : public CDialog
 	DECLARE_DYNAMIC(CShowFileTransferDlg)
 
 public:
-	CShowFileTransferDlg(CWnd* pParent = NULL);   // 标准构造函数
+	CShowFileTransferDlg(void* pDlg, CWnd* pParent = NULL);   // 标准构造函数
 	virtual ~CShowFileTransferDlg();
 
 // 对话框数据
@@ -19,6 +19,7 @@ private:
 	int			m_nCurListItem;
 	CString		m_strCmdChannel;
 	CString		m_strFileChannel;
+	void*		m_pDlg;
 
 	int				m_nStatusSize;			//字体大小
 	CFont			m_fontStatus;			//字体
@@ -29,6 +30,7 @@ private:
 	void	InitCtrlPosition();
 	void	ShowFileTransferList();
 	void	ReSendFile();
+	void	PkgToPapers();
 
 	void	SetFontSize(int nSize);
 protected:

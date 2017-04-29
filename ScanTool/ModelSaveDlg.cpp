@@ -50,7 +50,76 @@ END_MESSAGE_MAP()
 BOOL CModelSaveDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
+#if 1
+	bool bFindSubId = false;
+	USES_CONVERSION;
+	if (g_lExamList.size() > 0)
+	{
+		int nExamItem = 0;
+		EXAM_LIST::iterator itExam = g_lExamList.begin();
+		for (int i = 0; itExam != g_lExamList.end(); itExam++, i++)
+		{
+			CString strName = A2T(itExam->strExamName.c_str());
+			if (i == 0)
+				m_strExamName = strName;
 
+			int nCount = m_comboExamName.GetCount();
+			m_comboExamName.InsertString(nCount, strName);
+
+			m_comboExamName.SetItemDataPtr(nCount, (void*)&(*itExam));
+
+			//一开始默认初始化到模板所在列表
+			if (m_pModel->nExamID == itExam->nExamID)
+			{
+				nExamItem = nCount;
+				m_strExamName = strName;
+			}
+		}
+		m_comboExamName.SetCurSel(nExamItem);
+
+
+		EXAMINFO* pExamInfo = (EXAMINFO*)m_comboExamName.GetItemDataPtr(nExamItem);
+		if (pExamInfo)
+		{
+			m_comboSubject.ResetContent();
+			SUBJECT_LIST::iterator itSub = pExamInfo->lSubjects.begin();
+			for (int i = 0; itSub != pExamInfo->lSubjects.end(); itSub++, i++)
+			{
+				EXAM_SUBJECT* pSubject = &(*itSub);
+				CString strSubjectName = A2T(itSub->strSubjName.c_str());
+
+				int nCount = m_comboSubject.GetCount();
+				m_comboSubject.InsertString(nCount, strSubjectName);
+				m_comboSubject.SetItemDataPtr(nCount, pSubject);
+
+				//一开始默认初始化到模板所在列表
+				if (m_pModel->nSubjectID == itSub->nSubjID)
+				{
+					bFindSubId = true;
+					m_comboSubject.SetCurSel(nCount);
+
+					m_SubjectID = itSub->nSubjID;
+					m_strSubjectName = itSub->strSubjName.c_str();
+				}
+			}
+			if (!bFindSubId)
+			{
+				m_comboSubject.SetCurSel(0);
+
+				itSub = pExamInfo->lSubjects.begin();
+				if (itSub != pExamInfo->lSubjects.end())
+				{
+					m_SubjectID = itSub->nSubjID;
+					m_strSubjectName = itSub->strSubjName.c_str();
+				}
+			}
+
+			m_nExamID = pExamInfo->nExamID;
+			m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
+			m_strGradeName = pExamInfo->strGradeName.c_str();
+		}
+	}
+#else
 	USES_CONVERSION;
 	if (g_lExamList.size() > 0)
 	{
@@ -95,7 +164,8 @@ BOOL CModelSaveDlg::OnInitDialog()
 			m_strExamTypeName = pExamInfo->strExamTypeName.c_str();
 			m_strGradeName = pExamInfo->strGradeName.c_str();
 		}
-	}	
+	}
+#endif
 	m_nSaveMode = m_pModel->nSaveMode;
 	if (m_nSaveMode == 1)
 	{

@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VersionControlServer", "Ver
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CheckPkgProcess", "CheckPkgProcess\CheckPkgProcess.vcxproj", "{15F81132-9D60-4C29-A179-F5659613DEFB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NetOperatorDll", "NetOperatorDll\NetOperatorDll\NetOperatorDll.vcxproj", "{EFDE3C03-67C1-4F67-A4CB-36B233C529DA}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModelControlServer", "ModelControlServer\ModelControlServer.vcxproj", "{0881D46F-4BA2-40C3-A5F6-2E87AC75AA20}"
 EndProject
 Global
@@ -35,6 +37,10 @@ Global
 		{15F81132-9D60-4C29-A179-F5659613DEFB}.Debug|Win32.Build.0 = Debug|Win32
 		{15F81132-9D60-4C29-A179-F5659613DEFB}.Release|Win32.ActiveCfg = Release|Win32
 		{15F81132-9D60-4C29-A179-F5659613DEFB}.Release|Win32.Build.0 = Release|Win32
+		{EFDE3C03-67C1-4F67-A4CB-36B233C529DA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EFDE3C03-67C1-4F67-A4CB-36B233C529DA}.Debug|Win32.Build.0 = Debug|Win32
+		{EFDE3C03-67C1-4F67-A4CB-36B233C529DA}.Release|Win32.ActiveCfg = Release|Win32
+		{EFDE3C03-67C1-4F67-A4CB-36B233C529DA}.Release|Win32.Build.0 = Release|Win32
 		{0881D46F-4BA2-40C3-A5F6-2E87AC75AA20}.Debug|Win32.ActiveCfg = Debug|Win32
 		{0881D46F-4BA2-40C3-A5F6-2E87AC75AA20}.Debug|Win32.Build.0 = Debug|Win32
 		{0881D46F-4BA2-40C3-A5F6-2E87AC75AA20}.Release|Win32.ActiveCfg = Release|Win32
