@@ -2411,9 +2411,51 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 //		matCompRoi.deallocate();
 		matCompRoi = matCompPic(cv::Rect(ptNew1, ptNew2));
 		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
-		
+
+// 		GaussianBlur(matCompRoi, matCompRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
+// 		sharpenImage1(matCompRoi, matCompRoi);
+
+		//++先获取均值和标准差，再计算新的二值化阀值	2017.4.27
+		const int channels[1] = { 0 };
+		const int histSize[1] = { _nThreshold_Recog2_ };
+		float hranges[2] = { 0, _nThreshold_Recog2_ };
+		const float* ranges[1];
+		ranges[0] = hranges;
+		MatND hist;
+		calcHist(&matCompRoi, 1, channels, Mat(), hist, 1, histSize, ranges);	//histSize, ranges
+
+		int nSum = 0;
+		int nDevSum = 0;
+		int nCount = 0;
+		for (int h = 0; h < hist.rows; h++)	//histSize
+		{
+			float binVal = hist.at<float>(h);
+
+			nCount += static_cast<int>(binVal);
+			nSum += h*binVal;
+		}
+		int nThreshold = _nThreshold_Recog2_;
+		if (nCount > 0)
+		{
+			float fMean = (float)nSum / nCount;		//均值
+
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nDevSum += pow(h - fMean, 2)*binVal;
+			}
+			float fStdev = sqrt(nDevSum / nCount);
+			nThreshold = fMean + fStdev;
+			if (fStdev > fMean)
+				nThreshold = fMean + fStdev;
+		}
+
+		if (nThreshold > _nThreshold_Recog2_) nThreshold = _nThreshold_Recog2_;
+		//--
+
 		//图片二值化
-		threshold(matCompRoi, matCompRoi, _nThreshold_Recog2_, 255, THRESH_BINARY_INV);				//200, 255
+		threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY_INV);				//200, 255
 
 		//这里进行开闭运算
 		//确定腐蚀和膨胀核的大小

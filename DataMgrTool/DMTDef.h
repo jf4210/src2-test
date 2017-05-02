@@ -20,7 +20,7 @@
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define PrintAllOmrVal		//打印所有OMR选项值
-	#define Test_Recog3		//测试第三种识别方法准确度
+//	#define Test_Recog3		//测试第三种识别方法准确度
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -44,7 +44,7 @@
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION	_T("1.70428-2")
+#define SOFT_VERSION	_T("1.70502-1")
 #define SYS_BASE_NAME	_T("YKLX-DMT")
 //#define WH_CCBKS		//武汉楚才杯专用，解析二维码需要json解析
 
