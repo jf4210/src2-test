@@ -154,7 +154,7 @@
 
 #ifndef TO_WHTY
 	#ifdef PUBLISH_VERSION
-		#define SOFT_VERSION	_T("2.10420-3")
+		#define SOFT_VERSION	_T("2.10503-1")
 	#else
 		#define SOFT_VERSION	_T("2.10420-1-Pir")		//-Pri
 	#endif

@@ -30,7 +30,7 @@
 #endif
 
 //++ test 2017.4.27
-#define Test_RecogFirst_NoThreshord		//针对第一种算法，不用阀值直接判断要求最少选项数，如达到多少密度比例就让我选项一定填涂
+#define Test_RecogFirst_NoThreshord		//针对第一种算法，不用阀值直接判断要求最少选项数，如达到多少密度比例就认为选项一定填涂
 //--
 
 #define Test_RecogOmr3			//第3种OMR识别方法测试

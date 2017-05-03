@@ -350,6 +350,22 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			strcat_s(szItemInfo, szTmp);
 		}
 		strcat_s(szItemInfo, "]");
+
+	#ifdef Test_RecogFirst_NoThreshord
+		float fDensityThreshold = 0.0;
+		strcat_s(szItemInfo, "判断选中阀值:[");
+		for (int i = 0; i < vecOmrItemDensityDiff.size(); i++)
+		{
+			char szTmp[40] = { 0 };
+			sprintf_s(szTmp, "%s:%.5f ", vecOmrItemDensityDiff[i].szVal, _dDiffThread_Fix_ + fDensityThreshold * 0.5);
+			strcat_s(szItemInfo, szTmp);
+			if ((vecOmrItemDensityDiff[i].fDiff >= _dDiffThread_Fix_ + fDensityThreshold * 0.5))
+				fDensityThreshold += vecOmrItemDensityDiff[i].fDiff;
+			if (vecOmrItemDensityDiff[i].fDiff > _dDiffExit_Fix_)	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
+				break;
+		}
+		strcat_s(szItemInfo, "]");
+	#endif
 		
 		std::vector<pRECTINFO> vecItemsGrayDesc;
 		std::vector<ST_ITEM_DIFF> vecOmrItemGrayDiff;
@@ -1951,19 +1967,20 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			fDiffThread = _dDiffThread_Fix_;
 			fDiffExit = _dDiffExit_Fix_;
 		}
-
+		
 		int nFlag = -1;
 		float fThreld = 0.0;
+		float fDensityThreshold = 0.0;
 		for (int i = 0; i < vecOmrItemDiff.size(); i++)
 		{
 			//根据所有选项灰度值排序，相邻灰度值差值超过阀值，同时其中第一个最大的灰度值超过1.0，就认为这个区间为选中的阀值区间
 			//(大于1.0是防止最小的灰度值很小的时候影响阀值判断)
-			float fDiff = (fCompThread - vecOmrItemDiff[i].fFirst) * 0.1;
-			if ((vecOmrItemDiff[i].fDiff >= fDiffThread && vecOmrItemDiff[i].fFirst > fCompThread) ||
-				(vecOmrItemDiff[i].fDiff >= fDiffThread + fDiff && vecOmrItemDiff[i].fFirst > (fCompThread - 0.1) && fDiff > 0))
+			float fDiff = (fCompThread - vecOmrItemDiff[i].fFirst) * 0.5;
+			if ((vecOmrItemDiff[i].fDiff >= fDiffThread + fDensityThreshold * 0.5 ))
 			{
 				nFlag = i;
 				fThreld = vecOmrItemDiff[i].fFirst;
+				fDensityThreshold += vecOmrItemDiff[i].fDiff;
 			#ifdef Test_RecogFirst_NoThreshord
 				if (vecOmrItemDiff[i].fDiff > fDiffExit)	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
 					break;
@@ -1999,14 +2016,66 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			}
 		#endif
 		}
-	#else	//一下是直接通过阀值判断是否选中，可用，对填涂不规范并且不清晰的情况不够理想
-		std::string strRecogAnswer1;
-		for (int i = 0; i < vecVal_calcHist.size(); i++)
-		{
-			char szVal[5] = { 0 };
-			sprintf_s(szVal, "%c", vecVal_calcHist[i] + 65);
-			strRecogAnswer1.append(szVal);	
-		}
+	#else
+			std::string strRecogAnswer1;
+			std::vector<pRECTINFO> vecItemsDesc;
+			std::vector<ST_ITEM_DIFF> vecOmrItemDiff;
+			calcOmrDensityDiffVal(omrResult.lSelAnswer, vecItemsDesc, vecOmrItemDiff);
+
+			float fCompThread = 0.0;		//密度间隔达到要求时，第一个选项的密度必须达到的要求
+			float fDiffThread = 0.0;		//选项可能填涂的可能密度梯度阀值
+			float fDiffExit = 0;			//密度的梯度递减太快时，可以认为后面选项没有填涂，此时的密度梯度阀值
+			if (pModelInfo->pModel->nHasHead)
+			{
+				fCompThread = _dCompThread_Head_;
+				fDiffThread = _dDiffThread_Head_;
+				fDiffExit = _dDiffExit_Head_;
+			}
+			else
+			{
+				fCompThread = _dCompThread_Fix_;
+				fDiffThread = _dDiffThread_Fix_;
+				fDiffExit = _dDiffExit_Fix_;
+			}
+
+			int nFlag = -1;
+			float fThreld = 0.0;
+			for (int i = 0; i < vecOmrItemDiff.size(); i++)
+			{
+				//根据所有选项灰度值排序，相邻灰度值差值超过阀值，同时其中第一个最大的灰度值超过1.0，就认为这个区间为选中的阀值区间
+				//(大于1.0是防止最小的灰度值很小的时候影响阀值判断)
+				float fDiff = (fCompThread - vecOmrItemDiff[i].fFirst) * 0.1;
+				if ((vecOmrItemDiff[i].fDiff >= fDiffThread && vecOmrItemDiff[i].fFirst > fCompThread) ||
+					(vecOmrItemDiff[i].fDiff >= fDiffThread + fDiff && vecOmrItemDiff[i].fFirst > (fCompThread - 0.1) && fDiff > 0))
+				{
+					nFlag = i;
+					fThreld = vecOmrItemDiff[i].fFirst;
+					if (vecOmrItemDiff[i].fDiff > fDiffExit && i + 1 >= vecVal_calcHist.size())	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
+						break;
+				}
+			}
+			if (nFlag >= 0)
+			{
+				RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
+				for (; itItem != omrResult.lSelAnswer.end(); itItem++)
+				{
+					if (itItem->fRealValuePercent >= fThreld)
+					{
+						char szVal[10] = { 0 };
+						sprintf_s(szVal, "%c", itItem->nAnswer + 65);
+						strRecogAnswer1.append(szVal);
+					}
+				}
+			}
+			else
+			{
+				for (int i = 0; i < vecVal_calcHist.size(); i++)
+				{
+					char szVal[10] = { 0 };
+					sprintf_s(szVal, "%c", vecVal_calcHist[i] + 65);
+					strRecogAnswer1.append(szVal);
+				}
+			}
 	#endif
 
 
@@ -2649,6 +2718,7 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 			for (int j = 0; j < mean.cols; j++)
 			{
 				double ImgPixelVal = cvGetReal2D(src, i, j);
+				fAllMeanGray = ImgPixelVal;
 				//输出像素值
 				TRACE("图像的均值: %f\n", ImgPixelVal);
 			}
@@ -2661,6 +2731,7 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 			for (int j = 0; j < stddev.cols; j++)
 			{
 				double ImgPixelVal = cvGetReal2D(src2, i, j);
+				fAllGrayStddev = ImgPixelVal;
 				//输出像素值
 				TRACE("标准差: %f\n", ImgPixelVal);
 			}
