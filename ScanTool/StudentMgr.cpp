@@ -47,7 +47,21 @@ bool CStudentMgr::InitTable(std::string strTableName)
 {
 	if (_session && !_session->isConnected())
 		return false;
-
+#if 1
+	try
+	{
+		std::string strSql1 = "DROP TABLE IF EXISTS " + strTableName;
+		std::string strSql2 = Poco::format("CREATE TABLE IF NOT EXISTS %s (zkzh VARCHAR(30), name VARCHAR(60), classRoom VARCHAR(60), school VARCHAR(120))", strTableName);
+		*_session << strSql1, now;
+		*_session << strSql2, now;
+	}
+	catch (Poco::Exception& e)
+	{
+		std::string strErr = "InitTable³õÊ¼»¯Ê§°Ü(" + e.displayText() + ")";
+		g_pLogger->information(strErr);
+		return false;
+	}
+#else
 	try
 	{
 		std::string strSql1 = "DROP TABLE IF EXISTS " + strTableName;
@@ -61,6 +75,7 @@ bool CStudentMgr::InitTable(std::string strTableName)
 		g_pLogger->information(strErr);
 		return false;
 	}
+#endif
 	return true;
 }
 

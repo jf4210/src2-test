@@ -261,7 +261,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		g_pLogger->information(szLog);
 	}
 
-#if 1	//test log
+#ifdef PrintRecogLog	//test log
 	std::string strPaperLog = "试卷(";
 	strPaperLog.append(pPaper->strStudentInfo);
 	strPaperLog.append(")识别结果: ");
@@ -303,7 +303,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		else
 			strcpy_s(szSingle, "多");
 		
-		char szItemInfo[2000] = { 0 };
+		std::string strItemLog;
 		if (itOmr->nDoubt)	//itOmr->nDoubt
 		{
 			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
@@ -312,25 +312,25 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 				char szTmp[100] = { 0 }; 
 				sprintf_s(szTmp, "%c,识别=%.3f(R/S=%.1f/%.1f),Succ:%d. ", itRect->nAnswer + 65, \
 					itRect->fRealValuePercent, itRect->fRealValue, itRect->fStandardValue, itRect->fRealValuePercent > itRect->fStandardValuePercent);
-				strcat_s(szItemInfo, szTmp);
+				strItemLog.append(szTmp);
 			}
-			strcat_s(szItemInfo, "\n");
+			strItemLog.append("\n");
 			RECTLIST::iterator itRect2 = itOmr->lSelAnswer.begin();
 			for (; itRect2 != itOmr->lSelAnswer.end(); itRect2++)
 			{
 				char szTmp[200] = { 0 };
 				sprintf_s(szTmp, "%c,密度=%.3f/%.3f,灰度=%.3f(%.3f-%.3f) ", itRect2->nAnswer + 65, \
 						  itRect2->fRealDensity, itRect2->fStandardDensity, itRect2->fRealMeanGray - itRect2->fStandardMeanGray, itRect2->fRealMeanGray, itRect2->fStandardMeanGray);
-				strcat_s(szItemInfo, szTmp);
+				strItemLog.append(szTmp);
 			}
-			strcat_s(szItemInfo, "\n");
+			strItemLog.append("\n");
 			RECTLIST::iterator itRect3 = itOmr->lSelAnswer.begin();
 			for (; itRect3 != itOmr->lSelAnswer.end(); itRect3++)
 			{
 				char szTmp[200] = { 0 };
 				sprintf_s(szTmp, "%c,灰度=%.3f(%.3f-%.3f), ", itRect3->nAnswer + 65, \
 						  itRect3->fRealMeanGray - itRect3->fStandardMeanGray, itRect3->fRealMeanGray, itRect3->fStandardMeanGray);
-				strcat_s(szItemInfo, szTmp);
+				strItemLog.append(szTmp);
 			}
 		}
 
@@ -338,33 +338,70 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		std::vector<pRECTINFO> vecItemsDesc;
 		std::vector<ST_ITEM_DIFF> vecOmrItemDiff;
 		calcOmrDensityDiffVal(itOmr->lSelAnswer, vecItemsDesc, vecOmrItemDiff);
-		strcat_s(szItemInfo, "\n[");
+		strItemLog.append("\n[");
 		for (int i = 0; i < vecOmrItemDiff.size(); i++)
 		{
 			char szTmp[40] = { 0 };
 			sprintf_s(szTmp, "%s:%.5f ", vecOmrItemDiff[i].szVal, vecOmrItemDiff[i].fDiff);
-			strcat_s(szItemInfo, szTmp);
+			strItemLog.append(szTmp);
 		}
-		strcat_s(szItemInfo, "]");
+		strItemLog.append("]");
 
 		std::vector<pRECTINFO> vecItemsGrayDesc;
 		std::vector<ST_ITEM_DIFF> vecOmrItemGrayDiff;
 		calcOmrGrayDiffVal(itOmr->lSelAnswer, vecItemsGrayDesc, vecOmrItemGrayDiff);
-		strcat_s(szItemInfo, "\n[");
+		strItemLog.append("\n[");
 		for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
 		{
 			char szTmp[40] = { 0 };
 			sprintf_s(szTmp, "%s:%.3f ", vecOmrItemGrayDiff[i].szVal, vecOmrItemGrayDiff[i].fDiff);
-			strcat_s(szItemInfo, szTmp);
+			strItemLog.append(szTmp);
 		}
-		strcat_s(szItemInfo, "]");
+		strItemLog.append("]");
+
+		std::vector<pRECTINFO> vecItemsGrayDesc;
+		std::vector<ST_ITEM_DIFF> vecOmrItemGrayDiff;
+		calcOmrGrayDiffVal(itOmr->lSelAnswer, vecItemsGrayDesc, vecOmrItemGrayDiff);
+		strItemLog.append("\n[");
+		for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
+		{
+			char szTmp[40] = { 0 };
+			sprintf_s(szTmp, "%s:%.3f ", vecOmrItemGrayDiff[i].szVal, vecOmrItemGrayDiff[i].fDiff);
+			strItemLog.append(szTmp);
+		}
+		strItemLog.append("]");
+		float fMeanGrayDiff = 0.0;
+		for (int i = 0; i < vecItemsGrayDesc.size(); i++)
+		{
+			fMeanGrayDiff += (vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray);
+		}
+		fMeanGrayDiff = fMeanGrayDiff / vecItemsGrayDesc.size();
+		char szTmp1[40] = { 0 };
+		sprintf_s(szTmp1, "平均灰度差:%.3f, ", fMeanGrayDiff);
+		strItemLog.append(szTmp1);
+		strItemLog.append("判断选中的阀值[");
+		float fThreld = 0.0;
+		float fGrayDiffLast = 0.0;		//对上一次判断选中的选项对下一个选项选中判断的增益
+		for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
+		{
+			float fGrayThresholdGray = vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray - fMeanGrayDiff;
+			char szTmp[40] = { 0 };
+			sprintf_s(szTmp, "%s:%.3f ", vecOmrItemGrayDiff[i].szVal, _dDiffThread_3_ + fGrayThresholdGray + fGrayDiffLast);
+			strItemLog.append(szTmp);
+			fGrayDiffLast += abs(fGrayThresholdGray) / 2;
+		}
+		strItemLog.append("]");
 		//--------------------------
 		
-		char szOmrItem[2060] = { 0 };
-		if (itOmr->nDoubt)
-			sprintf_s(szOmrItem, "%d(%s):%s ---%s Doubt(%d)\t==>%s\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal2.c_str(), itOmr->nDoubt, szItemInfo);
+		char szOmrItem[3060] = { 0 };
+// 		if (itOmr->nDoubt)
+// 			sprintf_s(szOmrItem, "%d(%s):%s ---%s Doubt(%d)\t==>%s\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal2.c_str(), itOmr->nDoubt, strItemLog.c_str());	//szItemInfo
+// 		else
+// 			sprintf_s(szOmrItem, "%d(%s):%s ---%s Doubt(%d)\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal2.c_str(), itOmr->nDoubt);
+		if (itOmr->nDoubt)	//itOmr->nDoubt
+			sprintf_s(szOmrItem, "%d(%s):%s[%s -- %s -- %s] Doubt(%d)\t==>%s\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal1.c_str(), itOmr->strRecogVal2.c_str(), itOmr->strRecogVal3.c_str(), itOmr->nDoubt, strItemLog.c_str());	//szItemInfo
 		else
-			sprintf_s(szOmrItem, "%d(%s):%s ---%s Doubt(%d)\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal2.c_str(), itOmr->nDoubt);
+			sprintf_s(szOmrItem, "%d(%s):%s[%s -- %s -- %s] Doubt(%d)\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal1.c_str(), itOmr->strRecogVal2.c_str(), itOmr->strRecogVal3.c_str(), itOmr->nDoubt);
 
 		strPaperLog.append(szOmrItem);
 	}
@@ -1783,6 +1820,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		}
 
 	#if 1
+		std::string strRecogAnswer;
 		std::string strRecogAnswer1;
 		std::vector<pRECTINFO> vecItemsDesc;
 		std::vector<ST_ITEM_DIFF> vecOmrItemDiff;
@@ -1866,6 +1904,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		int nDoubt = 0;
 		if (strRecogAnswer1 == "" && (strRecogAnswer2 == "" || strRecogAnswer3 == ""))
 		{
+			strRecogAnswer = strRecogAnswer1;
 			nDoubt = 2;
 			nNullCount++;
 
@@ -1877,11 +1916,13 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		{
 			if (strRecogAnswer1 == strRecogAnswer2 || strRecogAnswer1 == strRecogAnswer3)
 			{
+				strRecogAnswer = strRecogAnswer1;
 				nDoubt = 0;
 				nEqualCount++;
 			}
 			else
 			{
+				strRecogAnswer = strRecogAnswer1;
 				nDoubt = 1;
 				nDoubtCount++;
 
@@ -1927,9 +1968,11 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			}
 		}		
 	#endif
-		omrResult.nDoubt		= nDoubt;
-		omrResult.strRecogVal	= strRecogAnswer1;
-		omrResult.strRecogVal2	= strRecogAnswer2;
+		omrResult.nDoubt = nDoubt;
+		omrResult.strRecogVal = strRecogAnswer;
+		omrResult.strRecogVal1 = strRecogAnswer1;
+		omrResult.strRecogVal2 = strRecogAnswer2;
+		omrResult.strRecogVal3 = strRecogAnswer3;
 		(static_cast<pST_PaperInfo>(pPic->pPaper))->lOmrResult.push_back(omrResult);
 	}
 	if (!bResult)
@@ -3336,7 +3379,64 @@ bool CRecognizeThread::RecogVal_Sn3(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 	fCompThread = _dCompThread_3_;
 	fDiffThread = _dDiffThread_3_;
 	fDiffExit = _dDiffExit_3_;
+#if 1
+	float fMeanGrayDiff = 0.0;
+	for (int i = 0; i < vecItemsGrayDesc.size(); i++)
+	{
+		fMeanGrayDiff += (vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray);
+	}
+	fMeanGrayDiff = fMeanGrayDiff / vecItemsGrayDesc.size();
 
+	int nFlag = -1;
+	float fThreld = 0.0;
+	float fGrayDiffLast = 0.0;		//对上一次判断选中的选项对下一个选项选中判断的增益
+	for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
+	{
+		float fGrayThresholdGray = vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray - fMeanGrayDiff;
+		if ((vecOmrItemGrayDiff[i].fDiff >= fDiffThread + fGrayThresholdGray + fGrayDiffLast))
+		{
+			nFlag = i;
+			fThreld = vecOmrItemGrayDiff[i].fFirst;
+			if (vecOmrItemGrayDiff[i].fDiff > fDiffExit && i + 1 >= vecVal_AnswerSuer.size())	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
+				break;
+		}
+		fGrayDiffLast += abs(fGrayThresholdGray) / 2;
+	}
+	if (nFlag >= 0)
+	{
+		if (nFlag == vecOmrItemGrayDiff.size() - 1)
+		{
+			if (vecItemsGrayDesc[vecOmrItemGrayDiff.size()]->fRealMeanGray <= fCompThread)
+			{
+				fThreld = vecItemsGrayDesc[vecOmrItemGrayDiff.size()]->fRealMeanGray;
+			}
+		}
+		RECTLIST::iterator itItem = pSn->lSN.begin();
+		for (; itItem != pSn->lSN.end(); itItem++)
+		{
+			if (itItem->fRealMeanGray <= fThreld)
+			{
+				vecItemVal.push_back(itItem->nSnVal);
+			}
+		}
+	}
+	else if (vecItemsGrayDesc[vecOmrItemGrayDiff.size()]->fRealMeanGray <= fCompThread)		//++判断全都选中的情况
+	{
+		fThreld = vecItemsGrayDesc[vecOmrItemGrayDiff.size()]->fRealMeanGray;
+		RECTLIST::iterator itItem = pSn->lSN.begin();
+		for (; itItem != pSn->lSN.end(); itItem++)
+		{
+			if (itItem->fRealMeanGray <= fThreld)
+			{
+				vecItemVal.push_back(itItem->nSnVal);
+			}
+		}
+	}
+	else
+	{
+		vecItemVal = vecVal_AnswerSuer;
+	}
+#else
 	int nFlag = -1;
 	float fThreld = 0.0;
 	for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
@@ -3364,6 +3464,7 @@ bool CRecognizeThread::RecogVal_Sn3(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 	{
 		vecItemVal = vecVal_AnswerSuer;
 	}
+#endif
 	return true;
 }
 

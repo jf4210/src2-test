@@ -57,8 +57,7 @@ void CDecompressThread::run()
 		{
 			if (g_lRecogTask.size() > 200)
 			{
-				Poco::Thread::sleep(1000);
-				continue;
+				break;
 			}
 			pTask = *it;
 			it = g_lDecompressTask.erase(it);

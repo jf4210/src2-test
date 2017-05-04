@@ -1326,7 +1326,9 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 			jsnOmr.set("th", itOmr->nTH);
 			jsnOmr.set("type", itOmr->nSingle + 1);
 			jsnOmr.set("value", itOmr->strRecogVal);
+			jsnOmr.set("value1", itOmr->strRecogVal1);
 			jsnOmr.set("value2", itOmr->strRecogVal2);
+			jsnOmr.set("value3", itOmr->strRecogVal3);
 			jsnOmr.set("doubt", itOmr->nDoubt);
 			Poco::JSON::Array jsnPositionArry;
 			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
@@ -1431,7 +1433,9 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 				jsnOmr.set("th", itOmr->nTH);
 				jsnOmr.set("type", itOmr->nSingle + 1);
 				jsnOmr.set("value", itOmr->strRecogVal);
+				jsnOmr.set("value1", itOmr->strRecogVal1);
 				jsnOmr.set("value2", itOmr->strRecogVal2);
+				jsnOmr.set("value3", itOmr->strRecogVal3);
 				jsnOmr.set("doubt", itOmr->nDoubt);
 				Poco::JSON::Array jsnPositionArry;
 				RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();

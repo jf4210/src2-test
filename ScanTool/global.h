@@ -83,6 +83,7 @@
 #define WarpAffine_TEST		//仿射变换测试
 #ifdef _DEBUG
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
+	#define PrintRecogLog		//打印识别日志
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define	 TEST_MODEL_NAME	//模板名称测试
 //	#define	 TEST_SCAN_THREAD	//扫描线程测试
@@ -458,7 +459,7 @@ typedef struct _studentInfo_
 class CBmkStudent
 {
 	CBmkStudent(){}
-	CBmkStudent(std::string& strZkzh, std::string& strName) :_strZkzh(strZkzh), _strName(strName){}
+	CBmkStudent(std::string& strZkzh, std::string& strName, std::string& strClassroom, std::string& strSchool) :_strZkzh(strZkzh), _strName(strName), _strClassroom(strClassroom), _strSchool(strSchool){}
 	bool operator==(const CBmkStudent& other) const
 	{
 		return _strZkzh == other._strZkzh && _strName == other._strName && _strClassroom == other._strClassroom && _strSchool == other._strSchool;

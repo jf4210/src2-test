@@ -349,6 +349,15 @@ void CDataMgrToolDlg::OnDestroy()
 	SAFE_RELEASE(m_pHttpObj);
 	SAFE_RELEASE(m_pHttpThread);
 
+	g_fmDecompressLock.lock();
+	DECOMPRESSTASKLIST::iterator it = g_lDecompressTask.begin();
+	for (; it != g_lDecompressTask.end();)
+	{
+		pDECOMPRESSTASK pTask = *it;
+		it = g_lDecompressTask.erase(it);
+		SAFE_RELEASE(pTask);
+	}
+	g_fmDecompressLock.unlock();
 	//解压线程退出
 	for (int i = 0; i < m_vecDecompressThreadObj.size(); i++)
 	{
