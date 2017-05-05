@@ -1315,6 +1315,161 @@ void CV_picture::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 	CStatic::OnKeyUp(nChar, nRepCnt, nFlags);
 }
 
+
+int ShowMat(cv::Mat img, HWND hWndDisplay)
+{
+	if (img.channels() == 1)
+	{
+		RECT rect;
+		GetClientRect(hWndDisplay, &rect);
+		cv::Mat imgShow(abs(rect.top - rect.bottom), abs(rect.right - rect.left), CV_8UC1);
+		resize(img, imgShow, imgShow.size());
+
+		ATL::CImage CI;
+		int w = imgShow.cols;//宽  
+		int h = imgShow.rows;//高  
+		int channels = imgShow.channels();//通道数  
+
+		CI.Create(w, h, 8 * channels);
+
+		RGBQUAD* ColorTable;
+		int MaxColors = CI.GetMaxColorTableEntries();// 256;
+		//这里可以通过CI.GetMaxColorTableEntries()得到大小(如果你是CI.Load读入图像的话)
+
+		ColorTable = new RGBQUAD[MaxColors];
+		CI.GetColorTable(0, MaxColors, ColorTable);//这里是取得指针
+		for (int i = 0; i < MaxColors; i++)
+		{
+			ColorTable[i].rgbBlue = (BYTE)i;
+			//BYTE和uchar一回事，但MFC中都用它
+			ColorTable[i].rgbGreen = (BYTE)i;
+			ColorTable[i].rgbRed = (BYTE)i;
+		}
+		CI.SetColorTable(0, MaxColors, ColorTable);
+		delete[]ColorTable;
+
+		uchar *pS;
+		uchar *pImg = (uchar *)CI.GetBits();//得到CImage数据区地址  
+		int step = CI.GetPitch();
+		for (int i = 0; i < h; i++)
+		{
+			pS = imgShow.ptr<uchar>(i);
+			for (int j = 0; j < w; j++)
+			{
+				*(pImg + i*step + j) = pS[j];
+				//注意到这里的step不用乘以3  
+			}
+		}
+
+		HDC dc;
+		dc = GetDC(hWndDisplay);
+		CI.Draw(dc, 0, 0);
+		ReleaseDC(hWndDisplay, dc);
+		CI.Destroy();
+	}
+	if (img.channels() == 3)
+	{
+		RECT rect;
+		GetClientRect(hWndDisplay, &rect);
+		cv::Mat imgShow(abs(rect.top - rect.bottom), abs(rect.right - rect.left), CV_8UC3);
+		resize(img, imgShow, imgShow.size());
+
+		ATL::CImage CI;
+		int w = imgShow.cols;//宽  
+		int h = imgShow.rows;//高  
+		int channels = imgShow.channels();//通道数  
+
+		CI.Create(w, h, 8 * channels);
+		uchar *pS;
+		uchar *pImg = (uchar *)CI.GetBits();//得到CImage数据区地址  
+		int step = CI.GetPitch();
+		for (int i = 0; i < h; i++)
+		{
+			pS = imgShow.ptr<uchar>(i);
+			for (int j = 0; j < w; j++)
+			{
+				for (int k = 0; k < 3; k++)
+					*(pImg + i*step + j * 3 + k) = pS[j * 3 + k];
+				//注意到这里的step不用乘以3  
+			}
+		}
+
+		HDC dc;
+		dc = GetDC(hWndDisplay);
+		CI.Draw(dc, 0, 0);
+		ReleaseDC(hWndDisplay, dc);
+		CI.Destroy();
+	}
+	return 0;
+}
+
+int ShowMat2(cv::Mat img, HWND hWndDisplay)
+{
+	CImage CI;
+	int w = img.cols;//宽
+	int h = img.rows;//高
+	int chinnels = img.channels();//通道数
+	CI.Destroy();//创建前，最好使用它，防止重复创建，程序崩溃
+	CI.Create(w, h, 8 * chinnels);
+
+	//	然后就是数据拷贝了(这里的矩阵表示方法，根据需要(cvMat or Mat)修改)：
+	if (chinnels == 1)
+	{//灰度图像
+
+		RGBQUAD* ColorTable;
+		int MaxColors = CI.GetMaxColorTableEntries();// 256;
+		//这里可以通过CI.GetMaxColorTableEntries()得到大小(如果你是CI.Load读入图像的话)
+
+		ColorTable = new RGBQUAD[MaxColors];
+		CI.GetColorTable(0, MaxColors, ColorTable);//这里是取得指针
+		for (int i = 0; i < MaxColors; i++)
+		{
+			ColorTable[i].rgbBlue = (BYTE)i;
+			//BYTE和uchar一回事，但MFC中都用它
+			ColorTable[i].rgbGreen = (BYTE)i;
+			ColorTable[i].rgbRed = (BYTE)i;
+		}
+		CI.SetColorTable(0, MaxColors, ColorTable);
+		delete[]ColorTable;
+
+		uchar *pS;
+		uchar *pImg = (uchar *)CI.GetBits();
+		int step = CI.GetPitch();
+		for (int i = 0; i < h; i++)
+		{
+			pS = img.ptr<uchar>(i);
+			for (int j = 0; j < w; j++)
+			{
+				*(pImg + i*step + j) = pS[j];
+			}
+		}
+	}
+	if (chinnels == 3)
+	{//彩色图像
+		uchar *pS;
+		uchar *pImg = (uchar *)CI.GetBits();//得到CImage数据区地址
+		int step = CI.GetPitch();
+		//这个是一行像素站的存储空间w*3，并且结果是4的倍数(这个不用关注，到底是不是4的倍数有待考证)
+		for (int i = 0; i < h; i++)
+		{
+			pS = img.ptr<uchar>(i);
+			for (int j = 0; j < w; j++)
+			{
+				for (int k = 0; k < 3; k++)
+					*(pImg + i*step + j * 3 + k) = pS[j * 3 + k];
+				//注意到这里的step不用乘以3
+			}
+		}
+	}
+
+	HDC dc;
+	dc = GetDC(hWndDisplay);
+	CI.Draw(dc, 0, 0);
+	ReleaseDC(hWndDisplay, dc);
+	CI.Destroy();
+	return 0;
+}
+
 void CV_picture::OnPaint()
 {
 	try
@@ -1325,7 +1480,23 @@ void CV_picture::OnPaint()
 		CDC* pDC = this->GetDC();
 		HDC hDC = pDC->GetSafeHdc();
 #if 1
-		
+	#ifdef _DEBUG
+		ShowMat(m_drawing, this->GetSafeHwnd());
+
+		if (m_bShowRectTracker_H)
+		{
+			m_RectTrackerH.Draw(pDC);
+		}
+		if(m_bShowRectTracker_V)
+		{
+			m_RectTrackerV.Draw(pDC);
+		}
+		if(m_bShowRectTracker_SN)
+		{
+			m_RectTrackerSN.Draw(pDC);
+		}
+		ReleaseDC(pDC);		//一个GetDC必须对应一个ReleaseDC，否则造成严重的内存泄露
+	#else
 		this->GetClientRect(&m_rect);
 		this->GetWindowRect(&m_rect_win);
 
@@ -1352,6 +1523,7 @@ void CV_picture::OnPaint()
 			m_RectTrackerSN.Draw(pDC);
 		}
 		ReleaseDC(pDC);		//一个GetDC必须对应一个ReleaseDC，否则造成严重的内存泄露
+	#endif
 #else
 		this->GetClientRect(&m_rect);
 		this->GetWindowRect(&m_rect_win);
