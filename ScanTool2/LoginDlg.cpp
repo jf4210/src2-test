@@ -420,6 +420,8 @@ int CLoginDlg::GetExamInfo()
 	g_lTcpTask.push_back(pTcpTask);
 	g_fmTcpTaskLock.unlock();
 
+	g_eGetExamList.reset();
+
 	return nResult;
 }
 

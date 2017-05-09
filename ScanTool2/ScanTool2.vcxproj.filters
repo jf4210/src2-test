@@ -28,6 +28,36 @@
     <Filter Include="转码">
       <UniqueIdentifier>{5e3d918d-43f2-4987-95df-f3803da949e0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="线程">
+      <UniqueIdentifier>{2aafe9e3-6c8c-456d-b586-1f0c8d9677eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="线程\识别">
+      <UniqueIdentifier>{716fd566-d04d-4e7a-962f-d3ca01ccbba9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="线程\解压缩">
+      <UniqueIdentifier>{39b5f0e4-a150-4f14-b243-6b58940b5001}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="线程\tcp命令">
+      <UniqueIdentifier>{897d2071-c606-4f94-b9dd-e04a2a38274e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="报名库管理">
+      <UniqueIdentifier>{030b5030-c242-4be9-868b-4f1138b2b710}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{0b53347d-c877-4655-8ddd-924991641f7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="考试列表窗口列表\单项考试列表窗口">
+      <UniqueIdentifier>{2ac6e35e-c53e-4354-a13e-73ab6e262a42}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="考试列表窗口列表\搜索窗口">
+      <UniqueIdentifier>{33e87b36-0e0a-48f6-a7a0-0881c6b18a46}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="控件">
+      <UniqueIdentifier>{342e7ff4-0588-4477-a7b0-fc9ee46801a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="控件\下拉列表">
+      <UniqueIdentifier>{84bbe0c1-ee90-4d49-9a6d-f011ea86a5b9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -60,6 +90,45 @@
     <ClInclude Include="MyCodeConvert.h">
       <Filter>转码</Filter>
     </ClInclude>
+    <ClInclude Include="CompressThread.h">
+      <Filter>线程\解压缩</Filter>
+    </ClInclude>
+    <ClInclude Include="RecognizeThread.h">
+      <Filter>线程\识别</Filter>
+    </ClInclude>
+    <ClInclude Include="TcpClient.h">
+      <Filter>线程\tcp命令</Filter>
+    </ClInclude>
+    <ClInclude Include="ZipObj.h">
+      <Filter>线程\解压缩</Filter>
+    </ClInclude>
+    <ClInclude Include="ExamInfoMgrDlg.h">
+      <Filter>考试列表窗口列表</Filter>
+    </ClInclude>
+    <ClInclude Include="StudentMgr.h">
+      <Filter>报名库管理</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\md5.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\modelInfo.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\unzip.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\zip.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="ExamInfoDlg.h">
+      <Filter>考试列表窗口列表\单项考试列表窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="ComboBoxExt.h">
+      <Filter>控件\下拉列表</Filter>
+    </ClInclude>
+    <ClInclude Include="ComboBoxExtList.h">
+      <Filter>控件\下拉列表</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool2.cpp">
@@ -82,6 +151,42 @@
     </ClCompile>
     <ClCompile Include="MyCodeConvert.cpp">
       <Filter>转码</Filter>
+    </ClCompile>
+    <ClCompile Include="CompressThread.cpp">
+      <Filter>线程\解压缩</Filter>
+    </ClCompile>
+    <ClCompile Include="RecognizeThread.cpp">
+      <Filter>线程\识别</Filter>
+    </ClCompile>
+    <ClCompile Include="TcpClient.cpp">
+      <Filter>线程\tcp命令</Filter>
+    </ClCompile>
+    <ClCompile Include="ZipObj.cpp">
+      <Filter>线程\解压缩</Filter>
+    </ClCompile>
+    <ClCompile Include="ExamInfoMgrDlg.cpp">
+      <Filter>考试列表窗口列表</Filter>
+    </ClCompile>
+    <ClCompile Include="StudentMgr.cpp">
+      <Filter>报名库管理</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\md5.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\unzip.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\zip.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="ExamInfoDlg.cpp">
+      <Filter>考试列表窗口列表\单项考试列表窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ComboBoxExt.cpp">
+      <Filter>控件\下拉列表</Filter>
+    </ClCompile>
+    <ClCompile Include="ComboBoxExtList.cpp">
+      <Filter>控件\下拉列表</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

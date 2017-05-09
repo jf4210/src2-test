@@ -74,7 +74,7 @@
 #include "zip.h"
 #include "unzip.h"
 #include "MyCodeConvert.h"
-#include "./pdf2jpg/MuPDFConvert.h"
+//#include "./pdf2jpg/MuPDFConvert.h"
 #include "modelInfo.h"
 
 #include "zbar.h"   
@@ -171,6 +171,20 @@
 
 // #define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}
 // #define SAFE_RELEASE_ARRY(pObj) if(pObj) {delete[] pObj; pObj = NULL;}
+
+//++登录信息
+extern bool	_bLogin_;				//是否已经登录
+extern ::string _strUserName_;		//登录用户名
+extern std::string _strNickName_;	//用户昵称
+extern std::string _strPwd_;		//密码
+extern std::string _strEzs_;		//后端需要的EZS
+extern int _nTeacherId_;			//教师ID
+extern int _nUserId_;				//用户ID
+//--
+extern int					_nReocgThreads_;		//识别线程数量
+//++事件定义
+extern Poco::Event			g_eGetExamList;		//获取考试列表事件
+//--
 
 extern CString				g_strCurrentPath;
 extern std::string			g_strPaperSavePath;
@@ -430,7 +444,7 @@ typedef struct _ExamSubjects_
 	std::string strSubjName;	//考试科目名称
 	std::string strModelName;	//扫描所用模板名称
 }EXAM_SUBJECT, *pEXAM_SUBJECT;
-typedef std::list<EXAM_SUBJECT> SUBJECT_LIST;
+typedef std::list<pEXAM_SUBJECT> SUBJECT_LIST;
 
 typedef struct _examInfo_
 {
@@ -442,8 +456,18 @@ typedef struct _examInfo_
 	std::string strExamTypeName;	//考试类型名称
 	std::string strGradeName;		//年级名称
 	SUBJECT_LIST lSubjects;			//科目列表
+	~_examInfo_()
+	{
+		SUBJECT_LIST::iterator itSub = lSubjects.begin();
+		for (; itSub != lSubjects.end();)
+		{
+			pEXAM_SUBJECT pSub = *itSub;
+			itSub = lSubjects.erase(itSub);
+			SAFE_RELEASE(pSub);
+		}
+	}
 }EXAMINFO, *pEXAMINFO;
-typedef std::list<EXAMINFO> EXAM_LIST;
+typedef std::list<pEXAMINFO> EXAM_LIST;
 
 extern Poco::FastMutex	g_lfmExamList;
 extern EXAM_LIST	g_lExamList;

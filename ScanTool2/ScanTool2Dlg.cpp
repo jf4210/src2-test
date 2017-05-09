@@ -53,9 +53,14 @@ EXAM_LIST			g_lExamList;	//当前账号对应的考试列表
 Poco::FastMutex		g_fmCompressLock;		//压缩文件列表锁
 COMPRESSTASKLIST	g_lCompressTask;		//解压文件列表
 
+//++线程退出完成事件
 Poco::Event			g_eTcpThreadExit;
 Poco::Event			g_eSendFileThreadExit;
 Poco::Event			g_eCompressThreadExit;
+//--
+//++事件定义
+Poco::Event			g_eGetExamList;		//获取考试列表事件
+//--
 
 STUDENT_LIST		g_lBmkStudent;	//报名库学生列表
 
@@ -88,10 +93,23 @@ std::string			g_strCmdIP;
 std::string			g_strFileIP;
 int					g_nCmdPort;
 int					g_nFilePort;
+
+int				_nReocgThreads_ = 3;		//识别线程数量
+
+//++登录信息
+bool	_bLogin_ = false;		//是否已经登录
+std::string _strUserName_;		//登录用户名
+std::string _strNickName_;		//用户昵称
+std::string _strPwd_;			//密码
+std::string _strEzs_;			//后端需要的EZS
+int _nTeacherId_ = 0;			//教师ID
+int _nUserId_ = 0;				//用户ID
+//--
 //--
 
 CScanTool2Dlg::CScanTool2Dlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CScanTool2Dlg::IDD, pParent)
+	, m_pExamInfoMgrDlg(NULL)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -101,9 +119,121 @@ void CScanTool2Dlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 }
 
+void CScanTool2Dlg::InitThreads()
+{
+	m_pRecogThread = new Poco::Thread[_nReocgThreads_];
+	for (int i = 0; i < _nReocgThreads_; i++)
+	{
+		CRecognizeThread* pRecogObj = new CRecognizeThread;
+		m_pRecogThread[i].start(*pRecogObj);
+
+		m_vecRecogThreadObj.push_back(pRecogObj);
+	}
+// 	m_SendFileThread = new Poco::Thread;
+// 	m_pSendFileObj = new CSendFileThread(strFileServerIP, nFileServerPort);
+// 	m_SendFileThread->start(*m_pSendFileObj);
+	m_TcpCmdThread = new Poco::Thread;
+	m_pTcpCmdObj = new CTcpClient(g_strCmdIP, g_nCmdPort);
+	m_TcpCmdThread->start(*m_pTcpCmdObj);
+	m_pCompressThread = new Poco::Thread;
+	m_pCompressObj = new CCompressThread(this);
+	m_pCompressThread->start(*m_pCompressObj);
+}
+
+void CScanTool2Dlg::ReleaseThreads()
+{
+	//识别线程
+	for (int i = 0; i < m_vecRecogThreadObj.size(); i++)
+	{
+		m_vecRecogThreadObj[i]->eExit.wait();
+		m_pRecogThread[i].join();
+	}
+	std::vector<CRecognizeThread*>::iterator itRecogObj = m_vecRecogThreadObj.begin();
+	for (; itRecogObj != m_vecRecogThreadObj.end();)
+	{
+		CRecognizeThread* pObj = *itRecogObj;
+		SAFE_RELEASE(pObj);
+		itRecogObj = m_vecRecogThreadObj.erase(itRecogObj);
+	}
+	if (m_pRecogThread)
+	{
+		delete[] m_pRecogThread;
+		m_pRecogThread = NULL;
+	}
+
+	//文件发送线程
+// 	m_SendFileThread->join();
+// 	SAFE_RELEASE(m_pSendFileObj);
+// 	g_eSendFileThreadExit.wait();
+// 	SAFE_RELEASE(m_SendFileThread);
+
+	//tcp命令线程
+	m_TcpCmdThread->join();
+	SAFE_RELEASE(m_pTcpCmdObj);
+	g_eTcpThreadExit.wait();
+	SAFE_RELEASE(m_TcpCmdThread);
+
+	//压缩线程
+	m_pCompressThread->join();
+	SAFE_RELEASE(m_pCompressObj);
+	g_eCompressThreadExit.wait();
+	SAFE_RELEASE(m_pCompressThread);
+}
+
+void CScanTool2Dlg::InitCtrlPositon()
+{
+	CRect rcClient;
+	GetClientRect(&rcClient);
+	int cx = rcClient.right;
+	int cy = rcClient.bottom;
+
+	if (m_pExamInfoMgrDlg && m_pExamInfoMgrDlg->GetSafeHwnd())
+	{
+		m_pExamInfoMgrDlg->MoveWindow(rcClient);
+	}
+}
+
+void CScanTool2Dlg::ReleaseData()
+{
+	g_lfmExamList.lock();
+	EXAM_LIST::iterator itExam = g_lExamList.begin();
+	for (; itExam != g_lExamList.end();)
+	{
+		pEXAMINFO pExam = *itExam;
+		itExam = g_lExamList.erase(itExam);
+		SAFE_RELEASE(pExam);
+	}
+	g_lfmExamList.unlock();
+}
+
+void CScanTool2Dlg::ReleaseDlg()
+{
+	if (m_pExamInfoMgrDlg)
+	{
+		m_pExamInfoMgrDlg->DestroyWindow();
+		SAFE_RELEASE(m_pExamInfoMgrDlg);
+	}
+}
+
+void CScanTool2Dlg::InitUI()
+{
+	CRect rc;
+	::SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
+	int sx = rc.Width();
+	int sy = rc.Height();
+	if (sx > MAX_DLG_WIDTH)
+		sx = MAX_DLG_WIDTH;
+	if (sy > MAX_DLG_HEIGHT)
+		sy = MAX_DLG_HEIGHT;
+	MoveWindow(0, 0, sx, sy);
+	InitCtrlPositon();
+}
+
 BEGIN_MESSAGE_MAP(CScanTool2Dlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_WM_DESTROY()
+	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 
@@ -118,7 +248,22 @@ BOOL CScanTool2Dlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
-	// TODO:  在此添加额外的初始化代码
+	InitThreads();
+	m_pExamInfoMgrDlg = new CExamInfoMgrDlg(this);
+	m_pExamInfoMgrDlg->Create(CExamInfoMgrDlg::IDD, this);
+	m_pExamInfoMgrDlg->ShowWindow(SW_SHOW);
+
+	try
+	{
+		g_eGetExamList.wait(5000);
+	}
+	catch (Poco::TimeoutException &e)
+	{
+	}
+	InitUI();
+	m_pExamInfoMgrDlg->InitData();
+	m_pExamInfoMgrDlg->ShowExamList(g_lExamList, 1);
+//	m_pExamInfoMgrDlg->Invalidate();
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -159,3 +304,22 @@ HCURSOR CScanTool2Dlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+
+
+void CScanTool2Dlg::OnDestroy()
+{
+	CDialogEx::OnDestroy();
+
+	g_nExitFlag = 1;
+	ReleaseData();
+	ReleaseDlg();
+	ReleaseThreads();
+}
+
+
+void CScanTool2Dlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialogEx::OnSize(nType, cx, cy);
+
+	InitCtrlPositon();
+}

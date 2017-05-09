@@ -83,23 +83,18 @@ bool InitConfig()
 	strConfigPath.Append(_T("config.ini"));
 	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(T2A(strConfigPath));
 	Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strUtf8Path));
-	int nRecogThreads = pConf->getInt("Recog.threads", 2);
-	g_nManulUploadFile = pConf->getInt("UploadFile.manul", 0);
-	g_bShowScanSrcUI = pConf->getBool("Scan.bShowUI", false);
-	  = pConf->getBool("Scan.bModifySN", false);
-	g_nOperatingMode = pConf->getInt("Scan.OperatingMode", 2);
-	g_nZkzhNull2Issue = pConf->getInt("Scan.khNull2Issue", 0);
+	_nReocgThreads_		= pConf->getInt("Recog.threads", 2);
+	g_nManulUploadFile	= pConf->getInt("UploadFile.manul", 0);
+	g_bShowScanSrcUI	= pConf->getBool("Scan.bShowUI", false);
+//	m_bModifySN = pConf->getBool("Scan.bModifySN", false);
+	g_nOperatingMode	= pConf->getInt("Scan.OperatingMode", 2);
+	g_nZkzhNull2Issue	= pConf->getInt("Scan.khNull2Issue", 0);
 
-	std::string strFileServerIP = pConf->getString("Server.fileIP");
-	int			nFileServerPort = pConf->getInt("Server.filePort", 19980);
-	m_strCmdServerIP = pConf->getString("Server.cmdIP");
-	m_nCmdPort = pConf->getInt("Server.cmdPort", 19980);
-	g_strCmdIP = m_strCmdServerIP;
-	g_nCmdPort = m_nCmdPort;
-	g_strFileIP = strFileServerIP;
-	g_nFilePort = nFileServerPort;
+	g_strFileIP = pConf->getString("Server.fileIP");
+	g_nFilePort = pConf->getInt("Server.filePort", 19980);
+	g_strCmdIP = pConf->getString("Server.cmdIP");
+	g_nCmdPort = pConf->getInt("Server.cmdPort", 19980);
 }
-
 
 BOOL CScanTool2App::InitInstance()
 {
@@ -133,6 +128,26 @@ BOOL CScanTool2App::InitInstance()
 	// TODO:  应适当修改该字符串，
 	// 例如修改为公司或组织名
 	SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
+
+	InitConfig();
+
+	USES_CONVERSION;
+	CLoginDlg loginDlg(A2T(g_strCmdIP.c_str()), g_nCmdPort);
+	if (loginDlg.DoModal() != IDOK)
+	{
+		return FALSE;
+	}
+	else
+	{
+		_bLogin_		= TRUE;
+		_strUserName_	= T2A(loginDlg.m_strUserName);
+		_strNickName_	= T2A(loginDlg.m_strNickName);
+		_strPwd_		= T2A(loginDlg.m_strPwd);
+		_strEzs_		= T2A(loginDlg.m_strEzs);
+		_nTeacherId_	= loginDlg.m_nTeacherId;
+		_nUserId_		= loginDlg.m_nUserId;
+	}
+//	g_eGetExamList.wait();
 
 	CScanTool2Dlg dlg;
 	m_pMainWnd = &dlg;

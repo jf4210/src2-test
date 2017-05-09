@@ -3,7 +3,10 @@
 //
 
 #pragma once
-
+#include "TcpClient.h"
+#include "CompressThread.h"
+#include "RecognizeThread.h"
+#include "ExamInfoMgrDlg.h"
 
 // CScanTool2Dlg 对话框
 class CScanTool2Dlg : public CDialogEx
@@ -18,7 +21,25 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
+	void InitThreads();
+	void ReleaseThreads();
+	void InitCtrlPositon();
+	void ReleaseData();
+	void ReleaseDlg();
 
+	void InitUI();
+
+private:
+	Poco::Thread*		m_pRecogThread;		//识别线程对象数组
+	std::vector<CRecognizeThread*> m_vecRecogThreadObj;		//存储识别线程对象
+	Poco::Thread*		m_TcpCmdThread;
+	CTcpClient*			m_pTcpCmdObj;
+	Poco::Thread*		m_pCompressThread;
+	CCompressThread*	m_pCompressObj;
+
+	//++窗口指针
+	CExamInfoMgrDlg*	m_pExamInfoMgrDlg;
+	//--
 // 实现
 protected:
 	HICON m_hIcon;
@@ -28,4 +49,7 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnDestroy();
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 };
