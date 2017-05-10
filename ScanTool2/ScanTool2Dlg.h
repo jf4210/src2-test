@@ -7,6 +7,8 @@
 #include "CompressThread.h"
 #include "RecognizeThread.h"
 #include "ExamInfoMgrDlg.h"
+#include "ScanMgrDlg.h"
+#include "ScanThread.h"
 
 // CScanTool2Dlg 对话框
 class CScanTool2Dlg : public CDialogEx
@@ -18,7 +20,9 @@ public:
 // 对话框数据
 	enum { IDD = IDD_SCANTOOL2_DIALOG };
 
-	protected:
+
+	void	SwitchDlg(int nDlg);		//切换窗口显示
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
 	void InitThreads();
@@ -28,7 +32,6 @@ public:
 	void ReleaseDlg();
 
 	void InitUI();
-
 private:
 	Poco::Thread*		m_pRecogThread;		//识别线程对象数组
 	std::vector<CRecognizeThread*> m_vecRecogThreadObj;		//存储识别线程对象
@@ -36,9 +39,13 @@ private:
 	CTcpClient*			m_pTcpCmdObj;
 	Poco::Thread*		m_pCompressThread;
 	CCompressThread*	m_pCompressObj;
+// 	Poco::Thread*		m_pScanThread;
+// 	CScanThread*		m_pScanThreadObj;
+	CScanThread			m_scanThread;
 
 	//++窗口指针
 	CExamInfoMgrDlg*	m_pExamInfoMgrDlg;
+	CScanMgrDlg*		m_pScanMgrDlg;
 	//--
 // 实现
 protected:

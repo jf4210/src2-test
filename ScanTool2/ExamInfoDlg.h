@@ -46,6 +46,11 @@ private:
 	CString		_strMakeModel;		//制作模板
 	CString		_strScan;			//扫描
 	CString		_strUpLoadProcess;	//上传进度
+
+	bool		_bMouseInDlg;		//鼠标在当前窗口区域
 public:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg void OnMouseHover(UINT nFlags, CPoint point);
+	afx_msg void OnMouseLeave();
+	afx_msg void OnStnClickedStaticScan();
 };

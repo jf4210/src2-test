@@ -5,6 +5,7 @@
 #include "ScanTool2.h"
 #include "ExamInfoDlg.h"
 #include "afxdialogex.h"
+#include "ScanTool2Dlg.h"
 
 
 // CExamInfoDlg 对话框
@@ -14,7 +15,7 @@ IMPLEMENT_DYNAMIC(CExamInfoDlg, CDialog)
 CExamInfoDlg::CExamInfoDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CExamInfoDlg::IDD, pParent)
 	, _pExamInfo(NULL), _pSubjectInfo(NULL), _strExamName(_T("")), _strSubject(_T("")), _strMakeModel(_T("制作模板")), _strScan(_T("扫描提卡")), _strUpLoadProcess(_T("上传进度:"))
-	, m_nStatusSize(20)
+	, m_nStatusSize(20), _bMouseInDlg(false)
 {
 
 }
@@ -38,6 +39,9 @@ BEGIN_MESSAGE_MAP(CExamInfoDlg, CDialog)
 	ON_WM_ERASEBKGND()
 	ON_WM_SIZE()
 	ON_WM_CTLCOLOR()
+	ON_WM_MOUSEHOVER()
+	ON_WM_MOUSELEAVE()
+	ON_STN_CLICKED(IDC_STATIC_Scan, &CExamInfoDlg::OnStnClickedStaticScan)
 END_MESSAGE_MAP()
 
 
@@ -124,6 +128,7 @@ void CExamInfoDlg::InitCtrlPosition()
 // 		GetDlgItem(IDC_STATIC_ExamSubject)->MoveWindow(nCurrLeft, nCurrTop, nW, nStaticH);
 // 		nCurrLeft += (nW + nGap);
 // 	}
+
 	//从右往左算相对位置
 	int nW1 = nRealW * 0.2;
 	nCurrLeft = cx - nRightGap - nW1;
@@ -167,6 +172,7 @@ void CExamInfoDlg::InitCtrlPosition()
 		if (nW > 650) nW = 650;
 		GetDlgItem(IDC_STATIC_ExamName)->MoveWindow(nLeftGap, nCurrTop, nW, nStaticH);
 	}
+	Invalidate();
 }
 
 void CExamInfoDlg::DrawBorder(CDC *pDC)
@@ -175,7 +181,10 @@ void CExamInfoDlg::DrawBorder(CDC *pDC)
 	CPen pPen;
 	CRect rcClient(0, 0, 0, 0);
 	GetClientRect(&rcClient);
-	pPen.CreatePen(PS_SOLID, 2, RGB(166, 218, 239));
+	if (!_bMouseInDlg)
+		pPen.CreatePen(PS_SOLID, 2, RGB(166, 218, 239));
+	else
+		pPen.CreatePen(PS_SOLID, 2, RGB(106, 218, 239));
 
 	pDC->SelectStockObject(NULL_BRUSH);
 	pOldPen = pDC->SelectObject(&pPen);
@@ -230,4 +239,30 @@ HBRUSH CExamInfoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}
 	return hbr;
+}
+
+
+void CExamInfoDlg::OnMouseHover(UINT nFlags, CPoint point)
+{
+// 	_bMouseInDlg = true;
+// 	Invalidate();
+	CDialog::OnMouseHover(nFlags, point);
+}
+
+
+void CExamInfoDlg::OnMouseLeave()
+{
+// 	_bMouseInDlg = false;
+// 	Invalidate();
+	CDialog::OnMouseLeave();
+}
+
+
+void CExamInfoDlg::OnStnClickedStaticScan()
+{
+	_pCurrExam_ = _pExamInfo;
+	_pCurrSub_	= _pSubjectInfo;
+
+	CScanTool2Dlg* pDlg = (CScanTool2Dlg*)AfxGetMainWnd();
+	pDlg->SwitchDlg(1);
 }

@@ -49,14 +49,23 @@
     <Filter Include="考试列表窗口列表\单项考试列表窗口">
       <UniqueIdentifier>{2ac6e35e-c53e-4354-a13e-73ab6e262a42}</UniqueIdentifier>
     </Filter>
-    <Filter Include="考试列表窗口列表\搜索窗口">
-      <UniqueIdentifier>{33e87b36-0e0a-48f6-a7a0-0881c6b18a46}</UniqueIdentifier>
-    </Filter>
     <Filter Include="控件">
       <UniqueIdentifier>{342e7ff4-0588-4477-a7b0-fc9ee46801a0}</UniqueIdentifier>
     </Filter>
     <Filter Include="控件\下拉列表">
       <UniqueIdentifier>{84bbe0c1-ee90-4d49-9a6d-f011ea86a5b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描界面窗口">
+      <UniqueIdentifier>{6ae26692-6328-4d45-8508-ad3df034c137}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描界面窗口\扫描操作窗口">
+      <UniqueIdentifier>{e77a3cbe-c631-4648-8916-1247a7eab655}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描界面窗口\TWAIN">
+      <UniqueIdentifier>{a693d912-16d6-4fe9-a98c-2af8499c9354}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="线程\扫描">
+      <UniqueIdentifier>{69996135-b9e2-4e01-84bb-775d7c95d8d0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -129,6 +138,33 @@
     <ClInclude Include="ComboBoxExtList.h">
       <Filter>控件\下拉列表</Filter>
     </ClInclude>
+    <ClInclude Include="ScanMgrDlg.h">
+      <Filter>扫描界面窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanDlg.h">
+      <Filter>扫描界面窗口\扫描操作窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\twain\Common.h">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\twain\CommonTWAIN.h">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\twain\CTiffWriter.h">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\twain\DSMInterface.h">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\twain\TwainApp.h">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\twain\TwainString.h">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanThread.h">
+      <Filter>线程\扫描</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool2.cpp">
@@ -187,6 +223,33 @@
     </ClCompile>
     <ClCompile Include="ComboBoxExtList.cpp">
       <Filter>控件\下拉列表</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanMgrDlg.cpp">
+      <Filter>扫描界面窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanDlg.cpp">
+      <Filter>扫描界面窗口\扫描操作窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\twain\CommonTWAIN.cpp">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\twain\CTiffWriter.cpp">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\twain\DSMInterface.cpp">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\twain\TwainApp.cpp">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\twain\TwainString.cpp">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\twain\VerifySignature.cpp">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanThread.cpp">
+      <Filter>线程\扫描</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

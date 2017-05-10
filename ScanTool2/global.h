@@ -181,6 +181,7 @@ extern std::string _strEzs_;		//后端需要的EZS
 extern int _nTeacherId_;			//教师ID
 extern int _nUserId_;				//用户ID
 //--
+
 extern int					_nReocgThreads_;		//识别线程数量
 //++事件定义
 extern Poco::Event			g_eGetExamList;		//获取考试列表事件
@@ -471,6 +472,11 @@ typedef std::list<pEXAMINFO> EXAM_LIST;
 
 extern Poco::FastMutex	g_lfmExamList;
 extern EXAM_LIST	g_lExamList;
+
+//++扫描相关
+extern pEXAMINFO			_pCurrExam_;	//当前考试
+extern pEXAM_SUBJECT		_pCurrSub_;		//当前考试科目
+//--
 
 //报名库学生信息
 typedef struct _studentInfo_

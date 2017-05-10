@@ -109,6 +109,12 @@
     <ClInclude Include="..\..\common\modelInfo.h" />
     <ClInclude Include="..\..\common\unzip.h" />
     <ClInclude Include="..\..\common\zip.h" />
+    <ClInclude Include="..\..\include\twain\Common.h" />
+    <ClInclude Include="..\..\include\twain\CommonTWAIN.h" />
+    <ClInclude Include="..\..\include\twain\CTiffWriter.h" />
+    <ClInclude Include="..\..\include\twain\DSMInterface.h" />
+    <ClInclude Include="..\..\include\twain\TwainApp.h" />
+    <ClInclude Include="..\..\include\twain\TwainString.h" />
     <ClInclude Include="ComboBoxExt.h" />
     <ClInclude Include="ComboBoxExtList.h" />
     <ClInclude Include="CompressThread.h" />
@@ -120,6 +126,9 @@
     <ClInclude Include="MyCodeConvert.h" />
     <ClInclude Include="RecognizeThread.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="ScanDlg.h" />
+    <ClInclude Include="ScanMgrDlg.h" />
+    <ClInclude Include="ScanThread.h" />
     <ClInclude Include="ScanTool2.h" />
     <ClInclude Include="ScanTool2Dlg.h" />
     <ClInclude Include="stdafx.h" />
@@ -132,6 +141,24 @@
     <ClCompile Include="..\..\common\md5.cpp" />
     <ClCompile Include="..\..\common\unzip.cpp" />
     <ClCompile Include="..\..\common\zip.cpp" />
+    <ClCompile Include="..\..\include\twain\CommonTWAIN.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\include\twain\CTiffWriter.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\include\twain\DSMInterface.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\include\twain\TwainApp.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\include\twain\TwainString.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\include\twain\VerifySignature.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="ComboBoxExt.cpp" />
     <ClCompile Include="ComboBoxExtList.cpp" />
     <ClCompile Include="CompressThread.cpp" />
@@ -142,6 +169,9 @@
     <ClCompile Include="MultiPlatform4TYDlg.cpp" />
     <ClCompile Include="MyCodeConvert.cpp" />
     <ClCompile Include="RecognizeThread.cpp" />
+    <ClCompile Include="ScanDlg.cpp" />
+    <ClCompile Include="ScanMgrDlg.cpp" />
+    <ClCompile Include="ScanThread.cpp" />
     <ClCompile Include="ScanTool2.cpp" />
     <ClCompile Include="ScanTool2Dlg.cpp" />
     <ClCompile Include="stdafx.cpp">

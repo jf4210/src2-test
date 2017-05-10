@@ -13,6 +13,7 @@ IMPLEMENT_DYNAMIC(CExamInfoMgrDlg, CDialog)
 
 CExamInfoMgrDlg::CExamInfoMgrDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CExamInfoMgrDlg::IDD, pParent)
+	, m_nMaxShowExamListItem(0), m_nAllExamListItems(0), m_nCurrStartShowExamListItem(0)
 {
 
 }
@@ -34,8 +35,7 @@ BOOL CExamInfoMgrDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	InitCtrlPosition();
-	InitData();
-	ShowExamList(g_lExamList, 1);
+	InitShowData();
 
 	return TRUE;
 }
@@ -58,6 +58,10 @@ BEGIN_MESSAGE_MAP(CExamInfoMgrDlg, CDialog)
 	ON_WM_DESTROY()
 	ON_CBN_SELCHANGE(IDC_COMBO_Subject, &CExamInfoMgrDlg::OnCbnSelchangeComboSubject)
 	ON_CBN_SELCHANGE(IDC_COMBO_Grade, &CExamInfoMgrDlg::OnCbnSelchangeComboGrade)
+	ON_BN_CLICKED(IDC_BTN_First, &CExamInfoMgrDlg::OnBnClickedBtnFirst)
+	ON_BN_CLICKED(IDC_BTN_Last, &CExamInfoMgrDlg::OnBnClickedBtnLast)
+	ON_BN_CLICKED(IDC_BTN_Up, &CExamInfoMgrDlg::OnBnClickedBtnUp)
+	ON_BN_CLICKED(IDC_BTN_Down, &CExamInfoMgrDlg::OnBnClickedBtnDown)
 END_MESSAGE_MAP()
 
 
@@ -70,10 +74,10 @@ void CExamInfoMgrDlg::InitCtrlPosition()
 	int cy = rcClient.bottom;
 
 	const int nTopGap = 50;	//上边的间隔
-	const int nBottomGap = 20;	//下边的间隔
-	const int nLeftGap = 2;		//左边的空白间隔
-	const int nRightGap = 2;	//右边的空白间隔
-	const int nGap = 5;
+	const int nBottomGap = 30;	//下边的间隔
+	const int nLeftGap = 20;		//左边的空白间隔
+	const int nRightGap = 20;	//右边的空白间隔
+	int nGap = 5;
 
 	m_rtExamList.left = nLeftGap;
 	m_rtExamList.top = nTopGap;
@@ -105,9 +109,38 @@ void CExamInfoMgrDlg::InitCtrlPosition()
 		GetDlgItem(IDC_COMBO_Grade)->MoveWindow(nCurrLeft, nCurrTop, nStaticW * 2, nCtrlH);
 		nCurrLeft += (nStaticW * 2 + nGap * 3);
 	}
+
+	//bottom
+
+	nGap = 2;
+	int nBtnW = 30;
+	int nBtnH = nBottomGap - nGap - nGap;
+	nCurrLeft = m_rtExamList.left + m_rtExamList.Width() / 2 - (nBtnW + nGap) * 2;
+	nCurrTop = cy - nBottomGap - nGap;
+	if (GetDlgItem(IDC_BTN_First)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_First)->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
+		nCurrLeft += (nBtnW + nGap);
+	}
+	if (GetDlgItem(IDC_BTN_Up)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_Up)->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
+		nCurrLeft += (nBtnW + nGap);
+	}
+
+	if (GetDlgItem(IDC_BTN_Down)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_Down)->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
+		nCurrLeft += (nBtnW + nGap);
+	}
+	if (GetDlgItem(IDC_BTN_Last)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_Last)->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
+		nCurrLeft += (nBtnW + nGap);
+	}
 }
 
-void CExamInfoMgrDlg::InitData()
+void CExamInfoMgrDlg::InitSearchData()
 {
 	std::vector<std::string> vecSub;
 	vecSub.push_back("全部");
@@ -115,6 +148,7 @@ void CExamInfoMgrDlg::InitData()
 	vecGrade.push_back("全部");
 
 	//获取列表中所有科目名称信息、年级信息
+	int nAllExamItems = 0;
 	for (auto examObj : g_lExamList)
 	{
 		pEXAMINFO pExam = examObj;
@@ -145,7 +179,10 @@ void CExamInfoMgrDlg::InitData()
 		}
 		if (!bFindGrade && pExam->strGradeName != "")
 			vecGrade.push_back(pExam->strGradeName);
+
+		nAllExamItems = pExam->lSubjects.size();
 	}
+	m_nAllExamListItems = nAllExamItems;
 
 	m_comboSubject.ResetContent();
 	m_comboGrade.ResetContent();
@@ -163,12 +200,26 @@ void CExamInfoMgrDlg::InitData()
 	m_comboGrade.SetCurSel(0);
 }
 
-void CExamInfoMgrDlg::ShowExamList(EXAM_LIST lExam, int nStartShow)
+void CExamInfoMgrDlg::InitShowData()
 {
-	if (lExam.size() <= 0) return;
+	InitSearchData();
+	GetSearchResultExamList();
+	ShowExamList(m_lExamList, 1);
+}
 
-	ReleaseDlgData();
+void CExamInfoMgrDlg::ReleaseData()
+{
+	EXAM_LIST::iterator itExam = m_lExamList.begin();
+	for (; itExam != m_lExamList.end();)
+	{
+		pEXAMINFO pExam = *itExam;
+		itExam = m_lExamList.erase(itExam);
+		SAFE_RELEASE(pExam);
+	}
+}
 
+void CExamInfoMgrDlg::GetSearchResultExamList()
+{
 	//++科目过滤
 	USES_CONVERSION;
 	CString strCurSub = _T("");
@@ -178,48 +229,111 @@ void CExamInfoMgrDlg::ShowExamList(EXAM_LIST lExam, int nStartShow)
 	std::string strCurrSubject = T2A(strCurSub);
 	std::string strCurrGrade = T2A(strCurGrade);
 	//--
+	
+	EXAM_LIST::iterator itExam = m_lExamList.begin();
+	for (; itExam != m_lExamList.end();)
+	{
+		pEXAMINFO pExam = *itExam;
+		itExam = m_lExamList.erase(itExam);
+		SAFE_RELEASE(pExam);
+	}
 
-	int nGap = 2;
-	int nExamDlg_H = 35;					//考试信息列表的高度
-	int nRealW = m_rtExamList.Width();	//考试信息列表的宽度
-	int nRealH = m_rtExamList.Height();	//实际有效的显示考试列表窗口的高度
-	int nMaxShow = nRealH / (nExamDlg_H + nGap);		//当前窗口最大可以显示的窗口列表的数量
-
-	int nCurrLeft = m_rtExamList.left;
-	int nCurrTop = m_rtExamList.top;
-
-	int nCount = 0;
-	for (auto examObj : lExam)
+	for (auto examObj : g_lExamList)
 	{
 		pEXAMINFO pExam = examObj;
 		if (pExam->strGradeName == strCurrGrade || strCurrGrade == "全部")
 		{
+			pEXAMINFO pShowExam = NULL;
+			bool bFind = false;
 			for (auto subObj : examObj->lSubjects)
 			{
 				pEXAM_SUBJECT pSub = subObj;
 				if (pSub->strSubjName == strCurrSubject || strCurrSubject == "全部")
 				{
-					nCount++;
-					if (nCount >= nStartShow && nCount < nStartShow + nMaxShow)
+					if (!pShowExam)
 					{
-						CExamInfoDlg* pExamDlg = new CExamInfoDlg(this);
-						pExamDlg->Create(CExamInfoDlg::IDD, this);
-						pExamDlg->ShowWindow(SW_HIDE);
-
-						pExamDlg->MoveWindow(nCurrLeft, nCurrTop, nRealW, nExamDlg_H);
-						nCurrTop += (nExamDlg_H + nGap);
-
-
-						pExamDlg->SetExamInfo(pExam, pSub);
-						//**********************	设置上传数量	*******************************
-						pExamDlg->SetUploadPapers(-1);
-						pExamDlg->ShowWindow(SW_SHOW);
-						m_vecExamInfoDlg.push_back(pExamDlg);
+						pShowExam = new EXAMINFO();
+						pShowExam->nExamID		= pExam->nExamID;
+						pShowExam->nExamGrade	= pExam->nExamGrade;
+						pShowExam->nExamState	= pExam->nExamState;
+						pShowExam->strExamID	= pExam->strExamID;
+						pShowExam->strExamName	= pExam->strExamName;
+						pShowExam->strExamTypeName = pExam->strExamTypeName;
+						pShowExam->strGradeName = pExam->strGradeName;
 					}
-				}				
+					pEXAM_SUBJECT pShowSub = new EXAM_SUBJECT();
+//					memcpy(pShowSub, pSub, sizeof(EXAM_SUBJECT));
+					pShowSub->nSubjID = pSub->nSubjID;
+					pShowSub->strModelName = pSub->strModelName;
+					pShowSub->strSubjName = pSub->strSubjName;
+					pShowExam->lSubjects.push_back(pShowSub);
+				}
 			}
-		}		
+			if (pShowExam)
+				m_lExamList.push_back(pShowExam);
+		}
 	}
+}
+
+void CExamInfoMgrDlg::ShowExamList(EXAM_LIST lExam, int nStartShow)
+{
+	if (nStartShow > m_nAllExamListItems) return;
+	if (nStartShow <= 0) return;
+
+	ReleaseDlgData();
+	if (lExam.size() <= 0) return;
+
+// 	//++科目过滤
+// 	USES_CONVERSION;
+// 	CString strCurSub = _T("");
+// 	CString strCurGrade = _T("");
+// 	m_comboSubject.GetLBText(m_comboSubject.GetCurSel(), strCurSub);
+// 	m_comboGrade.GetLBText(m_comboGrade.GetCurSel(), strCurGrade);
+// 	std::string strCurrSubject = T2A(strCurSub);
+// 	std::string strCurrGrade = T2A(strCurGrade);
+// 	//--
+
+	int nGap = 2;
+	int nExamDlg_H = 45;				//考试信息列表的高度
+	int nRealW = m_rtExamList.Width();	//考试信息列表的宽度
+	int nRealH = m_rtExamList.Height();	//实际有效的显示考试列表窗口的高度
+	int nMaxShow = nRealH / (nExamDlg_H + nGap);		//当前窗口最大可以显示的窗口列表的数量
+	m_nMaxShowExamListItem = nMaxShow;
+	m_nCurrStartShowExamListItem = nStartShow;
+
+	int nCurrLeft = m_rtExamList.left;
+	int nCurrTop = m_rtExamList.top;
+
+	int nAllExamItems = 0;
+	int nCount = 0;
+	for (auto examObj : lExam)
+	{
+		pEXAMINFO pExam = examObj;
+
+		for (auto subObj : examObj->lSubjects)
+		{
+			pEXAM_SUBJECT pSub = subObj;
+			nCount++;
+			if (nCount >= nStartShow && nCount < nStartShow + nMaxShow)
+			{
+				CExamInfoDlg* pExamDlg = new CExamInfoDlg(this);
+				pExamDlg->Create(CExamInfoDlg::IDD, this);
+				pExamDlg->ShowWindow(SW_HIDE);
+
+				pExamDlg->MoveWindow(nCurrLeft, nCurrTop, nRealW, nExamDlg_H);
+				nCurrTop += (nExamDlg_H + nGap);
+
+
+				pExamDlg->SetExamInfo(pExam, pSub);
+				//**********************	设置上传数量	*******************************
+				pExamDlg->SetUploadPapers(-1);
+				pExamDlg->ShowWindow(SW_SHOW);
+				m_vecExamInfoDlg.push_back(pExamDlg);
+			}
+		}
+		nAllExamItems += pExam->lSubjects.size();
+	}
+	m_nAllExamListItems = nAllExamItems;
 }
 
 
@@ -240,7 +354,7 @@ void CExamInfoMgrDlg::OnSize(UINT nType, int cx, int cy)
 	CDialog::OnSize(nType, cx, cy);
 
 	InitCtrlPosition();
-	ShowExamList(g_lExamList, 1);
+	ShowExamList(m_lExamList, 1);
 }
 
 
@@ -259,6 +373,7 @@ void CExamInfoMgrDlg::OnDestroy()
 {
 	CDialog::OnDestroy();
 
+	ReleaseData();
 	ReleaseDlgData();
 }
 
@@ -267,7 +382,8 @@ void CExamInfoMgrDlg::OnCbnSelchangeComboSubject()
 {
 	if (m_comboSubject.GetCurSel() < 0)
 		return;
-	ShowExamList(g_lExamList, 1);
+	GetSearchResultExamList();
+	ShowExamList(m_lExamList, 1);
 }
 
 
@@ -275,5 +391,41 @@ void CExamInfoMgrDlg::OnCbnSelchangeComboGrade()
 {
 	if (m_comboGrade.GetCurSel() < 0)
 		return;
-	ShowExamList(g_lExamList, 1);
+
+	GetSearchResultExamList();
+	ShowExamList(m_lExamList, 1);
 }
+
+
+void CExamInfoMgrDlg::OnBnClickedBtnFirst()
+{
+	if (m_lExamList.size() == 0)
+		GetSearchResultExamList();
+
+	ShowExamList(m_lExamList, 1);
+}
+
+
+void CExamInfoMgrDlg::OnBnClickedBtnLast()
+{
+	if (m_lExamList.size() == 0)
+		GetSearchResultExamList();
+
+	int nMaxDlgs = ceil((double)m_nAllExamListItems / (double)m_nMaxShowExamListItem);
+	ShowExamList(m_lExamList, (nMaxDlgs - 1) * m_nMaxShowExamListItem + 1);
+}
+
+
+void CExamInfoMgrDlg::OnBnClickedBtnUp()
+{
+	int nCurrStartShowExamListItem = m_nCurrStartShowExamListItem - m_nMaxShowExamListItem;
+	ShowExamList(m_lExamList, nCurrStartShowExamListItem);
+}
+
+
+void CExamInfoMgrDlg::OnBnClickedBtnDown()
+{
+	int nCurrStartShowExamListItem = m_nCurrStartShowExamListItem + m_nMaxShowExamListItem;
+	ShowExamList(m_lExamList, nCurrStartShowExamListItem);
+}
+

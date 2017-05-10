@@ -105,11 +105,15 @@ std::string _strEzs_;			//后端需要的EZS
 int _nTeacherId_ = 0;			//教师ID
 int _nUserId_ = 0;				//用户ID
 //--
+//++扫描相关
+pEXAMINFO			_pCurrExam_= NULL;		//当前考试
+pEXAM_SUBJECT		_pCurrSub_ = NULL;		//当前考试科目
+//--
 //--
 
 CScanTool2Dlg::CScanTool2Dlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CScanTool2Dlg::IDD, pParent)
-	, m_pExamInfoMgrDlg(NULL)
+	, m_pExamInfoMgrDlg(NULL), m_pScanMgrDlg(NULL)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -138,6 +142,11 @@ void CScanTool2Dlg::InitThreads()
 	m_pCompressThread = new Poco::Thread;
 	m_pCompressObj = new CCompressThread(this);
 	m_pCompressThread->start(*m_pCompressObj);
+
+// 	m_pScanThread = new Poco::Thread;
+// 	m_pScanThreadObj = new CScanThread;
+// 	m_pScanThread->start(*m_pScanThreadObj);
+	m_scanThread.CreateThread();
 }
 
 void CScanTool2Dlg::ReleaseThreads()
@@ -188,9 +197,9 @@ void CScanTool2Dlg::InitCtrlPositon()
 	int cy = rcClient.bottom;
 
 	if (m_pExamInfoMgrDlg && m_pExamInfoMgrDlg->GetSafeHwnd())
-	{
 		m_pExamInfoMgrDlg->MoveWindow(rcClient);
-	}
+	if (m_pScanMgrDlg && m_pScanMgrDlg->GetSafeHwnd())
+		m_pScanMgrDlg->MoveWindow(rcClient);
 }
 
 void CScanTool2Dlg::ReleaseData()
@@ -213,6 +222,11 @@ void CScanTool2Dlg::ReleaseDlg()
 		m_pExamInfoMgrDlg->DestroyWindow();
 		SAFE_RELEASE(m_pExamInfoMgrDlg);
 	}
+	if (m_pScanMgrDlg)
+	{
+		m_pScanMgrDlg->DestroyWindow();
+		SAFE_RELEASE(m_pScanMgrDlg);
+	}
 }
 
 void CScanTool2Dlg::InitUI()
@@ -227,6 +241,21 @@ void CScanTool2Dlg::InitUI()
 		sy = MAX_DLG_HEIGHT;
 	MoveWindow(0, 0, sx, sy);
 	InitCtrlPositon();
+}
+
+void CScanTool2Dlg::SwitchDlg(int nDlg)
+{
+	if (nDlg == 0)
+	{
+		m_pExamInfoMgrDlg->ShowWindow(SW_SHOW);
+		m_pScanMgrDlg->ShowWindow(SW_HIDE);
+	}
+	else if (nDlg == 1)
+	{
+		m_pExamInfoMgrDlg->ShowWindow(SW_HIDE);
+		m_pScanMgrDlg->ShowWindow(SW_SHOW);
+		m_pScanMgrDlg->UpdateInfo();
+	}
 }
 
 BEGIN_MESSAGE_MAP(CScanTool2Dlg, CDialogEx)
@@ -248,10 +277,19 @@ BOOL CScanTool2Dlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
+	USES_CONVERSION;
+	CString strTitle = _T("");
+	strTitle.Format(_T("%s %s"), SYS_BASE_NAME, SOFT_VERSION);
+	SetWindowText(strTitle);
+
 	InitThreads();
 	m_pExamInfoMgrDlg = new CExamInfoMgrDlg(this);
 	m_pExamInfoMgrDlg->Create(CExamInfoMgrDlg::IDD, this);
 	m_pExamInfoMgrDlg->ShowWindow(SW_SHOW);
+
+	m_pScanMgrDlg = new CScanMgrDlg(this);
+	m_pScanMgrDlg->Create(CScanMgrDlg::IDD, this);
+	m_pScanMgrDlg->ShowWindow(SW_HIDE);
 
 	try
 	{
@@ -261,8 +299,7 @@ BOOL CScanTool2Dlg::OnInitDialog()
 	{
 	}
 	InitUI();
-	m_pExamInfoMgrDlg->InitData();
-	m_pExamInfoMgrDlg->ShowExamList(g_lExamList, 1);
+	m_pExamInfoMgrDlg->InitShowData();
 //	m_pExamInfoMgrDlg->Invalidate();
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
