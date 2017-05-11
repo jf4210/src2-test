@@ -40,6 +40,7 @@ Poco::FastMutex			g_fmHttpSend;
 LIST_SEND_HTTP			g_lHttpSend;			//发送HTTP任务列表
 
 std::string		g_strUploadUri;		//识别结果提交的uri地址
+int				g_nRecogMode = 1;		//识别模式，0-严格模式，1-简单模式
 
 CLog g_Log;
 int	g_nExitFlag;
@@ -831,6 +832,7 @@ void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
 		pDecompressTask->bRecogElectOmr = dlg.m_nChkElectOmr;	//进行参数传递
 		pDecompressTask->nSendEzs = dlg.m_nHandleResult;		//参数传递
 		pDecompressTask->nNoNeedRecogVal = dlg.m_nNoRecogVal;	//....
+		g_nRecogMode = dlg.m_nRecogMode;
 
 
 		_fmDecompress_.lock();

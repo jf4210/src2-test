@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CRecogParamDlg, CDialog)
 
 CRecogParamDlg::CRecogParamDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CRecogParamDlg::IDD, pParent)
-	, m_nChkSN(1), m_nChkElectOmr(1), m_nChkOmr(1), m_nHandleResult(2), m_nNoRecogVal(0)
+	, m_nChkSN(1), m_nChkElectOmr(1), m_nChkOmr(1), m_nHandleResult(2), m_nNoRecogVal(0), m_nRecogMode(g_nRecogMode)
 {
 
 }
@@ -38,6 +38,7 @@ BEGIN_MESSAGE_MAP(CRecogParamDlg, CDialog)
 	ON_BN_CLICKED(IDC_RADIO_CompressPKG, &CRecogParamDlg::OnBnClickedRadioCompresspkg)
 	ON_BN_CLICKED(IDC_RADIO_SendEZS, &CRecogParamDlg::OnBnClickedRadioSendezs)
 	ON_BN_CLICKED(IDC_RADIO_NoCompress, &CRecogParamDlg::OnBnClickedRadioNocompress)
+	ON_BN_CLICKED(IDC_CHK_RecogMode, &CRecogParamDlg::OnBnClickedChkRecogmode)
 END_MESSAGE_MAP()
 
 BOOL CRecogParamDlg::OnInitDialog()
@@ -72,6 +73,9 @@ BOOL CRecogParamDlg::OnInitDialog()
 		((CButton*)GetDlgItem(IDC_RADIO_NoCompress))->SetCheck(1);
 		GetDlgItem(IDC_EDIT_EZS)->EnableWindow(TRUE);
 	}
+
+	((CButton*)GetDlgItem(IDC_CHK_RecogMode))->SetCheck(m_nRecogMode);
+
 
 	UpdateData(FALSE);
 
@@ -120,6 +124,15 @@ void CRecogParamDlg::OnBnClickedChkElecomr()
 	}
 }
 
+void CRecogParamDlg::OnBnClickedChkRecogmode()
+{
+	if (((CButton*)GetDlgItem(IDC_CHK_RecogMode))->GetCheck())
+	{
+		m_nRecogMode = 1;
+	}
+	else
+		m_nRecogMode = 0;
+}
 
 void CRecogParamDlg::OnBnClickedOk()
 {
@@ -179,3 +192,5 @@ void CRecogParamDlg::OnBnClickedRadioNocompress()
 	((CButton*)GetDlgItem(IDC_CHK_OMR))->SetCheck(1);
 	((CButton*)GetDlgItem(IDC_CHK_ElecOmr))->SetCheck(1);
 }
+
+

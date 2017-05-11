@@ -43,7 +43,7 @@
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION	_T("1.70505-2")
+#define SOFT_VERSION	_T("1.70511-1")
 #define SYS_BASE_NAME	_T("YKLX-DMT")
 //#define WH_CCBKS		//武汉楚才杯专用，解析二维码需要json解析
 
@@ -54,6 +54,7 @@ extern CLog g_Log;
 extern int	g_nExitFlag;
 
 extern CString				g_strCurrentPath;
+extern int					g_nRecogMode;		//识别模式，0-严格模式，1-简单模式
 
 extern std::string _strEncryptPwd_;
 extern pMODEL _pModel_;

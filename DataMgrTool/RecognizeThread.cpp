@@ -200,7 +200,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		m_ptFixCP = Point(0, 0);
 
 		pPAPERSINFO pCurrentPapers = static_cast<pPAPERSINFO>(pPaper->pPapers);
-		if (pCurrentPapers->nRecogMode == 1)
+		if (g_nRecogMode == 1)		//pCurrentPapers->nRecogMode == 1
 		{
 			bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
 		#ifdef WarpAffine_TEST
