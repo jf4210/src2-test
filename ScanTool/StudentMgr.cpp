@@ -51,7 +51,7 @@ bool CStudentMgr::InitTable(std::string strTableName)
 	try
 	{
 		std::string strSql1 = "DROP TABLE IF EXISTS " + strTableName;
-		std::string strSql2 = Poco::format("CREATE TABLE IF NOT EXISTS %s (zkzh VARCHAR(30), name VARCHAR(60), classRoom VARCHAR(60), school VARCHAR(120))", strTableName);
+		std::string strSql2 = Poco::format("CREATE TABLE IF NOT EXISTS %s (zkzh VARCHAR(30), name VARCHAR(60), classRoom VARCHAR(60), school VARCHAR(120), scaned INTEGER(3))", strTableName);
 		*_session << strSql1, now;
 		*_session << strSql2, now;
 	}
@@ -65,7 +65,7 @@ bool CStudentMgr::InitTable(std::string strTableName)
 	try
 	{
 		std::string strSql1 = "DROP TABLE IF EXISTS " + strTableName;
-		std::string strSql2 = "CREATE TABLE IF NOT EXISTS student (zkzh VARCHAR(30), name VARCHAR(60), classRoom VARCHAR(60), school VARCHAR(120))";
+		std::string strSql2 = "CREATE TABLE IF NOT EXISTS student (zkzh VARCHAR(30), name VARCHAR(60), classRoom VARCHAR(60), school VARCHAR(120), scaned INTEGER(3))";
 		*_session << strSql1, now;
 		*_session << strSql2, now;
 	}
@@ -94,13 +94,13 @@ bool CStudentMgr::InsertData(STUDENT_LIST& lData, std::string strTable)
 		_mem = new Poco::Data::Session(Poco::Data::SQLite::Connector::KEY, ":memory:");
 		Poco::Data::SQLite::Utility::fileToMemory(*_mem, _strDbPath);
 
-		std::string strSql = Poco::format("INSERT INTO %s VALUES(:ln, :fn, :cn, :sn)", strTable);
+		std::string strSql = Poco::format("INSERT INTO %s VALUES(:ln, :fn, :cn, :sn, :status)", strTable);
 		Poco::Data::Statement stmt((*_mem << strSql, use(lData)));
 		stmt.execute();
 
 		Poco::Data::SQLite::Utility::memoryToFile(_strDbPath, *_mem);
 	#else
-		std::string strSql = Poco::format("INSERT INTO %s VALUES(:ln, :fn, :cn, :sn)", strTable);
+		std::string strSql = Poco::format("INSERT INTO %s VALUES(:ln, :fn, :cn, :sn, :status)", strTable);
 		Poco::Data::Statement stmt((*_session << strSql, use(lData)));
 		stmt.execute();
 	#endif
@@ -145,6 +145,31 @@ bool CStudentMgr::SearchStudent(std::string strKey, int nType, STUDENT_LIST& lRe
 	catch (Poco::Exception& e)
 	{
 		std::string strErr = "²éÑ¯±¨Ãû¿âÊ§°Ü(" + e.displayText() + ")";
+		g_pLogger->information(strErr);
+		bResult = false;
+	}
+	return bResult;
+}
+
+bool CStudentMgr::UpdateStudentStatus(std::string strTable, std::string strZkzh, int nStatus)
+{
+	bool bResult = false;
+	if (_session && !_session->isConnected())
+		return false;
+
+	try
+	{
+		std::string strSql;
+		strSql = Poco::format("update %s set scaned = %d where zkzh=%s;", strTable, nStatus, CMyCodeConvert::Gb2312ToUtf8(strZkzh));
+		Poco::Data::Statement stmt((*_session << strSql, now));
+		stmt.execute();
+		bResult = true;
+		std::string strLog = Poco::format("¸üÐÂ¿¼Éú(%s)É¨Ãè×´Ì¬%d", strZkzh, nStatus);
+		g_pLogger->information(strLog);
+	}
+	catch (Poco::Exception& e)
+	{
+		std::string strErr = "¸üÐÂ¿¼Éú" + strZkzh + "É¨Ãè×´Ì¬Ê§°Ü(" + e.displayText() + ")";
 		g_pLogger->information(strErr);
 		bResult = false;
 	}

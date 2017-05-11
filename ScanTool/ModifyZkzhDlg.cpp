@@ -677,6 +677,13 @@ LRESULT CModifyZkzhDlg::OnEditEnd(WPARAM nItem, LPARAM nSubItem)
 		{
 			m_lcZkzh.SetItemText(nItem, nSubItem, strText, RGB(255, 0, 0), crBackground);
 			pPaper->bModifyZKZH = true;
+
+#if 0	//test
+			if (m_pStudentMgr && m_pStudentMgr->UpdateStudentStatus("student", pPaper->strSN, 1))
+			{
+				TRACE("更新考生%s扫描状态完成\n", pPaper->strStudentInfo.c_str());
+			}
+#endif
 		}
 		else
 		{

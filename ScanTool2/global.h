@@ -187,6 +187,7 @@ extern int					_nReocgThreads_;		//识别线程数量
 extern Poco::Event			g_eGetExamList;		//获取考试列表事件
 //--
 
+
 extern CString				g_strCurrentPath;
 extern std::string			g_strPaperSavePath;
 extern std::string			g_strModelSavePath;
@@ -476,6 +477,8 @@ extern EXAM_LIST	g_lExamList;
 //++扫描相关
 extern pEXAMINFO			_pCurrExam_;	//当前考试
 extern pEXAM_SUBJECT		_pCurrSub_;		//当前考试科目
+extern pMODEL				_pModel_;		//当前扫描使用的模板
+extern CScanThread			_scanThread_;
 //--
 
 //报名库学生信息

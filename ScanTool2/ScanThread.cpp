@@ -5,7 +5,7 @@
 #include "ScanTool2.h"
 #include "ScanThread.h"
 
-#include "ScanMgrDlg.h"
+#include "ScanDlg.h"
 
 #include "DSMInterface.h"
 #include "TwainString.h"
@@ -77,7 +77,7 @@ TW_UINT16 FAR PASCAL DSMCallback(pTW_IDENTITY _pOrigin,
 IMPLEMENT_DYNCREATE(CScanThread, CWinThread)
 
 CScanThread::CScanThread():
-m_bStop(false)
+m_bStop(false), m_pDlg(NULL), m_nStartSaveIndex(0), m_nScanCount(0)
 {
 }
 
@@ -121,7 +121,8 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		pResult->bScanOK = false;
 		pResult->strResult = "Á¬½ÓÉ¨ÃèÔ´Ê§°Ü";
 		
-		CScanMgrDlg* pDlg = (CScanMgrDlg*)AfxGetMainWnd();
+//		CScanMgrDlg* pDlg = (CScanMgrDlg*)AfxGetMainWnd();
+		CScanDlg* pDlg = (CScanDlg*)m_pDlg;
 
 		pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
 		return;
@@ -135,7 +136,8 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		pResult->bScanOK = false;
 		pResult->strResult = "¼ÓÔØÉ¨ÃèÔ´Ê§°Ü";
 
-		CScanMgrDlg* pDlg = (CScanMgrDlg*)AfxGetMainWnd();
+//		CScanMgrDlg* pDlg = (CScanMgrDlg*)AfxGetMainWnd();
+		CScanDlg* pDlg = (CScanDlg*)m_pDlg;
 
 		pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
 		return;
@@ -179,12 +181,14 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		pResult->bScanOK = false;
 		pResult->strResult = "É¨ÃèÊ§°Ü";
 
-		CScanMgrDlg* pDlg = (CScanMgrDlg*)AfxGetMainWnd();
+//		CScanMgrDlg* pDlg = (CScanMgrDlg*)AfxGetMainWnd();
+		CScanDlg* pDlg = (CScanDlg*)m_pDlg;
 
 		pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
 		return;
 	}
 
+	m_nStartSaveIndex = stScanCtrl.nSaveIndex;
 	int nScanResult = 0;
 
 	// now we have to wait until we hear something back from the DS.
@@ -254,7 +258,8 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	disableDS();
 
 
-	CScanMgrDlg* pDlg = (CScanMgrDlg*)AfxGetMainWnd();
+//	CScanMgrDlg* pDlg = (CScanMgrDlg*)AfxGetMainWnd();
+	CScanDlg* pDlg = (CScanDlg*)m_pDlg;
 
 	if (m_bStop)
 	{
@@ -453,7 +458,6 @@ int CScanThread::GetImgMemory()
 
 				if (TWRC_XFERDONE == twrc)
 				{
-				#ifdef OPENCV_TEST
 					int w = m_ImageInfo.ImageWidth;
 					int h = m_ImageInfo.ImageLength;
 
@@ -470,20 +474,12 @@ int CScanThread::GetImgMemory()
 						int n = ss.str().length();
 						CopyData(pIpl2->imageData, (char*)ss.str().c_str(), ss.str().length(), false, height);
 
-// 						cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
-// 						cvReleaseImage(&pIpl2);
-
-						pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
-						pResult->bScanOK = true;
-						pResult->strResult = "»ñµÃÍ¼Ïñ";
-						pResult->pIpl2 = pIpl2;
-						CScanTestDlg* pDlg = (CScanTestDlg*)AfxGetMainWnd();
-						pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
+						SaveFile(pIpl2);
 					}
 					catch (cv::Exception& exc)
 					{
 					}
-				#endif
+
 					ss.str("");
 					
 					updateEXTIMAGEINFO();
@@ -673,7 +669,9 @@ int CScanThread::GetImgNative()
 				pResult->bScanOK = true;
 				pResult->strResult = "»ñµÃÍ¼Ïñ";
 				pResult->pIpl2 = pIpl2;
-				CScanTestDlg* pDlg = (CScanTestDlg*)AfxGetMainWnd();
+//				CScanTestDlg* pDlg = (CScanTestDlg*)AfxGetMainWnd();
+				CScanDlg* pDlg = (CScanDlg*)m_pDlg;
+
 				pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
 			}
 			catch (...)
@@ -750,6 +748,47 @@ int CScanThread::GetImgNative()
 void CScanThread::setStop()
 {
 	m_bStop = true;
+}
+
+void CScanThread::setNotifyDlg(void* pDlg)
+{
+	m_pDlg = pDlg;
+}
+
+void CScanThread::setModelInfo(int nModelPicNums, std::string& strSavePath)
+{
+	m_nModelPicNums = nModelPicNums;
+	m_strCurrPicSavePath = strSavePath;
+}
+
+void* CScanThread::SaveFile(IplImage *pIpl)
+{
+	m_nScanCount++;
+	int nStudentId = m_nScanCount / m_nModelPicNums + 1;
+	int nOrder = m_nScanCount % m_nModelPicNums + 1;
+
+	char szPicName[50] = { 0 };
+	char szPicPath[MAX_PATH] = { 0 };
+	sprintf_s(szPicName, "S%d_%d.jpg", nStudentId, nOrder);
+	sprintf_s(szPicPath, "%s\\S%d_%d.jpg", m_strCurrPicSavePath.c_str(), nStudentId, nOrder);
+
+	try
+	{
+		cv::Mat matTest = cv::cvarrToMat(pIpl);
+
+		std::string strPicName = szPicPath;
+		imwrite(strPicName, matTest);
+		cvReleaseImage(&pIpl);
+
+		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
+		pResult->bScanOK = true;
+		pResult->strResult = Poco::format("»ñµÃÍ¼Ïñ%s", szPicName);
+		CScanDlg* pDlg = (CScanDlg*)m_pDlg;
+		pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
+	}
+	catch (cv::Exception& exc)
+	{
+	}
 }
 
 std::string CScanThread::ErrCode2Str(int nErr)

@@ -2030,7 +2030,7 @@ void CScanToolDlg::OnNMDblclkListPicture(NMHDR *pNMHDR, LRESULT *pResult)
 
 	//双击为空的准考证号时显示准考证号修改窗口
 	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(m_nCurrItemPaperList);
-	if ((g_nOperatingMode == 1 || m_bModifySN) && m_pModel && pItemPaper && (pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH))
+	if ((/*g_nOperatingMode == 1 ||*/ m_bModifySN) && m_pModel && pItemPaper && (pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH))
 	{
 		if (!m_pStudentMgr)
 		{
@@ -3333,7 +3333,7 @@ void CScanToolDlg::OnBnClickedBtnUploadmgr()
 			g_lRecogTask.push_back(pTask);
 		}
 	}
-#if 0
+#if 1
 	//报名库测试数据
 	g_lBmkStudent.clear();
 	for (int i = 0; i < 100; i++)
@@ -5074,7 +5074,7 @@ void CScanToolDlg::OnTimer(UINT nIDEvent)
 		if (bRecogComplete)
 		{
 			USES_CONVERSION;
-			if (m_nScanStatus == 3 && (g_nOperatingMode == 1 || m_bModifySN) && bNeedShowZkzhDlg)
+			if (m_nScanStatus == 3 && (/*g_nOperatingMode == 1 ||*/ m_bModifySN) && bNeedShowZkzhDlg)
 			{
 				KillTimer(TIMER_CheckRecogComplete);
 				if (!m_pStudentMgr)
@@ -5215,7 +5215,7 @@ void CScanToolDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	ShowPaperByItem(pNMItemActivate->iItem, 1);
 	//双击为空的准考证号时显示准考证号修改窗口
 	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lProblemPaper.GetItemData(pNMItemActivate->iItem);
-	if ((g_nOperatingMode == 1 || m_bModifySN) && m_pModel && pItemPaper)
+	if ((/*g_nOperatingMode == 1 ||*/ m_bModifySN) && m_pModel && pItemPaper)
 	{
 		if (!m_pStudentMgr)
 		{

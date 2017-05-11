@@ -1,6 +1,8 @@
 #pragma once
 #include "global.h"
 #include "ScanDlg.h"
+#include "DataCheckDlg.h"
+#include "ScanRecordDlg.h"
 
 // CScanMgrDlg 对话框
 
@@ -16,6 +18,7 @@ public:
 	enum { IDD = IDD_SCANMGRDLG };
 
 	void	UpdateInfo();
+	void	SearchModel();	//遍历所有模板
 private:
 	void	InitCtrlPosition();
 	void	InitChildDlg();
@@ -23,6 +26,8 @@ private:
 private:
 	CRect		m_rtChildDlg;		//显示子窗口的区域
 	CScanDlg*	m_pScanDlg;
+	CDataCheckDlg*	m_pDataCheckDlg;
+	CScanRecordDlg* m_pScanRecordDlg;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();
@@ -33,4 +38,6 @@ public:
 	afx_msg void OnBnClickedBtnScan();
 	afx_msg void OnDestroy();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnBnClickedBtnDatacheck();
+	afx_msg void OnBnClickedBtnScanrecord();
 };

@@ -41,7 +41,7 @@ private:
 	CCompressThread*	m_pCompressObj;
 // 	Poco::Thread*		m_pScanThread;
 // 	CScanThread*		m_pScanThreadObj;
-	CScanThread			m_scanThread;
+//	CScanThread			m_scanThread;
 
 	//++´°¿ÚÖ¸Õë
 	CExamInfoMgrDlg*	m_pExamInfoMgrDlg;

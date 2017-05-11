@@ -14,7 +14,7 @@ IMPLEMENT_DYNAMIC(CScanDlg, CDialog)
 
 CScanDlg::CScanDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CScanDlg::IDD, pParent)
-	, m_nStatusSize(20), _pTWAINApp(NULL)
+	, m_nStatusSize(20), _pTWAINApp(NULL), m_nCurrentScanCount(0), m_nModelPicNums(1)
 {
 
 }
@@ -56,9 +56,36 @@ BOOL CScanDlg::PreTranslateMessage(MSG* pMsg)
 	return CDialog::PreTranslateMessage(pMsg);
 }
 
+LRESULT CScanDlg::ScanDone(WPARAM wParam, LPARAM lParam)
+{
+	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
+	if (pResult)
+	{
+		TRACE("扫描完成消息。%s\n", pResult->strResult.c_str());
+		
+		delete pResult;
+		pResult = NULL;
+	}
+	return 1;
+}
+
+LRESULT CScanDlg::ScanErr(WPARAM wParam, LPARAM lParam)
+{
+	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
+	if (pResult)
+	{
+		TRACE("扫描错误。%s\n", pResult->strResult.c_str());
+		delete pResult;
+		pResult = NULL;
+	}
+	return 1;
+}
+
 BEGIN_MESSAGE_MAP(CScanDlg, CDialog)
 	ON_WM_SIZE()
 	ON_BN_CLICKED(IDC_BTN_ChangeExam, &CScanDlg::OnBnClickedBtnChangeexam)
+	ON_WM_DESTROY()
+	ON_BN_CLICKED(IDC_BTN_Scan, &CScanDlg::OnBnClickedBtnScan)
 END_MESSAGE_MAP()
 
 
@@ -66,7 +93,7 @@ END_MESSAGE_MAP()
 
 void CScanDlg::InitUI()
 {
-	InitScanner();
+	InitScanner(); 
 	int nSrc = 0;
 	int nDuplex = 1;
 	char* ret;
@@ -109,7 +136,7 @@ void CScanDlg::InitCtrlPosition()
 	int nBaseLeft = nLeftGap + (cx - nLeftGap - nRightGap) * 0.1;
 	int nCurrLeft = nBaseLeft;
 	int nCurrTop = nTopGap;
-	int nStaticW = 70;
+	int nStaticW = 60;
 	int nStaticH = 30;
 	if (GetDlgItem(IDC_STATIC_ExamName)->GetSafeHwnd())
 	{
@@ -295,4 +322,117 @@ void CScanDlg::UpdateInfo()
 	}
 	UpdateData(FALSE);
 	Invalidate();
+}
+
+
+void CScanDlg::OnDestroy()
+{
+	CDialog::OnDestroy();
+
+	if (_pTWAINApp)
+	{
+		_pTWAINApp->exit();
+		SAFE_RELEASE(_pTWAINApp);
+	}
+}
+
+
+void CScanDlg::OnBnClickedBtnScan()
+{
+	int           sel = m_comboScanner.GetCurSel();
+	TW_INT16      index = (TW_INT16)m_comboScanner.GetItemData(sel);
+	pTW_IDENTITY  pID = NULL;
+
+	if (_bLogin_)
+	{
+		AfxMessageBox(_T("未登录, 无法扫描"));
+		return;
+	}
+	if (!_pModel_)
+	{
+		AfxMessageBox(_T("当前考试无模板信息"));	//模板解析错误
+		return;
+	}
+
+	USES_CONVERSION;
+	char szPicTmpPath[MAX_PATH] = { 0 };
+	sprintf_s(szPicTmpPath, "%sPaper\\Tmp", T2A(g_strCurrentPath));
+
+	std::string strUtfPath = CMyCodeConvert::Gb2312ToUtf8(szPicTmpPath);
+	try
+	{
+		Poco::File tmpPath(strUtfPath);
+		if (tmpPath.exists())
+			tmpPath.remove(true);
+
+		Poco::File tmpPath1(strUtfPath);
+		tmpPath1.createDirectories();
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strLog = "删除临时文件夹失败(" + exc.message() + "): ";
+		strLog.append(szPicTmpPath);
+		g_pLogger->information(strLog);
+	}
+
+	m_strCurrPicSavePath = szPicTmpPath;
+
+	//获取扫描参数
+	int nScanSize = 1;				//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3, TWSS_NONE-自定义
+	int nScanType = 2;				//0-黑白，1-灰度，2-彩色
+	int nScanDpi = 200;				//dpi: 72, 150, 200, 300
+	int nAutoCut = 1;
+	nScanSize = _pModel_->nScanSize;
+	nScanType = _pModel_->nScanType;
+	nScanDpi = _pModel_->nScanDpi;
+	nAutoCut = _pModel_->nAutoCut;
+
+	m_nModelPicNums = _pModel_->nPicNum;
+
+	bool bShowScanSrcUI = g_bShowScanSrcUI;			//显示高级扫描界面
+
+	int nDuplex = m_comboDuplex.GetCurSel();		//单双面,0-单面,1-双面
+	int nSize = TWSS_NONE;							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3, TWSS_NONE-自定义
+	if (nScanSize == 1)
+		nSize = TWSS_A4LETTER;
+	else if (nScanSize == 2)
+		nSize = TWSS_A3;
+	else
+		nSize = TWSS_NONE;
+	
+	int nNum = 0;
+	if (nDuplex == 0)
+	{
+		nNum = m_nCurrentScanCount * m_nModelPicNums;
+	}
+	else
+	{
+		int nModelPics = m_nModelPicNums;
+		if (nModelPics % 2)
+			nModelPics++;
+
+		nNum = m_nCurrentScanCount * nModelPics;
+	}
+	
+	if (NULL != (pID = _pTWAINApp->getDataSource(index)))
+	{
+		pST_SCANCTRL pScanCtrl = new ST_SCANCTRL();
+		pScanCtrl->nScannerId = pID->Id;
+		pScanCtrl->nScanCount = nNum;
+		pScanCtrl->nScanDuplexenable = nDuplex;
+		pScanCtrl->nScanPixelType = nScanType;
+		pScanCtrl->nScanResolution = nScanDpi;
+		pScanCtrl->nScanSize = nSize;
+		pScanCtrl->bShowUI = bShowScanSrcUI;
+		_scanThread_.setNotifyDlg(this);
+		_scanThread_.setModelInfo(m_nModelPicNums, m_strCurrPicSavePath);
+		_scanThread_.PostThreadMessage(MSG_START_SCAN, pID->Id, (LPARAM)pScanCtrl);
+	}
+
+	char szRet[20] = { 0 };
+	sprintf_s(szRet, "%d", sel);
+	WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "scanSrc", szRet);
+	memset(szRet, 0, 20);
+	sprintf_s(szRet, "%d", nDuplex);
+	WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "scanDuplex", szRet);
 }

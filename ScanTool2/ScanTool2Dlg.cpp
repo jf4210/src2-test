@@ -108,6 +108,8 @@ int _nUserId_ = 0;				//用户ID
 //++扫描相关
 pEXAMINFO			_pCurrExam_= NULL;		//当前考试
 pEXAM_SUBJECT		_pCurrSub_ = NULL;		//当前考试科目
+pMODEL				_pModel_ = NULL;		//当前扫描使用的模板
+CScanThread			_scanThread_;
 //--
 //--
 
@@ -146,7 +148,7 @@ void CScanTool2Dlg::InitThreads()
 // 	m_pScanThread = new Poco::Thread;
 // 	m_pScanThreadObj = new CScanThread;
 // 	m_pScanThread->start(*m_pScanThreadObj);
-	m_scanThread.CreateThread();
+	_scanThread_.CreateThread();
 }
 
 void CScanTool2Dlg::ReleaseThreads()

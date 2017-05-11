@@ -379,6 +379,11 @@ void CTcpClient::HandleCmd()
 				{
 					result = parser.parse(pBuff);
 					Poco::JSON::Object::Ptr examObj = result.extract<Poco::JSON::Object::Ptr>();
+
+					Poco::JSON::Object::Ptr examInfoObj = examObj->getObject("examInfo");
+					int nExamID = examInfoObj->get("examId").convert<int>();
+					int nSubID = examInfoObj->get("subjectId").convert<int>();
+
 					Poco::JSON::Array::Ptr arryObj = examObj->getArray("students");
 
 					g_lBmkStudent.clear();
@@ -403,7 +408,7 @@ void CTcpClient::HandleCmd()
 					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
 					CStudentMgr studentMgr;
 					bool bResult = studentMgr.InitDB(strDbPath);
-					std::string strTableName = "student";
+					std::string strTableName = Poco::format("%d_%d", nExamID, nSubID);			//"student";
 					if (bResult) bResult = studentMgr.InitTable(strTableName);
 					if (bResult) bResult = studentMgr.InsertData(g_lBmkStudent, strTableName);
 				}

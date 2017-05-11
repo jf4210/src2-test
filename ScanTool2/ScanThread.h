@@ -3,6 +3,8 @@
 #include "CommonTWAIN.h"
 #include "TwainApp.h"
 
+#define OPENCV_TEST		//获取到图像数据后使用opencv写文件
+
 // CScanThread
 #define MSG_START_SCAN	(WM_APP + 201)
 #define MSG_SCAN_DONE	(WM_APP + 202)
@@ -19,6 +21,8 @@ typedef struct _tagScanCtrl_
 	int		nScanResolution;	//扫描DPI
 	int		nAutoCut;	//自动裁剪
 	int		nRotate;	//自动纠偏
+
+	int		nSaveIndex;	//文件保存时的起始索引，如从第1张开始，第5张开始
 	_tagScanCtrl_()
 	{
 		nScannerId = 0;
@@ -30,6 +34,7 @@ typedef struct _tagScanCtrl_
 		nAutoCut = 1;
 		nRotate = 1;
 		bShowUI = false;
+		nSaveIndex = 1;
 	}
 }ST_SCANCTRL, *pST_SCANCTRL;
 
@@ -72,8 +77,17 @@ public:
 	int		GetImgMemory();
 	int		GetImgNative();
 	void	setStop();
+	void	setNotifyDlg(void* pDlg);
+	void setModelInfo(int nModelPicNums, std::string& strSavePath);
 private:	
 	bool	m_bStop;
+	void*	m_pDlg;		//消息通知窗口
+	int		m_nStartSaveIndex;		//文件保存时的起始索引
+	int		m_nScanCount;
+	int		m_nModelPicNums;
+	std::string		m_strCurrPicSavePath;		//gb2312
+
+	void* SaveFile(IplImage *pIpl);
 	std::string ErrCode2Str(int nErr);	//错误代码转字符串
 protected:
 	DECLARE_MESSAGE_MAP()

@@ -51,24 +51,24 @@
 
 
 //-------------------------------------
-#include "Poco/Data/Statement.h"
-#include "Poco/Data/RecordSet.h"
-#include "Poco/Data/SQLChannel.h"
-#include "Poco/Data/SessionFactory.h"
-#include "Poco/Data/SQLite/Connector.h"
-#include "Poco/Data/SQLite/Utility.h"
-#include "Poco/Data/SQLite/Notifier.h"
-#include "Poco/Data/SQLite/Connector.h"
-
-#include "Poco/Nullable.h"
-#include "Poco/Data/Transaction.h"
-#include "Poco/Data/DataException.h"
-#include "Poco/Data/SQLite/SQLiteException.h"
-#include "Poco/Data/TypeHandler.h"
-#include "Poco/Data/SQLite/Connector.h"
-#include "Poco/Data/SQLite/Utility.h"
-#include "Poco/Data/SQLite/Notifier.h"
-#include "Poco/Data/SQLite/Connector.h"
+// #include "Poco/Data/Statement.h"
+// #include "Poco/Data/RecordSet.h"
+// #include "Poco/Data/SQLChannel.h"
+// #include "Poco/Data/SessionFactory.h"
+// #include "Poco/Data/SQLite/Connector.h"
+// #include "Poco/Data/SQLite/Utility.h"
+// #include "Poco/Data/SQLite/Notifier.h"
+// #include "Poco/Data/SQLite/Connector.h"
+// 
+// #include "Poco/Nullable.h"
+// #include "Poco/Data/Transaction.h"
+// #include "Poco/Data/DataException.h"
+// #include "Poco/Data/SQLite/SQLiteException.h"
+// #include "Poco/Data/TypeHandler.h"
+// #include "Poco/Data/SQLite/Connector.h"
+// #include "Poco/Data/SQLite/Utility.h"
+// #include "Poco/Data/SQLite/Notifier.h"
+// #include "Poco/Data/SQLite/Connector.h"
 //-------------------------------------
 
 #include "zip.h"
@@ -76,7 +76,7 @@
 #include "MyCodeConvert.h"
 #include "./pdf2jpg/MuPDFConvert.h"
 #include "modelInfo.h"
-
+#include "StudentDef.h"
 #include "zbar.h"   
 
 //#define PIC_RECTIFY_TEST	//图像旋转纠正测试
@@ -155,9 +155,9 @@
 
 #ifndef TO_WHTY
 	#ifdef PUBLISH_VERSION
-		#define SOFT_VERSION	_T("2.10503-1")
+		#define SOFT_VERSION	_T("2.10511-1")
 	#else
-		#define SOFT_VERSION	_T("2.10420-1-Pir")		//-Pri
+		#define SOFT_VERSION	_T("2.10511-1-Pir")		//-Pri
 	#endif
 #else
 	#define SOFT_VERSION	_T("2.1-0323")
@@ -449,6 +449,7 @@ extern Poco::FastMutex	g_lfmExamList;
 extern EXAM_LIST	g_lExamList;
 
 //报名库学生信息
+#if 0
 typedef struct _studentInfo_
 {
 	std::string strZkzh;
@@ -554,6 +555,7 @@ namespace Poco {
 		};
 	}
 }
+#endif
 typedef std::list<ST_STUDENT> STUDENT_LIST;	//报名库列表
 extern STUDENT_LIST		g_lBmkStudent;	//报名库学生列表
 

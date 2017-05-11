@@ -320,8 +320,21 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 			bResult = objResult->get("success").convert<bool>();
 			if (bResult)
 			{
+			#if 1
+				//++添加考试ID和科目ID到结果信息中
+				Poco::JSON::Object objExam;
+				objExam.set("examId", pTask->nExamID);
+				objExam.set("subjectId", pTask->nSubjectID);
+				objResult->set("examInfo", objExam);
+				std::stringstream jsnSnString;
+				objResult->stringify(jsnSnString, 0);
+				//--
+				ret = RESULT_GET_BMK_SUCCESS;
+				strSendData = jsnSnString.str();
+			#else
 				ret = RESULT_GET_BMK_SUCCESS;
 				strSendData = strInput;
+			#endif
 			}
 			else
 			{

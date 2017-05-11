@@ -67,6 +67,12 @@
     <Filter Include="线程\扫描">
       <UniqueIdentifier>{69996135-b9e2-4e01-84bb-775d7c95d8d0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="扫描界面窗口\数据校对窗口">
+      <UniqueIdentifier>{7fec711a-008e-4c35-810b-9c66533fcbcf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描界面窗口\扫描记录窗口">
+      <UniqueIdentifier>{640e6bcf-dd8d-4d0c-b1e6-06deb1a92301}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -165,6 +171,12 @@
     <ClInclude Include="ScanThread.h">
       <Filter>线程\扫描</Filter>
     </ClInclude>
+    <ClInclude Include="DataCheckDlg.h">
+      <Filter>扫描界面窗口\数据校对窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanRecordDlg.h">
+      <Filter>扫描界面窗口\扫描记录窗口</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool2.cpp">
@@ -250,6 +262,12 @@
     </ClCompile>
     <ClCompile Include="ScanThread.cpp">
       <Filter>线程\扫描</Filter>
+    </ClCompile>
+    <ClCompile Include="DataCheckDlg.cpp">
+      <Filter>扫描界面窗口\数据校对窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanRecordDlg.cpp">
+      <Filter>扫描界面窗口\扫描记录窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

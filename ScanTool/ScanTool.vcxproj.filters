@@ -363,6 +363,9 @@
     <ClInclude Include="PkgToPapers.h">
       <Filter>从Pkg恢复Papers</Filter>
     </ClInclude>
+    <ClInclude Include="StudentDef.h">
+      <Filter>修改ZKZH窗口\报名库管理</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ScanTool.cpp">
