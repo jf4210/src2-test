@@ -479,7 +479,6 @@ int CScanThread::GetImgMemory()
 					catch (cv::Exception& exc)
 					{
 					}
-
 					ss.str("");
 					
 					updateEXTIMAGEINFO();
@@ -782,13 +781,16 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
 		pResult->bScanOK = true;
-		pResult->strResult = Poco::format("获得图像%s", szPicName);
+		pResult->strResult = "获得图像";
+		pResult->strResult.append(szPicName);
 		CScanDlg* pDlg = (CScanDlg*)m_pDlg;
 		pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
 	}
 	catch (cv::Exception& exc)
 	{
 	}
+
+	return NULL;
 }
 
 std::string CScanThread::ErrCode2Str(int nErr)

@@ -44,43 +44,6 @@ BOOL CScanDlg::OnInitDialog()
 	return TRUE;
 }
 
-BOOL CScanDlg::PreTranslateMessage(MSG* pMsg)
-{
-	if (pMsg->message == WM_KEYDOWN)
-	{
-		if (pMsg->wParam == VK_ESCAPE || pMsg->wParam == VK_RETURN)
-		{
-			return TRUE;
-		}
-	}
-	return CDialog::PreTranslateMessage(pMsg);
-}
-
-LRESULT CScanDlg::ScanDone(WPARAM wParam, LPARAM lParam)
-{
-	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
-	if (pResult)
-	{
-		TRACE("扫描完成消息。%s\n", pResult->strResult.c_str());
-		
-		delete pResult;
-		pResult = NULL;
-	}
-	return 1;
-}
-
-LRESULT CScanDlg::ScanErr(WPARAM wParam, LPARAM lParam)
-{
-	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
-	if (pResult)
-	{
-		TRACE("扫描错误。%s\n", pResult->strResult.c_str());
-		delete pResult;
-		pResult = NULL;
-	}
-	return 1;
-}
-
 BEGIN_MESSAGE_MAP(CScanDlg, CDialog)
 	ON_WM_SIZE()
 	ON_BN_CLICKED(IDC_BTN_ChangeExam, &CScanDlg::OnBnClickedBtnChangeexam)
@@ -424,9 +387,9 @@ void CScanDlg::OnBnClickedBtnScan()
 		pScanCtrl->nScanResolution = nScanDpi;
 		pScanCtrl->nScanSize = nSize;
 		pScanCtrl->bShowUI = bShowScanSrcUI;
-		_scanThread_.setNotifyDlg(this);
-		_scanThread_.setModelInfo(m_nModelPicNums, m_strCurrPicSavePath);
-		_scanThread_.PostThreadMessage(MSG_START_SCAN, pID->Id, (LPARAM)pScanCtrl);
+// 		_pScanThread_->setNotifyDlg(this);
+// 		_pScanThread_->setModelInfo(m_nModelPicNums, m_strCurrPicSavePath);
+// 		_pScanThread_->PostThreadMessage(MSG_START_SCAN, pID->Id, (LPARAM)pScanCtrl);
 	}
 
 	char szRet[20] = { 0 };
@@ -435,4 +398,41 @@ void CScanDlg::OnBnClickedBtnScan()
 	memset(szRet, 0, 20);
 	sprintf_s(szRet, "%d", nDuplex);
 	WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "scanDuplex", szRet);
+}
+
+BOOL CScanDlg::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		if (pMsg->wParam == VK_ESCAPE || pMsg->wParam == VK_RETURN)
+		{
+			return TRUE;
+		}
+	}
+	return CDialog::PreTranslateMessage(pMsg);
+}
+
+LRESULT CScanDlg::ScanDone(WPARAM wParam, LPARAM lParam)
+{
+	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
+	if (pResult)
+	{
+		TRACE("扫描完成消息。%s\n", pResult->strResult.c_str());
+
+		delete pResult;
+		pResult = NULL;
+	}
+	return 1;
+}
+
+LRESULT CScanDlg::ScanErr(WPARAM wParam, LPARAM lParam)
+{
+	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
+	if (pResult)
+	{
+		TRACE("扫描错误。%s\n", pResult->strResult.c_str());
+		delete pResult;
+		pResult = NULL;
+	}
+	return 1;
 }

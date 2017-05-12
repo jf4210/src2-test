@@ -1,4 +1,5 @@
 #pragma once
+#include "global.h"
 #include "CommonTWAIN.h"
 #include "TwainApp.h"
 #include "ComboBoxExt.h"

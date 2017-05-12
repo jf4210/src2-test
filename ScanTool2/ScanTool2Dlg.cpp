@@ -60,9 +60,13 @@ Poco::Event			g_eCompressThreadExit;
 //--
 //++事件定义
 Poco::Event			g_eGetExamList;		//获取考试列表事件
+Poco::Event			g_eDownLoadModel;	//下载模板完成状态
 //--
 
+int					g_nDownLoadModelStatus = 0;		//下载模板的状态	0-未下载，初始化，1-模板下载中，2-下载成功，3-本地存在此文件，不需要下载, -1-服务器此科目模板不存在, -2-服务器读取文件失败
+
 STUDENT_LIST		g_lBmkStudent;	//报名库学生列表
+
 
 double	_dCompThread_Fix_ = 1.2;
 double	_dDiffThread_Fix_ = 0.2;
@@ -109,7 +113,6 @@ int _nUserId_ = 0;				//用户ID
 pEXAMINFO			_pCurrExam_= NULL;		//当前考试
 pEXAM_SUBJECT		_pCurrSub_ = NULL;		//当前考试科目
 pMODEL				_pModel_ = NULL;		//当前扫描使用的模板
-CScanThread			_scanThread_;
 //--
 //--
 
@@ -148,7 +151,6 @@ void CScanTool2Dlg::InitThreads()
 // 	m_pScanThread = new Poco::Thread;
 // 	m_pScanThreadObj = new CScanThread;
 // 	m_pScanThread->start(*m_pScanThreadObj);
-	_scanThread_.CreateThread();
 }
 
 void CScanTool2Dlg::ReleaseThreads()
@@ -256,6 +258,7 @@ void CScanTool2Dlg::SwitchDlg(int nDlg)
 	{
 		m_pExamInfoMgrDlg->ShowWindow(SW_HIDE);
 		m_pScanMgrDlg->ShowWindow(SW_SHOW);
+		m_pScanMgrDlg->SearchModel();		//加载模板
 		m_pScanMgrDlg->UpdateInfo();
 	}
 }

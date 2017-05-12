@@ -73,12 +73,13 @@ public:
 	virtual int ExitInstance();
 
 	void	StartScan(WPARAM wParam, LPARAM lParam);
+
 	int		Scan();
 	int		GetImgMemory();
 	int		GetImgNative();
 	void	setStop();
 	void	setNotifyDlg(void* pDlg);
-	void setModelInfo(int nModelPicNums, std::string& strSavePath);
+	void	setModelInfo(int nModelPicNums, std::string& strSavePath);
 private:	
 	bool	m_bStop;
 	void*	m_pDlg;		//消息通知窗口

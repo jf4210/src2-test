@@ -18,7 +18,8 @@ public:
 	enum { IDD = IDD_SCANMGRDLG };
 
 	void	UpdateInfo();
-	void	SearchModel();	//遍历所有模板
+	void	SearchModel();		//遍历所有模板
+	void	DownLoadModel();	//下载模板
 private:
 	void	InitCtrlPosition();
 	void	InitChildDlg();

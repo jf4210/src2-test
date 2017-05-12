@@ -6,7 +6,7 @@
 #include "ScanMgrDlg.h"
 #include "afxdialogex.h"
 
-
+#include "Net_Cmd_Protocol.h"
 // CScanMgrDlg 对话框
 
 IMPLEMENT_DYNAMIC(CScanMgrDlg, CDialog)
@@ -182,73 +182,109 @@ void CScanMgrDlg::UpdateInfo()
 
 void CScanMgrDlg::SearchModel()
 {
+	if (!_pCurrExam_ || !_pCurrSub_) return;
+
 	if (_pModel_)
 		SAFE_RELEASE(_pModel_);
 
 	USES_CONVERSION;
-	std::string strModelPath = T2A(g_strCurrentPath + _T("Model"));
+	std::string strModelName = _pCurrSub_->strModelName;	//gb2312
+	std::string strModelFullPath = T2A(g_strCurrentPath + _T("Model\\"));
+	strModelFullPath += strModelName;
+	bool bExist = false;
 	try
 	{
-		Poco::DirectoryIterator it(strModelPath);
-		Poco::DirectoryIterator end;
-		while (it != end)
+		Poco::File fModel(strModelFullPath);		//考试对应的模板文件存在，则直接解压此模板，否则就通过examID_subID来搜索模板
+		if (fModel.exists())
+			bExist = true;
+	}
+	catch (Poco::Exception& e)
+	{
+	}
+
+	//这部分是加载含有_examID_subID.的模板，即如果没有和科目信息中记录的模板名称一样的模板存在的话，就加载考试ID和科目ID一样的模板
+	//暂且不用
+#if 0		
+	if (!bExist)
+	{
+		std::string strExamSub = Poco::format("_%d_%d.", _pCurrExam_->nExamID, _pCurrSub_->nSubjID);
+		std::string strModelPath = T2A(g_strCurrentPath + _T("Model"));
+		try
 		{
-			Poco::Path p(it->path());
-			if (it->isFile() && p.getExtension() == "mod")
+			Poco::DirectoryIterator it(strModelPath);
+			Poco::DirectoryIterator end;
+			while (it != end)
 			{
-				std::string strName = p.getFileName();
-				std::string strPath = p.toString();
-
-				std::string strModelName = strName;
-				std::string strExamID;
-				std::string strSubjectID;
-				int nPos = 0;
-				int nOldPos = 0;
-				nPos = strModelName.find("_N_");
-				if (nPos != std::string::npos)	//新模板名称
+				Poco::Path p(it->path());
+				if (it->isFile() && p.getExtension() == "mod" && p.getFileName().find(strExamSub) != std::string::npos)
 				{
-					int nPos2 = strModelName.find("_", nPos + 3);
-
-					strExamID = strModelName.substr(nPos + 3, nPos2 - nPos - 3);
-					nOldPos = nPos2;
-					nPos2 = strModelName.find(".", nPos2 + 1);
-					strSubjectID = strModelName.substr(nOldPos + 1, nPos2 - nOldPos - 1);
+					strModelFullPath = CMyCodeConvert::Utf8ToGb2312(p.toString());
+					bExist = true;
+					break;
 				}
-				else
-				{
-					nPos = strModelName.find("_");
-					strExamID = strModelName.substr(0, nPos);
-					nOldPos = nPos;
-					nPos = strModelName.find(".", nPos + 1);
-					strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
-				}
-
-				char szIndex[50] = { 0 };
-				sprintf(szIndex, "%s_%s", strExamID.c_str(), strSubjectID.c_str());
-
-// 				pMODELINFO pModelInfo = new MODELINFO;
-// 				pModelInfo->nExamID = atoi(strExamID.c_str());
-// 				pModelInfo->nSubjectID = atoi(strSubjectID.c_str());
-// 				pModelInfo->strName = CMyCodeConvert::Utf8ToGb2312(strName);
-// 				pModelInfo->strPath = CMyCodeConvert::Utf8ToGb2312(strPath);
-// 				pModelInfo->strMd5 = calcFileMd5(strPath);
-// 
-// 				_mapModelLock_.lock();
-// 				_mapModel_.insert(MAP_MODEL::value_type(szIndex, pModelInfo));
-// 				_mapModelLock_.unlock();
+				++it;
 			}
-			++it;
+		}
+		catch (Poco::FileException& exc)
+		{
+			std::cerr << exc.displayText() << std::endl;
+		}
+		catch (Poco::Exception& exc)
+		{
+			std::cerr << exc.displayText() << std::endl;
 		}
 	}
-	catch (Poco::FileException& exc)
+#endif
+	
+	if (bExist)
 	{
-		std::cerr << exc.displayText() << std::endl;
-		return;
+		_pModel_ = LoadModelFile(A2T(strModelFullPath.c_str()));
 	}
-	catch (Poco::Exception& exc)
+}
+
+void CScanMgrDlg::DownLoadModel()
+{
+	if (!_pCurrExam_ || !_pCurrSub_) return;
+
+	g_nDownLoadModelStatus = 0;
+
+	//先查本地列表，如果没有则请求，如果有，计算crc，和服务器不同则下载
+	USES_CONVERSION;
+	CString modelPath = g_strCurrentPath + _T("Model");
+	modelPath = modelPath + _T("\\") + A2T(_pCurrSub_->strModelName.c_str());
+	std::string strModelPath = T2A(modelPath);
+
+	ST_DOWN_MODEL stModelInfo;
+	ZeroMemory(&stModelInfo, sizeof(ST_DOWN_MODEL));
+	stModelInfo.nExamID = _pCurrExam_->nExamID;
+	stModelInfo.nSubjectID = _pCurrSub_->nSubjID;
+	sprintf_s(stModelInfo.szUserNo, "%s", _strUserName_.c_str());
+	sprintf_s(stModelInfo.szModelName, "%s", _pCurrSub_->strModelName.c_str());
+
+	Poco::File fileModel(strModelPath);
+	if (fileModel.exists())
 	{
-		std::cerr << exc.displayText() << std::endl;
-		return;
+		std::string strMd5 = calcFileMd5(strModelPath);
+		strncpy(stModelInfo.szMD5, strMd5.c_str(), strMd5.length());
+	}
+
+	std::string strLog = "请求下载模板: ";
+	strLog.append(stModelInfo.szModelName);
+	g_pLogger->information(strLog);
+
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_NEED_DOWN_MODEL;
+	pTcpTask->nPkgLen = sizeof(ST_DOWN_MODEL);
+	memcpy(pTcpTask->szSendBuf, (char*)&stModelInfo, sizeof(ST_DOWN_MODEL));
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
+
+
+	g_eDownLoadModel.wait();
+	if (g_nDownLoadModelStatus == 2 || g_nDownLoadModelStatus == 3)
+	{
+		//模板下载完成
 	}
 }
 

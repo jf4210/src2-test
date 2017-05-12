@@ -569,18 +569,8 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 		jsnPaperOMR.set("papers", pTask->pPapers->strPapersName);
 		jsnPaperOMR.set("studentKey", (*itPaper)->strMd5Key);
 		omrArry.add(jsnPaperOMR);
-
-		//********************************************
-
-		//********************************************
-
-		//	选做题信息先不做
-
-		//********************************************
-
-		//********************************************
-		int nFlag = 0;		
-		if (nFlag & (*itPaper)->lElectOmrResult.size() > 0)
+	
+		if ((*itPaper)->lElectOmrResult.size() > 0)
 		{
 			bHasElectOmr = true;
 			Poco::JSON::Object jsnPaperElectOmr;

@@ -31,9 +31,6 @@
     <Filter Include="线程">
       <UniqueIdentifier>{2aafe9e3-6c8c-456d-b586-1f0c8d9677eb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="线程\识别">
-      <UniqueIdentifier>{716fd566-d04d-4e7a-962f-d3ca01ccbba9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="线程\解压缩">
       <UniqueIdentifier>{39b5f0e4-a150-4f14-b243-6b58940b5001}</UniqueIdentifier>
     </Filter>
@@ -73,6 +70,9 @@
     <Filter Include="扫描界面窗口\扫描记录窗口">
       <UniqueIdentifier>{640e6bcf-dd8d-4d0c-b1e6-06deb1a92301}</UniqueIdentifier>
     </Filter>
+    <Filter Include="线程\识别">
+      <UniqueIdentifier>{193e3ee1-a31d-4eaa-b651-557e4369a808}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -108,9 +108,6 @@
     <ClInclude Include="CompressThread.h">
       <Filter>线程\解压缩</Filter>
     </ClInclude>
-    <ClInclude Include="RecognizeThread.h">
-      <Filter>线程\识别</Filter>
-    </ClInclude>
     <ClInclude Include="TcpClient.h">
       <Filter>线程\tcp命令</Filter>
     </ClInclude>
@@ -119,9 +116,6 @@
     </ClInclude>
     <ClInclude Include="ExamInfoMgrDlg.h">
       <Filter>考试列表窗口列表</Filter>
-    </ClInclude>
-    <ClInclude Include="StudentMgr.h">
-      <Filter>报名库管理</Filter>
     </ClInclude>
     <ClInclude Include="..\..\common\md5.h">
       <Filter>common</Filter>
@@ -150,6 +144,18 @@
     <ClInclude Include="ScanDlg.h">
       <Filter>扫描界面窗口\扫描操作窗口</Filter>
     </ClInclude>
+    <ClInclude Include="DataCheckDlg.h">
+      <Filter>扫描界面窗口\数据校对窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanRecordDlg.h">
+      <Filter>扫描界面窗口\扫描记录窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\Net_Cmd_Protocol.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="RecognizeThread.h">
+      <Filter>线程\识别</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\include\twain\Common.h">
       <Filter>扫描界面窗口\TWAIN</Filter>
     </ClInclude>
@@ -171,11 +177,8 @@
     <ClInclude Include="ScanThread.h">
       <Filter>线程\扫描</Filter>
     </ClInclude>
-    <ClInclude Include="DataCheckDlg.h">
-      <Filter>扫描界面窗口\数据校对窗口</Filter>
-    </ClInclude>
-    <ClInclude Include="ScanRecordDlg.h">
-      <Filter>扫描界面窗口\扫描记录窗口</Filter>
+    <ClInclude Include="StudentMgr.h">
+      <Filter>报名库管理</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -203,9 +206,6 @@
     <ClCompile Include="CompressThread.cpp">
       <Filter>线程\解压缩</Filter>
     </ClCompile>
-    <ClCompile Include="RecognizeThread.cpp">
-      <Filter>线程\识别</Filter>
-    </ClCompile>
     <ClCompile Include="TcpClient.cpp">
       <Filter>线程\tcp命令</Filter>
     </ClCompile>
@@ -214,9 +214,6 @@
     </ClCompile>
     <ClCompile Include="ExamInfoMgrDlg.cpp">
       <Filter>考试列表窗口列表</Filter>
-    </ClCompile>
-    <ClCompile Include="StudentMgr.cpp">
-      <Filter>报名库管理</Filter>
     </ClCompile>
     <ClCompile Include="..\..\common\md5.cpp">
       <Filter>common</Filter>
@@ -242,6 +239,15 @@
     <ClCompile Include="ScanDlg.cpp">
       <Filter>扫描界面窗口\扫描操作窗口</Filter>
     </ClCompile>
+    <ClCompile Include="DataCheckDlg.cpp">
+      <Filter>扫描界面窗口\数据校对窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanRecordDlg.cpp">
+      <Filter>扫描界面窗口\扫描记录窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="RecognizeThread.cpp">
+      <Filter>线程\识别</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\include\twain\CommonTWAIN.cpp">
       <Filter>扫描界面窗口\TWAIN</Filter>
     </ClCompile>
@@ -263,11 +269,8 @@
     <ClCompile Include="ScanThread.cpp">
       <Filter>线程\扫描</Filter>
     </ClCompile>
-    <ClCompile Include="DataCheckDlg.cpp">
-      <Filter>扫描界面窗口\数据校对窗口</Filter>
-    </ClCompile>
-    <ClCompile Include="ScanRecordDlg.cpp">
-      <Filter>扫描界面窗口\扫描记录窗口</Filter>
+    <ClCompile Include="StudentMgr.cpp">
+      <Filter>报名库管理</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

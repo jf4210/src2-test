@@ -332,6 +332,90 @@ void CTcpClient::HandleCmd()
 		break;
 		}
 	}
+	else if (pstHead->usCmd == USER_RESPONSE_NEEDDOWN)
+	{
+		switch (pstHead->usResult)
+		{
+			case RESULT_DOWNMODEL_OK:
+			{
+				pST_DOWN_MODEL pstModelInfo = (pST_DOWN_MODEL)(m_szRecvBuff + HEAD_SIZE);
+
+				ST_DOWN_MODEL stModelInfo;
+				ZeroMemory(&stModelInfo, sizeof(ST_DOWN_MODEL));
+				stModelInfo.nExamID = _pCurrExam_->nExamID;
+				stModelInfo.nSubjectID = _pCurrSub_->nSubjID;
+				sprintf_s(stModelInfo.szUserNo, "%s", _strUserName_.c_str());
+				sprintf_s(stModelInfo.szModelName, "%s", _pCurrSub_->strModelName.c_str());
+
+				pTCP_TASK pTcpTask = new TCP_TASK;
+				pTcpTask->usCmd = USER_DOWN_MODEL;
+				pTcpTask->nPkgLen = sizeof(ST_DOWN_MODEL);
+				memcpy(pTcpTask->szSendBuf, (char*)&stModelInfo, sizeof(ST_DOWN_MODEL));
+				g_fmTcpTaskLock.lock();
+				g_lTcpTask.push_back(pTcpTask);
+				g_fmTcpTaskLock.unlock();
+				g_nDownLoadModelStatus = 1;
+			}
+			break;
+			case RESULT_DOWNMODEL_FAIL:
+			{
+				std::string strLog = "服务器此科目模板不存在";
+				g_pLogger->information(strLog);
+				g_nDownLoadModelStatus = -1;
+				g_eDownLoadModel.set();			//下载模板文件请求命令处理完毕
+			}
+			break;
+			case RESULT_DOWNMODEL_NONEED:
+			{
+				std::string strLog = "本地存在此文件，不需要下载";
+				g_pLogger->information(strLog);
+				g_nDownLoadModelStatus = 3;
+				g_eDownLoadModel.set();			//下载模板文件请求命令处理完毕
+			}
+			break;
+		}
+	}
+	else if (pstHead->usCmd == USER_RESPONSE_DOWNMODEL)
+	{
+		USES_CONVERSION;
+		switch (pstHead->usResult)
+		{
+			case RESULT_DOWNMODEL_RECV:
+			{
+				//覆盖本地文件
+				std::string strModelPath = T2A(g_strCurrentPath);
+				strModelPath.append("Model\\");
+
+				Poco::File fileModelPath(g_strModelSavePath);
+				fileModelPath.createDirectories();
+
+				strModelPath.append(_pCurrSub_->strModelName);
+				Poco::File fileModel(strModelPath);
+				if (fileModel.exists())
+					fileModel.remove();
+
+				ofstream out(strModelPath, std::ios::binary);
+				if (!out)
+				{
+					break;
+				}
+				std::stringstream buffer;
+				buffer.write(m_pRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+				int n = buffer.str().length();
+				out << buffer.str();
+				out.close();
+				g_nDownLoadModelStatus = 2;
+			}
+			break;
+			case RESULT_ERROR_FILEIO:
+			{
+				//服务器读取文件失败
+				g_nDownLoadModelStatus = -2;
+			}
+			break;
+		}
+		g_eDownLoadModel.set();			//下载模板文件请求命令处理完毕
+	}
 	else if (pstHead->usCmd == USER_RESPONSE_MODELINFO)
 	{
 		switch (pstHead->usResult)

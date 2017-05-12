@@ -77,7 +77,7 @@
 //#include "./pdf2jpg/MuPDFConvert.h"
 #include "modelInfo.h"
 
-#include "zbar.h"   
+#include "zbar.h"
 
 //#define PIC_RECTIFY_TEST	//图像旋转纠正测试
 #define WarpAffine_TEST		//仿射变换测试
@@ -174,7 +174,7 @@
 
 //++登录信息
 extern bool	_bLogin_;				//是否已经登录
-extern ::string _strUserName_;		//登录用户名
+extern std::string _strUserName_;	//登录用户名
 extern std::string _strNickName_;	//用户昵称
 extern std::string _strPwd_;		//密码
 extern std::string _strEzs_;		//后端需要的EZS
@@ -183,9 +183,12 @@ extern int _nUserId_;				//用户ID
 //--
 
 extern int					_nReocgThreads_;		//识别线程数量
+
 //++事件定义
 extern Poco::Event			g_eGetExamList;		//获取考试列表事件
+extern Poco::Event			g_eDownLoadModel;	//下载模板完成状态
 //--
+extern int					g_nDownLoadModelStatus;		//下载模板的状态	0-未下载，初始化，1-模板下载中，2-下载成功，3-本地存在此文件，不需要下载, -1-服务器此科目模板不存在, -2-服务器读取文件失败
 
 
 extern CString				g_strCurrentPath;
@@ -478,7 +481,6 @@ extern EXAM_LIST	g_lExamList;
 extern pEXAMINFO			_pCurrExam_;	//当前考试
 extern pEXAM_SUBJECT		_pCurrSub_;		//当前考试科目
 extern pMODEL				_pModel_;		//当前扫描使用的模板
-extern CScanThread			_scanThread_;
 //--
 
 //报名库学生信息

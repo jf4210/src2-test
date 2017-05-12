@@ -107,6 +107,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\common\md5.h" />
     <ClInclude Include="..\..\common\modelInfo.h" />
+    <ClInclude Include="..\..\common\Net_Cmd_Protocol.h" />
     <ClInclude Include="..\..\common\unzip.h" />
     <ClInclude Include="..\..\common\zip.h" />
     <ClInclude Include="..\..\include\twain\Common.h" />
