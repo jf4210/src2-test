@@ -22,6 +22,7 @@ public:
 
 
 	void	SwitchDlg(int nDlg);		//切换窗口显示
+	void	DumpReleaseTwain();			//在系统崩溃时释放twain资源
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 

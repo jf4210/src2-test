@@ -217,6 +217,8 @@ void CScanTool2Dlg::ReleaseData()
 		SAFE_RELEASE(pExam);
 	}
 	g_lfmExamList.unlock();
+
+	SAFE_RELEASE(_pModel_);
 }
 
 void CScanTool2Dlg::ReleaseDlg()
@@ -258,6 +260,7 @@ void CScanTool2Dlg::SwitchDlg(int nDlg)
 	{
 		m_pExamInfoMgrDlg->ShowWindow(SW_HIDE);
 		m_pScanMgrDlg->ShowWindow(SW_SHOW);
+		m_pScanMgrDlg->DownLoadModel();
 		m_pScanMgrDlg->SearchModel();		//¼ÓÔØÄ£°å
 		m_pScanMgrDlg->UpdateInfo();
 	}
@@ -365,3 +368,9 @@ void CScanTool2Dlg::OnSize(UINT nType, int cx, int cy)
 
 	InitCtrlPositon();
 }
+
+void CScanTool2Dlg::DumpReleaseTwain()
+{
+	m_pScanMgrDlg->m_scanThread.exit();
+}
+

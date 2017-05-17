@@ -73,6 +73,9 @@
     <Filter Include="线程\识别">
       <UniqueIdentifier>{193e3ee1-a31d-4eaa-b651-557e4369a808}</UniqueIdentifier>
     </Filter>
+    <Filter Include="dump">
+      <UniqueIdentifier>{763ac6fb-f4d1-46ea-af03-790ab1d36bed}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -179,6 +182,9 @@
     </ClInclude>
     <ClInclude Include="StudentMgr.h">
       <Filter>报名库管理</Filter>
+    </ClInclude>
+    <ClInclude Include="minidump.h">
+      <Filter>dump</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

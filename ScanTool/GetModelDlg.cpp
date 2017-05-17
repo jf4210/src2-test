@@ -183,7 +183,7 @@ void CGetModelDlg::OnBnClickedBtnDown()
 		sprintf_s(stModelInfo.szUserNo, "%s", T2A(strUser));
 		sprintf_s(stModelInfo.szModelName, "%s", T2A(m_strScanModelName));
 
-		Poco::File fileModel(strModelPath);
+		Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
 		if (fileModel.exists())
 		{
 			std::string strMd5 = calcFileMd5(strModelPath);

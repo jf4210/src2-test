@@ -3677,6 +3677,8 @@ void CScanToolDlg::OnBnClickedBtnReback()
 	this->ShowWindow(SW_HIDE);
 	m_bF1Enable = FALSE;
 	m_bF2Enable = FALSE;
+	if (g_nOperatingMode == 1 || m_bModifySN)
+		KillTimer(TIMER_CheckRecogComplete);
 }
 
 void sharpenImage1(const cv::Mat &image, cv::Mat &result, int nKernel)
@@ -5059,6 +5061,12 @@ void CScanToolDlg::OnTimer(UINT nIDEvent)
 {
 	if (nIDEvent == TIMER_CheckRecogComplete)
 	{
+		if (!m_pPapersInfo)
+		{
+			KillTimer(TIMER_CheckRecogComplete);
+			return;
+		}
+
 		bool bRecogComplete = true;
 		bool bNeedShowZkzhDlg = false;
 		for (auto p : m_pPapersInfo->lPaper)

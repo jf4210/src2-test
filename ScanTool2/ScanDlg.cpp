@@ -6,6 +6,7 @@
 #include "ScanDlg.h"
 #include "afxdialogex.h"
 #include "ScanTool2Dlg.h"
+#include "ScanMgrDlg.h"
 
 
 // CScanDlg ¶Ô»°¿ò
@@ -40,6 +41,8 @@ BOOL CScanDlg::OnInitDialog()
 	SetFontSize(m_nStatusSize);
 	InitCtrlPosition();
 	InitUI();
+	m_comboScanner.AdjustDroppedWidth();
+	m_comboDuplex.AdjustDroppedWidth();
 
 	return TRUE;
 }
@@ -49,6 +52,8 @@ BEGIN_MESSAGE_MAP(CScanDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_ChangeExam, &CScanDlg::OnBnClickedBtnChangeexam)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BTN_Scan, &CScanDlg::OnBnClickedBtnScan)
+	ON_MESSAGE(MSG_SCAN_DONE, &CScanDlg::ScanDone)
+	ON_MESSAGE(MSG_SCAN_ERR, &CScanDlg::ScanErr)
 END_MESSAGE_MAP()
 
 
@@ -75,12 +80,10 @@ void CScanDlg::InitUI()
 	SAFE_RELEASE_ARRY(ret);
 	m_comboScanner.SetCurSel(nSrc);
 
+	m_comboDuplex.ResetContent();
 	m_comboDuplex.AddString(_T("µ¥ÃæÉ¨Ãè"));
 	m_comboDuplex.AddString(_T("Ë«ÃæÉ¨Ãè"));
 	m_comboDuplex.SetCurSel(nDuplex);
-
-	m_comboScanner.AdjustDroppedWidth();
-	m_comboDuplex.AdjustDroppedWidth();
 }
 
 void CScanDlg::InitCtrlPosition()
@@ -272,7 +275,6 @@ void CScanDlg::InitScanner()
 		}
 		_pTWAINApp->disconnectDSM();
 	}
-	m_comboScanner.SetCurSel(0);
 }
 
 void CScanDlg::UpdateInfo()
@@ -283,6 +285,7 @@ void CScanDlg::UpdateInfo()
 		m_strExamName		= A2T(_pCurrExam_->strExamName.c_str());
 		m_strSubjectName	= A2T((_pCurrExam_->strGradeName + _pCurrSub_->strSubjName).c_str());
 	}
+	InitUI();
 	UpdateData(FALSE);
 	Invalidate();
 }
@@ -306,7 +309,7 @@ void CScanDlg::OnBnClickedBtnScan()
 	TW_INT16      index = (TW_INT16)m_comboScanner.GetItemData(sel);
 	pTW_IDENTITY  pID = NULL;
 
-	if (_bLogin_)
+	if (!_bLogin_)
 	{
 		AfxMessageBox(_T("Î´µÇÂ¼, ÎÞ·¨É¨Ãè"));
 		return;
@@ -386,10 +389,12 @@ void CScanDlg::OnBnClickedBtnScan()
 		pScanCtrl->nScanPixelType = nScanType;
 		pScanCtrl->nScanResolution = nScanDpi;
 		pScanCtrl->nScanSize = nSize;
-		pScanCtrl->bShowUI = bShowScanSrcUI;
-// 		_pScanThread_->setNotifyDlg(this);
-// 		_pScanThread_->setModelInfo(m_nModelPicNums, m_strCurrPicSavePath);
-// 		_pScanThread_->PostThreadMessage(MSG_START_SCAN, pID->Id, (LPARAM)pScanCtrl);
+		pScanCtrl->bShowUI = true;	//bShowScanSrcUI;
+
+		CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
+		pDlg->m_scanThread.setNotifyDlg(this);
+		pDlg->m_scanThread.setModelInfo(m_nModelPicNums, m_strCurrPicSavePath);
+		pDlg->m_scanThread.PostThreadMessage(MSG_START_SCAN, pID->Id, (LPARAM)pScanCtrl);
 	}
 
 	char szRet[20] = { 0 };

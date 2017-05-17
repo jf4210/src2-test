@@ -7,6 +7,7 @@
 #include "afxdialogex.h"
 
 #include "Net_Cmd_Protocol.h"
+#include "ZipObj.h"
 // CScanMgrDlg 对话框
 
 IMPLEMENT_DYNAMIC(CScanMgrDlg, CDialog)
@@ -34,6 +35,7 @@ BOOL CScanMgrDlg::OnInitDialog()
 
 	InitChildDlg();
 	InitCtrlPosition();
+	m_scanThread.CreateThread();
 
 	return TRUE;
 }
@@ -194,7 +196,7 @@ void CScanMgrDlg::SearchModel()
 	bool bExist = false;
 	try
 	{
-		Poco::File fModel(strModelFullPath);		//考试对应的模板文件存在，则直接解压此模板，否则就通过examID_subID来搜索模板
+		Poco::File fModel(CMyCodeConvert::Gb2312ToUtf8(strModelFullPath));		//考试对应的模板文件存在，则直接解压此模板，否则就通过examID_subID来搜索模板
 		if (fModel.exists())
 			bExist = true;
 	}
@@ -238,7 +240,19 @@ void CScanMgrDlg::SearchModel()
 	
 	if (bExist)
 	{
-		_pModel_ = LoadModelFile(A2T(strModelFullPath.c_str()));
+		CZipObj zipObj;
+		zipObj.setLogger(g_pLogger);
+		zipObj.UnZipFile(A2T(strModelFullPath.c_str()));
+
+		CString strModelFilePath = g_strCurrentPath + _T("Model\\") + A2T(strModelName.c_str());
+		strModelFilePath = strModelFilePath.Left(strModelFilePath.ReverseFind('.'));
+		_pModel_ = LoadModelFile(strModelFilePath);
+		std::string strLog;
+		if (_pModel_)
+			strLog = Poco::format("模板%s加载成功", strModelName);
+		else
+			strLog = Poco::format("模板%s加载失败", strModelName);
+		g_pLogger->information(strLog);
 	}
 }
 
@@ -261,7 +275,7 @@ void CScanMgrDlg::DownLoadModel()
 	sprintf_s(stModelInfo.szUserNo, "%s", _strUserName_.c_str());
 	sprintf_s(stModelInfo.szModelName, "%s", _pCurrSub_->strModelName.c_str());
 
-	Poco::File fileModel(strModelPath);
+	Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
 	if (fileModel.exists())
 	{
 		std::string strMd5 = calcFileMd5(strModelPath);
@@ -282,10 +296,24 @@ void CScanMgrDlg::DownLoadModel()
 
 
 	g_eDownLoadModel.wait();
-	if (g_nDownLoadModelStatus == 2 || g_nDownLoadModelStatus == 3)
+	if (g_nDownLoadModelStatus == 2)
 	{
 		//模板下载完成
+		strLog.append(" ==>此模板下载成功.");
 	}
+	else if (g_nDownLoadModelStatus == 3)
+	{
+		strLog.append(" ==>此模板本地以及存在且无修改，不需要重新下载.");
+	}
+	else if (g_nDownLoadModelStatus == -1)
+	{
+		strLog.append(" ==>服务器此科目模板不存在.");
+	}
+	else if (g_nDownLoadModelStatus == -2)
+	{
+		strLog.append(" ==>服务器读取文件失败.");
+	}
+	g_pLogger->information(strLog);
 }
 
 void CScanMgrDlg::OnBnClickedBtnScanrecord()

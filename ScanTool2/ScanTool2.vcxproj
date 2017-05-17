@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0CFDE0FD-86FE-4531-8878-94CE1FFC2BF6}</ProjectGuid>
+    <ProjectGuid>{0CD01A11-4779-47B8-94C5-379F4947D365}</ProjectGuid>
     <RootNamespace>ScanTool2</RootNamespace>
     <Keyword>MFCProj</Keyword>
   </PropertyGroup>
@@ -124,6 +124,7 @@
     <ClInclude Include="ExamInfoMgrDlg.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="LoginDlg.h" />
+    <ClInclude Include="minidump.h" />
     <ClInclude Include="MultiPlatform4TYDlg.h" />
     <ClInclude Include="MyCodeConvert.h" />
     <ClInclude Include="RecognizeThread.h" />

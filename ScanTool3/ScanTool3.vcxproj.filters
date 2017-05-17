@@ -1,0 +1,303 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="考试列表窗口列表">
+      <UniqueIdentifier>{2b04f457-11cb-4c4b-ab1c-858e7f6cc557}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="登录">
+      <UniqueIdentifier>{85007784-79cb-4dec-9776-58b66a1d4ce4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="global">
+      <UniqueIdentifier>{1c4ead59-7521-416c-b741-0eeadb93a2ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="登录\天喻多平台选项框">
+      <UniqueIdentifier>{78c35e81-e87d-4c15-bc98-9dd82597a4d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="转码">
+      <UniqueIdentifier>{5e3d918d-43f2-4987-95df-f3803da949e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="线程">
+      <UniqueIdentifier>{2aafe9e3-6c8c-456d-b586-1f0c8d9677eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="线程\解压缩">
+      <UniqueIdentifier>{39b5f0e4-a150-4f14-b243-6b58940b5001}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="线程\tcp命令">
+      <UniqueIdentifier>{897d2071-c606-4f94-b9dd-e04a2a38274e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="报名库管理">
+      <UniqueIdentifier>{030b5030-c242-4be9-868b-4f1138b2b710}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{0b53347d-c877-4655-8ddd-924991641f7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="考试列表窗口列表\单项考试列表窗口">
+      <UniqueIdentifier>{2ac6e35e-c53e-4354-a13e-73ab6e262a42}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="控件">
+      <UniqueIdentifier>{342e7ff4-0588-4477-a7b0-fc9ee46801a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="控件\下拉列表">
+      <UniqueIdentifier>{84bbe0c1-ee90-4d49-9a6d-f011ea86a5b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描界面窗口">
+      <UniqueIdentifier>{6ae26692-6328-4d45-8508-ad3df034c137}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描界面窗口\扫描操作窗口">
+      <UniqueIdentifier>{e77a3cbe-c631-4648-8916-1247a7eab655}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描界面窗口\TWAIN">
+      <UniqueIdentifier>{a693d912-16d6-4fe9-a98c-2af8499c9354}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="线程\扫描">
+      <UniqueIdentifier>{69996135-b9e2-4e01-84bb-775d7c95d8d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描界面窗口\数据校对窗口">
+      <UniqueIdentifier>{7fec711a-008e-4c35-810b-9c66533fcbcf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描界面窗口\扫描记录窗口">
+      <UniqueIdentifier>{640e6bcf-dd8d-4d0c-b1e6-06deb1a92301}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="线程\识别">
+      <UniqueIdentifier>{193e3ee1-a31d-4eaa-b651-557e4369a808}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dump">
+      <UniqueIdentifier>{763ac6fb-f4d1-46ea-af03-790ab1d36bed}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LoginDlg.h">
+      <Filter>登录</Filter>
+    </ClInclude>
+    <ClInclude Include="global.h">
+      <Filter>global</Filter>
+    </ClInclude>
+    <ClInclude Include="MultiPlatform4TYDlg.h">
+      <Filter>登录\天喻多平台选项框</Filter>
+    </ClInclude>
+    <ClInclude Include="MyCodeConvert.h">
+      <Filter>转码</Filter>
+    </ClInclude>
+    <ClInclude Include="CompressThread.h">
+      <Filter>线程\解压缩</Filter>
+    </ClInclude>
+    <ClInclude Include="TcpClient.h">
+      <Filter>线程\tcp命令</Filter>
+    </ClInclude>
+    <ClInclude Include="ZipObj.h">
+      <Filter>线程\解压缩</Filter>
+    </ClInclude>
+    <ClInclude Include="ExamInfoMgrDlg.h">
+      <Filter>考试列表窗口列表</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\md5.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\modelInfo.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\unzip.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\zip.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="ExamInfoDlg.h">
+      <Filter>考试列表窗口列表\单项考试列表窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="ComboBoxExt.h">
+      <Filter>控件\下拉列表</Filter>
+    </ClInclude>
+    <ClInclude Include="ComboBoxExtList.h">
+      <Filter>控件\下拉列表</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanMgrDlg.h">
+      <Filter>扫描界面窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanDlg.h">
+      <Filter>扫描界面窗口\扫描操作窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="DataCheckDlg.h">
+      <Filter>扫描界面窗口\数据校对窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanRecordDlg.h">
+      <Filter>扫描界面窗口\扫描记录窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\Net_Cmd_Protocol.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="RecognizeThread.h">
+      <Filter>线程\识别</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\twain\Common.h">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\twain\CommonTWAIN.h">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\twain\CTiffWriter.h">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\twain\DSMInterface.h">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\twain\TwainApp.h">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\twain\TwainString.h">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanThread.h">
+      <Filter>线程\扫描</Filter>
+    </ClInclude>
+    <ClInclude Include="StudentMgr.h">
+      <Filter>报名库管理</Filter>
+    </ClInclude>
+    <ClInclude Include="minidump.h">
+      <Filter>dump</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanTool3.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanTool3Dlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SingleExamDlg.h">
+      <Filter>考试列表窗口列表\单项考试列表窗口</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LoginDlg.cpp">
+      <Filter>登录</Filter>
+    </ClCompile>
+    <ClCompile Include="global.cpp">
+      <Filter>global</Filter>
+    </ClCompile>
+    <ClCompile Include="MultiPlatform4TYDlg.cpp">
+      <Filter>登录\天喻多平台选项框</Filter>
+    </ClCompile>
+    <ClCompile Include="MyCodeConvert.cpp">
+      <Filter>转码</Filter>
+    </ClCompile>
+    <ClCompile Include="CompressThread.cpp">
+      <Filter>线程\解压缩</Filter>
+    </ClCompile>
+    <ClCompile Include="TcpClient.cpp">
+      <Filter>线程\tcp命令</Filter>
+    </ClCompile>
+    <ClCompile Include="ZipObj.cpp">
+      <Filter>线程\解压缩</Filter>
+    </ClCompile>
+    <ClCompile Include="ExamInfoMgrDlg.cpp">
+      <Filter>考试列表窗口列表</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\md5.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\unzip.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\zip.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="ExamInfoDlg.cpp">
+      <Filter>考试列表窗口列表\单项考试列表窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ComboBoxExt.cpp">
+      <Filter>控件\下拉列表</Filter>
+    </ClCompile>
+    <ClCompile Include="ComboBoxExtList.cpp">
+      <Filter>控件\下拉列表</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanMgrDlg.cpp">
+      <Filter>扫描界面窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanDlg.cpp">
+      <Filter>扫描界面窗口\扫描操作窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="DataCheckDlg.cpp">
+      <Filter>扫描界面窗口\数据校对窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanRecordDlg.cpp">
+      <Filter>扫描界面窗口\扫描记录窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="RecognizeThread.cpp">
+      <Filter>线程\识别</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\twain\CommonTWAIN.cpp">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\twain\CTiffWriter.cpp">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\twain\DSMInterface.cpp">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\twain\TwainApp.cpp">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\twain\TwainString.cpp">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\twain\VerifySignature.cpp">
+      <Filter>扫描界面窗口\TWAIN</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanThread.cpp">
+      <Filter>线程\扫描</Filter>
+    </ClCompile>
+    <ClCompile Include="StudentMgr.cpp">
+      <Filter>报名库管理</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanTool3Dlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanTool3.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SingleExamDlg.cpp">
+      <Filter>考试列表窗口列表\单项考试列表窗口</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\ScanTool3.rc2">
+      <Filter>资源文件</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ScanTool3.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\ScanTool3.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+  </ItemGroup>
+</Project>

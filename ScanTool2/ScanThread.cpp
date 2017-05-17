@@ -117,6 +117,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	connectDSM();
 	if (m_DSMState < 3)
 	{
+		exit();
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
 		pResult->bScanOK = false;
 		pResult->strResult = "连接扫描源失败";
@@ -132,6 +133,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	loadDS(nId);
 	if (m_pDataSource == 0)
 	{
+		exit();
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
 		pResult->bScanOK = false;
 		pResult->strResult = "加载扫描源失败";
@@ -146,8 +148,8 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	TW_INT16  twrc = TWRC_FAILURE;
 	
 #if 1
-//	twrc = set_CapabilityOneValue(ICAP_XFERMECH, TWSX_NATIVE, TWTY_UINT16);
-	twrc = set_CapabilityOneValue(ICAP_XFERMECH, TWSX_MEMORY, TWTY_UINT16);
+	twrc = set_CapabilityOneValue(ICAP_XFERMECH, TWSX_NATIVE, TWTY_UINT16);
+//	twrc = set_CapabilityOneValue(ICAP_XFERMECH, TWSX_MEMORY, TWTY_UINT16);
 #else	//输出JPG
 	twrc = set_CapabilityOneValue(ICAP_XFERMECH, TWSX_FILE, TWTY_UINT16);
 	twrc = set_CapabilityOneValue(ICAP_IMAGEFILEFORMAT, TWFF_JFIF, TWTY_UINT16);		//TWFF_JFIF
@@ -462,7 +464,7 @@ int CScanThread::GetImgMemory()
 					int h = m_ImageInfo.ImageLength;
 
 					int nChannel = m_ImageInfo.SamplesPerPixel;
-					int depth = (m_ImageInfo.SamplesPerPixel == 1) ? IPL_DEPTH_1U : IPL_DEPTH_8U;
+					int depth = (m_ImageInfo.BitsPerPixel == 1) ? IPL_DEPTH_1U : IPL_DEPTH_8U;
 					try
 					{
 						IplImage *pIpl2 = cvCreateImage(cvSize(w, h), depth, nChannel);
@@ -472,6 +474,7 @@ int CScanThread::GetImgMemory()
 						height = (m_ImageInfo.ImageLength > 0) ? m_ImageInfo.ImageLength : -m_ImageInfo.ImageLength;
 
 						int n = ss.str().length();
+						TRACE("图片信息: w=%d, h=%d, area = %d, 实际数据长度n=%d,相差= %d\n", w, h, w * h, n, w*h - n);
 						CopyData(pIpl2->imageData, (char*)ss.str().c_str(), ss.str().length(), false, height);
 
 						SaveFile(pIpl2);
@@ -647,7 +650,7 @@ int CScanThread::GetImgNative()
 			int h = m_ImageInfo.ImageLength;
 
 			int nChannel = m_ImageInfo.SamplesPerPixel;
-			int depth = (m_ImageInfo.SamplesPerPixel == 1) ? IPL_DEPTH_1U : IPL_DEPTH_8U;
+			int depth = (m_ImageInfo.BitsPerPixel == 1) ? IPL_DEPTH_1U : IPL_DEPTH_8U;
 			try
 			{
 				IplImage *pIpl2 = cvCreateImage(cvSize(w, h), depth, nChannel);
@@ -657,21 +660,11 @@ int CScanThread::GetImgNative()
 				height = (m_ImageInfo.ImageLength > 0) ? m_ImageInfo.ImageLength : -m_ImageInfo.ImageLength;
 
 				char* p = (char*)pDIB + bmpFIH.bfOffBits;
-				CopyData(pIpl2->imageData, (char*)p, nImageSize, isLowerLeft, height);
+				TRACE("图片信息1: w=%d, h=%d, area = %d, 实际数据长度n=%d,相差= %d, channel=%d, depth=%d\n", w, h, w * h, nImageSize, w*h - nImageSize, nChannel, depth);
+				TRACE("图片信息2: w=%d, h=%d, area = %d, 实际数据长度n=%d,相差= %d, channel=%d, depth=%d\n", w, h, w * h, pDIB->biSizeImage, w*h - pDIB->biSizeImage, nChannel, depth);
+				CopyData(pIpl2->imageData, (char*)p, pDIB->biSizeImage, isLowerLeft, height);
 
-// 				cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
-// 				std::string strPicName = szOutFileName;
-// 				imwrite(strPicName, matTest2);
-// 				cvReleaseImage(&pIpl2);
-
-				pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
-				pResult->bScanOK = true;
-				pResult->strResult = "获得图像";
-				pResult->pIpl2 = pIpl2;
-//				CScanTestDlg* pDlg = (CScanTestDlg*)AfxGetMainWnd();
-				CScanDlg* pDlg = (CScanDlg*)m_pDlg;
-
-				pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
+				SaveFile(pIpl2);
 			}
 			catch (...)
 			{
@@ -760,9 +753,13 @@ void CScanThread::setModelInfo(int nModelPicNums, std::string& strSavePath)
 	m_strCurrPicSavePath = strSavePath;
 }
 
+void CScanThread::resetData()
+{
+	m_nScanCount = 0;
+}
+
 void* CScanThread::SaveFile(IplImage *pIpl)
 {
-	m_nScanCount++;
 	int nStudentId = m_nScanCount / m_nModelPicNums + 1;
 	int nOrder = m_nScanCount % m_nModelPicNums + 1;
 
@@ -771,6 +768,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 	sprintf_s(szPicName, "S%d_%d.jpg", nStudentId, nOrder);
 	sprintf_s(szPicPath, "%s\\S%d_%d.jpg", m_strCurrPicSavePath.c_str(), nStudentId, nOrder);
 
+	m_nScanCount++;
 	try
 	{
 		cv::Mat matTest = cv::cvarrToMat(pIpl);
