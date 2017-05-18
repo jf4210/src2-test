@@ -1,5 +1,4 @@
 #pragma once
-//#include "ExamInfoDlg.h"
 #include "SingleExamDlg.h"
 #include "ComboBoxExt.h"
 
@@ -24,6 +23,9 @@ public:
 private:
 	void	InitSearchData();
 	void	GetSearchResultExamList();
+	void	GetAllShowPaperCount();
+	int		GetStartExamIndex(int n);		//获得显示第n页时，起始考试在考试列表中的索引
+	void	DrawBorder(CDC *pDC);	//绘制边框线
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog(); 
@@ -31,7 +33,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 private:
-	std::vector<CSingleExamDlg*> m_vecExamInfoDlg;
+	std::vector<CSingleExamDlg*>	m_vecExamInfoDlg;
+	std::vector<CLinkCtrl *>		m_vecBtnIndex;
 	EXAM_LIST	m_lExamList;
 	CRect		m_rtExamList;		//显示考试列表的区域
 	CComboBoxExt	m_comboSubject;		//科目下拉列表
@@ -39,7 +42,16 @@ private:
 
 	int		m_nMaxShowExamListItem;		//当前窗口最大可以显示的考试列表行数
 	int		m_nAllExamListItems;		//当前搜索条件下，所有需要显示的考试数量
-	int		m_nCurrStartShowExamListItem;	//当前显示的是考试列表中的第几项
+	int		m_nShowPapersCount;			//当前搜索条件下，总共有多少也可以显示
+	int		m_nCurrShowPaper;			//当前显示第几页
+
+	CString m_strShowCurrPaper;			//显示当前页数信息
+
+	//++具体考试信息子窗口
+	int		m_nMaxSubsRow;		//一行最多显示的科目按钮数量
+	int		m_nSubjectBtnH;		//科目按钮高度
+	int		m_nDlgMinH;			//窗口最小高度
+	//--
 public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);

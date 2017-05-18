@@ -29,11 +29,13 @@ private:
 	void	InitCtrlPosition();
 	void	SetFontSize(int nSize);
 	void	ReleaseData();
+	void	DrawBorder(CDC *pDC);	//绘制边框线
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 
 	virtual BOOL OnInitDialog();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	virtual LRESULT DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
 
 
@@ -46,6 +48,14 @@ private:
 	pEXAMINFO		_pExamInfo;
 	std::vector<CButton*> m_vecBtn;			//动态创建按钮，存储按钮对象
 	CString		_strExamName;		//考试名称
+	CString		_strExamTime;		//考试时间
+	CString		_strExamType;
+	CString		_strExamGrade;
+
+
+	bool		_bMouseInDlg;		//鼠标在当前窗口区域
 public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

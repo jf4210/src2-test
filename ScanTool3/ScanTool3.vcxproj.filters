@@ -76,6 +76,9 @@
     <Filter Include="dump">
       <UniqueIdentifier>{763ac6fb-f4d1-46ea-af03-790ab1d36bed}</UniqueIdentifier>
     </Filter>
+    <Filter Include="扫描界面窗口\下载报名库和模板等待窗口">
+      <UniqueIdentifier>{ed01a411-d295-422f-9877-efa8380dc6e0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -125,9 +128,6 @@
     </ClInclude>
     <ClInclude Include="..\..\common\zip.h">
       <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="ExamInfoDlg.h">
-      <Filter>考试列表窗口列表\单项考试列表窗口</Filter>
     </ClInclude>
     <ClInclude Include="ComboBoxExt.h">
       <Filter>控件\下拉列表</Filter>
@@ -189,6 +189,9 @@
     <ClInclude Include="SingleExamDlg.h">
       <Filter>考试列表窗口列表\单项考试列表窗口</Filter>
     </ClInclude>
+    <ClInclude Include="WaitDownloadDlg.h">
+      <Filter>扫描界面窗口\下载报名库和模板等待窗口</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -226,9 +229,6 @@
     </ClCompile>
     <ClCompile Include="..\..\common\zip.cpp">
       <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="ExamInfoDlg.cpp">
-      <Filter>考试列表窗口列表\单项考试列表窗口</Filter>
     </ClCompile>
     <ClCompile Include="ComboBoxExt.cpp">
       <Filter>控件\下拉列表</Filter>
@@ -283,6 +283,9 @@
     </ClCompile>
     <ClCompile Include="SingleExamDlg.cpp">
       <Filter>考试列表窗口列表\单项考试列表窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="WaitDownloadDlg.cpp">
+      <Filter>扫描界面窗口\下载报名库和模板等待窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

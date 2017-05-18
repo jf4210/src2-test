@@ -260,9 +260,10 @@ void CScanTool3Dlg::SwitchDlg(int nDlg)
 	{
 		m_pExamInfoMgrDlg->ShowWindow(SW_HIDE);
 		m_pScanMgrDlg->ShowWindow(SW_SHOW);
-		m_pScanMgrDlg->DownLoadModel();
-		m_pScanMgrDlg->SearchModel();		//加载模板
-		m_pScanMgrDlg->UpdateInfo();
+		m_pScanMgrDlg->ShowDlg();
+// 		m_pScanMgrDlg->SearchModel();		//加载模板
+// 		m_pScanMgrDlg->DownLoadModel();
+// 		m_pScanMgrDlg->UpdateInfo();
 	}
 }
 

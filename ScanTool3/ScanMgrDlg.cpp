@@ -14,7 +14,8 @@ IMPLEMENT_DYNAMIC(CScanMgrDlg, CDialog)
 
 CScanMgrDlg::CScanMgrDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CScanMgrDlg::IDD, pParent)
-	, m_pScanDlg(NULL), m_pDataCheckDlg(NULL), m_pScanRecordDlg(NULL)
+	, m_pScanDlg(NULL), m_pWaitDownloadDlg(NULL)
+	, m_strExamName(_T("")), m_nStatusSize(30)
 {
 
 }
@@ -26,6 +27,8 @@ CScanMgrDlg::~CScanMgrDlg()
 void CScanMgrDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
+	DDX_Text(pDX, IDC_STATIC_ExamName, m_strExamName);
+	DDX_Control(pDX, IDC_COMBO_Subject, m_comboSubject);
 }
 
 
@@ -33,9 +36,12 @@ BOOL CScanMgrDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	InitData();
 	InitChildDlg();
 	InitCtrlPosition();
 	m_scanThread.CreateThread();
+
+	SetFontSize(m_nStatusSize);
 
 	return TRUE;
 }
@@ -53,11 +59,10 @@ BOOL CScanMgrDlg::PreTranslateMessage(MSG* pMsg)
 }
 
 BEGIN_MESSAGE_MAP(CScanMgrDlg, CDialog)
-	ON_BN_CLICKED(IDC_BTN_Scan, &CScanMgrDlg::OnBnClickedBtnScan)
 	ON_WM_DESTROY()
 	ON_WM_SIZE()
-	ON_BN_CLICKED(IDC_BTN_DataCheck, &CScanMgrDlg::OnBnClickedBtnDatacheck)
-	ON_BN_CLICKED(IDC_BTN_ScanRecord, &CScanMgrDlg::OnBnClickedBtnScanrecord)
+	ON_WM_CTLCOLOR()
+	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 
@@ -83,83 +88,119 @@ void CScanMgrDlg::InitCtrlPosition()
 
 	int nCurrLeft = nLeftGap;
 	int nCurrTop = 20;
-	int nBtnW = cx * 0.1;
-	int nBtnH = 50;
-	if (nBtnW < 100) nBtnW = 100;
-	if (nBtnW > 200) nBtnW = 200;
-	if (GetDlgItem(IDC_BTN_Scan)->GetSafeHwnd())
+	int nStaticW = (cx - nLeftGap - nRightGap) * 0.1;
+	if (nStaticW < 50) nStaticW = 50;
+	if (nStaticW > 70) nStaticW = 70;
+	int nH = nTopGap - nCurrTop;
+	if (GetDlgItem(IDC_STATIC_ExamName)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_BTN_Scan)->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
-		nCurrLeft += (nBtnW + nGap);
+		int nRightTmpGap = 100;	//最右边临时空出一块
+		int nW = cx - nLeftGap - nRightGap - nRightTmpGap - nStaticW - nGap - nStaticW - nGap * 3;
+		GetDlgItem(IDC_STATIC_ExamName)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
+		nCurrLeft += (nW + nGap * 3);
 	}
-	if (GetDlgItem(IDC_BTN_DataCheck)->GetSafeHwnd())
+	if (GetDlgItem(IDC_STATIC_CurrSubject)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_BTN_DataCheck)->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
-		nCurrLeft += (nBtnW + nGap);
+		GetDlgItem(IDC_STATIC_CurrSubject)->MoveWindow(nCurrLeft, nCurrTop, nStaticW, nH);
+		nCurrLeft += (nStaticW + nGap);
 	}
-	if (GetDlgItem(IDC_BTN_ScanRecord)->GetSafeHwnd())
+	if (GetDlgItem(IDC_COMBO_Subject)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_BTN_ScanRecord)->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
-		nCurrLeft += (nBtnW + nGap);
+		int nCommboH = 10;
+		nCurrTop += (nH / 2 - nCommboH);
+		GetDlgItem(IDC_COMBO_Subject)->MoveWindow(nCurrLeft, nCurrTop, nStaticW, nH);
+		nCurrLeft += (nStaticW + nGap);
 	}
 
 	//child dlg
 	if (m_pScanDlg && m_pScanDlg->GetSafeHwnd())
 		m_pScanDlg->MoveWindow(m_rtChildDlg);
-	if (m_pDataCheckDlg && m_pDataCheckDlg->GetSafeHwnd())
-		m_pDataCheckDlg->MoveWindow(m_rtChildDlg);
-	if (m_pScanRecordDlg && m_pScanRecordDlg->GetSafeHwnd())
-		m_pScanRecordDlg->MoveWindow(m_rtChildDlg);
+	if (m_pWaitDownloadDlg && m_pWaitDownloadDlg->GetSafeHwnd())
+		m_pWaitDownloadDlg->MoveWindow(m_rtChildDlg);
 	Invalidate();
 }
 
 
 void CScanMgrDlg::InitChildDlg()
 {
+	m_pWaitDownloadDlg = new CWaitDownloadDlg(this);
+	m_pWaitDownloadDlg->Create(CWaitDownloadDlg::IDD, this);
+	m_pWaitDownloadDlg->ShowWindow(SW_SHOW);
+
 	m_pScanDlg = new CScanDlg(this);
 	m_pScanDlg->Create(CScanDlg::IDD, this);
-	m_pScanDlg->ShowWindow(SW_SHOW);
+	m_pScanDlg->ShowWindow(SW_HIDE);
 
-	m_pDataCheckDlg = new CDataCheckDlg(this);
-	m_pDataCheckDlg->Create(CDataCheckDlg::IDD, this);
-	m_pDataCheckDlg->ShowWindow(SW_HIDE);
 
-	m_pScanRecordDlg = new CScanRecordDlg(this);
-	m_pScanRecordDlg->Create(CScanRecordDlg::IDD, this);
-	m_pScanRecordDlg->ShowWindow(SW_HIDE);
 }
 
 void CScanMgrDlg::ReleaseDlg()
 {
+	if (m_pWaitDownloadDlg)
+	{
+		m_pWaitDownloadDlg->DestroyWindow();
+		SAFE_RELEASE(m_pWaitDownloadDlg);
+	}
 	if (m_pScanDlg)
 	{
 		m_pScanDlg->DestroyWindow();
 		SAFE_RELEASE(m_pScanDlg);
 	}
-	if (m_pDataCheckDlg)
-	{
-		m_pDataCheckDlg->DestroyWindow();
-		SAFE_RELEASE(m_pDataCheckDlg);
-	}
-	if (m_pScanRecordDlg)
-	{
-		m_pScanRecordDlg->DestroyWindow();
-		SAFE_RELEASE(m_pScanRecordDlg);
-	}
 }
 
-void CScanMgrDlg::OnBnClickedBtnScan()
+void CScanMgrDlg::SetFontSize(int nSize)
 {
-	m_pScanDlg->ShowWindow(SW_SHOW);
-	m_pDataCheckDlg->ShowWindow(SW_HIDE);
-	m_pScanRecordDlg->ShowWindow(SW_HIDE);
+	m_fontStatus.DeleteObject();
+	m_fontStatus.CreateFont(nSize, 0, 0, 0,
+							FW_BOLD, FALSE, FALSE, 0,
+							DEFAULT_CHARSET,
+							OUT_DEFAULT_PRECIS,
+							CLIP_DEFAULT_PRECIS,
+							DEFAULT_QUALITY,
+							DEFAULT_PITCH | FF_SWISS,
+							_T("Arial"));
+	GetDlgItem(IDC_STATIC_ExamName)->SetFont(&m_fontStatus);
+
+	CFont fontStatus;
+	fontStatus.CreateFont(nSize - 5, 0, 0, 0,
+							FW_BOLD, FALSE, FALSE, 0,
+							DEFAULT_CHARSET,
+							OUT_DEFAULT_PRECIS,
+							CLIP_DEFAULT_PRECIS,
+							DEFAULT_QUALITY,
+							DEFAULT_PITCH | FF_SWISS,
+							_T("Arial"));
+	GetDlgItem(IDC_STATIC_CurrSubject)->SetFont(&fontStatus);
 }
 
-void CScanMgrDlg::OnBnClickedBtnDatacheck()
+void CScanMgrDlg::DrawBorder(CDC *pDC)
 {
-	m_pScanDlg->ShowWindow(SW_HIDE);
-	m_pDataCheckDlg->ShowWindow(SW_SHOW);
-	m_pScanRecordDlg->ShowWindow(SW_HIDE);
+	CPen *pOldPen = NULL;
+	CPen pPen;
+	CRect rcClient(0, 0, 0, 0);
+	GetClientRect(&rcClient);
+	pPen.CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
+
+	pDC->SelectStockObject(NULL_BRUSH);
+	pOldPen = pDC->SelectObject(&pPen);
+	pDC->Rectangle(&rcClient);
+	pDC->SelectObject(pOldPen);
+	pPen.Detach();
+	ReleaseDC(pDC);
+}
+
+void CScanMgrDlg::ShowChildDlg(int n)
+{
+	if (n == 1)
+	{
+		m_pWaitDownloadDlg->ShowWindow(SW_SHOW);
+		m_pScanDlg->ShowWindow(SW_HIDE);
+	}
+	else if (n == 2)
+	{
+		m_pWaitDownloadDlg->ShowWindow(SW_HIDE);
+		m_pScanDlg->ShowWindow(SW_SHOW);
+	}
 }
 
 void CScanMgrDlg::OnDestroy()
@@ -169,15 +210,50 @@ void CScanMgrDlg::OnDestroy()
 	ReleaseDlg();
 }
 
-
 void CScanMgrDlg::OnSize(UINT nType, int cx, int cy)
 {
 	CDialog::OnSize(nType, cx, cy);
 
 	InitCtrlPosition();
 }
+
+void CScanMgrDlg::InitData()
+{
+	USES_CONVERSION;
+	m_comboSubject.ResetContent();
+	if (_pCurrExam_ && _pCurrSub_)
+	{
+		m_strExamName = A2T(_pCurrExam_->strExamName.c_str());
+
+		int nShowSubject = -1;
+		for (auto pSubject : _pCurrExam_->lSubjects)
+		{
+			int i = 0;
+			m_comboSubject.AddString(A2T(pSubject->strSubjName.c_str()));
+			if (_pCurrSub_ == pSubject)
+				nShowSubject = i;
+			i++;
+		}
+		m_comboSubject.SetCurSel(nShowSubject);
+	}
+	UpdateData(FALSE);
+}
+
+
+void CScanMgrDlg::ShowDlg()
+{
+	ShowChildDlg(1);
+	SearchModel();		//加载模板
+	if (DownLoadModel())			//下载模块放到等待窗口中处理,处理完毕就隐藏
+	{
+		ShowChildDlg(2);
+		UpdateInfo();
+	}
+}
+
 void CScanMgrDlg::UpdateInfo()
 {
+	InitData();
 	if (m_pScanDlg)	m_pScanDlg->UpdateInfo();
 }
 
@@ -256,9 +332,9 @@ void CScanMgrDlg::SearchModel()
 	}
 }
 
-void CScanMgrDlg::DownLoadModel()
+bool CScanMgrDlg::DownLoadModel()
 {
-	if (!_pCurrExam_ || !_pCurrSub_) return;
+	if (!_pCurrExam_ || !_pCurrSub_) return false;
 
 	g_nDownLoadModelStatus = 0;
 
@@ -296,14 +372,17 @@ void CScanMgrDlg::DownLoadModel()
 
 
 	g_eDownLoadModel.wait();
+	bool bResult = false;
 	if (g_nDownLoadModelStatus == 2)
 	{
 		//模板下载完成
 		strLog.append(" ==>此模板下载成功.");
+		bResult = true;
 	}
 	else if (g_nDownLoadModelStatus == 3)
 	{
 		strLog.append(" ==>此模板本地以及存在且无修改，不需要重新下载.");
+		bResult = true;
 	}
 	else if (g_nDownLoadModelStatus == -1)
 	{
@@ -314,11 +393,34 @@ void CScanMgrDlg::DownLoadModel()
 		strLog.append(" ==>服务器读取文件失败.");
 	}
 	g_pLogger->information(strLog);
+	return bResult;
 }
 
-void CScanMgrDlg::OnBnClickedBtnScanrecord()
+
+HBRUSH CScanMgrDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
-	m_pScanDlg->ShowWindow(SW_HIDE);
-	m_pDataCheckDlg->ShowWindow(SW_HIDE);
-	m_pScanRecordDlg->ShowWindow(SW_SHOW);
+	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+
+	UINT CurID = pWnd->GetDlgCtrlID();
+	if (CurID == IDC_STATIC_ExamName || CurID == IDC_STATIC_CurrSubject || CurID == IDC_COMBO_Subject)
+	{
+		//		pDC->SetBkColor(RGB(255, 255, 255));
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
+	return hbr;
+}
+
+
+BOOL CScanMgrDlg::OnEraseBkgnd(CDC* pDC)
+{
+	CRect rcClient;
+	GetClientRect(&rcClient);
+
+	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 222, 250
+	DrawBorder(pDC);
+
+//	ReleaseDC(pDC);
+
+	return CDialog::OnEraseBkgnd(pDC);
 }
