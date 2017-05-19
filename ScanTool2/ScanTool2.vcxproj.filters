@@ -55,26 +55,23 @@
     <Filter Include="扫描界面窗口">
       <UniqueIdentifier>{6ae26692-6328-4d45-8508-ad3df034c137}</UniqueIdentifier>
     </Filter>
-    <Filter Include="扫描界面窗口\扫描操作窗口">
-      <UniqueIdentifier>{e77a3cbe-c631-4648-8916-1247a7eab655}</UniqueIdentifier>
-    </Filter>
     <Filter Include="扫描界面窗口\TWAIN">
       <UniqueIdentifier>{a693d912-16d6-4fe9-a98c-2af8499c9354}</UniqueIdentifier>
     </Filter>
     <Filter Include="线程\扫描">
       <UniqueIdentifier>{69996135-b9e2-4e01-84bb-775d7c95d8d0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="扫描界面窗口\数据校对窗口">
-      <UniqueIdentifier>{7fec711a-008e-4c35-810b-9c66533fcbcf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="扫描界面窗口\扫描记录窗口">
-      <UniqueIdentifier>{640e6bcf-dd8d-4d0c-b1e6-06deb1a92301}</UniqueIdentifier>
-    </Filter>
     <Filter Include="线程\识别">
       <UniqueIdentifier>{193e3ee1-a31d-4eaa-b651-557e4369a808}</UniqueIdentifier>
     </Filter>
     <Filter Include="dump">
       <UniqueIdentifier>{763ac6fb-f4d1-46ea-af03-790ab1d36bed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描界面窗口\扫描过程窗口">
+      <UniqueIdentifier>{640e6bcf-dd8d-4d0c-b1e6-06deb1a92301}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描界面窗口\扫描开始窗口">
+      <UniqueIdentifier>{e77a3cbe-c631-4648-8916-1247a7eab655}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -145,13 +142,7 @@
       <Filter>扫描界面窗口</Filter>
     </ClInclude>
     <ClInclude Include="ScanDlg.h">
-      <Filter>扫描界面窗口\扫描操作窗口</Filter>
-    </ClInclude>
-    <ClInclude Include="DataCheckDlg.h">
-      <Filter>扫描界面窗口\数据校对窗口</Filter>
-    </ClInclude>
-    <ClInclude Include="ScanRecordDlg.h">
-      <Filter>扫描界面窗口\扫描记录窗口</Filter>
+      <Filter>扫描界面窗口\扫描开始窗口</Filter>
     </ClInclude>
     <ClInclude Include="..\..\common\Net_Cmd_Protocol.h">
       <Filter>common</Filter>
@@ -185,6 +176,9 @@
     </ClInclude>
     <ClInclude Include="minidump.h">
       <Filter>dump</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanProcessDlg.h">
+      <Filter>扫描界面窗口\扫描过程窗口</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -243,13 +237,7 @@
       <Filter>扫描界面窗口</Filter>
     </ClCompile>
     <ClCompile Include="ScanDlg.cpp">
-      <Filter>扫描界面窗口\扫描操作窗口</Filter>
-    </ClCompile>
-    <ClCompile Include="DataCheckDlg.cpp">
-      <Filter>扫描界面窗口\数据校对窗口</Filter>
-    </ClCompile>
-    <ClCompile Include="ScanRecordDlg.cpp">
-      <Filter>扫描界面窗口\扫描记录窗口</Filter>
+      <Filter>扫描界面窗口\扫描开始窗口</Filter>
     </ClCompile>
     <ClCompile Include="RecognizeThread.cpp">
       <Filter>线程\识别</Filter>
@@ -277,6 +265,9 @@
     </ClCompile>
     <ClCompile Include="StudentMgr.cpp">
       <Filter>报名库管理</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanProcessDlg.cpp">
+      <Filter>扫描界面窗口\扫描过程窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

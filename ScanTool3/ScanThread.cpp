@@ -5,7 +5,7 @@
 #include "ScanTool3.h"
 #include "ScanThread.h"
 
-#include "ScanDlg.h"
+#include "ScanMgrDlg.h"
 
 #include "DSMInterface.h"
 #include "TwainString.h"
@@ -113,10 +113,12 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	ST_SCANCTRL stScanCtrl = *pScanCtrl;
 	delete pScanCtrl;
 	pScanCtrl = NULL;
-
+	
+	_nScanStatus_ = 1;
 	connectDSM();
 	if (m_DSMState < 3)
 	{
+		_nScanStatus_ = -1;
 		exit();
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
 		pResult->bScanOK = false;
@@ -133,6 +135,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	loadDS(nId);
 	if (m_pDataSource == 0)
 	{
+		_nScanStatus_ = -2;
 		exit();
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
 		pResult->bScanOK = false;
@@ -179,6 +182,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 //	hWnd = GetDesktopWindow();
 	if (!enableDS(hWnd, stScanCtrl.bShowUI))
 	{
+		_nScanStatus_ = -3;
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
 		pResult->bScanOK = false;
 		pResult->strResult = "É¨ÃèÊ§°Ü";
@@ -265,6 +269,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 
 	if (m_bStop)
 	{
+		_nScanStatus_ = 3;
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
 		pResult->bScanOK = false;
 		pResult->nState = nScanResult;
@@ -283,6 +288,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		}
 		else
 		{
+			_nScanStatus_ = 2;
 			pResult->bScanOK = true;
 			pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
 		}
@@ -781,7 +787,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 		pResult->bScanOK = true;
 		pResult->strResult = "»ñµÃÍ¼Ïñ";
 		pResult->strResult.append(szPicName);
-		CScanDlg* pDlg = (CScanDlg*)m_pDlg;
+		CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
 		pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
 	}
 	catch (cv::Exception& exc)
@@ -830,6 +836,7 @@ std::string CScanThread::ErrCode2Str(int nErr)
 			strResult = "Î´Öª´íÎó";
 			break;
 	}
+	_nScanStatus_ = nErr;
 	return strResult;
 }
 

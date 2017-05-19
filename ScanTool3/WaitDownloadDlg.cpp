@@ -6,6 +6,10 @@
 #include "WaitDownloadDlg.h"
 #include "afxdialogex.h"
 
+#include "Net_Cmd_Protocol.h"
+#include "ZipObj.h"
+#include "ScanMgrDlg.h"
+#include "ScanTool3Dlg.h"
 
 // CWaitDownloadDlg ¶Ô»°¿ò
 
@@ -124,3 +128,5 @@ BOOL CWaitDownloadDlg::OnEraseBkgnd(CDC* pDC)
 
 	return CDialog::OnEraseBkgnd(pDC);
 }
+
+

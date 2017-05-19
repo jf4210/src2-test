@@ -15,7 +15,7 @@ IMPLEMENT_DYNAMIC(CScanDlg, CDialog)
 
 CScanDlg::CScanDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CScanDlg::IDD, pParent)
-	, m_nStatusSize(20), _pTWAINApp(NULL), m_nCurrentScanCount(0), m_nModelPicNums(1)
+	, m_nStatusSize(18), _pTWAINApp(NULL), m_nCurrentScanCount(0), m_nModelPicNums(1)
 {
 
 }
@@ -27,8 +27,8 @@ CScanDlg::~CScanDlg()
 void CScanDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	DDX_Text(pDX, IDC_STATIC_ExamName_Data, m_strExamName);
-	DDX_Text(pDX, IDC_STATIC_Subject_Data, m_strSubjectName);
+// 	DDX_Text(pDX, IDC_STATIC_ExamName_Data, m_strExamName);
+// 	DDX_Text(pDX, IDC_STATIC_Subject_Data, m_strSubjectName);
 	DDX_Control(pDX, IDC_COMBO_Scanner, m_comboScanner);
 	DDX_Control(pDX, IDC_COMBO_ScannerType, m_comboDuplex);
 }
@@ -49,11 +49,10 @@ BOOL CScanDlg::OnInitDialog()
 
 BEGIN_MESSAGE_MAP(CScanDlg, CDialog)
 	ON_WM_SIZE()
-	ON_BN_CLICKED(IDC_BTN_ChangeExam, &CScanDlg::OnBnClickedBtnChangeexam)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BTN_Scan, &CScanDlg::OnBnClickedBtnScan)
-	ON_MESSAGE(MSG_SCAN_DONE, &CScanDlg::ScanDone)
-	ON_MESSAGE(MSG_SCAN_ERR, &CScanDlg::ScanErr)
+	ON_WM_CTLCOLOR()
+	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 
@@ -104,38 +103,38 @@ void CScanDlg::InitCtrlPosition()
 	int nCurrTop = nTopGap;
 	int nStaticW = 60;
 	int nStaticH = 30;
-	if (GetDlgItem(IDC_STATIC_ExamName)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_STATIC_ExamName)->MoveWindow(nCurrLeft, nCurrTop, nStaticW, nStaticH);
-		nCurrLeft += (nStaticW + nGap);
-	}
-
-	//从右往左排列
-	nCurrLeft = cx - nRightGap - (cx - nLeftGap - nRightGap) * 0.1 - nStaticW;
-	nCurrTop = nTopGap;
-	if (GetDlgItem(IDC_BTN_ChangeExam)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_BTN_ChangeExam)->MoveWindow(nCurrLeft, nCurrTop, nStaticW, nStaticH);
-		int nTmpGap = (cx - nLeftGap - nRightGap) * 0.1;
-		nCurrLeft -= (nStaticW * 2 + nGap + nTmpGap);
-	}
-	if (GetDlgItem(IDC_STATIC_Subject_Data)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_STATIC_Subject_Data)->MoveWindow(nCurrLeft, nCurrTop, nStaticW * 2, nStaticH);
-		nCurrLeft -= (nStaticW + nGap);
-	}
-	if (GetDlgItem(IDC_STATIC_Subject)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_STATIC_Subject)->MoveWindow(nCurrLeft, nCurrTop, nStaticW, nStaticH);
-		nCurrLeft -= (nStaticW + nGap);
-	}
-	int nStaticExamW = nCurrLeft - nLeftGap - nStaticW - nGap;	//考试名称控件的宽度
-	nCurrLeft = nBaseLeft + nStaticW + nGap;
-	if (GetDlgItem(IDC_STATIC_ExamName_Data)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_STATIC_ExamName_Data)->MoveWindow(nCurrLeft, nCurrTop, nStaticExamW, nStaticH);
-	}
-	nCurrTop += (nStaticH + nGap);
+// 	if (GetDlgItem(IDC_STATIC_ExamName)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_STATIC_ExamName)->MoveWindow(nCurrLeft, nCurrTop, nStaticW, nStaticH);
+// 		nCurrLeft += (nStaticW + nGap);
+// 	}
+// 
+// 	//从右往左排列
+// 	nCurrLeft = cx - nRightGap - (cx - nLeftGap - nRightGap) * 0.1 - nStaticW;
+// 	nCurrTop = nTopGap;
+// 	if (GetDlgItem(IDC_BTN_ChangeExam)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_BTN_ChangeExam)->MoveWindow(nCurrLeft, nCurrTop, nStaticW, nStaticH);
+// 		int nTmpGap = (cx - nLeftGap - nRightGap) * 0.1;
+// 		nCurrLeft -= (nStaticW * 2 + nGap + nTmpGap);
+// 	}
+// 	if (GetDlgItem(IDC_STATIC_Subject_Data)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_STATIC_Subject_Data)->MoveWindow(nCurrLeft, nCurrTop, nStaticW * 2, nStaticH);
+// 		nCurrLeft -= (nStaticW + nGap);
+// 	}
+// 	if (GetDlgItem(IDC_STATIC_Subject)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_STATIC_Subject)->MoveWindow(nCurrLeft, nCurrTop, nStaticW, nStaticH);
+// 		nCurrLeft -= (nStaticW + nGap);
+// 	}
+// 	int nStaticExamW = nCurrLeft - nLeftGap - nStaticW - nGap;	//考试名称控件的宽度
+// 	nCurrLeft = nBaseLeft + nStaticW + nGap;
+// 	if (GetDlgItem(IDC_STATIC_ExamName_Data)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_STATIC_ExamName_Data)->MoveWindow(nCurrLeft, nCurrTop, nStaticExamW, nStaticH);
+// 	}
+// 	nCurrTop += (nStaticH + nGap);
 
 	//中间控件
 	int nTmp = cy - nCurrTop - nBottomGap; 
@@ -147,8 +146,8 @@ void CScanDlg::InitCtrlPosition()
 	nCurrLeft = (cx - nLeftGap - nRightGap) * 0.4;
 	if (GetDlgItem(IDC_STATIC_Scaner)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_STATIC_Scaner)->MoveWindow(nCurrLeft, nCurrTop, 80, nStaticH);
-		nCurrLeft += (80 + nGap * 3);
+		GetDlgItem(IDC_STATIC_Scaner)->MoveWindow(nCurrLeft, nCurrTop, 100, nStaticH);
+		nCurrLeft += (100 + nGap * 3);
 	}
 	if (GetDlgItem(IDC_COMBO_Scanner)->GetSafeHwnd())
 	{
@@ -162,8 +161,8 @@ void CScanDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_STATIC_ScanType)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_STATIC_ScanType)->MoveWindow(nCurrLeft, nCurrTop, 80, nStaticH);
-		nCurrLeft += (80 + nGap * 3);
+		GetDlgItem(IDC_STATIC_ScanType)->MoveWindow(nCurrLeft, nCurrTop, 100, nStaticH);
+		nCurrLeft += (100 + nGap * 3);
 	}
 	if (GetDlgItem(IDC_COMBO_ScannerType)->GetSafeHwnd())
 	{
@@ -205,7 +204,8 @@ void CScanDlg::SetFontSize(int nSize)
 							DEFAULT_QUALITY,
 							DEFAULT_PITCH | FF_SWISS,
 							_T("Arial"));
-	GetDlgItem(IDC_STATIC_ExamName_Data)->SetFont(&m_fontStatus);
+	GetDlgItem(IDC_STATIC_Scaner)->SetFont(&m_fontStatus);
+	GetDlgItem(IDC_STATIC_ScanType)->SetFont(&m_fontStatus);
 }
 
 void CScanDlg::OnSize(UINT nType, int cx, int cy)
@@ -213,13 +213,6 @@ void CScanDlg::OnSize(UINT nType, int cx, int cy)
 	CDialog::OnSize(nType, cx, cy);
 
 	InitCtrlPosition();
-}
-
-
-void CScanDlg::OnBnClickedBtnChangeexam()
-{
-	CScanTool3Dlg* pDlg = (CScanTool3Dlg*)AfxGetMainWnd();
-	pDlg->SwitchDlg(0);
 }
 
 void CScanDlg::InitScanner()
@@ -280,11 +273,7 @@ void CScanDlg::InitScanner()
 void CScanDlg::UpdateInfo()
 {
 	USES_CONVERSION;
-	if (_pCurrExam_ && _pCurrSub_)
-	{
-		m_strExamName		= A2T(_pCurrExam_->strExamName.c_str());
-		m_strSubjectName	= A2T((_pCurrExam_->strGradeName + _pCurrSub_->strSubjName).c_str());
-	}
+
 	InitUI();
 	UpdateData(FALSE);
 	Invalidate();
@@ -382,6 +371,7 @@ void CScanDlg::OnBnClickedBtnScan()
 	
 	if (NULL != (pID = _pTWAINApp->getDataSource(index)))
 	{
+		_nScanStatus_ = 0;
 		pST_SCANCTRL pScanCtrl = new ST_SCANCTRL();
 		pScanCtrl->nScannerId = pID->Id;
 		pScanCtrl->nScanCount = nNum;
@@ -389,12 +379,14 @@ void CScanDlg::OnBnClickedBtnScan()
 		pScanCtrl->nScanPixelType = nScanType;
 		pScanCtrl->nScanResolution = nScanDpi;
 		pScanCtrl->nScanSize = nSize;
-		pScanCtrl->bShowUI = true;	//bShowScanSrcUI;
+		pScanCtrl->bShowUI = bShowScanSrcUI;	//bShowScanSrcUI;
 
 		CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
 		pDlg->m_scanThread.setNotifyDlg(this);
 		pDlg->m_scanThread.setModelInfo(m_nModelPicNums, m_strCurrPicSavePath);
 		pDlg->m_scanThread.PostThreadMessage(MSG_START_SCAN, pID->Id, (LPARAM)pScanCtrl);
+
+		pDlg->ShowChildDlg(3);
 	}
 
 	char szRet[20] = { 0 };
@@ -417,27 +409,28 @@ BOOL CScanDlg::PreTranslateMessage(MSG* pMsg)
 	return CDialog::PreTranslateMessage(pMsg);
 }
 
-LRESULT CScanDlg::ScanDone(WPARAM wParam, LPARAM lParam)
+HBRUSH CScanDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
-	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
-	if (pResult)
-	{
-		TRACE("扫描完成消息。%s\n", pResult->strResult.c_str());
+	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
-		delete pResult;
-		pResult = NULL;
+	UINT CurID = pWnd->GetDlgCtrlID();
+	if (CurID == IDC_STATIC_Scaner || CurID == IDC_STATIC_ScanType)
+	{
+		//		pDC->SetBkColor(RGB(255, 255, 255));
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}
-	return 1;
+	return hbr;
 }
 
-LRESULT CScanDlg::ScanErr(WPARAM wParam, LPARAM lParam)
+
+BOOL CScanDlg::OnEraseBkgnd(CDC* pDC)
 {
-	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
-	if (pResult)
-	{
-		TRACE("扫描错误。%s\n", pResult->strResult.c_str());
-		delete pResult;
-		pResult = NULL;
-	}
-	return 1;
+	CRect rcClient;
+	GetClientRect(&rcClient);
+
+	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 222, 250
+	ReleaseDC(pDC);
+
+	return CDialog::OnEraseBkgnd(pDC);
 }

@@ -52,3 +52,11 @@
 #endif
 
 
+
+#define ENABLE_XLISTCTRL_TRACE
+
+#ifdef ENABLE_XLISTCTRL_TRACE
+#define XLISTCTRL_TRACE TRACE
+#else
+#define XLISTCTRL_TRACE __noop
+#endif

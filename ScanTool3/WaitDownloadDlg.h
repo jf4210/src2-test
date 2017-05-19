@@ -1,5 +1,5 @@
 #pragma once
-
+#include "global.h"
 
 // CWaitDownloadDlg 对话框
 
@@ -17,6 +17,7 @@ public:
 private:
 	void	InitCtrlPosition();
 	void	SetFontSize(int nSize);
+
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 

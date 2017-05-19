@@ -8,13 +8,14 @@
 
 #include "Net_Cmd_Protocol.h"
 #include "ZipObj.h"
+#include "ScanTool3Dlg.h"
 // CScanMgrDlg 对话框
 
 IMPLEMENT_DYNAMIC(CScanMgrDlg, CDialog)
 
 CScanMgrDlg::CScanMgrDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CScanMgrDlg::IDD, pParent)
-	, m_pScanDlg(NULL), m_pWaitDownloadDlg(NULL)
+	, m_pScanDlg(NULL), m_pWaitDownloadDlg(NULL), m_pScanProcessDlg(NULL)
 	, m_strExamName(_T("")), m_nStatusSize(30)
 {
 
@@ -42,6 +43,7 @@ BOOL CScanMgrDlg::OnInitDialog()
 	m_scanThread.CreateThread();
 
 	SetFontSize(m_nStatusSize);
+	m_comboSubject.AdjustDroppedWidth();
 
 	return TRUE;
 }
@@ -63,6 +65,9 @@ BEGIN_MESSAGE_MAP(CScanMgrDlg, CDialog)
 	ON_WM_SIZE()
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
+	ON_BN_CLICKED(IDC_BTN_ChangeExam, &CScanMgrDlg::OnBnClickedBtnChangeexam)
+	ON_MESSAGE(MSG_SCAN_DONE, &CScanMgrDlg::ScanDone)
+	ON_MESSAGE(MSG_SCAN_ERR, &CScanMgrDlg::ScanErr)
 END_MESSAGE_MAP()
 
 
@@ -89,13 +94,18 @@ void CScanMgrDlg::InitCtrlPosition()
 	int nCurrLeft = nLeftGap;
 	int nCurrTop = 20;
 	int nStaticW = (cx - nLeftGap - nRightGap) * 0.1;
-	if (nStaticW < 50) nStaticW = 50;
+	if (nStaticW < 60) nStaticW = 60;
 	if (nStaticW > 70) nStaticW = 70;
 	int nH = nTopGap - nCurrTop;
 	if (GetDlgItem(IDC_STATIC_ExamName)->GetSafeHwnd())
 	{
 		int nRightTmpGap = 100;	//最右边临时空出一块
-		int nW = cx - nLeftGap - nRightGap - nRightTmpGap - nStaticW - nGap - nStaticW - nGap * 3;
+
+		int nCommboW = nStaticW * 1.5;
+		if (nCommboW < 100) nCommboW = 100;
+		if (nCommboW > 110) nCommboW = 110;
+
+		int nW = cx - nLeftGap - nRightGap - nStaticW - nGap - nRightTmpGap - nCommboW - nGap - nStaticW - nGap * 3;
 		GetDlgItem(IDC_STATIC_ExamName)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
 		nCurrLeft += (nW + nGap * 3);
 	}
@@ -108,15 +118,26 @@ void CScanMgrDlg::InitCtrlPosition()
 	{
 		int nCommboH = 10;
 		nCurrTop += (nH / 2 - nCommboH);
-		GetDlgItem(IDC_COMBO_Subject)->MoveWindow(nCurrLeft, nCurrTop, nStaticW, nH);
+		int nCommboW = nStaticW * 1.5;
+		if (nCommboW < 100) nCommboW = 100;
+		if (nCommboW > 110) nCommboW = 110;
+		GetDlgItem(IDC_COMBO_Subject)->MoveWindow(nCurrLeft, nCurrTop, nCommboW, nH);
+		nCurrLeft += (nCommboW + nGap);
+	}
+	if (GetDlgItem(IDC_BTN_ChangeExam)->GetSafeHwnd())
+	{
+		int nBtnH = 25;
+		GetDlgItem(IDC_BTN_ChangeExam)->MoveWindow(nCurrLeft, nCurrTop, nStaticW, nBtnH);
 		nCurrLeft += (nStaticW + nGap);
 	}
 
 	//child dlg
-	if (m_pScanDlg && m_pScanDlg->GetSafeHwnd())
-		m_pScanDlg->MoveWindow(m_rtChildDlg);
 	if (m_pWaitDownloadDlg && m_pWaitDownloadDlg->GetSafeHwnd())
 		m_pWaitDownloadDlg->MoveWindow(m_rtChildDlg);
+	if (m_pScanDlg && m_pScanDlg->GetSafeHwnd())
+		m_pScanDlg->MoveWindow(m_rtChildDlg);
+	if (m_pScanProcessDlg && m_pScanProcessDlg->GetSafeHwnd())
+		m_pScanProcessDlg->MoveWindow(m_rtChildDlg);
 	Invalidate();
 }
 
@@ -131,7 +152,9 @@ void CScanMgrDlg::InitChildDlg()
 	m_pScanDlg->Create(CScanDlg::IDD, this);
 	m_pScanDlg->ShowWindow(SW_HIDE);
 
-
+	m_pScanProcessDlg = new CScanProcessDlg(this);
+	m_pScanProcessDlg->Create(CScanProcessDlg::IDD, this);
+	m_pScanProcessDlg->ShowWindow(SW_HIDE);
 }
 
 void CScanMgrDlg::ReleaseDlg()
@@ -145,6 +168,11 @@ void CScanMgrDlg::ReleaseDlg()
 	{
 		m_pScanDlg->DestroyWindow();
 		SAFE_RELEASE(m_pScanDlg);
+	}
+	if (m_pScanProcessDlg)
+	{
+		m_pScanProcessDlg->DestroyWindow();
+		SAFE_RELEASE(m_pScanProcessDlg);
 	}
 }
 
@@ -191,15 +219,31 @@ void CScanMgrDlg::DrawBorder(CDC *pDC)
 
 void CScanMgrDlg::ShowChildDlg(int n)
 {
+	InitData();
 	if (n == 1)
 	{
 		m_pWaitDownloadDlg->ShowWindow(SW_SHOW);
 		m_pScanDlg->ShowWindow(SW_HIDE);
+		m_pScanProcessDlg->ShowWindow(SW_HIDE);
+		if (!DownLoadModel())
+		{
+			AfxMessageBox(_T("考试信息为空"));
+			//跳到考试管理页面
+			CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
+			pDlg->SwitchDlg(0);
+		}
 	}
 	else if (n == 2)
 	{
 		m_pWaitDownloadDlg->ShowWindow(SW_HIDE);
 		m_pScanDlg->ShowWindow(SW_SHOW);
+		m_pScanProcessDlg->ShowWindow(SW_HIDE);
+	}
+	else if (n == 3)
+	{
+		m_pWaitDownloadDlg->ShowWindow(SW_HIDE);
+		m_pScanDlg->ShowWindow(SW_HIDE);
+		m_pScanProcessDlg->ShowWindow(SW_SHOW);
 	}
 }
 
@@ -225,10 +269,10 @@ void CScanMgrDlg::InitData()
 	{
 		m_strExamName = A2T(_pCurrExam_->strExamName.c_str());
 
+		int i = 0;
 		int nShowSubject = -1;
 		for (auto pSubject : _pCurrExam_->lSubjects)
 		{
-			int i = 0;
 			m_comboSubject.AddString(A2T(pSubject->strSubjName.c_str()));
 			if (_pCurrSub_ == pSubject)
 				nShowSubject = i;
@@ -239,28 +283,25 @@ void CScanMgrDlg::InitData()
 	UpdateData(FALSE);
 }
 
-
 void CScanMgrDlg::ShowDlg()
 {
-	ShowChildDlg(1);
-	SearchModel();		//加载模板
-	if (DownLoadModel())			//下载模块放到等待窗口中处理,处理完毕就隐藏
-	{
-		ShowChildDlg(2);
-		UpdateInfo();
-	}
+// 	ShowChildDlg(1);
+// 	SearchModel();		//加载模板
+// 	if (DownLoadModel())			//下载模块放到等待窗口中处理,处理完毕就隐藏
+// 	{
+// 		ShowChildDlg(2);
+// 		UpdateInfo();
+// 	}
 }
 
 void CScanMgrDlg::UpdateInfo()
 {
-	InitData();
 	if (m_pScanDlg)	m_pScanDlg->UpdateInfo();
 }
 
-
-void CScanMgrDlg::SearchModel()
+bool CScanMgrDlg::SearchModel()
 {
-	if (!_pCurrExam_ || !_pCurrSub_) return;
+	if (!_pCurrExam_ || !_pCurrSub_) return false;
 
 	if (_pModel_)
 		SAFE_RELEASE(_pModel_);
@@ -314,6 +355,7 @@ void CScanMgrDlg::SearchModel()
 	}
 #endif
 	
+	bool bResult = false;
 	if (bExist)
 	{
 		CZipObj zipObj;
@@ -325,11 +367,15 @@ void CScanMgrDlg::SearchModel()
 		_pModel_ = LoadModelFile(strModelFilePath);
 		std::string strLog;
 		if (_pModel_)
+		{
 			strLog = Poco::format("模板%s加载成功", strModelName);
+			bResult = true;
+		}
 		else
 			strLog = Poco::format("模板%s加载失败", strModelName);
 		g_pLogger->information(strLog);
 	}
+	return bResult;
 }
 
 bool CScanMgrDlg::DownLoadModel()
@@ -362,6 +408,8 @@ bool CScanMgrDlg::DownLoadModel()
 	strLog.append(stModelInfo.szModelName);
 	g_pLogger->information(strLog);
 
+	g_eDownLoadModel.reset();
+
 	pTCP_TASK pTcpTask = new TCP_TASK;
 	pTcpTask->usCmd = USER_NEED_DOWN_MODEL;
 	pTcpTask->nPkgLen = sizeof(ST_DOWN_MODEL);
@@ -370,44 +418,25 @@ bool CScanMgrDlg::DownLoadModel()
 	g_lTcpTask.push_back(pTcpTask);
 	g_fmTcpTaskLock.unlock();
 
-
-	g_eDownLoadModel.wait();
-	bool bResult = false;
-	if (g_nDownLoadModelStatus == 2)
-	{
-		//模板下载完成
-		strLog.append(" ==>此模板下载成功.");
-		bResult = true;
-	}
-	else if (g_nDownLoadModelStatus == 3)
-	{
-		strLog.append(" ==>此模板本地以及存在且无修改，不需要重新下载.");
-		bResult = true;
-	}
-	else if (g_nDownLoadModelStatus == -1)
-	{
-		strLog.append(" ==>服务器此科目模板不存在.");
-	}
-	else if (g_nDownLoadModelStatus == -2)
-	{
-		strLog.append(" ==>服务器读取文件失败.");
-	}
-	g_pLogger->information(strLog);
-	return bResult;
+	return true;
 }
-
 
 HBRUSH CScanMgrDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
 	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
 	UINT CurID = pWnd->GetDlgCtrlID();
-	if (CurID == IDC_STATIC_ExamName || CurID == IDC_STATIC_CurrSubject || CurID == IDC_COMBO_Subject)
+	if (CurID == IDC_STATIC_ExamName || CurID == IDC_STATIC_CurrSubject)
 	{
 		//		pDC->SetBkColor(RGB(255, 255, 255));
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}
+// 	else if (CurID == IDC_COMBO_Subject)
+// 	{
+// 		pDC->SetBkMode(TRANSPARENT);
+// 		return (HBRUSH)GetStockObject(WHITE_BRUSH);
+// 	}
 	return hbr;
 }
 
@@ -423,4 +452,36 @@ BOOL CScanMgrDlg::OnEraseBkgnd(CDC* pDC)
 //	ReleaseDC(pDC);
 
 	return CDialog::OnEraseBkgnd(pDC);
+}
+
+
+void CScanMgrDlg::OnBnClickedBtnChangeexam()
+{
+	CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
+	pDlg->SwitchDlg(0);
+}
+
+LRESULT CScanMgrDlg::ScanDone(WPARAM wParam, LPARAM lParam)
+{
+	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
+	if (pResult)
+	{
+		TRACE("扫描完成消息。%s\n", pResult->strResult.c_str());
+
+		delete pResult;
+		pResult = NULL;
+	}
+	return 1;
+}
+
+LRESULT CScanMgrDlg::ScanErr(WPARAM wParam, LPARAM lParam)
+{
+	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
+	if (pResult)
+	{
+		TRACE("扫描错误。%s\n", pResult->strResult.c_str());
+		delete pResult;
+		pResult = NULL;
+	}
+	return 1;
 }

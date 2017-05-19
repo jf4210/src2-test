@@ -257,6 +257,14 @@ HBRUSH CComboBoxExt::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 			hbr = (HBRUSH)m_BrushAlert.GetSafeHandle();
 		}
 	}
+	if (nCtlColor == CTLCOLOR_LISTBOX)	//(nCtlColor == CTLCOLOR_LISTBOX)	pWnd->GetParent()->GetDlgCtrlID() == this->GetParent()->GetDlgCtrlID()
+	{
+//		pDC->SetTextColor(RGB(0, 255, 0));
+//		pDC->SetBkColor(RGB(0, 0, 0));
+//		pDC->SetBkMode(TRANSPARENT);
+//		pDC->SetBkColor(RGB(255, 255, 255));
+		return (HBRUSH)GetStockObject(WHITE_BRUSH);
+	}
 
 	// TODO: Return a different brush if the default is not desired
 

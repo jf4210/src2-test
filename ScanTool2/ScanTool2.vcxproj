@@ -119,7 +119,6 @@
     <ClInclude Include="ComboBoxExt.h" />
     <ClInclude Include="ComboBoxExtList.h" />
     <ClInclude Include="CompressThread.h" />
-    <ClInclude Include="DataCheckDlg.h" />
     <ClInclude Include="ExamInfoDlg.h" />
     <ClInclude Include="ExamInfoMgrDlg.h" />
     <ClInclude Include="global.h" />
@@ -131,7 +130,7 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ScanDlg.h" />
     <ClInclude Include="ScanMgrDlg.h" />
-    <ClInclude Include="ScanRecordDlg.h" />
+    <ClInclude Include="ScanProcessDlg.h" />
     <ClInclude Include="ScanThread.h" />
     <ClInclude Include="ScanTool2.h" />
     <ClInclude Include="ScanTool2Dlg.h" />
@@ -166,7 +165,6 @@
     <ClCompile Include="ComboBoxExt.cpp" />
     <ClCompile Include="ComboBoxExtList.cpp" />
     <ClCompile Include="CompressThread.cpp" />
-    <ClCompile Include="DataCheckDlg.cpp" />
     <ClCompile Include="ExamInfoDlg.cpp" />
     <ClCompile Include="ExamInfoMgrDlg.cpp" />
     <ClCompile Include="global.cpp" />
@@ -176,7 +174,7 @@
     <ClCompile Include="RecognizeThread.cpp" />
     <ClCompile Include="ScanDlg.cpp" />
     <ClCompile Include="ScanMgrDlg.cpp" />
-    <ClCompile Include="ScanRecordDlg.cpp" />
+    <ClCompile Include="ScanProcessDlg.cpp" />
     <ClCompile Include="ScanThread.cpp" />
     <ClCompile Include="ScanTool2.cpp" />
     <ClCompile Include="ScanTool2Dlg.cpp" />

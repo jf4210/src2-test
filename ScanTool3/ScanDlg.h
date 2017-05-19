@@ -25,10 +25,6 @@ private:
 	void	SetFontSize(int nSize);
 	
 private:
-	CString		m_strExamName;
-	CString		m_strSubjectName;
-
-
 	TwainApp*		_pTWAINApp;
 	int				m_nCurrentScanCount;	//当前扫描需要扫描试卷数量
 	int				m_nModelPicNums;		//模板图片数，即一份模板有多少图片，对应多少试卷
@@ -45,13 +41,11 @@ protected:
 	virtual BOOL OnInitDialog();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 
-	LRESULT	ScanDone(WPARAM wParam, LPARAM lParam);
-	LRESULT	ScanErr(WPARAM wParam, LPARAM lParam);
-
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnBnClickedBtnChangeexam();
 	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedBtnScan();
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };

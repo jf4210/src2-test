@@ -143,7 +143,9 @@ void CScanTool3Dlg::InitThreads()
 // 	m_SendFileThread->start(*m_pSendFileObj);
 	m_TcpCmdThread = new Poco::Thread;
 	m_pTcpCmdObj = new CTcpClient(g_strCmdIP, g_nCmdPort);
+	m_pTcpCmdObj->SetMainWnd(this);
 	m_TcpCmdThread->start(*m_pTcpCmdObj);
+
 	m_pCompressThread = new Poco::Thread;
 	m_pCompressObj = new CCompressThread(this);
 	m_pCompressThread->start(*m_pCompressObj);
@@ -249,6 +251,12 @@ void CScanTool3Dlg::InitUI()
 	InitCtrlPositon();
 }
 
+LRESULT CScanTool3Dlg::MsgCmdDlModel(WPARAM wParam, LPARAM lParam)
+{
+	HandleModel();
+	return 1;
+}
+
 void CScanTool3Dlg::SwitchDlg(int nDlg)
 {
 	if (nDlg == 0)
@@ -260,10 +268,7 @@ void CScanTool3Dlg::SwitchDlg(int nDlg)
 	{
 		m_pExamInfoMgrDlg->ShowWindow(SW_HIDE);
 		m_pScanMgrDlg->ShowWindow(SW_SHOW);
-		m_pScanMgrDlg->ShowDlg();
-// 		m_pScanMgrDlg->SearchModel();		//¼ÓÔØÄ£°å
-// 		m_pScanMgrDlg->DownLoadModel();
-// 		m_pScanMgrDlg->UpdateInfo();
+		m_pScanMgrDlg->ShowChildDlg(1);
 	}
 }
 
@@ -272,6 +277,7 @@ BEGIN_MESSAGE_MAP(CScanTool3Dlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_WM_DESTROY()
 	ON_WM_SIZE()
+	ON_MESSAGE(MSG_CMD_DL_MODEL_OK, &CScanTool3Dlg::MsgCmdDlModel)
 END_MESSAGE_MAP()
 
 
@@ -373,5 +379,13 @@ void CScanTool3Dlg::OnSize(UINT nType, int cx, int cy)
 void CScanTool3Dlg::DumpReleaseTwain()
 {
 	m_pScanMgrDlg->m_scanThread.exit();
+}
+
+bool CScanTool3Dlg::HandleModel()
+{
+	bool bResult = m_pScanMgrDlg->SearchModel();
+	if (bResult)
+		m_pScanMgrDlg->ShowChildDlg(2);
+	return bResult;
 }
 

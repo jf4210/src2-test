@@ -2,6 +2,8 @@
 #include "TcpClient.h"
 #include "Net_Cmd_Protocol.h"
 #include "StudentMgr.h"
+#include "ScanTool3.h"
+#include "ScanTool3Dlg.h"
 
 //extern Poco::Net::StreamSocket *pSs;
 
@@ -374,6 +376,16 @@ void CTcpClient::HandleCmd()
 			}
 			break;
 		}
+		if (g_nDownLoadModelStatus != 1)
+		{
+#if 0
+			CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+			pDlg->HandleModel();
+#else
+			CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+			pDlg->PostMessage(MSG_CMD_DL_MODEL_OK, NULL, NULL);
+#endif
+		}
 	}
 	else if (pstHead->usCmd == USER_RESPONSE_DOWNMODEL)
 	{
@@ -415,6 +427,13 @@ void CTcpClient::HandleCmd()
 			break;
 		}
 		g_eDownLoadModel.set();			//下载模板文件请求命令处理完毕
+#if 0
+		CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+		pDlg->HandleModel();
+#else
+		CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+		pDlg->PostMessage(MSG_CMD_DL_MODEL_OK, NULL, NULL);
+#endif
 	}
 	else if (pstHead->usCmd == USER_RESPONSE_MODELINFO)
 	{
@@ -538,4 +557,9 @@ void CTcpClient::HandleTask(pTCP_TASK pTask)
 		_bConnect = false;
 		g_bCmdConnect = _bConnect;
 	}
+}
+
+void CTcpClient::SetMainWnd(void* p)
+{
+	_pMainDlg = p;
 }

@@ -22,6 +22,7 @@ public:
 
 
 	void	SwitchDlg(int nDlg);		//切换窗口显示
+	bool	HandleModel();				//处理模板，通过子窗口处理模板
 	void	DumpReleaseTwain();			//在系统崩溃时释放twain资源
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
@@ -33,6 +34,8 @@ protected:
 	void ReleaseDlg();
 
 	void InitUI();
+
+	LRESULT	MsgCmdDlModel(WPARAM wParam, LPARAM lParam);
 private:
 	Poco::Thread*		m_pRecogThread;		//识别线程对象数组
 	std::vector<CRecognizeThread*> m_vecRecogThreadObj;		//存储识别线程对象

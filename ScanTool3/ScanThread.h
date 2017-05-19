@@ -10,6 +10,8 @@
 #define MSG_SCAN_DONE	(WM_APP + 202)
 #define MSG_SCAN_ERR	(WM_APP + 203)
 
+int		_nScanStatus_ = 0;		//扫描进度 0-未扫描，1-正在扫描，2-扫描完成, 3-扫描中止, -1--连接扫描仪失败, -2--加载扫描仪失败, -3--扫描失败
+
 typedef struct _tagScanCtrl_
 {
 	bool	bShowUI;		//是否显示原始Twain界面
