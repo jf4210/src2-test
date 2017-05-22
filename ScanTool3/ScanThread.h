@@ -10,7 +10,6 @@
 #define MSG_SCAN_DONE	(WM_APP + 202)
 #define MSG_SCAN_ERR	(WM_APP + 203)
 
-int		_nScanStatus_ = 0;		//扫描进度 0-未扫描，1-正在扫描，2-扫描完成, 3-扫描中止, -1--连接扫描仪失败, -2--加载扫描仪失败, -3--扫描失败
 
 typedef struct _tagScanCtrl_
 {
@@ -42,14 +41,20 @@ typedef struct _tagScanCtrl_
 
 typedef struct _tagScanResult_
 {
-	bool		bScanOK;
+	bool		bScanOK;	//本次扫描完成？
 	int			nState;
+	int			nPaperId;
+	int			nPicId;
+	pST_PaperInfo pPaper;
 	IplImage*	pIpl2;
 	std::string strResult;
 	_tagScanResult_()
 	{
 		bScanOK = false;
 		nState = 0;
+		nPaperId = 0;
+		nPicId = 0;
+		pPaper = NULL;
 		pIpl2 = NULL;
 	}
 	~_tagScanResult_()
@@ -82,13 +87,14 @@ public:
 	void	setStop();
 	void	setNotifyDlg(void* pDlg);
 	void	setModelInfo(int nModelPicNums, std::string& strSavePath);
-	void	resetData();
+	void	resetData();	//重置计数器
 private:	
 	bool	m_bStop;
 	void*	m_pDlg;		//消息通知窗口
 	int		m_nStartSaveIndex;		//文件保存时的起始索引
 	int		m_nScanCount;
 	int		m_nModelPicNums;
+	pST_PaperInfo	m_pCurrPaper;	//当前试卷
 	std::string		m_strCurrPicSavePath;		//gb2312
 
 	void* SaveFile(IplImage *pIpl);

@@ -244,7 +244,21 @@ void CScanMgrDlg::ShowChildDlg(int n)
 		m_pWaitDownloadDlg->ShowWindow(SW_HIDE);
 		m_pScanDlg->ShowWindow(SW_HIDE);
 		m_pScanProcessDlg->ShowWindow(SW_SHOW);
+
+		m_pScanProcessDlg->InitShow();
 	}
+}
+
+void CScanMgrDlg::ResetChildDlg()
+{
+	if (m_pScanProcessDlg)
+		m_pScanProcessDlg->ResetPicList();
+}
+
+void CScanMgrDlg::UpdateChildDlgInfo()
+{
+	if (m_pScanProcessDlg)
+		m_pScanProcessDlg->InitShow();
 }
 
 void CScanMgrDlg::OnDestroy()
@@ -292,11 +306,6 @@ void CScanMgrDlg::ShowDlg()
 // 		ShowChildDlg(2);
 // 		UpdateInfo();
 // 	}
-}
-
-void CScanMgrDlg::UpdateInfo()
-{
-	if (m_pScanDlg)	m_pScanDlg->UpdateInfo();
 }
 
 bool CScanMgrDlg::SearchModel()
@@ -467,6 +476,19 @@ LRESULT CScanMgrDlg::ScanDone(WPARAM wParam, LPARAM lParam)
 	if (pResult)
 	{
 		TRACE("扫描完成消息。%s\n", pResult->strResult.c_str());
+		g_pLogger->information(pResult->strResult);
+
+		if (pResult->nState == 1)
+		{
+			//试卷列表显示扫描试卷
+			if (pResult->nPicId == 1)	//第一页的时候创建新的试卷信息
+			{
+				m_pScanProcessDlg->AddPaper(pResult->nPaperId, pResult->pPaper);
+			}
+		}
+
+		if (pResult->bScanOK)	//扫描完成
+			UpdateChildDlgInfo();
 
 		delete pResult;
 		pResult = NULL;
@@ -480,6 +502,7 @@ LRESULT CScanMgrDlg::ScanErr(WPARAM wParam, LPARAM lParam)
 	if (pResult)
 	{
 		TRACE("扫描错误。%s\n", pResult->strResult.c_str());
+		UpdateChildDlgInfo();
 		delete pResult;
 		pResult = NULL;
 	}

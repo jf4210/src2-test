@@ -391,6 +391,7 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 }PAPERSINFO, *pPAPERSINFO;
 typedef std::list<pPAPERSINFO> PAPERS_LIST;		//试卷袋列表
 
+
 typedef struct _RecogTask_
 {
 	int		nPic;						//此试卷属于模板的第几张
@@ -400,6 +401,8 @@ typedef struct _RecogTask_
 }RECOGTASK, *pRECOGTASK;
 typedef std::list<pRECOGTASK> RECOGTASKLIST;	//识别任务列表
 #endif
+
+extern pPAPERSINFO			_pCurrPapersInfo_;
 
 extern Poco::FastMutex		g_fmRecog;		//识别线程获取任务锁
 extern RECOGTASKLIST		g_lRecogTask;	//识别任务列表

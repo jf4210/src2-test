@@ -298,6 +298,7 @@ void CScanDlg::OnBnClickedBtnScan()
 	TW_INT16      index = (TW_INT16)m_comboScanner.GetItemData(sel);
 	pTW_IDENTITY  pID = NULL;
 
+	_nScanStatus_ = 0;
 	if (!_bLogin_)
 	{
 		AfxMessageBox(_T("Î´µÇÂ¼, ÎÞ·¨É¨Ãè"));
@@ -368,13 +369,19 @@ void CScanDlg::OnBnClickedBtnScan()
 
 		nNum = m_nCurrentScanCount * nModelPics;
 	}
+	if (nNum == 0)
+		nNum = -1;
 	
 	if (NULL != (pID = _pTWAINApp->getDataSource(index)))
 	{
-		_nScanStatus_ = 0;
+		SAFE_RELEASE(_pCurrPapersInfo_);
+		_pCurrPapersInfo_ = new PAPERSINFO();
+
+
+		_nScanStatus_ = 1;
 		pST_SCANCTRL pScanCtrl = new ST_SCANCTRL();
 		pScanCtrl->nScannerId = pID->Id;
-		pScanCtrl->nScanCount = nNum;
+		pScanCtrl->nScanCount = nNum;			//nNum
 		pScanCtrl->nScanDuplexenable = nDuplex;
 		pScanCtrl->nScanPixelType = nScanType;
 		pScanCtrl->nScanResolution = nScanDpi;
@@ -382,8 +389,10 @@ void CScanDlg::OnBnClickedBtnScan()
 		pScanCtrl->bShowUI = bShowScanSrcUI;	//bShowScanSrcUI;
 
 		CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
-		pDlg->m_scanThread.setNotifyDlg(this);
+		pDlg->m_scanThread.setNotifyDlg(pDlg);
 		pDlg->m_scanThread.setModelInfo(m_nModelPicNums, m_strCurrPicSavePath);
+		pDlg->m_scanThread.resetData();
+		pDlg->ResetChildDlg();
 		pDlg->m_scanThread.PostThreadMessage(MSG_START_SCAN, pID->Id, (LPARAM)pScanCtrl);
 
 		pDlg->ShowChildDlg(3);

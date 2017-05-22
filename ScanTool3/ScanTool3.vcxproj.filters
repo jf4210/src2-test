@@ -79,6 +79,15 @@
     <Filter Include="控件\XList">
       <UniqueIdentifier>{6f04ce61-ac54-4530-9e36-b476b9c458f0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="扫描界面窗口\扫描过程窗口\扫描中状态窗口">
+      <UniqueIdentifier>{4fb2a0d0-65a8-498e-9040-b100263ac4c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描界面窗口\扫描过程窗口\图像显示窗口">
+      <UniqueIdentifier>{b32c79b0-2d03-49e7-91f0-a4ea4ef89ad2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="控件\图片显示">
+      <UniqueIdentifier>{c7bec528-2cd0-422f-a0b4-3f0cc41560f8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -231,6 +240,21 @@
     <ClInclude Include="XListCtrl\XTrace.h">
       <Filter>控件\XList</Filter>
     </ClInclude>
+    <ClInclude Include="ScanReminderDlg.h">
+      <Filter>扫描界面窗口\扫描过程窗口\扫描中状态窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="ShowPicDlg.h">
+      <Filter>扫描界面窗口\扫描过程窗口\图像显示窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="picCtrl\CV_picture.h">
+      <Filter>控件\图片显示</Filter>
+    </ClInclude>
+    <ClInclude Include="picCtrl\CvvImage.h">
+      <Filter>控件\图片显示</Filter>
+    </ClInclude>
+    <ClInclude Include="PicShow.h">
+      <Filter>控件\图片显示</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -355,6 +379,21 @@
     </ClCompile>
     <ClCompile Include="XListCtrl\XListCtrl.cpp">
       <Filter>控件\XList</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanReminderDlg.cpp">
+      <Filter>扫描界面窗口\扫描过程窗口\扫描中状态窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ShowPicDlg.cpp">
+      <Filter>扫描界面窗口\扫描过程窗口\图像显示窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="picCtrl\CV_picture.cpp">
+      <Filter>控件\图片显示</Filter>
+    </ClCompile>
+    <ClCompile Include="picCtrl\CvvImage.cpp">
+      <Filter>控件\图片显示</Filter>
+    </ClCompile>
+    <ClCompile Include="PicShow.cpp">
+      <Filter>控件\图片显示</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

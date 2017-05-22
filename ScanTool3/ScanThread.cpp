@@ -13,6 +13,7 @@
 #include "CTiffWriter.h"
 
 
+
 CScanThread* g_pTWAINApp = NULL;
 extern bool gUSE_CALLBACKS;    // defined in TwainApp.cpp
 
@@ -77,7 +78,7 @@ TW_UINT16 FAR PASCAL DSMCallback(pTW_IDENTITY _pOrigin,
 IMPLEMENT_DYNCREATE(CScanThread, CWinThread)
 
 CScanThread::CScanThread():
-m_bStop(false), m_pDlg(NULL), m_nStartSaveIndex(0), m_nScanCount(0)
+m_bStop(false), m_pDlg(NULL), m_nStartSaveIndex(0), m_nScanCount(0), m_pCurrPaper(NULL)
 {
 }
 
@@ -115,6 +116,10 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	pScanCtrl = NULL;
 	
 	_nScanStatus_ = 1;
+
+	CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
+//	pDlg->UpdateChildDlgInfo();
+
 	connectDSM();
 	if (m_DSMState < 3)
 	{
@@ -265,13 +270,13 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 
 
 //	CScanMgrDlg* pDlg = (CScanMgrDlg*)AfxGetMainWnd();
-	CScanDlg* pDlg = (CScanDlg*)m_pDlg;
+//	CScanDlg* pDlg = (CScanDlg*)m_pDlg;
 
 	if (m_bStop)
 	{
 		_nScanStatus_ = 3;
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
-		pResult->bScanOK = false;
+		pResult->bScanOK = true;
 		pResult->nState = nScanResult;
 		pResult->strResult = "扫描仪被中止";
 		pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
@@ -282,7 +287,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		pResult->nState = nScanResult;
 		if (nScanResult != 0)
 		{			
-			pResult->bScanOK = false;
+			pResult->bScanOK = true;
 			pResult->strResult = ErrCode2Str(nScanResult);
 			pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
 		}
@@ -783,10 +788,42 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 		imwrite(strPicName, matTest);
 		cvReleaseImage(&pIpl);
 
+		//++添加试卷
+		pST_PicInfo pPic = new ST_PicInfo;
+		pPic->strPicName = szPicName;
+		pPic->strPicPath = szPicPath;
+		if (nOrder == 1)	//第一页的时候创建新的试卷信息
+		{
+			char szStudentName[30] = { 0 };
+			sprintf_s(szStudentName, "S%d", nStudentId);
+			m_pCurrPaper = new ST_PaperInfo;
+			m_pCurrPaper->strStudentInfo = szStudentName;
+			m_pCurrPaper->pModel = _pModel_;
+			m_pCurrPaper->pPapers = _pCurrPapersInfo_;
+			m_pCurrPaper->pSrcDlg = m_pDlg;
+			m_pCurrPaper->lPic.push_back(pPic);
+
+			_pCurrPapersInfo_->fmlPaper.lock();
+			_pCurrPapersInfo_->lPaper.push_back(m_pCurrPaper);
+			_pCurrPapersInfo_->fmlPaper.unlock();
+		}
+		else
+		{
+			m_pCurrPaper->lPic.push_back(pPic);
+		}
+		pPic->pPaper = m_pCurrPaper;
+		//--
+		
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
-		pResult->bScanOK = true;
+		pResult->bScanOK = false;
+		pResult->nState = 1;			//标识正在扫描
+		pResult->nPaperId = nStudentId;
+		pResult->nPicId = nOrder;
+		pResult->pPaper = m_pCurrPaper;
 		pResult->strResult = "获得图像";
 		pResult->strResult.append(szPicName);
+
+		TRACE("%s\n", pResult->strResult.c_str());
 		CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
 		pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
 	}

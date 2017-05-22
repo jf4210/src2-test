@@ -63,9 +63,10 @@ Poco::Event			g_eGetExamList;		//获取考试列表事件
 Poco::Event			g_eDownLoadModel;	//下载模板完成状态
 //--
 
+pPAPERSINFO			_pCurrPapersInfo_ = NULL;
 int					g_nDownLoadModelStatus = 0;		//下载模板的状态	0-未下载，初始化，1-模板下载中，2-下载成功，3-本地存在此文件，不需要下载, -1-服务器此科目模板不存在, -2-服务器读取文件失败
-
-STUDENT_LIST		g_lBmkStudent;	//报名库学生列表
+int					_nScanStatus_ = 0;				//扫描进度 0-未扫描，1-正在扫描，2-扫描完成, 3-扫描中止, -1--连接扫描仪失败, -2--加载扫描仪失败, -3--扫描失败
+STUDENT_LIST		g_lBmkStudent;					//报名库学生列表
 
 
 double	_dCompThread_Fix_ = 1.2;
@@ -210,6 +211,7 @@ void CScanTool3Dlg::InitCtrlPositon()
 
 void CScanTool3Dlg::ReleaseData()
 {
+	//考试列表
 	g_lfmExamList.lock();
 	EXAM_LIST::iterator itExam = g_lExamList.begin();
 	for (; itExam != g_lExamList.end();)
@@ -220,7 +222,19 @@ void CScanTool3Dlg::ReleaseData()
 	}
 	g_lfmExamList.unlock();
 
+	//发送文件列表
+	g_fmSendLock.lock();
+	SENDTASKLIST::iterator itSendTask = g_lSendTask.begin();
+	for (; itSendTask != g_lSendTask.end();)
+	{
+		pSENDTASK pTask = *itSendTask;
+		itSendTask = g_lSendTask.erase(itSendTask);
+		SAFE_RELEASE(pTask);
+	}
+	g_fmSendLock.unlock();
+
 	SAFE_RELEASE(_pModel_);
+	SAFE_RELEASE(_pCurrPapersInfo_);
 }
 
 void CScanTool3Dlg::ReleaseDlg()

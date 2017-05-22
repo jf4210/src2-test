@@ -21,10 +21,11 @@ public:
 	CScanThread		m_scanThread;
 
 	void	ShowDlg();
-	void	UpdateInfo();
 	bool	SearchModel();		//遍历所有模板
 	bool	DownLoadModel();	//下载模板
 	void	ShowChildDlg(int n);
+	void	ResetChildDlg();	//子窗口重置
+	void	UpdateChildDlgInfo();	//更新子窗口信息
 private:
 	void	InitData();
 	void	InitCtrlPosition();
