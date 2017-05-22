@@ -312,6 +312,9 @@ bool CScanMgrDlg::SearchModel()
 {
 	if (!_pCurrExam_ || !_pCurrSub_) return false;
 
+	if (_pCurrSub_->strModelName.empty())
+		return false;
+
 	if (_pModel_)
 		SAFE_RELEASE(_pModel_);
 

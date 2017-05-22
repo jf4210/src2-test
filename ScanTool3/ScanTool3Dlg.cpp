@@ -400,6 +400,11 @@ bool CScanTool3Dlg::HandleModel()
 	bool bResult = m_pScanMgrDlg->SearchModel();
 	if (bResult)
 		m_pScanMgrDlg->ShowChildDlg(2);
+	else
+	{
+		AfxMessageBox(_T("»ñÈ¡Ä£°åÊ§°Ü"));
+		SwitchDlg(0);
+	}
 	return bResult;
 }
 

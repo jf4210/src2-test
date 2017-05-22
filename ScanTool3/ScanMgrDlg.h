@@ -49,6 +49,7 @@ private:
 
 	CString			m_strExamName;
 	CComboBoxExt		m_comboSubject;
+//	CComboBox		m_comboSubject;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
 	virtual BOOL OnInitDialog();
