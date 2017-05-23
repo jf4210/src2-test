@@ -16,6 +16,7 @@ public:
 	enum { IDD = IDD_SHOWPICDLG };
 
 	void	setShowPaper(pST_PaperInfo pPaper);
+	void	UpdateUI();
 private:
 	CTabCtrl		m_tabPicShowCtrl;		//Í¼Æ¬ÏÔÊ¾¿Ø¼þ
 

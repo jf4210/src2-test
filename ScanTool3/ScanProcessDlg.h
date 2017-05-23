@@ -20,6 +20,7 @@ public:
 	void	AddPaper(int nID, pST_PaperInfo pPaper);
 	void	ResetPicList();
 	void	InitShow();
+	void UpdateChildInfo(bool bScanDone = false);
 private:
 	void	InitUI();
 	void	InitCtrlPosition();
@@ -46,4 +47,5 @@ public:
 	afx_msg void OnBnClickedBtnSave();
 	afx_msg void OnDestroy();
 	afx_msg void OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedBtnScanprocess();
 };

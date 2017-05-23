@@ -92,7 +92,6 @@ private:
 	bool	m_bStop;
 	void*	m_pDlg;		//消息通知窗口
 	int		m_nStartSaveIndex;		//文件保存时的起始索引
-	int		m_nScanCount;
 	int		m_nModelPicNums;
 	pST_PaperInfo	m_pCurrPaper;	//当前试卷
 	std::string		m_strCurrPicSavePath;		//gb2312

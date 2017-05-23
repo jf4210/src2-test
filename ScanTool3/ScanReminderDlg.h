@@ -14,10 +14,15 @@ public:
 // 对话框数据
 	enum { IDD = IDD_SCANREMINDERDLG };
 
+	void		SetShowTips(CString str);
+	void		UpdataScanCount(int nCount);
 private:
 	int				m_nStatusSize;			//状态栏字体大小
 	CFont			m_fontStatus;			//状态栏字体
 	COLORREF		m_colorStatus;			//状态栏字体颜色
+	
+	CString			m_strScanCount;
+	CString			m_strShowTips;
 
 	void	InitCtrlPosition();
 	void	SetFontSize(int nSize);

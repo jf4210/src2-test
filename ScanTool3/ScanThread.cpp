@@ -78,7 +78,7 @@ TW_UINT16 FAR PASCAL DSMCallback(pTW_IDENTITY _pOrigin,
 IMPLEMENT_DYNCREATE(CScanThread, CWinThread)
 
 CScanThread::CScanThread():
-m_bStop(false), m_pDlg(NULL), m_nStartSaveIndex(0), m_nScanCount(0), m_pCurrPaper(NULL)
+m_bStop(false), m_pDlg(NULL), m_nStartSaveIndex(0), m_pCurrPaper(NULL)
 {
 }
 
@@ -766,20 +766,20 @@ void CScanThread::setModelInfo(int nModelPicNums, std::string& strSavePath)
 
 void CScanThread::resetData()
 {
-	m_nScanCount = 0;
+	_nScanCount_ = 0;
 }
 
 void* CScanThread::SaveFile(IplImage *pIpl)
 {
-	int nStudentId = m_nScanCount / m_nModelPicNums + 1;
-	int nOrder = m_nScanCount % m_nModelPicNums + 1;
+	int nStudentId = _nScanCount_ / m_nModelPicNums + 1;
+	int nOrder = _nScanCount_ % m_nModelPicNums + 1;
 
 	char szPicName[50] = { 0 };
 	char szPicPath[MAX_PATH] = { 0 };
 	sprintf_s(szPicName, "S%d_%d.jpg", nStudentId, nOrder);
 	sprintf_s(szPicPath, "%s\\S%d_%d.jpg", m_strCurrPicSavePath.c_str(), nStudentId, nOrder);
 
-	m_nScanCount++;
+	_nScanCount_++;
 	try
 	{
 		cv::Mat matTest = cv::cvarrToMat(pIpl);

@@ -4,6 +4,7 @@
 #include "WaitDownloadDlg.h"
 #include "ScanProcessDlg.h"
 #include "ScanThread.h"
+#include "ScanRecordMgrDlg.h"
 
 // CScanMgrDlg 对话框
 
@@ -20,14 +21,14 @@ public:
 
 	CScanThread		m_scanThread;
 
-	void	ShowDlg();
+
+	void	InitExamData();
 	bool	SearchModel();		//遍历所有模板
 	bool	DownLoadModel();	//下载模板
 	void	ShowChildDlg(int n);
 	void	ResetChildDlg();	//子窗口重置
 	void	UpdateChildDlgInfo();	//更新子窗口信息
 private:
-	void	InitData();
 	void	InitCtrlPosition();
 	void	InitChildDlg();
 	void	ReleaseDlg();
@@ -46,6 +47,7 @@ private:
 	CWaitDownloadDlg*	m_pWaitDownloadDlg;
 	CScanDlg*			m_pScanDlg;
 	CScanProcessDlg*	m_pScanProcessDlg;
+	CScanRecordMgrDlg*	m_pScanRecordMgrDlg;
 
 	CString			m_strExamName;
 	CComboBoxExt		m_comboSubject;

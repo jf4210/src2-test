@@ -130,11 +130,14 @@
     <ClInclude Include="picCtrl\CvvImage.h" />
     <ClInclude Include="picCtrl\CV_picture.h" />
     <ClInclude Include="PicShow.h" />
+    <ClInclude Include="PkgRecordDlg.h" />
     <ClInclude Include="RecognizeThread.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ScanDlg.h" />
     <ClInclude Include="ScanMgrDlg.h" />
     <ClInclude Include="ScanProcessDlg.h" />
+    <ClInclude Include="ScanBmkRecordDlg.h" />
+    <ClInclude Include="ScanRecordMgrDlg.h" />
     <ClInclude Include="ScanReminderDlg.h" />
     <ClInclude Include="ScanThread.h" />
     <ClInclude Include="ScanTool3.h" />
@@ -203,10 +206,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="PicShow.cpp" />
+    <ClCompile Include="PkgRecordDlg.cpp" />
     <ClCompile Include="RecognizeThread.cpp" />
     <ClCompile Include="ScanDlg.cpp" />
     <ClCompile Include="ScanMgrDlg.cpp" />
     <ClCompile Include="ScanProcessDlg.cpp" />
+    <ClCompile Include="ScanBmkRecordDlg.cpp" />
+    <ClCompile Include="ScanRecordMgrDlg.cpp" />
     <ClCompile Include="ScanReminderDlg.cpp" />
     <ClCompile Include="ScanThread.cpp" />
     <ClCompile Include="ScanTool3.cpp" />

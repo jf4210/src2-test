@@ -36,7 +36,6 @@ BOOL CShowPicDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	if (_pModel_) m_nModelPicNums = _pModel_->nPicNum;
 	InitUI();
 
 	return TRUE;
@@ -57,7 +56,7 @@ BOOL CShowPicDlg::PreTranslateMessage(MSG* pMsg)
 BEGIN_MESSAGE_MAP(CShowPicDlg, CDialog)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB_PicShow, &CShowPicDlg::OnTcnSelchangeTabPicshow)
 	ON_WM_SIZE()
-	ON_WM_ERASEBKGND()
+//	ON_WM_ERASEBKGND()
 	ON_WM_CTLCOLOR()
 	ON_WM_DESTROY()
 END_MESSAGE_MAP()
@@ -100,6 +99,8 @@ void CShowPicDlg::InitUI()
 		}
 	}
 	m_tabPicShowCtrl.DeleteAllItems();
+
+	if (_pModel_) m_nModelPicNums = _pModel_->nPicNum;
 
 	USES_CONVERSION;
 	CRect rtTab;
@@ -168,6 +169,11 @@ void CShowPicDlg::setShowPaper(pST_PaperInfo pPaper)
 		if (i != 0)
 			m_vecPicShow[i]->ShowWindow(SW_HIDE);
 	}
+}
+
+void CShowPicDlg::UpdateUI()
+{
+	InitUI();
 }
 
 void CShowPicDlg::OnSize(UINT nType, int cx, int cy)
@@ -442,6 +448,8 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		}
 
 		addWeighted(tmp, 0.5, tmp2, 0.5, 0, tmp);
+		if (i >= m_nModelPicNums)
+			break;
 		m_vecPicShow[i]->ShowPic(tmp);
 	}
 }

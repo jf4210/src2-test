@@ -114,6 +114,7 @@ int _nUserId_ = 0;				//用户ID
 pEXAMINFO			_pCurrExam_= NULL;		//当前考试
 pEXAM_SUBJECT		_pCurrSub_ = NULL;		//当前考试科目
 pMODEL				_pModel_ = NULL;		//当前扫描使用的模板
+int					_nScanCount_ = 0;		//扫描计数器，当前已扫描多少份
 //--
 //--
 
@@ -282,6 +283,7 @@ void CScanTool3Dlg::SwitchDlg(int nDlg)
 	{
 		m_pExamInfoMgrDlg->ShowWindow(SW_HIDE);
 		m_pScanMgrDlg->ShowWindow(SW_SHOW);
+		m_pScanMgrDlg->InitExamData();
 		m_pScanMgrDlg->ShowChildDlg(1);
 	}
 }

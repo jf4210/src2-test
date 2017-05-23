@@ -381,7 +381,7 @@ void CScanDlg::OnBnClickedBtnScan()
 		_nScanStatus_ = 1;
 		pST_SCANCTRL pScanCtrl = new ST_SCANCTRL();
 		pScanCtrl->nScannerId = pID->Id;
-		pScanCtrl->nScanCount = nNum;			//nNum
+		pScanCtrl->nScanCount = 2;			//nNum
 		pScanCtrl->nScanDuplexenable = nDuplex;
 		pScanCtrl->nScanPixelType = nScanType;
 		pScanCtrl->nScanResolution = nScanDpi;

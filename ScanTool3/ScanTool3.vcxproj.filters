@@ -88,6 +88,9 @@
     <Filter Include="控件\图片显示">
       <UniqueIdentifier>{c7bec528-2cd0-422f-a0b4-3f0cc41560f8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="扫描界面窗口\扫描记录查询窗口">
+      <UniqueIdentifier>{13f50868-b1b6-4dcf-9fdf-66404f12e172}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -255,6 +258,15 @@
     <ClInclude Include="PicShow.h">
       <Filter>控件\图片显示</Filter>
     </ClInclude>
+    <ClInclude Include="ScanBmkRecordDlg.h">
+      <Filter>扫描界面窗口\扫描记录查询窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="PkgRecordDlg.h">
+      <Filter>扫描界面窗口\扫描记录查询窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanRecordMgrDlg.h">
+      <Filter>扫描界面窗口\扫描记录查询窗口</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -394,6 +406,15 @@
     </ClCompile>
     <ClCompile Include="PicShow.cpp">
       <Filter>控件\图片显示</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanBmkRecordDlg.cpp">
+      <Filter>扫描界面窗口\扫描记录查询窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="PkgRecordDlg.cpp">
+      <Filter>扫描界面窗口\扫描记录查询窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanRecordMgrDlg.cpp">
+      <Filter>扫描界面窗口\扫描记录查询窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

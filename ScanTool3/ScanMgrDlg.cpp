@@ -15,7 +15,7 @@ IMPLEMENT_DYNAMIC(CScanMgrDlg, CDialog)
 
 CScanMgrDlg::CScanMgrDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CScanMgrDlg::IDD, pParent)
-	, m_pScanDlg(NULL), m_pWaitDownloadDlg(NULL), m_pScanProcessDlg(NULL)
+	, m_pScanDlg(NULL), m_pWaitDownloadDlg(NULL), m_pScanProcessDlg(NULL), m_pScanRecordMgrDlg(NULL)
 	, m_strExamName(_T("")), m_nStatusSize(30)
 {
 
@@ -37,7 +37,7 @@ BOOL CScanMgrDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	InitData();
+	InitExamData();
 	InitChildDlg();
 	InitCtrlPosition();
 	m_scanThread.CreateThread();
@@ -138,6 +138,8 @@ void CScanMgrDlg::InitCtrlPosition()
 		m_pScanDlg->MoveWindow(m_rtChildDlg);
 	if (m_pScanProcessDlg && m_pScanProcessDlg->GetSafeHwnd())
 		m_pScanProcessDlg->MoveWindow(m_rtChildDlg);
+	if (m_pScanRecordMgrDlg && m_pScanRecordMgrDlg->GetSafeHwnd())
+		m_pScanRecordMgrDlg->MoveWindow(m_rtChildDlg);
 	Invalidate();
 }
 
@@ -155,6 +157,10 @@ void CScanMgrDlg::InitChildDlg()
 	m_pScanProcessDlg = new CScanProcessDlg(this);
 	m_pScanProcessDlg->Create(CScanProcessDlg::IDD, this);
 	m_pScanProcessDlg->ShowWindow(SW_HIDE);
+
+	m_pScanRecordMgrDlg = new CScanRecordMgrDlg(this);
+	m_pScanRecordMgrDlg->Create(CScanRecordMgrDlg::IDD, this);
+	m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
 }
 
 void CScanMgrDlg::ReleaseDlg()
@@ -173,6 +179,11 @@ void CScanMgrDlg::ReleaseDlg()
 	{
 		m_pScanProcessDlg->DestroyWindow();
 		SAFE_RELEASE(m_pScanProcessDlg);
+	}
+	if (m_pScanRecordMgrDlg)
+	{
+		m_pScanRecordMgrDlg->DestroyWindow();
+		SAFE_RELEASE(m_pScanRecordMgrDlg);
 	}
 }
 
@@ -219,12 +230,13 @@ void CScanMgrDlg::DrawBorder(CDC *pDC)
 
 void CScanMgrDlg::ShowChildDlg(int n)
 {
-	InitData();
+//	InitData();
 	if (n == 1)
 	{
 		m_pWaitDownloadDlg->ShowWindow(SW_SHOW);
 		m_pScanDlg->ShowWindow(SW_HIDE);
 		m_pScanProcessDlg->ShowWindow(SW_HIDE);
+		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
 		if (!DownLoadModel())
 		{
 			AfxMessageBox(_T("考试信息为空"));
@@ -238,14 +250,23 @@ void CScanMgrDlg::ShowChildDlg(int n)
 		m_pWaitDownloadDlg->ShowWindow(SW_HIDE);
 		m_pScanDlg->ShowWindow(SW_SHOW);
 		m_pScanProcessDlg->ShowWindow(SW_HIDE);
+		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
 	}
 	else if (n == 3)
 	{
 		m_pWaitDownloadDlg->ShowWindow(SW_HIDE);
 		m_pScanDlg->ShowWindow(SW_HIDE);
 		m_pScanProcessDlg->ShowWindow(SW_SHOW);
+		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
 
 		m_pScanProcessDlg->InitShow();
+	}
+	else if (n == 4)
+	{
+		m_pWaitDownloadDlg->ShowWindow(SW_HIDE);
+		m_pScanDlg->ShowWindow(SW_HIDE);
+		m_pScanProcessDlg->ShowWindow(SW_HIDE);
+		m_pScanRecordMgrDlg->ShowWindow(SW_SHOW);
 	}
 }
 
@@ -275,7 +296,7 @@ void CScanMgrDlg::OnSize(UINT nType, int cx, int cy)
 	InitCtrlPosition();
 }
 
-void CScanMgrDlg::InitData()
+void CScanMgrDlg::InitExamData()
 {
 	USES_CONVERSION;
 	m_comboSubject.ResetContent();
@@ -294,18 +315,10 @@ void CScanMgrDlg::InitData()
 		}
 		m_comboSubject.SetCurSel(nShowSubject);
 	}
-	UpdateData(FALSE);
-}
 
-void CScanMgrDlg::ShowDlg()
-{
-// 	ShowChildDlg(1);
-// 	SearchModel();		//加载模板
-// 	if (DownLoadModel())			//下载模块放到等待窗口中处理,处理完毕就隐藏
-// 	{
-// 		ShowChildDlg(2);
-// 		UpdateInfo();
-// 	}
+	UpdateChildDlgInfo();
+
+	UpdateData(FALSE);
 }
 
 bool CScanMgrDlg::SearchModel()
@@ -490,8 +503,14 @@ LRESULT CScanMgrDlg::ScanDone(WPARAM wParam, LPARAM lParam)
 			}
 		}
 
+		m_pScanProcessDlg->UpdateChildInfo(pResult->bScanOK);
 		if (pResult->bScanOK)	//扫描完成
-			UpdateChildDlgInfo();
+		{
+			if (m_pScanProcessDlg)
+			{
+				m_pScanProcessDlg->InitShow();
+			}			
+		}
 
 		delete pResult;
 		pResult = NULL;

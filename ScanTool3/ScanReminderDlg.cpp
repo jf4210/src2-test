@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CScanReminderDlg, CDialog)
 
 CScanReminderDlg::CScanReminderDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CScanReminderDlg::IDD, pParent)
-	, m_nStatusSize(25)
+	, m_nStatusSize(25), m_strShowTips(_T("正在扫描，请稍后...")), m_strScanCount(_T("已扫 0 张"))
 {
 
 }
@@ -25,6 +25,8 @@ CScanReminderDlg::~CScanReminderDlg()
 void CScanReminderDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
+	DDX_Text(pDX, IDC_STATIC_ScanCount, m_strScanCount);
+	DDX_Text(pDX, IDC_STATIC_Tip, m_strShowTips);
 }
 
 
@@ -71,7 +73,7 @@ void CScanReminderDlg::InitCtrlPosition()
 	const int nRightGap = 20;	//右边的空白间隔
 	int nGap = 5;
 
-	int nBaseLeft = nLeftGap + (cx - nLeftGap - nRightGap) * 0.4;
+	int nBaseLeft = nLeftGap + (cx - nLeftGap - nRightGap) * 0.3;
 	int nCurrLeft = nBaseLeft;
 	int nCurrTop = cy * 0.5;
 
@@ -80,6 +82,13 @@ void CScanReminderDlg::InitCtrlPosition()
 		int nW = (cx - nLeftGap - nRightGap) * 0.4;
 		int nH = 50;
 		GetDlgItem(IDC_STATIC_Tip)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
+		nCurrTop += (nH + nGap);
+	}
+	if (GetDlgItem(IDC_STATIC_ScanCount)->GetSafeHwnd())
+	{
+		int nW = (cx - nLeftGap - nRightGap) * 0.4;
+		int nH = 50;
+		GetDlgItem(IDC_STATIC_ScanCount)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
 	}
 	Invalidate();
 }
@@ -96,6 +105,16 @@ void CScanReminderDlg::SetFontSize(int nSize)
 							DEFAULT_PITCH | FF_SWISS,
 							_T("Arial"));
 	GetDlgItem(IDC_STATIC_Tip)->SetFont(&m_fontStatus);
+	CFont fontStatus;
+	fontStatus.CreateFont(nSize + 2, 0, 0, 0,
+							FW_BOLD, FALSE, FALSE, 0,
+							DEFAULT_CHARSET,
+							OUT_DEFAULT_PRECIS,
+							CLIP_DEFAULT_PRECIS,
+							DEFAULT_QUALITY,
+							DEFAULT_PITCH | FF_SWISS,
+							_T("Arial"));
+	GetDlgItem(IDC_STATIC_ScanCount)->SetFont(&fontStatus);
 }
 
 void CScanReminderDlg::DrawBorder(CDC *pDC)
@@ -131,7 +150,7 @@ HBRUSH CScanReminderDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
 	UINT CurID = pWnd->GetDlgCtrlID();
-	if (CurID == IDC_STATIC_Tip)
+	if (CurID == IDC_STATIC_Tip || CurID == IDC_STATIC_ScanCount)
 	{
 		//		pDC->SetBkColor(RGB(255, 255, 255));
 		pDC->SetBkMode(TRANSPARENT);
@@ -147,3 +166,18 @@ void CScanReminderDlg::OnSize(UINT nType, int cx, int cy)
 
 	InitCtrlPosition();
 }
+
+void CScanReminderDlg::SetShowTips(CString str)
+{
+	m_strShowTips = str;
+	UpdateData(FALSE);
+	Invalidate();
+}
+
+void CScanReminderDlg::UpdataScanCount(int nCount)
+{
+	m_strScanCount.Format(_T("已扫 %d 张"), nCount);
+	UpdateData(FALSE);
+	Invalidate();
+}
+

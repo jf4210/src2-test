@@ -64,6 +64,7 @@ BEGIN_MESSAGE_MAP(CScanProcessDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_Save, &CScanProcessDlg::OnBnClickedBtnSave)
 	ON_WM_DESTROY()
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_Paper, &CScanProcessDlg::OnNMDblclkListPaper)
+	ON_BN_CLICKED(IDC_BTN_ScanProcess, &CScanProcessDlg::OnBnClickedBtnScanprocess)
 END_MESSAGE_MAP()
 
 
@@ -115,7 +116,7 @@ void CScanProcessDlg::InitCtrlPosition()
 		m_lcPicture.MoveWindow(nCurrLeft, nCurrTop, nLeftW, nH);
 		nCurrTop += (nH + nGap);
 
-		m_lcPicture.SetColumnWidth(1, nLeftW - 40 - 3);
+		m_lcPicture.SetColumnWidth(1, nLeftW - 40 - 5);
 	}
 	if (GetDlgItem(IDC_BTN_Save)->GetSafeHwnd())
 	{
@@ -132,7 +133,7 @@ void CScanProcessDlg::InitCtrlPosition()
 	m_rtChildDlg.left = nLeftGap + nLeftW + nGap;
 	m_rtChildDlg.top = nTopGap;
 	m_rtChildDlg.right = cx - nRightGap;
-	m_rtChildDlg.bottom = cy - nBottomGap;
+	m_rtChildDlg.bottom = cy - nBottomGap - 40 - nGap;
 
 	if (m_pReminderDlg && m_pReminderDlg->GetSafeHwnd())
 	{
@@ -141,6 +142,16 @@ void CScanProcessDlg::InitCtrlPosition()
 	if (m_pShowPicDlg && m_pShowPicDlg->GetSafeHwnd())
 	{
 		m_pShowPicDlg->MoveWindow(m_rtChildDlg);
+	}
+
+	//btn
+	if (GetDlgItem(IDC_BTN_ScanProcess)->GetSafeHwnd())
+	{
+		int nW = 100;
+		int nH = 40;
+		nCurrLeft = cx - nRightGap - nW;
+		nCurrTop = cy - nBottomGap - nH;
+		GetDlgItem(IDC_BTN_ScanProcess)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
 	}
 }
 
@@ -176,6 +187,8 @@ void CScanProcessDlg::AddPaper(int nID, pST_PaperInfo pPaper)
 	m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 	m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
 	m_lcPicture.SetItemData(nCount, (DWORD_PTR)pPaper);
+
+
 }
 
 void CScanProcessDlg::ResetPicList()
@@ -189,15 +202,32 @@ void CScanProcessDlg::InitShow()
 	{
 		case 1:
 			EnableBtn(FALSE);
-			m_pReminderDlg->ShowWindow(SW_SHOW);
-			m_pShowPicDlg->ShowWindow(SW_HIDE);
+// 			m_pReminderDlg->ShowWindow(SW_SHOW);
+// 			m_pShowPicDlg->ShowWindow(SW_HIDE);
 			break;
 		case 2:
 			EnableBtn(TRUE);
+// 			m_pReminderDlg->ShowWindow(SW_HIDE);
+// 			m_pShowPicDlg->ShowWindow(SW_SHOW);
 			break;
 		default:
-			EnableBtn(FALSE);
+			EnableBtn(TRUE);
+// 			m_pReminderDlg->ShowWindow(SW_HIDE);
+// 			m_pShowPicDlg->ShowWindow(SW_SHOW);
 	}
+	m_pReminderDlg->ShowWindow(SW_SHOW);
+	m_pShowPicDlg->ShowWindow(SW_HIDE);
+	m_pReminderDlg->UpdataScanCount(_nScanCount_);		//更新扫描数量
+	m_pShowPicDlg->UpdateUI();
+}
+
+void CScanProcessDlg::UpdateChildInfo(bool bScanDone /*= false*/)
+{
+	if (bScanDone)
+		m_pReminderDlg->SetShowTips(_T("本批次扫描完成"));
+	else
+		m_pReminderDlg->SetShowTips(_T("正在扫描，请稍后..."));
+	m_pReminderDlg->UpdataScanCount(_nScanCount_);		//更新扫描数量
 }
 
 void CScanProcessDlg::EnableBtn(BOOL bEnable)
@@ -473,7 +503,6 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 		}		
 	}
 
-
 	int nSrc = 0;
 	int nRegDuplex = 1;
 	char* ret;
@@ -579,6 +608,7 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 	pDlg->m_scanThread.PostThreadMessage(MSG_START_SCAN, index, (LPARAM)pScanCtrl);
 	
 	InitShow();
+	UpdateChildInfo();
 }
 
 void CScanProcessDlg::OnBnClickedBtnSave()
@@ -723,7 +753,6 @@ void CScanProcessDlg::OnDestroy()
 	}
 }
 
-
 void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
@@ -736,4 +765,10 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	m_pReminderDlg->ShowWindow(SW_HIDE);
 	m_pShowPicDlg->ShowWindow(SW_SHOW);
 	m_pShowPicDlg->setShowPaper(pPaper);
+}
+
+void CScanProcessDlg::OnBnClickedBtnScanprocess()
+{
+	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
+	pDlg->ShowChildDlg(4);
 }
