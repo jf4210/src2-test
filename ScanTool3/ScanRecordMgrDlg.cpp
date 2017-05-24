@@ -7,6 +7,7 @@
 #include "afxdialogex.h"
 #include "ScanMgrDlg.h"
 
+#include "ScanTool3Dlg.h"
 
 // CScanRecordMgrDlg ¶Ô»°¿ò
 
@@ -14,7 +15,7 @@ IMPLEMENT_DYNAMIC(CScanRecordMgrDlg, CDialog)
 
 CScanRecordMgrDlg::CScanRecordMgrDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CScanRecordMgrDlg::IDD, pParent)
-	, m_pPkgRecordDlg(NULL), m_pBmkRecordDlg(NULL)
+	, m_pPkgRecordDlg(NULL), m_pBmkRecordDlg(NULL), m_nReturnFlag(2)
 {
 
 }
@@ -180,6 +181,20 @@ void CScanRecordMgrDlg::OnBnClickedBtnPkgrecord()
 
 void CScanRecordMgrDlg::OnBnClickedBtnRebackscan()
 {
-	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
-	pDlg->ShowChildDlg(3);
+	if (m_nReturnFlag == 1)
+	{
+		CScanTool3Dlg* pDlg = (CScanTool3Dlg*)AfxGetMainWnd();
+		pDlg->SwitchDlg(0);
+	}
+	else
+	{
+		CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
+		pDlg->ShowChildDlg(3);
+	}
 }
+
+void CScanRecordMgrDlg::SetReBackDlg(int nFlag)
+{
+	m_nReturnFlag = nFlag;
+}
+

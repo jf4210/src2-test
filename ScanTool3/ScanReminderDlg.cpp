@@ -84,11 +84,26 @@ void CScanReminderDlg::InitCtrlPosition()
 		GetDlgItem(IDC_STATIC_Tip)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
 		nCurrTop += (nH + nGap);
 	}
+	if (GetDlgItem(IDC_STATIC_1)->GetSafeHwnd())
+	{
+		int nW = (cx - nLeftGap - nRightGap) * 0.15;
+		int nH = 50;
+		GetDlgItem(IDC_STATIC_1)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
+		nCurrLeft += (nW + nGap);
+	}
 	if (GetDlgItem(IDC_STATIC_ScanCount)->GetSafeHwnd())
 	{
-		int nW = (cx - nLeftGap - nRightGap) * 0.4;
+		int nW = (cx - nLeftGap - nRightGap) * 0.1;
 		int nH = 50;
 		GetDlgItem(IDC_STATIC_ScanCount)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
+		nCurrLeft += (nW + nGap);
+	}
+	if (GetDlgItem(IDC_STATIC_2)->GetSafeHwnd())
+	{
+		int nW = (cx - nLeftGap - nRightGap) * 0.1;
+		int nH = 50;
+		GetDlgItem(IDC_STATIC_2)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
+		nCurrLeft += (nW + nGap);
 	}
 	Invalidate();
 }
@@ -105,8 +120,9 @@ void CScanReminderDlg::SetFontSize(int nSize)
 							DEFAULT_PITCH | FF_SWISS,
 							_T("Arial"));
 	GetDlgItem(IDC_STATIC_Tip)->SetFont(&m_fontStatus);
-	CFont fontStatus;
-	fontStatus.CreateFont(nSize + 2, 0, 0, 0,
+
+	m_fontStatus2.DeleteObject();
+	m_fontStatus2.CreateFont(nSize + 2, 0, 0, 0,
 							FW_BOLD, FALSE, FALSE, 0,
 							DEFAULT_CHARSET,
 							OUT_DEFAULT_PRECIS,
@@ -114,7 +130,9 @@ void CScanReminderDlg::SetFontSize(int nSize)
 							DEFAULT_QUALITY,
 							DEFAULT_PITCH | FF_SWISS,
 							_T("Arial"));
-	GetDlgItem(IDC_STATIC_ScanCount)->SetFont(&fontStatus);
+	GetDlgItem(IDC_STATIC_1)->SetFont(&m_fontStatus2);
+	GetDlgItem(IDC_STATIC_ScanCount)->SetFont(&m_fontStatus2);
+	GetDlgItem(IDC_STATIC_2)->SetFont(&m_fontStatus2);
 }
 
 void CScanReminderDlg::DrawBorder(CDC *pDC)
@@ -150,9 +168,15 @@ HBRUSH CScanReminderDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
 	UINT CurID = pWnd->GetDlgCtrlID();
-	if (CurID == IDC_STATIC_Tip || CurID == IDC_STATIC_ScanCount)
+	if (CurID == IDC_STATIC_Tip || CurID == IDC_STATIC_1 || CurID == IDC_STATIC_2)
 	{
 		//		pDC->SetBkColor(RGB(255, 255, 255));
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
+	else if (CurID == IDC_STATIC_ScanCount)
+	{
+		pDC->SetTextColor(RGB(0, 0, 255));
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}
@@ -176,7 +200,7 @@ void CScanReminderDlg::SetShowTips(CString str)
 
 void CScanReminderDlg::UpdataScanCount(int nCount)
 {
-	m_strScanCount.Format(_T("“—…® %d ’≈"), nCount);
+	m_strScanCount.Format(_T("%d"), nCount);
 	UpdateData(FALSE);
 	Invalidate();
 }

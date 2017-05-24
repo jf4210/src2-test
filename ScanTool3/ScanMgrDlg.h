@@ -21,6 +21,7 @@ public:
 
 	CScanThread		m_scanThread;
 
+	CScanRecordMgrDlg*	m_pScanRecordMgrDlg;
 
 	void	InitExamData();
 	bool	SearchModel();		//遍历所有模板
@@ -47,7 +48,7 @@ private:
 	CWaitDownloadDlg*	m_pWaitDownloadDlg;
 	CScanDlg*			m_pScanDlg;
 	CScanProcessDlg*	m_pScanProcessDlg;
-	CScanRecordMgrDlg*	m_pScanRecordMgrDlg;
+//	CScanRecordMgrDlg*	m_pScanRecordMgrDlg;
 
 	CString			m_strExamName;
 	CComboBoxExt		m_comboSubject;

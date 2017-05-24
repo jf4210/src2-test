@@ -19,6 +19,7 @@ public:
 private:
 	int				m_nStatusSize;			//状态栏字体大小
 	CFont			m_fontStatus;			//状态栏字体
+	CFont			m_fontStatus2;			//状态栏字体
 	COLORREF		m_colorStatus;			//状态栏字体颜色
 	
 	CString			m_strScanCount;

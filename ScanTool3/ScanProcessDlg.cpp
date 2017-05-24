@@ -116,7 +116,7 @@ void CScanProcessDlg::InitCtrlPosition()
 		m_lcPicture.MoveWindow(nCurrLeft, nCurrTop, nLeftW, nH);
 		nCurrTop += (nH + nGap);
 
-		m_lcPicture.SetColumnWidth(1, nLeftW - 40 - 5);
+		m_lcPicture.SetColumnWidth(1, nLeftW - 40 - 20);
 	}
 	if (GetDlgItem(IDC_BTN_Save)->GetSafeHwnd())
 	{

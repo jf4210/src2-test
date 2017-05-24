@@ -39,6 +39,8 @@ BEGIN_MESSAGE_MAP(CSingleExamDlg, CDialog)
 	ON_WM_SIZE()
 	ON_WM_ERASEBKGND()
 	ON_WM_CTLCOLOR()
+	ON_BN_CLICKED(IDC_BTN_ScanProcesses, &CSingleExamDlg::OnBnClickedBtnScanprocesses)
+	ON_BN_CLICKED(IDC_BTN_MakeScanModel, &CSingleExamDlg::OnBnClickedBtnMakescanmodel)
 END_MESSAGE_MAP()
 
 
@@ -291,4 +293,18 @@ HBRUSH CSingleExamDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}
 	return hbr;
+}
+
+
+void CSingleExamDlg::OnBnClickedBtnScanprocesses()
+{
+	_pCurrExam_ = _pExamInfo;
+	CScanTool3Dlg* pDlg = (CScanTool3Dlg*)AfxGetMainWnd();
+	pDlg->SwitchDlg(1, 4);		//显示第1个窗口，并一开始就显示这个窗口中的第4个窗口
+}
+
+
+void CSingleExamDlg::OnBnClickedBtnMakescanmodel()
+{
+	
 }

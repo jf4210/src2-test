@@ -300,20 +300,23 @@ void CScanMgrDlg::InitExamData()
 {
 	USES_CONVERSION;
 	m_comboSubject.ResetContent();
-	if (_pCurrExam_ && _pCurrSub_)
+	if (_pCurrExam_)
 	{
 		m_strExamName = A2T(_pCurrExam_->strExamName.c_str());
 
-		int i = 0;
-		int nShowSubject = -1;
-		for (auto pSubject : _pCurrExam_->lSubjects)
+		if (_pCurrSub_)
 		{
-			m_comboSubject.AddString(A2T(pSubject->strSubjName.c_str()));
-			if (_pCurrSub_ == pSubject)
-				nShowSubject = i;
-			i++;
+			int i = 0;
+			int nShowSubject = -1;
+			for (auto pSubject : _pCurrExam_->lSubjects)
+			{
+				m_comboSubject.AddString(A2T(pSubject->strSubjName.c_str()));
+				if (_pCurrSub_ == pSubject)
+					nShowSubject = i;
+				i++;
+			}
+			m_comboSubject.SetCurSel(nShowSubject);
 		}
-		m_comboSubject.SetCurSel(nShowSubject);
 	}
 
 	UpdateChildDlgInfo();
@@ -465,7 +468,6 @@ HBRUSH CScanMgrDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return hbr;
 }
 
-
 BOOL CScanMgrDlg::OnEraseBkgnd(CDC* pDC)
 {
 	CRect rcClient;
@@ -478,7 +480,6 @@ BOOL CScanMgrDlg::OnEraseBkgnd(CDC* pDC)
 
 	return CDialog::OnEraseBkgnd(pDC);
 }
-
 
 void CScanMgrDlg::OnBnClickedBtnChangeexam()
 {

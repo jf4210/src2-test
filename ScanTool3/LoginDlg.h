@@ -1,5 +1,7 @@
 #pragma once
 #include "global.h"
+#include "BmpButton.h"
+#include "IconEdit.h"
 
 // CLoginDlg ¶Ô»°¿ò
 
@@ -15,6 +17,15 @@ public:
 	enum { IDD = IDD_LOGINDLG };
 
 public:
+	CBitmap		m_bmpBkg;
+	CBitmap		m_bmpLogo;
+	CBitmap		m_bmpTitle;
+	CBmpButton	m_bmpBtnMin;
+	CBmpButton	m_bmpBtnExit;
+	CBmpButton	m_bmpBtnLogin;
+	CIconEdit	m_icnEditUser;
+	CIconEdit	m_icnEditPwd;
+
 	CString		m_strUserName;
 	CString		m_strPwd;
 	CString		m_strEzs;
@@ -24,6 +35,7 @@ public:
 	int			m_nTeacherId;
 	int			m_nUserId;
 
+	bool		m_bRecordPwd;
 	bool		m_bLogin;
 	int			m_nRecvLen;
 	int			m_nWantLen;
@@ -36,7 +48,9 @@ public:
 	int		GetExamInfo();
 	int		GetBmkInfo();
 
-#ifdef TO_WHTY
+	void	InitUI();
+//#ifdef TO_WHTY
+#if 1
 	VEC_PLATFORM_TY _vecPlatformList;
 	void	LoginPlatform4TY(pST_PLATFORMINFO p);
 #endif
@@ -53,4 +67,11 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedBtnLogin();
+	afx_msg void OnBnClickedChkRecordpwd();
+	afx_msg LRESULT OnNcHitTest(CPoint point);
+	afx_msg void OnBnClickedBtnClose();
+	afx_msg void OnBnClickedBtnMin();
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg void OnStnClickedStaticCheckbox();
 };

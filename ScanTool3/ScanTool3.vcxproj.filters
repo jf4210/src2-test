@@ -91,6 +91,12 @@
     <Filter Include="扫描界面窗口\扫描记录查询窗口">
       <UniqueIdentifier>{13f50868-b1b6-4dcf-9fdf-66404f12e172}</UniqueIdentifier>
     </Filter>
+    <Filter Include="控件\按钮">
+      <UniqueIdentifier>{32688e89-3379-41b1-9bc2-16a0b7236d9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="控件\iconEdit">
+      <UniqueIdentifier>{53310133-b815-46db-92fd-5551348919e9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -267,6 +273,12 @@
     <ClInclude Include="ScanRecordMgrDlg.h">
       <Filter>扫描界面窗口\扫描记录查询窗口</Filter>
     </ClInclude>
+    <ClInclude Include="BmpButton.h">
+      <Filter>控件\按钮</Filter>
+    </ClInclude>
+    <ClInclude Include="IconEdit.h">
+      <Filter>控件\iconEdit</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -416,6 +428,12 @@
     <ClCompile Include="ScanRecordMgrDlg.cpp">
       <Filter>扫描界面窗口\扫描记录查询窗口</Filter>
     </ClCompile>
+    <ClCompile Include="BmpButton.cpp">
+      <Filter>控件\按钮</Filter>
+    </ClCompile>
+    <ClCompile Include="IconEdit.cpp">
+      <Filter>控件\iconEdit</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\ScanTool3.rc2">
@@ -433,6 +451,45 @@
     </Image>
     <Image Include="XListCtrl\checkboxes.bmp">
       <Filter>控件\XList</Filter>
+    </Image>
+    <Image Include="skin\login\logo.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\login\bitmap2.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\login\顶部条.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\login\登录按钮.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\login\登录背景.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\login\关闭.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\login\密码.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\login\用户.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\login\最小化.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\login\顶部.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\login\用户.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\login\密码.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\icon1.ico">
+      <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>
 </Project>

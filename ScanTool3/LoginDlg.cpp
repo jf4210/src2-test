@@ -29,13 +29,15 @@ CLoginDlg::CLoginDlg(CString strIP, int nPort, CWnd* pParent /*=NULL*/)
 	, m_strEzs(_T(""))
 	, m_nTeacherId(-1)
 	, m_nUserId(-1)
+	, m_bRecordPwd(true)
 {
 	ZeroMemory(m_szRecvBuff, 1024);
 }
 
 CLoginDlg::~CLoginDlg()
 {
-#ifdef TO_WHTY
+//#ifdef TO_WHTY
+#if 1
 	VEC_PLATFORM_TY::iterator it = _vecPlatformList.begin();
 	for (; it != _vecPlatformList.end();)
 	{
@@ -52,11 +54,23 @@ void CLoginDlg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_EDIT_UserName, m_strUserName);
 	DDX_Text(pDX, IDC_EDIT_Pwd, m_strPwd);
+	DDX_Control(pDX, IDC_EDIT_UserName, m_icnEditUser);
+	DDX_Control(pDX, IDC_EDIT_Pwd, m_icnEditPwd);
+	DDX_Control(pDX, IDC_BTN_Login, m_bmpBtnLogin);
+	DDX_Control(pDX, IDC_BTN_CLOSE, m_bmpBtnExit);
+	DDX_Control(pDX, IDC_BTN_Min, m_bmpBtnMin);
 }
 
 
 BEGIN_MESSAGE_MAP(CLoginDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_Login, &CLoginDlg::OnBnClickedBtnLogin)
+	ON_BN_CLICKED(IDC_CHK_RecordPwd, &CLoginDlg::OnBnClickedChkRecordpwd)
+	ON_WM_NCHITTEST()
+	ON_BN_CLICKED(IDC_BTN_CLOSE, &CLoginDlg::OnBnClickedBtnClose)
+	ON_BN_CLICKED(IDC_BTN_Min, &CLoginDlg::OnBnClickedBtnMin)
+	ON_WM_ERASEBKGND()
+	ON_WM_CTLCOLOR()
+	ON_STN_CLICKED(IDC_STATIC_CheckBox, &CLoginDlg::OnStnClickedStaticCheckbox)
 END_MESSAGE_MAP()
 
 
@@ -67,6 +81,8 @@ BOOL CLoginDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	InitUI();
+
 	char* ret;
 	ret = new char[255];
 	ret[0] = '\0';
@@ -74,12 +90,22 @@ BOOL CLoginDlg::OnInitDialog()
 	{
 		m_strUserName = ret;
 	}
+	memset(ret, 0, 255);
+	if (ReadRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "recordPwd", ret) == 0)
+	{
+		m_bRecordPwd = atoi(ret);
+	}
+	if (m_bRecordPwd)
+	{
+		memset(ret, 0, 255);
+		if (ReadRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "pwd", ret) == 0)
+		{
+			m_strPwd = ret;
+		}
+	}
+	((CButton*)GetDlgItem(IDC_CHK_RecordPwd))->SetCheck(m_bRecordPwd);
 	SAFE_RELEASE_ARRY(ret);
-
-#ifdef Test_Data
-	m_strPwd = _T("12345678");
-#endif
-
+	
 	UpdateData(FALSE);
 
 	return TRUE;
@@ -90,6 +116,22 @@ void CLoginDlg::OnBnClickedBtnLogin()
 {
 	UpdateData(TRUE);
 	USES_CONVERSION;
+
+	if (m_bRecordPwd)
+	{
+		char szRet[50] = { 0 };
+		sprintf_s(szRet, "%s", T2A(m_strPwd));
+		WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "pwd", szRet);
+
+		sprintf_s(szRet, "%d", 1);
+		WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "recordPwd", szRet);
+	}
+	else
+	{
+		char szRet[50] = { 0 };
+		sprintf_s(szRet, "%d", 0);
+		WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "recordPwd", szRet);
+	}
 
 	Poco::Net::SocketAddress sa(T2A(m_strServerIP), m_nServerPort);
 	try
@@ -124,7 +166,8 @@ void CLoginDlg::OnBnClickedBtnLogin()
 		else if (nResult == 2)
 		{
 			//天喻版本，弹出平台列表，选择一个平台
-		#ifdef TO_WHTY
+//		#ifdef TO_WHTY
+		#if 1
 			CMultiPlatform4TYDlg dlg(_vecPlatformList);
 			dlg.DoModal();
 			WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "login", T2A(m_strUserName));
@@ -332,7 +375,8 @@ int CLoginDlg::RecvData(CString& strResultInfo)
 			break;
 		case RESULT_LOGIN_PLATFORM_TY:
 			{
-			#ifdef TO_WHTY
+//			#ifdef TO_WHTY
+			#if 1
 				char szData[4096] = { 0 };
 				nResult = 2;	//天喻平台选择
 // 				char* pData = new char[pstHead->uPackSize + 1];
@@ -456,7 +500,23 @@ int CLoginDlg::GetBmkInfo()
 	return nResult;
 }
 
-#ifdef TO_WHTY
+void CLoginDlg::InitUI()
+{
+	m_bmpBtnExit.SetStateBitmap(IDB_LOGIN_CloseBtn, 0, 0);
+	m_bmpBtnMin.SetStateBitmap(IDB_LOGIN_MinBtn, 0, 0);
+	m_bmpBtnLogin.SetStateBitmap(IDB_LOGIN_Btn, 0, 0);
+
+	m_icnEditUser.SetIcon(IDI_ICON_LOGIN_User);	//IDI_ICON_LOGIN_User
+	m_icnEditPwd.SetIcon(IDI_ICON_LOGIN_Pwd);
+	m_icnEditPwd.SetPasswordChar('*');
+
+	m_bmpLogo.LoadBitmap(IDB_LOGIN_LOGO);
+	m_bmpTitle.LoadBitmap(IDB_LOGIN_TITLE);
+	m_bmpBkg.LoadBitmap(IDB_LOGIN_BK);
+}
+
+//#ifdef TO_WHTY
+#if 1
 void CLoginDlg::LoginPlatform4TY(pST_PLATFORMINFO p)
 {
 	ZeroMemory(m_pRecvBuff, nRecvBuffSize);
@@ -488,3 +548,134 @@ void CLoginDlg::OnOK()
 {
 	OnBnClickedBtnLogin();
 }
+
+
+void CLoginDlg::OnBnClickedChkRecordpwd()
+{
+	if (((CButton*)GetDlgItem(IDC_CHK_RecordPwd))->GetCheck())
+		m_bRecordPwd = true;
+	else
+		m_bRecordPwd = false;
+}
+
+void CLoginDlg::OnStnClickedStaticCheckbox()
+{
+	m_bRecordPwd = !m_bRecordPwd;
+	((CButton*)GetDlgItem(IDC_CHK_RecordPwd))->SetCheck(m_bRecordPwd);
+}
+
+LRESULT CLoginDlg::OnNcHitTest(CPoint point)
+{
+	CRect rcWndRect;
+	GetWindowRect(rcWndRect);
+	rcWndRect.bottom = rcWndRect.top + 40;
+	if (rcWndRect.PtInRect(point))
+		return HTCAPTION;
+	return CDialog::OnNcHitTest(point);
+}
+
+
+void CLoginDlg::OnBnClickedBtnClose()
+{
+	OnCancel();
+}
+
+
+void CLoginDlg::OnBnClickedBtnMin()
+{
+	SendMessage(WM_SYSCOMMAND, SC_MINIMIZE, 0);
+}
+
+
+BOOL CLoginDlg::OnEraseBkgnd(CDC* pDC)
+{
+	CDialog::OnEraseBkgnd(pDC);
+
+	int iX, iY;
+	CDC memDC;
+	CRect rectClient;
+	BITMAP bmp;
+
+	iX = iY = 0;
+	GetClientRect(&rectClient);
+
+	if (memDC.CreateCompatibleDC(pDC))
+	{
+#if 1
+		CBitmap *pOldBmp = memDC.SelectObject(&m_bmpTitle);
+		m_bmpTitle.GetBitmap(&bmp);
+		pDC->SetStretchBltMode(COLORONCOLOR);
+		pDC->StretchBlt(iX, iY, bmp.bmWidth, bmp.bmHeight, &memDC, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+		memDC.SelectObject(pOldBmp);
+
+		int nTmpX = bmp.bmWidth;
+		int nTitleH = bmp.bmHeight;
+
+// 		iX = iX + bmp.bmWidth;
+// 		pOldBmp = memDC.SelectObject(&m_bmpTitle);
+// 		m_bmpTitle.GetBitmap(&bmp);
+// 
+// 		pDC->SetStretchBltMode(COLORONCOLOR);
+// 		pDC->StretchBlt(iX, iY, rectClient.Width() - nTmpX, nTitleH, &memDC, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+// 		memDC.SelectObject(pOldBmp);
+
+		iX = 0;
+		iY = iY + nTitleH;
+		pOldBmp = memDC.SelectObject(&m_bmpBkg);
+		m_bmpBkg.GetBitmap(&bmp);
+
+		pDC->SetStretchBltMode(COLORONCOLOR);
+		pDC->StretchBlt(iX, iY, rectClient.Width(), rectClient.Height() - nTitleH, &memDC, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+		memDC.SelectObject(pOldBmp);
+#else
+		CBitmap *pOldBmp = memDC.SelectObject(&m_bmpLogo);
+		m_bmpLogo.GetBitmap(&bmp);
+		pDC->BitBlt(iX, iY, bmp.bmWidth, bmp.bmHeight, &memDC, 0, 0, SRCCOPY);
+		memDC.SelectObject(pOldBmp);
+
+		int nTmpX = bmp.bmWidth;
+		int nTitleH = bmp.bmHeight;
+
+		iX = iX + bmp.bmWidth;
+		pOldBmp = memDC.SelectObject(&m_bmpTitle);
+		m_bmpTitle.GetBitmap(&bmp);
+		pDC->BitBlt(iX, iY, rectClient.Width() - nTmpX, nTitleH, &memDC, 0, 0, SRCCOPY);
+		memDC.SelectObject(pOldBmp);
+
+		iX = 0;
+		iY = iY + nTitleH;
+		pOldBmp = memDC.SelectObject(&m_bmpBkg);
+		m_bmpBkg.GetBitmap(&bmp);
+		
+		pDC->BitBlt(iX, iY, rectClient.Width(), rectClient.Height() - nTitleH, &memDC, 0, 0, SRCCOPY);
+		memDC.SelectObject(pOldBmp);
+#endif
+	}
+	memDC.DeleteDC();
+
+	return TRUE;
+}
+
+
+HBRUSH CLoginDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+	UINT CurID = pWnd->GetDlgCtrlID();
+	if (CurID == IDC_STATIC || CurID == IDC_STATIC_CheckBox)
+	{
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
+	else if (CurID == IDC_CHK_RecordPwd)
+	{
+		HBRUSH hMYbr = ::CreateSolidBrush(RGB(62, 147, 254));
+
+//		pDC->SetBkColor(RGB(0,0,255));
+		pDC->SetBkMode(TRANSPARENT);
+
+//		return (HBRUSH)GetStockObject(NULL_BRUSH);
+		return hMYbr;
+	}
+	return hbr;
+}
+

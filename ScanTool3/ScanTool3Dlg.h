@@ -21,7 +21,7 @@ public:
 	enum { IDD = IDD_SCANTOOL2_DIALOG };
 
 
-	void	SwitchDlg(int nDlg);		//切换窗口显示
+	void	SwitchDlg(int nDlg, int nChildID = 1);		//切换窗口显示
 	bool	HandleModel();				//处理模板，通过子窗口处理模板
 	void	DumpReleaseTwain();			//在系统崩溃时释放twain资源
 protected:

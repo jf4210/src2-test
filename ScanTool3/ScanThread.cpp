@@ -130,7 +130,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		pResult->strResult = "连接扫描源失败";
 		
 //		CScanMgrDlg* pDlg = (CScanMgrDlg*)AfxGetMainWnd();
-		CScanDlg* pDlg = (CScanDlg*)m_pDlg;
+//		CScanDlg* pDlg = (CScanDlg*)m_pDlg;
 
 		pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
 		return;
@@ -147,7 +147,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		pResult->strResult = "加载扫描源失败";
 
 //		CScanMgrDlg* pDlg = (CScanMgrDlg*)AfxGetMainWnd();
-		CScanDlg* pDlg = (CScanDlg*)m_pDlg;
+//		CScanDlg* pDlg = (CScanDlg*)m_pDlg;
 
 		pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
 		return;
@@ -193,7 +193,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		pResult->strResult = "扫描失败";
 
 //		CScanMgrDlg* pDlg = (CScanMgrDlg*)AfxGetMainWnd();
-		CScanDlg* pDlg = (CScanDlg*)m_pDlg;
+//		CScanDlg* pDlg = (CScanDlg*)m_pDlg;
 
 		pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
 		return;
@@ -826,6 +826,14 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 		TRACE("%s\n", pResult->strResult.c_str());
 		CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
 		pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
+
+		//添加到识别任务列表
+		if (_pModel_)
+		{
+			pRECOGTASK pTask = new RECOGTASK;
+			pTask->pPaper = m_pCurrPaper;
+			g_lRecogTask.push_back(pTask);
+		}
 	}
 	catch (cv::Exception& exc)
 	{

@@ -272,7 +272,7 @@ LRESULT CScanTool3Dlg::MsgCmdDlModel(WPARAM wParam, LPARAM lParam)
 	return 1;
 }
 
-void CScanTool3Dlg::SwitchDlg(int nDlg)
+void CScanTool3Dlg::SwitchDlg(int nDlg, int nChildID /*= 1*/)
 {
 	if (nDlg == 0)
 	{
@@ -284,7 +284,7 @@ void CScanTool3Dlg::SwitchDlg(int nDlg)
 		m_pExamInfoMgrDlg->ShowWindow(SW_HIDE);
 		m_pScanMgrDlg->ShowWindow(SW_SHOW);
 		m_pScanMgrDlg->InitExamData();
-		m_pScanMgrDlg->ShowChildDlg(1);
+		m_pScanMgrDlg->ShowChildDlg(nChildID);
 	}
 }
 
