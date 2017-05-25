@@ -114,7 +114,7 @@ void CSingleExamDlg::InitCtrlPosition()
 	int cx = rcClient.right;
 	int cy = rcClient.bottom;
 
-	const int nTopGap = 5;	//上边的间隔
+	const int nTopGap = 20;	//上边的间隔
 	const int nBottomGap = 10;	//下边的间隔
 	const int nLeftGap = 10;		//左边的空白间隔
 	const int nRightGap = 50;	//右边的空白间隔
@@ -134,6 +134,7 @@ void CSingleExamDlg::InitCtrlPosition()
 	{
 		int nW = cx - nLeftGap - nRightGap - nBtnW - nGap - nBtnW - nGap * 5;
 		int nH = cy - nTopGap - nBottomGap - m_nSubjectBtnH - nGap - nStaticH - nGap;// nStaticH * 2 - nGap;
+		if (nH > 30) nH = 30;
 		GetDlgItem(IDC_STATIC_ExamName)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
 		nCurrTop += nH + nGap;
 	}
