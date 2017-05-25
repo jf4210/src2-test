@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CExamInfoMgrDlg, CDialog)
 
 CExamInfoMgrDlg::CExamInfoMgrDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CExamInfoMgrDlg::IDD, pParent)
-	, m_nMaxShowExamListItem(0), m_nAllExamListItems(0), m_nShowPapersCount(0), m_nCurrShowPaper(1), m_nMaxSubsRow(3), m_nSubjectBtnH(30), m_nDlgMinH(100), m_strShowCurrPaper(_T(""))
+	, m_nMaxShowExamListItem(0), m_nAllExamListItems(0), m_nShowPapersCount(0), m_nCurrShowPaper(1), m_nMaxSubsRow(3), m_nSubjectBtnH(30), m_nDlgMinH(130), m_strShowCurrPaper(_T(""))
 {
 
 }
@@ -63,6 +63,7 @@ BEGIN_MESSAGE_MAP(CExamInfoMgrDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_Last, &CExamInfoMgrDlg::OnBnClickedBtnLast)
 	ON_BN_CLICKED(IDC_BTN_Up, &CExamInfoMgrDlg::OnBnClickedBtnUp)
 	ON_BN_CLICKED(IDC_BTN_Down, &CExamInfoMgrDlg::OnBnClickedBtnDown)
+	ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
 
@@ -260,6 +261,8 @@ void CExamInfoMgrDlg::GetSearchResultExamList()
 		SAFE_RELEASE(pExam);
 	}
 
+	TRACE("全部考试有 %d个\n", g_lExamList.size());
+
 	for (auto examObj : g_lExamList)
 	{
 		pEXAMINFO pExam = examObj;
@@ -301,10 +304,12 @@ void CExamInfoMgrDlg::GetSearchResultExamList()
 
 void CExamInfoMgrDlg::GetAllShowPaperCount()
 {
-	int nGap = 2;
+	int nGap = 5;
 	int nExamDlg_H = 45;				//考试信息列表的高度
 	int nShowCount = 1;
 	int nTmpTop = m_rtExamList.top;
+	TRACE("显示的考试列表有%d个\n", m_lExamList.size());
+	int i = 0;
 	for (auto examObj : m_lExamList)
 	{
 		pEXAMINFO pExam = examObj;
@@ -312,12 +317,14 @@ void CExamInfoMgrDlg::GetAllShowPaperCount()
 		int nSubs = pExam->lSubjects.size();
 		int nMaxCountInH = ceil((float)nSubs / (float)m_nMaxSubsRow);	//最多有几行按钮
 		nExamDlg_H = nMaxCountInH * m_nSubjectBtnH + (nMaxCountInH - 1) * nGap + 6;
-		if (nExamDlg_H < 50) nExamDlg_H = 50;
+		if (nExamDlg_H < m_nDlgMinH) nExamDlg_H = m_nDlgMinH;
 
+		i++;
 		if (nTmpTop + nExamDlg_H > m_rtExamList.Height())
 		{
 			nShowCount++;
 			nTmpTop = m_rtExamList.top;
+			TRACE("分页%d, 在第%d个分页\n", nShowCount, i);
 		}
 
 		nTmpTop += (nExamDlg_H + nGap);
@@ -327,7 +334,7 @@ void CExamInfoMgrDlg::GetAllShowPaperCount()
 
 int CExamInfoMgrDlg::GetStartExamIndex(int n)
 {
-	int nGap = 2;
+	int nGap = 5;
 	int nExamDlg_H = 45;				//考试信息列表的高度
 
 	int nResult = 0;
@@ -384,13 +391,15 @@ void CExamInfoMgrDlg::ShowExamList(EXAM_LIST lExam, int nStartShow)
 	ReleaseDlgData();
 	if (lExam.size() <= 0) return;
 
-	int nGap = 2;
+	int nGap = 5;
 	int nExamDlg_H = 45;				//考试信息列表的高度
 	int nRealW = m_rtExamList.Width();	//考试信息列表的宽度
 	int nRealH = m_rtExamList.Height();	//实际有效的显示考试列表窗口的高度
 	
 	int nCurrLeft = m_rtExamList.left;
 	int nCurrTop = m_rtExamList.top;
+
+	TRACE("起始显示列表中第%d个\n", nStartShow);
 
 	int nCount = 0;
 	for (auto examObj : lExam)
@@ -541,3 +550,17 @@ void CExamInfoMgrDlg::OnBnClickedBtnDown()
 	ShowExamList(m_lExamList, nCurrStartShowExamListItem);
 }
 
+HBRUSH CExamInfoMgrDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+
+	UINT CurID = pWnd->GetDlgCtrlID();
+	if (CurID == IDC_STATIC_DlgMgr_Subject || CurID == IDC_STATIC_DlgMgr_Grade || CurID == IDC_STATIC_PaperCount)
+	{
+		//		pDC->SetBkColor(RGB(255, 255, 255));
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
+	
+	return hbr;
+}

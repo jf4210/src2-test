@@ -29,7 +29,9 @@ public:
 	void	ShowChildDlg(int n);
 	void	ResetChildDlg();	//子窗口重置
 	void	UpdateChildDlgInfo();	//更新子窗口信息
+	pTW_IDENTITY GetScanSrc(int nIndex);	//获取扫描源信息
 private:
+	void	InitScanner();
 	void	InitCtrlPosition();
 	void	InitChildDlg();
 	void	ReleaseDlg();
@@ -50,9 +52,12 @@ private:
 	CScanProcessDlg*	m_pScanProcessDlg;
 //	CScanRecordMgrDlg*	m_pScanRecordMgrDlg;
 
-	CString			m_strExamName;
+	CString				m_strExamName;
 	CComboBoxExt		m_comboSubject;
 //	CComboBox		m_comboSubject;
+
+	TwainApp*		_pTWAINApp;
+	std::vector<CString> m_vecScanSrc;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

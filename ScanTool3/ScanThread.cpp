@@ -268,6 +268,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	// can negotiate caps again.
 	disableDS();
 
+	exit();
 
 //	CScanMgrDlg* pDlg = (CScanMgrDlg*)AfxGetMainWnd();
 //	CScanDlg* pDlg = (CScanDlg*)m_pDlg;

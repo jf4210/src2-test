@@ -17,7 +17,7 @@ public:
 // 对话框数据
 	enum { IDD = IDD_SCANDLG };
 
-	void	InitScanner();
+	void	SetScanSrcInfo(std::vector<CString>& vec);
 	void	UpdateInfo();
 private:
 	void	InitUI();
@@ -25,7 +25,6 @@ private:
 	void	SetFontSize(int nSize);
 	
 private:
-	TwainApp*		_pTWAINApp;
 	int				m_nCurrentScanCount;	//当前扫描需要扫描试卷数量
 	int				m_nModelPicNums;		//模板图片数，即一份模板有多少图片，对应多少试卷
 	std::string		m_strCurrPicSavePath;		//gb2312

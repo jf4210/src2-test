@@ -503,6 +503,12 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 		}		
 	}
 
+	if (!_pModel_)
+	{
+		AfxMessageBox(_T("当前扫描模板为空"));
+		return;
+	}
+
 	int nSrc = 0;
 	int nRegDuplex = 1;
 	char* ret;
@@ -590,22 +596,27 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 	_pCurrPapersInfo_ = new PAPERSINFO();
 
 
-	_nScanStatus_ = 1;
-	pST_SCANCTRL pScanCtrl = new ST_SCANCTRL();
-	pScanCtrl->nScannerId = index;
-	pScanCtrl->nScanCount = nNum;			//nNum
-	pScanCtrl->nScanDuplexenable = nDuplex;
-	pScanCtrl->nScanPixelType = nScanType;
-	pScanCtrl->nScanResolution = nScanDpi;
-	pScanCtrl->nScanSize = nSize;
-	pScanCtrl->bShowUI = bShowScanSrcUI;	//bShowScanSrcUI;
-
 	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
-	pDlg->m_scanThread.setNotifyDlg(pDlg);
-	pDlg->m_scanThread.setModelInfo(_pModel_->nPicNum, m_strCurrPicSavePath);
-	pDlg->m_scanThread.resetData();
-	pDlg->ResetChildDlg();
-	pDlg->m_scanThread.PostThreadMessage(MSG_START_SCAN, index, (LPARAM)pScanCtrl);
+	pTW_IDENTITY pID = NULL;
+	pID = pDlg->GetScanSrc(index);
+	if (NULL != pID)
+	{
+		_nScanStatus_ = 1;
+		pST_SCANCTRL pScanCtrl = new ST_SCANCTRL();
+		pScanCtrl->nScannerId = pID->Id;
+		pScanCtrl->nScanCount = nNum;			//nNum
+		pScanCtrl->nScanDuplexenable = nDuplex;
+		pScanCtrl->nScanPixelType = nScanType;
+		pScanCtrl->nScanResolution = nScanDpi;
+		pScanCtrl->nScanSize = nSize;
+		pScanCtrl->bShowUI = bShowScanSrcUI;	//bShowScanSrcUI;
+
+		pDlg->m_scanThread.setNotifyDlg(pDlg);
+		pDlg->m_scanThread.setModelInfo(_pModel_->nPicNum, m_strCurrPicSavePath);
+		pDlg->m_scanThread.resetData();
+		pDlg->ResetChildDlg();
+		pDlg->m_scanThread.PostThreadMessage(MSG_START_SCAN, pID->Id, (LPARAM)pScanCtrl);
+	}	
 	
 	InitShow();
 	UpdateChildInfo();

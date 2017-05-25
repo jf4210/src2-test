@@ -62,4 +62,5 @@ public:
 	afx_msg void OnBnClickedBtnLast();
 	afx_msg void OnBnClickedBtnUp();
 	afx_msg void OnBnClickedBtnDown();
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

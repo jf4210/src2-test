@@ -324,7 +324,7 @@ BOOL CScanTool3Dlg::OnInitDialog()
 
 	try
 	{
-		g_eGetExamList.wait(5000);
+		g_eGetExamList.wait(10000);
 	}
 	catch (Poco::TimeoutException &e)
 	{

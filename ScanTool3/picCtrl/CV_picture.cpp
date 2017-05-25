@@ -1496,6 +1496,7 @@ void CV_picture::OnPaint()
 			m_RectTrackerSN.Draw(pDC);
 		}
 		ReleaseDC(pDC);		//一个GetDC必须对应一个ReleaseDC，否则造成严重的内存泄露
+//		__super::OnPaint();
 	#else
 		this->GetClientRect(&m_rect);
 		this->GetWindowRect(&m_rect_win);

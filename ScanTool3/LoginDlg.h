@@ -18,7 +18,6 @@ public:
 
 public:
 	CBitmap		m_bmpBkg;
-	CBitmap		m_bmpLogo;
 	CBitmap		m_bmpTitle;
 	CBmpButton	m_bmpBtnMin;
 	CBmpButton	m_bmpBtnExit;
@@ -62,7 +61,8 @@ private:
 	int			nRecvBuffSize;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
-	virtual BOOL OnInitDialog(); 
+	virtual BOOL OnInitDialog();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual void OnOK();
 	DECLARE_MESSAGE_MAP()
 public:

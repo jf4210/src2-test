@@ -79,9 +79,6 @@ LRESULT CSingleExamDlg::DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam
 		{
 			if (wID == pSub->nSubjID)
 			{
-// 				CString strMsg = _T("");
-// 				strMsg.Format(_T("%s"), A2T(pSub->strModelName.c_str()));
-// 				AfxMessageBox(strMsg);
 				_pCurrExam_ = _pExamInfo;
 				_pCurrSub_	= pSub;
 
@@ -117,10 +114,10 @@ void CSingleExamDlg::InitCtrlPosition()
 	int cx = rcClient.right;
 	int cy = rcClient.bottom;
 
-	const int nTopGap = 2;	//上边的间隔
+	const int nTopGap = 5;	//上边的间隔
 	const int nBottomGap = 10;	//下边的间隔
 	const int nLeftGap = 10;		//左边的空白间隔
-	const int nRightGap = 10;	//右边的空白间隔
+	const int nRightGap = 50;	//右边的空白间隔
 	int nGap = 2;
 	int nStaticH = (cy - nTopGap - nBottomGap) / 4;	//静态控件高度
 	if (nStaticH < 20) nStaticH = 20;
@@ -181,7 +178,7 @@ void CSingleExamDlg::InitCtrlPosition()
 		nCurrLeft += (nW + nGap);
 	}
 
-	int nMaxBtnRow = m_nMaxSubsRow;			//一行最多显示2个科目按钮
+	int nMaxBtnRow = m_nMaxSubsRow;			//一行最多显示的科目按钮
 	int nBtnH = m_nSubjectBtnH;
 	for (int i = 0; i < m_vecBtn.size(); i++)
 	{
@@ -230,13 +227,14 @@ void CSingleExamDlg::DrawBorder(CDC *pDC)
 	CRect rcClient(0, 0, 0, 0);
 	GetClientRect(&rcClient);
 	if (!_bMouseInDlg)
-		pPen.CreatePen(PS_SOLID, 2, RGB(166, 218, 239));
+		pPen.CreatePen(PS_SOLID, 1, RGB(166, 218, 239));
 	else
-		pPen.CreatePen(PS_SOLID, 2, RGB(106, 218, 239));
+		pPen.CreatePen(PS_SOLID, 1, RGB(106, 218, 239));
 
 	pDC->SelectStockObject(NULL_BRUSH);
 	pOldPen = pDC->SelectObject(&pPen);
-	pDC->Rectangle(&rcClient);
+//	pDC->Rectangle(&rcClient);
+	pDC->RoundRect(rcClient, CPoint(10, 10));
 	pDC->SelectObject(pOldPen);
 	pPen.Detach();
 	ReleaseDC(pDC);
@@ -268,18 +266,39 @@ void CSingleExamDlg::SetExamInfo(pEXAMINFO pExamInfo)
 	InitCtrlPosition();
 }
 
-
 BOOL CSingleExamDlg::OnEraseBkgnd(CDC* pDC)
 {
 	CRect rcClient;
 	GetClientRect(&rcClient);
 
 	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 242, 250
+
+	//画虚线
+	if (GetDlgItem(IDC_STATIC_ExamType)->GetSafeHwnd())
+	{
+		CPen *pOldPen = NULL;
+		CPen pPen;
+		pPen.CreatePen(PS_DASH, 1, RGB(106, 218, 239));
+		pOldPen = pDC->SelectObject(&pPen);
+
+		CRect rtTmp;
+		GetDlgItem(IDC_STATIC_ExamType)->GetWindowRect(rtTmp);
+		ScreenToClient(&rtTmp);
+
+		CPoint pt1, pt2;
+		pt1.x = rtTmp.left;
+		pt1.y = rtTmp.bottom;
+		pt2.x = pt1.x + 300;
+		pt2.y = pt1.y;
+		pDC->MoveTo(pt1);
+		pDC->LineTo(pt2);
+		pDC->SelectObject(pOldPen);
+		pPen.Detach();
+	}
 	DrawBorder(pDC);
 
 	return CDialog::OnEraseBkgnd(pDC);
 }
-
 
 HBRUSH CSingleExamDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
@@ -294,7 +313,6 @@ HBRUSH CSingleExamDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	}
 	return hbr;
 }
-
 
 void CSingleExamDlg::OnBnClickedBtnScanprocesses()
 {

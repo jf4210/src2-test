@@ -112,6 +112,22 @@ BOOL CLoginDlg::OnInitDialog()
 }
 
 
+BOOL CLoginDlg::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		if (pMsg->wParam == VK_ESCAPE)
+		{
+			OnCancel();
+		}
+		else if (pMsg->wParam == VK_RETURN)
+		{
+			OnOK();
+		}
+	}
+	return CDialog::PreTranslateMessage(pMsg);
+}
+
 void CLoginDlg::OnBnClickedBtnLogin()
 {
 	UpdateData(TRUE);
@@ -506,11 +522,10 @@ void CLoginDlg::InitUI()
 	m_bmpBtnMin.SetStateBitmap(IDB_LOGIN_MinBtn, 0, 0);
 	m_bmpBtnLogin.SetStateBitmap(IDB_LOGIN_Btn, 0, 0);
 
-	m_icnEditUser.SetIcon(IDI_ICON_LOGIN_User);	//IDI_ICON_LOGIN_User
+	m_icnEditUser.SetIcon(IDI_ICON_LOGIN_User);
 	m_icnEditPwd.SetIcon(IDI_ICON_LOGIN_Pwd);
 	m_icnEditPwd.SetPasswordChar('*');
 
-	m_bmpLogo.LoadBitmap(IDB_LOGIN_LOGO);
 	m_bmpTitle.LoadBitmap(IDB_LOGIN_TITLE);
 	m_bmpBkg.LoadBitmap(IDB_LOGIN_BK);
 }
@@ -568,7 +583,7 @@ LRESULT CLoginDlg::OnNcHitTest(CPoint point)
 {
 	CRect rcWndRect;
 	GetWindowRect(rcWndRect);
-	rcWndRect.bottom = rcWndRect.top + 40;
+//	rcWndRect.bottom = rcWndRect.top + 40;	//40
 	if (rcWndRect.PtInRect(point))
 		return HTCAPTION;
 	return CDialog::OnNcHitTest(point);
@@ -580,12 +595,10 @@ void CLoginDlg::OnBnClickedBtnClose()
 	OnCancel();
 }
 
-
 void CLoginDlg::OnBnClickedBtnMin()
 {
 	SendMessage(WM_SYSCOMMAND, SC_MINIMIZE, 0);
 }
-
 
 BOOL CLoginDlg::OnEraseBkgnd(CDC* pDC)
 {
@@ -601,7 +614,6 @@ BOOL CLoginDlg::OnEraseBkgnd(CDC* pDC)
 
 	if (memDC.CreateCompatibleDC(pDC))
 	{
-#if 1
 		CBitmap *pOldBmp = memDC.SelectObject(&m_bmpTitle);
 		m_bmpTitle.GetBitmap(&bmp);
 		pDC->SetStretchBltMode(COLORONCOLOR);
@@ -610,15 +622,7 @@ BOOL CLoginDlg::OnEraseBkgnd(CDC* pDC)
 
 		int nTmpX = bmp.bmWidth;
 		int nTitleH = bmp.bmHeight;
-
-// 		iX = iX + bmp.bmWidth;
-// 		pOldBmp = memDC.SelectObject(&m_bmpTitle);
-// 		m_bmpTitle.GetBitmap(&bmp);
-// 
-// 		pDC->SetStretchBltMode(COLORONCOLOR);
-// 		pDC->StretchBlt(iX, iY, rectClient.Width() - nTmpX, nTitleH, &memDC, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
-// 		memDC.SelectObject(pOldBmp);
-
+		
 		iX = 0;
 		iY = iY + nTitleH;
 		pOldBmp = memDC.SelectObject(&m_bmpBkg);
@@ -627,35 +631,11 @@ BOOL CLoginDlg::OnEraseBkgnd(CDC* pDC)
 		pDC->SetStretchBltMode(COLORONCOLOR);
 		pDC->StretchBlt(iX, iY, rectClient.Width(), rectClient.Height() - nTitleH, &memDC, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
 		memDC.SelectObject(pOldBmp);
-#else
-		CBitmap *pOldBmp = memDC.SelectObject(&m_bmpLogo);
-		m_bmpLogo.GetBitmap(&bmp);
-		pDC->BitBlt(iX, iY, bmp.bmWidth, bmp.bmHeight, &memDC, 0, 0, SRCCOPY);
-		memDC.SelectObject(pOldBmp);
-
-		int nTmpX = bmp.bmWidth;
-		int nTitleH = bmp.bmHeight;
-
-		iX = iX + bmp.bmWidth;
-		pOldBmp = memDC.SelectObject(&m_bmpTitle);
-		m_bmpTitle.GetBitmap(&bmp);
-		pDC->BitBlt(iX, iY, rectClient.Width() - nTmpX, nTitleH, &memDC, 0, 0, SRCCOPY);
-		memDC.SelectObject(pOldBmp);
-
-		iX = 0;
-		iY = iY + nTitleH;
-		pOldBmp = memDC.SelectObject(&m_bmpBkg);
-		m_bmpBkg.GetBitmap(&bmp);
-		
-		pDC->BitBlt(iX, iY, rectClient.Width(), rectClient.Height() - nTitleH, &memDC, 0, 0, SRCCOPY);
-		memDC.SelectObject(pOldBmp);
-#endif
 	}
 	memDC.DeleteDC();
 
 	return TRUE;
 }
-
 
 HBRUSH CLoginDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {

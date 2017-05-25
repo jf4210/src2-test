@@ -97,6 +97,9 @@
     <Filter Include="控件\iconEdit">
       <UniqueIdentifier>{53310133-b815-46db-92fd-5551348919e9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="模板界面">
+      <UniqueIdentifier>{0ee7330b-ca90-41f3-857b-f033b2172267}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -279,6 +282,9 @@
     <ClInclude Include="IconEdit.h">
       <Filter>控件\iconEdit</Filter>
     </ClInclude>
+    <ClInclude Include="MakeModelDlg.h">
+      <Filter>模板界面</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -433,6 +439,9 @@
     </ClCompile>
     <ClCompile Include="IconEdit.cpp">
       <Filter>控件\iconEdit</Filter>
+    </ClCompile>
+    <ClCompile Include="MakeModelDlg.cpp">
+      <Filter>模板界面</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
