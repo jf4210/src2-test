@@ -9,6 +9,7 @@
 #include "ExamInfoMgrDlg.h"
 #include "ScanMgrDlg.h"
 #include "ScanThread.h"
+#include "BmpButton.h"
 
 // CScanTool2Dlg 对话框
 class CScanTool3Dlg : public CDialogEx
@@ -51,6 +52,21 @@ private:
 	CExamInfoMgrDlg*	m_pExamInfoMgrDlg;
 	CScanMgrDlg*		m_pScanMgrDlg;
 	//--
+
+
+	CBitmap		m_bmpBkg;
+	CBitmap		m_bmpTitle;
+	CBmpButton	m_bmpBtnMin;
+	CBmpButton	m_bmpBtnExit;
+	CBmpButton	m_bmpBtnUserPic;	//用户头像按钮
+
+	CString		m_strTitle;
+	CString		m_strVersion;
+	int				m_nStatusSize;			//状态栏字体大小
+	CFont			m_fontTitle;			//标题字体
+	CFont			m_fontVersion;			//版本字体
+	COLORREF		m_colorStatus;			//状态栏字体颜色
+	void	SetFontSize(int nSize);
 // 实现
 protected:
 	HICON m_hIcon;
@@ -63,4 +79,9 @@ protected:
 public:
 	afx_msg void OnDestroy();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnBnClickedBtnClose();
+	afx_msg void OnBnClickedBtnMin();
+	afx_msg LRESULT OnNcHitTest(CPoint point);
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

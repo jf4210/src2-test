@@ -236,6 +236,7 @@ void CTcpClient::HandleCmd()
 			std::string strExamData = pBuff;
 			std::string strUtf = CMyCodeConvert::Utf8ToGb2312(pBuff);
 
+			g_lfmExamList.lock();
 			Poco::JSON::Parser parser;
 			Poco::Dynamic::Var result;
 			try
@@ -256,7 +257,6 @@ void CTcpClient::HandleCmd()
 				}
 
 				Poco::JSON::Array::Ptr arryObj = examObj->getArray("exams");
-				g_lfmExamList.lock();
 				for (int i = 0; i < arryObj->size(); i++)
 				{
 					Poco::JSON::Object::Ptr objExamInfo = arryObj->getObject(i);
@@ -299,7 +299,6 @@ void CTcpClient::HandleCmd()
 					}
 					g_lExamList.push_back(examInfo);
 				}
-				g_lfmExamList.unlock();
 			}
 			catch (Poco::JSON::JSONException& jsone)
 			{
@@ -325,6 +324,7 @@ void CTcpClient::HandleCmd()
 				TRACE(_T("%s\n"), strErrInfo.c_str());
 			}
 			SAFE_RELEASE_ARRY(pBuff);
+			g_lfmExamList.unlock();
 		}
 		break;
 		}

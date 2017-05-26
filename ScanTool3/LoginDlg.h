@@ -59,6 +59,15 @@ private:
 	CString		m_strServerIP;
 	int			m_nServerPort;
 	int			nRecvBuffSize;
+	CString		m_strTitle;
+	CString		m_strVersion;
+
+	int				m_nStatusSize;			//状态栏字体大小
+	CFont			m_fontTitle;			//标题字体
+	CFont			m_fontVersion;			//版本字体
+	COLORREF		m_colorStatus;			//状态栏字体颜色
+	void	SetFontSize(int nSize);
+
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

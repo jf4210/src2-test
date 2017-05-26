@@ -118,10 +118,10 @@ void CSingleExamDlg::InitCtrlPosition()
 	const int nBottomGap = 10;	//下边的间隔
 	const int nLeftGap = 10;		//左边的空白间隔
 	const int nRightGap = 50;	//右边的空白间隔
-	int nGap = 2;
+	int nGap = 5;
 	int nStaticH = (cy - nTopGap - nBottomGap) / 4;	//静态控件高度
-	if (nStaticH < 20) nStaticH = 20;
-	if (nStaticH > 30) nStaticH = 30;
+	if (nStaticH < 10) nStaticH = 10;
+	if (nStaticH > 20) nStaticH = 20;
 
 	int nBtnW = (cx - nLeftGap - nRightGap) * 0.1;	//一行最多放2个按钮
 	if (nBtnW < 80) nBtnW = 80;
@@ -135,6 +135,7 @@ void CSingleExamDlg::InitCtrlPosition()
 		int nW = cx - nLeftGap - nRightGap - nBtnW - nGap - nBtnW - nGap * 5;
 		int nH = cy - nTopGap - nBottomGap - m_nSubjectBtnH - nGap - nStaticH - nGap;// nStaticH * 2 - nGap;
 		if (nH > 30) nH = 30;
+		if (nH < 20) nH = 20;
 		GetDlgItem(IDC_STATIC_ExamName)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
 		nCurrTop += nH + nGap;
 	}
@@ -181,10 +182,12 @@ void CSingleExamDlg::InitCtrlPosition()
 
 	int nMaxBtnRow = m_nMaxSubsRow;			//一行最多显示的科目按钮
 	int nBtnH = m_nSubjectBtnH;
+	int nMaxRow = ceil((double)m_vecBtn.size() / nMaxBtnRow);
+	int nTmpTop = nTopGap + (cy - nTopGap - nBottomGap) / 2 - (nBtnH * nMaxRow + (nMaxRow - 1) * nGap) / 2;
 	for (int i = 0; i < m_vecBtn.size(); i++)
 	{
 		nCurrLeft = cx - nRightGap - (nMaxBtnRow - i % nMaxBtnRow) * nBtnW - (nMaxBtnRow - i % nMaxBtnRow - 1) * nGap;
-		nCurrTop = nTopGap + (i / nMaxBtnRow) * (nBtnH + nGap);
+		nCurrTop = nTmpTop + (i / nMaxBtnRow) * (nBtnH + nGap);
 		if (m_vecBtn[i]->GetSafeHwnd())
 		{
 			m_vecBtn[i]->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
@@ -288,7 +291,7 @@ BOOL CSingleExamDlg::OnEraseBkgnd(CDC* pDC)
 
 		CPoint pt1, pt2;
 		pt1.x = rtTmp.left;
-		pt1.y = rtTmp.bottom;
+		pt1.y = rtTmp.bottom + 1;
 		pt2.x = pt1.x + 300;
 		pt2.y = pt1.y;
 		pDC->MoveTo(pt1);

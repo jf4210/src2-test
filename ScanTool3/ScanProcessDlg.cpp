@@ -692,15 +692,19 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	char szTime[50] = { 0 };
 	sprintf_s(szTime, "%d%02d%02d%02d%02d%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
 
-#ifndef TO_WHTY
-	sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s_%d", T2A(g_strCurrentPath), _strUserName_.c_str(), _pModel_->nExamID, _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
-	sprintf_s(szZipBaseName, "%s_%d-%d_%s_%d", _strUserName_.c_str(), _pModel_->nExamID, _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
-	sprintf_s(szZipName, "%s_%d-%d_%s_%d%s", _strUserName_.c_str(), _pModel_->nExamID, _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount, T2A(PAPERS_EXT_NAME));
-#else
-	sprintf_s(szPapersSavePath, "%sPaper\\%s_%s_%d_%s_%d", T2A(g_strCurrentPath), _strUserName_.c_str(), strExamID.c_str(), _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
-	sprintf_s(szZipBaseName, "%s_%s_%d_%s_%d", _strUserName_.c_str(), strExamID.c_str(), _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
-	sprintf_s(szZipName, "%s_%s_%d_%s_%d%s", _strUserName_.c_str(), strExamID.c_str(), _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount, T2A(PAPERS_EXT_NAME));
-#endif
+	if (!_bHandModel_)
+	{
+		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s_%d", T2A(g_strCurrentPath), _strUserName_.c_str(), _pModel_->nExamID, _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
+		sprintf_s(szZipBaseName, "%s_%d-%d_%s_%d", _strUserName_.c_str(), _pModel_->nExamID, _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
+		sprintf_s(szZipName, "%s_%d-%d_%s_%d%s", _strUserName_.c_str(), _pModel_->nExamID, _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount, T2A(PAPERS_EXT_NAME));
+	}
+	else
+	{
+		std::string strExamID = _pCurrExam_->strExamID;
+		sprintf_s(szPapersSavePath, "%sPaper\\%s_%s_%d_%s_%d", T2A(g_strCurrentPath), _strUserName_.c_str(), strExamID.c_str(), _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
+		sprintf_s(szZipBaseName, "%s_%s_%d_%s_%d", _strUserName_.c_str(), strExamID.c_str(), _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
+		sprintf_s(szZipName, "%s_%s_%d_%s_%d%s", _strUserName_.c_str(), strExamID.c_str(), _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount, T2A(PAPERS_EXT_NAME));
+	}
 
 	//临时目录改名，以便压缩时继续扫描
 	std::string strSrcPicDirPath;

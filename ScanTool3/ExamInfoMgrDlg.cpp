@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CExamInfoMgrDlg, CDialog)
 
 CExamInfoMgrDlg::CExamInfoMgrDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CExamInfoMgrDlg::IDD, pParent)
-	, m_nMaxShowExamListItem(0), m_nAllExamListItems(0), m_nShowPapersCount(0), m_nCurrShowPaper(1), m_nMaxSubsRow(3), m_nSubjectBtnH(30), m_nDlgMinH(130), m_strShowCurrPaper(_T(""))
+	, m_nMaxShowExamListItem(0), m_nAllExamListItems(0), m_nShowPapersCount(0), m_nCurrShowPaper(1), m_nMaxSubsRow(3), m_nSubjectBtnH(30), m_nDlgMinH(110), m_strShowCurrPaper(_T(""))
 {
 
 }
@@ -316,7 +316,7 @@ void CExamInfoMgrDlg::GetAllShowPaperCount()
 
 		int nSubs = pExam->lSubjects.size();
 		int nMaxCountInH = ceil((float)nSubs / (float)m_nMaxSubsRow);	//最多有几行按钮
-		nExamDlg_H = nMaxCountInH * m_nSubjectBtnH + (nMaxCountInH - 1) * nGap + 6;
+		nExamDlg_H = nMaxCountInH * m_nSubjectBtnH + (nMaxCountInH - 1) * nGap + 30;
 		if (nExamDlg_H < m_nDlgMinH) nExamDlg_H = m_nDlgMinH;
 
 		i++;
@@ -347,7 +347,7 @@ int CExamInfoMgrDlg::GetStartExamIndex(int n)
 
 		int nSubs = pExam->lSubjects.size();
 		int nMaxCountInH = ceil((float)nSubs / (float)m_nMaxSubsRow);	//最多有几行按钮
-		nExamDlg_H = nMaxCountInH * m_nSubjectBtnH + (nMaxCountInH - 1) * nGap + 6;
+		nExamDlg_H = nMaxCountInH * m_nSubjectBtnH + (nMaxCountInH - 1) * nGap + 30;
 		if (nExamDlg_H < m_nDlgMinH) nExamDlg_H = m_nDlgMinH;
 
 		if (nTmpTop + nExamDlg_H > m_rtExamList.Height())
@@ -411,7 +411,7 @@ void CExamInfoMgrDlg::ShowExamList(EXAM_LIST lExam, int nStartShow)
 		{
 			int nSubs = pExam->lSubjects.size();
 			int nMaxCountInH = ceil((float)nSubs / (float)m_nMaxSubsRow);	//最多有几行按钮
-			nExamDlg_H = nMaxCountInH * m_nSubjectBtnH + (nMaxCountInH - 1) * nGap + 6;
+			nExamDlg_H = nMaxCountInH * m_nSubjectBtnH + (nMaxCountInH - 1) * nGap + 30;
 			if (nExamDlg_H < m_nDlgMinH) nExamDlg_H = m_nDlgMinH;
 
 			if (nCurrTop + nExamDlg_H > m_rtExamList.Height())
@@ -435,6 +435,8 @@ void CExamInfoMgrDlg::ShowExamList(EXAM_LIST lExam, int nStartShow)
 
 	m_strShowCurrPaper.Format(_T("当前页: %d/%d"), m_nCurrShowPaper, m_nShowPapersCount);
 	UpdateData(FALSE);
+	Invalidate();
+//	GetDlgItem(IDC_STATIC_PaperCount)->Invalidate();
 }
 
 

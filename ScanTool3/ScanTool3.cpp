@@ -173,7 +173,6 @@ BOOL CScanTool3App::InitInstance()
 		_nTeacherId_	= loginDlg.m_nTeacherId;
 		_nUserId_		= loginDlg.m_nUserId;
 	}
-//	g_eGetExamList.wait();
 
 	CScanTool3Dlg dlg;
 	m_pMainWnd = &dlg;

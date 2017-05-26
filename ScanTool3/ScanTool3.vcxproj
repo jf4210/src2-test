@@ -260,18 +260,24 @@
   <ItemGroup>
     <Image Include="res\icon1.ico" />
     <Image Include="res\ScanTool3.ico" />
-    <Image Include="skin\login\bitmap2.bmp" />
-    <Image Include="skin\login\logo.bmp" />
+    <Image Include="skin\examList\1_01_01.bmp" />
+    <Image Include="skin\examList\1_02.bmp" />
+    <Image Include="skin\examList\1_04_03.bmp" />
+    <Image Include="skin\examList\1_04_03hover.bmp" />
+    <Image Include="skin\examList\1_04_04.bmp" />
+    <Image Include="skin\examList\1_04_04hover.bmp" />
+    <Image Include="skin\examList\2_03.bmp" />
+    <Image Include="skin\login\bitmap1.bmp" />
     <Image Include="skin\login\关闭.bmp" />
-    <Image Include="skin\login\密码.bmp" />
+    <Image Include="skin\login\关闭_hover.bmp" />
     <Image Include="skin\login\密码.ico" />
     <Image Include="skin\login\最小化.bmp" />
-    <Image Include="skin\login\用户.bmp" />
+    <Image Include="skin\login\最小化_hover.bmp" />
     <Image Include="skin\login\用户.ico" />
     <Image Include="skin\login\登录按钮.bmp" />
+    <Image Include="skin\login\登录按钮_hover.bmp" />
     <Image Include="skin\login\登录背景.bmp" />
     <Image Include="skin\login\顶部.bmp" />
-    <Image Include="skin\login\顶部条.bmp" />
     <Image Include="XListCtrl\checkboxes.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

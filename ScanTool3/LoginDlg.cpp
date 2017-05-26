@@ -30,6 +30,7 @@ CLoginDlg::CLoginDlg(CString strIP, int nPort, CWnd* pParent /*=NULL*/)
 	, m_nTeacherId(-1)
 	, m_nUserId(-1)
 	, m_bRecordPwd(true)
+	, m_nStatusSize(15)
 {
 	ZeroMemory(m_szRecvBuff, 1024);
 }
@@ -59,6 +60,8 @@ void CLoginDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BTN_Login, m_bmpBtnLogin);
 	DDX_Control(pDX, IDC_BTN_CLOSE, m_bmpBtnExit);
 	DDX_Control(pDX, IDC_BTN_Min, m_bmpBtnMin);
+	DDX_Text(pDX, IDC_STATIC_Title, m_strTitle);
+	DDX_Text(pDX, IDC_STATIC_Version, m_strVersion);
 }
 
 
@@ -82,6 +85,9 @@ BOOL CLoginDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	InitUI();
+	m_strTitle.Format(_T("%s"), SYS_BASE_NAME);
+	m_strVersion = SOFT_VERSION;
+	SetWindowText(m_strTitle);
 
 	char* ret;
 	ret = new char[255];
@@ -152,7 +158,8 @@ void CLoginDlg::OnBnClickedBtnLogin()
 	Poco::Net::SocketAddress sa(T2A(m_strServerIP), m_nServerPort);
 	try
 	{
-		Poco::Timespan ts(10, 0);
+		Poco::Timespan ts(6, 0);
+		m_ss.close();
 		m_ss.connect(sa);
 		m_ss.setReceiveTimeout(ts);
 
@@ -182,8 +189,6 @@ void CLoginDlg::OnBnClickedBtnLogin()
 		else if (nResult == 2)
 		{
 			//ÌìÓ÷°æ±¾£¬µ¯³öÆ½Ì¨ÁÐ±í£¬Ñ¡ÔñÒ»¸öÆ½Ì¨
-//		#ifdef TO_WHTY
-		#if 1
 			CMultiPlatform4TYDlg dlg(_vecPlatformList);
 			dlg.DoModal();
 			WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "login", T2A(m_strUserName));
@@ -207,9 +212,8 @@ void CLoginDlg::OnBnClickedBtnLogin()
 					AfxMessageBox(_T("µÇÂ¼Ê§°Ü: ") + strResult2);
 				else
 					AfxMessageBox(_T("µÇÂ¼Ê§°Ü"));
-				CDialog::OnCancel();
+//				CDialog::OnCancel();
 			}
-		#endif
 		}
 		else
 		{
@@ -218,7 +222,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 				AfxMessageBox(_T("µÇÂ¼Ê§°Ü: ") + strResult);
 			else
 				AfxMessageBox(_T("µÇÂ¼Ê§°Ü"));
-			CDialog::OnCancel();
+//			CDialog::OnCancel();
 		}
 
 	}
@@ -228,7 +232,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 		g_pLogger->information(strLog);
 		TRACE(strLog.c_str());
 		AfxMessageBox(_T("µÇÂ¼Ê§°Ü"));
-		OnCancel();
+//		OnCancel();
 	}
 }
 
@@ -350,18 +354,23 @@ int CLoginDlg::RecvData(CString& strResultInfo)
 				{
 					result = parser.parse(pstResult->szUserInfo);
 					Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
-				#ifdef TO_WHTY
-					std::string strPersonId = object->get("personid").convert<std::string>();
-					std::string strNickName = CMyCodeConvert::Utf8ToGb2312(object->get("name").convert<std::string>());
-					std::string strUserName = object->get("account").convert<std::string>();
-					m_strPersonId = strPersonId.c_str();
-				#else
-					std::string strUserName = object->get("name").convert<std::string>();
-					Poco::JSON::Object::Ptr objDetail = object->getObject("detail");
-					std::string strNickName = CMyCodeConvert::Utf8ToGb2312(objDetail->get("nickName").convert<std::string>());
-				#endif
-					m_strUser		= strUserName.c_str();
-					m_strNickName	= strNickName.c_str();
+					if (_bHandModel_)
+					{
+						std::string strPersonId = object->get("personid").convert<std::string>();
+						std::string strNickName = CMyCodeConvert::Utf8ToGb2312(object->get("name").convert<std::string>());
+						std::string strUserName = object->get("account").convert<std::string>();
+						m_strPersonId = strPersonId.c_str();
+						m_strUser = strUserName.c_str();
+						m_strNickName = strNickName.c_str();
+					}
+					else
+					{
+						std::string strUserName = object->get("name").convert<std::string>();
+						Poco::JSON::Object::Ptr objDetail = object->getObject("detail");
+						std::string strNickName = CMyCodeConvert::Utf8ToGb2312(objDetail->get("nickName").convert<std::string>());
+						m_strUser = strUserName.c_str();
+						m_strNickName = strNickName.c_str();
+					}
 				}
 				catch (Poco::JSON::JSONException& jsone)
 				{
@@ -466,11 +475,10 @@ int CLoginDlg::GetExamInfo()
 // 	stHead.uPackSize = sizeof(ST_EXAM_INFO);
 	ST_EXAM_INFO stExamInfo;
 	ZeroMemory(&stExamInfo, sizeof(ST_EXAM_INFO));
-#ifdef TO_WHTY
-	strcpy(stExamInfo.szEzs, T2A(m_strPersonId));
-#else
-	strcpy(stExamInfo.szEzs, T2A(m_strEzs));
-#endif
+	if (_bHandModel_)
+		strcpy(stExamInfo.szEzs, T2A(m_strPersonId));
+	else
+		strcpy(stExamInfo.szEzs, T2A(m_strEzs));
 
 	pTCP_TASK pTcpTask = new TCP_TASK;
 	pTcpTask->usCmd = USER_GETEXAMINFO;
@@ -499,11 +507,10 @@ int CLoginDlg::GetBmkInfo()
 
 	ST_GET_BMK_INFO stGetBmkInfo;
 	ZeroMemory(&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
-#ifdef TO_WHTY
-	strcpy(stGetBmkInfo.szEzs, T2A(m_strPersonId));
-#else
-	strcpy(stGetBmkInfo.szEzs, T2A(m_strEzs));
-#endif
+	if (_bHandModel_)
+		strcpy(stGetBmkInfo.szEzs, T2A(m_strPersonId));
+	else
+		strcpy(stGetBmkInfo.szEzs, T2A(m_strEzs));
 
 	pTCP_TASK pTcpTask = new TCP_TASK;
 	pTcpTask->usCmd = USER_GET_BMK;
@@ -518,9 +525,9 @@ int CLoginDlg::GetBmkInfo()
 
 void CLoginDlg::InitUI()
 {
-	m_bmpBtnExit.SetStateBitmap(IDB_LOGIN_CloseBtn, 0, 0);
-	m_bmpBtnMin.SetStateBitmap(IDB_LOGIN_MinBtn, 0, 0);
-	m_bmpBtnLogin.SetStateBitmap(IDB_LOGIN_Btn, 0, 0);
+	m_bmpBtnExit.SetStateBitmap(IDB_LOGIN_CloseBtn, 0, IDB_LOGIN_CloseBtn_Hover);
+	m_bmpBtnMin.SetStateBitmap(IDB_LOGIN_MinBtn, 0, IDB_LOGIN_MinBtn_Hover);
+	m_bmpBtnLogin.SetStateBitmap(IDB_LOGIN_Btn, 0, IDB_LOGIN_Btn_Hover);
 
 	m_icnEditUser.SetIcon(IDI_ICON_LOGIN_User);
 	m_icnEditPwd.SetIcon(IDI_ICON_LOGIN_Pwd);
@@ -528,10 +535,10 @@ void CLoginDlg::InitUI()
 
 	m_bmpTitle.LoadBitmap(IDB_LOGIN_TITLE);
 	m_bmpBkg.LoadBitmap(IDB_LOGIN_BK);
+
+	SetFontSize(m_nStatusSize);
 }
 
-//#ifdef TO_WHTY
-#if 1
 void CLoginDlg::LoginPlatform4TY(pST_PLATFORMINFO p)
 {
 	ZeroMemory(m_pRecvBuff, nRecvBuffSize);
@@ -558,7 +565,7 @@ void CLoginDlg::LoginPlatform4TY(pST_PLATFORMINFO p)
 	memcpy(szSendBuf + HEAD_SIZE, (char*)&stLogin, sizeof(ST_LOGIN_INFO4TY));
 	m_ss.sendBytes(szSendBuf, HEAD_SIZE + stHead.uPackSize);
 }
-#endif
+
 void CLoginDlg::OnOK()
 {
 	OnBnClickedBtnLogin();
@@ -617,7 +624,7 @@ BOOL CLoginDlg::OnEraseBkgnd(CDC* pDC)
 		CBitmap *pOldBmp = memDC.SelectObject(&m_bmpTitle);
 		m_bmpTitle.GetBitmap(&bmp);
 		pDC->SetStretchBltMode(COLORONCOLOR);
-		pDC->StretchBlt(iX, iY, bmp.bmWidth, bmp.bmHeight, &memDC, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+		pDC->StretchBlt(iX, iY, rectClient.Width(), bmp.bmHeight, &memDC, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
 		memDC.SelectObject(pOldBmp);
 
 		int nTmpX = bmp.bmWidth;
@@ -646,7 +653,19 @@ HBRUSH CLoginDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}
-	else if (CurID == IDC_CHK_RecordPwd)
+	else if (CurID == IDC_STATIC_Bottom || CurID == IDC_STATIC_Version)
+	{
+		pDC->SetTextColor(RGB(173, 209, 255));
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
+	else if (CurID == IDC_STATIC_Title )
+	{
+		pDC->SetTextColor(RGB(255, 255, 255));
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
+	else if (CurID == IDC_CHK_RecordPwd )
 	{
 		HBRUSH hMYbr = ::CreateSolidBrush(RGB(62, 147, 254));
 
@@ -656,6 +675,36 @@ HBRUSH CLoginDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 //		return (HBRUSH)GetStockObject(NULL_BRUSH);
 		return hMYbr;
 	}
+// 	else if (CurID == IDC_EDIT_Pwd || CurID == IDC_EDIT_UserName)
+// 	{
+// 		HBRUSH hMYbr = ::CreateSolidBrush(RGB(62, 147, 254));
+// 		pDC->SetBkMode(TRANSPARENT);
+// 		return hMYbr;
+// 	}
 	return hbr;
+}
+
+void CLoginDlg::SetFontSize(int nSize)
+{
+	m_fontTitle.DeleteObject();
+	m_fontTitle.CreateFont(nSize, 0, 0, 0,
+							FW_BOLD, FALSE, FALSE, 0,
+							DEFAULT_CHARSET,
+							OUT_DEFAULT_PRECIS,
+							CLIP_DEFAULT_PRECIS,
+							DEFAULT_QUALITY,
+							DEFAULT_PITCH | FF_SWISS,
+							_T("Ó×Ô²"));	//Arial
+	m_fontVersion.DeleteObject();
+	m_fontVersion.CreateFont(nSize - 3, 0, 0, 0,
+						   FW_BOLD, FALSE, FALSE, 0,
+						   DEFAULT_CHARSET,
+						   OUT_DEFAULT_PRECIS,
+						   CLIP_DEFAULT_PRECIS,
+						   DEFAULT_QUALITY,
+						   DEFAULT_PITCH | FF_SWISS,
+						   _T("Ó×Ô²"));	//Arial
+	GetDlgItem(IDC_STATIC_Title)->SetFont(&m_fontTitle);
+	GetDlgItem(IDC_STATIC_Version)->SetFont(&m_fontVersion);
 }
 

@@ -238,6 +238,7 @@ void CTcpClient::HandleCmd()
 			std::string strExamData = pBuff;
 			std::string strUtf = CMyCodeConvert::Utf8ToGb2312(pBuff);
 
+			g_lfmExamList.lock();
 			Poco::JSON::Parser parser;
 			Poco::Dynamic::Var result;
 			try
@@ -258,17 +259,16 @@ void CTcpClient::HandleCmd()
 				}
 
 				Poco::JSON::Array::Ptr arryObj = examObj->getArray("exams");
-				g_lfmExamList.lock();
 				for (int i = 0; i < arryObj->size(); i++)
 				{
 					Poco::JSON::Object::Ptr objExamInfo = arryObj->getObject(i);
 					//EXAMINFO examInfo;
 					pEXAMINFO pExamInfo = new EXAMINFO;
-				#ifndef TO_WHTY
-					pExamInfo->nExamID = objExamInfo->get("id").convert<int>();
-				#else
-					pExamInfo->strExamID = objExamInfo->get("id").convert<std::string>();
-				#endif
+				
+					if (!_bHandModel_)
+						pExamInfo->nExamID = objExamInfo->get("id").convert<int>();
+					else
+						pExamInfo->strExamID = objExamInfo->get("id").convert<std::string>();
 					pExamInfo->strExamName = CMyCodeConvert::Utf8ToGb2312(objExamInfo->get("name").convert<std::string>());
 
 					if (!objExamInfo->isNull("examType"))
@@ -303,7 +303,6 @@ void CTcpClient::HandleCmd()
 					}
 					g_lExamList.push_back(pExamInfo);
 				}
-				g_lfmExamList.unlock();
 			}
 			catch (Poco::JSON::JSONException& jsone)
 			{
@@ -329,6 +328,7 @@ void CTcpClient::HandleCmd()
 				TRACE(_T("%s\n"), strErrInfo.c_str());
 			}
 			SAFE_RELEASE_ARRY(pBuff);
+			g_lfmExamList.unlock();
 			g_eGetExamList.set();		//获取到报名库信息
 		}
 		break;

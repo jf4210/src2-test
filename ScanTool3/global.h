@@ -155,14 +155,14 @@
 
 #ifndef TO_WHTY
 	#ifdef PUBLISH_VERSION
-		#define SOFT_VERSION	_T("2.10503-1")
+		#define SOFT_VERSION	_T("v2.1")
 	#else
-		#define SOFT_VERSION	_T("2.10420-1-Pir")		//-Pri
+		#define SOFT_VERSION	_T("v2.1-Pir")		//-Pri
 	#endif
 #else
-	#define SOFT_VERSION	_T("2.1-0323")
+	#define SOFT_VERSION	_T("v2.1")
 #endif
-#define SYS_BASE_NAME	_T("YKLX-ScanTool")
+#define SYS_BASE_NAME	_T("智能评阅扫描客户端")
 #define SYS_GUIDE_NAME	_T("GuideDlg")
 
 
@@ -173,6 +173,7 @@
 // #define SAFE_RELEASE_ARRY(pObj) if(pObj) {delete[] pObj; pObj = NULL;}
 
 //++登录信息
+extern bool	_bHandModel_;			//是否是手阅模式，手阅模式是天喻用
 extern bool	_bLogin_;				//是否已经登录
 extern std::string _strUserName_;	//登录用户名
 extern std::string _strNickName_;	//用户昵称
@@ -180,6 +181,7 @@ extern std::string _strPwd_;		//密码
 extern std::string _strEzs_;		//后端需要的EZS
 extern int _nTeacherId_;			//教师ID
 extern int _nUserId_;				//用户ID
+extern std::string _strPersonID_;	//手阅模式，天喻专用
 //--
 
 extern int					_nReocgThreads_;		//识别线程数量

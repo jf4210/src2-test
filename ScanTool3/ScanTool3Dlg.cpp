@@ -102,6 +102,7 @@ int					g_nFilePort;
 int				_nReocgThreads_ = 3;		//识别线程数量
 
 //++登录信息
+bool	_bHandModel_ = true;	//是否是手阅模式，手阅模式是天喻用
 bool	_bLogin_ = false;		//是否已经登录
 std::string _strUserName_;		//登录用户名
 std::string _strNickName_;		//用户昵称
@@ -109,6 +110,7 @@ std::string _strPwd_;			//密码
 std::string _strEzs_;			//后端需要的EZS
 int _nTeacherId_ = 0;			//教师ID
 int _nUserId_ = 0;				//用户ID
+std::string _strPersonID_;		//手阅模式，天喻专用
 //--
 //++扫描相关
 pEXAMINFO			_pCurrExam_= NULL;		//当前考试
@@ -120,7 +122,7 @@ int					_nScanCount_ = 0;		//扫描计数器，当前已扫描多少份
 
 CScanTool3Dlg::CScanTool3Dlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CScanTool3Dlg::IDD, pParent)
-	, m_pExamInfoMgrDlg(NULL), m_pScanMgrDlg(NULL)
+	, m_pExamInfoMgrDlg(NULL), m_pScanMgrDlg(NULL), m_nStatusSize(25)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -128,6 +130,11 @@ CScanTool3Dlg::CScanTool3Dlg(CWnd* pParent /*=NULL*/)
 void CScanTool3Dlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_BTN_CLOSE, m_bmpBtnExit);
+	DDX_Control(pDX, IDC_BTN_Min, m_bmpBtnMin);
+	DDX_Control(pDX, IDC_BTN_UserPic, m_bmpBtnUserPic);
+	DDX_Text(pDX, IDC_STATIC_Title, m_strTitle);
+	DDX_Text(pDX, IDC_STATIC_MinTitle, m_strVersion);
 }
 
 void CScanTool3Dlg::InitThreads()
@@ -204,6 +211,55 @@ void CScanTool3Dlg::InitCtrlPositon()
 	int cx = rcClient.right;
 	int cy = rcClient.bottom;
 
+	int nTitleH = 100;
+	BITMAP bmp;
+	if (m_bmpTitle.GetSafeHandle())
+	{
+		m_bmpTitle.GetBitmap(&bmp);
+		nTitleH = bmp.bmHeight;
+	}
+	rcClient.top = nTitleH;
+
+	int nGap = 5;
+	int nBtnW = 20;
+	int nBtnH = 20;
+	int nCurrLeft = cx - nBtnW * 2;
+	int nCurrTop = 0;
+	if (m_bmpBtnMin.GetSafeHwnd())
+	{
+		m_bmpBtnMin.MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
+		nCurrLeft += (nBtnW);
+	}
+	if (m_bmpBtnExit.GetSafeHwnd())
+	{
+		m_bmpBtnExit.MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
+	}
+	if (m_bmpBtnUserPic.GetSafeHwnd())
+	{
+		int nW = 20;
+		int nH = 20;
+		nCurrLeft = cx - nW - 20;
+		nCurrTop = nBtnH + (nTitleH - nBtnH) / 2 - nH / 2;
+		m_bmpBtnUserPic.MoveWindow(nCurrLeft, nCurrTop, nW, nH);
+	}
+
+	nCurrLeft = 110;
+	nCurrTop = nTitleH / 4;
+	if (GetDlgItem(IDC_STATIC_Title)->GetSafeHwnd())
+	{
+		int nH = nTitleH / 2 * 0.7;
+		int nW = rcClient.Width() / 2;
+		GetDlgItem(IDC_STATIC_Title)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
+		nCurrTop += nH;
+	}
+	if (GetDlgItem(IDC_STATIC_Title)->GetSafeHwnd())
+	{
+		int nH = nTitleH / 2 * 0.7;
+		int nW = rcClient.Width() / 2;
+		GetDlgItem(IDC_STATIC_MinTitle)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
+		nCurrTop += nH;
+	}
+
 	if (m_pExamInfoMgrDlg && m_pExamInfoMgrDlg->GetSafeHwnd())
 		m_pExamInfoMgrDlg->MoveWindow(rcClient);
 	if (m_pScanMgrDlg && m_pScanMgrDlg->GetSafeHwnd())
@@ -254,6 +310,15 @@ void CScanTool3Dlg::ReleaseDlg()
 
 void CScanTool3Dlg::InitUI()
 {
+	m_bmpBtnExit.SetStateBitmap(IDB_Main_BtnClose, 0, IDB_Main_BtnClose_Hover);
+	m_bmpBtnMin.SetStateBitmap(IDB_Main_BtnMin, 0, IDB_Main_BtnMin_Hover);
+	m_bmpBtnUserPic.SetStateBitmap(IDB_Pic_User, 0, 0);
+	
+	m_bmpTitle.LoadBitmap(IDB_Main_TitleBK);
+	m_bmpBkg.LoadBitmap(IDB_Main_Bk);
+
+	SetFontSize(m_nStatusSize);
+
 	CRect rc;
 	::SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
 	int sx = rc.Width();
@@ -294,6 +359,11 @@ BEGIN_MESSAGE_MAP(CScanTool3Dlg, CDialogEx)
 	ON_WM_DESTROY()
 	ON_WM_SIZE()
 	ON_MESSAGE(MSG_CMD_DL_MODEL_OK, &CScanTool3Dlg::MsgCmdDlModel)
+	ON_BN_CLICKED(IDC_BTN_CLOSE, &CScanTool3Dlg::OnBnClickedBtnClose)
+	ON_BN_CLICKED(IDC_BTN_Min, &CScanTool3Dlg::OnBnClickedBtnMin)
+	ON_WM_NCHITTEST()
+	ON_WM_ERASEBKGND()
+	ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
 
@@ -310,8 +380,8 @@ BOOL CScanTool3Dlg::OnInitDialog()
 
 	USES_CONVERSION;
 	CString strTitle = _T("");
-	strTitle.Format(_T("%s %s"), SYS_BASE_NAME, SOFT_VERSION);
-	SetWindowText(strTitle);
+	m_strTitle = SYS_BASE_NAME;
+	m_strVersion.Format(_T("Tianyu big data scan tool %s"), SOFT_VERSION);
 
 	InitThreads();
 	m_pExamInfoMgrDlg = new CExamInfoMgrDlg(this);
@@ -332,7 +402,7 @@ BOOL CScanTool3Dlg::OnInitDialog()
 	InitUI();
 	m_pExamInfoMgrDlg->InitShowData();
 //	m_pExamInfoMgrDlg->Invalidate();
-
+	UpdateData(FALSE);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -410,3 +480,108 @@ bool CScanTool3Dlg::HandleModel()
 	return bResult;
 }
 
+
+
+void CScanTool3Dlg::OnBnClickedBtnClose()
+{
+	SendMessage(WM_SYSCOMMAND, SC_CLOSE, 0);
+}
+
+
+void CScanTool3Dlg::OnBnClickedBtnMin()
+{
+	SendMessage(WM_SYSCOMMAND, SC_MINIMIZE, 0);
+}
+
+
+LRESULT CScanTool3Dlg::OnNcHitTest(CPoint point)
+{
+	CRect rcWndRect;
+	GetWindowRect(rcWndRect);
+	//	rcWndRect.bottom = rcWndRect.top + 40;	//40
+	if (rcWndRect.PtInRect(point))
+		return HTCAPTION;
+	return CDialog::OnNcHitTest(point);
+}
+
+
+BOOL CScanTool3Dlg::OnEraseBkgnd(CDC* pDC)
+{
+	CDialog::OnEraseBkgnd(pDC);
+
+	int iX, iY;
+	CDC memDC;
+	CRect rectClient;
+	BITMAP bmp;
+
+	iX = iY = 0;
+	GetClientRect(&rectClient);
+
+	if (memDC.CreateCompatibleDC(pDC))
+	{
+		CBitmap *pOldBmp = memDC.SelectObject(&m_bmpTitle);
+		m_bmpTitle.GetBitmap(&bmp);
+		pDC->SetStretchBltMode(COLORONCOLOR);
+		pDC->StretchBlt(iX, iY, rectClient.Width(), bmp.bmHeight, &memDC, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+		memDC.SelectObject(pOldBmp);
+
+		int nTmpX = bmp.bmWidth;
+		int nTitleH = bmp.bmHeight;
+
+		iX = 0;
+		iY = iY + nTitleH;
+		pOldBmp = memDC.SelectObject(&m_bmpBkg);
+		m_bmpBkg.GetBitmap(&bmp);
+
+		pDC->SetStretchBltMode(COLORONCOLOR);
+		pDC->StretchBlt(iX, iY, rectClient.Width(), rectClient.Height() - nTitleH, &memDC, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+		memDC.SelectObject(pOldBmp);
+	}
+	memDC.DeleteDC();
+
+	return TRUE;
+}
+
+void CScanTool3Dlg::SetFontSize(int nSize)
+{
+	m_fontTitle.DeleteObject();
+	m_fontTitle.CreateFont(nSize, 0, 0, 0,
+						   FW_BOLD, FALSE, FALSE, 0,
+						   DEFAULT_CHARSET,
+						   OUT_DEFAULT_PRECIS,
+						   CLIP_DEFAULT_PRECIS,
+						   DEFAULT_QUALITY,
+						   DEFAULT_PITCH | FF_SWISS,
+						   _T("幼圆"));	//Arial
+	m_fontVersion.DeleteObject();
+	m_fontVersion.CreateFont(12, 0, 0, 0,
+							 FW_BOLD, FALSE, FALSE, 0,
+							 DEFAULT_CHARSET,
+							 OUT_DEFAULT_PRECIS,
+							 CLIP_DEFAULT_PRECIS,
+							 DEFAULT_QUALITY,
+							 DEFAULT_PITCH | FF_SWISS,
+							 _T("幼圆"));	//Arial
+	GetDlgItem(IDC_STATIC_Title)->SetFont(&m_fontTitle);
+	GetDlgItem(IDC_STATIC_MinTitle)->SetFont(&m_fontVersion);
+}
+
+HBRUSH CScanTool3Dlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+
+	UINT CurID = pWnd->GetDlgCtrlID();
+	if (CurID == IDC_STATIC_MinTitle)
+	{
+		pDC->SetTextColor(RGB(221, 236, 254));
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
+	else if (CurID == IDC_STATIC_Title)
+	{
+		pDC->SetTextColor(RGB(255, 255, 255));
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
+	return hbr;
+}

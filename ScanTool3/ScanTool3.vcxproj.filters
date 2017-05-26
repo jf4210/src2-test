@@ -461,15 +461,6 @@
     <Image Include="XListCtrl\checkboxes.bmp">
       <Filter>控件\XList</Filter>
     </Image>
-    <Image Include="skin\login\logo.bmp">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="skin\login\bitmap2.bmp">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="skin\login\顶部条.bmp">
-      <Filter>资源文件</Filter>
-    </Image>
     <Image Include="skin\login\登录按钮.bmp">
       <Filter>资源文件</Filter>
     </Image>
@@ -477,12 +468,6 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="skin\login\关闭.bmp">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="skin\login\密码.bmp">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="skin\login\用户.bmp">
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="skin\login\最小化.bmp">
@@ -498,6 +483,39 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="res\icon1.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\login\登录按钮_hover.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\login\关闭_hover.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\login\最小化_hover.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\login\bitmap1.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\1_01_01.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\1_02.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\1_04_03.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\1_04_03hover.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\1_04_04.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\1_04_04hover.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\2_03.bmp">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>
