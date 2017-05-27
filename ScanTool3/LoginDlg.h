@@ -65,6 +65,7 @@ private:
 	int				m_nStatusSize;			//状态栏字体大小
 	CFont			m_fontTitle;			//标题字体
 	CFont			m_fontVersion;			//版本字体
+	CFont			m_fontLogin;
 	COLORREF		m_colorStatus;			//状态栏字体颜色
 	void	SetFontSize(int nSize);
 

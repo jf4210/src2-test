@@ -102,7 +102,7 @@ int					g_nFilePort;
 int				_nReocgThreads_ = 3;		//识别线程数量
 
 //++登录信息
-bool	_bHandModel_ = true;	//是否是手阅模式，手阅模式是天喻用
+bool	_bHandModel_ = false;	//是否是手阅模式，手阅模式是天喻用
 bool	_bLogin_ = false;		//是否已经登录
 std::string _strUserName_;		//登录用户名
 std::string _strNickName_;		//用户昵称
@@ -135,6 +135,7 @@ void CScanTool3Dlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BTN_UserPic, m_bmpBtnUserPic);
 	DDX_Text(pDX, IDC_STATIC_Title, m_strTitle);
 	DDX_Text(pDX, IDC_STATIC_MinTitle, m_strVersion);
+	DDX_Text(pDX, IDC_STATIC_UserName, m_strUserName);
 }
 
 void CScanTool3Dlg::InitThreads()
@@ -236,11 +237,18 @@ void CScanTool3Dlg::InitCtrlPositon()
 	}
 	if (m_bmpBtnUserPic.GetSafeHwnd())
 	{
-		int nW = 20;
-		int nH = 20;
+		int nW = 38;
+		int nH = 38;
 		nCurrLeft = cx - nW - 20;
 		nCurrTop = nBtnH + (nTitleH - nBtnH) / 2 - nH / 2;
 		m_bmpBtnUserPic.MoveWindow(nCurrLeft, nCurrTop, nW, nH);
+	}
+	if (GetDlgItem(IDC_STATIC_UserName)->GetSafeHwnd())
+	{
+		int nW = 100;
+		int nH = 38;	//与m_bmpBtnUserPic高度一致
+		nCurrLeft -= (nW + nGap);
+		GetDlgItem(IDC_STATIC_UserName)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
 	}
 
 	nCurrLeft = 110;
@@ -382,6 +390,7 @@ BOOL CScanTool3Dlg::OnInitDialog()
 	CString strTitle = _T("");
 	m_strTitle = SYS_BASE_NAME;
 	m_strVersion.Format(_T("Tianyu big data scan tool %s"), SOFT_VERSION);
+	m_strUserName = A2T(_strNickName_.c_str());
 
 	InitThreads();
 	m_pExamInfoMgrDlg = new CExamInfoMgrDlg(this);
@@ -562,8 +571,18 @@ void CScanTool3Dlg::SetFontSize(int nSize)
 							 DEFAULT_QUALITY,
 							 DEFAULT_PITCH | FF_SWISS,
 							 _T("幼圆"));	//Arial
+	m_fontUserName.DeleteObject();
+	m_fontUserName.CreateFont(15, 0, 0, 0,
+							 FW_BOLD, FALSE, FALSE, 0,
+							 DEFAULT_CHARSET,
+							 OUT_DEFAULT_PRECIS,
+							 CLIP_DEFAULT_PRECIS,
+							 DEFAULT_QUALITY,
+							 DEFAULT_PITCH | FF_SWISS,
+							 _T("幼圆"));	//Arial
 	GetDlgItem(IDC_STATIC_Title)->SetFont(&m_fontTitle);
 	GetDlgItem(IDC_STATIC_MinTitle)->SetFont(&m_fontVersion);
+	GetDlgItem(IDC_STATIC_UserName)->SetFont(&m_fontUserName);
 }
 
 HBRUSH CScanTool3Dlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
@@ -577,11 +596,16 @@ HBRUSH CScanTool3Dlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}
-	else if (CurID == IDC_STATIC_Title)
+	else if (CurID == IDC_STATIC_Title || CurID == IDC_STATIC_UserName)
 	{
 		pDC->SetTextColor(RGB(255, 255, 255));
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}
+// 	else if (CurID == IDC_STATIC_UserName)
+// 	{
+// 		pDC->SetBkMode(TRANSPARENT);
+// 		return (HBRUSH)GetStockObject(NULL_BRUSH);
+// 	}
 	return hbr;
 }

@@ -518,5 +518,47 @@
     <Image Include="skin\examList\2_03.bmp">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="skin\examList\3_03.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\3_03hover.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\4_03.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\4_03hover.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\4_10.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\4_10hover.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\title1.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\title2.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\scanMgr\1_03.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\scanMgr\1_03hover.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\scanMgr\1_01.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\scanMgr\1_10.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\scanMgr\1_10hover.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\scanMgr\1_02.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>

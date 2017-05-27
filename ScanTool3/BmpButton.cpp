@@ -196,9 +196,19 @@ void CBmpButton::ShowBmpBtnText(CDC* pDC, const CRect& rc)
 // 				m_rcText = rc;
 				GetClientRect(rcBtnRect);
 				GetClientRect(m_rcText);
-				
+
+				LOGFONT lf;
+				if (m_bUseDefaultFont)
+				{
+					g_fontBase.GetLogFont(&lf);
+				}
+				else
+				{
+					m_pFont->GetLogFont(&lf);
+				}
+				int nH = abs(lf.lfHeight);
 				//×ÝÏò¾ÓÖÐÏÔÊ¾ 
-				m_rcText.top = m_rcText.bottom/2 - 7;
+				m_rcText.top = m_rcText.bottom/2 - nH / 2;	//7
 				//m_rcText.bottom = rcBtnRect.bottom / 2 + 10;
 			}
 

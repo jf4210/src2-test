@@ -5,6 +5,7 @@
 #include "ScanProcessDlg.h"
 #include "ScanThread.h"
 #include "ScanRecordMgrDlg.h"
+#include "BmpButton.h"
 
 // CScanMgrDlg 对话框
 
@@ -31,6 +32,7 @@ public:
 	void	UpdateChildDlgInfo();	//更新子窗口信息
 	pTW_IDENTITY GetScanSrc(int nIndex);	//获取扫描源信息
 private:
+	void	InitUI();
 	void	InitScanner();
 	void	InitCtrlPosition();
 	void	InitChildDlg();
@@ -58,6 +60,8 @@ private:
 
 	TwainApp*		_pTWAINApp;
 	std::vector<CString> m_vecScanSrc;
+
+	CBmpButton		m_bmpBtnChangeExam;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

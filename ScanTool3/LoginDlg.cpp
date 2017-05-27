@@ -528,6 +528,7 @@ void CLoginDlg::InitUI()
 	m_bmpBtnExit.SetStateBitmap(IDB_LOGIN_CloseBtn, 0, IDB_LOGIN_CloseBtn_Hover);
 	m_bmpBtnMin.SetStateBitmap(IDB_LOGIN_MinBtn, 0, IDB_LOGIN_MinBtn_Hover);
 	m_bmpBtnLogin.SetStateBitmap(IDB_LOGIN_Btn, 0, IDB_LOGIN_Btn_Hover);
+	m_bmpBtnLogin.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), 0);
 
 	m_icnEditUser.SetIcon(IDI_ICON_LOGIN_User);
 	m_icnEditPwd.SetIcon(IDI_ICON_LOGIN_Pwd);
@@ -704,7 +705,17 @@ void CLoginDlg::SetFontSize(int nSize)
 						   DEFAULT_QUALITY,
 						   DEFAULT_PITCH | FF_SWISS,
 						   _T("свт╡"));	//Arial
+	m_fontLogin.DeleteObject();
+	m_fontLogin.CreateFont(15, 0, 0, 0,
+							 FW_BOLD, FALSE, FALSE, 0,
+							 DEFAULT_CHARSET,
+							 OUT_DEFAULT_PRECIS,
+							 CLIP_DEFAULT_PRECIS,
+							 DEFAULT_QUALITY,
+							 DEFAULT_PITCH | FF_SWISS,
+							 _T("свт╡"));	//Arial
 	GetDlgItem(IDC_STATIC_Title)->SetFont(&m_fontTitle);
 	GetDlgItem(IDC_STATIC_Version)->SetFont(&m_fontVersion);
+	m_bmpBtnLogin.SetBtnFont(m_fontLogin);
 }
 

@@ -31,6 +31,7 @@ private:
 	COLORREF		m_colorStatus;			//×´Ì¬À¸×ÖÌåÑÕÉ«
 
 	CString		m_strWaitInfo;
+	CBitmap		m_bmpBk;
 public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);

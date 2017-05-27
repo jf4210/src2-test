@@ -39,6 +39,7 @@ BOOL CWaitDownloadDlg::OnInitDialog()
 
 	m_strWaitInfo = _T("正在下载考生库和扫描模板，请稍后......");
 	SetFontSize(m_nStatusSize);
+	m_bmpBk.LoadBitmap(IDB_ScanMgr_WaitPic);
 	InitCtrlPosition();
 	UpdateData(FALSE);
 	return TRUE;
@@ -71,9 +72,13 @@ void CWaitDownloadDlg::InitCtrlPosition()
 	int cx = rcClient.right;
 	int cy = rcClient.bottom;
 
+	int nCurrLeft = 0;
+	int nCurrTop = rcClient.Height() / 2;
 	if (GetDlgItem(IDC_STATIC_WaitInfo)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_STATIC_WaitInfo)->MoveWindow(rcClient);
+		int nW = cx;
+		int nH = rcClient.Height() * 0.3;
+		GetDlgItem(IDC_STATIC_WaitInfo)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
 	}
 	Invalidate();
 }
@@ -122,11 +127,29 @@ BOOL CWaitDownloadDlg::OnEraseBkgnd(CDC* pDC)
 	CRect rcClient;
 	GetClientRect(&rcClient);
 
-	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 222, 250
+//	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 222, 250
+	CDialog::OnEraseBkgnd(pDC);
+
+	int iX, iY;
+	CDC memDC;
+	BITMAP bmp;
+
+	iX = iY = 0;
+	GetClientRect(&rcClient);
+
+	if (memDC.CreateCompatibleDC(pDC))
+	{
+		CBitmap *pOldBmp = memDC.SelectObject(&m_bmpBk);
+		m_bmpBk.GetBitmap(&bmp);
+		pDC->SetStretchBltMode(COLORONCOLOR);
+		pDC->StretchBlt(iX, iY, rcClient.Width(), rcClient.Height(), &memDC, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+		memDC.SelectObject(pOldBmp);
+	}
+	memDC.DeleteDC();
 
 	ReleaseDC(pDC);
 
-	return CDialog::OnEraseBkgnd(pDC);
+	return TRUE;
 }
 
 

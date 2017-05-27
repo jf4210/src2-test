@@ -25,6 +25,8 @@ private:
 	CString			m_strScanCount;
 	CString			m_strShowTips;
 
+	CBitmap			m_bmpBk;
+
 	void	InitCtrlPosition();
 	void	SetFontSize(int nSize);
 	void	DrawBorder(CDC *pDC);

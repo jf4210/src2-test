@@ -62,9 +62,11 @@ private:
 
 	CString		m_strTitle;
 	CString		m_strVersion;
+	CString		m_strUserName;		//显示的用户名
 	int				m_nStatusSize;			//状态栏字体大小
 	CFont			m_fontTitle;			//标题字体
 	CFont			m_fontVersion;			//版本字体
+	CFont			m_fontUserName;			//用户名字体
 	COLORREF		m_colorStatus;			//状态栏字体颜色
 	void	SetFontSize(int nSize);
 // 实现

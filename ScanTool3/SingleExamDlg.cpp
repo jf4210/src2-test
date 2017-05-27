@@ -14,7 +14,7 @@ IMPLEMENT_DYNAMIC(CSingleExamDlg, CDialog)
 
 CSingleExamDlg::CSingleExamDlg(CWnd* pParent /*=NULL*/)
 : CDialog(CSingleExamDlg::IDD, pParent)
-, _pExamInfo(NULL), _strExamName(_T("")), _strExamTime(_T("")), _strExamType(_T("")), _strExamGrade(_T(""))
+, _pExamInfo(NULL), _strExamName(_T("")), _strExamTime(_T("")), _strExamType(_T("")), _strExamGrade(_T("")), _strNetHandType(_T(""))
 , m_nStatusSize(25), m_nSubjectBtnH(30), m_nMaxSubsRow(2), _bMouseInDlg(false)
 {
 
@@ -32,6 +32,9 @@ void CSingleExamDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_STATIC_ExamType, _strExamType);
 	DDX_Text(pDX, IDC_STATIC_ExamGrade, _strExamGrade);
 	DDX_Text(pDX, IDC_STATIC_ExamTime, _strExamTime);
+	DDX_Text(pDX, IDC_STATIC_NetHand_Mode, _strNetHandType);
+	DDX_Control(pDX, IDC_BTN_ScanProcesses, m_bmpBtnScanProcess);
+	DDX_Control(pDX, IDC_BTN_MakeScanModel, m_bmpBtnMakeModel);
 }
 
 
@@ -50,6 +53,7 @@ BOOL CSingleExamDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	InitUI();
 	InitData();
 	SetFontSize(m_nStatusSize);
 	InitCtrlPosition();
@@ -91,6 +95,23 @@ LRESULT CSingleExamDlg::DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam
 	return CDialog::DefWindowProc(message, wParam, lParam);
 }
 
+void CSingleExamDlg::InitUI()
+{
+	m_bmpBtnScanProcess.SetStateBitmap(IDB_Exam_ScanProcessBtn_Hover, 0, IDB_Exam_ScanProcessBtn);
+	m_bmpBtnMakeModel.SetStateBitmap(IDB_Exam_MakeModelBtn_Hover, 0, IDB_Exam_MakeModelBtn);
+// 	m_bmpBtnScanProcess.SetStateBitmap(IDB_Exam_ScanProcessBtn, 0, IDB_Exam_ScanProcessBtn_Hover);
+// 	m_bmpBtnMakeModel.SetStateBitmap(IDB_Exam_MakeModelBtn, 0, IDB_Exam_MakeModelBtn_Hover);
+	m_bmpBtnMakeModel.SetWindowText(_T("  制作扫描模板"));
+	m_bmpBtnMakeModel.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), 0);
+	m_bmpBtnScanProcess.SetWindowText(_T("  扫描进度查询"));
+	m_bmpBtnScanProcess.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), 0);
+
+	if (_bHandModel_)
+		m_bmpExamType.LoadBitmap(IDB_Exam_Hand);
+	else
+		m_bmpExamType.LoadBitmap(IDB_Exam_Net);
+}
+
 void CSingleExamDlg::InitData()
 {
 	_strExamName = _T("");
@@ -99,6 +120,16 @@ void CSingleExamDlg::InitData()
 	_strExamGrade = _T("");
 
 	if (!_pExamInfo) return;
+	if (_bHandModel_)
+	{
+		_strNetHandType = _T("手");
+		m_bmpBtnMakeModel.ShowWindow(SW_HIDE);
+	}
+	else
+	{
+		_strNetHandType = _T("网");
+		m_bmpBtnMakeModel.ShowWindow(SW_SHOW);
+	}
 
 	USES_CONVERSION;
 	_strExamName = A2T(_pExamInfo->strExamName.c_str());
@@ -133,7 +164,7 @@ void CSingleExamDlg::InitCtrlPosition()
 	if (GetDlgItem(IDC_STATIC_ExamName)->GetSafeHwnd())
 	{
 		int nW = cx - nLeftGap - nRightGap - nBtnW - nGap - nBtnW - nGap * 5;
-		int nH = cy - nTopGap - nBottomGap - m_nSubjectBtnH - nGap - nStaticH - nGap;// nStaticH * 2 - nGap;
+		int nH = cy - nTopGap - nBottomGap - (m_nSubjectBtnH + 10 + nGap * 2) - nStaticH - nGap;// nStaticH * 2 - nGap;
 		if (nH > 30) nH = 30;
 		if (nH < 20) nH = 20;
 		GetDlgItem(IDC_STATIC_ExamName)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
@@ -156,16 +187,16 @@ void CSingleExamDlg::InitCtrlPosition()
 		int nW = cx - nLeftGap - nRightGap - nBtnW - nGap - nBtnW - nGap * 5;
 		nW = nW * 0.5 - nGap * 2;
 		GetDlgItem(IDC_STATIC_ExamTime)->MoveWindow(nCurrLeft, nCurrTop, nW, nStaticH);
-		nCurrTop += (nStaticH + nGap);
+		nCurrTop += (nStaticH + nGap * 2);
 	}
 	if (GetDlgItem(IDC_BTN_ScanProcesses)->GetSafeHwnd())
 	{
 		nCurrLeft = nLeftGap;
 		int nW = cx - nLeftGap - nRightGap - nBtnW - nGap - nBtnW - nGap * 5;
 		nW = nW * 0.2;
-		if (nW < 90) nW = 90;
-		if (nW > 110) nW = 110;
-		int nH = m_nSubjectBtnH;
+		if (nW < 160) nW = 160;
+		if (nW > 170) nW = 170;
+		int nH = m_nSubjectBtnH + 10;
 		GetDlgItem(IDC_BTN_ScanProcesses)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
 		nCurrLeft += (nW + nGap);
 	}
@@ -173,11 +204,21 @@ void CSingleExamDlg::InitCtrlPosition()
 	{
 		int nW = cx - nLeftGap - nRightGap - nBtnW - nGap - nBtnW - nGap * 5;
 		nW = nW * 0.2;
-		if (nW < 90) nW = 90;
-		if (nW > 110) nW = 110;
-		int nH = m_nSubjectBtnH;
+		if (nW < 160) nW = 160;
+		if (nW > 170) nW = 170;
+		int nH = m_nSubjectBtnH + 10;
 		GetDlgItem(IDC_BTN_MakeScanModel)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
 		nCurrLeft += (nW + nGap);
+	}
+
+	//网阅or手阅
+	if (GetDlgItem(IDC_STATIC_NetHand_Mode)->GetSafeHwnd())
+	{
+		int nW = 22;
+		int nH = nStaticH;
+		nCurrLeft = cx - nW - nGap*2;
+		nCurrTop = 0;
+		GetDlgItem(IDC_STATIC_NetHand_Mode)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
 	}
 
 	int nMaxBtnRow = m_nMaxSubsRow;			//一行最多显示的科目按钮
@@ -209,7 +250,28 @@ void CSingleExamDlg::SetFontSize(int nSize)
 							DEFAULT_QUALITY,
 							DEFAULT_PITCH | FF_SWISS,
 							_T("Arial"));
+	m_fontNetHandType.DeleteObject();
+	m_fontNetHandType.CreateFont(13, 0, 0, 0,
+							FW_BOLD, FALSE, FALSE, 0,
+							DEFAULT_CHARSET,
+							OUT_DEFAULT_PRECIS,
+							CLIP_DEFAULT_PRECIS,
+							DEFAULT_QUALITY,
+							DEFAULT_PITCH | FF_SWISS,
+							_T("Arial"));
+	m_fontBtn.DeleteObject();
+	m_fontBtn.CreateFont(14, 0, 0, 0,
+								 FW_BOLD, FALSE, FALSE, 0,
+								 DEFAULT_CHARSET,
+								 OUT_DEFAULT_PRECIS,
+								 CLIP_DEFAULT_PRECIS,
+								 DEFAULT_QUALITY,
+								 DEFAULT_PITCH | FF_SWISS,
+								 _T("幼圆"));
 	GetDlgItem(IDC_STATIC_ExamName)->SetFont(&m_fontStatus);
+	GetDlgItem(IDC_STATIC_NetHand_Mode)->SetFont(&m_fontNetHandType);
+	m_bmpBtnMakeModel.SetBtnFont(m_fontBtn); 
+	m_bmpBtnScanProcess.SetBtnFont(m_fontBtn);
 }
 
 void CSingleExamDlg::ReleaseData()
@@ -241,7 +303,7 @@ void CSingleExamDlg::DrawBorder(CDC *pDC)
 	pDC->RoundRect(rcClient, CPoint(10, 10));
 	pDC->SelectObject(pOldPen);
 	pPen.Detach();
-	ReleaseDC(pDC);
+//	ReleaseDC(pDC);
 }
 
 void CSingleExamDlg::OnSize(UINT nType, int cx, int cy)
@@ -261,7 +323,8 @@ void CSingleExamDlg::SetExamInfo(pEXAMINFO pExamInfo)
 	for (auto pSub : _pExamInfo->lSubjects)
 	{
 		pEXAM_SUBJECT pSubject = pSub;
-		CButton* pNewButton = new CButton();// 也可以定义为类的成员变量。
+		CBmpButton* pNewButton = new CBmpButton();// 也可以定义为类的成员变量。
+		pNewButton->SetStateBitmap(IDB_Exam_SubjectBtn, 0, IDB_Exam_SubjectBtn_Hover);
 		CRect rcButton(10, 10, 50, 30); // 按钮在对话框中的位置。
 		pNewButton->Create(A2T(pSub->strSubjName.c_str()), 0, rcButton, this, pSubject->nSubjID);
 		pNewButton->ShowWindow(SW_SHOW);
@@ -272,6 +335,8 @@ void CSingleExamDlg::SetExamInfo(pEXAMINFO pExamInfo)
 
 BOOL CSingleExamDlg::OnEraseBkgnd(CDC* pDC)
 {
+	CDialog::OnEraseBkgnd(pDC);
+
 	CRect rcClient;
 	GetClientRect(&rcClient);
 
@@ -301,7 +366,20 @@ BOOL CSingleExamDlg::OnEraseBkgnd(CDC* pDC)
 	}
 	DrawBorder(pDC);
 
-	return CDialog::OnEraseBkgnd(pDC);
+	int iX, iY;
+	CDC memDC;
+	BITMAP bmp;
+	if (memDC.CreateCompatibleDC(pDC))
+	{
+		CBitmap *pOldBmp = memDC.SelectObject(&m_bmpExamType);
+		m_bmpExamType.GetBitmap(&bmp);
+		pDC->SetStretchBltMode(COLORONCOLOR);
+		pDC->StretchBlt(rcClient.right - bmp.bmWidth - 10, 1, bmp.bmWidth, bmp.bmHeight, &memDC, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+		memDC.SelectObject(pOldBmp);
+	}
+	memDC.DeleteDC();
+
+	return TRUE;
 }
 
 HBRUSH CSingleExamDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
@@ -312,6 +390,12 @@ HBRUSH CSingleExamDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	if (CurID == IDC_STATIC_ExamName || CurID == IDC_STATIC_ExamType || CurID == IDC_STATIC_ExamGrade || CurID == IDC_STATIC_ExamTime)
 	{
 		//		pDC->SetBkColor(RGB(255, 255, 255));
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
+	else if (CurID == IDC_STATIC_NetHand_Mode)
+	{
+		pDC->SetTextColor(RGB(173, 209, 255));
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}

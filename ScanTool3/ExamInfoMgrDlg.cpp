@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CExamInfoMgrDlg, CDialog)
 
 CExamInfoMgrDlg::CExamInfoMgrDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CExamInfoMgrDlg::IDD, pParent)
-	, m_nMaxShowExamListItem(0), m_nAllExamListItems(0), m_nShowPapersCount(0), m_nCurrShowPaper(1), m_nMaxSubsRow(3), m_nSubjectBtnH(30), m_nDlgMinH(110), m_strShowCurrPaper(_T(""))
+	, m_nMaxShowExamListItem(0), m_nAllExamListItems(0), m_nShowPapersCount(0), m_nCurrShowPaper(1), m_nMaxSubsRow(3), m_nSubjectBtnH(30), m_nDlgMinH(120), m_strShowCurrPaper(_T(""))
 {
 
 }
@@ -28,6 +28,10 @@ void CExamInfoMgrDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_Subject, m_comboSubject);
 	DDX_Control(pDX, IDC_COMBO_Grade, m_comboGrade);
 	DDX_Text(pDX, IDC_STATIC_PaperCount, m_strShowCurrPaper);
+	DDX_Control(pDX, IDC_BTN_First, m_bmpBtnFirst);
+	DDX_Control(pDX, IDC_BTN_Last, m_bmpBtnLast);
+	DDX_Control(pDX, IDC_BTN_Up, m_bmpBtnUp);
+	DDX_Control(pDX, IDC_BTN_Down, m_bmpBtnDown);
 }
 
 
@@ -35,6 +39,11 @@ BOOL CExamInfoMgrDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	m_bmpBkg.LoadBitmap(IDB_Main_Bk);
+	m_bmpBtnFirst.SetStateBitmap(IDB_Exam_SubjectBtn, 0, IDB_Exam_SubjectBtn_Hover);
+	m_bmpBtnLast.SetStateBitmap(IDB_Exam_SubjectBtn, 0, IDB_Exam_SubjectBtn_Hover);
+	m_bmpBtnUp.SetStateBitmap(IDB_Exam_SubjectBtn, 0, IDB_Exam_SubjectBtn_Hover);
+	m_bmpBtnDown.SetStateBitmap(IDB_Exam_SubjectBtn, 0, IDB_Exam_SubjectBtn_Hover);
 	InitCtrlPosition();
 	InitShowData();
 
@@ -118,9 +127,9 @@ void CExamInfoMgrDlg::InitCtrlPosition()
 	int nSysLinkW = 10;
 
 
-	nGap = 2;
-	int nBtnW = 30;
-	int nBtnH = nBottomGap - nGap - nGap;
+	nGap = 5;
+	int nBtnW = 40;
+	int nBtnH = nBottomGap - 2 - 2;
 //	nCurrLeft = m_rtExamList.left + m_rtExamList.Width() / 2 - (nBtnW + nGap) * 2;
 	nCurrLeft = m_rtExamList.left + m_rtExamList.Width() / 2 - (nBtnW + nGap) * 2 - (nSysLinkW + nGap) * nSysLinkCount / 2;
 	nCurrTop = cy - nBottomGap - nGap;
@@ -476,10 +485,31 @@ BOOL CExamInfoMgrDlg::OnEraseBkgnd(CDC* pDC)
 	CRect rcClient;
 	GetClientRect(&rcClient);
 
-	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 222, 250
-	DrawBorder(pDC);
+	CDialog::OnEraseBkgnd(pDC);
 
-	return CDialog::OnEraseBkgnd(pDC);
+	int iX, iY;
+	CDC memDC;
+	CRect rectClient;
+	BITMAP bmp;
+
+	iX = iY = 0;
+	GetClientRect(&rectClient);
+
+	if (memDC.CreateCompatibleDC(pDC))
+	{
+		CBitmap *pOldBmp = memDC.SelectObject(&m_bmpBkg);
+		m_bmpBkg.GetBitmap(&bmp);
+		pDC->SetStretchBltMode(COLORONCOLOR);
+		pDC->StretchBlt(iX, iY, rectClient.Width(), rectClient.Height(), &memDC, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+		memDC.SelectObject(pOldBmp);
+	}
+	memDC.DeleteDC();
+
+
+//	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 222, 250
+//	DrawBorder(pDC);
+
+	return TRUE;
 }
 
 
@@ -566,3 +596,4 @@ HBRUSH CExamInfoMgrDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	
 	return hbr;
 }
+

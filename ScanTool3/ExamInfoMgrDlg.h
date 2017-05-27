@@ -45,7 +45,13 @@ private:
 	int		m_nShowPapersCount;			//当前搜索条件下，总共有多少也可以显示
 	int		m_nCurrShowPaper;			//当前显示第几页
 
-	CString m_strShowCurrPaper;			//显示当前页数信息
+	CString		m_strShowCurrPaper;			//显示当前页数信息
+	CBitmap		m_bmpBkg;
+	CBmpButton	m_bmpBtnFirst;
+	CBmpButton	m_bmpBtnLast;
+	CBmpButton	m_bmpBtnUp;
+	CBmpButton	m_bmpBtnDown;
+
 
 	//++具体考试信息子窗口
 	int		m_nMaxSubsRow;		//一行最多显示的科目按钮数量

@@ -30,6 +30,7 @@ void CScanMgrDlg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_STATIC_ExamName, m_strExamName);
 	DDX_Control(pDX, IDC_COMBO_Subject, m_comboSubject);
+	DDX_Control(pDX, IDC_BTN_ChangeExam, m_bmpBtnChangeExam);
 }
 
 
@@ -37,6 +38,7 @@ BOOL CScanMgrDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	InitUI();
 	InitScanner();
 	InitExamData();
 	InitChildDlg();
@@ -97,6 +99,7 @@ void CScanMgrDlg::InitCtrlPosition()
 	int nStaticW = (cx - nLeftGap - nRightGap) * 0.1;
 	if (nStaticW < 60) nStaticW = 60;
 	if (nStaticW > 70) nStaticW = 70;
+	int nBtnW = nStaticW + 10;
 	int nH = nTopGap - nCurrTop;
 	if (GetDlgItem(IDC_STATIC_ExamName)->GetSafeHwnd())
 	{
@@ -106,7 +109,7 @@ void CScanMgrDlg::InitCtrlPosition()
 		if (nCommboW < 100) nCommboW = 100;
 		if (nCommboW > 110) nCommboW = 110;
 
-		int nW = cx - nLeftGap - nRightGap - nStaticW - nGap - nRightTmpGap - nCommboW - nGap - nStaticW - nGap * 3;
+		int nW = cx - nLeftGap - nRightGap - nBtnW - nGap - nRightTmpGap - nCommboW - nGap - nStaticW - nGap * 3;
 		GetDlgItem(IDC_STATIC_ExamName)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
 		nCurrLeft += (nW + nGap * 3);
 	}
@@ -128,8 +131,8 @@ void CScanMgrDlg::InitCtrlPosition()
 	if (GetDlgItem(IDC_BTN_ChangeExam)->GetSafeHwnd())
 	{
 		int nBtnH = 25;
-		GetDlgItem(IDC_BTN_ChangeExam)->MoveWindow(nCurrLeft, nCurrTop, nStaticW, nBtnH);
-		nCurrLeft += (nStaticW + nGap);
+		GetDlgItem(IDC_BTN_ChangeExam)->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
+		nCurrLeft += (nBtnW + nGap);
 	}
 
 	//child dlg
@@ -544,6 +547,12 @@ LRESULT CScanMgrDlg::ScanErr(WPARAM wParam, LPARAM lParam)
 		pResult = NULL;
 	}
 	return 1;
+}
+
+void CScanMgrDlg::InitUI()
+{
+	m_bmpBtnChangeExam.SetStateBitmap(IDB_ScanMgr_Btn_ChangeExam, 0, IDB_ScanMgr_Btn_ChangeExam_Hover);
+	m_bmpBtnChangeExam.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), 0);
 }
 
 void CScanMgrDlg::InitScanner()
