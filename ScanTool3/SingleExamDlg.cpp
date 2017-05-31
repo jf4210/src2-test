@@ -106,10 +106,13 @@ void CSingleExamDlg::InitUI()
 	m_bmpBtnScanProcess.SetWindowText(_T("  扫描进度查询"));
 	m_bmpBtnScanProcess.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), 0);
 
-	if (_bHandModel_)
-		m_bmpExamType.LoadBitmap(IDB_Exam_Hand);
-	else
-		m_bmpExamType.LoadBitmap(IDB_Exam_Net);
+	if (_pExamInfo)
+	{
+		if (_pExamInfo->nModel != 0)
+			m_bmpExamType.LoadBitmap(IDB_Exam_Hand);
+		else
+			m_bmpExamType.LoadBitmap(IDB_Exam_Net);
+	}	
 }
 
 void CSingleExamDlg::InitData()
@@ -120,13 +123,15 @@ void CSingleExamDlg::InitData()
 	_strExamGrade = _T("");
 
 	if (!_pExamInfo) return;
-	if (_bHandModel_)
+	if (_pExamInfo->nModel != 0)
 	{
+		m_bmpExamType.LoadBitmap(IDB_Exam_Hand);
 		_strNetHandType = _T("手");
 		m_bmpBtnMakeModel.ShowWindow(SW_HIDE);
 	}
 	else
 	{
+		m_bmpExamType.LoadBitmap(IDB_Exam_Net);
 		_strNetHandType = _T("网");
 		m_bmpBtnMakeModel.ShowWindow(SW_SHOW);
 	}

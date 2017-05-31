@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CExamInfoMgrDlg, CDialog)
 
 CExamInfoMgrDlg::CExamInfoMgrDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CExamInfoMgrDlg::IDD, pParent)
-	, m_nMaxShowExamListItem(0), m_nAllExamListItems(0), m_nShowPapersCount(0), m_nCurrShowPaper(1), m_nMaxSubsRow(3), m_nSubjectBtnH(30), m_nDlgMinH(120), m_strShowCurrPaper(_T(""))
+	, m_nMaxShowExamListItem(0), m_nAllExamListItems(0), m_nShowPapersCount(0), m_nCurrShowPaper(1), m_nMaxSubsRow(3), m_nSubjectBtnH(30), m_nDlgMinH(140), m_strShowCurrPaper(_T(""))
 {
 
 }
@@ -95,7 +95,7 @@ void CExamInfoMgrDlg::InitCtrlPosition()
 	m_rtExamList.right = cx - nRightGap;
 	m_rtExamList.bottom = nTopGap + cy - nBottomGap;
 
-	int nStaticW = 40;
+	int nStaticW = 50;
 	int nCtrlH = 30;
 
 	int nCurrLeft = nLeftGap;
@@ -129,10 +129,10 @@ void CExamInfoMgrDlg::InitCtrlPosition()
 
 	nGap = 5;
 	int nBtnW = 40;
-	int nBtnH = nBottomGap - 2 - 2;
+	int nBtnH = nBottomGap - nGap - nGap;
 //	nCurrLeft = m_rtExamList.left + m_rtExamList.Width() / 2 - (nBtnW + nGap) * 2;
 	nCurrLeft = m_rtExamList.left + m_rtExamList.Width() / 2 - (nBtnW + nGap) * 2 - (nSysLinkW + nGap) * nSysLinkCount / 2;
-	nCurrTop = cy - nBottomGap - nGap;
+	nCurrTop = cy - nBottomGap + nGap;
 	if (GetDlgItem(IDC_BTN_First)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_First)->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);

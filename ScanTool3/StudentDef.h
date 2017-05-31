@@ -22,15 +22,20 @@
 
 typedef struct _studentInfo_
 {
+	int			nScaned;
 	std::string strZkzh;
 	std::string strName;		//gb2312
 	std::string strClassroom;	//gb2312
 	std::string strSchool;		//gb2312
+	_studentInfo_()
+	{
+		nScaned = 0;
+	}
 }ST_STUDENT, *pST_STUDENT;
 class CBmkStudent
 {
 	CBmkStudent(){}
-	CBmkStudent(std::string& strZkzh, std::string& strName, std::string& strClassroom, std::string& strSchool) :_strZkzh(strZkzh), _strName(strName), _strClassroom(strClassroom), _strSchool(strSchool){}
+	CBmkStudent(std::string& strZkzh, std::string& strName, std::string& strClassroom, std::string& strSchool, int nScaned) :_strZkzh(strZkzh), _strName(strName), _strClassroom(strClassroom), _strSchool(strSchool), _nScaned(nScaned){}
 	bool operator==(const CBmkStudent& other) const
 	{
 		return _strZkzh == other._strZkzh && _strName == other._strName && _strClassroom == other._strClassroom && _strSchool == other._strSchool;
@@ -46,6 +51,8 @@ class CBmkStudent
 			return true;
 		if (_strSchool < p._strSchool)
 			return true;
+		if (_nScaned < p._nScaned)
+			return true;
 	}
 
 	const std::string& operator () () const
@@ -54,6 +61,7 @@ class CBmkStudent
 		return _strZkzh;
 	}
 private:
+	int			_nScaned;
 	std::string _strZkzh;
 	std::string _strName;
 	std::string _strClassroom;
@@ -76,6 +84,7 @@ namespace Poco {
 				pBinder->bind(pos++, CMyCodeConvert::Gb2312ToUtf8(obj.strName), dir);
 				pBinder->bind(pos++, CMyCodeConvert::Gb2312ToUtf8(obj.strClassroom), dir);
 				pBinder->bind(pos++, CMyCodeConvert::Gb2312ToUtf8(obj.strSchool), dir);
+				pBinder->bind(pos++, obj.nScaned, dir);
 			}
 
 			static void prepare(std::size_t pos, const ST_STUDENT& obj, AbstractPreparator::Ptr pPrepare)
@@ -85,7 +94,7 @@ namespace Poco {
 
 			static std::size_t size()
 			{
-				return 4;
+				return 5;
 			}
 
 			static void extract(std::size_t pos, ST_STUDENT& obj, const ST_STUDENT& defVal, AbstractExtractor::Ptr pExt)
@@ -95,6 +104,7 @@ namespace Poco {
 				std::string strName;
 				std::string strClassroom;
 				std::string strSchool;
+				int			nScaned;
 
 				if (pExt->extract(pos++, strZkzh))
 					obj.strZkzh = strZkzh;
@@ -115,6 +125,11 @@ namespace Poco {
 					obj.strSchool = CMyCodeConvert::Utf8ToGb2312(strSchool);
 				else
 					obj.strSchool = defVal.strSchool;
+
+				if (pExt->extract(pos++, nScaned))
+					obj.nScaned = nScaned;
+				else
+					obj.nScaned = defVal.nScaned;
 			}
 
 		private:

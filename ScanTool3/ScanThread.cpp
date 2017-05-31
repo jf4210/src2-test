@@ -795,13 +795,15 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 		pPic->strPicPath = szPicPath;
 		if (nOrder == 1)	//第一页的时候创建新的试卷信息
 		{
+			CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
+
 			char szStudentName[30] = { 0 };
 			sprintf_s(szStudentName, "S%d", nStudentId);
 			m_pCurrPaper = new ST_PaperInfo;
 			m_pCurrPaper->strStudentInfo = szStudentName;
 			m_pCurrPaper->pModel = _pModel_;
 			m_pCurrPaper->pPapers = _pCurrPapersInfo_;
-			m_pCurrPaper->pSrcDlg = m_pDlg;
+			m_pCurrPaper->pSrcDlg = pDlg->GetScanMainDlg();		//m_pDlg;
 			m_pCurrPaper->lPic.push_back(pPic);
 
 			_pCurrPapersInfo_->fmlPaper.lock();

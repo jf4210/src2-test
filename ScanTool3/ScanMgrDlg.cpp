@@ -71,6 +71,7 @@ BEGIN_MESSAGE_MAP(CScanMgrDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_ChangeExam, &CScanMgrDlg::OnBnClickedBtnChangeexam)
 	ON_MESSAGE(MSG_SCAN_DONE, &CScanMgrDlg::ScanDone)
 	ON_MESSAGE(MSG_SCAN_ERR, &CScanMgrDlg::ScanErr)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -241,6 +242,7 @@ void CScanMgrDlg::ShowChildDlg(int n)
 		m_pScanDlg->ShowWindow(SW_HIDE);
 		m_pScanProcessDlg->ShowWindow(SW_HIDE);
 		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
+		GetBmkInfo();
 		if (!DownLoadModel())
 		{
 			AfxMessageBox(_T("考试信息为空"));
@@ -291,6 +293,11 @@ void CScanMgrDlg::UpdateChildDlgInfo()
 pTW_IDENTITY CScanMgrDlg::GetScanSrc(int nIndex)
 {
 	return _pTWAINApp->getDataSource(nIndex);
+}
+
+void* CScanMgrDlg::GetScanMainDlg()
+{
+	return m_pScanProcessDlg;
 }
 
 void CScanMgrDlg::OnDestroy()
@@ -466,14 +473,41 @@ bool CScanMgrDlg::DownLoadModel()
 	return true;
 }
 
+bool CScanMgrDlg::GetBmkInfo()
+{
+	if (!_pCurrExam_ || !_pCurrSub_) return false;
+
+	if (_pCurrExam_->nModel != 0) return false;		//只针对网阅考试获取报名库
+
+	ST_GET_BMK_INFO stGetBmkInfo;
+	ZeroMemory(&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
+	stGetBmkInfo.nExamID = _pCurrExam_->nExamID;
+	stGetBmkInfo.nSubjectID = _pCurrSub_->nSubjID;
+	strcpy(stGetBmkInfo.szEzs, _strEzs_.c_str());
+
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_GET_BMK;
+	pTcpTask->nPkgLen = sizeof(ST_GET_BMK_INFO);
+	memcpy(pTcpTask->szSendBuf, (char*)&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
+}
+
 HBRUSH CScanMgrDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
 	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
 	UINT CurID = pWnd->GetDlgCtrlID();
-	if (CurID == IDC_STATIC_ExamName || CurID == IDC_STATIC_CurrSubject)
+	if (CurID == IDC_STATIC_ExamName /*|| CurID == IDC_STATIC_CurrSubject*/)
 	{
 		//		pDC->SetBkColor(RGB(255, 255, 255));
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
+	else if (CurID == IDC_STATIC_CurrSubject)
+	{
+		pDC->SetTextColor(RGB(81, 195, 201));
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}
@@ -611,3 +645,51 @@ void CScanMgrDlg::InitScanner()
 	}
 }
 
+
+
+void CScanMgrDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	if (nIDEvent == TIMER_CheckRecogComplete)
+	{
+		if (!_pCurrPapersInfo_)
+		{
+			KillTimer(TIMER_CheckRecogComplete);
+			return;
+		}
+
+		bool bRecogComplete = true;
+		bool bNeedShowZkzhDlg = false;
+		for (auto p : _pCurrPapersInfo_->lPaper)
+		{
+			if (!p->bRecogComplete)
+			{
+				bRecogComplete = false;
+				break;
+			}
+			if (p->strSN.empty())
+				bNeedShowZkzhDlg = true;
+		}
+		if (bRecogComplete)
+		{
+			USES_CONVERSION;
+			if (_nScanStatus_ == 2 && (/*g_nOperatingMode == 1 ||*/ g_bModifySN) && bNeedShowZkzhDlg)
+			{
+				KillTimer(TIMER_CheckRecogComplete);
+				if (!m_pStudentMgr)
+				{
+					USES_CONVERSION;
+					m_pStudentMgr = new CStudentMgr();
+					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+					bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+				}
+// 				CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr);
+// 				zkzhDlg.DoModal();
+// 
+// 				ShowPapers(m_pPapersInfo);
+			}
+			else
+				KillTimer(TIMER_CheckRecogComplete);
+		}
+	}
+	CDialog::OnTimer(nIDEvent);
+}

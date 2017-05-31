@@ -78,6 +78,7 @@
 #include "modelInfo.h"
 
 #include "zbar.h"
+#include "StudentDef.h"
 
 //#define PIC_RECTIFY_TEST	//Í¼ÏñĞı×ª¾ÀÕı²âÊÔ
 #define WarpAffine_TEST		//·ÂÉä±ä»»²âÊÔ
@@ -243,6 +244,7 @@ extern bool				g_bFileNeedConnect;	//ÎÄ¼şÍ¨µÀÊÇ·ñĞèÒªÖØÁ¬£¬ÓÃÓÚÍ¨µÀµØÖ·ĞÅÏ¢ĞŞ¸Äµ
 
 extern bool				g_bShowScanSrcUI;	//ÊÇ·ñÏÔÊ¾Ô­Ê¼É¨Ãè½çÃæ
 extern int				g_nOperatingMode;	//²Ù×÷Ä£Ê½£¬1--¼òÒ×Ä£Ê½(Óöµ½ÎÊÌâµã²»Í£Ö¹É¨Ãè)£¬2-ÑÏ¸ñÄ£Ê½(Óöµ½ÎÊÌâµãÊ±Á¢¿ÌÍ£Ö¹É¨Ãè)
+extern bool				g_bModifySN;		//ÊÇ·ñÔÊĞíĞŞ¸Ä×¼¿¼Ö¤ºÅ
 extern int				g_nZkzhNull2Issue;	//Ê¶±ğµ½×¼¿¼Ö¤ºÅÎª¿ÕÊ±£¬ÊÇ·ñÈÏÎªÊÇÎÊÌâÊÔ¾í
 
 #if 1
@@ -459,6 +461,7 @@ typedef std::list<pEXAM_SUBJECT> SUBJECT_LIST;
 
 typedef struct _examInfo_
 {
+	int			nModel;				//0--ÍøÔÄ£¬1--ÊÖÔÄ£¨ÌìÓ÷µÄ¿¼ÊÔ£©
 	int			nExamID;			//¿¼ÊÔID
 	int			nExamGrade;			//Äê¼¶
 	int			nExamState;			//¿¼ÊÔ×´Ì¬
@@ -467,6 +470,10 @@ typedef struct _examInfo_
 	std::string strExamTypeName;	//¿¼ÊÔÀàĞÍÃû³Æ
 	std::string strGradeName;		//Äê¼¶Ãû³Æ
 	SUBJECT_LIST lSubjects;			//¿ÆÄ¿ÁĞ±í
+	_examInfo_()
+	{
+		nModel = 0;
+	}
 	~_examInfo_()
 	{
 		SUBJECT_LIST::iterator itSub = lSubjects.begin();
@@ -490,6 +497,7 @@ extern pMODEL				_pModel_;		//µ±Ç°É¨ÃèÊ¹ÓÃµÄÄ£°å
 //--
 
 //±¨Ãû¿âÑ§ÉúĞÅÏ¢
+#if 0
 typedef struct _studentInfo_
 {
 	std::string strZkzh;
@@ -595,6 +603,7 @@ namespace Poco {
 		};
 	}
 }
+#endif
 typedef std::list<ST_STUDENT> STUDENT_LIST;	//±¨Ãû¿âÁĞ±í
 extern STUDENT_LIST		g_lBmkStudent;	//±¨Ãû¿âÑ§ÉúÁĞ±í
 

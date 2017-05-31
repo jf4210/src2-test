@@ -325,9 +325,9 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 				Poco::JSON::Object objExam;
 				objExam.set("examId", pTask->nExamID);
 				objExam.set("subjectId", pTask->nSubjectID);
-				objResult->set("examInfo", objExam);
+				object->set("examInfo", objExam);
 				std::stringstream jsnSnString;
-				objResult->stringify(jsnSnString, 0);
+				object->stringify(jsnSnString, 0);
 				//--
 				ret = RESULT_GET_BMK_SUCCESS;
 				strSendData = jsnSnString.str();

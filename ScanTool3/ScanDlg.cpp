@@ -416,12 +416,13 @@ HBRUSH CScanDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	if (CurID == IDC_STATIC_Scaner || CurID == IDC_STATIC_ScanType)
 	{
 		//		pDC->SetBkColor(RGB(255, 255, 255));
+		pDC->SetTextColor(RGB(116, 116, 116));
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}
 	else if (CurID == IDC_CHK_AdvanceScan)
 	{
-		HBRUSH hMYbr = ::CreateSolidBrush(RGB(62, 147, 254));
+		HBRUSH hMYbr = ::CreateSolidBrush(RGB(255, 255, 255));	//62, 147, 254
 
 		//		pDC->SetBkColor(RGB(0,0,255));
 		pDC->SetBkMode(TRANSPARENT);

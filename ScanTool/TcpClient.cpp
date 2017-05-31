@@ -408,7 +408,7 @@ void CTcpClient::HandleCmd()
 					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
 					CStudentMgr studentMgr;
 					bool bResult = studentMgr.InitDB(strDbPath);
-					std::string strTableName = Poco::format("%d_%d", nExamID, nSubID);			//"student";
+					std::string strTableName = Poco::format("T%d_%d", nExamID, nSubID);			//"student";
 					if (bResult) bResult = studentMgr.InitTable(strTableName);
 					if (bResult) bResult = studentMgr.InsertData(g_lBmkStudent, strTableName);
 				}

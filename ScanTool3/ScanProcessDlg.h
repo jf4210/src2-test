@@ -3,6 +3,7 @@
 #include "XListCtrl.h"
 #include "ScanReminderDlg.h"
 #include "ShowPicDlg.h"
+#include "BmpButton.h"
 
 // CScanProcessDlg 对话框
 
@@ -20,17 +21,24 @@ public:
 	void	AddPaper(int nID, pST_PaperInfo pPaper);
 	void	ResetPicList();
 	void	InitShow();
-	void UpdateChildInfo(bool bScanDone = false);
+	void	UpdateChildInfo(bool bScanDone = false);
+	void	ScanCompleted();
 private:
 	void	InitUI();
 	void	InitCtrlPosition();
 	void	EnableBtn(BOOL bEnable);
 	void	WriteJsonFile();
+	void	SetFontSize();
+
+	LRESULT MsgZkzhRecog(WPARAM wParam, LPARAM lParam);		//准考证号识别完成时的通知
 private:
 	CXListCtrl	m_lcPicture;
 	CRect		m_rtChildDlg;	//子控件位置
 	CScanReminderDlg* m_pReminderDlg;	//扫描提示框窗口
 	CShowPicDlg*	m_pShowPicDlg;
+
+	CFont			m_fontBtn;				//按钮字体
+	CBmpButton		m_bmpBtnScanProcess;
 
 	int				m_nCurrentScanCount;	//当前扫描需要扫描试卷数量
 	std::string		m_strCurrPicSavePath;		//gb2312

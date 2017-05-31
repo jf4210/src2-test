@@ -27,6 +27,7 @@ void CScanProcessDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_Paper, m_lcPicture);
+	DDX_Control(pDX, IDC_BTN_ScanProcess, m_bmpBtnScanProcess);
 }
 
 
@@ -34,7 +35,8 @@ BOOL CScanProcessDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	InitUI();
+	InitUI(); 
+	SetFontSize();
 
 	USES_CONVERSION;
 	char szPicTmpPath[MAX_PATH] = { 0 };
@@ -65,6 +67,7 @@ BEGIN_MESSAGE_MAP(CScanProcessDlg, CDialog)
 	ON_WM_DESTROY()
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_Paper, &CScanProcessDlg::OnNMDblclkListPaper)
 	ON_BN_CLICKED(IDC_BTN_ScanProcess, &CScanProcessDlg::OnBnClickedBtnScanprocess)
+	ON_MESSAGE(MSG_ZKZH_RECOG, &CScanProcessDlg::MsgZkzhRecog)
 END_MESSAGE_MAP()
 
 
@@ -72,6 +75,10 @@ END_MESSAGE_MAP()
 
 void CScanProcessDlg::InitUI()
 {
+	m_bmpBtnScanProcess.SetStateBitmap(IDB_Exam_ScanProcessBtn_Hover, 0, IDB_Exam_ScanProcessBtn);
+	m_bmpBtnScanProcess.SetWindowText(_T("  扫描进度查询"));
+	m_bmpBtnScanProcess.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), 0);
+
 	m_lcPicture.SetExtendedStyle(m_lcPicture.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcPicture.InsertColumn(0, _T("题卡"), LVCFMT_CENTER, 40);
 	m_lcPicture.InsertColumn(1, _T("考号"), LVCFMT_CENTER, 120);
@@ -147,7 +154,7 @@ void CScanProcessDlg::InitCtrlPosition()
 	//btn
 	if (GetDlgItem(IDC_BTN_ScanProcess)->GetSafeHwnd())
 	{
-		int nW = 100;
+		int nW = 160;
 		int nH = 40;
 		nCurrLeft = cx - nRightGap - nW;
 		nCurrTop = cy - nBottomGap - nH;
@@ -187,8 +194,6 @@ void CScanProcessDlg::AddPaper(int nID, pST_PaperInfo pPaper)
 	m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 	m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
 	m_lcPicture.SetItemData(nCount, (DWORD_PTR)pPaper);
-
-
 }
 
 void CScanProcessDlg::ResetPicList()
@@ -228,6 +233,31 @@ void CScanProcessDlg::UpdateChildInfo(bool bScanDone /*= false*/)
 	else
 		m_pReminderDlg->SetShowTips(_T("正在扫描，请稍后..."));
 	m_pReminderDlg->UpdataScanCount(_nScanCount_);		//更新扫描数量
+}
+
+void CScanProcessDlg::ScanCompleted()
+{
+	//显示所有识别完成的准考证号
+	if (g_nOperatingMode == 1 || g_bModifySN)
+	{
+		USES_CONVERSION;
+		int nCount = m_lcPicture.GetItemCount();
+		for (int i = 0; i < nCount; i++)
+		{
+			pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(i);
+			if (pItemPaper)
+			{
+				if (!pItemPaper->strSN.empty())
+					m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
+				else
+				{
+					m_lcPicture.SetItemText(i, 1, _T("未识别"));
+					m_lcPicture.SetItemColors(i, 1, RGB(255, 0, 0), RGB(255, 255, 255));
+				}
+			}
+		}
+		SetTimer(TIMER_CheckRecogComplete, 100, NULL);
+	}
 }
 
 void CScanProcessDlg::EnableBtn(BOOL bEnable)
@@ -489,6 +519,49 @@ void CScanProcessDlg::WriteJsonFile()
 	out.close();
 }
 
+void CScanProcessDlg::SetFontSize()
+{
+	m_fontBtn.DeleteObject();
+	m_fontBtn.CreateFont(12, 0, 0, 0,
+						 FW_BOLD, FALSE, FALSE, 0,
+						 DEFAULT_CHARSET,
+						 OUT_DEFAULT_PRECIS,
+						 CLIP_DEFAULT_PRECIS,
+						 DEFAULT_QUALITY,
+						 DEFAULT_PITCH | FF_SWISS,
+						 _T("幼圆"));
+	m_bmpBtnScanProcess.SetBtnFont(m_fontBtn);
+}
+
+LRESULT CScanProcessDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
+{
+	pST_PaperInfo pPaper = (pST_PaperInfo)wParam;
+	pPAPERSINFO   pPapers = (pPAPERSINFO)lParam;
+	if (g_nOperatingMode != 1 && !g_bModifySN)
+		return FALSE;
+	if (_pCurrExam_->nModel)
+		return FALSE;
+
+	USES_CONVERSION;
+	int nCount = m_lcPicture.GetItemCount();
+	for (int i = 0; i < nCount; i++)
+	{
+		pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(i);
+		if (pItemPaper == pPaper)
+		{
+			if (!pPaper->strSN.empty())
+				m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+			else
+			{
+				m_lcPicture.SetItemText(i, 1, _T("未识别"));
+				m_lcPicture.SetItemColors(i, 1, RGB(255, 0, 0), RGB(255, 255, 255));
+			}
+			break;
+		}
+	}
+	return TRUE;
+}
+
 void CScanProcessDlg::OnBnClickedBtnScanagain()
 {
 	if (_pCurrPapersInfo_)
@@ -692,7 +765,7 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	char szTime[50] = { 0 };
 	sprintf_s(szTime, "%d%02d%02d%02d%02d%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
 
-	if (!_bHandModel_)
+	if (_pCurrExam_->nModel == 0)
 	{
 		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s_%d", T2A(g_strCurrentPath), _strUserName_.c_str(), _pModel_->nExamID, _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
 		sprintf_s(szZipBaseName, "%s_%d-%d_%s_%d", _strUserName_.c_str(), _pModel_->nExamID, _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);

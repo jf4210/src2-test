@@ -833,7 +833,13 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 	jsnPapers.set("papersDesc", CMyCodeConvert::Gb2312ToUtf8(pPapers->strDesc));
 	jsnPapers.set("totalNum", pPapers->nTotalPaper);
 	jsnPapers.set("qkNum", pPapers->nQk);
+#if 1	//test
+	std::string strExamID = Poco::format("%d", pPapers->nExamID);
+	jsnPapers.set("examId", strExamID);
+#else
 	jsnPapers.set("examId", pPapers->nExamID);
+#endif
+//	jsnPapers.set("examId", pPapers->nExamID);
 	jsnPapers.set("subjectId", pPapers->nSubjectID);
 	jsnPapers.set("teacherId", pPapers->nTeacherId);
 	jsnPapers.set("userId", pPapers->nUserId);

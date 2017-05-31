@@ -192,12 +192,13 @@ HBRUSH CScanReminderDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	if (CurID == IDC_STATIC_Tip || CurID == IDC_STATIC_1 || CurID == IDC_STATIC_2)
 	{
 		//		pDC->SetBkColor(RGB(255, 255, 255));
+		pDC->SetTextColor(RGB(115, 172, 254));
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}
 	else if (CurID == IDC_STATIC_ScanCount)
 	{
-		pDC->SetTextColor(RGB(0, 0, 255));
+		pDC->SetTextColor(RGB(61, 147, 254));
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}

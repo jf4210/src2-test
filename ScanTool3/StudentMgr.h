@@ -12,6 +12,7 @@ public:
 	bool InitTable(std::string strTableName);
 	bool InsertData(STUDENT_LIST& lData, std::string strTable);
 	bool SearchStudent(std::string strKey, int nType, STUDENT_LIST& lResult);
+	bool UpdateStudentStatus(std::string strTable, std::string strZkzh, int nStatus);
 private:
 	std::string strData;
 	std::string _strDbPath;

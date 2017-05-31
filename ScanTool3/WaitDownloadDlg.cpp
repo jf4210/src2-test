@@ -115,6 +115,7 @@ HBRUSH CWaitDownloadDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	if (CurID == IDC_STATIC_WaitInfo)
 	{
 		//		pDC->SetBkColor(RGB(255, 255, 255));
+		pDC->SetTextColor(RGB(61, 147, 254));
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}

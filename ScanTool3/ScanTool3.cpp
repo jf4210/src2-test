@@ -88,7 +88,7 @@ bool InitConfig()
 	_nReocgThreads_		= pConf->getInt("Recog.threads", 2);
 	g_nManulUploadFile	= pConf->getInt("UploadFile.manul", 0);
 	g_bShowScanSrcUI	= pConf->getBool("Scan.bShowUI", false);
-//	m_bModifySN = pConf->getBool("Scan.bModifySN", false);
+	g_bModifySN			= pConf->getBool("Scan.bModifySN", false);
 	g_nOperatingMode	= pConf->getInt("Scan.OperatingMode", 2);
 	g_nZkzhNull2Issue	= pConf->getInt("Scan.khNull2Issue", 0);
 

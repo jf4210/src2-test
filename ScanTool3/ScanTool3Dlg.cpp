@@ -27,6 +27,7 @@ bool				g_bFileNeedConnect = false;	//文件通道是否需要重连，用于通道地址信息修改
 
 bool				g_bShowScanSrcUI = false;	//是否显示原始扫描界面
 int					g_nOperatingMode = 2;		//操作模式，1--简易模式(遇到问题点不停止扫描)，2-严格模式(遇到问题点时立刻停止扫描)
+bool				g_bModifySN = false;		//是否允许修改准考证号
 int					g_nZkzhNull2Issue = 0;		//识别到准考证号未空时，是否认为是问题试卷
 
 int					g_nExitFlag = 0;

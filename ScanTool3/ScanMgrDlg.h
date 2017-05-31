@@ -6,8 +6,10 @@
 #include "ScanThread.h"
 #include "ScanRecordMgrDlg.h"
 #include "BmpButton.h"
+#include "StudentMgr.h"
 
 // CScanMgrDlg 对话框
+#define TIMER_CheckRecogComplete	200
 
 class CScanMgrDlg : public CDialog
 {
@@ -27,10 +29,12 @@ public:
 	void	InitExamData();
 	bool	SearchModel();		//遍历所有模板
 	bool	DownLoadModel();	//下载模板
+	bool	GetBmkInfo();		//下载报名库
 	void	ShowChildDlg(int n);
 	void	ResetChildDlg();	//子窗口重置
 	void	UpdateChildDlgInfo();	//更新子窗口信息
 	pTW_IDENTITY GetScanSrc(int nIndex);	//获取扫描源信息
+	void*	GetScanMainDlg();	//获取扫描的主界面窗口指针
 private:
 	void	InitUI();
 	void	InitScanner();
@@ -43,6 +47,7 @@ private:
 	LRESULT	ScanDone(WPARAM wParam, LPARAM lParam);
 	LRESULT	ScanErr(WPARAM wParam, LPARAM lParam);
 
+//	LRESULT MsgZkzhRecog(WPARAM wParam, LPARAM lParam);		//准考证号识别完成时的通知
 private:
 	int				m_nStatusSize;			//状态栏字体大小
 	CFont			m_fontStatus;			//状态栏字体
@@ -57,6 +62,7 @@ private:
 	CString				m_strExamName;
 	CComboBoxExt		m_comboSubject;
 //	CComboBox		m_comboSubject;
+	CStudentMgr*		m_pStudentMgr;
 
 	TwainApp*		_pTWAINApp;
 	std::vector<CString> m_vecScanSrc;
@@ -77,4 +83,5 @@ public:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnBnClickedBtnChangeexam();
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 };
