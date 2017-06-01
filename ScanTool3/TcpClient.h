@@ -1,7 +1,8 @@
 #pragma once
 #include "global.h"
 
-#define MSG_CMD_DL_MODEL_OK	(WM_USER + 200)
+#define MSG_CMD_DL_MODEL_OK	(WM_USER + 200)		//模板下载完成消息
+#define MSG_CMD_GET_BMK_OK	(WM_USER + 201)		//报名库下载完成
 
 class CTcpClient : public Poco::Runnable
 {

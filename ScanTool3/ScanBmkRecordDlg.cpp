@@ -65,6 +65,13 @@ void CScanBmkRecordDlg::InitUI()
 {
 	SetFontSize(m_nStatusSize);
 	UpDateInfo();
+
+	CBitmap bmp;
+	bmp.LoadBitmap(IDB_Scrollbar);
+	BITMAP bm;
+	bmp.GetBitmap(&bm);
+	m_bitmap_scrollbar = (HBITMAP)bmp.Detach();
+	SkinWndScroll(&m_lcBmk, m_bitmap_scrollbar);
 	m_lcBmk.SetExtendedStyle(m_lcBmk.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcBmk.InsertColumn(0, _T("Ë³Ðò"), LVCFMT_CENTER, 40);
 	m_lcBmk.InsertColumn(1, _T("¿¼ºÅ"), LVCFMT_CENTER, 110);

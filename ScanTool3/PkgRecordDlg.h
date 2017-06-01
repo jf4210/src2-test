@@ -1,6 +1,7 @@
 #pragma once
 #include "global.h"
 #include "XListCtrl.h"
+#include "ctrl/skinscrollwnd.h"
 
 // CPkgRecordDlg 对话框
 
@@ -20,6 +21,7 @@ private:
 	void	InitCtrlPosition();
 
 	CXListCtrl	m_lcPkg;
+	HBITMAP			m_bitmap_scrollbar;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

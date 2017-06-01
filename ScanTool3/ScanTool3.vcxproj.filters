@@ -100,6 +100,12 @@
     <Filter Include="模板界面">
       <UniqueIdentifier>{0ee7330b-ca90-41f3-857b-f033b2172267}</UniqueIdentifier>
     </Filter>
+    <Filter Include="控件\scrollbar">
+      <UniqueIdentifier>{281a3f9b-ca90-42cd-b5ab-f433e9c75c8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描界面窗口\扫描过程窗口\异常处理窗口">
+      <UniqueIdentifier>{75281bea-095a-47ba-b446-c4be6994acdc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -285,6 +291,15 @@
     <ClInclude Include="MakeModelDlg.h">
       <Filter>模板界面</Filter>
     </ClInclude>
+    <ClInclude Include="ctrl\skinscrollbar.h">
+      <Filter>控件\scrollbar</Filter>
+    </ClInclude>
+    <ClInclude Include="ctrl\skinscrollwnd.h">
+      <Filter>控件\scrollbar</Filter>
+    </ClInclude>
+    <ClInclude Include="ModifyZkzhDlg.h">
+      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -443,6 +458,15 @@
     <ClCompile Include="MakeModelDlg.cpp">
       <Filter>模板界面</Filter>
     </ClCompile>
+    <ClCompile Include="ctrl\skinscrollbar.cpp">
+      <Filter>控件\scrollbar</Filter>
+    </ClCompile>
+    <ClCompile Include="ctrl\skinscrollwnd.cpp">
+      <Filter>控件\scrollbar</Filter>
+    </ClCompile>
+    <ClCompile Include="ModifyZkzhDlg.cpp">
+      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\ScanTool3.rc2">
@@ -558,6 +582,21 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="skin\scanMgr\1_02.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\scanMgr\1_06.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\scanMgr\1_06hover.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\scanMgr\1_09.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\scanMgr\1_09hover.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\scanMgr\scrollbar.bmp">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>

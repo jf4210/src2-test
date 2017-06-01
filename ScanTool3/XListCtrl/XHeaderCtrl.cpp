@@ -53,7 +53,7 @@ CXHeaderCtrl::CXHeaderCtrl()
 {
 	m_cr3DHighLight   = ::GetSysColor(COLOR_3DHIGHLIGHT);
 	m_cr3DShadow      = ::GetSysColor(COLOR_3DSHADOW);
-	m_cr3DFace        = ::GetSysColor(COLOR_3DFACE);
+	m_cr3DFace		  = RGB(248,251,255);// ::GetSysColor(COLOR_3DFACE);	//2017.6.1
 	m_crBtnText       = ::GetSysColor(COLOR_BTNTEXT);
 
 	m_pListCtrl       = NULL;			//+++

@@ -6,7 +6,7 @@
 #include "ScanProcessDlg.h"
 #include "afxdialogex.h"
 #include "ScanMgrDlg.h"
-
+#include "ModifyZkzhDlg.h"
 
 // CScanProcessDlg 对话框
 
@@ -14,7 +14,7 @@ IMPLEMENT_DYNAMIC(CScanProcessDlg, CDialog)
 
 CScanProcessDlg::CScanProcessDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CScanProcessDlg::IDD, pParent)
-	, m_nCurrentScanCount(0), m_pReminderDlg(NULL), m_pShowPicDlg(NULL)
+	, m_nCurrentScanCount(0), m_pReminderDlg(NULL), m_pShowPicDlg(NULL), m_pStudentMgr(NULL)
 {
 
 }
@@ -28,6 +28,8 @@ void CScanProcessDlg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_Paper, m_lcPicture);
 	DDX_Control(pDX, IDC_BTN_ScanProcess, m_bmpBtnScanProcess);
+	DDX_Control(pDX, IDC_BTN_ScanAgain, m_bmpBtnScanAgain);
+	DDX_Control(pDX, IDC_BTN_Save, m_bmpBtnSave);
 }
 
 
@@ -68,6 +70,7 @@ BEGIN_MESSAGE_MAP(CScanProcessDlg, CDialog)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_Paper, &CScanProcessDlg::OnNMDblclkListPaper)
 	ON_BN_CLICKED(IDC_BTN_ScanProcess, &CScanProcessDlg::OnBnClickedBtnScanprocess)
 	ON_MESSAGE(MSG_ZKZH_RECOG, &CScanProcessDlg::MsgZkzhRecog)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -77,12 +80,49 @@ void CScanProcessDlg::InitUI()
 {
 	m_bmpBtnScanProcess.SetStateBitmap(IDB_Exam_ScanProcessBtn_Hover, 0, IDB_Exam_ScanProcessBtn);
 	m_bmpBtnScanProcess.SetWindowText(_T("  扫描进度查询"));
-	m_bmpBtnScanProcess.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), 0);
+	m_bmpBtnScanProcess.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), RGB(116, 116, 116));
+	m_bmpBtnScanAgain.SetStateBitmap(IDB_ScanMgr_BtnScanAgain, 0, IDB_ScanMgr_BtnScanAgain_Hover);
+	m_bmpBtnScanAgain.SetWindowText(_T("  继续扫描"));
+	m_bmpBtnScanAgain.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), RGB(116, 116, 116));
+	m_bmpBtnSave.SetStateBitmap(IDB_ScanMgr_BtnSave, 0, IDB_ScanMgr_BtnSave_Hover);
+	m_bmpBtnSave.SetWindowText(_T("  保存上传"));
+	m_bmpBtnSave.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), RGB(116, 116, 116));
 
+	CBitmap bmp;
+	bmp.LoadBitmap(IDB_Scrollbar);
+	BITMAP bm;
+	bmp.GetBitmap(&bm);
+	m_bitmap_scrollbar = (HBITMAP)bmp.Detach();
+//	SkinWndScroll(&m_lcPicture, m_bitmap_scrollbar);
+#if 0
+	int nListColWidth[7] = { 40, 120};
+	m_lcPicture.DeleteAllItems();
+	DWORD dwStyle = ::GetWindowLong(m_lcPicture.m_hWnd, GWL_STYLE);
+	dwStyle &= ~(LVS_TYPEMASK);
+	dwStyle &= ~(LVS_EDITLABELS);    
+	::SetWindowLong(m_lcPicture.m_hWnd, GWL_STYLE, dwStyle | LVS_REPORT | LVS_NOLABELWRAP | LVS_SHOWSELALWAYS);
+	DWORD styles = LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES;
+	ListView_SetExtendedListViewStyleEx(m_lcPicture.m_hWnd, styles, styles);
+	TCHAR rgtsz[2][10] = { _T("题卡"), _T("考号")};
+	LV_COLUMN lvcolumn;
+	CRect rect;
+	m_lcPicture.GetWindowRect(&rect);
+	for (int i = 0; i < 2; i++)
+	{
+		lvcolumn.mask = LVCF_FMT | LVCF_SUBITEM | LVCF_TEXT | LVCF_WIDTH | LVCF_ORDER;
+		lvcolumn.fmt = LVCFMT_LEFT;
+		lvcolumn.pszText = rgtsz[i];
+		lvcolumn.iSubItem = i;
+		lvcolumn.iOrder = i;
+		lvcolumn.cx = nListColWidth[i];
+		m_lcPicture.InsertColumn(i, &lvcolumn);
+	}
+#else
 	m_lcPicture.SetExtendedStyle(m_lcPicture.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcPicture.InsertColumn(0, _T("题卡"), LVCFMT_CENTER, 40);
 	m_lcPicture.InsertColumn(1, _T("考号"), LVCFMT_CENTER, 120);
 //	m_lcPicture.InsertColumn(2, _T("*"), LVCFMT_CENTER, 20);
+#endif
 
 	m_pReminderDlg = new CScanReminderDlg(this);
 	m_pReminderDlg->Create(CScanReminderDlg::IDD, this);
@@ -160,6 +200,7 @@ void CScanProcessDlg::InitCtrlPosition()
 		nCurrTop = cy - nBottomGap - nH;
 		GetDlgItem(IDC_BTN_ScanProcess)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
 	}
+	Invalidate();
 }
 
 BOOL CScanProcessDlg::OnEraseBkgnd(CDC* pDC)
@@ -178,7 +219,11 @@ void CScanProcessDlg::OnSize(UINT nType, int cx, int cy)
 {
 	CDialog::OnSize(nType, cx, cy);
 
+// 	if (m_lcPicture.GetSafeHwnd())
+// 		UnskinWndScroll(&m_lcPicture);
 	InitCtrlPosition();
+// 	if (m_lcPicture.GetSafeHwnd())
+// 		SkinWndScroll(&m_lcPicture, m_bitmap_scrollbar);
 }
 
 void CScanProcessDlg::AddPaper(int nID, pST_PaperInfo pPaper)
@@ -194,6 +239,7 @@ void CScanProcessDlg::AddPaper(int nID, pST_PaperInfo pPaper)
 	m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 	m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
 	m_lcPicture.SetItemData(nCount, (DWORD_PTR)pPaper);
+//	m_lcPicture.EnsureVisible(nCount, FALSE);	//滚动最后一行
 }
 
 void CScanProcessDlg::ResetPicList()
@@ -521,8 +567,8 @@ void CScanProcessDlg::WriteJsonFile()
 
 void CScanProcessDlg::SetFontSize()
 {
-	m_fontBtn.DeleteObject();
-	m_fontBtn.CreateFont(12, 0, 0, 0,
+	m_fontBtn1.DeleteObject();
+	m_fontBtn1.CreateFont(12, 0, 0, 0,
 						 FW_BOLD, FALSE, FALSE, 0,
 						 DEFAULT_CHARSET,
 						 OUT_DEFAULT_PRECIS,
@@ -530,7 +576,63 @@ void CScanProcessDlg::SetFontSize()
 						 DEFAULT_QUALITY,
 						 DEFAULT_PITCH | FF_SWISS,
 						 _T("幼圆"));
-	m_bmpBtnScanProcess.SetBtnFont(m_fontBtn);
+	m_bmpBtnScanProcess.SetBtnFont(m_fontBtn1);
+	m_fontBtn2.DeleteObject();
+	m_fontBtn2.CreateFont(20, 0, 0, 0,
+						  FW_BOLD, FALSE, FALSE, 0,
+						  DEFAULT_CHARSET,
+						  OUT_DEFAULT_PRECIS,
+						  CLIP_DEFAULT_PRECIS,
+						  DEFAULT_QUALITY,
+						  DEFAULT_PITCH | FF_SWISS,
+						  _T("幼圆"));
+	m_bmpBtnSave.SetBtnFont(m_fontBtn2);
+	m_bmpBtnScanAgain.SetBtnFont(m_fontBtn2);
+}
+
+void CScanProcessDlg::ShowPapers(pPAPERSINFO pPapers)
+{
+	//显示所有识别完成的准考证号
+	USES_CONVERSION;
+	//重新显示合格试卷
+	m_lcPicture.DeleteAllItems();
+	for (auto pPaper : pPapers->lPaper)
+	{
+		int nCount = m_lcPicture.GetItemCount();
+		char szCount[10] = { 0 };
+		sprintf_s(szCount, "%d", nCount + 1);
+		m_lcPicture.InsertItem(nCount, NULL);
+		m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+		if (pPaper->bModifyZKZH)
+		{
+//			m_lcPicture.SetItemText(nCount, 2, _T("*"));
+			m_lcPicture.SetItemColors(nCount, 1, RGB(0, 0, 255), RGB(255, 255, 255));
+		}
+		m_lcPicture.SetItemData(nCount, (DWORD_PTR)pPaper);
+	}
+	
+	//异常试卷放到正常试卷后面显示
+	for (auto pPaper : pPapers->lIssue)
+	{
+		int nCount = m_lcPicture.GetItemCount();
+		char szCount[10] = { 0 };
+		sprintf_s(szCount, "%d", nCount + 1);
+		m_lcPicture.InsertItem(nCount, NULL);
+		m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+//		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
+		CString strErrInfo = _T("");
+		if (pPaper->strSN.empty())	strErrInfo = _T("考号为空");
+		if (pPaper->bReScan)	strErrInfo = _T("重扫");
+		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)strErrInfo);	//2
+		m_lcPicture.SetItemData(nCount, (DWORD_PTR)pPaper);
+		m_lcPicture.SetItemColors(nCount, 1, RGB(255, 0, 0), RGB(255, 255, 255));
+
+		CString strTips = _T("异常试卷，将不会上传，也不会参与评卷。 需要单独找出，后面单独扫描");
+		m_lcPicture.SetItemToolTipText(nCount, 0, strTips);
+		m_lcPicture.SetItemToolTipText(nCount, 1, strTips);
+//		m_lcPicture.SetItemToolTipText(nCount, 2, strTips);
+	}
 }
 
 LRESULT CScanProcessDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
@@ -564,6 +666,7 @@ LRESULT CScanProcessDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 
 void CScanProcessDlg::OnBnClickedBtnScanagain()
 {
+	bool bDelCurrPapers = true;
 	if (_pCurrPapersInfo_)
 	{
 		int nCount = _pCurrPapersInfo_->lPaper.size() + _pCurrPapersInfo_->lIssue.size();
@@ -572,7 +675,10 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 			CString strMsg = _T("");
 			strMsg.Format(_T("当前试卷袋有%d份试卷未保存，是否删除?"), nCount);
 			if (MessageBox(strMsg, _T("提示"), MB_YESNO) != IDYES)
-				return;
+			{
+				bDelCurrPapers = false;
+			//	return;
+			}
 		}		
 	}
 
@@ -608,21 +714,24 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 	sprintf_s(szPicTmpPath, "%sPaper\\Tmp", T2A(g_strCurrentPath));
 
 	std::string strUtfPath = CMyCodeConvert::Gb2312ToUtf8(szPicTmpPath);
-	try
+	if (bDelCurrPapers)
 	{
-		Poco::File tmpPath(strUtfPath);
-		if (tmpPath.exists())
-			tmpPath.remove(true);
+		try
+		{
+			Poco::File tmpPath(strUtfPath);
+			if (tmpPath.exists())
+				tmpPath.remove(true);
 
-		Poco::File tmpPath1(strUtfPath);
-		tmpPath1.createDirectories();
-	}
-	catch (Poco::Exception& exc)
-	{
-		std::string strLog = "删除临时文件夹失败(" + exc.message() + "): ";
-		strLog.append(szPicTmpPath);
-		g_pLogger->information(strLog);
-	}
+			Poco::File tmpPath1(strUtfPath);
+			tmpPath1.createDirectories();
+		}
+		catch (Poco::Exception& exc)
+		{
+			std::string strLog = "删除临时文件夹失败(" + exc.message() + "): ";
+			strLog.append(szPicTmpPath);
+			g_pLogger->information(strLog);
+		}
+	}	
 
 	m_strCurrPicSavePath = szPicTmpPath;
 
@@ -665,9 +774,11 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 	if (nNum == 0)
 		nNum = -1;
 
-	SAFE_RELEASE(_pCurrPapersInfo_);
-	_pCurrPapersInfo_ = new PAPERSINFO();
-
+	if (bDelCurrPapers)
+	{
+		SAFE_RELEASE(_pCurrPapersInfo_);
+		_pCurrPapersInfo_ = new PAPERSINFO();
+	}
 
 	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
 	pTW_IDENTITY pID = NULL;
@@ -686,8 +797,11 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 
 		pDlg->m_scanThread.setNotifyDlg(pDlg);
 		pDlg->m_scanThread.setModelInfo(_pModel_->nPicNum, m_strCurrPicSavePath);
-		pDlg->m_scanThread.resetData();
-		pDlg->ResetChildDlg();
+		if (bDelCurrPapers)
+		{
+			pDlg->m_scanThread.resetData();
+			pDlg->ResetChildDlg();
+		}
 		pDlg->m_scanThread.PostThreadMessage(MSG_START_SCAN, pID->Id, (LPARAM)pScanCtrl);
 	}	
 	
@@ -829,6 +943,7 @@ void CScanProcessDlg::OnDestroy()
 {
 	CDialog::OnDestroy();
 
+	SAFE_RELEASE(m_pStudentMgr);
 	if (m_pReminderDlg)
 	{
 		m_pReminderDlg->DestroyWindow();
@@ -853,10 +968,75 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	m_pReminderDlg->ShowWindow(SW_HIDE);
 	m_pShowPicDlg->ShowWindow(SW_SHOW);
 	m_pShowPicDlg->setShowPaper(pPaper);
+
+	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(pNMItemActivate->iItem);
+	if ((/*g_nOperatingMode == 1 ||*/ g_bModifySN) && _pModel_ && pItemPaper && (pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH || pItemPaper->bReScan))
+	{
+		if (!m_pStudentMgr)
+		{
+			USES_CONVERSION;
+			m_pStudentMgr = new CStudentMgr();
+			std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+			bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+		}
+		CModifyZkzhDlg zkzhDlg(_pModel_, _pCurrPapersInfo_, m_pStudentMgr, pItemPaper);
+		zkzhDlg.DoModal();
+
+		ShowPapers(_pCurrPapersInfo_);
+	}
 }
 
 void CScanProcessDlg::OnBnClickedBtnScanprocess()
 {
 	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
 	pDlg->ShowChildDlg(4);
+}
+
+
+void CScanProcessDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	if (nIDEvent == TIMER_CheckRecogComplete)
+	{
+		if (!_pCurrPapersInfo_)
+		{
+			KillTimer(TIMER_CheckRecogComplete);
+			return;
+		}
+
+		bool bRecogComplete = true;
+		bool bNeedShowZkzhDlg = false;
+		for (auto p : _pCurrPapersInfo_->lPaper)
+		{
+			if (!p->bRecogComplete)
+			{
+				bRecogComplete = false;
+				break;
+			}
+			if (p->strSN.empty())
+				bNeedShowZkzhDlg = true;
+		}
+		if (bRecogComplete)
+		{
+			USES_CONVERSION;
+			if (_nScanStatus_ == 2 && (/*g_nOperatingMode == 1 ||*/ g_bModifySN) && bNeedShowZkzhDlg)
+			{
+				KillTimer(TIMER_CheckRecogComplete);
+				if (!m_pStudentMgr)
+				{
+					USES_CONVERSION;
+					m_pStudentMgr = new CStudentMgr();
+					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+					bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+				}
+				CModifyZkzhDlg zkzhDlg(_pModel_, _pCurrPapersInfo_, m_pStudentMgr);
+				zkzhDlg.DoModal();
+
+				ShowPapers(_pCurrPapersInfo_);
+			}
+			else
+				KillTimer(TIMER_CheckRecogComplete);
+		}
+	}
+
+	CDialog::OnTimer(nIDEvent);
 }

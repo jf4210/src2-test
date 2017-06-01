@@ -61,6 +61,7 @@ Poco::Event			g_eCompressThreadExit;
 //--
 //++事件定义
 Poco::Event			g_eGetExamList;		//获取考试列表事件
+Poco::Event			g_eGetBmk;			//获取报名库事件
 Poco::Event			g_eDownLoadModel;	//下载模板完成状态
 //--
 
@@ -346,6 +347,25 @@ LRESULT CScanTool3Dlg::MsgCmdDlModel(WPARAM wParam, LPARAM lParam)
 	return 1;
 }
 
+LRESULT CScanTool3Dlg::MsgCmdGetBmk(WPARAM wParam, LPARAM lParam)
+{
+	if (g_lBmkStudent.size() == 0)
+	{
+		if (MessageBox(_T("获取考生报名库失败, 是否继续?"), _T("提示"), MB_YESNO) != IDYES)
+		{
+			SwitchDlg(0);
+			return 0;
+		}
+	}
+	if (!m_pScanMgrDlg->DownLoadModel())
+	{
+		AfxMessageBox(_T("考试信息为空"));
+		//跳到考试管理页面
+		SwitchDlg(0);
+	}
+	return 1;
+}
+
 void CScanTool3Dlg::SwitchDlg(int nDlg, int nChildID /*= 1*/)
 {
 	if (nDlg == 0)
@@ -368,6 +388,7 @@ BEGIN_MESSAGE_MAP(CScanTool3Dlg, CDialogEx)
 	ON_WM_DESTROY()
 	ON_WM_SIZE()
 	ON_MESSAGE(MSG_CMD_DL_MODEL_OK, &CScanTool3Dlg::MsgCmdDlModel)
+	ON_MESSAGE(MSG_CMD_GET_BMK_OK, &CScanTool3Dlg::MsgCmdGetBmk)
 	ON_BN_CLICKED(IDC_BTN_CLOSE, &CScanTool3Dlg::OnBnClickedBtnClose)
 	ON_BN_CLICKED(IDC_BTN_Min, &CScanTool3Dlg::OnBnClickedBtnMin)
 	ON_WM_NCHITTEST()

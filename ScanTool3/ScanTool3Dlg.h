@@ -37,6 +37,7 @@ protected:
 	void InitUI();
 
 	LRESULT	MsgCmdDlModel(WPARAM wParam, LPARAM lParam);
+	LRESULT MsgCmdGetBmk(WPARAM wParam, LPARAM lParam);
 private:
 	Poco::Thread*		m_pRecogThread;		//识别线程对象数组
 	std::vector<CRecognizeThread*> m_vecRecogThreadObj;		//存储识别线程对象

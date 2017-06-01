@@ -57,6 +57,12 @@ BOOL CPkgRecordDlg::PreTranslateMessage(MSG* pMsg)
 // CPkgRecordDlg 消息处理程序
 void CPkgRecordDlg::InitUI()
 {
+	CBitmap bmp;
+	bmp.LoadBitmap(IDB_Scrollbar);
+	BITMAP bm;
+	bmp.GetBitmap(&bm);
+	m_bitmap_scrollbar = (HBITMAP)bmp.Detach();
+	SkinWndScroll(&m_lcPkg, m_bitmap_scrollbar);
 	m_lcPkg.SetExtendedStyle(m_lcPkg.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcPkg.InsertColumn(0, _T("顺序"), LVCFMT_CENTER, 40);
 	m_lcPkg.InsertColumn(1, _T("文件名"), LVCFMT_CENTER, 110);

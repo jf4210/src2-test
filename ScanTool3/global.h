@@ -189,6 +189,7 @@ extern int					_nReocgThreads_;		//识别线程数量
 
 //++事件定义
 extern Poco::Event			g_eGetExamList;		//获取考试列表事件
+extern Poco::Event			g_eGetBmk;			//获取报名库事件
 extern Poco::Event			g_eDownLoadModel;	//下载模板完成状态
 //--
 extern int					g_nDownLoadModelStatus;		//下载模板的状态	0-未下载，初始化，1-模板下载中，2-下载成功，3-本地存在此文件，不需要下载, -1-服务器此科目模板不存在, -2-服务器读取文件失败

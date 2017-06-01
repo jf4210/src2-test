@@ -118,7 +118,7 @@ bool CStudentMgr::InsertData(STUDENT_LIST& lData, std::string strTable)
 	return bResult;
 }
 
-bool CStudentMgr::SearchStudent(std::string strKey, int nType, STUDENT_LIST& lResult)
+bool CStudentMgr::SearchStudent(std::string strTable, std::string strKey, int nType, STUDENT_LIST& lResult)
 {
 	bool bResult = false;
 	if (_session && !_session->isConnected())
@@ -128,7 +128,7 @@ bool CStudentMgr::SearchStudent(std::string strKey, int nType, STUDENT_LIST& lRe
 	{
 		Poco::Stopwatch sw;
 		sw.start();
-		std::string strTable = "student";
+//		std::string strTable = "student";
 		std::string strSql;
 		if (nType == 1)
 			strSql = Poco::format("select * from %s where name like '%%%s%%';", strTable, CMyCodeConvert::Gb2312ToUtf8(strKey));

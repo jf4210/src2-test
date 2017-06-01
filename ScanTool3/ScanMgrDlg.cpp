@@ -71,7 +71,7 @@ BEGIN_MESSAGE_MAP(CScanMgrDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_ChangeExam, &CScanMgrDlg::OnBnClickedBtnChangeexam)
 	ON_MESSAGE(MSG_SCAN_DONE, &CScanMgrDlg::ScanDone)
 	ON_MESSAGE(MSG_SCAN_ERR, &CScanMgrDlg::ScanErr)
-	ON_WM_TIMER()
+//	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -230,7 +230,7 @@ void CScanMgrDlg::DrawBorder(CDC *pDC)
 	pDC->Rectangle(&rcClient);
 	pDC->SelectObject(pOldPen);
 	pPen.Detach();
-	ReleaseDC(pDC);
+//	ReleaseDC(pDC);
 }
 
 void CScanMgrDlg::ShowChildDlg(int n)
@@ -242,14 +242,20 @@ void CScanMgrDlg::ShowChildDlg(int n)
 		m_pScanDlg->ShowWindow(SW_HIDE);
 		m_pScanProcessDlg->ShowWindow(SW_HIDE);
 		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
-		GetBmkInfo();
-		if (!DownLoadModel())
+		if (!GetBmkInfo())
 		{
 			AfxMessageBox(_T("考试信息为空"));
 			//跳到考试管理页面
 			CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
 			pDlg->SwitchDlg(0);
 		}
+// 		if (!DownLoadModel())
+// 		{
+// 			AfxMessageBox(_T("考试信息为空"));
+// 			//跳到考试管理页面
+// 			CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
+// 			pDlg->SwitchDlg(0);
+// 		}
 	}
 	else if (n == 2)
 	{
@@ -485,6 +491,8 @@ bool CScanMgrDlg::GetBmkInfo()
 	stGetBmkInfo.nSubjectID = _pCurrSub_->nSubjID;
 	strcpy(stGetBmkInfo.szEzs, _strEzs_.c_str());
 
+	g_eGetBmk.reset();
+
 	pTCP_TASK pTcpTask = new TCP_TASK;
 	pTcpTask->usCmd = USER_GET_BMK;
 	pTcpTask->nPkgLen = sizeof(ST_GET_BMK_INFO);
@@ -492,6 +500,8 @@ bool CScanMgrDlg::GetBmkInfo()
 	g_fmTcpTaskLock.lock();
 	g_lTcpTask.push_back(pTcpTask);
 	g_fmTcpTaskLock.unlock();
+
+	return true;
 }
 
 HBRUSH CScanMgrDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
@@ -525,9 +535,9 @@ BOOL CScanMgrDlg::OnEraseBkgnd(CDC* pDC)
 	GetClientRect(&rcClient);
 
 	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 222, 250
-	DrawBorder(pDC);
+//	DrawBorder(pDC);
 
-//	ReleaseDC(pDC);
+	ReleaseDC(pDC);
 
 	return CDialog::OnEraseBkgnd(pDC);
 }
@@ -560,6 +570,7 @@ LRESULT CScanMgrDlg::ScanDone(WPARAM wParam, LPARAM lParam)
 		{
 			if (m_pScanProcessDlg)
 			{
+				m_pScanProcessDlg->ScanCompleted();
 				m_pScanProcessDlg->InitShow();
 			}			
 		}
@@ -645,8 +656,7 @@ void CScanMgrDlg::InitScanner()
 	}
 }
 
-
-
+#if 0
 void CScanMgrDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	if (nIDEvent == TIMER_CheckRecogComplete)
@@ -693,3 +703,4 @@ void CScanMgrDlg::OnTimer(UINT_PTR nIDEvent)
 	}
 	CDialog::OnTimer(nIDEvent);
 }
+#endif

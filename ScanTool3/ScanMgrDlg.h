@@ -62,7 +62,7 @@ private:
 	CString				m_strExamName;
 	CComboBoxExt		m_comboSubject;
 //	CComboBox		m_comboSubject;
-	CStudentMgr*		m_pStudentMgr;
+//	CStudentMgr*		m_pStudentMgr;
 
 	TwainApp*		_pTWAINApp;
 	std::vector<CString> m_vecScanSrc;
@@ -83,5 +83,5 @@ public:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnBnClickedBtnChangeexam();
-	afx_msg void OnTimer(UINT_PTR nIDEvent);
+//	afx_msg void OnTimer(UINT_PTR nIDEvent);
 };

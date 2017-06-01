@@ -814,7 +814,8 @@ void CModifyZkzhDlg::OnBnClickedBtnSearch()
 	m_lcBmk.DeleteAllItems();
 	std::string strKey = T2A(m_strSearchKey);
 	STUDENT_LIST lResult;
-	if (m_pStudentMgr && m_pStudentMgr->SearchStudent(strKey, m_nSearchType, lResult))
+	std::string strTable = Poco::format("T%d_%d", m_pModel->nExamID, m_pModel->nSubjectID);
+	if (m_pStudentMgr && m_pStudentMgr->SearchStudent(strTable, strKey, m_nSearchType, lResult))
 	{
 		for (auto obj : lResult)
 		{

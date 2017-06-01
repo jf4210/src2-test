@@ -1,6 +1,7 @@
 #pragma once
 #include "global.h"
 #include "XListCtrl.h"
+#include "ctrl/skinscrollwnd.h"
 
 // CScanRecordDlg 对话框
 
@@ -26,6 +27,7 @@ private:
 	COLORREF		m_colorStatus;			//状态栏字体颜色
 
 	CXListCtrl		m_lcBmk;
+	HBITMAP			m_bitmap_scrollbar;
 	
 	CString			m_strGmkCount;		//报名库总人数
 	CString			m_strScanCount;		//已扫人数

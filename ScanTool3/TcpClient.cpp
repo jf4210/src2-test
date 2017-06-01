@@ -329,7 +329,7 @@ void CTcpClient::HandleCmd()
 			}
 			SAFE_RELEASE_ARRY(pBuff);
 			g_lfmExamList.unlock();
-			g_eGetExamList.set();		//获取到报名库信息
+			g_eGetExamList.set();		//获取到考试列表信息
 		}
 		break;
 		}
@@ -509,6 +509,10 @@ void CTcpClient::HandleCmd()
 					g_pLogger->information(strLog);
 					TRACE(_T("%s\n"), strLog.c_str());
 
+					//先通知主窗口进行后面下载模板操作，插入数据库这块较耗时
+					CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+					pDlg->PostMessage(MSG_CMD_GET_BMK_OK, NULL, NULL);
+
 					//插入数据库
 					USES_CONVERSION;
 					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
@@ -537,6 +541,9 @@ void CTcpClient::HandleCmd()
 			break;
 		}
 		SAFE_RELEASE_ARRY(pBuff);
+		g_eGetBmk.set();
+// 		CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+// 		pDlg->PostMessage(MSG_CMD_GET_BMK_OK, NULL, NULL);
 	}
 }
 
