@@ -831,7 +831,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 		pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
 
 		//添加到识别任务列表
-		if (_pModel_)
+		if (_pModel_ && _pCurrExam_->nModel == 0)	//网阅模式下的试卷才加入识别队列
 		{
 			pRECOGTASK pTask = new RECOGTASK;
 			pTask->pPaper = m_pCurrPaper;

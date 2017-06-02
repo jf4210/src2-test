@@ -741,7 +741,7 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		}
 		catch (cv::Exception& exc)
 		{
-			std::string strLog2 = Poco::format("识别定点(%d)异常: %s\n", i, exc.msg);
+			std::string strLog2 = Poco::format("识别定点(%d)异常: %s\n", i, exc.msg.c_str());
 			strLog.append(strLog2);
 			TRACE(strLog2.c_str());
 
@@ -3281,6 +3281,8 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 					sprintf_s(szLog, "识别准考证号第%d位失败,识别出结果%d位(%s), 图片名: %s\n", pSnItem->nItem, vecItemVal.size(), szVal, pPic->strPicName.c_str());
 					strLog.append(szLog);
 					TRACE(szLog);
+
+					vecSN.push_back(-1);
 				}
 			}
 		}
@@ -3298,6 +3300,23 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		strLog.append(szLog);
 		TRACE(szLog);
 		(static_cast<CDialog*>((static_cast<pST_PaperInfo>(pPic->pPaper))->pSrcDlg))->PostMessage(MSG_ZKZH_RECOG, (WPARAM)pPic->pPaper, (LPARAM)(static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers);
+	}
+	else
+	{
+		bool bAllEmpty = true;
+		for (int i = 0; i < vecSN.size(); i++)
+		{
+			char szTmp[5] = { 0 };
+			if (vecSN[i] >= 0)
+			{
+				itoa(vecSN[i], szTmp, 10);
+				bAllEmpty = false;
+			}
+			else
+				szTmp[0] = '#';		//未识别出来的或者识别到多个的用#代替，后面做模糊查找
+			if (!bAllEmpty)			//只要识别到一部分，就将此识别到的结果放入模糊搜索字段中
+				(static_cast<pST_PaperInfo>(pPic->pPaper))->strRecogSN4Search.append(szTmp);
+		}
 	}
 	if (!bRecogAll)
 	{

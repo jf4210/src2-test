@@ -609,6 +609,10 @@ void CScanProcessDlg::ShowPapers(pPAPERSINFO pPapers)
 //			m_lcPicture.SetItemText(nCount, 2, _T("*"));
 			m_lcPicture.SetItemColors(nCount, 1, RGB(0, 0, 255), RGB(255, 255, 255));
 		}
+		if (pPaper->nZkzhInBmkStatus != 1 && g_lBmkStudent.size() > 0)	//不在报名库中
+		{
+			m_lcPicture.SetItemColors(nCount, 1, RGB(0, 255, 0), RGB(255, 255, 255));
+		}
 		m_lcPicture.SetItemData(nCount, (DWORD_PTR)pPaper);
 	}
 	
@@ -633,6 +637,7 @@ void CScanProcessDlg::ShowPapers(pPAPERSINFO pPapers)
 		m_lcPicture.SetItemToolTipText(nCount, 1, strTips);
 //		m_lcPicture.SetItemToolTipText(nCount, 2, strTips);
 	}
+	m_lcPicture.Invalidate();
 }
 
 LRESULT CScanProcessDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
@@ -652,7 +657,10 @@ LRESULT CScanProcessDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 		if (pItemPaper == pPaper)
 		{
 			if (!pPaper->strSN.empty())
+			{
 				m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+				CheckZkzhInBmk(pPaper);
+			}
 			else
 			{
 				m_lcPicture.SetItemText(i, 1, _T("未识别"));
@@ -823,20 +831,23 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 		return;
 	}
 
-	bool bRecogComplete = true;
-	for (auto p : _pCurrPapersInfo_->lPaper)
+	if (_pCurrExam_->nModel == 0)	//网阅模式
 	{
-		if (!p->bRecogComplete)
+		bool bRecogComplete = true;
+		for (auto p : _pCurrPapersInfo_->lPaper)
 		{
-			bRecogComplete = false;
-			break;
+			if (!p->bRecogComplete)
+			{
+				bRecogComplete = false;
+				break;
+			}
 		}
-	}
-	if (!bRecogComplete)
-	{
-		AfxMessageBox(_T("请稍后，图像正在识别！"));
-		return;
-	}
+		if (!bRecogComplete)
+		{
+			AfxMessageBox(_T("请稍后，图像正在识别！"));
+			return;
+		}
+	}	
 
 	std::string strUser;
 	std::string strEzs;
@@ -1012,9 +1023,10 @@ void CScanProcessDlg::OnTimer(UINT_PTR nIDEvent)
 				bRecogComplete = false;
 				break;
 			}
-			if (p->strSN.empty())
+			if (p->strSN.empty() || (p->nZkzhInBmkStatus != 1 && g_lBmkStudent.size() > 0))	//报名库列表存在时，检查准考证号是否在报名库中报名库
 				bNeedShowZkzhDlg = true;
 		}
+
 		if (bRecogComplete)
 		{
 			USES_CONVERSION;
@@ -1040,3 +1052,38 @@ void CScanProcessDlg::OnTimer(UINT_PTR nIDEvent)
 
 	CDialog::OnTimer(nIDEvent);
 }
+
+int CScanProcessDlg::CheckZkzhInBmk(std::string strZkzh)
+{
+	int nResult = 0;	//0--报名库不存在，1--报名库存在，-1--报名库检测到已经扫描
+	for (auto obj : g_lBmkStudent)
+	{
+		if (obj.strZkzh == strZkzh)
+		{
+			if (obj.nScaned == 1)
+				nResult = -1;
+			else
+			{
+				nResult = 1;
+				obj.nScaned = 1;
+			}
+			break;
+		}
+	}
+
+	return nResult;
+}
+
+void CScanProcessDlg::CheckZkzhInBmk(pST_PaperInfo pPaper)
+{
+	if (!pPaper) return;
+
+	int nResult = CheckZkzhInBmk(pPaper->strSN);
+	if (nResult == 1)
+		pPaper->nZkzhInBmkStatus = 1;
+	else if (nResult == -1)
+		pPaper->nZkzhInBmkStatus = -1;
+	else 
+		pPaper->nZkzhInBmkStatus = 0;
+}
+

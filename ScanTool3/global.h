@@ -84,7 +84,7 @@
 #define WarpAffine_TEST		//仿射变换测试
 #ifdef _DEBUG
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
-	#define PrintRecogLog		//打印识别日志
+//	#define PrintRecogLog		//打印识别日志
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define	 TEST_MODEL_NAME	//模板名称测试
 //	#define	 TEST_SCAN_THREAD	//扫描线程测试
@@ -281,6 +281,7 @@ typedef struct _PaperInfo_
 	bool		bRecogComplete;		//该学生已经识别完成
 	bool		bReScan;			//重新扫描标识，在准考证号修改窗口中设置
 	int			nQKFlag;			//缺考标识
+	int			nZkzhInBmkStatus;	//准考证号是否在报名库中存在，在报名库列表不存在时，此项无效, 0--报名库中不存在，1--报名库中存在，-1--扫描时重号了
 	//++从Pkg恢复Papers时的参数
 	int			nChkFlag;			//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不進行圖片识别
 	//--
@@ -289,6 +290,7 @@ typedef struct _PaperInfo_
 	void*		pSrcDlg;			//来源，来自哪个窗口，扫描or导入试卷窗口
 	std::string strStudentInfo;		//学生信息, S1、S2、S3...
 	std::string strSN;				//识别出的考号、准考证号
+	std::string strRecogSN4Search;	//用于模糊搜索的考号，将未识别出来的部分用#代替，后期进行模糊搜索
 	
 	SNLIST				lSnResult;
 	OMRRESULTLIST		lOmrResult;			//OMRRESULTLIST
@@ -298,6 +300,7 @@ typedef struct _PaperInfo_
 	{
 		bIssuePaper = false;
 		bModifyZKZH = false;
+		nZkzhInBmkStatus = 0;
 		bRecogComplete = false;
 		bReScan = false;
 		nQKFlag = 0;

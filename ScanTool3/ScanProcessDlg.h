@@ -33,6 +33,8 @@ private:
 	void	SetFontSize();
 
 	void	ShowPapers(pPAPERSINFO pPapers);
+	int		CheckZkzhInBmk(std::string strZkzh);
+	void	CheckZkzhInBmk(pST_PaperInfo pPaper);
 
 	LRESULT MsgZkzhRecog(WPARAM wParam, LPARAM lParam);		//准考证号识别完成时的通知
 private:

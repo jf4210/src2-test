@@ -505,16 +505,18 @@ void CTcpClient::HandleCmd()
 							stData.strSchool = CMyCodeConvert::Utf8ToGb2312(objItem->get("school").convert<std::string>());
 						g_lBmkStudent.push_back(stData);
 					}
+
+					USES_CONVERSION;
+
 					std::string strLog = Poco::format("获取报名库完成(%d人)", (int)g_lBmkStudent.size());
 					g_pLogger->information(strLog);
-					TRACE(_T("%s\n"), strLog.c_str());
+					TRACE(_T("%s\n"), A2T(strLog.c_str()));
 
 					//先通知主窗口进行后面下载模板操作，插入数据库这块较耗时
 					CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
 					pDlg->PostMessage(MSG_CMD_GET_BMK_OK, NULL, NULL);
 
 					//插入数据库
-					USES_CONVERSION;
 					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
 					CStudentMgr studentMgr;
 					bool bResult = studentMgr.InitDB(strDbPath);

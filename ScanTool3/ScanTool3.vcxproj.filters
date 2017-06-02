@@ -106,6 +106,12 @@
     <Filter Include="扫描界面窗口\扫描过程窗口\异常处理窗口">
       <UniqueIdentifier>{75281bea-095a-47ba-b446-c4be6994acdc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="扫描界面窗口\扫描过程窗口\异常处理窗口\搜索窗口">
+      <UniqueIdentifier>{1826da89-8083-4cb9-916c-ab6e93961f9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="控件\group">
+      <UniqueIdentifier>{6a5aa516-766e-461f-9ed1-c57a29e5034d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -300,6 +306,12 @@
     <ClInclude Include="ModifyZkzhDlg.h">
       <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口</Filter>
     </ClInclude>
+    <ClInclude Include="VagueSearchDlg.h">
+      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\搜索窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="ctrl\XPGroupBox.h">
+      <Filter>控件\group</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -466,6 +478,12 @@
     </ClCompile>
     <ClCompile Include="ModifyZkzhDlg.cpp">
       <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="VagueSearchDlg.cpp">
+      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\搜索窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ctrl\XPGroupBox.cpp">
+      <Filter>控件\group</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
