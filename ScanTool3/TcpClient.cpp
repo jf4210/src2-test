@@ -513,8 +513,8 @@ void CTcpClient::HandleCmd()
 					TRACE(_T("%s\n"), A2T(strLog.c_str()));
 
 					//先通知主窗口进行后面下载模板操作，插入数据库这块较耗时
-					CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
-					pDlg->PostMessage(MSG_CMD_GET_BMK_OK, NULL, NULL);
+// 					CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+// 					pDlg->PostMessage(MSG_CMD_GET_BMK_OK, NULL, NULL);
 
 					//插入数据库
 					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
@@ -536,7 +536,7 @@ void CTcpClient::HandleCmd()
 			break;
 			case RESULT_GET_BMK_FAIL:
 			{
-				std::string strLog = "报名库下载失败: " + strResult;
+				std::string strLog = "报名库下载失败: " + CMyCodeConvert::Utf8ToGb2312(strResult);
 				TRACE(strLog.c_str());
 				g_pLogger->information(strLog);
 			}
@@ -544,8 +544,8 @@ void CTcpClient::HandleCmd()
 		}
 		SAFE_RELEASE_ARRY(pBuff);
 		g_eGetBmk.set();
-// 		CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
-// 		pDlg->PostMessage(MSG_CMD_GET_BMK_OK, NULL, NULL);
+		CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+		pDlg->PostMessage(MSG_CMD_GET_BMK_OK, NULL, NULL);
 	}
 }
 

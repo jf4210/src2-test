@@ -88,6 +88,8 @@ public:
 	void	setNotifyDlg(void* pDlg);
 	void	setModelInfo(int nModelPicNums, std::string& strSavePath);
 	void	resetData();	//重置计数器
+
+	void	TestMode();
 private:	
 	bool	m_bStop;
 	void*	m_pDlg;		//消息通知窗口

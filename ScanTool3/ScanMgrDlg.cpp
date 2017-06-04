@@ -485,6 +485,8 @@ bool CScanMgrDlg::GetBmkInfo()
 
 	if (_pCurrExam_->nModel != 0) return false;		//只针对网阅考试获取报名库
 
+	TRACE("请求报名库(%d:%d)...\n", _pCurrExam_->nExamID, _pCurrSub_->nSubjID);
+
 	ST_GET_BMK_INFO stGetBmkInfo;
 	ZeroMemory(&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
 	stGetBmkInfo.nExamID = _pCurrExam_->nExamID;

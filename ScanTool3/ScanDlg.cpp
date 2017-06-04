@@ -300,6 +300,11 @@ void CScanDlg::OnBnClickedBtnScan()
 		return;
 	}
 
+#ifdef Test_Data
+	TestData();
+	return;
+#endif
+
 	USES_CONVERSION;
 	char szPicTmpPath[MAX_PATH] = { 0 };
 	sprintf_s(szPicTmpPath, "%sPaper\\Tmp", T2A(g_strCurrentPath));
@@ -468,4 +473,21 @@ BOOL CScanDlg::OnEraseBkgnd(CDC* pDC)
 void CScanDlg::OnBnClickedChkAdvancescan()
 {
 	m_bAdvancedScan = ((CButton*)GetDlgItem(IDC_CHK_AdvanceScan))->GetCheck();
+}
+
+void CScanDlg::TestData()
+{
+	SAFE_RELEASE(_pCurrPapersInfo_);
+	_pCurrPapersInfo_ = new PAPERSINFO();
+
+	m_nModelPicNums = _pModel_->nPicNum;
+
+	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
+	pDlg->m_scanThread.setNotifyDlg(pDlg);
+	pDlg->m_scanThread.setModelInfo(m_nModelPicNums, m_strCurrPicSavePath);
+	pDlg->m_scanThread.resetData();
+	pDlg->ResetChildDlg();
+	pDlg->m_scanThread.PostThreadMessage(MSG_START_SCAN, 0, (LPARAM)NULL);
+
+	pDlg->ShowChildDlg(3);
 }

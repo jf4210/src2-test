@@ -56,6 +56,7 @@ BEGIN_MESSAGE_MAP(CScanBmkRecordDlg, CDialog)
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
 	ON_WM_SIZE()
+	ON_NOTIFY(NM_CLICK, IDC_LIST_Bmk, &CScanBmkRecordDlg::OnNMClickListBmk)
 END_MESSAGE_MAP()
 
 
@@ -71,7 +72,7 @@ void CScanBmkRecordDlg::InitUI()
 	BITMAP bm;
 	bmp.GetBitmap(&bm);
 	m_bitmap_scrollbar = (HBITMAP)bmp.Detach();
-	SkinWndScroll(&m_lcBmk, m_bitmap_scrollbar);
+//	SkinWndScroll(&m_lcBmk, m_bitmap_scrollbar);
 	m_lcBmk.SetExtendedStyle(m_lcBmk.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcBmk.InsertColumn(0, _T("顺序"), LVCFMT_CENTER, 40);
 	m_lcBmk.InsertColumn(1, _T("考号"), LVCFMT_CENTER, 110);
@@ -240,3 +241,11 @@ void CScanBmkRecordDlg::UpDateInfo()
 }
 
 
+
+
+void CScanBmkRecordDlg::OnNMClickListBmk(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	// TODO:  在此添加控件通知处理程序代码
+	*pResult = 0;
+}
