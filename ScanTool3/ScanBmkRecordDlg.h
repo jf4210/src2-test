@@ -2,6 +2,7 @@
 #include "global.h"
 #include "XListCtrl.h"
 #include "ctrl/skinscrollwnd.h"
+#include "BmpButton.h"
 
 // CScanRecordDlg 对话框
 
@@ -26,6 +27,7 @@ private:
 	CFont			m_fontStatus;			//状态栏字体
 	COLORREF		m_colorStatus;			//状态栏字体颜色
 
+	CBmpButton		m_bmpBtnExport;
 	CXListCtrl		m_lcBmk;
 	HBITMAP			m_bitmap_scrollbar;
 	

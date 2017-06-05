@@ -62,11 +62,11 @@ void CPkgRecordDlg::InitUI()
 	BITMAP bm;
 	bmp.GetBitmap(&bm);
 	m_bitmap_scrollbar = (HBITMAP)bmp.Detach();
-	SkinWndScroll(&m_lcPkg, m_bitmap_scrollbar);
+//	SkinWndScroll(&m_lcPkg, m_bitmap_scrollbar);
 	m_lcPkg.SetExtendedStyle(m_lcPkg.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcPkg.InsertColumn(0, _T("顺序"), LVCFMT_CENTER, 40);
 	m_lcPkg.InsertColumn(1, _T("文件名"), LVCFMT_CENTER, 110);
-	m_lcPkg.InsertColumn(2, _T("上传进度"), LVCFMT_CENTER, 110);
+	m_lcPkg.InsertColumn(2, _T("上传进度"), LVCFMT_CENTER, 100);
 	m_lcPkg.InsertColumn(3, _T("上传状态"), LVCFMT_CENTER, 110);
 
 	InitCtrlPosition();
@@ -96,7 +96,7 @@ void CPkgRecordDlg::InitCtrlPosition()
 		int nH = cy - nTopGap - nBottomGap;
 		nCurrLeft = cx / 2 - nW / 2;
 		GetDlgItem(IDC_LIST_Pkg)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
-		m_lcPkg.SetColumnWidth(1, nW - 280);
+		m_lcPkg.SetColumnWidth(1, nW - 295);
 	}
 	Invalidate();
 }
@@ -120,3 +120,54 @@ void CPkgRecordDlg::OnSize(UINT nType, int cx, int cy)
 
 	InitCtrlPosition();
 }
+
+void CPkgRecordDlg::UpdateChildDlg()
+{
+	USES_CONVERSION;
+	for (auto item : g_lSendTask)
+	{
+		bool bFind = false;
+		int nCount = m_lcPkg.GetItemCount();
+		int i = 0;
+		for (; i < nCount; i++)
+		{
+			pSENDTASK pItem = (pSENDTASK)m_lcPkg.GetItemData(i);
+			if (pItem == item)
+			{
+				bFind = true;
+				break;
+			}
+		}
+
+		char szPercent[10] = { 0 };
+		sprintf_s(szPercent, "%.1f", item->fSendPercent);
+		char szState[20] = { 0 };
+		if (item->nSendState == 0)
+			strcpy_s(szState, "未上传");
+		else if (item->nSendState == 1)
+			strcpy_s(szState, "正在上传");
+		else if (item->nSendState == 2)
+			strcpy_s(szState, "上传成功");
+		else if (item->nSendState == 3)
+			strcpy_s(szState, "上传失败");
+		if (bFind)
+		{
+			m_lcPkg.SetItemText(i, 1, (LPCTSTR)A2T(item->strFileName.c_str()));
+			m_lcPkg.SetItemText(i, 2, (LPCTSTR)A2T(szPercent));
+			m_lcPkg.SetItemText(i, 3, (LPCTSTR)A2T(szState));
+		}
+		else
+		{
+			char szCount[10] = { 0 };
+			sprintf_s(szCount, "%d", nCount + 1);
+
+			m_lcPkg.InsertItem(nCount, NULL);
+			m_lcPkg.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+			m_lcPkg.SetItemText(nCount, 1, (LPCTSTR)A2T(item->strFileName.c_str()));
+			m_lcPkg.SetItemText(nCount, 2, (LPCTSTR)A2T(szPercent));
+			m_lcPkg.SetItemText(nCount, 3, (LPCTSTR)A2T(szState));
+			m_lcPkg.SetItemData(nCount, (DWORD_PTR)item);
+		}
+	}
+}
+

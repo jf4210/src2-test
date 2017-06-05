@@ -34,7 +34,8 @@ BOOL CScanReminderDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	m_bmpBk.LoadBitmap(IDB_ScanMgr_WaitPic);
+//	m_bmpBk.LoadBitmap(IDB_ScanMgr_WaitPic);
+	m_bmpBk.LoadBitmap(IDB_ScanMgr_Scanning);
 	InitCtrlPosition();
 	SetFontSize(m_nStatusSize);
 
@@ -155,17 +156,33 @@ BOOL CScanReminderDlg::OnEraseBkgnd(CDC* pDC)
 {
 	CRect rcClient;
 	GetClientRect(&rcClient);
-
-//	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 222, 250
-//	DrawBorder(pDC);
-//	ReleaseDC(pDC);
-
+	
 	CDialog::OnEraseBkgnd(pDC);
 
 	int iX, iY;
 	CDC memDC;
 	BITMAP bmp;
+#if 1
+	iX = iY = 0;
 
+	m_bmpBk.GetBitmap(&bmp);
+	iX = rcClient.Width() / 2 - bmp.bmWidth / 2;
+	iY = rcClient.Height() / 2 - bmp.bmHeight / 2;
+	GetClientRect(&rcClient);
+
+	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));
+
+	if (memDC.CreateCompatibleDC(pDC))
+	{
+		CBitmap *pOldBmp = memDC.SelectObject(&m_bmpBk);
+		m_bmpBk.GetBitmap(&bmp);
+		pDC->SetStretchBltMode(COLORONCOLOR);
+		pDC->StretchBlt(iX, iY, bmp.bmWidth, bmp.bmHeight, &memDC, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+		memDC.SelectObject(pOldBmp);
+	}
+	memDC.DeleteDC();
+//	ReleaseDC(pDC);
+#else
 	iX = iY = 0;
 	GetClientRect(&rcClient);
 
@@ -178,7 +195,7 @@ BOOL CScanReminderDlg::OnEraseBkgnd(CDC* pDC)
 		memDC.SelectObject(pOldBmp);
 	}
 	memDC.DeleteDC();
-
+#endif
 
 	return TRUE;
 }

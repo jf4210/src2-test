@@ -29,6 +29,7 @@ void CScanBmkRecordDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_STATIC_Scan_Count, m_strScanCount);
 	DDX_Text(pDX, IDC_STATIC_UnScan_Count, m_strUnScanCount);
 	DDX_Control(pDX, IDC_LIST_Bmk, m_lcBmk);
+	DDX_Control(pDX, IDC_BTN_ExportScan, m_bmpBtnExport);
 }
 
 
@@ -67,6 +68,9 @@ void CScanBmkRecordDlg::InitUI()
 	SetFontSize(m_nStatusSize);
 	UpDateInfo();
 
+	m_bmpBtnExport.SetStateBitmap(IDB_RecordDlg_Btn_Hover, 0, IDB_RecordDlg_Btn);
+	m_bmpBtnExport.SetWindowText(_T("导出未扫名单"));
+
 	CBitmap bmp;
 	bmp.LoadBitmap(IDB_Scrollbar);
 	BITMAP bm;
@@ -77,7 +81,7 @@ void CScanBmkRecordDlg::InitUI()
 	m_lcBmk.InsertColumn(0, _T("顺序"), LVCFMT_CENTER, 40);
 	m_lcBmk.InsertColumn(1, _T("考号"), LVCFMT_CENTER, 110);
 	m_lcBmk.InsertColumn(2, _T("姓名"), LVCFMT_CENTER, 110);
-	m_lcBmk.InsertColumn(3, _T("扫描状态"), LVCFMT_CENTER, 120);
+	m_lcBmk.InsertColumn(3, _T("扫描状态"), LVCFMT_CENTER, 100);
 
 	InitCtrlPosition();
 }
@@ -146,7 +150,7 @@ void CScanBmkRecordDlg::InitCtrlPosition()
 		int nXTmp = (cx - nLeftGap - nRightGap) * 0;
 		GetDlgItem(IDC_LIST_Bmk)->MoveWindow(nCurrLeft + nXTmp, nCurrTop, nW, nH);
 		if (nW > 380)
-			m_lcBmk.SetColumnWidth(3, nW - 280);
+			m_lcBmk.SetColumnWidth(3, nW - 295);
 	}
 
 	if (GetDlgItem(IDC_BTN_ExportScan)->GetSafeHwnd())
@@ -234,8 +238,45 @@ void CScanBmkRecordDlg::UpDateInfo()
 	//			需要根据报名库标识来取值
 	//*************************************************
 	m_strGmkCount.Format(_T("%d人"), g_lBmkStudent.size());
-	m_strScanCount = _T("0人");
-	m_strUnScanCount = _T("0人");
+	
+	if (g_lBmkStudent.size() == 0)
+	{
+		m_strScanCount.Format(_T("%d人"), _nScanPaperCount_);
+		m_strUnScanCount = _T("0人");
+		UpdateData(FALSE);
+		return;
+	}
+
+	int nScaned = 0;
+	int unScaned = 0;
+	USES_CONVERSION;
+	m_lcBmk.DeleteAllItems();
+	for (auto obj : g_lBmkStudent)
+	{
+		int nCount = m_lcBmk.GetItemCount();
+		char szCount[10] = { 0 };
+		sprintf_s(szCount, "%d", nCount + 1);
+		m_lcBmk.InsertItem(nCount, NULL);
+
+		m_lcBmk.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+		m_lcBmk.SetItemText(nCount, 1, (LPCTSTR)A2T(obj.strZkzh.c_str()));
+		m_lcBmk.SetItemText(nCount, 2, (LPCTSTR)A2T(obj.strName.c_str()));
+		std::string strScanStatus;
+		if (obj.nScaned)
+		{
+			strScanStatus = "已扫";
+			nScaned++;
+		}
+		else
+		{
+			strScanStatus = "未扫";
+			unScaned++;
+		}
+		m_lcBmk.SetItemText(nCount, 3, (LPCTSTR)A2T(strScanStatus.c_str()));
+		m_lcBmk.SetItemData(nCount, (DWORD_PTR)&obj);
+	}
+	m_strScanCount.Format(_T("%d人"), nScaned);
+	m_strUnScanCount.Format(_T("%d人"), unScaned);
 
 	UpdateData(FALSE);
 }

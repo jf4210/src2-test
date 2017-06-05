@@ -948,6 +948,9 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 
 	_pCurrPapersInfo_ = NULL;
 	ResetPicList();
+
+	//记录当前总共扫描多少人
+	_nScanPaperCount_ += _pCurrPapersInfo_->nPaperCount;
 }
 
 void CScanProcessDlg::OnDestroy()
@@ -1017,6 +1020,7 @@ void CScanProcessDlg::OnBnClickedBtnScanprocess()
 {
 	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
 	pDlg->ShowChildDlg(4);
+	pDlg->SetReturnDlg(2);
 }
 
 

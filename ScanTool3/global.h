@@ -87,9 +87,7 @@
 //	#define PrintRecogLog		//打印识别日志
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define	 TEST_MODEL_NAME	//模板名称测试
-//	#define	 TEST_SCAN_THREAD	//扫描线程测试
-	#define Test_Data			//测试数据，测试模式
-	#define Test_TraceLog		//测试日志
+//	#define Test_Data			//测试数据，测试模式
 #else	//release版本
 	#define	 TEST_MODEL_NAME	//模板名称测试
 	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
@@ -194,7 +192,8 @@ extern Poco::Event			g_eDownLoadModel;	//下载模板完成状态
 //--
 extern int					g_nDownLoadModelStatus;		//下载模板的状态	0-未下载，初始化，1-模板下载中，2-下载成功，3-本地存在此文件，不需要下载, -1-服务器此科目模板不存在, -2-服务器读取文件失败
 extern int					_nScanStatus_;				//扫描进度 0-未扫描，1-正在扫描，2-扫描完成, 3-扫描中止, -1--连接扫描仪失败, -2--加载扫描仪失败, -3--扫描失败
-extern int					_nScanCount_;			//扫描计数器，当前已扫描多少份
+extern int					_nScanCount_;				//扫描计数器，当前已扫描多少份
+extern int					_nScanPaperCount_;			//当前已经扫描人数，从软件启动开始计数
 
 extern CString				g_strCurrentPath;
 extern std::string			g_strPaperSavePath;

@@ -80,7 +80,7 @@ void CVagueSearchDlg::InitUI()
 	BITMAP bm;
 	bmp.GetBitmap(&bm);
 	m_bitmap_scrollbar = (HBITMAP)bmp.Detach();
-	SkinWndScroll(&m_lcBmk, m_bitmap_scrollbar);
+//	SkinWndScroll(&m_lcBmk, m_bitmap_scrollbar);
 
 	InitCtrlPosition();
 }

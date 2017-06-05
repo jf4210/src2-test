@@ -119,6 +119,7 @@ pEXAMINFO			_pCurrExam_= NULL;		//当前考试
 pEXAM_SUBJECT		_pCurrSub_ = NULL;		//当前考试科目
 pMODEL				_pModel_ = NULL;		//当前扫描使用的模板
 int					_nScanCount_ = 0;		//扫描计数器，当前已扫描多少份
+int					_nScanPaperCount_ = 0;	//当前已经扫描人数，从软件启动开始计数
 //--
 //--
 
@@ -379,6 +380,8 @@ void CScanTool3Dlg::SwitchDlg(int nDlg, int nChildID /*= 1*/)
 		m_pScanMgrDlg->ShowWindow(SW_SHOW);
 		m_pScanMgrDlg->InitExamData();
 		m_pScanMgrDlg->ShowChildDlg(nChildID);
+		if (nChildID == 4)
+			m_pScanMgrDlg->SetReturnDlg(1);
 	}
 }
 
@@ -511,19 +514,15 @@ bool CScanTool3Dlg::HandleModel()
 	return bResult;
 }
 
-
-
 void CScanTool3Dlg::OnBnClickedBtnClose()
 {
 	SendMessage(WM_SYSCOMMAND, SC_CLOSE, 0);
 }
 
-
 void CScanTool3Dlg::OnBnClickedBtnMin()
 {
 	SendMessage(WM_SYSCOMMAND, SC_MINIMIZE, 0);
 }
-
 
 LRESULT CScanTool3Dlg::OnNcHitTest(CPoint point)
 {

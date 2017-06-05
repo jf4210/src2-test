@@ -35,6 +35,7 @@ public:
 	void	UpdateChildDlgInfo();	//更新子窗口信息
 	pTW_IDENTITY GetScanSrc(int nIndex);	//获取扫描源信息
 	void*	GetScanMainDlg();	//获取扫描的主界面窗口指针
+	void	SetReturnDlg(int nFlag = 2);		//设置扫描记录窗口中的返回按钮的返回界面，点返回按钮时，是返回那个窗口，目前有两个入口，一是试卷管理窗口，二是扫描过程窗口，这两个地方都可以进入到当前窗口，需要记录返回的位置   1--返回试卷管理窗口，2--返回扫描过程窗口
 private:
 	void	InitUI();
 	void	InitScanner();
@@ -43,6 +44,8 @@ private:
 	void	ReleaseDlg();
 	void	SetFontSize(int nSize);
 	void	DrawBorder(CDC *pDC);	//绘制边框线
+
+	bool	chkChangeExamLegal();	//检查切换考试或者科目时的合法性，是否允许切换
 
 	LRESULT	ScanDone(WPARAM wParam, LPARAM lParam);
 	LRESULT	ScanErr(WPARAM wParam, LPARAM lParam);
@@ -84,4 +87,5 @@ public:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnBnClickedBtnChangeexam();
 //	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnCbnSelchangeComboSubject();
 };

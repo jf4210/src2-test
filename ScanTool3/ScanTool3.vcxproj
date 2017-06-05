@@ -296,6 +296,12 @@
     <Image Include="skin\login\登录按钮_hover.bmp" />
     <Image Include="skin\login\登录背景.bmp" />
     <Image Include="skin\login\顶部.bmp" />
+    <Image Include="skin\recordDlg\tabclick.bmp" />
+    <Image Include="skin\recordDlg\tabnormal.bmp" />
+    <Image Include="skin\recordDlg\tabover.bmp" />
+    <Image Include="skin\recordDlg\第1页.bmp" />
+    <Image Include="skin\recordDlg\第1页hover.bmp" />
+    <Image Include="skin\recordDlg\第2页.bmp" />
     <Image Include="skin\scanMgr\1_01.bmp" />
     <Image Include="skin\scanMgr\1_02.bmp" />
     <Image Include="skin\scanMgr\1_03.bmp" />
@@ -306,6 +312,8 @@
     <Image Include="skin\scanMgr\1_09hover.bmp" />
     <Image Include="skin\scanMgr\1_10.bmp" />
     <Image Include="skin\scanMgr\1_10hover.bmp" />
+    <Image Include="skin\scanMgr\dowmload.bmp" />
+    <Image Include="skin\scanMgr\scanning.bmp" />
     <Image Include="skin\scanMgr\scrollbar.bmp" />
     <Image Include="XListCtrl\checkboxes.bmp" />
   </ItemGroup>

@@ -83,7 +83,7 @@ void CModifyZkzhDlg::InitUI()
 #ifdef NewListModelTest
 	m_lcZkzh.SetExtendedStyle(m_lcZkzh.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 //	m_lcZkzh.InsertColumn(0, _T("顺序"), LVCFMT_CENTER, 40);
-	m_lcZkzh.InsertColumn(0, _T("考生"), LVCFMT_CENTER, 110);
+	m_lcZkzh.InsertColumn(0, _T("考生"), LVCFMT_CENTER, 50);
 	m_lcZkzh.InsertColumn(1, _T("准考证号(可编辑)"), LVCFMT_CENTER, 110);
 	m_lcZkzh.InsertColumn(2, _T("删除重扫"), LVCFMT_CENTER, 80);	//重扫标识
 	m_lcZkzh.InsertColumn(3, _T("备注"), LVCFMT_CENTER, 150);
@@ -316,6 +316,7 @@ void CModifyZkzhDlg::InitCtrlPosition()
 	//-------------------------------------------------
 
 	//tab
+	nCurrentLeft = nLeftGap + nListCtrlWidth + nGap;
 	nCurrentTop = nTopGap;
 	int nPicShowTabCtrlWidth = cx - nLeftGap - nRightGap - nListCtrlWidth - nGap - nGap;
 	int nPicShowTabCtrlHigh = cy - nTopGap - nBottomH - nBottomGap;

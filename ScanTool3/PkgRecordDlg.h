@@ -16,6 +16,7 @@ public:
 // 对话框数据
 	enum { IDD = IDD_PKGRECORDDLG };
 
+	void	UpdateChildDlg();
 private:
 	void	InitUI();
 	void	InitCtrlPosition();

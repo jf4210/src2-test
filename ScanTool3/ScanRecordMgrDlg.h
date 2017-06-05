@@ -1,6 +1,7 @@
 #pragma once
 #include "PkgRecordDlg.h"
 #include "ScanBmkRecordDlg.h"
+#include "BmpButton.h"
 
 // CScanRecordMgrDlg 对话框
 
@@ -15,15 +16,23 @@ public:
 // 对话框数据
 	enum { IDD = IDD_SCANRECORDMGRDLG };
 	
-	void	SetReBackDlg(int nFlag);		//点返回按钮时，是返回那个窗口，目前有两个入口，一是试卷管理窗口，二是扫描过程窗口，这两个地方都可以进入到当前窗口，需要记录返回的位置
+	void	SetReBackDlg(int nFlag);		//点返回按钮时，是返回那个窗口，目前有两个入口，一是试卷管理窗口，二是扫描过程窗口，这两个地方都可以进入到当前窗口，需要记录返回的位置   1--返回试卷管理窗口，2--返回扫描过程窗口
+	void	UpdateChildDlg();
 private:
 	void	InitUI();
 	void	InitCtrlPosition();
 	void	ReleaseData();
+	void	DrawBorder(CDC *pDC);
 
 	CPkgRecordDlg*		m_pPkgRecordDlg;
 	CScanBmkRecordDlg*	m_pBmkRecordDlg;
 	int		m_nReturnFlag;		//1--返回试卷管理窗口，2--返回扫描过程窗口
+
+	CBmpButton		m_bmpBtnBmk;
+	CBmpButton		m_bmpBtnPkg;
+	CBmpButton		m_bmpBtnReturn;
+
+	CRect			m_rtChildDlg;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

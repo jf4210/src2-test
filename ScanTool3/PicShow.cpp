@@ -400,6 +400,7 @@ void CPicShow::ShowPic(cv::Mat& imgMat, cv::Point pt /*= cv::Point(0,0)*/, float
 	m_src_img = imgMat;
 //	cv::Point pt(0, 0);
 	m_picShow.ShowImage_rect(m_src_img, pt, m_fScale);
+	m_picShow.Invalidate();
 }
 
 void CPicShow::RotateImg2(cv::Mat& imgMat, int nDirection /*= 1*/)

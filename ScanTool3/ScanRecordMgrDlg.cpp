@@ -27,6 +27,9 @@ CScanRecordMgrDlg::~CScanRecordMgrDlg()
 void CScanRecordMgrDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_BTN_BmkRecord, m_bmpBtnBmk);
+	DDX_Control(pDX, IDC_BTN_PkgRecord, m_bmpBtnPkg);
+	DDX_Control(pDX, IDC_BTN_ReBackScan, m_bmpBtnReturn);
 }
 
 
@@ -47,6 +50,8 @@ BOOL CScanRecordMgrDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	InitUI();
+
+	UpdateChildDlg();
 	return TRUE;
 }
 
@@ -69,12 +74,34 @@ void CScanRecordMgrDlg::OnSize(UINT nType, int cx, int cy)
 	InitCtrlPosition();
 }
 
+void CScanRecordMgrDlg::DrawBorder(CDC *pDC)
+{
+	CPen *pOldPen = NULL;
+	CPen pPen;
+ 	CRect rcClient(0, 0, 0, 0);
+// 	GetClientRect(&rcClient);
+	rcClient.left = m_rtChildDlg.left - 1;
+	rcClient.right = m_rtChildDlg.right + 1;
+	rcClient.top = m_rtChildDlg.top - 1;
+	rcClient.bottom = m_rtChildDlg.bottom + 1;
+
+	pPen.CreatePen(PS_SOLID, 1, RGB(225, 242, 250));
+
+	pDC->SelectStockObject(NULL_BRUSH);
+	pOldPen = pDC->SelectObject(&pPen);
+	pDC->Rectangle(&rcClient);
+	pDC->SelectObject(pOldPen);
+	pPen.Detach();
+	//	ReleaseDC(pDC);
+}
+
 BOOL CScanRecordMgrDlg::OnEraseBkgnd(CDC* pDC)
 {
 	CRect rcClient;
 	GetClientRect(&rcClient);
 
 	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 222, 250
+	DrawBorder(pDC);
 	ReleaseDC(pDC);
 
 	return CDialog::OnEraseBkgnd(pDC);
@@ -82,6 +109,17 @@ BOOL CScanRecordMgrDlg::OnEraseBkgnd(CDC* pDC)
 
 void CScanRecordMgrDlg::InitUI()
 {
+	m_bmpBtnBmk.SetStateBitmap(IDB_Tab_Normal, IDB_Tab_Click, IDB_Tab_Over);
+	m_bmpBtnBmk.SetWindowText(_T("¿¼Éú¿âÏêÇé"));
+//	m_bmpBtnBmk.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), RGB(116, 116, 116));
+
+	m_bmpBtnPkg.SetStateBitmap(IDB_Tab_Normal, IDB_Tab_Click, IDB_Tab_Over);
+	m_bmpBtnPkg.SetWindowText(_T("ÊÔ¾í´üÏêÇé"));
+//	m_bmpBtnPkg.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), RGB(116, 116, 116));
+
+	m_bmpBtnReturn.SetStateBitmap(IDB_RecordDlg_Btn_Hover, 0, IDB_RecordDlg_Btn);
+	m_bmpBtnReturn.SetWindowText(_T("·µ»Ø"));
+
 	m_pBmkRecordDlg = new CScanBmkRecordDlg(this);
 	m_pBmkRecordDlg->Create(CScanBmkRecordDlg::IDD, this);
 	m_pBmkRecordDlg->ShowWindow(SW_SHOW);
@@ -114,15 +152,35 @@ void CScanRecordMgrDlg::InitCtrlPosition()
 
 	int nCurrLeft = nLeftGap + cx / 2 - nTmpW / 2;
 	int nCurrTop = nTopGap;
-	if (GetDlgItem(IDC_BTN_BmkRecord)->GetSafeHwnd())
+	if (_pCurrExam_ && _pCurrExam_->nModel == 0)	//ÊÖÔÄ
 	{
-		GetDlgItem(IDC_BTN_BmkRecord)->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
-		nCurrLeft += (nBtnW + nGap);
+		if (GetDlgItem(IDC_BTN_BmkRecord)->GetSafeHwnd())
+		{
+			// 			GetDlgItem(IDC_BTN_BmkRecord)->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
+			// 			nCurrLeft += (nBtnW + nGap);
+
+			GetDlgItem(IDC_BTN_BmkRecord)->ShowWindow(SW_HIDE);
+		}
+		if (GetDlgItem(IDC_BTN_PkgRecord)->GetSafeHwnd())
+		{
+			GetDlgItem(IDC_BTN_PkgRecord)->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
+			nCurrLeft += (nBtnW + nGap);
+		}
 	}
-	if (GetDlgItem(IDC_BTN_PkgRecord)->GetSafeHwnd())
+	else	//ÍøÔÄ
 	{
-		GetDlgItem(IDC_BTN_PkgRecord)->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
-		nCurrLeft += (nBtnW + nGap);
+		if (GetDlgItem(IDC_BTN_BmkRecord)->GetSafeHwnd())
+		{
+			GetDlgItem(IDC_BTN_BmkRecord)->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
+			nCurrLeft += (nBtnW /*+ nGap*/);
+
+			GetDlgItem(IDC_BTN_BmkRecord)->ShowWindow(SW_SHOW);
+		}
+		if (GetDlgItem(IDC_BTN_PkgRecord)->GetSafeHwnd())
+		{
+			GetDlgItem(IDC_BTN_PkgRecord)->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
+			nCurrLeft += (nBtnW + nGap);
+		}
 	}
 	if (GetDlgItem(IDC_BTN_ReBackScan)->GetSafeHwnd())
 	{
@@ -131,16 +189,15 @@ void CScanRecordMgrDlg::InitCtrlPosition()
 		GetDlgItem(IDC_BTN_ReBackScan)->MoveWindow(nX, nCurrTop, nW, nBtnH);
 	}
 
-	CRect rtChildDlg;
-	rtChildDlg.left = nLeftGap + cx / 2 - nTmpW / 2;
-	rtChildDlg.top = nTopGap + nBtnH + nGap;
-	rtChildDlg.right = rtChildDlg.left + nTmpW;
-	rtChildDlg.bottom = cy - nBottomGap;
+	m_rtChildDlg.left = nLeftGap + cx / 2 - nTmpW / 2;
+	m_rtChildDlg.top = nTopGap + nBtnH + 1 /*nGap*/;
+	m_rtChildDlg.right = m_rtChildDlg.left + nTmpW;
+	m_rtChildDlg.bottom = cy - 1;
 	
 	if (m_pBmkRecordDlg && m_pBmkRecordDlg->GetSafeHwnd())
-		m_pBmkRecordDlg->MoveWindow(rtChildDlg);
+		m_pBmkRecordDlg->MoveWindow(m_rtChildDlg);
 	if (m_pPkgRecordDlg && m_pPkgRecordDlg->GetSafeHwnd())
-		m_pPkgRecordDlg->MoveWindow(rtChildDlg);
+		m_pPkgRecordDlg->MoveWindow(m_rtChildDlg);
 	Invalidate();
 }
 
@@ -169,6 +226,8 @@ void CScanRecordMgrDlg::OnBnClickedBtnBmkrecord()
 {
 	m_pBmkRecordDlg->ShowWindow(SW_SHOW);
 	m_pPkgRecordDlg->ShowWindow(SW_HIDE);
+
+	m_pBmkRecordDlg->UpDateInfo();
 }
 
 
@@ -176,6 +235,8 @@ void CScanRecordMgrDlg::OnBnClickedBtnPkgrecord()
 {
 	m_pBmkRecordDlg->ShowWindow(SW_HIDE);
 	m_pPkgRecordDlg->ShowWindow(SW_SHOW);
+
+	m_pPkgRecordDlg->UpdateChildDlg();
 }
 
 
@@ -196,5 +257,11 @@ void CScanRecordMgrDlg::OnBnClickedBtnRebackscan()
 void CScanRecordMgrDlg::SetReBackDlg(int nFlag)
 {
 	m_nReturnFlag = nFlag;
+}
+
+void CScanRecordMgrDlg::UpdateChildDlg()
+{
+	m_pBmkRecordDlg->UpDateInfo();
+	m_pPkgRecordDlg->UpdateChildDlg();
 }
 

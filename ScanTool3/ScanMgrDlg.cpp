@@ -72,6 +72,7 @@ BEGIN_MESSAGE_MAP(CScanMgrDlg, CDialog)
 	ON_MESSAGE(MSG_SCAN_DONE, &CScanMgrDlg::ScanDone)
 	ON_MESSAGE(MSG_SCAN_ERR, &CScanMgrDlg::ScanErr)
 //	ON_WM_TIMER()
+ON_CBN_SELCHANGE(IDC_COMBO_Subject, &CScanMgrDlg::OnCbnSelchangeComboSubject)
 END_MESSAGE_MAP()
 
 
@@ -233,6 +234,43 @@ void CScanMgrDlg::DrawBorder(CDC *pDC)
 //	ReleaseDC(pDC);
 }
 
+bool CScanMgrDlg::chkChangeExamLegal()
+{
+	if (_nScanStatus_ == 1)
+	{
+		AfxMessageBox(_T("请稍后，正在扫描。。。"));
+		return false;
+	}
+	if (!_pCurrPapersInfo_)
+		return true;
+
+	if (_pCurrExam_ && _pCurrExam_->nModel == 0)	//网阅模式
+	{
+		bool bRecogComplete = true;
+		for (auto p : _pCurrPapersInfo_->lPaper)
+		{
+			if (!p->bRecogComplete)
+			{
+				bRecogComplete = false;
+				break;
+			}
+		}
+		if (!bRecogComplete)
+		{
+			AfxMessageBox(_T("请稍后，图像正在识别！"));
+			return false;
+		}
+	}
+	int nCount = _pCurrPapersInfo_->lPaper.size() + _pCurrPapersInfo_->lIssue.size();
+	if (nCount > 0)
+	{
+		if (MessageBox(_T("当前试卷袋信息未保存，是否切换？"), _T("警告"), MB_YESNO) != IDYES)
+			return false;
+	}
+
+	return true;
+}
+
 void CScanMgrDlg::ShowChildDlg(int n)
 {
 //	InitData();
@@ -281,6 +319,8 @@ void CScanMgrDlg::ShowChildDlg(int n)
 		m_pScanDlg->ShowWindow(SW_HIDE);
 		m_pScanProcessDlg->ShowWindow(SW_HIDE);
 		m_pScanRecordMgrDlg->ShowWindow(SW_SHOW);
+
+		m_pScanRecordMgrDlg->UpdateChildDlg();
 	}
 }
 
@@ -304,6 +344,11 @@ pTW_IDENTITY CScanMgrDlg::GetScanSrc(int nIndex)
 void* CScanMgrDlg::GetScanMainDlg()
 {
 	return m_pScanProcessDlg;
+}
+
+void CScanMgrDlg::SetReturnDlg(int nFlag /*= 2*/)
+{
+	m_pScanRecordMgrDlg->SetReBackDlg(nFlag);
 }
 
 void CScanMgrDlg::OnDestroy()
@@ -341,6 +386,8 @@ void CScanMgrDlg::InitExamData()
 			for (auto pSubject : _pCurrExam_->lSubjects)
 			{
 				m_comboSubject.AddString(A2T(pSubject->strSubjName.c_str()));
+				int nCount = m_comboSubject.GetCount();
+				m_comboSubject.SetItemDataPtr(nCount - 1, pSubject);
 				if (_pCurrSub_ == pSubject)
 					nShowSubject = i;
 				i++;
@@ -546,6 +593,9 @@ BOOL CScanMgrDlg::OnEraseBkgnd(CDC* pDC)
 
 void CScanMgrDlg::OnBnClickedBtnChangeexam()
 {
+	if (!chkChangeExamLegal())
+		return;
+
 	CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
 	pDlg->SwitchDlg(0);
 }
@@ -706,3 +756,14 @@ void CScanMgrDlg::OnTimer(UINT_PTR nIDEvent)
 	CDialog::OnTimer(nIDEvent);
 }
 #endif
+
+void CScanMgrDlg::OnCbnSelchangeComboSubject()
+{
+	if (!chkChangeExamLegal())
+		return;
+
+	int nItem = m_comboSubject.GetCurSel();
+	_pCurrSub_ = (pEXAM_SUBJECT)m_comboSubject.GetItemDataPtr(nItem);
+	CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
+	pDlg->SwitchDlg(1);
+}

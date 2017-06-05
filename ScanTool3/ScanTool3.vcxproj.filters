@@ -617,5 +617,29 @@
     <Image Include="skin\scanMgr\scrollbar.bmp">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="skin\recordDlg\tabclick.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\recordDlg\tabnormal.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\recordDlg\tabover.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\recordDlg\第1页hover.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\recordDlg\第2页.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\recordDlg\第1页.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\scanMgr\dowmload.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\scanMgr\scanning.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>
