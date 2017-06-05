@@ -109,6 +109,11 @@ END_MESSAGE_MAP()
 
 void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 {
+#ifdef Test_Data
+	TestMode();
+	return;
+#endif
+
 	int nId = (int)wParam;
 	pST_SCANCTRL pScanCtrl = (pST_SCANCTRL)lParam;
 	ST_SCANCTRL stScanCtrl = *pScanCtrl;
@@ -886,6 +891,72 @@ std::string CScanThread::ErrCode2Str(int nErr)
 	}
 	_nScanStatus_ = nErr;
 	return strResult;
+}
+
+void CScanThread::TestMode()
+{
+	CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
+	USES_CONVERSION;
+	for (int i = 0; i < 40; i++)
+	{
+		int nStudentId = i / m_nModelPicNums + 1;
+		int nOrder = i % m_nModelPicNums + 1;
+		char szPicName[50] = { 0 };
+		char szPicPath[MAX_PATH] = { 0 };
+		sprintf_s(szPicName, "S%d_%d.jpg", nStudentId, nOrder);
+		sprintf_s(szPicPath, "%sPaper\\TestPic\\S%d_%d.jpg", T2A(g_strCurrentPath), nStudentId, nOrder);
+		pST_PicInfo pPic = new ST_PicInfo;
+		pPic->strPicName = szPicName;
+		pPic->strPicPath = szPicPath;
+
+		_nScanCount_++;
+		if (nOrder == 1)
+		{
+			char szStudentName[30] = { 0 };
+			sprintf_s(szStudentName, "S%d", nStudentId);
+			m_pCurrPaper = new ST_PaperInfo;
+			m_pCurrPaper->strStudentInfo = szStudentName;
+			m_pCurrPaper->pModel = _pModel_;
+			m_pCurrPaper->pPapers = _pCurrPapersInfo_;
+			m_pCurrPaper->pSrcDlg = pDlg->GetScanMainDlg();
+			m_pCurrPaper->lPic.push_back(pPic);
+
+			_pCurrPapersInfo_->fmlPaper.lock();
+			_pCurrPapersInfo_->lPaper.push_back(m_pCurrPaper);
+			_pCurrPapersInfo_->fmlPaper.unlock();
+		}
+		else
+			m_pCurrPaper->lPic.push_back(pPic);
+
+		pPic->pPaper = m_pCurrPaper;
+
+
+		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
+		pResult->bScanOK = false;
+		pResult->nState = 1;			//标识正在扫描
+		pResult->nPaperId = nStudentId;
+		pResult->nPicId = nOrder;
+		pResult->pPaper = m_pCurrPaper;
+		pResult->strResult = "获得图像";
+		pResult->strResult.append(szPicName);
+
+		TRACE("%s\n", pResult->strResult.c_str());
+		CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
+		pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
+
+		//添加到识别任务列表
+		if (_pModel_)
+		{
+			pRECOGTASK pTask = new RECOGTASK;
+			pTask->pPaper = m_pCurrPaper;
+			g_lRecogTask.push_back(pTask);
+		}
+	}
+	pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
+	pResult->nState = 0;
+	_nScanStatus_ = 2;
+	pResult->bScanOK = true;
+	pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
 }
 
 

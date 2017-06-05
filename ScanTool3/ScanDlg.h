@@ -25,6 +25,7 @@ private:
 	void	InitCtrlPosition();
 	void	SetFontSize(int nSize);
 	
+	void	TestData();		//测试数据，可删
 private:
 	int				m_nCurrentScanCount;	//当前扫描需要扫描试卷数量
 	int				m_nModelPicNums;		//模板图片数，即一份模板有多少图片，对应多少试卷

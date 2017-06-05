@@ -36,7 +36,7 @@ BOOL CVagueSearchDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	InitUI();
-
+	UpdateData();
 	return TRUE;
 }
 
@@ -73,7 +73,7 @@ void CVagueSearchDlg::InitUI()
 			break;
 	}
 
-//	m_GroupStatic.SetBackgroundColor(RGB(255, 255, 255));
+	m_GroupStatic.SetBackgroundColor(RGB(255, 255, 255));
 
 	CBitmap bmp;
 	bmp.LoadBitmap(IDB_Scrollbar);
@@ -173,7 +173,7 @@ HBRUSH CVagueSearchDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	UINT CurID = pWnd->GetDlgCtrlID();
 	if (CurID == IDC_STATIC_Group || CurID == IDC_STATIC_DB_Search)
 	{
-		//		pDC->SetBkColor(RGB(255, 255, 255));
+		pDC->SetBkColor(RGB(255, 255, 255));
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}

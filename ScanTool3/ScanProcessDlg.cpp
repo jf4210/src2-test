@@ -975,12 +975,28 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	if (_nScanStatus_ == 1)
 		return;
 
+	bool bRecogComplete = true;
+	for (auto p : _pCurrPapersInfo_->lPaper)
+	{
+		if (!p->bRecogComplete)
+		{
+			bRecogComplete = false;
+			break;
+		}
+	}
+	if (!bRecogComplete)
+	{
+		AfxMessageBox(_T("请等待识别完成。。。"));
+		return;
+	}
+
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcPicture.GetItemData(pNMItemActivate->iItem);
 	m_pReminderDlg->ShowWindow(SW_HIDE);
 	m_pShowPicDlg->ShowWindow(SW_SHOW);
 	m_pShowPicDlg->setShowPaper(pPaper);
 
 	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(pNMItemActivate->iItem);
+	//***	注意：如果不在报名库中的同时报名库不空的也要允许修改	********	2017.6.4
 	if ((/*g_nOperatingMode == 1 ||*/ g_bModifySN) && _pModel_ && pItemPaper && (pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH || pItemPaper->bReScan))
 	{
 		if (!m_pStudentMgr)
