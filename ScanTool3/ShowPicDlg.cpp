@@ -16,7 +16,7 @@ IMPLEMENT_DYNAMIC(CShowPicDlg, CDialog)
 
 CShowPicDlg::CShowPicDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CShowPicDlg::IDD, pParent)
-	, m_nModelPicNums(1), m_pCurrPaper(NULL)
+	, m_nModelPicNums(1), m_pCurrPaper(NULL), m_nShowModel(2), m_nCurrTabSel(0)
 {
 
 }
@@ -56,7 +56,7 @@ BOOL CShowPicDlg::PreTranslateMessage(MSG* pMsg)
 BEGIN_MESSAGE_MAP(CShowPicDlg, CDialog)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB_PicShow, &CShowPicDlg::OnTcnSelchangeTabPicshow)
 	ON_WM_SIZE()
-//	ON_WM_ERASEBKGND()
+	ON_WM_ERASEBKGND()
 	ON_WM_CTLCOLOR()
 	ON_WM_DESTROY()
 END_MESSAGE_MAP()
@@ -76,68 +76,161 @@ void CShowPicDlg::InitCtrlPosition()
 	const int nRightGap = 2;	//右边的空白间隔
 	int nGap = 5;
 
-	if (GetDlgItem(IDC_TAB_PicShow)->GetSafeHwnd())
+	if (m_nShowModel == 1)
 	{
-		GetDlgItem(IDC_TAB_PicShow)->MoveWindow(nLeftGap, nTopGap, cx - nLeftGap - nRightGap, cy - nTopGap - nBottomGap);
+		if (GetDlgItem(IDC_TAB_PicShow)->GetSafeHwnd())
+		{
+			GetDlgItem(IDC_TAB_PicShow)->MoveWindow(nLeftGap, nTopGap, cx - nLeftGap - nRightGap, cy - nTopGap - nBottomGap);
+		}
 	}
+	else
+	{
+		int nBtnW = 50;
+		int nBtnH = 25;
+		int nCurrLeft = nLeftGap;
+		int nCurrTop = nTopGap;
+		for (int i = 0; i < m_vecBtn.size(); i++)
+		{
+			nCurrLeft = nCurrLeft + i * (nBtnW + 1);
+			if (m_vecBtn[i]->GetSafeHwnd())
+			{
+				m_vecBtn[i]->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
+			}
+		}
+		CRect rtPic;
+		rtPic.top = nCurrTop + nBtnH + 2;
+		rtPic.left = nLeftGap;
+		rtPic.right = cx - nRightGap;
+		rtPic.bottom = cy - nBottomGap;
+		for (int i = 0; i < m_vecPicShow.size(); i++)
+			m_vecPicShow[i]->MoveWindow(&rtPic);
+	}	
 }
 
 void CShowPicDlg::InitUI()
 {
-	if (_pModel_)
+	if (m_nShowModel == 1)
 	{
-		std::vector<CPicShow*>::iterator itPic = m_vecPicShow.begin();
-		for (; itPic != m_vecPicShow.end();)
+		for (int i = 0; i < m_vecBtn.size(); i++)
 		{
-			CPicShow* pModelPicShow = *itPic;
-			if (pModelPicShow)
-			{
-				delete pModelPicShow;
-				pModelPicShow = NULL;
-			}
-			itPic = m_vecPicShow.erase(itPic);
+			CButton* pBtn = m_vecBtn[i];
+			SAFE_RELEASE(pBtn);
+			m_vecBtn[i] = NULL;
 		}
-	}
-	m_tabPicShowCtrl.DeleteAllItems();
+		m_vecBtn.clear();
 
-	if (_pModel_) m_nModelPicNums = _pModel_->nPicNum;
+// 		if (_pModel_)
+// 		{
+			std::vector<CPicShow*>::iterator itPic = m_vecPicShow.begin();
+			for (; itPic != m_vecPicShow.end();)
+			{
+				CPicShow* pModelPicShow = *itPic;
+				if (pModelPicShow)
+				{
+					delete pModelPicShow;
+					pModelPicShow = NULL;
+				}
+				itPic = m_vecPicShow.erase(itPic);
+			}
+//		}
+		m_tabPicShowCtrl.DeleteAllItems();
 
-	USES_CONVERSION;
-	CRect rtTab;
-	m_tabPicShowCtrl.GetClientRect(&rtTab);
-	for (int i = 0; i < m_nModelPicNums; i++)
-	{
-		char szTabHeadName[20] = { 0 };
-		sprintf_s(szTabHeadName, "第%d页", i + 1);
+		if (_pModel_) m_nModelPicNums = _pModel_->nPicNum;
 
-		m_tabPicShowCtrl.InsertItem(i, A2T(szTabHeadName));
-
-		CPicShow* pPicShow = new CPicShow(this);
-		pPicShow->Create(CPicShow::IDD, &m_tabPicShowCtrl);
-		pPicShow->ShowWindow(SW_HIDE);
-		pPicShow->MoveWindow(&rtTab);
-		m_vecPicShow.push_back(pPicShow);
-	}
-	m_tabPicShowCtrl.SetCurSel(0);
-	if (m_vecPicShow.size())
-	{
-		m_vecPicShow[0]->ShowWindow(SW_SHOW);
-		m_pCurrentPicShow = m_vecPicShow[0];
-	}
-
-	if (m_tabPicShowCtrl.GetSafeHwnd())
-	{
+		USES_CONVERSION;
 		CRect rtTab;
 		m_tabPicShowCtrl.GetClientRect(&rtTab);
-		int nTabHead_H = 24;		//tab控件头的高度
-		CRect rtPic = rtTab;
-		rtPic.top = rtPic.top + nTabHead_H;
-		rtPic.left += 2;
-		rtPic.right -= 4;
-		rtPic.bottom -= 4;
-		for (int i = 0; i < m_vecPicShow.size(); i++)
-			m_vecPicShow[i]->MoveWindow(&rtPic);
+		for (int i = 0; i < m_nModelPicNums; i++)
+		{
+			char szTabHeadName[20] = { 0 };
+			sprintf_s(szTabHeadName, "第%d页", i + 1);
+
+			m_tabPicShowCtrl.InsertItem(i, A2T(szTabHeadName));
+
+			CPicShow* pPicShow = new CPicShow(this);
+			pPicShow->Create(CPicShow::IDD, &m_tabPicShowCtrl);
+			pPicShow->ShowWindow(SW_HIDE);
+			pPicShow->MoveWindow(&rtTab);
+			m_vecPicShow.push_back(pPicShow);
+		}
+		m_tabPicShowCtrl.SetCurSel(0);
+		if (m_vecPicShow.size())
+		{
+			m_vecPicShow[0]->ShowWindow(SW_SHOW);
+			m_pCurrentPicShow = m_vecPicShow[0];
+		}
+		m_nCurrTabSel = 0;
+
+		if (m_tabPicShowCtrl.GetSafeHwnd())
+		{
+			CRect rtTab;
+			m_tabPicShowCtrl.GetClientRect(&rtTab);
+			int nTabHead_H = 24;		//tab控件头的高度
+			CRect rtPic = rtTab;
+			rtPic.top = rtPic.top + nTabHead_H;
+			rtPic.left += 2;
+			rtPic.right -= 4;
+			rtPic.bottom -= 4;
+			for (int i = 0; i < m_vecPicShow.size(); i++)
+				m_vecPicShow[i]->MoveWindow(&rtPic);
+		}
 	}
+	else
+	{
+		m_tabPicShowCtrl.ShowWindow(SW_HIDE);
+// 		if (_pModel_)
+// 		{
+			std::vector<CPicShow*>::iterator itPic = m_vecPicShow.begin();
+			for (; itPic != m_vecPicShow.end();)
+			{
+				CPicShow* pModelPicShow = *itPic;
+				if (pModelPicShow)
+				{
+					delete pModelPicShow;
+					pModelPicShow = NULL;
+				}
+				itPic = m_vecPicShow.erase(itPic);
+			}
+//		}
+		
+		if (_pModel_) m_nModelPicNums = _pModel_->nPicNum;
+
+		for (int i = 0; i < m_vecBtn.size(); i++)
+		{
+			CButton* pBtn = m_vecBtn[i];
+			SAFE_RELEASE(pBtn);
+			m_vecBtn[i] = NULL;
+		}
+		m_vecBtn.clear();
+
+		USES_CONVERSION;
+		for (int i = 0; i < m_nModelPicNums; i++)
+		{
+			char szTabHeadName[20] = { 0 };
+			sprintf_s(szTabHeadName, "第%d页", i + 1);
+
+			CBmpButton* pNewButton = new CBmpButton();// 也可以定义为类的成员变量。
+			pNewButton->SetStateBitmap(IDB_RecordDlg_Btn_Over, IDB_RecordDlg_Btn, IDB_RecordDlg_Btn_Hover, 0, IDB_RecordDlg_Btn);
+			CRect rcButton(10, 10, 50, 30); // 按钮在对话框中的位置。
+			pNewButton->Create(A2T(szTabHeadName), 0, rcButton, this, (i + 1) * 100);	//设置索引从101开始
+			pNewButton->ShowWindow(SW_SHOW);
+			m_vecBtn.push_back(pNewButton);
+			
+			CPicShow* pPicShow = new CPicShow(this);
+			pPicShow->Create(CPicShow::IDD, this);	//pNewButton
+			pPicShow->ShowWindow(SW_HIDE);
+			m_vecPicShow.push_back(pPicShow);
+		}
+		m_vecBtn[0]->CheckBtn(TRUE);
+
+		if (m_vecPicShow.size())
+		{
+			m_vecPicShow[0]->ShowWindow(SW_SHOW);
+			m_pCurrentPicShow = m_vecPicShow[0];
+		}
+		m_nCurrTabSel = 0;
+	}
+	InitCtrlPosition();
 }
 
 void CShowPicDlg::OnTcnSelchangeTabPicshow(NMHDR *pNMHDR, LRESULT *pResult)
@@ -162,6 +255,17 @@ void CShowPicDlg::setShowPaper(pST_PaperInfo pPaper)
 
 	PaintRecognisedRect(m_pCurrPaper);
 
+	if (m_nShowModel == 2)
+	{
+		for (int i = 0; i < m_vecBtn.size(); i++)
+		{
+			if (i == 0)
+				m_vecBtn[i]->CheckBtn(TRUE);
+			else
+				m_vecBtn[i]->CheckBtn(FALSE);
+		}
+	}
+
 	m_pCurrentPicShow = m_vecPicShow[0];
 	m_pCurrentPicShow->ShowWindow(SW_SHOW);
 	for (int i = 0; i < m_vecPicShow.size(); i++)
@@ -174,6 +278,17 @@ void CShowPicDlg::setShowPaper(pST_PaperInfo pPaper)
 void CShowPicDlg::UpdateUI()
 {
 	InitUI();
+}
+
+void CShowPicDlg::setShowModel(int nModel)
+{
+	m_nShowModel = nModel;
+	InitUI();
+}
+
+void CShowPicDlg::setRotate(int nDirection)
+{
+	m_vecPicShow[m_nCurrTabSel]->SetRotateDir(nDirection);
 }
 
 void CShowPicDlg::OnSize(UINT nType, int cx, int cy)
@@ -454,6 +569,30 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 	}
 }
 
+LRESULT CShowPicDlg::DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam)
+{
+	if (WM_COMMAND == message)
+	{
+		USES_CONVERSION;
+		WORD wID = LOWORD(wParam);
+		for (int i = 0; i < m_vecBtn.size(); i++)
+		{
+			if (wID == (i + 1) * 100)
+			{
+				m_vecBtn[i]->CheckBtn(TRUE);
+				m_vecPicShow[i]->ShowWindow(SW_SHOW);
+				m_nCurrTabSel = i;
+			}
+			else
+			{
+				m_vecBtn[i]->CheckBtn(FALSE);
+				m_vecPicShow[i]->ShowWindow(SW_HIDE);
+			}
+		}
+	}
+	return CDialog::DefWindowProc(message, wParam, lParam);
+}
+
 void CShowPicDlg::OnDestroy()
 {
 	CDialog::OnDestroy();
@@ -465,4 +604,12 @@ void CShowPicDlg::OnDestroy()
 		SAFE_RELEASE(pModelPicShow);
 		itPic = m_vecPicShow.erase(itPic);
 	}
+
+	for (int i = 0; i < m_vecBtn.size(); i++)
+	{
+		CButton* pBtn = m_vecBtn[i];
+		SAFE_RELEASE(pBtn);
+		m_vecBtn[i] = NULL;
+	}
+	m_vecBtn.clear();
 }

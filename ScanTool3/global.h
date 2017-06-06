@@ -87,7 +87,7 @@
 //	#define PrintRecogLog		//打印识别日志
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define	 TEST_MODEL_NAME	//模板名称测试
-//	#define Test_Data			//测试数据，测试模式
+	#define Test_Data			//测试数据，测试模式
 #else	//release版本
 	#define	 TEST_MODEL_NAME	//模板名称测试
 	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
@@ -247,6 +247,18 @@ extern int				g_nOperatingMode;	//操作模式，1--简易模式(遇到问题点不停止扫描)，2
 extern bool				g_bModifySN;		//是否允许修改准考证号
 extern int				g_nZkzhNull2Issue;	//识别到准考证号为空时，是否认为是问题试卷
 
+//窗口类型，当前显示的窗口
+typedef enum _eDlgType_
+{
+	DLG_Login = 0,			//登录窗口
+	DLG_ExamMgr,			//考试列表管理窗口
+	DLG_DownloadModle,		//下载报名库与模板窗口
+	DLG_ScanStart,			//扫描开始窗口
+	Dlg_ScanProcess,		//扫描进度窗口
+	Dlg_ScanRecordMgr		//扫描记录管理窗口，报名库信息展示窗口
+}E_DLG_TYPE;
+extern E_DLG_TYPE		_eCurrDlgType_;	//当前显示的窗口，弹出窗口不算
+
 #if 1
 typedef struct _PicInfo_				//图片信息
 {
@@ -284,6 +296,7 @@ typedef struct _PaperInfo_
 	//++从Pkg恢复Papers时的参数
 	int			nChkFlag;			//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不進行圖片识别
 	//--
+	int			nIndex;				//在试卷袋中的索引，即S1为1，S2为2，S3为3...
 	pMODEL		pModel;				//识别此学生试卷所用的模板
 	void*		pPapers;			//所属的试卷袋信息
 	void*		pSrcDlg;			//来源，来自哪个窗口，扫描or导入试卷窗口
@@ -302,6 +315,7 @@ typedef struct _PaperInfo_
 		nZkzhInBmkStatus = 0;
 		bRecogComplete = false;
 		bReScan = false;
+		nIndex = 0;
 		nQKFlag = 0;
 		nChkFlag = 0;
 		pModel = NULL;
@@ -500,113 +514,6 @@ extern pMODEL				_pModel_;		//当前扫描使用的模板
 //--
 
 //报名库学生信息
-#if 0
-typedef struct _studentInfo_
-{
-	std::string strZkzh;
-	std::string strName;		//gb2312
-	std::string strClassroom;	//gb2312
-	std::string strSchool;		//gb2312
-}ST_STUDENT, *pST_STUDENT;
-class CBmkStudent
-{
-	CBmkStudent(){}
-	CBmkStudent(std::string& strZkzh, std::string& strName, std::string& strClassroom, std::string& strSchool) :_strZkzh(strZkzh), _strName(strName), _strClassroom(strClassroom), _strSchool(strSchool){}
-	bool operator==(const CBmkStudent& other) const
-	{
-		return _strZkzh == other._strZkzh && _strName == other._strName && _strClassroom == other._strClassroom && _strSchool == other._strSchool;
-	}
-
-	bool operator < (const CBmkStudent& p) const
-	{
-		if (_strZkzh < p._strZkzh)
-			return true;
-		if (_strName < p._strName)
-			return true;
-		if (_strClassroom < p._strClassroom)
-			return true;
-		if (_strSchool < p._strSchool)
-			return true;
-	}
-
-	const std::string& operator () () const
-		/// This method is required so we can extract data to a map!
-	{
-		return _strZkzh;
-	}
-private:
-	std::string _strZkzh;
-	std::string _strName;
-	std::string _strClassroom;
-	std::string _strSchool;
-};
-
-
-namespace Poco {
-	namespace Data {
-
-		template <>
-		class TypeHandler<ST_STUDENT>
-		{
-		public:
-			static void bind(std::size_t pos, const ST_STUDENT& obj, AbstractBinder::Ptr pBinder, AbstractBinder::Direction dir)
-			{
-				// the table is defined as Person (LastName VARCHAR(30), FirstName VARCHAR, Address VARCHAR, Age INTEGER(3))
-				poco_assert_dbg(!pBinder.isNull());
-				pBinder->bind(pos++, obj.strZkzh, dir);
-				pBinder->bind(pos++, CMyCodeConvert::Gb2312ToUtf8(obj.strName), dir);
-				pBinder->bind(pos++, CMyCodeConvert::Gb2312ToUtf8(obj.strClassroom), dir);
-				pBinder->bind(pos++, CMyCodeConvert::Gb2312ToUtf8(obj.strSchool), dir);
-			}
-
-			static void prepare(std::size_t pos, const ST_STUDENT& obj, AbstractPreparator::Ptr pPrepare)
-			{
-				// no-op (SQLite is prepare-less connector)
-			}
-
-			static std::size_t size()
-			{
-				return 4;
-			}
-
-			static void extract(std::size_t pos, ST_STUDENT& obj, const ST_STUDENT& defVal, AbstractExtractor::Ptr pExt)
-			{
-				poco_assert_dbg(!pExt.isNull());
-				std::string strZkzh;
-				std::string strName;
-				std::string strClassroom;
-				std::string strSchool;
-
-				if (pExt->extract(pos++, strZkzh))
-					obj.strZkzh = strZkzh;
-				else
-					obj.strZkzh = defVal.strZkzh;
-
-				if (pExt->extract(pos++, strName))
-					obj.strName = CMyCodeConvert::Utf8ToGb2312(strName);
-				else
-					obj.strName = defVal.strName;
-
-				if (pExt->extract(pos++, strClassroom))
-					obj.strClassroom = CMyCodeConvert::Utf8ToGb2312(strClassroom);
-				else
-					obj.strClassroom = defVal.strClassroom;
-
-				if (pExt->extract(pos++, strSchool))
-					obj.strSchool = CMyCodeConvert::Utf8ToGb2312(strSchool);
-				else
-					obj.strSchool = defVal.strSchool;
-			}
-
-		private:
-			TypeHandler();
-			~TypeHandler();
-			TypeHandler(const TypeHandler&);
-			TypeHandler& operator=(const TypeHandler&);
-		};
-	}
-}
-#endif
 typedef std::list<ST_STUDENT> STUDENT_LIST;	//报名库列表
 extern STUDENT_LIST		g_lBmkStudent;	//报名库学生列表
 

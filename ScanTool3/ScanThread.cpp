@@ -805,6 +805,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 			char szStudentName[30] = { 0 };
 			sprintf_s(szStudentName, "S%d", nStudentId);
 			m_pCurrPaper = new ST_PaperInfo;
+			m_pCurrPaper->nIndex = nStudentId;
 			m_pCurrPaper->strStudentInfo = szStudentName;
 			m_pCurrPaper->pModel = _pModel_;
 			m_pCurrPaper->pPapers = _pCurrPapersInfo_;
@@ -915,6 +916,7 @@ void CScanThread::TestMode()
 			char szStudentName[30] = { 0 };
 			sprintf_s(szStudentName, "S%d", nStudentId);
 			m_pCurrPaper = new ST_PaperInfo;
+			m_pCurrPaper->nIndex = nStudentId;
 			m_pCurrPaper->strStudentInfo = szStudentName;
 			m_pCurrPaper->pModel = _pModel_;
 			m_pCurrPaper->pPapers = _pCurrPapersInfo_;

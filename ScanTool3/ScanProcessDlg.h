@@ -32,6 +32,8 @@ private:
 	void	WriteJsonFile();
 	void	SetFontSize();
 
+	void	SetStatusShow(int nType, CString strShowInfo);	//1--扫描状态信息，2--保存试卷袋信息
+
 	void	ShowPapers(pPAPERSINFO pPapers);
 	int		CheckZkzhInBmk(std::string strZkzh);
 	void	CheckZkzhInBmk(pST_PaperInfo pPaper);

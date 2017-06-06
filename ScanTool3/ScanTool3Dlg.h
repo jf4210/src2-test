@@ -6,6 +6,7 @@
 #include "TcpClient.h"
 #include "CompressThread.h"
 #include "RecognizeThread.h"
+#include "SendFileThread.h"
 #include "ExamInfoMgrDlg.h"
 #include "ScanMgrDlg.h"
 #include "ScanThread.h"
@@ -41,6 +42,8 @@ protected:
 private:
 	Poco::Thread*		m_pRecogThread;		//识别线程对象数组
 	std::vector<CRecognizeThread*> m_vecRecogThreadObj;		//存储识别线程对象
+	Poco::Thread*		m_SendFileThread;
+	CSendFileThread*	m_pSendFileObj;
 	Poco::Thread*		m_TcpCmdThread;
 	CTcpClient*			m_pTcpCmdObj;
 	Poco::Thread*		m_pCompressThread;

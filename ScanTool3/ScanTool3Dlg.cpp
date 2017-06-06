@@ -121,6 +121,7 @@ pMODEL				_pModel_ = NULL;		//当前扫描使用的模板
 int					_nScanCount_ = 0;		//扫描计数器，当前已扫描多少份
 int					_nScanPaperCount_ = 0;	//当前已经扫描人数，从软件启动开始计数
 //--
+E_DLG_TYPE			_eCurrDlgType_ = DLG_Login;	//当前显示的窗口，弹出窗口不算
 //--
 
 CScanTool3Dlg::CScanTool3Dlg(CWnd* pParent /*=NULL*/)
@@ -151,9 +152,9 @@ void CScanTool3Dlg::InitThreads()
 
 		m_vecRecogThreadObj.push_back(pRecogObj);
 	}
-// 	m_SendFileThread = new Poco::Thread;
-// 	m_pSendFileObj = new CSendFileThread(strFileServerIP, nFileServerPort);
-// 	m_SendFileThread->start(*m_pSendFileObj);
+	m_SendFileThread = new Poco::Thread;
+	m_pSendFileObj = new CSendFileThread(g_strFileIP, g_nFilePort);
+	m_SendFileThread->start(*m_pSendFileObj);
 	m_TcpCmdThread = new Poco::Thread;
 	m_pTcpCmdObj = new CTcpClient(g_strCmdIP, g_nCmdPort);
 	m_pTcpCmdObj->SetMainWnd(this);
@@ -190,10 +191,10 @@ void CScanTool3Dlg::ReleaseThreads()
 	}
 
 	//文件发送线程
-// 	m_SendFileThread->join();
-// 	SAFE_RELEASE(m_pSendFileObj);
-// 	g_eSendFileThreadExit.wait();
-// 	SAFE_RELEASE(m_SendFileThread);
+	m_SendFileThread->join();
+	SAFE_RELEASE(m_pSendFileObj);
+	g_eSendFileThreadExit.wait();
+	SAFE_RELEASE(m_SendFileThread);
 
 	//tcp命令线程
 	m_TcpCmdThread->join();
@@ -301,6 +302,17 @@ void CScanTool3Dlg::ReleaseData()
 	}
 	g_fmSendLock.unlock();
 
+	//释放未处理完的识别任务列表
+	g_fmRecog.lock();
+	RECOGTASKLIST::iterator itRecog = g_lRecogTask.begin();
+	for (; itRecog != g_lRecogTask.end();)
+	{
+		pRECOGTASK pRecogTask = *itRecog;
+		SAFE_RELEASE(pRecogTask);
+		itRecog = g_lRecogTask.erase(itRecog);
+	}
+	g_fmRecog.unlock();
+
 	SAFE_RELEASE(_pModel_);
 	SAFE_RELEASE(_pCurrPapersInfo_);
 }
@@ -373,6 +385,8 @@ void CScanTool3Dlg::SwitchDlg(int nDlg, int nChildID /*= 1*/)
 	{
 		m_pExamInfoMgrDlg->ShowWindow(SW_SHOW);
 		m_pScanMgrDlg->ShowWindow(SW_HIDE);
+
+		_eCurrDlgType_ = DLG_ExamMgr;
 	}
 	else if (nDlg == 1)
 	{

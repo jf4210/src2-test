@@ -236,9 +236,14 @@ void CScanMgrDlg::DrawBorder(CDC *pDC)
 
 bool CScanMgrDlg::chkChangeExamLegal()
 {
+	if (_eCurrDlgType_ == Dlg_ScanRecordMgr)
+	{
+		AfxMessageBox(_T("当前窗口不允许切换"));
+		return false;
+	}
 	if (_nScanStatus_ == 1)
 	{
-		AfxMessageBox(_T("请稍后，正在扫描。。。"));
+		AfxMessageBox(_T("正在扫描, 请稍后。。。"));
 		return false;
 	}
 	if (!_pCurrPapersInfo_)
@@ -280,6 +285,8 @@ void CScanMgrDlg::ShowChildDlg(int n)
 		m_pScanDlg->ShowWindow(SW_HIDE);
 		m_pScanProcessDlg->ShowWindow(SW_HIDE);
 		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
+
+		_eCurrDlgType_ = DLG_DownloadModle;
 		if (!GetBmkInfo())
 		{
 			AfxMessageBox(_T("考试信息为空"));
@@ -303,6 +310,8 @@ void CScanMgrDlg::ShowChildDlg(int n)
 		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
 
 		m_pScanDlg->SetScanSrcInfo(m_vecScanSrc);
+
+		_eCurrDlgType_ = DLG_ScanStart;
 	}
 	else if (n == 3)
 	{
@@ -312,6 +321,8 @@ void CScanMgrDlg::ShowChildDlg(int n)
 		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
 
 		m_pScanProcessDlg->InitShow();
+
+		_eCurrDlgType_ = Dlg_ScanProcess;
 	}
 	else if (n == 4)
 	{
@@ -321,6 +332,8 @@ void CScanMgrDlg::ShowChildDlg(int n)
 		m_pScanRecordMgrDlg->ShowWindow(SW_SHOW);
 
 		m_pScanRecordMgrDlg->UpdateChildDlg();
+
+		_eCurrDlgType_ = Dlg_ScanRecordMgr;
 	}
 }
 

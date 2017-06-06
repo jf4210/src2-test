@@ -240,6 +240,18 @@ void CScanProcessDlg::AddPaper(int nID, pST_PaperInfo pPaper)
 	m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
 	m_lcPicture.SetItemData(nCount, (DWORD_PTR)pPaper);
 //	m_lcPicture.EnsureVisible(nCount, FALSE);	//滚动最后一行
+
+	if (_pCurrExam_->nModel == 0)	//网阅模式
+	{
+		m_pReminderDlg->ShowWindow(SW_SHOW);
+		m_pShowPicDlg->ShowWindow(SW_HIDE);
+	}
+	else //手阅模式
+	{
+		m_pReminderDlg->ShowWindow(SW_HIDE);
+		m_pShowPicDlg->ShowWindow(SW_SHOW);
+		m_pShowPicDlg->setShowPaper(pPaper);
+	}
 }
 
 void CScanProcessDlg::ResetPicList()
@@ -275,14 +287,23 @@ void CScanProcessDlg::InitShow()
 void CScanProcessDlg::UpdateChildInfo(bool bScanDone /*= false*/)
 {
 	if (bScanDone)
-		m_pReminderDlg->SetShowTips(_T("本批次扫描完成"));
+	{
+//		m_pReminderDlg->SetShowTips(_T("本批次扫描完成"));
+		SetStatusShow(1, _T("本批次扫描完成"));
+	}
 	else
-		m_pReminderDlg->SetShowTips(_T("正在扫描，请稍后..."));
+	{
+//		m_pReminderDlg->SetShowTips(_T("正在扫描，请稍后..."));
+		SetStatusShow(1, _T("正在扫描，请稍后..."));
+	}
 	m_pReminderDlg->UpdataScanCount(_nScanCount_);		//更新扫描数量
 }
 
 void CScanProcessDlg::ScanCompleted()
 {
+	if (_pCurrExam_->nModel == 1)
+		return;
+
 	//显示所有识别完成的准考证号
 	if (g_nOperatingMode == 1 || g_bModifySN)
 	{
@@ -590,6 +611,21 @@ void CScanProcessDlg::SetFontSize()
 	m_bmpBtnScanAgain.SetBtnFont(m_fontBtn2);
 }
 
+void CScanProcessDlg::SetStatusShow(int nType, CString strShowInfo)
+{
+	//1--扫描状态信息，2--保存试卷袋信息
+	if (nType == 2)
+	{
+		m_pReminderDlg->SetShowScanCount(false);
+		m_pReminderDlg->SetShowTips(strShowInfo);
+	}
+	else
+	{
+		m_pReminderDlg->SetShowScanCount(true);
+		m_pReminderDlg->SetShowTips(strShowInfo);
+	}
+}
+
 void CScanProcessDlg::ShowPapers(pPAPERSINFO pPapers)
 {
 	//显示所有识别完成的准考证号
@@ -600,7 +636,7 @@ void CScanProcessDlg::ShowPapers(pPAPERSINFO pPapers)
 	{
 		int nCount = m_lcPicture.GetItemCount();
 		char szCount[10] = { 0 };
-		sprintf_s(szCount, "%d", nCount + 1);
+		sprintf_s(szCount, "%d", pPaper->nIndex);	//nCount + 1
 		m_lcPicture.InsertItem(nCount, NULL);
 		m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
@@ -609,7 +645,7 @@ void CScanProcessDlg::ShowPapers(pPAPERSINFO pPapers)
 //			m_lcPicture.SetItemText(nCount, 2, _T("*"));
 			m_lcPicture.SetItemColors(nCount, 1, RGB(0, 0, 255), RGB(255, 255, 255));
 		}
-		if (pPaper->nZkzhInBmkStatus != 1 && g_lBmkStudent.size() > 0)	//不在报名库中
+		if (pPaper->nZkzhInBmkStatus != 1 && g_lBmkStudent.size() > 0)	//不在报名库中、重号
 		{
 			m_lcPicture.SetItemColors(nCount, 1, RGB(0, 255, 0), RGB(255, 255, 255));
 		}
@@ -621,13 +657,13 @@ void CScanProcessDlg::ShowPapers(pPAPERSINFO pPapers)
 	{
 		int nCount = m_lcPicture.GetItemCount();
 		char szCount[10] = { 0 };
-		sprintf_s(szCount, "%d", nCount + 1);
+		sprintf_s(szCount, "%d", pPaper->nIndex);
 		m_lcPicture.InsertItem(nCount, NULL);
 		m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 //		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
 		CString strErrInfo = _T("");
 		if (pPaper->strSN.empty())	strErrInfo = _T("考号为空");
-		if (pPaper->bReScan)	strErrInfo = _T("重扫");
+		if (pPaper->bReScan)	strErrInfo = _T("删除");	//重扫
 		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)strErrInfo);	//2
 		m_lcPicture.SetItemData(nCount, (DWORD_PTR)pPaper);
 		m_lcPicture.SetItemColors(nCount, 1, RGB(255, 0, 0), RGB(255, 255, 255));
@@ -660,6 +696,8 @@ LRESULT CScanProcessDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 			{
 				m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
 				CheckZkzhInBmk(pPaper);
+				if (g_lBmkStudent.size() > 0 && pPaper->nZkzhInBmkStatus != 1)
+					m_lcPicture.SetItemColors(i, 1, RGB(0, 255, 0), RGB(255, 255, 255));
 			}
 			else
 			{
@@ -847,7 +885,7 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 			AfxMessageBox(_T("请稍后，图像正在识别！"));
 			return;
 		}
-	}	
+	}
 
 	std::string strUser;
 	std::string strEzs;
@@ -946,11 +984,15 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 // 	strInfo.Format(_T("正在保存%s..."), A2T(szZipName));
 // 	SetStatusShowInfo(strInfo, bWarn);
 
-	_pCurrPapersInfo_ = NULL;
-	ResetPicList();
-
 	//记录当前总共扫描多少人
 	_nScanPaperCount_ += _pCurrPapersInfo_->nPaperCount;
+
+	CString strStatus = _T("正在保存");
+	strStatus.Format(_T("正在保存%s"), szZipName);
+	SetStatusShow(2, strStatus);
+
+	_pCurrPapersInfo_ = NULL;
+	ResetPicList();
 }
 
 void CScanProcessDlg::OnDestroy()
@@ -976,31 +1018,41 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 0;
 
 	if (_nScanStatus_ == 1)
+	{
+		AfxMessageBox(_T("正在扫描，请稍后。。。"));
 		return;
+	}
 
-	bool bRecogComplete = true;
-	for (auto p : _pCurrPapersInfo_->lPaper)
+	if (_pCurrExam_->nModel == 0)
 	{
-		if (!p->bRecogComplete)
+		bool bRecogComplete = true;
+		for (auto p : _pCurrPapersInfo_->lPaper)
 		{
-			bRecogComplete = false;
-			break;
+			if (!p->bRecogComplete)
+			{
+				bRecogComplete = false;
+				break;
+			}
 		}
-	}
-	if (!bRecogComplete)
-	{
-		AfxMessageBox(_T("请等待识别完成。。。"));
-		return;
-	}
+		if (!bRecogComplete)
+		{
+			AfxMessageBox(_T("请等待识别完成。。。"));
+			return;
+		}
+	}	
 
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcPicture.GetItemData(pNMItemActivate->iItem);
 	m_pReminderDlg->ShowWindow(SW_HIDE);
 	m_pShowPicDlg->ShowWindow(SW_SHOW);
 	m_pShowPicDlg->setShowPaper(pPaper);
 
+	if (_pCurrExam_->nModel == 1)
+		return;
+
 	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(pNMItemActivate->iItem);
 	//***	注意：如果不在报名库中的同时报名库不空的也要允许修改	********	2017.6.4
-	if ((/*g_nOperatingMode == 1 ||*/ g_bModifySN) && _pModel_ && pItemPaper && (pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH || pItemPaper->bReScan))
+	if ((/*g_nOperatingMode == 1 ||*/ g_bModifySN) && _pModel_ && pItemPaper && \
+		(pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH || pItemPaper->bReScan || pItemPaper->nZkzhInBmkStatus != 1))
 	{
 		if (!m_pStudentMgr)
 		{

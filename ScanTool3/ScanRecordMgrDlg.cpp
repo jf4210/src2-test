@@ -109,11 +109,11 @@ BOOL CScanRecordMgrDlg::OnEraseBkgnd(CDC* pDC)
 
 void CScanRecordMgrDlg::InitUI()
 {
-	m_bmpBtnBmk.SetStateBitmap(IDB_Tab_Normal, IDB_Tab_Click, IDB_Tab_Over);
+	m_bmpBtnBmk.SetStateBitmap(IDB_Tab_Normal, IDB_Tab_Click, IDB_Tab_Over, 0, IDB_Tab_Click);
 	m_bmpBtnBmk.SetWindowText(_T("¿¼Éú¿âÏêÇé"));
 //	m_bmpBtnBmk.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), RGB(116, 116, 116));
 
-	m_bmpBtnPkg.SetStateBitmap(IDB_Tab_Normal, IDB_Tab_Click, IDB_Tab_Over);
+	m_bmpBtnPkg.SetStateBitmap(IDB_Tab_Normal, IDB_Tab_Click, IDB_Tab_Over, 0, IDB_Tab_Click);
 	m_bmpBtnPkg.SetWindowText(_T("ÊÔ¾í´üÏêÇé"));
 //	m_bmpBtnPkg.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), RGB(116, 116, 116));
 
@@ -128,6 +128,8 @@ void CScanRecordMgrDlg::InitUI()
 	m_pPkgRecordDlg->Create(CPkgRecordDlg::IDD, this);
 	m_pPkgRecordDlg->ShowWindow(SW_HIDE);
 
+	m_bmpBtnBmk.CheckBtn(TRUE);
+	m_bmpBtnPkg.CheckBtn(FALSE);
 	InitCtrlPosition();
 }
 
@@ -227,6 +229,8 @@ void CScanRecordMgrDlg::OnBnClickedBtnBmkrecord()
 	m_pBmkRecordDlg->ShowWindow(SW_SHOW);
 	m_pPkgRecordDlg->ShowWindow(SW_HIDE);
 
+	m_bmpBtnBmk.CheckBtn(TRUE);
+	m_bmpBtnPkg.CheckBtn(FALSE);
 	m_pBmkRecordDlg->UpDateInfo();
 }
 
@@ -236,6 +240,8 @@ void CScanRecordMgrDlg::OnBnClickedBtnPkgrecord()
 	m_pBmkRecordDlg->ShowWindow(SW_HIDE);
 	m_pPkgRecordDlg->ShowWindow(SW_SHOW);
 
+	m_bmpBtnBmk.CheckBtn(FALSE);
+	m_bmpBtnPkg.CheckBtn(TRUE);
 	m_pPkgRecordDlg->UpdateChildDlg();
 }
 

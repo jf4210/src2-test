@@ -131,6 +131,7 @@
     <ClInclude Include="ctrl\skinscrollwnd.h" />
     <ClInclude Include="ctrl\XPGroupBox.h" />
     <ClInclude Include="ExamInfoMgrDlg.h" />
+    <ClInclude Include="FileUpLoad.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="IconEdit.h" />
     <ClInclude Include="LoginDlg.h" />
@@ -154,12 +155,14 @@
     <ClInclude Include="ScanThread.h" />
     <ClInclude Include="ScanTool3.h" />
     <ClInclude Include="ScanTool3Dlg.h" />
+    <ClInclude Include="SendFileThread.h" />
     <ClInclude Include="ShowPicDlg.h" />
     <ClInclude Include="SingleExamDlg.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StudentMgr.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TcpClient.h" />
+    <ClInclude Include="Thread.h" />
     <ClInclude Include="VagueSearchDlg.h" />
     <ClInclude Include="WaitDownloadDlg.h" />
     <ClInclude Include="XListCtrl\AdvComboBox.h" />
@@ -214,6 +217,7 @@
     <ClCompile Include="ctrl\skinscrollwnd.cpp" />
     <ClCompile Include="ctrl\XPGroupBox.cpp" />
     <ClCompile Include="ExamInfoMgrDlg.cpp" />
+    <ClCompile Include="FileUpLoad.cpp" />
     <ClCompile Include="global.cpp" />
     <ClCompile Include="IconEdit.cpp" />
     <ClCompile Include="LoginDlg.cpp" />
@@ -238,6 +242,7 @@
     <ClCompile Include="ScanThread.cpp" />
     <ClCompile Include="ScanTool3.cpp" />
     <ClCompile Include="ScanTool3Dlg.cpp" />
+    <ClCompile Include="SendFileThread.cpp" />
     <ClCompile Include="ShowPicDlg.cpp" />
     <ClCompile Include="SingleExamDlg.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -246,6 +251,7 @@
     </ClCompile>
     <ClCompile Include="StudentMgr.cpp" />
     <ClCompile Include="TcpClient.cpp" />
+    <ClCompile Include="Thread.cpp" />
     <ClCompile Include="VagueSearchDlg.cpp" />
     <ClCompile Include="WaitDownloadDlg.cpp" />
     <ClCompile Include="XListCtrl\AdvComboBox.cpp" />

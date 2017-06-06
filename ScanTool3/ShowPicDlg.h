@@ -1,7 +1,7 @@
 #pragma once
 #include "global.h"
 #include "PicShow.h"
-
+#include "BmpButton.h"
 // CShowPicDlg 对话框
 
 class CShowPicDlg : public CDialog
@@ -17,9 +17,13 @@ public:
 
 	void	setShowPaper(pST_PaperInfo pPaper);
 	void	UpdateUI();
+	void	setShowModel(int nModel);	//显示模式，1--使用tab控件显示，2--使用按钮控件代替tab分页
+	void	setRotate(int nDirection);	//设置旋转方向，1:针对原始图像需要进行的旋转，正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
 private:
 	CTabCtrl		m_tabPicShowCtrl;		//图片显示控件
+	int				m_nShowModel;		//显示模式，1--使用tab控件显示，2--使用按钮控件代替tab分页
 
+	std::vector<CBmpButton*> m_vecBtn;	//m_nShowModel == 2 时有效
 	std::vector<CPicShow*>	m_vecPicShow;	//存储图片显示窗口指针，有多个模板图片时，对应到不同的tab控件页面
 	int						m_nCurrTabSel;	//当前Tab控件选择的页面
 	CPicShow*				m_pCurrentPicShow;		//当前图片显示控件
@@ -30,6 +34,8 @@ private:
 	void	InitUI();
 	void	InitCtrlPosition();
 	void	PaintRecognisedRect(pST_PaperInfo pPaper);
+
+	virtual LRESULT DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam);
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

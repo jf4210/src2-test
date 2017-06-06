@@ -16,6 +16,7 @@ public:
 
 	void		SetShowTips(CString str);
 	void		UpdataScanCount(int nCount);
+	void		SetShowScanCount(bool bShow);	//是否需要显示扫描数量的提示
 private:
 	int				m_nStatusSize;			//状态栏字体大小
 	CFont			m_fontStatus;			//状态栏字体

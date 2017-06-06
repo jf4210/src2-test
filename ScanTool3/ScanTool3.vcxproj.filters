@@ -112,6 +112,9 @@
     <Filter Include="控件\group">
       <UniqueIdentifier>{6a5aa516-766e-461f-9ed1-c57a29e5034d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="线程\文件上传">
+      <UniqueIdentifier>{81057a4e-ee09-4fac-9e55-8e83d28dfe7d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -312,6 +315,15 @@
     <ClInclude Include="ctrl\XPGroupBox.h">
       <Filter>控件\group</Filter>
     </ClInclude>
+    <ClInclude Include="FileUpLoad.h">
+      <Filter>线程\文件上传</Filter>
+    </ClInclude>
+    <ClInclude Include="SendFileThread.h">
+      <Filter>线程\文件上传</Filter>
+    </ClInclude>
+    <ClInclude Include="Thread.h">
+      <Filter>线程\文件上传</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -484,6 +496,15 @@
     </ClCompile>
     <ClCompile Include="ctrl\XPGroupBox.cpp">
       <Filter>控件\group</Filter>
+    </ClCompile>
+    <ClCompile Include="FileUpLoad.cpp">
+      <Filter>线程\文件上传</Filter>
+    </ClCompile>
+    <ClCompile Include="SendFileThread.cpp">
+      <Filter>线程\文件上传</Filter>
+    </ClCompile>
+    <ClCompile Include="Thread.cpp">
+      <Filter>线程\文件上传</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

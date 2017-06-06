@@ -2,6 +2,7 @@
 #include "StudentMgr.h"
 #include "ctrl/XPGroupBox.h"
 #include "ctrl/skinscrollwnd.h"
+#include "BmpButton.h"
 
 // CVagueSearchDlg 对话框
 
@@ -26,6 +27,7 @@ private:
 	CString			m_strSearchKey;		//搜索关键字
 	CListCtrl		m_lcBmk;			//报名库列表控件
 	CXPGroupBox		m_GroupStatic;
+	CBmpButton		m_bmpBtnSearch;
 
 	HBITMAP			m_bitmap_scrollbar;
 private:

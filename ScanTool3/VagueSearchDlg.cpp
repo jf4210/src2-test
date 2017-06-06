@@ -28,6 +28,7 @@ void CVagueSearchDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_ZkzhSearchResult, m_lcBmk);
 	DDX_Text(pDX, IDC_EDIT_SearchKey, m_strSearchKey);
 	DDX_Control(pDX, IDC_STATIC_Group, m_GroupStatic);
+//	DDX_Control(pDX, IDC_BTN_Search, m_bmpBtnSearch);
 }
 
 

@@ -244,3 +244,13 @@ void CScanReminderDlg::UpdataScanCount(int nCount)
 	Invalidate();
 }
 
+void CScanReminderDlg::SetShowScanCount(bool bShow)
+{
+	if (GetDlgItem(IDC_STATIC_1)->GetSafeHwnd())
+		GetDlgItem(IDC_STATIC_1)->ShowWindow(bShow);
+	if (GetDlgItem(IDC_STATIC_2)->GetSafeHwnd())
+		GetDlgItem(IDC_STATIC_2)->ShowWindow(bShow);
+	if (GetDlgItem(IDC_STATIC_ScanCount)->GetSafeHwnd())
+		GetDlgItem(IDC_STATIC_ScanCount)->ShowWindow(bShow);
+}
+
