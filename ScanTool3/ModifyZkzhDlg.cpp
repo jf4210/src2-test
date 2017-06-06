@@ -285,6 +285,8 @@ void CModifyZkzhDlg::InitData()
 
 			//显示备注信息，为何出现在此列表
 			std::string strDetailInfo;
+			if (pPaper->strSN.empty())
+				strDetailInfo = "考号为空";
 			if (pPaper->bModifyZKZH)
 				strDetailInfo = "有过修改";
 			if (g_lBmkStudent.size() > 0)

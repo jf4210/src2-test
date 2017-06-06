@@ -81,9 +81,9 @@ void CScanReminderDlg::InitCtrlPosition()
 
 	if (GetDlgItem(IDC_STATIC_Tip)->GetSafeHwnd())
 	{
-		int nW = (cx - nLeftGap - nRightGap) * 0.4;
+		int nW = (cx - nLeftGap - nRightGap) * 1;	//0.4
 		int nH = 50;
-		GetDlgItem(IDC_STATIC_Tip)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
+		GetDlgItem(IDC_STATIC_Tip)->MoveWindow(nLeftGap, nCurrTop, nW, nH);	//nCurrLeft
 		nCurrTop += (nH + nGap);
 	}
 	if (GetDlgItem(IDC_STATIC_1)->GetSafeHwnd())
