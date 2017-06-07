@@ -3316,6 +3316,7 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 				szTmp[0] = '#';		//未识别出来的或者识别到多个的用#代替，后面做模糊查找
 			if (!bAllEmpty)			//只要识别到一部分，就将此识别到的结果放入模糊搜索字段中
 				(static_cast<pST_PaperInfo>(pPic->pPaper))->strRecogSN4Search.append(szTmp);
+			(static_cast<CDialog*>((static_cast<pST_PaperInfo>(pPic->pPaper))->pSrcDlg))->PostMessage(MSG_ZKZH_RECOG, (WPARAM)pPic->pPaper, (LPARAM)(static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers);
 		}
 	}
 	if (!bRecogAll)

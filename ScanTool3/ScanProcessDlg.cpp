@@ -701,8 +701,16 @@ LRESULT CScanProcessDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 			}
 			else
 			{
-				m_lcPicture.SetItemText(i, 1, _T("未识别"));
-				m_lcPicture.SetItemColors(i, 1, RGB(255, 0, 0), RGB(255, 255, 255));
+				if (pPaper->strRecogSN4Search.empty())
+				{
+					m_lcPicture.SetItemText(i, 1, _T("考号识别为空"));
+					m_lcPicture.SetItemColors(i, 1, RGB(255, 0, 0), RGB(255, 255, 255));
+				}
+				else
+				{
+					m_lcPicture.SetItemText(i, 1, _T("考号识别不完全"));
+					m_lcPicture.SetItemColors(i, 1, RGB(255, 0, 0), RGB(255, 255, 255));
+				}
 			}
 			break;
 		}
@@ -916,9 +924,10 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 			_pCurrPapersInfo_->nPaperCount = _pCurrPapersInfo_->lPaper.size();		//修改扫描数量，将问题试卷删除，不算到扫描试卷中。
 		}
 	}
-
+	TRACE("------------------- 1\n");
 	WriteJsonFile();
 
+	TRACE("------------------- 2\n");
 	//试卷袋压缩
 	char szPapersSavePath[500] = { 0 };
 	char szZipName[210] = { 0 };
@@ -969,6 +978,8 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 		//*************************************************
 	}
 
+	TRACE("------------------- 3\n");
+
 	pCOMPRESSTASK pTask = new COMPRESSTASK;
 	pTask->strCompressFileName = szZipName;
 	pTask->strExtName = T2A(PAPERS_EXT_NAME);
@@ -987,10 +998,12 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	//记录当前总共扫描多少人
 	_nScanPaperCount_ += _pCurrPapersInfo_->nPaperCount;
 
+	TRACE("------------------- 4\n");
 	CString strStatus = _T("正在保存");
-	strStatus.Format(_T("正在保存%s"), szZipName);
+	strStatus.Format(_T("正在保存%s"), A2T(szZipName));
 	SetStatusShow(2, strStatus);
 
+	TRACE("------------------- 5\n");
 	_pCurrPapersInfo_ = NULL;
 	ResetPicList();
 }
