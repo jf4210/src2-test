@@ -115,6 +115,9 @@
     <Filter Include="线程\文件上传">
       <UniqueIdentifier>{81057a4e-ee09-4fac-9e55-8e83d28dfe7d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="控件\杂">
+      <UniqueIdentifier>{d8b0fd42-4963-4ed4-9177-f57e5936ac7b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -324,6 +327,9 @@
     <ClInclude Include="Thread.h">
       <Filter>线程\文件上传</Filter>
     </ClInclude>
+    <ClInclude Include="ctrl\TransparentStatic.h">
+      <Filter>控件\杂</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -505,6 +511,9 @@
     </ClCompile>
     <ClCompile Include="Thread.cpp">
       <Filter>线程\文件上传</Filter>
+    </ClCompile>
+    <ClCompile Include="ctrl\TransparentStatic.cpp">
+      <Filter>控件\杂</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

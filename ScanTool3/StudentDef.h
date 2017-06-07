@@ -20,6 +20,33 @@
 #include "Poco/Data/SQLite/Notifier.h"
 #include "Poco/Data/SQLite/Connector.h"
 
+
+#define		NewBmkTest		//新报名库格式测试
+
+#ifdef NewBmkTest
+typedef struct _subjectScanStatus_
+{
+	int		nSubjectID;
+	int		nScaned;
+	_subjectScanStatus_()
+	{
+		nScaned = 0;
+		nSubjectID = 0;
+	}
+}ST_SubjectScanStatus, *pST_SubjectScanStatus;
+typedef std::list<ST_SubjectScanStatus> L_SUBJECTSCANSTATUS;
+
+typedef struct _allStudentInfo4Exam_	//针对考试的学生列表信息，包含各个科目信息
+{
+	int		nExamID;
+	std::string strZkzh;
+	std::string strName;		//gb2312
+	std::string strClassroom;	//gb2312
+	std::string strSchool;		//gb2312
+	L_SUBJECTSCANSTATUS lSubjectScanStatus;	//科目扫描状态
+}ST_ALLSTUDENT, *pST_ALLSTUDENT;
+#endif
+
 typedef struct _studentInfo_
 {
 	int			nScaned;
@@ -32,6 +59,7 @@ typedef struct _studentInfo_
 		nScaned = 0;
 	}
 }ST_STUDENT, *pST_STUDENT;
+
 class CBmkStudent
 {
 	CBmkStudent(){}

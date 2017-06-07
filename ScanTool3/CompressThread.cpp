@@ -2,7 +2,7 @@
 #include "CompressThread.h"
 #include <algorithm>
 #include "ScanTool3.h"
-// #include "ScanToolDlg.h"
+#include "ScanMgrDlg.h"
 //#include "PkgToPapers.h"
 
 CCompressThread::CCompressThread(void* pDlg) :m_pDlg(pDlg)
@@ -68,7 +68,7 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 		{
 			strInfo.Format(_T("±£´æ%s³É¹¦"), A2T(pTask->strCompressFileName.c_str()));
 		}
-//		((CScanToolDlg*)m_pDlg)->SetStatusShowInfo(strInfo, bWarn);
+		((CScanMgrDlg*)m_pDlg)->SendMessage(MSG_Compress_Done, (WPARAM)bWarn, (LPARAM)(LPCTSTR)strInfo);
 
 		if (bWarn)
 		{

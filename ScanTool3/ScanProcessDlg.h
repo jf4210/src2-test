@@ -25,14 +25,13 @@ public:
 	void	InitShow();
 	void	UpdateChildInfo(bool bScanDone = false);
 	void	ScanCompleted();
+	void SetStatusShow(int nType, CString strShowInfo, bool bWarn = false);	//1--扫描状态信息，2--保存试卷袋信息
 private:
 	void	InitUI();
 	void	InitCtrlPosition();
 	void	EnableBtn(BOOL bEnable);
 	void	WriteJsonFile();
 	void	SetFontSize();
-
-	void	SetStatusShow(int nType, CString strShowInfo);	//1--扫描状态信息，2--保存试卷袋信息
 
 	void	ShowPapers(pPAPERSINFO pPapers);
 	int		CheckZkzhInBmk(std::string strZkzh);

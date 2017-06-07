@@ -71,6 +71,7 @@ BEGIN_MESSAGE_MAP(CScanMgrDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_ChangeExam, &CScanMgrDlg::OnBnClickedBtnChangeexam)
 	ON_MESSAGE(MSG_SCAN_DONE, &CScanMgrDlg::ScanDone)
 	ON_MESSAGE(MSG_SCAN_ERR, &CScanMgrDlg::ScanErr)
+	ON_MESSAGE(MSG_Compress_Done, &CScanMgrDlg::MsgCompressResult)
 //	ON_WM_TIMER()
 ON_CBN_SELCHANGE(IDC_COMBO_Subject, &CScanMgrDlg::OnCbnSelchangeComboSubject)
 END_MESSAGE_MAP()
@@ -362,6 +363,14 @@ void* CScanMgrDlg::GetScanMainDlg()
 void CScanMgrDlg::SetReturnDlg(int nFlag /*= 2*/)
 {
 	m_pScanRecordMgrDlg->SetReBackDlg(nFlag);
+}
+
+LRESULT CScanMgrDlg::MsgCompressResult(WPARAM wParam, LPARAM lParam)
+{
+	CString str = (LPCTSTR)lParam;
+	bool bWarn = (bool)wParam;
+	m_pScanProcessDlg->SetStatusShow(2, str, bWarn);
+	return TRUE;
 }
 
 void CScanMgrDlg::OnDestroy()

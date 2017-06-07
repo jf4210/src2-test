@@ -161,7 +161,7 @@ void CScanTool3Dlg::InitThreads()
 	m_TcpCmdThread->start(*m_pTcpCmdObj);
 
 	m_pCompressThread = new Poco::Thread;
-	m_pCompressObj = new CCompressThread(this);
+	m_pCompressObj = new CCompressThread(m_pScanMgrDlg);
 	m_pCompressThread->start(*m_pCompressObj);
 
 // 	m_pScanThread = new Poco::Thread;
@@ -431,7 +431,6 @@ BOOL CScanTool3Dlg::OnInitDialog()
 	m_strVersion.Format(_T("Tianyu big data scan tool %s"), SOFT_VERSION);
 	m_strUserName = A2T(_strNickName_.c_str());
 
-	InitThreads();
 	m_pExamInfoMgrDlg = new CExamInfoMgrDlg(this);
 	m_pExamInfoMgrDlg->Create(CExamInfoMgrDlg::IDD, this);
 	m_pExamInfoMgrDlg->ShowWindow(SW_SHOW);
@@ -439,6 +438,8 @@ BOOL CScanTool3Dlg::OnInitDialog()
 	m_pScanMgrDlg = new CScanMgrDlg(this);
 	m_pScanMgrDlg->Create(CScanMgrDlg::IDD, this);
 	m_pScanMgrDlg->ShowWindow(SW_HIDE);
+
+	InitThreads();
 
 	try
 	{

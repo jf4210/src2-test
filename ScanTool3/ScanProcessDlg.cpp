@@ -337,7 +337,7 @@ void CScanProcessDlg::EnableBtn(BOOL bEnable)
 
 void CScanProcessDlg::WriteJsonFile()
 {
-
+	TRACE("-------------- 11\n");
 	Poco::JSON::Array jsnPaperArry;
 	PAPER_LIST::iterator itNomarlPaper = _pCurrPapersInfo_->lPaper.begin();
 	for (int i = 0; itNomarlPaper != _pCurrPapersInfo_->lPaper.end(); itNomarlPaper++, i++)
@@ -575,15 +575,19 @@ void CScanProcessDlg::WriteJsonFile()
 	std::stringstream jsnString;
 	jsnFileData.stringify(jsnString, 0);
 
+	TRACE("-------------- 12\n");
 	std::string strFileData;
 	if (!encString(jsnString.str(), strFileData))
 		strFileData = jsnString.str();
 
+	TRACE("-------------- 13\n");
 	char szExamInfoPath[MAX_PATH] = { 0 };
 	sprintf_s(szExamInfoPath, "%s\\papersInfo.dat", m_strCurrPicSavePath.c_str());
 	ofstream out(szExamInfoPath);
 	out << strFileData.c_str();
 	out.close();
+
+	TRACE("-------------- 14\n");
 }
 
 void CScanProcessDlg::SetFontSize()
@@ -611,18 +615,24 @@ void CScanProcessDlg::SetFontSize()
 	m_bmpBtnScanAgain.SetBtnFont(m_fontBtn2);
 }
 
-void CScanProcessDlg::SetStatusShow(int nType, CString strShowInfo)
+void CScanProcessDlg::SetStatusShow(int nType, CString strShowInfo, bool bWarn /*= false*/)
 {
 	//1--É¨Ãè×´Ì¬ÐÅÏ¢£¬2--±£´æÊÔ¾í´üÐÅÏ¢
 	if (nType == 2)
 	{
 		m_pReminderDlg->SetShowScanCount(false);
-		m_pReminderDlg->SetShowTips(strShowInfo);
+		m_pReminderDlg->SetShowTips(strShowInfo, bWarn);
+
+		if (_pCurrExam_->nModel == 0)
+		{
+			m_pReminderDlg->ShowWindow(SW_SHOW);
+			m_pShowPicDlg->ShowWindow(SW_HIDE);
+		}
 	}
 	else
 	{
 		m_pReminderDlg->SetShowScanCount(true);
-		m_pReminderDlg->SetShowTips(strShowInfo);
+		m_pReminderDlg->SetShowTips(strShowInfo, bWarn);
 	}
 }
 

@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CScanReminderDlg, CDialog)
 
 CScanReminderDlg::CScanReminderDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CScanReminderDlg::IDD, pParent)
-	, m_nStatusSize(25), m_strShowTips(_T("正在扫描，请稍后...")), m_strScanCount(_T("已扫 0 张"))
+	, m_nStatusSize(25), m_strShowTips(_T("正在扫描，请稍后...")), m_strScanCount(_T("已扫 0 张")), m_nShowType(1)
 {
 
 }
@@ -27,6 +27,7 @@ void CScanReminderDlg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_STATIC_ScanCount, m_strScanCount);
 	DDX_Text(pDX, IDC_STATIC_Tip, m_strShowTips);
+//	DDX_Control(pDX, IDC_STATIC_Tip, m_staticShowTips);
 }
 
 
@@ -36,6 +37,11 @@ BOOL CScanReminderDlg::OnInitDialog()
 
 //	m_bmpBk.LoadBitmap(IDB_ScanMgr_WaitPic);
 	m_bmpBk.LoadBitmap(IDB_ScanMgr_Scanning);
+
+	m_staticShowTips.SubclassDlgItem(IDC_STATIC_Tip, this);
+	m_staticShowTips.SetMultiLine();
+	m_staticShowTips.SetTextColor(RGB(115, 172, 254));
+
 	InitCtrlPosition();
 	SetFontSize(m_nStatusSize);
 
@@ -82,7 +88,11 @@ void CScanReminderDlg::InitCtrlPosition()
 	if (GetDlgItem(IDC_STATIC_Tip)->GetSafeHwnd())
 	{
 		int nW = (cx - nLeftGap - nRightGap) * 1;	//0.4
-		int nH = 50;
+		int nH = 40;
+		if (m_nShowType == 1)
+			nH = 30;
+		else
+			nH = 80;	//可以显示3行字体信息
 		GetDlgItem(IDC_STATIC_Tip)->MoveWindow(nLeftGap, nCurrTop, nW, nH);	//nCurrLeft
 		nCurrTop += (nH + nGap);
 	}
@@ -113,7 +123,7 @@ void CScanReminderDlg::InitCtrlPosition()
 void CScanReminderDlg::SetFontSize(int nSize)
 {
 	m_fontStatus.DeleteObject();
-	m_fontStatus.CreateFont(nSize, 0, 0, 0,
+	m_fontStatus.CreateFont(nSize, 12, 0, 0,
 							FW_BOLD, FALSE, FALSE, 0,
 							DEFAULT_CHARSET,
 							OUT_DEFAULT_PRECIS,
@@ -122,9 +132,10 @@ void CScanReminderDlg::SetFontSize(int nSize)
 							DEFAULT_PITCH | FF_SWISS,
 							_T("Arial"));
 	GetDlgItem(IDC_STATIC_Tip)->SetFont(&m_fontStatus);
+	m_staticShowTips.SetShowFont(m_fontStatus);
 
 	m_fontStatus2.DeleteObject();
-	m_fontStatus2.CreateFont(nSize + 2, 0, 0, 0,
+	m_fontStatus2.CreateFont(nSize + 3, 0, 0, 0,
 							FW_BOLD, FALSE, FALSE, 0,
 							DEFAULT_CHARSET,
 							OUT_DEFAULT_PRECIS,
@@ -167,7 +178,7 @@ BOOL CScanReminderDlg::OnEraseBkgnd(CDC* pDC)
 
 	m_bmpBk.GetBitmap(&bmp);
 	iX = rcClient.Width() / 2 - bmp.bmWidth / 2;
-	iY = rcClient.Height() / 2 - bmp.bmHeight / 2;
+	iY = rcClient.Height() / 2 - bmp.bmHeight / 2 - 30;
 	GetClientRect(&rcClient);
 
 	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));
@@ -230,9 +241,17 @@ void CScanReminderDlg::OnSize(UINT nType, int cx, int cy)
 	InitCtrlPosition();
 }
 
-void CScanReminderDlg::SetShowTips(CString str)
+void CScanReminderDlg::SetShowTips(CString str, bool bWarn /*= false*/)
 {
 	m_strShowTips = str;
+	if (bWarn)
+	{
+		m_staticShowTips.SetTextColor(RGB(222, 35, 145));
+	}
+	else
+	{
+		m_staticShowTips.SetTextColor(RGB(115, 172, 254));
+	}
 	UpdateData(FALSE);
 	Invalidate();
 }
@@ -246,11 +265,17 @@ void CScanReminderDlg::UpdataScanCount(int nCount)
 
 void CScanReminderDlg::SetShowScanCount(bool bShow)
 {
+	if (bShow)
+		m_nShowType = 1;
+	else
+		m_nShowType = 2;
 	if (GetDlgItem(IDC_STATIC_1)->GetSafeHwnd())
 		GetDlgItem(IDC_STATIC_1)->ShowWindow(bShow);
 	if (GetDlgItem(IDC_STATIC_2)->GetSafeHwnd())
 		GetDlgItem(IDC_STATIC_2)->ShowWindow(bShow);
 	if (GetDlgItem(IDC_STATIC_ScanCount)->GetSafeHwnd())
 		GetDlgItem(IDC_STATIC_ScanCount)->ShowWindow(bShow);
+	
+	InitCtrlPosition();
 }
 

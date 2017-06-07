@@ -36,7 +36,7 @@ bool CZipObj::ZipFile(CString strSrcPath, CString strDstPath, CString strExtName
 		Poco::File p2(strUtf8ModelPath);	//T2A(zipName)
 		if (!p2.exists())
 		{
-			std::string strErr = Poco::format("需要压缩的原文件夹(%s)不存在。", T2A(strSrcPath));
+			std::string strErr = Poco::format("需要压缩的原文件夹(%s)不存在。", CMyCodeConvert::Utf8ToGb2312(strUtf8ModelPath));	//T2A(strSrcPath)
 			RecordLog(strErr);
 			return false;
 		}
