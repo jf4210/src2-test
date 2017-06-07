@@ -330,6 +330,9 @@
     <ClInclude Include="ctrl\TransparentStatic.h">
       <Filter>控件\杂</Filter>
     </ClInclude>
+    <ClInclude Include="StudentDef.h">
+      <Filter>报名库管理</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

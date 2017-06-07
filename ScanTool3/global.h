@@ -121,33 +121,6 @@
 	#define PAPERS_EXT_NAME	_T(".typkg")			//试卷袋压缩后的扩展名(保证有4位),通过服务器收完文件后重命名为.zip
 #endif
 
-#ifdef SHOW_GUIDEDLG
-	//#define SHOW_LOGIN_MAINDLG			//是否在主界面上显示登录按钮
-	//#define SHOW_MODELMGR_MAINDLG			//是否在主界面上显示模板管理按钮
-	//#define SHOW_MODELMAKE_MAINDLG		//是否在主界面上显示模板制作按钮
-	//#define SHOW_COMBOLIST_MAINDLG		//是否在主界面上显示下拉列表控件
-	//#define SHOW_SCANALL_MAINDLG			//是否在主界面上显示整袋扫描按钮
-	#ifndef PUBLISH_VERSION
-		#define SHOW_PAPERINPUT_MAINDLG			//是否在主界面上显示试卷导入按钮
-	#endif
-#elif defined (TO_WHTY)
-	#define SHOW_LOGIN_MAINDLG			//是否在主界面上显示登录按钮
-	//#define SHOW_MODELMGR_MAINDLG			//是否在主界面上显示模板管理按钮
-	//#define SHOW_MODELMAKE_MAINDLG		//是否在主界面上显示模板制作按钮
-	//#define SHOW_COMBOLIST_MAINDLG		//是否在主界面上显示下拉列表控件
-	//#define SHOW_SCANALL_MAINDLG			//是否在主界面上显示整袋扫描按钮
-	//#define SHOW_PAPERINPUT_MAINDLG		//是否在主界面上显示试卷导入按钮
-#else
-	#define SHOW_LOGIN_MAINDLG				//是否在主界面上显示登录按钮
-	#define SHOW_MODELMGR_MAINDLG			//是否在主界面上显示模板管理按钮
-	//#define SHOW_MODELMAKE_MAINDLG		//是否在主界面上显示模板制作按钮
-	//#define SHOW_COMBOLIST_MAINDLG		//是否在主界面上显示下拉列表控件
-	//#define SHOW_SCANALL_MAINDLG			//是否在主界面上显示整袋扫描按钮
-	#ifndef PUBLISH_VERSION
-		#define SHOW_PAPERINPUT_MAINDLG			//是否在主界面上显示试卷导入按钮
-	#endif
-#endif
-
 #define  MSG_ERR_RECOG	(WM_USER + 110)
 #define  MSG_ZKZH_RECOG (WM_USER + 111)		//在准考证号识别完成时通知UI线程修改试卷列表，显示已经识别的ZKZH		2017.2.14
 #define	 MSG_Pkg2Papers_OK (WM_USER + 112)	//从pkg恢复到Papers完成
@@ -516,7 +489,10 @@ extern pMODEL				_pModel_;		//当前扫描使用的模板
 //报名库学生信息
 typedef std::list<ST_STUDENT> STUDENT_LIST;	//报名库列表
 extern STUDENT_LIST		g_lBmkStudent;	//报名库学生列表
-
+#ifdef NewBmkTest
+typedef std::list<ST_ALLSTUDENT> ALLSTUDENT_LIST;	//单个考试中所有科目的报名库列表
+extern ALLSTUDENT_LIST		g_lBmkAllStudent;	//单个考试中所有科目的报名库学生列表
+#endif
 
 typedef struct _CompressTask_
 {
