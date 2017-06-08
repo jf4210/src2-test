@@ -219,8 +219,11 @@ void CExamBmkRecordDlg::ResetBmkList()
 	m_comboSubject.AddString(_T("全部"));
 	m_comboSubject.SetItemData(0, 0);
 	m_comboScanStatus.AddString(_T("全部"));
+	m_comboScanStatus.SetItemData(0, 0);
 	m_comboScanStatus.AddString(_T("已扫"));
+	m_comboScanStatus.SetItemData(1, 1);
 	m_comboScanStatus.AddString(_T("未扫"));
+	m_comboScanStatus.SetItemData(2, 2);
 
 	USES_CONVERSION;
 	int nSubjects = _pCurrExam_->lSubjects.size();	//科目数量
@@ -297,7 +300,8 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 	std::string strCurrSubject = T2A(strCurSub);
 	std::string strCurrScanStatus = T2A(strCurScanStatus);
 
-	int nCurrSubID = m_comboSubject.GetItemData(m_comboScanStatus.GetCurSel());
+	int nCurrSubID = m_comboSubject.GetItemData(m_comboSubject.GetCurSel());
+	int nCurrScanStatus = m_comboScanStatus.GetItemData(m_comboScanStatus.GetCurSel());
 	
 	int nSubjects = _pCurrExam_->lSubjects.size();	//科目数量
 	int i = 0;
@@ -337,6 +341,10 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 				{
 					if (examSubject.nSubjectID == tmpSubject->nSubjID)
 					{
+						//*****************************************
+						//如果科目为全部的话，扫描状态的过滤无用，因为，对每个考生，可能某个科目没扫，某个科目又扫了，所以这种情况下，这个考生都要出现在列表中
+						//除非某个考生所有科目都没有扫描
+						//*****************************************
 						std::string strScanStatus;
 						if (examSubject.nScaned)
 						{
@@ -365,26 +373,70 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 			{
 				if (examSubject.nSubjectID == nCurrSubID)
 				{
-					std::string strScanStatus;
-					if (examSubject.nScaned)
+					if (strCurrScanStatus == "全部")
 					{
-						strScanStatus = "OK";
+						std::string strScanStatus;
+						if (examSubject.nScaned)
+						{
+							strScanStatus = "OK";
+						}
+						else
+						{
+							strScanStatus = "未扫";
+						}
+						int nCount = m_lcBmk.GetItemCount();
+						char szCount[10] = { 0 };
+						sprintf_s(szCount, "%d", nCount + 1);
+						m_lcBmk.InsertItem(nCount, NULL);
+
+						m_lcBmk.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+						m_lcBmk.SetItemText(nCount, 1, (LPCTSTR)A2T(objExamStudent.strZkzh.c_str()));
+						m_lcBmk.SetItemText(nCount, 2, (LPCTSTR)A2T(objExamStudent.strName.c_str()));
+
+						m_lcBmk.SetItemText(nCount, 3, (LPCTSTR)A2T(strScanStatus.c_str()));
+						break;
 					}
 					else
 					{
-						strScanStatus = "未扫";
+						if (nCurrScanStatus == 1)	//已扫
+						{
+							std::string strScanStatus;
+							if (examSubject.nScaned)
+							{
+								strScanStatus = "OK";
+								int nCount = m_lcBmk.GetItemCount();
+								char szCount[10] = { 0 };
+								sprintf_s(szCount, "%d", nCount + 1);
+								m_lcBmk.InsertItem(nCount, NULL);
+
+								m_lcBmk.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+								m_lcBmk.SetItemText(nCount, 1, (LPCTSTR)A2T(objExamStudent.strZkzh.c_str()));
+								m_lcBmk.SetItemText(nCount, 2, (LPCTSTR)A2T(objExamStudent.strName.c_str()));
+
+								m_lcBmk.SetItemText(nCount, 3, (LPCTSTR)A2T(strScanStatus.c_str()));
+								break;
+							}
+						}
+						else  //未扫
+						{
+							std::string strScanStatus;
+							if (examSubject.nScaned == 0)
+							{
+								strScanStatus = "OK";
+								int nCount = m_lcBmk.GetItemCount();
+								char szCount[10] = { 0 };
+								sprintf_s(szCount, "%d", nCount + 1);
+								m_lcBmk.InsertItem(nCount, NULL);
+
+								m_lcBmk.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+								m_lcBmk.SetItemText(nCount, 1, (LPCTSTR)A2T(objExamStudent.strZkzh.c_str()));
+								m_lcBmk.SetItemText(nCount, 2, (LPCTSTR)A2T(objExamStudent.strName.c_str()));
+
+								m_lcBmk.SetItemText(nCount, 3, (LPCTSTR)A2T(strScanStatus.c_str()));
+								break;
+							}
+						}
 					}
-					int nCount = m_lcBmk.GetItemCount();
-					char szCount[10] = { 0 };
-					sprintf_s(szCount, "%d", nCount + 1);
-					m_lcBmk.InsertItem(nCount, NULL);
-
-					m_lcBmk.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
-					m_lcBmk.SetItemText(nCount, 1, (LPCTSTR)A2T(objExamStudent.strZkzh.c_str()));
-					m_lcBmk.SetItemText(nCount, 2, (LPCTSTR)A2T(objExamStudent.strName.c_str()));
-
-					m_lcBmk.SetItemText(nCount, 3, (LPCTSTR)A2T(strScanStatus.c_str()));
-					break;
 				}
 			}
 		}
@@ -393,11 +445,15 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 
 void CExamBmkRecordDlg::OnCbnSelchangeComboBmkSubject()
 {
-	// TODO:  在此添加控件通知处理程序代码
+	if (m_comboSubject.GetCurSel() < 0)
+		return;
+	GetBmkSearchResult();
 }
 
 
 void CExamBmkRecordDlg::OnCbnSelchangeComboBmkScanstatus()
 {
-	// TODO:  在此添加控件通知处理程序代码
+	if (m_comboScanStatus.GetCurSel() < 0)
+		return;
+	GetBmkSearchResult();
 }
