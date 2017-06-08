@@ -277,6 +277,40 @@ bool CScanMgrDlg::chkChangeExamLegal()
 	return true;
 }
 
+bool CScanMgrDlg::getCurrSubjectBmk()
+{
+	bool bResult = false;
+	g_lBmkStudent.clear();
+	EXAMBMK_MAP::iterator itFindExam = g_mapBmkMgr.find(_pCurrExam_->nExamID);
+	if (itFindExam != g_mapBmkMgr.end())
+	{
+		for (auto student : itFindExam->second)
+		{
+			for (auto subject : student.lSubjectScanStatus)
+			{
+				if (subject.nSubjectID == _pCurrSub_->nSubjID)
+				{
+					ST_STUDENT _currSubjectStudent;
+					_currSubjectStudent.strZkzh = student.strZkzh;
+					_currSubjectStudent.strName = student.strName;
+					_currSubjectStudent.strClassroom = student.strClassroom;
+					_currSubjectStudent.strSchool = student.strSchool;
+					_currSubjectStudent.nScaned = subject.nScaned;
+					g_lBmkStudent.push_back(_currSubjectStudent);
+				}
+			}
+		}
+	}
+	if (g_lBmkStudent.size() > 0)
+	{
+		_bGetBmk_ = true;
+		bResult = true;
+	}
+	else
+		_bGetBmk_ = false;
+	return bResult;
+}
+
 void CScanMgrDlg::ShowChildDlg(int n)
 {
 //	InitData();
@@ -288,20 +322,27 @@ void CScanMgrDlg::ShowChildDlg(int n)
 		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
 
 		_eCurrDlgType_ = DLG_DownloadModle;
-		if (!GetBmkInfo())
+		int nResult = GetBmkInfo();
+		if (nResult == 0)
 		{
 			AfxMessageBox(_T("考试信息为空"));
 			//跳到考试管理页面
 			CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
 			pDlg->SwitchDlg(0);
 		}
-// 		if (!DownLoadModel())
-// 		{
-// 			AfxMessageBox(_T("考试信息为空"));
-// 			//跳到考试管理页面
-// 			CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
-// 			pDlg->SwitchDlg(0);
-// 		}
+		if (nResult == -2 && (MessageBox(_T("获取考生报名库失败, 是否继续?"), _T("提示"), MB_YESNO) != IDYES))
+		{
+			CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
+			pDlg->SwitchDlg(0);
+			return;
+		}
+		if ((nResult == 2 || nResult == -2) && !DownLoadModel())	//如果已经下载了当前考试的报名库，就提取报名库，如何直接下载模板
+		{
+			AfxMessageBox(_T("考试信息为空"));
+			//跳到考试管理页面
+			CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
+			pDlg->SwitchDlg(0);
+		}
 	}
 	else if (n == 2)
 	{
@@ -548,12 +589,41 @@ bool CScanMgrDlg::DownLoadModel()
 	return true;
 }
 
-bool CScanMgrDlg::GetBmkInfo()
+int CScanMgrDlg::GetBmkInfo()
 {
-	if (!_pCurrExam_ || !_pCurrSub_) return false;
+	if (!_pCurrExam_ || !_pCurrSub_) return 0;
 
-	if (_pCurrExam_->nModel != 0) return false;		//只针对网阅考试获取报名库
+	if (_pCurrExam_->nModel != 0) return 0;		//只针对网阅考试获取报名库
 
+#if 1		//NewBmkTest
+	TRACE("请求报名库(%d)...\n", _pCurrExam_->nExamID);
+	EXAMBMK_MAP::iterator itFindExam = g_mapBmkMgr.find(_pCurrExam_->nExamID);
+	if (itFindExam != g_mapBmkMgr.end())		//如果已经下载了当前考试的报名库，就提取报名库，如何直接下载模板
+	{
+		int nResult = 0;
+		if (getCurrSubjectBmk())
+			nResult = 2;
+		else
+			nResult = -2;	//获取科目学生列表失败
+		return nResult;
+	}
+
+	ST_GET_BMK_INFO stGetBmkInfo;
+	ZeroMemory(&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
+	stGetBmkInfo.nExamID = _pCurrExam_->nExamID;
+	stGetBmkInfo.nSubjectID = _pCurrSub_->nSubjID;
+	strcpy(stGetBmkInfo.szEzs, _strEzs_.c_str());
+
+	g_eGetBmk.reset();
+
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_GET_EXAM_BMK;
+	pTcpTask->nPkgLen = sizeof(ST_GET_BMK_INFO);
+	memcpy(pTcpTask->szSendBuf, (char*)&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
+#else
 	TRACE("请求报名库(%d:%d)...\n", _pCurrExam_->nExamID, _pCurrSub_->nSubjID);
 
 	ST_GET_BMK_INFO stGetBmkInfo;
@@ -571,8 +641,8 @@ bool CScanMgrDlg::GetBmkInfo()
 	g_fmTcpTaskLock.lock();
 	g_lTcpTask.push_back(pTcpTask);
 	g_fmTcpTaskLock.unlock();
-
-	return true;
+#endif
+	return 1;
 }
 
 HBRUSH CScanMgrDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)

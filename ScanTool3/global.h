@@ -155,7 +155,7 @@ extern int _nTeacherId_;			//教师ID
 extern int _nUserId_;				//用户ID
 extern std::string _strPersonID_;	//手阅模式，天喻专用
 //--
-
+extern bool		_bGetBmk_;			//是否获得当前科目报名库
 extern int					_nReocgThreads_;		//识别线程数量
 
 //++事件定义
@@ -492,6 +492,8 @@ extern STUDENT_LIST		g_lBmkStudent;	//报名库学生列表
 #ifdef NewBmkTest
 typedef std::list<ST_ALLSTUDENT> ALLSTUDENT_LIST;	//单个考试中所有科目的报名库列表
 extern ALLSTUDENT_LIST		g_lBmkAllStudent;	//单个考试中所有科目的报名库学生列表
+typedef std::map<int, ALLSTUDENT_LIST> EXAMBMK_MAP;	//针对可能下载多个考试的报名库的情况
+extern EXAMBMK_MAP			g_mapBmkMgr;			//考试报名库管理哈希表
 #endif
 
 typedef struct _CompressTask_

@@ -30,7 +30,7 @@ public:
 	void	InitExamData();
 	bool	SearchModel();		//遍历所有模板
 	bool	DownLoadModel();	//下载模板
-	bool	GetBmkInfo();		//下载报名库
+	int		GetBmkInfo();		//下载报名库
 	void	ShowChildDlg(int n);
 	void	ResetChildDlg();	//子窗口重置
 	void	UpdateChildDlgInfo();	//更新子窗口信息
@@ -48,6 +48,7 @@ private:
 	void	DrawBorder(CDC *pDC);	//绘制边框线
 
 	bool	chkChangeExamLegal();	//检查切换考试或者科目时的合法性，是否允许切换
+	bool	getCurrSubjectBmk();	//获取当前考试科目的报名库，从考试总报名库中提取
 
 	LRESULT	ScanDone(WPARAM wParam, LPARAM lParam);
 	LRESULT	ScanErr(WPARAM wParam, LPARAM lParam);

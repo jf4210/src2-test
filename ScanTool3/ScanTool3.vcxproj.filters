@@ -333,6 +333,9 @@
     <ClInclude Include="StudentDef.h">
       <Filter>报名库管理</Filter>
     </ClInclude>
+    <ClInclude Include="ExamBmkRecordDlg.h">
+      <Filter>扫描界面窗口\扫描记录查询窗口</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -517,6 +520,9 @@
     </ClCompile>
     <ClCompile Include="ctrl\TransparentStatic.cpp">
       <Filter>控件\杂</Filter>
+    </ClCompile>
+    <ClCompile Include="ExamBmkRecordDlg.cpp">
+      <Filter>扫描界面窗口\扫描记录查询窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

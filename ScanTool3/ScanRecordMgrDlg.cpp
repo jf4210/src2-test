@@ -15,7 +15,7 @@ IMPLEMENT_DYNAMIC(CScanRecordMgrDlg, CDialog)
 
 CScanRecordMgrDlg::CScanRecordMgrDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CScanRecordMgrDlg::IDD, pParent)
-	, m_pPkgRecordDlg(NULL), m_pBmkRecordDlg(NULL), m_nReturnFlag(2)
+	, m_pPkgRecordDlg(NULL), m_pBmkRecordDlg(NULL), m_pExamBmkRecordDlg(NULL), m_nReturnFlag(2)
 {
 
 }
@@ -117,7 +117,7 @@ void CScanRecordMgrDlg::InitUI()
 	m_bmpBtnPkg.SetWindowText(_T("试卷袋详情"));
 //	m_bmpBtnPkg.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), RGB(116, 116, 116));
 
-	m_bmpBtnReturn.SetStateBitmap(IDB_RecordDlg_Btn_Hover, 0, IDB_RecordDlg_Btn);
+	m_bmpBtnReturn.SetStateBitmap(IDB_RecordDlg_Btn, 0, IDB_RecordDlg_Btn_Hover);
 	m_bmpBtnReturn.SetWindowText(_T("返回"));
 
 	m_pBmkRecordDlg = new CScanBmkRecordDlg(this);
@@ -127,6 +127,10 @@ void CScanRecordMgrDlg::InitUI()
 	m_pPkgRecordDlg = new CPkgRecordDlg(this);
 	m_pPkgRecordDlg->Create(CPkgRecordDlg::IDD, this);
 	m_pPkgRecordDlg->ShowWindow(SW_HIDE);
+
+	m_pExamBmkRecordDlg = new CExamBmkRecordDlg(this);
+	m_pExamBmkRecordDlg->Create(CExamBmkRecordDlg::IDD, this);
+	m_pExamBmkRecordDlg->ShowWindow(SW_HIDE);
 
 	m_bmpBtnBmk.CheckBtn(TRUE);
 	m_bmpBtnPkg.CheckBtn(FALSE);
@@ -200,6 +204,8 @@ void CScanRecordMgrDlg::InitCtrlPosition()
 		m_pBmkRecordDlg->MoveWindow(m_rtChildDlg);
 	if (m_pPkgRecordDlg && m_pPkgRecordDlg->GetSafeHwnd())
 		m_pPkgRecordDlg->MoveWindow(m_rtChildDlg);
+	if (m_pExamBmkRecordDlg && m_pExamBmkRecordDlg->GetSafeHwnd())
+		m_pExamBmkRecordDlg->MoveWindow(m_rtChildDlg);
 	Invalidate();
 }
 
@@ -215,6 +221,11 @@ void CScanRecordMgrDlg::ReleaseData()
 		m_pPkgRecordDlg->DestroyWindow();
 		SAFE_RELEASE(m_pPkgRecordDlg);
 	}
+	if (m_pExamBmkRecordDlg)
+	{
+		m_pExamBmkRecordDlg->DestroyWindow();
+		SAFE_RELEASE(m_pExamBmkRecordDlg);
+	}
 }
 
 void CScanRecordMgrDlg::OnDestroy()
@@ -226,12 +237,37 @@ void CScanRecordMgrDlg::OnDestroy()
 
 void CScanRecordMgrDlg::OnBnClickedBtnBmkrecord()
 {
+#if 1
+	if (m_nReturnFlag == 1)		//从考试列表过来的，就显示整个考试的报名库信息
+	{
+		m_pBmkRecordDlg->ShowWindow(SW_HIDE);
+		m_pPkgRecordDlg->ShowWindow(SW_HIDE);
+		m_pExamBmkRecordDlg->ShowWindow(SW_SHOW);
+
+		m_bmpBtnBmk.CheckBtn(TRUE);
+		m_bmpBtnPkg.CheckBtn(FALSE);
+//		m_pBmkRecordDlg->UpDateInfo();
+		m_pExamBmkRecordDlg->ResetBmkList();
+	}
+	else
+	{
+		m_pBmkRecordDlg->ShowWindow(SW_SHOW);
+		m_pPkgRecordDlg->ShowWindow(SW_HIDE);
+		m_pExamBmkRecordDlg->ShowWindow(SW_HIDE);
+
+		m_bmpBtnBmk.CheckBtn(TRUE);
+		m_bmpBtnPkg.CheckBtn(FALSE);
+		m_pBmkRecordDlg->UpDateInfo();
+	}
+#else
 	m_pBmkRecordDlg->ShowWindow(SW_SHOW);
 	m_pPkgRecordDlg->ShowWindow(SW_HIDE);
+	m_pExamBmkRecordDlg->ShowWindow(SW_HIDE);
 
 	m_bmpBtnBmk.CheckBtn(TRUE);
 	m_bmpBtnPkg.CheckBtn(FALSE);
 	m_pBmkRecordDlg->UpDateInfo();
+#endif
 }
 
 
@@ -239,6 +275,7 @@ void CScanRecordMgrDlg::OnBnClickedBtnPkgrecord()
 {
 	m_pBmkRecordDlg->ShowWindow(SW_HIDE);
 	m_pPkgRecordDlg->ShowWindow(SW_SHOW);
+	m_pExamBmkRecordDlg->ShowWindow(SW_HIDE);
 
 	m_bmpBtnBmk.CheckBtn(FALSE);
 	m_bmpBtnPkg.CheckBtn(TRUE);
@@ -267,7 +304,30 @@ void CScanRecordMgrDlg::SetReBackDlg(int nFlag)
 
 void CScanRecordMgrDlg::UpdateChildDlg()
 {
-	m_pBmkRecordDlg->UpDateInfo();
+	if (m_nReturnFlag == 1)
+	{
+		m_pExamBmkRecordDlg->ResetBmkList();
+	}
+	else
+	{
+		m_pBmkRecordDlg->UpDateInfo();
+	}
 	m_pPkgRecordDlg->UpdateChildDlg();
+
+	if (m_bmpBtnBmk.BtnIsChecked())
+	{
+		if (m_nReturnFlag == 1)
+		{
+			m_pBmkRecordDlg->ShowWindow(SW_HIDE);
+			m_pPkgRecordDlg->ShowWindow(SW_HIDE);
+			m_pExamBmkRecordDlg->ShowWindow(SW_SHOW);
+		}
+		else
+		{
+			m_pBmkRecordDlg->ShowWindow(SW_SHOW);
+			m_pPkgRecordDlg->ShowWindow(SW_HIDE);
+			m_pExamBmkRecordDlg->ShowWindow(SW_HIDE);
+		}
+	}
 }
 

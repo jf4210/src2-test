@@ -83,6 +83,18 @@ void CScanBmkRecordDlg::InitUI()
 	m_lcBmk.InsertColumn(2, _T("姓名"), LVCFMT_CENTER, 110);
 	m_lcBmk.InsertColumn(3, _T("扫描状态"), LVCFMT_CENTER, 100);
 
+// 	CHeaderCtrl *pHead = m_lcBmk.GetHeaderCtrl();
+// 	if (pHead && pHead->GetSafeHwnd())
+// 	{
+// 		TCHAR szBuf[129] = { 0 };
+// 		HDITEM hdItem = { 0 };
+// 		hdItem.mask = HDI_TEXT; //取字符掩码     
+// 		hdItem.pszText = szBuf; //字符缓冲区     
+// 		hdItem.cchTextMax = 128; //缓冲区大小
+// 		hdItem.pszText = _T("测试"); //设置新字符     
+// 		pHead->SetItem(3, &hdItem); //设置题头    
+// 	}
+
 	InitCtrlPosition();
 }
 
@@ -149,8 +161,18 @@ void CScanBmkRecordDlg::InitCtrlPosition()
 		int nH = cy - nTopGap - nStaticH - nGap - nBottomGap;
 		int nXTmp = (cx - nLeftGap - nRightGap) * 0;
 		GetDlgItem(IDC_LIST_Bmk)->MoveWindow(nCurrLeft + nXTmp, nCurrTop, nW, nH);
-		if (nW > 380)
-			m_lcBmk.SetColumnWidth(3, nW - 295);
+		int nColumns = m_lcBmk.GetColumns() - 3;	//除去不可动的表头，剩下的表头(即每个科目表头)平分剩下的宽度
+		if (nColumns > 0)
+		{
+			int nColunmW = (nW - 295) / nColumns;
+			if (nColunmW < 100)	nColunmW = 100;
+			for (int i = 0; i < nColumns; i++)
+			{
+				m_lcBmk.SetColumnWidth(3 + i, nColunmW);
+			}
+		}
+// 		if (nW > 380)
+// 			m_lcBmk.SetColumnWidth(3, nW - 295);
 	}
 
 	if (GetDlgItem(IDC_BTN_ExportScan)->GetSafeHwnd())
@@ -239,7 +261,7 @@ void CScanBmkRecordDlg::UpDateInfo()
 	//*************************************************
 	m_strGmkCount.Format(_T("%d人"), g_lBmkStudent.size());
 	
-	if (g_lBmkStudent.size() == 0)
+	if (!_bGetBmk_)
 	{
 		m_strScanCount.Format(_T("%d人"), _nScanPaperCount_);
 		m_strUnScanCount = _T("0人");
@@ -280,9 +302,6 @@ void CScanBmkRecordDlg::UpDateInfo()
 
 	UpdateData(FALSE);
 }
-
-
-
 
 void CScanBmkRecordDlg::OnNMClickListBmk(NMHDR *pNMHDR, LRESULT *pResult)
 {

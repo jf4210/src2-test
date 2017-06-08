@@ -655,7 +655,7 @@ void CScanProcessDlg::ShowPapers(pPAPERSINFO pPapers)
 //			m_lcPicture.SetItemText(nCount, 2, _T("*"));
 			m_lcPicture.SetItemColors(nCount, 1, RGB(0, 0, 255), RGB(255, 255, 255));
 		}
-		if (pPaper->nZkzhInBmkStatus != 1 && g_lBmkStudent.size() > 0)	//不在报名库中、重号
+		if (pPaper->nZkzhInBmkStatus != 1 && _bGetBmk_)	//不在报名库中、重号
 		{
 			m_lcPicture.SetItemColors(nCount, 1, RGB(0, 255, 0), RGB(255, 255, 255));
 		}
@@ -706,7 +706,7 @@ LRESULT CScanProcessDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 			{
 				m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
 				CheckZkzhInBmk(pPaper);
-				if (g_lBmkStudent.size() > 0 && pPaper->nZkzhInBmkStatus != 1)
+				if (_bGetBmk_ && pPaper->nZkzhInBmkStatus != 1)
 					m_lcPicture.SetItemColors(i, 1, RGB(0, 255, 0), RGB(255, 255, 255));
 			}
 			else
@@ -934,6 +934,7 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 			_pCurrPapersInfo_->nPaperCount = _pCurrPapersInfo_->lPaper.size();		//修改扫描数量，将问题试卷删除，不算到扫描试卷中。
 		}
 	}
+
 	TRACE("------------------- 1\n");
 	WriteJsonFile();
 
@@ -1118,7 +1119,7 @@ void CScanProcessDlg::OnTimer(UINT_PTR nIDEvent)
 				bRecogComplete = false;
 				break;
 			}
-			if (p->strSN.empty() || (p->nZkzhInBmkStatus != 1 && g_lBmkStudent.size() > 0))	//报名库列表存在时，检查准考证号是否在报名库中报名库
+			if (p->strSN.empty() || (p->nZkzhInBmkStatus != 1 && _bGetBmk_))	//报名库列表存在时，检查准考证号是否在报名库中报名库
 				bNeedShowZkzhDlg = true;
 		}
 

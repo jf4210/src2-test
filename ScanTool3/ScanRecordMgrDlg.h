@@ -1,6 +1,7 @@
 #pragma once
 #include "PkgRecordDlg.h"
 #include "ScanBmkRecordDlg.h"
+#include "ExamBmkRecordDlg.h"
 #include "BmpButton.h"
 
 // CScanRecordMgrDlg 对话框
@@ -26,6 +27,7 @@ private:
 
 	CPkgRecordDlg*		m_pPkgRecordDlg;
 	CScanBmkRecordDlg*	m_pBmkRecordDlg;
+	CExamBmkRecordDlg*	m_pExamBmkRecordDlg;
 	int		m_nReturnFlag;		//1--返回试卷管理窗口，2--返回扫描过程窗口
 
 	CBmpButton		m_bmpBtnBmk;
