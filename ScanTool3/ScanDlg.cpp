@@ -392,6 +392,10 @@ void CScanDlg::OnBnClickedBtnScan()
 
 		pDlg->ShowChildDlg(3);
 	}
+	else
+	{
+		AfxMessageBox(_T("ªÒ»°…®√Ë‘¥ ß∞‹"));
+	}
 
 	char szRet[20] = { 0 };
 	sprintf_s(szRet, "%d", sel);

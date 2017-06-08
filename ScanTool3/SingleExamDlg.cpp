@@ -6,7 +6,7 @@
 #include "SingleExamDlg.h"
 #include "afxdialogex.h"
 #include "ScanTool3Dlg.h"
-
+#include "TestDlg.h"
 
 // CSingleExamDlg ¶Ô»°¿ò
 
@@ -417,5 +417,6 @@ void CSingleExamDlg::OnBnClickedBtnScanprocesses()
 
 void CSingleExamDlg::OnBnClickedBtnMakescanmodel()
 {
-	
+	CTestDlg	dlg;
+	dlg.DoModal();
 }

@@ -37,6 +37,8 @@ private:
 	int		CheckZkzhInBmk(std::string strZkzh);
 	void	CheckZkzhInBmk(pST_PaperInfo pPaper);
 
+	void TestData(bool bReset);	//测试数据，可以删
+
 	LRESULT MsgZkzhRecog(WPARAM wParam, LPARAM lParam);		//准考证号识别完成时的通知
 private:
 	CXListCtrl	m_lcPicture;	//CXListCtrl

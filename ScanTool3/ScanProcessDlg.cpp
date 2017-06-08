@@ -337,6 +337,8 @@ void CScanProcessDlg::EnableBtn(BOOL bEnable)
 
 void CScanProcessDlg::WriteJsonFile()
 {
+	clock_t start_pic, end_pic;
+	start_pic = clock();
 	TRACE("-------------- 11\n");
 	Poco::JSON::Array jsnPaperArry;
 	PAPER_LIST::iterator itNomarlPaper = _pCurrPapersInfo_->lPaper.begin();
@@ -575,7 +577,8 @@ void CScanProcessDlg::WriteJsonFile()
 	std::stringstream jsnString;
 	jsnFileData.stringify(jsnString, 0);
 
-	TRACE("-------------- 12\n");
+	end_pic = clock();
+	TRACE("-------------- 12 --> time: %d\n", end_pic - start_pic);
 	std::string strFileData;
 	if (!encString(jsnString.str(), strFileData))
 		strFileData = jsnString.str();
@@ -843,6 +846,13 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 		SAFE_RELEASE(_pCurrPapersInfo_);
 		_pCurrPapersInfo_ = new PAPERSINFO();
 	}
+
+#ifdef Test_Data
+	TestData(bDelCurrPapers);
+	InitShow();
+	UpdateChildInfo();
+	return;
+#endif
 
 	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
 	pTW_IDENTITY pID = NULL;
@@ -1180,5 +1190,21 @@ void CScanProcessDlg::CheckZkzhInBmk(pST_PaperInfo pPaper)
 		pPaper->nZkzhInBmkStatus = -1;
 	else 
 		pPaper->nZkzhInBmkStatus = 0;
+}
+
+void CScanProcessDlg::TestData(bool bReset)
+{
+	_nScanStatus_ = 1;
+	pST_SCANCTRL pScanCtrl = new ST_SCANCTRL();
+
+	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
+	pDlg->m_scanThread.setNotifyDlg(pDlg);
+	pDlg->m_scanThread.setModelInfo(_pModel_->nPicNum, m_strCurrPicSavePath);
+	if (bReset)
+	{
+		pDlg->m_scanThread.resetData();
+		pDlg->ResetChildDlg();
+	}
+	pDlg->m_scanThread.PostThreadMessage(MSG_START_SCAN, 0, (LPARAM)pScanCtrl);
 }
 
