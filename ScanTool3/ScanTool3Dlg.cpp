@@ -70,7 +70,8 @@ int					g_nDownLoadModelStatus = 0;		//下载模板的状态	0-未下载，初始化，1-模板下
 int					_nScanStatus_ = 0;				//扫描进度 0-未扫描，1-正在扫描，2-扫描完成, 3-扫描中止, -1--连接扫描仪失败, -2--加载扫描仪失败, -3--扫描失败
 STUDENT_LIST		g_lBmkStudent;					//报名库学生列表
 #ifdef NewBmkTest
-ALLSTUDENT_LIST		g_lBmkAllStudent;	//单个考试中所有科目的报名库学生列表
+ALLSTUDENT_LIST		g_lBmkAllStudent;		//单个考试中所有科目的报名库学生列表
+EXAMBMK_MAP			g_mapBmkMgr;			//考试报名库管理哈希表
 #endif
 
 
@@ -117,6 +118,8 @@ int _nTeacherId_ = 0;			//教师ID
 int _nUserId_ = 0;				//用户ID
 std::string _strPersonID_;		//手阅模式，天喻专用
 //--
+
+bool				_bGetBmk_ = false;			//是否获得当前科目报名库
 //++扫描相关
 pEXAMINFO			_pCurrExam_= NULL;		//当前考试
 pEXAM_SUBJECT		_pCurrSub_ = NULL;		//当前考试科目
@@ -365,14 +368,52 @@ LRESULT CScanTool3Dlg::MsgCmdDlModel(WPARAM wParam, LPARAM lParam)
 
 LRESULT CScanTool3Dlg::MsgCmdGetBmk(WPARAM wParam, LPARAM lParam)
 {
+	int nType = wParam;		//0--获取科目报名库完成，1--获取考试报名库完成
+#ifdef NewBmkTest
+	if (nType == 0)
+	{
+		if (g_lBmkStudent.size() == 0)
+		{
+			_bGetBmk_ = false;
+			if (MessageBox(_T("获取考生报名库失败, 是否继续?"), _T("提示"), MB_YESNO) != IDYES)
+			{
+				SwitchDlg(0);
+				return 0;
+			}
+		}
+	}
+	else
+	{
+		bool bWarn = false;
+		EXAMBMK_MAP::iterator itFindExam = g_mapBmkMgr.find(_pCurrExam_->nExamID);
+		if (itFindExam != g_mapBmkMgr.end())
+		{
+			if (itFindExam->second.size() == 0)
+			{
+				_bGetBmk_ = false;
+				bWarn = true;
+			}
+		}
+		else
+			bWarn = true;
+
+		if (bWarn && (MessageBox(_T("获取考生报名库失败, 是否继续?"), _T("提示"), MB_YESNO) != IDYES))
+		{
+			SwitchDlg(0);
+			return 0;
+		}
+	}
+#else
 	if (g_lBmkStudent.size() == 0)
 	{
+		_bGetBmk_ = false;
 		if (MessageBox(_T("获取考生报名库失败, 是否继续?"), _T("提示"), MB_YESNO) != IDYES)
 		{
 			SwitchDlg(0);
 			return 0;
 		}
 	}
+#endif
 	if (!m_pScanMgrDlg->DownLoadModel())
 	{
 		AfxMessageBox(_T("考试信息为空"));
@@ -396,9 +437,9 @@ void CScanTool3Dlg::SwitchDlg(int nDlg, int nChildID /*= 1*/)
 		m_pExamInfoMgrDlg->ShowWindow(SW_HIDE);
 		m_pScanMgrDlg->ShowWindow(SW_SHOW);
 		m_pScanMgrDlg->InitExamData();
-		m_pScanMgrDlg->ShowChildDlg(nChildID);
 		if (nChildID == 4)
 			m_pScanMgrDlg->SetReturnDlg(1);
+		m_pScanMgrDlg->ShowChildDlg(nChildID);
 	}
 }
 

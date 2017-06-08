@@ -493,6 +493,7 @@ void CTcpClient::HandleCmd()
 					Poco::JSON::Array::Ptr arryObj = examObj->getArray("students");
 
 					g_lBmkStudent.clear();
+					_bGetBmk_ = false;
 					for (int i = 0; i < arryObj->size(); i++)
 					{
 						Poco::JSON::Object::Ptr objItem = arryObj->getObject(i);
@@ -513,9 +514,9 @@ void CTcpClient::HandleCmd()
 					TRACE(_T("%s\n"), A2T(strLog.c_str()));
 
 					//先通知主窗口进行后面下载模板操作，插入数据库这块较耗时
-// 					CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
-// 					pDlg->PostMessage(MSG_CMD_GET_BMK_OK, NULL, NULL);
-
+					CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+					pDlg->PostMessage(MSG_CMD_GET_BMK_OK, NULL, NULL);
+					
 					//插入数据库
 					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
 					CStudentMgr studentMgr;
@@ -523,6 +524,9 @@ void CTcpClient::HandleCmd()
 					std::string strTableName = Poco::format("T%d_%d", nExamID, nSubID);			//"student";
 					if (bResult) bResult = studentMgr.InitTable(strTableName);
 					if (bResult) bResult = studentMgr.InsertData(g_lBmkStudent, strTableName);
+
+					if (g_lBmkStudent.size() > 0)
+						_bGetBmk_ = true;
 				}
 				catch (Poco::JSON::JSONException& jsone)
 				{
@@ -531,6 +535,9 @@ void CTcpClient::HandleCmd()
 					strErrInfo.append(jsone.message() + "\tData:" + strResult);
 					g_pLogger->information(strErrInfo);
 					TRACE(_T("%s\n"), strErrInfo.c_str());
+
+					CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+					pDlg->PostMessage(MSG_CMD_GET_BMK_OK, NULL, NULL);
 				}
 			}
 			break;
@@ -539,13 +546,145 @@ void CTcpClient::HandleCmd()
 				std::string strLog = "报名库下载失败: " + CMyCodeConvert::Utf8ToGb2312(strResult);
 				TRACE(strLog.c_str());
 				g_pLogger->information(strLog);
+
+				CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+				pDlg->PostMessage(MSG_CMD_GET_BMK_OK, NULL, NULL);
 			}
 			break;
 		}
 		SAFE_RELEASE_ARRY(pBuff);
 		g_eGetBmk.set();
-		CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
-		pDlg->PostMessage(MSG_CMD_GET_BMK_OK, NULL, NULL);
+// 		CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+// 		pDlg->PostMessage(MSG_CMD_GET_BMK_OK, NULL, NULL);
+	}
+	else if (pstHead->usCmd == USER_RESPONSE_GET_EXAM_BMK)		//获取到整个考试的报名库
+	{
+		char* pBuff = new char[pstHead->uPackSize + 1];
+		pBuff[pstHead->uPackSize] = '\0';
+		strncpy(pBuff, m_pRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+		std::string strResult = CMyCodeConvert::Utf8ToGb2312(pBuff);
+		switch (pstHead->usResult)
+		{
+			case RESULT_GET_BMK_SUCCESS:
+			{
+				Poco::JSON::Parser parser;
+				Poco::Dynamic::Var result;
+				try
+				{
+					result = parser.parse(pBuff);
+					Poco::JSON::Object::Ptr examObj = result.extract<Poco::JSON::Object::Ptr>();
+
+					Poco::JSON::Object::Ptr examInfoObj = examObj->getObject("examInfo");
+					int nExamID = examInfoObj->get("examId").convert<int>();
+					int nSubID = examInfoObj->get("subjectId").convert<int>();
+
+					Poco::JSON::Array::Ptr arryObj = examObj->getArray("students");
+
+					ALLSTUDENT_LIST _AllStudent;
+					
+					for (int i = 0; i < arryObj->size(); i++)
+					{
+						Poco::JSON::Object::Ptr objItem = arryObj->getObject(i);
+						ST_ALLSTUDENT stData;
+						stData.nExamID = nExamID;
+						stData.strZkzh = objItem->get("zkzh").convert<std::string>();
+						stData.strName = CMyCodeConvert::Utf8ToGb2312(objItem->get("name").convert<std::string>());
+						if (objItem->has("classRoom"))
+							stData.strClassroom = CMyCodeConvert::Utf8ToGb2312(objItem->get("classRoom").convert<std::string>());
+						if (objItem->has("school"))
+							stData.strSchool = CMyCodeConvert::Utf8ToGb2312(objItem->get("school").convert<std::string>());
+
+						Poco::JSON::Array::Ptr arrySub = objItem->getArray("scanStatus");
+						for (int j = 0; j < arrySub->size(); j++)
+						{
+							Poco::JSON::Object::Ptr objSubjectItem = arrySub->getObject(j);
+							ST_SubjectScanStatus _SubjectScan;
+							_SubjectScan.nSubjectID = objSubjectItem->get("subjectID").convert<int>();
+							_SubjectScan.nScaned	= objSubjectItem->get("scaned").convert<int>();
+							stData.lSubjectScanStatus.push_back(_SubjectScan);
+						}
+						_AllStudent.push_back(stData);
+					}
+
+					EXAMBMK_MAP::iterator itFindExam = g_mapBmkMgr.find(nExamID);
+					if (itFindExam != g_mapBmkMgr.end())
+					{
+						itFindExam->second.clear();
+						itFindExam->second = _AllStudent;
+					}
+					else
+					{
+						g_mapBmkMgr.insert(EXAMBMK_MAP::value_type(nExamID, _AllStudent));	//************************
+					}
+
+					USES_CONVERSION;
+
+					std::string strLog = Poco::format("获取考试(%d)报名库完成(%d人)", nExamID, (int)_AllStudent.size());
+					g_pLogger->information(strLog);
+					TRACE(_T("%s\n"), A2T(strLog.c_str()));
+
+					//先通知主窗口进行后面下载模板操作，插入数据库这块较耗时
+					CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+					pDlg->PostMessage(MSG_CMD_GET_BMK_OK, 1, NULL);
+
+					//初始化当前科目报名库
+					g_lBmkStudent.clear();
+					_bGetBmk_ = false;
+					for (auto student : _AllStudent)
+					{
+						for (auto subject : student.lSubjectScanStatus)
+						{
+							if (subject.nSubjectID == nSubID)
+							{
+								ST_STUDENT _currSubjectStudent;
+								_currSubjectStudent.strZkzh = student.strZkzh;
+								_currSubjectStudent.strName = student.strName;
+								_currSubjectStudent.strClassroom = student.strClassroom;
+								_currSubjectStudent.strSchool = student.strSchool;
+								_currSubjectStudent.nScaned = subject.nScaned;
+								g_lBmkStudent.push_back(_currSubjectStudent);
+							}
+						}
+					}
+					//插入数据库
+					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+					CStudentMgr studentMgr;
+					bool bResult = studentMgr.InitDB(strDbPath);
+					std::string strTableName = Poco::format("T%d_%d", nExamID, nSubID);			//"student";
+					if (bResult) bResult = studentMgr.InitTable(strTableName);
+					if (bResult) bResult = studentMgr.InsertData(g_lBmkStudent, strTableName);
+
+					if (g_lBmkStudent.size() > 0)
+						_bGetBmk_ = true;
+				}
+				catch (Poco::JSON::JSONException& jsone)
+				{
+					std::string strErrInfo;
+					strErrInfo.append("Error when parse json(获取报名库): ");
+					strErrInfo.append(jsone.message() + "\tData:" + strResult);
+					g_pLogger->information(strErrInfo);
+					TRACE(_T("%s\n"), strErrInfo.c_str());
+
+					CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+					pDlg->PostMessage(MSG_CMD_GET_BMK_OK, 1, NULL);
+				}
+			}
+			break;
+			case RESULT_GET_BMK_FAIL:
+			{
+				std::string strLog = "报名库下载失败: " + CMyCodeConvert::Utf8ToGb2312(strResult);
+				TRACE(strLog.c_str());
+				g_pLogger->information(strLog);
+
+				CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+				pDlg->PostMessage(MSG_CMD_GET_BMK_OK, 1, NULL);
+			}
+			break;
+		}
+		SAFE_RELEASE_ARRY(pBuff);
+		g_eGetBmk.set();
+		// 		CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+		// 		pDlg->PostMessage(MSG_CMD_GET_BMK_OK, NULL, NULL);
 	}
 }
 

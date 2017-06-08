@@ -273,6 +273,7 @@ bool CVagueSearchDlg::vagueSearch(pST_PaperInfo pPaper)
 		++p;
 	}
 	TRACE("进行模糊查找的字符串: %s\n", szVagueKey);
+	m_strSearchKey = szVagueKey;
 	m_lcBmk.DeleteAllItems();
 	STUDENT_LIST lResult;
 	std::string strTable = Poco::format("T%d_%d", m_pModel->nExamID, m_pModel->nSubjectID);
@@ -294,7 +295,7 @@ bool CVagueSearchDlg::vagueSearch(pST_PaperInfo pPaper)
 		}
 		bResult = true;
 	}
-
+	UpdateData(FALSE);
 	return bResult;
 }
 

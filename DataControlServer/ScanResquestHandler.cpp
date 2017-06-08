@@ -133,7 +133,9 @@ void CScanResquestHandler::HandleTask(pSCAN_REQ_TASK pTask)
 				nCmd = USER_RESPONSE_ELECTOMR_MODEL;
 			else if (pTask->strMsg == "getBmk")
 				nCmd = USER_RESPONSE_GET_BMK;
-			if (pTask->strMsg == "getBmk")
+			else if (pTask->strMsg == "getExamBmk")
+				nCmd = USER_RESPONSE_GET_EXAM_BMK;
+			if (pTask->strMsg == "getBmk" || pTask->strMsg == "getExamBmk")
 			{
 				int ret = 0;
 				std::string strSendData;
@@ -345,7 +347,6 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 			bResult = objResult->get("success").convert<bool>();
 			if (bResult)
 			{
-			#if 1
 				//++添加考试ID和科目ID到结果信息中
 				Poco::JSON::Object objExam;
 				objExam.set("examId", pTask->nExamID);
@@ -356,10 +357,32 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 				//--
 				ret = RESULT_GET_BMK_SUCCESS;
 				strSendData = jsnSnString.str();
-			#else
+			}
+			else
+			{
+				std::string strResult = object->get("msg").convert<std::string>();
+				strResult = CMyCodeConvert::Utf8ToGb2312(strResult);
+
+				ret = RESULT_GET_BMK_FAIL;
+				strSendData = strResult;
+			}
+		}
+		else if (pTask->strMsg == "getExamBmk")
+		{
+			Poco::JSON::Object::Ptr objResult = object->getObject("status");
+			bResult = objResult->get("success").convert<bool>();
+			if (bResult)
+			{
+				//++添加考试ID和科目ID到结果信息中
+				Poco::JSON::Object objExam;
+				objExam.set("examId", pTask->nExamID);
+				objExam.set("subjectId", pTask->nSubjectID);
+				object->set("examInfo", objExam);
+				std::stringstream jsnSnString;
+				object->stringify(jsnSnString, 0);
+				//--
 				ret = RESULT_GET_BMK_SUCCESS;
-				strSendData = strInput;
-			#endif
+				strSendData = jsnSnString.str();
 			}
 			else
 			{
@@ -473,6 +496,8 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 		nCmd = USER_RESPONSE_ELECTOMR_MODEL;
 	else if (pTask->strMsg == "getBmk")
 		nCmd = USER_RESPONSE_GET_BMK;
+	else if (pTask->strMsg == "getExamBmk")
+		nCmd = USER_RESPONSE_GET_EXAM_BMK;
 
 	if (pTask->pUser)
 		pTask->pUser->SendResponesInfo(nCmd, ret, (char*)strSendData.c_str(), strSendData.length());

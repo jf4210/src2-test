@@ -545,6 +545,80 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			g_fmScanReq.unlock();
 		}
 		break;
+	case USER_GET_EXAM_BMK:
+		{
+			ST_GET_BMK_INFO stGetBmkInfo = *(pStGetBmkInfo)(pMission->m_pMissionData + HEAD_SIZE);
+
+			std::cout << "请求考试的报名库命令: " << stGetBmkInfo.nExamID << std::endl;
+
+			#ifdef _DEBUG	//测试数据，后期要删
+			Poco::JSON::Object objBmkTestResult;
+			Poco::JSON::Object objStatus;
+			objStatus.set("success", true);
+
+			Poco::JSON::Array arryStudent;
+			for (int i = 0; i < 100; i++)
+			{
+				Poco::JSON::Object objStudent;
+				std::string strZkzh = Poco::format("%d", 100 + i);
+				objStudent.set("zkzh", strZkzh);
+				std::string strName = Poco::format("测试%d", i);
+				objStudent.set("name", CMyCodeConvert::Gb2312ToUtf8(strName));
+				objStudent.set("classRoom", CMyCodeConvert::Gb2312ToUtf8("一班"));
+				objStudent.set("school", CMyCodeConvert::Gb2312ToUtf8("一中"));
+
+				Poco::JSON::Array arryScanStatus;
+				for (int j = 0; j < 4; j++)
+				{
+					Poco::JSON::Object objSubStatus;
+					objSubStatus.set("subjectID", 590 + j);
+					objSubStatus.set("scaned", 0);
+					arryScanStatus.add(objSubStatus);
+				}
+				objStudent.set("scanStatus", arryScanStatus);
+				arryStudent.add(objStudent);
+			}
+
+			Poco::JSON::Object objExam;
+			objExam.set("examId", 402);
+			objExam.set("subjectId", 590);
+			objBmkTestResult.set("status", objStatus);
+			objBmkTestResult.set("students", arryStudent);
+			objBmkTestResult.set("examInfo", objExam); 
+			std::stringstream jsnSnString;
+			objBmkTestResult.stringify(jsnSnString, 0);
+
+			std::string strSendData = jsnSnString.str();
+			pUser->SendResponesInfo(USER_RESPONSE_GET_EXAM_BMK, RESULT_GET_BMK_SUCCESS, (char*)strSendData.c_str(), strSendData.length());
+			break;
+			#endif
+
+			std::string strEzs = stGetBmkInfo.szEzs;
+			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
+			pTask->strUri = SysSet.m_strBackUri + "/getStudents";
+			pTask->nExamID = stGetBmkInfo.nExamID;
+			pTask->nSubjectID = stGetBmkInfo.nSubjectID;
+
+			char szExamInfo[30] = { 0 };
+			sprintf(szExamInfo, "/%d/%d", stGetBmkInfo.nExamID, stGetBmkInfo.nSubjectID);
+			pTask->strUri.append(szExamInfo);
+
+			pTask->pUser = pUser;
+			pTask->strEzs = SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
+			pTask->strMsg = "getExamBmk";
+
+			Poco::JSON::Object obj;
+			obj.set("examId", stGetBmkInfo.nExamID);
+			obj.set("subjectId", stGetBmkInfo.nSubjectID);
+			stringstream ss;
+			obj.stringify(ss, 0);
+			pTask->strRequest = ss.str();
+
+			g_fmScanReq.lock();
+			g_lScanReq.push_back(pTask);
+			g_fmScanReq.unlock();
+		}
+		break;
 	default:
 		bFind = FALSE;
 		break;

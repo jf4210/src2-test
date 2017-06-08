@@ -131,6 +131,7 @@
     <ClInclude Include="ctrl\skinscrollwnd.h" />
     <ClInclude Include="ctrl\TransparentStatic.h" />
     <ClInclude Include="ctrl\XPGroupBox.h" />
+    <ClInclude Include="ExamBmkRecordDlg.h" />
     <ClInclude Include="ExamInfoMgrDlg.h" />
     <ClInclude Include="FileUpLoad.h" />
     <ClInclude Include="global.h" />
@@ -220,6 +221,7 @@
     <ClCompile Include="ctrl\skinscrollwnd.cpp" />
     <ClCompile Include="ctrl\TransparentStatic.cpp" />
     <ClCompile Include="ctrl\XPGroupBox.cpp" />
+    <ClCompile Include="ExamBmkRecordDlg.cpp" />
     <ClCompile Include="ExamInfoMgrDlg.cpp" />
     <ClCompile Include="FileUpLoad.cpp" />
     <ClCompile Include="global.cpp" />

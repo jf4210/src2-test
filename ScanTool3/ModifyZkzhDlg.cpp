@@ -265,7 +265,7 @@ void CModifyZkzhDlg::InitData()
 	USES_CONVERSION;
 	for (auto pPaper : m_pPapers->lPaper)
 	{
-		if (pPaper->strSN.empty() || pPaper->bModifyZKZH || (pPaper->nZkzhInBmkStatus != 1 && g_lBmkStudent.size() > 0))
+		if (pPaper->strSN.empty() || pPaper->bModifyZKZH || (pPaper->nZkzhInBmkStatus != 1 && _bGetBmk_))
 		{
 			//添加进试卷列表控件
 			int nCount = m_lcZkzh.GetItemCount();
@@ -289,7 +289,7 @@ void CModifyZkzhDlg::InitData()
 				strDetailInfo = "考号为空";
 			if (pPaper->bModifyZKZH)
 				strDetailInfo = "有过修改";
-			if (g_lBmkStudent.size() > 0)
+			if (_bGetBmk_)
 			{
 				if (pPaper->nZkzhInBmkStatus == -1)
 					strDetailInfo = "发生重号";
@@ -358,7 +358,7 @@ void CModifyZkzhDlg::InitData()
 		std::string strDetailInfo;
 		if (pPaper->bModifyZKZH)
 			strDetailInfo = "有过修改";
-		if (g_lBmkStudent.size() > 0)
+		if (_bGetBmk_)
 		{
 			if (pPaper->nZkzhInBmkStatus == -1)
 				strDetailInfo = "发生重号";
