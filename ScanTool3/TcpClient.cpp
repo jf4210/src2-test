@@ -647,13 +647,15 @@ void CTcpClient::HandleCmd()
 						}
 					}
 					//²åÈëÊý¾Ý¿â
-					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
-					CStudentMgr studentMgr;
-					bool bResult = studentMgr.InitDB(strDbPath);
-					std::string strTableName = Poco::format("T%d_%d", nExamID, nSubID);			//"student";
-					if (bResult) bResult = studentMgr.InitTable(strTableName);
-					if (bResult) bResult = studentMgr.InsertData(g_lBmkStudent, strTableName);
-
+					if (nSubID > 0)
+					{
+						std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+						CStudentMgr studentMgr;
+						bool bResult = studentMgr.InitDB(strDbPath);
+						std::string strTableName = Poco::format("T%d_%d", nExamID, nSubID);			//"student";
+						if (bResult) bResult = studentMgr.InitTable(strTableName);
+						if (bResult) bResult = studentMgr.InsertData(g_lBmkStudent, strTableName);
+					}
 					if (g_lBmkStudent.size() > 0)
 						_bGetBmk_ = true;
 				}

@@ -45,4 +45,5 @@ public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnCbnSelchangeComboBmkSubject();
 	afx_msg void OnCbnSelchangeComboBmkScanstatus();
+	afx_msg void OnBnClickedBtnExambmkExportscan();
 };

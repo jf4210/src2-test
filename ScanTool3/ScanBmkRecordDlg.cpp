@@ -58,6 +58,7 @@ BEGIN_MESSAGE_MAP(CScanBmkRecordDlg, CDialog)
 	ON_WM_ERASEBKGND()
 	ON_WM_SIZE()
 	ON_NOTIFY(NM_CLICK, IDC_LIST_Bmk, &CScanBmkRecordDlg::OnNMClickListBmk)
+	ON_BN_CLICKED(IDC_BTN_ExportScan, &CScanBmkRecordDlg::OnBnClickedBtnExportscan)
 END_MESSAGE_MAP()
 
 
@@ -68,7 +69,7 @@ void CScanBmkRecordDlg::InitUI()
 	SetFontSize(m_nStatusSize);
 	UpDateInfo();
 
-	m_bmpBtnExport.SetStateBitmap(IDB_RecordDlg_Btn_Hover, 0, IDB_RecordDlg_Btn);
+	m_bmpBtnExport.SetStateBitmap(IDB_RecordDlg_Btn, 0, IDB_RecordDlg_Btn_Hover);
 	m_bmpBtnExport.SetWindowText(_T("导出未扫名单"));
 
 	CBitmap bmp;
@@ -308,4 +309,66 @@ void CScanBmkRecordDlg::OnNMClickListBmk(NMHDR *pNMHDR, LRESULT *pResult)
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	// TODO:  在此添加控件通知处理程序代码
 	*pResult = 0;
+}
+
+
+void CScanBmkRecordDlg::OnBnClickedBtnExportscan()
+{
+	std::string strData;
+	USES_CONVERSION;
+	int nColumns = m_lcBmk.GetColumns();	//除去不可动的表头，剩下的表头(即每个科目表头)平分剩下的宽度
+	if (nColumns > 0)
+	{
+		CHeaderCtrl *pHead = m_lcBmk.GetHeaderCtrl();
+		for (int i = 1; i < nColumns; i++)
+		{
+			HDITEM hdItem = { 0 };
+			TCHAR szBuf[129] = { 0 };
+			hdItem.mask = HDI_TEXT; //取字符掩码
+			hdItem.cchTextMax = 128; //缓冲区大小
+			hdItem.pszText = szBuf; //字符缓冲区    
+			pHead->GetItem(i, &hdItem);
+			TRACE("head: %d\t", hdItem.pszText);
+			strData.append(T2A(szBuf));
+			strData.append("\t\t");
+		}
+	}
+	strData.append("\r\n");
+
+	int nCount = m_lcBmk.GetItemCount();
+	for (int i = 0; i < nCount; i++)
+	{
+		std::string strRowData;
+		for (int j = 1; j < nColumns; j++)
+		{
+			CString strItem = m_lcBmk.GetItemText(i, j);
+			if (strItem == _T("未扫"))
+			{
+				strData.append(T2A(strItem));
+				strData.append("\t\t");
+			}
+		}
+		strData.append("\r\n");
+	}
+
+
+
+	TCHAR szFilter[] = { _T("TXT Files (*.txt)|*.txt|Excel Files (*.xls)|*.xls||") };
+	CString fileName;
+	fileName = "*.*";
+
+	CFileDialog dlg(FALSE, _T("*.txt"), _T(""), OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, szFilter, NULL);
+	dlg.m_ofn.lpstrDefExt = _T(".txt");  
+
+	if (dlg.DoModal() == IDOK)
+	{
+		fileName = dlg.GetFolderPath() + _T("\\") + dlg.GetFileName();
+		CFile file;
+		file.Open(fileName, CFile::modeCreate | CFile::modeReadWrite);
+		//file.Write(fileName.GetBuffer(fileName.GetLength()),fileName.GetLength());  
+
+		//将编辑框中的内容写到文件中  
+		file.Write(strData.c_str(), strData.length());
+		file.Close();
+	}
 }

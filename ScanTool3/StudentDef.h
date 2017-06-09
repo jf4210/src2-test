@@ -45,6 +45,9 @@ typedef struct _allStudentInfo4Exam_	//针对考试的学生列表信息，包含各个科目信息
 	std::string strSchool;		//gb2312
 	L_SUBJECTSCANSTATUS lSubjectScanStatus;	//科目扫描状态
 }ST_ALLSTUDENT, *pST_ALLSTUDENT;
+
+typedef std::list<ST_ALLSTUDENT>		ALLSTUDENT_LIST;	//单个考试中所有科目的报名库列表
+typedef std::map<int, ALLSTUDENT_LIST>	EXAMBMK_MAP;		//针对可能下载多个考试的报名库的情况
 #endif
 
 typedef struct _studentInfo_

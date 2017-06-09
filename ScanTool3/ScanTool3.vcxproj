@@ -165,8 +165,9 @@
     <ClInclude Include="StudentMgr.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TcpClient.h" />
-    <ClInclude Include="TestDlg.h" />
+    <ClInclude Include="NewMessageBox.h" />
     <ClInclude Include="Thread.h" />
+    <ClInclude Include="TipBaseDlg.h" />
     <ClInclude Include="VagueSearchDlg.h" />
     <ClInclude Include="WaitDownloadDlg.h" />
     <ClInclude Include="XListCtrl\AdvComboBox.h" />
@@ -257,8 +258,9 @@
     </ClCompile>
     <ClCompile Include="StudentMgr.cpp" />
     <ClCompile Include="TcpClient.cpp" />
-    <ClCompile Include="TestDlg.cpp" />
+    <ClCompile Include="NewMessageBox.h.cpp" />
     <ClCompile Include="Thread.cpp" />
+    <ClCompile Include="TipBaseDlg.cpp" />
     <ClCompile Include="VagueSearchDlg.cpp" />
     <ClCompile Include="WaitDownloadDlg.cpp" />
     <ClCompile Include="XListCtrl\AdvComboBox.cpp" />

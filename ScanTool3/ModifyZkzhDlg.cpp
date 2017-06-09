@@ -47,7 +47,7 @@ BEGIN_MESSAGE_MAP(CModifyZkzhDlg, CDialog)
 	ON_NOTIFY(NM_HOVER, IDC_LIST_Zkzh, &CModifyZkzhDlg::OnNMHoverListZkzh)
 	ON_REGISTERED_MESSAGE(WM_XLISTCTRL_EDIT_END, OnEditEnd)
 	ON_REGISTERED_MESSAGE(WM_XLISTCTRL_LBUTTONDOWN_EDIT_CLICKED, OnLBtnDownEdit)
-	ON_BN_CLICKED(IDC_BTN_SAVE, &CModifyZkzhDlg::OnBnClickedBtnSave)
+	ON_BN_CLICKED(IDC_BTN_SAVE_ModifiSnDlg, &CModifyZkzhDlg::OnBnClickedBtnSave)
 // 	ON_BN_CLICKED(IDC_RADIO_SearchZkzh, &CModifyZkzhDlg::OnBnClickedRadioSearchzkzh)
 // 	ON_BN_CLICKED(IDC_RADIO_SearchName, &CModifyZkzhDlg::OnBnClickedRadioSearchname)
 // 	ON_BN_CLICKED(IDC_BTN_Search, &CModifyZkzhDlg::OnBnClickedBtnSearch)
@@ -240,9 +240,9 @@ void CModifyZkzhDlg::InitCtrlPosition()
 		GetDlgItem(IDC_EDIT_Zkzh)->MoveWindow(nCurrentLeft, nCurrentTop, nListCtrlWidth - nGap - 35 - nGap - nBtnW, nBtnH);
 		nCurrentLeft += (nListCtrlWidth - nGap - 35 - nGap - nBtnW + nGap);
 	}
-	if (GetDlgItem(IDC_BTN_SAVE)->GetSafeHwnd())
+	if (GetDlgItem(IDC_BTN_SAVE_ModifiSnDlg)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_BTN_SAVE)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
+		GetDlgItem(IDC_BTN_SAVE_ModifiSnDlg)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
 		nCurrentLeft = nLeftGap + nListCtrlWidth + nGap;
 	}
 	//-------------------------------------------------

@@ -3,40 +3,47 @@
 
 #include "stdafx.h"
 #include "ScanTool3.h"
-#include "TestDlg.h"
+#include "NewMessageBox.h"
 #include "afxdialogex.h"
 
 // CTestDlg 对话框
 
-IMPLEMENT_DYNAMIC(CTestDlg, CDialog)
+IMPLEMENT_DYNAMIC(CNewMessageBox, CDialog)
 
-CTestDlg::CTestDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CTestDlg::IDD, pParent)
+CNewMessageBox::CNewMessageBox(CWnd* pParent /*=NULL*/)
+: CTipBaseDlg(CNewMessageBox::IDD, pParent)
 {
 
 }
 
-CTestDlg::~CTestDlg()
+CNewMessageBox::~CNewMessageBox()
 {
 }
 
-void CTestDlg::DoDataExchange(CDataExchange* pDX)
+void CNewMessageBox::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 }
 
 
-BEGIN_MESSAGE_MAP(CTestDlg, CDialog)
-	ON_WM_SIZE()
+BOOL CNewMessageBox::OnInitDialog()
+{
+	CDialog::OnInitDialog();
+
+	return TRUE;
+}
+
+BEGIN_MESSAGE_MAP(CNewMessageBox, CTipBaseDlg)
+//	ON_WM_SIZE()
 //	ON_WM_NCPAINT()
-	ON_WM_NCHITTEST()
+//	ON_WM_NCHITTEST()
 END_MESSAGE_MAP()
 
 
 // CTestDlg 消息处理程序
 
-
-void CTestDlg::OnSize(UINT nType, int cx, int cy)
+#if 0
+void CNewMessageBox::OnSize(UINT nType, int cx, int cy)
 {
 	CDialog::OnSize(nType, cx, cy);
 
@@ -44,12 +51,12 @@ void CTestDlg::OnSize(UINT nType, int cx, int cy)
 	CRect rc;
 	GetWindowRect(&rc);
 	rc -= rc.TopLeft();
-	m_rgn.CreateRoundRectRgn(rc.left, rc.top, rc.right, rc.bottom, 200, 200);
+	m_rgn.CreateRoundRectRgn(rc.left, rc.top, rc.right, rc.bottom, 50, 50);
 	SetWindowRgn(m_rgn, TRUE);
 }
 
 
-void CTestDlg::OnNcPaint()
+void CNewMessageBox::OnNcPaint()
 {
 	// TODO:  在此处添加消息处理程序代码
 	// 不为绘图消息调用 CDialog::OnNcPaint()
@@ -87,7 +94,7 @@ void CTestDlg::OnNcPaint()
 }
 
 
-LRESULT CTestDlg::OnNcHitTest(CPoint point)
+LRESULT CNewMessageBox::OnNcHitTest(CPoint point)
 {
 	CRect rcWndRect;
 	GetWindowRect(rcWndRect);
@@ -96,3 +103,4 @@ LRESULT CTestDlg::OnNcHitTest(CPoint point)
 		return HTCAPTION;
 	return CDialog::OnNcHitTest(point);
 }
+#endif

@@ -572,7 +572,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				{
 					Poco::JSON::Object objSubStatus;
 					objSubStatus.set("subjectID", 590 + j);
-					objSubStatus.set("scaned", 0);
+					objSubStatus.set("scaned", (j + i) % 2);
 					arryScanStatus.add(objSubStatus);
 				}
 				objStudent.set("scanStatus", arryScanStatus);

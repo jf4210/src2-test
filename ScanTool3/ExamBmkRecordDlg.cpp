@@ -25,7 +25,7 @@ void CExamBmkRecordDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_Bmk, m_lcBmk);
-	DDX_Control(pDX, IDC_BTN_ExportScan, m_bmpBtnExport);
+	DDX_Control(pDX, IDC_BTN_ExamBmk_ExportScan, m_bmpBtnExport);
 	DDX_Control(pDX, IDC_COMBO_Bmk_Subject, m_comboSubject);
 	DDX_Control(pDX, IDC_COMBO_Bmk_ScanStatus, m_comboScanStatus);
 }
@@ -58,6 +58,7 @@ BEGIN_MESSAGE_MAP(CExamBmkRecordDlg, CDialog)
 	ON_WM_SIZE()
 	ON_CBN_SELCHANGE(IDC_COMBO_Bmk_Subject, &CExamBmkRecordDlg::OnCbnSelchangeComboBmkSubject)
 	ON_CBN_SELCHANGE(IDC_COMBO_Bmk_ScanStatus, &CExamBmkRecordDlg::OnCbnSelchangeComboBmkScanstatus)
+	ON_BN_CLICKED(IDC_BTN_ExamBmk_ExportScan, &CExamBmkRecordDlg::OnBnClickedBtnExambmkExportscan)
 END_MESSAGE_MAP()
 
 
@@ -71,8 +72,8 @@ void CExamBmkRecordDlg::InitUI()
 	m_comboScanStatus.AdjustDroppedWidth();
 	m_comboSubject.AdjustDroppedWidth();
 
-	m_bmpBtnExport.SetStateBitmap(IDB_RecordDlg_Btn_Hover, 0, IDB_RecordDlg_Btn);
-	m_bmpBtnExport.SetWindowText(_T("导出未扫名单"));
+	m_bmpBtnExport.SetStateBitmap(IDB_RecordDlg_Btn, 0, IDB_RecordDlg_Btn_Hover);
+	m_bmpBtnExport.SetWindowText(_T("导出当前名单"));
 
 	CBitmap bmp;
 	bmp.LoadBitmap(IDB_Scrollbar);
@@ -121,14 +122,14 @@ void CExamBmkRecordDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_STATIC_2)->GetSafeHwnd())
 	{
-		int nW = 50;
+		int nW = 60;
 		GetDlgItem(IDC_STATIC_2)->MoveWindow(nCurrLeft, nCurrTop, nW, nStaticH);
 		nCurrLeft += (nW + nGap);
 	}
-	if (m_comboSubject.GetSafeHwnd())
+	if (m_comboScanStatus.GetSafeHwnd())
 	{
 		int nW = 60;
-		m_comboSubject.MoveWindow(nCurrLeft, nCurrTop, nW, nStaticH);
+		m_comboScanStatus.MoveWindow(nCurrLeft, nCurrTop, nW, nStaticH);
 		nCurrTop += (nStaticH + nGap);
 	}
 
@@ -151,13 +152,13 @@ void CExamBmkRecordDlg::InitCtrlPosition()
 		}
 	}
 
-	if (GetDlgItem(IDC_BTN_ExportScan)->GetSafeHwnd())
+	if (GetDlgItem(IDC_BTN_ExamBmk_ExportScan)->GetSafeHwnd())
 	{
 		int nW = 100;
 		int nH = 25;
 		nCurrLeft = cx / 2 - nW / 2;
 		nCurrTop = cy - nBottomGap + nGap;
-		GetDlgItem(IDC_BTN_ExportScan)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
+		GetDlgItem(IDC_BTN_ExamBmk_ExportScan)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
 	}
 }
 
@@ -185,6 +186,12 @@ HBRUSH CExamBmkRecordDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
 	UINT CurID = pWnd->GetDlgCtrlID();
+	if (CurID == IDC_STATIC_1 || CurID == IDC_STATIC_2)
+	{
+		//		pDC->SetBkColor(RGB(255, 255, 255));
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
 	return hbr;
 }
 
@@ -233,10 +240,11 @@ void CExamBmkRecordDlg::ResetBmkList()
 		//科目列表从报名库的第3列插入
 		m_lcBmk.InsertColumn(i + 3, A2T(objSubject->strSubjName.c_str()), LVCFMT_CENTER, 100);
 		m_comboSubject.AddString(A2T(objSubject->strSubjName.c_str()));
-		m_comboSubject.SetItemData(m_comboSubject.GetCount(), objSubject->nSubjID);
+		m_comboSubject.SetItemData(m_comboSubject.GetCount() - 1, objSubject->nSubjID);
 		++i;
 	}
-
+	m_comboSubject.SetCurSel(0);
+	m_comboScanStatus.SetCurSel(0);
 	InitCtrlPosition();
 
 	EXAMBMK_MAP::iterator itFindExam = g_mapBmkMgr.find(_pCurrExam_->nExamID);
@@ -244,6 +252,9 @@ void CExamBmkRecordDlg::ResetBmkList()
 		return;
 
 	//insert data
+#if 1
+	GetBmkSearchResult();
+#else
 	for (auto objExamStudent : itFindExam->second)
 	{
 		int nCount = m_lcBmk.GetItemCount();
@@ -282,6 +293,7 @@ void CExamBmkRecordDlg::ResetBmkList()
 			}
 		}
 	}
+#endif
 }
 
 void CExamBmkRecordDlg::GetBmkSearchResult()
@@ -332,6 +344,7 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 	//insert data
 	for (auto objExamStudent : itFindExam->second)
 	{
+		bool bInsertItem = false;	//是否已经插入列表了
 		for (auto examSubject : objExamStudent.lSubjectScanStatus)
 		{
 			if (strCurrSubject == "全部")
@@ -341,30 +354,88 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 				{
 					if (examSubject.nSubjectID == tmpSubject->nSubjID)
 					{
-						//*****************************************
-						//如果科目为全部的话，扫描状态的过滤无用，因为，对每个考生，可能某个科目没扫，某个科目又扫了，所以这种情况下，这个考生都要出现在列表中
-						//除非某个考生所有科目都没有扫描
-						//*****************************************
-						std::string strScanStatus;
-						if (examSubject.nScaned)
+						if (strCurrScanStatus == "全部")
 						{
-							strScanStatus = "OK";
+							std::string strScanStatus;
+							if (examSubject.nScaned)
+							{
+								strScanStatus = "OK";
+							}
+							else
+							{
+								strScanStatus = "未扫";
+							}
+							int nCount = m_lcBmk.GetItemCount();
+							if (!bInsertItem)
+							{
+								char szCount[10] = { 0 };
+								sprintf_s(szCount, "%d", nCount + 1);
+								m_lcBmk.InsertItem(nCount, NULL);
+
+								m_lcBmk.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+								m_lcBmk.SetItemText(nCount, 1, (LPCTSTR)A2T(objExamStudent.strZkzh.c_str()));
+								m_lcBmk.SetItemText(nCount, 2, (LPCTSTR)A2T(objExamStudent.strName.c_str()));
+								m_lcBmk.SetItemText(nCount, 3 + j, (LPCTSTR)A2T(strScanStatus.c_str()));
+								bInsertItem = true;
+							}
+							else
+								m_lcBmk.SetItemText(nCount - 1, 3 + j, (LPCTSTR)A2T(strScanStatus.c_str()));
+
+							break;
 						}
 						else
 						{
-							strScanStatus = "未扫";
+							if (nCurrScanStatus == 1)	//已扫
+							{
+								std::string strScanStatus;
+								if (examSubject.nScaned)
+								{
+									strScanStatus = "OK";
+									int nCount = m_lcBmk.GetItemCount();
+									if (!bInsertItem)
+									{
+										char szCount[10] = { 0 };
+										sprintf_s(szCount, "%d", nCount + 1);
+										m_lcBmk.InsertItem(nCount, NULL);
+
+										m_lcBmk.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+										m_lcBmk.SetItemText(nCount, 1, (LPCTSTR)A2T(objExamStudent.strZkzh.c_str()));
+										m_lcBmk.SetItemText(nCount, 2, (LPCTSTR)A2T(objExamStudent.strName.c_str()));
+										m_lcBmk.SetItemText(nCount, 3 + j, (LPCTSTR)A2T(strScanStatus.c_str()));
+										bInsertItem = true;
+									}
+									else
+										m_lcBmk.SetItemText(nCount - 1, 3 + j, (LPCTSTR)A2T(strScanStatus.c_str()));
+
+									break;
+								}
+							}
+							else
+							{
+								std::string strScanStatus;
+								if (examSubject.nScaned == 0)
+								{
+									strScanStatus = "未扫";
+									int nCount = m_lcBmk.GetItemCount();
+									if (!bInsertItem)
+									{
+										char szCount[10] = { 0 };
+										sprintf_s(szCount, "%d", nCount + 1);
+										m_lcBmk.InsertItem(nCount, NULL);
+
+										m_lcBmk.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+										m_lcBmk.SetItemText(nCount, 1, (LPCTSTR)A2T(objExamStudent.strZkzh.c_str()));
+										m_lcBmk.SetItemText(nCount, 2, (LPCTSTR)A2T(objExamStudent.strName.c_str()));
+										m_lcBmk.SetItemText(nCount, 3 + j, (LPCTSTR)A2T(strScanStatus.c_str()));
+										bInsertItem = true;
+									}
+									else
+										m_lcBmk.SetItemText(nCount - 1, 3 + j, (LPCTSTR)A2T(strScanStatus.c_str()));
+
+									break;
+								}
+							}
 						}
-						int nCount = m_lcBmk.GetItemCount();
-						char szCount[10] = { 0 };
-						sprintf_s(szCount, "%d", nCount + 1);
-						m_lcBmk.InsertItem(nCount, NULL);
-
-						m_lcBmk.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
-						m_lcBmk.SetItemText(nCount, 1, (LPCTSTR)A2T(objExamStudent.strZkzh.c_str()));
-						m_lcBmk.SetItemText(nCount, 2, (LPCTSTR)A2T(objExamStudent.strName.c_str()));
-
-						m_lcBmk.SetItemText(nCount, 3 + j, (LPCTSTR)A2T(strScanStatus.c_str()));
-						break;
 					}
 					++j;
 				}
@@ -422,7 +493,7 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 							std::string strScanStatus;
 							if (examSubject.nScaned == 0)
 							{
-								strScanStatus = "OK";
+								strScanStatus = "未扫";
 								int nCount = m_lcBmk.GetItemCount();
 								char szCount[10] = { 0 };
 								sprintf_s(szCount, "%d", nCount + 1);
@@ -456,4 +527,63 @@ void CExamBmkRecordDlg::OnCbnSelchangeComboBmkScanstatus()
 	if (m_comboScanStatus.GetCurSel() < 0)
 		return;
 	GetBmkSearchResult();
+}
+
+
+void CExamBmkRecordDlg::OnBnClickedBtnExambmkExportscan()
+{
+	std::string strData;
+	USES_CONVERSION;
+	int nColumns = m_lcBmk.GetColumns();	//除去不可动的表头，剩下的表头(即每个科目表头)平分剩下的宽度
+	if (nColumns > 0)
+	{
+		CHeaderCtrl *pHead = m_lcBmk.GetHeaderCtrl();
+		for (int i = 1; i < nColumns; i++)
+		{
+			HDITEM hdItem = { 0 };
+			TCHAR szBuf[129] = { 0 };
+			hdItem.mask = HDI_TEXT; //取字符掩码
+			hdItem.cchTextMax = 128; //缓冲区大小
+			hdItem.pszText = szBuf; //字符缓冲区    
+			pHead->GetItem(i, &hdItem);
+			TRACE("head: %d\t", hdItem.pszText);
+			strData.append(T2A(szBuf));
+			strData.append("\t\t");
+		}
+	}
+	strData.append("\r\n");
+
+	int nCount = m_lcBmk.GetItemCount();
+	for (int i = 0; i < nCount; i++)
+	{
+		std::string strRowData;
+		for (int j = 1; j < nColumns; j++)
+		{
+			CString strItem = m_lcBmk.GetItemText(i, j);
+			strData.append(T2A(strItem));
+			strData.append("\t\t");
+		}
+		strData.append("\r\n");
+	}
+
+
+
+	TCHAR szFilter[] = { _T("TXT Files (*.txt)|*.txt|Excel Files (*.xls)|*.xls||") };
+	CString fileName;
+	fileName = "*.*";
+
+	CFileDialog dlg(FALSE, _T("*.txt"), _T(""), OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, szFilter, NULL);
+	dlg.m_ofn.lpstrDefExt = _T(".txt");  
+
+	if (dlg.DoModal() == IDOK)
+	{
+		fileName = dlg.GetFolderPath() + _T("\\") + dlg.GetFileName();  
+		CFile file;
+		file.Open(fileName, CFile::modeCreate | CFile::modeReadWrite);
+		//file.Write(fileName.GetBuffer(fileName.GetLength()),fileName.GetLength());  
+
+		//将编辑框中的内容写到文件中  
+		file.Write(strData.c_str(), strData.length());
+		file.Close();
+	}
 }

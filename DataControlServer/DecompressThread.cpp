@@ -695,9 +695,9 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 					Poco::JSON::Object jsnOmr;
 #if 1	//test
 					strExamID = Poco::format("%d", nExamId);
-					jsnSn.set("examId", strExamID);
+					jsnOmr.set("examId", strExamID);
 #else
-					jsnSn.set("examId", nExamId);
+					jsnOmr.set("examId", nExamId);
 #endif
 //					jsnOmr.set("examId", nExamId);
 					jsnOmr.set("subjectId", nSubjectId);
@@ -716,7 +716,11 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 
 						Poco::JSON::Array::Ptr jsnElectOmrArry = jsnPaperObj->getArray("electOmr");
 						Poco::JSON::Object jsnElectOmr;
+					#if 1	//test
+						jsnElectOmr.set("examId", strExamID);
+					#else
 						jsnElectOmr.set("examId", nExamId);
+					#endif
 						jsnElectOmr.set("subjectId", nSubjectId);
 						jsnElectOmr.set("userId", nUserId);
 						jsnElectOmr.set("teacherId", nTeacherId);

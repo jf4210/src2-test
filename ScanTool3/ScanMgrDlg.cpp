@@ -800,55 +800,6 @@ void CScanMgrDlg::InitScanner()
 	}
 }
 
-#if 0
-void CScanMgrDlg::OnTimer(UINT_PTR nIDEvent)
-{
-	if (nIDEvent == TIMER_CheckRecogComplete)
-	{
-		if (!_pCurrPapersInfo_)
-		{
-			KillTimer(TIMER_CheckRecogComplete);
-			return;
-		}
-
-		bool bRecogComplete = true;
-		bool bNeedShowZkzhDlg = false;
-		for (auto p : _pCurrPapersInfo_->lPaper)
-		{
-			if (!p->bRecogComplete)
-			{
-				bRecogComplete = false;
-				break;
-			}
-			if (p->strSN.empty())
-				bNeedShowZkzhDlg = true;
-		}
-		if (bRecogComplete)
-		{
-			USES_CONVERSION;
-			if (_nScanStatus_ == 2 && (/*g_nOperatingMode == 1 ||*/ g_bModifySN) && bNeedShowZkzhDlg)
-			{
-				KillTimer(TIMER_CheckRecogComplete);
-				if (!m_pStudentMgr)
-				{
-					USES_CONVERSION;
-					m_pStudentMgr = new CStudentMgr();
-					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
-					bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
-				}
-// 				CModifyZkzhDlg zkzhDlg(m_pModel, m_pPapersInfo, m_pStudentMgr);
-// 				zkzhDlg.DoModal();
-// 
-// 				ShowPapers(m_pPapersInfo);
-			}
-			else
-				KillTimer(TIMER_CheckRecogComplete);
-		}
-	}
-	CDialog::OnTimer(nIDEvent);
-}
-#endif
-
 void CScanMgrDlg::OnCbnSelchangeComboSubject()
 {
 	if (!chkChangeExamLegal())

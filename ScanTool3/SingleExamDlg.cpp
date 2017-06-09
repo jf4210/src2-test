@@ -6,7 +6,8 @@
 #include "SingleExamDlg.h"
 #include "afxdialogex.h"
 #include "ScanTool3Dlg.h"
-#include "TestDlg.h"
+#include "NewMessageBox.h"
+#include "Net_Cmd_Protocol.h"
 
 // CSingleExamDlg 对话框
 
@@ -411,12 +412,34 @@ void CSingleExamDlg::OnBnClickedBtnScanprocesses()
 {
 	_pCurrExam_ = _pExamInfo;
 	CScanTool3Dlg* pDlg = (CScanTool3Dlg*)AfxGetMainWnd();
+
+	//检查是否需要下载报名库
+	EXAMBMK_MAP::iterator itFindExam = g_mapBmkMgr.find(_pCurrExam_->nExamID);
+	if (itFindExam == g_mapBmkMgr.end())		//如果已经下载了当前考试的报名库，就提取报名库，如何直接下载模板
+	{
+		ST_GET_BMK_INFO stGetBmkInfo;
+		ZeroMemory(&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
+		stGetBmkInfo.nExamID = _pCurrExam_->nExamID;
+		stGetBmkInfo.nSubjectID = 0;
+		strcpy(stGetBmkInfo.szEzs, _strEzs_.c_str());
+
+		g_eGetBmk.reset();
+
+		pTCP_TASK pTcpTask = new TCP_TASK;
+		pTcpTask->usCmd = USER_GET_EXAM_BMK;
+		pTcpTask->nPkgLen = sizeof(ST_GET_BMK_INFO);
+		memcpy(pTcpTask->szSendBuf, (char*)&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
+		g_fmTcpTaskLock.lock();
+		g_lTcpTask.push_back(pTcpTask);
+		g_fmTcpTaskLock.unlock();
+	}
+
 	pDlg->SwitchDlg(1, 4);		//显示第1个窗口，并一开始就显示这个窗口中的第4个窗口
 }
 
 
 void CSingleExamDlg::OnBnClickedBtnMakescanmodel()
 {
-	CTestDlg	dlg;
+	CNewMessageBox	dlg;
 	dlg.DoModal();
 }

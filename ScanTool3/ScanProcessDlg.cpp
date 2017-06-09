@@ -639,6 +639,38 @@ void CScanProcessDlg::SetStatusShow(int nType, CString strShowInfo, bool bWarn /
 	}
 }
 
+void CScanProcessDlg::UpdateExamBmk()
+{
+	if (g_lBmkStudent.size() <= 0)
+		return;
+
+	if (!_pCurrExam_ || !_pCurrSub_)
+		return;
+
+	EXAMBMK_MAP::iterator itFindExam = g_mapBmkMgr.find(_pCurrExam_->nExamID);
+	if (itFindExam == g_mapBmkMgr.end())
+		return;
+
+	for (auto subjectStudent : g_lBmkStudent)
+	{
+		for (auto examStudent : itFindExam->second)
+		{
+			if (examStudent.strZkzh == subjectStudent.strZkzh)
+			{
+				for (auto sujectItem : examStudent.lSubjectScanStatus)
+				{
+					if (sujectItem.nSubjectID == _pCurrSub_->nSubjID)
+					{
+						sujectItem.nScaned = subjectStudent.nScaned;
+						break;
+					}
+				}
+				break;
+			}
+		}
+	}
+}
+
 void CScanProcessDlg::ShowPapers(pPAPERSINFO pPapers)
 {
 	//显示所有识别完成的准考证号
@@ -744,7 +776,7 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 			if (MessageBox(strMsg, _T("提示"), MB_YESNO) != IDYES)
 			{
 				bDelCurrPapers = false;
-			//	return;
+				return;
 			}
 		}		
 	}
@@ -1024,6 +1056,8 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	strStatus.Format(_T("正在保存%s"), A2T(szZipName));
 	SetStatusShow(2, strStatus);
 
+	UpdateExamBmk();
+
 	TRACE("------------------- 5\n");
 	_pCurrPapersInfo_ = NULL;
 	ResetPicList();
@@ -1105,8 +1139,8 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 void CScanProcessDlg::OnBnClickedBtnScanprocess()
 {
 	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
-	pDlg->ShowChildDlg(4);
 	pDlg->SetReturnDlg(2);
+	pDlg->ShowChildDlg(4);
 }
 
 
