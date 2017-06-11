@@ -441,6 +441,6 @@ void CSingleExamDlg::OnBnClickedBtnScanprocesses()
 void CSingleExamDlg::OnBnClickedBtnMakescanmodel()
 {
 	CNewMessageBox	dlg;
-//	dlg.setShowInfo(2, "test");
+	dlg.setShowInfo(2, "test");
 	dlg.DoModal();
 }

@@ -12,7 +12,7 @@ IMPLEMENT_DYNAMIC(CNewMessageBox, CDialog)
 
 CNewMessageBox::CNewMessageBox(CWnd* pParent /*=NULL*/)
 : CTipBaseDlg(CNewMessageBox::IDD, pParent)
-, m_nShowType(0), m_nBtn(1)
+, m_nShowType(1), m_nBtn(1)
 {
 
 }
@@ -35,6 +35,7 @@ BOOL CNewMessageBox::OnInitDialog()
 	CTipBaseDlg::OnInitDialog();
 
 	InitUI();
+	InitCtrlPosition();
 
 	return TRUE;
 }
@@ -57,56 +58,6 @@ void CNewMessageBox::OnSize(UINT nType, int cx, int cy)
 	InitCtrlPosition();
 }
 
-#if 0
-void CNewMessageBox::OnNcPaint()
-{
-	// TODO:  在此处添加消息处理程序代码
-	// 不为绘图消息调用 CDialog::OnNcPaint()
-	CWindowDC dc(this);
-	CRect rcWindow;
-	CRect rcClient;
-	this->GetClientRect(rcClient);
-	this->ClientToScreen(rcClient);
-	this->GetWindowRect(rcWindow);
-	CPoint point = rcWindow.TopLeft();
-	rcClient.OffsetRect(-point);
-	rcWindow.OffsetRect(-point);
-	int windowWidth = rcWindow.Width();
-	int windowHeight = rcWindow.Height();
-	HDC hMemDC = ::CreateCompatibleDC(dc.m_hDC);
-	HBITMAP hBmp = ::CreateCompatibleBitmap(dc.m_hDC, windowWidth, windowHeight);
-	::SelectObject(hMemDC, hBmp);
-	// 	Graphics graphics(hMemDC);
-	// 	graphics.Clear(Color(255, 255, 255, 255));
-	// 	graphics.SetSmoothingMode(SmoothingModeHighQuality);
-	//TODO:使用GDI+的DrawImage函数来贴上圆角图片,或者使用RoundRect函数来为对话框画上圆角线
-#if 0 /*使用DrawImage来绘制圆角图片*/
-	ImageAttributes ia;
-	ia.SetWrapMode(WrapModeTileFlipXY);
-	graphic.DrawImage(pImg_LTFrame, ……….);
-#endif
-#if 1 /*使用RoundRect来绘制圆角线*/
-	RoundRect(hMemDC, rcWindow.left, rcWindow.top, rcWindow.right, rcWindow.bottom, 10, 10);
-#endif
-	dc.IntersectClipRect(rcWindow);
-	dc.ExcludeClipRect(rcClient);
-	::BitBlt(dc.m_hDC, 0, 0, windowWidth, windowHeight, hMemDC, 0, 0, SRCCOPY);
-	::DeleteDC(hMemDC);
-	::DeleteObject(hBmp);
-}
-
-
-LRESULT CNewMessageBox::OnNcHitTest(CPoint point)
-{
-	CRect rcWndRect;
-	GetWindowRect(rcWndRect);
-	//	rcWndRect.bottom = rcWndRect.top + 40;	//40
-	if (rcWndRect.PtInRect(point))
-		return HTCAPTION;
-	return CDialog::OnNcHitTest(point);
-}
-#endif
-
 
 void CNewMessageBox::InitCtrlPosition()
 {
@@ -127,20 +78,26 @@ void CNewMessageBox::InitCtrlPosition()
 	if (GetDlgItem(IDC_STATIC_ShowMsg)->GetSafeHwnd())
 	{
 		int nStaticW = (cx - nLeftGap - nRightGap) * 0.8;
-		int nStaticH = 30;
+		int nStaticH = 40;
 		nCurrLeft = cx / 2 - nStaticW / 2;
-		nCurrTop = nTopGap + (cy - nTopGap - nBottomGap) / 2;
+
+		BITMAP bmp;
+		if (m_bmpBk.GetSafeHandle())
+			m_bmpBk.GetBitmap(&bmp);
+
+		nCurrTop = nTopGap + cy / 2 + bmp.bmHeight / 2 - 40;
 		GetDlgItem(IDC_STATIC_ShowMsg)->MoveWindow(nCurrLeft, nCurrTop, nStaticW, nStaticH);
 	}
 
 	if (m_nBtn == 1)
 	{
 		int nBtnW = (cx - nLeftGap - nRightGap) * 0.3;
-		if (nBtnW < 30) nBtnW = 30;
-		int nBtnH = 30;
+		if (nBtnW < 40) nBtnW = 40;
+		int nBtnH = 40;
 		if (m_bmpBtnOK.GetSafeHwnd())
 		{
 			nCurrLeft = cx / 2 - nBtnW / 2;
+			nCurrTop = cy - nBottomGap - nBtnH;
 			m_bmpBtnOK.MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
 		}
 	}
@@ -149,6 +106,7 @@ void CNewMessageBox::InitCtrlPosition()
 		int nBtnW = (cx - nLeftGap - nRightGap) * 0.3;
 		if (nBtnW < 30) nBtnW = 30;
 		int nBtnH = 30;
+		nCurrTop = cy - nBottomGap - nBtnH;
 		if (m_bmpBtnOK.GetSafeHwnd())
 		{
 			nCurrLeft = cx / 2 - nBtnW - nGap / 2;
@@ -170,15 +128,17 @@ void CNewMessageBox::InitUI()
 		m_bmpBk.DeleteObject();
 		m_bmpBk.LoadBitmap(IDB_Popup_BK_NoStudent);
 		m_nBtn = 2;
+		if (m_bmpBtnClose.GetSafeHwnd()) m_bmpBtnClose.ShowWindow(SW_SHOW);
 	}
 	else if (m_nShowType == 2)
 	{
 		m_bmpBk.DeleteObject();
 		m_bmpBk.LoadBitmap(IDB_Popup_BK_NoModel);
 		m_nBtn = 1;
+		if (m_bmpBtnClose.GetSafeHwnd()) m_bmpBtnClose.ShowWindow(SW_HIDE);
 	}
 
-	InitCtrlPosition();
+//	InitCtrlPosition();
 }
 
 void CNewMessageBox::setShowInfo(int nType, std::string strMsg)
@@ -205,7 +165,7 @@ BOOL CNewMessageBox::OnEraseBkgnd(CDC* pDC)
 
 	m_bmpBk.GetBitmap(&bmp);
 	iX = rcClient.Width() / 2 - bmp.bmWidth / 2;
-	iY = rcClient.Height() / 2 - bmp.bmHeight / 2 - 30;
+	iY = rcClient.Height() / 2 - bmp.bmHeight / 2 - 40;
 	GetClientRect(&rcClient);
 
 	//	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));
