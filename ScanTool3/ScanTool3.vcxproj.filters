@@ -121,6 +121,9 @@
     <Filter Include="控件\提示窗口">
       <UniqueIdentifier>{71cfa959-777f-4de0-be29-6d43f308002b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="控件\基础窗口">
+      <UniqueIdentifier>{d9e5c7e8-33b6-4ac1-a65c-81b779618cc2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -343,7 +346,7 @@
       <Filter>控件\提示窗口</Filter>
     </ClInclude>
     <ClInclude Include="TipBaseDlg.h">
-      <Filter>头文件</Filter>
+      <Filter>控件\基础窗口</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -533,11 +536,11 @@
     <ClCompile Include="ExamBmkRecordDlg.cpp">
       <Filter>扫描界面窗口\扫描记录查询窗口</Filter>
     </ClCompile>
-    <ClCompile Include="NewMessageBox.h.cpp">
-      <Filter>控件\提示窗口</Filter>
-    </ClCompile>
     <ClCompile Include="TipBaseDlg.cpp">
-      <Filter>源文件</Filter>
+      <Filter>控件\基础窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="NewMessageBox.cpp">
+      <Filter>控件\提示窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -693,6 +696,18 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="skin\scanMgr\scanning.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\..\wpf界面\ScanTool\nostudent.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\..\wpf界面\ScanTool\notemplate.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\popup\nostudent.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\popup\notemplate.bmp">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>

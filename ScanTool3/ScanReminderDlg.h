@@ -14,7 +14,7 @@ public:
 // 对话框数据
 	enum { IDD = IDD_SCANREMINDERDLG };
 
-	void SetShowTips(CString str, bool bWarn = false);
+	void		SetShowTips(CString str, bool bWarn = false);
 	void		UpdataScanCount(int nCount);
 	void		SetShowScanCount(bool bShow);	//是否需要显示扫描数量的提示
 private:

@@ -232,6 +232,7 @@
     <ClCompile Include="ModifyZkzhDlg.cpp" />
     <ClCompile Include="MultiPlatform4TYDlg.cpp" />
     <ClCompile Include="MyCodeConvert.cpp" />
+    <ClCompile Include="NewMessageBox.cpp" />
     <ClCompile Include="picCtrl\CvvImage.cpp" />
     <ClCompile Include="picCtrl\CV_picture.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -258,7 +259,6 @@
     </ClCompile>
     <ClCompile Include="StudentMgr.cpp" />
     <ClCompile Include="TcpClient.cpp" />
-    <ClCompile Include="NewMessageBox.h.cpp" />
     <ClCompile Include="Thread.cpp" />
     <ClCompile Include="TipBaseDlg.cpp" />
     <ClCompile Include="VagueSearchDlg.cpp" />
@@ -283,6 +283,8 @@
     <None Include="res\ScanTool3.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\..\wpf界面\ScanTool\nostudent.bmp" />
+    <Image Include="..\..\wpf界面\ScanTool\notemplate.bmp" />
     <Image Include="res\icon1.ico" />
     <Image Include="res\ScanTool3.ico" />
     <Image Include="skin\examList\1_01_01.bmp" />
@@ -311,6 +313,8 @@
     <Image Include="skin\login\登录按钮_hover.bmp" />
     <Image Include="skin\login\登录背景.bmp" />
     <Image Include="skin\login\顶部.bmp" />
+    <Image Include="skin\popup\nostudent.bmp" />
+    <Image Include="skin\popup\notemplate.bmp" />
     <Image Include="skin\recordDlg\tabclick.bmp" />
     <Image Include="skin\recordDlg\tabnormal.bmp" />
     <Image Include="skin\recordDlg\tabover.bmp" />
