@@ -9,6 +9,7 @@
 #include "Net_Cmd_Protocol.h"
 #include "ZipObj.h"
 #include "ScanTool3Dlg.h"
+#include "NewMessageBox.h"
 // CScanMgrDlg 对话框
 
 IMPLEMENT_DYNAMIC(CScanMgrDlg, CDialog)
@@ -239,12 +240,18 @@ bool CScanMgrDlg::chkChangeExamLegal()
 {
 	if (_eCurrDlgType_ == Dlg_ScanRecordMgr)
 	{
-		AfxMessageBox(_T("当前窗口不允许切换"));
+//		AfxMessageBox(_T("当前窗口不允许切换"));
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "当前窗口不允许切换");
+		dlg.DoModal();
 		return false;
 	}
 	if (_nScanStatus_ == 1)
 	{
-		AfxMessageBox(_T("正在扫描, 请稍后。。。"));
+//		AfxMessageBox(_T("正在扫描, 请稍后。。。"));
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "正在扫描, 请稍后。。。");
+		dlg.DoModal();
 		return false;
 	}
 	if (!_pCurrPapersInfo_)
@@ -263,15 +270,23 @@ bool CScanMgrDlg::chkChangeExamLegal()
 		}
 		if (!bRecogComplete)
 		{
-			AfxMessageBox(_T("请稍后，图像正在识别！"));
+//			AfxMessageBox(_T("请稍后，图像正在识别！"));
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(2, 1, "请稍后，图像正在识别！");
+			dlg.DoModal();
 			return false;
 		}
 	}
 	int nCount = _pCurrPapersInfo_->lPaper.size() + _pCurrPapersInfo_->lIssue.size();
 	if (nCount > 0)
 	{
-		if (MessageBox(_T("当前试卷袋信息未保存，是否切换？"), _T("警告"), MB_YESNO) != IDYES)
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 2, "当前试卷袋信息未保存，是否切换？");
+		dlg.DoModal();
+		if (dlg.m_nResult != IDYES)
 			return false;
+// 		if (MessageBox(_T("当前试卷袋信息未保存，是否切换？"), _T("警告"), MB_YESNO) != IDYES)
+// 			return false;
 	}
 
 	return true;

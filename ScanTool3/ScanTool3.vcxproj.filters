@@ -710,5 +710,17 @@
     <Image Include="skin\popup\notemplate.bmp">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="skin\popup\btn_hover.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\popup\btn_normal.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\hand1.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\net1.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>

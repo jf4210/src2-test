@@ -55,9 +55,11 @@ private:
 	CString		_strExamTime;		//考试时间
 	CString		_strExamType;		//考试类型：期中、期末、周练
 	CString		_strExamGrade;
+	CString		_strShowPaperType;	//手阅or网阅
 	CString		_strNetHandType;	//网阅or手阅
 
 	CBitmap		m_bmpExamType;		//图片类型，网阅还是手阅
+	CBitmap		m_bmpExamTypeLeft;		//图片类型，网阅还是手阅
 	CBmpButton	m_bmpBtnScanProcess;
 	CBmpButton	m_bmpBtnMakeModel;
 

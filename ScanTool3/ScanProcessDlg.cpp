@@ -7,7 +7,7 @@
 #include "afxdialogex.h"
 #include "ScanMgrDlg.h"
 #include "ModifyZkzhDlg.h"
-
+#include "NewMessageBox.h"
 // CScanProcessDlg 对话框
 
 IMPLEMENT_DYNAMIC(CScanProcessDlg, CDialog)
@@ -771,19 +771,33 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 		int nCount = _pCurrPapersInfo_->lPaper.size() + _pCurrPapersInfo_->lIssue.size();
 		if (nCount > 0)
 		{
-			CString strMsg = _T("");
-			strMsg.Format(_T("当前试卷袋有%d份试卷未保存，是否删除?"), nCount);
-			if (MessageBox(strMsg, _T("提示"), MB_YESNO) != IDYES)
+			std::string strMsg =Poco::format("当前试卷袋有%d份试卷未保存，是否删除?", nCount);
+
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(2, 2, strMsg);
+			dlg.DoModal();
+			if (dlg.m_nResult != IDYES)
 			{
 				bDelCurrPapers = false;
 				return;
 			}
+
+// 			CString strMsg = _T("");
+// 			strMsg.Format(_T("当前试卷袋有%d份试卷未保存，是否删除?"), nCount);
+// 			if (MessageBox(strMsg, _T("提示"), MB_YESNO) != IDYES)
+// 			{
+// 				bDelCurrPapers = false;
+// 				return;
+// 			}
 		}		
 	}
 
 	if (!_pModel_)
 	{
-		AfxMessageBox(_T("当前扫描模板为空"));
+//		AfxMessageBox(_T("当前扫描模板为空"));
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "当前扫描模板为空");
+		dlg.DoModal();
 		return;
 	}
 
@@ -919,13 +933,21 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 {
 	if (!_pCurrPapersInfo_)
 	{
-		AfxMessageBox(_T("没有试卷袋信息"));
+//		AfxMessageBox(_T("没有试卷袋信息"));
+
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "没有试卷袋信息");
+		dlg.DoModal();
 		return;
 	}
 
 	if (_pCurrPapersInfo_->nPapersType == 1)
 	{
-		AfxMessageBox(_T("这是已经打包过的试卷包，不能再次打包上传"));
+//		AfxMessageBox(_T("这是已经打包过的试卷包，不能再次打包上传"));
+
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "这是已经打包过的试卷包，不能再次打包上传");
+		dlg.DoModal();
 		return;
 	}
 
@@ -942,7 +964,11 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 		}
 		if (!bRecogComplete)
 		{
-			AfxMessageBox(_T("请稍后，图像正在识别！"));
+//			AfxMessageBox(_T("请稍后，图像正在识别！"));
+
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(2, 1, "请稍后，图像正在识别！");
+			dlg.DoModal();
 			return;
 		}
 	}
@@ -962,17 +988,28 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	{
 		if (g_nOperatingMode == 2)
 		{
-			AfxMessageBox(_T("存在识别异常试卷，不能上传，请先处理异常试卷"));
+//			AfxMessageBox(_T("存在识别异常试卷，不能上传，请先处理异常试卷"));
+
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(2, 1, "存在识别异常试卷，不能上传，请先处理异常试卷");
+			dlg.DoModal();
 			return;
 		}
 		else
 		{
-			CString strMsg = _T("");
-			strMsg.Format(_T("存在%d份问题试卷，这些试卷需要单独找出扫描，此次将不上传这%d份试卷，是否确定上传?"), _pCurrPapersInfo_->lIssue.size(), _pCurrPapersInfo_->lIssue.size());
-			if (MessageBox(strMsg, _T("警告"), MB_YESNO) != IDYES)
-			{
+			std::string strMsg = Poco::format("存在%d份问题试卷，这些试卷需要单独找出扫描，此次将不上传这%d份试卷，是否确定上传?", (int)_pCurrPapersInfo_->lIssue.size(), (int)_pCurrPapersInfo_->lIssue.size());
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(2, 2, strMsg);
+			dlg.DoModal();
+			if (dlg.m_nResult != IDYES)
 				return;
-			}
+
+// 			CString strMsg = _T("");
+// 			strMsg.Format(_T("存在%d份问题试卷，这些试卷需要单独找出扫描，此次将不上传这%d份试卷，是否确定上传?"), _pCurrPapersInfo_->lIssue.size(), _pCurrPapersInfo_->lIssue.size());
+// 			if (MessageBox(strMsg, _T("警告"), MB_YESNO) != IDYES)
+// 			{
+// 				return;
+// 			}
 			_pCurrPapersInfo_->nPaperCount = _pCurrPapersInfo_->lPaper.size();		//修改扫描数量，将问题试卷删除，不算到扫描试卷中。
 		}
 	}
@@ -1087,7 +1124,10 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 
 	if (_nScanStatus_ == 1)
 	{
-		AfxMessageBox(_T("正在扫描，请稍后。。。"));
+//		AfxMessageBox(_T("正在扫描，请稍后。。。"));
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "正在扫描，请稍后。。。");
+		dlg.DoModal();
 		return;
 	}
 
@@ -1104,7 +1144,10 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 		}
 		if (!bRecogComplete)
 		{
-			AfxMessageBox(_T("请等待识别完成。。。"));
+//			AfxMessageBox(_T("请等待识别完成。。。"));
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(2, 1, "请等待识别完成。。。");
+			dlg.DoModal();
 			return;
 		}
 	}	

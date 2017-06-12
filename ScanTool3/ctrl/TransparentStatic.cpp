@@ -161,10 +161,26 @@ void CTransparentStatic::OnPaint()
 	
 // 	CBrush br(bkcolor);
 // 	dc.FillRect(client_rect,&br);
+
+	int nLines = 1;
+	int nSingleCount = 0;
+	LOGFONT	logfont;
+	if (m_font.GetSafeHandle())
+	{
+		m_font.GetLogFont(&logfont);
+		int nCharW = logfont.lfWidth;
+		int nSingleCount = client_rect.Width() / nCharW - 1;
+		nLines = szText.GetLength() / nSingleCount;
+		if (nLines > 1)
+			m_bMultiLine = TRUE;
+		else
+			m_bMultiLine = FALSE;
+	}
+
 	DWORD dwFormat;
-	if(m_bLeftAlign)
-		dwFormat = DT_LEFT  | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS;
-	else if(m_bCenterAlign)
+	if (m_bLeftAlign)
+		dwFormat = DT_LEFT | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS;
+	else if (m_bCenterAlign)
 		dwFormat = DT_CENTER | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS;
 	else
 		dwFormat = DT_RIGHT | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS;
@@ -180,10 +196,6 @@ void CTransparentStatic::OnPaint()
 		LOGFONT	logfont;
 		if(m_font.GetSafeHandle())
 		{
-			m_font.GetLogFont(&logfont);
-			int nCharW = logfont.lfWidth;
-			int nSingleCount = client_rect.Width() / nCharW - 1;
-			int nLines = szText.GetLength() / nSingleCount;
 			for (int i = 0; i < nLines; i++)
 			{
 				szText.Insert(nSingleCount * (i + 1), _T("\r\n"));

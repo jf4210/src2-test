@@ -265,12 +265,21 @@ void CTcpClient::HandleCmd()
 					//EXAMINFO examInfo;
 					pEXAMINFO pExamInfo = new EXAMINFO;
 				
-					if (!_bHandModel_)
-						pExamInfo->nExamID = objExamInfo->get("id").convert<int>();
-					else
-						pExamInfo->strExamID = objExamInfo->get("id").convert<std::string>();
+					pExamInfo->nExamID = objExamInfo->get("id").convert<int>();
 					pExamInfo->strExamName = CMyCodeConvert::Utf8ToGb2312(objExamInfo->get("name").convert<std::string>());
+					
+					if (objExamInfo->has("examID"))
+						pExamInfo->strExamID = objExamInfo->get("examID").convert<std::string>();
+					if (objExamInfo->has("examModel"))
+						pExamInfo->nModel = objExamInfo->get("examModel").convert<int>();
+					if (objExamInfo->has("examTime"))
+						pExamInfo->strExamTime = objExamInfo->get("examTime").convert<std::string>();
 
+					if (pExamInfo->nModel == 1)
+					{
+						if (objExamInfo->has("personid"))
+							pExamInfo->strPersonID = objExamInfo->get("personid").convert<std::string>();
+					}
 					if (!objExamInfo->isNull("examType"))
 					{
 						Poco::JSON::Object::Ptr objExamType = objExamInfo->getObject("examType");
@@ -280,8 +289,16 @@ void CTcpClient::HandleCmd()
 					if (!objExamInfo->isNull("grade"))
 					{
 						Poco::JSON::Object::Ptr objGrade = objExamInfo->getObject("grade");
-						if (objGrade->has("id"))
-							pExamInfo->nExamGrade = objGrade->get("id").convert<int>();
+// 						if (pExamInfo->nModel == 1)
+// 						{
+// 							if (objGrade->has("id"))
+// 								pExamInfo->nExamGrade = objGrade->get("id").convert<int>();
+// 						}
+// 						else
+// 						{
+// 							if (objGrade->has("id"))
+// 								pExamInfo->nExamGrade = objGrade->get("id").convert<int>();
+// 						}
 						if (objGrade->has("name"))
 							pExamInfo->strGradeName = CMyCodeConvert::Utf8ToGb2312(objGrade->get("name").convert<std::string>());
 					}
@@ -291,14 +308,18 @@ void CTcpClient::HandleCmd()
 					for (int j = 0; j < arrySubjects->size(); j++)
 					{
 						Poco::JSON::Object::Ptr objSubject = arrySubjects->getObject(j);
-						//EXAM_SUBJECT subjectInfo;
 						pEXAM_SUBJECT pSubjectInfo = new EXAM_SUBJECT;
-						pSubjectInfo->nSubjID = objSubject->get("id").convert<int>();
-//						pSubjectInfo->nSubjCode = objSubject->get("code").convert<int>();
-						pSubjectInfo->strSubjName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("name").convert<std::string>());
-						if (!objSubject->isNull("scanTemplateName"))
-							pSubjectInfo->strModelName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("scanTemplateName").convert<std::string>());
-
+						if (pExamInfo->nModel == 1)
+						{
+							pSubjectInfo->strSubjName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("name").convert<std::string>());
+						}
+						else
+						{
+							pSubjectInfo->nSubjID = objSubject->get("id").convert<int>();
+							pSubjectInfo->strSubjName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("name").convert<std::string>());
+							if (!objSubject->isNull("scanTemplateName"))
+								pSubjectInfo->strModelName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("scanTemplateName").convert<std::string>());
+						}
 						pExamInfo->lSubjects.push_back(pSubjectInfo);
 					}
 					g_lExamList.push_back(pExamInfo);

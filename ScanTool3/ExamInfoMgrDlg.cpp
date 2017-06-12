@@ -288,12 +288,15 @@ void CExamInfoMgrDlg::GetSearchResultExamList()
 					{
 						pShowExam = new EXAMINFO();
 						pShowExam->nExamID		= pExam->nExamID;
-						pShowExam->nExamGrade	= pExam->nExamGrade;
+						pShowExam->nModel		= pExam->nModel;
+//						pShowExam->nExamGrade	= pExam->nExamGrade;
 						pShowExam->nExamState	= pExam->nExamState;
 						pShowExam->strExamID	= pExam->strExamID;
 						pShowExam->strExamName	= pExam->strExamName;
 						pShowExam->strExamTypeName = pExam->strExamTypeName;
 						pShowExam->strGradeName = pExam->strGradeName;
+						pShowExam->strExamTime	= pExam->strExamTime;
+						pShowExam->strPersonID	= pExam->strPersonID;
 					}
 					pEXAM_SUBJECT pShowSub = new EXAM_SUBJECT();
 //					memcpy(pShowSub, pSub, sizeof(EXAM_SUBJECT));

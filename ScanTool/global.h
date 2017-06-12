@@ -91,7 +91,7 @@
 	#define Test_TraceLog		//测试日志
 #else	//release版本
 	#define	 TEST_MODEL_NAME	//模板名称测试
-//	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
+	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
@@ -155,9 +155,9 @@
 
 #ifndef TO_WHTY
 	#ifdef PUBLISH_VERSION
-		#define SOFT_VERSION	_T("2.10511-1")
+		#define SOFT_VERSION	_T("2.10612-1")
 	#else
-		#define SOFT_VERSION	_T("2.10511-1-Pir")		//-Pri
+		#define SOFT_VERSION	_T("2.10612-1-Pir")		//-Pri
 	#endif
 #else
 	#define SOFT_VERSION	_T("2.1-0323")

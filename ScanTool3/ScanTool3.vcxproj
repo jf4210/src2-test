@@ -300,6 +300,8 @@
     <Image Include="skin\examList\4_03hover.bmp" />
     <Image Include="skin\examList\4_10.bmp" />
     <Image Include="skin\examList\4_10hover.bmp" />
+    <Image Include="skin\examList\hand1.bmp" />
+    <Image Include="skin\examList\net1.bmp" />
     <Image Include="skin\examList\title1.bmp" />
     <Image Include="skin\examList\title2.bmp" />
     <Image Include="skin\login\bitmap1.bmp" />
@@ -313,6 +315,8 @@
     <Image Include="skin\login\登录按钮_hover.bmp" />
     <Image Include="skin\login\登录背景.bmp" />
     <Image Include="skin\login\顶部.bmp" />
+    <Image Include="skin\popup\btn_hover.bmp" />
+    <Image Include="skin\popup\btn_normal.bmp" />
     <Image Include="skin\popup\nostudent.bmp" />
     <Image Include="skin\popup\notemplate.bmp" />
     <Image Include="skin\recordDlg\tabclick.bmp" />

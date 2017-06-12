@@ -6,7 +6,7 @@
 #include "VagueSearchDlg.h"
 #include "afxdialogex.h"
 #include "ModifyZkzhDlg.h"
-
+#include "NewMessageBox.h"
 // CVagueSearchDlg ¶Ô»°¿ò
 
 IMPLEMENT_DYNAMIC(CVagueSearchDlg, CDialog)
@@ -236,7 +236,9 @@ void CVagueSearchDlg::OnBnClickedBtnSearch()
 	}
 	else
 	{
-		AfxMessageBox(_T("ËÑË÷Ê§°Ü"));
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "ËÑË÷Ê§°Ü");
+		dlg.DoModal();
 	}
 }
 

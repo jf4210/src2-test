@@ -453,12 +453,14 @@ typedef struct _examInfo_
 {
 	int			nModel;				//0--网阅，1--手阅（天喻的考试）
 	int			nExamID;			//考试ID
-	int			nExamGrade;			//年级
+//	int			nExamGrade;			//年级
 	int			nExamState;			//考试状态
 	std::string	strExamID;			//天喻版本, 考试ID
 	std::string strExamName;		//考试名称
+	std::string strExamTime;		//考试时间
 	std::string strExamTypeName;	//考试类型名称
 	std::string strGradeName;		//年级名称
+	std::string strPersonID;		//手阅时有用
 	SUBJECT_LIST lSubjects;			//科目列表
 	_examInfo_()
 	{

@@ -34,6 +34,7 @@ void CSingleExamDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_STATIC_ExamGrade, _strExamGrade);
 	DDX_Text(pDX, IDC_STATIC_ExamTime, _strExamTime);
 	DDX_Text(pDX, IDC_STATIC_NetHand_Mode, _strNetHandType);
+	DDX_Text(pDX, IDC_STATIC_PaperType, _strShowPaperType);
 	DDX_Control(pDX, IDC_BTN_ScanProcesses, m_bmpBtnScanProcess);
 	DDX_Control(pDX, IDC_BTN_MakeScanModel, m_bmpBtnMakeModel);
 }
@@ -110,9 +111,15 @@ void CSingleExamDlg::InitUI()
 	if (_pExamInfo)
 	{
 		if (_pExamInfo->nModel != 0)
+		{
 			m_bmpExamType.LoadBitmap(IDB_Exam_Hand);
+			m_bmpExamTypeLeft.LoadBitmap(IDB_Exam_Hand1);
+		}
 		else
+		{
 			m_bmpExamType.LoadBitmap(IDB_Exam_Net);
+			m_bmpExamTypeLeft.LoadBitmap(IDB_Exam_Net1);
+		}
 	}	
 }
 
@@ -122,17 +129,20 @@ void CSingleExamDlg::InitData()
 	_strExamTime = _T("无考试时间");
 	_strExamType = _T("");
 	_strExamGrade = _T("");
+	_strShowPaperType = _T("题卡类型:");
 
 	if (!_pExamInfo) return;
 	if (_pExamInfo->nModel != 0)
 	{
 		m_bmpExamType.LoadBitmap(IDB_Exam_Hand);
+		m_bmpExamTypeLeft.LoadBitmap(IDB_Exam_Hand1);
 		_strNetHandType = _T("手");
 		m_bmpBtnMakeModel.ShowWindow(SW_HIDE);
 	}
 	else
 	{
 		m_bmpExamType.LoadBitmap(IDB_Exam_Net);
+		m_bmpExamTypeLeft.LoadBitmap(IDB_Exam_Net1);
 		_strNetHandType = _T("网");
 		m_bmpBtnMakeModel.ShowWindow(SW_SHOW);
 	}
@@ -141,6 +151,11 @@ void CSingleExamDlg::InitData()
 	_strExamName = A2T(_pExamInfo->strExamName.c_str());
 	_strExamType = A2T(_pExamInfo->strExamTypeName.c_str());
 	_strExamGrade = A2T(_pExamInfo->strGradeName.c_str());
+	_strExamTime = A2T(_pExamInfo->strExamTime.c_str());
+	if (_pExamInfo->nModel == 0)
+		_strShowPaperType = _T("题卡类型: 网阅");
+	else
+		_strShowPaperType = _T("题卡类型: 手阅");
 	UpdateData(FALSE);
 }
 
@@ -191,8 +206,16 @@ void CSingleExamDlg::InitCtrlPosition()
 	if (GetDlgItem(IDC_STATIC_ExamTime)->GetSafeHwnd())
 	{
 		int nW = cx - nLeftGap - nRightGap - nBtnW - nGap - nBtnW - nGap * 5;
-		nW = nW * 0.5 - nGap * 2;
+		nW = nW * 0.2 - nGap * 2;
 		GetDlgItem(IDC_STATIC_ExamTime)->MoveWindow(nCurrLeft, nCurrTop, nW, nStaticH);
+		nCurrLeft += (nW + nGap);
+//		nCurrTop += (nStaticH + nGap * 2);
+	}
+	if (GetDlgItem(IDC_STATIC_PaperType)->GetSafeHwnd())
+	{
+		int nW = cx - nLeftGap - nRightGap - nBtnW - nGap - nBtnW - nGap * 5;
+		nW = nW * 0.5 - nGap * 2;
+		GetDlgItem(IDC_STATIC_PaperType)->MoveWindow(nCurrLeft, nCurrTop, nW, nStaticH);
 		nCurrTop += (nStaticH + nGap * 2);
 	}
 	if (GetDlgItem(IDC_BTN_ScanProcesses)->GetSafeHwnd())
@@ -257,7 +280,7 @@ void CSingleExamDlg::SetFontSize(int nSize)
 							DEFAULT_PITCH | FF_SWISS,
 							_T("Arial"));
 	m_fontNetHandType.DeleteObject();
-	m_fontNetHandType.CreateFont(13, 0, 0, 0,
+	m_fontNetHandType.CreateFont(14, 0, 0, 0,
 							FW_BOLD, FALSE, FALSE, 0,
 							DEFAULT_CHARSET,
 							OUT_DEFAULT_PRECIS,
@@ -381,6 +404,13 @@ BOOL CSingleExamDlg::OnEraseBkgnd(CDC* pDC)
 		m_bmpExamType.GetBitmap(&bmp);
 		pDC->SetStretchBltMode(COLORONCOLOR);
 		pDC->StretchBlt(rcClient.right - bmp.bmWidth - 10, 1, bmp.bmWidth, bmp.bmHeight, &memDC, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+
+
+		pOldBmp = memDC.SelectObject(&m_bmpExamTypeLeft);
+		m_bmpExamTypeLeft.GetBitmap(&bmp);
+		pDC->SetStretchBltMode(COLORONCOLOR);
+		pDC->StretchBlt(rcClient.left, rcClient.top, bmp.bmWidth, rcClient.bottom, &memDC, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
+
 		memDC.SelectObject(pOldBmp);
 	}
 	memDC.DeleteDC();
@@ -393,7 +423,7 @@ HBRUSH CSingleExamDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
 	UINT CurID = pWnd->GetDlgCtrlID();
-	if (CurID == IDC_STATIC_ExamName || CurID == IDC_STATIC_ExamType || CurID == IDC_STATIC_ExamGrade || CurID == IDC_STATIC_ExamTime)
+	if (CurID == IDC_STATIC_ExamName || CurID == IDC_STATIC_ExamType || CurID == IDC_STATIC_ExamGrade || CurID == IDC_STATIC_ExamTime || CurID == IDC_STATIC_PaperType)
 	{
 		//		pDC->SetBkColor(RGB(255, 255, 255));
 		pDC->SetBkMode(TRANSPARENT);
@@ -401,7 +431,7 @@ HBRUSH CSingleExamDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	}
 	else if (CurID == IDC_STATIC_NetHand_Mode)
 	{
-		pDC->SetTextColor(RGB(173, 209, 255));
+		pDC->SetTextColor(RGB(230, 230, 255));	//173, 209, 255
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}
@@ -441,6 +471,6 @@ void CSingleExamDlg::OnBnClickedBtnScanprocesses()
 void CSingleExamDlg::OnBnClickedBtnMakescanmodel()
 {
 	CNewMessageBox	dlg;
-	dlg.setShowInfo(2, "test");
+	dlg.setShowInfo(1, 1, "测试");
 	dlg.DoModal();
 }

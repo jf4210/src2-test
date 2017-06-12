@@ -12,7 +12,7 @@ IMPLEMENT_DYNAMIC(CNewMessageBox, CDialog)
 
 CNewMessageBox::CNewMessageBox(CWnd* pParent /*=NULL*/)
 : CTipBaseDlg(CNewMessageBox::IDD, pParent)
-, m_nShowType(1), m_nBtn(1)
+, m_nShowType(1), m_nBtn(1), m_nStatusSize(25), m_nResult(0)
 {
 
 }
@@ -30,11 +30,27 @@ void CNewMessageBox::DoDataExchange(CDataExchange* pDX)
 }
 
 
+BOOL CNewMessageBox::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		if (m_nBtn > 1 && (pMsg->wParam == VK_ESCAPE || pMsg->wParam == VK_RETURN))
+		{
+			return TRUE;
+		}
+	}
+	return CTipBaseDlg::PreTranslateMessage(pMsg);
+}
+
 BOOL CNewMessageBox::OnInitDialog()
 {
 	CTipBaseDlg::OnInitDialog();
 
 	InitUI();
+
+	m_staticMsgShow.SubclassDlgItem(IDC_STATIC_ShowMsg, this);
+	m_staticMsgShow.SetCenterAlign();
+	SetFontSize(m_nStatusSize);
 	InitCtrlPosition();
 
 	return TRUE;
@@ -45,6 +61,9 @@ BEGIN_MESSAGE_MAP(CNewMessageBox, CTipBaseDlg)
 	//	ON_WM_NCPAINT()
 	//	ON_WM_NCHITTEST()
 	ON_WM_ERASEBKGND()
+	ON_WM_CTLCOLOR()
+	ON_BN_CLICKED(IDOK, &CNewMessageBox::OnBnClickedOk)
+	ON_BN_CLICKED(IDCANCEL, &CNewMessageBox::OnBnClickedCancel)
 END_MESSAGE_MAP()
 
 
@@ -77,15 +96,15 @@ void CNewMessageBox::InitCtrlPosition()
 
 	if (GetDlgItem(IDC_STATIC_ShowMsg)->GetSafeHwnd())
 	{
-		int nStaticW = (cx - nLeftGap - nRightGap) * 0.8;
-		int nStaticH = 40;
+		int nStaticW = (cx - nLeftGap - nRightGap) * 1;
+		int nStaticH = 50;
 		nCurrLeft = cx / 2 - nStaticW / 2;
 
 		BITMAP bmp;
 		if (m_bmpBk.GetSafeHandle())
 			m_bmpBk.GetBitmap(&bmp);
 
-		nCurrTop = nTopGap + cy / 2 + bmp.bmHeight / 2 - 40;
+		nCurrTop = nTopGap + cy / 2 + bmp.bmHeight / 2 - 35;
 		GetDlgItem(IDC_STATIC_ShowMsg)->MoveWindow(nCurrLeft, nCurrTop, nStaticW, nStaticH);
 	}
 
@@ -121,31 +140,87 @@ void CNewMessageBox::InitCtrlPosition()
 	Invalidate();
 }
 
+void CNewMessageBox::SetFontSize(int nSize)
+{
+	m_fontStatus.DeleteObject();
+	m_fontStatus.CreateFont(nSize, 12, 0, 0,
+							FW_BOLD, FALSE, FALSE, 0,
+							DEFAULT_CHARSET,
+							OUT_DEFAULT_PRECIS,
+							CLIP_DEFAULT_PRECIS,
+							DEFAULT_QUALITY,
+							DEFAULT_PITCH | FF_SWISS,
+							_T("Arial"));
+	m_fontBtn.DeleteObject();
+	m_fontBtn.CreateFont(20, 0, 0, 0,
+							FW_BOLD, FALSE, FALSE, 0,
+							DEFAULT_CHARSET,
+							OUT_DEFAULT_PRECIS,
+							CLIP_DEFAULT_PRECIS,
+							DEFAULT_QUALITY,
+							DEFAULT_PITCH | FF_SWISS,
+							_T("Arial"));
+
+//	GetDlgItem(IDC_STATIC_ShowMsg)->SetFont(&m_fontStatus);
+	m_staticMsgShow.SetShowFont(m_fontStatus);
+	m_bmpBtnOK.SetBtnFont(m_fontBtn);
+	m_bmpBtnClose.SetBtnFont(m_fontBtn);
+}
+
 void CNewMessageBox::InitUI()
 {
 	if (m_nShowType == 1)
 	{
 		m_bmpBk.DeleteObject();
 		m_bmpBk.LoadBitmap(IDB_Popup_BK_NoStudent);
-		m_nBtn = 2;
-		if (m_bmpBtnClose.GetSafeHwnd()) m_bmpBtnClose.ShowWindow(SW_SHOW);
+
+		if (m_nBtn == 1)
+		{
+			if (m_bmpBtnClose.GetSafeHwnd()) m_bmpBtnClose.ShowWindow(SW_HIDE);
+			if (m_bmpBtnOK.GetSafeHwnd())
+				m_bmpBtnOK.SetBmpBtnText(_T("¹Ø±Õ"));
+		}
+		else if (m_nBtn == 2)
+		{
+			if (m_bmpBtnClose.GetSafeHwnd())
+			{
+				m_bmpBtnClose.ShowWindow(SW_SHOW);
+				m_bmpBtnClose.SetBmpBtnText(_T("·ñ"));
+			}
+			if (m_bmpBtnOK.GetSafeHwnd())
+				m_bmpBtnOK.SetBmpBtnText(_T("ÊÇ"));
+		}
 	}
 	else if (m_nShowType == 2)
 	{
 		m_bmpBk.DeleteObject();
 		m_bmpBk.LoadBitmap(IDB_Popup_BK_NoModel);
-		m_nBtn = 1;
-		if (m_bmpBtnClose.GetSafeHwnd()) m_bmpBtnClose.ShowWindow(SW_HIDE);
+		
+		if (m_nBtn == 1)
+		{
+			if (m_bmpBtnClose.GetSafeHwnd()) m_bmpBtnClose.ShowWindow(SW_HIDE);
+		}
+		else if (m_nBtn == 2)
+		{
+			if (m_bmpBtnClose.GetSafeHwnd()) m_bmpBtnClose.ShowWindow(SW_SHOW);
+		}
 	}
+
+	m_bmpBtnOK.SetStateBitmap(IDB_Popup_Btn_Normal, 0, IDB_Popup_Btn_Hover);
+	m_bmpBtnOK.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), 0);
+	m_bmpBtnClose.SetStateBitmap(IDB_Popup_Btn_Normal, 0, IDB_Popup_Btn_Hover);
+	m_bmpBtnClose.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), 0);
+
 
 //	InitCtrlPosition();
 }
 
-void CNewMessageBox::setShowInfo(int nType, std::string strMsg)
+void CNewMessageBox::setShowInfo(int nType, int nBtns, std::string strMsg)
 {
 	USES_CONVERSION;
 	m_nShowType = nType;
 	m_strMsgShow = A2T(strMsg.c_str());
+	m_nBtn = nBtns;
 
 	InitUI();
 }
@@ -165,7 +240,7 @@ BOOL CNewMessageBox::OnEraseBkgnd(CDC* pDC)
 
 	m_bmpBk.GetBitmap(&bmp);
 	iX = rcClient.Width() / 2 - bmp.bmWidth / 2;
-	iY = rcClient.Height() / 2 - bmp.bmHeight / 2 - 40;
+	iY = rcClient.Height() / 2 - bmp.bmHeight / 2 - 35;
 	GetClientRect(&rcClient);
 
 	//	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));
@@ -181,4 +256,34 @@ BOOL CNewMessageBox::OnEraseBkgnd(CDC* pDC)
 	memDC.DeleteDC();
 
 	return TRUE;
+}
+
+
+HBRUSH CNewMessageBox::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CTipBaseDlg::OnCtlColor(pDC, pWnd, nCtlColor);
+
+	UINT CurID = pWnd->GetDlgCtrlID();
+	if (CurID == IDC_STATIC_ShowMsg)
+	{
+		pDC->SetTextColor(RGB(91, 77, 77));
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
+
+	return hbr;
+}
+
+
+void CNewMessageBox::OnBnClickedOk()
+{
+	m_nResult = IDYES;
+	CTipBaseDlg::OnOK();
+}
+
+
+void CNewMessageBox::OnBnClickedCancel()
+{
+	m_nResult = IDNO;
+	CTipBaseDlg::OnCancel();
 }

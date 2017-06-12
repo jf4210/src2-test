@@ -551,7 +551,8 @@ int CUserMgr::HandleHeader(CMission* pMission)
 
 			std::cout << "请求考试的报名库命令: " << stGetBmkInfo.nExamID << std::endl;
 
-			#ifdef _DEBUG	//测试数据，后期要删
+//			#ifdef _DEBUG	//测试数据，后期要删
+			#if 0
 			Poco::JSON::Object objBmkTestResult;
 			Poco::JSON::Object objStatus;
 			objStatus.set("success", true);

@@ -98,7 +98,7 @@ HBRUSH CTipBaseDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 }
 void CTipBaseDlg::DrawBorder(CDC* pDC, CRect rect)
 {
-	CPen pen(PS_SOLID, 2, RGB(108, 178, 254));	//166, 218, 239
+	CPen pen(PS_SOLID, 2, RGB(195, 195, 195));	//108, 178, 254
 	CPen* pOldPen = pDC->SelectObject(&pen);
 	pDC->SelectStockObject(NULL_BRUSH);
 //	pDC->Rectangle(&rect);

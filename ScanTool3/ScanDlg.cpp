@@ -7,7 +7,7 @@
 #include "afxdialogex.h"
 #include "ScanTool3Dlg.h"
 #include "ScanMgrDlg.h"
-
+#include "NewMessageBox.h"
 
 // CScanDlg 对话框
 
@@ -291,12 +291,18 @@ void CScanDlg::OnBnClickedBtnScan()
 	_nScanStatus_ = 0;
 	if (!_bLogin_)
 	{
-		AfxMessageBox(_T("未登录, 无法扫描"));
+		//		AfxMessageBox(_T("未登录, 无法扫描"));
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "未登录, 无法扫描");
+		dlg.DoModal();
 		return;
 	}
 	if (!_pModel_)
 	{
-		AfxMessageBox(_T("当前考试无模板信息"));	//模板解析错误
+//		AfxMessageBox(_T("当前考试无模板信息"));	//模板解析错误
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "当前考试无模板信息");
+		dlg.DoModal();
 		return;
 	}
 
@@ -394,7 +400,10 @@ void CScanDlg::OnBnClickedBtnScan()
 	}
 	else
 	{
-		AfxMessageBox(_T("获取扫描源失败"));
+		//		AfxMessageBox(_T("获取扫描源失败"));
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "获取扫描源失败");
+		dlg.DoModal();
 	}
 
 	char szRet[20] = { 0 };

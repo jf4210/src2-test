@@ -5,7 +5,7 @@
 #include "ScanTool3.h"
 #include "ModifyZkzhDlg.h"
 #include "afxdialogex.h"
-
+#include "NewMessageBox.h"
 
 // CModifyZkzhDlg 对话框
 
@@ -833,78 +833,6 @@ void CModifyZkzhDlg::OnBnClickedBtnSave()
 	ShowPaperByItem(m_nCurrentSelItem);
 }
 
-#if 0
-void CModifyZkzhDlg::OnBnClickedRadioSearchzkzh()
-{
-	if (((CButton*)GetDlgItem(IDC_RADIO_SearchZkzh))->GetCheck())
-	{
-		m_nSearchType = 2;
-		m_strSearchKey = _T("");
-		m_lcBmk.DeleteAllItems();
-		UpdateData(FALSE);
-	}
-}
-
-
-void CModifyZkzhDlg::OnBnClickedRadioSearchname()
-{
-	if (((CButton*)GetDlgItem(IDC_RADIO_SearchName))->GetCheck())
-	{
-		m_nSearchType = 1;
-		m_strSearchKey = _T("");
-		m_lcBmk.DeleteAllItems();
-		UpdateData(FALSE);
-	}
-}
-
-void CModifyZkzhDlg::OnBnClickedBtnSearch()
-{
-	UpdateData(TRUE);
-	USES_CONVERSION;
-	m_lcBmk.DeleteAllItems();
-	std::string strKey = T2A(m_strSearchKey);
-	STUDENT_LIST lResult;
-	std::string strTable = Poco::format("T%d_%d", m_pModel->nExamID, m_pModel->nSubjectID);
-	if (m_pStudentMgr && m_pStudentMgr->SearchStudent(strTable, strKey, m_nSearchType, lResult))
-	{
-		for (auto obj : lResult)
-		{
-			int nCount = m_lcBmk.GetItemCount();
-			char szCount[10] = { 0 };
-			sprintf_s(szCount, "%d", nCount + 1);
-			m_lcBmk.InsertItem(nCount, NULL);
-
-			m_lcBmk.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
-			m_lcBmk.SetItemText(nCount, 1, (LPCTSTR)A2T(obj.strName.c_str()));
-			m_lcBmk.SetItemText(nCount, 2, (LPCTSTR)A2T(obj.strZkzh.c_str()));
-			m_lcBmk.SetItemText(nCount, 3, (LPCTSTR)A2T(obj.strClassroom.c_str()));
-			m_lcBmk.SetItemText(nCount, 4, (LPCTSTR)A2T(obj.strSchool.c_str()));
-		}
-	}
-	else
-	{
-		AfxMessageBox(_T("搜索失败"));
-	}
-}
-
-void CModifyZkzhDlg::OnNMDblclkListZkzhsearchresult(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
-	*pResult = 0;
-	USES_CONVERSION;
-	CString strZkzh = m_lcBmk.GetItemText(pNMItemActivate->iItem, 2);
-	m_pCurrentShowPaper->strSN = T2A(strZkzh);
-	m_pCurrentShowPaper->bModifyZKZH = true;
-	//需要刷新未识别准考证号列表
-	
-
-	COLORREF crText, crBackground;
-	m_lcZkzh.GetItemColors(m_nCurrentSelItem, 2, crText, crBackground);
-	m_lcZkzh.SetItemText(m_nCurrentSelItem, 2, strZkzh, RGB(255, 0, 0), crBackground);
-	
-}
-#endif
-
 bool CModifyZkzhDlg::ReleaseData()
 {
 	if (m_pVagueSearchDlg)
@@ -926,8 +854,13 @@ bool CModifyZkzhDlg::ReleaseData()
 			pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
 			if (pPaper->strSN.empty())
 			{
-				if (MessageBox(_T("存在准考证号为空的考生，如果不修改，将影响此考生参与后面的评卷，是否忽略？"), _T("警告"), MB_YESNO) != IDYES)
+				CNewMessageBox	dlg;
+				dlg.setShowInfo(2, 2, "存在准考证号为空的考生，如果不修改，将影响此考生参与后面的评卷，是否忽略？");
+				dlg.DoModal();
+				if (dlg.m_nResult != IDYES)
 					return false;
+// 				if (MessageBox(_T("存在准考证号为空的考生，如果不修改，将影响此考生参与后面的评卷，是否忽略？"), _T("警告"), MB_YESNO) != IDYES)
+// 					return false;
 				break;
 			}
 		}
