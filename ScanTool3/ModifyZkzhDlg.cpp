@@ -12,7 +12,7 @@
 IMPLEMENT_DYNAMIC(CModifyZkzhDlg, CDialog)
 
 CModifyZkzhDlg::CModifyZkzhDlg(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper, CWnd* pParent /*=NULL*/)
-	: CDialog(CModifyZkzhDlg::IDD, pParent)
+: CDialog(CModifyZkzhDlg::IDD, pParent)
 	, m_pModel(pModel), m_pPapers(pPapersInfo), m_pCurrentShowPaper(NULL), m_pVagueSearchDlg(NULL), m_pShowPicDlg(NULL)
 	, m_nCurrentSelItem(0), m_pStudentMgr(pStuMgr), m_pShowPaper(pShowPaper)
 {
@@ -855,7 +855,7 @@ bool CModifyZkzhDlg::ReleaseData()
 			if (pPaper->strSN.empty())
 			{
 				CNewMessageBox	dlg;
-				dlg.setShowInfo(2, 2, "存在准考证号为空的考生，如果不修改，将影响此考生参与后面的评卷，是否忽略？");
+				dlg.setShowInfo(2, 2, "存在考号为空的考生，如果不修改，将影响此考生参与后面的评卷，是否忽略？");
 				dlg.DoModal();
 				if (dlg.m_nResult != IDYES)
 					return false;

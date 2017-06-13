@@ -498,6 +498,12 @@ void CSingleExamDlg::OnBnClickedBtnScanprocesses()
 void CSingleExamDlg::OnBnClickedBtnMakescanmodel()
 {
 	CNewMessageBox	dlg;
-	dlg.setShowInfo(1, 1, "测试参数是的房间爱上的减肥的法律上");
+	dlg.setShowInfo(1, 1, "存在考号为空的考生，如果不修改，将影响参与后面的评卷，是否忽略？");
 	dlg.DoModal();
+
+// 	CNewMessageBox* pDlg = new CNewMessageBox(this);
+// 	pDlg->Create(CNewMessageBox::IDD, this);
+// 	pDlg->setShowInfo(1, 1, "存在考号为空的考生，如果不修改，将影响参与后面的评卷，是否忽略？");
+// 	pDlg->ShowWindow(SW_SHOW);
+// 	pDlg->SetForegroundWindow();
 }

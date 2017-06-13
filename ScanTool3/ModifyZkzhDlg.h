@@ -6,6 +6,7 @@
 #include "StudentMgr.h"
 #include "VagueSearchDlg.h"
 #include "ShowPicDlg.h"
+//#include "TipBaseDlg.h"
 // CModifyZkzhDlg ∂‘ª∞øÚ
 
 #define	NewListModelTest	//≤‚ ‘

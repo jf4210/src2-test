@@ -192,6 +192,9 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			{
 				try
 				{
+					Poco::File fPic((*itPic)->strPicPath);
+					if (!fPic.exists())
+						continue;
 					matCompSrcPic = imread((*itPic)->strPicPath);			//imread((*itPic)->strPicPath);
 					bOpenSucc = true;
 					break;
