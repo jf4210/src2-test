@@ -86,7 +86,20 @@ bool CRecognizeThread::HandleTask(pRECOGTASK pTask)
 		pModelInfo = it->second;
 
 	PaperRecognise(pTask->pPaper, pModelInfo);
-	pTask->pPaper->bRecogComplete = true;
+	bool bRecogAllPic = true;
+	for (auto objPic : pTask->pPaper->lPic)
+	{
+		if (objPic->nRecoged < 2)
+		{
+			bRecogAllPic = false;
+			break;
+		}
+	}
+	if (bRecogAllPic)
+	{
+		TRACE("----->设置试卷(%s)识别完成\n", pTask->pPaper->strStudentInfo.c_str());
+		pTask->pPaper->bRecogComplete = true;
+	}
 
 	return true;
 }
@@ -149,20 +162,26 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		clock_t start_pic, end_pic;
 		start_pic = clock();
 
-		if ((*itPic)->bRecoged)		//已经识别过，不再识别
+		if ((*itPic)->nRecoged)		//已经识别过，不再识别
 			continue;
 
-		(*itPic)->bRecoged = true;
+		(*itPic)->nRecoged = 1;
 
 		if (i >= pModelInfo->pModel->vecPaperModel.size())
+		{
+			(*itPic)->nRecoged = 2;
 			continue;
+		}
 
 		int nCount = pModelInfo->pModel->vecPaperModel[i]->lH_Head.size() + pModelInfo->pModel->vecPaperModel[i]->lV_Head.size() + pModelInfo->pModel->vecPaperModel[i]->lABModel.size()
 			+ pModelInfo->pModel->vecPaperModel[i]->lCourse.size() + pModelInfo->pModel->vecPaperModel[i]->lQK_CP.size() + pModelInfo->pModel->vecPaperModel[i]->lGray.size()
 			+ pModelInfo->pModel->vecPaperModel[i]->lWhite.size() + pModelInfo->pModel->vecPaperModel[i]->lSNInfo.size() + pModelInfo->pModel->vecPaperModel[i]->lOMR2.size()
 			+ pModelInfo->pModel->vecPaperModel[i]->lElectOmr.size();
 		if (!nCount)	//如果当前模板试卷没有校验点就不需要进行试卷打开操作，直接下一张试卷
+		{
+			(*itPic)->nRecoged = 2;
 			continue;
+		}
 
 		std::string strPicFileName = (*itPic)->strPicName;
 		Mat matCompSrcPic;
@@ -188,6 +207,8 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			HandleWithErrPaper(pPaper);
 			std::string strLog = "几次打开文件都失败2: " + (*itPic)->strPicPath;
 			g_pLogger->information(strLog);
+
+			(*itPic)->nRecoged = 2;
 			continue;
 		}
 		
@@ -253,6 +274,8 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 				break;									//找到这张试卷有问题点，不进行下一张试卷的检测
 			}
 		}
+
+		(*itPic)->nRecoged = 2;
 
 		end_pic = clock();
 		TRACE("试卷 %s 打开时间: %d, 识别总时间: %d\n", strPicFileName.c_str(), end1_pic - start_pic, end_pic - start_pic);
@@ -3147,7 +3170,7 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			char szTmp[300] = { 0 };
 			sprintf_s(szTmp, "图片名: %s, SN: 第%d位, 选项=%d, 识别实际比例=%.3f, val=%.2f, 识别标准=%.3f, val=%.2f, 是否成功:%d\n", pPic->strPicName.c_str(), \
 					  pSnItem->nItem, rc.nSnVal, rc.fRealValuePercent, rc.fRealValue, rc.fStandardValuePercent, rc.fStandardValue, rc.fRealValuePercent > rc.fStandardValuePercent);
-			TRACE(szTmp);
+//			TRACE(szTmp);
 #else
 			bool bResult_Recog = RecogVal(nPic, rc, matCompPic, pPic, pModelInfo);
 			if (bResult_Recog)

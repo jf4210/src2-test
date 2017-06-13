@@ -235,8 +235,8 @@ extern E_DLG_TYPE		_eCurrDlgType_;	//当前显示的窗口，弹出窗口不算
 #if 1
 typedef struct _PicInfo_				//图片信息
 {
-	bool			bRecoged;		//是否已经识别过
 	bool			bFindIssue;		//是否找到问题点
+	int 			nRecoged;		//是否已经识别过, 0-未识别，1-正在识别，2-识别完成
 	void*			pPaper;			//所属试卷的信息
 	cv::Rect		rtFix;			//定点矩形
 	std::string		strPicName;		//图片名称
@@ -248,7 +248,7 @@ typedef struct _PicInfo_				//图片信息
 // 	cv::Mat			matDest;
 	_PicInfo_()
 	{
-		bRecoged = false;
+		nRecoged = 0;
 		bFindIssue = false;
 		pPaper = NULL;
 //		ptFix = cv::Point(0, 0);

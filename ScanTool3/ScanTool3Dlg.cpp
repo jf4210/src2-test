@@ -7,7 +7,7 @@
 #include "ScanTool3Dlg.h"
 #include "afxdialogex.h"
 #include "global.h"
-
+#include "NewMessageBox.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -375,11 +375,19 @@ LRESULT CScanTool3Dlg::MsgCmdGetBmk(WPARAM wParam, LPARAM lParam)
 		if (g_lBmkStudent.size() == 0)
 		{
 			_bGetBmk_ = false;
-			if (MessageBox(_T("获取考生报名库失败, 是否继续?"), _T("提示"), MB_YESNO) != IDYES)
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(1, 2, "获取考生报名库失败, 是否继续？");
+			dlg.DoModal();
+			if (dlg.m_nResult != IDYES)
 			{
 				SwitchDlg(0);
 				return 0;
 			}
+// 			if (MessageBox(_T("获取考生报名库失败, 是否继续?"), _T("提示"), MB_YESNO) != IDYES)
+// 			{
+// 				SwitchDlg(0);
+// 				return 0;
+// 			}
 		}
 	}
 	else
@@ -397,10 +405,16 @@ LRESULT CScanTool3Dlg::MsgCmdGetBmk(WPARAM wParam, LPARAM lParam)
 		else
 			bWarn = true;
 
-		if (bWarn && (MessageBox(_T("获取考生报名库失败, 是否继续?"), _T("提示"), MB_YESNO) != IDYES))
+		if (bWarn)	// && (MessageBox(_T("获取考生报名库失败, 是否继续?"), _T("提示"), MB_YESNO) != IDYES)
 		{
-			SwitchDlg(0);
-			return 0;
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(1, 2, "获取考生报名库失败, 是否继续？");
+			dlg.DoModal();
+			if (dlg.m_nResult != IDYES)
+			{
+				SwitchDlg(0);
+				return 0;
+			}
 		}
 	}
 #else
@@ -414,9 +428,16 @@ LRESULT CScanTool3Dlg::MsgCmdGetBmk(WPARAM wParam, LPARAM lParam)
 		}
 	}
 #endif
+
+	if (_eCurrDlgType_ == Dlg_ScanRecordMgr)	//如果当前是扫描记录管理窗口，就不需要再去下载模板了，是从主界面直接跳转到当前页面的，只获取报名库就好
+		return 0;
+
 	if (!m_pScanMgrDlg->DownLoadModel())
 	{
-		AfxMessageBox(_T("考试信息为空"));
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "考试信息为空");
+		dlg.DoModal();
+//		AfxMessageBox(_T("考试信息为空"));
 		//跳到考试管理页面
 		SwitchDlg(0);
 	}
@@ -567,7 +588,10 @@ bool CScanTool3Dlg::HandleModel()
 		m_pScanMgrDlg->ShowChildDlg(2);
 	else
 	{
-		AfxMessageBox(_T("获取模板失败"));
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "获取模板失败");
+		dlg.DoModal();
+//		AfxMessageBox(_T("获取模板失败"));
 		SwitchDlg(0);
 	}
 	return bResult;

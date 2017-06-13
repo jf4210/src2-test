@@ -340,20 +340,32 @@ void CScanMgrDlg::ShowChildDlg(int n)
 		int nResult = GetBmkInfo();
 		if (nResult == 0)
 		{
-			AfxMessageBox(_T("考试信息为空"));
+//			AfxMessageBox(_T("考试信息为空"));
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(2, 1, "考试信息为空");
+			dlg.DoModal();
 			//跳到考试管理页面
 			CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
 			pDlg->SwitchDlg(0);
 		}
-		if (nResult == -2 && (MessageBox(_T("获取考生报名库失败, 是否继续?"), _T("提示"), MB_YESNO) != IDYES))
+		if (nResult == -2)	// && (MessageBox(_T("获取考生报名库失败, 是否继续?"), _T("提示"), MB_YESNO) != IDYES)
 		{
-			CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
-			pDlg->SwitchDlg(0);
-			return;
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(1, 2, "获取考生报名库失败, 是否继续？");
+			dlg.DoModal();
+			if (dlg.m_nResult != IDYES)
+			{
+				CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
+				pDlg->SwitchDlg(0);
+				return;
+			}
 		}
 		if ((nResult == 2 || nResult == -2) && !DownLoadModel())	//如果已经下载了当前考试的报名库，就提取报名库，如何直接下载模板
 		{
-			AfxMessageBox(_T("考试信息为空"));
+//			AfxMessageBox(_T("考试信息为空"));
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(2, 1, "考试信息为空");
+			dlg.DoModal();
 			//跳到考试管理页面
 			CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
 			pDlg->SwitchDlg(0);

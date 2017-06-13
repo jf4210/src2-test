@@ -169,8 +169,9 @@ void CTransparentStatic::OnPaint()
 	{
 		m_font.GetLogFont(&logfont);
 		int nCharW = logfont.lfWidth;
-		int nSingleCount = client_rect.Width() / nCharW - 1;
-		nLines = szText.GetLength() / nSingleCount;
+		nSingleCount = client_rect.Width() / nCharW - 1;
+		int nLen = szText.GetLength() * sizeof(TCHAR);
+		nLines = nLen / nSingleCount + 1;
 		if (nLines > 1)
 			m_bMultiLine = TRUE;
 		else

@@ -5,7 +5,7 @@
 #include "ScanTool3.h"
 #include "ExamBmkRecordDlg.h"
 #include "afxdialogex.h"
-
+#include "NewMessageBox.h"
 
 // CScanRecordDlg 对话框
 
@@ -143,8 +143,8 @@ void CExamBmkRecordDlg::InitCtrlPosition()
 		int nColumns = m_lcBmk.GetColumns() - 3;	//除去不可动的表头，剩下的表头(即每个科目表头)平分剩下的宽度
 		if (nColumns > 0)
 		{
-			int nColunmW = (nW - 310) / nColumns;
-			if (nColunmW < 100)	nColunmW = 100;
+			int nColunmW = (nW - 330) / nColumns;
+			if (nColunmW < 90)	nColunmW = 90;
 			for (int i = 0; i < nColumns; i++)
 			{
 				m_lcBmk.SetColumnWidth(3 + i, nColunmW);
@@ -532,6 +532,14 @@ void CExamBmkRecordDlg::OnCbnSelchangeComboBmkScanstatus()
 
 void CExamBmkRecordDlg::OnBnClickedBtnExambmkExportscan()
 {
+	if (!_bGetBmk_)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "无考生数据！");
+		dlg.DoModal();
+		return;
+	}
+
 	std::string strData;
 	USES_CONVERSION;
 	int nColumns = m_lcBmk.GetColumns();	//除去不可动的表头，剩下的表头(即每个科目表头)平分剩下的宽度
@@ -565,8 +573,6 @@ void CExamBmkRecordDlg::OnBnClickedBtnExambmkExportscan()
 		}
 		strData.append("\r\n");
 	}
-
-
 
 	TCHAR szFilter[] = { _T("TXT Files (*.txt)|*.txt|Excel Files (*.xls)|*.xls||") };
 	CString fileName;

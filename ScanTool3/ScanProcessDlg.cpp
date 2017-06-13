@@ -301,6 +301,11 @@ void CScanProcessDlg::UpdateChildInfo(bool bScanDone /*= false*/)
 
 void CScanProcessDlg::ScanCompleted()
 {
+	if (!_pModel_)
+		return;
+
+	_pCurrPapersInfo_->nPaperCount = _nScanCount_ / _pModel_->nPicNum;	//计算扫描试卷数量
+
 	if (_pCurrExam_->nModel == 1)
 		return;
 
@@ -319,7 +324,7 @@ void CScanProcessDlg::ScanCompleted()
 				else
 				{
 					m_lcPicture.SetItemText(i, 1, _T("未识别"));
-					m_lcPicture.SetItemColors(i, 1, RGB(255, 0, 0), RGB(255, 255, 255));
+//					m_lcPicture.SetItemColors(i, 1, RGB(255, 0, 0), RGB(255, 255, 255));
 				}
 			}
 		}
@@ -556,7 +561,11 @@ void CScanProcessDlg::WriteJsonFile()
 	}
 
 	//写试卷袋信息到文件
-	std::string strUploader = CMyCodeConvert::Gb2312ToUtf8(_strUserName_);
+	std::string strUploader;
+	if (_pCurrExam_->nModel == 0)
+		strUploader = CMyCodeConvert::Gb2312ToUtf8(_strUserName_);
+	else
+		strUploader = CMyCodeConvert::Gb2312ToUtf8(_pCurrExam_->strPersonID);
 	std::string sEzs = _strEzs_;
 	Poco::JSON::Object jsnFileData;
 
@@ -741,20 +750,20 @@ LRESULT CScanProcessDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 			{
 				m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
 				CheckZkzhInBmk(pPaper);
-				if (_bGetBmk_ && pPaper->nZkzhInBmkStatus != 1)
-					m_lcPicture.SetItemColors(i, 1, RGB(0, 255, 0), RGB(255, 255, 255));
+// 				if (_bGetBmk_ && pPaper->nZkzhInBmkStatus != 1)
+// 					m_lcPicture.SetItemColors(i, 1, RGB(0, 255, 0), RGB(255, 255, 255));
 			}
 			else
 			{
 				if (pPaper->strRecogSN4Search.empty())
 				{
 					m_lcPicture.SetItemText(i, 1, _T("考号识别为空"));
-					m_lcPicture.SetItemColors(i, 1, RGB(255, 0, 0), RGB(255, 255, 255));
+//					m_lcPicture.SetItemColors(i, 1, RGB(255, 0, 0), RGB(255, 255, 255));
 				}
 				else
 				{
 					m_lcPicture.SetItemText(i, 1, _T("考号识别不完全"));
-					m_lcPicture.SetItemColors(i, 1, RGB(255, 0, 0), RGB(255, 255, 255));
+//					m_lcPicture.SetItemColors(i, 1, RGB(255, 0, 0), RGB(255, 255, 255));
 				}
 			}
 			break;
@@ -979,6 +988,8 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	int nUserId = -1;
 
 	strUser = _strUserName_;
+	if (_pCurrExam_->nModel == 1)
+		strUser = _pCurrExam_->strPersonID;
 	strEzs = _strEzs_;
 	nTeacherId = _nTeacherId_;
 	nUserId = _nUserId_;
@@ -1013,6 +1024,7 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 			_pCurrPapersInfo_->nPaperCount = _pCurrPapersInfo_->lPaper.size();		//修改扫描数量，将问题试卷删除，不算到扫描试卷中。
 		}
 	}
+	EnableBtn(FALSE);
 
 	TRACE("------------------- 1\n");
 	WriteJsonFile();
@@ -1029,16 +1041,16 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 
 	if (_pCurrExam_->nModel == 0)
 	{
-		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s_%d", T2A(g_strCurrentPath), _strUserName_.c_str(), _pModel_->nExamID, _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
-		sprintf_s(szZipBaseName, "%s_%d-%d_%s_%d", _strUserName_.c_str(), _pModel_->nExamID, _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
-		sprintf_s(szZipName, "%s_%d-%d_%s_%d%s", _strUserName_.c_str(), _pModel_->nExamID, _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount, T2A(PAPERS_EXT_NAME));
+		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s_%d", T2A(g_strCurrentPath), strUser.c_str(), _pModel_->nExamID, _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
+		sprintf_s(szZipBaseName, "%s_%d-%d_%s_%d", strUser.c_str(), _pModel_->nExamID, _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
+		sprintf_s(szZipName, "%s_%d-%d_%s_%d%s", strUser.c_str(), _pModel_->nExamID, _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount, T2A(PAPERS_EXT_NAME));
 	}
 	else
 	{
 		std::string strExamID = _pCurrExam_->strExamID;
-		sprintf_s(szPapersSavePath, "%sPaper\\%s_%s_%d_%s_%d", T2A(g_strCurrentPath), _strUserName_.c_str(), strExamID.c_str(), _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
-		sprintf_s(szZipBaseName, "%s_%s_%d_%s_%d", _strUserName_.c_str(), strExamID.c_str(), _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
-		sprintf_s(szZipName, "%s_%s_%d_%s_%d%s", _strUserName_.c_str(), strExamID.c_str(), _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount, T2A(PAPERS_EXT_NAME));
+		sprintf_s(szPapersSavePath, "%sPaper\\%s_%s_%d_%s_%d", T2A(g_strCurrentPath), strUser.c_str(), strExamID.c_str(), _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
+		sprintf_s(szZipBaseName, "%s_%s_%d_%s_%d", strUser.c_str(), strExamID.c_str(), _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
+		sprintf_s(szZipName, "%s_%s_%d_%s_%d%s", strUser.c_str(), strExamID.c_str(), _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount, T2A(PAPERS_EXT_NAME));
 	}
 
 	//临时目录改名，以便压缩时继续扫描
@@ -1098,6 +1110,7 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	TRACE("------------------- 5\n");
 	_pCurrPapersInfo_ = NULL;
 	ResetPicList();
+	EnableBtn(TRUE);
 }
 
 void CScanProcessDlg::OnDestroy()
@@ -1163,7 +1176,7 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(pNMItemActivate->iItem);
 	//***	注意：如果不在报名库中的同时报名库不空的也要允许修改	********	2017.6.4
 	if ((/*g_nOperatingMode == 1 ||*/ g_bModifySN) && _pModel_ && pItemPaper && \
-		(pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH || pItemPaper->bReScan || pItemPaper->nZkzhInBmkStatus != 1))
+		(pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH || pItemPaper->bReScan || (_bGetBmk_ && pItemPaper->nZkzhInBmkStatus != 1)))
 	{
 		if (!m_pStudentMgr)
 		{
@@ -1213,6 +1226,35 @@ void CScanProcessDlg::OnTimer(UINT_PTR nIDEvent)
 		if (bRecogComplete)
 		{
 			USES_CONVERSION;
+			//++重新刷新一遍列表
+			int nCount = m_lcPicture.GetItemCount();
+			for (int i = 0; i < nCount; i++)
+			{
+				pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(i);
+				if (pItemPaper)
+				{
+					if (!pItemPaper->strSN.empty())
+					{
+						m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
+						if (_bGetBmk_ && pItemPaper->nZkzhInBmkStatus != 1)
+							m_lcPicture.SetItemColors(i, 1, RGB(0, 255, 0), RGB(255, 255, 255));
+					}
+					else
+					{
+						if (pItemPaper->strRecogSN4Search.empty())
+						{
+							m_lcPicture.SetItemText(i, 1, _T("考号识别为空"));
+							m_lcPicture.SetItemColors(i, 1, RGB(255, 0, 0), RGB(255, 255, 255));
+						}
+						else
+						{
+							m_lcPicture.SetItemText(i, 1, _T("考号识别不完全"));
+							m_lcPicture.SetItemColors(i, 1, RGB(255, 0, 0), RGB(255, 255, 255));
+						}
+					}
+				}
+			}
+			//--
 			if (_nScanStatus_ == 2 && (/*g_nOperatingMode == 1 ||*/ g_bModifySN) && bNeedShowZkzhDlg)
 			{
 				KillTimer(TIMER_CheckRecogComplete);

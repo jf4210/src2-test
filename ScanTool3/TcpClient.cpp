@@ -4,6 +4,7 @@
 #include "StudentMgr.h"
 #include "ScanTool3.h"
 #include "ScanTool3Dlg.h"
+#include "NewMessageBox.h"
 
 //extern Poco::Net::StreamSocket *pSs;
 
@@ -253,7 +254,10 @@ void CTcpClient::HandleCmd()
 					std::string strLog = "获取考试信息失败: " + strMsg;
 					g_pLogger->information(strLog);
 					USES_CONVERSION;
-					AfxMessageBox(A2T(strLog.c_str()));
+//					AfxMessageBox(A2T(strLog.c_str()));
+					CNewMessageBox	dlg;
+					dlg.setShowInfo(2, 1, strLog);
+					dlg.DoModal();
 					SAFE_RELEASE_ARRY(pBuff);
 					return;
 				}
@@ -549,7 +553,7 @@ void CTcpClient::HandleCmd()
 					if (g_lBmkStudent.size() > 0)
 						_bGetBmk_ = true;
 				}
-				catch (Poco::JSON::JSONException& jsone)
+				catch (Poco::Exception& jsone)
 				{
 					std::string strErrInfo;
 					strErrInfo.append("Error when parse json(获取报名库): ");
@@ -680,7 +684,7 @@ void CTcpClient::HandleCmd()
 					if (g_lBmkStudent.size() > 0)
 						_bGetBmk_ = true;
 				}
-				catch (Poco::JSON::JSONException& jsone)
+				catch (Poco::Exception& jsone)	//Poco::JSON::JSONException
 				{
 					std::string strErrInfo;
 					strErrInfo.append("Error when parse json(获取报名库): ");

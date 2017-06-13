@@ -158,7 +158,7 @@ void CScanRecordMgrDlg::InitCtrlPosition()
 
 	int nCurrLeft = nLeftGap + cx / 2 - nTmpW / 2;
 	int nCurrTop = nTopGap;
-	if (_pCurrExam_ && _pCurrExam_->nModel == 0)	//ÊÖÔÄ
+	if (_pCurrExam_ && _pCurrExam_->nModel == 1)	//ÊÖÔÄ
 	{
 		if (GetDlgItem(IDC_BTN_BmkRecord)->GetSafeHwnd())
 		{
@@ -314,6 +314,17 @@ void CScanRecordMgrDlg::UpdateChildDlg()
 	}
 	m_pPkgRecordDlg->UpdateChildDlg();
 
+	if (_pCurrExam_ && _pCurrExam_->nModel == 1)
+	{
+		m_bmpBtnBmk.CheckBtn(FALSE);
+		m_bmpBtnPkg.CheckBtn(TRUE);
+	}
+	else
+	{
+		m_bmpBtnBmk.CheckBtn(TRUE);
+		m_bmpBtnPkg.CheckBtn(FALSE);
+	}
+
 	if (m_bmpBtnBmk.BtnIsChecked())
 	{
 		if (m_nReturnFlag == 1)
@@ -329,5 +340,13 @@ void CScanRecordMgrDlg::UpdateChildDlg()
 			m_pExamBmkRecordDlg->ShowWindow(SW_HIDE);
 		}
 	}
+	if (m_bmpBtnPkg.BtnIsChecked())
+	{
+		m_pBmkRecordDlg->ShowWindow(SW_HIDE);
+		m_pPkgRecordDlg->ShowWindow(SW_SHOW);
+		m_pExamBmkRecordDlg->ShowWindow(SW_HIDE);
+	}
+
+	InitCtrlPosition();
 }
 

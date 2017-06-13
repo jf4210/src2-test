@@ -394,17 +394,17 @@ void CExamInfoMgrDlg::GetAllShowPaperCount()
 		{
 			nShowCount++;
 			nTmpTop = m_rtExamList.top;
-			TRACE("分页%d, 在第%d个分页\n", nShowCount, i);
+			TRACE("分页%d, 在第%d个考试\n", nShowCount, i);
 		}
 
-		nTmpTop += (nExamDlg_H + nGap);
+		nTmpTop += (nExamDlg_H + m_nChildDlgGap);
 	}
 	m_nShowPapersCount = nShowCount;
 }
 
 int CExamInfoMgrDlg::GetStartExamIndex(int n)
 {
-	int nGap = m_nChildDlgGap;
+	int nGap = 5;
 	int nExamDlg_H = 45;				//考试信息列表的高度
 
 	int nResult = 0;
@@ -426,7 +426,7 @@ int CExamInfoMgrDlg::GetStartExamIndex(int n)
 			nTmpTop = m_rtExamList.top;
 		}
 
-		nTmpTop += (nExamDlg_H + nGap);
+		nTmpTop += (nExamDlg_H + m_nChildDlgGap);
 
 		if (nShowCount == n)
 		{
@@ -461,7 +461,7 @@ void CExamInfoMgrDlg::ShowExamList(EXAM_LIST lExam, int nStartShow)
 	ReleaseDlgData();
 	if (lExam.size() <= 0) return;
 
-	int nGap = m_nChildDlgGap;
+	int nGap = 5;
 	int nExamDlg_H = 45;				//考试信息列表的高度
 	int nRealW = m_rtExamList.Width();	//考试信息列表的宽度
 	int nRealH = m_rtExamList.Height();	//实际有效的显示考试列表窗口的高度
@@ -491,7 +491,7 @@ void CExamInfoMgrDlg::ShowExamList(EXAM_LIST lExam, int nStartShow)
 			pExamDlg->Create(CSingleExamDlg::IDD, this);
 			pExamDlg->ShowWindow(SW_HIDE);
 			pExamDlg->MoveWindow(nCurrLeft, nCurrTop, nRealW, nExamDlg_H);
-			nCurrTop += (nExamDlg_H + nGap);
+			nCurrTop += (nExamDlg_H + m_nChildDlgGap);
 
 			pExamDlg->m_nMaxSubsRow		= m_nMaxSubsRow;
 			pExamDlg->m_nSubjectBtnH	= m_nSubjectBtnH;

@@ -39,7 +39,8 @@ BOOL CScanReminderDlg::OnInitDialog()
 	m_bmpBk.LoadBitmap(IDB_ScanMgr_Scanning);
 
 	m_staticShowTips.SubclassDlgItem(IDC_STATIC_Tip, this);
-	m_staticShowTips.SetMultiLine();
+//	m_staticShowTips.SetMultiLine();
+	m_staticShowTips.SetCenterAlign();
 	m_staticShowTips.SetTextColor(RGB(115, 172, 254));
 
 	InitCtrlPosition();

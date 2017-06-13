@@ -153,7 +153,7 @@ void CSingleExamDlg::InitData()
 	_strExamGrade = A2T(_pExamInfo->strGradeName.c_str());
 //	_strExamTime = A2T(_pExamInfo->strExamTime.c_str());
 	if (!_pExamInfo->strExamTime.empty())
-		_strExamTime.Format(_T("考试时间: %s"), _pExamInfo->strExamTime.c_str());
+		_strExamTime.Format(_T("考试时间: %s"), A2T(_pExamInfo->strExamTime.c_str()));
 	if (_pExamInfo->nModel == 0)
 		_strShowPaperType = _T("题卡类型: 网阅");
 	else
@@ -193,11 +193,18 @@ void CSingleExamDlg::InitCtrlPosition()
 		GetDlgItem(IDC_STATIC_ExamName)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
 		nCurrTop += nH + nGap;
 	}
-	if (GetDlgItem(IDC_STATIC_ExamType)->GetSafeHwnd())
+// 	if (GetDlgItem(IDC_STATIC_ExamType)->GetSafeHwnd())
+// 	{
+// 		int nW = cx - nLeftGap - nRightGap - nBtnW - nGap - nBtnW - nGap * 5;
+// 		GetDlgItem(IDC_STATIC_ExamType)->MoveWindow(nCurrLeft, nCurrTop, nW * 0.15, nStaticH);
+// 		nCurrLeft += (nW * 0.15 + nGap);
+	// 	}
+	if (GetDlgItem(IDC_STATIC_ExamTime)->GetSafeHwnd())
 	{
 		int nW = cx - nLeftGap - nRightGap - nBtnW - nGap - nBtnW - nGap * 5;
-		GetDlgItem(IDC_STATIC_ExamType)->MoveWindow(nCurrLeft, nCurrTop, nW * 0.15, nStaticH);
-		nCurrLeft += (nW * 0.15 + nGap);
+		nW = nW * 0.2 - nGap * 2;
+		GetDlgItem(IDC_STATIC_ExamTime)->MoveWindow(nCurrLeft, nCurrTop, nW, nStaticH);
+		nCurrLeft += (nW + nGap);
 	}
 	if (GetDlgItem(IDC_STATIC_ExamGrade)->GetSafeHwnd())
 	{
@@ -205,21 +212,30 @@ void CSingleExamDlg::InitCtrlPosition()
 		GetDlgItem(IDC_STATIC_ExamGrade)->MoveWindow(nCurrLeft, nCurrTop, nW * 0.1, nStaticH);
 		nCurrLeft += (nW * 0.1 + nGap);
 	}
-	if (GetDlgItem(IDC_STATIC_ExamTime)->GetSafeHwnd())
-	{
-		int nW = cx - nLeftGap - nRightGap - nBtnW - nGap - nBtnW - nGap * 5;
-		nW = nW * 0.2 - nGap * 2;
-		GetDlgItem(IDC_STATIC_ExamTime)->MoveWindow(nCurrLeft, nCurrTop, nW, nStaticH);
-		nCurrLeft += (nW + nGap);
-//		nCurrTop += (nStaticH + nGap * 2);
-	}
+// 	if (GetDlgItem(IDC_STATIC_ExamTime)->GetSafeHwnd())
+// 	{
+// 		int nW = cx - nLeftGap - nRightGap - nBtnW - nGap - nBtnW - nGap * 5;
+// 		nW = nW * 0.2 - nGap * 2;
+// 		GetDlgItem(IDC_STATIC_ExamTime)->MoveWindow(nCurrLeft, nCurrTop, nW, nStaticH);
+// 		nCurrLeft += (nW + nGap);
+// //		nCurrTop += (nStaticH + nGap * 2);
+// 	}
 	if (GetDlgItem(IDC_STATIC_PaperType)->GetSafeHwnd())
 	{
 		int nW = cx - nLeftGap - nRightGap - nBtnW - nGap - nBtnW - nGap * 5;
-		nW = nW * 0.5 - nGap * 2;
+		nW = nW * 0.15;
 		GetDlgItem(IDC_STATIC_PaperType)->MoveWindow(nCurrLeft, nCurrTop, nW, nStaticH);
+		nCurrLeft += (nW + nGap);
+//		nCurrTop += (nStaticH + nGap * 2);
+	}
+	if (GetDlgItem(IDC_STATIC_ExamType)->GetSafeHwnd())
+	{
+		int nW = cx - nLeftGap - nRightGap - nBtnW - nGap - nBtnW - nGap * 5;
+		GetDlgItem(IDC_STATIC_ExamType)->MoveWindow(nCurrLeft, nCurrTop, nW * 0.15, nStaticH);
+//		nCurrLeft += (nW * 0.15 + nGap);
 		nCurrTop += (nStaticH + nGap * 2);
 	}
+
 	if (GetDlgItem(IDC_BTN_ScanProcesses)->GetSafeHwnd())
 	{
 		nCurrLeft = nLeftGap;
@@ -374,7 +390,7 @@ BOOL CSingleExamDlg::OnEraseBkgnd(CDC* pDC)
 	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 242, 250
 
 	//画虚线
-	if (GetDlgItem(IDC_STATIC_ExamType)->GetSafeHwnd())
+	if (GetDlgItem(IDC_STATIC_ExamTime)->GetSafeHwnd())
 	{
 		CPen *pOldPen = NULL;
 		CPen pPen;
@@ -382,13 +398,13 @@ BOOL CSingleExamDlg::OnEraseBkgnd(CDC* pDC)
 		pOldPen = pDC->SelectObject(&pPen);
 
 		CRect rtTmp;
-		GetDlgItem(IDC_STATIC_ExamType)->GetWindowRect(rtTmp);
+		GetDlgItem(IDC_STATIC_ExamTime)->GetWindowRect(rtTmp);
 		ScreenToClient(&rtTmp);
 
 		CPoint pt1, pt2;
 		pt1.x = rtTmp.left;
 		pt1.y = rtTmp.bottom + 1;
-		pt2.x = pt1.x + 300;
+		pt2.x = pt1.x + 350;
 		pt2.y = pt1.y;
 		pDC->MoveTo(pt1);
 		pDC->LineTo(pt2);
@@ -452,25 +468,28 @@ void CSingleExamDlg::OnBnClickedBtnScanprocesses()
 	CScanTool3Dlg* pDlg = (CScanTool3Dlg*)AfxGetMainWnd();
 
 	//检查是否需要下载报名库
-	EXAMBMK_MAP::iterator itFindExam = g_mapBmkMgr.find(_pCurrExam_->nExamID);
-	if (itFindExam == g_mapBmkMgr.end())		//如果已经下载了当前考试的报名库，就提取报名库，如何直接下载模板
+	if (_pCurrExam_->nModel == 0)
 	{
-		ST_GET_BMK_INFO stGetBmkInfo;
-		ZeroMemory(&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
-		stGetBmkInfo.nExamID = _pCurrExam_->nExamID;
-		stGetBmkInfo.nSubjectID = 0;
-		strcpy(stGetBmkInfo.szEzs, _strEzs_.c_str());
+		EXAMBMK_MAP::iterator itFindExam = g_mapBmkMgr.find(_pCurrExam_->nExamID);
+		if (itFindExam == g_mapBmkMgr.end())		//如果已经下载了当前考试的报名库，就提取报名库，如何直接下载模板
+		{
+			ST_GET_BMK_INFO stGetBmkInfo;
+			ZeroMemory(&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
+			stGetBmkInfo.nExamID = _pCurrExam_->nExamID;
+			stGetBmkInfo.nSubjectID = 0;
+			strcpy(stGetBmkInfo.szEzs, _strEzs_.c_str());
 
-		g_eGetBmk.reset();
+			g_eGetBmk.reset();
 
-		pTCP_TASK pTcpTask = new TCP_TASK;
-		pTcpTask->usCmd = USER_GET_EXAM_BMK;
-		pTcpTask->nPkgLen = sizeof(ST_GET_BMK_INFO);
-		memcpy(pTcpTask->szSendBuf, (char*)&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
-		g_fmTcpTaskLock.lock();
-		g_lTcpTask.push_back(pTcpTask);
-		g_fmTcpTaskLock.unlock();
-	}
+			pTCP_TASK pTcpTask = new TCP_TASK;
+			pTcpTask->usCmd = USER_GET_EXAM_BMK;
+			pTcpTask->nPkgLen = sizeof(ST_GET_BMK_INFO);
+			memcpy(pTcpTask->szSendBuf, (char*)&stGetBmkInfo, sizeof(ST_GET_BMK_INFO));
+			g_fmTcpTaskLock.lock();
+			g_lTcpTask.push_back(pTcpTask);
+			g_fmTcpTaskLock.unlock();
+		}
+	}	
 
 	pDlg->SwitchDlg(1, 4);		//显示第1个窗口，并一开始就显示这个窗口中的第4个窗口
 }
@@ -479,6 +498,6 @@ void CSingleExamDlg::OnBnClickedBtnScanprocesses()
 void CSingleExamDlg::OnBnClickedBtnMakescanmodel()
 {
 	CNewMessageBox	dlg;
-	dlg.setShowInfo(1, 1, "测试");
+	dlg.setShowInfo(1, 1, "测试参数是的房间爱上的减肥的法律上");
 	dlg.DoModal();
 }

@@ -5,7 +5,7 @@
 #include "ScanTool3.h"
 #include "ScanBmkRecordDlg.h"
 #include "afxdialogex.h"
-
+#include "NewMessageBox.h"
 
 // CScanRecordDlg 对话框
 
@@ -314,6 +314,14 @@ void CScanBmkRecordDlg::OnNMClickListBmk(NMHDR *pNMHDR, LRESULT *pResult)
 
 void CScanBmkRecordDlg::OnBnClickedBtnExportscan()
 {
+	if (g_lBmkStudent.size() <= 0)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "无考生数据！");
+		dlg.DoModal();
+		return;
+	}
+
 	std::string strData;
 	USES_CONVERSION;
 	int nColumns = m_lcBmk.GetColumns();	//除去不可动的表头，剩下的表头(即每个科目表头)平分剩下的宽度
