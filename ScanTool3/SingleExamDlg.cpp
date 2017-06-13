@@ -126,7 +126,7 @@ void CSingleExamDlg::InitUI()
 void CSingleExamDlg::InitData()
 {
 	_strExamName = _T("");
-	_strExamTime = _T("无考试时间");
+	_strExamTime = _T("考试时间:");
 	_strExamType = _T("");
 	_strExamGrade = _T("");
 	_strShowPaperType = _T("题卡类型:");
@@ -151,7 +151,9 @@ void CSingleExamDlg::InitData()
 	_strExamName = A2T(_pExamInfo->strExamName.c_str());
 	_strExamType = A2T(_pExamInfo->strExamTypeName.c_str());
 	_strExamGrade = A2T(_pExamInfo->strGradeName.c_str());
-	_strExamTime = A2T(_pExamInfo->strExamTime.c_str());
+//	_strExamTime = A2T(_pExamInfo->strExamTime.c_str());
+	if (!_pExamInfo->strExamTime.empty())
+		_strExamTime.Format(_T("考试时间: %s"), _pExamInfo->strExamTime.c_str());
 	if (_pExamInfo->nModel == 0)
 		_strShowPaperType = _T("题卡类型: 网阅");
 	else
@@ -423,9 +425,15 @@ HBRUSH CSingleExamDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
 	UINT CurID = pWnd->GetDlgCtrlID();
-	if (CurID == IDC_STATIC_ExamName || CurID == IDC_STATIC_ExamType || CurID == IDC_STATIC_ExamGrade || CurID == IDC_STATIC_ExamTime || CurID == IDC_STATIC_PaperType)
+	if (CurID == IDC_STATIC_ExamName)
 	{
 		//		pDC->SetBkColor(RGB(255, 255, 255));
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
+	else if (CurID == IDC_STATIC_ExamType || CurID == IDC_STATIC_ExamGrade || CurID == IDC_STATIC_ExamTime || CurID == IDC_STATIC_PaperType)
+	{
+		pDC->SetTextColor(RGB(146, 146, 146));
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}

@@ -12,8 +12,9 @@
 IMPLEMENT_DYNAMIC(CExamInfoMgrDlg, CDialog)
 
 CExamInfoMgrDlg::CExamInfoMgrDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CExamInfoMgrDlg::IDD, pParent)
-	, m_nMaxShowExamListItem(0), m_nAllExamListItems(0), m_nShowPapersCount(0), m_nCurrShowPaper(1), m_nMaxSubsRow(3), m_nSubjectBtnH(30), m_nDlgMinH(140), m_strShowCurrPaper(_T(""))
+: CDialog(CExamInfoMgrDlg::IDD, pParent)
+, m_nMaxShowExamListItem(0), m_nAllExamListItems(0), m_nShowPapersCount(0), m_nCurrShowPaper(1), m_nMaxSubsRow(3), m_nSubjectBtnH(30), m_nDlgMinH(140), m_strShowCurrPaper(_T(""))
+, m_nChildDlgGap(10)
 {
 
 }
@@ -27,6 +28,7 @@ void CExamInfoMgrDlg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_COMBO_Subject, m_comboSubject);
 	DDX_Control(pDX, IDC_COMBO_Grade, m_comboGrade);
+	DDX_Control(pDX, IDC_COMBO_TK_Type, m_comboTkType);
 	DDX_Text(pDX, IDC_STATIC_PaperCount, m_strShowCurrPaper);
 	DDX_Control(pDX, IDC_BTN_First, m_bmpBtnFirst);
 	DDX_Control(pDX, IDC_BTN_Last, m_bmpBtnLast);
@@ -73,6 +75,7 @@ BEGIN_MESSAGE_MAP(CExamInfoMgrDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_Up, &CExamInfoMgrDlg::OnBnClickedBtnUp)
 	ON_BN_CLICKED(IDC_BTN_Down, &CExamInfoMgrDlg::OnBnClickedBtnDown)
 	ON_WM_CTLCOLOR()
+	ON_CBN_SELCHANGE(IDC_COMBO_TK_Type, &CExamInfoMgrDlg::OnCbnSelchangeComboTkType)
 END_MESSAGE_MAP()
 
 
@@ -107,7 +110,7 @@ void CExamInfoMgrDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_COMBO_Subject)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_COMBO_Subject)->MoveWindow(nCurrLeft, nCurrTop, nStaticW * 2, nCtrlH);
+		GetDlgItem(IDC_COMBO_Subject)->MoveWindow(nCurrLeft, nCurrTop + 5, nStaticW * 2, nCtrlH);
 		nCurrLeft += (nStaticW * 2 + nGap * 3);
 	}
 	if (GetDlgItem(IDC_STATIC_DlgMgr_Grade)->GetSafeHwnd())
@@ -117,7 +120,17 @@ void CExamInfoMgrDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_COMBO_Grade)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_COMBO_Grade)->MoveWindow(nCurrLeft, nCurrTop, nStaticW * 2, nCtrlH);
+		GetDlgItem(IDC_COMBO_Grade)->MoveWindow(nCurrLeft, nCurrTop + 5, nStaticW * 2, nCtrlH);
+		nCurrLeft += (nStaticW * 2 + nGap * 3);
+	}
+	if (GetDlgItem(IDC_STATIC_DlgMgr_TK_Type)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_DlgMgr_TK_Type)->MoveWindow(nCurrLeft, nCurrTop, nStaticW + 10, nCtrlH);
+		nCurrLeft += (nStaticW + 10 + nGap);
+	}
+	if (GetDlgItem(IDC_COMBO_TK_Type)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_COMBO_TK_Type)->MoveWindow(nCurrLeft, nCurrTop + 5, nStaticW * 2, nCtrlH);
 		nCurrLeft += (nStaticW * 2 + nGap * 3);
 	}
 
@@ -177,6 +190,8 @@ void CExamInfoMgrDlg::InitSearchData()
 	vecSub.push_back("全部");
 	std::vector<std::string> vecGrade;
 	vecGrade.push_back("全部");
+	std::vector<std::string> vecTkType;
+	vecTkType.push_back("全部");
 
 	//获取列表中所有科目名称信息、年级信息
 	int nAllExamItems = 0;
@@ -211,24 +226,58 @@ void CExamInfoMgrDlg::InitSearchData()
 		if (!bFindGrade && pExam->strGradeName != "")
 			vecGrade.push_back(pExam->strGradeName);
 
+		if (pExam->nModel == 0)
+		{
+			bool bFind = false;
+			for (auto strTkType : vecTkType)
+			{
+				if (strTkType == "网阅卷")
+				{
+					bFind = true;
+					break;
+				}
+			}
+			if (!bFind)
+				vecTkType.push_back("网阅卷");
+		}
+		else
+		{
+			bool bFind = false;
+			for (auto strTkType : vecTkType)
+			{
+				if (strTkType == "手阅卷")
+				{
+					bFind = true;
+					break;
+				}
+			}
+			if (!bFind)
+				vecTkType.push_back("手阅卷");
+		}
+
 		nAllExamItems = pExam->lSubjects.size();
 	}
 	m_nAllExamListItems = nAllExamItems;
 
 	m_comboSubject.ResetContent();
 	m_comboGrade.ResetContent();
+	m_comboTkType.ResetContent();
 
 	USES_CONVERSION;
 	for (auto strSubName : vecSub)
 		m_comboSubject.AddString(A2T(strSubName.c_str()));
 	for (auto strGrade : vecGrade)
 		m_comboGrade.AddString(A2T(strGrade.c_str()));
+	for (auto strTkType : vecTkType)
+		m_comboTkType.AddString(A2T(strTkType.c_str()));
 
 	m_comboSubject.AdjustDroppedWidth();
 	m_comboGrade.AdjustDroppedWidth();
+	m_comboTkType.AdjustDroppedWidth();
 
 	m_comboSubject.SetCurSel(0);
 	m_comboGrade.SetCurSel(0);
+	m_comboTkType.SetCurSel(0);
 }
 
 void CExamInfoMgrDlg::InitShowData()
@@ -256,10 +305,19 @@ void CExamInfoMgrDlg::GetSearchResultExamList()
 	USES_CONVERSION;
 	CString strCurSub = _T("");
 	CString strCurGrade = _T("");
+	CString strCurTkType = _T("");
 	m_comboSubject.GetLBText(m_comboSubject.GetCurSel(), strCurSub);
 	m_comboGrade.GetLBText(m_comboGrade.GetCurSel(), strCurGrade);
+	m_comboTkType.GetLBText(m_comboTkType.GetCurSel(), strCurTkType);
 	std::string strCurrSubject = T2A(strCurSub);
 	std::string strCurrGrade = T2A(strCurGrade);
+	int nMode = -1;
+	if (strCurTkType == _T("全部"))
+		nMode = -1;
+	else if (strCurTkType == _T("网阅卷"))
+		nMode = 0;
+	else if (strCurTkType == _T("手阅卷"))
+		nMode = 1;
 	//--
 	
 	EXAM_LIST::iterator itExam = m_lExamList.begin();
@@ -275,7 +333,7 @@ void CExamInfoMgrDlg::GetSearchResultExamList()
 	for (auto examObj : g_lExamList)
 	{
 		pEXAMINFO pExam = examObj;
-		if (pExam->strGradeName == strCurrGrade || strCurrGrade == "全部")
+		if ((pExam->strGradeName == strCurrGrade || strCurrGrade == "全部") && (pExam->nModel == nMode || nMode == -1))
 		{
 			pEXAMINFO pShowExam = NULL;
 			bool bFind = false;
@@ -346,7 +404,7 @@ void CExamInfoMgrDlg::GetAllShowPaperCount()
 
 int CExamInfoMgrDlg::GetStartExamIndex(int n)
 {
-	int nGap = 5;
+	int nGap = m_nChildDlgGap;
 	int nExamDlg_H = 45;				//考试信息列表的高度
 
 	int nResult = 0;
@@ -403,7 +461,7 @@ void CExamInfoMgrDlg::ShowExamList(EXAM_LIST lExam, int nStartShow)
 	ReleaseDlgData();
 	if (lExam.size() <= 0) return;
 
-	int nGap = 5;
+	int nGap = m_nChildDlgGap;
 	int nExamDlg_H = 45;				//考试信息列表的高度
 	int nRealW = m_rtExamList.Width();	//考试信息列表的宽度
 	int nRealH = m_rtExamList.Height();	//实际有效的显示考试列表窗口的高度
@@ -590,7 +648,7 @@ HBRUSH CExamInfoMgrDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
 	UINT CurID = pWnd->GetDlgCtrlID();
-	if (CurID == IDC_STATIC_DlgMgr_Subject || CurID == IDC_STATIC_DlgMgr_Grade || CurID == IDC_STATIC_PaperCount)
+	if (CurID == IDC_STATIC_DlgMgr_Subject || CurID == IDC_STATIC_DlgMgr_Grade || CurID == IDC_STATIC_PaperCount || CurID == IDC_STATIC_DlgMgr_TK_Type)
 	{
 		//		pDC->SetBkColor(RGB(255, 255, 255));
 		pDC->SetBkMode(TRANSPARENT);
@@ -600,3 +658,12 @@ HBRUSH CExamInfoMgrDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return hbr;
 }
 
+void CExamInfoMgrDlg::OnCbnSelchangeComboTkType()
+{
+	if (m_comboTkType.GetCurSel() < 0)
+		return;
+
+	GetSearchResultExamList();
+	m_nCurrShowPaper = 1;
+	ShowExamList(m_lExamList, m_nCurrShowPaper);
+}

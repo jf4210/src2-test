@@ -39,6 +39,7 @@ private:
 	CRect		m_rtExamList;		//显示考试列表的区域
 	CComboBoxExt	m_comboSubject;		//科目下拉列表
 	CComboBoxExt	m_comboGrade;		//年级下拉列表
+	CComboBoxExt	m_comboTkType;		//题卡类型下拉列表，网阅卷，手阅卷
 
 	int		m_nMaxShowExamListItem;		//当前窗口最大可以显示的考试列表行数
 	int		m_nAllExamListItems;		//当前搜索条件下，所有需要显示的考试数量
@@ -57,6 +58,7 @@ private:
 	int		m_nMaxSubsRow;		//一行最多显示的科目按钮数量
 	int		m_nSubjectBtnH;		//科目按钮高度
 	int		m_nDlgMinH;			//窗口最小高度
+	int		m_nChildDlgGap;		//子窗口间隔
 	//--
 public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -69,4 +71,5 @@ public:
 	afx_msg void OnBnClickedBtnUp();
 	afx_msg void OnBnClickedBtnDown();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg void OnCbnSelchangeComboTkType();
 };
