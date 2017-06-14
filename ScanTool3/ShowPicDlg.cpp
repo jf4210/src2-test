@@ -193,7 +193,10 @@ void CShowPicDlg::InitUI()
 			}
 //		}
 		
-		if (_pModel_) m_nModelPicNums = _pModel_->nPicNum;
+		if (_pModel_)
+			m_nModelPicNums = _pModel_->nPicNum;
+		else
+			m_nModelPicNums = _nPicNum4Ty_;
 
 		for (int i = 0; i < m_vecBtn.size(); i++)
 		{

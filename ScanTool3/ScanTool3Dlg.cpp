@@ -117,6 +117,7 @@ std::string _strEzs_;			//后端需要的EZS
 int _nTeacherId_ = 0;			//教师ID
 int _nUserId_ = 0;				//用户ID
 std::string _strPersonID_;		//手阅模式，天喻专用
+int _nPicNum4Ty_ = 2;			//手阅模式，模板图片数量
 //--
 
 bool				_bGetBmk_ = false;			//是否获得当前科目报名库
@@ -132,7 +133,7 @@ E_DLG_TYPE			_eCurrDlgType_ = DLG_Login;	//当前显示的窗口，弹出窗口不算
 
 CScanTool3Dlg::CScanTool3Dlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CScanTool3Dlg::IDD, pParent)
-	, m_pExamInfoMgrDlg(NULL), m_pScanMgrDlg(NULL), m_nStatusSize(25)
+	, m_pExamInfoMgrDlg(NULL), m_pScanMgrDlg(NULL), m_pModifyZkzhDlg(NULL), m_nStatusSize(25)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -173,46 +174,6 @@ void CScanTool3Dlg::InitThreads()
 // 	m_pScanThread = new Poco::Thread;
 // 	m_pScanThreadObj = new CScanThread;
 // 	m_pScanThread->start(*m_pScanThreadObj);
-}
-
-void CScanTool3Dlg::ReleaseThreads()
-{
-	//识别线程
-	for (int i = 0; i < m_vecRecogThreadObj.size(); i++)
-	{
-		m_vecRecogThreadObj[i]->eExit.wait();
-		m_pRecogThread[i].join();
-	}
-	std::vector<CRecognizeThread*>::iterator itRecogObj = m_vecRecogThreadObj.begin();
-	for (; itRecogObj != m_vecRecogThreadObj.end();)
-	{
-		CRecognizeThread* pObj = *itRecogObj;
-		SAFE_RELEASE(pObj);
-		itRecogObj = m_vecRecogThreadObj.erase(itRecogObj);
-	}
-	if (m_pRecogThread)
-	{
-		delete[] m_pRecogThread;
-		m_pRecogThread = NULL;
-	}
-
-	//文件发送线程
-	m_SendFileThread->join();
-	SAFE_RELEASE(m_pSendFileObj);
-	g_eSendFileThreadExit.wait();
-	SAFE_RELEASE(m_SendFileThread);
-
-	//tcp命令线程
-	m_TcpCmdThread->join();
-	SAFE_RELEASE(m_pTcpCmdObj);
-	g_eTcpThreadExit.wait();
-	SAFE_RELEASE(m_TcpCmdThread);
-
-	//压缩线程
-	m_pCompressThread->join();
-	SAFE_RELEASE(m_pCompressObj);
-	g_eCompressThreadExit.wait();
-	SAFE_RELEASE(m_pCompressThread);
 }
 
 void CScanTool3Dlg::InitCtrlPositon()
@@ -282,6 +243,52 @@ void CScanTool3Dlg::InitCtrlPositon()
 		m_pExamInfoMgrDlg->MoveWindow(rcClient);
 	if (m_pScanMgrDlg && m_pScanMgrDlg->GetSafeHwnd())
 		m_pScanMgrDlg->MoveWindow(rcClient);
+	if (m_pModifyZkzhDlg && m_pModifyZkzhDlg->GetSafeHwnd())
+		m_pModifyZkzhDlg->MoveWindow(rcClient);
+}
+
+void CScanTool3Dlg::ReleaseThreads()
+{
+	//识别线程
+	for (int i = 0; i < m_vecRecogThreadObj.size(); i++)
+	{
+		m_vecRecogThreadObj[i]->eExit.wait();
+		m_pRecogThread[i].join();
+	}
+	std::vector<CRecognizeThread*>::iterator itRecogObj = m_vecRecogThreadObj.begin();
+	for (; itRecogObj != m_vecRecogThreadObj.end();)
+	{
+		CRecognizeThread* pObj = *itRecogObj;
+		SAFE_RELEASE(pObj);
+		itRecogObj = m_vecRecogThreadObj.erase(itRecogObj);
+	}
+	if (m_pRecogThread)
+	{
+		delete[] m_pRecogThread;
+		m_pRecogThread = NULL;
+	}
+
+	//文件发送线程
+	m_SendFileThread->join();
+	SAFE_RELEASE(m_pSendFileObj);
+	g_eSendFileThreadExit.wait();
+	SAFE_RELEASE(m_SendFileThread);
+
+	//tcp命令线程
+	m_TcpCmdThread->join();
+	SAFE_RELEASE(m_pTcpCmdObj);
+	g_eTcpThreadExit.wait();
+	SAFE_RELEASE(m_TcpCmdThread);
+
+	//压缩线程
+	m_pCompressThread->join();
+	SAFE_RELEASE(m_pCompressObj);
+	g_eCompressThreadExit.wait();
+	SAFE_RELEASE(m_pCompressThread);
+
+
+	SAFE_RELEASE(_pModel_);
+	SAFE_RELEASE(_pCurrPapersInfo_);
 }
 
 void CScanTool3Dlg::ReleaseData()
@@ -319,8 +326,8 @@ void CScanTool3Dlg::ReleaseData()
 	}
 	g_fmRecog.unlock();
 
-	SAFE_RELEASE(_pModel_);
-	SAFE_RELEASE(_pCurrPapersInfo_);
+// 	SAFE_RELEASE(_pModel_);
+// 	SAFE_RELEASE(_pCurrPapersInfo_);
 }
 
 void CScanTool3Dlg::ReleaseDlg()
@@ -334,6 +341,11 @@ void CScanTool3Dlg::ReleaseDlg()
 	{
 		m_pScanMgrDlg->DestroyWindow();
 		SAFE_RELEASE(m_pScanMgrDlg);
+	}
+	if (m_pModifyZkzhDlg)
+	{
+		m_pModifyZkzhDlg->DestroyWindow();
+		SAFE_RELEASE(m_pModifyZkzhDlg);
 	}
 }
 
@@ -462,6 +474,23 @@ void CScanTool3Dlg::SwitchDlg(int nDlg, int nChildID /*= 1*/)
 			m_pScanMgrDlg->SetReturnDlg(1);
 		m_pScanMgrDlg->ShowChildDlg(nChildID);
 	}
+	else if (nDlg == 2)
+	{
+		m_pExamInfoMgrDlg->ShowWindow(SW_HIDE);
+		m_pScanMgrDlg->ShowWindow(SW_SHOW);
+		m_pScanMgrDlg->UpdateChildDlgInfo(1);
+
+		m_pModifyZkzhDlg->ShowWindow(SW_HIDE);
+	}
+}
+
+void CScanTool3Dlg::SwitchModifyZkzkDlg(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper)
+{
+	m_pExamInfoMgrDlg->ShowWindow(SW_HIDE);
+	m_pScanMgrDlg->ShowWindow(SW_HIDE);
+
+	m_pModifyZkzhDlg->ReInitData(_pModel_, _pCurrPapersInfo_, pStuMgr, pShowPaper);
+	m_pModifyZkzhDlg->ShowWindow(SW_SHOW);
 }
 
 BEGIN_MESSAGE_MAP(CScanTool3Dlg, CDialogEx)
@@ -503,6 +532,10 @@ BOOL CScanTool3Dlg::OnInitDialog()
 	m_pScanMgrDlg = new CScanMgrDlg(this);
 	m_pScanMgrDlg->Create(CScanMgrDlg::IDD, this);
 	m_pScanMgrDlg->ShowWindow(SW_HIDE);
+
+	m_pModifyZkzhDlg = new CModifyZkzhDlg(_pModel_, _pCurrPapersInfo_, NULL);
+	m_pModifyZkzhDlg->Create(CModifyZkzhDlg::IDD, this);
+	m_pModifyZkzhDlg->ShowWindow(SW_HIDE);
 
 	InitThreads();
 
@@ -564,8 +597,8 @@ void CScanTool3Dlg::OnDestroy()
 
 	g_nExitFlag = 1;
 	ReleaseData();
-	ReleaseDlg();
 	ReleaseThreads();
+	ReleaseDlg();
 }
 
 

@@ -268,8 +268,15 @@ void CTcpClient::HandleCmd()
 					Poco::JSON::Object::Ptr objExamInfo = arryObj->getObject(i);
 					//EXAMINFO examInfo;
 					pEXAMINFO pExamInfo = new EXAMINFO;
-				
-					pExamInfo->nExamID = objExamInfo->get("id").convert<int>();
+					
+					if (objExamInfo->get("id").isString())	//直接从天喻服务器返回手阅数据
+					{
+						pExamInfo->strExamID = objExamInfo->get("id").convert<std::string>();
+						pExamInfo->nModel = 1;
+						pExamInfo->strPersonID = _strPersonID_;
+					}
+					else
+						pExamInfo->nExamID = objExamInfo->get("id").convert<int>();
 					pExamInfo->strExamName = CMyCodeConvert::Utf8ToGb2312(objExamInfo->get("name").convert<std::string>());
 					
 					if (objExamInfo->has("examID"))
@@ -315,6 +322,7 @@ void CTcpClient::HandleCmd()
 						pEXAM_SUBJECT pSubjectInfo = new EXAM_SUBJECT;
 						if (pExamInfo->nModel == 1)
 						{
+							pSubjectInfo->nSubjID = 10 * (j + 1);
 							pSubjectInfo->strSubjName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("name").convert<std::string>());
 						}
 						else

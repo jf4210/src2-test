@@ -412,10 +412,15 @@ void CScanMgrDlg::ResetChildDlg()
 		m_pScanProcessDlg->ResetPicList();
 }
 
-void CScanMgrDlg::UpdateChildDlgInfo()
+void CScanMgrDlg::UpdateChildDlgInfo(int nType /*= 0*/)
 {
 	if (m_pScanProcessDlg)
-		m_pScanProcessDlg->InitShow();
+	{
+		if (nType == 0)
+			m_pScanProcessDlg->InitShow();
+		else if (nType == 1)
+			m_pScanProcessDlg->ReShowCurrPapers();
+	}
 }
 
 pTW_IDENTITY CScanMgrDlg::GetScanSrc(int nIndex)
@@ -620,7 +625,7 @@ int CScanMgrDlg::GetBmkInfo()
 {
 	if (!_pCurrExam_ || !_pCurrSub_) return 0;
 
-	if (_pCurrExam_->nModel != 0) return 0;		//只针对网阅考试获取报名库
+	if (_pCurrExam_->nModel != 0) return -3;		//只针对网阅考试获取报名库
 
 #if 1		//NewBmkTest
 	TRACE("请求报名库(%d)...\n", _pCurrExam_->nExamID);

@@ -11,6 +11,7 @@
 #include "ScanMgrDlg.h"
 #include "ScanThread.h"
 #include "BmpButton.h"
+#include "ModifyZkzhDlg.h"
 
 // CScanTool2Dlg 对话框
 class CScanTool3Dlg : public CDialogEx
@@ -24,6 +25,7 @@ public:
 
 
 	void	SwitchDlg(int nDlg, int nChildID = 1);		//切换窗口显示
+	void	SwitchModifyZkzkDlg(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper = NULL);
 	bool	HandleModel();				//处理模板，通过子窗口处理模板
 	void	DumpReleaseTwain();			//在系统崩溃时释放twain资源
 protected:
@@ -55,6 +57,7 @@ private:
 	//++窗口指针
 	CExamInfoMgrDlg*	m_pExamInfoMgrDlg;
 	CScanMgrDlg*		m_pScanMgrDlg;
+	CModifyZkzhDlg*		m_pModifyZkzhDlg;
 	//--
 
 

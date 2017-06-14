@@ -89,7 +89,10 @@ LRESULT CSingleExamDlg::DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam
 				_pCurrSub_	= pSub;
 
 				CScanTool3Dlg* pDlg = (CScanTool3Dlg*)AfxGetMainWnd();
-				pDlg->SwitchDlg(1);
+				if (_pCurrExam_->nModel == 1)	//手阅时，不下载报名库和模板，直接扫描
+					pDlg->SwitchDlg(1, 2);
+				else
+					pDlg->SwitchDlg(1);
 				break;
 			}
 		}

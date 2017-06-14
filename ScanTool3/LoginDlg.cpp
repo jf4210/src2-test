@@ -8,6 +8,7 @@
 //#include "global.h"
 #include "Net_Cmd_Protocol.h"
 #include "MultiPlatform4TYDlg.h"
+#include "NewMessageBox.h"
 
 // CLoginDlg ¶Ô»°¿ò
 
@@ -183,7 +184,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 			GetExamInfo();
 //			GetBmkInfo();
 			WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "login", T2A(m_strUserName));
-			AfxMessageBox(_T("µÇÂ¼³É¹¦"));	//µÇÂ¼³É¹¦£¬»ñÈ¡¿¼ÊÔÐÅÏ¢Ê§°Ü
+//			AfxMessageBox(_T("µÇÂ¼³É¹¦"));	//µÇÂ¼³É¹¦£¬»ñÈ¡¿¼ÊÔÐÅÏ¢Ê§°Ü
 			CDialog::OnOK();
 		}
 		else if (nResult == 2)
@@ -202,26 +203,46 @@ void CLoginDlg::OnBnClickedBtnLogin()
 			{
 				GetExamInfo();
 				WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "login", T2A(m_strUserName));
-				AfxMessageBox(_T("µÇÂ¼³É¹¦"));	//µÇÂ¼³É¹¦£¬»ñÈ¡¿¼ÊÔÐÅÏ¢Ê§°Ü
+//				AfxMessageBox(_T("µÇÂ¼³É¹¦"));	//µÇÂ¼³É¹¦£¬»ñÈ¡¿¼ÊÔÐÅÏ¢Ê§°Ü
 				CDialog::OnOK();
 			}
 			else
 			{
 				WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "login", T2A(m_strUserName));
+				std::string strErrShow;
 				if (strResult2 != _T(""))
-					AfxMessageBox(_T("µÇÂ¼Ê§°Ü: ") + strResult2);
+				{
+//					AfxMessageBox(_T("µÇÂ¼Ê§°Ü: ") + strResult2);
+					strErrShow = "µÇÂ¼Ê§°Ü: " + std::string(T2A(strResult2));
+				}
 				else
-					AfxMessageBox(_T("µÇÂ¼Ê§°Ü"));
+				{
+//					AfxMessageBox(_T("µÇÂ¼Ê§°Ü"));
+					strErrShow = "µÇÂ¼Ê§°Ü";
+				}
+				CNewMessageBox dlg;
+				dlg.setShowInfo(2, 1, strErrShow);
+				dlg.DoModal();
 //				CDialog::OnCancel();
 			}
 		}
 		else
 		{
 			WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "login", T2A(m_strUserName));
+			std::string strErrShow;
 			if (strResult != _T(""))
-				AfxMessageBox(_T("µÇÂ¼Ê§°Ü: ") + strResult);
+			{
+//				AfxMessageBox(_T("µÇÂ¼Ê§°Ü: ") + strResult);
+				strErrShow = "µÇÂ¼Ê§°Ü: " + std::string(T2A(strResult));
+			}
 			else
-				AfxMessageBox(_T("µÇÂ¼Ê§°Ü"));
+			{
+//				AfxMessageBox(_T("µÇÂ¼Ê§°Ü"));
+				strErrShow = "µÇÂ¼Ê§°Ü";
+			}
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, strErrShow);
+			dlg.DoModal();
 //			CDialog::OnCancel();
 		}
 
@@ -231,7 +252,10 @@ void CLoginDlg::OnBnClickedBtnLogin()
 		std::string strLog = "Á¬½Ó·þÎñÆ÷Ê§°Ü£¬Detail: " + exc.displayText();
 		g_pLogger->information(strLog);
 		TRACE(strLog.c_str());
-		AfxMessageBox(_T("µÇÂ¼Ê§°Ü"));
+//		AfxMessageBox(_T("µÇÂ¼Ê§°Ü"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "µÇÂ¼Ê§°Ü");
+		dlg.DoModal();
 //		OnCancel();
 	}
 }
@@ -354,6 +378,10 @@ int CLoginDlg::RecvData(CString& strResultInfo)
 				{
 					result = parser.parse(pstResult->szUserInfo);
 					Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
+					//ÅÐ¶ÏÊÇ·ñÊÇÊÖÔÄÄ£Ê½µÇÂ¼£¬¼´ÊÇ·ñÖ±½ÓµÇÂ¼ÌìÓ÷µÄ·þÎñÆ÷
+					if (object->has("personid") && !object->isNull("personid"))
+						_bHandModel_ = true;
+
 					if (_bHandModel_)
 					{
 						std::string strPersonId = object->get("personid").convert<std::string>();

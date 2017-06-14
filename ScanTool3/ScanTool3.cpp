@@ -96,6 +96,7 @@ bool InitConfig()
 	g_nFilePort = pConf->getInt("Server.filePort", 19980);
 	g_strCmdIP = pConf->getString("Server.cmdIP");
 	g_nCmdPort = pConf->getInt("Server.cmdPort", 19980);
+	_nPicNum4Ty_ = pConf->getInt("WHTY.picNums", 2);
 }
 
 BOOL CScanTool3App::InitInstance()
@@ -170,6 +171,7 @@ BOOL CScanTool3App::InitInstance()
 		_strNickName_	= T2A(loginDlg.m_strNickName);
 		_strPwd_		= T2A(loginDlg.m_strPwd);
 		_strEzs_		= T2A(loginDlg.m_strEzs);
+		_strPersonID_	= T2A(loginDlg.m_strPersonId);
 		_nTeacherId_	= loginDlg.m_nTeacherId;
 		_nUserId_		= loginDlg.m_nUserId;
 	}

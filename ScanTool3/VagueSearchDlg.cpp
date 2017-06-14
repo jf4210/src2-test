@@ -41,6 +41,18 @@ BOOL CVagueSearchDlg::OnInitDialog()
 	return TRUE;
 }
 
+BOOL CVagueSearchDlg::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		if (pMsg->wParam == VK_ESCAPE || pMsg->wParam == VK_RETURN)
+		{
+			return TRUE;
+		}
+	}
+	return CDialog::PreTranslateMessage(pMsg);
+}
+
 BEGIN_MESSAGE_MAP(CVagueSearchDlg, CDialog)
 	ON_WM_ERASEBKGND()
 	ON_WM_SIZE()
@@ -212,6 +224,10 @@ void CVagueSearchDlg::OnBnClickedRadioSearchzkzh()
 
 void CVagueSearchDlg::OnBnClickedBtnSearch()
 {
+	if (!m_pModel)
+	{
+		return;
+	}
 	UpdateData(TRUE);
 	USES_CONVERSION;
 	m_lcBmk.DeleteAllItems();
@@ -251,7 +267,7 @@ void CVagueSearchDlg::setExamInfo(CStudentMgr* pMgr, pMODEL pModel)
 bool CVagueSearchDlg::vagueSearch(pST_PaperInfo pPaper)
 {
 	bool bResult = false;
-	if (!pPaper) return bResult;
+	if (!pPaper || !m_pModel) return bResult;
 
 	//将模糊查找字段变成合法的sql字段
 	std::string strVagueKey = pPaper->strRecogSN4Search;

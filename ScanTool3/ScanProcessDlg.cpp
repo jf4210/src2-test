@@ -6,15 +6,16 @@
 #include "ScanProcessDlg.h"
 #include "afxdialogex.h"
 #include "ScanMgrDlg.h"
-#include "ModifyZkzhDlg.h"
+//#include "ModifyZkzhDlg.h"
 #include "NewMessageBox.h"
+#include "ScanTool3Dlg.h"
 // CScanProcessDlg 对话框
 
 IMPLEMENT_DYNAMIC(CScanProcessDlg, CDialog)
 
 CScanProcessDlg::CScanProcessDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CScanProcessDlg::IDD, pParent)
-	, m_nCurrentScanCount(0), m_pReminderDlg(NULL), m_pShowPicDlg(NULL), m_pStudentMgr(NULL)
+	, m_nCurrentScanCount(0), m_pReminderDlg(NULL), m_pShowPicDlg(NULL), m_pStudentMgr(NULL), m_pModifyZkzhDlg(NULL)
 {
 
 }
@@ -131,6 +132,14 @@ void CScanProcessDlg::InitUI()
 	m_pShowPicDlg = new CShowPicDlg(this);
 	m_pShowPicDlg->Create(CShowPicDlg::IDD, this);
 	m_pShowPicDlg->ShowWindow(SW_HIDE);
+	m_pShowPicDlg->setShowModel(2);
+
+#ifdef TEST_MODIFY_ZKZH_CHIld
+	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
+	m_pModifyZkzhDlg = new CModifyZkzhDlg(_pModel_, _pCurrPapersInfo_, m_pStudentMgr);
+	m_pModifyZkzhDlg->Create(CModifyZkzhDlg::IDD, this);
+	m_pModifyZkzhDlg->ShowWindow(SW_HIDE);
+#endif
 
 	InitCtrlPosition();
 }
@@ -190,7 +199,10 @@ void CScanProcessDlg::InitCtrlPosition()
 	{
 		m_pShowPicDlg->MoveWindow(m_rtChildDlg);
 	}
-
+	if (m_pModifyZkzhDlg && m_pModifyZkzhDlg->GetSafeHwnd())
+	{
+		m_pModifyZkzhDlg->MoveWindow(m_rtChildDlg);
+	}
 	//btn
 	if (GetDlgItem(IDC_BTN_ScanProcess)->GetSafeHwnd())
 	{
@@ -237,7 +249,10 @@ void CScanProcessDlg::AddPaper(int nID, pST_PaperInfo pPaper)
 	m_lcPicture.InsertItem(nCount, NULL);
 
 	m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
-	m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+	if (_pCurrExam_->nModel == 1)
+		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
+	else
+		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
 	m_lcPicture.SetItemData(nCount, (DWORD_PTR)pPaper);
 //	m_lcPicture.EnsureVisible(nCount, FALSE);	//滚动最后一行
 
@@ -680,8 +695,15 @@ void CScanProcessDlg::UpdateExamBmk()
 	}
 }
 
+void CScanProcessDlg::ReShowCurrPapers()
+{
+	ShowPapers(_pCurrPapersInfo_);
+}
+
 void CScanProcessDlg::ShowPapers(pPAPERSINFO pPapers)
 {
+	if (!pPapers) return;
+
 	//显示所有识别完成的准考证号
 	USES_CONVERSION;
 	//重新显示合格试卷
@@ -801,7 +823,7 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 		}		
 	}
 
-	if (!_pModel_)
+	if (_pCurrExam_->nModel == 0 && !_pModel_)
 	{
 //		AfxMessageBox(_T("当前扫描模板为空"));
 		CNewMessageBox	dlg;
@@ -856,16 +878,26 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 	}	
 
 	m_strCurrPicSavePath = szPicTmpPath;
+	int _nModelPicNums = 0;
 
 	//获取扫描参数
 	int nScanSize = 1;				//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3, TWSS_NONE-自定义
 	int nScanType = 2;				//0-黑白，1-灰度，2-彩色
 	int nScanDpi = 200;				//dpi: 72, 150, 200, 300
 	int nAutoCut = 1;
-	nScanSize = _pModel_->nScanSize;
-	nScanType = _pModel_->nScanType;
-	nScanDpi = _pModel_->nScanDpi;
-	nAutoCut = _pModel_->nAutoCut;
+	if (_pModel_)
+	{
+		nScanSize = _pModel_->nScanSize;
+		nScanType = _pModel_->nScanType;
+		nScanDpi = _pModel_->nScanDpi;
+		nAutoCut = _pModel_->nAutoCut;
+
+		_nModelPicNums = _pModel_->nPicNum;
+	}
+	else  //手阅
+	{
+		_nModelPicNums = _nPicNum4Ty_;
+	}
 
 //	m_nModelPicNums = _pModel_->nPicNum;
 
@@ -887,7 +919,7 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 	}
 	else
 	{
-		int nModelPics = _pModel_->nPicNum;
+		int nModelPics = _nModelPicNums;
 		if (nModelPics % 2)
 			nModelPics++;
 
@@ -1128,6 +1160,11 @@ void CScanProcessDlg::OnDestroy()
 		m_pShowPicDlg->DestroyWindow();
 		SAFE_RELEASE(m_pShowPicDlg);
 	}
+	if (m_pModifyZkzhDlg)
+	{
+		m_pModifyZkzhDlg->DestroyWindow();
+		SAFE_RELEASE(m_pModifyZkzhDlg);
+	}
 }
 
 void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
@@ -1185,10 +1222,15 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 			std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
 			bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
 		}
+	#ifdef TEST_MODIFY_ZKZH_CHIld
+		CScanTool3Dlg* pDlg = (CScanTool3Dlg*)AfxGetMainWnd();
+		pDlg->SwitchModifyZkzkDlg(_pModel_, _pCurrPapersInfo_, m_pStudentMgr, pItemPaper);
+//		ShowPapers(_pCurrPapersInfo_);
+	#else
 		CModifyZkzhDlg zkzhDlg(_pModel_, _pCurrPapersInfo_, m_pStudentMgr, pItemPaper);
 		zkzhDlg.DoModal();
-
 		ShowPapers(_pCurrPapersInfo_);
+	#endif
 	}
 }
 
@@ -1265,10 +1307,15 @@ void CScanProcessDlg::OnTimer(UINT_PTR nIDEvent)
 					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
 					bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
 				}
+			#ifdef TEST_MODIFY_ZKZH_CHIld
+
+				CScanTool3Dlg* pDlg = (CScanTool3Dlg*)AfxGetMainWnd();
+				pDlg->SwitchModifyZkzkDlg(_pModel_, _pCurrPapersInfo_, m_pStudentMgr);
+			#else
 				CModifyZkzhDlg zkzhDlg(_pModel_, _pCurrPapersInfo_, m_pStudentMgr);
 				zkzhDlg.DoModal();
-
 				ShowPapers(_pCurrPapersInfo_);
+			#endif
 			}
 			else
 				KillTimer(TIMER_CheckRecogComplete);
@@ -1316,10 +1363,16 @@ void CScanProcessDlg::TestData(bool bReset)
 {
 	_nScanStatus_ = 1;
 	pST_SCANCTRL pScanCtrl = new ST_SCANCTRL();
+	
+	int _nModelPicNums = 0;
+	if (_pModel_)
+		_nModelPicNums = _pModel_->nPicNum;
+	else
+		_nModelPicNums = _nPicNum4Ty_;
 
 	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
 	pDlg->m_scanThread.setNotifyDlg(pDlg);
-	pDlg->m_scanThread.setModelInfo(_pModel_->nPicNum, m_strCurrPicSavePath);
+	pDlg->m_scanThread.setModelInfo(_nModelPicNums, m_strCurrPicSavePath);
 	if (bReset)
 	{
 		pDlg->m_scanThread.resetData();

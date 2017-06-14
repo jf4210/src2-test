@@ -6,7 +6,7 @@
 #include "ModifyZkzhDlg.h"
 #include "afxdialogex.h"
 #include "NewMessageBox.h"
-
+#include "ScanTool3Dlg.h"
 // CModifyZkzhDlg 对话框
 
 IMPLEMENT_DYNAMIC(CModifyZkzhDlg, CDialog)
@@ -28,6 +28,7 @@ void CModifyZkzhDlg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_Zkzh, m_lcZkzh);
 	DDX_Text(pDX, IDC_EDIT_Zkzh, m_strCurZkzh);
+	DDX_Control(pDX, IDC_BTN_Back, m_bmpBtnReturn);
 }
 
 
@@ -58,16 +59,43 @@ BEGIN_MESSAGE_MAP(CModifyZkzhDlg, CDialog)
 	ON_WM_CLOSE()
 	ON_WM_ERASEBKGND()
 	ON_WM_CTLCOLOR()
+	ON_BN_CLICKED(IDC_BTN_Back, &CModifyZkzhDlg::OnBnClickedBtnBack)
 END_MESSAGE_MAP()
 
 
 // CModifyZkzhDlg 消息处理程序
+void CModifyZkzhDlg::ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper /*= NULL*/)
+{
+	m_pModel			= pModel;
+	m_pPapers			= pPapersInfo;
+	m_pStudentMgr		= pStuMgr;
+	m_pCurrentShowPaper = pShowPaper;
+//	InitUI();
+
+	if (!m_pVagueSearchDlg)
+	{
+		m_pVagueSearchDlg = new CVagueSearchDlg();
+		m_pVagueSearchDlg->Create(CVagueSearchDlg::IDD, this);
+		m_pVagueSearchDlg->ShowWindow(SW_SHOW);
+	}
+	if (!m_pShowPicDlg)
+	{
+		m_pShowPicDlg = new CShowPicDlg();
+		m_pShowPicDlg->Create(CShowPicDlg::IDD, this);
+		m_pShowPicDlg->ShowWindow(SW_SHOW);
+	}
+	m_pShowPicDlg->setShowModel(2);
+	m_pVagueSearchDlg->setExamInfo(m_pStudentMgr, m_pModel);
+
+	InitData();
+	ShowPaperByItem(m_nCurrentSelItem);
+	InitCtrlPosition();
+}
 
 void CModifyZkzhDlg::InitUI()
 {
 #ifdef NewListModelTest
 	m_lcZkzh.SetExtendedStyle(m_lcZkzh.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
-//	m_lcZkzh.InsertColumn(0, _T("顺序"), LVCFMT_CENTER, 40);
 	m_lcZkzh.InsertColumn(0, _T("考生"), LVCFMT_CENTER, 50);
 	m_lcZkzh.InsertColumn(1, _T("准考证号(可编辑)"), LVCFMT_CENTER, 110);
 	m_lcZkzh.InsertColumn(2, _T("删除重扫"), LVCFMT_CENTER, 80);	//重扫标识
@@ -83,7 +111,6 @@ void CModifyZkzhDlg::InitUI()
 			hditem.iImage = XHEADERCTRL_UNCHECKED_IMAGE;
 		m_lcZkzh.m_HeaderCtrl.SetItem(i, &hditem);
 	}
-	// call EnableToolTips to enable tooltip display
 	m_lcZkzh.EnableToolTips(TRUE);
 #else
 	m_lcZkzh.SetExtendedStyle(m_lcZkzh.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
@@ -106,38 +133,28 @@ void CModifyZkzhDlg::InitUI()
 	m_lcZkzh.EnableToolTips(TRUE);
 #endif
 
-#if 0
-	m_lcBmk.SetExtendedStyle(m_lcBmk.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
-	m_lcBmk.InsertColumn(0, _T("题卡"), LVCFMT_CENTER, 40);
-	m_lcBmk.InsertColumn(1, _T("姓名"), LVCFMT_CENTER, 80);
-	m_lcBmk.InsertColumn(2, _T("准考证号"), LVCFMT_CENTER, 120);
-	m_lcBmk.InsertColumn(3, _T("班级"), LVCFMT_CENTER, 80);
-	m_lcBmk.InsertColumn(4, _T("学校"), LVCFMT_CENTER, 150);
+	m_bmpBtnReturn.SetStateBitmap(IDB_RecordDlg_Btn, 0, IDB_RecordDlg_Btn_Hover);
+	m_bmpBtnReturn.SetWindowText(_T("返回"));
 
-	switch (m_nSearchType)
+	if (!m_pShowPicDlg)
 	{
-		case 1:
-			((CButton*)GetDlgItem(IDC_RADIO_SearchName))->SetCheck(1);
-			((CButton*)GetDlgItem(IDC_RADIO_SearchZkzh))->SetCheck(0);
-			break;
-		case 2:
-			((CButton*)GetDlgItem(IDC_RADIO_SearchName))->SetCheck(0);
-			((CButton*)GetDlgItem(IDC_RADIO_SearchZkzh))->SetCheck(1);
-			break;
+		m_pShowPicDlg = new CShowPicDlg();
+		m_pShowPicDlg->Create(CShowPicDlg::IDD, this);
+		m_pShowPicDlg->ShowWindow(SW_SHOW);
 	}
-#endif
-
-	m_pShowPicDlg = new CShowPicDlg();
-	m_pShowPicDlg->Create(CShowPicDlg::IDD, this);
-	m_pShowPicDlg->ShowWindow(SW_SHOW);
-
-	m_pVagueSearchDlg = new CVagueSearchDlg();
-	m_pVagueSearchDlg->Create(CVagueSearchDlg::IDD, this);
-	m_pVagueSearchDlg->ShowWindow(SW_SHOW);
+	m_pShowPicDlg->setShowModel(2);
+	if (!m_pVagueSearchDlg)
+	{
+		m_pVagueSearchDlg = new CVagueSearchDlg();
+		m_pVagueSearchDlg->Create(CVagueSearchDlg::IDD, this);
+		m_pVagueSearchDlg->ShowWindow(SW_SHOW);
+	}
 	m_pVagueSearchDlg->setExamInfo(m_pStudentMgr, m_pModel);
 
+#ifndef TEST_MODIFY_ZKZH_CHIld
 	MoveWindow(0, 0, 1024, 650);
 	CenterWindow();
+#endif
 	InitCtrlPosition();
 }
 
@@ -147,13 +164,19 @@ void CModifyZkzhDlg::InitCtrlPosition()
 	GetClientRect(&rcClient);
 	int cx = rcClient.right;
 	int cy = rcClient.bottom;
-
+#ifdef TEST_MODIFY_ZKZH_CHIld
+	int nTopGap = 30;	//上边的间隔，留给控制栏
+	const int nLeftGap = 20;		//左边的空白间隔
+	const int nBottomGap = 20;	//下边的空白间隔
+	const int nRightGap = 20;	//右边的空白间隔
+	const int nGap = 2;			//普通控件的间隔
+#else
 	int nTopGap = 5;	//上边的间隔，留给控制栏
 	const int nLeftGap = 5;		//左边的空白间隔
 	const int nBottomGap = 2;	//下边的空白间隔
 	const int nRightGap = 2;	//右边的空白间隔
 	const int nGap = 2;			//普通控件的间隔
-
+#endif
 	int nGroupH = 70;			//group控件高度
 	int nListCtrlWidth = 350;	//图片列表控件宽度
 	int nStaticTip = 15;		//列表提示static控件高度
@@ -168,7 +191,14 @@ void CModifyZkzhDlg::InitCtrlPosition()
 		nCurrentTop += (nStaticTip + nGap);
 	}
 //	int nZkzhLCH = cy - nTopGap - nStaticTip - nGap - nStaticTip - nGap - nBtnH - nBottomH - nBottomGap;
-	int nZkzhLCH = cy - nTopGap - nStaticTip - nGap - nGap - nGroupH - nGap - nStaticTip - nGap - 150 - nBottomH - nBottomGap;
+	int nVagueSearchDlgH = (cy - nTopGap - nBottomH - nBottomGap) * 0.4;
+	if (nVagueSearchDlgH < 250)
+		nVagueSearchDlgH = 250;
+	if (nVagueSearchDlgH > 300)
+		nVagueSearchDlgH = 300;
+
+//	int nZkzhLCH = cy - nTopGap - nStaticTip - nGap - nGap - nGroupH - nGap - nStaticTip - nGap - 150 - nBottomH - nBottomGap;
+	int nZkzhLCH = cy - nTopGap - nStaticTip - nGap - nVagueSearchDlgH - nBottomH - nBottomGap;
 	if (m_lcZkzh.GetSafeHwnd())
 	{
 		m_lcZkzh.MoveWindow(nCurrentLeft, nCurrentTop, nListCtrlWidth, nZkzhLCH);
@@ -176,54 +206,11 @@ void CModifyZkzhDlg::InitCtrlPosition()
 		nCurrentTop += (nZkzhLCH + nGap);
 	}
 	//报名库查询
-#if 1
 	if (m_pVagueSearchDlg && m_pVagueSearchDlg->GetSafeHwnd())
 	{
-		int nH = cy - nBottomGap - nCurrentTop;
-		m_pVagueSearchDlg->MoveWindow(nCurrentLeft, nCurrentTop, nListCtrlWidth, nH);
+//		int nH = cy - nBottomGap - nCurrentTop;
+		m_pVagueSearchDlg->MoveWindow(nCurrentLeft, nCurrentTop, nListCtrlWidth, nVagueSearchDlgH);
 	}
-#else
-	int nTmpTop = nCurrentTop;
-	if (GetDlgItem(IDC_STATIC_Group)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_STATIC_Group)->MoveWindow(nCurrentLeft, nCurrentTop, nListCtrlWidth, nGroupH);
-		nCurrentTop += (nStaticTip + nGap);
-		nCurrentLeft += nGap;
-	}
-	if (GetDlgItem(IDC_RADIO_SearchName)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_RADIO_SearchName)->MoveWindow(nCurrentLeft, nCurrentTop, nListCtrlWidth / 2 - 5, nStaticTip);
-		nCurrentLeft += (nListCtrlWidth / 2 - 5 + nGap);
-//		nCurrentTop += (nStaticTip + nGap);
-	}
-	if (GetDlgItem(IDC_RADIO_SearchZkzh)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_RADIO_SearchZkzh)->MoveWindow(nCurrentLeft, nCurrentTop, nListCtrlWidth / 2 - 5, nStaticTip);
-		nCurrentLeft = nLeftGap + nGap + nGap;
-		nCurrentTop += (nStaticTip + nGap);
-	}
-	if (GetDlgItem(IDC_EDIT_SearchKey)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_EDIT_SearchKey)->MoveWindow(nCurrentLeft, nCurrentTop, nListCtrlWidth - 70, nBtnH);
-		nCurrentLeft += (nListCtrlWidth - 70 + nGap);
-	}
-	if (GetDlgItem(IDC_BTN_Search)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_BTN_Search)->MoveWindow(nCurrentLeft, nCurrentTop, 60, nBtnH);
-		nCurrentLeft = nLeftGap + nGap;
-		nCurrentTop = nTmpTop + nGap + nGroupH + nGap;
-	}
-	if (GetDlgItem(IDC_STATIC_DB_Search)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_STATIC_DB_Search)->MoveWindow(nCurrentLeft, nCurrentTop, nListCtrlWidth, nStaticTip);
-		nCurrentTop += (nStaticTip + nGap);
-	}
-	if (GetDlgItem(IDC_LIST_ZkzhSearchResult)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_LIST_ZkzhSearchResult)->MoveWindow(nCurrentLeft, nCurrentTop, nListCtrlWidth, 150);
-		nCurrentTop += (nStaticTip + nGap);
-	}
-#endif
 	//------------------------------------------------后期可删除，已经隐藏
 	if (GetDlgItem(IDC_STATIC_Zkzh_S2)->GetSafeHwnd())
 	{
@@ -255,6 +242,14 @@ void CModifyZkzhDlg::InitCtrlPosition()
 
 	if (m_pShowPicDlg && m_pShowPicDlg->GetSafeHwnd())
 		m_pShowPicDlg->MoveWindow(nCurrentLeft, nTopGap, nPicShowTabCtrlWidth, nPicShowTabCtrlHigh);
+
+	if (GetDlgItem(IDC_BTN_Back)->GetSafeHwnd())
+	{
+		int nBtnW = 40;
+		int nBtnH = nTopGap - 5;
+		GetDlgItem(IDC_BTN_Back)->MoveWindow(cx - nRightGap - nBtnW, 5, nBtnW, nBtnH);
+	}
+//	Invalidate();
 }
 
 void CModifyZkzhDlg::InitData()
@@ -262,6 +257,7 @@ void CModifyZkzhDlg::InitData()
 	if (NULL == m_pPapers)
 		return;
 
+	m_lcZkzh.DeleteAllItems();
 	USES_CONVERSION;
 	for (auto pPaper : m_pPapers->lPaper)
 	{
@@ -641,8 +637,12 @@ BOOL CModifyZkzhDlg::PreTranslateMessage(MSG* pMsg)
 		}
 		if (pMsg->wParam == VK_ESCAPE)
 		{
+#ifndef TEST_MODIFY_ZKZH_CHIld
 			if (!ReleaseData())
 				return TRUE;
+#else
+			return TRUE;
+#endif
 		}
 	}
 	return CDialog::PreTranslateMessage(pMsg);
@@ -845,7 +845,7 @@ bool CModifyZkzhDlg::ReleaseData()
 		m_pShowPicDlg->DestroyWindow();
 		SAFE_RELEASE(m_pShowPicDlg);
 	}
-	
+
 	int nCount = m_lcZkzh.GetItemCount();
 	if (g_nZkzhNull2Issue == 1)
 	{
@@ -1015,4 +1015,18 @@ HBRUSH CModifyZkzhDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 // 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 // 	}
 	return hbr;
+}
+
+
+void CModifyZkzhDlg::OnBnClickedBtnBack()
+{
+#ifdef TEST_MODIFY_ZKZH_CHIld
+	if (!ReleaseData())
+		return;
+	ShowWindow(SW_HIDE);
+	CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
+	pDlg->SwitchDlg(2);
+#else
+	OnClose();
+#endif
 }

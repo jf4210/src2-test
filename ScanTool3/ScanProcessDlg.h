@@ -6,6 +6,7 @@
 #include "BmpButton.h"
 #include "ctrl/skinscrollwnd.h"
 #include "StudentMgr.h"
+#include "ModifyZkzhDlg.h"
 
 // CScanProcessDlg 对话框
 
@@ -27,6 +28,7 @@ public:
 	void	ScanCompleted();
 	void	SetStatusShow(int nType, CString strShowInfo, bool bWarn = false);	//1--扫描状态信息，2--保存试卷袋信息
 	void	UpdateExamBmk();		//将当前试卷袋的扫描信息更新到考试的总报名库中
+	void	ReShowCurrPapers();
 private:
 	void	InitUI();
 	void	InitCtrlPosition();
@@ -47,6 +49,7 @@ private:
 	CScanReminderDlg*	m_pReminderDlg;	//扫描提示框窗口
 	CShowPicDlg*		m_pShowPicDlg;
 	CStudentMgr*		m_pStudentMgr;
+	CModifyZkzhDlg*		m_pModifyZkzhDlg;
 
 	CFont			m_fontBtn1;				//按钮字体
 	CFont			m_fontBtn2;

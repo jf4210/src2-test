@@ -31,10 +31,9 @@ public:
 
 	CString			m_strCurZkzh;
 	COLORREF		crOldText, crOldBackground;
+	CBmpButton		m_bmpBtnReturn;
 
-// 	int				m_nSearchType;		//搜索类型，1-按姓名搜索，2-按准考证号
-// 	CString			m_strSearchKey;		//搜索关键字
-//	CListCtrl		m_lcBmk;			//报名库列表控件
+	void			ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper = NULL);
 private:
 	CStudentMgr*	m_pStudentMgr;
 	pST_PaperInfo	m_pShowPaper;		//默认显示的试卷
@@ -73,4 +72,5 @@ public:
 	afx_msg void OnClose();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg void OnBnClickedBtnBack();
 };

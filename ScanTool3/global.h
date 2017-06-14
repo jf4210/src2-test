@@ -51,24 +51,24 @@
 
 
 //-------------------------------------
-#include "Poco/Data/Statement.h"
-#include "Poco/Data/RecordSet.h"
-#include "Poco/Data/SQLChannel.h"
-#include "Poco/Data/SessionFactory.h"
-#include "Poco/Data/SQLite/Connector.h"
-#include "Poco/Data/SQLite/Utility.h"
-#include "Poco/Data/SQLite/Notifier.h"
-#include "Poco/Data/SQLite/Connector.h"
-
-#include "Poco/Nullable.h"
-#include "Poco/Data/Transaction.h"
-#include "Poco/Data/DataException.h"
-#include "Poco/Data/SQLite/SQLiteException.h"
-#include "Poco/Data/TypeHandler.h"
-#include "Poco/Data/SQLite/Connector.h"
-#include "Poco/Data/SQLite/Utility.h"
-#include "Poco/Data/SQLite/Notifier.h"
-#include "Poco/Data/SQLite/Connector.h"
+// #include "Poco/Data/Statement.h"
+// #include "Poco/Data/RecordSet.h"
+// #include "Poco/Data/SQLChannel.h"
+// #include "Poco/Data/SessionFactory.h"
+// #include "Poco/Data/SQLite/Connector.h"
+// #include "Poco/Data/SQLite/Utility.h"
+// #include "Poco/Data/SQLite/Notifier.h"
+// #include "Poco/Data/SQLite/Connector.h"
+// 
+// #include "Poco/Nullable.h"
+// #include "Poco/Data/Transaction.h"
+// #include "Poco/Data/DataException.h"
+// #include "Poco/Data/SQLite/SQLiteException.h"
+// #include "Poco/Data/TypeHandler.h"
+// #include "Poco/Data/SQLite/Connector.h"
+// #include "Poco/Data/SQLite/Utility.h"
+// #include "Poco/Data/SQLite/Notifier.h"
+// #include "Poco/Data/SQLite/Connector.h"
 //-------------------------------------
 
 #include "zip.h"
@@ -100,6 +100,7 @@
 #endif
 
 #define Test_RecogOmr3			//第3种OMR识别方法测试
+#define TEST_MODIFY_ZKZH_CHIld	//将修改准考证号窗口嵌入当做子窗口，不做弹出窗口
 
 //+++++++++	选择版本 ++++++++++++++++++
 //#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
@@ -154,6 +155,7 @@ extern std::string _strEzs_;		//后端需要的EZS
 extern int _nTeacherId_;			//教师ID
 extern int _nUserId_;				//用户ID
 extern std::string _strPersonID_;	//手阅模式，天喻专用
+extern int _nPicNum4Ty_;			//手阅模式，模板图片数量
 //--
 extern bool		_bGetBmk_;			//是否获得当前科目报名库
 extern int					_nReocgThreads_;		//识别线程数量

@@ -297,7 +297,7 @@ void CScanDlg::OnBnClickedBtnScan()
 		dlg.DoModal();
 		return;
 	}
-	if (!_pModel_)
+	if (_pCurrExam_->nModel == 0 && !_pModel_)
 	{
 //		AfxMessageBox(_T("当前考试无模板信息"));	//模板解析错误
 		CNewMessageBox	dlg;
@@ -339,12 +339,19 @@ void CScanDlg::OnBnClickedBtnScan()
 	int nScanType = 2;				//0-黑白，1-灰度，2-彩色
 	int nScanDpi = 200;				//dpi: 72, 150, 200, 300
 	int nAutoCut = 1;
-	nScanSize = _pModel_->nScanSize;
-	nScanType = _pModel_->nScanType;
-	nScanDpi = _pModel_->nScanDpi;
-	nAutoCut = _pModel_->nAutoCut;
+	if (_pModel_)
+	{
+		nScanSize = _pModel_->nScanSize;
+		nScanType = _pModel_->nScanType;
+		nScanDpi = _pModel_->nScanDpi;
+		nAutoCut = _pModel_->nAutoCut;
 
-	m_nModelPicNums = _pModel_->nPicNum;
+		m_nModelPicNums = _pModel_->nPicNum;
+	}
+	else  //手阅
+	{
+		m_nModelPicNums = _nPicNum4Ty_;
+	}
 
 	bool bShowScanSrcUI = g_bShowScanSrcUI ? true : m_bAdvancedScan;			//显示高级扫描界面
 
@@ -493,7 +500,10 @@ void CScanDlg::TestData()
 	SAFE_RELEASE(_pCurrPapersInfo_);
 	_pCurrPapersInfo_ = new PAPERSINFO();
 
-	m_nModelPicNums = _pModel_->nPicNum;
+	if (_pModel_)
+		m_nModelPicNums = _pModel_->nPicNum;
+	else
+		m_nModelPicNums = _nPicNum4Ty_;
 
 	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
 	pDlg->m_scanThread.setNotifyDlg(pDlg);
