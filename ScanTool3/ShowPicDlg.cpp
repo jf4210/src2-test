@@ -136,7 +136,10 @@ void CShowPicDlg::InitUI()
 //		}
 		m_tabPicShowCtrl.DeleteAllItems();
 
-		if (_pModel_) m_nModelPicNums = _pModel_->nPicNum;
+		if (_pModel_)
+			m_nModelPicNums = _pModel_->nPicNum;
+		else
+			m_nModelPicNums = _nPicNum4Ty_;
 
 		USES_CONVERSION;
 		CRect rtTab;
@@ -616,4 +619,10 @@ void CShowPicDlg::OnDestroy()
 		m_vecBtn[i] = NULL;
 	}
 	m_vecBtn.clear();
+}
+
+void CShowPicDlg::showTmpPic(cv::Mat& matPic)
+{
+	if (m_pCurrentPicShow)
+		m_pCurrentPicShow->ShowPic(matPic);
 }

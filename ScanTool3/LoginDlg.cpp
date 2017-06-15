@@ -163,6 +163,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 		m_ss.close();
 		m_ss.connect(sa);
 		m_ss.setReceiveTimeout(ts);
+		SAFE_RELEASE(m_pRecvBuff);
 
 		ST_CMD_HEADER stHead;
 		stHead.usCmd = USER_LOGIN;

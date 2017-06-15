@@ -265,7 +265,7 @@ void CScanProcessDlg::AddPaper(int nID, pST_PaperInfo pPaper)
 	{
 		m_pReminderDlg->ShowWindow(SW_HIDE);
 		m_pShowPicDlg->ShowWindow(SW_SHOW);
-		m_pShowPicDlg->setShowPaper(pPaper);
+//		m_pShowPicDlg->setShowPaper(pPaper);
 	}
 }
 
@@ -585,8 +585,11 @@ void CScanProcessDlg::WriteJsonFile()
 	std::string sEzs = _strEzs_;
 	Poco::JSON::Object jsnFileData;
 
-	jsnFileData.set("examId", _pModel_->nExamID);
-	jsnFileData.set("subjectId", _pModel_->nSubjectID);
+	if (_pCurrExam_->nModel == 0)		//手阅模式(即天喻版本)，服务器收到直接重命名zip文件，不需要识别其中的信息文件
+	{
+		jsnFileData.set("examId", _pModel_->nExamID);
+		jsnFileData.set("subjectId", _pModel_->nSubjectID);
+	}
 	jsnFileData.set("uploader", strUploader);
 	jsnFileData.set("ezs", sEzs);
 	jsnFileData.set("nTeacherId", _nTeacherId_);
@@ -916,7 +919,7 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 	int nNum = 0;
 	if (nDuplex == 0)
 	{
-		nNum = m_nCurrentScanCount * _pModel_->nPicNum;
+		nNum = m_nCurrentScanCount * _nModelPicNums;
 	}
 	else
 	{
@@ -1380,5 +1383,10 @@ void CScanProcessDlg::TestData(bool bReset)
 		pDlg->ResetChildDlg();
 	}
 	pDlg->m_scanThread.PostThreadMessage(MSG_START_SCAN, 0, (LPARAM)pScanCtrl);
+}
+
+void CScanProcessDlg::ShowSinglePic(cv::Mat& matPic)
+{
+	m_pShowPicDlg->showTmpPic(matPic);
 }
 

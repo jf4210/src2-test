@@ -97,6 +97,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 		Poco::Timespan ts(10, 0);
 		m_ss.connect(sa);
 		m_ss.setReceiveTimeout(ts);
+		SAFE_RELEASE(m_pRecvBuff);
 
 		ST_CMD_HEADER stHead;
 		stHead.usCmd = USER_LOGIN;

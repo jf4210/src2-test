@@ -835,17 +835,6 @@ void CModifyZkzhDlg::OnBnClickedBtnSave()
 
 bool CModifyZkzhDlg::ReleaseData()
 {
-	if (m_pVagueSearchDlg)
-	{
-		m_pVagueSearchDlg->DestroyWindow();
-		SAFE_RELEASE(m_pVagueSearchDlg);
-	}
-	if (m_pShowPicDlg)
-	{
-		m_pShowPicDlg->DestroyWindow();
-		SAFE_RELEASE(m_pShowPicDlg);
-	}
-
 	int nCount = m_lcZkzh.GetItemCount();
 	if (g_nZkzhNull2Issue == 1)
 	{
@@ -855,7 +844,7 @@ bool CModifyZkzhDlg::ReleaseData()
 			if (pPaper->strSN.empty())
 			{
 				CNewMessageBox	dlg;
-				dlg.setShowInfo(2, 2, "存在考号为空的考生，如果不修改，将影响此考生参与后面的评卷，是否忽略？");
+				dlg.setShowInfo(2, 2, "存在考号为空的考生，如果不修改，将影响参与后面的评卷，是否忽略？");
 				dlg.DoModal();
 				if (dlg.m_nResult != IDYES)
 					return false;
@@ -911,6 +900,17 @@ bool CModifyZkzhDlg::ReleaseData()
 			continue;
 		}
 		itPaper++;
+	}
+
+	if (m_pVagueSearchDlg)
+	{
+		m_pVagueSearchDlg->DestroyWindow();
+		SAFE_RELEASE(m_pVagueSearchDlg);
+	}
+	if (m_pShowPicDlg)
+	{
+		m_pShowPicDlg->DestroyWindow();
+		SAFE_RELEASE(m_pShowPicDlg);
 	}
 
 	return true;

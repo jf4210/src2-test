@@ -739,6 +739,9 @@ LRESULT CScanMgrDlg::ScanDone(WPARAM wParam, LPARAM lParam)
 			{
 				m_pScanProcessDlg->AddPaper(pResult->nPaperId, pResult->pPaper);
 			}
+			
+			if (_pCurrExam_->nModel == 1)
+				ChildDlgShowPic(*pResult->matShowPic);
 		}
 
 		m_pScanProcessDlg->UpdateChildInfo(pResult->bScanOK);
@@ -841,4 +844,9 @@ void CScanMgrDlg::OnCbnSelchangeComboSubject()
 	_pCurrSub_ = (pEXAM_SUBJECT)m_comboSubject.GetItemDataPtr(nItem);
 	CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
 	pDlg->SwitchDlg(1);
+}
+
+void CScanMgrDlg::ChildDlgShowPic(cv::Mat& matPic)
+{
+	m_pScanProcessDlg->ShowSinglePic(matPic);
 }

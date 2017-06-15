@@ -786,13 +786,21 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 	sprintf_s(szPicPath, "%s\\S%d_%d.jpg", m_strCurrPicSavePath.c_str(), nStudentId, nOrder);
 
 	_nScanCount_++;
+
+	CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
 	try
 	{
-		cv::Mat matTest = cv::cvarrToMat(pIpl);
+		cv::Mat matSrc = cv::cvarrToMat(pIpl);
+		cv::Mat matShow = matSrc.clone();
 
 		std::string strPicName = szPicPath;
-		imwrite(strPicName, matTest);
+		imwrite(strPicName, matSrc);
 		cvReleaseImage(&pIpl);
+
+		//++需要显示图像，主线程显示需要很长时间，卡顿
+		if (_pCurrExam_->nModel == 1)
+			pDlg->ChildDlgShowPic(matShow);
+		//--
 
 		//++添加试卷
 		pST_PicInfo pPic = new ST_PicInfo;
@@ -829,11 +837,11 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 		pResult->nPaperId = nStudentId;
 		pResult->nPicId = nOrder;
 		pResult->pPaper = m_pCurrPaper;
+		pResult->matShowPic = &matShow;
 		pResult->strResult = "获得图像";
 		pResult->strResult.append(szPicName);
 
 		TRACE("%s\n", pResult->strResult.c_str());
-		CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
 		pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
 
 		//添加到识别任务列表
@@ -910,6 +918,10 @@ void CScanThread::TestMode()
 		pPic->strPicName = szPicName;
 		pPic->strPicPath = szPicPath;
 
+		cv::Mat matSrc = cv::imread(pPic->strPicPath);
+
+//		pDlg->ChildDlgShowPic(matSrc);
+
 		_nScanCount_++;
 		if (nOrder == 1)
 		{
@@ -939,6 +951,7 @@ void CScanThread::TestMode()
 		pResult->nPaperId = nStudentId;
 		pResult->nPicId = nOrder;
 		pResult->pPaper = m_pCurrPaper;
+		pResult->matShowPic = &matSrc;
 		pResult->strResult = "获得图像";
 		pResult->strResult.append(szPicName);
 
