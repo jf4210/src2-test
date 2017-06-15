@@ -104,7 +104,8 @@ void CShowPicDlg::InitCtrlPosition()
 		rtPic.bottom = cy - nBottomGap;
 		for (int i = 0; i < m_vecPicShow.size(); i++)
 			m_vecPicShow[i]->MoveWindow(&rtPic);
-	}	
+	}
+	Invalidate();
 }
 
 void CShowPicDlg::InitUI()

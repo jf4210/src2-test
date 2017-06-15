@@ -1377,7 +1377,12 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 			jsnElectOmr.set("position", jsnPositionArry);
 			jsnElectOmrArry.add(jsnElectOmr);
 		}
+#if 1
+		if (jsnElectOmrArry.size() > 0)
+			jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
+#else
 		jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
+#endif
 		jsnPaperArry.add(jsnPaper);
 	}
 

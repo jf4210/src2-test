@@ -462,7 +462,8 @@ void CScanProcessDlg::WriteJsonFile()
 			jsnElectOmr.set("position", jsnPositionArry);
 			jsnElectOmrArry.add(jsnElectOmr);
 		}
-		jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
+		if (jsnElectOmrArry.size() > 0)
+			jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
 		jsnPaperArry.add(jsnPaper);
 	}
 

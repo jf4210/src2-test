@@ -5152,6 +5152,12 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 		Rect rtTmp = rcList_XY[i];
 		Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
 		RecogGrayValue(matSrcModel, rc);
+		if (rc.fStandardDensity < 0.1)
+		{
+			CString strInfo = _T("");
+			strInfo.Format(_T("第%d个考号的选项%d密度值太低，可能阀值设置太低"), rc.nTH, rc.nSnVal);
+			MessageBox(strInfo, _T("警告"), MB_OK);
+		}
 
 		m_vecTmp.push_back(rc);
 	}
@@ -5314,6 +5320,12 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 		Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
 		Mat matTest = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg;
 		RecogGrayValue(matSrcModel, rc);
+		if (rc.fStandardDensity < 0.1)
+		{
+			CString strInfo = _T("");
+			strInfo.Format(_T("第%d题的选项%c密度值太低，可能阀值设置太低"), rc.nTH, rc.nAnswer + 65);
+			MessageBox(strInfo, _T("警告"), MB_OK);
+		}
 
 		m_vecTmp.push_back(rc);
 	}

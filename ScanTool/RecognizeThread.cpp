@@ -3245,12 +3245,6 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		if (vecItemVal.size() != 1)
 		{
 			char szTmpLog[300] = { 0 };
-// 			for (int i = 0; i < vecItemsDesc.size(); i++)
-// 			{
-// 				char szTmp[10] = { 0 };
-// 				sprintf_s(szTmpLog, "%d=%.3f", vecItemsDesc[i]->nSnVal, vecItemsDesc[i]->fRealValuePercent);
-// 				strcat_s(szTmpLog, szTmp);
-// 			}
 			sprintf_s(szTmpLog, "µÚ%dÎ»SN[", pSn->nItem);
 			for (int i = 0; i < vecSnItemDiff.size(); i++)
 			{

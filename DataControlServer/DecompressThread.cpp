@@ -715,6 +715,29 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 						//*************	注意：这里需要和后端确认，现在还不行	********************
 
 						Poco::JSON::Array::Ptr jsnElectOmrArry = jsnPaperObj->getArray("electOmr");
+				#if 1
+						//++2017.6.15
+						if (jsnElectOmrArry->size() > 0)
+						{
+							Poco::JSON::Object jsnElectOmr;
+						#if 1	//test
+							jsnElectOmr.set("examId", strExamID);
+						#else
+							jsnElectOmr.set("examId", nExamId);
+						#endif
+							jsnElectOmr.set("subjectId", nSubjectId);
+							jsnElectOmr.set("userId", nUserId);
+							jsnElectOmr.set("teacherId", nTeacherId);
+							jsnElectOmr.set("zkzh", pPaper->strZkzh);
+							jsnElectOmr.set("papers", pPapers->strPapersName);
+							jsnElectOmr.set("electOmr", jsnElectOmrArry);
+							std::stringstream jsnElectOmrString;
+							jsnElectOmr.stringify(jsnElectOmrString, 0);
+							pPaper->strElectOmrDetail = jsnElectOmrString.str();
+							pPaper->nHasElectOmr = 1;
+						}
+						//--
+				#else
 						Poco::JSON::Object jsnElectOmr;
 					#if 1	//test
 						jsnElectOmr.set("examId", strExamID);
@@ -731,6 +754,7 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 						jsnElectOmr.stringify(jsnElectOmrString, 0);
 						pPaper->strElectOmrDetail = jsnElectOmrString.str();
 						pPaper->nHasElectOmr = 1;
+				#endif
 					}
 				}
 				else
