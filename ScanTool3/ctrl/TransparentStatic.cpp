@@ -197,10 +197,10 @@ void CTransparentStatic::OnPaint()
 		LOGFONT	logfont;
 		if(m_font.GetSafeHandle())
 		{
-// 			for (int i = 0; i < nLines; i++)
-// 			{
-// 				szText.Insert(nSingleCount * (i + 1), _T("\r\n"));
-// 			}
+			for (int i = 0; i < nLines; i++)
+			{
+				szText.Insert(nSingleCount * (i + 1), _T("\r\n"));
+			}
 			dc.DrawText(szText, client_rect, DT_WORDBREAK | DT_CENTER | DT_VCENTER);	//DT_WORDBREAK | DT_LEFT /*| DT_VCENTER*//*DT_WORDBREAK*/
 		}
 		else

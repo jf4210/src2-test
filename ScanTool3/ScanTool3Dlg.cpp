@@ -149,6 +149,73 @@ void CScanTool3Dlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_STATIC_UserName, m_strUserName);
 }
 
+void CScanTool3Dlg::InitFileUpLoadList()
+{
+	USES_CONVERSION;
+	if (g_nManulUploadFile != 1)
+	{
+		CString strSearchPath = A2T(CMyCodeConvert::Utf8ToGb2312(g_strPaperSavePath).c_str());
+		CFileFind ff;
+		BOOL bFind = ff.FindFile(strSearchPath + _T("*"), 0);
+		while (bFind)
+		{
+			bFind = ff.FindNextFileW();
+			if (ff.GetFileName() == _T(".") || ff.GetFileName() == _T(".."))
+				continue;
+			else if (ff.IsArchived())
+			{
+				if (ff.GetFileName().Find(PAPERS_EXT_NAME) >= 0 || ff.GetFileName().Find(PAPERS_EXT_NAME_4TY) >= 0)
+				{
+					pSENDTASK pTask = new SENDTASK;
+					pTask->strFileName = T2A(ff.GetFileName());
+					pTask->strPath = T2A(ff.GetFilePath());
+					g_fmSendLock.lock();
+					g_lSendTask.push_back(pTask);
+					g_fmSendLock.unlock();
+				}
+			}
+		}
+	}
+}
+
+void CScanTool3Dlg::InitCompressList()
+{
+	USES_CONVERSION;
+
+	CString strSearchPath = A2T(CMyCodeConvert::Utf8ToGb2312(g_strPaperSavePath).c_str());
+	CFileFind ff;
+	BOOL bFind = ff.FindFile(strSearchPath + _T("*"), 0);
+	while (bFind)
+	{
+		bFind = ff.FindNextFileW();
+		if (ff.GetFileName() == _T(".") || ff.GetFileName() == _T(".."))
+			continue;
+		else if (ff.IsDirectory())
+		{
+			int nPos = -1;
+			if ((nPos = ff.GetFileName().Find(_T("_ToCompress"))) >= 0)
+			{
+				CString strFileName = ff.GetFileName();
+				CString strBaseZipName = strFileName.Left(nPos);
+				CString strZipName = strBaseZipName;
+				strZipName.Append(PAPERS_EXT_NAME);
+				CString strSrcDirPath = ff.GetFilePath();
+				CString strSavePath = g_strCurrentPath + _T("Paper\\") + strBaseZipName;
+
+				char szZipName[100] = { 0 };
+				pCOMPRESSTASK pTask = new COMPRESSTASK;
+				pTask->strCompressFileName = T2A(strZipName);
+				pTask->strExtName = T2A(PAPERS_EXT_NAME);
+				pTask->strSavePath = T2A(strSavePath);
+				pTask->strSrcFilePath = T2A(strSrcDirPath);
+				g_fmCompressLock.lock();
+				g_lCompressTask.push_back(pTask);
+				g_fmCompressLock.unlock();
+			}
+		}
+	}
+}
+
 void CScanTool3Dlg::InitThreads()
 {
 	m_pRecogThread = new Poco::Thread[_nReocgThreads_];
@@ -372,6 +439,71 @@ void CScanTool3Dlg::InitUI()
 	InitCtrlPositon();
 }
 
+BOOL CScanTool3Dlg::StartGuardProcess()
+{
+	CString strProcessName = _T("");
+	strProcessName.Format(_T("EasyTntGuardProcess.exe"));
+	int nProcessID = 0;
+#if 0
+	if (CheckProcessExist(strProcessName, nProcessID))
+	{
+		HANDLE hProcess = 0;
+		DWORD dwExitCode = 0;
+		hProcess = ::OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ | PROCESS_CREATE_THREAD, FALSE, nProcessID);
+
+		LPVOID Param = VirtualAllocEx(hProcess, NULL, sizeof(DWORD), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+		WriteProcessMemory(hProcess, Param, (LPVOID)&dwExitCode, sizeof(DWORD), NULL);
+
+		HANDLE hThread = CreateRemoteThread(hProcess,
+											NULL,
+											NULL,
+											(LPTHREAD_START_ROUTINE)ExitProcess,
+											Param,
+											NULL,
+											NULL);
+	}
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	CString strComm;
+	char szWrkDir[MAX_PATH];
+	strComm.Format(_T("%sEasyTntGuardProcess.exe"), g_strCurrentPath);
+	memset(&si, 0, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
+
+	if (!CreateProcessW(NULL, (LPTSTR)(LPCTSTR)strComm, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+	{
+		int nErrorCode = GetLastError();
+		USES_CONVERSION;
+		std::string strLog = Poco::format("CreateProcess %s failed. ErrorCode = %d", T2A(strComm), nErrorCode);
+		g_pLogger->information(strLog);
+		return FALSE;
+	}
+#else
+	if (!CheckProcessExist(strProcessName, nProcessID))
+	{
+		STARTUPINFO si;
+		PROCESS_INFORMATION pi;
+		CString strComm;
+		char szWrkDir[MAX_PATH];
+		strComm.Format(_T("%sEasyTntGuardProcess.exe"), g_strCurrentPath);
+		memset(&si, 0, sizeof(si));
+		si.cb = sizeof(si);
+		ZeroMemory(&pi, sizeof(pi));
+
+		if (!CreateProcessW(NULL, (LPTSTR)(LPCTSTR)strComm, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+		{
+			int nErrorCode = GetLastError();
+			USES_CONVERSION;
+			std::string strLog = Poco::format("CreateProcess %s failed. ErrorCode = %d", T2A(strComm), nErrorCode);
+			g_pLogger->information(strLog);
+			return FALSE;
+		}
+	}
+#endif
+	return TRUE;
+}
+
 LRESULT CScanTool3Dlg::MsgCmdDlModel(WPARAM wParam, LPARAM lParam)
 {
 	HandleModel();
@@ -456,6 +588,18 @@ LRESULT CScanTool3Dlg::MsgCmdGetBmk(WPARAM wParam, LPARAM lParam)
 	return 1;
 }
 
+LRESULT CScanTool3Dlg::MSG_UpdateNotify(WPARAM wParam, LPARAM lParam)
+{
+	CNewMessageBox dlg;
+	dlg.setShowInfo(1, 2, "有新版本可用，是否升级?");
+	dlg.DoModal();
+	if (dlg.m_nResult != IDYES)
+		return FALSE;
+
+	DestroyWindow();
+	return TRUE;
+}
+
 void CScanTool3Dlg::SwitchDlg(int nDlg, int nChildID /*= 1*/)
 {
 	if (nDlg == 0)
@@ -505,6 +649,7 @@ BEGIN_MESSAGE_MAP(CScanTool3Dlg, CDialogEx)
 	ON_WM_NCHITTEST()
 	ON_WM_ERASEBKGND()
 	ON_WM_CTLCOLOR()
+	ON_MESSAGE(MSG_NOTIFY_UPDATE, CScanTool3Dlg::MSG_UpdateNotify)
 END_MESSAGE_MAP()
 
 
@@ -524,6 +669,8 @@ BOOL CScanTool3Dlg::OnInitDialog()
 	m_strTitle = SYS_BASE_NAME;
 	m_strVersion.Format(_T("Tianyu big data scan tool %s"), SOFT_VERSION);
 	m_strUserName = A2T(_strNickName_.c_str());
+
+	SetWindowText(_T("YKLX-ScanTool GuideDlg"));
 
 	m_pExamInfoMgrDlg = new CExamInfoMgrDlg(this);
 	m_pExamInfoMgrDlg->Create(CExamInfoMgrDlg::IDD, this);
@@ -549,6 +696,12 @@ BOOL CScanTool3Dlg::OnInitDialog()
 	InitUI();
 	m_pExamInfoMgrDlg->InitShowData();
 //	m_pExamInfoMgrDlg->Invalidate();
+
+	InitFileUpLoadList();
+	InitCompressList();
+//#ifndef _DEBUG
+	StartGuardProcess();
+//#endif
 	UpdateData(FALSE);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }

@@ -23,10 +23,12 @@ public:
 	bool	ZipFile(CString strSrcPath, CString strDstPath, CString strExtName = _T(".zip"));
 	bool	UnZipFile(CString strZipPath, CString strUnzipPath = _T(""));
 	void	setLogger(Poco::Logger* pLogger);
+	void	setUsePwd(bool bUsePwd);
 private:
 	void	RecordLog(std::string& strLog);
 private:
 	std::string		_strPwd;
 	Poco::Logger*	_pLogger;
+	bool			_bUsePwd;
 };
 

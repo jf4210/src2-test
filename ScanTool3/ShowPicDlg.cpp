@@ -5,7 +5,7 @@
 #include "ScanTool3.h"
 #include "ShowPicDlg.h"
 #include "afxdialogex.h"
-
+#include "NewMessageBox.h"
 
 // CShowPicDlg ∂‘ª∞øÚ
 
@@ -580,6 +580,15 @@ LRESULT CShowPicDlg::DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 {
 	if (WM_COMMAND == message)
 	{
+		//++…®√Ë÷–Ω˚÷π«–ªª
+		if (_nScanStatus_ == 1)
+		{
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(2, 1, "…®√Ë÷–£¨«Î…‘∫Û...");
+			dlg.DoModal();
+			return FALSE;
+		}
+		//--
 		USES_CONVERSION;
 		WORD wID = LOWORD(wParam);
 		for (int i = 0; i < m_vecBtn.size(); i++)

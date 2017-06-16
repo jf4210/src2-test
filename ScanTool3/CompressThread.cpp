@@ -55,6 +55,9 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 		bool bResult = false;
 		CZipObj zipObj;
 		zipObj.setLogger(g_pLogger);
+		if (pTask->strSrcFilePath.find("_UnPwd") != std::string::npos)		//手阅试卷袋以"_ToCompress_UnPwd"结尾
+			zipObj.setUsePwd(false);
+
 		bResult = zipObj.ZipFile(A2T(pTask->strSrcFilePath.c_str()), A2T(pTask->strSavePath.c_str()), A2T(pTask->strExtName.c_str()));
 	#else
 		bool bResult = ZipFile(A2T(pTask->strSrcFilePath.c_str()), A2T(pTask->strSavePath.c_str()), A2T(pTask->strExtName.c_str()));
@@ -98,7 +101,10 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 				if (srcFileDir.exists())
 					srcFileDir.remove(true);
 
-				strLog = "文件[" + pTask->strCompressFileName + "]压缩完成，源文件夹删除成功";
+				if (bResult)
+					strLog = "文件[" + pTask->strCompressFileName + "]压缩完成，源文件夹删除成功";
+				else
+					strLog = "文件[" + pTask->strCompressFileName + "]压缩失败，源文件夹删除成功";
 				g_pLogger->information(strLog);
 			}
 			catch (Poco::Exception& exc)

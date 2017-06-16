@@ -15,7 +15,7 @@ IMPLEMENT_DYNAMIC(CScanProcessDlg, CDialog)
 
 CScanProcessDlg::CScanProcessDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CScanProcessDlg::IDD, pParent)
-	, m_nCurrentScanCount(0), m_pReminderDlg(NULL), m_pShowPicDlg(NULL), m_pStudentMgr(NULL), m_pModifyZkzhDlg(NULL)
+	, m_nCurrentScanCount(0), m_pReminderDlg(NULL), m_pShowPicDlg(NULL), m_pStudentMgr(NULL)/*, m_pModifyZkzhDlg(NULL)*/
 {
 
 }
@@ -135,10 +135,10 @@ void CScanProcessDlg::InitUI()
 	m_pShowPicDlg->setShowModel(2);
 
 #ifdef TEST_MODIFY_ZKZH_CHIld
-	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
-	m_pModifyZkzhDlg = new CModifyZkzhDlg(_pModel_, _pCurrPapersInfo_, m_pStudentMgr);
-	m_pModifyZkzhDlg->Create(CModifyZkzhDlg::IDD, this);
-	m_pModifyZkzhDlg->ShowWindow(SW_HIDE);
+// 	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
+// 	m_pModifyZkzhDlg = new CModifyZkzhDlg(_pModel_, _pCurrPapersInfo_, m_pStudentMgr);
+// 	m_pModifyZkzhDlg->Create(CModifyZkzhDlg::IDD, this);
+// 	m_pModifyZkzhDlg->ShowWindow(SW_HIDE);
 #endif
 
 	InitCtrlPosition();
@@ -199,10 +199,10 @@ void CScanProcessDlg::InitCtrlPosition()
 	{
 		m_pShowPicDlg->MoveWindow(m_rtChildDlg);
 	}
-	if (m_pModifyZkzhDlg && m_pModifyZkzhDlg->GetSafeHwnd())
-	{
-		m_pModifyZkzhDlg->MoveWindow(m_rtChildDlg);
-	}
+// 	if (m_pModifyZkzhDlg && m_pModifyZkzhDlg->GetSafeHwnd())
+// 	{
+// 		m_pModifyZkzhDlg->MoveWindow(m_rtChildDlg);
+// 	}
 	//btn
 	if (GetDlgItem(IDC_BTN_ScanProcess)->GetSafeHwnd())
 	{
@@ -297,6 +297,8 @@ void CScanProcessDlg::InitShow()
 	m_pShowPicDlg->ShowWindow(SW_HIDE);
 	m_pReminderDlg->UpdataScanCount(_nScanCount_);		//更新扫描数量
 	m_pShowPicDlg->UpdateUI();
+	Invalidate();
+	TRACE("=============>>> InitShow() %d\n", _nScanStatus_);
 }
 
 void CScanProcessDlg::UpdateChildInfo(bool bScanDone /*= false*/)
@@ -316,11 +318,17 @@ void CScanProcessDlg::UpdateChildInfo(bool bScanDone /*= false*/)
 
 void CScanProcessDlg::ScanCompleted()
 {
-	if (!_pModel_)
+	if (_pCurrExam_->nModel != 1 && !_pModel_)
 		return;
 
-	_pCurrPapersInfo_->nPaperCount = _nScanCount_ / _pModel_->nPicNum;	//计算扫描试卷数量
+	int nModelPics = 0;
+	if (_pCurrExam_->nModel == 1)
+		nModelPics = _nPicNum4Ty_;
+	else
+		nModelPics = _pModel_->nPicNum;
 
+	_pCurrPapersInfo_->nPaperCount = _nScanCount_ / nModelPics;	//计算扫描试卷数量
+	
 	if (_pCurrExam_->nModel == 1)
 		return;
 
@@ -654,11 +662,11 @@ void CScanProcessDlg::SetStatusShow(int nType, CString strShowInfo, bool bWarn /
 		m_pReminderDlg->SetShowScanCount(false);
 		m_pReminderDlg->SetShowTips(strShowInfo, bWarn);
 
-		if (_pCurrExam_->nModel == 0)
-		{
+// 		if (_pCurrExam_->nModel == 0)
+// 		{
 			m_pReminderDlg->ShowWindow(SW_SHOW);
 			m_pShowPicDlg->ShowWindow(SW_HIDE);
-		}
+//		}
 	}
 	else
 	{
@@ -816,20 +824,11 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 				bDelCurrPapers = false;
 				return;
 			}
-
-// 			CString strMsg = _T("");
-// 			strMsg.Format(_T("当前试卷袋有%d份试卷未保存，是否删除?"), nCount);
-// 			if (MessageBox(strMsg, _T("提示"), MB_YESNO) != IDYES)
-// 			{
-// 				bDelCurrPapers = false;
-// 				return;
-// 			}
 		}		
 	}
 
 	if (_pCurrExam_->nModel == 0 && !_pModel_)
 	{
-//		AfxMessageBox(_T("当前扫描模板为空"));
 		CNewMessageBox	dlg;
 		dlg.setShowInfo(2, 1, "当前扫描模板为空");
 		dlg.DoModal();
@@ -961,7 +960,7 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 		pScanCtrl->bShowUI = bShowScanSrcUI;	//bShowScanSrcUI;
 
 		pDlg->m_scanThread.setNotifyDlg(pDlg);
-		pDlg->m_scanThread.setModelInfo(_pModel_->nPicNum, m_strCurrPicSavePath);
+		pDlg->m_scanThread.setModelInfo(_nModelPicNums, m_strCurrPicSavePath);
 		if (bDelCurrPapers)
 		{
 			pDlg->m_scanThread.resetData();
@@ -982,6 +981,14 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 
 		CNewMessageBox	dlg;
 		dlg.setShowInfo(2, 1, "没有试卷袋信息");
+		dlg.DoModal();
+		return;
+	}
+	int nCount = _pCurrPapersInfo_->lPaper.size() + _pCurrPapersInfo_->lIssue.size();
+	if (nCount == 0)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "无试卷存在！");
 		dlg.DoModal();
 		return;
 	}
@@ -1060,6 +1067,11 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 			_pCurrPapersInfo_->nPaperCount = _pCurrPapersInfo_->lPaper.size();		//修改扫描数量，将问题试卷删除，不算到扫描试卷中。
 		}
 	}
+
+	int nSubjectID = 0;
+	if (_pCurrExam_->nModel == 0)
+		nSubjectID = _pModel_->nSubjectID;
+
 	EnableBtn(FALSE);
 
 	TRACE("------------------- 1\n");
@@ -1075,18 +1087,23 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	char szTime[50] = { 0 };
 	sprintf_s(szTime, "%d%02d%02d%02d%02d%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
 
+	CString strExtName = _T("");
+	if (_pCurrExam_->nModel == 1)
+		strExtName = PAPERS_EXT_NAME_4TY;
+	else
+		strExtName = PAPERS_EXT_NAME;
 	if (_pCurrExam_->nModel == 0)
 	{
-		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s_%d", T2A(g_strCurrentPath), strUser.c_str(), _pModel_->nExamID, _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
-		sprintf_s(szZipBaseName, "%s_%d-%d_%s_%d", strUser.c_str(), _pModel_->nExamID, _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
-		sprintf_s(szZipName, "%s_%d-%d_%s_%d%s", strUser.c_str(), _pModel_->nExamID, _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount, T2A(PAPERS_EXT_NAME));
+		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s_%d", T2A(g_strCurrentPath), strUser.c_str(), _pModel_->nExamID, nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
+		sprintf_s(szZipBaseName, "%s_%d-%d_%s_%d", strUser.c_str(), _pModel_->nExamID, nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
+		sprintf_s(szZipName, "%s_%d-%d_%s_%d%s", strUser.c_str(), _pModel_->nExamID, nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount, T2A(strExtName));
 	}
 	else
 	{
 		std::string strExamID = _pCurrExam_->strExamID;
-		sprintf_s(szPapersSavePath, "%sPaper\\%s_%s_%d_%s_%d", T2A(g_strCurrentPath), strUser.c_str(), strExamID.c_str(), _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
-		sprintf_s(szZipBaseName, "%s_%s_%d_%s_%d", strUser.c_str(), strExamID.c_str(), _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
-		sprintf_s(szZipName, "%s_%s_%d_%s_%d%s", strUser.c_str(), strExamID.c_str(), _pModel_->nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount, T2A(PAPERS_EXT_NAME));
+		sprintf_s(szPapersSavePath, "%sPaper\\%s_%s_%d_%s_%d", T2A(g_strCurrentPath), strUser.c_str(), strExamID.c_str(), nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
+		sprintf_s(szZipBaseName, "%s_%s_%d_%s_%d", strUser.c_str(), strExamID.c_str(), nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount);
+		sprintf_s(szZipName, "%s_%s_%d_%s_%d%s", strUser.c_str(), strExamID.c_str(), nSubjectID, szTime, _pCurrPapersInfo_->nPaperCount, T2A(strExtName));
 	}
 
 	//临时目录改名，以便压缩时继续扫描
@@ -1096,7 +1113,10 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 		Poco::File tmpPath(CMyCodeConvert::Gb2312ToUtf8(m_strCurrPicSavePath));
 
 		char szCompressDirPath[500] = { 0 };
-		sprintf_s(szCompressDirPath, "%sPaper\\%s_ToCompress", T2A(g_strCurrentPath), szZipBaseName);
+		if (_pCurrExam_->nModel == 1)	//手阅不用密码
+			sprintf_s(szCompressDirPath, "%sPaper\\%s_ToCompress_UnPwd", T2A(g_strCurrentPath), szZipBaseName);
+		else
+			sprintf_s(szCompressDirPath, "%sPaper\\%s_ToCompress", T2A(g_strCurrentPath), szZipBaseName);
 		strSrcPicDirPath = szCompressDirPath;
 		std::string strUtf8NewPath = CMyCodeConvert::Gb2312ToUtf8(strSrcPicDirPath);
 
@@ -1120,7 +1140,7 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 
 	pCOMPRESSTASK pTask = new COMPRESSTASK;
 	pTask->strCompressFileName = szZipName;
-	pTask->strExtName = T2A(PAPERS_EXT_NAME);
+	pTask->strExtName = T2A(strExtName);	//T2A(PAPERS_EXT_NAME);
 	pTask->strSavePath = szPapersSavePath;
 	pTask->strSrcFilePath = strSrcPicDirPath;
 	pTask->pPapersInfo = _pCurrPapersInfo_;
@@ -1164,11 +1184,11 @@ void CScanProcessDlg::OnDestroy()
 		m_pShowPicDlg->DestroyWindow();
 		SAFE_RELEASE(m_pShowPicDlg);
 	}
-	if (m_pModifyZkzhDlg)
-	{
-		m_pModifyZkzhDlg->DestroyWindow();
-		SAFE_RELEASE(m_pModifyZkzhDlg);
-	}
+// 	if (m_pModifyZkzhDlg)
+// 	{
+// 		m_pModifyZkzhDlg->DestroyWindow();
+// 		SAFE_RELEASE(m_pModifyZkzhDlg);
+// 	}
 }
 
 void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)

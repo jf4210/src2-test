@@ -389,6 +389,7 @@ void CScanMgrDlg::ShowChildDlg(int n)
 		m_pScanProcessDlg->ShowWindow(SW_SHOW);
 		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
 
+		m_pScanProcessDlg->UpdateChildInfo();
 		m_pScanProcessDlg->InitShow();
 
 		_eCurrDlgType_ = Dlg_ScanProcess;
@@ -741,7 +742,9 @@ LRESULT CScanMgrDlg::ScanDone(WPARAM wParam, LPARAM lParam)
 			}
 			
 			if (_pCurrExam_->nModel == 1)
-				ChildDlgShowPic(*pResult->matShowPic);
+			{
+				ChildDlgShowPic(pResult->matShowPic);
+			}
 		}
 
 		m_pScanProcessDlg->UpdateChildInfo(pResult->bScanOK);
@@ -766,6 +769,7 @@ LRESULT CScanMgrDlg::ScanErr(WPARAM wParam, LPARAM lParam)
 	if (pResult)
 	{
 		TRACE("É¨Ãè´íÎó¡£%s\n", pResult->strResult.c_str());
+		m_pScanProcessDlg->UpdateChildInfo(pResult->bScanOK);
 		UpdateChildDlgInfo();
 		delete pResult;
 		pResult = NULL;

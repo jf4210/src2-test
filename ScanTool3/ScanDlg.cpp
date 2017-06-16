@@ -305,12 +305,7 @@ void CScanDlg::OnBnClickedBtnScan()
 		dlg.DoModal();
 		return;
 	}
-
-#ifdef Test_Data
-	TestData();
-	return;
-#endif
-
+	
 	USES_CONVERSION;
 	char szPicTmpPath[MAX_PATH] = { 0 };
 	sprintf_s(szPicTmpPath, "%sPaper\\Tmp", T2A(g_strCurrentPath));
@@ -333,6 +328,11 @@ void CScanDlg::OnBnClickedBtnScan()
 	}
 
 	m_strCurrPicSavePath = szPicTmpPath;
+
+#ifdef Test_Data
+	TestData();
+	return;
+#endif
 
 	//获取扫描参数
 	int nScanSize = 1;				//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3, TWSS_NONE-自定义
@@ -390,7 +390,7 @@ void CScanDlg::OnBnClickedBtnScan()
 		_nScanStatus_ = 1;
 		pST_SCANCTRL pScanCtrl = new ST_SCANCTRL();
 		pScanCtrl->nScannerId = pID->Id;
-		pScanCtrl->nScanCount = 2;			//nNum
+		pScanCtrl->nScanCount = nNum;			//nNum
 		pScanCtrl->nScanDuplexenable = nDuplex;
 		pScanCtrl->nScanPixelType = nScanType;
 		pScanCtrl->nScanResolution = nScanDpi;
@@ -497,6 +497,7 @@ void CScanDlg::OnBnClickedChkAdvancescan()
 
 void CScanDlg::TestData()
 {
+	pST_SCANCTRL pScanCtrl = new ST_SCANCTRL();
 	SAFE_RELEASE(_pCurrPapersInfo_);
 	_pCurrPapersInfo_ = new PAPERSINFO();
 
@@ -510,7 +511,7 @@ void CScanDlg::TestData()
 	pDlg->m_scanThread.setModelInfo(m_nModelPicNums, m_strCurrPicSavePath);
 	pDlg->m_scanThread.resetData();
 	pDlg->ResetChildDlg();
-	pDlg->m_scanThread.PostThreadMessage(MSG_START_SCAN, 0, (LPARAM)NULL);
+	pDlg->m_scanThread.PostThreadMessage(MSG_START_SCAN, 0, (LPARAM)pScanCtrl);
 
 	pDlg->ShowChildDlg(3);
 }

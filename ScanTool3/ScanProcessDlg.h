@@ -6,7 +6,7 @@
 #include "BmpButton.h"
 #include "ctrl/skinscrollwnd.h"
 #include "StudentMgr.h"
-#include "ModifyZkzhDlg.h"
+//#include "ModifyZkzhDlg.h"
 
 // CScanProcessDlg 对话框
 
@@ -50,7 +50,7 @@ private:
 	CScanReminderDlg*	m_pReminderDlg;	//扫描提示框窗口
 	CShowPicDlg*		m_pShowPicDlg;
 	CStudentMgr*		m_pStudentMgr;
-	CModifyZkzhDlg*		m_pModifyZkzhDlg;
+//	CModifyZkzhDlg*		m_pModifyZkzhDlg;
 
 	CFont			m_fontBtn1;				//按钮字体
 	CFont			m_fontBtn2;

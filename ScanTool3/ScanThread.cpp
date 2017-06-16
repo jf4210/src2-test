@@ -109,11 +109,6 @@ END_MESSAGE_MAP()
 
 void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 {
-#ifdef Test_Data
-	TestMode();
-	return;
-#endif
-
 	int nId = (int)wParam;
 	pST_SCANCTRL pScanCtrl = (pST_SCANCTRL)lParam;
 	ST_SCANCTRL stScanCtrl = *pScanCtrl;
@@ -121,6 +116,11 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	pScanCtrl = NULL;
 	
 	_nScanStatus_ = 1;
+
+#ifdef Test_Data
+	TestMode();
+	return;
+#endif
 
 	CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
 //	pDlg->UpdateChildDlgInfo();
@@ -292,7 +292,8 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
 		pResult->nState = nScanResult;
 		if (nScanResult != 0)
-		{			
+		{
+			_nScanStatus_ = -3;
 			pResult->bScanOK = true;
 			pResult->strResult = ErrCode2Str(nScanResult);
 			pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
@@ -798,8 +799,8 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 		cvReleaseImage(&pIpl);
 
 		//++需要显示图像，主线程显示需要很长时间，卡顿
-		if (_pCurrExam_->nModel == 1)
-			pDlg->ChildDlgShowPic(matShow);
+// 		if (_pCurrExam_->nModel == 1)
+// 			pDlg->ChildDlgShowPic(matShow);
 		//--
 
 		//++添加试卷
@@ -837,7 +838,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 		pResult->nPaperId = nStudentId;
 		pResult->nPicId = nOrder;
 		pResult->pPaper = m_pCurrPaper;
-		pResult->matShowPic = &matShow;
+		pResult->matShowPic = matShow;
 		pResult->strResult = "获得图像";
 		pResult->strResult.append(szPicName);
 
@@ -951,7 +952,7 @@ void CScanThread::TestMode()
 		pResult->nPaperId = nStudentId;
 		pResult->nPicId = nOrder;
 		pResult->pPaper = m_pCurrPaper;
-		pResult->matShowPic = &matSrc;
+		pResult->matShowPic = matSrc;
 		pResult->strResult = "获得图像";
 		pResult->strResult.append(szPicName);
 

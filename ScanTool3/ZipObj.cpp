@@ -3,7 +3,7 @@
 
 
 CZipObj::CZipObj()
-: _strPwd("static"), _pLogger(NULL)
+: _strPwd("static"), _pLogger(NULL), _bUsePwd(true)
 {
 }
 
@@ -45,7 +45,11 @@ bool CZipObj::ZipFile(CString strSrcPath, CString strDstPath, CString strExtName
 	{
 	}
 
-	HZIP hz = CreateZip(zipName, _strPwd.c_str());
+	HZIP hz;
+	if (_bUsePwd)
+		hz = CreateZip(zipName, _strPwd.c_str());
+	else
+		hz = CreateZip(zipName, NULL);
 
 	Poco::DirectoryIterator it(strUtf8ModelPath);	//strModelPath
 	Poco::DirectoryIterator end;
@@ -103,6 +107,11 @@ bool CZipObj::UnZipFile(CString strZipPath, CString strUnzipPath)
 void CZipObj::setLogger(Poco::Logger* pLogger)
 {
 	_pLogger = pLogger;
+}
+
+void CZipObj::setUsePwd(bool bUsePwd)
+{
+	_bUsePwd = bUsePwd;
 }
 
 void CZipObj::RecordLog(std::string& strLog)

@@ -31,6 +31,8 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
+	void InitFileUpLoadList();
+	void InitCompressList();
 	void InitThreads();
 	void ReleaseThreads();
 	void InitCtrlPositon();
@@ -39,8 +41,11 @@ protected:
 
 	void InitUI();
 
+	BOOL StartGuardProcess();
+
 	LRESULT	MsgCmdDlModel(WPARAM wParam, LPARAM lParam);
 	LRESULT MsgCmdGetBmk(WPARAM wParam, LPARAM lParam);
+	LRESULT MSG_UpdateNotify(WPARAM wParam, LPARAM lParam);
 private:
 	Poco::Thread*		m_pRecogThread;		//识别线程对象数组
 	std::vector<CRecognizeThread*> m_vecRecogThreadObj;		//存储识别线程对象

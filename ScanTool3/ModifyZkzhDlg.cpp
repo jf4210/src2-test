@@ -60,6 +60,7 @@ BEGIN_MESSAGE_MAP(CModifyZkzhDlg, CDialog)
 	ON_WM_ERASEBKGND()
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BTN_Back, &CModifyZkzhDlg::OnBnClickedBtnBack)
+	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 
@@ -77,6 +78,7 @@ void CModifyZkzhDlg::ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudent
 		m_pVagueSearchDlg = new CVagueSearchDlg();
 		m_pVagueSearchDlg->Create(CVagueSearchDlg::IDD, this);
 		m_pVagueSearchDlg->ShowWindow(SW_SHOW);
+		TRACE("***************===========	new CVagueSearchDlg()2 ===========*************************\n");
 	}
 	if (!m_pShowPicDlg)
 	{
@@ -148,6 +150,7 @@ void CModifyZkzhDlg::InitUI()
 		m_pVagueSearchDlg = new CVagueSearchDlg();
 		m_pVagueSearchDlg->Create(CVagueSearchDlg::IDD, this);
 		m_pVagueSearchDlg->ShowWindow(SW_SHOW);
+		TRACE("***************===========	new CVagueSearchDlg()1 ===========*************************\n");
 	}
 	m_pVagueSearchDlg->setExamInfo(m_pStudentMgr, m_pModel);
 
@@ -875,31 +878,34 @@ bool CModifyZkzhDlg::ReleaseData()
 #endif
 
 	//如果此试卷已经被修改正常，从问题列表删除
-	PAPER_LIST::iterator itIssue = m_pPapers->lIssue.begin();
-	for (; itIssue != m_pPapers->lIssue.end();)
+	if (m_pPapers)
 	{
-		pST_PaperInfo pPaper = *itIssue;
-		if ((g_nZkzhNull2Issue == 1 && !pPaper->strSN.empty() || g_nZkzhNull2Issue == 0) && !pPaper->bReScan)		//考号不空，且不用重扫，则认为属于正常试卷，放入正常列表中，如果原来在问题列表，则移动到正常列表
+		PAPER_LIST::iterator itIssue = m_pPapers->lIssue.begin();
+		for (; itIssue != m_pPapers->lIssue.end();)
 		{
-			itIssue = m_pPapers->lIssue.erase(itIssue);
-			m_pPapers->lPaper.push_back(pPaper);
-			continue;
+			pST_PaperInfo pPaper = *itIssue;
+			if ((g_nZkzhNull2Issue == 1 && !pPaper->strSN.empty() || g_nZkzhNull2Issue == 0) && !pPaper->bReScan)		//考号不空，且不用重扫，则认为属于正常试卷，放入正常列表中，如果原来在问题列表，则移动到正常列表
+			{
+				itIssue = m_pPapers->lIssue.erase(itIssue);
+				m_pPapers->lPaper.push_back(pPaper);
+				continue;
+			}
+			itIssue++;
 		}
-		itIssue++;
-	}
 
-	//需要重扫的试卷放入问题试卷列表
-	PAPER_LIST::iterator itPaper = m_pPapers->lPaper.begin();
-	for (; itPaper != m_pPapers->lPaper.end();)
-	{
-		pST_PaperInfo pPaper = *itPaper;
-		if ((g_nZkzhNull2Issue == 1 && pPaper->strSN.empty()) || pPaper->bReScan)
+		//需要重扫的试卷放入问题试卷列表
+		PAPER_LIST::iterator itPaper = m_pPapers->lPaper.begin();
+		for (; itPaper != m_pPapers->lPaper.end();)
 		{
-			itPaper = m_pPapers->lPaper.erase(itPaper);
-			m_pPapers->lIssue.push_back(pPaper);
-			continue;
+			pST_PaperInfo pPaper = *itPaper;
+			if ((g_nZkzhNull2Issue == 1 && pPaper->strSN.empty()) || pPaper->bReScan)
+			{
+				itPaper = m_pPapers->lPaper.erase(itPaper);
+				m_pPapers->lIssue.push_back(pPaper);
+				continue;
+			}
+			itPaper++;
 		}
-		itPaper++;
 	}
 
 	if (m_pVagueSearchDlg)
@@ -979,10 +985,18 @@ bool CModifyZkzhDlg::VagueSearch(int nItem)
 
 void CModifyZkzhDlg::OnClose()
 {
+// 	if (!ReleaseData())
+// 		return;
+
+	CDialog::OnClose();
+}
+
+void CModifyZkzhDlg::OnDestroy()
+{
 	if (!ReleaseData())
 		return;
 
-	CDialog::OnClose();
+	CDialog::OnDestroy();
 }
 
 
@@ -1030,3 +1044,4 @@ void CModifyZkzhDlg::OnBnClickedBtnBack()
 	OnClose();
 #endif
 }
+

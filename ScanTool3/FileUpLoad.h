@@ -52,6 +52,10 @@ public:
 	std::list<stUpLoadAns*>		m_listFile; 
 	std::vector<stUpLoadAns*> m_VecAns;
 
+#ifdef TEST_MULTI_SENDER
+	CMutex		mutexObj;
+#endif
+
 	ITcpClient	*m_pITcpClient;
 	UINT		m_uThreadType;
 	CString		m_strAddr;

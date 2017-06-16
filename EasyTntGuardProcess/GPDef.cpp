@@ -1022,7 +1022,7 @@ BOOL UpdateFile(BOOL& bReplace, bool bSetupPkg)
 							if (dwResult == 1)
 							{
 								if (!bSetupPkg)
-									Sleep(2 * 1000);		//等待程序退出
+									Sleep(4 * 1000);		//等待程序退出
 
 								bReplace = ReplaceFile(bSetupPkg);
 								g_bShowUpdateMsg = TRUE;

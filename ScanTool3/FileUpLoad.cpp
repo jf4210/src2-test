@@ -4,8 +4,10 @@
 #include "Net_Cmd_Protocol.h"
 #include "SendFileThread.h"
 
+#ifndef TEST_MULTI_SENDER
 Poco::Event		g_eFileUpLoadThreadExit;
 CMutex	mutexObj(FALSE, _T("mutex1"));
+#endif
 
 CFileUpLoad::CFileUpLoad(CSendFileThread& rNotify)
  :m_pITcpClient(NULL)
@@ -30,7 +32,9 @@ CFileUpLoad::~CFileUpLoad(void)
 	std::string strLog = "CFileUpLoad exit.";
 	g_pLogger->information(strLog);
 	TRACE(strLog.c_str());
+#ifndef TEST_MULTI_SENDER
 	g_eFileUpLoadThreadExit.set();
+#endif
 }
 
 void CFileUpLoad::OnTcpClientNotifyReceivedData( const char* pData,int nLen )

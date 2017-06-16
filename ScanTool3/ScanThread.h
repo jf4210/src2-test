@@ -47,7 +47,7 @@ typedef struct _tagScanResult_
 	int			nPicId;
 	pST_PaperInfo pPaper;
 	IplImage*	pIpl2;
-	cv::Mat*	matShowPic;
+	cv::Mat		matShowPic;
 	std::string strResult;
 	_tagScanResult_()
 	{

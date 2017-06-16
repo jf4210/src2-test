@@ -8,6 +8,7 @@
 
 
 // CPkgRecordDlg ¶Ô»°¿ò
+#define TIMER_PROCESS	(WM_APP + 204)
 
 IMPLEMENT_DYNAMIC(CPkgRecordDlg, CDialog)
 
@@ -19,6 +20,7 @@ CPkgRecordDlg::CPkgRecordDlg(CWnd* pParent /*=NULL*/)
 
 CPkgRecordDlg::~CPkgRecordDlg()
 {
+	KillTimer(TIMER_PROCESS);
 }
 
 void CPkgRecordDlg::DoDataExchange(CDataExchange* pDX)
@@ -30,7 +32,8 @@ void CPkgRecordDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CPkgRecordDlg, CDialog)
 	ON_WM_ERASEBKGND()
-	ON_WM_SIZE()
+	ON_WM_SIZE()	
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -39,6 +42,8 @@ BOOL CPkgRecordDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	InitUI();
+
+	SetTimer(TIMER_PROCESS, 1000, NULL);
 	return TRUE;
 }
 
@@ -169,5 +174,15 @@ void CPkgRecordDlg::UpdateChildDlg()
 			m_lcPkg.SetItemData(nCount, (DWORD_PTR)item);
 		}
 	}
+}
+
+void CPkgRecordDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	if (nIDEvent == TIMER_PROCESS)
+	{
+		UpdateChildDlg();
+		UpdateData(FALSE);
+	}
+	CDialog::OnTimer(nIDEvent);
 }
 

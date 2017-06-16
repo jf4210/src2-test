@@ -152,7 +152,8 @@ void CSingleExamDlg::InitData()
 
 	USES_CONVERSION;
 	_strExamName = A2T(_pExamInfo->strExamName.c_str());
-	_strExamType = A2T(_pExamInfo->strExamTypeName.c_str());
+	if (_pExamInfo->nModel == 0)	//网阅模式才显示，手阅模式即天喻版本显示空
+		_strExamType = A2T(_pExamInfo->strExamTypeName.c_str());
 	_strExamGrade = A2T(_pExamInfo->strGradeName.c_str());
 //	_strExamTime = A2T(_pExamInfo->strExamTime.c_str());
 	if (!_pExamInfo->strExamTime.empty())

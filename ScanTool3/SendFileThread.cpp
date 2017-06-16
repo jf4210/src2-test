@@ -10,8 +10,18 @@ CSendFileThread::CSendFileThread(std::string& strIP, int nPort)
 
 CSendFileThread::~CSendFileThread()
 {
+#ifdef TEST_MULTI_SENDER
+	MAP_FILESENDER::iterator itSender = _mapSender.begin();
+	for (; itSender != _mapSender.end();)
+	{
+		CFileUpLoad* pUpLoad = itSender->second.pUpLoad;
+		itSender = _mapSender.erase(itSender);
+		SAFE_RELEASE(pUpLoad);
+	}
+#else
 	SAFE_RELEASE(m_pUpLoad);
 	g_eFileUpLoadThreadExit.wait();
+#endif
 	g_pLogger->information("CSendFileThread exit.");
 	TRACE("CSendFileThread exit.\n");
 	g_eSendFileThreadExit.set();
@@ -20,11 +30,26 @@ CSendFileThread::~CSendFileThread()
 void CSendFileThread::run()
 {
 	USES_CONVERSION;
+
+#ifdef TEST_MULTI_SENDER
+	std::string strKey = T2A(PAPERS_EXT_NAME);
+	MAP_FILESENDER::iterator itSender = _mapSender.find(strKey);
+	if(itSender == _mapSender.end())
+	{
+		ST_SENDER objSender;
+		objSender.strIP = _strIp;
+		objSender.nPort = _nPort;
+		objSender.pUpLoad = new CFileUpLoad(*this);
+		objSender.pUpLoad->InitUpLoadTcp(A2T(_strIp.c_str()), _nPort);
+		_mapSender.insert(MAP_FILESENDER::value_type(strKey, objSender));
+	}
+#else
 	m_pUpLoad = new CFileUpLoad(*this);
 	m_pUpLoad->InitUpLoadTcp(A2T(_strIp.c_str()), _nPort);
-
+#endif
 	while (!g_nExitFlag)
 	{
+	#ifndef TEST_MULTI_SENDER
 		if (g_bFileNeedConnect)
 		{
 			if (_strIp != g_strFileIP || _nPort != g_nFilePort)
@@ -34,6 +59,7 @@ void CSendFileThread::run()
 				m_pUpLoad->ReConnectAddr(A2T(_strIp.c_str()), _nPort);
 			}
 		}
+	#endif
 		pSENDTASK pTask = NULL;
 		g_fmSendLock.lock();
 #if 1
@@ -102,7 +128,30 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 	g_pLogger->information(szLog);
 
 //	m_upLoad.SendAnsFile(A2T(pTask->strPath.c_str()), A2T(pTask->strFileName.c_str()));
+
+#ifdef TEST_MULTI_SENDER
+	CFileUpLoad* pUpLoad = NULL;
+	int nPos = pTask->strFileName.find(".");
+	std::string strKey = pTask->strFileName.substr(nPos);
+	MAP_FILESENDER::iterator itSender = _mapSender.find(strKey);
+	if (itSender == _mapSender.end())
+	{
+		ST_SENDER objSender;
+		objSender.strIP = _strIp;
+		objSender.nPort = _nPort;
+		objSender.pUpLoad = new CFileUpLoad(*this);
+		objSender.pUpLoad->InitUpLoadTcp(A2T(_strIp.c_str()), _nPort);
+		_mapSender.insert(MAP_FILESENDER::value_type(strKey, objSender));
+		pUpLoad = objSender.pUpLoad;
+	}
+	else
+		pUpLoad = itSender->second.pUpLoad;
+
+	if(pUpLoad)
+		pUpLoad->SendAnsFile(A2T(pTask->strPath.c_str()), A2T(pTask->strFileName.c_str()), pTask);
+#else
 	m_pUpLoad->SendAnsFile(A2T(pTask->strPath.c_str()), A2T(pTask->strFileName.c_str()), pTask);
+#endif
 }
 
 void CSendFileThread::SendFileComplete(char* pName, char* pSrcPath)
