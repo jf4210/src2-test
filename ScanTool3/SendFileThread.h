@@ -10,7 +10,7 @@ typedef struct _SendInfo_
 	int			nPort;
 	std::string strIP;
 }ST_SENDER, *pST_SENDER;
-typedef std::map<std::string, ST_SENDER> MAP_FILESENDER;
+typedef std::map<std::string, pST_SENDER> MAP_FILESENDER;
 #endif
 
 class CSendFileThread :

@@ -104,6 +104,8 @@ std::string			g_strCmdIP;
 std::string			g_strFileIP;
 int					g_nCmdPort;
 int					g_nFilePort;
+std::string			g_strFileIp4HandModel;		//手阅模式时文件服务器地址
+int					g_nFilePort4HandModel;		//手阅模式时文件服务器端口
 
 int				_nReocgThreads_ = 3;		//识别线程数量
 
@@ -695,7 +697,6 @@ BOOL CScanTool3Dlg::OnInitDialog()
 	}
 	InitUI();
 	m_pExamInfoMgrDlg->InitShowData();
-//	m_pExamInfoMgrDlg->Invalidate();
 
 	InitFileUpLoadList();
 	InitCompressList();
@@ -898,4 +899,16 @@ HBRUSH CScanTool3Dlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 // 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 // 	}
 	return hbr;
+}
+
+void CScanTool3Dlg::GetFileAddrs()
+{
+	TRACE("请求其他格式的文件上传地址\n");
+
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_GET_FILE_UPLOAD_ADDR;
+	pTcpTask->nPkgLen = 0;
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
 }

@@ -494,14 +494,10 @@ int CLoginDlg::GetExamInfo()
 		return 0;
 
 	int nResult = 0;
-//	ZeroMemory(m_szRecvBuff, sizeof(m_szRecvBuff));
 	ZeroMemory(m_pRecvBuff, nRecvBuffSize);
 	m_nRecvLen = 0;
 	m_nWantLen = 0;
 
-// 	ST_CMD_HEADER stHead;
-// 	stHead.usCmd = USER_GETEXAMINFO;
-// 	stHead.uPackSize = sizeof(ST_EXAM_INFO);
 	ST_EXAM_INFO stExamInfo;
 	ZeroMemory(&stExamInfo, sizeof(ST_EXAM_INFO));
 	if (_bHandModel_)

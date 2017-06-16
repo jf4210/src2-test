@@ -14,9 +14,11 @@ CSendFileThread::~CSendFileThread()
 	MAP_FILESENDER::iterator itSender = _mapSender.begin();
 	for (; itSender != _mapSender.end();)
 	{
-		CFileUpLoad* pUpLoad = itSender->second.pUpLoad;
+		pST_SENDER pObjSender = itSender->second;
+		CFileUpLoad* pUpLoad = pObjSender->pUpLoad;
 		itSender = _mapSender.erase(itSender);
 		SAFE_RELEASE(pUpLoad);
+		SAFE_RELEASE(pObjSender);
 	}
 #else
 	SAFE_RELEASE(m_pUpLoad);
@@ -36,12 +38,12 @@ void CSendFileThread::run()
 	MAP_FILESENDER::iterator itSender = _mapSender.find(strKey);
 	if(itSender == _mapSender.end())
 	{
-		ST_SENDER objSender;
-		objSender.strIP = _strIp;
-		objSender.nPort = _nPort;
-		objSender.pUpLoad = new CFileUpLoad(*this);
-		objSender.pUpLoad->InitUpLoadTcp(A2T(_strIp.c_str()), _nPort);
-		_mapSender.insert(MAP_FILESENDER::value_type(strKey, objSender));
+		pST_SENDER pObjSender = new ST_SENDER;
+		pObjSender->strIP = _strIp;
+		pObjSender->nPort = _nPort;
+		pObjSender->pUpLoad = new CFileUpLoad(*this);
+		pObjSender->pUpLoad->InitUpLoadTcp(A2T(_strIp.c_str()), _nPort);
+		_mapSender.insert(MAP_FILESENDER::value_type(strKey, pObjSender));
 	}
 #else
 	m_pUpLoad = new CFileUpLoad(*this);
@@ -126,9 +128,7 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 	char szLog[500] = { 0 };
 	sprintf_s(szLog, "添加发送文件任务: %s, path: %s", pTask->strFileName.c_str(), pTask->strPath.c_str());
 	g_pLogger->information(szLog);
-
-//	m_upLoad.SendAnsFile(A2T(pTask->strPath.c_str()), A2T(pTask->strFileName.c_str()));
-
+	
 #ifdef TEST_MULTI_SENDER
 	CFileUpLoad* pUpLoad = NULL;
 	int nPos = pTask->strFileName.find(".");
@@ -136,16 +136,16 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 	MAP_FILESENDER::iterator itSender = _mapSender.find(strKey);
 	if (itSender == _mapSender.end())
 	{
-		ST_SENDER objSender;
-		objSender.strIP = _strIp;
-		objSender.nPort = _nPort;
-		objSender.pUpLoad = new CFileUpLoad(*this);
-		objSender.pUpLoad->InitUpLoadTcp(A2T(_strIp.c_str()), _nPort);
-		_mapSender.insert(MAP_FILESENDER::value_type(strKey, objSender));
-		pUpLoad = objSender.pUpLoad;
+		pST_SENDER pObjSender = new ST_SENDER;
+		pObjSender->strIP = _strIp;
+		pObjSender->nPort = _nPort;
+		pObjSender->pUpLoad = new CFileUpLoad(*this);
+		pObjSender->pUpLoad->InitUpLoadTcp(A2T(_strIp.c_str()), _nPort);
+		_mapSender.insert(MAP_FILESENDER::value_type(strKey, pObjSender));
+		pUpLoad = pObjSender->pUpLoad;
 	}
 	else
-		pUpLoad = itSender->second.pUpLoad;
+		pUpLoad = itSender->second->pUpLoad;
 
 	if(pUpLoad)
 		pUpLoad->SendAnsFile(A2T(pTask->strPath.c_str()), A2T(pTask->strFileName.c_str()), pTask);

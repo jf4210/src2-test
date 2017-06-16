@@ -721,6 +721,26 @@ void CTcpClient::HandleCmd()
 		// 		CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
 		// 		pDlg->PostMessage(MSG_CMD_GET_BMK_OK, NULL, NULL);
 	}
+	else if (pstHead->usCmd == USER_RESPONSE_GET_FILE_UPLOAD_ADDR)
+	{
+		char* pBuff = new char[pstHead->uPackSize + 1];
+		pBuff[pstHead->uPackSize] = '\0';
+		strncpy(pBuff, m_pRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+		std::string strResult = CMyCodeConvert::Utf8ToGb2312(pBuff);
+		switch (pstHead->usResult)
+		{
+			case RESULT_GET_FILE_ADDR_SUCCESS:
+			{
+
+			}
+			case RESULT_GET_FILE_ADDR_FAIL:
+			{
+
+			}
+			default:
+				break;
+		}
+	}
 }
 
 void CTcpClient::HandleTask(pTCP_TASK pTask)

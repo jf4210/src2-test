@@ -472,6 +472,8 @@ protected:
 		SysSet.m_strErrorPkg = CMyCodeConvert::Utf8ToGb2312(strCurrentPath + "errorPkg\\");
 		SysSet.m_strReSendPkg = CMyCodeConvert::Utf8ToGb2312(strCurrentPath + "ReSendInfo\\");
 
+		
+
 		InitParam();
 		
 #ifdef POCO_OS_FAMILY_WINDOWS

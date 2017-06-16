@@ -48,6 +48,7 @@ public:
 	string m_strSessionName;	//提交数据给后端时的cookie字段的名称，默认ezs
 	string m_strVerServerIP;	//版本控制服务器的地址信息
 	string m_strPicWwwNetAddr;	//图片的外网访问地址
+	string m_strFileAddrs;		//文件上传地址信息
 };
 
 #define SysSet CSysSet::GetRef()

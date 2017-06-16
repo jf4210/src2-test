@@ -20,7 +20,7 @@ CPkgRecordDlg::CPkgRecordDlg(CWnd* pParent /*=NULL*/)
 
 CPkgRecordDlg::~CPkgRecordDlg()
 {
-	KillTimer(TIMER_PROCESS);
+//	KillTimer(TIMER_PROCESS);
 }
 
 void CPkgRecordDlg::DoDataExchange(CDataExchange* pDX)

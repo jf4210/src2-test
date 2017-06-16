@@ -43,5 +43,17 @@ bool CSysSet::Load(std::string& strConfPath)
 	m_strSessionName	= pConf->getString("Sys.sessionName", "ezs");
 	m_strVerServerIP	= pConf->getString("VerServerInfo.addr", "116.211.105.45");
 	m_strPicWwwNetAddr	= pConf->getString("UpHttp.picWwwNetAddr", "");
+
+	//++获取不同类型文件上传的地址信息
+	int nTypes = pConf->getString("FileAddrs.nTypes", 1);
+	for (int i = 1; i <= nTypes; i++)
+	{
+		std::string strBaseKey = Poco::format("FileType_%d", i);
+		string strKey = strBaseKey + ".extName";
+		string strExtName = pConf->getString(strKey, ".pkg");
+		strKey = strBaseKey + ".ip";
+		string strExtName = pConf->getString(strKey, m_sLocalIP);
+	}
+	//--
 	return true;
 }

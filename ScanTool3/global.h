@@ -184,6 +184,8 @@ extern std::string			g_strCmdIP;
 extern std::string			g_strFileIP;
 extern int					g_nCmdPort;
 extern int					g_nFilePort;
+extern std::string			g_strFileIp4HandModel;		//手阅模式时文件服务器地址
+extern int					g_nFilePort4HandModel;		//手阅模式时文件服务器端口
 
 extern double	_dCompThread_Fix_;
 extern double	_dDiffThread_Fix_;

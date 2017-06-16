@@ -42,6 +42,7 @@ protected:
 	void InitUI();
 
 	BOOL StartGuardProcess();
+	void GetFileAddrs();		//获取其他格式的文件上传地址
 
 	LRESULT	MsgCmdDlModel(WPARAM wParam, LPARAM lParam);
 	LRESULT MsgCmdGetBmk(WPARAM wParam, LPARAM lParam);
