@@ -46,6 +46,7 @@ public:
 	int		RecvData(CString& strResultInfo);
 	int		GetExamInfo();
 	int		GetBmkInfo();
+	void	GetFileAddrs();
 
 	void	InitUI();
 //#ifdef TO_WHTY

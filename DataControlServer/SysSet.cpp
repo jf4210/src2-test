@@ -19,6 +19,7 @@ bool CSysSet::Load(std::string& strConfPath)
 {
 	Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strConfPath));
 	m_sLocalIP			= pConf->getString("Net.LocalIP", "127.0.0.1");
+	m_sPublicIP			= pConf->getString("Net.PublicIP", m_sLocalIP);
 	m_nPaperUpLoadPort	= pConf->getInt("Net.FilePort", 19980);
 	m_nCmdPort			= pConf->getInt("Net.CmdPort", 19981);
 //	m_strUpLoadPath		= pConf->getString("Sys.upLoadPath");
@@ -31,6 +32,7 @@ bool CSysSet::Load(std::string& strConfPath)
 	m_nUpLoadZKZH		= pConf->getInt("Sys.bUpZkzh", 1);
 	m_nUpLoadElectOmr	= pConf->getInt("Sys.bUpElectOmr", 1);
 	m_nVerServerPort	= pConf->getInt("VerServerInfo.port", 19991);
+	m_nServerMode		= pConf->getInt("Sys.serverMode", 0);
 
 	m_nHandleCmdThreads = pConf->getInt("Cmd.sendThreads", 2);
 	m_nSendHttpThreads	= pConf->getInt("UpHttp.sendThreads", 2);
@@ -42,17 +44,29 @@ bool CSysSet::Load(std::string& strConfPath)
 	m_strEncryptPwd		= pConf->getString("Sys.encryptPwd", "yklxTest");
 	m_strSessionName	= pConf->getString("Sys.sessionName", "ezs");
 	m_strVerServerIP	= pConf->getString("VerServerInfo.addr", "116.211.105.45");
-	m_strPicWwwNetAddr	= pConf->getString("UpHttp.picWwwNetAddr", "");
+	m_strPicWwwNetAddr = pConf->getString("UpHttp.picWwwNetAddr", "");
 
 	//++获取不同类型文件上传的地址信息
-	int nTypes = pConf->getString("FileAddrs.nTypes", 1);
+	std::string strBaseExtName;
+	if (m_nServerMode == 1)
+		strBaseExtName = ".typkg";
+	else
+		strBaseExtName = ".pkg";
+	std::string strAddr = Poco::format("@@@%s_%s_%d###", strBaseExtName, m_sPublicIP, m_nPaperUpLoadPort);
+	m_strFileAddrs = strAddr;
+
+	int nTypes = pConf->getInt("FileAddrs.nTypes", 1);
 	for (int i = 1; i <= nTypes; i++)
 	{
 		std::string strBaseKey = Poco::format("FileType_%d", i);
 		string strKey = strBaseKey + ".extName";
 		string strExtName = pConf->getString(strKey, ".pkg");
 		strKey = strBaseKey + ".ip";
-		string strExtName = pConf->getString(strKey, m_sLocalIP);
+		string strFileIP = pConf->getString(strKey, m_sLocalIP);
+		strKey = strBaseKey + ".port";
+		int nPort = pConf->getInt(strKey, m_nPaperUpLoadPort);
+		std::string strAddr = Poco::format("@@@%s_%s_%d###", strExtName, strFileIP, nPort);
+		m_strFileAddrs.append(strAddr);
 	}
 	//--
 	return true;

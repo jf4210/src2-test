@@ -8,6 +8,7 @@
 #include "afxdialogex.h"
 #include "global.h"
 #include "NewMessageBox.h"
+#include "Net_Cmd_Protocol.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -131,6 +132,12 @@ int					_nScanCount_ = 0;		//扫描计数器，当前已扫描多少份
 int					_nScanPaperCount_ = 0;	//当前已经扫描人数，从软件启动开始计数
 //--
 E_DLG_TYPE			_eCurrDlgType_ = DLG_Login;	//当前显示的窗口，弹出窗口不算
+//--
+//上传服务器地址相关
+#ifdef TEST_MULTI_SENDER
+Poco::FastMutex _fmMapSender_;
+MAP_FILESENDER	_mapSender_;		//上传服务器容器
+#endif
 //--
 
 CScanTool3Dlg::CScanTool3Dlg(CWnd* pParent /*=NULL*/)
@@ -383,6 +390,21 @@ void CScanTool3Dlg::ReleaseData()
 		SAFE_RELEASE(pTask);
 	}
 	g_fmSendLock.unlock();
+
+	//发送子线程
+#ifdef TEST_MULTI_SENDER
+	_fmMapSender_.lock();
+	MAP_FILESENDER::iterator itSender = _mapSender_.begin();
+	for (; itSender != _mapSender_.end();)
+	{
+		pST_SENDER pObjSender = itSender->second;
+		CFileUpLoad* pUpLoad = pObjSender->pUpLoad;
+		itSender = _mapSender_.erase(itSender);
+		SAFE_RELEASE(pUpLoad);
+		SAFE_RELEASE(pObjSender);
+	}
+	_fmMapSender_.unlock();
+#endif
 
 	//释放未处理完的识别任务列表
 	g_fmRecog.lock();
@@ -697,6 +719,7 @@ BOOL CScanTool3Dlg::OnInitDialog()
 	}
 	InitUI();
 	m_pExamInfoMgrDlg->InitShowData();
+//	GetFileAddrs();
 
 	InitFileUpLoadList();
 	InitCompressList();

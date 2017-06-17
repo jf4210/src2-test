@@ -14,11 +14,14 @@ public:
 	bool Load(std::string& strConfPath);
 	// 用于通讯的本地IP
 	string m_sLocalIP;
+	string m_sPublicIP;
 	// 命令通道监听端口
 	int m_nPaperUpLoadPort;
 	// 指令通道监听端口
 	int m_nCmdPort;
 	int m_nVerServerPort;	//版本控制服务器的地址信息
+
+	int	m_nServerMode;		//服务类型，0--易考乐学，1--天喻(登录和获取考试通过天喻接口)
 
 	int m_nHandleCmdThreads;	//处理接收到的网络命令线程
 	int m_nDecompressThreads;

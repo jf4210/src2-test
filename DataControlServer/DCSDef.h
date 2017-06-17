@@ -29,7 +29,8 @@
 #define DecompressTest		//解压测试，多线程解压
 
 #ifndef TO_WHTY
-	#define SOFT_VERSION "DataControlServer V1.70615-1"
+	#define SOFT_VERSION "DataControlServer V1.70617-2"
+	#define SOFT_VERSION4TY "DataControlServer for TY V2.1-0617"
 #else
 	#define SOFT_VERSION "DataControlServer for TY V2.1-0309"
 #endif

@@ -79,6 +79,7 @@
 
 #include "zbar.h"
 #include "StudentDef.h"
+#include "FileUpLoad.h"
 
 //#define PIC_RECTIFY_TEST	//图像旋转纠正测试
 #define WarpAffine_TEST		//仿射变换测试
@@ -90,6 +91,7 @@
 //	#define Test_Data			//测试数据，测试模式
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
 #else	//release版本
+	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
 	#define	 TEST_MODEL_NAME	//模板名称测试
 	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
 #endif
@@ -500,6 +502,19 @@ extern STUDENT_LIST		g_lBmkStudent;	//报名库学生列表
 #ifdef NewBmkTest
 extern ALLSTUDENT_LIST		g_lBmkAllStudent;	//单个考试中所有科目的报名库学生列表
 extern EXAMBMK_MAP			g_mapBmkMgr;			//考试报名库管理哈希表
+#endif
+
+#ifdef TEST_MULTI_SENDER
+typedef struct _SendInfo_
+{
+	CFileUpLoad* pUpLoad;
+	int			nPort;
+	std::string strIP;
+}ST_SENDER, *pST_SENDER;
+typedef std::map<std::string, pST_SENDER> MAP_FILESENDER;
+
+extern Poco::FastMutex	_fmMapSender_;
+extern MAP_FILESENDER	_mapSender_;
 #endif
 
 typedef struct _CompressTask_

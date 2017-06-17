@@ -229,16 +229,15 @@ void CTcpClient::HandleCmd()
 	}
 	else if (pstHead->usCmd == USER_RESPONSE_EXAMINFO)
 	{
+		char* pBuff = new char[pstHead->uPackSize + 1];
+		pBuff[pstHead->uPackSize] = '\0';
+		strncpy(pBuff, m_pRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+		std::string strExamData = pBuff;
+		std::string strUtf = CMyCodeConvert::Utf8ToGb2312(pBuff);
 		switch (pstHead->usResult)
 		{
 		case RESULT_EXAMINFO_SUCCESS:
 		{
-			char* pBuff = new char[pstHead->uPackSize + 1];
-			pBuff[pstHead->uPackSize] = '\0';
-			strncpy(pBuff, m_pRecvBuff + HEAD_SIZE, pstHead->uPackSize);
-			std::string strExamData = pBuff;
-			std::string strUtf = CMyCodeConvert::Utf8ToGb2312(pBuff);
-
 			g_lfmExamList.lock();
 			Poco::JSON::Parser parser;
 			Poco::Dynamic::Var result;
@@ -363,6 +362,16 @@ void CTcpClient::HandleCmd()
 			SAFE_RELEASE_ARRY(pBuff);
 			g_lfmExamList.unlock();
 			g_eGetExamList.set();		//获取到考试列表信息
+		}
+		break;
+		case RESULT_EXAMINFO_FAIL:
+		{
+			std::string strLog = "获取考试列表失败: " + CMyCodeConvert::Utf8ToGb2312(strUtf);
+			TRACE(strLog.c_str());
+			g_pLogger->information(strLog);
+			g_eGetExamList.set();		//获取到考试列表信息
+
+			SAFE_RELEASE_ARRY(pBuff);
 		}
 		break;
 		}
@@ -727,16 +736,78 @@ void CTcpClient::HandleCmd()
 		pBuff[pstHead->uPackSize] = '\0';
 		strncpy(pBuff, m_pRecvBuff + HEAD_SIZE, pstHead->uPackSize);
 		std::string strResult = CMyCodeConvert::Utf8ToGb2312(pBuff);
+		TRACE("获取文件服务器地址数据: %s\n", strResult.c_str());
 		switch (pstHead->usResult)
 		{
 			case RESULT_GET_FILE_ADDR_SUCCESS:
 			{
+				//解析格式数据
+				USES_CONVERSION;
+				std::string strPkg = T2A(PAPERS_EXT_NAME);
+				std::string strTyPkg = T2A(PAPERS_EXT_NAME_4TY);
 
+				std::string strData = pBuff;
+				int nPos = strData.find("@@@");
+				while (nPos != std::string::npos)
+				{
+					int nEnd = strData.find("###");
+					std::string strInfo = strData.substr(nPos + 3, nEnd - nPos - 3);
+					
+					int nPos1 = strInfo.find("_");
+					std::string strExtName = strInfo.substr(0, nPos1);
+					int nPos2 = strInfo.find("_", nPos1 + 1);
+					std::string strIP = strInfo.substr(nPos1 + 1, nPos2 - nPos1 - 1);
+					std::string strPort = strInfo.substr(nPos2 + 1);
+					int nPort = atoi(strPort.c_str());
+					TRACE("地址信息: %s-%s-%d\n", strExtName.c_str(), strIP.c_str(), nPort);
+
+					if (strExtName == strTyPkg)
+					{
+						g_strFileIp4HandModel = strIP;
+						g_nFilePort4HandModel = nPort;
+						TRACE(_T("get file addr: %s:%d\n"), strIP.c_str(), nPort);
+					}
+					else if (strExtName == strPkg)
+					{
+						g_strFileIP = strIP;
+						g_nFilePort = nPort;
+						TRACE(_T("get file addr: %s:%d\n"), strIP.c_str(), nPort);
+					}
+
+					//修改发送子线程
+				#ifdef TEST_MULTI_SENDER
+					_fmMapSender_.lock();
+					MAP_FILESENDER::iterator itSender = _mapSender_.find(strExtName);
+					if(itSender != _mapSender_.end())
+					{
+						pST_SENDER pObjSender = itSender->second;
+						pObjSender->strIP = strIP;
+						pObjSender->nPort = nPort;
+						pObjSender->pUpLoad->ReConnectAddr(A2T(strIP.c_str()), nPort);
+					}
+					else
+					{
+// 						pST_SENDER pObjSender = new ST_SENDER;
+// 						pObjSender->strIP = strIP;
+// 						pObjSender->nPort = nPort;
+// 						pObjSender->pUpLoad = new CFileUpLoad(*this);
+// 						pObjSender->pUpLoad->InitUpLoadTcp(A2T(strIP.c_str()), nPort);
+// 						_mapSender_.insert(MAP_FILESENDER::value_type(strExtName, pObjSender));
+					}
+					_fmMapSender_.unlock();
+				#endif
+					nPos = strData.find("@@@", nPos + 3);
+				}
 			}
+				break;
 			case RESULT_GET_FILE_ADDR_FAIL:
 			{
-
+				//无数据
+				g_strFileIp4HandModel = g_strFileIP;
+				g_nFilePort4HandModel = g_nFilePort;
+				TRACE(_T("get file addr: %s:%d\n"), g_strFileIp4HandModel.c_str(), g_nFilePort4HandModel);
 			}
+				break;
 			default:
 				break;
 		}

@@ -264,6 +264,10 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 								Poco::Path filePath(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
 								std::string strNewFilePath = SysSet.m_strPapersBackupPath + "\\" + filePath.getBaseName() + ".zip";
 
+								Poco::File newFile(CMyCodeConvert::Gb2312ToUtf8(strNewFilePath));
+								if (newFile.exists())
+									newFile.remove(true);
+
 								Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
 								fileList.renameTo(CMyCodeConvert::Gb2312ToUtf8(strNewFilePath));
 							}

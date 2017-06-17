@@ -135,15 +135,22 @@ void CScanResquestHandler::HandleTask(pSCAN_REQ_TASK pTask)
 				nCmd = USER_RESPONSE_GET_BMK;
 			else if (pTask->strMsg == "getExamBmk")
 				nCmd = USER_RESPONSE_GET_EXAM_BMK;
+
+
+			int ret = RESULT_ERROR_UNKNOWN;
 			if (pTask->strMsg == "getBmk" || pTask->strMsg == "getExamBmk")
 			{
-				int ret = 0;
-				std::string strSendData;
-				ret = RESULT_GET_BMK_FAIL;
-				strSendData = Poco::format("ÇëÇóÊ§°Ü£¬´íÎó´úÂë%d", (int)response.getStatus());
-				if (pTask->pUser)
-					pTask->pUser->SendResponesInfo(nCmd, ret, (char*)strSendData.c_str(), strSendData.length());
+				ret = RESULT_GET_BMK_FAIL;				
 			}
+			else if (pTask->strMsg == "ezs")
+			{
+				ret = RESULT_EXAMINFO_FAIL;
+			}
+
+			std::string strSendData;
+			strSendData = Poco::format("ÇëÇóÊ§°Ü£¬´íÎó´úÂë%d", (int)response.getStatus());
+			if (pTask->pUser)
+				pTask->pUser->SendResponesInfo(nCmd, ret, (char*)strSendData.c_str(), strSendData.length());
 		}
 	}
 	catch (Poco::Exception& exc)
@@ -183,7 +190,11 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 		if (pTask->strMsg == "login")
 		{
 			bool bResult = object->get("success").convert<bool>();
-			std::string strResult = object->get("result").convert<std::string>();
+			std::string strResult;
+			if (bResult)
+				strResult = object->get("result").convert<std::string>();
+			else
+				strResult = object->get("msg").convert<std::string>();
 			strResult = CMyCodeConvert::Utf8ToGb2312(strResult);
 
 			if (bResult)

@@ -148,6 +148,10 @@ void CSingleExamDlg::InitData()
 		m_bmpExamTypeLeft.LoadBitmap(IDB_Exam_Net1);
 		_strNetHandType = _T("Íø");
 		m_bmpBtnMakeModel.ShowWindow(SW_SHOW);
+
+#ifndef _DEBUG
+		m_bmpBtnMakeModel.ShowWindow(SW_HIDE);
+#endif
 	}
 
 	USES_CONVERSION;

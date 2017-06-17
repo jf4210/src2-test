@@ -56,7 +56,7 @@ void CFileUpLoad::OnTcpClientNotifyReceivedData( const char* pData,int nLen )
 
 void CFileUpLoad::OnTcpClientNotifyDisconnect( UINT uSocket )
 {
-	TRACE0("file server disconnect!\n");
+	TRACE(_T("file server disconnect!, %s:%d\n"), m_strAddr, m_usPort);
 	m_uThreadType = 1;
 	m_bConnect = FALSE;
 	g_bFileConnect = false;
@@ -111,6 +111,7 @@ RESTART:
 					m_pITcpClient = NULL;
 				}
 
+				TRACE(_T("connect server: %s:%d\n"), m_strAddr, m_usPort);
 				m_pITcpClient = CreateTcpClient(*this, T2A(m_strAddr), m_usPort);
 				if (m_pITcpClient == NULL)
 				{

@@ -477,8 +477,13 @@ protected:
 		InitParam();
 		
 #ifdef POCO_OS_FAMILY_WINDOWS
+		std::string strVer;
+		if (SysSet.m_nServerMode == 1)
+			strVer = SOFT_VERSION4TY;
+		else
+			strVer = SOFT_VERSION;
 		char szTitle[150] = { 0 };
-		sprintf(szTitle, "%s <%s:%d - %d>", SOFT_VERSION, SysSet.m_sLocalIP.c_str(), SysSet.m_nCmdPort, SysSet.m_nPaperUpLoadPort);
+		sprintf(szTitle, "%s <%s:%d - %d>", strVer.c_str(), SysSet.m_sLocalIP.c_str(), SysSet.m_nCmdPort, SysSet.m_nPaperUpLoadPort);
 		std::wstring wstrTitle;
 		Poco::UnicodeConverter::toUTF16(szTitle, wstrTitle);
 		SetConsoleTitle(wstrTitle.c_str());

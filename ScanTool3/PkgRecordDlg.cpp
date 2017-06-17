@@ -43,7 +43,7 @@ BOOL CPkgRecordDlg::OnInitDialog()
 
 	InitUI();
 
-	SetTimer(TIMER_PROCESS, 1000, NULL);
+	SetTimer(TIMER_PROCESS, 300, NULL);
 	return TRUE;
 }
 

@@ -65,28 +65,45 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			return 1;
 			#endif
 
-		#ifdef TO_WHTY
-			std::string strAppKey = "SP0000000TEST";
-			std::string strAppValue = "63d4311d46714a39-a54cf2b0537a79b6TEST";
-			std::string strMsgFormat = "json";
-			std::string strMethod = "login111";
-			std::string strPwd = LoginInfo.szPWD;
-			std::string strUser = LoginInfo.szUserNo;
-			std::string strSha1Src = Poco::format("%sappKey%smessageFormat%smethod%spassword%susername%sv1.0%s", strAppValue, strAppKey, strMsgFormat, strMethod, strPwd, strUser, strAppValue);
-			Poco::SHA1Engine engine;
-			engine.update(strSha1Src);
-			std::string strSHA1 = Poco::DigestEngine::digestToHex(engine.digest());
-			std::string strSHA1_Up = Poco::toUpper(strSHA1);
-			std::string strUriValue = Poco::format("/router?appKey=%s&messageFormat=%s&method=%s&password=%s&sign=%s&username=%s&v=1.0", strAppKey, strMsgFormat, strMethod, strPwd, strSHA1_Up, strUser);
+//		#ifdef TO_WHTY
+		#if 1
+			pSCAN_REQ_TASK pTask = NULL;
+			if(SysSet.m_nServerMode == 1)
+			{
+				std::string strAppKey = "SP0000000TEST";
+				std::string strAppValue = "63d4311d46714a39-a54cf2b0537a79b6TEST";
+				std::string strMsgFormat = "json";
+				std::string strMethod = "login111";
+				std::string strPwd = LoginInfo.szPWD;
+				std::string strUser = LoginInfo.szUserNo;
+				std::string strSha1Src = Poco::format("%sappKey%smessageFormat%smethod%spassword%susername%sv1.0%s", strAppValue, strAppKey, strMsgFormat, strMethod, strPwd, strUser, strAppValue);
+				Poco::SHA1Engine engine;
+				engine.update(strSha1Src);
+				std::string strSHA1 = Poco::DigestEngine::digestToHex(engine.digest());
+				std::string strSHA1_Up = Poco::toUpper(strSHA1);
+				std::string strUriValue = Poco::format("/router?appKey=%s&messageFormat=%s&method=%s&password=%s&sign=%s&username=%s&v=1.0", strAppKey, strMsgFormat, strMethod, strPwd, strSHA1_Up, strUser);
 
-			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
-			pTask->strUri		= SysSet.m_strBackUri + strUriValue;
-			pTask->pUser		= pUser;
-			pTask->strMsg		= "login2Ty";
-			pTask->strUser		= LoginInfo.szUserNo;
-			pTask->strPwd		= LoginInfo.szPWD;
-			std::string strLog = Poco::format("天喻登录: src_SHA1 = %s\nSHA1 = %s\nuri = %s", strSha1Src, strSHA1_Up, pTask->strUri);
-			g_Log.LogOut(strLog);
+				pTask = new SCAN_REQ_TASK;
+				pTask->strUri		= SysSet.m_strBackUri + strUriValue;
+				pTask->pUser		= pUser;
+				pTask->strMsg		= "login2Ty";
+				pTask->strUser		= LoginInfo.szUserNo;
+				pTask->strPwd		= LoginInfo.szPWD;
+				std::string strLog = Poco::format("天喻登录: src_SHA1 = %s\nSHA1 = %s\nuri = %s", strSha1Src, strSHA1_Up, pTask->strUri);
+				g_Log.LogOut(strLog);
+			}
+			else
+			{
+				pTask = new SCAN_REQ_TASK;
+				pTask->strUri		= SysSet.m_strBackUri + "/login";
+				pTask->pUser		= pUser;
+				pTask->strMsg		= "login";
+				pTask->strUser		= LoginInfo.szUserNo;
+				pTask->strPwd		= LoginInfo.szPWD;
+				char szTmp[200] = { 0 };
+				sprintf(szTmp, "username=%s&password=%s", LoginInfo.szUserNo, LoginInfo.szPWD);
+				pTask->strRequest = szTmp;
+			}
 		#else
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
 			pTask->strUri		= SysSet.m_strBackUri + "/login";
@@ -212,27 +229,41 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			return 1;
 			#endif
 
-		#ifdef TO_WHTY
-			std::string strAppKey = "SP0000000TEST";
-			std::string strAppValue = "63d4311d46714a39-a54cf2b0537a79b6TEST";
-			std::string strMsgFormat = "json";
-			std::string strMethod = "examinfo";
-			std::string strPersonId = stExamInfo.szEzs;
-			std::string strSha1Src = Poco::format("%sappKey%smessageFormat%smethod%sperson_id%sv1.0%s", strAppValue, strAppKey, strMsgFormat, strMethod, strPersonId, strAppValue);
-			Poco::SHA1Engine engine;
-			engine.update(strSha1Src);
-			std::string strSHA1 = Poco::DigestEngine::digestToHex(engine.digest());
-			std::string strSHA1_Up = Poco::toUpper(strSHA1);
-			std::string strUriValue = Poco::format("/router?appKey=%s&messageFormat=%s&method=%s&person_id=%s&sign=%s&v=1.0", strAppKey, strMsgFormat, strMethod, strPersonId, strSHA1_Up);
-			
-			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
-			pTask->strUri = SysSet.m_strBackUri + strUriValue;
-			pTask->pUser  = pUser;
-			pTask->strEzs = SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
-			pTask->strMsg = "ezs";
+//		#ifdef TO_WHTY
+		#if 1
+			pSCAN_REQ_TASK pTask = NULL;
+			if (SysSet.m_nServerMode == 1)
+			{
+				std::string strAppKey = "SP0000000TEST";
+				std::string strAppValue = "63d4311d46714a39-a54cf2b0537a79b6TEST";
+				std::string strMsgFormat = "json";
+				std::string strMethod = "examinfo";
+				std::string strPersonId = stExamInfo.szEzs;
+				std::string strSha1Src = Poco::format("%sappKey%smessageFormat%smethod%sperson_id%sv1.0%s", strAppValue, strAppKey, strMsgFormat, strMethod, strPersonId, strAppValue);
+				Poco::SHA1Engine engine;
+				engine.update(strSha1Src);
+				std::string strSHA1 = Poco::DigestEngine::digestToHex(engine.digest());
+				std::string strSHA1_Up = Poco::toUpper(strSHA1);
+				std::string strUriValue = Poco::format("/router?appKey=%s&messageFormat=%s&method=%s&person_id=%s&sign=%s&v=1.0", strAppKey, strMsgFormat, strMethod, strPersonId, strSHA1_Up);
 
-			std::string strLog = Poco::format("天喻平台，获取考试列表: src_SHA1 = %s\nSHA1 = %s\nuri = %s", strSha1Src, strSHA1_Up, pTask->strUri);
-			g_Log.LogOut(strLog);
+				pTask = new SCAN_REQ_TASK;
+				pTask->strUri = SysSet.m_strBackUri + strUriValue;
+				pTask->pUser = pUser;
+				pTask->strEzs = SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
+				pTask->strMsg = "ezs";
+
+				std::string strLog = Poco::format("天喻平台，获取考试列表: src_SHA1 = %s\nSHA1 = %s\nuri = %s", strSha1Src, strSHA1_Up, pTask->strUri);
+				g_Log.LogOut(strLog);
+			}
+			else
+			{
+				pTask = new SCAN_REQ_TASK;
+				pTask->strUri = SysSet.m_strBackUri + "/examinfo";
+				pTask->pUser  = pUser;
+				pTask->strEzs = SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
+				pTask->strMsg = "ezs";
+			}
+			
 		#else
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
 			pTask->strUri = SysSet.m_strBackUri + "/examinfo";
@@ -618,6 +649,16 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			g_fmScanReq.lock();
 			g_lScanReq.push_back(pTask);
 			g_fmScanReq.unlock();
+		}
+		break;
+	case USER_GET_FILE_UPLOAD_ADDR:
+		{
+			std::cout << "请求不同格式文件服务器地址信息命令: "<< std::endl;
+			int nResult = RESULT_GET_FILE_ADDR_SUCCESS;
+			if (SysSet.m_strFileAddrs.empty())
+				nResult = RESULT_GET_FILE_ADDR_FAIL;
+			std::string strVerAddr = SysSet.m_strFileAddrs;
+			pUser->SendResponesInfo(USER_RESPONSE_GET_FILE_UPLOAD_ADDR, nResult, (char*)strVerAddr.c_str(), strVerAddr.length());
 		}
 		break;
 	default:

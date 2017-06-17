@@ -164,6 +164,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 		m_ss.connect(sa);
 		m_ss.setReceiveTimeout(ts);
 		SAFE_RELEASE(m_pRecvBuff);
+		m_nRecvLen = 0;
 
 		ST_CMD_HEADER stHead;
 		stHead.usCmd = USER_LOGIN;
@@ -182,6 +183,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 		int nResult = RecvData(strResult);
 		if (nResult == 1)
 		{
+			GetFileAddrs();
 			GetExamInfo();
 //			GetBmkInfo();
 			WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "login", T2A(m_strUserName));
@@ -202,6 +204,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 			int nResult2 = RecvData(strResult2);
 			if (nResult2 == 1)
 			{
+				GetFileAddrs();
 				GetExamInfo();
 				WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "login", T2A(m_strUserName));
 //				AfxMessageBox(_T("登录成功"));	//登录成功，获取考试信息失败
@@ -546,6 +549,18 @@ int CLoginDlg::GetBmkInfo()
 	g_fmTcpTaskLock.unlock();
 
 	return nResult;
+}
+
+void CLoginDlg::GetFileAddrs()
+{
+	TRACE("请求其他格式的文件上传地址\n");
+
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_GET_FILE_UPLOAD_ADDR;
+	pTcpTask->nPkgLen = 0;
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
 }
 
 void CLoginDlg::InitUI()
