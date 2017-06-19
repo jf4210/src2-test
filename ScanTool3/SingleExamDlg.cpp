@@ -506,6 +506,9 @@ void CSingleExamDlg::OnBnClickedBtnScanprocesses()
 
 void CSingleExamDlg::OnBnClickedBtnMakescanmodel()
 {
+	_pCurrExam_ = _pExamInfo;
+	_pCurrSub_	= NULL;
+
 	CMakeModelDlg dlg;
 	dlg.DoModal();
 

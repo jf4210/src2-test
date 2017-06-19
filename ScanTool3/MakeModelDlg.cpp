@@ -52,6 +52,9 @@ BOOL CMakeModelDlg::OnInitDialog()
 	InitUI();
 	SetFontSize(m_nStatusSize);
 	m_comboSubject.AdjustDroppedWidth();
+
+	InitExamData();
+
 // 	InitExamData();
 // 	InitChildDlg();
 // 	InitCtrlPosition();
@@ -224,6 +227,28 @@ void CMakeModelDlg::InitUI()
 	m_bmpBtnUpload.SetWindowText(_T("    上传图片"));
 	m_bmpBtnDown.SetStateBitmap(IDB_MakeModel_Btn_Download_normal, 0, IDB_MakeModel_Btn_Download_down);
 	m_bmpBtnDown.SetWindowText(_T("    导入图片"));
+}
+
+void CMakeModelDlg::InitExamData()
+{
+	USES_CONVERSION;
+	m_comboSubject.ResetContent();
+	if (_pCurrExam_)
+	{
+		int i = 0;
+		int nShowSubject = -1;
+		for (auto pSubject : _pCurrExam_->lSubjects)
+		{
+			m_comboSubject.AddString(A2T(pSubject->strSubjName.c_str()));
+			int nCount = m_comboSubject.GetCount();
+			m_comboSubject.SetItemDataPtr(nCount - 1, pSubject);
+			
+			i++;
+		}
+		if (_pCurrExam_->lSubjects.size())
+			m_comboSubject.SetCurSel(0);
+	}
+	UpdateData(FALSE);
 }
 
 void CMakeModelDlg::OnBnClickedBtnScanpaper()

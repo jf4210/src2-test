@@ -23,6 +23,7 @@ private:
 	void	InitUI();
 	void	InitCtrlPosition();
 	void	SetFontSize(int nSize);
+	void	InitExamData();
 
 
 	//----------------------
