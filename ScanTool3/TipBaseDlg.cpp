@@ -6,6 +6,7 @@ COLORREF 		g_colLine;
 
 CTipBaseDlg::CTipBaseDlg(UINT nIDTemplate, CWnd* pParent)
 : CDialog(nIDTemplate, pParent)
+, m_nRoundSize(20)
 {
 }
 
@@ -54,7 +55,7 @@ void CTipBaseDlg::OnSize(UINT nType, int cx, int cy)
 //	GetWindowRect(&rc);
 	GetClientRect(&rc);
 //	rc -= rc.TopLeft();
-	m_rgn.CreateRoundRectRgn(rc.left, rc.top, rc.right, rc.bottom, 20, 20);
+	m_rgn.CreateRoundRectRgn(rc.left, rc.top, rc.right, rc.bottom, m_nRoundSize, m_nRoundSize);
 	SetWindowRgn(m_rgn, TRUE);
 }
 
@@ -103,8 +104,12 @@ void CTipBaseDlg::DrawBorder(CDC* pDC, CRect rect)
 	pDC->SelectStockObject(NULL_BRUSH);
 //	pDC->Rectangle(&rect);
 //	pDC->RoundRect(rect.left + 1, rect.top + 1, rect.right - 2, rect.bottom - 2, 20, 20);
-	pDC->RoundRect(rect.left, rect.top, rect.right - 1, rect.bottom - 1, 20, 20);
+	pDC->RoundRect(rect.left, rect.top, rect.right - 1, rect.bottom - 1, m_nRoundSize, m_nRoundSize);
 	pDC->SelectObject(pOldPen);
 }
 
+void CTipBaseDlg::SetRoundSize(int n)
+{
+	m_nRoundSize = n;
+}
 

@@ -89,10 +89,12 @@ public:
 	void	setNotifyDlg(void* pDlg);
 	void	setModelInfo(int nModelPicNums, std::string& strSavePath);
 	void	resetData();	//重置计数器
+	void	setNotifyDlgType(int n = 1);
 
 	void	TestMode();
 private:	
 	bool	m_bStop;
+	int		m_nNotifyDlgType;	//通知消息类型， 1-主扫描，2-扫描模板窗口
 	void*	m_pDlg;		//消息通知窗口
 	int		m_nStartSaveIndex;		//文件保存时的起始索引
 	int		m_nModelPicNums;

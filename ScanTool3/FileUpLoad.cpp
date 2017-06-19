@@ -123,6 +123,9 @@ RESTART:
 				else
 				{
 					TRACE0("\nconect to File Server Success!\n");
+					char szLog[300] = { 0 };
+					sprintf_s(szLog, "连接服务器成功(%s:%d)", T2A(m_strAddr), m_usPort);
+					g_pLogger->information(szLog);
 					m_bConnect = TRUE;
 					m_uThreadType = 2;
 					g_bFileConnect = true;

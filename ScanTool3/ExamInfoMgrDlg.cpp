@@ -42,10 +42,14 @@ BOOL CExamInfoMgrDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	m_bmpBkg.LoadBitmap(IDB_Main_Bk);
-	m_bmpBtnFirst.SetStateBitmap(IDB_Exam_SubjectBtn, 0, IDB_Exam_SubjectBtn_Hover);
-	m_bmpBtnLast.SetStateBitmap(IDB_Exam_SubjectBtn, 0, IDB_Exam_SubjectBtn_Hover);
-	m_bmpBtnUp.SetStateBitmap(IDB_Exam_SubjectBtn, 0, IDB_Exam_SubjectBtn_Hover);
-	m_bmpBtnDown.SetStateBitmap(IDB_Exam_SubjectBtn, 0, IDB_Exam_SubjectBtn_Hover);
+	m_bmpBtnFirst.SetStateBitmap(IDB_Exam_Btn_First_normal, 0, IDB_Exam_Btn_First_Down);
+	m_bmpBtnLast.SetStateBitmap(IDB_Exam_Btn_First_normal, 0, IDB_Exam_Btn_First_Down);
+	m_bmpBtnUp.SetStateBitmap(IDB_Exam_Btn_First_normal, 0, IDB_Exam_Btn_First_Down);
+	m_bmpBtnDown.SetStateBitmap(IDB_Exam_Btn_First_normal, 0, IDB_Exam_Btn_First_Down);
+// 	m_bmpBtnFirst.SetStateBitmap(IDB_Exam_SubjectBtn, 0, IDB_Exam_SubjectBtn_Hover);
+// 	m_bmpBtnLast.SetStateBitmap(IDB_Exam_SubjectBtn, 0, IDB_Exam_SubjectBtn_Hover);
+// 	m_bmpBtnUp.SetStateBitmap(IDB_Exam_SubjectBtn, 0, IDB_Exam_SubjectBtn_Hover);
+// 	m_bmpBtnDown.SetStateBitmap(IDB_Exam_SubjectBtn, 0, IDB_Exam_SubjectBtn_Hover);
 	InitCtrlPosition();
 	InitShowData();
 
@@ -255,7 +259,7 @@ void CExamInfoMgrDlg::InitSearchData()
 				vecTkType.push_back("ÊÖÔÄ¾í");
 		}
 
-		nAllExamItems = pExam->lSubjects.size();
+		nAllExamItems += pExam->lSubjects.size();
 	}
 	m_nAllExamListItems = nAllExamItems;
 

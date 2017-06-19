@@ -194,6 +194,8 @@ BOOL CScanTool3App::InitInstance()
 
 	AfxEnableControlContainer();
 
+	if (!FirstInstance())
+		return FALSE;
 	// 创建 shell 管理器，以防对话框包含
 	// 任何 shell 树视图控件或 shell 列表视图控件。
 	CShellManager *pShellManager = new CShellManager;
@@ -209,7 +211,7 @@ BOOL CScanTool3App::InitInstance()
 	// TODO:  应适当修改该字符串，
 	// 例如修改为公司或组织名
 	SetRegistryKey(_T("EasyTNT"));
-
+	
 	LOGFONT logfont;
 	if (::SystemParametersInfo(SPI_GETICONTITLELOGFONT,
 		sizeof (logfont), &logfont, 0))
@@ -285,5 +287,35 @@ BOOL CScanTool3App::InitInstance()
 	// 由于对话框已关闭，所以将返回 FALSE 以便退出应用程序，
 	//  而不是启动应用程序的消息泵。
 	return FALSE;
+}
+
+BOOL CScanTool3App::FirstInstance()
+{
+	TCHAR strTitle[MAX_PATH] = { 0 };
+	HWND hwnd = NULL;
+	HWND AfterHwnd = NULL;
+	while (true)
+	{
+		hwnd = ::FindWindowEx(NULL, AfterHwnd, _T("#32770"), NULL);
+		if (!hwnd)
+			break;
+		else
+		{
+			if (::GetWindowText(hwnd, strTitle, MAX_PATH))
+			{
+				if (StrStr(strTitle, SYS_BASE_NAME) != 0)
+				{
+					//找到窗口后的操作
+					GetLastActivePopup(hwnd);
+					if (IsIconic(hwnd))
+						ShowWindow(hwnd, SW_RESTORE);
+					SetForegroundWindow(hwnd);
+					return FALSE;
+				}
+			}
+		}
+		AfterHwnd = hwnd;
+	}
+	return TRUE;
 }
 

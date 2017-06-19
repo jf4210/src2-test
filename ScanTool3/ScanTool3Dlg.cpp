@@ -716,6 +716,7 @@ BOOL CScanTool3Dlg::OnInitDialog()
 	}
 	catch (Poco::TimeoutException &e)
 	{
+		TRACE("获取报名库超时\n");
 	}
 	InitUI();
 	m_pExamInfoMgrDlg->InitShowData();

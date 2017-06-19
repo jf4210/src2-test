@@ -6,6 +6,7 @@
 #include "ScanThread.h"
 
 #include "ScanMgrDlg.h"
+#include "MakeModelDlg.h"
 
 #include "DSMInterface.h"
 #include "TwainString.h"
@@ -78,7 +79,7 @@ TW_UINT16 FAR PASCAL DSMCallback(pTW_IDENTITY _pOrigin,
 IMPLEMENT_DYNCREATE(CScanThread, CWinThread)
 
 CScanThread::CScanThread():
-m_bStop(false), m_pDlg(NULL), m_nStartSaveIndex(0), m_pCurrPaper(NULL)
+m_bStop(false), m_pDlg(NULL), m_nStartSaveIndex(0), m_pCurrPaper(NULL), m_nNotifyDlgType(1)
 {
 }
 
@@ -122,8 +123,11 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	return;
 #endif
 
-	CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
-//	pDlg->UpdateChildDlgInfo();
+	CDialog* pDlg;
+	if (m_nNotifyDlgType == 2)
+		pDlg = (CMakeModelDlg*)m_pDlg;
+	else
+		pDlg = (CScanMgrDlg*)m_pDlg;
 
 	connectDSM();
 	if (m_DSMState < 3)
@@ -134,9 +138,6 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		pResult->bScanOK = false;
 		pResult->strResult = "Á¬½ÓÉ¨ÃèÔ´Ê§°Ü";
 		
-//		CScanMgrDlg* pDlg = (CScanMgrDlg*)AfxGetMainWnd();
-//		CScanDlg* pDlg = (CScanDlg*)m_pDlg;
-
 		pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
 		return;
 	}
@@ -150,10 +151,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
 		pResult->bScanOK = false;
 		pResult->strResult = "¼ÓÔØÉ¨ÃèÔ´Ê§°Ü";
-
-//		CScanMgrDlg* pDlg = (CScanMgrDlg*)AfxGetMainWnd();
-//		CScanDlg* pDlg = (CScanDlg*)m_pDlg;
-
+		
 		pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
 		return;
 	}
@@ -196,9 +194,6 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
 		pResult->bScanOK = false;
 		pResult->strResult = "É¨ÃèÊ§°Ü";
-
-//		CScanMgrDlg* pDlg = (CScanMgrDlg*)AfxGetMainWnd();
-//		CScanDlg* pDlg = (CScanDlg*)m_pDlg;
 
 		pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
 		return;
@@ -776,6 +771,11 @@ void CScanThread::resetData()
 	_nScanCount_ = 0;
 }
 
+void CScanThread::setNotifyDlgType(int n /*= 1*/)
+{
+	m_nNotifyDlgType = n;
+}
+
 void* CScanThread::SaveFile(IplImage *pIpl)
 {
 	int nStudentId = _nScanCount_ / m_nModelPicNums + 1;
@@ -788,7 +788,13 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 
 	_nScanCount_++;
 
-	CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
+//	CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
+	CDialog* pDlg;
+	if (m_nNotifyDlgType == 2)
+		pDlg = (CMakeModelDlg*)m_pDlg;
+	else
+		pDlg = (CScanMgrDlg*)m_pDlg;
+
 	try
 	{
 		cv::Mat matSrc = cv::cvarrToMat(pIpl);

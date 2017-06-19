@@ -124,6 +124,12 @@
     <Filter Include="控件\基础窗口">
       <UniqueIdentifier>{d9e5c7e8-33b6-4ac1-a65c-81b779618cc2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="控件\带标题圆角窗口">
+      <UniqueIdentifier>{002d80c3-75cf-46b3-bb86-c9ad20101a14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="模板界面\扫描题卡">
+      <UniqueIdentifier>{1a61cbe5-ab76-4fcb-90e8-19ac0f5b2b6f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -348,6 +354,9 @@
     <ClInclude Include="TipBaseDlg.h">
       <Filter>控件\基础窗口</Filter>
     </ClInclude>
+    <ClInclude Include="ScanModelPaperDlg.h">
+      <Filter>模板界面\扫描题卡</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -542,6 +551,9 @@
     <ClCompile Include="NewMessageBox.cpp">
       <Filter>控件\提示窗口</Filter>
     </ClCompile>
+    <ClCompile Include="ScanModelPaperDlg.cpp">
+      <Filter>模板界面\扫描题卡</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\ScanTool3.rc2">
@@ -720,6 +732,48 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="skin\examList\net1.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\makeModel\download_down.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\makeModel\download_normal.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\makeModel\save_down.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\makeModel\save_normal.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\makeModel\scan_down.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\makeModel\scan_normal.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\makeModel\upload_down.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\makeModel\upload_normal.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\makeModel\close_down.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\makeModel\close_normal.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\makeModel\btn_down.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\makeModel\btn_normal.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\page首页.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\examList\首页hover.bmp">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>

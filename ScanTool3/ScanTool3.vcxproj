@@ -150,6 +150,7 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ScanDlg.h" />
     <ClInclude Include="ScanMgrDlg.h" />
+    <ClInclude Include="ScanModelPaperDlg.h" />
     <ClInclude Include="ScanProcessDlg.h" />
     <ClInclude Include="ScanBmkRecordDlg.h" />
     <ClInclude Include="ScanRecordMgrDlg.h" />
@@ -243,6 +244,7 @@
     <ClCompile Include="RecognizeThread.cpp" />
     <ClCompile Include="ScanDlg.cpp" />
     <ClCompile Include="ScanMgrDlg.cpp" />
+    <ClCompile Include="ScanModelPaperDlg.cpp" />
     <ClCompile Include="ScanProcessDlg.cpp" />
     <ClCompile Include="ScanBmkRecordDlg.cpp" />
     <ClCompile Include="ScanRecordMgrDlg.cpp" />
@@ -302,8 +304,10 @@
     <Image Include="skin\examList\4_10hover.bmp" />
     <Image Include="skin\examList\hand1.bmp" />
     <Image Include="skin\examList\net1.bmp" />
+    <Image Include="skin\examList\page首页.bmp" />
     <Image Include="skin\examList\title1.bmp" />
     <Image Include="skin\examList\title2.bmp" />
+    <Image Include="skin\examList\首页hover.bmp" />
     <Image Include="skin\login\bitmap1.bmp" />
     <Image Include="skin\login\关闭.bmp" />
     <Image Include="skin\login\关闭_hover.bmp" />
@@ -315,6 +319,18 @@
     <Image Include="skin\login\登录按钮_hover.bmp" />
     <Image Include="skin\login\登录背景.bmp" />
     <Image Include="skin\login\顶部.bmp" />
+    <Image Include="skin\makeModel\btn_down.bmp" />
+    <Image Include="skin\makeModel\btn_normal.bmp" />
+    <Image Include="skin\makeModel\close_down.bmp" />
+    <Image Include="skin\makeModel\close_normal.bmp" />
+    <Image Include="skin\makeModel\download_down.bmp" />
+    <Image Include="skin\makeModel\download_normal.bmp" />
+    <Image Include="skin\makeModel\save_down.bmp" />
+    <Image Include="skin\makeModel\save_normal.bmp" />
+    <Image Include="skin\makeModel\scan_down.bmp" />
+    <Image Include="skin\makeModel\scan_normal.bmp" />
+    <Image Include="skin\makeModel\upload_down.bmp" />
+    <Image Include="skin\makeModel\upload_normal.bmp" />
     <Image Include="skin\popup\btn_hover.bmp" />
     <Image Include="skin\popup\btn_normal.bmp" />
     <Image Include="skin\popup\nostudent.bmp" />

@@ -765,13 +765,13 @@ void CTcpClient::HandleCmd()
 					{
 						g_strFileIp4HandModel = strIP;
 						g_nFilePort4HandModel = nPort;
-						TRACE(_T("get file addr: %s:%d\n"), strIP.c_str(), nPort);
+						TRACE(_T("get file addr: %s:%d\n"), A2T(strIP.c_str()), nPort);
 					}
 					else if (strExtName == strPkg)
 					{
 						g_strFileIP = strIP;
 						g_nFilePort = nPort;
-						TRACE(_T("get file addr: %s:%d\n"), strIP.c_str(), nPort);
+						TRACE(_T("get file addr: %s:%d\n"), A2T(strIP.c_str()), nPort);
 					}
 
 					//修改发送子线程
@@ -799,7 +799,7 @@ void CTcpClient::HandleCmd()
 					nPos = strData.find("@@@", nPos + 3);
 				}
 			}
-				break;
+			break;
 			case RESULT_GET_FILE_ADDR_FAIL:
 			{
 				//无数据
@@ -807,10 +807,11 @@ void CTcpClient::HandleCmd()
 				g_nFilePort4HandModel = g_nFilePort;
 				TRACE(_T("get file addr: %s:%d\n"), g_strFileIp4HandModel.c_str(), g_nFilePort4HandModel);
 			}
-				break;
+			break;
 			default:
 				break;
 		}
+		SAFE_RELEASE_ARRY(pBuff);
 	}
 }
 

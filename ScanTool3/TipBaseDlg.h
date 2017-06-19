@@ -9,6 +9,7 @@ public:
 	CString m_sCaption;
 public:
 	void	DrawBorder(CDC* pDC, CRect rect);
+	void	SetRoundSize(int n);
 protected:
 	virtual BOOL OnInitDialog();
 	afx_msg LRESULT OnNcHitTest(CPoint point);
@@ -17,6 +18,7 @@ protected:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 
 	DECLARE_MESSAGE_MAP()
-
+private:
+	int		m_nRoundSize;
 };
 
