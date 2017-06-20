@@ -9,6 +9,7 @@
 #include "NewMessageBox.h"
 #include "Net_Cmd_Protocol.h"
 #include "NewMakeModelDlg.h"
+#include "MakeModelDlg.h"
 
 // CSingleExamDlg 对话框
 
@@ -509,16 +510,11 @@ void CSingleExamDlg::OnBnClickedBtnMakescanmodel()
 	_pCurrExam_ = _pExamInfo;
 	_pCurrSub_	= NULL;
 
+#if 1
+	CMakeModelDlg dlg;
+	dlg.DoModal();
+#else
 	CNewMakeModelDlg dlg;
 	dlg.DoModal();
-
-// 	CNewMessageBox	dlg;
-// 	dlg.setShowInfo(1, 1, "存在考号为空的考生，如果不修改，将影响参与后面的评卷，是否忽略？");
-// 	dlg.DoModal();
-
-// 	CNewMessageBox* pDlg = new CNewMessageBox(this);
-// 	pDlg->Create(CNewMessageBox::IDD, this);
-// 	pDlg->setShowInfo(1, 1, "存在考号为空的考生，如果不修改，将影响参与后面的评卷，是否忽略？");
-// 	pDlg->ShowWindow(SW_SHOW);
-// 	pDlg->SetForegroundWindow();
+#endif
 }

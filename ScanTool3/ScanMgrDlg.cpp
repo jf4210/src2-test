@@ -391,8 +391,11 @@ void CScanMgrDlg::ShowChildDlg(int n)
 		m_pScanProcessDlg->ShowWindow(SW_SHOW);
 		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
 
-		m_pScanProcessDlg->UpdateChildInfo();
-		m_pScanProcessDlg->InitShow();
+		if (_pCurrExam_->nModel != 1)
+		{
+			m_pScanProcessDlg->UpdateChildInfo();
+			m_pScanProcessDlg->InitShow();
+		}
 
 		_eCurrDlgType_ = Dlg_ScanProcess;
 	}

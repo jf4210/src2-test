@@ -141,7 +141,8 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 	{
 		std::string strPkg = T2A(PAPERS_EXT_NAME);
 		std::string strTyPkg = T2A(PAPERS_EXT_NAME_4TY);
-		if (strKey == strPkg)
+		std::string strMod = ".mod";
+		if (strKey == strPkg || strKey == strKey)
 		{
 			_strIp = g_strFileIP;
 			_nPort = g_nFilePort;
@@ -154,7 +155,7 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 		else
 		{
 			char szLog[500] = { 0 };
-			sprintf_s(szLog, "添加发送文件任务: %s失败(extName: %s, ip: %s, port: %d其中某些有错)", strKey.c_str(), g_strFileIp4HandModel.c_str(), g_nFilePort4HandModel);
+			sprintf_s(szLog, "添加发送文件任务: %s失败(extName: %s, ip: %s, port: %d其中某些有错)", pTask->strFileName.c_str(), strKey.c_str(), g_strFileIp4HandModel.c_str(), g_nFilePort4HandModel);
 			g_pLogger->information(szLog);
 			return;
 		}

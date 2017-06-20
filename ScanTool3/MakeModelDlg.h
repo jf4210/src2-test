@@ -161,14 +161,14 @@ public:
 	CScanThread* m_pScanThread;
 #endif
 	//扫描
-	BOOL m_bTwainInit;
-	CString		m_strScanSavePath;
-	CArray<TW_IDENTITY, TW_IDENTITY> m_scanSourceArry;
-	BOOL ScanSrcInit();
+// 	BOOL m_bTwainInit;
+// 	CString		m_strScanSavePath;
+// 	CArray<TW_IDENTITY, TW_IDENTITY> m_scanSourceArry;
+// 	BOOL ScanSrcInit();
 
-	void CopyImage(HANDLE hBitmap, TW_IMAGEINFO& info);
-	void SetImage(HANDLE hBitmap, int bits);
-	void ScanDone(int nStatus);
+// 	void CopyImage(HANDLE hBitmap, TW_IMAGEINFO& info);
+// 	void SetImage(HANDLE hBitmap, int bits);
+// 	void ScanDone(int nStatus);
 public:
 	bool RecogNewGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc);							//在修改阀值后重新计算矩形区的灰度值
 
@@ -253,7 +253,7 @@ public:
 	afx_msg void OnNMDblclkListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnLvnKeydownListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult);
 //	afx_msg void OnBnClickedBtnSaverecoginfo();
-	afx_msg void OnBnClickedBtnuploadmodel();
+//	afx_msg void OnBnClickedBtnuploadmodel();
 	afx_msg void OnBnClickedBtnScanmodel();
 	afx_msg void OnDestroy();
 	afx_msg void OnNMHoverListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult);

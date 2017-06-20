@@ -66,7 +66,7 @@ BOOL CModelSaveDlg::OnInitDialog()
 			int nCount = m_comboExamName.GetCount();
 			m_comboExamName.InsertString(nCount, strName);
 
-			m_comboExamName.SetItemDataPtr(nCount, (void*)&(*itExam));
+			m_comboExamName.SetItemDataPtr(nCount, (void*)(*itExam));
 
 			//一开始默认初始化到模板所在列表
 			if (m_pModel->nExamID == (*itExam)->nExamID)

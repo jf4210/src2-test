@@ -604,9 +604,11 @@ LRESULT CScanTool3Dlg::MsgCmdGetBmk(WPARAM wParam, LPARAM lParam)
 	if (!m_pScanMgrDlg->DownLoadModel())
 	{
 		CNewMessageBox	dlg;
-		dlg.setShowInfo(2, 1, "考试信息为空");
+		if (!_pCurrExam_ || !_pCurrSub_)
+			dlg.setShowInfo(2, 1, "考试或科目信息为空");
+		else if (_pCurrSub_->strModelName.empty())
+			dlg.setShowInfo(2, 1, "未设置扫描模板");
 		dlg.DoModal();
-//		AfxMessageBox(_T("考试信息为空"));
 		//跳到考试管理页面
 		SwitchDlg(0);
 	}

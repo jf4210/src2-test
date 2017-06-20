@@ -40,7 +40,7 @@ BEGIN_MESSAGE_MAP(ElectOmrDlg, CDialog)
 	ON_WM_SIZE()
 	ON_BN_CLICKED(IDC_BTN_New, &ElectOmrDlg::OnBnClickedBtnNew)
 	ON_BN_CLICKED(IDC_BTN_DEL, &ElectOmrDlg::OnBnClickedBtnDel)
-	ON_BN_CLICKED(IDC_BTN_SAVE, &ElectOmrDlg::OnBnClickedBtnSave)
+	ON_BN_CLICKED(IDC_BTN_ElectOmr_SAVE, &ElectOmrDlg::OnBnClickedBtnSave)
 	ON_CBN_SELCHANGE(IDC_COMBO_Group, &ElectOmrDlg::OnCbnSelchangeComboGroup)
 END_MESSAGE_MAP()
 
@@ -82,9 +82,9 @@ void ElectOmrDlg::InitCtrlPosition()
 		GetDlgItem(IDC_BTN_DEL)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
 		nCurrentLeft = nCurrentLeft + nBtnW + nGap;
 	}
-	if (GetDlgItem(IDC_BTN_SAVE)->GetSafeHwnd())
+	if (GetDlgItem(IDC_BTN_ElectOmr_SAVE)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_BTN_SAVE)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
+		GetDlgItem(IDC_BTN_ElectOmr_SAVE)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
 		nCurrentLeft = nLeftGap;
 		nCurrentTop = nCurrentTop + nBtnH + nGap;
 	}

@@ -88,14 +88,14 @@ BEGIN_MESSAGE_MAP(CMakeModelDlg, CDialog)
 	ON_MESSAGE(WM_CV_LBTNUP, &CMakeModelDlg::RoiLBtnUp)
 	ON_MESSAGE(WM_CV_LBTNDOWN, &CMakeModelDlg::RoiLBtnDown)
 	ON_MESSAGE(WM_CV_RBTNUP, &CMakeModelDlg::RoiRBtnUp)
-	ON_BN_CLICKED(IDC_BTN_SAVE, &CMakeModelDlg::OnBnClickedBtnSave)
+	ON_BN_CLICKED(IDC_BTN_MAKEMODEL_SAVE, &CMakeModelDlg::OnBnClickedBtnSave)
 	ON_BN_CLICKED(IDC_BTN_ExitModelDlg, &CMakeModelDlg::OnBnClickedBtnExitmodeldlg)
 	ON_BN_CLICKED(IDC_BTN_New, &CMakeModelDlg::OnBnClickedBtnNew)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB_ModelPic, &CMakeModelDlg::OnTcnSelchangeTabModelpic)
 	ON_CBN_SELCHANGE(IDC_COMBO_CPType, &CMakeModelDlg::OnCbnSelchangeComboCptype)
 	ON_NOTIFY(NM_RCLICK, IDC_LIST_CheckPoint, &CMakeModelDlg::OnNMRClickListCheckpoint)
 	ON_COMMAND(ID_DelRecognition, &CMakeModelDlg::DeleteRectInfoOnList)
-	ON_COMMAND(ID_DelPicRectRecog, &CMakeModelDlg::DelRectInfoOnPic)
+//	ON_COMMAND(ID_DelPicRectRecog, &CMakeModelDlg::DelRectInfoOnPic)
 	ON_COMMAND(ID_TrackerRecognize, &CMakeModelDlg::RecognizeRectTracker)
 	ON_COMMAND(ID_AddRecog, &CMakeModelDlg::AddRecogRectToList)
 	ON_COMMAND(ID_RecogSN, &CMakeModelDlg::AddRecogSN)
@@ -105,7 +105,7 @@ BEGIN_MESSAGE_MAP(CMakeModelDlg, CDialog)
 	ON_MESSAGE(WM_CV_HTrackerChange, &CMakeModelDlg::HTrackerChange)
 	ON_MESSAGE(WM_CV_VTrackerChange, &CMakeModelDlg::VTrackerChange)
 	ON_MESSAGE(WM_CV_SNTrackerChange, &CMakeModelDlg::SNTrackerChange)
-	ON_BN_CLICKED(IDC_BTN_uploadModel, &CMakeModelDlg::OnBnClickedBtnuploadmodel)
+//	ON_BN_CLICKED(IDC_BTN_uploadModel, &CMakeModelDlg::OnBnClickedBtnuploadmodel)
 	ON_BN_CLICKED(IDC_BTN_ScanModel, &CMakeModelDlg::OnBnClickedBtnScanmodel)
 	ON_MESSAGE(WM_CV_ShiftDown, &CMakeModelDlg::ShiftKeyDown)
 	ON_MESSAGE(WM_CV_ShiftUp, &CMakeModelDlg::ShiftKeyUp)
@@ -493,9 +493,9 @@ void CMakeModelDlg::InitCtrlPosition()
 		GetDlgItem(IDC_BTN_RESET)->MoveWindow(nLeftGap + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeigh);
 		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
 	}
-	if (GetDlgItem(IDC_BTN_SAVE)->GetSafeHwnd())
+	if (GetDlgItem(IDC_BTN_MAKEMODEL_SAVE)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_BTN_SAVE)->MoveWindow(nLeftGap, nCurrentTop, nBtnWidth, nBtnHeigh);
+		GetDlgItem(IDC_BTN_MAKEMODEL_SAVE)->MoveWindow(nLeftGap, nCurrentTop, nBtnWidth, nBtnHeigh);
 //		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
 	}
 #if 1
@@ -856,6 +856,7 @@ LRESULT CMakeModelDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
 
 void CMakeModelDlg::OnBnClickedBtnScanmodel()
 {
+#if 0
 	if (m_strScanSavePath == _T(""))
 	{
 		LPITEMIDLIST pidRoot = NULL;
@@ -957,6 +958,7 @@ void CMakeModelDlg::OnBnClickedBtnScanmodel()
 		TRACE("扫描失败\n");
 	}
 	GetDlgItem(IDC_BTN_ScanModel)->EnableWindow(TRUE);
+#endif
 #endif
 }
 
@@ -4645,9 +4647,8 @@ BOOL CMakeModelDlg::DeleteRectInfo(CPType eType, int nItem)
 
 BOOL CMakeModelDlg::PreTranslateMessage(MSG* pMsg)
 {
-//	ProcessMessage(*pMsg);
-	if (ProcessMessage(*pMsg))
-		return TRUE;
+// 	if (ProcessMessage(*pMsg))
+// 		return TRUE;
 	return CDialog::PreTranslateMessage(pMsg);
 }
 void CMakeModelDlg::OnLvnKeydownListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult)
@@ -5486,18 +5487,10 @@ void CMakeModelDlg::setUploadModelInfo(CString& strName, CString& strModelPath, 
 
 	CString strUser = _T("");
 	CString strEzs = _T("");
-#ifdef SHOW_GUIDEDLG
-	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
 
-	strEzs = pDlg->m_strEzs;
-	strUser = pDlg->m_strUserName;
-#else
-	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();	//GetParent();
-	strEzs = pDlg->m_strEzs;
-	strUser = pDlg->m_strUserName;
-#endif
+	strUser = A2T(_strUserName_.c_str());
+	strEzs = A2T(_strEzs_.c_str());
 	
-
 	ST_MODELINFO stModelInfo;
 	ZeroMemory(&stModelInfo, sizeof(ST_MODELINFO));
 	stModelInfo.nExamID = nExamId;
@@ -5517,284 +5510,284 @@ void CMakeModelDlg::setUploadModelInfo(CString& strName, CString& strModelPath, 
 }
 
 
-void CMakeModelDlg::OnBnClickedBtnuploadmodel()
-{
-	CFileDialog dlg(TRUE,
-					NULL,
-					NULL,
-					OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
-					_T("All Files (*.*)|*.*;)||"),
-					NULL);
-	if (dlg.DoModal() != IDOK)
-		return;
+// void CMakeModelDlg::OnBnClickedBtnuploadmodel()
+// {
+// 	CFileDialog dlg(TRUE,
+// 					NULL,
+// 					NULL,
+// 					OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
+// 					_T("All Files (*.*)|*.*;)||"),
+// 					NULL);
+// 	if (dlg.DoModal() != IDOK)
+// 		return;
+// 
+// 	USES_CONVERSION;
+// 	std::string strJsnModel = T2A(dlg.GetPathName());
+// 
+// 	std::string strJsnData;
+// 	std::ifstream in(strJsnModel);
+// 	if (!in)
+// 		return;
+// 
+// 	std::string strJsnLine;
+// 	while (!in.eof())
+// 	{
+// 		getline(in, strJsnLine);					//不过滤空格
+// 		strJsnData.append(strJsnLine);
+// 	}
+// 	in.close();
+// 		
+// 	m_pModel = LoadMakePaperData(strJsnData);
+// 	if (!m_pModel)	return;
+// 
+// 	//++ 将PDF转JPG
+// 	int nPos1 = strJsnModel.rfind('\\');
+// 	int nPos2 = strJsnModel.rfind('.');
+// 	std::string strBaseName = strJsnModel.substr(nPos1 + 1, nPos2 - nPos1 - 1);
+// 	std::string strPdfPath = T2A(dlg.GetFolderPath());
+// 	strPdfPath.append("\\" + strBaseName + ".pdf");
+// 
+// 	bool bResult = Pdf2Jpg(strPdfPath, m_pModel->strModelName);
+// 	if (!bResult)
+// 	{
+// 		AfxMessageBox(_T("pdf转jpg失败"));
+// 		return;
+// 	}
+// 	//--
+// 
+// 	InitModelRecog(m_pModel);
+// 
+// 	m_nModelPicNums = m_pModel->nPicNum;
+// 	InitTab();
+// 	InitConf();
+// 	m_vecPaperModelInfo.clear();
+// 	for (int i = 0; i < m_pModel->nPicNum; i++)
+// 	{
+// 		CString strPicPath = g_strCurrentPath + _T("Model\\") + A2T(m_pModel->strModelName.c_str()) + _T("\\") + A2T(m_pModel->vecPaperModel[i]->strModelPicName.c_str());
+// 
+// 		pPaperModelInfo pPaperModel = new PaperModelInfo;
+// 		m_vecPaperModelInfo.push_back(pPaperModel);
+// 		pPaperModel->nPaper = i;
+// 		pPaperModel->strModelPicPath = strPicPath;
+// 		pPaperModel->strModelPicName = m_pModel->vecPaperModel[i]->strModelPicName;
+// 
+// 		pPaperModel->matSrcImg = imread((std::string)(CT2CA)strPicPath);
+// 		pPaperModel->matDstImg = pPaperModel->matSrcImg;
+// 
+// 		Mat src_img;
+// 		src_img = m_vecPaperModelInfo[i]->matDstImg;
+// 		m_vecPicShow[i]->ShowPic(src_img);
+// 		
+// 		pPaperModel->nPicW = src_img.cols;
+// 		pPaperModel->nPicH = src_img.rows;
+// 
+// 		pPaperModel->rtHTracker = m_pModel->vecPaperModel[i]->rtHTracker;
+// 		pPaperModel->rtVTracker = m_pModel->vecPaperModel[i]->rtVTracker;
+// //		pPaperModel->rtSNTracker = m_pModel->vecPaperModel[i]->rtSNTracker;
+// 		pPaperModel->rcSNTracker = m_pModel->vecPaperModel[i]->rcSNTracker;
+// 
+// 		RECTLIST::iterator itSelHTracker = m_pModel->vecPaperModel[i]->lSelHTracker.begin();
+// 		for (; itSelHTracker != m_pModel->vecPaperModel[i]->lSelHTracker.end(); itSelHTracker++)
+// 		{
+// 			pPaperModel->vecHTracker.push_back(*itSelHTracker);
+// 		}
+// 		RECTLIST::iterator itSelVTracker = m_pModel->vecPaperModel[i]->lSelVTracker.begin();
+// 		for (; itSelVTracker != m_pModel->vecPaperModel[i]->lSelVTracker.end(); itSelVTracker++)
+// 		{
+// 			pPaperModel->vecVTracker.push_back(*itSelVTracker);
+// 		}
+// 		RECTLIST::iterator itSelRoi = m_pModel->vecPaperModel[i]->lSelFixRoi.begin();
+// 		for (; itSelRoi != m_pModel->vecPaperModel[i]->lSelFixRoi.end(); itSelRoi++)
+// 		{
+// 			pPaperModel->vecRtSel.push_back(*itSelRoi);
+// 		}
+// 		OMRLIST::iterator itOmr2 = m_pModel->vecPaperModel[i]->lOMR2.begin();
+// 		for (; itOmr2 != m_pModel->vecPaperModel[i]->lOMR2.end(); itOmr2++)
+// 		{
+// 			pPaperModel->vecOmr2.push_back(*itOmr2);
+// 		}
+// 		RECTLIST::iterator itFix = m_pModel->vecPaperModel[i]->lFix.begin();
+// 		for (; itFix != m_pModel->vecPaperModel[i]->lFix.end(); itFix++)
+// 		{
+// 			pPaperModel->vecRtFix.push_back(*itFix);
+// 		}
+// 		RECTLIST::iterator itHHead = m_pModel->vecPaperModel[i]->lH_Head.begin();
+// 		for (; itHHead != m_pModel->vecPaperModel[i]->lH_Head.end(); itHHead++)
+// 		{
+// 			pPaperModel->vecH_Head.push_back(*itHHead);
+// 		}
+// 		RECTLIST::iterator itVHead = m_pModel->vecPaperModel[i]->lV_Head.begin();
+// 		for (; itVHead != m_pModel->vecPaperModel[i]->lV_Head.end(); itVHead++)
+// 		{
+// 			pPaperModel->vecV_Head.push_back(*itVHead);
+// 		}
+// 		RECTLIST::iterator itABModel = m_pModel->vecPaperModel[i]->lABModel.begin();
+// 		for (; itABModel != m_pModel->vecPaperModel[i]->lABModel.end(); itABModel++)
+// 		{
+// 			pPaperModel->vecABModel.push_back(*itABModel);
+// 		}
+// 		RECTLIST::iterator itCourse = m_pModel->vecPaperModel[i]->lCourse.begin();
+// 		for (; itCourse != m_pModel->vecPaperModel[i]->lCourse.end(); itCourse++)
+// 		{
+// 			pPaperModel->vecCourse.push_back(*itCourse);
+// 		}
+// 		RECTLIST::iterator itQK = m_pModel->vecPaperModel[i]->lQK_CP.begin();
+// 		for (; itQK != m_pModel->vecPaperModel[i]->lQK_CP.end(); itQK++)
+// 		{
+// 			pPaperModel->vecQK_CP.push_back(*itQK);
+// 		}
+// 		RECTLIST::iterator itGray = m_pModel->vecPaperModel[i]->lGray.begin();
+// 		for (; itGray != m_pModel->vecPaperModel[i]->lGray.end(); itGray++)
+// 		{
+// 			pPaperModel->vecGray.push_back(*itGray);
+// 		}
+// 		RECTLIST::iterator itWhite = m_pModel->vecPaperModel[i]->lWhite.begin();
+// 		for (; itWhite != m_pModel->vecPaperModel[i]->lWhite.end(); itWhite++)
+// 		{
+// 			pPaperModel->vecWhite.push_back(*itWhite);
+// 		}
+// 		SNLIST::iterator itSn = m_pModel->vecPaperModel[i]->lSNInfo.begin();
+// 		for (; itSn != m_pModel->vecPaperModel[i]->lSNInfo.end(); itSn++)
+// 		{
+// 			pSN_ITEM pSnItem = new SN_ITEM;
+// 			pSnItem->nItem = (*itSn)->nItem;
+// 			pSnItem->nRecogVal = (*itSn)->nRecogVal;
+// 			RECTLIST::iterator itRc = (*itSn)->lSN.begin();
+// 			for (; itRc != (*itSn)->lSN.end(); itRc++)
+// 			{
+// 				RECTINFO rc = *itRc;
+// 				pSnItem->lSN.push_back(rc);
+// 			}
+// 			pPaperModel->lSN.push_back(pSnItem);
+// 		}
+// 
+// 		ShowRectByCPType(m_eCurCPType);
+// 		UpdataCPList();
+// 	}
+// }
 
-	USES_CONVERSION;
-	std::string strJsnModel = T2A(dlg.GetPathName());
+// void CMakeModelDlg::CopyImage(HANDLE hBitmap, TW_IMAGEINFO& info)
+// {
+// 	SetImage(hBitmap, info.BitsPerPixel);
+// }
+// 
+// void CMakeModelDlg::SetImage(HANDLE hBitmap, int bits)
+// {
+// 	CDIB dib;
+// 	dib.CreateFromHandle(hBitmap, bits);
+// 
+// 	BITMAPFILEHEADER bFile;
+// 	::ZeroMemory(&bFile, sizeof(bFile));
+// 	memcpy((void *)&bFile.bfType, "BM", 2);
+// 	bFile.bfSize = dib.GetDIBSize() + sizeof(bFile);
+// 	bFile.bfOffBits = sizeof(BITMAPINFOHEADER) + dib.GetPaletteSize()*sizeof(RGBQUAD) + sizeof(BITMAPFILEHEADER);
+// 	unsigned char *pBits = NULL;
+// 	try
+// 	{
+// 		pBits = (unsigned char *)malloc(bFile.bfSize);
+// 	}
+// 	catch (...)
+// 	{
+// 		char szLog[100] = { 0 };
+// 		sprintf_s(szLog, "获取内存失败。");
+// 		g_pLogger->information(szLog);
+// 		return;
+// 	}
+// 
+// 	memcpy(pBits, &bFile, sizeof(BITMAPFILEHEADER));
+// 	memcpy(pBits + sizeof(BITMAPFILEHEADER), dib.m_pVoid, dib.GetDIBSize());
+// 
+// 	BYTE *p = pBits;
+// 	BITMAPFILEHEADER fheader;
+// 	memcpy(&fheader, p, sizeof(BITMAPFILEHEADER));
+// 	BITMAPINFOHEADER bmphdr;
+// 	p += sizeof(BITMAPFILEHEADER);
+// 	memcpy(&bmphdr, p, sizeof(BITMAPINFOHEADER));
+// 	int w = bmphdr.biWidth;
+// 	int h = bmphdr.biHeight;
+// 	p = pBits + fheader.bfOffBits;
+// 
+// 	int nChannel = (bmphdr.biBitCount == 1) ? 1 : bmphdr.biBitCount / 8;
+// 	int depth = (bmphdr.biBitCount == 1) ? IPL_DEPTH_1U : IPL_DEPTH_8U;
+// 	IplImage *pIpl2 = cvCreateImage(cvSize(w, h), depth, nChannel);
+// 
+// 	int height;
+// 	bool isLowerLeft = bmphdr.biHeight > 0;
+// 	height = (bmphdr.biHeight > 0) ? bmphdr.biHeight : -bmphdr.biHeight;
+// 	CopyData(pIpl2->imageData, (char*)p, bmphdr.biSizeImage, isLowerLeft, height);
+// 	free(pBits);
+// 	pBits = NULL;
+// 
+// 	// 	IplImage* pIpl = DIB2IplImage(dib);
+// 	// 	cv::Mat matTest = cv::cvarrToMat(pIpl);
+// 	USES_CONVERSION;
+// 
+// 	
+// 	static int nModelScan = 1;
+// 	char szPicPath[MAX_PATH] = { 0 };
+// 	sprintf_s(szPicPath, "%s\\model%d.jpg", T2A(m_strScanSavePath), nModelScan);
+// 	nModelScan++;
+// 
+// 
+// 	cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
+// //	cv::Mat matTest3 = matTest2.clone();
+// 
+// 	std::string strLog;
+// 	std::string strPicName = szPicPath;
+// 	try
+// 	{
+// 		imwrite(strPicName, matTest2);
+// 		strLog = "Get model pic: " + strPicName;
+// 	}
+// 	catch (...)
+// 	{
+// 		AfxMessageBox(_T("写文件失败"));
+// 		strLog = "Get model pic: " + strPicName + " failed.";
+// 	}
+// 
+// 	g_pLogger->information(strLog);
+// 
+// 	cvReleaseImage(&pIpl2);
+// }
+// 
+// void CMakeModelDlg::ScanDone(int nStatus)
+// {
+// 	if (nStatus < 0)
+// 		return;
+// 
+// 	TRACE("扫描完成\n");
+// 	AfxMessageBox(_T("扫描完成"));
+// 	CString strSelect = _T("/root,");
+// 	strSelect.Append(m_strScanSavePath);
+// 	ShellExecute(NULL, _T("open"), _T("explorer.exe"), strSelect, NULL, SW_SHOWNORMAL);
+// }
 
-	std::string strJsnData;
-	std::ifstream in(strJsnModel);
-	if (!in)
-		return;
-
-	std::string strJsnLine;
-	while (!in.eof())
-	{
-		getline(in, strJsnLine);					//不过滤空格
-		strJsnData.append(strJsnLine);
-	}
-	in.close();
-		
-	m_pModel = LoadMakePaperData(strJsnData);
-	if (!m_pModel)	return;
-
-	//++ 将PDF转JPG
-	int nPos1 = strJsnModel.rfind('\\');
-	int nPos2 = strJsnModel.rfind('.');
-	std::string strBaseName = strJsnModel.substr(nPos1 + 1, nPos2 - nPos1 - 1);
-	std::string strPdfPath = T2A(dlg.GetFolderPath());
-	strPdfPath.append("\\" + strBaseName + ".pdf");
-
-	bool bResult = Pdf2Jpg(strPdfPath, m_pModel->strModelName);
-	if (!bResult)
-	{
-		AfxMessageBox(_T("pdf转jpg失败"));
-		return;
-	}
-	//--
-
-	InitModelRecog(m_pModel);
-
-	m_nModelPicNums = m_pModel->nPicNum;
-	InitTab();
-	InitConf();
-	m_vecPaperModelInfo.clear();
-	for (int i = 0; i < m_pModel->nPicNum; i++)
-	{
-		CString strPicPath = g_strCurrentPath + _T("Model\\") + A2T(m_pModel->strModelName.c_str()) + _T("\\") + A2T(m_pModel->vecPaperModel[i]->strModelPicName.c_str());
-
-		pPaperModelInfo pPaperModel = new PaperModelInfo;
-		m_vecPaperModelInfo.push_back(pPaperModel);
-		pPaperModel->nPaper = i;
-		pPaperModel->strModelPicPath = strPicPath;
-		pPaperModel->strModelPicName = m_pModel->vecPaperModel[i]->strModelPicName;
-
-		pPaperModel->matSrcImg = imread((std::string)(CT2CA)strPicPath);
-		pPaperModel->matDstImg = pPaperModel->matSrcImg;
-
-		Mat src_img;
-		src_img = m_vecPaperModelInfo[i]->matDstImg;
-		m_vecPicShow[i]->ShowPic(src_img);
-		
-		pPaperModel->nPicW = src_img.cols;
-		pPaperModel->nPicH = src_img.rows;
-
-		pPaperModel->rtHTracker = m_pModel->vecPaperModel[i]->rtHTracker;
-		pPaperModel->rtVTracker = m_pModel->vecPaperModel[i]->rtVTracker;
-//		pPaperModel->rtSNTracker = m_pModel->vecPaperModel[i]->rtSNTracker;
-		pPaperModel->rcSNTracker = m_pModel->vecPaperModel[i]->rcSNTracker;
-
-		RECTLIST::iterator itSelHTracker = m_pModel->vecPaperModel[i]->lSelHTracker.begin();
-		for (; itSelHTracker != m_pModel->vecPaperModel[i]->lSelHTracker.end(); itSelHTracker++)
-		{
-			pPaperModel->vecHTracker.push_back(*itSelHTracker);
-		}
-		RECTLIST::iterator itSelVTracker = m_pModel->vecPaperModel[i]->lSelVTracker.begin();
-		for (; itSelVTracker != m_pModel->vecPaperModel[i]->lSelVTracker.end(); itSelVTracker++)
-		{
-			pPaperModel->vecVTracker.push_back(*itSelVTracker);
-		}
-		RECTLIST::iterator itSelRoi = m_pModel->vecPaperModel[i]->lSelFixRoi.begin();
-		for (; itSelRoi != m_pModel->vecPaperModel[i]->lSelFixRoi.end(); itSelRoi++)
-		{
-			pPaperModel->vecRtSel.push_back(*itSelRoi);
-		}
-		OMRLIST::iterator itOmr2 = m_pModel->vecPaperModel[i]->lOMR2.begin();
-		for (; itOmr2 != m_pModel->vecPaperModel[i]->lOMR2.end(); itOmr2++)
-		{
-			pPaperModel->vecOmr2.push_back(*itOmr2);
-		}
-		RECTLIST::iterator itFix = m_pModel->vecPaperModel[i]->lFix.begin();
-		for (; itFix != m_pModel->vecPaperModel[i]->lFix.end(); itFix++)
-		{
-			pPaperModel->vecRtFix.push_back(*itFix);
-		}
-		RECTLIST::iterator itHHead = m_pModel->vecPaperModel[i]->lH_Head.begin();
-		for (; itHHead != m_pModel->vecPaperModel[i]->lH_Head.end(); itHHead++)
-		{
-			pPaperModel->vecH_Head.push_back(*itHHead);
-		}
-		RECTLIST::iterator itVHead = m_pModel->vecPaperModel[i]->lV_Head.begin();
-		for (; itVHead != m_pModel->vecPaperModel[i]->lV_Head.end(); itVHead++)
-		{
-			pPaperModel->vecV_Head.push_back(*itVHead);
-		}
-		RECTLIST::iterator itABModel = m_pModel->vecPaperModel[i]->lABModel.begin();
-		for (; itABModel != m_pModel->vecPaperModel[i]->lABModel.end(); itABModel++)
-		{
-			pPaperModel->vecABModel.push_back(*itABModel);
-		}
-		RECTLIST::iterator itCourse = m_pModel->vecPaperModel[i]->lCourse.begin();
-		for (; itCourse != m_pModel->vecPaperModel[i]->lCourse.end(); itCourse++)
-		{
-			pPaperModel->vecCourse.push_back(*itCourse);
-		}
-		RECTLIST::iterator itQK = m_pModel->vecPaperModel[i]->lQK_CP.begin();
-		for (; itQK != m_pModel->vecPaperModel[i]->lQK_CP.end(); itQK++)
-		{
-			pPaperModel->vecQK_CP.push_back(*itQK);
-		}
-		RECTLIST::iterator itGray = m_pModel->vecPaperModel[i]->lGray.begin();
-		for (; itGray != m_pModel->vecPaperModel[i]->lGray.end(); itGray++)
-		{
-			pPaperModel->vecGray.push_back(*itGray);
-		}
-		RECTLIST::iterator itWhite = m_pModel->vecPaperModel[i]->lWhite.begin();
-		for (; itWhite != m_pModel->vecPaperModel[i]->lWhite.end(); itWhite++)
-		{
-			pPaperModel->vecWhite.push_back(*itWhite);
-		}
-		SNLIST::iterator itSn = m_pModel->vecPaperModel[i]->lSNInfo.begin();
-		for (; itSn != m_pModel->vecPaperModel[i]->lSNInfo.end(); itSn++)
-		{
-			pSN_ITEM pSnItem = new SN_ITEM;
-			pSnItem->nItem = (*itSn)->nItem;
-			pSnItem->nRecogVal = (*itSn)->nRecogVal;
-			RECTLIST::iterator itRc = (*itSn)->lSN.begin();
-			for (; itRc != (*itSn)->lSN.end(); itRc++)
-			{
-				RECTINFO rc = *itRc;
-				pSnItem->lSN.push_back(rc);
-			}
-			pPaperModel->lSN.push_back(pSnItem);
-		}
-
-		ShowRectByCPType(m_eCurCPType);
-		UpdataCPList();
-	}
-}
-
-void CMakeModelDlg::CopyImage(HANDLE hBitmap, TW_IMAGEINFO& info)
-{
-	SetImage(hBitmap, info.BitsPerPixel);
-}
-
-void CMakeModelDlg::SetImage(HANDLE hBitmap, int bits)
-{
-	CDIB dib;
-	dib.CreateFromHandle(hBitmap, bits);
-
-	BITMAPFILEHEADER bFile;
-	::ZeroMemory(&bFile, sizeof(bFile));
-	memcpy((void *)&bFile.bfType, "BM", 2);
-	bFile.bfSize = dib.GetDIBSize() + sizeof(bFile);
-	bFile.bfOffBits = sizeof(BITMAPINFOHEADER) + dib.GetPaletteSize()*sizeof(RGBQUAD) + sizeof(BITMAPFILEHEADER);
-	unsigned char *pBits = NULL;
-	try
-	{
-		pBits = (unsigned char *)malloc(bFile.bfSize);
-	}
-	catch (...)
-	{
-		char szLog[100] = { 0 };
-		sprintf_s(szLog, "获取内存失败。");
-		g_pLogger->information(szLog);
-		return;
-	}
-
-	memcpy(pBits, &bFile, sizeof(BITMAPFILEHEADER));
-	memcpy(pBits + sizeof(BITMAPFILEHEADER), dib.m_pVoid, dib.GetDIBSize());
-
-	BYTE *p = pBits;
-	BITMAPFILEHEADER fheader;
-	memcpy(&fheader, p, sizeof(BITMAPFILEHEADER));
-	BITMAPINFOHEADER bmphdr;
-	p += sizeof(BITMAPFILEHEADER);
-	memcpy(&bmphdr, p, sizeof(BITMAPINFOHEADER));
-	int w = bmphdr.biWidth;
-	int h = bmphdr.biHeight;
-	p = pBits + fheader.bfOffBits;
-
-	int nChannel = (bmphdr.biBitCount == 1) ? 1 : bmphdr.biBitCount / 8;
-	int depth = (bmphdr.biBitCount == 1) ? IPL_DEPTH_1U : IPL_DEPTH_8U;
-	IplImage *pIpl2 = cvCreateImage(cvSize(w, h), depth, nChannel);
-
-	int height;
-	bool isLowerLeft = bmphdr.biHeight > 0;
-	height = (bmphdr.biHeight > 0) ? bmphdr.biHeight : -bmphdr.biHeight;
-	CopyData(pIpl2->imageData, (char*)p, bmphdr.biSizeImage, isLowerLeft, height);
-	free(pBits);
-	pBits = NULL;
-
-	// 	IplImage* pIpl = DIB2IplImage(dib);
-	// 	cv::Mat matTest = cv::cvarrToMat(pIpl);
-	USES_CONVERSION;
-
-	
-	static int nModelScan = 1;
-	char szPicPath[MAX_PATH] = { 0 };
-	sprintf_s(szPicPath, "%s\\model%d.jpg", T2A(m_strScanSavePath), nModelScan);
-	nModelScan++;
-
-
-	cv::Mat matTest2 = cv::cvarrToMat(pIpl2);
-//	cv::Mat matTest3 = matTest2.clone();
-
-	std::string strLog;
-	std::string strPicName = szPicPath;
-	try
-	{
-		imwrite(strPicName, matTest2);
-		strLog = "Get model pic: " + strPicName;
-	}
-	catch (...)
-	{
-		AfxMessageBox(_T("写文件失败"));
-		strLog = "Get model pic: " + strPicName + " failed.";
-	}
-
-	g_pLogger->information(strLog);
-
-	cvReleaseImage(&pIpl2);
-}
-
-void CMakeModelDlg::ScanDone(int nStatus)
-{
-	if (nStatus < 0)
-		return;
-
-	TRACE("扫描完成\n");
-	AfxMessageBox(_T("扫描完成"));
-	CString strSelect = _T("/root,");
-	strSelect.Append(m_strScanSavePath);
-	ShellExecute(NULL, _T("open"), _T("explorer.exe"), strSelect, NULL, SW_SHOWNORMAL);
-}
-
-BOOL CMakeModelDlg::ScanSrcInit()
-{
-	USES_CONVERSION;
-	if (CallTwainProc(&m_AppId, NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETFIRST, &m_Source))
-	{
-		TW_IDENTITY temp_Source = m_Source;
-		m_scanSourceArry.Add(temp_Source);
-		while (CallTwainProc(&m_AppId, NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETNEXT, &m_Source))
-		{
-			TW_IDENTITY temp_Source = m_Source;
-			m_scanSourceArry.Add(temp_Source);
-		}
-		m_bSourceSelected = TRUE;
-	}
-	else
-	{
-		m_bSourceSelected = FALSE;
-	}
-	return m_bSourceSelected;
-}
+// BOOL CMakeModelDlg::ScanSrcInit()
+// {
+// 	USES_CONVERSION;
+// 	if (CallTwainProc(&m_AppId, NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETFIRST, &m_Source))
+// 	{
+// 		TW_IDENTITY temp_Source = m_Source;
+// 		m_scanSourceArry.Add(temp_Source);
+// 		while (CallTwainProc(&m_AppId, NULL, DG_CONTROL, DAT_IDENTITY, MSG_GETNEXT, &m_Source))
+// 		{
+// 			TW_IDENTITY temp_Source = m_Source;
+// 			m_scanSourceArry.Add(temp_Source);
+// 		}
+// 		m_bSourceSelected = TRUE;
+// 	}
+// 	else
+// 	{
+// 		m_bSourceSelected = FALSE;
+// 	}
+// 	return m_bSourceSelected;
+// }
 
 void CMakeModelDlg::OnDestroy()
 {
 	__super::OnDestroy();
 	
-	ReleaseTwain();
+//	ReleaseTwain();
 
 	SAFE_RELEASE(m_pRecogInfoDlg);
 	SAFE_RELEASE(m_pOmrInfoDlg);
@@ -6398,17 +6391,9 @@ bool CMakeModelDlg::UploadModel(CString strModelPath, pMODEL pModel)
 
 	strncpy(stModelInfo.szElectOmr, strElectOmrInfo.c_str(), strElectOmrInfo.length());
 
-#ifdef SHOW_GUIDEDLG
-	CGuideDlg* pDlg = (CGuideDlg*)AfxGetMainWnd();
 
-	sprintf_s(stModelInfo.szUserNo, "%s", T2A(pDlg->m_strUserName));
-	sprintf_s(stModelInfo.szEzs, "%s", T2A(pDlg->m_strEzs));
-#else
-	CScanToolDlg* pDlg = (CScanToolDlg*)AfxGetMainWnd();	//GetParent();
-
-	sprintf_s(stModelInfo.szUserNo, "%s", T2A(pDlg->m_strUserName));
-	sprintf_s(stModelInfo.szEzs, "%s", T2A(pDlg->m_strEzs));
-#endif
+	sprintf_s(stModelInfo.szUserNo, "%s", _strUserName_.c_str());
+	sprintf_s(stModelInfo.szEzs, "%s", _strEzs_.c_str());
 
 	pTCP_TASK pTcpTask = new TCP_TASK;
 	pTcpTask->usCmd = USER_SETMODELINFO;
