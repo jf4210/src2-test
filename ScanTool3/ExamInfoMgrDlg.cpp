@@ -197,6 +197,8 @@ void CExamInfoMgrDlg::InitSearchData()
 	std::vector<std::string> vecTkType;
 	vecTkType.push_back("全部");
 
+	std::vector<std::string> vecGradeTmp;
+
 	//获取列表中所有科目名称信息、年级信息
 	int nAllExamItems = 0;
 	for (auto examObj : g_lExamList)
@@ -219,7 +221,7 @@ void CExamInfoMgrDlg::InitSearchData()
 		}
 
 		bool bFindGrade = false;
-		for (auto strGrade : vecGrade)
+		for (auto strGrade : vecGradeTmp)
 		{
 			if (pExam->strGradeName == strGrade)
 			{
@@ -228,7 +230,7 @@ void CExamInfoMgrDlg::InitSearchData()
 			}
 		}
 		if (!bFindGrade && pExam->strGradeName != "")
-			vecGrade.push_back(pExam->strGradeName);
+			vecGradeTmp.push_back(pExam->strGradeName);
 
 		if (pExam->nModel == 0)
 		{
@@ -262,6 +264,12 @@ void CExamInfoMgrDlg::InitSearchData()
 		nAllExamItems += pExam->lSubjects.size();
 	}
 	m_nAllExamListItems = nAllExamItems;
+
+	//++年级信息排名
+	std::sort(vecGradeTmp.begin(), vecGradeTmp.end(), SortStringByDown);
+	for (auto itm : vecGradeTmp)
+		vecGrade.push_back(itm);
+	//--
 
 	m_comboSubject.ResetContent();
 	m_comboGrade.ResetContent();

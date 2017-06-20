@@ -177,7 +177,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 		char szSendBuf[1024] = { 0 };
 		memcpy(szSendBuf, (char*)&stHead, HEAD_SIZE);
 		memcpy(szSendBuf + HEAD_SIZE, (char*)&stLogin, sizeof(ST_LOGIN_INFO));
-		m_ss.sendBytes(szSendBuf, HEAD_SIZE + stHead.uPackSize);
+		int nSendLen = m_ss.sendBytes(szSendBuf, HEAD_SIZE + stHead.uPackSize);
 
 		CString strResult = _T("");
 		int nResult = RecvData(strResult);
@@ -385,13 +385,19 @@ int CLoginDlg::RecvData(CString& strResultInfo)
 					//判断是否是手阅模式登录，即是否直接登录天喻的服务器
 					if (object->has("personid") && !object->isNull("personid"))
 						_bHandModel_ = true;
+					else
+						_bHandModel_ = false;
 
 					if (_bHandModel_)
 					{
 						std::string strPersonId = object->get("personid").convert<std::string>();
 						std::string strNickName = CMyCodeConvert::Utf8ToGb2312(object->get("name").convert<std::string>());
 						std::string strUserName = object->get("account").convert<std::string>();
+						std::string strSchoolID;
+						if (object->has("orgaid"))
+							strSchoolID = object->get("orgaid").convert<std::string>();
 						m_strPersonId = strPersonId.c_str();
+						m_strSchoolID = strSchoolID.c_str();
 						m_strUser = strUserName.c_str();
 						m_strNickName = strNickName.c_str();
 					}
@@ -504,7 +510,16 @@ int CLoginDlg::GetExamInfo()
 	ST_EXAM_INFO stExamInfo;
 	ZeroMemory(&stExamInfo, sizeof(ST_EXAM_INFO));
 	if (_bHandModel_)
+	{
+	#if 1
+		std::string strTmp = T2A(m_strPersonId);
+		strTmp.append("###");
+		strTmp.append(T2A(m_strSchoolID));
+		strcpy(stExamInfo.szEzs, strTmp.c_str());
+	#else
 		strcpy(stExamInfo.szEzs, T2A(m_strPersonId));
+	#endif
+	}
 	else
 		strcpy(stExamInfo.szEzs, T2A(m_strEzs));
 

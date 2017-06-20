@@ -110,7 +110,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 		char szSendBuf[1024] = { 0 };
 		memcpy(szSendBuf, (char*)&stHead, HEAD_SIZE);
 		memcpy(szSendBuf + HEAD_SIZE, (char*)&stLogin, sizeof(ST_LOGIN_INFO));
-		m_ss.sendBytes(szSendBuf, HEAD_SIZE + stHead.uPackSize);
+		int nSendLen = m_ss.sendBytes(szSendBuf, HEAD_SIZE + stHead.uPackSize);
 
 		CString strResult = _T("");
 		int nResult = RecvData(strResult);

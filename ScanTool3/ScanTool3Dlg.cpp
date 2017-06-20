@@ -120,6 +120,7 @@ std::string _strEzs_;			//后端需要的EZS
 int _nTeacherId_ = 0;			//教师ID
 int _nUserId_ = 0;				//用户ID
 std::string _strPersonID_;		//手阅模式，天喻专用
+std::string _strSchoolID_;		//手阅模式，天喻专用
 int _nPicNum4Ty_ = 2;			//手阅模式，模板图片数量
 //--
 

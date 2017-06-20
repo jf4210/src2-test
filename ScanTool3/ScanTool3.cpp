@@ -255,6 +255,7 @@ BOOL CScanTool3App::InitInstance()
 		_strPwd_		= T2A(loginDlg.m_strPwd);
 		_strEzs_		= T2A(loginDlg.m_strEzs);
 		_strPersonID_	= T2A(loginDlg.m_strPersonId);
+		_strSchoolID_	= T2A(loginDlg.m_strSchoolID);
 		_nTeacherId_	= loginDlg.m_nTeacherId;
 		_nUserId_		= loginDlg.m_nUserId;
 	}

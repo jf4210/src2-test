@@ -159,6 +159,7 @@ extern std::string _strEzs_;		//后端需要的EZS
 extern int _nTeacherId_;			//教师ID
 extern int _nUserId_;				//用户ID
 extern std::string _strPersonID_;	//手阅模式，天喻专用
+extern std::string _strSchoolID_;	//手阅模式，天喻专用
 extern int _nPicNum4Ty_;			//手阅模式，模板图片数量
 //--
 extern bool		_bGetBmk_;			//是否获得当前科目报名库
@@ -577,6 +578,8 @@ bool	SortByPositionY2(cv::Rect& rt1, cv::Rect& rt2);
 bool	SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2);
 bool	SortByTH(RECTINFO& rc1, RECTINFO& rc2);
 bool	SortByOmrTH(OMR_QUESTION& rc1, OMR_QUESTION& rc2);
+bool	SortStringByDown(std::string& str1, std::string& str2);
+
 bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 0, int nPicH = 0);
 std::string calcFileMd5(std::string strPath);
 void	CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int height);

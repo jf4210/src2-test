@@ -155,6 +155,11 @@ bool SortByOmrTH(OMR_QUESTION& omr1, OMR_QUESTION& omr2)
 	return bResult;
 }
 
+bool SortStringByDown(std::string& str1, std::string& str2)
+{
+	return str1 > str2 ? true : false;
+}
+
 int WriteRegKey(HKEY root, char * subDir, DWORD regType, char * regKey, char * regValue)
 {
 	USES_CONVERSION;

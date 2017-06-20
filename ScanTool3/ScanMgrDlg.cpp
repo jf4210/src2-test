@@ -362,9 +362,11 @@ void CScanMgrDlg::ShowChildDlg(int n)
 		}
 		if ((nResult == 2 || nResult == -2) && !DownLoadModel())	//如果已经下载了当前考试的报名库，就提取报名库，如何直接下载模板
 		{
-//			AfxMessageBox(_T("考试信息为空"));
 			CNewMessageBox	dlg;
-			dlg.setShowInfo(2, 1, "考试信息为空");
+			if (!_pCurrExam_ || !_pCurrSub_)
+				dlg.setShowInfo(2, 1, "考试或科目信息为空");
+			else if (_pCurrSub_->strModelName.empty())
+				dlg.setShowInfo(2, 1, "未设置扫描模板");
 			dlg.DoModal();
 			//跳到考试管理页面
 			CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
@@ -582,6 +584,8 @@ bool CScanMgrDlg::SearchModel()
 bool CScanMgrDlg::DownLoadModel()
 {
 	if (!_pCurrExam_ || !_pCurrSub_) return false;
+
+	if (_pCurrSub_->strModelName.empty())	return false;
 
 	g_nDownLoadModelStatus = 0;
 

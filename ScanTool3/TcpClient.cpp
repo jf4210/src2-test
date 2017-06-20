@@ -440,17 +440,25 @@ void CTcpClient::HandleCmd()
 				std::string strModelPath = T2A(g_strCurrentPath);
 				strModelPath.append("Model\\");
 
-				Poco::File fileModelPath(g_strModelSavePath);
-				fileModelPath.createDirectories();
+				try
+				{
+					Poco::File fileModelPath(g_strModelSavePath);
+					fileModelPath.createDirectories();
 
-				strModelPath.append(_pCurrSub_->strModelName);
-				Poco::File fileModel(strModelPath);
-				if (fileModel.exists())
-					fileModel.remove();
-
+					strModelPath.append(_pCurrSub_->strModelName);
+					Poco::File fileModel(strModelPath);
+					if (fileModel.exists())
+						fileModel.remove();
+				}
+				catch (Poco::Exception &e)
+				{
+					TRACE("获取模板异常%s\n", e.displayText().c_str());
+				}
+				
 				ofstream out(strModelPath, std::ios::binary);
 				if (!out)
 				{
+					g_nDownLoadModelStatus = -2;
 					break;
 				}
 				std::stringstream buffer;

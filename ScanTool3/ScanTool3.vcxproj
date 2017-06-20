@@ -123,6 +123,7 @@
     <ClInclude Include="..\..\include\twain\DSMInterface.h" />
     <ClInclude Include="..\..\include\twain\TwainApp.h" />
     <ClInclude Include="..\..\include\twain\TwainString.h" />
+    <ClInclude Include="AdvancedSetDlg.h" />
     <ClInclude Include="BmpButton.h" />
     <ClInclude Include="ComboBoxExt.h" />
     <ClInclude Include="ComboBoxExtList.h" />
@@ -131,6 +132,7 @@
     <ClInclude Include="ctrl\skinscrollwnd.h" />
     <ClInclude Include="ctrl\TransparentStatic.h" />
     <ClInclude Include="ctrl\XPGroupBox.h" />
+    <ClInclude Include="ElectOmrDlg.h" />
     <ClInclude Include="ExamBmkRecordDlg.h" />
     <ClInclude Include="ExamInfoMgrDlg.h" />
     <ClInclude Include="FileUpLoad.h" />
@@ -138,14 +140,20 @@
     <ClInclude Include="IconEdit.h" />
     <ClInclude Include="LoginDlg.h" />
     <ClInclude Include="MakeModelDlg.h" />
+    <ClInclude Include="ModelInfoDlg.h" />
+    <ClInclude Include="ModelSaveDlg.h" />
+    <ClInclude Include="NewMakeModelDlg.h" />
     <ClInclude Include="minidump.h" />
     <ClInclude Include="ModifyZkzhDlg.h" />
     <ClInclude Include="MultiPlatform4TYDlg.h" />
     <ClInclude Include="MyCodeConvert.h" />
+    <ClInclude Include="NewModelDlg.h" />
+    <ClInclude Include="OmrInfoDlg.h" />
     <ClInclude Include="picCtrl\CvvImage.h" />
     <ClInclude Include="picCtrl\CV_picture.h" />
     <ClInclude Include="PicShow.h" />
     <ClInclude Include="PkgRecordDlg.h" />
+    <ClInclude Include="RecogInfoDlg.h" />
     <ClInclude Include="RecognizeThread.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ScanDlg.h" />
@@ -161,6 +169,7 @@
     <ClInclude Include="SendFileThread.h" />
     <ClInclude Include="ShowPicDlg.h" />
     <ClInclude Include="SingleExamDlg.h" />
+    <ClInclude Include="SNInfoSetDlg.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StudentDef.h" />
     <ClInclude Include="StudentMgr.h" />
@@ -168,6 +177,7 @@
     <ClInclude Include="TcpClient.h" />
     <ClInclude Include="NewMessageBox.h" />
     <ClInclude Include="Thread.h" />
+    <ClInclude Include="THSetDlg.h" />
     <ClInclude Include="TipBaseDlg.h" />
     <ClInclude Include="VagueSearchDlg.h" />
     <ClInclude Include="WaitDownloadDlg.h" />
@@ -215,6 +225,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="AdvancedSetDlg.cpp" />
     <ClCompile Include="BmpButton.cpp" />
     <ClCompile Include="ComboBoxExt.cpp" />
     <ClCompile Include="ComboBoxExtList.cpp" />
@@ -223,6 +234,7 @@
     <ClCompile Include="ctrl\skinscrollwnd.cpp" />
     <ClCompile Include="ctrl\TransparentStatic.cpp" />
     <ClCompile Include="ctrl\XPGroupBox.cpp" />
+    <ClCompile Include="ElectOmrDlg.cpp" />
     <ClCompile Include="ExamBmkRecordDlg.cpp" />
     <ClCompile Include="ExamInfoMgrDlg.cpp" />
     <ClCompile Include="FileUpLoad.cpp" />
@@ -230,10 +242,15 @@
     <ClCompile Include="IconEdit.cpp" />
     <ClCompile Include="LoginDlg.cpp" />
     <ClCompile Include="MakeModelDlg.cpp" />
+    <ClCompile Include="ModelInfoDlg.cpp" />
+    <ClCompile Include="ModelSaveDlg.cpp" />
+    <ClCompile Include="NewMakeModelDlg.cpp" />
     <ClCompile Include="ModifyZkzhDlg.cpp" />
     <ClCompile Include="MultiPlatform4TYDlg.cpp" />
     <ClCompile Include="MyCodeConvert.cpp" />
     <ClCompile Include="NewMessageBox.cpp" />
+    <ClCompile Include="NewModelDlg.cpp" />
+    <ClCompile Include="OmrInfoDlg.cpp" />
     <ClCompile Include="picCtrl\CvvImage.cpp" />
     <ClCompile Include="picCtrl\CV_picture.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -241,6 +258,7 @@
     </ClCompile>
     <ClCompile Include="PicShow.cpp" />
     <ClCompile Include="PkgRecordDlg.cpp" />
+    <ClCompile Include="RecogInfoDlg.cpp" />
     <ClCompile Include="RecognizeThread.cpp" />
     <ClCompile Include="ScanDlg.cpp" />
     <ClCompile Include="ScanMgrDlg.cpp" />
@@ -255,6 +273,7 @@
     <ClCompile Include="SendFileThread.cpp" />
     <ClCompile Include="ShowPicDlg.cpp" />
     <ClCompile Include="SingleExamDlg.cpp" />
+    <ClCompile Include="SNInfoSetDlg.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -262,6 +281,7 @@
     <ClCompile Include="StudentMgr.cpp" />
     <ClCompile Include="TcpClient.cpp" />
     <ClCompile Include="Thread.cpp" />
+    <ClCompile Include="THSetDlg.cpp" />
     <ClCompile Include="TipBaseDlg.cpp" />
     <ClCompile Include="VagueSearchDlg.cpp" />
     <ClCompile Include="WaitDownloadDlg.cpp" />
@@ -329,6 +349,8 @@
     <Image Include="skin\makeModel\save_normal.bmp" />
     <Image Include="skin\makeModel\scan_down.bmp" />
     <Image Include="skin\makeModel\scan_normal.bmp" />
+    <Image Include="skin\makeModel\treeleaf.bmp" />
+    <Image Include="skin\makeModel\treeNode.bmp" />
     <Image Include="skin\makeModel\upload_down.bmp" />
     <Image Include="skin\makeModel\upload_normal.bmp" />
     <Image Include="skin\popup\btn_hover.bmp" />

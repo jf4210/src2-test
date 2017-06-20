@@ -130,6 +130,39 @@
     <Filter Include="模板界面\扫描题卡">
       <UniqueIdentifier>{1a61cbe5-ab76-4fcb-90e8-19ac0f5b2b6f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="模板界面\模板制作界面">
+      <UniqueIdentifier>{a4e971e2-02c7-4323-8917-8b9f72997d0e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="模板界面\旧模板制作界面">
+      <UniqueIdentifier>{7e2269ac-d93f-4cbb-a2d1-4de9380183eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="模板界面\旧模板制作界面\OMR题号设置窗口">
+      <UniqueIdentifier>{2e37f864-2a9a-4b5f-88b1-eec48d9fb258}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="模板界面\旧模板制作界面\OMR选项设置">
+      <UniqueIdentifier>{ba0ee282-3e32-4f94-b757-d90c47c6953b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="模板界面\旧模板制作界面\OMR选项设置\OMR图片">
+      <UniqueIdentifier>{61adae6e-cd10-4edc-a260-1bbed18cdd97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="模板界面\旧模板制作界面\保存模板窗口">
+      <UniqueIdentifier>{583f1cd3-2b1a-44dd-a901-cf8dbb6fa7e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="模板界面\旧模板制作界面\创建新模板信息填写窗口">
+      <UniqueIdentifier>{761a57c4-8265-4808-9204-854c3b746ebf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="模板界面\旧模板制作界面\高级参数设置">
+      <UniqueIdentifier>{dde98b05-bd5d-4c33-8826-c899ee1c5d0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="模板界面\旧模板制作界面\考号信息设置窗口">
+      <UniqueIdentifier>{0b227f0d-29fd-4ab3-905f-2702d84472f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="模板界面\旧模板制作界面\识别信息修改窗口">
+      <UniqueIdentifier>{1973baae-6362-4b11-8fd1-7e6f776b3f91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="模板界面\旧模板制作界面\选做题信息设置窗口">
+      <UniqueIdentifier>{cf3504bd-5d3d-43a3-a95b-57140293d73c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -312,9 +345,6 @@
     <ClInclude Include="IconEdit.h">
       <Filter>控件\iconEdit</Filter>
     </ClInclude>
-    <ClInclude Include="MakeModelDlg.h">
-      <Filter>模板界面</Filter>
-    </ClInclude>
     <ClInclude Include="ctrl\skinscrollbar.h">
       <Filter>控件\scrollbar</Filter>
     </ClInclude>
@@ -356,6 +386,39 @@
     </ClInclude>
     <ClInclude Include="ScanModelPaperDlg.h">
       <Filter>模板界面\扫描题卡</Filter>
+    </ClInclude>
+    <ClInclude Include="NewModelDlg.h">
+      <Filter>模板界面\模板制作界面</Filter>
+    </ClInclude>
+    <ClInclude Include="NewMakeModelDlg.h">
+      <Filter>模板界面</Filter>
+    </ClInclude>
+    <ClInclude Include="MakeModelDlg.h">
+      <Filter>模板界面\旧模板制作界面</Filter>
+    </ClInclude>
+    <ClInclude Include="THSetDlg.h">
+      <Filter>模板界面\旧模板制作界面\OMR题号设置窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="OmrInfoDlg.h">
+      <Filter>模板界面\旧模板制作界面\OMR选项设置</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelSaveDlg.h">
+      <Filter>模板界面\旧模板制作界面\保存模板窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelInfoDlg.h">
+      <Filter>模板界面\旧模板制作界面\创建新模板信息填写窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="AdvancedSetDlg.h">
+      <Filter>模板界面\旧模板制作界面\高级参数设置</Filter>
+    </ClInclude>
+    <ClInclude Include="SNInfoSetDlg.h">
+      <Filter>模板界面\旧模板制作界面\考号信息设置窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="RecogInfoDlg.h">
+      <Filter>模板界面\旧模板制作界面\识别信息修改窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="ElectOmrDlg.h">
+      <Filter>模板界面\旧模板制作界面\选做题信息设置窗口</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -512,9 +575,6 @@
     <ClCompile Include="IconEdit.cpp">
       <Filter>控件\iconEdit</Filter>
     </ClCompile>
-    <ClCompile Include="MakeModelDlg.cpp">
-      <Filter>模板界面</Filter>
-    </ClCompile>
     <ClCompile Include="ctrl\skinscrollbar.cpp">
       <Filter>控件\scrollbar</Filter>
     </ClCompile>
@@ -553,6 +613,39 @@
     </ClCompile>
     <ClCompile Include="ScanModelPaperDlg.cpp">
       <Filter>模板界面\扫描题卡</Filter>
+    </ClCompile>
+    <ClCompile Include="NewModelDlg.cpp">
+      <Filter>模板界面\模板制作界面</Filter>
+    </ClCompile>
+    <ClCompile Include="NewMakeModelDlg.cpp">
+      <Filter>模板界面</Filter>
+    </ClCompile>
+    <ClCompile Include="MakeModelDlg.cpp">
+      <Filter>模板界面\旧模板制作界面</Filter>
+    </ClCompile>
+    <ClCompile Include="THSetDlg.cpp">
+      <Filter>模板界面\旧模板制作界面\OMR题号设置窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="OmrInfoDlg.cpp">
+      <Filter>模板界面\旧模板制作界面\OMR选项设置</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelSaveDlg.cpp">
+      <Filter>模板界面\旧模板制作界面\保存模板窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelInfoDlg.cpp">
+      <Filter>模板界面\旧模板制作界面\创建新模板信息填写窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="AdvancedSetDlg.cpp">
+      <Filter>模板界面\旧模板制作界面\高级参数设置</Filter>
+    </ClCompile>
+    <ClCompile Include="SNInfoSetDlg.cpp">
+      <Filter>模板界面\旧模板制作界面\考号信息设置窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="RecogInfoDlg.cpp">
+      <Filter>模板界面\旧模板制作界面\识别信息修改窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ElectOmrDlg.cpp">
+      <Filter>模板界面\旧模板制作界面\选做题信息设置窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -774,6 +867,12 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="skin\examList\首页hover.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\makeModel\treeleaf.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\makeModel\treeNode.bmp">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>

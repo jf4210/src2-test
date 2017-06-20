@@ -31,6 +31,7 @@ public:
 	CString		m_strUser;
 	CString		m_strNickName;
 	CString		m_strPersonId;		//天喻专用
+	CString		m_strSchoolID;		//天喻专用
 	int			m_nTeacherId;
 	int			m_nUserId;
 

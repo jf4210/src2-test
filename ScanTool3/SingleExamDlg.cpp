@@ -8,7 +8,7 @@
 #include "ScanTool3Dlg.h"
 #include "NewMessageBox.h"
 #include "Net_Cmd_Protocol.h"
-#include "MakeModelDlg.h"
+#include "NewMakeModelDlg.h"
 
 // CSingleExamDlg ¶Ô»°¿ò
 
@@ -509,7 +509,7 @@ void CSingleExamDlg::OnBnClickedBtnMakescanmodel()
 	_pCurrExam_ = _pExamInfo;
 	_pCurrSub_	= NULL;
 
-	CMakeModelDlg dlg;
+	CNewMakeModelDlg dlg;
 	dlg.DoModal();
 
 // 	CNewMessageBox	dlg;

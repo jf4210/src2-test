@@ -238,13 +238,33 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				std::string strAppValue = "63d4311d46714a39-a54cf2b0537a79b6TEST";
 				std::string strMsgFormat = "json";
 				std::string strMethod = "examinfo";
-				std::string strPersonId = stExamInfo.szEzs;
+
+				std::string strPersonId;
+				std::string strSchoolID;
+				std::string strTmp = stExamInfo.szEzs;
+				int nPos = strTmp.find("###");
+				if (nPos != std::string::npos)
+				{
+					std::string strEzs = strTmp.substr(0, nPos);
+					strSchoolID = strTmp.substr(nPos + 3);
+					strPersonId = strEzs;
+				}
+				else
+				{
+					strPersonId = stExamInfo.szEzs;
+				}
+//				std::string strPersonId = stExamInfo.szEzs;
 				std::string strSha1Src = Poco::format("%sappKey%smessageFormat%smethod%sperson_id%sv1.0%s", strAppValue, strAppKey, strMsgFormat, strMethod, strPersonId, strAppValue);
 				Poco::SHA1Engine engine;
 				engine.update(strSha1Src);
 				std::string strSHA1 = Poco::DigestEngine::digestToHex(engine.digest());
 				std::string strSHA1_Up = Poco::toUpper(strSHA1);
-				std::string strUriValue = Poco::format("/router?appKey=%s&messageFormat=%s&method=%s&person_id=%s&sign=%s&v=1.0", strAppKey, strMsgFormat, strMethod, strPersonId, strSHA1_Up);
+//				std::string strUriValue = Poco::format("/router?appKey=%s&messageFormat=%s&method=%s&person_id=%s&sign=%s&v=1.0", strAppKey, strMsgFormat, strMethod, strPersonId, strSHA1_Up);
+				std::string strUriValue;
+				if (nPos != std::string::npos)
+					strUriValue = Poco::format("/router?appKey=%s&messageFormat=%s&method=%s&person_id=%s&school_id=%s&sign=%s&v=1.0", strAppKey, strMsgFormat, strMethod, strPersonId, strSchoolID, strSHA1_Up);	//2017.6.20Ìí¼Óschool_id
+				else
+					strUriValue = Poco::format("/router?appKey=%s&messageFormat=%s&method=%s&person_id=%s&sign=%s&v=1.0", strAppKey, strMsgFormat, strMethod, strPersonId, strSHA1_Up);
 
 				pTask = new SCAN_REQ_TASK;
 				pTask->strUri = SysSet.m_strBackUri + strUriValue;

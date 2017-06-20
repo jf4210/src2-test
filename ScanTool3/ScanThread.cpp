@@ -6,7 +6,7 @@
 #include "ScanThread.h"
 
 #include "ScanMgrDlg.h"
-#include "MakeModelDlg.h"
+#include "NewMakeModelDlg.h"
 
 #include "DSMInterface.h"
 #include "TwainString.h"
@@ -125,7 +125,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 
 	CDialog* pDlg;
 	if (m_nNotifyDlgType == 2)
-		pDlg = (CMakeModelDlg*)m_pDlg;
+		pDlg = (CNewMakeModelDlg*)m_pDlg;
 	else
 		pDlg = (CScanMgrDlg*)m_pDlg;
 
@@ -783,15 +783,23 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 
 	char szPicName[50] = { 0 };
 	char szPicPath[MAX_PATH] = { 0 };
-	sprintf_s(szPicName, "S%d_%d.jpg", nStudentId, nOrder);
-	sprintf_s(szPicPath, "%s\\S%d_%d.jpg", m_strCurrPicSavePath.c_str(), nStudentId, nOrder);
+	if (m_nNotifyDlgType != 2)
+	{
+		sprintf_s(szPicName, "S%d_%d.jpg", nStudentId, nOrder);
+		sprintf_s(szPicPath, "%s\\S%d_%d.jpg", m_strCurrPicSavePath.c_str(), nStudentId, nOrder);
+	}
+	else
+	{
+		sprintf_s(szPicName, "model%d.jpg", nStudentId);
+		sprintf_s(szPicPath, "%s\\model%d.jpg", m_strCurrPicSavePath.c_str(), nStudentId);
+	}
 
 	_nScanCount_++;
 
 //	CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
 	CDialog* pDlg;
 	if (m_nNotifyDlgType == 2)
-		pDlg = (CMakeModelDlg*)m_pDlg;
+		pDlg = (CNewMakeModelDlg*)m_pDlg;
 	else
 		pDlg = (CScanMgrDlg*)m_pDlg;
 
@@ -803,61 +811,74 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 		std::string strPicName = szPicPath;
 		imwrite(strPicName, matSrc);
 		cvReleaseImage(&pIpl);
-
-		//++需要显示图像，主线程显示需要很长时间，卡顿
-// 		if (_pCurrExam_->nModel == 1)
-// 			pDlg->ChildDlgShowPic(matShow);
-		//--
-
-		//++添加试卷
-		pST_PicInfo pPic = new ST_PicInfo;
-		pPic->strPicName = szPicName;
-		pPic->strPicPath = szPicPath;
-		if (nOrder == 1)	//第一页的时候创建新的试卷信息
+		
+		if (m_nNotifyDlgType == 2)
 		{
-			CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
+			pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
+			pResult->bScanOK = false;
+			pResult->nState = 1;			//标识正在扫描
+			pResult->nPaperId = nStudentId;
+			pResult->nPicId = nOrder;
+			pResult->pPaper = NULL;
+			pResult->matShowPic = matShow;
+			pResult->strResult = "获得模板图像";
+			pResult->strResult.append(szPicName);
 
-			char szStudentName[30] = { 0 };
-			sprintf_s(szStudentName, "S%d", nStudentId);
-			m_pCurrPaper = new ST_PaperInfo;
-			m_pCurrPaper->nIndex = nStudentId;
-			m_pCurrPaper->strStudentInfo = szStudentName;
-			m_pCurrPaper->pModel = _pModel_;
-			m_pCurrPaper->pPapers = _pCurrPapersInfo_;
-			m_pCurrPaper->pSrcDlg = pDlg->GetScanMainDlg();		//m_pDlg;
-			m_pCurrPaper->lPic.push_back(pPic);
-
-			_pCurrPapersInfo_->fmlPaper.lock();
-			_pCurrPapersInfo_->lPaper.push_back(m_pCurrPaper);
-			_pCurrPapersInfo_->fmlPaper.unlock();
+			TRACE("%s\n", pResult->strResult.c_str());
+			pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
 		}
 		else
 		{
-			m_pCurrPaper->lPic.push_back(pPic);
-		}
-		pPic->pPaper = m_pCurrPaper;
-		//--
-		
-		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
-		pResult->bScanOK = false;
-		pResult->nState = 1;			//标识正在扫描
-		pResult->nPaperId = nStudentId;
-		pResult->nPicId = nOrder;
-		pResult->pPaper = m_pCurrPaper;
-		pResult->matShowPic = matShow;
-		pResult->strResult = "获得图像";
-		pResult->strResult.append(szPicName);
+			//++添加试卷
+			pST_PicInfo pPic = new ST_PicInfo;
+			pPic->strPicName = szPicName;
+			pPic->strPicPath = szPicPath;
+			if (nOrder == 1)	//第一页的时候创建新的试卷信息
+			{
+				CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
 
-		TRACE("%s\n", pResult->strResult.c_str());
-		pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
+				char szStudentName[30] = { 0 };
+				sprintf_s(szStudentName, "S%d", nStudentId);
+				m_pCurrPaper = new ST_PaperInfo;
+				m_pCurrPaper->nIndex = nStudentId;
+				m_pCurrPaper->strStudentInfo = szStudentName;
+				m_pCurrPaper->pModel = _pModel_;
+				m_pCurrPaper->pPapers = _pCurrPapersInfo_;
+				m_pCurrPaper->pSrcDlg = pDlg->GetScanMainDlg();		//m_pDlg;
+				m_pCurrPaper->lPic.push_back(pPic);
 
-		//添加到识别任务列表
-		if (_pModel_ && _pCurrExam_->nModel == 0)	//网阅模式下的试卷才加入识别队列
-		{
-			pRECOGTASK pTask = new RECOGTASK;
-			pTask->pPaper = m_pCurrPaper;
-			g_lRecogTask.push_back(pTask);
-		}
+				_pCurrPapersInfo_->fmlPaper.lock();
+				_pCurrPapersInfo_->lPaper.push_back(m_pCurrPaper);
+				_pCurrPapersInfo_->fmlPaper.unlock();
+			}
+			else
+			{
+				m_pCurrPaper->lPic.push_back(pPic);
+			}
+			pPic->pPaper = m_pCurrPaper;
+			//--
+
+			pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
+			pResult->bScanOK = false;
+			pResult->nState = 1;			//标识正在扫描
+			pResult->nPaperId = nStudentId;
+			pResult->nPicId = nOrder;
+			pResult->pPaper = m_pCurrPaper;
+			pResult->matShowPic = matShow;
+			pResult->strResult = "获得图像";
+			pResult->strResult.append(szPicName);
+
+			TRACE("%s\n", pResult->strResult.c_str());
+			pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
+
+			//添加到识别任务列表
+			if (_pModel_ && _pCurrExam_->nModel == 0)	//网阅模式下的试卷才加入识别队列
+			{
+				pRECOGTASK pTask = new RECOGTASK;
+				pTask->pPaper = m_pCurrPaper;
+				g_lRecogTask.push_back(pTask);
+			}
+		}		
 	}
 	catch (cv::Exception& exc)
 	{

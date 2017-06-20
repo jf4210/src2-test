@@ -6,7 +6,7 @@
 #include "ScanModelPaperDlg.h"
 #include "afxdialogex.h"
 #include "NewMessageBox.h"
-#include "MakeModelDlg.h"
+#include "NewMakeModelDlg.h"
 
 // CScanModelPaperDlg ¶Ô»°¿ò
 
@@ -445,7 +445,7 @@ void CScanModelPaperDlg::OnBnClickedBtnMakemodelScan()
 	if (nNum == 0)
 		nNum = -1;
 
-	CMakeModelDlg* pDlg = (CMakeModelDlg*)GetParent();
+	CNewMakeModelDlg* pDlg = (CNewMakeModelDlg*)GetParent();
 	if (NULL != (pID = pDlg->GetScanSrc(index)))
 	{
 		SAFE_RELEASE(_pCurrPapersInfo_);
@@ -463,7 +463,7 @@ void CScanModelPaperDlg::OnBnClickedBtnMakemodelScan()
 		pScanCtrl->bShowUI = bShowScanSrcUI;	//bShowScanSrcUI;
 
 		pDlg->m_scanThread.setNotifyDlg(pDlg);
-		pDlg->m_scanThread.setModelInfo(0, strSavePath);
+		pDlg->m_scanThread.setModelInfo(1, strSavePath);
 		pDlg->m_scanThread.resetData();
 		pDlg->m_scanThread.PostThreadMessage(MSG_START_SCAN, pID->Id, (LPARAM)pScanCtrl);
 	}
