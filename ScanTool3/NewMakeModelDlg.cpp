@@ -232,6 +232,19 @@ void CNewMakeModelDlg::InitUI()
 	m_pNewModelDlg = new CNewModelDlg();
 	m_pNewModelDlg->Create(CNewModelDlg::IDD, this);
 	m_pNewModelDlg->ShowWindow(SW_SHOW);
+
+	CRect rc;
+	::SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
+	int sx = rc.Width();
+	int sy = rc.Height();
+	if (sx > MAX_DLG_WIDTH)
+		sx = MAX_DLG_WIDTH;
+	if (sy > MAX_DLG_HEIGHT)
+		sy = MAX_DLG_HEIGHT;
+	MoveWindow(0, 0, sx, sy);
+	CenterWindow();
+
+	InitCtrlPosition();
 }
 
 void CNewMakeModelDlg::InitExamData()
@@ -258,6 +271,11 @@ void CNewMakeModelDlg::InitExamData()
 
 void CNewMakeModelDlg::OnBnClickedBtnScanpaper()
 {
+	if (m_comboSubject.GetCurSel() >= 0)
+		_pCurrSub_ = (pEXAM_SUBJECT)m_comboSubject.GetItemDataPtr(m_comboSubject.GetCurSel());
+	else
+		_pCurrSub_ = NULL;
+
 	CScanModelPaperDlg dlg;
 	dlg.SetScanSrc(m_vecScanSrc);
 	dlg.DoModal();
@@ -318,16 +336,7 @@ LRESULT CNewMakeModelDlg::ScanDone(WPARAM wParam, LPARAM lParam)
 	{
 		TRACE("扫描完成消息。%s\n", pResult->strResult.c_str());
 		g_pLogger->information(pResult->strResult);
-
-		if (pResult->nState == 1)
-		{
-			//试卷列表显示扫描试卷
-			if (pResult->nPicId == 1)	//第一页的时候创建新的试卷信息
-			{
-//				m_pScanProcessDlg->AddPaper(pResult->nPaperId, pResult->pPaper);
-			}
-		}
-
+		
 		if (pResult->bScanOK)	//扫描完成
 		{
 			

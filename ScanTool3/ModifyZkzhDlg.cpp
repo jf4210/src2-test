@@ -71,6 +71,14 @@ void CModifyZkzhDlg::ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudent
 	m_pPapers			= pPapersInfo;
 	m_pStudentMgr		= pStuMgr;
 	m_pCurrentShowPaper = pShowPaper;
+	m_pShowPaper		= pShowPaper;
+
+	if (_bGetBmk_)
+	{
+		m_lBmkStudent.clear();
+		m_lBmkStudent = g_lBmkStudent;
+	}
+
 //	InitUI();
 
 	if (!m_pVagueSearchDlg)
@@ -838,73 +846,74 @@ void CModifyZkzhDlg::OnBnClickedBtnSave()
 
 bool CModifyZkzhDlg::ReleaseData()
 {
-	int nCount = m_lcZkzh.GetItemCount();
-	if (g_nZkzhNull2Issue == 1)
+	if (!g_nExitFlag)
 	{
+		int nCount = m_lcZkzh.GetItemCount();
+		if (g_nZkzhNull2Issue == 1)
+		{
+			for (int i = 0; i < nCount; i++)
+			{
+				pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
+				if (pPaper->strSN.empty())
+				{
+					CNewMessageBox	dlg;
+					dlg.setShowInfo(2, 2, "存在考号为空的考生，如果不修改，将影响参与后面的评卷，是否忽略？");
+					dlg.DoModal();
+					if (dlg.m_nResult != IDYES)
+						return false;
+					break;
+				}
+			}
+		}
+	#ifdef NewListModelTest
 		for (int i = 0; i < nCount; i++)
 		{
 			pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
-			if (pPaper->strSN.empty())
-			{
-				CNewMessageBox	dlg;
-				dlg.setShowInfo(2, 2, "存在考号为空的考生，如果不修改，将影响参与后面的评卷，是否忽略？");
-				dlg.DoModal();
-				if (dlg.m_nResult != IDYES)
-					return false;
-// 				if (MessageBox(_T("存在准考证号为空的考生，如果不修改，将影响此考生参与后面的评卷，是否忽略？"), _T("警告"), MB_YESNO) != IDYES)
-// 					return false;
-				break;
-			}
+			if (m_lcZkzh.GetCheckbox(i, 2))
+				pPaper->bReScan = true;			//设置此试卷需要重新扫描
+			else
+				pPaper->bReScan = false;
 		}
-	}
-#ifdef NewListModelTest
-	for (int i = 0; i < nCount; i++)
-	{
-		pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
-		if (m_lcZkzh.GetCheckbox(i, 2))
-			pPaper->bReScan = true;			//设置此试卷需要重新扫描
-		else
-			pPaper->bReScan = false;
-	}
-#else
-	for (int i = 0; i < nCount; i++)
-	{
-		pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
-		if (m_lcZkzh.GetCheckbox(i, 3))
-			pPaper->bReScan = true;			//设置此试卷需要重新扫描
-		else
-			pPaper->bReScan = false;
-	}
-#endif
-
-	//如果此试卷已经被修改正常，从问题列表删除
-	if (m_pPapers)
-	{
-		PAPER_LIST::iterator itIssue = m_pPapers->lIssue.begin();
-		for (; itIssue != m_pPapers->lIssue.end();)
+	#else
+		for (int i = 0; i < nCount; i++)
 		{
-			pST_PaperInfo pPaper = *itIssue;
-			if ((g_nZkzhNull2Issue == 1 && !pPaper->strSN.empty() || g_nZkzhNull2Issue == 0) && !pPaper->bReScan)		//考号不空，且不用重扫，则认为属于正常试卷，放入正常列表中，如果原来在问题列表，则移动到正常列表
-			{
-				itIssue = m_pPapers->lIssue.erase(itIssue);
-				m_pPapers->lPaper.push_back(pPaper);
-				continue;
-			}
-			itIssue++;
+			pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
+			if (m_lcZkzh.GetCheckbox(i, 3))
+				pPaper->bReScan = true;			//设置此试卷需要重新扫描
+			else
+				pPaper->bReScan = false;
 		}
+	#endif
 
-		//需要重扫的试卷放入问题试卷列表
-		PAPER_LIST::iterator itPaper = m_pPapers->lPaper.begin();
-		for (; itPaper != m_pPapers->lPaper.end();)
+		//如果此试卷已经被修改正常，从问题列表删除
+		if (m_pPapers)
 		{
-			pST_PaperInfo pPaper = *itPaper;
-			if ((g_nZkzhNull2Issue == 1 && pPaper->strSN.empty()) || pPaper->bReScan)
+			PAPER_LIST::iterator itIssue = m_pPapers->lIssue.begin();
+			for (; itIssue != m_pPapers->lIssue.end();)
 			{
-				itPaper = m_pPapers->lPaper.erase(itPaper);
-				m_pPapers->lIssue.push_back(pPaper);
-				continue;
+				pST_PaperInfo pPaper = *itIssue;
+				if ((g_nZkzhNull2Issue == 1 && !pPaper->strSN.empty() || g_nZkzhNull2Issue == 0) && !pPaper->bReScan)		//考号不空，且不用重扫，则认为属于正常试卷，放入正常列表中，如果原来在问题列表，则移动到正常列表
+				{
+					itIssue = m_pPapers->lIssue.erase(itIssue);
+					m_pPapers->lPaper.push_back(pPaper);
+					continue;
+				}
+				itIssue++;
 			}
-			itPaper++;
+
+			//需要重扫的试卷放入问题试卷列表
+			PAPER_LIST::iterator itPaper = m_pPapers->lPaper.begin();
+			for (; itPaper != m_pPapers->lPaper.end();)
+			{
+				pST_PaperInfo pPaper = *itPaper;
+				if ((g_nZkzhNull2Issue == 1 && pPaper->strSN.empty()) || pPaper->bReScan)
+				{
+					itPaper = m_pPapers->lPaper.erase(itPaper);
+					m_pPapers->lIssue.push_back(pPaper);
+					continue;
+				}
+				itPaper++;
+			}
 		}
 	}
 

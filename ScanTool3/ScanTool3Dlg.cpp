@@ -552,11 +552,6 @@ LRESULT CScanTool3Dlg::MsgCmdGetBmk(WPARAM wParam, LPARAM lParam)
 				SwitchDlg(0);
 				return 0;
 			}
-// 			if (MessageBox(_T("获取考生报名库失败, 是否继续?"), _T("提示"), MB_YESNO) != IDYES)
-// 			{
-// 				SwitchDlg(0);
-// 				return 0;
-// 			}
 		}
 	}
 	else
@@ -599,7 +594,10 @@ LRESULT CScanTool3Dlg::MsgCmdGetBmk(WPARAM wParam, LPARAM lParam)
 #endif
 
 	if (_eCurrDlgType_ == Dlg_ScanRecordMgr)	//如果当前是扫描记录管理窗口，就不需要再去下载模板了，是从主界面直接跳转到当前页面的，只获取报名库就好
+	{
+		m_pScanMgrDlg->UpdateChildDlgInfo();
 		return 0;
+	}
 
 	if (!m_pScanMgrDlg->DownLoadModel())
 	{

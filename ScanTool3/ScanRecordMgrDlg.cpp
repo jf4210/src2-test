@@ -285,6 +285,8 @@ void CScanRecordMgrDlg::OnBnClickedBtnPkgrecord()
 
 void CScanRecordMgrDlg::OnBnClickedBtnRebackscan()
 {
+	CScanMgrDlg* pParentDlg = (CScanMgrDlg*)GetParent();
+	pParentDlg->ResetSubjectUI();
 	if (m_nReturnFlag == 1)
 	{
 		CScanTool3Dlg* pDlg = (CScanTool3Dlg*)AfxGetMainWnd();
@@ -293,7 +295,7 @@ void CScanRecordMgrDlg::OnBnClickedBtnRebackscan()
 	else
 	{
 		CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
-		pDlg->ShowChildDlg(3);
+		pDlg->ShowChildDlg(3, 1);
 	}
 }
 

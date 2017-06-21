@@ -80,6 +80,10 @@ CComboBoxExt::CComboBoxExt()
 	m_hWndToolTip = NULL;
 	m_crAlertBkg = GetSysColor(COLOR_WINDOW);
 	m_crAlertText = GetSysColor(COLOR_WINDOWTEXT);
+
+// 	m_crAlertBkg = RGB(255, 0,0);
+// 	m_crAlertText = RGB(0,0,255);
+
 	m_BrushAlert.CreateSolidBrush(m_crAlertBkg);
 }
 
@@ -240,7 +244,7 @@ HBRUSH CComboBoxExt::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	HBRUSH hbr = CComboBox::OnCtlColor(pDC, pWnd, nCtlColor);
 	if(CBS_DROPDOWNLIST == (3 & GetStyle()) || CBS_SIMPLE == (3 & GetStyle()))
 		return hbr;
-
+	
 	// TODO: Change any attributes of the DC here
 
 	if(CTLCOLOR_EDIT == nCtlColor)

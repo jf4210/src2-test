@@ -135,7 +135,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		_nScanStatus_ = -1;
 		exit();
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
-		pResult->bScanOK = false;
+		pResult->bScanOK = true;
 		pResult->strResult = "Á¬½ÓÉ¨ÃèÔ´Ê§°Ü";
 		
 		pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
@@ -149,7 +149,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		_nScanStatus_ = -2;
 		exit();
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
-		pResult->bScanOK = false;
+		pResult->bScanOK = true;
 		pResult->strResult = "¼ÓÔØÉ¨ÃèÔ´Ê§°Ü";
 		
 		pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
@@ -192,7 +192,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	{
 		_nScanStatus_ = -3;
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
-		pResult->bScanOK = false;
+		pResult->bScanOK = true;
 		pResult->strResult = "É¨ÃèÊ§°Ü";
 
 		pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);

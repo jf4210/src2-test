@@ -326,7 +326,7 @@ bool CScanMgrDlg::getCurrSubjectBmk()
 	return bResult;
 }
 
-void CScanMgrDlg::ShowChildDlg(int n)
+void CScanMgrDlg::ShowChildDlg(int n, int nOprater /*= 0*/)
 {
 //	InitData();
 	if (n == 1)
@@ -381,6 +381,7 @@ void CScanMgrDlg::ShowChildDlg(int n)
 		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
 
 		m_pScanDlg->SetScanSrcInfo(m_vecScanSrc);
+		m_pScanProcessDlg->InitTmpSubjectBmk();
 
 		_eCurrDlgType_ = DLG_ScanStart;
 	}
@@ -391,13 +392,12 @@ void CScanMgrDlg::ShowChildDlg(int n)
 		m_pScanProcessDlg->ShowWindow(SW_SHOW);
 		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
 
-		if (_pCurrExam_->nModel != 1)
-		{
-			m_pScanProcessDlg->UpdateChildInfo();
-			m_pScanProcessDlg->InitShow();
-		}
-
 		_eCurrDlgType_ = Dlg_ScanProcess;
+		if (/*_pCurrExam_->nModel == 1 && */nOprater == 1)
+			return;
+
+		m_pScanProcessDlg->UpdateChildInfo();
+		m_pScanProcessDlg->InitShow();
 	}
 	else if (n == 4)
 	{
@@ -406,9 +406,8 @@ void CScanMgrDlg::ShowChildDlg(int n)
 		m_pScanProcessDlg->ShowWindow(SW_HIDE);
 		m_pScanRecordMgrDlg->ShowWindow(SW_SHOW);
 
-		m_pScanRecordMgrDlg->UpdateChildDlg();
-
 		_eCurrDlgType_ = Dlg_ScanRecordMgr;
+		m_pScanRecordMgrDlg->UpdateChildDlg();
 	}
 }
 
@@ -420,12 +419,19 @@ void CScanMgrDlg::ResetChildDlg()
 
 void CScanMgrDlg::UpdateChildDlgInfo(int nType /*= 0*/)
 {
-	if (m_pScanProcessDlg)
+	if (_eCurrDlgType_ == Dlg_ScanRecordMgr)
 	{
-		if (nType == 0)
-			m_pScanProcessDlg->InitShow();
-		else if (nType == 1)
-			m_pScanProcessDlg->ReShowCurrPapers();
+		m_pScanRecordMgrDlg->UpdateChildDlg();
+	}
+	else if (_eCurrDlgType_ == Dlg_ScanProcess)
+	{
+		if (m_pScanProcessDlg)
+		{
+			if (nType == 0)
+				m_pScanProcessDlg->InitShow();
+			else if (nType == 1)
+				m_pScanProcessDlg->ReShowCurrPapers();
+		}
 	}
 }
 
@@ -441,6 +447,18 @@ void* CScanMgrDlg::GetScanMainDlg()
 
 void CScanMgrDlg::SetReturnDlg(int nFlag /*= 2*/)
 {
+	if (nFlag == 1)
+	{
+		GetDlgItem(IDC_STATIC_CurrSubject)->ShowWindow(SW_HIDE);
+		m_comboSubject.ShowWindow(SW_HIDE);
+		m_bmpBtnChangeExam.ShowWindow(SW_HIDE);
+	}
+	else if (nFlag == 2)
+	{
+		GetDlgItem(IDC_STATIC_CurrSubject)->EnableWindow(FALSE);
+		m_comboSubject.EnableWindow(FALSE);
+		m_bmpBtnChangeExam.ShowWindow(SW_HIDE);
+	}
 	m_pScanRecordMgrDlg->SetReBackDlg(nFlag);
 }
 
@@ -860,4 +878,13 @@ void CScanMgrDlg::OnCbnSelchangeComboSubject()
 void CScanMgrDlg::ChildDlgShowPic(cv::Mat& matPic)
 {
 	m_pScanProcessDlg->ShowSinglePic(matPic);
+}
+
+void CScanMgrDlg::ResetSubjectUI()
+{
+	GetDlgItem(IDC_STATIC_CurrSubject)->ShowWindow(SW_SHOW);
+	GetDlgItem(IDC_STATIC_CurrSubject)->EnableWindow(TRUE);
+	m_comboSubject.ShowWindow(SW_SHOW);
+	m_comboSubject.EnableWindow(TRUE);
+	m_bmpBtnChangeExam.ShowWindow(SW_SHOW);
 }

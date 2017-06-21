@@ -71,6 +71,10 @@ void CExamBmkRecordDlg::InitUI()
 
 	m_comboScanStatus.AdjustDroppedWidth();
 	m_comboSubject.AdjustDroppedWidth();
+//	m_comboSubject.SetMode(CComboBoxExt::MODE_STANDARD);
+//	m_comboSubject.SetAlertColorBkg(RGB(255, 255, 0));
+// 	m_comboSubject.AlertText();
+// 	m_comboSubject.AlertBkg();
 
 	m_bmpBtnExport.SetStateBitmap(IDB_RecordDlg_Btn, 0, IDB_RecordDlg_Btn_Hover);
 	m_bmpBtnExport.SetWindowText(_T("导出当前名单"));
@@ -117,7 +121,7 @@ void CExamBmkRecordDlg::InitCtrlPosition()
 	if (m_comboSubject.GetSafeHwnd())
 	{
 		int nW = 100;
-		m_comboSubject.MoveWindow(nCurrLeft, nCurrTop, nW, nStaticH);
+		m_comboSubject.MoveWindow(nCurrLeft, nCurrTop + 5, nW, nStaticH);
 		nCurrLeft += (nW + nGap* 3);
 	}
 	if (GetDlgItem(IDC_STATIC_2)->GetSafeHwnd())
@@ -129,7 +133,7 @@ void CExamBmkRecordDlg::InitCtrlPosition()
 	if (m_comboScanStatus.GetSafeHwnd())
 	{
 		int nW = 60;
-		m_comboScanStatus.MoveWindow(nCurrLeft, nCurrTop, nW, nStaticH);
+		m_comboScanStatus.MoveWindow(nCurrLeft, nCurrTop + 5, nW, nStaticH);
 		nCurrTop += (nStaticH + nGap);
 	}
 
@@ -160,6 +164,7 @@ void CExamBmkRecordDlg::InitCtrlPosition()
 		nCurrTop = cy - nBottomGap + nGap;
 		GetDlgItem(IDC_BTN_ExamBmk_ExportScan)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
 	}
+	Invalidate();
 }
 
 void CExamBmkRecordDlg::SetFontSize(int nSize)
@@ -192,6 +197,7 @@ HBRUSH CExamBmkRecordDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}
+
 	return hbr;
 }
 
@@ -532,13 +538,22 @@ void CExamBmkRecordDlg::OnCbnSelchangeComboBmkScanstatus()
 
 void CExamBmkRecordDlg::OnBnClickedBtnExambmkExportscan()
 {
-	if (!_bGetBmk_)
+	EXAMBMK_MAP::iterator itFindExam = g_mapBmkMgr.find(_pCurrExam_->nExamID);
+	if (itFindExam == g_mapBmkMgr.end() || itFindExam->second.size() <= 0)
 	{
 		CNewMessageBox	dlg;
 		dlg.setShowInfo(2, 1, "无考生数据！");
 		dlg.DoModal();
 		return;
 	}
+
+// 	if (!_bGetBmk_)
+// 	{
+// 		CNewMessageBox	dlg;
+// 		dlg.setShowInfo(2, 1, "无考生数据！");
+// 		dlg.DoModal();
+// 		return;
+// 	}
 
 	std::string strData;
 	USES_CONVERSION;

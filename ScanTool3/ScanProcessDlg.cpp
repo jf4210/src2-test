@@ -683,17 +683,34 @@ void CScanProcessDlg::UpdateExamBmk()
 	if (!_pCurrExam_ || !_pCurrSub_)
 		return;
 
+	//++根据试卷袋中检查在报名库中标识来修改当前科目总报名库扫描标识
+	for (auto pPaper : _pCurrPapersInfo_->lPaper)
+	{
+		for (auto& subjectStudent : g_lBmkStudent)
+		{
+			if (subjectStudent.strZkzh == pPaper->strSN)
+			{
+				if (pPaper->nZkzhInBmkStatus != 0)
+				{
+					subjectStudent.nScaned = 1;
+				}
+				break;
+			}
+		}
+	}
+	//--
+
 	EXAMBMK_MAP::iterator itFindExam = g_mapBmkMgr.find(_pCurrExam_->nExamID);
 	if (itFindExam == g_mapBmkMgr.end())
 		return;
 
 	for (auto subjectStudent : g_lBmkStudent)
 	{
-		for (auto examStudent : itFindExam->second)
+		for (auto& examStudent : itFindExam->second)
 		{
 			if (examStudent.strZkzh == subjectStudent.strZkzh)
 			{
-				for (auto sujectItem : examStudent.lSubjectScanStatus)
+				for (auto& sujectItem : examStudent.lSubjectScanStatus)
 				{
 					if (sujectItem.nSubjectID == _pCurrSub_->nSubjID)
 					{
@@ -1352,7 +1369,8 @@ void CScanProcessDlg::OnTimer(UINT_PTR nIDEvent)
 int CScanProcessDlg::CheckZkzhInBmk(std::string strZkzh)
 {
 	int nResult = 0;	//0--报名库不存在，1--报名库存在，-1--报名库检测到已经扫描
-	for (auto obj : g_lBmkStudent)
+//	for (auto& obj : g_lBmkStudent)
+	for (auto& obj : m_lBmkStudent)
 	{
 		if (obj.strZkzh == strZkzh)
 		{
@@ -1408,5 +1426,14 @@ void CScanProcessDlg::TestData(bool bReset)
 void CScanProcessDlg::ShowSinglePic(cv::Mat& matPic)
 {
 	m_pShowPicDlg->showTmpPic(matPic);
+}
+
+void CScanProcessDlg::InitTmpSubjectBmk()
+{
+	if (_bGetBmk_)
+	{
+		m_lBmkStudent.clear();
+		m_lBmkStudent = g_lBmkStudent;
+	}
 }
 

@@ -31,7 +31,7 @@ public:
 	bool	SearchModel();		//遍历所有模板
 	bool	DownLoadModel();	//下载模板
 	int		GetBmkInfo();		//下载报名库
-	void	ShowChildDlg(int n);
+	void	ShowChildDlg(int n, int nOprater = 0);
 	void	ResetChildDlg();	//子窗口重置
 	void	UpdateChildDlgInfo(int nType = 0);	//更新子窗口信息
 	pTW_IDENTITY GetScanSrc(int nIndex);	//获取扫描源信息
@@ -39,6 +39,7 @@ public:
 	void	SetReturnDlg(int nFlag = 2);		//设置扫描记录窗口中的返回按钮的返回界面，点返回按钮时，是返回那个窗口，目前有两个入口，一是试卷管理窗口，二是扫描过程窗口，这两个地方都可以进入到当前窗口，需要记录返回的位置   1--返回试卷管理窗口，2--返回扫描过程窗口
 	LRESULT	MsgCompressResult(WPARAM wParam, LPARAM lParam);		//压缩线程操作结果
 	void	ChildDlgShowPic(cv::Mat& matPic);
+	void	ResetSubjectUI();		//科目部分UI重置
 private:
 	void	InitUI();
 	void	InitScanner();

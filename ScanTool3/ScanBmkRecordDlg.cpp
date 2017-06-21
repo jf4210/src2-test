@@ -347,15 +347,28 @@ void CScanBmkRecordDlg::OnBnClickedBtnExportscan()
 	for (int i = 0; i < nCount; i++)
 	{
 		std::string strRowData;
-		for (int j = 1; j < nColumns; j++)
+
+		CString strScanStatus = m_lcBmk.GetItemText(i, 3);
+		if (strScanStatus == _T("δɨ"))
 		{
-			CString strItem = m_lcBmk.GetItemText(i, j);
-			if (strItem == _T("δɨ"))
+			for (int j = 1; j < nColumns; j++)
 			{
+				CString strItem = m_lcBmk.GetItemText(i, j);
 				strData.append(T2A(strItem));
 				strData.append("\t\t");
 			}
 		}
+
+// 		for (int j = 1; j < nColumns; j++)
+// 		{
+// 			CString strItem = m_lcBmk.GetItemText(i, j);
+// 			CString strScanStatus = m_lcBmk.GetItemText(i, 3);
+// 			if (strScanStatus == _T("δɨ"))
+// 			{
+// 				strData.append(T2A(strItem));
+// 				strData.append("\t\t");
+// 			}
+// 		}
 		strData.append("\r\n");
 	}
 

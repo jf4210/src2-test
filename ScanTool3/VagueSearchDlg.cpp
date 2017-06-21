@@ -361,7 +361,11 @@ void CVagueSearchDlg::SetZkzhScaned(std::string strZkzh)
 int CVagueSearchDlg::CheckZkzhInBmk(std::string strZkzh)
 {
 	int nResult = 0;	//0--报名库不存在，1--报名库存在，-1--报名库检测到已经扫描
-	for (auto obj : g_lBmkStudent)
+
+	CModifyZkzhDlg* pDlg = (CModifyZkzhDlg*)GetParent();
+
+//	for (auto& obj : g_lBmkStudent)
+	for (auto& obj : pDlg->m_lBmkStudent)
 	{
 		if (obj.strZkzh == strZkzh)
 		{

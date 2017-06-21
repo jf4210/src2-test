@@ -15,6 +15,7 @@
 #include "Net_Cmd_Protocol.h"
 //#include "./pdf2jpg/MuPDFConvert.h"
 #include "AdvancedSetDlg.h"
+#include "ScanModelPaperDlg.h"
 
 using namespace std;
 using namespace cv;
@@ -34,6 +35,7 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_bFistHTracker(true), m_bFistVTracker(true), m_bFistSNTracker(true)
 	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL), m_pSNInfoDlg(NULL), m_pElectOmrDlg(NULL)
 	, m_bShiftKeyDown(false)/*, m_pScanThread(NULL)*/
+	, _pTWAINApp(NULL)
 {
 	InitParam();
 }
@@ -122,6 +124,7 @@ BOOL CMakeModelDlg::OnInitDialog()
 	USES_CONVERSION;
 	InitUI();
 	InitConf();
+	InitScanner();
 	if (m_pModel)
 	{
 		m_vecPaperModelInfo.clear();
@@ -264,11 +267,7 @@ BOOL CMakeModelDlg::OnInitDialog()
 		CString strTitle = _T("未保存模板");
 		SetWindowText(strTitle);
 	}
-
-#ifdef TEST_SCAN_THREAD
-	m_scanThread.CreateThread();
-#endif
-
+	
 	return TRUE;
 }
 void CMakeModelDlg::OnTcnSelchangeTabModelpic(NMHDR *pNMHDR, LRESULT *pResult)
@@ -856,6 +855,12 @@ LRESULT CMakeModelDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
 
 void CMakeModelDlg::OnBnClickedBtnScanmodel()
 {
+
+	CScanModelPaperDlg dlg;
+	dlg.SetScanSrc(m_vecScanSrc);
+	dlg.DoModal();
+	m_strScanSavePath = dlg.m_strSavePath;
+
 #if 0
 	if (m_strScanSavePath == _T(""))
 	{
@@ -1218,6 +1223,100 @@ void CMakeModelDlg::OnBnClickedBtnReset()
 	}
 }
 
+pTW_IDENTITY CMakeModelDlg::GetScanSrc(int nIndex)
+{
+	return _pTWAINApp->getDataSource(nIndex);
+}
+
+void CMakeModelDlg::InitScanner()
+{
+	if (_pTWAINApp)
+	{
+		_pTWAINApp->exit();
+		SAFE_RELEASE(_pTWAINApp);
+	}
+
+	_pTWAINApp = new TwainApp(m_hWnd);
+
+	TW_IDENTITY *pAppID = _pTWAINApp->getAppIdentity();
+
+	pAppID->Version.MajorNum = 2;
+	pAppID->Version.MinorNum = 1;
+	pAppID->Version.Language = TWLG_ENGLISH_CANADIAN;
+	pAppID->Version.Country = TWCY_CANADA;
+	SSTRCPY(pAppID->Version.Info, sizeof(pAppID->Version.Info), "2.1.1");
+	pAppID->ProtocolMajor = TWON_PROTOCOLMAJOR;
+	pAppID->ProtocolMinor = TWON_PROTOCOLMINOR;
+	pAppID->SupportedGroups = DF_APP2 | DG_IMAGE | DG_CONTROL;
+	SSTRCPY(pAppID->Manufacturer, sizeof(pAppID->Manufacturer), "TWAIN Working Group");
+	SSTRCPY(pAppID->ProductFamily, sizeof(pAppID->ProductFamily), "Sample");
+	SSTRCPY(pAppID->ProductName, sizeof(pAppID->ProductName), "MFC Supported Caps");
+
+	_pTWAINApp->connectDSM();
+	if (_pTWAINApp->m_DSMState >= 3)
+	{
+		pTW_IDENTITY pID = NULL;
+		int   i = 0;
+		int   index = 0;
+		int   nDefault = -1;
+
+		// Emply the list the refill
+		m_vecScanSrc.clear();
+
+		if (NULL != (pID = _pTWAINApp->getDefaultDataSource())) // Get Default
+		{
+			nDefault = pID->Id;
+		}
+		USES_CONVERSION;
+		while (NULL != (pID = _pTWAINApp->getDataSource((TW_INT16)i)))
+		{
+			m_vecScanSrc.push_back(A2T(pID->ProductName));
+			if (LB_ERR == index)
+			{
+				break;
+			}
+
+			i++;
+		}
+		_pTWAINApp->disconnectDSM();
+	}
+}
+
+LRESULT CMakeModelDlg::ScanDone(WPARAM wParam, LPARAM lParam)
+{
+	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
+	if (pResult)
+	{
+		TRACE("扫描完成消息。%s\n", pResult->strResult.c_str());
+		g_pLogger->information(pResult->strResult);
+
+		if (pResult->bScanOK)	//扫描完成
+		{
+			AfxMessageBox(_T("扫描完成"));
+			CString strSelect = _T("/root,");
+			strSelect.Append(m_strScanSavePath);
+			ShellExecute(NULL, _T("open"), _T("explorer.exe"), strSelect, NULL, SW_SHOWNORMAL);
+		}
+
+		delete pResult;
+		pResult = NULL;
+	}
+	return 1;
+}
+
+LRESULT CMakeModelDlg::ScanErr(WPARAM wParam, LPARAM lParam)
+{
+	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
+	if (pResult)
+	{
+		TRACE("扫描错误。%s\n", pResult->strResult.c_str());
+		// 		m_pScanProcessDlg->UpdateChildInfo(pResult->bScanOK);
+		// 		UpdateChildDlgInfo();
+		delete pResult;
+		pResult = NULL;
+	}
+	return 1;
+}
 bool CMakeModelDlg::RecogNewGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 {
 //	cv::cvtColor(matSrcRoi, matSrcRoi, CV_BGR2GRAY);
@@ -5788,6 +5887,11 @@ void CMakeModelDlg::OnDestroy()
 	__super::OnDestroy();
 	
 //	ReleaseTwain();
+	if (_pTWAINApp)
+	{
+		_pTWAINApp->exit();
+		SAFE_RELEASE(_pTWAINApp);
+	}
 
 	SAFE_RELEASE(m_pRecogInfoDlg);
 	SAFE_RELEASE(m_pOmrInfoDlg);
@@ -6441,29 +6545,3 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 			break;
 	}
 }
-
-#ifdef TEST_SCAN_THREAD
-LRESULT CMakeModelDlg::ScanDone(WPARAM wParam, LPARAM lParam)
-{
-	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
-	if (pResult)
-	{
-		TRACE("扫描完成消息。%s\n", pResult->strResult.c_str());
-		delete pResult;
-		pResult = NULL;
-	}
-	return 1;
-}
-
-LRESULT CMakeModelDlg::ScanErr(WPARAM wParam, LPARAM lParam)
-{
-	pST_SCAN_RESULT pResult = (pST_SCAN_RESULT)wParam;
-	if (pResult)
-	{
-		TRACE("扫描错误。%s\n", pResult->strResult.c_str());
-		delete pResult;
-		pResult = NULL;
-	}
-	return 1;
-}
-#endif

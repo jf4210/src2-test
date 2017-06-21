@@ -20,6 +20,7 @@ public:
 // 对话框数据
 	enum { IDD = IDD_SCANMODELPAPERDLG };
 
+	CString			m_strSavePath;
 public:
 	void	SetScanSrc(std::vector<CString>& vec);
 private:
@@ -35,7 +36,6 @@ private:
 	//----------------------
 
 	bool			m_bAdvancedScan;
-	CString			m_strSavePath;
 
 	int				m_nStatusSize;			//状态栏字体大小
 	CFont			m_fontStatus;			//状态栏字体

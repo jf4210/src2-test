@@ -510,7 +510,7 @@ void CSingleExamDlg::OnBnClickedBtnMakescanmodel()
 	_pCurrExam_ = _pExamInfo;
 	_pCurrSub_	= NULL;
 
-#if 1
+#ifndef TEST_NEW_MAKEMODEL
 	CMakeModelDlg dlg;
 	dlg.DoModal();
 #else

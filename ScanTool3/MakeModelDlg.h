@@ -161,6 +161,17 @@ public:
 	CScanThread* m_pScanThread;
 #endif
 	//ษจร่
+	//----------------------
+	CString		m_strScanSavePath;
+	CScanThread		m_scanThread;
+	pTW_IDENTITY GetScanSrc(int nIndex);
+	TwainApp*		_pTWAINApp;
+	std::vector<CString> m_vecScanSrc;
+	void	InitScanner();
+
+	LRESULT	ScanDone(WPARAM wParam, LPARAM lParam);
+	LRESULT	ScanErr(WPARAM wParam, LPARAM lParam);
+	//----------------------
 // 	BOOL m_bTwainInit;
 // 	CString		m_strScanSavePath;
 // 	CArray<TW_IDENTITY, TW_IDENTITY> m_scanSourceArry;

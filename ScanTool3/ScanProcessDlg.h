@@ -30,6 +30,7 @@ public:
 	void	UpdateExamBmk();		//将当前试卷袋的扫描信息更新到考试的总报名库中
 	void	ReShowCurrPapers();
 	void	ShowSinglePic(cv::Mat& matPic);
+	void	InitTmpSubjectBmk();		//初始化临时报名库
 private:
 	void	InitUI();
 	void	InitCtrlPosition();
@@ -51,6 +52,8 @@ private:
 	CShowPicDlg*		m_pShowPicDlg;
 	CStudentMgr*		m_pStudentMgr;
 //	CModifyZkzhDlg*		m_pModifyZkzhDlg;
+
+	STUDENT_LIST		m_lBmkStudent;
 
 	CFont			m_fontBtn1;				//按钮字体
 	CFont			m_fontBtn2;

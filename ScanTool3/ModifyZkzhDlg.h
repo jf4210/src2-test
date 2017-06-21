@@ -33,6 +33,8 @@ public:
 	COLORREF		crOldText, crOldBackground;
 	CBmpButton		m_bmpBtnReturn;
 
+	STUDENT_LIST	m_lBmkStudent;
+
 	void			ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper = NULL);
 private:
 	CStudentMgr*	m_pStudentMgr;

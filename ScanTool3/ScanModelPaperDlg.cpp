@@ -6,7 +6,12 @@
 #include "ScanModelPaperDlg.h"
 #include "afxdialogex.h"
 #include "NewMessageBox.h"
-#include "NewMakeModelDlg.h"
+
+#ifndef TEST_NEW_MAKEMODEL
+	#include "MakeModelDlg.h"
+#else
+	#include "NewMakeModelDlg.h"
+#endif
 
 // CScanModelPaperDlg 对话框
 
@@ -404,17 +409,23 @@ void CScanModelPaperDlg::OnBnClickedBtnMakemodelScan()
 	_nScanStatus_ = 0;
 
 	char szPicTmpPath[MAX_PATH] = { 0 };
-	sprintf_s(szPicTmpPath, "%s", T2A(m_strSavePath));
+	if (_pCurrSub_)
+		sprintf_s(szPicTmpPath, "%s\\%s", T2A(m_strSavePath), _pCurrSub_->strSubjName.c_str());
+	else
+		sprintf_s(szPicTmpPath, "%s", T2A(m_strSavePath));
 
 	std::string strUtfPath = CMyCodeConvert::Gb2312ToUtf8(szPicTmpPath);
 	try
 	{
-		Poco::File tmpPath(strUtfPath);
-		if (tmpPath.exists())
-			tmpPath.remove(true);
+		if (_pCurrSub_)
+		{
+			Poco::File tmpPath(strUtfPath);
+			if (tmpPath.exists())
+				tmpPath.remove(true);
 
-		Poco::File tmpPath1(strUtfPath);
-		tmpPath1.createDirectories();
+			Poco::File tmpPath1(strUtfPath);
+			tmpPath1.createDirectories();
+		}		
 	}
 	catch (Poco::Exception& exc)
 	{
@@ -422,9 +433,10 @@ void CScanModelPaperDlg::OnBnClickedBtnMakemodelScan()
 		strLog.append(szPicTmpPath);
 		g_pLogger->information(strLog);
 	}
+	strSavePath = szPicTmpPath;
 	
 	//获取扫描参数
-	int nScanSize = 1;				//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3, TWSS_NONE-自定义
+	int nScanSize = m_comboPaperSize.GetCurSel();				//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3, TWSS_NONE-自定义
 	int nScanType = 2;				//0-黑白，1-灰度，2-彩色
 	int nScanDpi = 200;				//dpi: 72, 150, 200, 300
 	int nAutoCut = 1;
@@ -433,7 +445,7 @@ void CScanModelPaperDlg::OnBnClickedBtnMakemodelScan()
 
 	int nDuplex = m_comboDuplex.GetCurSel();		//单双面,0-单面,1-双面
 
-	int nSize = m_comboPaperSize.GetCurSel();							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3, TWSS_NONE-自定义
+	int nSize = 0;							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3, TWSS_NONE-自定义
 	if (nScanSize == 0)
 		nSize = TWSS_A4LETTER;
 	else if (nScanSize == 1)
@@ -445,7 +457,11 @@ void CScanModelPaperDlg::OnBnClickedBtnMakemodelScan()
 	if (nNum == 0)
 		nNum = -1;
 
+#ifndef TEST_NEW_MAKEMODEL
+	CMakeModelDlg* pDlg = (CMakeModelDlg*)GetParent();
+#else
 	CNewMakeModelDlg* pDlg = (CNewMakeModelDlg*)GetParent();
+#endif
 	if (NULL != (pID = pDlg->GetScanSrc(index)))
 	{
 		SAFE_RELEASE(_pCurrPapersInfo_);
@@ -463,6 +479,7 @@ void CScanModelPaperDlg::OnBnClickedBtnMakemodelScan()
 		pScanCtrl->bShowUI = bShowScanSrcUI;	//bShowScanSrcUI;
 
 		pDlg->m_scanThread.setNotifyDlg(pDlg);
+		pDlg->m_scanThread.setNotifyDlgType(2);
 		pDlg->m_scanThread.setModelInfo(1, strSavePath);
 		pDlg->m_scanThread.resetData();
 		pDlg->m_scanThread.PostThreadMessage(MSG_START_SCAN, pID->Id, (LPARAM)pScanCtrl);
