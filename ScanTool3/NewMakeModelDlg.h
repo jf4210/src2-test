@@ -44,7 +44,7 @@ private:
 	CBmpButton		m_bmpBtnUpload;
 	CBmpButton		m_bmpBtnSave;
 	CBmpButton		m_bmpBtnDown;
-	CComboBoxExt	m_comboSubject;
+	CComboBoxExt	m_comboSubject;		//CComboBoxExt
 
 	CRect			m_rtChild;
 	CNewModelDlg*	m_pNewModelDlg;

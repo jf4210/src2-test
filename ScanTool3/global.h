@@ -102,7 +102,7 @@
 	#endif
 #endif
 
-//#define TEST_NEW_MAKEMODEL		//新模板测试
+#define TEST_NEW_MAKEMODEL		//新模板测试
 
 #define Test_RecogOmr3			//第3种OMR识别方法测试
 #define TEST_MODIFY_ZKZH_CHIld	//将修改准考证号窗口嵌入当做子窗口，不做弹出窗口

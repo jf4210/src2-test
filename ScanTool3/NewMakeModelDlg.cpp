@@ -53,7 +53,7 @@ BOOL CNewMakeModelDlg::OnInitDialog()
 
 	InitUI();
 	SetFontSize(m_nStatusSize);
-	m_comboSubject.AdjustDroppedWidth();
+//	m_comboSubject.AdjustDroppedWidth();
 
 	InitExamData();
 	
@@ -62,7 +62,7 @@ BOOL CNewMakeModelDlg::OnInitDialog()
 
 	InitScanner();
 	m_scanThread.CreateThread();
-
+	
 	return TRUE;
 }
 
@@ -145,6 +145,7 @@ void CNewMakeModelDlg::InitCtrlPosition()
 	{
 		m_pNewModelDlg->MoveWindow(m_rtChild);
 	}
+//	Invalidate();
 }
 
 void CNewMakeModelDlg::SetFontSize(int nSize)
@@ -260,6 +261,10 @@ void CNewMakeModelDlg::InitExamData()
 		for (auto pSubject : _pCurrExam_->lSubjects)
 		{
 			m_comboSubject.AddString(A2T(pSubject->strSubjName.c_str()));
+
+//			m_comboSubject.AddStringWithInfo(A2T(pSubject->strSubjName.c_str()), _T("111"));
+//			m_comboSubject.SetEditSel(0, 1);
+//			m_comboSubject.InsertString(m_comboSubject.GetCount(), A2T(pSubject->strSubjName.c_str()));
 			int nCount = m_comboSubject.GetCount();
 			m_comboSubject.SetItemDataPtr(nCount - 1, pSubject);
 			
