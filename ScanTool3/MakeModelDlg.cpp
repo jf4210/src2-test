@@ -114,6 +114,8 @@ BEGIN_MESSAGE_MAP(CMakeModelDlg, CDialog)
 	ON_WM_DESTROY()
 	ON_NOTIFY(NM_HOVER, IDC_LIST_CheckPoint, &CMakeModelDlg::OnNMHoverListCheckpoint)
 	ON_BN_CLICKED(IDC_BTN_AdvancedSetting, &CMakeModelDlg::OnBnClickedBtnAdvancedsetting)
+	ON_MESSAGE(MSG_SCAN_DONE, &CMakeModelDlg::ScanDone)
+	ON_MESSAGE(MSG_SCAN_ERR, &CMakeModelDlg::ScanErr)
 END_MESSAGE_MAP()
 
 // CMakeModelDlg 消息处理程序
@@ -125,6 +127,7 @@ BOOL CMakeModelDlg::OnInitDialog()
 	InitUI();
 	InitConf();
 	InitScanner();
+	m_scanThread.CreateThread();
 	if (m_pModel)
 	{
 		m_vecPaperModelInfo.clear();
