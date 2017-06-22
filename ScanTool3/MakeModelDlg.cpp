@@ -369,7 +369,22 @@ void CMakeModelDlg::InitUI()
 	m_cpListCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36);
 	m_cpListCtrl.InsertColumn(1, _T("位置信息"), LVCFMT_CENTER, 120);
 
+
+	//释放图像显示控件
+	std::vector<CPicShow*>::iterator itPic = m_vecPicShow.begin();
+	for (; itPic != m_vecPicShow.end();)
+	{
+		CPicShow* pModelPicShow = *itPic;
+		if (pModelPicShow)
+		{
+			delete pModelPicShow;
+			pModelPicShow = NULL;
+		}
+		itPic = m_vecPicShow.erase(itPic);
+	}
+
 	CRect rtTab;
+	m_tabModelPicCtrl.DeleteAllItems();
 	m_tabModelPicCtrl.GetClientRect(&rtTab);
 	for (int i = 0; i < m_nModelPicNums; i++)
 	{
@@ -6612,6 +6627,7 @@ void CMakeModelDlg::ReInitModel(pMODEL pModel)
 	InitUI();
 	InitConf();
 
+	USES_CONVERSION;
 	if (m_pModel)
 	{
 		m_vecPaperModelInfo.clear();

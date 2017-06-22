@@ -66,4 +66,6 @@ public:
 	afx_msg void OnStnClickedStaticXxV();
 	afx_msg void OnStnClickedStaticDirectZx();
 	afx_msg void OnStnClickedStaticDirectFx();
+	afx_msg void OnStnClickedStaticTxSingle();
+	afx_msg void OnStnClickedStaticTxMulti();
 };

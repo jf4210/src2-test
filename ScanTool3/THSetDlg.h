@@ -1,9 +1,9 @@
 #pragma once
-
+#include "TipBaseDlg.h"
 
 // CTHSetDlg ¶Ô»°¿ò
 
-class CTHSetDlg : public CDialog
+class CTHSetDlg : public CTipBaseDlg
 {
 	DECLARE_DYNAMIC(CTHSetDlg)
 

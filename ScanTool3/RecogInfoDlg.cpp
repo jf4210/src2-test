@@ -28,11 +28,14 @@ void CRecogInfoDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_Threshold, m_nThresholdVal);
 	DDX_Text(pDX, IDC_EDIT_ThresholdPercent, m_fThresholdValPercent);
 	DDX_Text(pDX, IDC_EDIT_CPType, m_strCPTypeName);
+	DDX_Control(pDX, IDC_STATIC_Group, m_GroupStatic);
 }
 
 BEGIN_MESSAGE_MAP(CRecogInfoDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_SaveRecogInfo, &CRecogInfoDlg::OnBnClickedBtnSaverecoginfo)
 	ON_WM_SIZE()
+	ON_WM_CTLCOLOR()
+	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 BOOL CRecogInfoDlg::OnInitDialog()
@@ -41,6 +44,8 @@ BOOL CRecogInfoDlg::OnInitDialog()
 
 	UpdateData(FALSE);
 	InitCtrlPosition();
+
+	m_GroupStatic.SetBackgroundColor(RGB(255, 255, 255));
 
 	return TRUE;
 }
@@ -185,4 +190,27 @@ BOOL CRecogInfoDlg::PreTranslateMessage(MSG* pMsg)
 	return CDialog::PreTranslateMessage(pMsg);
 }
 
+HBRUSH CRecogInfoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
+	if (nCtlColor == CTLCOLOR_STATIC)
+	{
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
+	return hbr;
+}
+
+
+BOOL CRecogInfoDlg::OnEraseBkgnd(CDC* pDC)
+{
+	CDialog::OnEraseBkgnd(pDC);
+
+	CRect rcClient;
+	GetClientRect(&rcClient);
+
+	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 242, 250
+
+	return TRUE;
+}

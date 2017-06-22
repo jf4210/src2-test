@@ -1,5 +1,6 @@
 #pragma once
 #include "global.h"
+#include "ctrl/XPGroupBox.h"
 
 // CRecogInfoDlg 对话框
 
@@ -24,6 +25,8 @@ public:
 
 private:
 	void		InitCtrlPosition();
+
+	CXPGroupBox m_GroupStatic;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 
@@ -33,4 +36,6 @@ protected:
 public:
 	afx_msg void OnBnClickedBtnSaverecoginfo();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };

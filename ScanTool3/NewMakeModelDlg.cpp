@@ -43,6 +43,7 @@ BEGIN_MESSAGE_MAP(CNewMakeModelDlg, CDialog)
 	ON_MESSAGE(MSG_SCAN_DONE, &CNewMakeModelDlg::ScanDone)
 	ON_MESSAGE(MSG_SCAN_ERR, &CNewMakeModelDlg::ScanErr)
 	ON_BN_CLICKED(IDC_BTN_NewMakeModel, &CNewMakeModelDlg::OnBnClickedBtnNewmakemodel)
+	ON_CBN_SELCHANGE(IDC_COMBO_MakeModel_Subject, &CNewMakeModelDlg::OnCbnSelchangeComboMakemodelSubject)
 END_MESSAGE_MAP()
 
 
@@ -58,8 +59,11 @@ BOOL CNewMakeModelDlg::OnInitDialog()
 	m_comboSubject.AdjustDroppedWidth();
 
 	InitExamData();
-	LoadSubjectModel(_pCurrSub_);
 
+	SAFE_RELEASE(_pModel_);
+	_pModel_ = LoadSubjectModel(_pCurrSub_);
+	if (m_pMakeModelDlg)
+		m_pMakeModelDlg->ReInitModel(_pModel_);
 	//加载模板
 
 	InitCtrlPosition();
@@ -154,7 +158,7 @@ void CNewMakeModelDlg::InitCtrlPosition()
 	{
 		m_pMakeModelDlg->MoveWindow(m_rtChild);
 	}
-//	Invalidate();
+	Invalidate();
 }
 
 void CNewMakeModelDlg::SetFontSize(int nSize)
@@ -281,6 +285,9 @@ void CNewMakeModelDlg::InitExamData()
 			int nCount = m_comboSubject.GetCount();
 			m_comboSubject.SetItemDataPtr(nCount - 1, pSubject);
 			
+			if (i == 0)
+				_pCurrSub_ = pSubject;
+
 			i++;
 		}
 		if (_pCurrExam_->lSubjects.size())
@@ -294,6 +301,8 @@ pMODEL CNewMakeModelDlg::LoadSubjectModel(pEXAM_SUBJECT pSubModel)
 	if (!pSubModel)
 		return NULL;
 
+	pSubModel->strModelName = "2017-02-05武汉四中高三文综考试_文综_N_201_272.mod";
+
 	if (pSubModel->strModelName.empty())
 		return NULL;
 
@@ -303,11 +312,11 @@ pMODEL CNewMakeModelDlg::LoadSubjectModel(pEXAM_SUBJECT pSubModel)
 	std::string strBaseModelName;
 	try
 	{
-		Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(pSubModel->strModelName));
+		Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
 		if (!fileModel.exists())
 			return NULL;
 		
-		Poco::Path pathModel(CMyCodeConvert::Gb2312ToUtf8(pSubModel->strModelName));
+		Poco::Path pathModel(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
 		strBaseModelName = CMyCodeConvert::Utf8ToGb2312(pathModel.getBaseName());
 	}
 	catch (Poco::Exception& e)
@@ -369,6 +378,7 @@ void CNewMakeModelDlg::OnDestroy()
 	CDialog::OnDestroy();
 
 //	m_scanThread.PostThreadMessage(WM_QUIT, NULL, NULL);
+	SAFE_RELEASE(_pModel_);
 	if (_pTWAINApp)
 	{
 		_pTWAINApp->exit();
@@ -445,3 +455,19 @@ void CNewMakeModelDlg::OnBnClickedBtnNewmakemodel()
 
 }
 
+void CNewMakeModelDlg::OnCbnSelchangeComboMakemodelSubject()
+{
+	if (m_comboSubject.GetCurSel() < 0)
+		return;
+
+	pEXAM_SUBJECT pSubject = (pEXAM_SUBJECT)m_comboSubject.GetItemDataPtr(m_comboSubject.GetCurSel());
+	if (_pCurrSub_ != pSubject)
+	{
+		_pCurrSub_ = pSubject;
+
+		SAFE_RELEASE(_pModel_);
+		_pModel_ = LoadSubjectModel(_pCurrSub_);
+		if (m_pMakeModelDlg)
+			m_pMakeModelDlg->ReInitModel(_pModel_);
+	}
+}

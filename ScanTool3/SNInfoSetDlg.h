@@ -48,4 +48,10 @@ public:
 	afx_msg void OnBnClickedRadioOption1();
 	afx_msg void OnBnClickedRadioOption2();
 	afx_msg void OnBnClickedCheckUseBarcode();
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg void OnStnClickedStaticSnH();
+	afx_msg void OnStnClickedStaticSnV();
+	afx_msg void OnStnClickedStaticOption1();
+	afx_msg void OnStnClickedStaticOption2();
 };

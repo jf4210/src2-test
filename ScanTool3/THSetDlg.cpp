@@ -12,7 +12,7 @@
 IMPLEMENT_DYNAMIC(CTHSetDlg, CDialog)
 
 CTHSetDlg::CTHSetDlg(int nStartTH/* = 0*/, CWnd* pParent /*=NULL*/)
-	: CDialog(CTHSetDlg::IDD, pParent)
+: CTipBaseDlg(CTHSetDlg::IDD, pParent)
 	, m_nStartTH(nStartTH + 1)
 {
 
@@ -24,12 +24,12 @@ CTHSetDlg::~CTHSetDlg()
 
 void CTHSetDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
+	CTipBaseDlg::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_EDIT_TH, m_nStartTH);
 }
 
 
-BEGIN_MESSAGE_MAP(CTHSetDlg, CDialog)
+BEGIN_MESSAGE_MAP(CTHSetDlg, CTipBaseDlg)
 	ON_BN_CLICKED(IDOK, &CTHSetDlg::OnBnClickedOk)
 END_MESSAGE_MAP()
 
@@ -38,7 +38,7 @@ END_MESSAGE_MAP()
 
 BOOL CTHSetDlg::OnInitDialog()
 {
-	CDialog::OnInitDialog();
+	CTipBaseDlg::OnInitDialog();
 	UpdateData(FALSE);
 
 	return TRUE;
@@ -48,5 +48,5 @@ void CTHSetDlg::OnBnClickedOk()
 {
 	UpdateData(TRUE);
 
-	CDialog::OnOK();
+	CTipBaseDlg::OnOK();
 }

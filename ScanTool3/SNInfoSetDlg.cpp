@@ -41,6 +41,12 @@ BEGIN_MESSAGE_MAP(CSNInfoSetDlg, CDialog)
 	ON_BN_CLICKED(IDC_RADIO_Option_1, &CSNInfoSetDlg::OnBnClickedRadioOption1)
 	ON_BN_CLICKED(IDC_RADIO_Option_2, &CSNInfoSetDlg::OnBnClickedRadioOption2)
 	ON_BN_CLICKED(IDC_CHECK_USE_BARCODE, &CSNInfoSetDlg::OnBnClickedCheckUseBarcode)
+	ON_WM_CTLCOLOR()
+	ON_WM_ERASEBKGND()
+	ON_STN_CLICKED(IDC_STATIC_SN_H, &CSNInfoSetDlg::OnStnClickedStaticSnH)
+	ON_STN_CLICKED(IDC_STATIC_SN_V, &CSNInfoSetDlg::OnStnClickedStaticSnV)
+	ON_STN_CLICKED(IDC_STATIC_Option_1, &CSNInfoSetDlg::OnStnClickedStaticOption1)
+	ON_STN_CLICKED(IDC_STATIC_Option_2, &CSNInfoSetDlg::OnStnClickedStaticOption2)
 END_MESSAGE_MAP()
 
 BOOL CSNInfoSetDlg::OnInitDialog()
@@ -92,11 +98,19 @@ void CSNInfoSetDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_RADIO_SN_H)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_RADIO_SN_H)->MoveWindow(nLeftGap + nStaticWidth + nGap, nTopGap, nRadioWidth, nStaticHeight);
+		GetDlgItem(IDC_RADIO_SN_H)->MoveWindow(nLeftGap + nStaticWidth + nGap, nTopGap, 15, nStaticHeight);
+	}
+	if (GetDlgItem(IDC_STATIC_SN_H)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_SN_H)->MoveWindow(nLeftGap + nStaticWidth + nGap + 15 + nGap, nTopGap, nRadioWidth - 15, nStaticHeight);
 	}
 	if (GetDlgItem(IDC_RADIO_SN_V)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_RADIO_SN_V)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap, nTopGap, nRadioWidth, nStaticHeight);
+		GetDlgItem(IDC_RADIO_SN_V)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap, nTopGap, 15, nStaticHeight);
+	}
+	if (GetDlgItem(IDC_STATIC_SN_V)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_SN_V)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap + 15 + nGap, nTopGap, nRadioWidth, nStaticHeight);
 	}
 	nTopGap = nTopGap + nStaticHeight + nGap;
 	if (GetDlgItem(IDC_STATIC_Option)->GetSafeHwnd())
@@ -105,11 +119,19 @@ void CSNInfoSetDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_RADIO_Option_1)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_RADIO_Option_1)->MoveWindow(nLeftGap + nStaticWidth + nGap, nTopGap, nRadioWidth, nStaticHeight);
+		GetDlgItem(IDC_RADIO_Option_1)->MoveWindow(nLeftGap + nStaticWidth + nGap, nTopGap, 15, nStaticHeight);
+	}
+	if (GetDlgItem(IDC_STATIC_Option_1)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_Option_1)->MoveWindow(nLeftGap + nStaticWidth + nGap + 15 + nGap, nTopGap, nRadioWidth - 15, nStaticHeight);
 	}
 	if (GetDlgItem(IDC_RADIO_Option_2)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_RADIO_Option_2)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap, nTopGap, nRadioWidth, nStaticHeight);
+		GetDlgItem(IDC_RADIO_Option_2)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap, nTopGap, 15, nStaticHeight);
+	}
+	if (GetDlgItem(IDC_STATIC_Option_2)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_Option_2)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap + 15 + nGap, nTopGap, nRadioWidth, nStaticHeight);
 	}
 	nTopGap = nTopGap + nStaticHeight + nGap;
 	int nPicSNWidth = rcClient.Width() - nLeftGap - nRightGap;
@@ -305,4 +327,87 @@ void CSNInfoSetDlg::InitType(int nType)
 		GetDlgItem(IDC_RADIO_Option_1)->EnableWindow(FALSE);
 		GetDlgItem(IDC_RADIO_Option_2)->EnableWindow(FALSE);
 	}
+}
+
+
+HBRUSH CSNInfoSetDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+
+	UINT CurID = pWnd->GetDlgCtrlID();
+	if (CurID == IDC_CHECK_USE_BARCODE)
+	{
+		HBRUSH hMYbr = ::CreateSolidBrush(RGB(255, 255, 255));	//62, 147, 254
+
+		pDC->SetBkMode(TRANSPARENT);
+
+		return hMYbr;
+	}
+	if (nCtlColor == CTLCOLOR_STATIC)
+	{
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
+	return hbr;
+}
+
+
+BOOL CSNInfoSetDlg::OnEraseBkgnd(CDC* pDC)
+{
+	CDialog::OnEraseBkgnd(pDC);
+
+	CRect rcClient;
+	GetClientRect(&rcClient);
+
+	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 242, 250
+
+	return TRUE;
+}
+
+
+void CSNInfoSetDlg::OnStnClickedStaticSnH()
+{
+	if (m_nSNSel != 0)
+	{
+		m_nSNSel = 0;
+		ShowSNPic();
+	}
+	m_radioSN_H.SetCheck(1);
+	m_radioSN_V.SetCheck(0);
+}
+
+
+void CSNInfoSetDlg::OnStnClickedStaticSnV()
+{
+	if (m_nSNSel != 1)
+	{
+		m_nSNSel = 1;
+		ShowSNPic();
+	}
+	m_radioSN_H.SetCheck(0);
+	m_radioSN_V.SetCheck(1);
+}
+
+
+void CSNInfoSetDlg::OnStnClickedStaticOption1()
+{
+	if (m_nOptionSel != 0)
+	{
+		m_nOptionSel = 0;
+		ShowSNPic();
+	}
+	m_radioADD_Z.SetCheck(1);
+	m_radioADD_F.SetCheck(0);
+}
+
+
+void CSNInfoSetDlg::OnStnClickedStaticOption2()
+{
+	if (m_nOptionSel != 1)
+	{
+		m_nOptionSel = 1;
+		ShowSNPic();
+	}
+	m_radioADD_Z.SetCheck(0);
+	m_radioADD_F.SetCheck(1);
 }

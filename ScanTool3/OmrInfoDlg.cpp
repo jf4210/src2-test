@@ -55,6 +55,8 @@ BEGIN_MESSAGE_MAP(COmrInfoDlg, CDialog)
 	ON_STN_CLICKED(IDC_STATIC_XX_V, &COmrInfoDlg::OnStnClickedStaticXxV)
 	ON_STN_CLICKED(IDC_STATIC_Direct_ZX, &COmrInfoDlg::OnStnClickedStaticDirectZx)
 	ON_STN_CLICKED(IDC_STATIC_Direct_FX, &COmrInfoDlg::OnStnClickedStaticDirectFx)
+	ON_STN_CLICKED(IDC_STATIC_TX_Single, &COmrInfoDlg::OnStnClickedStaticTxSingle)
+	ON_STN_CLICKED(IDC_STATIC_TX_Multi, &COmrInfoDlg::OnStnClickedStaticTxMulti)
 END_MESSAGE_MAP()
 
 BOOL COmrInfoDlg::OnInitDialog()
@@ -111,11 +113,19 @@ void COmrInfoDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_RADIO_TX_Single)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_RADIO_TX_Single)->MoveWindow(nLeftGap + nStaticWidth + nGap, nTopGap, nRadioWidth, nStaticHeight);
+		GetDlgItem(IDC_RADIO_TX_Single)->MoveWindow(nLeftGap + nStaticWidth + nGap, nTopGap, 15, nStaticHeight);
+	}
+	if (GetDlgItem(IDC_STATIC_TX_Single)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_TX_Single)->MoveWindow(nLeftGap + nStaticWidth + nGap + 15 + nGap, nTopGap, nRadioWidth - 15, nStaticHeight);
 	}
 	if (GetDlgItem(IDC_RADIO_TX_Multi)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_RADIO_TX_Multi)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap, nTopGap, nRadioWidth, nStaticHeight);
+		GetDlgItem(IDC_RADIO_TX_Multi)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap, nTopGap, 15, nStaticHeight);
+	}
+	if (GetDlgItem(IDC_STATIC_TX_Multi)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_TX_Multi)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap + 15 + nGap, nTopGap, nRadioWidth - 15, nStaticHeight);
 	}
 	nTopGap = nTopGap + nStaticHeight + nGap;
 	if (GetDlgItem(IDC_STATIC_TH)->GetSafeHwnd())
@@ -145,7 +155,7 @@ void COmrInfoDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_RADIO_XX_H)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_RADIO_XX_H)->MoveWindow(nLeftGap + nStaticWidth + nGap, nTopGap, nRadioWidth, nStaticHeight);
+		GetDlgItem(IDC_RADIO_XX_H)->MoveWindow(nLeftGap + nStaticWidth + nGap, nTopGap, 15, nStaticHeight);
 	}
 	if (GetDlgItem(IDC_STATIC_XX_H)->GetSafeHwnd())
 	{
@@ -153,7 +163,7 @@ void COmrInfoDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_RADIO_XX_V)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_RADIO_XX_V)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap, nTopGap, nRadioWidth, nStaticHeight);
+		GetDlgItem(IDC_RADIO_XX_V)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap, nTopGap, 15, nStaticHeight);
 	}
 	if (GetDlgItem(IDC_STATIC_XX_V)->GetSafeHwnd())
 	{
@@ -166,7 +176,7 @@ void COmrInfoDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_RADIO_Direct_ZX)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_RADIO_Direct_ZX)->MoveWindow(nLeftGap + nStaticWidth + nGap, nTopGap, nRadioWidth, nStaticHeight);
+		GetDlgItem(IDC_RADIO_Direct_ZX)->MoveWindow(nLeftGap + nStaticWidth + nGap, nTopGap, 15, nStaticHeight);
 	}
 	if (GetDlgItem(IDC_STATIC_Direct_ZX)->GetSafeHwnd())
 	{
@@ -174,7 +184,7 @@ void COmrInfoDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_RADIO_Direct_FX)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_RADIO_Direct_FX)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap, nTopGap, nRadioWidth, nStaticHeight);
+		GetDlgItem(IDC_RADIO_Direct_FX)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap, nTopGap, 15, nStaticHeight);
 	}
 	if (GetDlgItem(IDC_STATIC_Direct_FX)->GetSafeHwnd())
 	{
@@ -462,7 +472,6 @@ BOOL COmrInfoDlg::OnEraseBkgnd(CDC* pDC)
 
 	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 242, 250
 
-
 	return TRUE;
 }
 
@@ -474,6 +483,8 @@ void COmrInfoDlg::OnStnClickedStaticThH()
 		m_nTHSel = 0;
 		ShowOmrPic();
 	}
+	m_radioTH_H.SetCheck(1);
+	m_radioTH_V.SetCheck(0);
 }
 
 void COmrInfoDlg::OnStnClickedStaticThV()
@@ -483,6 +494,8 @@ void COmrInfoDlg::OnStnClickedStaticThV()
 		m_nTHSel = 1;
 		ShowOmrPic();
 	}
+	m_radioTH_H.SetCheck(0);
+	m_radioTH_V.SetCheck(1);
 }
 
 
@@ -493,6 +506,8 @@ void COmrInfoDlg::OnStnClickedStaticXxH()
 		m_nXXSel = 0;
 		ShowOmrPic();
 	}
+	m_radioXX_H.SetCheck(1);
+	m_radioXX_V.SetCheck(0);
 }
 
 
@@ -503,6 +518,8 @@ void COmrInfoDlg::OnStnClickedStaticXxV()
 		m_nXXSel = 1;
 		ShowOmrPic();
 	}
+	m_radioXX_H.SetCheck(0);
+	m_radioXX_V.SetCheck(1);
 }
 
 
@@ -513,6 +530,8 @@ void COmrInfoDlg::OnStnClickedStaticDirectZx()
 		m_nDirectSel = 0;
 		ShowOmrPic();
 	}
+	m_radioDirectZX.SetCheck(1);
+	m_radioDirectFX.SetCheck(0);
 }
 
 
@@ -523,4 +542,22 @@ void COmrInfoDlg::OnStnClickedStaticDirectFx()
 		m_nDirectSel = 1;
 		ShowOmrPic();
 	}
+	m_radioDirectZX.SetCheck(0);
+	m_radioDirectFX.SetCheck(1);
+}
+
+
+void COmrInfoDlg::OnStnClickedStaticTxSingle()
+{
+	m_bSingle = TRUE;
+	m_radioTX_S.SetCheck(1);
+	m_radioTX_M.SetCheck(0);
+}
+
+
+void COmrInfoDlg::OnStnClickedStaticTxMulti()
+{
+	m_bSingle = FALSE;
+	m_radioTX_S.SetCheck(0);
+	m_radioTX_M.SetCheck(1);
 }
