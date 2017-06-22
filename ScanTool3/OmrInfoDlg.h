@@ -58,4 +58,12 @@ public:
 	afx_msg void OnBnClickedRadioDirectFx();
 	afx_msg void OnBnClickedRadioTxSingle();
 	afx_msg void OnBnClickedRadioTxMulti();
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg void OnStnClickedStaticThH();
+	afx_msg void OnStnClickedStaticThV();
+	afx_msg void OnStnClickedStaticXxH();
+	afx_msg void OnStnClickedStaticXxV();
+	afx_msg void OnStnClickedStaticDirectZx();
+	afx_msg void OnStnClickedStaticDirectFx();
 };

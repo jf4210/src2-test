@@ -180,6 +180,8 @@ public:
 // 	void CopyImage(HANDLE hBitmap, TW_IMAGEINFO& info);
 // 	void SetImage(HANDLE hBitmap, int bits);
 // 	void ScanDone(int nStatus);
+
+	void ReInitModel(pMODEL pModel);
 public:
 	bool RecogNewGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc);							//在修改阀值后重新计算矩形区的灰度值
 
@@ -269,4 +271,6 @@ public:
 	afx_msg void OnDestroy();
 	afx_msg void OnNMHoverListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedBtnAdvancedsetting();
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

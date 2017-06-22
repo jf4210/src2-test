@@ -510,6 +510,13 @@ void CSingleExamDlg::OnBnClickedBtnMakescanmodel()
 	_pCurrExam_ = _pExamInfo;
 	_pCurrSub_	= NULL;
 
+#ifdef TEST_TIP_SHOW
+	CNewMessageBox	dlg1;
+	dlg1.setShowInfo(2, 2, "存在考号为空的考生，如果不修改，将影响参与后面的评卷，是否忽略？");
+	dlg1.DoModal();
+	return;
+#endif
+
 #ifndef TEST_NEW_MAKEMODEL
 	CMakeModelDlg dlg;
 	dlg.DoModal();

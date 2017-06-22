@@ -101,6 +101,12 @@ private:
 	pST_PaperInfo	m_pCurrPaper;	//当前试卷
 	std::string		m_strCurrPicSavePath;		//gb2312
 
+	int		m_nDoubleScan;	//是否双面扫描
+
+	int		CheckOrientation4Fix(cv::Mat& matSrc, int n);	//定点模式下的方向
+	int		CheckOrientation4Head(cv::Mat& matSrc, int n);	//同步头模式下的方向
+	int		CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan);
+
 	void* SaveFile(IplImage *pIpl);
 	std::string ErrCode2Str(int nErr);	//错误代码转字符串
 protected:

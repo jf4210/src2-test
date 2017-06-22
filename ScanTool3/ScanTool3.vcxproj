@@ -128,6 +128,7 @@
     <ClInclude Include="ComboBoxExt.h" />
     <ClInclude Include="ComboBoxExtList.h" />
     <ClInclude Include="CompressThread.h" />
+    <ClInclude Include="CreateModelDlg.h" />
     <ClInclude Include="ctrl\skinscrollbar.h" />
     <ClInclude Include="ctrl\skinscrollwnd.h" />
     <ClInclude Include="ctrl\TransparentStatic.h" />
@@ -149,6 +150,7 @@
     <ClInclude Include="MyCodeConvert.h" />
     <ClInclude Include="NewModelDlg.h" />
     <ClInclude Include="OmrInfoDlg.h" />
+    <ClInclude Include="OmrRecog.h" />
     <ClInclude Include="picCtrl\CvvImage.h" />
     <ClInclude Include="picCtrl\CV_picture.h" />
     <ClInclude Include="PicShow.h" />
@@ -230,6 +232,7 @@
     <ClCompile Include="ComboBoxExt.cpp" />
     <ClCompile Include="ComboBoxExtList.cpp" />
     <ClCompile Include="CompressThread.cpp" />
+    <ClCompile Include="CreateModelDlg.cpp" />
     <ClCompile Include="ctrl\skinscrollbar.cpp" />
     <ClCompile Include="ctrl\skinscrollwnd.cpp" />
     <ClCompile Include="ctrl\TransparentStatic.cpp" />
@@ -251,6 +254,7 @@
     <ClCompile Include="NewMessageBox.cpp" />
     <ClCompile Include="NewModelDlg.cpp" />
     <ClCompile Include="OmrInfoDlg.cpp" />
+    <ClCompile Include="OmrRecog.cpp" />
     <ClCompile Include="picCtrl\CvvImage.cpp" />
     <ClCompile Include="picCtrl\CV_picture.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>

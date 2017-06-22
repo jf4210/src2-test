@@ -284,6 +284,11 @@ void CScanDlg::OnDestroy()
 
 void CScanDlg::OnBnClickedBtnScan()
 {
+#ifdef TEST_TIP_SHOW
+	CScanMgrDlg* pTmpDlg = (CScanMgrDlg*)GetParent();
+	pTmpDlg->ShowChildDlg(3);
+	return;
+#endif
 	int           sel = m_comboScanner.GetCurSel();
 	TW_INT16      index = (TW_INT16)m_comboScanner.GetItemData(sel);
 	pTW_IDENTITY  pID = NULL;

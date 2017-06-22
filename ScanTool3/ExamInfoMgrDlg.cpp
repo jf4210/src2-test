@@ -237,28 +237,28 @@ void CExamInfoMgrDlg::InitSearchData()
 			bool bFind = false;
 			for (auto strTkType : vecTkType)
 			{
-				if (strTkType == "ÍøÔÄ¾í")
+				if (strTkType == "ÍøÔÄ")
 				{
 					bFind = true;
 					break;
 				}
 			}
 			if (!bFind)
-				vecTkType.push_back("ÍøÔÄ¾í");
+				vecTkType.push_back("ÍøÔÄ");
 		}
 		else
 		{
 			bool bFind = false;
 			for (auto strTkType : vecTkType)
 			{
-				if (strTkType == "ÊÖÔÄ¾í")
+				if (strTkType == "ÊÖÔÄ")
 				{
 					bFind = true;
 					break;
 				}
 			}
 			if (!bFind)
-				vecTkType.push_back("ÊÖÔÄ¾í");
+				vecTkType.push_back("ÊÖÔÄ");
 		}
 
 		nAllExamItems += pExam->lSubjects.size();
@@ -326,9 +326,9 @@ void CExamInfoMgrDlg::GetSearchResultExamList()
 	int nMode = -1;
 	if (strCurTkType == _T("È«²¿"))
 		nMode = -1;
-	else if (strCurTkType == _T("ÍøÔÄ¾í"))
+	else if (strCurTkType == _T("ÍøÔÄ"))
 		nMode = 0;
-	else if (strCurTkType == _T("ÊÖÔÄ¾í"))
+	else if (strCurTkType == _T("ÊÖÔÄ"))
 		nMode = 1;
 	//--
 	

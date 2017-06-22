@@ -357,19 +357,8 @@ void CScanBmkRecordDlg::OnBnClickedBtnExportscan()
 				strData.append(T2A(strItem));
 				strData.append("\t\t");
 			}
+			strData.append("\r\n");
 		}
-
-// 		for (int j = 1; j < nColumns; j++)
-// 		{
-// 			CString strItem = m_lcBmk.GetItemText(i, j);
-// 			CString strScanStatus = m_lcBmk.GetItemText(i, 3);
-// 			if (strScanStatus == _T("δɨ"))
-// 			{
-// 				strData.append(T2A(strItem));
-// 				strData.append("\t\t");
-// 			}
-// 		}
-		strData.append("\r\n");
 	}
 
 

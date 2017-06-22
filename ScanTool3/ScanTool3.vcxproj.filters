@@ -163,6 +163,9 @@
     <Filter Include="模板界面\旧模板制作界面\选做题信息设置窗口">
       <UniqueIdentifier>{cf3504bd-5d3d-43a3-a95b-57140293d73c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="模板界面\新建模板窗口">
+      <UniqueIdentifier>{8c88448f-51e9-41bf-88b2-b8dcfc652cc0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -420,6 +423,12 @@
     <ClInclude Include="ElectOmrDlg.h">
       <Filter>模板界面\旧模板制作界面\选做题信息设置窗口</Filter>
     </ClInclude>
+    <ClInclude Include="OmrRecog.h">
+      <Filter>线程\识别</Filter>
+    </ClInclude>
+    <ClInclude Include="CreateModelDlg.h">
+      <Filter>模板界面\新建模板窗口</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -646,6 +655,12 @@
     </ClCompile>
     <ClCompile Include="ElectOmrDlg.cpp">
       <Filter>模板界面\旧模板制作界面\选做题信息设置窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="OmrRecog.cpp">
+      <Filter>线程\识别</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateModelDlg.cpp">
+      <Filter>模板界面\新建模板窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

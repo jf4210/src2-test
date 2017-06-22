@@ -16,7 +16,7 @@ CNewModelDlg::CNewModelDlg(CWnd* pParent /*=NULL*/)
 {
 	mTreeImageList.Create(16, 16, ILC_COLOR24, 2, 2);
 
-	mBmpRoot.LoadBitmap(IDB_TREE_R);
+//	mBmpRoot.LoadBitmap(IDB_TREE_R);
 	mBmpLeaf.LoadBitmap(IDB_TREE_L);
 
 	mTreeImageList.Add(&mBmpRoot, RGB(0, 0, 0));
@@ -69,8 +69,12 @@ void CNewModelDlg::InitTreeData()
 {
 	m_treeChkPoint.SetImageList(&mTreeImageList, TVSIL_NORMAL);
 
-	HTREEITEM hRootItem = m_treeChkPoint.InsertItem(TVIF_TEXT, _T("全部"), 0, 0, 0, 0, 0, NULL, NULL);
+	HTREEITEM hRootItem = m_treeChkPoint.InsertItem(TVIF_TEXT, _T("全部"), 1, 1, 0, 0, 0, NULL, NULL);
+//	HTREEITEM hRootItem = m_treeChkPoint.InsertItem(_T("全部"), 1, 1, NULL, NULL);
 	HTREEITEM hFixPoint = m_treeChkPoint.InsertItem(TVIF_TEXT, _T("定点"), 0, 0, 0, 0, 0, NULL, NULL);
+// 	HTREEITEM hFixPoint1 = m_treeChkPoint.InsertItem(_T("定点1"), -1, -1, hFixPoint, NULL);
+// 	HTREEITEM hFixPoint2 = m_treeChkPoint.InsertItem(_T("定点2"), -1, -1, hFixPoint, NULL);
+
 	HTREEITEM hSubjectPoint = m_treeChkPoint.InsertItem(TVIF_TEXT, _T("科目校验点"), 0, 0, 0, 0, 0, NULL, NULL);
 	HTREEITEM hGrayPoint = m_treeChkPoint.InsertItem(TVIF_TEXT, _T("灰度校验点"), 0, 0, 0, 0, 0, NULL, NULL);
 	HTREEITEM hQkPoint = m_treeChkPoint.InsertItem(TVIF_TEXT, _T("缺考点"), 0, 0, 0, 0, 0, NULL, NULL);

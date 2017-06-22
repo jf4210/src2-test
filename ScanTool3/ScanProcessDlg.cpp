@@ -992,6 +992,12 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 
 void CScanProcessDlg::OnBnClickedBtnSave()
 {
+#ifdef TEST_TIP_SHOW
+	CString str = _T("保存478bsdffsfsdfsdfsfsfdsfsdfsf73500c2940239e3622d7e2fc59e6_63-129_20170622151957_1.pkg成功");
+//	CString str = _T("保存一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十成功");
+	SetStatusShow(2, str, 1);
+	return;
+#endif
 	if (!_pCurrPapersInfo_)
 	{
 //		AfxMessageBox(_T("没有试卷袋信息"));
@@ -1212,6 +1218,8 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	*pResult = 0;
+	if (pNMItemActivate->iItem < 0)
+		return;
 
 	if (_nScanStatus_ == 1)
 	{

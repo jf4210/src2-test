@@ -857,7 +857,7 @@ bool CModifyZkzhDlg::ReleaseData()
 				if (pPaper->strSN.empty())
 				{
 					CNewMessageBox	dlg;
-					dlg.setShowInfo(2, 2, "存在考号为空的考生，如果不修改，将影响参与后面的评卷，是否忽略？");
+					dlg.setShowInfo(2, 2, "存在考号为空的考生，若不修改，将影响参加后面的评卷，忽略？");
 					dlg.DoModal();
 					if (dlg.m_nResult != IDYES)
 						return false;

@@ -17,9 +17,9 @@
 
 IMPLEMENT_DYNAMIC(CScanModelPaperDlg, CDialog)
 
-CScanModelPaperDlg::CScanModelPaperDlg(CWnd* pParent /*=NULL*/)
+CScanModelPaperDlg::CScanModelPaperDlg(void* pDlg, CWnd* pParent /*=NULL*/)
 : CTipBaseDlg(CScanModelPaperDlg::IDD, pParent)
-, m_nStatusSize(25), m_bAdvancedScan(false)
+,m_pNotifyDlg(pDlg), m_nStatusSize(25), m_bAdvancedScan(false)
 {
 
 }
@@ -460,7 +460,8 @@ void CScanModelPaperDlg::OnBnClickedBtnMakemodelScan()
 #ifndef TEST_NEW_MAKEMODEL
 	CMakeModelDlg* pDlg = (CMakeModelDlg*)GetParent();
 #else
-	CNewMakeModelDlg* pDlg = (CNewMakeModelDlg*)GetParent();
+//	CNewMakeModelDlg* pDlg = (CNewMakeModelDlg*)GetParent();
+	CNewMakeModelDlg* pDlg = (CNewMakeModelDlg*)m_pNotifyDlg;
 #endif
 	if (NULL != (pID = pDlg->GetScanSrc(index)))
 	{

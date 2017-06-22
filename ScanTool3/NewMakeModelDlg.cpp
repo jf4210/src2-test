@@ -6,14 +6,15 @@
 #include "NewMakeModelDlg.h"
 #include "afxdialogex.h"
 #include "ScanModelPaperDlg.h"
-
+#include "NewMessageBox.h"
+#include "CreateModelDlg.h"
 // CMakeModelDlg 对话框
 
 IMPLEMENT_DYNAMIC(CNewMakeModelDlg, CDialog)
 
 CNewMakeModelDlg::CNewMakeModelDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CNewMakeModelDlg::IDD, pParent)
-	, m_nStatusSize(30), _pTWAINApp(NULL), m_pNewModelDlg(NULL)
+	, m_nStatusSize(30), _pTWAINApp(NULL), m_pNewModelDlg(NULL), m_pMakeModelDlg(NULL)
 {
 
 }
@@ -41,6 +42,7 @@ BEGIN_MESSAGE_MAP(CNewMakeModelDlg, CDialog)
 	ON_WM_DESTROY()
 	ON_MESSAGE(MSG_SCAN_DONE, &CNewMakeModelDlg::ScanDone)
 	ON_MESSAGE(MSG_SCAN_ERR, &CNewMakeModelDlg::ScanErr)
+	ON_BN_CLICKED(IDC_BTN_NewMakeModel, &CNewMakeModelDlg::OnBnClickedBtnNewmakemodel)
 END_MESSAGE_MAP()
 
 
@@ -53,10 +55,13 @@ BOOL CNewMakeModelDlg::OnInitDialog()
 
 	InitUI();
 	SetFontSize(m_nStatusSize);
-//	m_comboSubject.AdjustDroppedWidth();
+	m_comboSubject.AdjustDroppedWidth();
 
 	InitExamData();
-	
+	LoadSubjectModel(_pCurrSub_);
+
+	//加载模板
+
 	InitCtrlPosition();
 
 
@@ -144,6 +149,10 @@ void CNewMakeModelDlg::InitCtrlPosition()
 	if (m_pNewModelDlg && m_pNewModelDlg->GetSafeHwnd())
 	{
 		m_pNewModelDlg->MoveWindow(m_rtChild);
+	}
+	if (m_pMakeModelDlg && m_pMakeModelDlg->GetSafeHwnd())
+	{
+		m_pMakeModelDlg->MoveWindow(m_rtChild);
 	}
 //	Invalidate();
 }
@@ -234,7 +243,11 @@ void CNewMakeModelDlg::InitUI()
 
 	m_pNewModelDlg = new CNewModelDlg();
 	m_pNewModelDlg->Create(CNewModelDlg::IDD, this);
-	m_pNewModelDlg->ShowWindow(SW_SHOW);
+	m_pNewModelDlg->ShowWindow(SW_HIDE);
+
+	m_pMakeModelDlg = new CMakeModelDlg();
+	m_pMakeModelDlg->Create(CMakeModelDlg::IDD, this);
+	m_pMakeModelDlg->ShowWindow(SW_SHOW);
 
 	CRect rc;
 	::SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
@@ -276,6 +289,41 @@ void CNewMakeModelDlg::InitExamData()
 	UpdateData(FALSE);
 }
 
+pMODEL CNewMakeModelDlg::LoadSubjectModel(pEXAM_SUBJECT pSubModel)
+{
+	if (!pSubModel)
+		return NULL;
+
+	if (pSubModel->strModelName.empty())
+		return NULL;
+
+	USES_CONVERSION;
+	std::string strModelPath = T2A(g_strCurrentPath + _T("Model"));
+	strModelPath = g_strModelSavePath + "\\" + pSubModel->strModelName;	//gb2312
+	std::string strBaseModelName;
+	try
+	{
+		Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(pSubModel->strModelName));
+		if (!fileModel.exists())
+			return NULL;
+		
+		Poco::Path pathModel(CMyCodeConvert::Gb2312ToUtf8(pSubModel->strModelName));
+		strBaseModelName = CMyCodeConvert::Utf8ToGb2312(pathModel.getBaseName());
+	}
+	catch (Poco::Exception& e)
+	{
+	}
+
+	CZipObj zipObj;
+	zipObj.setLogger(g_pLogger);
+	zipObj.UnZipFile(A2T(strModelPath.c_str()));
+
+	CString strModelFilePath = g_strCurrentPath + _T("Model\\") + A2T(strBaseModelName.c_str());
+	pMODEL pModel = LoadModelFile(strModelFilePath);
+
+	return pModel;
+}
+
 void CNewMakeModelDlg::OnBnClickedBtnScanpaper()
 {
 	if (m_comboSubject.GetCurSel() >= 0)
@@ -283,7 +331,7 @@ void CNewMakeModelDlg::OnBnClickedBtnScanpaper()
 	else
 		_pCurrSub_ = NULL;
 
-	CScanModelPaperDlg dlg;
+	CScanModelPaperDlg dlg(this);
 	dlg.SetScanSrc(m_vecScanSrc);
 	dlg.DoModal();
 }
@@ -332,6 +380,11 @@ void CNewMakeModelDlg::OnDestroy()
 		SAFE_RELEASE(m_pNewModelDlg);
 	}
 
+	if (m_pMakeModelDlg)
+	{
+		m_pMakeModelDlg->DestroyWindow();
+		SAFE_RELEASE(m_pMakeModelDlg);
+	}
 
 //	::WaitForSingleObject(m_scanThread.m_hThread, INFINITE);
 }
@@ -368,3 +421,27 @@ LRESULT CNewMakeModelDlg::ScanErr(WPARAM wParam, LPARAM lParam)
 	}
 	return 1;
 }
+
+void CNewMakeModelDlg::OnBnClickedBtnNewmakemodel()
+{
+	if (m_comboSubject.GetCurSel() >= 0)
+		_pCurrSub_ = (pEXAM_SUBJECT)m_comboSubject.GetItemDataPtr(m_comboSubject.GetCurSel());
+	else
+		_pCurrSub_ = NULL;
+
+	if (!_pCurrSub_)
+	{
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "科目信息为空");
+		dlg.DoModal();
+		return;
+	}
+
+	CCreateModelDlg dlg(this);
+	dlg.DoModal();
+	if (dlg.m_nSearchType == 1)
+		m_strScanPicPath = dlg.m_strScanSavePath;
+
+
+}
+

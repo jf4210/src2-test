@@ -170,18 +170,22 @@ void CTransparentStatic::OnPaint()
 		m_font.GetLogFont(&logfont);
 		int nCharW = logfont.lfWidth;
 		nSingleCount = client_rect.Width() / nCharW - 1;
-		int nLen = szText.GetLength() * sizeof(TCHAR);
+		int nLen = szText.GetLength()/* * sizeof(TCHAR)*/;
 		nLines = nLen / nSingleCount + 1;
 		if (nLines > 1)
+		{
 			m_bMultiLine = TRUE;
+		}
 		else
+		{
 			m_bMultiLine = FALSE;
+		}
 	}
 
 	DWORD dwFormat;
-	if (m_bLeftAlign)
+	if (m_bLeftAlign)		//m_bLeftAlign
 		dwFormat = DT_LEFT | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS;
-	else if (m_bCenterAlign)
+	else if (m_bCenterAlign)	//m_bCenterAlign
 		dwFormat = DT_CENTER | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS;
 	else
 		dwFormat = DT_RIGHT | DT_NOPREFIX | DT_VCENTER | DT_END_ELLIPSIS;
@@ -197,11 +201,16 @@ void CTransparentStatic::OnPaint()
 		LOGFONT	logfont;
 		if(m_font.GetSafeHandle())
 		{
-			for (int i = 0; i < nLines; i++)
+// 			for (int i = 0; i < nLines; i++)
+// 			{
+// 				szText.Insert(nSingleCount * (i + 1) / sizeof(TCHAR), _T("\r\n"));
+// 			}
+			for (int i = 1; i < nLines; i++)
 			{
-				szText.Insert(nSingleCount * (i + 1), _T("\r\n"));
+				szText.Insert(nSingleCount * i / sizeof(TCHAR) - 1, _T("\r\n"));
 			}
 			dc.DrawText(szText, client_rect, DT_WORDBREAK | DT_CENTER | DT_VCENTER);	//DT_WORDBREAK | DT_LEFT /*| DT_VCENTER*//*DT_WORDBREAK*/
+//			dc.DrawText(szText, client_rect, DT_WORDBREAK | DT_VCENTER | DT_VCENTER);	//DT_WORDBREAK | DT_LEFT /*| DT_VCENTER*//*DT_WORDBREAK*/
 		}
 		else
 			dc.DrawText(szText, client_rect, DT_WORDBREAK | DT_CENTER | DT_VCENTER/*DT_WORDBREAK*/);

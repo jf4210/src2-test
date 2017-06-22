@@ -365,7 +365,7 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 							std::string strScanStatus;
 							if (examSubject.nScaned)
 							{
-								strScanStatus = "OK";
+								strScanStatus = "已扫";
 							}
 							else
 							{
@@ -396,7 +396,7 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 								std::string strScanStatus;
 								if (examSubject.nScaned)
 								{
-									strScanStatus = "OK";
+									strScanStatus = "已扫";
 									int nCount = m_lcBmk.GetItemCount();
 									if (!bInsertItem)
 									{
@@ -455,7 +455,7 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 						std::string strScanStatus;
 						if (examSubject.nScaned)
 						{
-							strScanStatus = "OK";
+							strScanStatus = "已扫";
 						}
 						else
 						{
@@ -480,7 +480,7 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 							std::string strScanStatus;
 							if (examSubject.nScaned)
 							{
-								strScanStatus = "OK";
+								strScanStatus = "已扫";
 								int nCount = m_lcBmk.GetItemCount();
 								char szCount[10] = { 0 };
 								sprintf_s(szCount, "%d", nCount + 1);

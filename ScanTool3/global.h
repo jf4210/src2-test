@@ -89,6 +89,7 @@
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define	 TEST_MODEL_NAME	//模板名称测试
 //	#define Test_Data			//测试数据，测试模式
+//	#define TEST_TIP_SHOW		//提示信息显示测试
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
 #else	//release版本
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
@@ -103,6 +104,9 @@
 #endif
 
 #define TEST_NEW_MAKEMODEL		//新模板测试
+#ifdef TEST_NEW_MAKEMODEL
+	#define MAKEMODEL_IN_NEW
+#endif
 
 #define Test_RecogOmr3			//第3种OMR识别方法测试
 #define TEST_MODIFY_ZKZH_CHIld	//将修改准考证号窗口嵌入当做子窗口，不做弹出窗口

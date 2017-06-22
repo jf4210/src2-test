@@ -14,7 +14,7 @@ class CScanModelPaperDlg : public CTipBaseDlg
 	DECLARE_DYNAMIC(CScanModelPaperDlg)
 
 public:
-	CScanModelPaperDlg(CWnd* pParent = NULL);   // 标准构造函数
+	CScanModelPaperDlg(void* pDlg, CWnd* pParent = NULL);   // 标准构造函数
 	virtual ~CScanModelPaperDlg();
 
 // 对话框数据
@@ -35,6 +35,7 @@ private:
 	void	SetScanSrcInfo(std::vector<CString>& vec);
 	//----------------------
 
+	void*			m_pNotifyDlg;
 	bool			m_bAdvancedScan;
 
 	int				m_nStatusSize;			//状态栏字体大小

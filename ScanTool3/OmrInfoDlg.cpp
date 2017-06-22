@@ -47,6 +47,14 @@ BEGIN_MESSAGE_MAP(COmrInfoDlg, CDialog)
 	ON_BN_CLICKED(IDC_RADIO_Direct_FX, &COmrInfoDlg::OnBnClickedRadioDirectFx)
 	ON_BN_CLICKED(IDC_RADIO_TX_Single, &COmrInfoDlg::OnBnClickedRadioTxSingle)
 	ON_BN_CLICKED(IDC_RADIO_TX_Multi, &COmrInfoDlg::OnBnClickedRadioTxMulti)
+	ON_WM_CTLCOLOR()
+	ON_WM_ERASEBKGND()
+	ON_STN_CLICKED(IDC_STATIC_TH_H, &COmrInfoDlg::OnStnClickedStaticThH)
+	ON_STN_CLICKED(IDC_STATIC_TH_V, &COmrInfoDlg::OnStnClickedStaticThV)
+	ON_STN_CLICKED(IDC_STATIC_XX_H, &COmrInfoDlg::OnStnClickedStaticXxH)
+	ON_STN_CLICKED(IDC_STATIC_XX_V, &COmrInfoDlg::OnStnClickedStaticXxV)
+	ON_STN_CLICKED(IDC_STATIC_Direct_ZX, &COmrInfoDlg::OnStnClickedStaticDirectZx)
+	ON_STN_CLICKED(IDC_STATIC_Direct_FX, &COmrInfoDlg::OnStnClickedStaticDirectFx)
 END_MESSAGE_MAP()
 
 BOOL COmrInfoDlg::OnInitDialog()
@@ -116,11 +124,19 @@ void COmrInfoDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_RADIO_TH_H)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_RADIO_TH_H)->MoveWindow(nLeftGap + nStaticWidth + nGap, nTopGap, nRadioWidth, nStaticHeight);
+		GetDlgItem(IDC_RADIO_TH_H)->MoveWindow(nLeftGap + nStaticWidth + nGap, nTopGap, 15, nStaticHeight);
+	}
+	if (GetDlgItem(IDC_STATIC_TH_H)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_TH_H)->MoveWindow(nLeftGap + nStaticWidth + nGap + 15 + nGap, nTopGap, nRadioWidth - 15, nStaticHeight);
 	}
 	if (GetDlgItem(IDC_RADIO_TH_V)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_RADIO_TH_V)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap, nTopGap, nRadioWidth, nStaticHeight);
+		GetDlgItem(IDC_RADIO_TH_V)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap, nTopGap, 15, nStaticHeight);
+	}
+	if (GetDlgItem(IDC_STATIC_TH_V)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_TH_V)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap + 15 + nGap, nTopGap, nRadioWidth - 15, nStaticHeight);
 	}
 	nTopGap = nTopGap + nStaticHeight + nGap;
 	if (GetDlgItem(IDC_STATIC_XX)->GetSafeHwnd())
@@ -131,9 +147,17 @@ void COmrInfoDlg::InitCtrlPosition()
 	{
 		GetDlgItem(IDC_RADIO_XX_H)->MoveWindow(nLeftGap + nStaticWidth + nGap, nTopGap, nRadioWidth, nStaticHeight);
 	}
+	if (GetDlgItem(IDC_STATIC_XX_H)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_XX_H)->MoveWindow(nLeftGap + nStaticWidth + nGap + 15 + nGap, nTopGap, nRadioWidth - 15, nStaticHeight);
+	}
 	if (GetDlgItem(IDC_RADIO_XX_V)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_RADIO_XX_V)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap, nTopGap, nRadioWidth, nStaticHeight);
+	}
+	if (GetDlgItem(IDC_STATIC_XX_V)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_XX_V)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap + 15 + nGap, nTopGap, nRadioWidth - 15, nStaticHeight);
 	}
 	nTopGap = nTopGap + nStaticHeight + nGap;
 	if (GetDlgItem(IDC_STATIC_Direct)->GetSafeHwnd())
@@ -144,9 +168,17 @@ void COmrInfoDlg::InitCtrlPosition()
 	{
 		GetDlgItem(IDC_RADIO_Direct_ZX)->MoveWindow(nLeftGap + nStaticWidth + nGap, nTopGap, nRadioWidth, nStaticHeight);
 	}
+	if (GetDlgItem(IDC_STATIC_Direct_ZX)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_Direct_ZX)->MoveWindow(nLeftGap + nStaticWidth + nGap + 15 + nGap, nTopGap, nRadioWidth - 15, nStaticHeight);
+	}
 	if (GetDlgItem(IDC_RADIO_Direct_FX)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_RADIO_Direct_FX)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap, nTopGap, nRadioWidth, nStaticHeight);
+	}
+	if (GetDlgItem(IDC_STATIC_Direct_FX)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_Direct_FX)->MoveWindow(nLeftGap + nStaticWidth + nGap + nRadioWidth + nGap + 15 + nGap, nTopGap, nRadioWidth - 15, nStaticHeight);
 	}
 	nTopGap = nTopGap + nStaticHeight + nGap;
 	int nPicOmrWidth = rcClient.Width() - nLeftGap - nRightGap;
@@ -408,5 +440,87 @@ void COmrInfoDlg::InitUI()
 	}
 }
 
+HBRUSH COmrInfoDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+
+	if (nCtlColor == CTLCOLOR_STATIC)
+	{
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
+	return hbr;
+}
 
 
+BOOL COmrInfoDlg::OnEraseBkgnd(CDC* pDC)
+{
+	CDialog::OnEraseBkgnd(pDC);
+
+	CRect rcClient;
+	GetClientRect(&rcClient);
+
+	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 242, 250
+
+
+	return TRUE;
+}
+
+
+void COmrInfoDlg::OnStnClickedStaticThH()
+{
+	if (m_nTHSel != 0)
+	{
+		m_nTHSel = 0;
+		ShowOmrPic();
+	}
+}
+
+void COmrInfoDlg::OnStnClickedStaticThV()
+{
+	if (m_nTHSel != 1)
+	{
+		m_nTHSel = 1;
+		ShowOmrPic();
+	}
+}
+
+
+void COmrInfoDlg::OnStnClickedStaticXxH()
+{
+	if (m_nXXSel != 0)
+	{
+		m_nXXSel = 0;
+		ShowOmrPic();
+	}
+}
+
+
+void COmrInfoDlg::OnStnClickedStaticXxV()
+{
+	if (m_nXXSel != 1)
+	{
+		m_nXXSel = 1;
+		ShowOmrPic();
+	}
+}
+
+
+void COmrInfoDlg::OnStnClickedStaticDirectZx()
+{
+	if (m_nDirectSel != 0)
+	{
+		m_nDirectSel = 0;
+		ShowOmrPic();
+	}
+}
+
+
+void COmrInfoDlg::OnStnClickedStaticDirectFx()
+{
+	if (m_nDirectSel != 1)
+	{
+		m_nDirectSel = 1;
+		ShowOmrPic();
+	}
+}
