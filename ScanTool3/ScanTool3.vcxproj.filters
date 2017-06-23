@@ -166,6 +166,15 @@
     <Filter Include="模板界面\新建模板窗口">
       <UniqueIdentifier>{8c88448f-51e9-41bf-88b2-b8dcfc652cc0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="模板界面\考试信息列表">
+      <UniqueIdentifier>{cdfb1a2b-cba2-44d4-b252-41bf165ca164}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="模板界面\新建模板窗口\本地图片选择窗口">
+      <UniqueIdentifier>{2390a7a2-83e2-4a02-97aa-afd11edd54b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="模板界面\新模板保存窗口">
+      <UniqueIdentifier>{615b50b9-e604-4892-98fe-57c1f7867746}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -429,6 +438,12 @@
     <ClInclude Include="CreateModelDlg.h">
       <Filter>模板界面\新建模板窗口</Filter>
     </ClInclude>
+    <ClInclude Include="ExamInfoDlg.h">
+      <Filter>模板界面\考试信息列表</Filter>
+    </ClInclude>
+    <ClInclude Include="LocalPicSelDlg.h">
+      <Filter>模板界面\新建模板窗口\本地图片选择窗口</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -661,6 +676,12 @@
     </ClCompile>
     <ClCompile Include="CreateModelDlg.cpp">
       <Filter>模板界面\新建模板窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ExamInfoDlg.cpp">
+      <Filter>模板界面\考试信息列表</Filter>
+    </ClCompile>
+    <ClCompile Include="LocalPicSelDlg.cpp">
+      <Filter>模板界面\新建模板窗口\本地图片选择窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

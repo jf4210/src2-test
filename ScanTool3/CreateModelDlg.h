@@ -1,14 +1,14 @@
 #pragma once
 #include <vector>
 #include "TipBaseDlg.h"
-
+#include "ModelInfoDlg.h"
 
 // CCreateModelDlg 对话框
-typedef struct tagPath
-{
-	CString strName;
-	CString strPath;
-}MODELPATH;
+// typedef struct tagPath
+// {
+// 	CString strName;
+// 	CString strPath;
+// }MODELPATH;
 
 class CCreateModelDlg : public CTipBaseDlg
 {
@@ -21,7 +21,7 @@ public:
 // 对话框数据
 	enum { IDD = IDD_CREATEMODELDLG };
 
-	int		m_nSearchType;
+	int		m_nSearchType;	//1-从扫描仪获取图像，2-从本地选择图片，3-从服务器下载图像
 	CString			m_strScanSavePath;
 	std::vector<MODELPATH> m_vecPath;
 

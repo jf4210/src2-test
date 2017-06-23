@@ -14,7 +14,7 @@ IMPLEMENT_DYNAMIC(CNewMakeModelDlg, CDialog)
 
 CNewMakeModelDlg::CNewMakeModelDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CNewMakeModelDlg::IDD, pParent)
-	, m_nStatusSize(30), _pTWAINApp(NULL), m_pNewModelDlg(NULL), m_pMakeModelDlg(NULL)
+	, m_nStatusSize(30), _pTWAINApp(NULL), m_pNewModelDlg(NULL), m_pMakeModelDlg(NULL), m_pModel(NULL)
 {
 
 }
@@ -30,6 +30,7 @@ void CNewMakeModelDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BTN_SaveModel, m_bmpBtnSave);
 	DDX_Control(pDX, IDC_BTN_UploadPic, m_bmpBtnUpload);
 	DDX_Control(pDX, IDC_BTN_InputPic, m_bmpBtnDown);
+	DDX_Control(pDX, IDC_BTN_NewMakeModel, m_bmpBtnNew);
 	DDX_Control(pDX, IDC_COMBO_MakeModel_Subject, m_comboSubject);
 }
 
@@ -44,6 +45,7 @@ BEGIN_MESSAGE_MAP(CNewMakeModelDlg, CDialog)
 	ON_MESSAGE(MSG_SCAN_ERR, &CNewMakeModelDlg::ScanErr)
 	ON_BN_CLICKED(IDC_BTN_NewMakeModel, &CNewMakeModelDlg::OnBnClickedBtnNewmakemodel)
 	ON_CBN_SELCHANGE(IDC_COMBO_MakeModel_Subject, &CNewMakeModelDlg::OnCbnSelchangeComboMakemodelSubject)
+	ON_BN_CLICKED(IDC_BTN_SaveModel, &CNewMakeModelDlg::OnBnClickedBtnSavemodel)
 END_MESSAGE_MAP()
 
 
@@ -60,10 +62,10 @@ BOOL CNewMakeModelDlg::OnInitDialog()
 
 	InitExamData();
 
-	SAFE_RELEASE(_pModel_);
-	_pModel_ = LoadSubjectModel(_pCurrSub_);
+	SAFE_RELEASE(m_pModel);
+	m_pModel = LoadSubjectModel(_pCurrSub_);
 	if (m_pMakeModelDlg)
-		m_pMakeModelDlg->ReInitModel(_pModel_);
+		m_pMakeModelDlg->ReInitModel(m_pModel);
 	//加载模板
 
 	InitCtrlPosition();
@@ -112,9 +114,10 @@ void CNewMakeModelDlg::InitCtrlPosition()
 
 	int nCurrLeft = nLeftGap;
 	int nCurrTop = nTopGap;
-	if (m_bmpBtnScan.GetSafeHwnd())
+
+	if (m_bmpBtnNew.GetSafeHwnd())
 	{
-		m_bmpBtnScan.MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
+		m_bmpBtnNew.MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
 		nCurrLeft += (nBtnW + nGap);
 	}
 	if (m_bmpBtnSave.GetSafeHwnd())
@@ -125,6 +128,11 @@ void CNewMakeModelDlg::InitCtrlPosition()
 	if (m_bmpBtnUpload.GetSafeHwnd())
 	{
 		m_bmpBtnUpload.MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
+		nCurrLeft += (nBtnW + nGap);
+	}
+	if (m_bmpBtnScan.GetSafeHwnd())
+	{
+		m_bmpBtnScan.MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
 		nCurrLeft += (nBtnW + nGap);
 	}
 	if (m_bmpBtnDown.GetSafeHwnd())
@@ -301,8 +309,6 @@ pMODEL CNewMakeModelDlg::LoadSubjectModel(pEXAM_SUBJECT pSubModel)
 	if (!pSubModel)
 		return NULL;
 
-	pSubModel->strModelName = "2017-02-05武汉四中高三文综考试_文综_N_201_272.mod";
-
 	if (pSubModel->strModelName.empty())
 		return NULL;
 
@@ -343,6 +349,7 @@ void CNewMakeModelDlg::OnBnClickedBtnScanpaper()
 	CScanModelPaperDlg dlg(this);
 	dlg.SetScanSrc(m_vecScanSrc);
 	dlg.DoModal();
+	m_strScanPicPath = dlg.m_strSavePath;
 }
 
 
@@ -378,7 +385,7 @@ void CNewMakeModelDlg::OnDestroy()
 	CDialog::OnDestroy();
 
 //	m_scanThread.PostThreadMessage(WM_QUIT, NULL, NULL);
-	SAFE_RELEASE(_pModel_);
+	SAFE_RELEASE(m_pModel);
 	if (_pTWAINApp)
 	{
 		_pTWAINApp->exit();
@@ -406,10 +413,25 @@ LRESULT CNewMakeModelDlg::ScanDone(WPARAM wParam, LPARAM lParam)
 	{
 		TRACE("扫描完成消息。%s\n", pResult->strResult.c_str());
 		g_pLogger->information(pResult->strResult);
+
+		USES_CONVERSION;
+		MODELPATH picInfo;
+		picInfo.strName = A2T(pResult->strPicName.c_str());
+		picInfo.strPath = A2T(pResult->strPicPath.c_str());
+		m_vecModelPicPath.push_back(picInfo);
 		
 		if (pResult->bScanOK)	//扫描完成
 		{
-			
+			CNewMessageBox dlg;
+			dlg.setShowInfo(1, 1, "扫描完成");
+			dlg.DoModal();
+// 			CString strSelect = _T("/root,");
+// 			strSelect.Append(m_strScanPicPath);
+// 			ShellExecute(NULL, _T("open"), _T("explorer.exe"), strSelect, NULL, SW_SHOWNORMAL);
+
+			m_pMakeModelDlg->CreateNewModel(m_vecModelPicPath);
+			m_pModel = m_pMakeModelDlg->m_pModel;
+			m_bmpBtnNew.EnableWindow(FALSE);
 		}
 
 		delete pResult;
@@ -424,8 +446,13 @@ LRESULT CNewMakeModelDlg::ScanErr(WPARAM wParam, LPARAM lParam)
 	if (pResult)
 	{
 		TRACE("扫描错误。%s\n", pResult->strResult.c_str());
-// 		m_pScanProcessDlg->UpdateChildInfo(pResult->bScanOK);
-// 		UpdateChildDlgInfo();
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "扫描失败");
+		dlg.DoModal();
+
+		m_vecModelPicPath.clear();
+		m_bmpBtnNew.EnableWindow(TRUE);
+
 		delete pResult;
 		pResult = NULL;
 	}
@@ -446,12 +473,31 @@ void CNewMakeModelDlg::OnBnClickedBtnNewmakemodel()
 		dlg.DoModal();
 		return;
 	}
+	if (m_pModel)
+	{
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "当前科目模板已存在，无法创建");
+		dlg.DoModal();
+		return;
+	}
+
+	m_vecModelPicPath.clear();
 
 	CCreateModelDlg dlg(this);
-	dlg.DoModal();
-	if (dlg.m_nSearchType == 1)
-		m_strScanPicPath = dlg.m_strScanSavePath;
+	if (dlg.DoModal() != IDOK)
+		return;
 
+	if (dlg.m_nSearchType == 1)
+	{
+		m_strScanPicPath = dlg.m_strScanSavePath;
+		m_bmpBtnNew.EnableWindow(FALSE);
+	}
+	else if (dlg.m_nSearchType == 2)
+	{
+		m_pMakeModelDlg->CreateNewModel(dlg.m_vecPath);
+		m_pModel = m_pMakeModelDlg->m_pModel;
+		m_bmpBtnNew.EnableWindow(FALSE);
+	}
 
 }
 
@@ -464,10 +510,25 @@ void CNewMakeModelDlg::OnCbnSelchangeComboMakemodelSubject()
 	if (_pCurrSub_ != pSubject)
 	{
 		_pCurrSub_ = pSubject;
+		m_bmpBtnNew.EnableWindow(TRUE);
 
-		SAFE_RELEASE(_pModel_);
-		_pModel_ = LoadSubjectModel(_pCurrSub_);
+		SAFE_RELEASE(m_pModel);
+		m_pModel = LoadSubjectModel(_pCurrSub_);
 		if (m_pMakeModelDlg)
-			m_pMakeModelDlg->ReInitModel(_pModel_);
+			m_pMakeModelDlg->ReInitModel(m_pModel);
 	}
+}
+
+
+void CNewMakeModelDlg::OnBnClickedBtnSavemodel()
+{
+	if (!m_pModel)
+	{
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "请先创建模板！");
+		dlg.DoModal();
+		return;
+	}
+
+	m_pMakeModelDlg->SaveNewModel();
 }

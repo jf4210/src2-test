@@ -28,7 +28,7 @@ void CRecogInfoDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_Threshold, m_nThresholdVal);
 	DDX_Text(pDX, IDC_EDIT_ThresholdPercent, m_fThresholdValPercent);
 	DDX_Text(pDX, IDC_EDIT_CPType, m_strCPTypeName);
-	DDX_Control(pDX, IDC_STATIC_Group, m_GroupStatic);
+//	DDX_Control(pDX, IDC_STATIC_Group, m_GroupStatic);
 }
 
 BEGIN_MESSAGE_MAP(CRecogInfoDlg, CDialog)
@@ -45,7 +45,7 @@ BOOL CRecogInfoDlg::OnInitDialog()
 	UpdateData(FALSE);
 	InitCtrlPosition();
 
-	m_GroupStatic.SetBackgroundColor(RGB(255, 255, 255));
+//	m_GroupStatic.SetBackgroundColor(RGB(255, 255, 255));
 
 	return TRUE;
 }
@@ -114,6 +114,7 @@ void CRecogInfoDlg::InitCtrlPosition()
 		nTopInGroup = nCurrentTop + nGroupStaticHeight + nGap + nStaticHeight + nGap;
 		GetDlgItem(IDC_BTN_SaveRecogInfo)->MoveWindow(nBtnInGroup_L, nTopInGroup, nBtnInGroup_W, nBtnInGroup_H);
 	}
+	Invalidate();
 }
 
 // CRecogInfoDlg 消息处理程序

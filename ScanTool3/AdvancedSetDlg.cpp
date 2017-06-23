@@ -12,7 +12,7 @@
 IMPLEMENT_DYNAMIC(CAdvancedSetDlg, CDialog)
 
 CAdvancedSetDlg::CAdvancedSetDlg(pMODEL	pModel, ST_SENSITIVE_PARAM stSensitiveParam, CWnd* pParent /*=NULL*/)
-	: CDialog(CAdvancedSetDlg::IDD, pParent)
+: CTipBaseDlg(CAdvancedSetDlg::IDD, pParent)
 	, m_pModel(pModel), m_nScanDpi(200), m_nAutoCut(1), m_nScanPaperSize(1), m_nScanType(2), _stSensitiveParam(stSensitiveParam)
 {
 
@@ -24,7 +24,7 @@ CAdvancedSetDlg::~CAdvancedSetDlg()
 
 void CAdvancedSetDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
+	CTipBaseDlg::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_COMBO_ScanDpi, m_combo_ScanDpi);
 	DDX_Control(pDX, IDC_COMBO_PaperSize, m_combo_PaperSize);
 	DDX_Control(pDX, IDC_CHK_AutoCut, m_chkAutoCut);
@@ -38,7 +38,7 @@ void CAdvancedSetDlg::DoDataExchange(CDataExchange* pDX)
 
 BOOL CAdvancedSetDlg::OnInitDialog()
 {
-	CDialog::OnInitDialog();
+	CTipBaseDlg::OnInitDialog();
 
 	m_Spin_Zkzh.SetBuddy(GetDlgItem(IDC_EDIT_Sensitivity_ZKZH));
 	m_Spin_Zkzh.SetRange(1, 50);
@@ -54,7 +54,7 @@ BOOL CAdvancedSetDlg::OnInitDialog()
 	return TRUE;
 }
 
-BEGIN_MESSAGE_MAP(CAdvancedSetDlg, CDialog)
+BEGIN_MESSAGE_MAP(CAdvancedSetDlg, CTipBaseDlg)
 	ON_CBN_SELCHANGE(IDC_COMBO_ScanDpi, &CAdvancedSetDlg::OnCbnSelchangeComboScandpi)
 	ON_BN_CLICKED(IDOK, &CAdvancedSetDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDC_CHK_AutoCut, &CAdvancedSetDlg::OnBnClickedChkAutocut)
@@ -63,6 +63,7 @@ BEGIN_MESSAGE_MAP(CAdvancedSetDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_Def_Param, &CAdvancedSetDlg::OnBnClickedBtnDefParam)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_Zkzh, &CAdvancedSetDlg::OnDeltaposSpinZkzh)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_Omr, &CAdvancedSetDlg::OnDeltaposSpinOmr)
+	ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
 
@@ -154,7 +155,7 @@ void CAdvancedSetDlg::OnCbnSelchangeComboScandpi()
 void CAdvancedSetDlg::OnBnClickedOk()
 {
 	UpdateData(TRUE);
-	CDialog::OnOK();
+	CTipBaseDlg::OnOK();
 }
 
 void CAdvancedSetDlg::OnBnClickedChkAutocut()
@@ -231,4 +232,21 @@ void CAdvancedSetDlg::OnDeltaposSpinOmr(NMHDR *pNMHDR, LRESULT *pResult)
 			m_nSensitiveOmr = 50;
 	}
 	UpdateData(false);
+}
+
+
+HBRUSH CAdvancedSetDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CTipBaseDlg::OnCtlColor(pDC, pWnd, nCtlColor);
+
+	UINT CurID = pWnd->GetDlgCtrlID();
+	if (CurID == IDC_CHK_AutoCut)
+	{
+		HBRUSH hMYbr = ::CreateSolidBrush(RGB(255, 255, 255));	//62, 147, 254
+
+		pDC->SetBkMode(TRANSPARENT);
+
+		return hMYbr;
+	}
+	return hbr;
 }

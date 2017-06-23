@@ -492,5 +492,12 @@ void CScanModelPaperDlg::OnBnClickedBtnMakemodelScan()
 		dlg.DoModal();
 	}
 
+	char szRet[20] = { 0 };
+	sprintf_s(szRet, "%d", sel);
+	WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "scanSrc", szRet);
+	memset(szRet, 0, 20);
+	sprintf_s(szRet, "%d", nDuplex);
+	WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "scanDuplex", szRet);
+
 	OnOK();
 }

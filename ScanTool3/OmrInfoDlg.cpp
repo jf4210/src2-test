@@ -333,6 +333,7 @@ void COmrInfoDlg::ShowOmrPic()
 	}
 	m_src_img = cv::imread((std::string)(CT2CA)strPicPath);
 	m_picOmrShow.ShowImage(m_src_img, 0);
+	m_picOmrShow.Invalidate();
 }
 
 BOOL COmrInfoDlg::PreTranslateMessage(MSG* pMsg)

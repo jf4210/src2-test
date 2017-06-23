@@ -42,6 +42,8 @@ BEGIN_MESSAGE_MAP(ElectOmrDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_DEL, &ElectOmrDlg::OnBnClickedBtnDel)
 	ON_BN_CLICKED(IDC_BTN_ElectOmr_SAVE, &ElectOmrDlg::OnBnClickedBtnSave)
 	ON_CBN_SELCHANGE(IDC_COMBO_Group, &ElectOmrDlg::OnCbnSelchangeComboGroup)
+	ON_WM_CTLCOLOR()
+	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 
@@ -376,4 +378,30 @@ void ElectOmrDlg::showUI(int nGroup)
 	}
 	if (!bFind)
 		m_comboGroup.SetCurSel(-1);
+}
+
+
+HBRUSH ElectOmrDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+
+	if (nCtlColor == CTLCOLOR_STATIC)
+	{
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
+	return hbr;
+}
+
+
+BOOL ElectOmrDlg::OnEraseBkgnd(CDC* pDC)
+{
+	CDialog::OnEraseBkgnd(pDC);
+
+	CRect rcClient;
+	GetClientRect(&rcClient);
+
+	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 242, 250
+
+	return TRUE;
 }

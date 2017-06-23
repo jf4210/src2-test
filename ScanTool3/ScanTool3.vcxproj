@@ -135,10 +135,12 @@
     <ClInclude Include="ctrl\XPGroupBox.h" />
     <ClInclude Include="ElectOmrDlg.h" />
     <ClInclude Include="ExamBmkRecordDlg.h" />
+    <ClInclude Include="ExamInfoDlg.h" />
     <ClInclude Include="ExamInfoMgrDlg.h" />
     <ClInclude Include="FileUpLoad.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="IconEdit.h" />
+    <ClInclude Include="LocalPicSelDlg.h" />
     <ClInclude Include="LoginDlg.h" />
     <ClInclude Include="MakeModelDlg.h" />
     <ClInclude Include="ModelInfoDlg.h" />
@@ -239,10 +241,12 @@
     <ClCompile Include="ctrl\XPGroupBox.cpp" />
     <ClCompile Include="ElectOmrDlg.cpp" />
     <ClCompile Include="ExamBmkRecordDlg.cpp" />
+    <ClCompile Include="ExamInfoDlg.cpp" />
     <ClCompile Include="ExamInfoMgrDlg.cpp" />
     <ClCompile Include="FileUpLoad.cpp" />
     <ClCompile Include="global.cpp" />
     <ClCompile Include="IconEdit.cpp" />
+    <ClCompile Include="LocalPicSelDlg.cpp" />
     <ClCompile Include="LoginDlg.cpp" />
     <ClCompile Include="MakeModelDlg.cpp" />
     <ClCompile Include="ModelInfoDlg.cpp" />

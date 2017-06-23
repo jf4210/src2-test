@@ -1,5 +1,6 @@
 #pragma once
 #include "modelInfo.h"
+#include "TipBaseDlg.h"
 
 // CAdvancedSetDlg ¶Ô»°¿ò
 typedef struct _SensitiveParam_
@@ -17,7 +18,7 @@ typedef struct _SensitiveParam_
 	}
 }ST_SENSITIVE_PARAM;
 
-class CAdvancedSetDlg : public CDialog
+class CAdvancedSetDlg : public CTipBaseDlg
 {
 	DECLARE_DYNAMIC(CAdvancedSetDlg)
 
@@ -65,4 +66,5 @@ public:
 	afx_msg void OnBnClickedBtnDefParam();
 	afx_msg void OnDeltaposSpinZkzh(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnDeltaposSpinOmr(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

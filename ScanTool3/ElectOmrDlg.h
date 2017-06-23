@@ -47,4 +47,6 @@ public:
 	afx_msg void OnBnClickedBtnDel();
 	afx_msg void OnBnClickedBtnSave();
 	afx_msg void OnCbnSelchangeComboGroup();
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };

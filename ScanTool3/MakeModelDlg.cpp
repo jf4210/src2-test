@@ -16,6 +16,7 @@
 //#include "./pdf2jpg/MuPDFConvert.h"
 #include "AdvancedSetDlg.h"
 #include "ScanModelPaperDlg.h"
+#include "ExamInfoDlg.h"
 
 using namespace std;
 using namespace cv;
@@ -365,6 +366,7 @@ void CMakeModelDlg::InitUI()
 
 	//删除表头科目部分，重新插入科目
 	while (m_cpListCtrl.DeleteColumn(0));
+	m_cpListCtrl.DeleteAllItems();
 	m_cpListCtrl.SetExtendedStyle(m_cpListCtrl.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_cpListCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36);
 	m_cpListCtrl.InsertColumn(1, _T("位置信息"), LVCFMT_CENTER, 120);
@@ -439,6 +441,7 @@ void CMakeModelDlg::InitUI()
 	m_pElectOmrDlg->Create(ElectOmrDlg::IDD, this);
 	m_pElectOmrDlg->ShowWindow(SW_HIDE);
 
+#if 0
 	CRect rc;
 	::SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
 	int sx = rc.Width();
@@ -449,7 +452,7 @@ void CMakeModelDlg::InitUI()
 		sy = MAX_DLG_HEIGHT;
 	MoveWindow(0, 0, sx, sy);
 	CenterWindow();
-
+#endif
 	InitCtrlPosition();
 }
 
@@ -512,7 +515,61 @@ void CMakeModelDlg::InitCtrlPosition()
 	{
 		m_pElectOmrDlg->MoveWindow(nLeftGap, nTopInGroup, nLeftCtrlWidth, nGroupHeight);
 	}
+#if 1
+	nCurrentTop = nCurrentTop + nGroupHeight + nGap;
 
+	int nBtnW = (nLeftCtrlWidth - nGap) / 2;
+	if (GetDlgItem(IDC_BTN_AdvancedSetting)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_AdvancedSetting)->MoveWindow(nLeftGap, nCurrentTop, nLeftCtrlWidth, nBtnHeigh);
+		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
+	}
+	if (GetDlgItem(IDC_BTN_SelPic)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_SelPic)->MoveWindow(nLeftGap, nCurrentTop, nBtnW, nBtnHeigh);
+	}
+	if (GetDlgItem(IDC_BTN_RESET)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_RESET)->MoveWindow(nLeftGap + nBtnW + nGap, nCurrentTop, nBtnW, nBtnHeigh);
+		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
+	}
+
+	if (GetDlgItem(IDC_BTN_New)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_New)->MoveWindow(nLeftGap, nCurrentTop, nBtnWidth, nBtnHeigh);
+	}
+	if (GetDlgItem(IDC_BTN_ScanModel)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_ScanModel)->MoveWindow(nLeftGap + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeigh);
+		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
+	}
+// 	if (GetDlgItem(IDC_BTN_SelPic)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_BTN_SelPic)->MoveWindow(nLeftGap, nCurrentTop, nBtnWidth, nBtnHeigh);
+// 		//		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
+// 	}
+// 	if (GetDlgItem(IDC_BTN_RESET)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_BTN_RESET)->MoveWindow(nLeftGap + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeigh);
+// 		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
+// 	}
+	if (GetDlgItem(IDC_BTN_MAKEMODEL_SAVE)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_MAKEMODEL_SAVE)->MoveWindow(nLeftGap, nCurrentTop, nBtnWidth, nBtnHeigh);
+		//		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
+	}
+// 	if (GetDlgItem(IDC_BTN_AdvancedSetting)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_BTN_AdvancedSetting)->MoveWindow(nLeftGap + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeigh);
+// 		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
+// 	}
+	if (GetDlgItem(IDC_BTN_ExitModelDlg)->GetSafeHwnd())
+	{
+		//		GetDlgItem(IDC_BTN_ExitModelDlg)->MoveWindow(nLeftGap, nCurrentTop, nBtnWidth, nBtnHeigh);
+		GetDlgItem(IDC_BTN_ExitModelDlg)->MoveWindow(nLeftGap + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeigh);
+		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
+	}
+#else
 	nCurrentTop = nCurrentTop + nGroupHeight + nGap;
 	if (GetDlgItem(IDC_BTN_New)->GetSafeHwnd())
 	{
@@ -552,6 +609,7 @@ void CMakeModelDlg::InitCtrlPosition()
 		GetDlgItem(IDC_BTN_ExitModelDlg)->MoveWindow(nLeftGap + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeigh);
 		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
 	}
+#endif
 	if (m_tabModelPicCtrl.GetSafeHwnd())
 	{
 		m_tabModelPicCtrl.MoveWindow(nLeftGap + nLeftCtrlWidth + nGap, nTopGap, cx - nLeftGap - nLeftCtrlWidth - nGap - nRightGap, cy - nTopGap - nBottomGap);
@@ -897,7 +955,6 @@ LRESULT CMakeModelDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
 
 void CMakeModelDlg::OnBnClickedBtnScanmodel()
 {
-
 	CScanModelPaperDlg dlg(this);
 	dlg.SetScanSrc(m_vecScanSrc);
 	dlg.DoModal();
@@ -1037,6 +1094,12 @@ void CMakeModelDlg::OnBnClickedBtnNew()
 	m_pModel = new MODEL;
 	m_pModel->nABModel = dlg.m_bABPaperModel;
 	m_pModel->nHasHead = dlg.m_bHasHead;
+
+	if (_pCurrExam_)
+		m_pModel->nExamID = _pCurrExam_->nExamID;
+	if (_pCurrSub_)
+		m_pModel->nSubjectID = _pCurrSub_->nSubjID;
+
 	InitConf();
 	
 	for (int i = 0; i < m_nModelPicNums; i++)
@@ -6564,6 +6627,10 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	CAdvancedSetDlg dlg(m_pModel, stSensitiveParam);
 	if (dlg.DoModal() != IDOK)
 		return;
+	if (!m_pModel)
+	{
+		return;
+	}
 
 	m_pModel->nScanDpi = dlg.m_nScanDpi;
 	m_pModel->nAutoCut = dlg.m_nAutoCut;
@@ -6600,7 +6667,6 @@ BOOL CMakeModelDlg::OnEraseBkgnd(CDC* pDC)
 
 	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 242, 250
 
-
 	return TRUE;
 }
 
@@ -6608,7 +6674,6 @@ BOOL CMakeModelDlg::OnEraseBkgnd(CDC* pDC)
 HBRUSH CMakeModelDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
 	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
-
 
 	UINT CurID = pWnd->GetDlgCtrlID();
 	if (CurID == IDC_STATIC_CPType || CurID == IDC_STATIC_List)
@@ -6621,7 +6686,7 @@ HBRUSH CMakeModelDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 void CMakeModelDlg::ReInitModel(pMODEL pModel)
 {
-	SAFE_RELEASE(m_pModel);
+//	SAFE_RELEASE(m_pModel);
 
 	m_pModel = pModel;
 	InitUI();
@@ -6630,6 +6695,13 @@ void CMakeModelDlg::ReInitModel(pMODEL pModel)
 	USES_CONVERSION;
 	if (m_pModel)
 	{
+		std::vector<pPaperModelInfo>::iterator itPaperModelInfo = m_vecPaperModelInfo.begin();
+		for (; itPaperModelInfo != m_vecPaperModelInfo.end();)
+		{
+			pPaperModelInfo pPaperModel = *itPaperModelInfo;
+			SAFE_RELEASE(pPaperModel);
+			itPaperModelInfo = m_vecPaperModelInfo.erase(itPaperModelInfo);
+		}
 		m_vecPaperModelInfo.clear();
 
 		for (int i = 0; i < m_pModel->nPicNum; i++)
@@ -6770,5 +6842,266 @@ void CMakeModelDlg::ReInitModel(pMODEL pModel)
 		CString strTitle = _T("未保存模板");
 		SetWindowText(strTitle);
 	}
+}
+
+void CMakeModelDlg::CreateNewModel(std::vector<MODELPATH>& vecPath)
+{
+	USES_CONVERSION;
+	std::vector<pPaperModelInfo>::iterator itPaperModelInfo = m_vecPaperModelInfo.begin();
+	for (; itPaperModelInfo != m_vecPaperModelInfo.end();)
+	{
+		pPaperModelInfo pPaperModel = *itPaperModelInfo;
+		SAFE_RELEASE(pPaperModel);
+		itPaperModelInfo = m_vecPaperModelInfo.erase(itPaperModelInfo);
+	}
+	m_vecPaperModelInfo.clear();
+
+//	GetDlgItem(IDC_BTN_New)->EnableWindow(FALSE);
+	m_nModelPicNums = vecPath.size();
+	InitTab();
+	m_cpListCtrl.DeleteAllItems();
+
+	m_bNewModelFlag = true;
+	m_pModel = new MODEL;
+	m_pModel->nABModel = 0;
+	m_pModel->nHasHead = 0;
+
+	if (_pCurrExam_)
+		m_pModel->nExamID = _pCurrExam_->nExamID;
+	if (_pCurrSub_)
+		m_pModel->nSubjectID = _pCurrSub_->nSubjID;
+
+	InitConf();
+
+	for (int i = 0; i < m_nModelPicNums; i++)
+	{
+		pPaperModelInfo paperMode = new PaperModelInfo;
+		m_vecPaperModelInfo.push_back(paperMode);
+
+		paperMode->strModelPicName = T2A(vecPath[i].strName);
+		paperMode->strModelPicPath = vecPath[i].strPath;
+		
+#ifdef PIC_RECTIFY_TEST
+		Mat src_img = imread((std::string)(CT2CA)dlg.m_vecPath[i].strPath);	//(std::string)(CT2CA)paperMode->strModelPicPath
+		Mat dst;
+		Mat rotMat;
+		PicRectify(src_img, dst, rotMat);
+		Mat matImg;
+		if (dst.channels() == 1)
+			cvtColor(dst, matImg, CV_GRAY2BGR);
+		else
+			matImg = dst;
+#else
+		Mat matImg = imread((std::string)(CT2CA)vecPath[i].strPath);	//(std::string)(CT2CA)paperMode->strModelPicPath
+#endif
+		paperMode->matSrcImg = matImg;
+		paperMode->matDstImg = paperMode->matSrcImg;
+		if (i == 0)
+			m_pModelPicShow->ShowPic(matImg);
+
+		paperMode->nPicW = matImg.cols;
+		paperMode->nPicH = matImg.rows;
+
+		//试卷纸张类型判断
+		int nL, nW;
+		if (matImg.cols > matImg.rows)
+		{
+			nL = matImg.cols;
+			nW = matImg.rows;
+		}
+		else
+		{
+			nL = matImg.rows;
+			nW = matImg.cols;
+		}
+		if (i == 0)
+		{
+			if (nW > 1350 && nW < 1800)
+			{
+				if (nL > 2000 && nL < 2500)
+				{
+					m_pModel->nScanDpi = 200;
+					m_pModel->nScanSize = 1;	//A4
+				}
+			}
+			else if (nW > 2000 && nW < 2500)
+			{
+				if (nL > 2850 && nL < 3450)
+				{
+					m_pModel->nScanDpi = 200;
+					m_pModel->nScanSize = 2;	//A3
+				}
+			}
+			// 			else if (nW > 1450 && nW < 1900)
+			// 			{
+			// 				if (nL > 2150 && nL < 2600)
+			// 				{
+			// 					m_pModel->nScanDpi = 150;
+			// 					m_pModel->nScanSize = 2;	//A3
+			// 				}
+			// 			}
+		}
+	}
+	SetWindowTextW(_T("*未保存模板*"));
+}
+
+void CMakeModelDlg::SaveNewModel()
+{
+	if (!m_pModel)
+	{
+		AfxMessageBox(_T("请先创建模板"));
+		return;
+	}
+
+	if (!checkValidity()) return;
+
+	CExamInfoDlg dlg(m_pModel);
+	if (dlg.DoModal() != IDOK)
+		return;
+
+	USES_CONVERSION;
+	m_pModel->nSaveMode = 2;
+	char szModelName[150] = { 0 };
+#ifdef TEST_MODEL_NAME
+	sprintf_s(szModelName, "%s_%s_N_%d_%d", T2A(dlg.m_strExamName), T2A(dlg.m_strSubjectName), dlg.m_nExamID, dlg.m_SubjectID);
+#else
+	sprintf_s(szModelName, "%d_%d", dlg.m_nExamID, dlg.m_SubjectID);
+#endif
+	char szModelDesc[300] = { 0 };
+	sprintf_s(szModelDesc, "考试名称: %s\r\n科目: %s\r\n年级: %s\r\n考试类型名称: %s", T2A(dlg.m_strExamName), T2A(dlg.m_strSubjectName), T2A(dlg.m_strGradeName), T2A(dlg.m_strExamTypeName));
+	m_pModel->nExamID = dlg.m_nExamID;
+	m_pModel->nSubjectID = dlg.m_SubjectID;
+	m_pModel->strModelName = szModelName;
+	m_pModel->strModelDesc = szModelDesc;
+
+	CString strTitle = _T("");
+	strTitle.Format(_T("模板名称: %s"), A2T(m_pModel->strModelName.c_str()));
+	SetWindowText(strTitle);
+
+	m_bSavedModelFlag = true;
+
+	for (int i = 0; i < m_pModel->vecPaperModel.size(); i++)
+	{
+		pPAPERMODEL pPaperModel = m_pModel->vecPaperModel[i];
+		SAFE_RELEASE(pPaperModel);
+	}
+	m_pModel->vecPaperModel.clear();
+
+	m_pModel->nZkzhType = m_pSNInfoDlg->m_nZkzhType;
+	bool bHasElectOmr = false;
+
+	m_pModel->nPicNum = m_vecPaperModelInfo.size();
+	for (int i = 0; i < m_pModel->nPicNum; i++)
+	{
+		pPAPERMODEL pPaperModel = new PAPERMODEL;
+		pPaperModel->strModelPicName = m_vecPaperModelInfo[i]->strModelPicName;
+
+		//++同步头模式时，添加4个定点
+		RecogFixWithHead(i);
+		//--
+
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecHTracker.size(); j++)
+			pPaperModel->lSelHTracker.push_back(m_vecPaperModelInfo[i]->vecHTracker[j]);
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecVTracker.size(); j++)
+			pPaperModel->lSelVTracker.push_back(m_vecPaperModelInfo[i]->vecVTracker[j]);
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecRtSel.size(); j++)
+			pPaperModel->lSelFixRoi.push_back(m_vecPaperModelInfo[i]->vecRtSel[j]);
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecRtFix.size(); j++)
+			pPaperModel->lFix.push_back(m_vecPaperModelInfo[i]->vecRtFix[j]);
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecH_Head.size(); j++)
+			pPaperModel->lH_Head.push_back(m_vecPaperModelInfo[i]->vecH_Head[j]);
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecV_Head.size(); j++)
+			pPaperModel->lV_Head.push_back(m_vecPaperModelInfo[i]->vecV_Head[j]);
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecABModel.size(); j++)
+			pPaperModel->lABModel.push_back(m_vecPaperModelInfo[i]->vecABModel[j]);
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecCourse.size(); j++)
+			pPaperModel->lCourse.push_back(m_vecPaperModelInfo[i]->vecCourse[j]);
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecQK_CP.size(); j++)
+			pPaperModel->lQK_CP.push_back(m_vecPaperModelInfo[i]->vecQK_CP[j]);
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecGray.size(); j++)
+			pPaperModel->lGray.push_back(m_vecPaperModelInfo[i]->vecGray[j]);
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecWhite.size(); j++)
+			pPaperModel->lWhite.push_back(m_vecPaperModelInfo[i]->vecWhite[j]);
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecOmr2.size(); j++)
+			pPaperModel->lOMR2.push_back(m_vecPaperModelInfo[i]->vecOmr2[j]);
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecElectOmr.size(); j++)
+		{
+			pPaperModel->lElectOmr.push_back(m_vecPaperModelInfo[i]->vecElectOmr[j]);
+			bHasElectOmr = true;
+		}
+		SNLIST::iterator itSn = m_vecPaperModelInfo[i]->lSN.begin();
+		for (; itSn != m_vecPaperModelInfo[i]->lSN.end(); itSn++)
+		{
+			pSN_ITEM pSnItem = new SN_ITEM;
+			pSnItem->nItem = (*itSn)->nItem;
+			pSnItem->nRecogVal = (*itSn)->nRecogVal;
+			RECTLIST::iterator itRc = (*itSn)->lSN.begin();
+			for (; itRc != (*itSn)->lSN.end(); itRc++)
+			{
+				RECTINFO rc = *itRc;
+				pSnItem->lSN.push_back(rc);
+			}
+			// 			pSN_ITEM pSnItem = *itSn;
+			// 			itSn = m_vecPaperModelInfo[i]->lSN.erase(itSn);
+			pPaperModel->lSNInfo.push_back(pSnItem);
+		}
+		//++ 有同步头的情况下，直接新建模板马上保存，需要设置水平和垂直橡皮筋的长度
+		if (m_pModel->nHasHead && m_vecPaperModelInfo[i]->bFirstH && m_pModel->nType == 0)
+		{
+			m_ptHTracker1 = cv::Point(0, 0);
+			m_ptHTracker2 = cv::Point(m_vecPaperModelInfo[i]->matSrcImg.cols, 90);
+			//			m_vecPaperModelInfo[m_nCurrTabSel]->bFirstH = false;
+
+			m_vecPaperModelInfo[i]->rtHTracker.x = m_ptHTracker1.x;
+			m_vecPaperModelInfo[i]->rtHTracker.y = m_ptHTracker1.y;
+			m_vecPaperModelInfo[i]->rtHTracker.width = m_ptHTracker2.x - m_ptHTracker1.x;
+			m_vecPaperModelInfo[i]->rtHTracker.height = m_ptHTracker2.y - m_ptHTracker1.y;
+		}
+		if (m_pModel->nHasHead && m_vecPaperModelInfo[i]->bFirstV && m_pModel->nType == 0)
+		{
+			m_ptVTracker1 = cv::Point(m_vecPaperModelInfo[i]->matSrcImg.cols - 90, 0);
+			m_ptVTracker2 = cv::Point(m_vecPaperModelInfo[i]->matSrcImg.cols, m_vecPaperModelInfo[i]->matSrcImg.rows);
+			//			m_vecPaperModelInfo[m_nCurrTabSel]->bFirstV = false;
+
+			m_vecPaperModelInfo[i]->rtVTracker.x = m_ptVTracker1.x;
+			m_vecPaperModelInfo[i]->rtVTracker.y = m_ptVTracker1.y;
+			m_vecPaperModelInfo[i]->rtVTracker.width = m_ptVTracker2.x - m_ptVTracker1.x;
+			m_vecPaperModelInfo[i]->rtVTracker.height = m_ptVTracker2.y - m_ptVTracker1.y;
+		}
+		//--
+		pPaperModel->rtHTracker = m_vecPaperModelInfo[i]->rtHTracker;
+		pPaperModel->rtVTracker = m_vecPaperModelInfo[i]->rtVTracker;
+		//		pPaperModel->rtSNTracker = m_vecPaperModelInfo[i]->rtSNTracker;
+		pPaperModel->rcSNTracker = m_vecPaperModelInfo[i]->rcSNTracker;
+
+		pPaperModel->nPicW = m_vecPaperModelInfo[i]->nPicW;
+		pPaperModel->nPicH = m_vecPaperModelInfo[i]->nPicH;
+
+		m_pModel->vecPaperModel.push_back(pPaperModel);
+	}
+
+	if (!bHasElectOmr)
+		m_pModel->nHasElectOmr = 0;
+
+	SetCursor(LoadCursor(NULL, IDC_WAIT));
+
+	CString modelPath = g_strCurrentPath + _T("Model");
+	modelPath = modelPath + _T("\\") + A2T(m_pModel->strModelName.c_str());
+	if (SaveModelFile(m_pModel))
+	{
+		//		ZipFile(modelPath, modelPath, _T(".mod"));
+		CZipObj zipObj;
+		zipObj.setLogger(g_pLogger);
+		zipObj.ZipFile(modelPath, modelPath, _T(".mod"));
+
+		//直接上传模板
+		CString strModelFullPath = modelPath + _T(".mod");
+		UploadModel(strModelFullPath, m_pModel);
+		AfxMessageBox(_T("保存完成!"));
+	}
+	else
+		AfxMessageBox(_T("保存失败"));
+
+	SetCursor(LoadCursor(NULL, IDC_ARROW));
 }
 

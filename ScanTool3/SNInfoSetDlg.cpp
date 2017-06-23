@@ -189,6 +189,7 @@ void CSNInfoSetDlg::ShowSNPic()
 	}
 	m_src_img = cv::imread((std::string)(CT2CA)strPicPath);
 	m_picSNShow.ShowImage(m_src_img, 0);
+	m_picSNShow.Invalidate();
 }
 
 

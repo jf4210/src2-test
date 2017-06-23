@@ -7,7 +7,7 @@
 #include "afxdialogex.h"
 #include "ScanModelPaperDlg.h"
 #include "NewMakeModelDlg.h"
-
+#include "LocalPicSelDlg.h"
 // CCreateModelDlg 对话框
 
 IMPLEMENT_DYNAMIC(CCreateModelDlg, CDialog)
@@ -100,7 +100,18 @@ void CCreateModelDlg::OnBnClickedBtnStart()
 // 			}
 // 		}
 
+	#if 1
+		CLocalPicSelDlg dlg;
+		dlg.DoModal();
 
+		if(dlg.m_vecPath.size() <= 0)
+		{
+			OnCancel();
+			return;
+		}
+		m_vecPath = dlg.m_vecPath;
+
+	#else
 		OPENFILENAME ofn;
 		TCHAR szOpenFileNames[5 * MAX_PATH];
 		TCHAR szPath[MAX_PATH];
@@ -139,6 +150,7 @@ void CCreateModelDlg::OnBnClickedBtnStart()
 				p += lstrlen(p) + 1;           //移至下一个文件  
 			}
 		}
+	#endif
 	}
 	else
 	{

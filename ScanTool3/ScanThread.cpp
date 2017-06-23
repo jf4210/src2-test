@@ -2021,6 +2021,8 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 			pResult->nPaperId = nStudentId;
 			pResult->nPicId = nOrder;
 			pResult->pPaper = NULL;
+			pResult->strPicName = szPicName;
+			pResult->strPicPath = szPicPath;
 			pResult->matShowPic = matShow;
 			pResult->strResult = "获得模板图像";
 			pResult->strResult.append(szPicName);
@@ -2066,6 +2068,8 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 			pResult->nPicId = nOrder;
 			pResult->pPaper = m_pCurrPaper;
 			pResult->matShowPic = matShow;
+			pResult->strPicName = szPicName;
+			pResult->strPicPath = szPicPath;
 			pResult->strResult = "获得图像";
 			pResult->strResult.append(szPicName);
 

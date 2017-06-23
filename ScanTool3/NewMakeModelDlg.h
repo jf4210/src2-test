@@ -39,7 +39,9 @@ private:
 	LRESULT	ScanErr(WPARAM wParam, LPARAM lParam);
 	//----------------------
 	CString			m_strScanPicPath;		//扫描仪扫描的图像路径，需要加上科目名称
+	std::vector<MODELPATH> m_vecModelPicPath;
 
+	pMODEL			m_pModel;
 	int				m_nStatusSize;			//状态栏字体大小
 	CFont			m_fontStatus;			//状态栏字体
 	COLORREF		m_colorStatus;			//状态栏字体颜色
@@ -48,6 +50,7 @@ private:
 	CBmpButton		m_bmpBtnUpload;
 	CBmpButton		m_bmpBtnSave;
 	CBmpButton		m_bmpBtnDown;
+	CBmpButton		m_bmpBtnNew;
 	CComboBoxExt	m_comboSubject;		//CComboBoxExt
 
 	CRect			m_rtChild;
@@ -67,4 +70,5 @@ public:
 	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedBtnNewmakemodel();
 	afx_msg void OnCbnSelchangeComboMakemodelSubject();
+	afx_msg void OnBnClickedBtnSavemodel();
 };
