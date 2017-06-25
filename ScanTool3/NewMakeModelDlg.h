@@ -45,6 +45,7 @@ private:
 	int				m_nStatusSize;			//状态栏字体大小
 	CFont			m_fontStatus;			//状态栏字体
 	COLORREF		m_colorStatus;			//状态栏字体颜色
+	CFont			m_btnFont;				//按钮字体
 
 	CBmpButton		m_bmpBtnScan;
 	CBmpButton		m_bmpBtnUpload;
@@ -71,4 +72,5 @@ public:
 	afx_msg void OnBnClickedBtnNewmakemodel();
 	afx_msg void OnCbnSelchangeComboMakemodelSubject();
 	afx_msg void OnBnClickedBtnSavemodel();
+	afx_msg void OnBnClickedBtnUploadpic();
 };

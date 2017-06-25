@@ -681,6 +681,38 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			pUser->SendResponesInfo(USER_RESPONSE_GET_FILE_UPLOAD_ADDR, nResult, (char*)strVerAddr.c_str(), strVerAddr.length());
 		}
 		break;
+	case USER_NEED_UP_MODEL_PIC:
+		{
+			std::cout << "ÇëÇóÉÏ´«Ä£°åÍ¼ÏñÃüÁî: " << std::endl;
+			ST_MODELPIC stModelPic = *(pST_MODELPIC)(pMission->m_pMissionData + HEAD_SIZE);
+			int nResult = RESULT_ERROR_UNKNOWN;
+
+			std::string strModelPicPath = Poco::format("%s\\%d\\%d_%d_%s", CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strModelSavePath), stModelPic.nExamID,\
+												   stModelPic.nExamID, stModelPic.nSubjectID, CMyCodeConvert::Gb2312ToUtf8(stModelPic.szPicName));
+			try
+			{
+				Poco::File modelPic(strModelPicPath);
+				if (!modelPic.exists())
+				{
+					nResult = RESULT_UP_MODEL_PIC_SEND;
+				}
+				else
+				{
+					std::string strMd5 = calcFileMd5(strModelPicPath);
+					if (strMd5 == stModelPic.szMD5)
+						nResult = RESULT_UP_MODEL_PIC_NONEED;
+					else
+						nResult = RESULT_UP_MODEL_PIC_SEND;
+				}
+			}
+			catch (Poco::Exception& e)
+			{
+				std::cout << "¼ì²âÄ£°åÍ¼Æ¬Â·¾¶Òì³£: "<< e.displayText() << std::endl;
+				nResult = RESULT_UP_MODEL_PIC_SEND;
+			}
+			pUser->SendResponesInfo(USER_RESPONSE_NEED_UP_MODEL_PIC, nResult, (char*)&stModelPic, sizeof(stModelPic));
+		}
+		break;
 	default:
 		bFind = FALSE;
 		break;

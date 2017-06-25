@@ -8,6 +8,7 @@
 #include "ScanModelPaperDlg.h"
 #include "NewMessageBox.h"
 #include "CreateModelDlg.h"
+#include "Net_Cmd_Protocol.h"
 // CMakeModelDlg 对话框
 
 IMPLEMENT_DYNAMIC(CNewMakeModelDlg, CDialog)
@@ -46,6 +47,7 @@ BEGIN_MESSAGE_MAP(CNewMakeModelDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_NewMakeModel, &CNewMakeModelDlg::OnBnClickedBtnNewmakemodel)
 	ON_CBN_SELCHANGE(IDC_COMBO_MakeModel_Subject, &CNewMakeModelDlg::OnCbnSelchangeComboMakemodelSubject)
 	ON_BN_CLICKED(IDC_BTN_SaveModel, &CNewMakeModelDlg::OnBnClickedBtnSavemodel)
+	ON_BN_CLICKED(IDC_BTN_UploadPic, &CNewMakeModelDlg::OnBnClickedBtnUploadpic)
 END_MESSAGE_MAP()
 
 
@@ -109,7 +111,7 @@ void CNewMakeModelDlg::InitCtrlPosition()
 	const int nRightGap = 20;	//右边的空白间隔
 	int nGap = 5;
 
-	int nBtnW = 80;
+	int nBtnW = 110;
 	int nBtnH = 40;
 
 	int nCurrLeft = nLeftGap;
@@ -180,7 +182,20 @@ void CNewMakeModelDlg::SetFontSize(int nSize)
 						  DEFAULT_QUALITY,
 						  DEFAULT_PITCH | FF_SWISS,
 						  _T("Arial"));
+	m_btnFont.CreateFont(20, 0, 0, 0,
+						  FW_BOLD, FALSE, FALSE, 0,
+						  DEFAULT_CHARSET,
+						  OUT_DEFAULT_PRECIS,
+						  CLIP_DEFAULT_PRECIS,
+						  DEFAULT_QUALITY,
+						  DEFAULT_PITCH | FF_SWISS,
+						  _T("Arial"));
 	GetDlgItem(IDC_STATIC_MakeModel_CurrSubject)->SetFont(&fontStatus);
+	m_bmpBtnNew.SetBtnFont(m_btnFont);
+	m_bmpBtnSave.SetBtnFont(m_btnFont);
+	m_bmpBtnScan.SetBtnFont(m_btnFont);
+	m_bmpBtnUpload.SetBtnFont(m_btnFont);
+	m_bmpBtnDown.SetBtnFont(m_btnFont);
 }
 
 pTW_IDENTITY CNewMakeModelDlg::GetScanSrc(int nIndex)
@@ -480,13 +495,12 @@ void CNewMakeModelDlg::OnBnClickedBtnNewmakemodel()
 		dlg.DoModal();
 		return;
 	}
-
-	m_vecModelPicPath.clear();
-
+	
 	CCreateModelDlg dlg(this);
 	if (dlg.DoModal() != IDOK)
 		return;
 
+	m_vecModelPicPath.clear();
 	if (dlg.m_nSearchType == 1)
 	{
 		m_strScanPicPath = dlg.m_strScanSavePath;
@@ -494,7 +508,8 @@ void CNewMakeModelDlg::OnBnClickedBtnNewmakemodel()
 	}
 	else if (dlg.m_nSearchType == 2)
 	{
-		m_pMakeModelDlg->CreateNewModel(dlg.m_vecPath);
+		m_vecModelPicPath = dlg.m_vecPath;
+		m_pMakeModelDlg->CreateNewModel(m_vecModelPicPath);
 		m_pModel = m_pMakeModelDlg->m_pModel;
 		m_bmpBtnNew.EnableWindow(FALSE);
 	}
@@ -531,4 +546,38 @@ void CNewMakeModelDlg::OnBnClickedBtnSavemodel()
 	}
 
 	m_pMakeModelDlg->SaveNewModel();
+}
+
+
+void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
+{
+	USES_CONVERSION;
+	for (int i = 0; i < m_vecModelPicPath.size(); i++)
+	{
+		USES_CONVERSION;
+		std::string strPath = T2A(m_vecModelPicPath[i].strPath);
+		std::string strPicName = T2A(m_vecModelPicPath[i].strName);
+		std::string strPicPath = T2A(m_vecModelPicPath[i].strPath);
+		std::string strMd5;
+
+		strMd5 = calcFileMd5(strPath);
+
+		ST_MODELPIC stModelPic;
+		ZeroMemory(&stModelPic, sizeof(ST_MODELPIC));
+		stModelPic.nExamID = m_pModel->nExamID;
+		stModelPic.nSubjectID = m_pModel->nSubjectID;
+		strncpy(stModelPic.szPicName, strPicName.c_str(), strPicName.length());
+		strncpy(stModelPic.szPicPath, strPicPath.c_str(), strPicPath.length());
+		strncpy(stModelPic.szMD5, strMd5.c_str(), strMd5.length());
+		if (m_pModel)
+			strncpy(stModelPic.szModelName, m_pModel->strModelName.c_str(), m_pModel->strModelName.length());
+
+		pTCP_TASK pTcpTask = new TCP_TASK;
+		pTcpTask->usCmd = USER_NEED_UP_MODEL_PIC;
+		pTcpTask->nPkgLen = sizeof(ST_MODELPIC);
+		memcpy(pTcpTask->szSendBuf, (char*)&stModelPic, sizeof(ST_MODELPIC));
+		g_fmTcpTaskLock.lock();
+		g_lTcpTask.push_back(pTcpTask);
+		g_fmTcpTaskLock.unlock();
+	}
 }

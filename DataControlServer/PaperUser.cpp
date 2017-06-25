@@ -271,7 +271,7 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 								Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
 								fileList.renameTo(CMyCodeConvert::Gb2312ToUtf8(strNewFilePath));
 							}
-							else
+							else if (strExtFileName == ".pkg")
 							{
 								std::string strUploadPath = SysSet.m_strUpLoadPath + "\\";
 								strUploadPath.append(m_szFileName);
@@ -296,7 +296,10 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 								g_fmDecompressLock.lock();
 								g_lDecompressTask.push_back(pDecompressTask);
 								g_fmDecompressLock.unlock();
-							}							
+							}
+							else	//上传的模板图像
+							{
+							}
 							#else
 							Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
 							if (fileList.exists())

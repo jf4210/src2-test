@@ -490,6 +490,7 @@ void CScanModelPaperDlg::OnBnClickedBtnMakemodelScan()
 		CNewMessageBox	dlg;
 		dlg.setShowInfo(2, 1, "ªÒ»°…®√Ë‘¥ ß∞‹");
 		dlg.DoModal();
+		return;
 	}
 
 	char szRet[20] = { 0 };

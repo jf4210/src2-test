@@ -135,14 +135,21 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 	CFileUpLoad* pUpLoad = NULL;
 	int nPos = pTask->strFileName.find(".");
 	std::string strKey = pTask->strFileName.substr(nPos);
+
+
+	std::string strPkg = T2A(PAPERS_EXT_NAME);
+	std::string strTyPkg = T2A(PAPERS_EXT_NAME_4TY);
+	if (strKey != strPkg && strKey != strTyPkg)
+		strKey = strPkg;
+
 	_fmMapSender_.lock();
 	MAP_FILESENDER::iterator itSender = _mapSender_.find(strKey);
 	if (itSender == _mapSender_.end())
 	{
-		std::string strPkg = T2A(PAPERS_EXT_NAME);
-		std::string strTyPkg = T2A(PAPERS_EXT_NAME_4TY);
-		std::string strMod = ".mod";
-		if (strKey == strPkg || strKey == strKey)
+// 		std::string strPkg = T2A(PAPERS_EXT_NAME);
+// 		std::string strTyPkg = T2A(PAPERS_EXT_NAME_4TY);
+//		std::string strMod = ".mod";
+		if (strKey == strPkg)	//strKey == strPkg || strKey == strMod
 		{
 			_strIp = g_strFileIP;
 			_nPort = g_nFilePort;

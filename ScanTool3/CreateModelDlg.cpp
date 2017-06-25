@@ -78,7 +78,8 @@ void CCreateModelDlg::OnBnClickedBtnStart()
 
 		CScanModelPaperDlg dlg(pDlg);
 		dlg.SetScanSrc(pDlg->m_vecScanSrc);
-		dlg.DoModal();
+		if (dlg.DoModal() != IDOK)
+			return;
 		m_strScanSavePath = dlg.m_strSavePath;
 	}
 	else if (m_nSearchType == 2)

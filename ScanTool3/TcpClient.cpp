@@ -821,6 +821,38 @@ void CTcpClient::HandleCmd()
 		}
 		SAFE_RELEASE_ARRY(pBuff);
 	}
+	else if (pstHead->usCmd == USER_RESPONSE_GET_FILE_UPLOAD_ADDR)
+	{
+		pST_MODELPIC pstModelPic = (pST_MODELPIC)(m_szRecvBuff + HEAD_SIZE);
+		switch (pstHead->usResult)
+		{
+			case RESULT_UP_MODEL_PIC_SEND:
+			{
+				TRACE("可以发送模板图片: %s\n", pstModelPic->szPicPath);
+				std::string strLog = "可以发送模板图片: ";
+				strLog.append(pstModelPic->szPicPath);
+				g_pLogger->information(strLog);
+
+				pSENDTASK pTask = new SENDTASK;
+				pTask->strFileName = pstModelPic->szPicName;
+				pTask->strPath = pstModelPic->szPicPath;
+				g_fmSendLock.lock();
+				g_lSendTask.push_back(pTask);
+				g_fmSendLock.unlock();
+			}
+				break;
+			case RESULT_UP_MODEL_PIC_NONEED:
+			{
+				TRACE("不需要发送模板图片: %s\n", pstModelPic->szPicPath);
+				std::string strLog = "不需要重新发送模板文件";
+				strLog.append(pstModelPic->szPicPath);
+				g_pLogger->information(strLog);
+			}
+				break;
+			default:
+				break;
+		}
+	}
 }
 
 void CTcpClient::HandleTask(pTCP_TASK pTask)
