@@ -299,6 +299,59 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 							}
 							else	//上传的模板图像
 							{
+//								MAP_MODEL_PIC::iterator itFind = _mapModelPic__.find(szIndex);
+
+								std::string strModelPicName = m_szFileName;
+								std::string strExamID;
+								std::string strSubjectID;
+								std::string strPicIndex;
+								std::string strPicOriName;
+								std::string strExtName;
+								int nPos = 0;
+								int nOldPos = 0;
+								nPos = strModelPicName.find("_");
+								if(nPos != std::string::npos)
+								{
+									strExamID = strModelPicName.substr(0, nPos);
+									nOldPos = nPos;
+									nPos = strModelPicName.find("_", nPos + 1);
+									strSubjectID = strModelPicName.substr(nOldPos + 1, nPos - nOldPos - 1);
+									nOldPos = nPos;
+									nPos = strModelPicName.find("_", nPos + 1);
+									strPicIndex = strModelPicName.substr(nOldPos + 1, nPos - nOldPos - 1);
+									
+									nPos = strModelPicName.find("_#_");
+									nOldPos = nPos;
+									nPos = strModelPicName.find(".", nPos + 3);
+									strPicOriName = strModelPicName.substr(nOldPos + 3, nPos - nOldPos - 3);
+									strExtName = strModelPicName.substr(nPos);
+
+
+									std::string strLog;
+									strLog = "获取到模板图片(" + strExamID + "_" + strSubjectID + "_" + strPicIndex + strExtName + ")";
+									std::cout << strLog << std::endl;
+
+									std::string strPicSaveDir = SysSet.m_strModelSavePath + "\\" + strExamID;
+									std::string strPicSavePath = strPicSaveDir + "\\" + strExamID + "_" + strSubjectID + "_" + strPicIndex + strExtName;
+
+									try
+									{
+										Poco::File fileModelPicPath(CMyCodeConvert::Gb2312ToUtf8(strPicSaveDir));
+										fileModelPicPath.createDirectories();
+
+										Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(strPicSavePath));
+										if (fileModel.exists())
+											fileModel.remove(true);
+										
+										Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
+										fileList.renameTo(CMyCodeConvert::Gb2312ToUtf8(strPicSavePath));
+									}
+									catch (Poco::Exception &e)
+									{
+										std::cout << "接收模板图像检查路径时异常: " << e.displayText() << std::endl;
+									}
+
+								}
 							}
 							#else
 							Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));

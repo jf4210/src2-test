@@ -426,10 +426,16 @@ typedef struct _TcpTask_
 {
 	unsigned short usCmd;
 	int		nPkgLen;
+	char*	pszSendBuf;
 	char	szSendBuf[2500];
 	_TcpTask_()
 	{
 		ZeroMemory(szSendBuf, 2500);
+		pszSendBuf = NULL;
+	}
+	~_TcpTask_()
+	{
+		SAFE_RELEASE(pszSendBuf);
 	}
 }TCP_TASK, *pTCP_TASK;
 typedef std::list<pTCP_TASK> TCP_TASKLIST;

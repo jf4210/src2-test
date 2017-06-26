@@ -365,6 +365,7 @@
     <Image Include="skin\popup\btn_normal.bmp" />
     <Image Include="skin\popup\nostudent.bmp" />
     <Image Include="skin\popup\notemplate.bmp" />
+    <Image Include="skin\popup\succeed.bmp" />
     <Image Include="skin\recordDlg\tabclick.bmp" />
     <Image Include="skin\recordDlg\tabnormal.bmp" />
     <Image Include="skin\recordDlg\tabover.bmp" />

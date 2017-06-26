@@ -205,6 +205,18 @@ void CNewMessageBox::InitUI()
 			if (m_bmpBtnClose.GetSafeHwnd()) m_bmpBtnClose.ShowWindow(SW_SHOW);
 		}
 	}
+	else if (m_nShowType == 3)
+	{
+		m_bmpBk.DeleteObject();
+		m_bmpBk.LoadBitmap(IDB_Popup_BK_Success);
+
+		if (m_nBtn == 1)
+		{
+			if (m_bmpBtnClose.GetSafeHwnd()) m_bmpBtnClose.ShowWindow(SW_HIDE);
+			if (m_bmpBtnOK.GetSafeHwnd())
+				m_bmpBtnOK.SetBmpBtnText(_T("È·¶¨"));
+		}
+	}
 
 	m_bmpBtnOK.SetStateBitmap(IDB_Popup_Btn_Normal, 0, IDB_Popup_Btn_Hover);
 	m_bmpBtnOK.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), 0);

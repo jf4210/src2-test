@@ -687,8 +687,11 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			ST_MODELPIC stModelPic = *(pST_MODELPIC)(pMission->m_pMissionData + HEAD_SIZE);
 			int nResult = RESULT_ERROR_UNKNOWN;
 
-			std::string strModelPicPath = Poco::format("%s\\%d\\%d_%d_%s", CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strModelSavePath), stModelPic.nExamID,\
-												   stModelPic.nExamID, stModelPic.nSubjectID, CMyCodeConvert::Gb2312ToUtf8(stModelPic.szPicName));
+			std::string strModelPicPath = Poco::format("%s\\%d\\%d_%d_%d%s", CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strModelSavePath), stModelPic.nExamID, \
+													   stModelPic.nExamID, stModelPic.nSubjectID, stModelPic.nIndex, CMyCodeConvert::Gb2312ToUtf8(stModelPic.szExtName));
+
+// 			std::string strModelPicPath = Poco::format("%s\\%d\\%d_%d_%d_#_%s", CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strModelSavePath), stModelPic.nExamID,\
+// 												   stModelPic.nExamID, stModelPic.nSubjectID, stModelPic.nIndex, CMyCodeConvert::Gb2312ToUtf8(stModelPic.szPicName));
 			try
 			{
 				Poco::File modelPic(strModelPicPath);
@@ -710,6 +713,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				std::cout << "¼ì²âÄ£°åÍ¼Æ¬Â·¾¶Òì³£: "<< e.displayText() << std::endl;
 				nResult = RESULT_UP_MODEL_PIC_SEND;
 			}
+			
 			pUser->SendResponesInfo(USER_RESPONSE_NEED_UP_MODEL_PIC, nResult, (char*)&stModelPic, sizeof(stModelPic));
 		}
 		break;

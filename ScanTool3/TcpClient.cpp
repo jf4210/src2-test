@@ -9,7 +9,7 @@
 //extern Poco::Net::StreamSocket *pSs;
 
 CTcpClient::CTcpClient(std::string strIp, int nPort)
-: _strIP(strIp), _nPort(nPort), _bConnect(false), _nRecvLen(0), _nWantLen(0), m_pRecvBuff(NULL)
+: _strIP(strIp), _nPort(nPort), _bConnect(false), _nRecvLen(0), _nWantLen(0), m_pRecvBuff(NULL), m_pSendBuff(NULL)
 {
 }
 
@@ -382,7 +382,7 @@ void CTcpClient::HandleCmd()
 		{
 			case RESULT_DOWNMODEL_OK:
 			{
-				pST_DOWN_MODEL pstModelInfo = (pST_DOWN_MODEL)(m_szRecvBuff + HEAD_SIZE);
+//				pST_DOWN_MODEL pstModelInfo = (pST_DOWN_MODEL)(m_szRecvBuff + HEAD_SIZE);
 
 				ST_DOWN_MODEL stModelInfo;
 				ZeroMemory(&stModelInfo, sizeof(ST_DOWN_MODEL));
@@ -821,24 +821,65 @@ void CTcpClient::HandleCmd()
 		}
 		SAFE_RELEASE_ARRY(pBuff);
 	}
-	else if (pstHead->usCmd == USER_RESPONSE_GET_FILE_UPLOAD_ADDR)
+	else if (pstHead->usCmd == USER_RESPONSE_NEED_UP_MODEL_PIC)
 	{
-		pST_MODELPIC pstModelPic = (pST_MODELPIC)(m_szRecvBuff + HEAD_SIZE);
+		pST_MODELPIC pstModelPic = (pST_MODELPIC)(m_pRecvBuff + HEAD_SIZE);
 		switch (pstHead->usResult)
 		{
 			case RESULT_UP_MODEL_PIC_SEND:
 			{
 				TRACE("可以发送模板图片: %s\n", pstModelPic->szPicPath);
+
 				std::string strLog = "可以发送模板图片: ";
 				strLog.append(pstModelPic->szPicPath);
 				g_pLogger->information(strLog);
-
+			#if 1
+				char szModelPicName[100] = { 0 };
+				sprintf_s(szModelPicName, "%d_%d_%d_#_%s", pstModelPic->nExamID, pstModelPic->nSubjectID, pstModelPic->nIndex, pstModelPic->szPicName);
+//				std::string strModelPicName = Poco::format("%d_%d_%s", pstModelPic->nExamID, pstModelPic->nSubjectID, pstModelPic->szPicName);
 				pSENDTASK pTask = new SENDTASK;
-				pTask->strFileName = pstModelPic->szPicName;
+				pTask->strFileName = szModelPicName;	//pstModelPic->szPicName;
 				pTask->strPath = pstModelPic->szPicPath;
 				g_fmSendLock.lock();
 				g_lSendTask.push_back(pTask);
 				g_fmSendLock.unlock();
+			#else
+				std::string strFileData;
+
+				std::ifstream fin(pstModelPic->szPicPath, std::ifstream::binary);
+				if (!fin)
+				{
+					return ;
+				}
+				std::stringstream buffer;
+				buffer << fin.rdbuf();
+				strFileData = buffer.str();
+				fin.close();
+
+				int nLen = strFileData.length();
+
+				ST_SENDMODELPIC stSendPic;
+				stSendPic.nExamID = pstModelPic->nExamID;
+				stSendPic.nSubjectID = pstModelPic->nSubjectID;
+				stSendPic.nPicLen = nLen;
+				strncpy(stSendPic.szMD5, pstModelPic->szMD5, strlen(pstModelPic->szMD5));
+				strncpy(stSendPic.szFileName, pstModelPic->szPicName, strlen(pstModelPic->szPicName));
+
+				pTCP_TASK pTcpTask = new TCP_TASK;
+				pTcpTask->usCmd = USER_MODEL_PIC_SEND;
+				pTcpTask->nPkgLen = sizeof(ST_SENDMODELPIC) + stSendPic.nPicLen;
+				if (pTcpTask->nPkgLen > strlen(pTcpTask->szSendBuf))
+				{
+					pTcpTask->pszSendBuf = new char[pTcpTask->nPkgLen + 1];
+					ZeroMemory(pTcpTask->pszSendBuf, pTcpTask->nPkgLen + 1);
+					memcpy(pTcpTask->pszSendBuf, (char*)&stSendPic, sizeof(ST_SENDMODELPIC));
+				}
+				else
+					memcpy(pTcpTask->szSendBuf, (char*)&stSendPic, sizeof(ST_SENDMODELPIC));
+				g_fmTcpTaskLock.lock();
+				g_lTcpTask.push_back(pTcpTask);
+				g_fmTcpTaskLock.unlock();
+			#endif
 			}
 				break;
 			case RESULT_UP_MODEL_PIC_NONEED:
@@ -861,13 +902,56 @@ void CTcpClient::HandleTask(pTCP_TASK pTask)
 	stHead.usCmd = pTask->usCmd;
 	stHead.uPackSize = pTask->nPkgLen;
 
+	bool  bSendNewBuff = false;
+	char* pSendBuff = NULL;
 	char szSendBuf[2500 + HEAD_SIZE] = { 0 };
-	memcpy(szSendBuf, (char*)&stHead, HEAD_SIZE);
-	memcpy(szSendBuf + HEAD_SIZE, pTask->szSendBuf, pTask->nPkgLen);
+	if (pTask->pszSendBuf != NULL)
+	{
+		bSendNewBuff = true;
+		pSendBuff = new char[pTask->nPkgLen + 1];
+		ZeroMemory(pSendBuff, pTask->nPkgLen + 1);
+		memcpy(pSendBuff, (char*)&stHead, HEAD_SIZE);
+		memcpy(pSendBuff + HEAD_SIZE, pTask->szSendBuf, pTask->nPkgLen);
 
+// 		m_ss.setBlocking(true);
+// 		m_ss.setNoDelay(false);
+	}
+	else
+	{
+		memcpy(szSendBuf, (char*)&stHead, HEAD_SIZE);
+		memcpy(szSendBuf + HEAD_SIZE, pTask->szSendBuf, pTask->nPkgLen);
+	}
+
+// 	int nWantSend = HEAD_SIZE + pTask->nPkgLen;
+// 	int nSended = 0;
+// 	while (nWantSend > 0)
+// 	{
+// 		int nSendLen = -1;
+// 		try
+// 		{
+// 			if (bSendNewBuff)
+// 				nSendLen = m_ss.sendBytes(pSendBuff + nSended, 1500);
+// 			else
+// 				nSendLen = m_ss.sendBytes(szSendBuf + nSended, nWantSend);
+// 
+// 			nWantSend -= nSendLen;
+// 			nSended += nSendLen;
+// 		}
+// 		catch (Poco::Exception& exc)
+// 		{
+// 			std::string strLog = "发送数据异常 ==> " + exc.displayText();
+// 			TRACE(strLog.c_str());
+// 			g_pLogger->information(strLog);
+// 			_bConnect = false;
+// 			g_bCmdConnect = _bConnect;
+// 		}
+// 	}
 	try
 	{
-		m_ss.sendBytes(szSendBuf, HEAD_SIZE + pTask->nPkgLen);
+		if (bSendNewBuff)
+			m_ss.sendBytes(pSendBuff, HEAD_SIZE + pTask->nPkgLen);
+		else
+			m_ss.sendBytes(szSendBuf, HEAD_SIZE + pTask->nPkgLen);
 	}
 	catch (Poco::Exception& exc)
 	{
@@ -876,6 +960,12 @@ void CTcpClient::HandleTask(pTCP_TASK pTask)
 		g_pLogger->information(strLog);
 		_bConnect = false;
 		g_bCmdConnect = _bConnect;
+ 	}
+	if (bSendNewBuff)
+	{
+		SAFE_RELEASE(pSendBuff);
+// 		m_ss.setBlocking(false);
+// 		m_ss.setNoDelay(true);
 	}
 }
 

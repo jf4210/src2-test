@@ -151,6 +151,7 @@ void CNetUser::OnRead(char* pData, int nDataLen)
 		int nLen = m_pNetRecvBuffer->GetUnUsedSize();
 		if (nLen <= 0)
 		{//没有空间,暂时不处理
+			std::cout << " no buff\n";
 		}
 		else
 		{

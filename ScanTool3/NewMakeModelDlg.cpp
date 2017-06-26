@@ -552,6 +552,19 @@ void CNewMakeModelDlg::OnBnClickedBtnSavemodel()
 void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 {
 	USES_CONVERSION;
+	if (m_pModel)
+	{
+		m_vecModelPicPath.clear();
+		for (int i = 0; i < m_pModel->vecPaperModel.size(); i++)
+		{
+			CString strPicPath = g_strCurrentPath + _T("Model\\") + A2T(m_pModel->strModelName.c_str()) + _T("\\") + A2T(m_pModel->vecPaperModel[i]->strModelPicName.c_str());
+			MODELPATH picInfo;
+			picInfo.strName = A2T(m_pModel->vecPaperModel[i]->strModelPicName.c_str());
+			picInfo.strPath = strPicPath;
+			m_vecModelPicPath.push_back(picInfo);
+		}
+	}
+
 	for (int i = 0; i < m_vecModelPicPath.size(); i++)
 	{
 		USES_CONVERSION;
@@ -559,18 +572,45 @@ void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 		std::string strPicName = T2A(m_vecModelPicPath[i].strName);
 		std::string strPicPath = T2A(m_vecModelPicPath[i].strPath);
 		std::string strMd5;
+		std::string strExtName = strPicName.substr(strPicName.rfind("."));
+
+		try
+		{
+			Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(strPath));
+			if (!fileModel.exists())
+			{
+				CNewMessageBox dlg;
+				dlg.setShowInfo(2, 1, "Í¼ÏñÂ·¾¶²»´æÔÚ£¡");
+				dlg.DoModal();
+				continue;
+			}
+			
+			std::string strTmpSendDir = T2A(g_strCurrentPath);
+			strTmpSendDir.append("Model\\Tmp\\");
+
+			Poco::File fileModelPath(CMyCodeConvert::Gb2312ToUtf8(strTmpSendDir));
+			fileModelPath.createDirectories();
+
+			Poco::File fileOriPic(CMyCodeConvert::Gb2312ToUtf8(strPicPath));
+			fileOriPic.copyTo(strTmpSendDir);
+			strPicPath = strTmpSendDir + strPicName;
+		}
+		catch (Poco::Exception &e)
+		{
+			continue;
+		}
 
 		strMd5 = calcFileMd5(strPath);
-
+		
 		ST_MODELPIC stModelPic;
 		ZeroMemory(&stModelPic, sizeof(ST_MODELPIC));
+		stModelPic.nIndex = i + 1;
 		stModelPic.nExamID = m_pModel->nExamID;
 		stModelPic.nSubjectID = m_pModel->nSubjectID;
 		strncpy(stModelPic.szPicName, strPicName.c_str(), strPicName.length());
 		strncpy(stModelPic.szPicPath, strPicPath.c_str(), strPicPath.length());
 		strncpy(stModelPic.szMD5, strMd5.c_str(), strMd5.length());
-		if (m_pModel)
-			strncpy(stModelPic.szModelName, m_pModel->strModelName.c_str(), m_pModel->strModelName.length());
+		strncpy(stModelPic.szExtName, strExtName.c_str(), strExtName.length());
 
 		pTCP_TASK pTcpTask = new TCP_TASK;
 		pTcpTask->usCmd = USER_NEED_UP_MODEL_PIC;

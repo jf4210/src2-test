@@ -17,7 +17,7 @@
 #include "AdvancedSetDlg.h"
 #include "ScanModelPaperDlg.h"
 #include "ExamInfoDlg.h"
-
+#include "NewMessageBox.h"
 using namespace std;
 using namespace cv;
 // CMakeModelDlg 对话框
@@ -48,8 +48,8 @@ CMakeModelDlg::~CMakeModelDlg()
 	SAFE_RELEASE(m_pSNInfoDlg);
 	SAFE_RELEASE(m_pElectOmrDlg);
 
-	if (m_bNewModelFlag && !m_bSavedModelFlag && m_pModel != NULL)
-		SAFE_RELEASE(m_pModel);
+// 	if (m_bNewModelFlag && !m_bSavedModelFlag && m_pModel != NULL)
+// 		SAFE_RELEASE(m_pModel);
 
 	std::vector<CPicShow*>::iterator itPic = m_vecPicShow.begin();
 	for (; itPic != m_vecPicShow.end();)
@@ -6005,8 +6005,8 @@ void CMakeModelDlg::OnDestroy()
 	SAFE_RELEASE(m_pSNInfoDlg);
 	SAFE_RELEASE(m_pElectOmrDlg);
 
-	if (m_bNewModelFlag && !m_bSavedModelFlag && m_pModel != NULL)
-		SAFE_RELEASE(m_pModel);
+// 	if (m_bNewModelFlag && !m_bSavedModelFlag && m_pModel != NULL)
+// 		SAFE_RELEASE(m_pModel);
 
 	std::vector<CPicShow*>::iterator itPic = m_vecPicShow.begin();
 	for (; itPic != m_vecPicShow.end();)
@@ -7097,10 +7097,19 @@ void CMakeModelDlg::SaveNewModel()
 		//直接上传模板
 		CString strModelFullPath = modelPath + _T(".mod");
 		UploadModel(strModelFullPath, m_pModel);
-		AfxMessageBox(_T("保存完成!"));
+
+		CNewMessageBox dlg;
+		dlg.setShowInfo(3, 1, "保存完成");
+		dlg.DoModal();
+//		AfxMessageBox(_T("保存完成!"));
 	}
 	else
-		AfxMessageBox(_T("保存失败"));
+	{
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "保存失败");
+		dlg.DoModal();
+//		AfxMessageBox(_T("保存失败"));
+	}
 
 	SetCursor(LoadCursor(NULL, IDC_ARROW));
 }

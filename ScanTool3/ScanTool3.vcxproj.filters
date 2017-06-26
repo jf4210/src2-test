@@ -911,5 +911,8 @@
     <Image Include="skin\makeModel\treeNode.bmp">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="skin\popup\succeed.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>
