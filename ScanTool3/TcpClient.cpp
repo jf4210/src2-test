@@ -239,6 +239,14 @@ void CTcpClient::HandleCmd()
 		case RESULT_EXAMINFO_SUCCESS:
 		{
 			g_lfmExamList.lock();
+			EXAM_LIST::iterator itExam = g_lExamList.begin();
+			for (; itExam != g_lExamList.end();)
+			{
+				pEXAMINFO pExam = *itExam;
+				itExam = g_lExamList.erase(itExam);
+				SAFE_RELEASE(pExam);
+			}
+
 			Poco::JSON::Parser parser;
 			Poco::Dynamic::Var result;
 			try
@@ -252,8 +260,9 @@ void CTcpClient::HandleCmd()
 					std::string strMsg = CMyCodeConvert::Utf8ToGb2312(statusObj->get("msg").convert<std::string>());
 					std::string strLog = "获取考试信息失败: " + strMsg;
 					g_pLogger->information(strLog);
+
+					g_lfmExamList.unlock();
 					USES_CONVERSION;
-//					AfxMessageBox(A2T(strLog.c_str()));
 					CNewMessageBox	dlg;
 					dlg.setShowInfo(2, 1, strLog);
 					dlg.DoModal();
@@ -893,6 +902,92 @@ void CTcpClient::HandleCmd()
 			default:
 				break;
 		}
+	}
+	else if (pstHead->usCmd == USER_RESPONSE_GET_MODEL_PIC)
+	{
+		switch (pstHead->usResult)
+		{
+			case RESULT_GET_MODEL_PIC_SUCCESS:
+			{				
+				USES_CONVERSION;
+				std::stringstream buffData;
+				buffData.write(m_pRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+				std::string strData = buffData.str();
+				int nPos = strData.find("#_#_#_#_");
+				while (nPos != std::string::npos)
+				{
+					int nPos2 = strData.find("_*_", nPos + 8);
+					string strFileName = strData.substr(nPos + 8, nPos2 - nPos - 8);
+					int nPos3 = strData.find("_#####_", nPos2 + 3);
+					string sFileLen = strData.substr(nPos2 + 3, nPos3 - nPos2 - 3);
+					int nLen = atoi(sFileLen.c_str());
+//					string strFileData = strData.substr(nPos3 + 7, nLen);
+					
+					TRACE("收到模板图片: %s\n", strFileName.c_str()); 
+					std::string strLog = "收到模板图片: " + strFileName;
+					g_pLogger->information(strLog);
+					
+					std::string strExamID = strFileName.substr(0, strFileName.find("_"));
+
+					//覆盖本地文件
+					std::string strModelDir = g_strModelSavePath + "\\TmpModelPic\\" + strExamID + "\\";
+					std::string strModelPicNewPath = strModelDir + strFileName;
+					try
+					{
+						Poco::File fileModelPath(strModelDir);
+						fileModelPath.createDirectories();
+
+						Poco::File fileModel(strModelPicNewPath);
+						if (fileModel.exists())
+							fileModel.remove(true);
+					}
+					catch (Poco::Exception &e)
+					{
+						TRACE("获取模板异常%s\n", e.displayText().c_str());
+					}
+
+					ofstream out(CMyCodeConvert::Utf8ToGb2312(strModelPicNewPath), std::ios::binary);
+					if (!out)
+					{
+						continue;
+					}
+					std::stringstream buffer;
+					buffer.write(m_pRecvBuff + HEAD_SIZE + nPos3 + 7, nLen);
+					int n = buffer.str().length();
+					out << buffer.str();
+					out.close();
+
+					MODELPICPATH picInfo;
+					picInfo.strName = A2T(strFileName.c_str());
+					picInfo.strPath = A2T(CMyCodeConvert::Utf8ToGb2312(strModelPicNewPath).c_str());
+					_vecModelPicPath_.push_back(picInfo);
+
+					//next
+					nPos = strData.find("#_#_#_#_", nPos3 + 7 + nLen);
+				}
+				_nGetModelPic_ = 2;
+			}
+				break;
+			case RESULT_ERROR_FILEIO:
+			{
+				TRACE("服务器读取模板图片失败\n");
+				std::string strLog = "服务器读取模板图片失败";
+				g_pLogger->information(strLog);
+				_nGetModelPic_ = 4;
+			}
+				break;
+			case RESULT_GET_MODEL_PIC_NOPIC:
+			{
+				TRACE("服务器不存在模板图像");
+				std::string strLog = "服务器不存在模板图像";
+				g_pLogger->information(strLog);
+				_nGetModelPic_ = 3;
+			}
+				break;
+			default:
+				break;
+		}
+		g_eGetModelPic.set();
 	}
 }
 

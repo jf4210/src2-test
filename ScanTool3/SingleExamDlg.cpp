@@ -152,7 +152,7 @@ void CSingleExamDlg::InitData()
 		m_bmpBtnMakeModel.ShowWindow(SW_SHOW);
 
 #ifndef _DEBUG
-		m_bmpBtnMakeModel.ShowWindow(SW_HIDE);
+//		m_bmpBtnMakeModel.ShowWindow(SW_HIDE);
 #endif
 	}
 

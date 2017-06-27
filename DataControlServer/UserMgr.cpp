@@ -698,14 +698,21 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				if (!modelPic.exists())
 				{
 					nResult = RESULT_UP_MODEL_PIC_SEND;
+					std::cout << "可以发送模板图片：" << strModelPicPath << std::endl;
 				}
 				else
 				{
 					std::string strMd5 = calcFileMd5(strModelPicPath);
 					if (strMd5 == stModelPic.szMD5)
+					{
 						nResult = RESULT_UP_MODEL_PIC_NONEED;
+						std::cout << "不需要发送模板图片：" << strModelPicPath << std::endl;
+					}
 					else
+					{
 						nResult = RESULT_UP_MODEL_PIC_SEND;
+						std::cout << "可以发送模板图片：" << strModelPicPath << std::endl;
+					}
 				}
 			}
 			catch (Poco::Exception& e)
@@ -715,6 +722,87 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			}
 			
 			pUser->SendResponesInfo(USER_RESPONSE_NEED_UP_MODEL_PIC, nResult, (char*)&stModelPic, sizeof(stModelPic));
+		}
+		break;
+	case USER_GET_MODEL_PIC:
+		{
+			char szData[1024] = { 0 };
+			strncpy(szData, pMission->m_pMissionData + HEAD_SIZE, header.uPackSize);
+			std::string strModelPicInfo = szData;
+			std::cout << "请求下载模板图像命令: " << strModelPicInfo << std::endl;
+
+			int nPos = strModelPicInfo.find("_");
+			std::string strExamID = strModelPicInfo.substr(0, nPos);
+			std::string strSubjectID = strModelPicInfo.substr(nPos + 1);
+
+			std::string strModelPicDir = SysSet.m_strModelSavePath + "\\" + strExamID + "\\";
+
+			std::vector<std::string> vecModelPicName;
+			std::vector<std::string> vecModelPicPath;
+			std::string strPaperPath = CMyCodeConvert::Gb2312ToUtf8(strModelPicDir);
+
+			try
+			{
+				Poco::File modlePicDir(strPaperPath);
+				if (!modlePicDir.exists())
+				{
+					pUser->SendResult(USER_RESPONSE_GET_MODEL_PIC, RESULT_GET_MODEL_PIC_NOPIC);
+					return false;
+				}
+			}
+			catch (Poco::Exception& e)
+			{
+			}
+
+			Poco::DirectoryIterator it(strPaperPath);
+			Poco::DirectoryIterator end;
+			while (it != end)
+			{
+				Poco::Path p(it->path());
+				if (it->isFile())
+				{
+					std::string strName = p.getFileName();
+					if (strName.find(strModelPicInfo) != std::string::npos)
+					{
+						std::string strPicPath = p.toString();
+						vecModelPicName.push_back(strName);
+						vecModelPicPath.push_back(strPicPath);
+					}
+				}
+				it++;
+			}
+			if (vecModelPicPath.size() == 0)
+			{
+				pUser->SendResult(USER_RESPONSE_GET_MODEL_PIC, RESULT_GET_MODEL_PIC_NOPIC);
+				return false;
+			}
+
+			std::string strSendData;
+			for (int i = 0; i < vecModelPicPath.size(); i++)
+			{
+				std::string strFileData;
+				std::ifstream fin(CMyCodeConvert::Utf8ToGb2312(vecModelPicPath[i]), std::ifstream::binary);
+				if (!fin)
+				{
+					pUser->SendResult(USER_RESPONSE_GET_MODEL_PIC, RESULT_ERROR_FILEIO);
+					return false;
+				}
+				std::stringstream buffer;
+				buffer << fin.rdbuf();
+				strFileData = buffer.str();
+				fin.close();
+
+				strSendData.append("#_#_#_#_");
+				strSendData.append(vecModelPicName[i]);
+				strSendData.append("_*_");
+				char szLen[20] = { 0 };
+				sprintf_s(szLen, "%d", strFileData.length());
+				strSendData.append(szLen);
+				strSendData.append("_#####_");
+				strSendData.append(strFileData);
+			}
+
+			pUser->SendResponesInfo(USER_RESPONSE_GET_MODEL_PIC, RESULT_GET_MODEL_PIC_SUCCESS, (char*)strSendData.c_str(), strSendData.length());
 		}
 		break;
 	default:

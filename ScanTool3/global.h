@@ -138,9 +138,9 @@
 
 #ifndef TO_WHTY
 	#ifdef PUBLISH_VERSION
-		#define SOFT_VERSION	_T("v2.1")
+		#define SOFT_VERSION	_T("v2.2")
 	#else
-		#define SOFT_VERSION	_T("v2.1-Pir")		//-Pri
+		#define SOFT_VERSION	_T("v2.2-Pir")		//-Pri
 	#endif
 #else
 	#define SOFT_VERSION	_T("v2.1")
@@ -175,11 +175,13 @@ extern int					_nReocgThreads_;		//识别线程数量
 extern Poco::Event			g_eGetExamList;		//获取考试列表事件
 extern Poco::Event			g_eGetBmk;			//获取报名库事件
 extern Poco::Event			g_eDownLoadModel;	//下载模板完成状态
+extern Poco::Event			g_eGetModelPic;		//下载模板图片状态
 //--
 extern int					g_nDownLoadModelStatus;		//下载模板的状态	0-未下载，初始化，1-模板下载中，2-下载成功，3-本地存在此文件，不需要下载, -1-服务器此科目模板不存在, -2-服务器读取文件失败
 extern int					_nScanStatus_;				//扫描进度 0-未扫描，1-正在扫描，2-扫描完成, 3-扫描中止, -1--连接扫描仪失败, -2--加载扫描仪失败, -3--扫描失败
 extern int					_nScanCount_;				//扫描计数器，当前已扫描多少份
 extern int					_nScanPaperCount_;			//当前已经扫描人数，从软件启动开始计数
+extern int					_nGetModelPic_;				//获取模板图片状态，0-未获取，1-正在获取(下载)， 2-获取模板图片成功，3-服务器无模板图片，4-服务器读取失败
 
 extern CString				g_strCurrentPath;
 extern std::string			g_strPaperSavePath;
@@ -529,6 +531,14 @@ typedef std::map<std::string, pST_SENDER> MAP_FILESENDER;
 extern Poco::FastMutex	_fmMapSender_;
 extern MAP_FILESENDER	_mapSender_;
 #endif
+
+//模板图像路径，用于创建模板用
+typedef struct tagModelPicPath
+{
+	CString strName;
+	CString strPath;
+}MODELPICPATH;
+extern std::vector<MODELPICPATH> _vecModelPicPath_;		//用于从服务器上下载图像后直接创建模板
 
 typedef struct _CompressTask_
 {

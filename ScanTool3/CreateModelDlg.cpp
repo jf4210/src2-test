@@ -143,7 +143,7 @@ void CCreateModelDlg::OnBnClickedBtnStart()
 				lstrcat(szFileName, p);       //加上文件名       
 
 				// 插入到List Box中  
-				MODELPATH st;
+				MODELPICPATH st;
 				st.strName = p;
 				st.strPath = szFileName;
 				m_vecPath.push_back(st);

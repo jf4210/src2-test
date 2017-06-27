@@ -5,7 +5,7 @@
 #include "ScanTool3.h"
 #include "LocalPicSelDlg.h"
 #include "afxdialogex.h"
-
+#include "NewMessageBox.h"
 
 // CLocalPicSelDlg 对话框
 
@@ -78,7 +78,7 @@ void CLocalPicSelDlg::OnBnClickedBtnAdd()
 	if (dlg.DoModal() != IDOK)
 		return;
 
-	MODELPATH st;
+	MODELPICPATH st;
 	st.strName = dlg.GetFileName();
 	st.strPath = dlg.GetPathName();
 	m_vecPath.push_back(st);
@@ -98,7 +98,7 @@ void CLocalPicSelDlg::OnBnClickedBtnDel()
 	if (m_nCurrentItem < 0 || m_nCurrentItem > m_vecPath.size() - 1)
 		return;
 
-	std::vector<MODELPATH>::iterator it = m_vecPath.begin() + m_nCurrentItem;
+	std::vector<MODELPICPATH>::iterator it = m_vecPath.begin() + m_nCurrentItem;
 	if (it != m_vecPath.end())
 		m_vecPath.erase(it);
 
@@ -120,8 +120,13 @@ void CLocalPicSelDlg::OnBnClickedBtnOk()
 {
 	if (m_vecPath.size() <= 0)
 	{
-		if(MessageBox(_T("未选择模板图像信息"), _T(""), MB_OKCANCEL) != IDOK)
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 2, "未选择模板图像信息");
+		if (dlg.DoModal() != IDOK)
 			return;
+
+// 		if(MessageBox(_T("未选择模板图像信息"), _T(""), MB_OKCANCEL) != IDOK)
+// 			return;
 	}
 	OnOK();
 }

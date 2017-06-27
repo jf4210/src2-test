@@ -34,7 +34,7 @@ int CNetIoSendBuffer::AddData(const char* pData, int nDataLen)
 	DWORD dwLen=nDataLen+m_nDataSize;
 	if (dwLen>MAX_SENBUF_LEN)
 	{
-
+		std::cout << "待发送数据太多" << std::endl;
 		UnLock();
 //		g_Log.LogOut(LOG_SERIOUS,"待发送数据太多");
 		g_Log.LogOut("待发送数据太多");

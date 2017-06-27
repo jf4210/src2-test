@@ -16,7 +16,7 @@ public:
 // 对话框数据
 	enum { IDD = IDD_LOCALPICSELDLG };
 
-	std::vector<MODELPATH> m_vecPath;
+	std::vector<MODELPICPATH> m_vecPath;
 
 	CListCtrl	m_listPath;
 private:

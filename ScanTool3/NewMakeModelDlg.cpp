@@ -259,6 +259,8 @@ void CNewMakeModelDlg::InitScanner()
 
 void CNewMakeModelDlg::InitUI()
 {
+	m_bmpBtnNew.SetStateBitmap(IDB_MakeModel_Btn_New_normal, 0, IDB_MakeModel_Btn_New_down);
+	m_bmpBtnNew.SetWindowText(_T("    新建模板"));
 	m_bmpBtnScan.SetStateBitmap(IDB_MakeModel_Btn_Scan_Normal, 0, IDB_MakeModel_Btn_Scan_Down); 
 	m_bmpBtnScan.SetWindowText(_T("    扫描题卡"));
 	m_bmpBtnSave.SetStateBitmap(IDB_MakeModel_Btn_Save_Normal, 0, IDB_MakeModel_Btn_Save_Down);
@@ -430,7 +432,7 @@ LRESULT CNewMakeModelDlg::ScanDone(WPARAM wParam, LPARAM lParam)
 		g_pLogger->information(pResult->strResult);
 
 		USES_CONVERSION;
-		MODELPATH picInfo;
+		MODELPICPATH picInfo;
 		picInfo.strName = A2T(pResult->strPicName.c_str());
 		picInfo.strPath = A2T(pResult->strPicPath.c_str());
 		m_vecModelPicPath.push_back(picInfo);
@@ -444,6 +446,7 @@ LRESULT CNewMakeModelDlg::ScanDone(WPARAM wParam, LPARAM lParam)
 // 			strSelect.Append(m_strScanPicPath);
 // 			ShellExecute(NULL, _T("open"), _T("explorer.exe"), strSelect, NULL, SW_SHOWNORMAL);
 
+			SAFE_RELEASE(m_pModel);
 			m_pMakeModelDlg->CreateNewModel(m_vecModelPicPath);
 			m_pModel = m_pMakeModelDlg->m_pModel;
 			m_bmpBtnNew.EnableWindow(FALSE);
@@ -488,18 +491,18 @@ void CNewMakeModelDlg::OnBnClickedBtnNewmakemodel()
 		dlg.DoModal();
 		return;
 	}
-	if (m_pModel)
-	{
-		CNewMessageBox dlg;
-		dlg.setShowInfo(2, 1, "当前科目模板已存在，无法创建");
-		dlg.DoModal();
-		return;
-	}
+// 	if (m_pModel)
+// 	{
+// 		CNewMessageBox dlg;
+// 		dlg.setShowInfo(2, 1, "当前科目模板已存在，无法创建");
+// 		dlg.DoModal();
+// 		return;
+// 	}
 	
 	CCreateModelDlg dlg(this);
 	if (dlg.DoModal() != IDOK)
 		return;
-
+	
 	m_vecModelPicPath.clear();
 	if (dlg.m_nSearchType == 1)
 	{
@@ -508,12 +511,73 @@ void CNewMakeModelDlg::OnBnClickedBtnNewmakemodel()
 	}
 	else if (dlg.m_nSearchType == 2)
 	{
+		SAFE_RELEASE(m_pModel);
 		m_vecModelPicPath = dlg.m_vecPath;
 		m_pMakeModelDlg->CreateNewModel(m_vecModelPicPath);
 		m_pModel = m_pMakeModelDlg->m_pModel;
 		m_bmpBtnNew.EnableWindow(FALSE);
 	}
+	else if (dlg.m_nSearchType == 3)
+	{
+		//下载模板图片
+		g_eGetModelPic.reset();
+		_nGetModelPic_ = 1;
+		_vecModelPicPath_.clear();
+		m_vecModelPicPath.clear();
 
+		std::string strModelInfo = Poco::format("%d_%d", _pCurrExam_->nExamID, _pCurrSub_->nSubjID);
+		pTCP_TASK pTcpTask = new TCP_TASK;
+		pTcpTask->usCmd = USER_GET_MODEL_PIC;
+		pTcpTask->nPkgLen = strModelInfo.length();
+		memcpy(pTcpTask->szSendBuf, (char*)strModelInfo.c_str(), strModelInfo.length());
+		g_fmTcpTaskLock.lock();
+		g_lTcpTask.push_back(pTcpTask);
+		g_fmTcpTaskLock.unlock();
+
+		try
+		{
+			g_eGetModelPic.wait(10000);
+		}
+		catch (Poco::TimeoutException &e)
+		{
+			TRACE("获取模板图片超时\n");
+		}
+
+		if (_nGetModelPic_ == 2)
+		{
+			CNewMessageBox dlg;
+			dlg.setShowInfo(3, 1, "下载模板图像完成");
+			dlg.DoModal();
+
+			if (_vecModelPicPath_.size() > 0)
+			{
+				SAFE_RELEASE(m_pModel);
+				m_vecModelPicPath = _vecModelPicPath_;
+				m_pMakeModelDlg->CreateNewModel(m_vecModelPicPath);
+				m_pModel = m_pMakeModelDlg->m_pModel;
+				m_bmpBtnNew.EnableWindow(FALSE);
+			}
+		}
+		else if (_nGetModelPic_ == 3)
+		{
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, "服务器上无模板图像");
+			dlg.DoModal();
+		}
+		else if (_nGetModelPic_ == 4)
+		{
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, "下载模板图像失败");
+			dlg.DoModal();
+		}
+		else if (_nGetModelPic_ == 1)
+		{
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, "下载模板图像超时");
+			dlg.DoModal();
+		}
+		_nGetModelPic_ = 0;
+	}
 }
 
 void CNewMakeModelDlg::OnCbnSelchangeComboMakemodelSubject()
@@ -528,6 +592,7 @@ void CNewMakeModelDlg::OnCbnSelchangeComboMakemodelSubject()
 		m_bmpBtnNew.EnableWindow(TRUE);
 
 		SAFE_RELEASE(m_pModel);
+		m_vecModelPicPath.clear();
 		m_pModel = LoadSubjectModel(_pCurrSub_);
 		if (m_pMakeModelDlg)
 			m_pMakeModelDlg->ReInitModel(m_pModel);
@@ -554,17 +619,26 @@ void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 	USES_CONVERSION;
 	if (m_pModel)
 	{
-		m_vecModelPicPath.clear();
+		if (m_pModel->vecPaperModel.size() > 0)
+			m_vecModelPicPath.clear();
 		for (int i = 0; i < m_pModel->vecPaperModel.size(); i++)
 		{
 			CString strPicPath = g_strCurrentPath + _T("Model\\") + A2T(m_pModel->strModelName.c_str()) + _T("\\") + A2T(m_pModel->vecPaperModel[i]->strModelPicName.c_str());
-			MODELPATH picInfo;
+			MODELPICPATH picInfo;
 			picInfo.strName = A2T(m_pModel->vecPaperModel[i]->strModelPicName.c_str());
 			picInfo.strPath = strPicPath;
 			m_vecModelPicPath.push_back(picInfo);
 		}
 	}
+	if (m_vecModelPicPath.size() == 0)
+	{
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "无模板图片信息！");
+		dlg.DoModal();
+		return;
+	}
 
+	bool bFailFlag = false;
 	for (int i = 0; i < m_vecModelPicPath.size(); i++)
 	{
 		USES_CONVERSION;
@@ -579,6 +653,7 @@ void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 			Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(strPath));
 			if (!fileModel.exists())
 			{
+				bFailFlag = true;
 				CNewMessageBox dlg;
 				dlg.setShowInfo(2, 1, "图像路径不存在！");
 				dlg.DoModal();
@@ -619,5 +694,11 @@ void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 		g_fmTcpTaskLock.lock();
 		g_lTcpTask.push_back(pTcpTask);
 		g_fmTcpTaskLock.unlock();
+	}
+	if (!bFailFlag)
+	{
+		CNewMessageBox dlg;
+		dlg.setShowInfo(3, 1, "添加上传任务完成！");
+		dlg.DoModal();
 	}
 }

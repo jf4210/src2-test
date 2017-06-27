@@ -183,7 +183,7 @@ public:
 // 	void ScanDone(int nStatus);
 
 	void ReInitModel(pMODEL pModel);
-	void CreateNewModel(std::vector<MODELPATH>& vecPath);
+	void CreateNewModel(std::vector<MODELPICPATH>& vecPath);
 	void SaveNewModel();
 public:
 	bool RecogNewGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc);							//在修改阀值后重新计算矩形区的灰度值

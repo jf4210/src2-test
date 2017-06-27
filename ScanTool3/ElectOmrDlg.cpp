@@ -6,6 +6,7 @@
 #include "ElectOmrDlg.h"
 #include "afxdialogex.h"
 #include "MakeModelDlg.h"
+#include "NewMessageBox.h"
 
 // ElectOmrDlg 对话框
 
@@ -196,7 +197,10 @@ void ElectOmrDlg::OnBnClickedBtnDel()
 	int nItem = m_comboGroup.GetCurSel();
 	if (nItem < 0)
 	{
-		AfxMessageBox(_T("请先新建选项组"));
+//		AfxMessageBox(_T("请先新建选项组"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "请先新建选项组");
+		dlg.DoModal();
 		return;
 	}
 	pELECTOMRGROUPINFO pElectOmr = (pELECTOMRGROUPINFO)m_comboGroup.GetItemDataPtr(nItem);
@@ -212,7 +216,10 @@ void ElectOmrDlg::OnBnClickedBtnDel()
 	}
 	if (bFind)
 	{
-		AfxMessageBox(_T("请先清除属于此组选做题的选项"));
+//		AfxMessageBox(_T("请先清除属于此组选做题的选项"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "请先清除属于此组选做题的选项");
+		dlg.DoModal();
 		return;
 	}
 
@@ -238,13 +245,19 @@ void ElectOmrDlg::OnBnClickedBtnSave()
 	UpdateData(TRUE);
 	if (m_nRealItem == 0 || m_nAllCount == 0)
 	{
-		AfxMessageBox(_T("选项数量设置不合法，不能保存！"));
+//		AfxMessageBox(_T("选项数量设置不合法，不能保存！"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "选项数量设置不合法，不能保存！");
+		dlg.DoModal();
 		return;
 	}
 	int nItem = m_comboGroup.GetCurSel();
 	if (nItem < 0)
 	{
-		AfxMessageBox(_T("请先新建选项组"));
+//		AfxMessageBox(_T("请先新建选项组"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "请先新建选项组");
+		dlg.DoModal();
 		return;
 	}
 	pELECTOMRGROUPINFO pElectOmr = (pELECTOMRGROUPINFO)m_comboGroup.GetItemDataPtr(nItem);

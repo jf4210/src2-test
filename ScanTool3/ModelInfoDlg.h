@@ -1,12 +1,13 @@
 #pragma once
 #include <vector>
+#include "global.h"
 
 // CModelInfoDlg 对话框
-typedef struct tagPath
-{
-	CString strName;
-	CString strPath;
-}MODELPATH;
+// typedef struct tagModelPicPath
+// {
+// 	CString strName;
+// 	CString strPath;
+// }MODELPICPATH;
 
 class CModelInfoDlg : public CDialog
 {
@@ -23,7 +24,7 @@ public:
 	int			m_nPaperNum;
 	bool		m_bABPaperModel;		//AB卷模式
 	bool		m_bHasHead;				//是否有同步头
-	std::vector<MODELPATH> m_vecPath;
+	std::vector<MODELPICPATH> m_vecPath;
 
 	CListCtrl	m_listPath;
 private:

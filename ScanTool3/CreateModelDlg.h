@@ -23,7 +23,7 @@ public:
 
 	int		m_nSearchType;	//1-从扫描仪获取图像，2-从本地选择图片，3-从服务器下载图像
 	CString			m_strScanSavePath;
-	std::vector<MODELPATH> m_vecPath;
+	std::vector<MODELPICPATH> m_vecPath;
 
 	CFont	fontStatus;
 	void	SetFontSize();

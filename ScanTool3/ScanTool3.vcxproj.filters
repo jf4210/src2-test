@@ -914,5 +914,11 @@
     <Image Include="skin\popup\succeed.bmp">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="skin\makeModel\new_down.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\makeModel\new_normal.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>

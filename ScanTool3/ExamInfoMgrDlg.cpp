@@ -5,6 +5,7 @@
 #include "ScanTool3.h"
 #include "ExamInfoMgrDlg.h"
 #include "afxdialogex.h"
+#include "Net_Cmd_Protocol.h"
 
 
 // CExamInfoMgrDlg 对话框
@@ -13,7 +14,7 @@ IMPLEMENT_DYNAMIC(CExamInfoMgrDlg, CDialog)
 
 CExamInfoMgrDlg::CExamInfoMgrDlg(CWnd* pParent /*=NULL*/)
 : CDialog(CExamInfoMgrDlg::IDD, pParent)
-, m_nMaxShowExamListItem(0), m_nAllExamListItems(0), m_nShowPapersCount(0), m_nCurrShowPaper(1), m_nMaxSubsRow(3), m_nSubjectBtnH(30), m_nDlgMinH(135), m_strShowCurrPaper(_T(""))
+, m_nMaxShowExamListItem(0), m_nAllExamListItems(0), m_nShowPapersCount(0), m_nCurrShowPaper(1), m_nMaxSubsRow(3), m_nSubjectBtnH(30), m_nDlgMinH(138), m_strShowCurrPaper(_T(""))
 , m_nChildDlgGap(10)
 {
 
@@ -34,6 +35,7 @@ void CExamInfoMgrDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BTN_Last, m_bmpBtnLast);
 	DDX_Control(pDX, IDC_BTN_Up, m_bmpBtnUp);
 	DDX_Control(pDX, IDC_BTN_Down, m_bmpBtnDown);
+	DDX_Control(pDX, IDC_BTN_Reflesh, m_bmpBtnReflesh);
 }
 
 
@@ -42,6 +44,7 @@ BOOL CExamInfoMgrDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	m_bmpBkg.LoadBitmap(IDB_Main_Bk);
+	m_bmpBtnReflesh.SetStateBitmap(IDB_Exam_Btn_First_normal, 0, IDB_Exam_Btn_First_Down);
 	m_bmpBtnFirst.SetStateBitmap(IDB_Exam_Btn_First_normal, 0, IDB_Exam_Btn_First_Down);
 	m_bmpBtnLast.SetStateBitmap(IDB_Exam_Btn_First_normal, 0, IDB_Exam_Btn_First_Down);
 	m_bmpBtnUp.SetStateBitmap(IDB_Exam_Btn_First_normal, 0, IDB_Exam_Btn_First_Down);
@@ -80,6 +83,7 @@ BEGIN_MESSAGE_MAP(CExamInfoMgrDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_Down, &CExamInfoMgrDlg::OnBnClickedBtnDown)
 	ON_WM_CTLCOLOR()
 	ON_CBN_SELCHANGE(IDC_COMBO_TK_Type, &CExamInfoMgrDlg::OnCbnSelchangeComboTkType)
+	ON_BN_CLICKED(IDC_BTN_Reflesh, &CExamInfoMgrDlg::OnBnClickedBtnReflesh)
 END_MESSAGE_MAP()
 
 
@@ -91,8 +95,8 @@ void CExamInfoMgrDlg::InitCtrlPosition()
 	int cx = rcClient.right;
 	int cy = rcClient.bottom;
 
-	const int nTopGap = 50;	//上边的间隔
-	const int nBottomGap = 30;	//下边的间隔
+	const int nTopGap = 40;	//上边的间隔
+	const int nBottomGap = 35;	//下边的间隔
 	const int nLeftGap = 20;		//左边的空白间隔
 	const int nRightGap = 20;	//右边的空白间隔
 	int nGap = 5;
@@ -145,11 +149,17 @@ void CExamInfoMgrDlg::InitCtrlPosition()
 
 
 	nGap = 5;
-	int nBtnW = 40;
+	int nBtnW = 45;
 	int nBtnH = nBottomGap - nGap - nGap;
 //	nCurrLeft = m_rtExamList.left + m_rtExamList.Width() / 2 - (nBtnW + nGap) * 2;
 	nCurrLeft = m_rtExamList.left + m_rtExamList.Width() / 2 - (nBtnW + nGap) * 2 - (nSysLinkW + nGap) * nSysLinkCount / 2;
 	nCurrTop = cy - nBottomGap + nGap;
+
+	if (GetDlgItem(IDC_BTN_Reflesh)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_Reflesh)->MoveWindow(nCurrLeft - nBtnW - nGap, nCurrTop, nBtnW, nBtnH);
+	}
+
 	if (GetDlgItem(IDC_BTN_First)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_First)->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
@@ -678,4 +688,68 @@ void CExamInfoMgrDlg::OnCbnSelchangeComboTkType()
 	GetSearchResultExamList();
 	m_nCurrShowPaper = 1;
 	ShowExamList(m_lExamList, m_nCurrShowPaper);
+}
+
+
+void CExamInfoMgrDlg::OnBnClickedBtnReflesh()
+{
+	USES_CONVERSION;
+	if (!_bLogin_)
+		return ;
+
+	int nResult = 0;
+
+	ST_EXAM_INFO stExamInfo;
+	ZeroMemory(&stExamInfo, sizeof(ST_EXAM_INFO));
+	if (_bHandModel_)
+	{
+#if 1
+		std::string strTmp = _strPersonID_ + "###" + _strSchoolID_;
+		strcpy(stExamInfo.szEzs, strTmp.c_str());
+#else
+		strcpy(stExamInfo.szEzs, T2A(m_strPersonId));
+#endif
+	}
+	else
+		strcpy(stExamInfo.szEzs, _strEzs_.c_str());
+
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_GETEXAMINFO;
+	pTcpTask->nPkgLen = sizeof(ST_EXAM_INFO);
+	memcpy(pTcpTask->szSendBuf, (char*)&stExamInfo, sizeof(ST_EXAM_INFO));
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
+
+	g_eGetExamList.reset();
+
+
+	EXAM_LIST::iterator itExam = g_lExamList.begin();
+	for (; itExam != g_lExamList.end();)
+	{
+		pEXAMINFO pExam = *itExam;
+		itExam = g_lExamList.erase(itExam);
+		SAFE_RELEASE(pExam);
+	}
+	EXAM_LIST::iterator itExam2 = m_lExamList.begin();
+	for (; itExam2 != m_lExamList.end();)
+	{
+		pEXAMINFO pExam = *itExam2;
+		itExam2 = m_lExamList.erase(itExam2);
+		SAFE_RELEASE(pExam);
+	}
+	m_nCurrShowPaper = 1;
+	ShowExamList(m_lExamList, m_nCurrShowPaper);
+
+	try
+	{
+		g_eGetExamList.wait(10000);
+	}
+	catch (Poco::TimeoutException &e)
+	{
+		TRACE("获取报名库超时\n");
+	}
+	InitShowData();
+
+	return ;
 }

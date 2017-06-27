@@ -52,6 +52,7 @@ private:
 	CBmpButton	m_bmpBtnLast;
 	CBmpButton	m_bmpBtnUp;
 	CBmpButton	m_bmpBtnDown;
+	CBmpButton	m_bmpBtnReflesh;
 
 
 	//++具体考试信息子窗口
@@ -72,4 +73,5 @@ public:
 	afx_msg void OnBnClickedBtnDown();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnCbnSelchangeComboTkType();
+	afx_msg void OnBnClickedBtnReflesh();
 };

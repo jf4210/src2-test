@@ -64,12 +64,15 @@ Poco::Event			g_eCompressThreadExit;
 Poco::Event			g_eGetExamList;		//获取考试列表事件
 Poco::Event			g_eGetBmk;			//获取报名库事件
 Poco::Event			g_eDownLoadModel;	//下载模板完成状态
+Poco::Event			g_eGetModelPic;		//下载模板图片状态
 //--
 
 pPAPERSINFO			_pCurrPapersInfo_ = NULL;
 int					g_nDownLoadModelStatus = 0;		//下载模板的状态	0-未下载，初始化，1-模板下载中，2-下载成功，3-本地存在此文件，不需要下载, -1-服务器此科目模板不存在, -2-服务器读取文件失败
 int					_nScanStatus_ = 0;				//扫描进度 0-未扫描，1-正在扫描，2-扫描完成, 3-扫描中止, -1--连接扫描仪失败, -2--加载扫描仪失败, -3--扫描失败
 STUDENT_LIST		g_lBmkStudent;					//报名库学生列表
+int					_nGetModelPic_ = 0;				//获取模板图片状态，0-未获取，1-正在获取(下载)， 2-获取模板图片成功，3-服务器无模板图片，4-服务器读取失败
+std::vector<MODELPICPATH> _vecModelPicPath_;		//用于从服务器上下载图像后直接创建模板
 #ifdef NewBmkTest
 ALLSTUDENT_LIST		g_lBmkAllStudent;		//单个考试中所有科目的报名库学生列表
 EXAMBMK_MAP			g_mapBmkMgr;			//考试报名库管理哈希表

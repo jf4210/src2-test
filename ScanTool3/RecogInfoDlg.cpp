@@ -6,7 +6,7 @@
 #include "RecogInfoDlg.h"
 #include "afxdialogex.h"
 #include "MakeModelDlg.h"
-
+#include "NewMessageBox.h"
 // CRecogInfoDlg 对话框
 
 IMPLEMENT_DYNAMIC(CRecogInfoDlg, CDialog)
@@ -139,7 +139,11 @@ void CRecogInfoDlg::OnBnClickedBtnSaverecoginfo()
 		cv::Mat imgResult = ((CMakeModelDlg*)GetParent())->m_vecPaperModelInfo[((CMakeModelDlg*)GetParent())->m_nCurrTabSel]->matDstImg(rm);
 		((CMakeModelDlg*)GetParent())->RecogNewGrayValue(imgResult, *m_pCurRectInfo);
 	}
-	AfxMessageBox(_T("修改成功"));
+//	AfxMessageBox(_T("修改成功"));
+
+	CNewMessageBox dlg;
+	dlg.setShowInfo(3, 1, "修改成功");
+	dlg.DoModal();
 }
 
 void CRecogInfoDlg::ShowDetailRectInfo(pRECTINFO pCurRectInfo)

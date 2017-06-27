@@ -777,7 +777,10 @@ LRESULT CMakeModelDlg::RoiLBtnUp(WPARAM wParam, LPARAM lParam)
 	m_cpListCtrl.SetItemState(m_nCurListCtrlSel, 0, LVIS_DROPHILITED);		// 取消高亮显示
 	if (m_eCurCPType == UNKNOWN)
 	{
-		AfxMessageBox(_T("请先选中校验点类型"));
+//		AfxMessageBox(_T("请先选中校验点类型"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "请先选中校验点类型");
+		dlg.DoModal();
 		return FALSE;
 	}
 
@@ -785,7 +788,10 @@ LRESULT CMakeModelDlg::RoiLBtnUp(WPARAM wParam, LPARAM lParam)
 	{
 		if (checkOverlap(m_eCurCPType, Rt))
 		{
-			AfxMessageBox(_T("检测到包含已选区域"));
+//			AfxMessageBox(_T("检测到包含已选区域"));
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, "检测到包含已选区域");
+			dlg.DoModal();
 			return FALSE;
 		}
 		Recognise(Rt);
@@ -796,7 +802,10 @@ LRESULT CMakeModelDlg::RoiLBtnUp(WPARAM wParam, LPARAM lParam)
 	{
 		if (checkOverlap(m_eCurCPType, Rt))
 		{
-			AfxMessageBox(_T("检测到包含已选区域"));
+//			AfxMessageBox(_T("检测到包含已选区域"));
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, "检测到包含已选区域");
+			dlg.DoModal();
 			return FALSE;
 		}
 		RecogByHead(Rt);
@@ -813,12 +822,18 @@ LRESULT CMakeModelDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
 			return false;
 		if (!m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.size())
 		{
-			AfxMessageBox(_T("请先设置水平同步头"));
+//			AfxMessageBox(_T("请先设置水平同步头"));
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, "请先设置水平同步头");
+			dlg.DoModal();
 			return false;
 		}
 		if (!m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.size())
 		{
-			AfxMessageBox(_T("请先设置垂直同步头"));
+//			AfxMessageBox(_T("请先设置垂直同步头"));
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, "请先设置垂直同步头");
+			dlg.DoModal();
 			return false;
 		}
 		int nPosH = -1;
@@ -1179,12 +1194,16 @@ void CMakeModelDlg::OnBnClickedBtnSelpic()
 {
 	if (!m_pModel)
 	{
-		AfxMessageBox(_T("请先创建模板"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "请先创建模板");
+		dlg.DoModal();
 		return;
 	}
 	if (!m_bNewModelFlag)
 	{
-		AfxMessageBox(_T("重新选择图片需要重新设置本页的校验点"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "重新选择图片需要重新设置本页的校验点");
+		dlg.DoModal();
 	}
 
 	CFileDialog dlg(true, _T("*.bmp"), NULL, OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY,
@@ -1239,7 +1258,9 @@ void CMakeModelDlg::OnBnClickedBtnReset()
 {
 	if (!m_pModel)
 	{
-		AfxMessageBox(_T("请先创建模板"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "请先创建模板");
+		dlg.DoModal();
 		return;
 	}
 
@@ -2012,7 +2033,9 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 			}
 			else
 			{
-				AfxMessageBox(_T("定点最多可设置4个"));
+				CNewMessageBox dlg;
+				dlg.setShowInfo(2, 1, "定点最多可设置4个");
+				dlg.DoModal();
 			}			
 		}
 	}
@@ -2038,12 +2061,16 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 		return false;
 	if (!m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.size())
 	{
-		AfxMessageBox(_T("请先设置水平同步头"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "请先设置水平同步头");
+		dlg.DoModal();
 		return false;
 	}
 	if (!m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.size())
 	{
-		AfxMessageBox(_T("请先设置垂直同步头"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "请先设置垂直同步头");
+		dlg.DoModal();
 		return false;
 	}
 	int nPosH_B = -1;
@@ -2100,22 +2127,34 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 	{
 		if (nPosV_E - nPosV_B > 0 && nPosH_E - nPosH_B > 0)
 		{
-			AfxMessageBox(_T("选择区域不合法，请重新选择！"));
+//			AfxMessageBox(_T("选择区域不合法，请重新选择！"));
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, "选择区域不合法，请重新选择！");
+			dlg.DoModal();
 			return false;
 		}
 		if (!m_pElectOmrDlg->m_pCurrentGroup)
 		{
-			AfxMessageBox(_T("当前选做题信息不存在，请新建!"));
+//			AfxMessageBox(_T("当前选做题信息不存在，请新建!"));
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, "当前选做题信息不存在，请新建!");
+			dlg.DoModal();
 			return false;
 		}
 		if (!m_pElectOmrDlg->checkValid())
 		{
-			AfxMessageBox(_T("当前选做题信息未保存，请先保存此题选做题信息!"));
+//			AfxMessageBox(_T("当前选做题信息未保存，请先保存此题选做题信息!"));
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, "当前选做题信息未保存，请先保存!");
+			dlg.DoModal();
 			return false;
 		}
 		if (m_pElectOmrDlg->m_pCurrentGroup->nAllCount < (nPosV_E - nPosV_B + 1)*(nPosH_E - nPosH_B + 1))
 		{
-			AfxMessageBox(_T("识别出的选项数超出范围!"));
+//			AfxMessageBox(_T("识别出的选项数超出范围!"));
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, "识别出的选项数超出范围");
+			dlg.DoModal();
 			return false;
 		}
 	}
@@ -2359,8 +2398,12 @@ bool CMakeModelDlg::checkValidity()
 			if (nCount > 0 && m_vecPaperModelInfo[i]->vecRtFix.size() < 3)
 			{
 				char szTmp[50] = { 0 };
-				sprintf_s(szTmp, "第 %d 页定点设置数量太少，要求至少3个，建议设置4个", i + 1);
-				AfxMessageBox(A2T(szTmp));
+// 				sprintf_s(szTmp, "第 %d 页定点设置数量太少，要求至少3个，建议设置4个", i + 1);
+// 				AfxMessageBox(A2T(szTmp));
+				sprintf_s(szTmp, "第 %d 页定点设置数量太少，建议设置4个", i + 1);
+				CNewMessageBox dlg;
+				dlg.setShowInfo(2, 1, szTmp);
+				dlg.DoModal();
 				bResult = false;
 				break;
 			}
@@ -2392,7 +2435,10 @@ bool CMakeModelDlg::checkValidity()
 	//准考证号检查
 	if (m_vecPaperModelInfo[0]->lSN.size() == 0)
 	{
-		AfxMessageBox(_T("第1页准考证号未设置"));
+//		AfxMessageBox(_T("第1页准考证号未设置"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "第1页准考证号未设置");
+		dlg.DoModal();
 		bResult = false;
 	}
 
@@ -2403,7 +2449,10 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 {
 	if (!m_pModel)
 	{
-		AfxMessageBox(_T("请先创建模板"));
+//		AfxMessageBox(_T("请先创建模板"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "请先创建模板");
+		dlg.DoModal();
 		return;
 	}
 	
@@ -2559,10 +2608,18 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 		//直接上传模板
 		CString strModelFullPath = modelPath + _T(".mod");
 		UploadModel(strModelFullPath, m_pModel);
-		AfxMessageBox(_T("保存完成!"));
+//		AfxMessageBox(_T("保存完成!"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(3, 1, "保存完成!");
+		dlg.DoModal();
 	}
 	else
-		AfxMessageBox(_T("保存失败"));
+	{
+//		AfxMessageBox(_T("保存失败"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "保存失败");
+		dlg.DoModal();
+	}
 	
 	SetCursor(LoadCursor(NULL, IDC_ARROW));
 }
@@ -4521,14 +4578,20 @@ void CMakeModelDlg::AddRecogRectToList()
 			}
 			if (bError)
 			{
-				AfxMessageBox(_T("此组选做题实际选项总数超出范围"));
+//				AfxMessageBox(_T("此组选做题实际选项总数超出范围"));
+				CNewMessageBox dlg;
+				dlg.setShowInfo(2, 1, "此组选做题实际选项总数超出范围");
+				dlg.DoModal();
 				break;
 			}
 			if (!bFind)
 			{
 				if (!m_pElectOmrDlg->m_pCurrentGroup)
 				{
-					AfxMessageBox(_T("添加失败，当前选做题信息为空"));
+//					AfxMessageBox(_T("添加失败，当前选做题信息为空"));
+					CNewMessageBox dlg;
+					dlg.setShowInfo(2, 1, "添加失败，当前选做题信息为空");
+					dlg.DoModal();
 					break;
 				}
 				ELECTOMR_QUESTION sElectOmr;
@@ -5363,7 +5426,11 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 		{
 			CString strInfo = _T("");
 			strInfo.Format(_T("第%d个考号的选项%d密度值太低，可能阀值设置太低"), rc.nTH, rc.nSnVal);
-			MessageBox(strInfo, _T("警告"), MB_OK);
+//			MessageBox(strInfo, _T("警告"), MB_OK);
+			USES_CONVERSION;
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, T2A(strInfo));
+			dlg.DoModal();
 		}
 
 		m_vecTmp.push_back(rc);
@@ -5531,7 +5598,12 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 		{
 			CString strInfo = _T("");
 			strInfo.Format(_T("第%d题的选项%c密度值太低，可能阀值设置太低"), rc.nTH, rc.nAnswer + 65);
-			MessageBox(strInfo, _T("警告"), MB_OK);
+//			MessageBox(strInfo, _T("警告"), MB_OK);
+
+			USES_CONVERSION;
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, T2A(strInfo));
+			dlg.DoModal();
 		}
 
 		m_vecTmp.push_back(rc);
@@ -5595,7 +5667,10 @@ void CMakeModelDlg::GetElectOmrInfo(std::vector<cv::Rect>& rcList)
 	TRACE("检测到框选了%d * %d的矩形区\n", nMaxRow, nMaxCols);
 	if (nMaxCols > 1 && nMaxRow > 1)
 	{
-		AfxMessageBox(_T("选择区域不合法，请重新选择！"));
+//		AfxMessageBox(_T("选择区域不合法，请重新选择！"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "选择区域不合法，请重新选择！");
+		dlg.DoModal();
 		return;
 	}
 
@@ -5604,17 +5679,26 @@ void CMakeModelDlg::GetElectOmrInfo(std::vector<cv::Rect>& rcList)
 	//m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr
 	if (!m_pElectOmrDlg->m_pCurrentGroup)
 	{
-		AfxMessageBox(_T("当前选做题信息不存在，请新建!"));
+//		AfxMessageBox(_T("当前选做题信息不存在，请新建!"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "当前选做题信息不存在，请新建！");
+		dlg.DoModal();
 		return;
 	}
 	if (!m_pElectOmrDlg->checkValid())
 	{
-		AfxMessageBox(_T("当前选做题信息未保存，请先保存此题选做题信息!"));
+//		AfxMessageBox(_T("当前选做题信息未保存，请先保存此题选做题信息!"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "当前选做题信息未保存，请先保存！");
+		dlg.DoModal();
 		return;
 	}
 	if (m_pElectOmrDlg->m_pCurrentGroup->nAllCount < rcList_XY.size())
 	{
-		AfxMessageBox(_T("识别出的选项数超出范围!"));
+//		AfxMessageBox(_T("识别出的选项数超出范围!"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "识别出的选项数超出范围！");
+		dlg.DoModal();
 		return;
 	}
 	
@@ -5667,7 +5751,10 @@ void CMakeModelDlg::GetElectOmrInfo(std::vector<cv::Rect>& rcList)
 		}
 		if (bError)
 		{
-			AfxMessageBox(_T("此组选做题实际选项总数超出范围"));
+//			AfxMessageBox(_T("此组选做题实际选项总数超出范围"));
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, "此组选做题实际选项总数超出范围");
+			dlg.DoModal();
 			break;
 		}
 		if (!bFind)
@@ -6596,7 +6683,10 @@ bool CMakeModelDlg::UploadModel(CString strModelPath, pMODEL pModel)
 		CString strErr;
 		sprintf_s(szLog, "选做题信息长度(%d)超过发送结构体的存储空间(%d),无法进行后续提交操作", strElectOmrInfo.length(), sizeof(stModelInfo.szElectOmr));
 		g_pLogger->information(szLog);
-		AfxMessageBox(_T("选择题信息太多，无法操作！"));
+//		AfxMessageBox(_T("选择题信息太多，无法操作！"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "选择题信息太多，无法操作");
+		dlg.DoModal();
 		return false;
 	}
 
@@ -6844,7 +6934,7 @@ void CMakeModelDlg::ReInitModel(pMODEL pModel)
 	}
 }
 
-void CMakeModelDlg::CreateNewModel(std::vector<MODELPATH>& vecPath)
+void CMakeModelDlg::CreateNewModel(std::vector<MODELPICPATH>& vecPath)
 {
 	USES_CONVERSION;
 	std::vector<pPaperModelInfo>::iterator itPaperModelInfo = m_vecPaperModelInfo.begin();
@@ -6949,7 +7039,10 @@ void CMakeModelDlg::SaveNewModel()
 {
 	if (!m_pModel)
 	{
-		AfxMessageBox(_T("请先创建模板"));
+//		AfxMessageBox(_T("请先创建模板"));
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "请先创建模板");
+		dlg.DoModal();
 		return;
 	}
 

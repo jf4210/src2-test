@@ -154,7 +154,7 @@ void CModelInfoDlg::OnBnClickedBtnAdd()
 	if (dlg.DoModal() != IDOK)
 		return;
 
-	MODELPATH st;
+	MODELPICPATH st;
 	st.strName = dlg.GetFileName();
 	st.strPath = dlg.GetPathName();
 	m_vecPath.push_back(st);
@@ -174,7 +174,7 @@ void CModelInfoDlg::OnBnClickedBtnDel()
 	if (m_nCurrentItem < 0 || m_nCurrentItem > m_vecPath.size() - 1)
 		return;
 
-	std::vector<MODELPATH>::iterator it = m_vecPath.begin() + m_nCurrentItem;
+	std::vector<MODELPICPATH>::iterator it = m_vecPath.begin() + m_nCurrentItem;
 	if (it != m_vecPath.end())
 		m_vecPath.erase(it);
 

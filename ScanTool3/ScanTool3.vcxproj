@@ -353,6 +353,8 @@
     <Image Include="skin\makeModel\close_normal.bmp" />
     <Image Include="skin\makeModel\download_down.bmp" />
     <Image Include="skin\makeModel\download_normal.bmp" />
+    <Image Include="skin\makeModel\new_down.bmp" />
+    <Image Include="skin\makeModel\new_normal.bmp" />
     <Image Include="skin\makeModel\save_down.bmp" />
     <Image Include="skin\makeModel\save_normal.bmp" />
     <Image Include="skin\makeModel\scan_down.bmp" />
