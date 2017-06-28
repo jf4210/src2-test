@@ -511,8 +511,12 @@ void CSingleExamDlg::OnBnClickedBtnMakescanmodel()
 	_pCurrSub_	= NULL;
 
 #ifdef TEST_TIP_SHOW
+	//存在考号为空的考生，若不修改，将影响参加后面的评卷，忽略？
+	//当前试卷袋有20份试卷未保存，是否删除?
+	//正在保存f91f021afcbc479ba4a77cb4d3f70a52_402-590_20170531110518_56.pkg
+	//保存f91f021afcbc479ba4a77cb4d3f70a52_402-590_20170531110518_56.pkg成功
 	CNewMessageBox	dlg1;
-	dlg1.setShowInfo(2, 2, "存在考号为空的考生，如果不修改，将影响参与后面的评卷，是否忽略？");
+	dlg1.setShowInfo(2, 2, "当前试卷袋有20份试卷未保存，是否删除?");
 	dlg1.DoModal();
 	return;
 #endif

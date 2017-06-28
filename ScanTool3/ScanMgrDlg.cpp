@@ -226,7 +226,7 @@ void CScanMgrDlg::DrawBorder(CDC *pDC)
 	CPen pPen;
 	CRect rcClient(0, 0, 0, 0);
 	GetClientRect(&rcClient);
-	pPen.CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
+	pPen.CreatePen(PS_SOLID, 1, RGB(118, 190, 254));
 
 	pDC->SelectStockObject(NULL_BRUSH);
 	pOldPen = pDC->SelectObject(&pPen);
@@ -318,6 +318,14 @@ bool CScanMgrDlg::getCurrSubjectBmk()
 	}
 	if (g_lBmkStudent.size() > 0)
 	{
+// 		USES_CONVERSION;
+// 		std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+// 		CStudentMgr studentMgr;
+// 		bool bResult = studentMgr.InitDB(strDbPath);
+// 		std::string strTableName = Poco::format("T%d_%d", _pCurrExam_->nExamID, _pCurrSub_->nSubjID);			//"student";
+// 		if (bResult) bResult = studentMgr.InitTable(strTableName);
+// 		if (bResult) bResult = studentMgr.InsertData(g_lBmkStudent, strTableName);
+
 		_bGetBmk_ = true;
 		bResult = true;
 	}
@@ -372,6 +380,8 @@ void CScanMgrDlg::ShowChildDlg(int n, int nOprater /*= 0*/)
 			CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
 			pDlg->SwitchDlg(0);
 		}
+
+		InitScanner();
 	}
 	else if (n == 2)
 	{
@@ -734,7 +744,7 @@ BOOL CScanMgrDlg::OnEraseBkgnd(CDC* pDC)
 	GetClientRect(&rcClient);
 
 	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 222, 250
-//	DrawBorder(pDC);
+	DrawBorder(pDC);
 
 	ReleaseDC(pDC);
 
@@ -810,6 +820,11 @@ void CScanMgrDlg::InitUI()
 
 void CScanMgrDlg::InitScanner()
 {
+	if (_pTWAINApp)
+	{
+		_pTWAINApp->exit();
+		SAFE_RELEASE(_pTWAINApp);
+	}
 	_pTWAINApp = new TwainApp(m_hWnd);
 
 	TW_IDENTITY *pAppID = _pTWAINApp->getAppIdentity();
@@ -844,20 +859,11 @@ void CScanMgrDlg::InitScanner()
 		USES_CONVERSION;
 		while (NULL != (pID = _pTWAINApp->getDataSource((TW_INT16)i)))
 		{
-//			index = m_comboScanner.AddString(A2T(pID->ProductName));
 			m_vecScanSrc.push_back(A2T(pID->ProductName));
 			if (LB_ERR == index)
 			{
 				break;
 			}
-
-// 			m_comboScanner.SetItemData(index, i);
-// 
-// 			if (nDefault == (int)pID->Id)
-// 			{
-// 				m_comboScanner.SetCurSel(index);
-// 			}
-
 			i++;
 		}
 		_pTWAINApp->disconnectDSM();

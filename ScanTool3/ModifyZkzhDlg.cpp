@@ -268,6 +268,7 @@ void CModifyZkzhDlg::InitData()
 	if (NULL == m_pPapers)
 		return;
 
+	bool bFindFirstShow = false;
 	m_lcZkzh.DeleteAllItems();
 	USES_CONVERSION;
 	for (auto pPaper : m_pPapers->lPaper)
@@ -309,7 +310,10 @@ void CModifyZkzhDlg::InitData()
 			m_lcZkzh.SetItemText(nCount, 3, (LPCTSTR)A2T(strDetailInfo.c_str()));
 
 			if (pPaper == m_pShowPaper)
+			{
+				bFindFirstShow = true;
 				m_nCurrentSelItem = nCount;
+			}
 
 			CString strTips = _T("Ë«»÷ÏÔÊ¾´Ë¿¼ÉúÊÔ¾í");
 			m_lcZkzh.SetItemToolTipText(nCount, 0, (LPCTSTR)strTips);
@@ -378,7 +382,10 @@ void CModifyZkzhDlg::InitData()
 		m_lcZkzh.SetItemText(nCount, 3, (LPCTSTR)A2T(strDetailInfo.c_str()));
 
 		if (pPaper == m_pShowPaper)
+		{
+			bFindFirstShow = true;
 			m_nCurrentSelItem = nCount;
+		}
 
 		CString strTips = _T("Ë«»÷ÏÔÊ¾´Ë¿¼ÉúÊÔ¾í");
 		m_lcZkzh.SetItemToolTipText(nCount, 0, (LPCTSTR)strTips);
@@ -416,6 +423,9 @@ void CModifyZkzhDlg::InitData()
 		m_lcZkzh.SetItemToolTipText(nCount, 3, (LPCTSTR)strTips);
 #endif
 	}
+
+	if (!bFindFirstShow)
+		m_nCurrentSelItem = 0;
 }
 
 LRESULT CModifyZkzhDlg::RoiRBtnUp(WPARAM wParam, LPARAM lParam)
@@ -665,12 +675,14 @@ void CModifyZkzhDlg::OnNMDblclkListZkzh(NMHDR *pNMHDR, LRESULT *pResult)
 	if (pNMItemActivate->iItem < 0)
 		return;
 
-	for (int i = 0; i < m_lcZkzh.GetColumns(); i++)
+	if (m_nCurrentSelItem < m_lcZkzh.GetItemCount())
+	{
+		for (int i = 0; i < m_lcZkzh.GetColumns(); i++)
 		if (!m_lcZkzh.GetModified(m_nCurrentSelItem, i))
 			m_lcZkzh.SetItemColors(m_nCurrentSelItem, i, crOldText, crOldBackground);
 		else
 			m_lcZkzh.SetItemColors(m_nCurrentSelItem, i, RGB(255, 0, 0), crOldBackground);
-
+	}
 //	m_lcZkzh.SetItemState(m_nCurrentSelItem, 0, LVIS_DROPHILITED);
 	m_nCurrentSelItem = pNMItemActivate->iItem;
 	ShowPaperByItem(pNMItemActivate->iItem);

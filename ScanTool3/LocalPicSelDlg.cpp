@@ -13,6 +13,7 @@ IMPLEMENT_DYNAMIC(CLocalPicSelDlg, CDialog)
 
 CLocalPicSelDlg::CLocalPicSelDlg(CWnd* pParent /*=NULL*/)
 : CTipBaseDlg(CLocalPicSelDlg::IDD, pParent)
+, m_nCurrentItem(-1)
 {
 
 }
@@ -46,15 +47,20 @@ BOOL CLocalPicSelDlg::OnInitDialog()
 	m_listPath.InsertColumn(0, _T("ÐòºÅ"), LVCFMT_CENTER, 36);
 	m_listPath.InsertColumn(1, _T("Â·¾¶"), LVCFMT_CENTER, 330);
 
+	m_vecPath.clear();
+
 	return TRUE;
 }
 
 void CLocalPicSelDlg::OnNMClickListPic(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	*pResult = 0;
+
+	if (pNMItemActivate->iItem < 0)
+		return;
 
 	m_nCurrentItem = pNMItemActivate->iItem;
-	*pResult = 0;
 }
 
 

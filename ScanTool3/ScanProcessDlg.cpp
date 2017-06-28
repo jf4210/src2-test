@@ -993,7 +993,8 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 void CScanProcessDlg::OnBnClickedBtnSave()
 {
 #ifdef TEST_TIP_SHOW
-	CString str = _T("保存478bsdffsfsdfsdfsfsfdsfsdfsf73500c2940239e3622d7e2fc59e6_63-129_20170622151957_1.pkg成功");
+//	CString str = _T("保存478bsdffsfsdfsdfsfsfdsfsdfsf73500c2940239e3622d7e2fc59e6_63-129_20170622151957_1.pkg成功");
+	CString str = _T("保存f91f021afcbc479ba4a77cb4d3f70a52_402-590_20170531111240_10.pkg成功");
 //	CString str = _T("保存一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十成功");
 	SetStatusShow(2, str, 1);
 	return;

@@ -2,6 +2,7 @@
 #include <vector>
 #include "TipBaseDlg.h"
 #include "ModelInfoDlg.h"
+#include "BmpButton.h"
 
 // CCreateModelDlg ¶Ô»°¿ò
 // typedef struct tagPath
@@ -25,6 +26,8 @@ public:
 	CString			m_strScanSavePath;
 	std::vector<MODELPICPATH> m_vecPath;
 
+
+	CBmpButton		m_bmpBtnClose;
 	CFont	fontStatus;
 	void	SetFontSize();
 protected:
@@ -41,4 +44,5 @@ public:
 	afx_msg void OnStnClickedStaticFromserver();
 	afx_msg void OnStnClickedStaticFromscanner();
 	afx_msg void OnStnClickedStaticFromlocalfile();
+	afx_msg void OnBnClickedBtnClose();
 };

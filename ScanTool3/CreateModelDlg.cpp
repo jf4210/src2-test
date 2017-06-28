@@ -26,6 +26,7 @@ CCreateModelDlg::~CCreateModelDlg()
 void CCreateModelDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CTipBaseDlg::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_BTN_CLOSE, m_bmpBtnClose);
 }
 
 
@@ -38,6 +39,7 @@ BEGIN_MESSAGE_MAP(CCreateModelDlg, CTipBaseDlg)
 	ON_STN_CLICKED(IDC_STATIC_FromServer, &CCreateModelDlg::OnStnClickedStaticFromserver)
 	ON_STN_CLICKED(IDC_STATIC_FromScanner, &CCreateModelDlg::OnStnClickedStaticFromscanner)
 	ON_STN_CLICKED(IDC_STATIC_FromLocalFile, &CCreateModelDlg::OnStnClickedStaticFromlocalfile)
+	ON_BN_CLICKED(IDC_BTN_CLOSE, &CCreateModelDlg::OnBnClickedBtnClose)
 END_MESSAGE_MAP()
 
 
@@ -46,6 +48,7 @@ BOOL CCreateModelDlg::OnInitDialog()
 {
 	CTipBaseDlg::OnInitDialog();
 
+	m_bmpBtnClose.SetStateBitmap(IDB_Btn_MakeModel_CloseNormal, 0, IDB_Btn_MakeModel_CloseDown);
 	SetFontSize();
 	switch (m_nSearchType)
 	{
@@ -278,4 +281,10 @@ void CCreateModelDlg::OnStnClickedStaticFromlocalfile()
 			((CButton*)GetDlgItem(IDC_RADIO_FromServer))->SetCheck(1);
 			break;
 	}
+}
+
+
+void CCreateModelDlg::OnBnClickedBtnClose()
+{
+	OnCancel();
 }

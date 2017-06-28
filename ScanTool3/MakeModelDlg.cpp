@@ -98,7 +98,7 @@ BEGIN_MESSAGE_MAP(CMakeModelDlg, CDialog)
 	ON_CBN_SELCHANGE(IDC_COMBO_CPType, &CMakeModelDlg::OnCbnSelchangeComboCptype)
 	ON_NOTIFY(NM_RCLICK, IDC_LIST_CheckPoint, &CMakeModelDlg::OnNMRClickListCheckpoint)
 	ON_COMMAND(ID_DelRecognition, &CMakeModelDlg::DeleteRectInfoOnList)
-//	ON_COMMAND(ID_DelPicRectRecog, &CMakeModelDlg::DelRectInfoOnPic)
+	ON_COMMAND(ID_DelPicRectRecog, &CMakeModelDlg::DelRectInfoOnPic)
 	ON_COMMAND(ID_TrackerRecognize, &CMakeModelDlg::RecognizeRectTracker)
 	ON_COMMAND(ID_AddRecog, &CMakeModelDlg::AddRecogRectToList)
 	ON_COMMAND(ID_RecogSN, &CMakeModelDlg::AddRecogSN)
@@ -4952,8 +4952,11 @@ void CMakeModelDlg::OnNMDblclkListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	*pResult = 0;
+	if (pNMItemActivate->iItem < 0)
+		return;
 
-	m_cpListCtrl.SetItemState(m_nCurListCtrlSel, 0, LVIS_DROPHILITED);		// 取消高亮显示
+	if (m_nCurListCtrlSel < m_cpListCtrl.GetItemCount())
+		m_cpListCtrl.SetItemState(m_nCurListCtrlSel, 0, LVIS_DROPHILITED);		// 取消高亮显示
 
 	m_nCurListCtrlSel = pNMItemActivate->iItem;
 	ShowRectByItem(m_nCurListCtrlSel);

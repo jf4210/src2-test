@@ -639,6 +639,7 @@ void CTcpClient::HandleCmd()
 
 					Poco::JSON::Array::Ptr arryObj = examObj->getArray("students");
 
+					std::vector<int> vecSubjectID;
 					ALLSTUDENT_LIST _AllStudent;
 					
 					for (int i = 0; i < arryObj->size(); i++)
@@ -661,6 +662,17 @@ void CTcpClient::HandleCmd()
 							_SubjectScan.nSubjectID = objSubjectItem->get("subjectID").convert<int>();
 							_SubjectScan.nScaned	= objSubjectItem->get("scaned").convert<int>();
 							stData.lSubjectScanStatus.push_back(_SubjectScan);
+
+							bool bFind = false;
+							for (int k = 0; k < vecSubjectID.size(); k++)
+							{
+								if (_SubjectScan.nSubjectID == vecSubjectID[k])
+								{
+									bFind = true;
+									break;
+								}
+							}
+							if (!bFind) vecSubjectID.push_back(_SubjectScan.nSubjectID);
 						}
 						_AllStudent.push_back(stData);
 					}
@@ -685,7 +697,7 @@ void CTcpClient::HandleCmd()
 					//先通知主窗口进行后面下载模板操作，插入数据库这块较耗时
 					CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
 					pDlg->PostMessage(MSG_CMD_GET_BMK_OK, 1, NULL);
-
+					
 					//初始化当前科目报名库
 					g_lBmkStudent.clear();
 					_bGetBmk_ = false;
@@ -706,6 +718,35 @@ void CTcpClient::HandleCmd()
 						}
 					}
 					//插入数据库
+				#if 1
+					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+					CStudentMgr studentMgr;
+					bool bResult = studentMgr.InitDB(strDbPath);
+					for (int k = 0; k < vecSubjectID.size(); k++)
+					{
+						STUDENT_LIST _tmpListBmkStudent;
+						for (auto student : _AllStudent)
+						{
+							for (auto subject : student.lSubjectScanStatus)
+							{
+								if (subject.nSubjectID == vecSubjectID[k])
+								{
+									ST_STUDENT _currSubjectStudent;
+									_currSubjectStudent.strZkzh = student.strZkzh;
+									_currSubjectStudent.strName = student.strName;
+									_currSubjectStudent.strClassroom = student.strClassroom;
+									_currSubjectStudent.strSchool = student.strSchool;
+									_currSubjectStudent.nScaned = subject.nScaned;
+									_tmpListBmkStudent.push_back(_currSubjectStudent);
+								}
+							}
+						}
+						
+						std::string strTableName = Poco::format("T%d_%d", nExamID, vecSubjectID[k]);			//"student";
+						if (bResult) bResult = studentMgr.InitTable(strTableName);
+						if (bResult) bResult = studentMgr.InsertData(_tmpListBmkStudent, strTableName);
+					}
+				#else
 					if (nSubID > 0)
 					{
 						std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
@@ -715,6 +756,7 @@ void CTcpClient::HandleCmd()
 						if (bResult) bResult = studentMgr.InitTable(strTableName);
 						if (bResult) bResult = studentMgr.InsertData(g_lBmkStudent, strTableName);
 					}
+				#endif
 					if (g_lBmkStudent.size() > 0)
 						_bGetBmk_ = true;
 				}

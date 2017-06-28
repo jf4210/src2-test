@@ -57,6 +57,7 @@ TW_UINT16 FAR PASCAL DSMCallback(pTW_IDENTITY _pOrigin,
 			case MSG_NULL:
 				g_pTWAINApp->m_DSMessage = _MSG;
 				twrc = TWRC_SUCCESS;
+				TRACE("============>>>>>> DSMCallback --> %d\n", _MSG);
 				break;
 
 			default:
@@ -66,7 +67,15 @@ TW_UINT16 FAR PASCAL DSMCallback(pTW_IDENTITY _pOrigin,
 				break;
 		}
 	}
-	TRACE("============>>>>>>	DSMCallback \n");
+	else
+	{
+		TRACE("============>>>>>>	DSMCallback 有异常了, %d:%d:%d:%d\n", 0 != _pOrigin, 0 != g_pTWAINApp, NULL != g_pTWAINApp->getDataSource(), _pOrigin->Id == g_pTWAINApp->getDataSource()->Id);
+
+		std::string strLog = Poco::format("============>>>>>>	DSMCallback 有异常了, %d:%d:%d:%d\n", (int)(0 != _pOrigin), (int)(0 != g_pTWAINApp), (int)(NULL != g_pTWAINApp->getDataSource()), (int)(_pOrigin->Id == g_pTWAINApp->getDataSource()->Id));
+		g_pLogger->information(strLog);
+
+//		g_pTWAINApp->exit();
+	}
 	// Force a refresh, so that we process the message...
 //	g_pTWAINApp->RedrawWindow();
 
@@ -139,6 +148,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	connectDSM();
 	if (m_DSMState < 3)
 	{
+		TRACE("连接扫描源失败\n");
 		_nScanStatus_ = -1;
 		exit();
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
@@ -153,6 +163,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	loadDS(nId);
 	if (m_pDataSource == 0)
 	{
+		TRACE("加载扫描源失败\n");
 		_nScanStatus_ = -2;
 		exit();
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
@@ -198,6 +209,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 //	hWnd = GetDesktopWindow();
 	if (!enableDS(hWnd, stScanCtrl.bShowUI))
 	{
+		TRACE("扫描失败\n");
 		_nScanStatus_ = -3;
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
 		pResult->bScanOK = true;
@@ -1935,6 +1947,23 @@ int CScanThread::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 
 void* CScanThread::SaveFile(IplImage *pIpl)
 {
+	if (m_nDoubleScan)	//如果是双面扫描，需要判断模板为奇数时舍弃最后一张图片的情况
+	{
+		if (m_nModelPicNums % 2 != 0)
+		{
+			static int i = 1;
+			if (i % (m_nModelPicNums + 1) == 0)
+			{
+				std::string strLog = Poco::format("abandon image, i = %d", i);
+				g_pLogger->information(strLog);
+				TRACE("%s\n", strLog.c_str());
+				i = 1;
+				return NULL;
+			}
+			i++;
+		}
+	}
+
 	int nStudentId = _nScanCount_ / m_nModelPicNums + 1;
 	int nOrder = _nScanCount_ % m_nModelPicNums + 1;
 

@@ -271,6 +271,9 @@ void CScanTool3Dlg::InitCtrlPositon()
 		nTitleH = bmp.bmHeight;
 	}
 	rcClient.top = nTitleH;
+// 	rcClient.left = rcClient.left + 10;
+// 	rcClient.right = rcClient.right - 10;
+// 	rcClient.bottom = rcClient.bottom + 10;
 
 	int nGap = 5;
 	int nBtnW = 20;
@@ -601,7 +604,7 @@ LRESULT CScanTool3Dlg::MsgCmdGetBmk(WPARAM wParam, LPARAM lParam)
 		m_pScanMgrDlg->UpdateChildDlgInfo();
 		return 0;
 	}
-
+	
 	if (!m_pScanMgrDlg->DownLoadModel())
 	{
 		CNewMessageBox	dlg;
@@ -832,6 +835,20 @@ LRESULT CScanTool3Dlg::OnNcHitTest(CPoint point)
 	return CDialog::OnNcHitTest(point);
 }
 
+void CScanTool3Dlg::DrawBorder(CDC *pDC)
+{
+	CPen *pOldPen = NULL;
+	CPen pPen;
+	CRect rcClient(0, 0, 0, 0);
+	GetClientRect(&rcClient);
+	pPen.CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
+
+	pDC->SelectStockObject(NULL_BRUSH);
+	pOldPen = pDC->SelectObject(&pPen);
+	pDC->Rectangle(&rcClient);
+	pDC->SelectObject(pOldPen);
+	pPen.Detach();
+}
 
 BOOL CScanTool3Dlg::OnEraseBkgnd(CDC* pDC)
 {
@@ -866,6 +883,8 @@ BOOL CScanTool3Dlg::OnEraseBkgnd(CDC* pDC)
 		memDC.SelectObject(pOldBmp);
 	}
 	memDC.DeleteDC();
+
+//	DrawBorder(pDC);
 
 	return TRUE;
 }

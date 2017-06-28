@@ -99,6 +99,13 @@ bool CStudentMgr::InsertData(STUDENT_LIST& lData, std::string strTable)
 		stmt.execute();
 
 		Poco::Data::SQLite::Utility::memoryToFile(_strDbPath, *_mem);
+
+		if (_mem)
+		{
+			_mem->close();
+			delete _mem;
+			_mem = NULL;
+		}
 	#else
 		std::string strSql = Poco::format("INSERT INTO %s VALUES(:ln, :fn, :cn, :sn, :status)", strTable);
 		Poco::Data::Statement stmt((*_session << strSql, use(lData)));

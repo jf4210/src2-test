@@ -304,7 +304,7 @@ BOOL CScanTool3App::FirstInstance()
 		{
 			if (::GetWindowText(hwnd, strTitle, MAX_PATH))
 			{
-				if (StrStr(strTitle, SYS_BASE_NAME) != 0)
+				if (StrStr(strTitle, _T("YKLX-ScanTool GuideDlg")) != 0)	//SYS_BASE_NAME
 				{
 					//找到窗口后的操作
 					GetLastActivePopup(hwnd);

@@ -465,7 +465,7 @@ void CExamInfoMgrDlg::DrawBorder(CDC *pDC)
 	CPen pPen;
 	CRect rcClient(0, 0, 0, 0);
 	GetClientRect(&rcClient);
-	pPen.CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
+	pPen.CreatePen(PS_SOLID, 1, RGB(118, 190, 254));
 
 	pDC->SelectStockObject(NULL_BRUSH);
 	pOldPen = pDC->SelectObject(&pPen);
@@ -590,7 +590,7 @@ BOOL CExamInfoMgrDlg::OnEraseBkgnd(CDC* pDC)
 
 
 //	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 222, 250
-//	DrawBorder(pDC);
+	DrawBorder(pDC);
 
 	return TRUE;
 }

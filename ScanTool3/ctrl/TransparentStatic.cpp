@@ -170,7 +170,7 @@ void CTransparentStatic::OnPaint()
 		m_font.GetLogFont(&logfont);
 		int nCharW = logfont.lfWidth;
 		nSingleCount = client_rect.Width() / nCharW - 1;
-		int nLen = szText.GetLength()/* * sizeof(TCHAR)*/;
+		int nLen = szText.GetLength() * sizeof(TCHAR);	//int nLen = szText.GetLength();
 		nLines = nLen / nSingleCount + 1;
 		if (nLines > 1)
 		{
@@ -207,7 +207,7 @@ void CTransparentStatic::OnPaint()
 // 			}
 			for (int i = 1; i < nLines; i++)
 			{
-				szText.Insert(nSingleCount * i / sizeof(TCHAR) - 1, _T("\r\n"));
+				szText.Insert(nSingleCount * i /*/ sizeof(TCHAR)*/ - 1, _T("\r\n"));
 			}
 			dc.DrawText(szText, client_rect, DT_WORDBREAK | DT_CENTER | DT_VCENTER);	//DT_WORDBREAK | DT_LEFT /*| DT_VCENTER*//*DT_WORDBREAK*/
 //			dc.DrawText(szText, client_rect, DT_WORDBREAK | DT_VCENTER | DT_VCENTER);	//DT_WORDBREAK | DT_LEFT /*| DT_VCENTER*//*DT_WORDBREAK*/
