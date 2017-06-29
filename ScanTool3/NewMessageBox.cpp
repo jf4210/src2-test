@@ -81,6 +81,10 @@ void CNewMessageBox::OnSize(UINT nType, int cx, int cy)
 void CNewMessageBox::InitCtrlPosition()
 {
 	CRect rcClient;
+	if (!this->GetSafeHwnd())
+	{
+		return;
+	}
 	GetClientRect(&rcClient);
 	int cx = rcClient.right;
 	int cy = rcClient.bottom;
@@ -91,28 +95,16 @@ void CNewMessageBox::InitCtrlPosition()
 	const int nRightGap = 10;	//ÓÒ±ßµÄ¿Õ°×¼ä¸ô
 	int nGap = 5;
 
+	int nBtnH = 40;
+
 	int nCurrLeft = nLeftGap;
 	int nCurrTop = nTopGap;
-
-	if (GetDlgItem(IDC_STATIC_ShowMsg)->GetSafeHwnd())
-	{
-		int nStaticW = (cx - nLeftGap - nRightGap) * 1;
-		int nStaticH = 50;
-		nCurrLeft = cx / 2 - nStaticW / 2;
-
-		BITMAP bmp;
-		if (m_bmpBk.GetSafeHandle())
-			m_bmpBk.GetBitmap(&bmp);
-
-		nCurrTop = nTopGap + cy / 2 + bmp.bmHeight / 2 - 35;
-		GetDlgItem(IDC_STATIC_ShowMsg)->MoveWindow(nCurrLeft, nCurrTop, nStaticW, nStaticH);
-	}
-
+	
 	if (m_nBtn == 1)
 	{
 		int nBtnW = (cx - nLeftGap - nRightGap) * 0.3;
 		if (nBtnW < 40) nBtnW = 40;
-		int nBtnH = 40;
+		nBtnH = 40;
 		if (m_bmpBtnOK.GetSafeHwnd())
 		{
 			nCurrLeft = cx / 2 - nBtnW / 2;
@@ -124,7 +116,7 @@ void CNewMessageBox::InitCtrlPosition()
 	{
 		int nBtnW = (cx - nLeftGap - nRightGap) * 0.3;
 		if (nBtnW < 30) nBtnW = 30;
-		int nBtnH = 30;
+		nBtnH = 30;
 		nCurrTop = cy - nBottomGap - nBtnH;
 		if (m_bmpBtnOK.GetSafeHwnd())
 		{
@@ -137,6 +129,41 @@ void CNewMessageBox::InitCtrlPosition()
 			m_bmpBtnClose.MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
 		}
 	}
+
+
+	if (GetDlgItem(IDC_STATIC_ShowMsg)->GetSafeHwnd())
+	{
+		int nStaticW = (cx - nLeftGap - nRightGap) * 1;
+		int nStaticH = 50;
+		nCurrLeft = cx / 2 - nStaticW / 2;
+
+		int nLines = 1;
+		int nSingleCount = 0;
+		LOGFONT	logfont;
+		if (m_fontStatus.GetSafeHandle())
+		{
+			m_fontStatus.GetLogFont(&logfont);
+			int nCharW = logfont.lfWidth;
+			nSingleCount = nStaticW / nCharW - 1;
+			int nLen = m_strMsgShow.GetLength() * sizeof(TCHAR);	//int nLen = szText.GetLength();
+			nLines = nLen / nSingleCount + 1;
+		}
+		
+		BITMAP bmp;
+		if (m_bmpBk.GetSafeHandle())
+		{
+			m_bmpBk.GetBitmap(&bmp);
+			if (nLines > 1)
+				nCurrTop = nTopGap + cy / 2 + bmp.bmHeight / 2 - 45;
+			else
+				nCurrTop = nTopGap + cy / 2 + bmp.bmHeight / 2 - 30;
+			nStaticH = cy - nBottomGap - nBtnH - nCurrTop - nGap * 2;
+		}
+
+		//		nCurrTop = nTopGap + cy / 2 + bmp.bmHeight / 2 - 40;
+		GetDlgItem(IDC_STATIC_ShowMsg)->MoveWindow(nCurrLeft, nCurrTop, nStaticW, nStaticH);
+	}
+
 	Invalidate();
 }
 
@@ -223,7 +250,7 @@ void CNewMessageBox::InitUI()
 	m_bmpBtnClose.SetStateBitmap(IDB_Popup_Btn_Normal, 0, IDB_Popup_Btn_Hover);
 	m_bmpBtnClose.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), 0);
 
-//	InitCtrlPosition();
+	InitCtrlPosition();
 }
 
 void CNewMessageBox::setShowInfo(int nType, int nBtns, std::string strMsg)
@@ -268,7 +295,7 @@ BOOL CNewMessageBox::OnEraseBkgnd(CDC* pDC)
 
 	m_bmpBk.GetBitmap(&bmp);
 	iX = rcClient.Width() / 2 - bmp.bmWidth / 2;
-	iY = rcClient.Height() / 2 - bmp.bmHeight / 2 - 35;
+	iY = rcClient.Height() / 2 - bmp.bmHeight / 2 - 45;
 	GetClientRect(&rcClient);
 
 	//	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));

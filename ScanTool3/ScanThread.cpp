@@ -69,12 +69,12 @@ TW_UINT16 FAR PASCAL DSMCallback(pTW_IDENTITY _pOrigin,
 	}
 	else
 	{
-		TRACE("============>>>>>>	DSMCallback 有异常了, %d:%d:%d:%d\n", 0 != _pOrigin, 0 != g_pTWAINApp, NULL != g_pTWAINApp->getDataSource(), _pOrigin->Id == g_pTWAINApp->getDataSource()->Id);
+		TRACE("============>>>>>>	DSMCallback 有异常了, %d:%d:%d:%d\n", 0 != _pOrigin, 0 != g_pTWAINApp, \
+			  g_pTWAINApp == 0 ? -2 : ((int)(NULL != g_pTWAINApp->getDataSource())), g_pTWAINApp == 0 ? -3 : ((int)(_pOrigin->Id == g_pTWAINApp->getDataSource()->Id)));
 
-		std::string strLog = Poco::format("============>>>>>>	DSMCallback 有异常了, %d:%d:%d:%d\n", (int)(0 != _pOrigin), (int)(0 != g_pTWAINApp), (int)(NULL != g_pTWAINApp->getDataSource()), (int)(_pOrigin->Id == g_pTWAINApp->getDataSource()->Id));
+		std::string strLog = Poco::format("============>>>>>>	DSMCallback 有异常了, %d:%d:%d:%d\n", (int)(0 != _pOrigin), (int)(NULL != g_pTWAINApp), \
+				g_pTWAINApp == 0 ? -2 : ((int)(NULL != g_pTWAINApp->getDataSource())), g_pTWAINApp == 0 ? -3 : ((int)(_pOrigin->Id == g_pTWAINApp->getDataSource()->Id)));
 		g_pLogger->information(strLog);
-
-//		g_pTWAINApp->exit();
 	}
 	// Force a refresh, so that we process the message...
 //	g_pTWAINApp->RedrawWindow();
@@ -112,6 +112,11 @@ int CScanThread::ExitInstance()
 	g_pTWAINApp = NULL;
 	TRACE("ExitInstance(), 线程退出\n");
 	return CWinThread::ExitInstance();
+}
+
+void CScanThread::ResetGlobalVal()
+{
+	g_pTWAINApp = this;
 }
 
 BEGIN_MESSAGE_MAP(CScanThread, CWinThread)
@@ -283,6 +288,10 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		nScanResult = Scan();
 		m_DSMessage = (TW_UINT16)-1;
 	}
+	else if (m_DSMessage == MSG_CLOSEDSREQ)
+	{
+		nScanResult = -4;	//扫描关闭，没扫描
+	}
 	
 	// Scan is done, disable the ds, thus moving us back to state 4 where we
 	// can negotiate caps again.
@@ -308,7 +317,10 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		pResult->nState = nScanResult;
 		if (nScanResult != 0)
 		{
-			_nScanStatus_ = -3;
+			if (nScanResult == -4)
+				_nScanStatus_ = -4;
+			else
+				_nScanStatus_ = -3;
 			pResult->bScanOK = true;
 			pResult->strResult = ErrCode2Str(nScanResult);
 			pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
@@ -1947,7 +1959,7 @@ int CScanThread::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 
 void* CScanThread::SaveFile(IplImage *pIpl)
 {
-	if (m_nDoubleScan)	//如果是双面扫描，需要判断模板为奇数时舍弃最后一张图片的情况
+	if (m_nNotifyDlgType != 2 && m_nDoubleScan)	//如果是双面扫描，需要判断模板为奇数时舍弃最后一张图片的情况
 	{
 		if (m_nModelPicNums % 2 != 0)
 		{
@@ -2127,7 +2139,28 @@ std::string CScanThread::ErrCode2Str(int nErr)
 	switch (nErr)
 	{
 		case -1:
-			strResult = "扫描初始化--获取扫描仪信息失败";
+			strResult = "扫描初始化--获取扫描仪信息失败";	//连接扫描仪失败
+			break;
+		case 0:
+			strResult = "未扫描";
+			break;
+		case 1:
+			strResult = "正在扫描";
+			break;
+		case 2:
+			strResult = "扫描完成";
+			break;
+		case 3:
+			strResult = "扫描中止";
+			break;
+		case -2:
+			strResult = "加载扫描仪失败";
+			break;
+		case -3:
+			strResult = "扫描失败";
+			break;
+		case -4:
+			strResult = "扫描关闭";
 			break;
 		case -100:
 			strResult = "内存传输模式--扫描仪被中止";

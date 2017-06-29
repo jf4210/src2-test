@@ -82,6 +82,7 @@ public:
 	virtual BOOL InitInstance();
 	virtual int ExitInstance();
 
+	void	ResetGlobalVal();
 	void	StartScan(WPARAM wParam, LPARAM lParam);
 
 	int		Scan();

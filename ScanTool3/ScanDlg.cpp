@@ -402,6 +402,7 @@ void CScanDlg::OnBnClickedBtnScan()
 		pScanCtrl->nScanSize = nSize;
 		pScanCtrl->bShowUI = bShowScanSrcUI;	//bShowScanSrcUI;
 
+		pDlg->m_scanThread.ResetGlobalVal();
 		pDlg->m_scanThread.setNotifyDlg(pDlg);
 		pDlg->m_scanThread.setModelInfo(m_nModelPicNums, m_strCurrPicSavePath);
 		pDlg->m_scanThread.resetData();
@@ -512,6 +513,7 @@ void CScanDlg::TestData()
 		m_nModelPicNums = _nPicNum4Ty_;
 
 	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
+	pDlg->m_scanThread.ResetGlobalVal();
 	pDlg->m_scanThread.setNotifyDlg(pDlg);
 	pDlg->m_scanThread.setModelInfo(m_nModelPicNums, m_strCurrPicSavePath);
 	pDlg->m_scanThread.resetData();

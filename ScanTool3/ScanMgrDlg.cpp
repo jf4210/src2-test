@@ -240,9 +240,15 @@ bool CScanMgrDlg::chkChangeExamLegal()
 {
 	if (_eCurrDlgType_ == Dlg_ScanRecordMgr)
 	{
-//		AfxMessageBox(_T("当前窗口不允许切换"));
 		CNewMessageBox	dlg;
 		dlg.setShowInfo(2, 1, "当前窗口不允许切换");
+		dlg.DoModal();
+		return false;
+	}
+	else if (_eCurrDlgType_ == DLG_DownloadModle)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "正在下载报名库和模板，请稍后。。。");
 		dlg.DoModal();
 		return false;
 	}

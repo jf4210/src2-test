@@ -432,10 +432,13 @@ LRESULT CNewMakeModelDlg::ScanDone(WPARAM wParam, LPARAM lParam)
 		g_pLogger->information(pResult->strResult);
 
 		USES_CONVERSION;
-		MODELPICPATH picInfo;
-		picInfo.strName = A2T(pResult->strPicName.c_str());
-		picInfo.strPath = A2T(pResult->strPicPath.c_str());
-		m_vecModelPicPath.push_back(picInfo);
+		if (!pResult->bScanOK)
+		{
+			MODELPICPATH picInfo;
+			picInfo.strName = A2T(pResult->strPicName.c_str());
+			picInfo.strPath = A2T(pResult->strPicPath.c_str());
+			m_vecModelPicPath.push_back(picInfo);
+		}
 		
 		if (pResult->bScanOK)	//…®√ËÕÍ≥…
 		{
@@ -464,9 +467,18 @@ LRESULT CNewMakeModelDlg::ScanErr(WPARAM wParam, LPARAM lParam)
 	if (pResult)
 	{
 		TRACE("…®√Ë¥ÌŒÛ°£%s\n", pResult->strResult.c_str());
-		CNewMessageBox dlg;
-		dlg.setShowInfo(2, 1, "…®√Ë ß∞‹");
-		dlg.DoModal();
+		if (_nScanStatus_ != -4)
+		{
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, "…®√Ë ß∞‹");
+			dlg.DoModal();
+		}
+		else
+		{
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, "…®√Ë“—»°œ˚");
+			dlg.DoModal();
+		}
 
 		m_vecModelPicPath.clear();
 		m_bmpBtnNew.EnableWindow(TRUE);

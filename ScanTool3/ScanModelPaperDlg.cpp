@@ -479,6 +479,7 @@ void CScanModelPaperDlg::OnBnClickedBtnMakemodelScan()
 		pScanCtrl->nScanSize = nSize;
 		pScanCtrl->bShowUI = bShowScanSrcUI;	//bShowScanSrcUI;
 
+		pDlg->m_scanThread.ResetGlobalVal();
 		pDlg->m_scanThread.setNotifyDlg(pDlg);
 		pDlg->m_scanThread.setNotifyDlgType(2);
 		pDlg->m_scanThread.setModelInfo(1, strSavePath);

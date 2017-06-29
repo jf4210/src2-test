@@ -976,6 +976,7 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 		pScanCtrl->nScanSize = nSize;
 		pScanCtrl->bShowUI = bShowScanSrcUI;	//bShowScanSrcUI;
 
+		pDlg->m_scanThread.ResetGlobalVal();
 		pDlg->m_scanThread.setNotifyDlg(pDlg);
 		pDlg->m_scanThread.setModelInfo(_nModelPicNums, m_strCurrPicSavePath);
 		if (bDelCurrPapers)
@@ -1422,6 +1423,7 @@ void CScanProcessDlg::TestData(bool bReset)
 		_nModelPicNums = _nPicNum4Ty_;
 
 	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
+	pDlg->m_scanThread.ResetGlobalVal();
 	pDlg->m_scanThread.setNotifyDlg(pDlg);
 	pDlg->m_scanThread.setModelInfo(_nModelPicNums, m_strCurrPicSavePath);
 	if (bReset)
