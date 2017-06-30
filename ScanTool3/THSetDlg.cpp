@@ -26,11 +26,13 @@ void CTHSetDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CTipBaseDlg::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_EDIT_TH, m_nStartTH);
+	DDX_Control(pDX, IDC_BTN_CLOSE, m_bmpBtnClose);
 }
 
 
 BEGIN_MESSAGE_MAP(CTHSetDlg, CTipBaseDlg)
 	ON_BN_CLICKED(IDOK, &CTHSetDlg::OnBnClickedOk)
+	ON_BN_CLICKED(IDC_BTN_CLOSE, &CTHSetDlg::OnBnClickedBtnClose)
 END_MESSAGE_MAP()
 
 
@@ -39,6 +41,8 @@ END_MESSAGE_MAP()
 BOOL CTHSetDlg::OnInitDialog()
 {
 	CTipBaseDlg::OnInitDialog();
+
+	m_bmpBtnClose.SetStateBitmap(IDB_Btn_MakeModel_CloseNormal, 0, IDB_Btn_MakeModel_CloseDown);
 	UpdateData(FALSE);
 
 	return TRUE;
@@ -49,4 +53,10 @@ void CTHSetDlg::OnBnClickedOk()
 	UpdateData(TRUE);
 
 	CTipBaseDlg::OnOK();
+}
+
+
+void CTHSetDlg::OnBnClickedBtnClose()
+{
+	CTipBaseDlg::OnCancel();
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "TipBaseDlg.h"
+#include "BmpButton.h"
 
 // CTHSetDlg 对话框
 
@@ -14,6 +15,7 @@ public:
 // 对话框数据
 	enum { IDD = IDD_THSETDLG };
 
+	CBmpButton		m_bmpBtnClose;
 public:
 	int		m_nStartTH;	//起始题号
 protected:
@@ -22,4 +24,5 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedOk();
+	afx_msg void OnBnClickedBtnClose();
 };

@@ -226,6 +226,12 @@ BOOL CNetUser::NotifySendData(void)
 		}
 		m_nSendCount++;
 	}
+	else
+	{
+		char szTmp[100] = { 0 };
+		sprintf_s(szTmp, "NotifySendData, m_nSendCount(%d)\n", m_nSendCount);
+		std::cout << szTmp << std::endl;
+	}
 
 	UnLockSend();
 	return TRUE;
@@ -236,6 +242,7 @@ BOOL CNetUser::SendResult(WORD dwCmd, int nResultCode)
 {
 	if (m_bNoUse)
 	{
+		std::cout << "SendResult fail. no used\n";
 		return FALSE;
 	}
 	ST_CMD_HEADER resultCmd;
@@ -253,6 +260,7 @@ BOOL CNetUser::SendResponesInfo(WORD dwCmd, int nResultCode, char* pInfoData, DW
 {
 	if (m_bNoUse)
 	{
+		std::cout << "SendResponesInfo fail. no used\n";
 		return FALSE;
 	}
 	ST_CMD_HEADER resultCmd;
@@ -263,6 +271,7 @@ BOOL CNetUser::SendResponesInfo(WORD dwCmd, int nResultCode, char* pInfoData, DW
 
 	if (!m_pNetSendBuffer->AddData((char*)&resultCmd, HEAD_SIZE))
 	{
+		std::cout << "SendResponesInfo fail. add data fail\n";
 		return FALSE;
 	}
 	if (dwInfoSize > 0 && pInfoData)
@@ -270,6 +279,7 @@ BOOL CNetUser::SendResponesInfo(WORD dwCmd, int nResultCode, char* pInfoData, DW
 		if (!m_pNetSendBuffer->AddData(pInfoData, dwInfoSize))
 		{//把先前加入发送队列的头取出
 			m_pNetSendBuffer->Flushtail(HEAD_SIZE);
+			std::cout << "SendResponesInfo fail. add data fail2\n";
 			return FALSE;
 		}
 	}

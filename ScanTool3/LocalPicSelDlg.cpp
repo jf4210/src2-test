@@ -26,6 +26,7 @@ void CLocalPicSelDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CTipBaseDlg::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_PIC, m_listPath);
+	DDX_Control(pDX, IDC_BTN_CLOSE, m_bmpBtnClose);
 }
 
 
@@ -34,6 +35,7 @@ BEGIN_MESSAGE_MAP(CLocalPicSelDlg, CTipBaseDlg)
 	ON_BN_CLICKED(IDC_BTN_ADD, &CLocalPicSelDlg::OnBnClickedBtnAdd)
 	ON_BN_CLICKED(IDC_BTN_DEL, &CLocalPicSelDlg::OnBnClickedBtnDel)
 	ON_BN_CLICKED(IDC_BTN_OK, &CLocalPicSelDlg::OnBnClickedBtnOk)
+	ON_BN_CLICKED(IDC_BTN_CLOSE, &CLocalPicSelDlg::OnBnClickedBtnClose)
 END_MESSAGE_MAP()
 
 
@@ -43,6 +45,7 @@ BOOL CLocalPicSelDlg::OnInitDialog()
 	CTipBaseDlg::OnInitDialog();
 
 
+	m_bmpBtnClose.SetStateBitmap(IDB_Btn_MakeModel_CloseNormal, 0, IDB_Btn_MakeModel_CloseDown);
 	m_listPath.SetExtendedStyle(m_listPath.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_listPath.InsertColumn(0, _T("ÐòºÅ"), LVCFMT_CENTER, 36);
 	m_listPath.InsertColumn(1, _T("Â·¾¶"), LVCFMT_CENTER, 330);
@@ -135,4 +138,10 @@ void CLocalPicSelDlg::OnBnClickedBtnOk()
 // 			return;
 	}
 	OnOK();
+}
+
+
+void CLocalPicSelDlg::OnBnClickedBtnClose()
+{
+	OnCancel();
 }

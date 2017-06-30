@@ -2,6 +2,7 @@
 #include <vector>
 #include "TipBaseDlg.h"
 #include "ModelInfoDlg.h"
+#include "BmpButton.h"
 
 // CLocalPicSelDlg ¶Ô»°¿ò
 
@@ -18,6 +19,7 @@ public:
 
 	std::vector<MODELPICPATH> m_vecPath;
 
+	CBmpButton		m_bmpBtnClose;
 	CListCtrl	m_listPath;
 private:
 	int			m_nCurrentItem;
@@ -31,4 +33,5 @@ public:
 	afx_msg void OnBnClickedBtnAdd();
 	afx_msg void OnBnClickedBtnDel();
 	afx_msg void OnBnClickedBtnOk();
+	afx_msg void OnBnClickedBtnClose();
 };
