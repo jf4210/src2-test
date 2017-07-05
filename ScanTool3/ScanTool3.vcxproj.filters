@@ -444,6 +444,9 @@
     <ClInclude Include="LocalPicSelDlg.h">
       <Filter>模板界面\新建模板窗口\本地图片选择窗口</Filter>
     </ClInclude>
+    <ClInclude Include="MyVersion.h">
+      <Filter>global</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

@@ -795,7 +795,7 @@ LRESULT CScanMgrDlg::ScanDone(WPARAM wParam, LPARAM lParam)
 			{
 				m_pScanProcessDlg->ScanCompleted();
 				m_pScanProcessDlg->InitShow();
-			}			
+			}
 		}
 
 		delete pResult;
@@ -812,6 +812,32 @@ LRESULT CScanMgrDlg::ScanErr(WPARAM wParam, LPARAM lParam)
 		TRACE("扫描错误。%s\n", pResult->strResult.c_str());
 		m_pScanProcessDlg->UpdateChildInfo(pResult->bScanOK);
 		UpdateChildDlgInfo();
+
+		int nModelPics = 0;
+		if (_pCurrExam_->nModel == 1)
+			nModelPics = _nPicNum4Ty_;
+		else
+			nModelPics = _pModel_->nPicNum;
+
+		int nScanCount = _nScanCount_ / nModelPics;	//计算扫描试卷数量
+		std::string strMsg = Poco::format("当前已经扫描%d份试卷，是否保留?", nScanCount);
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(1, 2, strMsg);
+		dlg.DoModal();
+		if (dlg.m_nResult != IDYES)
+		{
+			SAFE_RELEASE(_pCurrPapersInfo_);
+			m_pScanProcessDlg->ResetPicList();
+		}
+		else
+		{
+			if (m_pScanProcessDlg)
+			{
+				m_pScanProcessDlg->ScanCompleted();
+				m_pScanProcessDlg->InitShow();
+			}
+		}
+
 		delete pResult;
 		pResult = NULL;
 	}

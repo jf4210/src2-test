@@ -831,7 +831,7 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 		int nCount = _pCurrPapersInfo_->lPaper.size() + _pCurrPapersInfo_->lIssue.size();
 		if (nCount > 0)
 		{
-			std::string strMsg =Poco::format("当前试卷袋有%d份试卷未保存，是否删除?", nCount);
+			std::string strMsg = Poco::format("当前试卷袋有%d份试卷未保存，是否删除?", nCount);
 
 			CNewMessageBox	dlg;
 			dlg.setShowInfo(2, 2, strMsg);
@@ -1076,7 +1076,7 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 		}
 		else
 		{
-			std::string strMsg = Poco::format("存在%d份问题试卷，这些试卷需要单独找出扫描，此次将不上传这%d份试卷，是否确定上传?", (int)_pCurrPapersInfo_->lIssue.size(), (int)_pCurrPapersInfo_->lIssue.size());
+			std::string strMsg = Poco::format("存在%d份问题卷，这些试卷需要单独找出扫描，是否确定上传?", (int)_pCurrPapersInfo_->lIssue.size());
 			CNewMessageBox	dlg;
 			dlg.setShowInfo(2, 2, strMsg);
 			dlg.DoModal();

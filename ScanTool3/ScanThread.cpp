@@ -181,6 +181,12 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 
 	TW_INT16  twrc = TWRC_FAILURE;
 	
+// 	TW_CAPABILITY   cap;
+// 	cap.Cap = Cap;
+// 	cap.ConType     = TWON_ONEVALUE;
+// 	cap.hContainer  = _DSM_Alloc(sizeof(TW_ONEVALUE));// Largest int size
+	
+
 #if 1
 	twrc = set_CapabilityOneValue(ICAP_XFERMECH, TWSX_NATIVE, TWTY_UINT16);
 //	twrc = set_CapabilityOneValue(ICAP_XFERMECH, TWSX_MEMORY, TWTY_UINT16);
@@ -191,8 +197,8 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	//双面扫描
 	m_nDoubleScan = stScanCtrl.nScanDuplexenable;
 	twrc = set_CapabilityOneValue(CAP_DUPLEXENABLED, stScanCtrl.nScanDuplexenable, TWTY_BOOL);
-	twrc = set_CapabilityOneValue(ICAP_SUPPORTEDSIZES, stScanCtrl.nScanSize, TWTY_INT16);
-	twrc = set_CapabilityOneValue(ICAP_PIXELTYPE, stScanCtrl.nScanPixelType, TWTY_INT16);
+	twrc = set_CapabilityOneValue(ICAP_SUPPORTEDSIZES, stScanCtrl.nScanSize, TWTY_INT16);	//TWTY_INT16
+	twrc = set_CapabilityOneValue(ICAP_PIXELTYPE, stScanCtrl.nScanPixelType, TWTY_UINT16);	//TWTY_INT16
 	int nResolution = stScanCtrl.nScanResolution;
 	twrc = set_CapabilityOneValue(ICAP_XRESOLUTION, (pTW_FIX32)&nResolution);
 	twrc = set_CapabilityOneValue(ICAP_YRESOLUTION, (pTW_FIX32)&nResolution);
@@ -691,8 +697,10 @@ int CScanThread::GetImgNative()
 			bmpFIH.bfOffBits = sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER)+(sizeof(RGBQUAD)*dwPaletteSize);
 			
 		#ifdef OPENCV_TEST
-			int w = m_ImageInfo.ImageWidth;
-			int h = m_ImageInfo.ImageLength;
+// 			int w = m_ImageInfo.ImageWidth;		//2017.7.5
+// 			int h = m_ImageInfo.ImageLength;
+			int w = pDIB->biWidth;
+			int h = pDIB->biHeight;
 
 			int nChannel = m_ImageInfo.SamplesPerPixel;
 			int depth = (m_ImageInfo.BitsPerPixel == 1) ? IPL_DEPTH_1U : IPL_DEPTH_8U;
@@ -701,8 +709,11 @@ int CScanThread::GetImgNative()
 				IplImage *pIpl2 = cvCreateImage(cvSize(w, h), depth, nChannel);
 
 				int height;
-				bool isLowerLeft = m_ImageInfo.ImageLength > 0;
-				height = (m_ImageInfo.ImageLength > 0) ? m_ImageInfo.ImageLength : -m_ImageInfo.ImageLength;
+// 				bool isLowerLeft = m_ImageInfo.ImageLength > 0;									//2017.7.5
+// 				height = (m_ImageInfo.ImageLength > 0) ? m_ImageInfo.ImageLength : -m_ImageInfo.ImageLength;
+
+				bool isLowerLeft = pDIB->biHeight > 0;
+				height = (pDIB->biHeight > 0) ? pDIB->biHeight : -pDIB->biHeight;
 
 				char* p = (char*)pDIB + bmpFIH.bfOffBits;
 				TRACE("图片信息1: w=%d, h=%d, area = %d, 实际数据长度n=%d,相差= %d, channel=%d, depth=%d\n", w, h, w * h, nImageSize, w*h - nImageSize, nChannel, depth);
@@ -1906,6 +1917,37 @@ int CScanThread::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 	//4、正面需要旋转180度 ==> 反面也需要旋转180度
 	//*********************************
 	int nResult = 1;	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+#if 1	//2017.7.4
+
+	static int nFristOrientation = 1;
+	if (bDoubleScan && n % 2 != 0)	//双面扫描, 且属于双面扫描的第二面的情况
+	{
+		int nCountBK = _pModel_->vecPaperModel[n]->lGray.size() + _pModel_->vecPaperModel[n]->lCourse.size();
+		if (nCountBK == 0)
+		{
+			if (nFristOrientation == 1) nResult = 1;
+			else if (nFristOrientation == 2) nResult = 3;
+			else if (nFristOrientation == 3) nResult = 2;
+			else if (nFristOrientation == 4) nResult = 4;
+			end = clock();
+			TRACE("判断旋转方向时间: %dms\n", end - start);
+
+			std::string strDirection;
+			switch (nResult)
+			{
+				case 1: strDirection = "正向，不需要旋转"; break;
+				case 2: strDirection = "右旋90"; break;
+				case 3: strDirection = "左旋90"; break;
+				case 4: strDirection = "右旋180"; break;
+			}
+			std::string strLog = "双面扫描第二面，根据第一面方向判断结果：" + strDirection;
+			g_pLogger->information(strLog);
+			TRACE("%s\n", strLog.c_str());
+			return nResult;
+		}
+	}
+
+#else
 	static int nFristOrientation = 1;
 	if (bDoubleScan && n % 2 != 0)	//双面扫描, 且属于双面扫描的第二面的情况
 	{
@@ -1929,6 +1971,7 @@ int CScanThread::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 		TRACE("%s\n", strLog.c_str());
 		return nResult;
 	}
+#endif
 
 	cv::Mat matCom = matSrc.clone();
 	if (_pModel_->nHasHead)

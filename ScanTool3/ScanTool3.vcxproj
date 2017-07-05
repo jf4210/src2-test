@@ -145,6 +145,7 @@
     <ClInclude Include="MakeModelDlg.h" />
     <ClInclude Include="ModelInfoDlg.h" />
     <ClInclude Include="ModelSaveDlg.h" />
+    <ClInclude Include="MyVersion.h" />
     <ClInclude Include="NewMakeModelDlg.h" />
     <ClInclude Include="minidump.h" />
     <ClInclude Include="ModifyZkzhDlg.h" />

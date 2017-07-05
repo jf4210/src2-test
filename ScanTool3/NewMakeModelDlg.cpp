@@ -227,6 +227,33 @@ void CNewMakeModelDlg::InitScanner()
 	SSTRCPY(pAppID->ProductFamily, sizeof(pAppID->ProductFamily), "Sample");
 	SSTRCPY(pAppID->ProductName, sizeof(pAppID->ProductName), "MFC Supported Caps");
 
+#if 0
+	_pTWAINApp->getSources();
+
+	pTW_IDENTITY pID = NULL;
+	int   i = 0;
+	int   index = 0;
+	int   nDefault = -1;
+
+	// Emply the list the refill
+	m_vecScanSrc.clear();
+
+	if (NULL != (pID = _pTWAINApp->getDefaultDataSource())) // Get Default
+	{
+		nDefault = pID->Id;
+	}
+	USES_CONVERSION;
+	while (NULL != (pID = _pTWAINApp->getDataSource((TW_INT16)i)))
+	{
+		m_vecScanSrc.push_back(A2T(pID->ProductName));
+		if (LB_ERR == index)
+		{
+			break;
+		}
+
+		i++;
+	}
+#else
 	_pTWAINApp->connectDSM();
 	if (_pTWAINApp->m_DSMState >= 3)
 	{
@@ -255,6 +282,7 @@ void CNewMakeModelDlg::InitScanner()
 		}
 		_pTWAINApp->disconnectDSM();
 	}
+#endif
 }
 
 void CNewMakeModelDlg::InitUI()
