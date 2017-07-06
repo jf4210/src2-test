@@ -180,12 +180,6 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	}
 
 	TW_INT16  twrc = TWRC_FAILURE;
-	
-// 	TW_CAPABILITY   cap;
-// 	cap.Cap = Cap;
-// 	cap.ConType     = TWON_ONEVALUE;
-// 	cap.hContainer  = _DSM_Alloc(sizeof(TW_ONEVALUE));// Largest int size
-	
 
 #if 1
 	twrc = set_CapabilityOneValue(ICAP_XFERMECH, TWSX_NATIVE, TWTY_UINT16);
@@ -697,8 +691,9 @@ int CScanThread::GetImgNative()
 			bmpFIH.bfOffBits = sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER)+(sizeof(RGBQUAD)*dwPaletteSize);
 			
 		#ifdef OPENCV_TEST
-// 			int w = m_ImageInfo.ImageWidth;		//2017.7.5
-// 			int h = m_ImageInfo.ImageLength;
+			#if 1
+			// 			int w = m_ImageInfo.ImageWidth;		//2017.7.5
+			// 			int h = m_ImageInfo.ImageLength;
 			int w = pDIB->biWidth;
 			int h = pDIB->biHeight;
 
@@ -709,8 +704,8 @@ int CScanThread::GetImgNative()
 				IplImage *pIpl2 = cvCreateImage(cvSize(w, h), depth, nChannel);
 
 				int height;
-// 				bool isLowerLeft = m_ImageInfo.ImageLength > 0;									//2017.7.5
-// 				height = (m_ImageInfo.ImageLength > 0) ? m_ImageInfo.ImageLength : -m_ImageInfo.ImageLength;
+				// 				bool isLowerLeft = m_ImageInfo.ImageLength > 0;									//2017.7.5
+				// 				height = (m_ImageInfo.ImageLength > 0) ? m_ImageInfo.ImageLength : -m_ImageInfo.ImageLength;
 
 				bool isLowerLeft = pDIB->biHeight > 0;
 				height = (pDIB->biHeight > 0) ? pDIB->biHeight : -pDIB->biHeight;
@@ -725,6 +720,31 @@ int CScanThread::GetImgNative()
 			catch (...)
 			{
 			}
+			#else
+			int w = m_ImageInfo.ImageWidth;
+			int h = m_ImageInfo.ImageLength;
+
+			int nChannel = m_ImageInfo.SamplesPerPixel;
+			int depth = (m_ImageInfo.BitsPerPixel == 1) ? IPL_DEPTH_1U : IPL_DEPTH_8U;
+			try
+			{
+				IplImage *pIpl2 = cvCreateImage(cvSize(w, h), depth, nChannel);
+
+				int height;
+				bool isLowerLeft = m_ImageInfo.ImageLength > 0;
+				height = (m_ImageInfo.ImageLength > 0) ? m_ImageInfo.ImageLength : -m_ImageInfo.ImageLength;
+
+				char* p = (char*)pDIB + bmpFIH.bfOffBits;
+				TRACE("图片信息1: w=%d, h=%d, area = %d, 实际数据长度n=%d,相差= %d, channel=%d, depth=%d\n", w, h, w * h, nImageSize, w*h - nImageSize, nChannel, depth);
+				TRACE("图片信息2: w=%d, h=%d, area = %d, 实际数据长度n=%d,相差= %d, channel=%d, depth=%d\n", w, h, w * h, pDIB->biSizeImage, w*h - pDIB->biSizeImage, nChannel, depth);
+				CopyData(pIpl2->imageData, (char*)p, pDIB->biSizeImage, isLowerLeft, height);
+
+				SaveFile(pIpl2);
+			}
+			catch (...)
+			{
+			}
+			#endif
 		#endif
 
 			_DSM_UnlockMemory(hImg);
