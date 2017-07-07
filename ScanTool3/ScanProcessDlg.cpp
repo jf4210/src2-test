@@ -852,6 +852,8 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 		return;
 	}
 
+	InitTmpSubjectBmk();
+
 	int nSrc = 0;
 	int nRegDuplex = 1;
 	char* ret;
