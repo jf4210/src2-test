@@ -360,6 +360,8 @@ void CScanDlg::OnBnClickedBtnScan()
 
 	bool bShowScanSrcUI = g_bShowScanSrcUI ? true : m_bAdvancedScan;			//显示高级扫描界面
 
+
+	_nDoubleScan_ = m_comboDuplex.GetCurSel();
 	int nDuplex = m_comboDuplex.GetCurSel();		//单双面,0-单面,1-双面
 	int nSize = TWSS_NONE;							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3, TWSS_NONE-自定义
 	if (nScanSize == 1)

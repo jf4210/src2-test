@@ -295,7 +295,7 @@ bool CVagueSearchDlg::vagueSearch(pST_PaperInfo pPaper)
 	m_lcBmk.DeleteAllItems();
 	STUDENT_LIST lResult;
 	std::string strTable = Poco::format("T%d_%d", m_pModel->nExamID, m_pModel->nSubjectID);
-	if (m_pStudentMgr && m_pStudentMgr->SearchStudent(strTable, szVagueKey, m_nSearchType, lResult))
+	if (m_pStudentMgr && !m_strSearchKey.IsEmpty() && m_pStudentMgr->SearchStudent(strTable, szVagueKey, m_nSearchType, lResult))
 	{
 		USES_CONVERSION;
 		for (auto obj : lResult)

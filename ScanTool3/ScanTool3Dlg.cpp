@@ -72,6 +72,8 @@ int					g_nDownLoadModelStatus = 0;		//下载模板的状态	0-未下载，初始化，1-模板下
 int					_nScanStatus_ = 0;				//扫描进度 0-未扫描，1-正在扫描，2-扫描完成, 3-扫描中止, -1--连接扫描仪失败, -2--加载扫描仪失败, -3--扫描失败, -4-扫描取消
 STUDENT_LIST		g_lBmkStudent;					//报名库学生列表
 int					_nGetModelPic_ = 0;				//获取模板图片状态，0-未获取，1-正在获取(下载)， 2-获取模板图片成功，3-服务器无模板图片，4-服务器读取失败
+int					_nDoubleScan_ = 1;				//是否双面扫描，0-单面， 1-双面，用于双面图像调换时处理
+
 std::vector<MODELPICPATH> _vecModelPicPath_;		//用于从服务器上下载图像后直接创建模板
 #ifdef NewBmkTest
 ALLSTUDENT_LIST		g_lBmkAllStudent;		//单个考试中所有科目的报名库学生列表

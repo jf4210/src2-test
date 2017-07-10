@@ -50,10 +50,15 @@ private:
 
 	bool	VagueSearch(int nItem);		//对某项进行模糊查找
 
+	int		CheckZkzhInBmk(std::string strZkzh);
+	void	CheckZkzhInBmk(pST_PaperInfo pPaper);
+
+	LRESULT MsgZkzhRecog(WPARAM wParam, LPARAM lParam);
 	LRESULT RoiRBtnUp(WPARAM wParam, LPARAM lParam);
 	void	LeftRotate();
 	void	RightRotate();
-
+	void	PicsExchange();		//图片调换，第一页与第二页调换顺序，只有在模板图片为2页时有用
+	
  	void	ShowPaperByItem(int nItem);
 // 	void	ShowPaperZkzhPosition(pST_PaperInfo pPaper);
 //	void	PrintRecogRect(int nPic, pST_PaperInfo pPaper, pST_PicInfo pPic, cv::Mat& matImg);		//打印所有模板上的矩形位置

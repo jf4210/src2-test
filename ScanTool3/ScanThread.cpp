@@ -1938,7 +1938,6 @@ int CScanThread::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 	//*********************************
 	int nResult = 1;	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
 #if 1	//2017.7.4
-
 	static int nFristOrientation = 1;
 	if (bDoubleScan && n % 2 != 0)	//双面扫描, 且属于双面扫描的第二面的情况
 	{
@@ -2077,6 +2076,10 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 		//++ 2016.8.26 判断扫描图片方向，并进行旋转
 		if (_pModel_ && m_nNotifyDlgType == 1/*&& m_pModel->nType*/)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
 		{
+		#if 1
+			COmrRecog omrObj;
+			omrObj.GetRightPicOrientation(matSrc, nOrder - 1, m_nDoubleScan == 0 ? false : true);
+		#else
 			int nResult = CheckOrientation(matSrc, nOrder - 1, m_nDoubleScan == 0 ? false : true);
 			switch (nResult)	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
 			{
@@ -2108,6 +2111,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 					break;
 				default: break;
 			}
+		#endif
 		}
 		//--
 
@@ -2264,7 +2268,7 @@ void CScanThread::TestMode()
 {
 	CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
 	USES_CONVERSION;
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < 8; i++)
 	{
 		int nStudentId = i / m_nModelPicNums + 1;
 		int nOrder = i % m_nModelPicNums + 1;

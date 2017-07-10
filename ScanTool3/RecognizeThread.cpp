@@ -3337,10 +3337,6 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			if (!bAllEmpty)			//只要识别到一部分，就将此识别到的结果放入模糊搜索字段中
 				(static_cast<pST_PaperInfo>(pPic->pPaper))->strRecogSN4Search.append(szTmp);
 		}
-	#ifdef Test_Data
-		(static_cast<pST_PaperInfo>(pPic->pPaper))->strSN = "201530207";
-		(static_cast<pST_PaperInfo>(pPic->pPaper))->strRecogSN4Search = "";
-	#endif
 		(static_cast<CDialog*>((static_cast<pST_PaperInfo>(pPic->pPaper))->pSrcDlg))->PostMessage(MSG_ZKZH_RECOG, (WPARAM)pPic->pPaper, (LPARAM)(static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers);
 	}
 	if (!bRecogAll)

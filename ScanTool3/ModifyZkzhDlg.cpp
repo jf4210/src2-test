@@ -7,6 +7,7 @@
 #include "afxdialogex.h"
 #include "NewMessageBox.h"
 #include "ScanTool3Dlg.h"
+#include "OmrRecog.h"
 // CModifyZkzhDlg 对话框
 
 IMPLEMENT_DYNAMIC(CModifyZkzhDlg, CDialog)
@@ -56,6 +57,8 @@ BEGIN_MESSAGE_MAP(CModifyZkzhDlg, CDialog)
 	ON_MESSAGE(WM_CV_RBTNUP, &CModifyZkzhDlg::RoiRBtnUp)
 	ON_COMMAND(ID_LeftRotate, &CModifyZkzhDlg::LeftRotate)
 	ON_COMMAND(ID_RightRotate, &CModifyZkzhDlg::RightRotate)
+	ON_COMMAND(ID_PicsExchange, &CModifyZkzhDlg::PicsExchange)
+	ON_MESSAGE(MSG_ZKZH_RECOG, &CModifyZkzhDlg::MsgZkzhRecog)
 	ON_WM_CLOSE()
 	ON_WM_ERASEBKGND()
 	ON_WM_CTLCOLOR()
@@ -453,6 +456,111 @@ void CModifyZkzhDlg::RightRotate()
 	if (m_pShowPicDlg) m_pShowPicDlg->setRotate(2);
 }
 
+void CModifyZkzhDlg::PicsExchange()
+{
+	if (!m_pModel)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "模板不存在");
+		dlg.DoModal();		
+		return;
+	}
+
+	if (m_pModel->nPicNum != 2)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "只有针对一个学生2张图片时才可调换");
+		dlg.DoModal();
+		return;
+	}
+
+	if (!m_pCurrentShowPaper)
+		return;
+
+	//图像重命名
+	bool bPicsExchangeSucc = true;
+	pST_PicInfo pPic1 = *(m_pCurrentShowPaper->lPic.begin());
+	pST_PicInfo pPic2 = *(m_pCurrentShowPaper->lPic.rbegin());
+	try
+	{
+// 		std::string strBasePath = pPic1->strPicPath.substr(0, pPic1->strPicPath.rfind("\\") + 1);
+// 		std::string strTmpName = pPic1->strPicName;
+		Poco::File fPic1(pPic1->strPicPath);
+		fPic1.renameTo(pPic1->strPicPath + "_tmp");
+
+		Poco::File fPic2(pPic2->strPicPath);
+		fPic2.renameTo(pPic1->strPicPath);
+
+		fPic1.renameTo(pPic2->strPicPath);
+	}
+	catch (Poco::Exception &e)
+	{
+		bPicsExchangeSucc = false;
+		std::string strErr = e.displayText();
+
+		TRACE("图像调换重命名失败: %s\n", strErr.c_str());
+	}
+
+	if (!bPicsExchangeSucc)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "2张图片调换失败，请删除重扫");
+		dlg.DoModal();
+		return;
+	}
+
+	//调整方向
+	cv::Mat matSrc1 = cv::imread(pPic1->strPicPath);
+	COmrRecog omrObj;
+	int nResult1 = omrObj.GetRightPicOrientation(matSrc1, 0, _nDoubleScan_ == 0 ? false : true);
+	std::string strPicPath1 = pPic1->strPicPath;
+	if (nResult1 >= 2 && nResult1 <= 4)
+		imwrite(strPicPath1, matSrc1);
+
+	cv::Mat matSrc2 = cv::imread(pPic2->strPicPath);
+	int nResult2 = omrObj.GetRightPicOrientation(matSrc2, 1, _nDoubleScan_ == 0 ? false : true);
+	std::string strPicPath2 = pPic2->strPicPath;
+	if (nResult2 >= 2 && nResult2 <= 4)
+		imwrite(strPicPath2, matSrc2);
+
+// 	m_pCurrentShowPaper->lPic.clear();
+// 	m_pCurrentShowPaper->lPic.push_back(pPic2);
+// 	m_pCurrentShowPaper->lPic.push_back(pPic1);
+
+	m_pCurrentShowPaper->nPicsExchange++;		//记录当前试卷被调换次数
+	m_pCurrentShowPaper->pSrcDlg = this;
+	m_pCurrentShowPaper->bIssuePaper = false;
+	m_pCurrentShowPaper->nQKFlag = false;
+	m_pCurrentShowPaper->bRecogComplete = false;
+	m_pCurrentShowPaper->strSN = "";
+	m_pCurrentShowPaper->strRecogSN4Search = "";
+	m_pCurrentShowPaper->lOmrResult.clear();
+	m_pCurrentShowPaper->lElectOmrResult.clear();
+	for (auto itSn : m_pCurrentShowPaper->lSnResult)
+	{
+		pSN_ITEM pSNItem = itSn;
+		SAFE_RELEASE(pSNItem);
+	}
+	m_pCurrentShowPaper->lSnResult.clear();
+
+
+	pPic1->bFindIssue = false;
+	pPic1->nRecoged = 0;
+	pPic1->lFix.clear();
+	pPic1->lIssueRect.clear();
+	pPic1->lNormalRect.clear();
+
+	pPic2->bFindIssue = false;
+	pPic2->nRecoged = 0;
+	pPic2->lFix.clear();
+	pPic2->lIssueRect.clear();
+	pPic2->lNormalRect.clear();
+
+	pRECOGTASK pTask = new RECOGTASK;
+	pTask->pPaper = m_pCurrentShowPaper;
+	g_lRecogTask.push_back(pTask);
+}
+
 void CModifyZkzhDlg::ShowPaperByItem(int nItem)
 {
 	if (nItem < 0)
@@ -493,161 +601,7 @@ void CModifyZkzhDlg::ShowPaperByItem(int nItem)
 	UpdateData(FALSE);
 	m_lcZkzh.Invalidate();
 }
-#if 0
-void CModifyZkzhDlg::ShowPaperZkzhPosition(pST_PaperInfo pPaper)
-{
-	if (NULL == pPaper || NULL == m_pModel)
-		return;
 
-	PIC_LIST::iterator itPic = pPaper->lPic.begin();
-	for (int i = 0; itPic != pPaper->lPic.end(); itPic++, i++)
-	{
-		cv::Mat matSrc = cv::imread((*itPic)->strPicPath);
-#ifdef PIC_RECTIFY_TEST
-		cv::Mat dst;
-		cv::Mat rotMat;
-		PicRectify(matSrc, dst, rotMat);
-		cv::Mat matImg;
-		if (dst.channels() == 1)
-			cvtColor(dst, matImg, CV_GRAY2BGR);
-		else
-			matImg = dst;
-		// #ifdef WarpAffine_TEST
-		// 		cv::Mat	inverseMat(2, 3, CV_32FC1);
-		// 		PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
-		// #endif
-#else
-		cv::Mat matImg = matSrc;
-#endif
-
-// #ifdef WarpAffine_TEST
-// 		cv::Mat	inverseMat(2, 3, CV_32FC1);
-// 		if (pPaper->pModel)
-// 			PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
-// #endif
-// 
-// #ifdef Test_ShowOriPosition
-// 		cv::Mat	inverseMat(2, 3, CV_32FC1);
-// 		GetInverseMat((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
-// #endif
-
-		PrintRecogRect(i, pPaper, *itPic, matImg);
-
-		cv::Point pt(0, 0);
-		if (pPaper->pModel)
-			pt = pPaper->pModel->vecPaperModel[i]->rcSNTracker.rt.tl() - cv::Point(300, 300);
-
-		m_vecPicShow[i]->ShowPic(matImg, pt);
-	}
-}
-
-void CModifyZkzhDlg::PrintRecogRect(int nPic, pST_PaperInfo pPaper, pST_PicInfo pPic, cv::Mat& matImg)
-{
-
-#ifdef WarpAffine_TEST
-	cv::Mat	inverseMat(2, 3, CV_32FC1);
-	if (pPaper->pModel)
-		PicTransfer(nPic, matImg, pPic->lFix, pPaper->pModel->vecPaperModel[nPic]->lFix, inverseMat);
-#endif
-
-#ifdef Test_ShowOriPosition
-	cv::Mat	inverseMat(2, 3, CV_32FC1);
-	GetInverseMat(pPic->lFix, pPaper->pModel->vecPaperModel[nPic]->lFix, inverseMat);
-#endif
-	cv::Mat tmp = matImg;
-	cv::Mat tmp2 = matImg.clone();
-	if (pPaper->pModel)
-	{
-		RECTLIST::iterator itHTracker = pPaper->pModel->vecPaperModel[nPic]->lSelHTracker.begin();
-		for (int j = 0; itHTracker != pPaper->pModel->vecPaperModel[nPic]->lSelHTracker.end(); itHTracker++, j++)
-		{
-			cv::Rect rt = (*itHTracker).rt;
-
-			rectangle(tmp, rt, CV_RGB(25, 200, 20), 2);
-			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-		}
-		RECTLIST::iterator itVTracker = pPaper->pModel->vecPaperModel[nPic]->lSelVTracker.begin();
-		for (int j = 0; itVTracker != pPaper->pModel->vecPaperModel[nPic]->lSelVTracker.end(); itVTracker++, j++)
-		{
-			cv::Rect rt = (*itVTracker).rt;
-
-			rectangle(tmp, rt, CV_RGB(25, 200, 20), 2);
-			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-		}
-	}
-
-	if (pPaper->pModel)
-	{
-		RECTLIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[nPic]->lSelFixRoi.begin();													//显示识别定点的选择区
-		for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[nPic]->lSelFixRoi.end(); itSelRoi++, j++)
-		{
-			cv::Rect rt = (*itSelRoi).rt;
-
-			char szCP[20] = { 0 };
-			rectangle(tmp, rt, CV_RGB(0, 0, 255), 2);
-			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-		}
-	}
-
-
-	RECTLIST::iterator itPicFix = pPic->lFix.begin();														//显示识别出来的定点
-	for (int j = 0; itPicFix != pPic->lFix.end(); itPicFix++, j++)
-	{
-		cv::Rect rt = (*itPicFix).rt;
-
-		char szCP[20] = { 0 };
-		sprintf_s(szCP, "R_F%d", j);
-		putText(tmp, szCP, cv::Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, cv::Scalar(0, 255, 0));	//CV_FONT_HERSHEY_COMPLEX
-		rectangle(tmp, rt, CV_RGB(0, 255, 0), 2);
-		rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-	}
-	if (pPaper->pModel)
-	{
-		RECTLIST::iterator itFixRect = pPaper->pModel->vecPaperModel[nPic]->lFix.begin();								//显示模板上的定点对应到此试卷上的新定点
-		for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[nPic]->lFix.end(); itFixRect++, j++)
-		{
-			cv::Rect rt = (*itFixRect).rt;
-
-			char szCP[20] = { 0 };
-			sprintf_s(szCP, "M_F%d", j);
-			putText(tmp, szCP, cv::Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, cv::Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
-			rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
-			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-		}
-	}
-
-	RECTLIST::iterator itNormal = pPic->lNormalRect.begin();													//显示识别正常的点
-	for (int j = 0; itNormal != pPic->lNormalRect.end(); itNormal++, j++)
-	{
-		cv::Rect rt = (*itNormal).rt;
-
-		char szCP[20] = { 0 };
-		if (itNormal->eCPType == SN || itNormal->eCPType == OMR)
-		{
-			rectangle(tmp, rt, CV_RGB(0, 255, 0), 2);
-			rectangle(tmp2, rt, CV_RGB(155, 233, 70), -1);
-		}
-		else
-		{
-			rectangle(tmp, rt, CV_RGB(50, 255, 55), 2);
-			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-		}
-	}
-	RECTLIST::iterator itIssue = pPic->lIssueRect.begin();													//显示识别异常的点
-	for (int j = 0; itIssue != pPic->lIssueRect.end(); itIssue++, j++)
-	{
-		cv::Rect rt = (*itIssue).rt;
-		
-		char szCP[20] = { 0 };
-		sprintf_s(szCP, "E%d", j);
-		putText(tmp, szCP, cv::Point(rt.x, rt.y - 5), CV_FONT_HERSHEY_PLAIN, 1, cv::Scalar(0, 0, 255));	//CV_FONT_HERSHEY_COMPLEX
-		rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
-		rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-	}
-
-	addWeighted(tmp, 0.5, tmp2, 0.5, 0, tmp);
-}
-#endif
 BOOL CModifyZkzhDlg::PreTranslateMessage(MSG* pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN)
@@ -951,8 +905,8 @@ bool CModifyZkzhDlg::VagueSearch(int nItem)
 	if (nItem >= m_lcZkzh.GetItemCount())
 		return bResult;
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(nItem);
-	if (pPaper->strRecogSN4Search.empty())
-		return bResult;
+// 	if (pPaper->strRecogSN4Search.empty())
+// 		return bResult;
 
 #if 1
 	bResult = m_pVagueSearchDlg->vagueSearch(pPaper);
@@ -1002,6 +956,78 @@ bool CModifyZkzhDlg::VagueSearch(int nItem)
 	}
 #endif
 	return bResult;
+}
+
+LRESULT CModifyZkzhDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
+{
+	pST_PaperInfo pPaper = (pST_PaperInfo)wParam;
+	pPAPERSINFO   pPapers = (pPAPERSINFO)lParam;
+	if (g_nOperatingMode != 1 && !g_bModifySN)
+		return FALSE;
+	if (_pCurrExam_->nModel)
+		return FALSE;
+
+	USES_CONVERSION;
+	int nCount = m_lcZkzh.GetItemCount();
+	for (int i = 0; i < nCount; i++)
+	{
+		pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcZkzh.GetItemData(i);
+		if (pItemPaper == pPaper)
+		{
+			if (!pPaper->strSN.empty())
+			{
+				m_lcZkzh.SetItemText(i, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+				CheckZkzhInBmk(pPaper);
+
+				//显示备注信息，为何出现在此列表
+				std::string strDetailInfo;
+				if (pPaper->strSN.empty())
+					strDetailInfo = "图像被调换，考号为空";
+				if (pPaper->bModifyZKZH)
+					strDetailInfo = "有过修改";
+				if (_bGetBmk_)
+				{
+					if (pPaper->nZkzhInBmkStatus == -1)
+						strDetailInfo = "图像被调换，发生重号";
+					if (pPaper->nZkzhInBmkStatus == 0)
+						strDetailInfo = "图像被调换，考号不在报名库";
+				}
+				if (pPaper->bReScan)
+					strDetailInfo = "这份试卷将删除";
+
+				m_lcZkzh.SetItemText(i, 3, (LPCTSTR)A2T(strDetailInfo.c_str()));
+			}
+			else
+			{
+				if (pPaper->strRecogSN4Search.empty())
+				{
+					m_lcZkzh.SetItemText(i, 1, _T(" "));
+					m_lcZkzh.SetItemText(i, 3, _T("图像被调换，考号为空"));
+				}
+				else
+				{
+					m_lcZkzh.SetItemText(i, 1, _T(" "));
+					m_lcZkzh.SetItemText(i, 3, _T("图像被调换，考号识别不完全"));
+				}
+			}
+			break;
+		}
+	}
+
+	CNewMessageBox	dlg;
+	dlg.setShowInfo(1, 1, "图像调换完成");
+	dlg.DoModal();
+
+	if (m_nCurrentSelItem < m_lcZkzh.GetItemCount())
+	{
+		for (int i = 0; i < m_lcZkzh.GetColumns(); i++)
+		if (!m_lcZkzh.GetModified(m_nCurrentSelItem, i))
+			m_lcZkzh.SetItemColors(m_nCurrentSelItem, i, crOldText, crOldBackground);
+		else
+			m_lcZkzh.SetItemColors(m_nCurrentSelItem, i, RGB(255, 0, 0), crOldBackground);
+	}
+	ShowPaperByItem(m_nCurrentSelItem);
+	return TRUE;
 }
 
 void CModifyZkzhDlg::OnClose()
@@ -1066,3 +1092,37 @@ void CModifyZkzhDlg::OnBnClickedBtnBack()
 #endif
 }
 
+
+int CModifyZkzhDlg::CheckZkzhInBmk(std::string strZkzh)
+{
+	int nResult = 0;	//0--报名库不存在，1--报名库存在，-1--报名库检测到已经扫描
+	for (auto& obj : m_lBmkStudent)
+	{
+		if (obj.strZkzh == strZkzh)
+		{
+			if (obj.nScaned == 1)
+				nResult = -1;
+			else
+			{
+				nResult = 1;
+				obj.nScaned = 1;
+			}
+			break;
+		}
+	}
+
+	return nResult;
+}
+
+void CModifyZkzhDlg::CheckZkzhInBmk(pST_PaperInfo pPaper)
+{
+	if (!pPaper) return;
+
+	int nResult = CheckZkzhInBmk(pPaper->strSN);
+	if (nResult == 1)
+		pPaper->nZkzhInBmkStatus = 1;
+	else if (nResult == -1)
+		pPaper->nZkzhInBmkStatus = -1;
+	else
+		pPaper->nZkzhInBmkStatus = 0;
+}

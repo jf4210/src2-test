@@ -388,6 +388,7 @@ void CScanProcessDlg::WriteJsonFile()
 		jsnPaper.set("reScan", (*itNomarlPaper)->bReScan);		//重扫标识
 		jsnPaper.set("IssueList", 0);		//标识此考生属于问题列表，在上传服务器时无用，只在从Pkg恢复Papers时有用
 		//--
+		jsnPaper.set("picExchangeTimes", (*itNomarlPaper)->nPicsExchange);	//这个学生的试卷被调换图像的次数，即第1页与第2页调换顺序的次数，偶数次相当于没有动，奇数次就被调换了
 
 		Poco::JSON::Array jsnSnDetailArry;
 		SNLIST::iterator itSn = (*itNomarlPaper)->lSnResult.begin();
@@ -497,6 +498,7 @@ void CScanProcessDlg::WriteJsonFile()
 			jsnPaper.set("reScan", (*itIssuePaper)->bReScan);		//重扫标识
 			jsnPaper.set("IssueList", 1);		//标识此考生属于问题列表，在上传服务器时无用，只在从Pkg恢复Papers时有用
 			//--
+			jsnPaper.set("picExchangeTimes", (*itIssuePaper)->nPicsExchange);	//这个学生的试卷被调换图像的次数，即第1页与第2页调换顺序的次数，偶数次相当于没有动，奇数次就被调换了
 
 			Poco::JSON::Array jsnSnDetailArry;
 			SNLIST::iterator itSn = (*itIssuePaper)->lSnResult.begin();
@@ -925,6 +927,7 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 
 	bool bShowScanSrcUI = g_bShowScanSrcUI;			//显示高级扫描界面
 
+	_nDoubleScan_ = nRegDuplex;
 	int nDuplex = nRegDuplex;		//单双面,0-单面,1-双面
 	int nSize = TWSS_NONE;							//1-A4		//TWSS_A4LETTER-a4, TWSS_A3-a3, TWSS_NONE-自定义
 	if (nScanSize == 1)
