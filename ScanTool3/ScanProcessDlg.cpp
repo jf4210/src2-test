@@ -756,6 +756,9 @@ void CScanProcessDlg::ShowPapers(pPAPERSINFO pPapers)
 		{
 			m_lcPicture.SetItemColors(nCount, 1, RGB(0, 255, 0), RGB(255, 255, 255));
 		}
+		if (pPaper->nPicsExchange != 0)	//试卷被调换顺序
+			m_lcPicture.SetItemColors(nCount, 1, RGB(0, 255, 255), RGB(255, 255, 255));
+
 		m_lcPicture.SetItemData(nCount, (DWORD_PTR)pPaper);
 	}
 	
@@ -1269,7 +1272,7 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(pNMItemActivate->iItem);
 	//***	注意：如果不在报名库中的同时报名库不空的也要允许修改	********	2017.6.4
 	if ((/*g_nOperatingMode == 1 ||*/ g_bModifySN) && _pModel_ && pItemPaper && \
-		(pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH || pItemPaper->bReScan || (_bGetBmk_ && pItemPaper->nZkzhInBmkStatus != 1)))
+		(pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH || pItemPaper->bReScan || (_bGetBmk_ && pItemPaper->nZkzhInBmkStatus != 1) || pItemPaper->nPicsExchange != 0))
 	{
 		if (!m_pStudentMgr)
 		{

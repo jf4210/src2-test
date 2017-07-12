@@ -276,7 +276,7 @@ void CModifyZkzhDlg::InitData()
 	USES_CONVERSION;
 	for (auto pPaper : m_pPapers->lPaper)
 	{
-		if (pPaper->strSN.empty() || pPaper->bModifyZKZH || (pPaper->nZkzhInBmkStatus != 1 && _bGetBmk_))
+		if (pPaper->strSN.empty() || pPaper->bModifyZKZH || (pPaper->nZkzhInBmkStatus != 1 && _bGetBmk_) || pPaper->nPicsExchange != 0)
 		{
 			//添加进试卷列表控件
 			int nCount = m_lcZkzh.GetItemCount();
@@ -296,20 +296,40 @@ void CModifyZkzhDlg::InitData()
 
 			//显示备注信息，为何出现在此列表
 			std::string strDetailInfo;
-			if (pPaper->strSN.empty())
-				strDetailInfo = "考号为空";
-			if (pPaper->bModifyZKZH)
-				strDetailInfo = "有过修改";
-			if (_bGetBmk_)
+			if (pPaper->nPicsExchange == 0)
 			{
-				if (pPaper->nZkzhInBmkStatus == -1)
-					strDetailInfo = "发生重号";
-				if (pPaper->nZkzhInBmkStatus == 0)
-					strDetailInfo = "考号不在报名库";
+				if (pPaper->strSN.empty())
+					strDetailInfo = "考号为空";
+				if (pPaper->bModifyZKZH)
+					strDetailInfo = "有过修改";
+				if (_bGetBmk_)
+				{
+					if (pPaper->nZkzhInBmkStatus == -1)
+						strDetailInfo = "发生重号";
+					if (pPaper->nZkzhInBmkStatus == 0)
+						strDetailInfo = "考号不在报名库";
+				}
+				if (pPaper->bReScan)
+					strDetailInfo = "这份试卷将删除";
 			}
-			if (pPaper->bReScan)
-				strDetailInfo = "这份试卷将删除";
-
+			else
+			{
+				if (pPaper->strSN.empty())
+					strDetailInfo = "图像有过调换，考号为空";
+				else
+					strDetailInfo = "图像有过调换";
+				if (pPaper->bModifyZKZH)
+					strDetailInfo = "图像有过调换，有过修改";
+				if (_bGetBmk_)
+				{
+					if (pPaper->nZkzhInBmkStatus == -1)
+						strDetailInfo = "图像有过调换，发生重号";
+					if (pPaper->nZkzhInBmkStatus == 0)
+						strDetailInfo = "图像有过调换，考号不在报名库";
+				}
+				if (pPaper->bReScan)
+					strDetailInfo = "图像有过调换，这份试卷将删除";
+			}
 			m_lcZkzh.SetItemText(nCount, 3, (LPCTSTR)A2T(strDetailInfo.c_str()));
 
 			if (pPaper == m_pShowPaper)
@@ -983,8 +1003,10 @@ LRESULT CModifyZkzhDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 				std::string strDetailInfo;
 				if (pPaper->strSN.empty())
 					strDetailInfo = "图像被调换，考号为空";
+				else
+					strDetailInfo = "图像被调换";
 				if (pPaper->bModifyZKZH)
-					strDetailInfo = "有过修改";
+					strDetailInfo = "图像被调换，有过修改";
 				if (_bGetBmk_)
 				{
 					if (pPaper->nZkzhInBmkStatus == -1)
@@ -993,7 +1015,7 @@ LRESULT CModifyZkzhDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 						strDetailInfo = "图像被调换，考号不在报名库";
 				}
 				if (pPaper->bReScan)
-					strDetailInfo = "这份试卷将删除";
+					strDetailInfo = "图像被调换，这份试卷将删除";
 
 				m_lcZkzh.SetItemText(i, 3, (LPCTSTR)A2T(strDetailInfo.c_str()));
 			}

@@ -743,8 +743,9 @@ void CTcpClient::HandleCmd()
 						}
 						
 						std::string strTableName = Poco::format("T%d_%d", nExamID, vecSubjectID[k]);			//"student";
-						if (bResult) bResult = studentMgr.InitTable(strTableName);
-						if (bResult) bResult = studentMgr.InsertData(_tmpListBmkStudent, strTableName);
+						if (bResult) bResult = studentMgr.InsertMemData(_tmpListBmkStudent, strTableName);
+// 						if (bResult) bResult = studentMgr.InitTable(strTableName);
+// 						if (bResult) bResult = studentMgr.InsertData(_tmpListBmkStudent, strTableName);
 					}
 				#else
 					if (nSubID > 0)

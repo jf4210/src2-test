@@ -4,7 +4,7 @@
 using namespace Poco::Data::Keywords;
 using Poco::Data::Session;
 
-CStudentMgr::CStudentMgr() :_session(NULL), _mem(NULL)
+CStudentMgr::CStudentMgr() :_session(NULL), _mem(NULL), _mem2(NULL)
 {
 	Poco::Data::SQLite::Connector::registerConnector();
 }
@@ -17,6 +17,13 @@ CStudentMgr::~CStudentMgr()
 		_mem->close();
 		delete _mem;
 		_mem = NULL;
+	}
+	if (_mem2)
+	{
+		Poco::Data::SQLite::Utility::memoryToFile(_strDbPath, *_mem2);
+		_mem2->close();
+		delete _mem2;
+		_mem2 = NULL;
 	}
 	if (_session)
 	{
@@ -115,11 +122,55 @@ bool CStudentMgr::InsertData(STUDENT_LIST& lData, std::string strTable)
 		sw.stop();
 		std::string strLog = Poco::format("插入报名库数据完成[%.6fs]", (double)sw.elapsed()/1000000);
 		g_pLogger->information(strLog);
+		TRACE("%s\n", strLog.c_str());
 	}
 	catch (Poco::Exception& e)
 	{
 		std::string strErr = "报名库InsertData失败(" + e.displayText() + ")";
 		g_pLogger->information(strErr);
+		TRACE("%s\n", strErr.c_str());
+		bResult = false;
+	}
+	return bResult;
+}
+
+bool CStudentMgr::InsertMemData(STUDENT_LIST& lData, std::string strTable)
+{
+	bool bResult = false;
+	if (_session && !_session->isConnected())
+		return false;
+
+	try
+	{
+		Poco::Stopwatch sw;
+		sw.start();
+
+		if (!_mem2)
+		{
+			_mem2 = new Poco::Data::Session(Poco::Data::SQLite::Connector::KEY, ":memory:");
+			Poco::Data::SQLite::Utility::fileToMemory(*_mem2, _strDbPath);
+		}
+
+		std::string strSql1 = "DROP TABLE IF EXISTS " + strTable;
+		std::string strSql2 = Poco::format("CREATE TABLE IF NOT EXISTS %s (zkzh VARCHAR(30), name VARCHAR(60), classRoom VARCHAR(60), school VARCHAR(120), scaned INTEGER(3))", strTable);
+		*_mem2 << strSql1, now;
+		*_mem2 << strSql2, now;
+
+		std::string strSql = Poco::format("INSERT INTO %s VALUES(:ln, :fn, :cn, :sn, :status)", strTable);
+		Poco::Data::Statement stmt((*_mem2 << strSql, use(lData)));
+		stmt.execute();
+		
+		bResult = true;
+		sw.stop();
+		std::string strLog = Poco::format("插入报名库数据完成[%.6fs]", (double)sw.elapsed() / 1000000);
+		g_pLogger->information(strLog);
+		TRACE("%s\n", strLog.c_str());
+	}
+	catch (Poco::Exception& e)
+	{
+		std::string strErr = "报名库InsertMemData失败(" + e.displayText() + ")";
+		g_pLogger->information(strErr);
+		TRACE("%s\n", strErr.c_str());
 		bResult = false;
 	}
 	return bResult;

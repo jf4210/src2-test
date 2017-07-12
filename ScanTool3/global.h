@@ -145,7 +145,7 @@
 #else
 	#define SOFT_VERSION	_T("v2.1")
 #endif
-#define SYS_BASE_NAME	_T("智能评阅扫描客户端")
+#define SYS_BASE_NAME	_T("智能阅卷扫描客户端")		//智能评阅扫描客户端
 #define SYS_GUIDE_NAME	_T("GuideDlg")
 
 
