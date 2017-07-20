@@ -2,6 +2,7 @@
 #include "modelinfo.h"
 #include "ComboBoxExt.h"
 #include "TipBaseDlg.h"
+#include "BmpButton.h"
 // CExamInfoDlg ¶Ô»°¿ò
 
 class CExamInfoDlg : public CTipBaseDlg
@@ -27,6 +28,7 @@ public:
 	CString		m_strGradeName;
 	int			m_SubjectID;
 
+	CBmpButton	m_bmpBtnClose;
 	bool	InitShow(pMODEL pModel);
 private:
 	BOOL InitData();
@@ -43,4 +45,5 @@ public:
 	afx_msg void OnCbnSelchangeComboExamname();
 	afx_msg void OnCbnSelchangeComboSubjectname();
 	afx_msg void OnBnClickedBtnSavenewmodel();
+	afx_msg void OnBnClickedBtnClose();
 };

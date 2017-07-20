@@ -331,13 +331,17 @@ pMODEL CNewMakeModelDlg::LoadSubjectModel(pEXAM_SUBJECT pSubModel)
 
 	USES_CONVERSION;
 	std::string strModelPath = T2A(g_strCurrentPath + _T("Model"));
-	strModelPath = g_strModelSavePath + "\\" + pSubModel->strModelName;	//gb2312
+	strModelPath = CMyCodeConvert::Utf8ToGb2312(g_strModelSavePath) + "\\" + pSubModel->strModelName;	//gb2312
 	std::string strBaseModelName;
 	try
 	{
 		Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
 		if (!fileModel.exists())
+		{
+			std::string strLog = "检查模板文件路径下模板不存在: " + strModelPath;
+			g_pLogger->information(strLog);
 			return NULL;
+		}
 		
 		Poco::Path pathModel(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
 		strBaseModelName = CMyCodeConvert::Utf8ToGb2312(pathModel.getBaseName());

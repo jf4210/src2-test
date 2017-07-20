@@ -32,6 +32,7 @@ void CExamInfoDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_SubjectID, m_SubjectID);
 	DDX_Control(pDX, IDC_COMBO_ExamName, m_comboExamName);
 	DDX_Control(pDX, IDC_COMBO_SubjectName, m_comboSubject);
+	DDX_Control(pDX, IDC_BTN_CLOSE, m_bmpBtnClose);
 }
 
 
@@ -40,6 +41,7 @@ BEGIN_MESSAGE_MAP(CExamInfoDlg, CTipBaseDlg)
 	ON_CBN_SELCHANGE(IDC_COMBO_ExamName, &CExamInfoDlg::OnCbnSelchangeComboExamname)
 	ON_CBN_SELCHANGE(IDC_COMBO_SubjectName, &CExamInfoDlg::OnCbnSelchangeComboSubjectname)
 	ON_BN_CLICKED(IDC_BTN_SaveNewModel, &CExamInfoDlg::OnBnClickedBtnSavenewmodel)
+	ON_BN_CLICKED(IDC_BTN_CLOSE, &CExamInfoDlg::OnBnClickedBtnClose)
 END_MESSAGE_MAP()
 
 BOOL CExamInfoDlg::OnInitDialog()
@@ -59,6 +61,7 @@ BOOL CExamInfoDlg::OnInitDialog()
 
 void CExamInfoDlg::InitUI()
 {
+	m_bmpBtnClose.SetStateBitmap(IDB_Btn_MakeModel_CloseNormal, 0, IDB_Btn_MakeModel_CloseDown);
 	InitCtrlPosition();
 }
 
@@ -69,7 +72,7 @@ void CExamInfoDlg::InitCtrlPosition()
 	int cx = rcClient.right;
 	int cy = rcClient.bottom;
 
-	const int nTopGap = 15;
+	const int nTopGap = 20;
 	const int nLeftGap = 15;		//×ó±ßµÄ¿Õ°×¼ä¸ô
 	const int nBottomGap = 40;	//ÏÂ±ßµÄ¿Õ°×¼ä¸ô
 	const int nRightGap = 15;	//ÓÒ±ßµÄ¿Õ°×¼ä¸ô
@@ -105,7 +108,7 @@ void CExamInfoDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_COMBO_SubjectName)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_COMBO_SubjectName)->MoveWindow(nCurrentLeft, nCurrentTop, 1 * nStaticW, nStaticH);
+		GetDlgItem(IDC_COMBO_SubjectName)->MoveWindow(nCurrentLeft, nCurrentTop, 1.5 * nStaticW, nStaticH);
 		nCurrentLeft = nLeft_Group;
 		nCurrentTop = nCurrentTop + nStaticH + nGap * 3;
 	}
@@ -127,7 +130,7 @@ void CExamInfoDlg::InitCtrlPosition()
 	}
 	if (GetDlgItem(IDC_EDIT_SubjectID)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_EDIT_SubjectID)->MoveWindow(nCurrentLeft, nCurrentTop, 2 * nStaticW, nStaticH);
+		GetDlgItem(IDC_EDIT_SubjectID)->MoveWindow(nCurrentLeft, nCurrentTop, 2.5 * nStaticW, nStaticH);
 		nCurrentLeft = nLeft_Group;
 		nCurrentTop = nCurrentTop + nStaticH + nGap * 3;
 	}
@@ -163,6 +166,10 @@ void CExamInfoDlg::InitCtrlPosition()
 	if (GetDlgItem(IDC_BTN_SaveNewModel)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_BTN_SaveNewModel)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
+	}
+	if (GetDlgItem(IDC_BTN_CLOSE)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_CLOSE)->MoveWindow(cx - 3 - 20, 3, 20, 20);
 	}
 }
 
@@ -373,3 +380,9 @@ void CExamInfoDlg::OnBnClickedBtnSavenewmodel()
 	OnOK();
 }
 
+
+
+void CExamInfoDlg::OnBnClickedBtnClose()
+{
+	OnCancel();	
+}

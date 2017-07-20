@@ -160,6 +160,8 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		pResult->bScanOK = true;
 		pResult->strResult = "Á¬½ÓÉ¨ÃèÔ´Ê§°Ü";
 		
+		std::string strLog = "Á¬½ÓÉ¨ÃèÔ´Ê§°Ü";
+		g_pLogger->information(strLog);
 		pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
 		return;
 	}
@@ -174,7 +176,9 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
 		pResult->bScanOK = true;
 		pResult->strResult = "¼ÓÔØÉ¨ÃèÔ´Ê§°Ü";
-		
+
+		std::string strLog = "¼ÓÔØÉ¨ÃèÔ´Ê§°Ü";
+		g_pLogger->information(strLog);
 		pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
 		return;
 	}
@@ -220,6 +224,8 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		pResult->bScanOK = true;
 		pResult->strResult = "É¨ÃèÊ§°Ü";
 
+		std::string strLog = "É¨ÃèÊ§°Ü";
+		g_pLogger->information(strLog);
 		pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
 		return;
 	}
@@ -309,6 +315,9 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		pResult->bScanOK = true;
 		pResult->nState = nScanResult;
 		pResult->strResult = "É¨ÃèÒÇ±»ÖÐÖ¹";
+
+		std::string strLog = "É¨ÃèÒÇ±»ÖÐÖ¹";
+		g_pLogger->information(strLog);
 		pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
 	}
 	else

@@ -819,6 +819,12 @@ bool CScanTool3Dlg::HandleModel()
 
 void CScanTool3Dlg::OnBnClickedBtnClose()
 {
+	CNewMessageBox dlg;
+	dlg.setShowInfo(1, 2, "是否确定退出?");
+	dlg.DoModal();
+	if (dlg.m_nResult != IDYES)
+		return ;
+
 	SendMessage(WM_SYSCOMMAND, SC_CLOSE, 0);
 }
 
