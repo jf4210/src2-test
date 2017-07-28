@@ -6949,6 +6949,8 @@ void CMakeModelDlg::CreateNewModel(std::vector<MODELPICPATH>& vecPath)
 	}
 	m_vecPaperModelInfo.clear();
 
+	m_nStartTH = 0;
+
 //	GetDlgItem(IDC_BTN_New)->EnableWindow(FALSE);
 	m_nModelPicNums = vecPath.size();
 	InitTab();

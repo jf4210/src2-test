@@ -40,6 +40,7 @@ public:
 	LRESULT	MsgCompressResult(WPARAM wParam, LPARAM lParam);		//压缩线程操作结果
 	void	ChildDlgShowPic(cv::Mat& matPic);
 	void	ResetSubjectUI();		//科目部分UI重置
+	void	ConnectServerFail();			//连接服务器异常，接收数据异常
 private:
 	void	InitUI();
 	void	InitScanner();

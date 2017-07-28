@@ -47,6 +47,7 @@ protected:
 
 	LRESULT	MsgCmdDlModel(WPARAM wParam, LPARAM lParam);
 	LRESULT MsgCmdGetBmk(WPARAM wParam, LPARAM lParam);
+	LRESULT MsgCmdConnectFail(WPARAM wParam, LPARAM lParam);
 	LRESULT MSG_UpdateNotify(WPARAM wParam, LPARAM lParam);
 private:
 	Poco::Thread*		m_pRecogThread;		//识别线程对象数组

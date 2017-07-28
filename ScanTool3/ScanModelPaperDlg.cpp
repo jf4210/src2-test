@@ -78,6 +78,7 @@ void CScanModelPaperDlg::InitUI()
 
 	int nSrc = 0;
 	int nDuplex = 1;
+	int nScanSize = 0;
 	char* ret;
 	ret = new char[20];
 	ret[0] = '\0';
@@ -90,6 +91,11 @@ void CScanModelPaperDlg::InitUI()
 	if (ReadRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "scanDuplex", ret) == 0)
 	{
 		nDuplex = atoi(ret);
+	}
+	memset(ret, 0, 20);
+	if (ReadRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "scanSize", ret) == 0)
+	{
+		nScanSize = atoi(ret);
 	}
 	SAFE_RELEASE_ARRY(ret);
 	if (nSrc >= m_comboScanSrc.GetCount())
@@ -104,7 +110,7 @@ void CScanModelPaperDlg::InitUI()
 	m_comboPaperSize.ResetContent();
 	m_comboPaperSize.AddString(_T("A4类型"));
 	m_comboPaperSize.AddString(_T("A3类型"));
-	m_comboPaperSize.SetCurSel(nDuplex);
+	m_comboPaperSize.SetCurSel(nScanSize);
 
 	((CButton*)GetDlgItem(IDC_CHK_MakeModel_Advance))->SetCheck(m_bAdvancedScan);
 }
@@ -468,7 +474,6 @@ void CScanModelPaperDlg::OnBnClickedBtnMakemodelScan()
 		SAFE_RELEASE(_pCurrPapersInfo_);
 		_pCurrPapersInfo_ = new PAPERSINFO();
 
-
 		_nScanStatus_ = 1;
 		pST_SCANCTRL pScanCtrl = new ST_SCANCTRL();
 		pScanCtrl->nScannerId = pID->Id;
@@ -500,6 +505,8 @@ void CScanModelPaperDlg::OnBnClickedBtnMakemodelScan()
 	memset(szRet, 0, 20);
 	sprintf_s(szRet, "%d", nDuplex);
 	WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "scanDuplex", szRet);
-
+	memset(szRet, 0, 20);
+	sprintf_s(szRet, "%d", nScanSize);
+	WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "scanSize", szRet);
 	OnOK();
 }

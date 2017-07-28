@@ -332,12 +332,13 @@ void CVagueSearchDlg::OnNMDblclkListZkzhsearchresult(NMHDR *pNMHDR, LRESULT *pRe
 	pDlg->m_pCurrentShowPaper->strSN = T2A(strZkzh);
 	pDlg->m_pCurrentShowPaper->bModifyZKZH = true;
 
-	CheckZkzhInBmk(pDlg->m_pCurrentShowPaper);
-	if (pDlg->m_pCurrentShowPaper->nZkzhInBmkStatus == 0)
-	{
-		SetZkzhScaned(pDlg->m_pCurrentShowPaper->strSN);
-		pDlg->m_pCurrentShowPaper->nZkzhInBmkStatus = 1;
-	}
+//	CheckZkzhInBmk(pDlg->m_pCurrentShowPaper);
+
+// 	if (pDlg->m_pCurrentShowPaper->nZkzhInBmkStatus == 0)	//永远无法执行
+// 	{
+// 		SetZkzhScaned(pDlg->m_pCurrentShowPaper->strSN);
+// 		pDlg->m_pCurrentShowPaper->nZkzhInBmkStatus = 1;
+// 	}
 
 	//需要刷新未识别准考证号列表
 

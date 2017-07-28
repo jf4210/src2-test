@@ -37,6 +37,7 @@ public:
 
 	void			ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper = NULL);
 private:
+//	std::vector<std::string> m_vecCHzkzh;	//重号的准考证号，在同一袋试卷时进行检查当前试卷袋中所有重号的试卷（防止出现第1份试卷正常后面出现重号的，在前面重号的试卷无法检测的问题）
 	CStudentMgr*	m_pStudentMgr;
 	pST_PaperInfo	m_pShowPaper;		//默认显示的试卷
 	CVagueSearchDlg* m_pVagueSearchDlg;	//模糊搜索窗口
@@ -60,6 +61,8 @@ private:
 	void	PicsExchange();		//图片调换，第一页与第二页调换顺序，只有在模板图片为2页时有用
 	
  	void	ShowPaperByItem(int nItem);
+	void	SetZkzhStatus();	//设置准考证号的扫描状态
+
 // 	void	ShowPaperZkzhPosition(pST_PaperInfo pPaper);
 //	void	PrintRecogRect(int nPic, pST_PaperInfo pPaper, pST_PicInfo pPic, cv::Mat& matImg);		//打印所有模板上的矩形位置
 	BOOL	PreTranslateMessage(MSG* pMsg);

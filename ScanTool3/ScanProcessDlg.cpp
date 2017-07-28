@@ -40,6 +40,7 @@ BOOL CScanProcessDlg::OnInitDialog()
 
 	InitUI(); 
 	SetFontSize();
+	m_vecCHzkzh.clear();
 
 	USES_CONVERSION;
 	char szPicTmpPath[MAX_PATH] = { 0 };
@@ -806,6 +807,22 @@ LRESULT CScanProcessDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 			{
 				m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
 				CheckZkzhInBmk(pPaper);
+
+				if (pPaper->nZkzhInBmkStatus == -1)
+				{
+					bool bFind = false;
+					for (auto sn : m_vecCHzkzh)
+					{
+						if (sn == pPaper->strSN)
+						{
+							bFind = true;
+							break;
+						}
+					}
+
+					if(!bFind) m_vecCHzkzh.push_back(pPaper->strSN);	//重号的考号放入容器中，需要去重
+				}
+
 // 				if (_bGetBmk_ && pPaper->nZkzhInBmkStatus != 1)
 // 					m_lcPicture.SetItemColors(i, 1, RGB(0, 255, 0), RGB(255, 255, 255));
 			}
@@ -857,6 +874,7 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 		return;
 	}
 
+	m_vecCHzkzh.clear();
 	InitTmpSubjectBmk();
 
 	int nSrc = 0;
@@ -1339,6 +1357,20 @@ void CScanProcessDlg::OnTimer(UINT_PTR nIDEvent)
 						m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pItemPaper->strSN.c_str()));
 						if (_bGetBmk_ && pItemPaper->nZkzhInBmkStatus != 1)
 							m_lcPicture.SetItemColors(i, 1, RGB(0, 255, 0), RGB(255, 255, 255));
+						else if (_bGetBmk_ && pItemPaper->nZkzhInBmkStatus == 1)	//考号正常，检测有没有在重号列表中的（防止出现第1份试卷正常后面出现重号的，在前面重号的试卷无法检测的问题）
+						{
+							if (m_vecCHzkzh.size() > 0)
+							{
+								for (auto sn : m_vecCHzkzh)
+								{
+									if (sn == pItemPaper->strSN)
+									{
+										pItemPaper->nZkzhInBmkStatus = -1;		//重号
+										break;
+									}
+								}
+							}
+						}
 					}
 					else
 					{

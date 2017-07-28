@@ -621,6 +621,12 @@ LRESULT CScanTool3Dlg::MsgCmdGetBmk(WPARAM wParam, LPARAM lParam)
 	return 1;
 }
 
+LRESULT CScanTool3Dlg::MsgCmdConnectFail(WPARAM wParam, LPARAM lParam)
+{
+	m_pScanMgrDlg->ConnectServerFail();
+	return 1;
+}
+
 LRESULT CScanTool3Dlg::MSG_UpdateNotify(WPARAM wParam, LPARAM lParam)
 {
 	CNewMessageBox dlg;
@@ -677,6 +683,7 @@ BEGIN_MESSAGE_MAP(CScanTool3Dlg, CDialogEx)
 	ON_WM_SIZE()
 	ON_MESSAGE(MSG_CMD_DL_MODEL_OK, &CScanTool3Dlg::MsgCmdDlModel)
 	ON_MESSAGE(MSG_CMD_GET_BMK_OK, &CScanTool3Dlg::MsgCmdGetBmk)
+	ON_MESSAGE(MSG_CMD_CONNECTION_FAIL, &CScanTool3Dlg::MsgCmdConnectFail)
 	ON_BN_CLICKED(IDC_BTN_CLOSE, &CScanTool3Dlg::OnBnClickedBtnClose)
 	ON_BN_CLICKED(IDC_BTN_Min, &CScanTool3Dlg::OnBnClickedBtnMin)
 	ON_WM_NCHITTEST()

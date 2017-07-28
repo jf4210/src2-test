@@ -194,6 +194,9 @@ bool CTcpClient::receiveData()
 		g_pLogger->information(strLog);
 		_bConnect = false;
 		g_bCmdConnect = _bConnect;
+
+		CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+		pDlg->PostMessage(MSG_CMD_CONNECTION_FAIL, NULL, NULL);
 		return false;
 	}
 

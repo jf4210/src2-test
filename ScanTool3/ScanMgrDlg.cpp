@@ -926,3 +926,16 @@ void CScanMgrDlg::ResetSubjectUI()
 	m_comboSubject.EnableWindow(TRUE);
 	m_bmpBtnChangeExam.ShowWindow(SW_SHOW);
 }
+
+void CScanMgrDlg::ConnectServerFail()
+{
+	if (_eCurrDlgType_ == DLG_DownloadModle)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "接收数据异常，请重试!");
+		dlg.DoModal();
+		//跳到考试管理页面
+		CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
+		pDlg->SwitchDlg(0);
+	}
+}

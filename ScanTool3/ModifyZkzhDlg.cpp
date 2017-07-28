@@ -273,7 +273,44 @@ void CModifyZkzhDlg::InitData()
 
 	bool bFindFirstShow = false;
 	m_lcZkzh.DeleteAllItems();
+
 	USES_CONVERSION;
+// 	m_vecCHzkzh.clear();
+// 	//------------------------先提取重号的考号
+// 	for (auto pPaper : m_pPapers->lPaper)
+// 	{
+// 		if (pPaper->nZkzhInBmkStatus == -1)
+// 		{
+// 			bool bFind = false;
+// 			for (auto sn : m_vecCHzkzh)
+// 			{
+// 				if (sn == pPaper->strSN)
+// 				{
+// 					bFind = true;
+// 					break;
+// 				}
+// 			}
+// 			if (!bFind) m_vecCHzkzh.push_back(pPaper->strSN);	//重号的考号放入容器中，需要去重
+// 		}
+// 	}
+// 	for (auto pPaper : m_pPapers->lIssue)
+// 	{
+// 		if (pPaper->nZkzhInBmkStatus == -1)
+// 		{
+// 			bool bFind = false;
+// 			for (auto sn : m_vecCHzkzh)
+// 			{
+// 				if (sn == pPaper->strSN)
+// 				{
+// 					bFind = true;
+// 					break;
+// 				}
+// 			}
+// 			if (!bFind) m_vecCHzkzh.push_back(pPaper->strSN);	//重号的考号放入容器中，需要去重
+// 		}
+// 	}
+// 	//------------------------
+
 	for (auto pPaper : m_pPapers->lPaper)
 	{
 		if (pPaper->strSN.empty() || pPaper->bModifyZKZH || (pPaper->nZkzhInBmkStatus != 1 && _bGetBmk_) || pPaper->nPicsExchange != 0)
@@ -622,6 +659,54 @@ void CModifyZkzhDlg::ShowPaperByItem(int nItem)
 	m_lcZkzh.Invalidate();
 }
 
+void CModifyZkzhDlg::SetZkzhStatus()
+{
+	std::vector<std::string> vecCHzkzh;		//检查重号的准考证号，进行2次遍历，
+											//防止出现第一次属于正常，后面出现重号后，前面第一次的试卷的状态还是属于正常的问题
+	int nCount = m_lcZkzh.GetItemCount();
+	for (int i = 0; i < nCount; i++)
+	{
+		pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
+		CheckZkzhInBmk(pPaper);
+		if (pPaper->nZkzhInBmkStatus == -1)
+		{
+			bool bFind = false;
+			for (auto sn : vecCHzkzh)
+			{
+				if (sn == pPaper->strSN)
+				{
+					bFind = true;
+					break;
+				}
+			}
+
+			if (!bFind) vecCHzkzh.push_back(pPaper->strSN);	//重号的考号放入容器中，需要去重
+		}
+	}
+	for (int i = 0; i < nCount; i++)
+	{
+		pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
+		if (pPaper->nZkzhInBmkStatus == 1)		//只需要检查正常试卷，看准考证号是不是在重号的准考证号列表中
+		{
+			if (vecCHzkzh.size() > 0)
+			{
+				for (auto sn : vecCHzkzh)
+				{
+					if (sn == pPaper->strSN)
+					{
+						pPaper->nZkzhInBmkStatus = -1;		//重号
+						break;
+					}
+				}
+				continue;
+			}
+		}
+// 		if (pPaper->nZkzhInBmkStatus == -1)		//重号的试卷需要检查是不是目前还是重号，防止之前设置重号了，但是没有上传，后面改过来了
+// 		{
+// 		}
+	}
+}
+
 BOOL CModifyZkzhDlg::PreTranslateMessage(MSG* pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN)
@@ -902,6 +987,8 @@ bool CModifyZkzhDlg::ReleaseData()
 			}
 		}
 	}
+
+	SetZkzhStatus();
 
 	if (m_pVagueSearchDlg)
 	{
