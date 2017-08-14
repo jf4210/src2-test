@@ -78,7 +78,7 @@ TW_UINT16 FAR PASCAL DSMCallback(pTW_IDENTITY _pOrigin,
 	}
 	// Force a refresh, so that we process the message...
 //	g_pTWAINApp->RedrawWindow();
-
+	
 	// All done...
 	return twrc;
 }
@@ -202,7 +202,14 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	twrc = set_CapabilityOneValue(ICAP_YRESOLUTION, (pTW_FIX32)&nResolution);
 
 	twrc = set_CapabilityOneValue(ICAP_AUTOMATICBORDERDETECTION, stScanCtrl.nAutoCut, TWTY_INT16);	//自动裁剪
-	twrc = set_CapabilityOneValue(ICAP_AUTOMATICDESKEW, stScanCtrl.nRotate, TWTY_INT16);		//自动纠偏
+	twrc = set_CapabilityOneValue(ICAP_AUTOMATICDESKEW, stScanCtrl.nDeskew, TWTY_INT16);		//自动纠偏
+
+	twrc = set_CapabilityOneValue(ICAP_AUTOMATICROTATE, stScanCtrl.nRotate, TWTY_INT16);		//自动旋转
+	if (stScanCtrl.nRotate == 0)
+	{
+		int nRotation = 0;
+		twrc = set_CapabilityOneValue(ICAP_ROTATION, (pTW_FIX32)&nRotation);	//不旋转
+	}
 
 	twrc = set_CapabilityOneValue(CAP_XFERCOUNT, stScanCtrl.nScanCount, TWTY_INT16);
 #if 0
@@ -216,6 +223,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	m_DSMessage = (TW_UINT16)-1;
 	HWND hWnd = AfxGetMainWnd()->m_hWnd;
 //	hWnd = GetDesktopWindow();
+//	hWnd = pDlg->m_hWnd;
 	if (!enableDS(hWnd, stScanCtrl.bShowUI))
 	{
 		TRACE("扫描失败\n");
@@ -228,6 +236,21 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 		g_pLogger->information(strLog);
 		pDlg->PostMessage(MSG_SCAN_ERR, (WPARAM)pResult, NULL);
 		return;
+	}
+
+	if (m_DSMessage == (TW_UINT16)-1)
+	{
+		MSG MsgTmp;
+		while (!PeekMessage((LPMSG)&MsgTmp, NULL, 0, 0, PM_NOREMOVE))
+		{
+//			TRACE("PeekMsg times = %d\n", i);
+			if (m_DSMessage != (TW_UINT16)-1)
+			{
+				break;
+			}
+		}
+// 		BOOL bResult = PeekMessage((LPMSG)&MsgTmp, NULL, 0, 0, PM_NOREMOVE);	//PM_NOREMOVE
+// 		TRACE("PeekMsg = %d\n", (int)bResult);
 	}
 
 	m_nStartSaveIndex = stScanCtrl.nSaveIndex;

@@ -403,6 +403,7 @@ void CScanDlg::OnBnClickedBtnScan()
 		pScanCtrl->nScanResolution = nScanDpi;
 		pScanCtrl->nScanSize = nSize;
 		pScanCtrl->bShowUI = bShowScanSrcUI;	//bShowScanSrcUI;
+		pScanCtrl->nAutoCut = nAutoCut;
 
 		pDlg->m_scanThread.ResetGlobalVal();
 		pDlg->m_scanThread.setNotifyDlg(pDlg);

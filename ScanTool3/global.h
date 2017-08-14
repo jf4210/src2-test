@@ -88,7 +88,7 @@
 //	#define PrintRecogLog		//打印识别日志
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define	 TEST_MODEL_NAME	//模板名称测试
-	#define Test_Data			//测试数据，测试模式
+//	#define Test_Data			//测试数据，测试模式
 //	#define TEST_TIP_SHOW		//提示信息显示测试
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
 #else	//release版本
@@ -145,7 +145,7 @@
 #else
 	#define SOFT_VERSION	_T("v2.1")
 #endif
-#define SYS_BASE_NAME	_T("智能阅卷扫描客户端")		//智能评阅扫描客户端
+#define SYS_BASE_NAME	_T("慧学扫描客户端")		//智能阅卷扫描客户端	//智能评阅扫描客户端
 #define SYS_GUIDE_NAME	_T("GuideDlg")
 
 

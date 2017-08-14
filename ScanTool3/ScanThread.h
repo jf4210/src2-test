@@ -21,7 +21,8 @@ typedef struct _tagScanCtrl_
 	int		nScanSize;		//纸张类型
 	int		nScanResolution;	//扫描DPI
 	int		nAutoCut;	//自动裁剪
-	int		nRotate;	//自动纠偏
+	int		nDeskew;	//自动纠偏
+	int		nRotate;	//自动旋转
 
 	int		nSaveIndex;	//文件保存时的起始索引，如从第1张开始，第5张开始
 	_tagScanCtrl_()
@@ -33,7 +34,8 @@ typedef struct _tagScanCtrl_
 		nScanSize = TWSS_A4LETTER;
 		nScanResolution = 200;
 		nAutoCut = 1;
-		nRotate = 1;
+		nDeskew = 1;
+		nRotate = 0;
 		bShowUI = false;
 		nSaveIndex = 1;
 	}

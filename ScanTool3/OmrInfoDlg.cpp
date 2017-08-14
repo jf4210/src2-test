@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(COmrInfoDlg, CDialog)
 
 COmrInfoDlg::COmrInfoDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(COmrInfoDlg::IDD, pParent)
-	, m_nTHSel(0), m_nXXSel(0), m_nDirectSel(0), m_bShowFist(FALSE), m_bSingle(TRUE)
+	, m_nTHSel(1), m_nXXSel(0), m_nDirectSel(0), m_bShowFist(FALSE), m_bSingle(TRUE)
 {
 
 }
