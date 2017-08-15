@@ -88,14 +88,23 @@
 //	#define PrintRecogLog		//打印识别日志
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define	 TEST_MODEL_NAME	//模板名称测试
-//	#define Test_Data			//测试数据，测试模式
+	#define Test_Data			//测试数据，测试模式
 //	#define TEST_TIP_SHOW		//提示信息显示测试
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
+//	#define USE_TESSERACT		//使用Tesseract进行数字汉字识别
 #else	//release版本
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
 	#define	 TEST_MODEL_NAME	//模板名称测试
+//	#define USE_TESSERACT		//使用Tesseract进行数字汉字识别
 	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
 #endif
+
+#ifdef USE_TESSERACT
+	#include "tesseract/baseapi.h"
+	#include "leptonica/allheaders.h"
+#endif
+
+
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
 	#ifndef TriangleSide_TEST
@@ -152,6 +161,13 @@
 #define MAX_DLG_WIDTH	1024
 #define MAX_DLG_HEIGHT	768
 
+#ifdef USE_TESSERACT
+	#ifdef _DEBUG
+		#pragma comment(lib, "libtesseract304d.lib")
+	#else
+		#pragma comment(lib, "libtesseract304.lib")
+	#endif
+#endif
 // #define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}
 // #define SAFE_RELEASE_ARRY(pObj) if(pObj) {delete[] pObj; pObj = NULL;}
 

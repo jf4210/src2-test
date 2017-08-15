@@ -57,7 +57,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;XLISTCTRLLIB_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;XLISTCTRLLIB_STATIC;USE_TESSERACT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\include;..\..\include\twain\;.\picCtrl;..\..\common;./XListCtrl</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -66,6 +66,10 @@
       <OutputFile>..\..\bin\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\lib\x86</AdditionalLibraryDirectories>
       <AdditionalDependencies>FreeImage.lib;libzbar-0.lib;opencv_world310d.lib;libeay32.lib;ssleay32.lib;libmupdf.lib</AdditionalDependencies>
+      <StackReserveSize>50000000</StackReserveSize>
+      <StackCommitSize>50000000</StackCommitSize>
+      <HeapReserveSize>50000000</HeapReserveSize>
+      <HeapCommitSize>50000000</HeapCommitSize>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -304,7 +308,9 @@
     <ClCompile Include="XListCtrl\XComboList.cpp" />
     <ClCompile Include="XListCtrl\XEdit.cpp" />
     <ClCompile Include="XListCtrl\XHeaderCtrl.cpp" />
-    <ClCompile Include="XListCtrl\XListCtrl.cpp" />
+    <ClCompile Include="XListCtrl\XListCtrl.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="ZipObj.cpp" />
   </ItemGroup>
   <ItemGroup>

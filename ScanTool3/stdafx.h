@@ -34,8 +34,9 @@
 #include <afxcontrolbars.h>     // 功能区和控件条的 MFC 支持
 
 
-
-
+#ifdef USE_TESSERACT
+	#include "tesseract/tesscallback.h"
+#endif
 
 
 
@@ -60,3 +61,4 @@
 #else
 #define XLISTCTRL_TRACE __noop
 #endif
+

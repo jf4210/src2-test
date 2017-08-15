@@ -64,6 +64,7 @@ BEGIN_MESSAGE_MAP(CModifyZkzhDlg, CDialog)
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BTN_Back, &CModifyZkzhDlg::OnBnClickedBtnBack)
 	ON_WM_DESTROY()
+	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 
@@ -263,7 +264,7 @@ void CModifyZkzhDlg::InitCtrlPosition()
 		int nBtnH = nTopGap - 5;
 		GetDlgItem(IDC_BTN_Back)->MoveWindow(cx - nRightGap - nBtnW, 5, nBtnW, nBtnH);
 	}
-//	Invalidate();
+	Invalidate();
 }
 
 void CModifyZkzhDlg::InitData()
@@ -1234,4 +1235,12 @@ void CModifyZkzhDlg::CheckZkzhInBmk(pST_PaperInfo pPaper)
 		pPaper->nZkzhInBmkStatus = -1;
 	else
 		pPaper->nZkzhInBmkStatus = 0;
+}
+
+
+void CModifyZkzhDlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialog::OnSize(nType, cx, cy);
+
+	InitCtrlPosition();
 }

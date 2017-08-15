@@ -2,6 +2,7 @@
 //
 
 #include "stdafx.h"
+
 #include "ScanTool3.h"
 #include "ScanThread.h"
 
@@ -15,7 +16,10 @@
 
 #include "MakeModelDlg.h"
 #include "OmrRecog.h"
-
+// #ifdef USE_TESSERACT
+// #include "tesseract/baseapi.h"
+// #include "leptonica/allheaders.h"
+// #endif
 CScanThread* g_pTWAINApp = NULL;
 extern bool gUSE_CALLBACKS;    // defined in TwainApp.cpp
 

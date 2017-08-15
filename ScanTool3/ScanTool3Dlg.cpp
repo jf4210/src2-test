@@ -856,7 +856,7 @@ void CScanTool3Dlg::DrawBorder(CDC *pDC)
 	CPen pPen;
 	CRect rcClient(0, 0, 0, 0);
 	GetClientRect(&rcClient);
-	pPen.CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
+	pPen.CreatePen(PS_SOLID, 1, RGB(118, 190, 254));
 
 	pDC->SelectStockObject(NULL_BRUSH);
 	pOldPen = pDC->SelectObject(&pPen);
@@ -899,8 +899,9 @@ BOOL CScanTool3Dlg::OnEraseBkgnd(CDC* pDC)
 	}
 	memDC.DeleteDC();
 
-//	DrawBorder(pDC);
+	DrawBorder(pDC);
 
+	ReleaseDC(pDC);
 	return TRUE;
 }
 
