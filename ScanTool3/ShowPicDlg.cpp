@@ -630,8 +630,8 @@ void CShowPicDlg::OnDestroy()
 	m_vecBtn.clear();
 }
 
-void CShowPicDlg::showTmpPic(cv::Mat& matPic)
+void CShowPicDlg::showTmpPic(cv::Mat& matPic, cv::Point pt/* = cv::Point(0, 0)*/, float fShowPer/* = 1.0*/, int nDirection/* = -1*/)
 {
 	if (m_pCurrentPicShow)
-		m_pCurrentPicShow->ShowPic(matPic);
+		m_pCurrentPicShow->ShowPic(matPic, pt, fShowPer, nDirection);
 }

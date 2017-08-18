@@ -12,6 +12,14 @@
 #include "ModelInfoDlg.h"
 // CMakeModelDlg 对话框
 
+typedef struct _ProjectionInfo_
+{
+	int		nStartIndex;	//原图上的起始点
+	int		nEndIndex;		//原图上的结束点
+	int		nArea;			//点的面积
+//	cv::Mat matProjection;	
+}ST_PROJECTION, *pST_PROJECTION;
+typedef std::vector<ST_PROJECTION> VEC_PROJECT;
 
 typedef struct _PaperModelInfo_
 {
@@ -97,8 +105,9 @@ public:
 	int	m_nQK_CPVal;
 	int	m_nGrayVal;
 	int	m_nWhiteVal;
-	int   m_nOMR;
+	int m_nOMR;
 	int	m_nSN;
+	int m_nTitle;
 	float m_fFixThresholdPercent;
 	float m_fHeadThresholdPercent;	//同步头达到阀值的比例
 	float m_fABModelThresholdPercent;
@@ -187,7 +196,8 @@ public:
 	void SaveNewModel();
 public:
 	bool RecogNewGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc);							//在修改阀值后重新计算矩形区的灰度值
-
+	void horizontalProjectionMat(cv::Mat srcImg, VEC_PROJECT& vecResult);			//水平投影
+	void verticalProjectionMat(cv::Mat srcImg, VEC_PROJECT& vecResult);				//垂直投影  
 private:
 	void InitUI();
 	void InitTab();
@@ -199,6 +209,7 @@ private:
 	void UpdataCPList();
 	CPType GetComboSelCpType();
 	bool RecogByHead(cv::Rect rtOri);			//通过同步头来识别点
+	bool RecogTitle(cv::Rect rtOri);			//标题区识别操作
 	bool Recognise(cv::Rect rtOri);				//识别操作
 	inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc);						//识别灰度值
 	

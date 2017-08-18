@@ -114,6 +114,7 @@ void CSendFileThread::run()
 		pTask = NULL;
 #endif
 	}
+	TRACE("发送文件线程退出\n");
 }
 
 void CSendFileThread::HandleTask(pSENDTASK pTask)
@@ -161,6 +162,7 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 		}
 		else
 		{
+			_fmMapSender_.unlock();
 			char szLog[500] = { 0 };
 			sprintf_s(szLog, "添加发送文件任务: %s失败(extName: %s, ip: %s, port: %d其中某些有错)", pTask->strFileName.c_str(), strKey.c_str(), g_strFileIp4HandModel.c_str(), g_nFilePort4HandModel);
 			g_pLogger->information(szLog);

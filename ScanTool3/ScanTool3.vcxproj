@@ -66,10 +66,10 @@
       <OutputFile>..\..\bin\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\lib\x86</AdditionalLibraryDirectories>
       <AdditionalDependencies>FreeImage.lib;libzbar-0.lib;opencv_world310d.lib;libeay32.lib;ssleay32.lib;libmupdf.lib</AdditionalDependencies>
-      <StackReserveSize>50000000</StackReserveSize>
-      <StackCommitSize>50000000</StackCommitSize>
-      <HeapReserveSize>50000000</HeapReserveSize>
-      <HeapCommitSize>50000000</HeapCommitSize>
+      <StackReserveSize>10000000</StackReserveSize>
+      <StackCommitSize>1000000</StackCommitSize>
+      <HeapReserveSize>10000000</HeapReserveSize>
+      <HeapCommitSize>1000000</HeapCommitSize>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>

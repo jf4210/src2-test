@@ -29,7 +29,7 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_pModelPicShow(NULL), m_nGaussKernel(5), m_nSharpKernel(5), m_nThresholdKernel(150), m_nCannyKernel(90), m_nDilateKernel(6), m_nErodeKernel(2), m_nDilateKernel_DefCommon(6), m_nDilateKernel_DefSn(6)
 	, m_pModel(pModel), m_bNewModelFlag(false), m_nModelPicNums(1), m_nCurrTabSel(0), m_bSavedModelFlag(false), m_ncomboCurrentSel(0), m_eCurCPType(UNKNOWN)
 	, m_nCurListCtrlSel(0), m_nStartTH(0)
-	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200)
+	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200), m_nTitle(150)
 	, m_fHeadThresholdPercent(0.75), m_fABModelThresholdPercent(0.75), m_fCourseThresholdPercent(0.75), m_fQK_CPThresholdPercent_Fix(1.5), m_fQK_CPThresholdPercent_Head(1.2), m_fFixThresholdPercent(0.80)
 	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75), m_fOMRThresholdPercent_Fix(1.5), m_fSNThresholdPercent_Fix(1.5), m_fOMRThresholdPercent_Head(1.2), m_fSNThresholdPercent_Head(1.2)
 	, m_pCurRectInfo(NULL), m_ptFixCP(0,0)
@@ -371,7 +371,6 @@ void CMakeModelDlg::InitUI()
 	m_cpListCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36);
 	m_cpListCtrl.InsertColumn(1, _T("位置信息"), LVCFMT_CENTER, 120);
 
-
 	//释放图像显示控件
 	std::vector<CPicShow*>::iterator itPic = m_vecPicShow.begin();
 	for (; itPic != m_vecPicShow.end();)
@@ -610,6 +609,7 @@ void CMakeModelDlg::InitCtrlPosition()
 		nCurrentTop = nCurrentTop + nBtnHeigh + nGap;
 	}
 #endif
+
 	if (m_tabModelPicCtrl.GetSafeHwnd())
 	{
 		m_tabModelPicCtrl.MoveWindow(nLeftGap + nLeftCtrlWidth + nGap, nTopGap, cx - nLeftGap - nLeftCtrlWidth - nGap - nRightGap, cy - nTopGap - nBottomGap);
@@ -688,6 +688,9 @@ void CMakeModelDlg::InitConf()
 			m_comboCheckPointType.AddString(_T("考号设置"));
 			m_comboCheckPointType.AddString(_T("选择题"));
 			m_comboCheckPointType.AddString(_T("选做题"));
+		#ifdef USE_TESSERACT
+			m_comboCheckPointType.AddString(_T("标题区"));
+		#endif
 		}
 	}
 	m_comboCheckPointType.SetCurSel(0);
@@ -777,7 +780,6 @@ LRESULT CMakeModelDlg::RoiLBtnUp(WPARAM wParam, LPARAM lParam)
 	m_cpListCtrl.SetItemState(m_nCurListCtrlSel, 0, LVIS_DROPHILITED);		// 取消高亮显示
 	if (m_eCurCPType == UNKNOWN)
 	{
-//		AfxMessageBox(_T("请先选中校验点类型"));
 		CNewMessageBox dlg;
 		dlg.setShowInfo(2, 1, "请先选中校验点类型");
 		dlg.DoModal();
@@ -786,9 +788,36 @@ LRESULT CMakeModelDlg::RoiLBtnUp(WPARAM wParam, LPARAM lParam)
 
 	if (m_eCurCPType != H_HEAD && m_eCurCPType != V_HEAD && m_pModel && m_pModel->nHasHead == 0)
 	{
+	#ifdef USE_TESSERACT
+		if (m_eCurCPType == TITLE_AREA)
+		{
+			if (checkOverlap(m_eCurCPType, Rt))
+			{
+				CNewMessageBox dlg;
+				dlg.setShowInfo(2, 1, "检测到包含已选区域");
+				dlg.DoModal();
+				return FALSE;
+			}
+			Recognise(Rt);
+			SortRect();
+			UpdataCPList();
+		}
+		else
+		{
+			if (checkOverlap(m_eCurCPType, Rt))
+			{
+				CNewMessageBox dlg;
+				dlg.setShowInfo(2, 1, "检测到包含已选区域");
+				dlg.DoModal();
+				return FALSE;
+			}
+			Recognise(Rt);
+			SortRect();
+			UpdataCPList();
+		}
+	#else
 		if (checkOverlap(m_eCurCPType, Rt))
 		{
-//			AfxMessageBox(_T("检测到包含已选区域"));
 			CNewMessageBox dlg;
 			dlg.setShowInfo(2, 1, "检测到包含已选区域");
 			dlg.DoModal();
@@ -797,6 +826,7 @@ LRESULT CMakeModelDlg::RoiLBtnUp(WPARAM wParam, LPARAM lParam)
 		Recognise(Rt);
 		SortRect();
 		UpdataCPList();
+	#endif
 	}
 	else if (m_eCurCPType != H_HEAD && m_eCurCPType != V_HEAD && m_pModel &&  m_pModel->nHasHead != 0)
 	{
@@ -1565,6 +1595,7 @@ inline void CMakeModelDlg::GetThreshold(cv::Mat& matSrc, cv::Mat& matDst)
 	case ABMODEL: nRealThreshold = m_nABModelVal; break;
 	case COURSE: nRealThreshold = m_nCourseVal; break;
 	case QK_CP: nRealThreshold = m_nQK_CPVal; break;
+	case TITLE_AREA: nRealThreshold = m_nTitle; break;
 	case GRAY_CP: 
 	case WHITE_CP:
 	case SN:
@@ -1632,9 +1663,7 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
 		return false;
 	
-	TRACE("****** 1\n");
 	Mat imgResult = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtOri); 
-	TRACE("****** 2\n");
 
 	cvtColor(imgResult, imgResult, CV_BGR2GRAY);
 	GaussianBlur(imgResult, imgResult, cv::Size(m_nGaussKernel, m_nGaussKernel), 0, 0);
@@ -1642,15 +1671,12 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 
 	GetThreshold(imgResult, imgResult);
 
-	TRACE("****** 3\n");
 	cv::Canny(imgResult, imgResult, 0, m_nCannyKernel, 5);
 	Mat element = getStructuringElement(MORPH_RECT, Size(m_nDilateKernel, m_nDilateKernel));	//Size(6, 6)	普通空白框可识别
 	dilate(imgResult, imgResult, element);
-#if 1
-	TRACE("****** 4\n");
+
 	IplImage ipl_img(imgResult);
 
-	TRACE("****** 5\n");
 	//the parm. for cvFindContours  
 	CvMemStorage* storage = cvCreateMemStorage(0);
 	CvSeq* contour = 0;
@@ -1658,7 +1684,6 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 	//提取轮廓  
 	cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-	TRACE("****** 6\n");
 	Rect rtMax;		//记录最大矩形，识别同步头时用来排除非同步头框
 	bool bResult = false;
 	std::vector<Rect>RectCompList;
@@ -1859,130 +1884,7 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 	{
 		GetElectOmrInfo(RectCompList);
 	}
-#else
-	m_vecContours.clear();
-	cv::findContours(imgResult.clone(), m_vecContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);	//hsvRe.clone()		//CV_RETR_EXTERNAL	//CV_CHAIN_APPROX_SIMPLE
 
-	bool bResult = false;
-	std::vector<Rect>RectCompList;
-	for (int i = 0; i < m_vecContours.size(); i++)
-	{
-		Rect rm = cv::boundingRect(cv::Mat(m_vecContours[i]));
-
-		if (rm.width < 10 || rm.height < 7 || rm.width > 70 || rm.height > 50||rm.area() < 70)
-		{
-//			TRACE("*****Rect %d x = %d,y = %d, width = %d, high = %d \n", i, rm.x, rm.y, rm.width, rm.height);
-			continue;
-		}
-		
-		rm.x = rm.x + rtOri.x/* - m_ptFixCP.x*/;
-		rm.y = rm.y + rtOri.y/* - m_ptFixCP.y*/;
-
-		RectCompList.push_back(rm);
-
-		RECTINFO rc;
-		rc.rt = rm;
-		rc.eCPType = m_eCurCPType;
-		RECTINFO rcOri;
-		rcOri.rt = rtOri;
-		
-		if (m_eCurCPType == H_HEAD)
-		{
-			rc.nThresholdValue = m_nHeadVal;
-			rc.fStandardValuePercent = m_fHeadThresholdPercent;
-
-			Rect rtTmp = rm;
-			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
-			RecogGrayValue(matSrcModel, rc);
-
-			m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.push_back(rc);
-		}
-		else if (m_eCurCPType == V_HEAD)
-		{
-			rc.nThresholdValue = m_nHeadVal;
-			rc.fStandardValuePercent = m_fHeadThresholdPercent;
-
-			Rect rtTmp = rm;
-			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
-			RecogGrayValue(matSrcModel, rc);
-
-			m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.push_back(rc);
-		}
-		else if (m_eCurCPType == ABMODEL)
-		{
-			rc.nThresholdValue = m_nABModelVal;
-			rc.fStandardValuePercent = m_fABModelThresholdPercent;
-
-			Rect rtTmp = rm;
-			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
-			RecogGrayValue(matSrcModel, rc);
-
-			m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel.push_back(rc);
-		}
-		else if (m_eCurCPType == COURSE)
-		{
-			rc.nThresholdValue = m_nCourseVal;
-			rc.fStandardValuePercent = m_fCourseThresholdPercent;
-
-			Rect rtTmp = rm;
-			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
-			RecogGrayValue(matSrcModel, rc);
-
-			m_vecPaperModelInfo[m_nCurrTabSel]->vecCourse.push_back(rc);
-		}
-		else if (m_eCurCPType == QK_CP)
-		{
-			rc.nThresholdValue = m_nQK_CPVal;
-			rc.fStandardValuePercent = m_fQK_CPThresholdPercent_Fix;
-
-			Rect rtTmp = rm;
-			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
-			RecogGrayValue(matSrcModel, rc);
-
-			m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.push_back(rc);
-		}
-		else if (m_eCurCPType == GRAY_CP)
-		{
-			rc.nThresholdValue = m_nGrayVal;
-			rc.fStandardValuePercent = m_fGrayThresholdPercent;
-
-			Rect rtTmp = rm;
-			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
-			RecogGrayValue(matSrcModel, rc);
-
-			m_vecPaperModelInfo[m_nCurrTabSel]->vecGray.push_back(rc);
-		}
-		else if (m_eCurCPType == WHITE_CP)		//黑白提卡空白校验点设置不了，以后再解决
-		{
-			rc.nThresholdValue = m_nWhiteVal;
-			rc.fStandardValuePercent = m_fWhiteThresholdPercent;
-
-			Rect rtTmp = rm;
-			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
-			RecogGrayValue(matSrcModel, rc);
-
-			m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.push_back(rc);
-		}
-		else if (m_eCurCPType == SN)
-		{
-			TRACE("SN - rt(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
-		}
-		else if (m_eCurCPType == OMR)
-		{
-			TRACE("OMR - rt(%d,%d,%d,%d)\n", rm.x, rm.y, rm.width, rm.height);
-		}
-
-		bResult = true;
-	}
-	if (m_eCurCPType == SN)
-	{
-		GetSNArry(RectCompList);
-	}
-	if (m_eCurCPType == OMR)
-	{
-		GetOmrArry(RectCompList);
-	}
-#endif
 	if (m_eCurCPType == Fix_CP)
 	{
 		if (RectCompList.size() > 0)
@@ -2051,6 +1953,188 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 	g_pLogger->information(szLog);
 	TRACE(szLog);
 	return bResult;
+}
+
+bool CMakeModelDlg::RecogTitle(cv::Rect rtOri)
+{
+	bool bResult = true;
+	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
+		return false;
+
+	Mat imgResult = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtOri);
+	cvtColor(imgResult, imgResult, CV_BGR2GRAY);
+	GaussianBlur(imgResult, imgResult, cv::Size(m_nGaussKernel, m_nGaussKernel), 0, 0);
+	sharpenImage1(imgResult, imgResult);
+
+	GetThreshold(imgResult, imgResult);
+
+	//旋转水平，防歪斜
+
+	//计算水平和垂直投影
+	if (rtOri.width >= rtOri.height)	//水平的
+	{
+		//先水平投影，
+	}
+	else
+	{
+	}
+
+	return bResult;
+}
+
+void CMakeModelDlg::horizontalProjectionMat(cv::Mat srcImg, VEC_PROJECT& vecResult)
+{
+	Mat binImg;
+	blur(srcImg, binImg, Size(3, 3));
+	threshold(binImg, binImg, 0, 255, CV_THRESH_OTSU);
+	int perPixelValue = 0;//每个像素的值  
+	int width = srcImg.cols;
+	int height = srcImg.rows;
+	int* projectValArry = new int[height];//创建一个储存每行白色像素个数的数组  
+	memset(projectValArry, 0, height * 4);//初始化数组  
+	for (int col = 0; col < height; col++)//遍历每个像素点  
+	{
+		for (int row = 0; row < width; row++)
+		{
+			perPixelValue = binImg.at<uchar>(col, row);
+			if (perPixelValue == 0)//如果是白底黑字  
+			{
+				projectValArry[col]++;
+			}
+		}
+	}
+
+	//定义一个全255矩阵，全白
+// 	Mat horizontalProjectionMat(height, width, CV_8UC1, Scalar(255));//创建画布  
+// 	for (int i = 0; i < height; i++)//水平直方图  
+// 	{
+// 		for (int j = 0; j < projectValArry[i]; j++)
+// 		{
+// 			perPixelValue = 0;
+// 			horizontalProjectionMat.at<uchar>(i, width - 1 - j) = perPixelValue;//设置直方图为黑色  
+// 		}
+// 	}
+
+	int startIndex = 0;//记录进入字符区的索引  
+	int endIndex = 0;//记录进入空白区域的索引  
+	bool inBlock = false;//是否遍历到了字符区内  
+	int nArea = 0;		//字符区域的面积，即黑点的数量
+	for (int i = 0; i < srcImg.rows; i++)
+	{
+		if (!inBlock && projectValArry[i] != 0)//进入字符区  
+		{
+			inBlock = true;
+			startIndex = i;
+			nArea = 0;
+		}
+		else if (inBlock && projectValArry[i] == 0)//进入空白区  
+		{
+			endIndex = i;
+			inBlock = false;
+//			Mat roiImg = srcImg(Range(startIndex, endIndex + 1), Range(0, srcImg.cols));//从原图中截取有图像的区域  
+			ST_PROJECTION stProjection;
+			stProjection.nStartIndex = startIndex;
+			stProjection.nEndIndex = endIndex;
+			stProjection.nArea = nArea;
+//			stProjection.matProjection = roiImg;
+			vecResult.push_back(stProjection);
+		}
+		else if (inBlock && projectValArry[i] > 0)
+		{
+			nArea += projectValArry[i];
+		}
+	}
+	if (inBlock)
+	{
+		endIndex = srcImg.rows;
+		inBlock = false;
+//		Mat roiImg = srcImg(Range(startIndex, endIndex), Range(0, srcImg.cols));//从原图中截取有图像的区域  
+		ST_PROJECTION stProjection;
+		stProjection.nStartIndex = startIndex;
+		stProjection.nEndIndex = endIndex;
+		stProjection.nArea = nArea;
+//		stProjection.matProjection = roiImg;
+		vecResult.push_back(stProjection);
+	}
+	delete[] projectValArry;
+}
+
+void CMakeModelDlg::verticalProjectionMat(cv::Mat srcImg, VEC_PROJECT& vecResult)
+{
+	cv::Mat binImg;
+	cv::blur(srcImg, binImg, Size(3, 3));
+	threshold(binImg, binImg, 0, 255, CV_THRESH_OTSU);
+	int perPixelValue;//每个像素的值  
+	int width = srcImg.cols;
+	int height = srcImg.rows;
+	int* projectValArry = new int[width];//创建用于储存每列白色像素个数的数组  
+	memset(projectValArry, 0, width * 4);//初始化数组  
+	for (int col = 0; col < width; col++)
+	{
+		for (int row = 0; row < height; row++)
+		{
+			perPixelValue = binImg.at<uchar>(row, col);
+			if (perPixelValue == 0)//如果是白底黑字  
+			{
+				projectValArry[col]++;
+			}
+		}
+	}
+	
+	//定义一个全255矩阵，全白
+// 	cv::Mat verticalProjectionMat(height, width, CV_8UC1, cv::Scalar(255));//垂直投影的画布
+// 	for (int i = 0; i < width; i++)//垂直投影直方图  
+// 	{
+// 		for (int j = 0; j < projectValArry[i]; j++)
+// 		{
+// 			perPixelValue = 0;  //直方图设置为黑色    
+// 			verticalProjectionMat.at<uchar>(height - 1 - j, i) = perPixelValue;
+// 		}
+// 	}
+
+	int startIndex = 0;//记录进入字符区的索引  
+	int endIndex = 0;//记录进入空白区域的索引  
+	bool inBlock = false;//是否遍历到了字符区内  
+	int nArea = 0;		//字符区域的面积，即黑点的数量
+	for (int i = 0; i < srcImg.cols; i++)//cols=width  
+	{
+		if (!inBlock && projectValArry[i] != 0)//进入字符区  
+		{
+			inBlock = true;
+			startIndex = i;
+			nArea = 0;
+		}
+		else if (projectValArry[i] == 0 && inBlock)//进入空白区  
+		{
+			endIndex = i;
+			inBlock = false;
+			cv::Mat roiImg = srcImg(cv::Range(0, srcImg.rows), cv::Range(startIndex, endIndex + 1));
+			ST_PROJECTION stProjection;
+			stProjection.nStartIndex = startIndex;
+			stProjection.nEndIndex	= endIndex;
+			stProjection.nArea		= nArea;
+//			stProjection.matProjection = roiImg;
+			vecResult.push_back(stProjection);
+		}
+		else if (inBlock && projectValArry[i] > 0)
+		{
+			nArea += projectValArry[i];
+		}
+	}
+
+	if (inBlock)
+	{
+		endIndex = srcImg.cols;
+		inBlock = false;
+		cv::Mat roiImg = srcImg(cv::Range(0, srcImg.rows), cv::Range(startIndex, endIndex));
+		ST_PROJECTION stProjection;
+		stProjection.nStartIndex = startIndex;
+		stProjection.nEndIndex = endIndex;
+		stProjection.nArea = nArea;
+//		stProjection.matProjection = roiImg;
+		vecResult.push_back(stProjection);
+	}
+	delete[] projectValArry;
 }
 
 bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
@@ -4035,6 +4119,8 @@ CPType CMakeModelDlg::GetComboSelCpType()
 		eType = OMR;
 	else if (strCheckPoint == "选做题")
 		eType = ELECT_OMR;
+	else if (strCheckPoint == "标题区")
+		eType = TITLE_AREA;
 	return eType;
 }
 
@@ -6385,6 +6471,7 @@ void CMakeModelDlg::InitParam()
 		m_nFixVal	= pConf->getInt("MakeModel_Threshold.fix", 150);
 		m_nOMR		= pConf->getInt("MakeModel_Threshold.omr", 230);
 		m_nSN		= pConf->getInt("MakeModel_Threshold.sn", 200);
+		m_nTitle	= pConf->getInt("MakeModel_Threshold.title", 150);
 
 		m_fHeadThresholdPercent		= pConf->getDouble("MakeModel_RecogPercent_Common.head", 0.75);
 		m_fABModelThresholdPercent	= pConf->getDouble("MakeModel_RecogPercent_Common.abModel", 0.75);
@@ -6425,6 +6512,7 @@ void CMakeModelDlg::InitParam()
 		m_nFixVal	= 150;
 		m_nOMR		= 230;
 		m_nSN		= 200;
+		m_nTitle	= 150;
 
 		m_fHeadThresholdPercent		= 0.75;
 		m_fABModelThresholdPercent	= 0.75;
