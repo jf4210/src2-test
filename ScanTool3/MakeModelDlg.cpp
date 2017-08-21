@@ -36,7 +36,7 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_bFistHTracker(true), m_bFistVTracker(true), m_bFistSNTracker(true)
 	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL), m_pSNInfoDlg(NULL), m_pElectOmrDlg(NULL)
 	, m_bShiftKeyDown(false)/*, m_pScanThread(NULL)*/
-	, _pTWAINApp(NULL)
+	, _pTWAINApp(NULL), m_pTess()
 {
 	InitParam();
 }
@@ -125,6 +125,9 @@ END_MESSAGE_MAP()
 BOOL CMakeModelDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
+
+	m_pTess = new tesseract::TessBaseAPI();
+	m_pTess->Init(NULL, "chi_sim", tesseract::OEM_DEFAULT);
 
 	USES_CONVERSION;
 	InitUI();
@@ -256,7 +259,6 @@ BOOL CMakeModelDlg::OnInitDialog()
 				}
 				pPaperModel->lSN.push_back(pSnItem);
 			}
-			
 
 			ShowRectByCPType(m_eCurCPType);
 			UpdataCPList();
@@ -689,7 +691,7 @@ void CMakeModelDlg::InitConf()
 			m_comboCheckPointType.AddString(_T("选择题"));
 			m_comboCheckPointType.AddString(_T("选做题"));
 		#ifdef USE_TESSERACT
-			m_comboCheckPointType.AddString(_T("标题区"));
+			m_comboCheckPointType.AddString(_T("文字定位区"));
 		#endif
 		}
 	}
@@ -789,7 +791,7 @@ LRESULT CMakeModelDlg::RoiLBtnUp(WPARAM wParam, LPARAM lParam)
 	if (m_eCurCPType != H_HEAD && m_eCurCPType != V_HEAD && m_pModel && m_pModel->nHasHead == 0)
 	{
 	#ifdef USE_TESSERACT
-		if (m_eCurCPType == TITLE_AREA)
+		if (m_eCurCPType == CHARACTER_AREA)
 		{
 			if (checkOverlap(m_eCurCPType, Rt))
 			{
@@ -798,7 +800,7 @@ LRESULT CMakeModelDlg::RoiLBtnUp(WPARAM wParam, LPARAM lParam)
 				dlg.DoModal();
 				return FALSE;
 			}
-			Recognise(Rt);
+			RecogCharacterArea(Rt);
 			SortRect();
 			UpdataCPList();
 		}
@@ -1595,7 +1597,7 @@ inline void CMakeModelDlg::GetThreshold(cv::Mat& matSrc, cv::Mat& matDst)
 	case ABMODEL: nRealThreshold = m_nABModelVal; break;
 	case COURSE: nRealThreshold = m_nCourseVal; break;
 	case QK_CP: nRealThreshold = m_nQK_CPVal; break;
-	case TITLE_AREA: nRealThreshold = m_nTitle; break;
+	case CHARACTER_AREA: nRealThreshold = m_nTitle; break;
 	case GRAY_CP: 
 	case WHITE_CP:
 	case SN:
@@ -1955,7 +1957,7 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 	return bResult;
 }
 
-bool CMakeModelDlg::RecogTitle(cv::Rect rtOri)
+bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 {
 	bool bResult = true;
 	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
@@ -1968,6 +1970,7 @@ bool CMakeModelDlg::RecogTitle(cv::Rect rtOri)
 
 	GetThreshold(imgResult, imgResult);
 
+#if 0
 	//旋转水平，防歪斜
 
 	//计算水平和垂直投影
@@ -1978,7 +1981,63 @@ bool CMakeModelDlg::RecogTitle(cv::Rect rtOri)
 	else
 	{
 	}
+#endif
+	clock_t start, end;
+	start = clock();
+	m_pTess->SetImage((uchar*)imgResult.data, imgResult.cols, imgResult.rows, 1, imgResult.cols);
+	m_pTess->Recognize(0);
+	end = clock();
+	TRACE("识别文字时间: %d\n", end - start);
 
+	Mat imgSrc = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
+	std::string strOut;
+	tesseract::ResultIterator* ri = m_pTess->GetIterator();
+	tesseract::PageIteratorLevel level = tesseract::RIL_SYMBOL;	//RIL_WORD
+	if (ri != 0)
+	{
+		int nIndex = 1;
+
+		ST_RECOG_CHARACTER_INFO stRecogCharacterRt;
+		stRecogCharacterRt.nIndex = nIndex;
+		stRecogCharacterRt.nGaussKernel = m_nGaussKernel;
+		stRecogCharacterRt.nSharpKernel = m_nSharpKernel;
+
+		do
+		{
+			const char* word = ri->GetUTF8Text(level);
+			float conf = ri->Confidence(level);
+			int x1, y1, x2, y2;
+			ri->BoundingBox(level, &x1, &y1, &x2, &y2);
+			Point start, end;
+			start.x = rtOri.x + x1;
+			start.y = rtOri.y + y1;
+			end.x = rtOri.x + x2;
+			end.y = rtOri.y + y2;
+			Rect rtSrc(start, end);
+			
+			if (word)
+			{
+				ST_CHARACTER_RECTINFO stCharRt;
+				stCharRt.nIndex = nIndex;
+				stCharRt.rc.eCPType = CHARACTER_AREA;
+				stCharRt.rc.rt = rtSrc;
+
+				stCharRt.rc.nGaussKernel = m_nGaussKernel;
+				stCharRt.rc.nSharpKernel = m_nSharpKernel;
+				stCharRt.rc.nCannyKernel = m_nCannyKernel;
+				stCharRt.rc.nDilateKernel = m_nDilateKernel;
+
+				stCharRt.strVal = CMyCodeConvert::Utf8ToGb2312(word);
+				stRecogCharacterRt.vecCharacterRt.push_back(stCharRt);
+				rectangle(imgSrc, rtSrc, CV_RGB(255, 0, 0), 2);
+				nIndex++;
+			}
+		} while (ri->Next(level));
+
+		if(stRecogCharacterRt.vecCharacterRt.size() > 0)
+			m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.push_back(stRecogCharacterRt);
+	}
+	m_pModelPicShow->ShowPic(imgSrc);
 	return bResult;
 }
 
@@ -3512,6 +3571,30 @@ bool CMakeModelDlg::ShowRectByPoint(cv::Point pt)
 				}
 			}
 		}
+	case CHARACTER_AREA:
+		if (eType == CHARACTER_AREA || eType == UNKNOWN)
+		{
+			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.size(); i++)
+			{
+				for(int j = 0; j < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size(); j++)
+				{
+					if (m_pCurRectInfo != &m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt[j].rc)
+					{
+						RECTINFO rc = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt[j].rc;
+						rt = rc.rt;
+
+						cv::rectangle(tmp2, rt, CV_RGB(168, 86, 157), -1);
+					}
+					else
+					{
+						RECTINFO rc = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt[j].rc;
+						rt = rc.rt;
+
+						cv::rectangle(tmp2, rt, CV_RGB(40, 205, 150), -1);
+					}
+				}
+			}
+		}
 	}
 	cv::addWeighted(tmp, 0.5, tmp2, 0.5, 0, tmp);
 	m_pModelPicShow->ShowPic(tmp);
@@ -4083,6 +4166,21 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 				}
 			}
 		}
+	case CHARACTER_AREA:
+		if (eType == CHARACTER_AREA || eType == UNKNOWN)
+		{
+			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.size(); i++)
+			{
+				for(int j = 0; j < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size(); j++)
+				{
+					RECTINFO rc = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt[j].rc;
+					rt = rc.rt;
+
+					cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+					cv::rectangle(tmp2, rt, CV_RGB(168, 86, 157), -1);
+				}
+			}
+		}
 		break;
 	default: return;
 	}
@@ -4119,8 +4217,8 @@ CPType CMakeModelDlg::GetComboSelCpType()
 		eType = OMR;
 	else if (strCheckPoint == "选做题")
 		eType = ELECT_OMR;
-	else if (strCheckPoint == "标题区")
-		eType = TITLE_AREA;
+	else if (strCheckPoint == "文字定位区")
+		eType = CHARACTER_AREA;
 	return eType;
 }
 
@@ -4212,7 +4310,7 @@ void CMakeModelDlg::UpdataCPList()
 			m_ptHTracker1 = m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.tl();
 			m_ptHTracker2 = m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.br();
 			m_vecPaperModelInfo[m_nCurrTabSel]->bFirstH = false;
-		}		
+		}
 		m_pModelPicShow->m_picShow.setHTrackerPosition(m_ptHTracker1, m_ptHTracker2);
 	}
 	else if (m_eCurCPType == V_HEAD)
@@ -4460,6 +4558,27 @@ void CMakeModelDlg::UpdataCPList()
 		}
 		if (m_eCurCPType == UNKNOWN)
 			nCount += nElectOmrCount;
+	}
+	if (m_eCurCPType == CHARACTER_AREA || m_eCurCPType == UNKNOWN)
+	{
+		int nCharacterRtCount = 0;
+		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.size(); i++)
+		{
+			for(int j = 0; j < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size(); j++)
+			{
+				RECTINFO rcInfo = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt[j].rc;
+				char szPosition[50] = { 0 };
+				sprintf_s(szPosition, "(%d,%d,%d,%d)", rcInfo.rt.x, rcInfo.rt.y, rcInfo.rt.width, rcInfo.rt.height);
+				char szCount[10] = { 0 };
+				sprintf_s(szCount, "%d", j + nCount + 1);
+				m_cpListCtrl.InsertItem(j + nCount, NULL);
+				m_cpListCtrl.SetItemText(j + nCount, 0, (LPCTSTR)A2T(szCount));
+				m_cpListCtrl.SetItemText(j + nCount, 1, (LPCTSTR)A2T(szPosition));
+			}
+			nCharacterRtCount += m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size();
+		}
+		if (m_eCurCPType == UNKNOWN)
+			nCount += nCharacterRtCount;
 	}
 }
 
@@ -5275,6 +5394,25 @@ inline int CMakeModelDlg::GetRectInfoByPoint(cv::Point pt, CPType eType, RECTINF
 					}					
 				}
 				if (nFind > 0) break;
+			}
+		}
+	case CHARACTER_AREA:
+		if (eType == CHARACTER_AREA || eType == UNKNOWN)
+		{
+			int nCount = 0;
+			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.size(); i++)
+			{
+				for (int j = 0; j < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size(); j++)
+				{
+					if (m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt[j].rc.rt.contains(pt))
+					{
+						nFind = nCount + j;
+						pRc = &m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt[j].rc;
+						break;
+					}
+				}
+				if(nFind > 0) break;
+				nCount += m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size();
 			}
 		}
 	}
@@ -6176,6 +6314,7 @@ void CMakeModelDlg::OnDestroy()
 		SAFE_RELEASE(_pTWAINApp);
 	}
 
+	SAFE_RELEASE(m_pTess);
 	SAFE_RELEASE(m_pRecogInfoDlg);
 	SAFE_RELEASE(m_pOmrInfoDlg);
 	SAFE_RELEASE(m_pSNInfoDlg);

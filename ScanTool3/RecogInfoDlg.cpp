@@ -171,6 +171,7 @@ void CRecogInfoDlg::ShowDetailRectInfo(pRECTINFO pCurRectInfo)
 		break;
 	}
 	case ELECT_OMR:	m_strCPTypeName = _T("选做题"); break;
+	case CHARACTER_AREA: m_strCPTypeName = _T("文字定位区"); break;
 	default:
 		m_strCPTypeName = _T(""); break;
 	}

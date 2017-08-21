@@ -51,6 +51,7 @@ typedef struct _PaperModelInfo_
 	std::vector<RECTINFO>	vecWhite;				//空白校验点
 	std::vector<OMR_QUESTION> vecOmr2;
 	std::vector<ELECTOMR_QUESTION> vecElectOmr;		//选做题信息
+	std::vector<ST_RECOG_CHARACTER_INFO> vecCharacterLocation;	//文字定位
 	_PaperModelInfo_()
 	{
 		bFirstH = true;
@@ -166,6 +167,8 @@ public:
 
 	bool		m_bShiftKeyDown;	//shift按键是否按下
 
+	tesseract::TessBaseAPI* m_pTess;
+
 #ifdef TEST_SCAN_THREAD
 	CScanThread m_scanThread;
 	CScanThread* m_pScanThread;
@@ -196,8 +199,8 @@ public:
 	void SaveNewModel();
 public:
 	bool RecogNewGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc);							//在修改阀值后重新计算矩形区的灰度值
-	void horizontalProjectionMat(cv::Mat srcImg, VEC_PROJECT& vecResult);			//水平投影
-	void verticalProjectionMat(cv::Mat srcImg, VEC_PROJECT& vecResult);				//垂直投影  
+	void horizontalProjectionMat(cv::Mat srcImg, VEC_PROJECT& vecResult);				//水平投影
+	void verticalProjectionMat(cv::Mat srcImg, VEC_PROJECT& vecResult);					//垂直投影  
 private:
 	void InitUI();
 	void InitTab();
@@ -209,7 +212,7 @@ private:
 	void UpdataCPList();
 	CPType GetComboSelCpType();
 	bool RecogByHead(cv::Rect rtOri);			//通过同步头来识别点
-	bool RecogTitle(cv::Rect rtOri);			//标题区识别操作
+	bool RecogCharacterArea(cv::Rect rtOri);			//标题区识别操作
 	bool Recognise(cv::Rect rtOri);				//识别操作
 	inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc);						//识别灰度值
 	
