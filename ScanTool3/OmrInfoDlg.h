@@ -19,6 +19,7 @@ public:
 
 	CButton		m_radioTX_S;
 	CButton		m_radioTX_M;
+	CButton		m_radioTX_P;	//判断题
 
 	CButton		m_radioTH_H;
 	CButton		m_radioTH_V;
@@ -29,7 +30,7 @@ public:
 	CButton		m_radioDirectZX;
 	CButton		m_radioDirectFX;
 	
-	BOOL		m_bSingle;		//题型，是否单选题
+	int			m_nSingle;		//题型，0-单选，1-多选，2-判断
 	int			m_nCurrentOmrVal;	//根据题号、选项、方向组合构成的6位二进制的值，标识8中情况
 	void		ShowUI(int nOmrVal, int nSingleFlag);
 private:
@@ -68,4 +69,6 @@ public:
 	afx_msg void OnStnClickedStaticDirectFx();
 	afx_msg void OnStnClickedStaticTxSingle();
 	afx_msg void OnStnClickedStaticTxMulti();
+	afx_msg void OnStnClickedStaticTxPd();
+	afx_msg void OnBnClickedRadioTxPd();
 };

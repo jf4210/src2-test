@@ -167,7 +167,9 @@ void CRecogInfoDlg::ShowDetailRectInfo(pRECTINFO pCurRectInfo)
 	case OMR:
 	{
 		if(m_pCurRectInfo->nSingle == 0) m_strCPTypeName = _T("单选题");
-		else m_strCPTypeName = _T("多选题");
+		else if(m_pCurRectInfo->nSingle == 1) m_strCPTypeName = _T("多选题");
+		else
+			m_strCPTypeName = _T("判断题");
 		break;
 	}
 	case ELECT_OMR:	m_strCPTypeName = _T("选做题"); break;

@@ -49,28 +49,6 @@
 #include "Poco/Crypto/X509Certificate.h"
 #include "Poco/Crypto/CryptoStream.h"
 
-
-//-------------------------------------
-// #include "Poco/Data/Statement.h"
-// #include "Poco/Data/RecordSet.h"
-// #include "Poco/Data/SQLChannel.h"
-// #include "Poco/Data/SessionFactory.h"
-// #include "Poco/Data/SQLite/Connector.h"
-// #include "Poco/Data/SQLite/Utility.h"
-// #include "Poco/Data/SQLite/Notifier.h"
-// #include "Poco/Data/SQLite/Connector.h"
-// 
-// #include "Poco/Nullable.h"
-// #include "Poco/Data/Transaction.h"
-// #include "Poco/Data/DataException.h"
-// #include "Poco/Data/SQLite/SQLiteException.h"
-// #include "Poco/Data/TypeHandler.h"
-// #include "Poco/Data/SQLite/Connector.h"
-// #include "Poco/Data/SQLite/Utility.h"
-// #include "Poco/Data/SQLite/Notifier.h"
-// #include "Poco/Data/SQLite/Connector.h"
-//-------------------------------------
-
 #include "zip.h"
 #include "unzip.h"
 #include "MyCodeConvert.h"

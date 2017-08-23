@@ -108,7 +108,7 @@ public:
 	int	m_nWhiteVal;
 	int m_nOMR;
 	int	m_nSN;
-	int m_nTitle;
+	int m_nCharacterThreshold;
 	float m_fFixThresholdPercent;
 	float m_fHeadThresholdPercent;	//同步头达到阀值的比例
 	float m_fABModelThresholdPercent;
@@ -166,8 +166,9 @@ public:
 	int			m_nStartTH;			//添加OMR时的起始题号
 
 	bool		m_bShiftKeyDown;	//shift按键是否按下
-
+#ifdef USE_TESSERACT
 	tesseract::TessBaseAPI* m_pTess;
+#endif
 
 #ifdef TEST_SCAN_THREAD
 	CScanThread m_scanThread;
