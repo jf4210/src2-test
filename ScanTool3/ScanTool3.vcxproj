@@ -162,6 +162,7 @@
     <ClInclude Include="picCtrl\CV_picture.h" />
     <ClInclude Include="PicShow.h" />
     <ClInclude Include="PkgRecordDlg.h" />
+    <ClInclude Include="RecogCharacterDlg.h" />
     <ClInclude Include="RecogInfoDlg.h" />
     <ClInclude Include="RecognizeThread.h" />
     <ClInclude Include="Resource.h" />
@@ -271,6 +272,7 @@
     </ClCompile>
     <ClCompile Include="PicShow.cpp" />
     <ClCompile Include="PkgRecordDlg.cpp" />
+    <ClCompile Include="RecogCharacterDlg.cpp" />
     <ClCompile Include="RecogInfoDlg.cpp" />
     <ClCompile Include="RecognizeThread.cpp" />
     <ClCompile Include="ScanDlg.cpp" />

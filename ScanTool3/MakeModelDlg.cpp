@@ -1606,7 +1606,12 @@ inline void CMakeModelDlg::GetThreshold(cv::Mat& matSrc, cv::Mat& matDst)
 	case ABMODEL: nRealThreshold = m_nABModelVal; break;
 	case COURSE: nRealThreshold = m_nCourseVal; break;
 	case QK_CP: nRealThreshold = m_nQK_CPVal; break;
-	case CHARACTER_AREA: nRealThreshold = m_nCharacterThreshold; break;
+	case CHARACTER_AREA:
+		{
+//			nRealThreshold = m_nCharacterThreshold; break;
+			threshold(matSrc, matDst, m_nCharacterThreshold, 255, THRESH_OTSU | THRESH_BINARY);
+		}
+		break;
 	case GRAY_CP: 
 	case WHITE_CP:
 	case SN:
@@ -2012,6 +2017,7 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 		stRecogCharacterRt.nGaussKernel = m_nGaussKernel;
 		stRecogCharacterRt.nSharpKernel = m_nSharpKernel;
 
+		std::string strRecogVal;
 		do
 		{
 			const char* word = ri->GetUTF8Text(level);
@@ -2040,13 +2046,15 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 
 				stCharRt.strVal = CMyCodeConvert::Utf8ToGb2312(word);
 				stRecogCharacterRt.vecCharacterRt.push_back(stCharRt);
-				rectangle(imgSrc, rtSrc, CV_RGB(255, 0, 0), 2);
+				cv::rectangle(imgSrc, rtSrc, CV_RGB(255, 0, 0), 2);
 				nIndex++;
+				strRecogVal.append(stCharRt.strVal);
 			}
 		} while (ri->Next(level));
 
 		if(stRecogCharacterRt.vecCharacterRt.size() > 0)
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.push_back(stRecogCharacterRt);
+		TRACE("识别的文字信息: %s\n", strRecogVal.c_str());
 	}
 	m_pModelPicShow->ShowPic(imgSrc);
 #endif
@@ -4611,6 +4619,7 @@ void CMakeModelDlg::UpdataCPList()
 	USES_CONVERSION;
 	int nCount = 0;
 	m_cpListCtrl.DeleteAllItems();
+	UpdateCPListByType();
 	if (m_eCurCPType == H_HEAD)
 	{
 		m_pModelPicShow->SetShowTracker(true, false, false);
@@ -4882,23 +4891,72 @@ void CMakeModelDlg::UpdataCPList()
 	if (m_eCurCPType == CHARACTER_AREA || m_eCurCPType == UNKNOWN)
 	{
 		int nCharacterRtCount = 0;
-		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.size(); i++)
-		{
-			for(int j = 0; j < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size(); j++)
-			{
-				RECTINFO rcInfo = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt[j].rc;
-				char szPosition[50] = { 0 };
-				sprintf_s(szPosition, "(%d,%d,%d,%d)", rcInfo.rt.x, rcInfo.rt.y, rcInfo.rt.width, rcInfo.rt.height);
-				char szCount[10] = { 0 };
-				sprintf_s(szCount, "%d", j + nCount + 1);
-				m_cpListCtrl.InsertItem(j + nCount, NULL);
-				m_cpListCtrl.SetItemText(j + nCount, 0, (LPCTSTR)A2T(szCount));
-				m_cpListCtrl.SetItemText(j + nCount, 1, (LPCTSTR)A2T(szPosition));
-			}
-			nCharacterRtCount += m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size();
-		}
 		if (m_eCurCPType == UNKNOWN)
+		{
+			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.size(); i++)
+			{
+				for (int j = 0; j < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size(); j++)
+				{
+					RECTINFO rcInfo = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt[j].rc;
+					char szPosition[50] = { 0 };
+					sprintf_s(szPosition, "(%d,%d,%d,%d)", rcInfo.rt.x, rcInfo.rt.y, rcInfo.rt.width, rcInfo.rt.height);
+					char szCount[10] = { 0 };
+					sprintf_s(szCount, "%d", j + nCount + nCharacterRtCount + 1);
+					m_cpListCtrl.InsertItem(j + nCount + nCharacterRtCount, NULL);
+					m_cpListCtrl.SetItemText(j + nCount + nCharacterRtCount, 0, (LPCTSTR)A2T(szCount));
+					m_cpListCtrl.SetItemText(j + nCount + nCharacterRtCount, 1, (LPCTSTR)A2T(szPosition));
+				}
+				nCharacterRtCount += m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size();
+			}
 			nCount += nCharacterRtCount;
+		}
+		else
+		{
+			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.size(); i++)
+			{
+				for (int j = 0; j < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size(); j++)
+				{
+					RECTINFO rcInfo = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt[j].rc;
+					char szSize[30] = { 0 };
+					sprintf_s(szSize, "(%d,%d)", rcInfo.rt.width, rcInfo.rt.height);
+					char szVal[10] = { 0 };
+					sprintf_s(szVal, "%s", m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt[j].strVal.c_str());
+					char szCount[10] = { 0 };
+					sprintf_s(szCount, "%d", j + nCount + nCharacterRtCount + 1);
+					m_cpListCtrl.InsertItem(j + nCount + nCharacterRtCount, NULL);
+					m_cpListCtrl.SetItemText(j + nCount + nCharacterRtCount, 0, (LPCTSTR)A2T(szCount));
+					m_cpListCtrl.SetItemText(j + nCount + nCharacterRtCount, 1, (LPCTSTR)A2T(szVal));
+					m_cpListCtrl.SetItemText(j + nCount + nCharacterRtCount, 2, (LPCTSTR)A2T(szSize));
+				}
+				nCharacterRtCount += m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size();
+			}
+		}
+	}
+}
+
+void CMakeModelDlg::UpdateCPListByType()
+{
+	m_cpListCtrl.DeleteAllItems();
+	//删除表头，工具重新插入属性信息
+	while (m_cpListCtrl.DeleteColumn(1));
+	switch(m_eCurCPType)
+	{
+		case CHARACTER_AREA:
+			m_cpListCtrl.InsertColumn(1, _T("值"), LVCFMT_CENTER, 60);
+			m_cpListCtrl.InsertColumn(2, _T("大小"), LVCFMT_CENTER, 60);
+			break;
+		case Fix_CP:
+		case H_HEAD:
+		case V_HEAD:
+		case ABMODEL:
+		case COURSE:
+		case GRAY_CP:
+		case QK_CP:
+		case SN:
+		case OMR:
+		default:
+			m_cpListCtrl.InsertColumn(1, _T("位置信息"), LVCFMT_CENTER, 120);
+			break;
 	}
 }
 

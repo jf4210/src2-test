@@ -175,6 +175,9 @@
     <Filter Include="模板界面\新模板保存窗口">
       <UniqueIdentifier>{615b50b9-e604-4892-98fe-57c1f7867746}</UniqueIdentifier>
     </Filter>
+    <Filter Include="模板界面\文字识别确认窗口">
+      <UniqueIdentifier>{3abeeb64-8ff5-48c6-aca4-83797c1ed77c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -447,6 +450,9 @@
     <ClInclude Include="MyVersion.h">
       <Filter>global</Filter>
     </ClInclude>
+    <ClInclude Include="RecogCharacterDlg.h">
+      <Filter>模板界面\文字识别确认窗口</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -685,6 +691,9 @@
     </ClCompile>
     <ClCompile Include="LocalPicSelDlg.cpp">
       <Filter>模板界面\新建模板窗口\本地图片选择窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="RecogCharacterDlg.cpp">
+      <Filter>模板界面\文字识别确认窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

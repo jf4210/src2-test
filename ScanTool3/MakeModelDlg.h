@@ -211,6 +211,7 @@ private:
 	bool UploadModel(CString strModelPath, pMODEL pModel);		//上传模板文件
 
 	void UpdataCPList();
+	void UpdateCPListByType();		//根据校验点类型更改显示样式
 	CPType GetComboSelCpType();
 	bool RecogByHead(cv::Rect rtOri);			//通过同步头来识别点
 	bool RecogCharacterArea(cv::Rect rtOri);			//标题区识别操作
