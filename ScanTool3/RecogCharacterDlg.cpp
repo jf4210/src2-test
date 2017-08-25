@@ -13,7 +13,7 @@
 IMPLEMENT_DYNAMIC(CRecogCharacterDlg, CDialog)
 
 CRecogCharacterDlg::CRecogCharacterDlg(CString strRecoged, CWnd* pParent /*=NULL*/)
-	: CTipBaseDlg(IDD_RECOGCHARACTERDLG, pParent)
+	: CTipBaseDlg(CRecogCharacterDlg::IDD, pParent)
 	, m_strVal(strRecoged), m_strValBk(strRecoged)
 {
 
@@ -31,7 +31,7 @@ void CRecogCharacterDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 
-BEGIN_MESSAGE_MAP(CRecogCharacterDlg, CDialog)
+BEGIN_MESSAGE_MAP(CRecogCharacterDlg, CTipBaseDlg)
 	ON_BN_CLICKED(IDC_BTN_CLOSE, &CRecogCharacterDlg::OnBnClickedBtnClose)
 	ON_BN_CLICKED(IDC_OK, &CRecogCharacterDlg::OnBnClickedOk)
 END_MESSAGE_MAP()

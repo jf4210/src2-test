@@ -192,7 +192,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			{
 				try
 				{
-					Poco::File fPic((*itPic)->strPicPath);
+					Poco::File fPic(CMyCodeConvert::Gb2312ToUtf8((*itPic)->strPicPath));
 					if (!fPic.exists())
 						continue;
 					matCompSrcPic = imread((*itPic)->strPicPath);			//imread((*itPic)->strPicPath);

@@ -63,6 +63,7 @@ private:
 	int			nRecvBuffSize;
 	CString		m_strTitle;
 	CString		m_strVersion;
+	CString		m_strCopyright;
 
 	int				m_nStatusSize;			//状态栏字体大小
 	CFont			m_fontTitle;			//标题字体
@@ -70,7 +71,7 @@ private:
 	CFont			m_fontLogin;
 	COLORREF		m_colorStatus;			//状态栏字体颜色
 	void	SetFontSize(int nSize);
-
+	void	InitCtrlPosition();
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

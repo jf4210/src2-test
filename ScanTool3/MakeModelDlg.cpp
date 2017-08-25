@@ -18,6 +18,7 @@
 #include "ScanModelPaperDlg.h"
 #include "ExamInfoDlg.h"
 #include "NewMessageBox.h"
+#include "RecogCharacterDlg.h"
 using namespace std;
 using namespace cv;
 // CMakeModelDlg 对话框
@@ -1996,9 +1997,25 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 	{
 	}
 	#endif
+	//第一次识别结果
+	m_pTess->SetPageSegMode(tesseract::PSM_SINGLE_BLOCK);
+
+	m_pTess->SetVariable("tessedit_char_whitelist", "");
+	m_pTess->SetImage((uchar*)imgResult.data, imgResult.cols, imgResult.rows, 1, imgResult.cols);
+	char* out = m_pTess->GetUTF8Text();
+	std::string strRecogVal1 = CMyCodeConvert::Utf8ToGb2312(out);
+	USES_CONVERSION;
+	CRecogCharacterDlg dlg(A2T(strRecogVal1.c_str()));
+	if (dlg.DoModal() != IDOK)
+		return false;
+
 	clock_t start, end;
 	start = clock();
-	m_pTess->SetImage((uchar*)imgResult.data, imgResult.cols, imgResult.rows, 1, imgResult.cols);
+//	m_pTess->SetImage((uchar*)imgResult.data, imgResult.cols, imgResult.rows, 1, imgResult.cols);
+	 
+	std::string strWhiteList = T2A(dlg.m_strVal);
+	m_pTess->SetVariable("tessedit_char_whitelist", CMyCodeConvert::Gb2312ToUtf8(strWhiteList).c_str());
+
 	m_pTess->Recognize(0);
 	end = clock();
 	TRACE("识别文字时间: %d\n", end - start);
@@ -2016,23 +2033,23 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 		stRecogCharacterRt.nThresholdValue = m_nCharacterThreshold;
 		stRecogCharacterRt.nGaussKernel = m_nGaussKernel;
 		stRecogCharacterRt.nSharpKernel = m_nSharpKernel;
+		stRecogCharacterRt.rt = rtOri;
 
-		std::string strRecogVal;
 		do
 		{
-			const char* word = ri->GetUTF8Text(level);
-			float conf = ri->Confidence(level);
-			int x1, y1, x2, y2;
-			ri->BoundingBox(level, &x1, &y1, &x2, &y2);
-			Point start, end;
-			start.x = rtOri.x + x1;
-			start.y = rtOri.y + y1;
-			end.x = rtOri.x + x2;
-			end.y = rtOri.y + y2;
-			Rect rtSrc(start, end);
-			
-			if (word)
+			const char* word = ri->GetUTF8Text(level);						
+			if (word && strcmp(word, " ") != 0)
 			{
+				float conf = ri->Confidence(level);
+				int x1, y1, x2, y2;
+				ri->BoundingBox(level, &x1, &y1, &x2, &y2);
+				Point start, end;
+				start.x = rtOri.x + x1;
+				start.y = rtOri.y + y1;
+				end.x = rtOri.x + x2;
+				end.y = rtOri.y + y2;
+				Rect rtSrc(start, end);
+
 				ST_CHARACTER_RECTINFO stCharRt;
 				stCharRt.nIndex = nIndex;
 				stCharRt.rc.eCPType = CHARACTER_AREA;
@@ -2048,13 +2065,12 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 				stRecogCharacterRt.vecCharacterRt.push_back(stCharRt);
 				cv::rectangle(imgSrc, rtSrc, CV_RGB(255, 0, 0), 2);
 				nIndex++;
-				strRecogVal.append(stCharRt.strVal);
 			}
 		} while (ri->Next(level));
 
-		if(stRecogCharacterRt.vecCharacterRt.size() > 0)
+		if (stRecogCharacterRt.vecCharacterRt.size() > 0)
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.push_back(stRecogCharacterRt);
-		TRACE("识别的文字信息: %s\n", strRecogVal.c_str());
+
 	}
 	m_pModelPicShow->ShowPic(imgSrc);
 #endif

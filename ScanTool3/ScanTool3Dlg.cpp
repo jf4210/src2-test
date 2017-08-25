@@ -115,6 +115,12 @@ int					g_nFilePort4HandModel;		//手阅模式时文件服务器端口
 
 int				_nReocgThreads_ = 3;		//识别线程数量
 
+//++标题信息
+std::string _strCopyright_;
+std::string _strMainTitle_;
+std::string _strLitteTitle_;
+//--
+
 //++登录信息
 bool	_bHandModel_ = false;	//是否是手阅模式，手阅模式是天喻用
 bool	_bLogin_ = false;		//是否已经登录
@@ -706,8 +712,11 @@ BOOL CScanTool3Dlg::OnInitDialog()
 
 	USES_CONVERSION;
 	CString strTitle = _T("");
-	m_strTitle = SYS_BASE_NAME;
-	m_strVersion.Format(_T("Tianyu big data scan tool %s"), SOFT_VERSION);
+// 	m_strTitle = SYS_BASE_NAME;
+// 	m_strVersion.Format(_T("Tianyu big data scan tool %s"), SOFT_VERSION);
+	m_strTitle = A2T(_strMainTitle_.c_str());
+	m_strVersion.Format(_T("%s %s"), A2T(_strLitteTitle_.c_str()), SOFT_VERSION);
+
 	m_strUserName = A2T(_strNickName_.c_str());
 
 	SetWindowText(_T("YKLX-ScanTool GuideDlg"));

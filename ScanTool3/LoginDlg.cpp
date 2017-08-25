@@ -5,7 +5,7 @@
 #include "ScanTool3.h"
 #include "LoginDlg.h"
 #include "afxdialogex.h"
-//#include "global.h"
+#include "global.h"
 #include "Net_Cmd_Protocol.h"
 #include "MultiPlatform4TYDlg.h"
 #include "NewMessageBox.h"
@@ -63,6 +63,7 @@ void CLoginDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BTN_Min, m_bmpBtnMin);
 	DDX_Text(pDX, IDC_STATIC_Title, m_strTitle);
 	DDX_Text(pDX, IDC_STATIC_Version, m_strVersion);
+	DDX_Text(pDX, IDC_STATIC_Bottom, m_strCopyright);
 }
 
 
@@ -85,8 +86,27 @@ BOOL CLoginDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	//++加密版权、标题数据信息
+#if 0
+	std::string strTmpMain = "学情大数据扫描客户端";
+	std::string strTmpLitteTitle = "Jiafa big data scan tool";
+	std::string strTmpCopyright = "成都佳发安泰科技股份有限公司2017~2018版权所有";
+	encString(strTmpMain, _strMainTitle_);
+	encString(strTmpLitteTitle, _strLitteTitle_);
+	encString(strTmpCopyright, _strCopyright_);
+#endif
+	//--
+	decString(_strMainTitle_, _strMainTitle_);
+	decString(_strLitteTitle_, _strLitteTitle_);
+	decString(_strCopyright_, _strCopyright_);
+	
 	InitUI();
-	m_strTitle.Format(_T("%s"), SYS_BASE_NAME);
+//	m_strTitle.Format(_T("%s"), SYS_BASE_NAME);
+
+	InitCtrlPosition();
+	USES_CONVERSION;
+	m_strTitle.Format(_T("%s"), A2T(_strMainTitle_.c_str()));
+	m_strCopyright.Format(_T("%s"), A2T(_strCopyright_.c_str()));
 	m_strVersion = SOFT_VERSION;
 	SetWindowText(m_strTitle);
 
@@ -118,6 +138,35 @@ BOOL CLoginDlg::OnInitDialog()
 	return TRUE;
 }
 
+void CLoginDlg::InitCtrlPosition()
+{
+	CRect rcClient;
+	GetClientRect(&rcClient);
+	int cx = rcClient.right;
+	int cy = rcClient.bottom;
+
+	CRect rt1, rt2;
+	int nTmpX = 0;
+	if (GetDlgItem(IDC_STATIC_Title)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_Title)->GetWindowRect(rt1);
+		int nLen = _strMainTitle_.length() / 2;
+		int nMinLen = nLen * m_nStatusSize;
+		rt1.right = rt1.left + nMinLen;
+		nTmpX = rt1.right + 5;
+		GetDlgItem(IDC_STATIC_Title)->MoveWindow(rt1);
+	}
+	if (GetDlgItem(IDC_STATIC_Version)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_Version)->GetWindowRect(rt2);
+		int nW = rt2.Width();
+		rt2.left = nTmpX;
+		rt2.right = rt2.left + nW;
+
+		GetDlgItem(IDC_STATIC_Version)->MoveWindow(rt2);
+	}
+
+}
 
 BOOL CLoginDlg::PreTranslateMessage(MSG* pMsg)
 {

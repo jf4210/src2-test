@@ -149,6 +149,13 @@
 // #define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}
 // #define SAFE_RELEASE_ARRY(pObj) if(pObj) {delete[] pObj; pObj = NULL;}
 
+
+//++标题信息
+extern std::string _strCopyright_;
+extern std::string _strMainTitle_;
+extern std::string _strLitteTitle_;
+//--
+
 //++登录信息
 extern bool	_bHandModel_;			//是否是手阅模式，手阅模式是天喻用
 extern bool	_bLogin_;				//是否已经登录
@@ -252,7 +259,7 @@ typedef struct _PicInfo_				//图片信息
 	void*			pPaper;			//所属试卷的信息
 	cv::Rect		rtFix;			//定点矩形
 	std::string		strPicName;		//图片名称
-	std::string		strPicPath;		//图片路径
+	std::string		strPicPath;		//图片路径	gb2312
 	RECTLIST		lFix;			//定点列表
 	RECTLIST		lNormalRect;	//识别出来的正常点位置
 	RECTLIST		lIssueRect;		//识别出来的问题试卷的问题点位置，只要出现问题点就不进行下一页的识别(严格模式)，或者存储已经发行的问题点，但是继续后面的识别(简单模式)

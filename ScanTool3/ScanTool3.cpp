@@ -97,6 +97,10 @@ bool InitConfig()
 	g_strCmdIP = pConf->getString("Server.cmdIP");
 	g_nCmdPort = pConf->getInt("Server.cmdPort", 19980);
 	_nPicNum4Ty_ = pConf->getInt("WHTY.picNums", 2);
+
+	_strMainTitle_ = pConf->getString("Title.mainTitle", "慧学扫描客户端");
+	_strLitteTitle_ = pConf->getString("Title.littleTitle", "Tianyu big data scan tool");
+	_strCopyright_ = pConf->getString("Title.copyRight", "武汉天喻教育科技有限公司 2017~2018 版权所有");
 }
 
 BOOL CheckNewVersion()
