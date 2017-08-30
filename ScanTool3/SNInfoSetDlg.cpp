@@ -256,7 +256,10 @@ void CSNInfoSetDlg::ShowUI(int nSnVal)
 	}
 	InitUI();
 	ShowSNPic();
-	m_chkUseBarCode.SetCheck(FALSE);
+	if (m_nZkzhType == 1)
+		m_chkUseBarCode.SetCheck(FALSE);
+	else
+		m_chkUseBarCode.SetCheck(TRUE);
 }
 
 void CSNInfoSetDlg::InitUI()
@@ -328,6 +331,7 @@ void CSNInfoSetDlg::InitType(int nType)
 		GetDlgItem(IDC_RADIO_Option_1)->EnableWindow(FALSE);
 		GetDlgItem(IDC_RADIO_Option_2)->EnableWindow(FALSE);
 	}
+	UpdateData(FALSE);
 }
 
 

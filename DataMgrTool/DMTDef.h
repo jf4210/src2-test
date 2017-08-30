@@ -222,6 +222,8 @@ typedef struct _PaperInfo_
 	bool		bIssuePaper;		//是否是问题试卷
 	int			nChkFlag;			//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不進行圖片识别
 	int			nQKFlag;			//缺考标识
+	int			nWJFlag;			//违纪标识
+	int			nStandardAnswer;	//当前试卷表示：0-正常试卷，1-Omr标答，2-主观题标答
 	pMODEL		pModel;				//识别此学生试卷所用的模板
 	void*		pPapers;			//所属的试卷袋信息
 	void*		pSrcDlg;			//来源，来自哪个窗口，扫描or导入试卷窗口
@@ -245,6 +247,8 @@ typedef struct _PaperInfo_
 		nChkFlag = 0;
 		bIssuePaper = false;
 		nQKFlag = 0;
+		nWJFlag = 0;
+		nStandardAnswer = 0;
 		pModel = NULL;
 		pPapers = NULL;
 		pSrcDlg = NULL;

@@ -506,6 +506,9 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERSINFO pPapers
 			if (pPaper)
 			{
 				pPaper->nChkFlag = 1;	//此图片合法，在参数文件中可以找到
+
+				if (jsnPaperObj->has("standardAnswer"))
+					pPaper->nStandardAnswer = jsnPaperObj->get("standardAnswer").convert<int>();
 			}
 		}
 		//将不在试卷袋参数文件中存在的图片都删除，不往图片服务器提交

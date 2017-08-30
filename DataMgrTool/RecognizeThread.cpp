@@ -147,7 +147,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			continue;
 
 		int nCount = pModelInfo->pModel->vecPaperModel[i]->lH_Head.size() + pModelInfo->pModel->vecPaperModel[i]->lV_Head.size() + pModelInfo->pModel->vecPaperModel[i]->lABModel.size()
-			+ pModelInfo->pModel->vecPaperModel[i]->lCourse.size() + pModelInfo->pModel->vecPaperModel[i]->lQK_CP.size() + pModelInfo->pModel->vecPaperModel[i]->lGray.size()
+			+ pModelInfo->pModel->vecPaperModel[i]->lCourse.size() + pModelInfo->pModel->vecPaperModel[i]->lQK_CP.size() + pModelInfo->pModel->vecPaperModel[i]->lWJ_CP.size() + pModelInfo->pModel->vecPaperModel[i]->lGray.size()
 			+ pModelInfo->pModel->vecPaperModel[i]->lWhite.size() + pModelInfo->pModel->vecPaperModel[i]->lSNInfo.size() + pModelInfo->pModel->vecPaperModel[i]->lOMR2.size()
 			+ pModelInfo->pModel->vecPaperModel[i]->lElectOmr.size();
 		if (!nCount)	//如果当前模板试卷没有校验点就不需要进行试卷打开操作，直接下一张试卷
@@ -212,6 +212,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			bResult = RecogABModel(nPic, matCompPic, *itPic, pModelInfo);
 			bResult = RecogCourse(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
 			bResult = RecogQKCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
+			bResult = RecogWJCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
 			bResult = RecogGrayCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
 			bResult = RecogWhiteCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
 			bResult = RecogSN(nPic, matCompPic, *itPic, pModelInfo);
@@ -230,6 +231,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			if (bResult) bResult = RecogABModel(nPic, matCompPic, *itPic, pModelInfo);
 			if (bResult) bResult = RecogCourse(nPic, matCompPic, *itPic, pModelInfo);
 			if (bResult) bResult = RecogQKCP(nPic, matCompPic, *itPic, pModelInfo);
+			if (bResult) bResult = RecogWJCP(nPic, matCompPic, *itPic, pModelInfo);
 			if (bResult) bResult = RecogGrayCP(nPic, matCompPic, *itPic, pModelInfo);
 			if (bResult) bResult = RecogWhiteCP(nPic, matCompPic, *itPic, pModelInfo);
 			if (bResult) bResult = RecogSN(nPic, matCompPic, *itPic, pModelInfo);
@@ -1730,6 +1732,68 @@ bool CRecognizeThread::RecogQKCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 	{
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别缺考失败, 图片名: %s\n", pPic->strPicName.c_str());
+		g_Log.LogOut(szLog);
+		TRACE(szLog);
+	}
+	return bResult;
+}
+
+bool CRecognizeThread::RecogWJCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, int nRecogMode /*= 2*/)
+{
+	TRACE("识别违纪\n");
+	bool bResult = true;
+	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lWJ_CP.begin();
+	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lWJ_CP.end(); itCP++)
+	{
+		RECTINFO rc = *itCP;
+
+		if (pModelInfo->pModel->nHasHead)
+		{
+			if (rc.nHItem >= m_vecH_Head.size() || rc.nVItem >= m_vecV_Head.size())
+			{
+				bResult = false;
+				pPic->bFindIssue = true;
+				pPic->lIssueRect.push_back(rc);
+				break;
+			}
+			rc.rt.x = m_vecH_Head[rc.nHItem].rt.tl().x;
+			rc.rt.y = m_vecV_Head[rc.nVItem].rt.tl().y;
+			rc.rt.width = m_vecH_Head[rc.nHItem].rt.width;
+			rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
+		}
+		else
+			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
+		bool bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
+		if (bResult_Recog)
+		{
+			if (rc.fRealValuePercent >= rc.fStandardValuePercent)
+			{
+				((pST_PaperInfo)pPic->pPaper)->nWJFlag = 1;			//设置学生缺考
+			}
+			pPic->lNormalRect.push_back(rc);
+			bResult = true;
+			continue;
+		}
+		else
+		{
+			char szLog[MAX_PATH] = { 0 };
+			sprintf_s(szLog, "校验失败, 异常结束, 问题点: (%d,%d,%d,%d)\n", rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
+			g_Log.LogOut(szLog);
+			TRACE(szLog);
+		}
+
+		pPic->bFindIssue = true;
+		pPic->lIssueRect.push_back(rc);
+		if (nRecogMode == 2)
+		{
+			bResult = false;						//找到问题点
+			break;
+		}
+	}
+	if (!bResult)
+	{
+		char szLog[MAX_PATH] = { 0 };
+		sprintf_s(szLog, "识别违纪失败, 图片名: %s\n", pPic->strPicName.c_str());
 		g_Log.LogOut(szLog);
 		TRACE(szLog);
 	}

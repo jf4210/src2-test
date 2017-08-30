@@ -275,6 +275,7 @@ typedef struct _PaperInfo_
 	bool		bRecogComplete;		//该学生已经识别完成
 	bool		bReScan;			//重新扫描标识，在准考证号修改窗口中设置
 	int			nQKFlag;			//缺考标识
+	int			nWJFlag;			//违纪标识
 	//++从Pkg恢复Papers时的参数
 	int			nChkFlag;			//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不進行圖片识别
 	//--
@@ -295,6 +296,7 @@ typedef struct _PaperInfo_
 		bRecogComplete = false;
 		bReScan = false;
 		nQKFlag = 0;
+		nWJFlag = 0;
 		nChkFlag = 0;
 		pModel = NULL;
 		pPapers = NULL;

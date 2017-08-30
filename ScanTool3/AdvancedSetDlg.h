@@ -1,6 +1,7 @@
 #pragma once
 #include "modelInfo.h"
 #include "TipBaseDlg.h"
+#include "BmpButton.h"
 
 // CAdvancedSetDlg ¶Ô»°¿ò
 typedef struct _SensitiveParam_
@@ -35,6 +36,7 @@ public:
 	CComboBox	m_combo_ScanType;
 	CButton		m_chkAutoCut;
 
+	CBmpButton		m_bmpBtnClose;
 	CSpinButtonCtrl m_Spin_Zkzh;
 	CSpinButtonCtrl m_Spin_Omr;
 	int			m_nSensitiveZkzh;
@@ -67,4 +69,5 @@ public:
 	afx_msg void OnDeltaposSpinZkzh(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnDeltaposSpinOmr(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg void OnBnClickedBtnClose();
 };

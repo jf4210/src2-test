@@ -566,6 +566,7 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 		jsnPaperOMR.set("userId", pTask->pPapers->nUserId);
 		jsnPaperOMR.set("teacherId", pTask->pPapers->nTeacherId);
 		jsnPaperOMR.set("zkzh", (*itPaper)->strSN);
+		jsnPaperOMR.set("nOmrAnswerFlag", (*itPaper)->nStandardAnswer);
 		jsnPaperOMR.set("papers", pTask->pPapers->strPapersName);
 		jsnPaperOMR.set("studentKey", (*itPaper)->strMd5Key);
 		omrArry.add(jsnPaperOMR);

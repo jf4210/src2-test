@@ -296,7 +296,6 @@ void CScanDlg::OnBnClickedBtnScan()
 	_nScanStatus_ = 0;
 	if (!_bLogin_)
 	{
-		//		AfxMessageBox(_T("未登录, 无法扫描"));
 		CNewMessageBox	dlg;
 		dlg.setShowInfo(2, 1, "未登录, 无法扫描");
 		dlg.DoModal();
@@ -304,11 +303,23 @@ void CScanDlg::OnBnClickedBtnScan()
 	}
 	if (_pCurrExam_->nModel == 0 && !_pModel_)
 	{
-//		AfxMessageBox(_T("当前考试无模板信息"));	//模板解析错误
 		CNewMessageBox	dlg;
 		dlg.setShowInfo(2, 1, "当前考试无模板信息");
 		dlg.DoModal();
 		return;
+	}
+
+	if (_nScanAnswerModel_ == 1)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(1, 1, "当前处于扫描 客观题(Omr) 答案模式！");
+		dlg.DoModal();
+	}
+	else if (_nScanAnswerModel_ == 2)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(1, 1, "当前处于扫描 主观题 答案模式！");
+		dlg.DoModal();
 	}
 	
 	USES_CONVERSION;
@@ -352,6 +363,9 @@ void CScanDlg::OnBnClickedBtnScan()
 		nAutoCut = _pModel_->nAutoCut;
 
 		m_nModelPicNums = _pModel_->nPicNum;
+
+		//扫描主观题答案时，模板图像数值1
+		if(_nScanAnswerModel_ == 2) m_nModelPicNums = 1;
 	}
 	else  //手阅
 	{

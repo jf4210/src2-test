@@ -763,6 +763,14 @@ void CTcpClient::HandleCmd()
 				#endif
 					if (g_lBmkStudent.size() > 0)
 						_bGetBmk_ = true;
+					else
+					{
+						std::string strErrInfo;
+						strErrInfo.append("获取报名库失败: 无当前科目信息");
+						g_pLogger->information(strErrInfo);
+						CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+						pDlg->PostMessage(MSG_CMD_GET_BMK_OK, 1, 1);
+					}
 				}
 				catch (Poco::Exception& jsone)	//Poco::JSON::JSONException
 				{

@@ -28,7 +28,7 @@ public:
 	CScanRecordMgrDlg*	m_pScanRecordMgrDlg;
 
 	void	InitExamData();
-	bool	SearchModel();		//遍历所有模板
+	int SearchModel();		//遍历所有模板
 	bool	DownLoadModel();	//下载模板
 	int		GetBmkInfo();		//下载报名库
 	void	ShowChildDlg(int n, int nOprater = 0);

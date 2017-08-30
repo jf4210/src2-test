@@ -326,7 +326,11 @@ void CScanProcessDlg::ScanCompleted()
 	if (_pCurrExam_->nModel == 1)
 		nModelPics = _nPicNum4Ty_;
 	else
+	{
 		nModelPics = _pModel_->nPicNum;
+		//扫描主观题答案时，模板图像数值1
+		if (_nScanAnswerModel_ == 2) nModelPics = 1;
+	}
 
 	_pCurrPapersInfo_->nPaperCount = _nScanCount_ / nModelPics;	//计算扫描试卷数量
 	
@@ -352,7 +356,8 @@ void CScanProcessDlg::ScanCompleted()
 				}
 			}
 		}
-		SetTimer(TIMER_CheckRecogComplete, 100, NULL);
+		if(_nScanAnswerModel_ == 0)		//扫描主观题、客观题答案时不进行准考证号异常处理操作
+			SetTimer(TIMER_CheckRecogComplete, 100, NULL);
 	}
 }
 
@@ -377,6 +382,7 @@ void CScanProcessDlg::WriteJsonFile()
 		jsnPaper.set("name", (*itNomarlPaper)->strStudentInfo);
 		jsnPaper.set("zkzh", (*itNomarlPaper)->strSN);
 		jsnPaper.set("qk", (*itNomarlPaper)->nQKFlag);
+		jsnPaper.set("standardAnswer", _nScanAnswerModel_);		//0-正常试卷，1-Omr标答，2-主观题标答
 
 		int nIssueFlag = 0;			//0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
 		if ((*itNomarlPaper)->strSN.empty() && !(*itNomarlPaper)->bModifyZKZH)
@@ -487,6 +493,7 @@ void CScanProcessDlg::WriteJsonFile()
 			jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
 			jsnPaper.set("zkzh", (*itIssuePaper)->strSN);
 			jsnPaper.set("qk", (*itIssuePaper)->nQKFlag);
+			jsnPaper.set("standardAnswer", _nScanAnswerModel_);		//0-正常试卷，1-Omr标答，2-主观题标答
 
 			int nIssueFlag = 0;			//0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
 			if ((*itIssuePaper)->strSN.empty())
@@ -874,6 +881,19 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 		return;
 	}
 
+	if (_nScanAnswerModel_ == 1)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(1, 1, "当前处于扫描 客观题(Omr) 答案模式！");
+		dlg.DoModal();
+	}
+	else if (_nScanAnswerModel_ == 2)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(1, 1, "当前处于扫描 主观题 答案模式！");
+		dlg.DoModal();
+	}
+
 	m_vecCHzkzh.clear();
 	InitTmpSubjectBmk();
 
@@ -938,6 +958,9 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 		nAutoCut = _pModel_->nAutoCut;
 
 		_nModelPicNums = _pModel_->nPicNum;
+
+		//扫描主观题答案时，模板图像数值1
+		if (_nScanAnswerModel_ == 2) _nModelPicNums = 1;
 	}
 	else  //手阅
 	{
@@ -1029,8 +1052,6 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 #endif
 	if (!_pCurrPapersInfo_)
 	{
-//		AfxMessageBox(_T("没有试卷袋信息"));
-
 		CNewMessageBox	dlg;
 		dlg.setShowInfo(2, 1, "没有试卷袋信息");
 		dlg.DoModal();
@@ -1047,15 +1068,13 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 
 	if (_pCurrPapersInfo_->nPapersType == 1)
 	{
-//		AfxMessageBox(_T("这是已经打包过的试卷包，不能再次打包上传"));
-
 		CNewMessageBox	dlg;
 		dlg.setShowInfo(2, 1, "这是已经打包过的试卷包，不能再次打包上传");
 		dlg.DoModal();
 		return;
 	}
 
-	if (_pCurrExam_->nModel == 0)	//网阅模式
+	if (_pCurrExam_->nModel == 0 && _nScanAnswerModel_ != 2)	//网阅模式
 	{
 		bool bRecogComplete = true;
 		for (auto p : _pCurrPapersInfo_->lPaper)
@@ -1068,8 +1087,6 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 		}
 		if (!bRecogComplete)
 		{
-//			AfxMessageBox(_T("请稍后，图像正在识别！"));
-
 			CNewMessageBox	dlg;
 			dlg.setShowInfo(2, 1, "请稍后，图像正在识别！");
 			dlg.DoModal();
@@ -1094,8 +1111,6 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	{
 		if (g_nOperatingMode == 2)
 		{
-//			AfxMessageBox(_T("存在识别异常试卷，不能上传，请先处理异常试卷"));
-
 			CNewMessageBox	dlg;
 			dlg.setShowInfo(2, 1, "存在识别异常试卷，不能上传，请先处理异常试卷");
 			dlg.DoModal();
@@ -1109,13 +1124,6 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 			dlg.DoModal();
 			if (dlg.m_nResult != IDYES)
 				return;
-
-// 			CString strMsg = _T("");
-// 			strMsg.Format(_T("存在%d份问题试卷，这些试卷需要单独找出扫描，此次将不上传这%d份试卷，是否确定上传?"), _pCurrPapersInfo_->lIssue.size(), _pCurrPapersInfo_->lIssue.size());
-// 			if (MessageBox(strMsg, _T("警告"), MB_YESNO) != IDYES)
-// 			{
-// 				return;
-// 			}
 			_pCurrPapersInfo_->nPaperCount = _pCurrPapersInfo_->lPaper.size();		//修改扫描数量，将问题试卷删除，不算到扫描试卷中。
 		}
 	}
@@ -1252,14 +1260,13 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 
 	if (_nScanStatus_ == 1)
 	{
-//		AfxMessageBox(_T("正在扫描，请稍后。。。"));
 		CNewMessageBox	dlg;
 		dlg.setShowInfo(2, 1, "正在扫描，请稍后。。。");
 		dlg.DoModal();
 		return;
 	}
 
-	if (_pCurrExam_->nModel == 0)
+	if (_pCurrExam_->nModel == 0 && _nScanAnswerModel_ != 2)
 	{
 		bool bRecogComplete = true;
 		for (auto p : _pCurrPapersInfo_->lPaper)
@@ -1272,7 +1279,6 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 		}
 		if (!bRecogComplete)
 		{
-//			AfxMessageBox(_T("请等待识别完成。。。"));
 			CNewMessageBox	dlg;
 			dlg.setShowInfo(2, 1, "请等待识别完成。。。");
 			dlg.DoModal();
@@ -1285,7 +1291,7 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	m_pShowPicDlg->ShowWindow(SW_SHOW);
 	m_pShowPicDlg->setShowPaper(pPaper);
 
-	if (_pCurrExam_->nModel == 1)
+	if (_pCurrExam_->nModel == 1 || _nScanAnswerModel_ != 0)	//扫描客观题omr、主观题标答时，不进入准考证号修改窗口
 		return;
 
 	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(pNMItemActivate->iItem);

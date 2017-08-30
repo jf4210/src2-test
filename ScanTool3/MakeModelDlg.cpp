@@ -30,8 +30,8 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_pModelPicShow(NULL), m_nGaussKernel(5), m_nSharpKernel(5), m_nThresholdKernel(150), m_nCannyKernel(90), m_nDilateKernel(6), m_nErodeKernel(2), m_nDilateKernel_DefCommon(6), m_nDilateKernel_DefSn(6)
 	, m_pModel(pModel), m_bNewModelFlag(false), m_nModelPicNums(1), m_nCurrTabSel(0), m_bSavedModelFlag(false), m_ncomboCurrentSel(0), m_eCurCPType(UNKNOWN)
 	, m_nCurListCtrlSel(0), m_nStartTH(0)
-	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200), m_nCharacterThreshold(150)
-	, m_fHeadThresholdPercent(0.75), m_fABModelThresholdPercent(0.75), m_fCourseThresholdPercent(0.75), m_fQK_CPThresholdPercent_Fix(1.5), m_fQK_CPThresholdPercent_Head(1.2), m_fFixThresholdPercent(0.80)
+	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nWJ_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200), m_nCharacterThreshold(150)
+	, m_fHeadThresholdPercent(0.75), m_fABModelThresholdPercent(0.75), m_fCourseThresholdPercent(0.75), m_fQK_CPThresholdPercent_Fix(1.5), m_fWJ_CPThresholdPercent_Fix(1.5), m_fQK_CPThresholdPercent_Head(1.2), m_fWJ_CPThresholdPercent_Head(1.2), m_fFixThresholdPercent(0.80)
 	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75), m_fOMRThresholdPercent_Fix(1.5), m_fSNThresholdPercent_Fix(1.5), m_fOMRThresholdPercent_Head(1.2), m_fSNThresholdPercent_Head(1.2)
 	, m_pCurRectInfo(NULL), m_ptFixCP(0,0)
 	, m_bFistHTracker(true), m_bFistVTracker(true), m_bFistSNTracker(true)
@@ -229,6 +229,11 @@ BOOL CMakeModelDlg::OnInitDialog()
 			for (; itQK != m_pModel->vecPaperModel[i]->lQK_CP.end(); itQK++)
 			{
 				pPaperModel->vecQK_CP.push_back(*itQK);
+			}
+			RECTLIST::iterator itWJ = m_pModel->vecPaperModel[i]->lWJ_CP.begin();
+			for (; itWJ != m_pModel->vecPaperModel[i]->lWJ_CP.end(); itWJ++)
+			{
+				pPaperModel->vecQK_CP.push_back(*itWJ);
 			}
 			RECTLIST::iterator itGray = m_pModel->vecPaperModel[i]->lGray.begin();
 			for (; itGray != m_pModel->vecPaperModel[i]->lGray.end(); itGray++)
@@ -648,6 +653,7 @@ void CMakeModelDlg::InitConf()
 			m_comboCheckPointType.AddString(_T("卷形校验点"));
 			m_comboCheckPointType.AddString(_T("科目校验点"));
 			m_comboCheckPointType.AddString(_T("缺考校验点"));
+			m_comboCheckPointType.AddString(_T("违纪校验点"));
 			m_comboCheckPointType.AddString(_T("灰度校验点"));
 			m_comboCheckPointType.AddString(_T("空白校验点"));
 			m_comboCheckPointType.AddString(_T("考号设置"));
@@ -662,6 +668,7 @@ void CMakeModelDlg::InitConf()
 			m_comboCheckPointType.AddString(_T("卷形校验点"));
 			m_comboCheckPointType.AddString(_T("科目校验点"));
 			m_comboCheckPointType.AddString(_T("缺考校验点"));
+			m_comboCheckPointType.AddString(_T("违纪校验点"));
 			m_comboCheckPointType.AddString(_T("灰度校验点"));
 			m_comboCheckPointType.AddString(_T("空白校验点"));
 			m_comboCheckPointType.AddString(_T("考号设置"));
@@ -677,6 +684,7 @@ void CMakeModelDlg::InitConf()
 			m_comboCheckPointType.AddString(_T("垂直同步头"));
 			m_comboCheckPointType.AddString(_T("科目校验点"));
 			m_comboCheckPointType.AddString(_T("缺考校验点"));
+			m_comboCheckPointType.AddString(_T("违纪校验点"));
 			m_comboCheckPointType.AddString(_T("灰度校验点"));
 			m_comboCheckPointType.AddString(_T("空白校验点"));
 			m_comboCheckPointType.AddString(_T("考号设置"));
@@ -690,6 +698,7 @@ void CMakeModelDlg::InitConf()
 			m_comboCheckPointType.AddString(_T("定点"));
 			m_comboCheckPointType.AddString(_T("科目校验点"));
 			m_comboCheckPointType.AddString(_T("缺考校验点"));
+			m_comboCheckPointType.AddString(_T("违纪校验点"));
 			m_comboCheckPointType.AddString(_T("灰度校验点"));
 //			m_comboCheckPointType.AddString(_T("空白校验点"));
 			m_comboCheckPointType.AddString(_T("考号设置"));
@@ -941,6 +950,17 @@ LRESULT CMakeModelDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
 		{
 			rc.nThresholdValue = m_nQK_CPVal;
 			rc.fStandardValuePercent = m_fQK_CPThresholdPercent_Head;
+
+			Rect rtTmp = rc.rt;
+			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+			RecogGrayValue(matSrcModel, rc);
+
+			m_vecTmp.push_back(rc);
+		}
+		else if (m_eCurCPType == WJ_CP)
+		{
+			rc.nThresholdValue = m_nWJ_CPVal;
+			rc.fStandardValuePercent = m_fWJ_CPThresholdPercent_Head;
 
 			Rect rtTmp = rc.rt;
 			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
@@ -1349,6 +1369,11 @@ void CMakeModelDlg::OnBnClickedBtnReset()
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.clear();
 //			if (m_pModel && m_pModel->vecPaperModel.size()) m_pModel->vecPaperModel[m_nCurrTabSel].lQK_CP.clear();
 		}
+	case WJ_CP:
+		if (m_eCurCPType == WJ_CP || m_eCurCPType == UNKNOWN)
+		{
+			m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.clear();
+		}
 	case GRAY_CP:
 		if (m_eCurCPType == GRAY_CP || m_eCurCPType == UNKNOWN)
 		{
@@ -1607,6 +1632,7 @@ inline void CMakeModelDlg::GetThreshold(cv::Mat& matSrc, cv::Mat& matDst)
 	case ABMODEL: nRealThreshold = m_nABModelVal; break;
 	case COURSE: nRealThreshold = m_nCourseVal; break;
 	case QK_CP: nRealThreshold = m_nQK_CPVal; break;
+	case WJ_CP: nRealThreshold = m_nWJ_CPVal; break;
 	case CHARACTER_AREA:
 		{
 //			nRealThreshold = m_nCharacterThreshold; break;
@@ -1796,6 +1822,17 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.push_back(rc);
 		}
+		else if (m_eCurCPType == WJ_CP)
+		{
+			rc.nThresholdValue = m_nWJ_CPVal;
+			rc.fStandardValuePercent = m_fWJ_CPThresholdPercent_Fix;
+
+			Rect rtTmp = rm;
+			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+			RecogGrayValue(matSrcModel, rc);
+
+			m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.push_back(rc);
+		}
 		else if (m_eCurCPType == GRAY_CP)
 		{
 			rc.nThresholdValue = m_nGrayVal;
@@ -1984,6 +2021,10 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 	sharpenImage1(imgResult, imgResult);
 
 	GetThreshold(imgResult, imgResult);
+
+	Mat element = getStructuringElement(MORPH_RECT, Size(2, 2));	//Size(6, 6)	普通空白框可识别
+	erode(imgResult, imgResult, element);
+
 #ifdef USE_TESSERACT
 	#if 0
 	//旋转水平，防歪斜
@@ -2029,7 +2070,7 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 		int nIndex = 1;
 
 		ST_RECOG_CHARACTER_INFO stRecogCharacterRt;
-		stRecogCharacterRt.nIndex = nIndex;
+		stRecogCharacterRt.nIndex = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.size() + 1;
 		stRecogCharacterRt.nThresholdValue = m_nCharacterThreshold;
 		stRecogCharacterRt.nGaussKernel = m_nGaussKernel;
 		stRecogCharacterRt.nSharpKernel = m_nSharpKernel;
@@ -2037,10 +2078,10 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 
 		do
 		{
-			const char* word = ri->GetUTF8Text(level);						
-			if (word && strcmp(word, " ") != 0)
+			const char* word = ri->GetUTF8Text(level);
+			float conf = ri->Confidence(level);
+			if (word && strcmp(word, " ") != 0 && conf >= 0.75)
 			{
-				float conf = ri->Confidence(level);
 				int x1, y1, x2, y2;
 				ri->BoundingBox(level, &x1, &y1, &x2, &y2);
 				Point start, end;
@@ -2052,6 +2093,7 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 
 				ST_CHARACTER_RECTINFO stCharRt;
 				stCharRt.nIndex = nIndex;
+				stCharRt.fConfidence = conf;
 				stCharRt.rc.eCPType = CHARACTER_AREA;
 				stCharRt.rc.rt = rtSrc;
 
@@ -2401,6 +2443,17 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 
 				m_vecTmp.push_back(rc);
 			}
+			else if (m_eCurCPType == WJ_CP)
+			{
+				rc.nThresholdValue = m_nWJ_CPVal;
+				rc.fStandardValuePercent = m_fWJ_CPThresholdPercent_Head;
+
+				Rect rtTmp = arr[i][j];
+				Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+				RecogGrayValue(matSrcModel, rc);
+
+				m_vecTmp.push_back(rc);
+			}
 			else if (m_eCurCPType == GRAY_CP)
 			{
 				rc.nThresholdValue = m_nGrayVal;
@@ -2710,6 +2763,8 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 			pPaperModel->lCourse.push_back(m_vecPaperModelInfo[i]->vecCourse[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecQK_CP.size(); j++)
 			pPaperModel->lQK_CP.push_back(m_vecPaperModelInfo[i]->vecQK_CP[j]);
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecWJ_CP.size(); j++)
+			pPaperModel->lWJ_CP.push_back(m_vecPaperModelInfo[i]->vecWJ_CP[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecGray.size(); j++)
 			pPaperModel->lGray.push_back(m_vecPaperModelInfo[i]->vecGray[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecWhite.size(); j++)
@@ -2868,6 +2923,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		Poco::JSON::Array jsnABModelArry;
 		Poco::JSON::Array jsnCourseArry;
 		Poco::JSON::Array jsnQKArry;
+		Poco::JSON::Array jsnWJArry;
 		Poco::JSON::Array jsnGrayCPArry;
 		Poco::JSON::Array jsnWhiteCPArry;
 		Poco::JSON::Array jsnOMRArry;
@@ -3015,6 +3071,31 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("cannyKernel", itQKCP->nCannyKernel);
 			jsnObj.set("dilateKernel", itQKCP->nDilateKernel);
 			jsnQKArry.add(jsnObj);
+		}
+		RECTLIST::iterator itWJCP = pModel->vecPaperModel[i]->lWJ_CP.begin();
+		for (; itWJCP != pModel->vecPaperModel[i]->lWJ_CP.end(); itWJCP++)
+		{
+			Poco::JSON::Object jsnObj;
+			jsnObj.set("eType", (int)itWJCP->eCPType);
+			jsnObj.set("left", itWJCP->rt.x);
+			jsnObj.set("top", itWJCP->rt.y);
+			jsnObj.set("width", itWJCP->rt.width);
+			jsnObj.set("height", itWJCP->rt.height);
+			jsnObj.set("hHeadItem", itWJCP->nHItem);
+			jsnObj.set("vHeadItem", itWJCP->nVItem);
+			jsnObj.set("thresholdValue", itWJCP->nThresholdValue);
+			jsnObj.set("standardValPercent", itWJCP->fStandardValuePercent);
+			jsnObj.set("standardVal", itWJCP->fStandardValue);
+			jsnObj.set("standardArea", itWJCP->fStandardArea);
+			jsnObj.set("standardDensity", itWJCP->fStandardDensity);
+			jsnObj.set("standardMeanGray", itWJCP->fStandardMeanGray);
+			jsnObj.set("standardStddev", itWJCP->fStandardStddev);
+
+			jsnObj.set("gaussKernel", itWJCP->nGaussKernel);
+			jsnObj.set("sharpKernel", itWJCP->nSharpKernel);
+			jsnObj.set("cannyKernel", itWJCP->nCannyKernel);
+			jsnObj.set("dilateKernel", itWJCP->nDilateKernel);
+			jsnWJArry.add(jsnObj);
 		}
 		RECTLIST::iterator itGrayCP = pModel->vecPaperModel[i]->lGray.begin();
 		for (; itGrayCP != pModel->vecPaperModel[i]->lGray.end(); itGrayCP++)
@@ -3250,6 +3331,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		jsnPaperObj.set("ABModel", jsnABModelArry);
 		jsnPaperObj.set("Course", jsnCourseArry);
 		jsnPaperObj.set("QKCP", jsnQKArry);
+		jsnPaperObj.set("WJCP", jsnWJArry);
 		jsnPaperObj.set("GrayCP", jsnGrayCPArry);
 		jsnPaperObj.set("WhiteCP", jsnWhiteCPArry);
 		jsnPaperObj.set("selRoiRect", jsnSelRoiArry);
@@ -3468,6 +3550,18 @@ bool CMakeModelDlg::ShowRectByPoint(cv::Point pt)
 				if (i != nFind || m_pCurRectInfo->eCPType != m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP[i].eCPType)
 				{
 					cv::Rect rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP[i].rt;
+					cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+				}
+			}
+		}
+	case WJ_CP:
+		if (eType == WJ_CP || eType == UNKNOWN)
+		{
+			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.size(); i++)
+			{
+				if (i != nFind || m_pCurRectInfo->eCPType != m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[i].eCPType)
+				{
+					cv::Rect rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[i].rt;
 					cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				}
 			}
@@ -3768,6 +3862,22 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 		}
 		if (m_eCurCPType == UNKNOWN)
 			nCurItem -= m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.size();
+	}
+	if (m_eCurCPType == WJ_CP || m_eCurCPType == UNKNOWN)
+	{
+		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.size(); i++)
+		{
+			cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[i].rt;
+			cv::rectangle(tmp2, rtTmp, CV_RGB(255, 233, 10), -1);
+		}
+		if (!bFind && m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.size() > nCurItem)
+		{
+			bFind = true;
+			rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[nCurItem].rt;
+			m_pCurRectInfo = &m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[nCurItem];
+		}
+		if (m_eCurCPType == UNKNOWN)
+			nCurItem -= m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.size();
 	}
 	if (m_eCurCPType == GRAY_CP || m_eCurCPType == UNKNOWN)
 	{
@@ -4098,6 +4208,17 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 		if (m_eCurCPType == UNKNOWN)
 			nCurItem -= m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.size();
 	}
+	if (m_eCurCPType == WJ_CP || m_eCurCPType == UNKNOWN)
+	{
+		if (!bFind && m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.size() > nCurItem)
+		{
+			bFind = true;
+			rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[nCurItem].rt;
+			m_pCurRectInfo = &m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[nCurItem];
+		}
+		if (m_eCurCPType == UNKNOWN)
+			nCurItem -= m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.size();
+	}
 	if (m_eCurCPType == GRAY_CP || m_eCurCPType == UNKNOWN)
 	{
 		if (!bFind && m_vecPaperModelInfo[m_nCurrTabSel]->vecGray.size() > nCurItem)
@@ -4413,6 +4534,16 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 				cv::rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
 		}
+	case WJ_CP:
+		if (eType == WJ_CP || eType == UNKNOWN)
+		{
+			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.size(); i++)
+			{
+				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[i].rt;
+				cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+				cv::rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+			}
+		}
 	case GRAY_CP:
 		if (eType == GRAY_CP || eType == UNKNOWN)
 		{
@@ -4551,6 +4682,8 @@ CPType CMakeModelDlg::GetComboSelCpType()
 		eType = COURSE;
 	else if (strCheckPoint == "缺考校验点")
 		eType = QK_CP;
+	else if (strCheckPoint == "违纪校验点")
+		eType = WJ_CP;
 	else if (strCheckPoint == "灰度校验点")
 		eType = GRAY_CP;
 	else if (strCheckPoint == "空白校验点")
@@ -4805,6 +4938,22 @@ void CMakeModelDlg::UpdataCPList()
 		if (m_eCurCPType == UNKNOWN)
 			nCount += m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.size();
 	}
+	if (m_eCurCPType == WJ_CP || m_eCurCPType == UNKNOWN)
+	{
+		for (int i = nCount; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.size() + nCount; i++)
+		{
+			RECTINFO rcInfo = m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[i - nCount];
+			char szPosition[50] = { 0 };
+			sprintf_s(szPosition, "(%d,%d,%d,%d)", rcInfo.rt.x, rcInfo.rt.y, rcInfo.rt.width, rcInfo.rt.height);
+			char szCount[10] = { 0 };
+			sprintf_s(szCount, "%d", i + 1);
+			m_cpListCtrl.InsertItem(i, NULL);
+			m_cpListCtrl.SetItemText(i, 0, (LPCTSTR)A2T(szCount));
+			m_cpListCtrl.SetItemText(i, 1, (LPCTSTR)A2T(szPosition));
+		}
+		if (m_eCurCPType == UNKNOWN)
+			nCount += m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.size();
+	}
 	if (m_eCurCPType == GRAY_CP || m_eCurCPType == UNKNOWN)
 	{
 		for (int i = nCount; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecGray.size() + nCount; i++)
@@ -4968,6 +5117,7 @@ void CMakeModelDlg::UpdateCPListByType()
 		case COURSE:
 		case GRAY_CP:
 		case QK_CP:
+		case WJ_CP:
 		case SN:
 		case OMR:
 		default:
@@ -5117,6 +5267,10 @@ void CMakeModelDlg::AddRecogRectToList()
 		else if (m_eCurCPType == QK_CP)
 		{
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.push_back(m_vecTmp[i]);
+		}
+		else if (m_eCurCPType == WJ_CP)
+		{
+			m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.push_back(m_vecTmp[i]);
 		}
 		else if (m_eCurCPType == GRAY_CP)
 		{
@@ -5469,6 +5623,13 @@ BOOL CMakeModelDlg::DeleteRectInfo(CPType eType, int nItem)
 		if (it != m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.end())
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.erase(it);
 		break;
+	case WJ_CP:
+		if (m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.size() < 0)
+			return FALSE;
+		it = m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.begin() + nItem;
+		if (it != m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.end())
+			m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.erase(it);
+		break;
 	case GRAY_CP:
 		if (m_vecPaperModelInfo[m_nCurrTabSel]->vecGray.size() < 0)
 			return FALSE;
@@ -5614,6 +5775,9 @@ void CMakeModelDlg::SortRect()
 	case QK_CP:
 		std::sort(m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.begin(), m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.end(), SortByPositionX);
 		break;
+	case WJ_CP:
+		std::sort(m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.begin(), m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.end(), SortByPositionX);
+		break;
 	case GRAY_CP:
 		std::sort(m_vecPaperModelInfo[m_nCurrTabSel]->vecGray.begin(), m_vecPaperModelInfo[m_nCurrTabSel]->vecGray.end(), SortByPositionX);
 		break;
@@ -5718,6 +5882,22 @@ inline int CMakeModelDlg::GetRectInfoByPoint(cv::Point pt, CPType eType, RECTINF
 						{
 							nFind = i;
 							pRc = &m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP[i];
+							break;
+						}
+					}
+				}
+			}
+		case WJ_CP:
+			if (eType == WJ_CP || eType == UNKNOWN)
+			{
+				if (nFind < 0)
+				{
+					for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.size(); i++)
+					{
+						if (m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[i].rt.contains(pt))
+						{
+							nFind = i;
+							pRc = &m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[i];
 							break;
 						}
 					}
@@ -6961,6 +7141,29 @@ inline bool CMakeModelDlg::checkOverlap(CPType eType, cv::Rect rtSrc)
 				}
 			}
 			break;
+		case WJ_CP:
+			{
+				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.size(); i++)
+				{
+					cv::Rect rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[i].rt;
+					if (rt.contains(rtSrc.tl()) || rt.contains(rtSrc.br()) || rtSrc.contains(rt.tl()) || rtSrc.contains(rt.br()))
+					{
+						bResult = true;
+						break;
+					}
+					if (rt.tl().x >= rtSrc.tl().x && rt.br().x <= rtSrc.br().x && rt.tl().y <= rtSrc.tl().y && rt.br().y >= rtSrc.br().y)
+					{
+						bResult = true;
+						break;
+					}
+					if (rtSrc.tl().x >= rt.tl().x && rtSrc.br().x <= rt.br().x && rtSrc.tl().y <= rt.tl().y && rtSrc.br().y >= rt.br().y)
+					{
+						bResult = true;
+						break;
+					}
+				}
+			}
+			break;
 		case GRAY_CP:
 			{
 				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecGray.size(); i++)
@@ -7079,6 +7282,7 @@ void CMakeModelDlg::InitParam()
 		m_nABModelVal = pConf->getInt("MakeModel_Threshold.abModel", 150);
 		m_nCourseVal = pConf->getInt("MakeModel_Threshold.course", 150);
 		m_nQK_CPVal = pConf->getInt("MakeModel_Threshold.qk", 150);
+		m_nWJ_CPVal = pConf->getInt("MakeModel_Threshold.wj", 150);
 		m_nGrayVal	= pConf->getInt("MakeModel_Threshold.gray", 150);
 		m_nFixVal	= pConf->getInt("MakeModel_Threshold.fix", 150);
 		m_nOMR		= pConf->getInt("MakeModel_Threshold.omr", 230);
@@ -7093,10 +7297,12 @@ void CMakeModelDlg::InitParam()
 		m_fWhiteThresholdPercent	= pConf->getDouble("MakeModel_RecogPercent_Common.white", 0.75); 
 		
 		m_fQK_CPThresholdPercent_Fix	= pConf->getDouble("MakeModel_RecogPercent_Fix.qk", 1.5);
+		m_fWJ_CPThresholdPercent_Fix	= pConf->getDouble("MakeModel_RecogPercent_Fix.wj", 1.5);
 		m_fOMRThresholdPercent_Fix		= pConf->getDouble("MakeModel_RecogPercent_Fix.omr", 1.5);
 		m_fSNThresholdPercent_Fix		= pConf->getDouble("MakeModel_RecogPercent_Fix.sn", 1.5);
 
 		m_fQK_CPThresholdPercent_Head	= pConf->getDouble("MakeModel_RecogPercent_Head.qk", 1.2);
+		m_fWJ_CPThresholdPercent_Head = pConf->getDouble("MakeModel_RecogPercent_Head.wj", 1.2);
 		m_fOMRThresholdPercent_Head		= pConf->getDouble("MakeModel_RecogPercent_Head.omr", 1.2);
 		m_fSNThresholdPercent_Head		= pConf->getDouble("MakeModel_RecogPercent_Head.sn", 1.2);
 		strLog = "读取参数完成";
@@ -7120,6 +7326,7 @@ void CMakeModelDlg::InitParam()
 		m_nABModelVal = 150;
 		m_nCourseVal = 150;
 		m_nQK_CPVal = 150;
+		m_nWJ_CPVal = 150;
 		m_nGrayVal	= 150;
 		m_nFixVal	= 150;
 		m_nOMR		= 230;
@@ -7130,7 +7337,9 @@ void CMakeModelDlg::InitParam()
 		m_fABModelThresholdPercent	= 0.75;
 		m_fCourseThresholdPercent	= 0.75;
 		m_fQK_CPThresholdPercent_Head	= 1.2;
+		m_fWJ_CPThresholdPercent_Head = 1.2;
 		m_fQK_CPThresholdPercent_Fix = 1.5;
+		m_fWJ_CPThresholdPercent_Fix = 1.5;
 		m_fFixThresholdPercent		= 0.8;
 		m_fGrayThresholdPercent		= 0.75;
 		m_fWhiteThresholdPercent	= 0.75;
@@ -7583,6 +7792,11 @@ void CMakeModelDlg::ReInitModel(pMODEL pModel)
 			{
 				pPaperModel->vecQK_CP.push_back(*itQK);
 			}
+			RECTLIST::iterator itWJ = m_pModel->vecPaperModel[i]->lWJ_CP.begin();
+			for (; itWJ != m_pModel->vecPaperModel[i]->lWJ_CP.end(); itWJ++)
+			{
+				pPaperModel->vecWJ_CP.push_back(*itWJ);
+			}
 			RECTLIST::iterator itGray = m_pModel->vecPaperModel[i]->lGray.begin();
 			for (; itGray != m_pModel->vecPaperModel[i]->lGray.end(); itGray++)
 			{
@@ -7815,6 +8029,8 @@ void CMakeModelDlg::SaveNewModel()
 			pPaperModel->lCourse.push_back(m_vecPaperModelInfo[i]->vecCourse[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecQK_CP.size(); j++)
 			pPaperModel->lQK_CP.push_back(m_vecPaperModelInfo[i]->vecQK_CP[j]);
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecWJ_CP.size(); j++)
+			pPaperModel->lWJ_CP.push_back(m_vecPaperModelInfo[i]->vecWJ_CP[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecGray.size(); j++)
 			pPaperModel->lGray.push_back(m_vecPaperModelInfo[i]->vecGray[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecWhite.size(); j++)

@@ -536,12 +536,12 @@ void CScanMgrDlg::InitExamData()
 	UpdateData(FALSE);
 }
 
-bool CScanMgrDlg::SearchModel()
+int CScanMgrDlg::SearchModel()
 {
-	if (!_pCurrExam_ || !_pCurrSub_) return false;
+	if (!_pCurrExam_ || !_pCurrSub_) return 0;
 
 	if (_pCurrSub_->strModelName.empty())
-		return false;
+		return 0;
 
 	if (_pModel_)
 		SAFE_RELEASE(_pModel_);
@@ -595,7 +595,7 @@ bool CScanMgrDlg::SearchModel()
 	}
 #endif
 	
-	bool bResult = false;
+	int nResult = 0;
 	if (bExist)
 	{
 		CZipObj zipObj;
@@ -609,13 +609,18 @@ bool CScanMgrDlg::SearchModel()
 		if (_pModel_)
 		{
 			strLog = Poco::format("模板%s加载成功", strModelName);
-			bResult = true;
+			nResult = 1;
 		}
 		else
+		{
 			strLog = Poco::format("模板%s加载失败", strModelName);
+			nResult = -1;
+		}
 		g_pLogger->information(strLog);
 	}
-	return bResult;
+	else
+		nResult = -2;
+	return nResult;
 }
 
 bool CScanMgrDlg::DownLoadModel()

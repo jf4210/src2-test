@@ -142,6 +142,7 @@ pEXAM_SUBJECT		_pCurrSub_ = NULL;		//当前考试科目
 pMODEL				_pModel_ = NULL;		//当前扫描使用的模板
 int					_nScanCount_ = 0;		//扫描计数器，当前已扫描多少份
 int					_nScanPaperCount_ = 0;	//当前已经扫描人数，从软件启动开始计数
+int					_nScanAnswerModel_ = 0;	//0-扫描试卷， 1-扫描Omr答案， 2-扫描主观题答案
 //--
 E_DLG_TYPE			_eCurrDlgType_ = DLG_Login;	//当前显示的窗口，弹出窗口不算
 //--
@@ -552,6 +553,7 @@ LRESULT CScanTool3Dlg::MsgCmdDlModel(WPARAM wParam, LPARAM lParam)
 LRESULT CScanTool3Dlg::MsgCmdGetBmk(WPARAM wParam, LPARAM lParam)
 {
 	int nType = wParam;		//0--获取科目报名库完成，1--获取考试报名库完成
+	int nGetBmkResult = lParam;
 #ifdef NewBmkTest
 	if (nType == 0)
 	{
@@ -574,7 +576,7 @@ LRESULT CScanTool3Dlg::MsgCmdGetBmk(WPARAM wParam, LPARAM lParam)
 		EXAMBMK_MAP::iterator itFindExam = g_mapBmkMgr.find(_pCurrExam_->nExamID);
 		if (itFindExam != g_mapBmkMgr.end())
 		{
-			if (itFindExam->second.size() == 0)
+			if (itFindExam->second.size() == 0 || nGetBmkResult == 1)	//考试报名库为空
 			{
 				_bGetBmk_ = false;
 				bWarn = true;
@@ -819,18 +821,23 @@ void CScanTool3Dlg::DumpReleaseTwain()
 
 bool CScanTool3Dlg::HandleModel()
 {
-	bool bResult = m_pScanMgrDlg->SearchModel();
-	if (bResult)
+	int nResult = m_pScanMgrDlg->SearchModel();
+	if (nResult == 1)
 		m_pScanMgrDlg->ShowChildDlg(2);
 	else
 	{
 		CNewMessageBox	dlg;
-		dlg.setShowInfo(2, 1, "获取模板失败");
+		if(nResult == -1)
+			dlg.setShowInfo(2, 1, "加载模板失败");
+		else if(nResult == -2)
+			dlg.setShowInfo(2, 1, "获取模板失败");
+		else
+			dlg.setShowInfo(2, 1, "未设置模板");
 		dlg.DoModal();
 //		AfxMessageBox(_T("获取模板失败"));
 		SwitchDlg(0);
 	}
-	return bResult;
+	return nResult > 0;
 }
 
 void CScanTool3Dlg::OnBnClickedBtnClose()

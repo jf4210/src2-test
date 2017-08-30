@@ -47,6 +47,7 @@ typedef struct _PaperModelInfo_
 	std::vector<RECTINFO>	vecABModel;				//卷型校验点
 	std::vector<RECTINFO>	vecCourse;				//科目校验点
 	std::vector<RECTINFO>	vecQK_CP;				//缺考校验点
+	std::vector<RECTINFO>	vecWJ_CP;				//违纪校验点
 	std::vector<RECTINFO>	vecGray;				//灰度校验点
 	std::vector<RECTINFO>	vecWhite;				//空白校验点
 	std::vector<OMR_QUESTION> vecOmr2;
@@ -104,6 +105,7 @@ public:
 	int	m_nABModelVal;
 	int	m_nCourseVal;
 	int	m_nQK_CPVal;
+	int m_nWJ_CPVal;
 	int	m_nGrayVal;
 	int	m_nWhiteVal;
 	int m_nOMR;
@@ -114,7 +116,9 @@ public:
 	float m_fABModelThresholdPercent;
 	float m_fCourseThresholdPercent;
 	float m_fQK_CPThresholdPercent_Head;	//通过同步头识别
+	float m_fWJ_CPThresholdPercent_Head;	//通过同步头识别
 	float m_fQK_CPThresholdPercent_Fix;		//通过定点识别（无同步头）
+	float m_fWJ_CPThresholdPercent_Fix;		//通过定点识别（无同步头）
 	float m_fGrayThresholdPercent;
 	float m_fWhiteThresholdPercent;
 	float m_fOMRThresholdPercent_Fix;	//通过定点识别（无同步头）

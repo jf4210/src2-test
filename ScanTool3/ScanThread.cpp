@@ -2057,7 +2057,7 @@ int CScanThread::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 
 void* CScanThread::SaveFile(IplImage *pIpl)
 {
-	if (m_nNotifyDlgType != 2 && m_nDoubleScan)	//如果是双面扫描，需要判断模板为奇数时舍弃最后一张图片的情况
+	if (_nScanAnswerModel_ != 2 && m_nNotifyDlgType != 2 && m_nDoubleScan)	//如果是双面扫描，需要判断模板为奇数时舍弃最后一张图片的情况
 	{
 		if (m_nModelPicNums % 2 != 0)
 		{
@@ -2092,7 +2092,6 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 
 	_nScanCount_++;
 
-//	CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
 	CDialog* pDlg;
 	if (m_nNotifyDlgType == 2)
 	{
@@ -2110,7 +2109,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 		cv::Mat matSrc = cv::cvarrToMat(pIpl);
 
 		//++ 2016.8.26 判断扫描图片方向，并进行旋转
-		if (_pModel_ && m_nNotifyDlgType == 1/*&& m_pModel->nType*/)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
+		if (_pModel_ && m_nNotifyDlgType == 1 && _nScanAnswerModel_ != 2/*&& m_pModel->nType*/)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
 		{
 		#if 1
 			COmrRecog omrObj;
@@ -2221,7 +2220,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 			pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
 
 			//添加到识别任务列表
-			if (_pModel_ && _pCurrExam_->nModel == 0)	//网阅模式下的试卷才加入识别队列
+			if (_pModel_ && _pCurrExam_->nModel == 0 && _nScanAnswerModel_ != 2)	//网阅模式下的试卷才加入识别队列, 扫描主观题答案不加入识别
 			{
 				pRECOGTASK pTask = new RECOGTASK;
 				pTask->pPaper = m_pCurrPaper;

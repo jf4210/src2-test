@@ -33,6 +33,7 @@ void CAdvancedSetDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SPIN_Omr, m_Spin_Omr);
 	DDX_Text(pDX, IDC_EDIT_Sensitivity_ZKZH, m_nSensitiveZkzh);
 	DDX_Text(pDX, IDC_EDIT_Sensitivity_Omr, m_nSensitiveOmr);
+	DDX_Control(pDX, IDC_BTN_CLOSE, m_bmpBtnClose);
 }
 
 
@@ -40,6 +41,7 @@ BOOL CAdvancedSetDlg::OnInitDialog()
 {
 	CTipBaseDlg::OnInitDialog();
 
+	m_bmpBtnClose.SetStateBitmap(IDB_Btn_MakeModel_CloseNormal, 0, IDB_Btn_MakeModel_CloseDown);
 	m_Spin_Zkzh.SetBuddy(GetDlgItem(IDC_EDIT_Sensitivity_ZKZH));
 	m_Spin_Zkzh.SetRange(1, 50);
 	m_Spin_Omr.SetBuddy(GetDlgItem(IDC_EDIT_Sensitivity_Omr));
@@ -64,6 +66,7 @@ BEGIN_MESSAGE_MAP(CAdvancedSetDlg, CTipBaseDlg)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_Zkzh, &CAdvancedSetDlg::OnDeltaposSpinZkzh)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_Omr, &CAdvancedSetDlg::OnDeltaposSpinOmr)
 	ON_WM_CTLCOLOR()
+	ON_BN_CLICKED(IDC_BTN_CLOSE, &CAdvancedSetDlg::OnBnClickedBtnClose)
 END_MESSAGE_MAP()
 
 
@@ -249,4 +252,10 @@ HBRUSH CAdvancedSetDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		return hMYbr;
 	}
 	return hbr;
+}
+
+
+void CAdvancedSetDlg::OnBnClickedBtnClose()
+{
+	OnCancel();
 }

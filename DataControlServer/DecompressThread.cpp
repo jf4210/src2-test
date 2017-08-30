@@ -630,6 +630,8 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 			nOmrNull = objData->get("nOmrNull").convert<int>();
 		if (objData->has("nSnNull"))
 			nSnNull = objData->get("nSnNull").convert<int>();
+// 		if (objData->has("standardAnswer"))
+// 			nStandardAnswer = objData->get("standardAnswer").convert<int>();
 
 		int nExamId		= objData->get("examId").convert<int>();
 		int nSubjectId	= objData->get("subjectId").convert<int>();
@@ -668,6 +670,8 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 					pPaper->nQkFlag = jsnPaperObj->get("qk").convert<int>();
 					if (jsnPaperObj->has("issueFlag"))
 						pPaper->nIssueFlag = jsnPaperObj->get("issueFlag").convert<int>();
+					if (jsnPaperObj->has("standardAnswer"))
+						pPaper->nStandardAnswer = jsnPaperObj->get("standardAnswer").convert<int>();
 
 					Poco::JSON::Array::Ptr jsnSnArry = jsnPaperObj->getArray("snDetail");
 					Poco::JSON::Object jsnSn;
@@ -682,6 +686,7 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 					jsnSn.set("teacherId", nTeacherId);
 					jsnSn.set("zkzh", pPaper->strZkzh);
 					jsnSn.set("papers", pPapers->strPapersName);
+					//jsnSn.set("qkStatus", pPaper->nQkFlag);
 					if (pPaper->strZkzh != "")
 						jsnSn.set("doubt", 0);
 					else
@@ -704,6 +709,7 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 					jsnOmr.set("userId", nUserId);
 					jsnOmr.set("teacherId", nTeacherId);
 					jsnOmr.set("zkzh", pPaper->strZkzh);
+					jsnOmr.set("nOmrAnswerFlag", pPaper->nStandardAnswer);
 					jsnOmr.set("papers", pPapers->strPapersName);
 					jsnOmr.set("omr", jsnOmrArry);
 					std::stringstream jsnOmrString;

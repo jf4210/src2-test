@@ -417,6 +417,9 @@ pMODEL LoadModelFile(CString strModelPath)
 			Poco::JSON::Array::Ptr arrayABModel = jsnPaperObj->getArray("ABModel");
 			Poco::JSON::Array::Ptr arrayCourse = jsnPaperObj->getArray("Course");
 			Poco::JSON::Array::Ptr arrayQKCP = jsnPaperObj->getArray("QKCP");
+			Poco::JSON::Array::Ptr arrayWJCP;
+			if(jsnPaperObj ->has("WJCP"))
+				arrayWJCP = jsnPaperObj->getArray("WJCP");
 			Poco::JSON::Array::Ptr arrayGrayCP = jsnPaperObj->getArray("GrayCP");
 			Poco::JSON::Array::Ptr arrayWhiteCP = jsnPaperObj->getArray("WhiteCP");
 			Poco::JSON::Array::Ptr arraySn = jsnPaperObj->getArray("snList");
@@ -635,6 +638,45 @@ pMODEL LoadModelFile(CString strModelPath)
 
 				paperModelInfo->lQK_CP.push_back(rc);
 			}
+			if (jsnPaperObj->has("WJCP"))
+			{
+				for (int i = 0; i < arrayWJCP->size(); i++)
+				{
+					Poco::JSON::Object::Ptr jsnRectInfoObj = arrayWJCP->getObject(i);
+					RECTINFO rc;
+					rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
+					rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
+					rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+
+					if (jsnRectInfoObj->has("standardArea"))
+						rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
+					if (jsnRectInfoObj->has("standardDensity"))
+						rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+					if (jsnRectInfoObj->has("standardMeanGray"))
+						rc.fStandardMeanGray = jsnRectInfoObj->get("standardMeanGray").convert<float>();
+					if (jsnRectInfoObj->has("standardStddev"))
+						rc.fStandardStddev = jsnRectInfoObj->get("standardStddev").convert<float>();
+
+					rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
+					rc.nHItem = jsnRectInfoObj->get("hHeadItem").convert<int>();
+					rc.nVItem = jsnRectInfoObj->get("vHeadItem").convert<int>();
+					rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
+					rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
+					rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
+					rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+
+					if (jsnRectInfoObj->has("gaussKernel"))
+						rc.nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
+					if (jsnRectInfoObj->has("sharpKernel"))
+						rc.nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
+					if (jsnRectInfoObj->has("cannyKernel"))
+						rc.nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();
+					if (jsnRectInfoObj->has("dilateKernel"))
+						rc.nDilateKernel = jsnRectInfoObj->get("dilateKernel").convert<int>();
+
+					paperModelInfo->lWJ_CP.push_back(rc);
+				}
+			}			
 			for (int i = 0; i < arrayGrayCP->size(); i++)
 			{
 				Poco::JSON::Object::Ptr jsnRectInfoObj = arrayGrayCP->getObject(i);
@@ -1053,6 +1095,23 @@ int GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, RECT
 			{
 				RECTLIST::iterator it = pPaperModel->lQK_CP.begin();
 				for (int i = 0; it != pPaperModel->lQK_CP.end(); i++, it++)
+				{
+					if (it->rt.contains(pt))
+					{
+						nFind = i;
+						pRc = &(*it);
+						break;
+					}
+				}
+			}
+		}
+	case WJ_CP:
+		if (eType == WJ_CP || eType == UNKNOWN)
+		{
+			if (!nFind)
+			{
+				RECTLIST::iterator it = pPaperModel->lWJ_CP.begin();
+				for (int i = 0; it != pPaperModel->lWJ_CP.end(); i++, it++)
 				{
 					if (it->rt.contains(pt))
 					{
@@ -3346,6 +3405,17 @@ bool InitModelRecog(pMODEL pModel)
 
 			cv::Mat matComp = matSrc(itQK->rt);
 			RecogGrayValue(matComp, *itQK);
+		}
+		RECTLIST::iterator itWJ = pPicModel->lWJ_CP.begin();
+		for (; itWJ != pPicModel->lWJ_CP.end(); itWJ++)
+		{
+			itWJ->nThresholdValue = 150;
+			itWJ->fStandardValuePercent = 0.75;
+
+			GetPositionByHead(pPicModel, itWJ->nHItem, itWJ->nVItem, itWJ->rt);
+
+			cv::Mat matComp = matSrc(itWJ->rt);
+			RecogGrayValue(matComp, *itWJ);
 		}
 		RECTLIST::iterator itGray = pPicModel->lGray.begin();
 		for (; itGray != pPicModel->lGray.end(); itGray++)

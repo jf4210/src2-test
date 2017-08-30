@@ -66,7 +66,7 @@
 //	#define PrintRecogLog		//打印识别日志
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define	 TEST_MODEL_NAME	//模板名称测试
-	#define Test_Data			//测试数据，测试模式
+//	#define Test_Data			//测试数据，测试模式
 //	#define TEST_TIP_SHOW		//提示信息显示测试
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
 //	#define USE_TESSERACT		//使用Tesseract进行数字汉字识别
@@ -184,6 +184,7 @@ extern int					_nScanCount_;				//扫描计数器，当前已扫描多少份
 extern int					_nScanPaperCount_;			//当前已经扫描人数，从软件启动开始计数
 extern int					_nGetModelPic_;				//获取模板图片状态，0-未获取，1-正在获取(下载)， 2-获取模板图片成功，3-服务器无模板图片，4-服务器读取失败
 extern int					_nDoubleScan_;				//是否双面扫描，0-单面， 1-双面，用于双面图像调换时处理
+extern int					_nScanAnswerModel_;			//0-扫描试卷， 1-扫描Omr答案， 2-扫描主观题答案
 
 extern CString				g_strCurrentPath;
 extern std::string			g_strPaperSavePath;
@@ -285,6 +286,7 @@ typedef struct _PaperInfo_
 	bool		bReScan;			//重新扫描标识，在准考证号修改窗口中设置
 	int			nPicsExchange;		//图像调换标识，即第一页与第二页调换位置，调换次数，0-未调换，1-调换1次。。。
 	int			nQKFlag;			//缺考标识
+	int			nWJFlag;			//违纪标识
 	int			nZkzhInBmkStatus;	//准考证号是否在报名库中存在，在报名库列表不存在时，此项无效, 0--报名库中不存在，1--报名库中存在，-1--扫描时重号了
 	//++从Pkg恢复Papers时的参数
 	int			nChkFlag;			//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不進行圖片识别
@@ -311,6 +313,7 @@ typedef struct _PaperInfo_
 		nPicsExchange = 0;
 		nIndex = 0;
 		nQKFlag = 0;
+		nWJFlag = 0;
 		nChkFlag = 0;
 		pModel = NULL;
 		pPapers = NULL;
