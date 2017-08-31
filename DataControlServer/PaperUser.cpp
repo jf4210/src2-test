@@ -57,12 +57,20 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 			ST_CMD_HEADER header = *(ST_CMD_HEADER*)m_PacketBuf;
 			if (header.usVerifyCode != VERIFYCODE)
 			{
+				char szLog[200] = { 0 };
+				strcpy_s(szLog, "非法数据包，连接关闭(包头非法)");
+				g_Log.LogOut(szLog);
+				std::cout << szLog << std::endl;
 				m_pTcpContext->ReleaseConnections();
 				return;
 			}
 
 			if (header.usCmd != REQUEST_UPLOADANS)
 			{
+				char szLog[200] = { 0 };
+				strcpy_s(szLog, "非法数据包，连接关闭(包命令非法)");
+				g_Log.LogOut(szLog);
+				std::cout << szLog << std::endl;
 				m_pTcpContext->ReleaseConnections();
 				return;
 			}
@@ -96,6 +104,12 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 				if (WriteAnswerFile(m_PacketBuf, nDataLen) <= 0)
 				{
 #if 1
+					m_end = clock();
+					char szLog[300] = { 0 };
+					sprintf(szLog, "写文件失败，连接关闭: %s, Timed = %d", m_szFileName, m_end - m_start);
+					g_Log.LogOut(szLog);
+					std::cout << szLog << std::endl;
+
 					m_bIOError = true;
 					m_pTcpContext->ReleaseConnections();	//写文件错误直接断开，让客户端重连
 					return;
@@ -104,7 +118,7 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 					{
 						m_end = clock();
 						char szLog[300] = { 0 };
-						sprintf(szLog, "WriteAnswerFile: %s failed. Timed = %d", m_szFileName, m_end - m_start);
+						sprintf(szLog, "WriteAnswerFile: %s failed. Timed = %d", m_szFileName, (m_end - m_start) / 1000.0);
 						g_Log.LogOut(szLog);
 
 						m_bIOError = true;											
@@ -261,15 +275,25 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 							strExtFileName = strExtFileName.substr(nPos, strExtFileName.length());
 							if (strExtFileName == ".typkg")		//武汉天喻版本，收到文件后重命名	8.18	*******	注意	********
 							{
-								Poco::Path filePath(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
-								std::string strNewFilePath = SysSet.m_strPapersBackupPath + "\\" + filePath.getBaseName() + ".zip";
+								try
+								{
+									Poco::Path filePath(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
+									std::string strNewFilePath = SysSet.m_strPapersBackupPath + "\\" + filePath.getBaseName() + ".zip";
 
-								Poco::File newFile(CMyCodeConvert::Gb2312ToUtf8(strNewFilePath));
-								if (newFile.exists())
-									newFile.remove(true);
+									Poco::File newFile(CMyCodeConvert::Gb2312ToUtf8(strNewFilePath));
+									if (newFile.exists())
+										newFile.remove(true);
 
-								Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
-								fileList.renameTo(CMyCodeConvert::Gb2312ToUtf8(strNewFilePath));
+									Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
+									fileList.renameTo(CMyCodeConvert::Gb2312ToUtf8(strNewFilePath));
+								}
+								catch (Poco::Exception& exc)
+								{
+									std::string strFileName = m_szFileName;
+									std::string strErrInfo = Poco::format("重命名并移动试卷袋(%s)失败, %s", strFileName, exc.message());
+									g_Log.LogOutError(strErrInfo);
+									std::cout << strErrInfo << std::endl;
+								}								
 							}
 							else if (strExtFileName == ".pkg")
 							{

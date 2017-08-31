@@ -247,6 +247,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			bResult = RecogABModel(nPic, matCompPic, *itPic, pModelInfo);
 			bResult = RecogCourse(nPic, matCompPic, *itPic, pModelInfo);
 			bResult = RecogQKCP(nPic, matCompPic, *itPic, pModelInfo);
+			bResult = RecogWJCP(nPic, matCompPic, *itPic, pModelInfo);
 			bResult = RecogGrayCP(nPic, matCompPic, *itPic, pModelInfo);
 			bResult = RecogWhiteCP(nPic, matCompPic, *itPic, pModelInfo);
 			bResult = RecogSN(nPic, matCompPic, *itPic, pModelInfo);
@@ -265,6 +266,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			if(bResult) bResult = RecogABModel(nPic, matCompPic, *itPic, pModelInfo);
 			if(bResult) bResult = RecogCourse(nPic, matCompPic, *itPic, pModelInfo);
 			if(bResult) bResult = RecogQKCP(nPic, matCompPic, *itPic, pModelInfo);
+			if(bResult) bResult = RecogWJCP(nPic, matCompPic, *itPic, pModelInfo);
 			if(bResult) bResult = RecogGrayCP(nPic, matCompPic, *itPic, pModelInfo);
 			if(bResult) bResult = RecogWhiteCP(nPic, matCompPic, *itPic, pModelInfo);
 			if (bResult) bResult = RecogSN(nPic, matCompPic, *itPic, pModelInfo);

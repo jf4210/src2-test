@@ -1480,7 +1480,7 @@ void CV_picture::OnPaint()
 		CDC* pDC = this->GetDC();
 		HDC hDC = pDC->GetSafeHdc();
 #if 1
-	#ifdef _DEBUG
+	#if 1
 		ShowMat(m_drawing, this->GetSafeHwnd());
 
 		if (m_bShowRectTracker_H)

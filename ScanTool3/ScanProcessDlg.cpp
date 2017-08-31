@@ -382,6 +382,7 @@ void CScanProcessDlg::WriteJsonFile()
 		jsnPaper.set("name", (*itNomarlPaper)->strStudentInfo);
 		jsnPaper.set("zkzh", (*itNomarlPaper)->strSN);
 		jsnPaper.set("qk", (*itNomarlPaper)->nQKFlag);
+		jsnPaper.set("wj", (*itNomarlPaper)->nWJFlag);
 		jsnPaper.set("standardAnswer", _nScanAnswerModel_);		//0-正常试卷，1-Omr标答，2-主观题标答
 
 		int nIssueFlag = 0;			//0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
@@ -493,6 +494,7 @@ void CScanProcessDlg::WriteJsonFile()
 			jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
 			jsnPaper.set("zkzh", (*itIssuePaper)->strSN);
 			jsnPaper.set("qk", (*itIssuePaper)->nQKFlag);
+			jsnPaper.set("wj", (*itIssuePaper)->nWJFlag);
 			jsnPaper.set("standardAnswer", _nScanAnswerModel_);		//0-正常试卷，1-Omr标答，2-主观题标答
 
 			int nIssueFlag = 0;			//0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
@@ -1406,7 +1408,6 @@ void CScanProcessDlg::OnTimer(UINT_PTR nIDEvent)
 					bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
 				}
 			#ifdef TEST_MODIFY_ZKZH_CHIld
-
 				CScanTool3Dlg* pDlg = (CScanTool3Dlg*)AfxGetMainWnd();
 				pDlg->SwitchModifyZkzkDlg(_pModel_, _pCurrPapersInfo_, m_pStudentMgr);
 			#else
