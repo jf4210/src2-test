@@ -300,7 +300,18 @@ void CTcpClient::HandleCmd()
 					if (pExamInfo->nModel == 1)
 					{
 						if (objExamInfo->has("personid"))
+						{
 							pExamInfo->strPersonID = objExamInfo->get("personid").convert<std::string>();
+							int nPos = pExamInfo->strPersonID.find(",");
+							if (nPos != std::string::npos)
+							{
+								std::string stdTmpPersonId = pExamInfo->strPersonID.substr(0, nPos);
+								std::string strLog = Poco::format("原始personID字符串(%s), 截取后(%s)", pExamInfo->strPersonID, stdTmpPersonId);
+								g_pLogger->information(strLog);
+
+								pExamInfo->strPersonID = stdTmpPersonId;
+							}
+						}
 					}
 					if (!objExamInfo->isNull("examType"))
 					{

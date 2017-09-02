@@ -272,110 +272,120 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 							#ifndef TEST_FILE_PRESSURE
 							std::string strExtFileName = m_szFileName;
 							int nPos = strExtFileName.rfind('.');
-							strExtFileName = strExtFileName.substr(nPos, strExtFileName.length());
-							if (strExtFileName == ".typkg")		//武汉天喻版本，收到文件后重命名	8.18	*******	注意	********
+							if (nPos != std::string::npos)
 							{
-								try
+								strExtFileName = strExtFileName.substr(nPos, strExtFileName.length());
+								if (strExtFileName == ".typkg")		//武汉天喻版本，收到文件后重命名	8.18	*******	注意	********
 								{
-									Poco::Path filePath(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
-									std::string strNewFilePath = SysSet.m_strPapersBackupPath + "\\" + filePath.getBaseName() + ".zip";
-
-									Poco::File newFile(CMyCodeConvert::Gb2312ToUtf8(strNewFilePath));
-									if (newFile.exists())
-										newFile.remove(true);
-
-									Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
-									fileList.renameTo(CMyCodeConvert::Gb2312ToUtf8(strNewFilePath));
-								}
-								catch (Poco::Exception& exc)
-								{
-									std::string strFileName = m_szFileName;
-									std::string strErrInfo = Poco::format("重命名并移动试卷袋(%s)失败, %s", strFileName, exc.message());
-									g_Log.LogOutError(strErrInfo);
-									std::cout << strErrInfo << std::endl;
-								}								
-							}
-							else if (strExtFileName == ".pkg")
-							{
-								std::string strUploadPath = SysSet.m_strUpLoadPath + "\\";
-								strUploadPath.append(m_szFileName);
-								try
-								{
-									Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
-									filePapers.moveTo(CMyCodeConvert::Gb2312ToUtf8(strUploadPath));
-								}
-								catch (Poco::Exception& exc)
-								{
-									std::string strFileName = m_szFileName;
-									std::string strErrInfo = Poco::format("移动试卷袋(%s)失败,%s", strFileName, exc.message());
-									g_Log.LogOutError(strErrInfo);
-									std::cout << strErrInfo << std::endl;
-								}
-
-								pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
-								pDecompressTask->strFilePath = strUploadPath;
-								pDecompressTask->strFileBaseName = m_szFileName;
-								pDecompressTask->strFileBaseName = pDecompressTask->strFileBaseName.substr(0, nPos);	//pDecompressTask->strFileBaseName.length() - 4
-								pDecompressTask->strSrcFileName = m_szFileName;
-								g_fmDecompressLock.lock();
-								g_lDecompressTask.push_back(pDecompressTask);
-								g_fmDecompressLock.unlock();
-							}
-							else	//上传的模板图像
-							{
-//								MAP_MODEL_PIC::iterator itFind = _mapModelPic__.find(szIndex);
-
-								std::string strModelPicName = m_szFileName;
-								std::string strExamID;
-								std::string strSubjectID;
-								std::string strPicIndex;
-								std::string strPicOriName;
-								std::string strExtName;
-								int nPos = 0;
-								int nOldPos = 0;
-								nPos = strModelPicName.find("_");
-								if(nPos != std::string::npos)
-								{
-									strExamID = strModelPicName.substr(0, nPos);
-									nOldPos = nPos;
-									nPos = strModelPicName.find("_", nPos + 1);
-									strSubjectID = strModelPicName.substr(nOldPos + 1, nPos - nOldPos - 1);
-									nOldPos = nPos;
-									nPos = strModelPicName.find("_", nPos + 1);
-									strPicIndex = strModelPicName.substr(nOldPos + 1, nPos - nOldPos - 1);
-									
-									nPos = strModelPicName.find("_#_");
-									nOldPos = nPos;
-									nPos = strModelPicName.find(".", nPos + 3);
-									strPicOriName = strModelPicName.substr(nOldPos + 3, nPos - nOldPos - 3);
-									strExtName = strModelPicName.substr(nPos);
-
-
-									std::string strLog;
-									strLog = "获取到模板图片(" + strExamID + "_" + strSubjectID + "_" + strPicIndex + strExtName + ")";
-									std::cout << strLog << std::endl;
-
-									std::string strPicSaveDir = SysSet.m_strModelSavePath + "\\" + strExamID;
-									std::string strPicSavePath = strPicSaveDir + "\\" + strExamID + "_" + strSubjectID + "_" + strPicIndex + strExtName;
-
 									try
 									{
-										Poco::File fileModelPicPath(CMyCodeConvert::Gb2312ToUtf8(strPicSaveDir));
-										fileModelPicPath.createDirectories();
+										Poco::Path filePath(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
+										std::string strNewFilePath = SysSet.m_strPapersBackupPath + "\\" + filePath.getBaseName() + ".zip";
 
-										Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(strPicSavePath));
-										if (fileModel.exists())
-											fileModel.remove(true);
-										
+										Poco::File newFile(CMyCodeConvert::Gb2312ToUtf8(strNewFilePath));
+										if (newFile.exists())
+											newFile.remove(true);
+
 										Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
-										fileList.renameTo(CMyCodeConvert::Gb2312ToUtf8(strPicSavePath));
+										fileList.renameTo(CMyCodeConvert::Gb2312ToUtf8(strNewFilePath));
 									}
-									catch (Poco::Exception &e)
+									catch (Poco::Exception& exc)
 									{
-										std::cout << "接收模板图像检查路径时异常: " << e.displayText() << std::endl;
+										std::string strFileName = m_szFileName;
+										std::string strErrInfo = Poco::format("重命名并移动试卷袋(%s)失败, %s", strFileName, exc.message());
+										g_Log.LogOutError(strErrInfo);
+										std::cout << strErrInfo << std::endl;
+									}
+								}
+								else if (strExtFileName == ".pkg")
+								{
+									std::string strUploadPath = SysSet.m_strUpLoadPath + "\\";
+									strUploadPath.append(m_szFileName);
+									try
+									{
+										Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
+										filePapers.moveTo(CMyCodeConvert::Gb2312ToUtf8(strUploadPath));
+									}
+									catch (Poco::Exception& exc)
+									{
+										std::string strFileName = m_szFileName;
+										std::string strErrInfo = Poco::format("移动试卷袋(%s)失败,%s", strFileName, exc.message());
+										g_Log.LogOutError(strErrInfo);
+										std::cout << strErrInfo << std::endl;
 									}
 
+									pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+									pDecompressTask->strFilePath = strUploadPath;
+									pDecompressTask->strFileBaseName = m_szFileName;
+									pDecompressTask->strFileBaseName = pDecompressTask->strFileBaseName.substr(0, nPos);	//pDecompressTask->strFileBaseName.length() - 4
+									pDecompressTask->strSrcFileName = m_szFileName;
+									g_fmDecompressLock.lock();
+									g_lDecompressTask.push_back(pDecompressTask);
+									g_fmDecompressLock.unlock();
 								}
+								else	//上传的模板图像
+								{
+									//								MAP_MODEL_PIC::iterator itFind = _mapModelPic__.find(szIndex);
+
+									std::string strModelPicName = m_szFileName;
+									std::string strExamID;
+									std::string strSubjectID;
+									std::string strPicIndex;
+									std::string strPicOriName;
+									std::string strExtName;
+									int nPos = 0;
+									int nOldPos = 0;
+									nPos = strModelPicName.find("_");
+									if (nPos != std::string::npos)
+									{
+										strExamID = strModelPicName.substr(0, nPos);
+										nOldPos = nPos;
+										nPos = strModelPicName.find("_", nPos + 1);
+										strSubjectID = strModelPicName.substr(nOldPos + 1, nPos - nOldPos - 1);
+										nOldPos = nPos;
+										nPos = strModelPicName.find("_", nPos + 1);
+										strPicIndex = strModelPicName.substr(nOldPos + 1, nPos - nOldPos - 1);
+
+										nPos = strModelPicName.find("_#_");
+										nOldPos = nPos;
+										nPos = strModelPicName.find(".", nPos + 3);
+										strPicOriName = strModelPicName.substr(nOldPos + 3, nPos - nOldPos - 3);
+										strExtName = strModelPicName.substr(nPos);
+
+
+										std::string strLog;
+										strLog = "获取到模板图片(" + strExamID + "_" + strSubjectID + "_" + strPicIndex + strExtName + ")";
+										std::cout << strLog << std::endl;
+
+										std::string strPicSaveDir = SysSet.m_strModelSavePath + "\\" + strExamID;
+										std::string strPicSavePath = strPicSaveDir + "\\" + strExamID + "_" + strSubjectID + "_" + strPicIndex + strExtName;
+
+										try
+										{
+											Poco::File fileModelPicPath(CMyCodeConvert::Gb2312ToUtf8(strPicSaveDir));
+											fileModelPicPath.createDirectories();
+
+											Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(strPicSavePath));
+											if (fileModel.exists())
+												fileModel.remove(true);
+
+											Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
+											fileList.renameTo(CMyCodeConvert::Gb2312ToUtf8(strPicSavePath));
+										}
+										catch (Poco::Exception &e)
+										{
+											std::cout << "接收模板图像检查路径时异常: " << e.displayText() << std::endl;
+										}
+
+									}
+								}
+							}
+							else
+							{
+								std::string strFileName = m_szFileName;
+								std::string strErrInfo = Poco::format("接收到非法试卷袋(%s)，丢弃不处理", strFileName);
+								g_Log.LogOutError(strErrInfo);
+								std::cout << strErrInfo << std::endl;
 							}
 							#else
 							Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
