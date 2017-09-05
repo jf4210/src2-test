@@ -12,6 +12,7 @@ public:
 	void	HandleTask(pSCAN_REQ_TASK pTask);
 
 	bool ParseResult(std::string& strInput, pSCAN_REQ_TASK pTask);
+	void HandleHttpFail(pSCAN_REQ_TASK pTask, std::string strSendData);
 
 	int modelHandle(pSCAN_REQ_TASK pTask, Poco::JSON::Object::Ptr object);
 

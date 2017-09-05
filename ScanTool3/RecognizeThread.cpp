@@ -22,6 +22,8 @@ void CRecognizeThread::run()
 	TRACE("RecognizeThread start...\n");
 	eExit.reset();
 
+	InitCharacterRecog();
+
 	while (!g_nExitFlag)
 	{
 		pRECOGTASK pTask = NULL;
@@ -59,6 +61,10 @@ void CRecognizeThread::run()
 		it = _mapModel.erase(it);
 	}
 	eExit.set();
+
+#ifdef USE_TESSERACT
+	SAFE_RELEASE(m_pTess);
+#endif
 	TRACE("RecognizeThread exit 0\n");
 }
 
@@ -241,6 +247,10 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		#ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
 			bResult = PicTransfer(nPic, matCompPic, (*itPic)->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, inverseMat);
+		#endif
+
+		#ifdef USE_TESSERACT
+			bResult = RecogCharacter(nPic, matCompPic, *itPic, pModelInfo);
 		#endif
 			bResult = RecogHHead(nPic, matCompPic, *itPic, pModelInfo);
 			bResult = RecogVHead(nPic, matCompPic, *itPic, pModelInfo);
@@ -598,6 +608,146 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 		TRACE(szLog);
 	}
 	
+	return bResult;
+}
+
+bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+{
+	bool bResult = true;
+
+	clock_t start, end;
+	start = clock();
+	std::string strLog;
+	strLog = Poco::format("图片%s\n", pPic->strPicName);
+
+	CHARACTER_ANCHOR_AREA_LIST::iterator itBigRecogCharRt = pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.begin();
+	for (int i = 0; itBigRecogCharRt != pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.end(); i++, itBigRecogCharRt++)
+	{
+		ST_CHARACTER_ANCHOR_AREA stBigRecogCharRt = *itBigRecogCharRt;
+
+		std::vector<Rect>RectCompList;
+		try
+		{
+			if (stBigRecogCharRt.rt.x < 0) stBigRecogCharRt.rt.x = 0;
+			if (stBigRecogCharRt.rt.y < 0) stBigRecogCharRt.rt.y = 0;
+			if (stBigRecogCharRt.rt.br().x > matCompPic.cols)
+			{
+				stBigRecogCharRt.rt.width = matCompPic.cols - stBigRecogCharRt.rt.x;
+			}
+			if (stBigRecogCharRt.rt.br().y > matCompPic.rows)
+			{
+				stBigRecogCharRt.rt.height = matCompPic.rows - stBigRecogCharRt.rt.y;
+			}
+
+			Mat matCompRoi;
+			matCompRoi = matCompPic(stBigRecogCharRt.rt);
+
+			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+			GaussianBlur(matCompRoi, matCompRoi, cv::Size(stBigRecogCharRt.nGaussKernel, stBigRecogCharRt.nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
+			SharpenImage(matCompRoi, matCompRoi, stBigRecogCharRt.nSharpKernel);
+
+			double dThread = threshold(matCompRoi, matCompRoi, stBigRecogCharRt.nThresholdValue, 255, THRESH_OTSU | THRESH_BINARY);
+
+			m_pTess->SetImage((uchar*)matCompRoi.data, matCompRoi.cols, matCompRoi.rows, 1, matCompRoi.cols);
+
+			std::string strWhiteList;
+			for (auto itChar : stBigRecogCharRt.vecCharacterRt)
+				strWhiteList.append(itChar.strVal);
+			m_pTess->SetVariable("tessedit_char_whitelist", CMyCodeConvert::Gb2312ToUtf8(strWhiteList).c_str());
+
+			m_pTess->Recognize(0);
+
+			tesseract::ResultIterator* ri = m_pTess->GetIterator();
+			tesseract::PageIteratorLevel level = tesseract::RIL_SYMBOL;	//RIL_WORD
+			if (ri != 0)
+			{
+				int nIndex = 1;
+
+				ST_CHARACTER_ANCHOR_AREA stRecogCharacterRt;
+				stRecogCharacterRt.nIndex = stBigRecogCharRt.nIndex;
+				stRecogCharacterRt.nThresholdValue = stBigRecogCharRt.nThresholdValue;
+				stRecogCharacterRt.nGaussKernel = stBigRecogCharRt.nGaussKernel;
+				stRecogCharacterRt.nSharpKernel = stBigRecogCharRt.nSharpKernel;
+				stRecogCharacterRt.nCannyKernel = stBigRecogCharRt.nCannyKernel;
+				stRecogCharacterRt.nDilateKernel = stBigRecogCharRt.nDilateKernel;
+				stRecogCharacterRt.rt = stBigRecogCharRt.rt;
+
+				do
+				{
+					const char* word = ri->GetUTF8Text(level);
+					float conf = ri->Confidence(level);
+					if (word && strcmp(word, " ") != 0 && conf >= 75)
+					{
+						int x1, y1, x2, y2;
+						ri->BoundingBox(level, &x1, &y1, &x2, &y2);
+						Point start, end;
+						start.x = stBigRecogCharRt.rt.x + x1;
+						start.y = stBigRecogCharRt.rt.y + y1;
+						end.x = stBigRecogCharRt.rt.x + x2;
+						end.y = stBigRecogCharRt.rt.y + y2;
+						Rect rtSrc(start, end);
+
+						ST_CHARACTER_ANCHOR_POINT stCharRt;
+						stCharRt.nIndex = nIndex;
+						stCharRt.fConfidence = conf;
+						stCharRt.rc.eCPType = CHARACTER_AREA;
+						stCharRt.rc.rt = rtSrc;
+
+						stCharRt.rc.nThresholdValue = stBigRecogCharRt.nThresholdValue;
+						stCharRt.rc.nGaussKernel = stBigRecogCharRt.nGaussKernel;
+						stCharRt.rc.nSharpKernel = stBigRecogCharRt.nSharpKernel;
+						stCharRt.rc.nCannyKernel = stBigRecogCharRt.nCannyKernel;
+						stCharRt.rc.nDilateKernel = stBigRecogCharRt.nDilateKernel;
+
+						stCharRt.strVal = CMyCodeConvert::Utf8ToGb2312(word);
+						stRecogCharacterRt.vecCharacterRt.push_back(stCharRt);
+						nIndex++;
+					}
+				} while (ri->Next(level));
+
+				pPic->lCharacterAnchorArea.push_back(stRecogCharacterRt);
+			}
+		}
+		catch (...)
+		{
+			std::string strLog2 = Poco::format("识别文字定位区域(%d)异常\n", i);
+			strLog.append(strLog2);
+			TRACE(strLog2.c_str());
+
+// 			pPic->bFindIssue = true;
+// 			pPic->lIssueRect.push_back(stBigRecogCharRt);
+			if (g_nOperatingMode == 2)
+			{
+				bResult = false;						//找到问题点
+				break;
+			}
+		}
+
+	}
+	if (!bResult)
+	{
+		char szLog[MAX_PATH] = { 0 };
+		sprintf_s(szLog, "识别文字定位区域失败, 图片名: %s\n", pPic->strPicName.c_str());
+		strLog.append(szLog);
+		TRACE(szLog);
+	}
+	end = clock();
+
+	std::string strRecogCharacter;
+	for (auto item : pPic->lCharacterAnchorArea)
+	{
+		for (auto item2 : item.vecCharacterRt)
+			strRecogCharacter.append(item2.strVal);
+		strRecogCharacter.append("\t");
+	}
+	std::string strTime = Poco::format("识别文字定位区域时间: %dms, 识别文字: %s\n", (int)(end - start), strRecogCharacter);
+	strLog.append(strTime);
+	g_pLogger->information(strLog);
+
+#if 1	 //重置定点，在识别出来的文字中选2个作为定点
+
+#endif
 	return bResult;
 }
 
@@ -3551,6 +3701,14 @@ bool CRecognizeThread::RecogVal_ElectOmr2(int nPic, cv::Mat& matCompPic, pST_Pic
 		TRACE(szLog);
 	}
 	return true;
+}
+
+void CRecognizeThread::InitCharacterRecog()
+{
+#ifdef USE_TESSERACT
+	m_pTess = new tesseract::TessBaseAPI();
+	m_pTess->Init(NULL, "chi_sim", tesseract::OEM_DEFAULT);
+#endif
 }
 
 bool CRecognizeThread::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, OMR_RESULT& omrResult)

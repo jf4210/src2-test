@@ -29,8 +29,8 @@
 #define DecompressTest		//解压测试，多线程解压
 
 #ifndef TO_WHTY
-	#define SOFT_VERSION "DataControlServer V1.70901-1"
-	#define SOFT_VERSION4TY "DataControlServer for TY V2.1-0901"
+	#define SOFT_VERSION "DataControlServer V1.70905-1"
+	#define SOFT_VERSION4TY "DataControlServer for TY V2.1-0905"
 #else
 	#define SOFT_VERSION "DataControlServer for TY V2.1-0309"
 #endif
@@ -170,6 +170,7 @@ typedef struct _Paper_
 {
 	int			nChkFlag;	//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不往zimg图像服务器提交
 	int			nQkFlag;	//缺考标识,0-未缺考, 1-缺考
+	int			nWjFlag;	//违纪标识,0-未违纪，1-违纪
 	int			nHasElectOmr;	//是否有多选题
 	int			nStandardAnswer;//当前试卷表示：0-正常试卷，1-Omr标答，2-主观题标答
 	int			nIssueFlag;		//问题标识，0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
@@ -188,6 +189,7 @@ typedef struct _Paper_
 	{
 		nChkFlag = 0;
 		nQkFlag = 0;
+		nWjFlag = 0;
 		nHasElectOmr = 0;
 		nIssueFlag = 0;
 		nStandardAnswer = 0;

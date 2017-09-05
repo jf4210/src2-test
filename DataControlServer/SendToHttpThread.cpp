@@ -859,6 +859,7 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 		jsnPaper.set("paperName", pPaper->strName);
 		jsnPaper.set("studentKey", strStudentKey);			//考试唯一MD5
 		jsnPaper.set("qkStatus", pPaper->nQkFlag);			//缺考信息
+		jsnPaper.set("wjStatus", pPaper->nWjFlag);			//违纪信息
 		jsnPaper.set("nOmrAnswerFlag", pPaper->nStandardAnswer);	//当前试卷为：0-正常考生试卷， 1-客观题标答(当前试卷答案为客观题标答), 2-主观题标答
 		jsnPaper.set("issueFlag", pPaper->nIssueFlag);		//问题试卷标识，0-正常试卷，完全机器识别正常的，无人工干预，1-正常试卷，扫描员手动修改过，
 															//2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。 //注意，如果没有这个标识，则默认是正常试卷

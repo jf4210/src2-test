@@ -326,7 +326,6 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 								else	//上传的模板图像
 								{
 									//								MAP_MODEL_PIC::iterator itFind = _mapModelPic__.find(szIndex);
-
 									std::string strModelPicName = m_szFileName;
 									std::string strExamID;
 									std::string strSubjectID;

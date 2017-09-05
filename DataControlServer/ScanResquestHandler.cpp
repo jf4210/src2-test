@@ -117,7 +117,11 @@ void CScanResquestHandler::HandleTask(pSCAN_REQ_TASK pTask)
 			std::string strLog = Poco::format("ÃüÁî: %s\turi: %s\t·¢ËÍÊý¾Ý: %s\t\tºó¶ËÊý¾Ý·µ»Ø´íÎó,²»ÊÇ200 OK,·µ»Øhttp´úÂë: %d", pTask->strMsg, pTask->strUri, pTask->strRequest, (int)response.getStatus());
 			g_Log.LogOut(strLog);
 			std::cout << strLog << std::endl;
-
+		#if 1
+			std::string strSendData;
+			strSendData = Poco::format("ÇëÇóÊ§°Ü£¬´íÎó´úÂë%d", (int)response.getStatus());
+			HandleHttpFail(pTask, strSendData);
+		#else
 			int nCmd = 0;
 			if (pTask->strMsg == "login")
 				nCmd = USER_RESPONSE_LOGIN;
@@ -151,6 +155,7 @@ void CScanResquestHandler::HandleTask(pSCAN_REQ_TASK pTask)
 			strSendData = Poco::format("ÇëÇóÊ§°Ü£¬´íÎó´úÂë%d", (int)response.getStatus());
 			if (pTask->pUser)
 				pTask->pUser->SendResponesInfo(nCmd, ret, (char*)strSendData.c_str(), strSendData.length());
+		#endif
 		}
 	}
 	catch (Poco::Exception& exc)
@@ -161,6 +166,10 @@ void CScanResquestHandler::HandleTask(pSCAN_REQ_TASK pTask)
 
 		std::cout << strErrorInfo << std::endl;
 		g_Log.LogOutError(strErrorInfo);
+
+		std::string strSendData;
+		strSendData = Poco::format("ÇëÇóÊ§°Ü£¬ÏêÇé:%s", exc.displayText());
+		HandleHttpFail(pTask, strSendData);
 	}
 	catch (...)
 	{
@@ -169,6 +178,9 @@ void CScanResquestHandler::HandleTask(pSCAN_REQ_TASK pTask)
 
 		std::cout << strErrorInfo << std::endl;
 		g_Log.LogOutError(strErrorInfo);
+
+		std::string strSendData = "ÇëÇóÊ§°Ü2£¬ÏêÇé:Unknown error";
+		HandleHttpFail(pTask, strSendData);
 	}
 }
 
@@ -513,6 +525,40 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 	if (pTask->pUser)
 		pTask->pUser->SendResponesInfo(nCmd, ret, (char*)strSendData.c_str(), strSendData.length());
 	return bResult;
+}
+
+void CScanResquestHandler::HandleHttpFail(pSCAN_REQ_TASK pTask, std::string strSendData)
+{
+	int nCmd = 0;
+	if (pTask->strMsg == "login")
+		nCmd = USER_RESPONSE_LOGIN;
+	else if (pTask->strMsg == "login2Ty")
+		nCmd = USER_RESPONSE_LOGIN;
+	else if (pTask->strMsg == "getUserInfo4Ty")
+		nCmd = USER_RESPONSE_LOGIN;
+	else if (pTask->strMsg == "ezs")
+		nCmd = USER_RESPONSE_EXAMINFO;
+	else if (pTask->strMsg == "createModel")
+		nCmd = USER_RESPONSE_CREATE_MODEL;
+	else if (pTask->strMsg == "setElectOmrInfo")
+		nCmd = USER_RESPONSE_ELECTOMR_MODEL;
+	else if (pTask->strMsg == "getBmk")
+		nCmd = USER_RESPONSE_GET_BMK;
+	else if (pTask->strMsg == "getExamBmk")
+		nCmd = USER_RESPONSE_GET_EXAM_BMK;
+
+	int ret = RESULT_ERROR_UNKNOWN;
+	if (pTask->strMsg == "getBmk" || pTask->strMsg == "getExamBmk")
+	{
+		ret = RESULT_GET_BMK_FAIL;
+	}
+	else if (pTask->strMsg == "ezs")
+	{
+		ret = RESULT_EXAMINFO_FAIL;
+	}
+
+	if (pTask->pUser)
+		pTask->pUser->SendResponesInfo(nCmd, ret, (char*)strSendData.c_str(), strSendData.length());
 }
 
 int CScanResquestHandler::modelHandle(pSCAN_REQ_TASK pTask, Poco::JSON::Object::Ptr object)

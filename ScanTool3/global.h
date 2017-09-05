@@ -69,7 +69,6 @@
 //	#define Test_Data			//测试数据，测试模式
 //	#define TEST_TIP_SHOW		//提示信息显示测试
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
-//	#define USE_TESSERACT		//使用Tesseract进行数字汉字识别
 #else	//release版本
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
 	#define	 TEST_MODEL_NAME	//模板名称测试
@@ -263,7 +262,10 @@ typedef struct _PicInfo_				//图片信息
 	std::string		strPicPath;		//图片路径	gb2312
 	RECTLIST		lFix;			//定点列表
 	RECTLIST		lNormalRect;	//识别出来的正常点位置
-	RECTLIST		lIssueRect;		//识别出来的问题试卷的问题点位置，只要出现问题点就不进行下一页的识别(严格模式)，或者存储已经发行的问题点，但是继续后面的识别(简单模式)
+	RECTLIST		lIssueRect;		//识别出来的问题试卷的问题点位置，只要出现问题点就不进行下一页的识别(严格模式)，或者存储已经发现的问题点，但是继续后面的识别(简单模式)
+	
+	RECTLIST		lModelFix;		//模板文字定点列表，在使用文字定位时有用
+	CHARACTER_ANCHOR_AREA_LIST lCharacterAnchorArea;	//文字定位区域
 // 	cv::Mat			matSrc;
 // 	cv::Mat			matDest;
 	_PicInfo_()
@@ -599,6 +601,7 @@ int		GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, REC
 //bool	ZipFile(CString strSrcPath, CString strDstPath, CString strExtName = _T(".zip"));
 //bool	UnZipFile(CString strZipPath);
 pMODEL	LoadModelFile(CString strModelPath);		//加载模板文件
+bool	SortByCharAnchorArea(ST_CHARACTER_ANCHOR_AREA& st1, ST_CHARACTER_ANCHOR_AREA& st2);
 bool	SortByArea(cv::Rect& rt1, cv::Rect& rt2);		//按面积排序
 bool	SortByPositionX(RECTINFO& rc1, RECTINFO& rc2);
 bool	SortByPositionY(RECTINFO& rc1, RECTINFO& rc2);
@@ -609,6 +612,8 @@ bool	SortByTH(RECTINFO& rc1, RECTINFO& rc2);
 bool	SortByOmrTH(OMR_QUESTION& rc1, OMR_QUESTION& rc2);
 bool	SortStringByDown(std::string& str1, std::string& str2);
 
+bool    GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel);	//使用文字定位时，生成文字定位的定点列表，只需要2个
+bool	GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt);
 bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 0, int nPicH = 0);
 std::string calcFileMd5(std::string strPath);
 void	CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int height);

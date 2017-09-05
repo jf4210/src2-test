@@ -52,7 +52,7 @@ typedef struct _PaperModelInfo_
 	std::vector<RECTINFO>	vecWhite;				//空白校验点
 	std::vector<OMR_QUESTION> vecOmr2;
 	std::vector<ELECTOMR_QUESTION> vecElectOmr;		//选做题信息
-	std::vector<ST_RECOG_CHARACTER_INFO> vecCharacterLocation;	//文字定位
+	std::vector<ST_CHARACTER_ANCHOR_AREA> vecCharacterLocation;	//文字定位区域
 	_PaperModelInfo_()
 	{
 		bFirstH = true;

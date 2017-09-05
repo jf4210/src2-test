@@ -185,6 +185,11 @@ BOOL CMakeModelDlg::OnInitDialog()
 //			pPaperModel->rtSNTracker = m_pModel->vecPaperModel[i]->rtSNTracker;
 			pPaperModel->rcSNTracker = m_pModel->vecPaperModel[i]->rcSNTracker;
 
+			CHARACTER_ANCHOR_AREA_LIST::iterator itRecogCharRt = m_pModel->vecPaperModel[i]->lCharacterAnchorArea.begin();
+			for (; itRecogCharRt != m_pModel->vecPaperModel[i]->lCharacterAnchorArea.end(); itRecogCharRt++)
+			{
+				pPaperModel->vecCharacterLocation.push_back(*itRecogCharRt);
+			}
 			RECTLIST::iterator itSelHTracker = m_pModel->vecPaperModel[i]->lSelHTracker.begin();
 			for (; itSelHTracker != m_pModel->vecPaperModel[i]->lSelHTracker.end(); itSelHTracker++)
 			{
@@ -1636,7 +1641,8 @@ inline void CMakeModelDlg::GetThreshold(cv::Mat& matSrc, cv::Mat& matDst)
 	case CHARACTER_AREA:
 		{
 //			nRealThreshold = m_nCharacterThreshold; break;
-			threshold(matSrc, matDst, m_nCharacterThreshold, 255, THRESH_OTSU | THRESH_BINARY);
+			double dThread = threshold(matSrc, matDst, m_nCharacterThreshold, 255, THRESH_OTSU | THRESH_BINARY);
+			TRACE("文字识别大津法处理阀值：%f\n", dThread);
 		}
 		break;
 	case GRAY_CP: 
@@ -2045,6 +2051,8 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 	m_pTess->SetImage((uchar*)imgResult.data, imgResult.cols, imgResult.rows, 1, imgResult.cols);
 	char* out = m_pTess->GetUTF8Text();
 	std::string strRecogVal1 = CMyCodeConvert::Utf8ToGb2312(out);
+	if (strRecogVal1.empty())
+		return false;
 	USES_CONVERSION;
 	CRecogCharacterDlg dlg(A2T(strRecogVal1.c_str()));
 	if (dlg.DoModal() != IDOK)
@@ -2061,7 +2069,7 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 	end = clock();
 	TRACE("识别文字时间: %d\n", end - start);
 
-	Mat imgSrc = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
+	Mat imgSrc	= m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
 	std::string strOut;
 	tesseract::ResultIterator* ri = m_pTess->GetIterator();
 	tesseract::PageIteratorLevel level = tesseract::RIL_SYMBOL;	//RIL_WORD
@@ -2069,18 +2077,24 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 	{
 		int nIndex = 1;
 
-		ST_RECOG_CHARACTER_INFO stRecogCharacterRt;
-		stRecogCharacterRt.nIndex = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.size() + 1;
+		ST_CHARACTER_ANCHOR_AREA stRecogCharacterRt;
+		int j = 0;
+		for (j = 0; j < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.size(); j++)
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[j].nIndex > j + 1)
+				break;
+		stRecogCharacterRt.nIndex = j + 1;
 		stRecogCharacterRt.nThresholdValue = m_nCharacterThreshold;
 		stRecogCharacterRt.nGaussKernel = m_nGaussKernel;
 		stRecogCharacterRt.nSharpKernel = m_nSharpKernel;
+		stRecogCharacterRt.nCannyKernel = m_nCannyKernel;
+		stRecogCharacterRt.nDilateKernel = m_nDilateKernel;
 		stRecogCharacterRt.rt = rtOri;
 
 		do
 		{
 			const char* word = ri->GetUTF8Text(level);
 			float conf = ri->Confidence(level);
-			if (word && strcmp(word, " ") != 0 && conf >= 0.75)
+			if (word && strcmp(word, " ") != 0 && conf >= 75)
 			{
 				int x1, y1, x2, y2;
 				ri->BoundingBox(level, &x1, &y1, &x2, &y2);
@@ -2091,7 +2105,7 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 				end.y = rtOri.y + y2;
 				Rect rtSrc(start, end);
 
-				ST_CHARACTER_RECTINFO stCharRt;
+				ST_CHARACTER_ANCHOR_POINT stCharRt;
 				stCharRt.nIndex = nIndex;
 				stCharRt.fConfidence = conf;
 				stCharRt.rc.eCPType = CHARACTER_AREA;
@@ -2105,14 +2119,29 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 
 				stCharRt.strVal = CMyCodeConvert::Utf8ToGb2312(word);
 				stRecogCharacterRt.vecCharacterRt.push_back(stCharRt);
-				cv::rectangle(imgSrc, rtSrc, CV_RGB(255, 0, 0), 2);
+//				cv::rectangle(imgSrc, rtSrc, CV_RGB(255, 0, 0), 2);
 				nIndex++;
 			}
 		} while (ri->Next(level));
 
 		if (stRecogCharacterRt.vecCharacterRt.size() > 0)
-			m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.push_back(stRecogCharacterRt);
+		{
+			Mat tmp = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
 
+			cv::Rect rtTmp = stRecogCharacterRt.rt;
+			cv::rectangle(imgSrc, rtTmp, CV_RGB(181, 115, 173), 2);
+			cv::rectangle(tmp, rtTmp, CV_RGB(170, 215, 111), -1);
+			for (int i = 0; i < stRecogCharacterRt.vecCharacterRt.size(); i++)
+			{
+				cv::Rect rt = stRecogCharacterRt.vecCharacterRt[i].rc.rt;
+				cv::rectangle(imgSrc, rt, CV_RGB(255, 0, 0), 2);
+				cv::rectangle(tmp, rt, CV_RGB(168, 86, 157), -1);
+			}
+			m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.push_back(stRecogCharacterRt);
+			std::sort(m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.begin(), m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.end(), SortByCharAnchorArea);
+
+			cv::addWeighted(imgSrc, 0.5, tmp, 0.5, 0, imgSrc);
+		}
 	}
 	m_pModelPicShow->ShowPic(imgSrc);
 #endif
@@ -2683,7 +2712,6 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 {
 	if (!m_pModel)
 	{
-//		AfxMessageBox(_T("请先创建模板"));
 		CNewMessageBox dlg;
 		dlg.setShowInfo(2, 1, "请先创建模板");
 		dlg.DoModal();
@@ -2745,6 +2773,8 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 		RecogFixWithHead(i);
 		//--
 
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecCharacterLocation.size(); j++)
+			pPaperModel->lCharacterAnchorArea.push_back(m_vecPaperModelInfo[i]->vecCharacterLocation[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecHTracker.size(); j++)
 			pPaperModel->lSelHTracker.push_back(m_vecPaperModelInfo[i]->vecHTracker[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecVTracker.size(); j++)
@@ -2928,6 +2958,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		Poco::JSON::Array jsnWhiteCPArry;
 		Poco::JSON::Array jsnOMRArry;
 		Poco::JSON::Array jsnElectOmrArry;
+		Poco::JSON::Array jsnCharacterAnchorAreaArry;
 		RECTLIST::iterator itFix = pModel->vecPaperModel[i]->lFix.begin();
 		for (; itFix != pModel->vecPaperModel[i]->lFix.end(); itFix++)
 		{
@@ -3323,6 +3354,60 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnTHObj.set("omrlist", jsnArry);
 			jsnElectOmrArry.add(jsnTHObj);
 		}
+		CHARACTER_ANCHOR_AREA_LIST::iterator itRecogCharInfo = pModel->vecPaperModel[i]->lCharacterAnchorArea.begin();
+		for (; itRecogCharInfo != pModel->vecPaperModel[i]->lCharacterAnchorArea.end(); itRecogCharInfo++)
+		{
+			Poco::JSON::Object jsnCharacterAnchorAreaObj;
+			Poco::JSON::Array  jsnArry;
+			std::vector<ST_CHARACTER_ANCHOR_POINT>::iterator itCharRt = itRecogCharInfo->vecCharacterRt.begin();
+			for (; itCharRt != itRecogCharInfo->vecCharacterRt.end(); itCharRt++)
+			{
+				RECTINFO rcTmp = itCharRt->rc;
+				Poco::JSON::Object jsnObj;
+				jsnObj.set("eType", (int)rcTmp.eCPType);
+				jsnObj.set("nTH", rcTmp.nTH);
+				jsnObj.set("nAnswer", rcTmp.nAnswer);
+				jsnObj.set("left", rcTmp.rt.x);
+				jsnObj.set("top", rcTmp.rt.y);
+				jsnObj.set("width", rcTmp.rt.width);
+				jsnObj.set("height", rcTmp.rt.height);
+				jsnObj.set("hHeadItem", rcTmp.nHItem);
+				jsnObj.set("vHeadItem", rcTmp.nVItem);
+				jsnObj.set("thresholdValue", rcTmp.nThresholdValue);
+				jsnObj.set("standardValPercent", rcTmp.fStandardValuePercent);
+				jsnObj.set("standardVal", rcTmp.fStandardValue);
+				jsnObj.set("standardArea", rcTmp.fStandardArea);
+				jsnObj.set("standardDensity", rcTmp.fStandardDensity);
+				jsnObj.set("standardMeanGray", rcTmp.fStandardMeanGray);
+				jsnObj.set("standardStddev", rcTmp.fStandardStddev);
+
+				jsnObj.set("gaussKernel", rcTmp.nGaussKernel);
+				jsnObj.set("sharpKernel", rcTmp.nSharpKernel);
+				jsnObj.set("cannyKernel", rcTmp.nCannyKernel);
+				jsnObj.set("dilateKernel", rcTmp.nDilateKernel);
+
+				//------------------
+				jsnObj.set("nIndex", itCharRt->nIndex);
+				jsnObj.set("fConfidence", itCharRt->fConfidence);
+				jsnObj.set("strRecogChar", CMyCodeConvert::Gb2312ToUtf8(itCharRt->strVal));
+				jsnArry.add(jsnObj);
+			}
+			jsnCharacterAnchorAreaObj.set("nIndex", itRecogCharInfo->nIndex);
+			jsnCharacterAnchorAreaObj.set("nThreshold", itRecogCharInfo->nThresholdValue);
+
+			jsnCharacterAnchorAreaObj.set("gaussKernel", itRecogCharInfo->nGaussKernel);
+			jsnCharacterAnchorAreaObj.set("sharpKernel", itRecogCharInfo->nSharpKernel);
+			jsnCharacterAnchorAreaObj.set("cannyKernel", itRecogCharInfo->nCannyKernel);
+			jsnCharacterAnchorAreaObj.set("dilateKernel", itRecogCharInfo->nDilateKernel);
+
+			jsnCharacterAnchorAreaObj.set("left", itRecogCharInfo->rt.x);
+			jsnCharacterAnchorAreaObj.set("top", itRecogCharInfo->rt.y);
+			jsnCharacterAnchorAreaObj.set("width", itRecogCharInfo->rt.width);
+			jsnCharacterAnchorAreaObj.set("height", itRecogCharInfo->rt.height);
+
+			jsnCharacterAnchorAreaObj.set("characterAnchorPointList", jsnArry);
+			jsnCharacterAnchorAreaArry.add(jsnCharacterAnchorAreaObj);
+		}
 		jsnPaperObj.set("paperNum", i);
 		jsnPaperObj.set("modelPicName", CMyCodeConvert::Gb2312ToUtf8(T2A(strPicName)));		//CMyCodeConvert::Gb2312ToUtf8(T2A(strPicName))
 		jsnPaperObj.set("FixCP", jsnFixCPArry);
@@ -3340,6 +3425,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		jsnPaperObj.set("selOmrRect", jsnOMRArry);
 		jsnPaperObj.set("snList", jsnSNArry);
 		jsnPaperObj.set("electOmrList", jsnElectOmrArry);
+		jsnPaperObj.set("characterAnchorArea", jsnCharacterAnchorAreaArry);
 
 		jsnPaperObj.set("picW", pModel->vecPaperModel[i]->nPicW);		//add on 16.8.29
 		jsnPaperObj.set("picH", pModel->vecPaperModel[i]->nPicH);		//add on 16.8.29
@@ -3720,6 +3806,9 @@ bool CMakeModelDlg::ShowRectByPoint(cv::Point pt)
 		{
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.size(); i++)
 			{
+				cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].rt;
+				cv::rectangle(tmp, rtTmp, CV_RGB(181, 115, 173), 2);
+				cv::rectangle(tmp2, rtTmp, CV_RGB(170, 215, 111), -1);
 				for(int j = 0; j < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size(); j++)
 				{
 					if (m_pCurRectInfo != &m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt[j].rc)
@@ -3734,6 +3823,7 @@ bool CMakeModelDlg::ShowRectByPoint(cv::Point pt)
 						RECTINFO rc = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt[j].rc;
 						rt = rc.rt;
 
+						cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 3);
 						cv::rectangle(tmp2, rt, CV_RGB(40, 205, 150), -1);
 					}
 				}
@@ -4646,6 +4736,9 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 		{
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.size(); i++)
 			{
+				cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].rt;
+				cv::rectangle(tmp, rtTmp, CV_RGB(181, 115, 173), 2);
+				cv::rectangle(tmp2, rtTmp, CV_RGB(170, 215, 111), -1);
 				for(int j = 0; j < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size(); j++)
 				{
 					RECTINFO rc = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt[j].rc;
@@ -5082,6 +5175,8 @@ void CMakeModelDlg::UpdataCPList()
 				for (int j = 0; j < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size(); j++)
 				{
 					RECTINFO rcInfo = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt[j].rc;
+					char szConfidence[20] = { 0 };
+					sprintf_s(szConfidence, "%.2f", m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt[j].fConfidence);
 					char szSize[30] = { 0 };
 					sprintf_s(szSize, "(%d,%d)", rcInfo.rt.width, rcInfo.rt.height);
 					char szVal[10] = { 0 };
@@ -5091,7 +5186,8 @@ void CMakeModelDlg::UpdataCPList()
 					m_cpListCtrl.InsertItem(j + nCount + nCharacterRtCount, NULL);
 					m_cpListCtrl.SetItemText(j + nCount + nCharacterRtCount, 0, (LPCTSTR)A2T(szCount));
 					m_cpListCtrl.SetItemText(j + nCount + nCharacterRtCount, 1, (LPCTSTR)A2T(szVal));
-					m_cpListCtrl.SetItemText(j + nCount + nCharacterRtCount, 2, (LPCTSTR)A2T(szSize));
+					m_cpListCtrl.SetItemText(j + nCount + nCharacterRtCount, 2, (LPCTSTR)A2T(szConfidence));
+					m_cpListCtrl.SetItemText(j + nCount + nCharacterRtCount, 3, (LPCTSTR)A2T(szSize));
 				}
 				nCharacterRtCount += m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size();
 			}
@@ -5107,8 +5203,9 @@ void CMakeModelDlg::UpdateCPListByType()
 	switch(m_eCurCPType)
 	{
 		case CHARACTER_AREA:
-			m_cpListCtrl.InsertColumn(1, _T("值"), LVCFMT_CENTER, 60);
-			m_cpListCtrl.InsertColumn(2, _T("大小"), LVCFMT_CENTER, 60);
+			m_cpListCtrl.InsertColumn(1, _T("值"), LVCFMT_CENTER, 30);
+			m_cpListCtrl.InsertColumn(2, _T("概率"), LVCFMT_CENTER, 45);
+			m_cpListCtrl.InsertColumn(3, _T("大小"), LVCFMT_CENTER, 55);
 			break;
 		case Fix_CP:
 		case H_HEAD:
@@ -5679,16 +5776,17 @@ BOOL CMakeModelDlg::DeleteRectInfo(CPType eType, int nItem)
 				nCharacterCount = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size();
 				if (nItem < nCharacterCount)
 				{
-					std::vector<ST_CHARACTER_RECTINFO>::iterator itCharacter = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.begin() + nItem;
+					std::vector<ST_CHARACTER_ANCHOR_POINT>::iterator itCharacter = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.begin() + nItem;
 					if (itCharacter != m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.end())
 						m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.erase(itCharacter);
 
 					if (m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i].vecCharacterRt.size() == 0)
 					{
-						std::vector<ST_RECOG_CHARACTER_INFO>::iterator itCharacterArea = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.begin() + i;
+						std::vector<ST_CHARACTER_ANCHOR_AREA>::iterator itCharacterArea = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.begin() + i;
 						if (itCharacterArea != m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.end())
 							m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.erase(itCharacterArea);
 					}
+					break;
 				}
 				else
 					nItem -= nCharacterCount;
@@ -7747,6 +7845,11 @@ void CMakeModelDlg::ReInitModel(pMODEL pModel)
 			//			pPaperModel->rtSNTracker = m_pModel->vecPaperModel[i]->rtSNTracker;
 			pPaperModel->rcSNTracker = m_pModel->vecPaperModel[i]->rcSNTracker;
 
+			CHARACTER_ANCHOR_AREA_LIST::iterator itRecogCharRt = m_pModel->vecPaperModel[i]->lCharacterAnchorArea.begin();
+			for (; itRecogCharRt != m_pModel->vecPaperModel[i]->lCharacterAnchorArea.end(); itRecogCharRt++)
+			{
+				pPaperModel->vecCharacterLocation.push_back(*itRecogCharRt);
+			}
 			RECTLIST::iterator itSelHTracker = m_pModel->vecPaperModel[i]->lSelHTracker.begin();
 			for (; itSelHTracker != m_pModel->vecPaperModel[i]->lSelHTracker.end(); itSelHTracker++)
 			{
@@ -8011,6 +8114,8 @@ void CMakeModelDlg::SaveNewModel()
 		RecogFixWithHead(i);
 		//--
 
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecCharacterLocation.size(); j++)
+			pPaperModel->lCharacterAnchorArea.push_back(m_vecPaperModelInfo[i]->vecCharacterLocation[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecHTracker.size(); j++)
 			pPaperModel->lSelHTracker.push_back(m_vecPaperModelInfo[i]->vecHTracker[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecVTracker.size(); j++)

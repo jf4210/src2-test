@@ -369,7 +369,7 @@ void CScanProcessDlg::EnableBtn(BOOL bEnable)
 		GetDlgItem(IDC_BTN_ScanAgain)->EnableWindow(bEnable);
 }
 
-void CScanProcessDlg::WriteJsonFile()
+bool CScanProcessDlg::WriteJsonFile()
 {
 	clock_t start_pic, end_pic;
 	start_pic = clock();
@@ -638,7 +638,20 @@ void CScanProcessDlg::WriteJsonFile()
 	out << strFileData.c_str();
 	out.close();
 
-	TRACE("-------------- 14\n");
+	bool bResult = false;
+	//网阅考试检查paper写入情况
+	try
+	{
+		Poco::File jsonFile(CMyCodeConvert::Gb2312ToUtf8(szExamInfoPath));
+		if (jsonFile.exists())
+			bResult = true;
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strErr = "保存试卷袋信息到文件[" + std::string(szExamInfoPath) + "]失败" + exc.message();
+		g_pLogger->information(strErr);
+	}
+	return bResult;
 }
 
 void CScanProcessDlg::SetFontSize()
@@ -1137,7 +1150,14 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	EnableBtn(FALSE);
 
 	TRACE("------------------- 1\n");
-	WriteJsonFile();
+	bool bResult = WriteJsonFile();
+	if (!bResult)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "保存试卷袋信息到文件失败，请重试！");
+		dlg.DoModal();
+		return;
+	}
 
 	TRACE("------------------- 2\n");
 	//试卷袋压缩

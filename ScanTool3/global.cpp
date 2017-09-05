@@ -45,6 +45,11 @@ void CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int
 #endif
 }
 
+bool SortByCharAnchorArea(ST_CHARACTER_ANCHOR_AREA& st1, ST_CHARACTER_ANCHOR_AREA& st2)
+{
+	return st1.nIndex < st2.nIndex;
+}
+
 bool SortByArea(cv::Rect& rt1, cv::Rect& rt2)
 {
 	return rt1.area() > rt2.area() ? true : (rt1.area() < rt2.area() ? false : (rt1.x > rt2.x ? true : false));
@@ -427,6 +432,9 @@ pMODEL LoadModelFile(CString strModelPath)
 			Poco::JSON::Array::Ptr arrayElectOmr;
 			if (jsnPaperObj->has("electOmrList"))
 				arrayElectOmr = jsnPaperObj->getArray("electOmrList");
+			Poco::JSON::Array::Ptr arrayCharacterAnchorArea;
+			if (jsnPaperObj->has("characterAnchorArea"))
+				arrayCharacterAnchorArea = jsnPaperObj->getArray("characterAnchorArea");
 
 			for (int i = 0; i < arrayFixCP->size(); i++)
 			{
@@ -971,6 +979,72 @@ pMODEL LoadModelFile(CString strModelPath)
 					paperModelInfo->lElectOmr.push_back(objElectOmr);
 				}
 			}
+			if (jsnPaperObj->has("characterAnchorArea"))
+			{
+				for (int i = 0; i < arrayCharacterAnchorArea->size(); i++)
+				{
+					Poco::JSON::Object::Ptr jsnRectInfoObj = arrayCharacterAnchorArea->getObject(i);
+					ST_CHARACTER_ANCHOR_AREA objCharacterAnchorArea;
+					objCharacterAnchorArea.nIndex = jsnRectInfoObj->get("nIndex").convert<int>();
+					objCharacterAnchorArea.nThresholdValue = jsnRectInfoObj->get("nThreshold").convert<int>();
+					objCharacterAnchorArea.nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
+					objCharacterAnchorArea.nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
+					objCharacterAnchorArea.nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();
+					objCharacterAnchorArea.nDilateKernel = jsnRectInfoObj->get("dilateKernel").convert<int>();
+
+					objCharacterAnchorArea.rt.x = jsnRectInfoObj->get("left").convert<int>();
+					objCharacterAnchorArea.rt.y = jsnRectInfoObj->get("top").convert<int>();
+					objCharacterAnchorArea.rt.width = jsnRectInfoObj->get("width").convert<int>();
+					objCharacterAnchorArea.rt.height = jsnRectInfoObj->get("height").convert<int>();
+
+					Poco::JSON::Array::Ptr omrList = jsnRectInfoObj->getArray("characterAnchorPointList");
+					for (int j = 0; j < omrList->size(); j++)
+					{
+						Poco::JSON::Object::Ptr jsnOmrObj = omrList->getObject(j);
+						ST_CHARACTER_ANCHOR_POINT stCharacterRt;
+						RECTINFO rc;
+						rc.eCPType = (CPType)jsnOmrObj->get("eType").convert<int>();
+						rc.nThresholdValue = jsnOmrObj->get("thresholdValue").convert<int>();
+						rc.fStandardValuePercent = jsnOmrObj->get("standardValPercent").convert<float>();
+						rc.fStandardValue = jsnOmrObj->get("standardVal").convert<float>();
+
+						if (jsnOmrObj->has("standardArea"))
+							rc.fStandardArea = jsnOmrObj->get("standardArea").convert<float>();
+						if (jsnOmrObj->has("standardDensity"))
+							rc.fStandardDensity = jsnOmrObj->get("standardDensity").convert<float>();
+						if (jsnOmrObj->has("standardMeanGray"))
+							rc.fStandardMeanGray = jsnOmrObj->get("standardMeanGray").convert<float>();
+						if (jsnOmrObj->has("standardStddev"))
+							rc.fStandardStddev = jsnOmrObj->get("standardStddev").convert<float>();
+
+						rc.nTH = jsnOmrObj->get("nTH").convert<int>();
+						rc.nAnswer = jsnOmrObj->get("nAnswer").convert<int>();
+						rc.rt.x = jsnOmrObj->get("left").convert<int>();
+						rc.rt.y = jsnOmrObj->get("top").convert<int>();
+						rc.rt.width = jsnOmrObj->get("width").convert<int>();
+						rc.rt.height = jsnOmrObj->get("height").convert<int>();
+						rc.nHItem = jsnOmrObj->get("hHeadItem").convert<int>();
+						rc.nVItem = jsnOmrObj->get("vHeadItem").convert<int>();
+
+						if (jsnOmrObj->has("gaussKernel"))
+							rc.nGaussKernel = jsnOmrObj->get("gaussKernel").convert<int>();
+						if (jsnOmrObj->has("sharpKernel"))
+							rc.nSharpKernel = jsnOmrObj->get("sharpKernel").convert<int>();
+						if (jsnOmrObj->has("cannyKernel"))
+							rc.nCannyKernel = jsnOmrObj->get("cannyKernel").convert<int>();
+						if (jsnOmrObj->has("dilateKernel"))
+							rc.nDilateKernel = jsnOmrObj->get("dilateKernel").convert<int>();
+
+						//---------------
+						stCharacterRt.nIndex = jsnOmrObj->get("nIndex").convert<int>();
+						stCharacterRt.fConfidence = jsnOmrObj->get("fConfidence").convert<double>();
+						stCharacterRt.strVal = CMyCodeConvert::Utf8ToGb2312(jsnOmrObj->get("strRecogChar").convert<std::string>());
+						stCharacterRt.rc = rc;
+						objCharacterAnchorArea.vecCharacterRt.push_back(stCharacterRt);
+					}
+					paperModelInfo->lCharacterAnchorArea.push_back(objCharacterAnchorArea);
+				}
+			}
 
 			std::vector<pPAPERMODEL>::iterator itBegin = pModel->vecPaperModel.begin();
 			for (; itBegin != pModel->vecPaperModel.end();)
@@ -1014,7 +1088,6 @@ pMODEL LoadModelFile(CString strModelPath)
 
 	return pModel;
 }
-
 
 int GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, RECTINFO*& pRc)
 {
@@ -2040,6 +2113,43 @@ bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*
 		rt.y = ptResult.y;
 #endif
 	}
+	return true;
+}
+
+bool GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt)
+{
+#ifdef USE_TESSERACT
+	//生成模板比较的定点
+
+#endif
+	return GetPosition(pPic->lFix, pModel->vecPaperModel[nPic]->lFix, rt);
+}
+
+bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
+{
+	int nModelCharArea = pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size();	//模板上的文字定位区
+	int nRealRecogCharArea = pPic->lCharacterAnchorArea.size();	//实际识别出的文字定位区
+
+	if (nModelCharArea <= 0 || nRealRecogCharArea <= 0) return false;
+
+	//识别出来的文字的准确度排序
+
+	if (nModelCharArea > 1)		//多个文字定位区
+	{
+		if (nRealRecogCharArea == 1)	//只识别出一个文字定位区
+		{
+		}
+		else
+		{
+
+		}
+	}
+	else
+	{
+
+	}
+	//查找模板上对应的文字位置
+
 	return true;
 }
 

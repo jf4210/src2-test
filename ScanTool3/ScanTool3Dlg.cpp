@@ -215,7 +215,26 @@ void CScanTool3Dlg::InitCompressList()
 		else if (ff.IsDirectory())
 		{
 			int nPos = -1;
-			if ((nPos = ff.GetFileName().Find(_T("_ToCompress"))) >= 0)
+			if ((nPos = ff.GetFileName().Find(_T("_ToCompress_UnPwd"))) >= 0)
+			{
+				CString strFileName = ff.GetFileName();
+				CString strBaseZipName = strFileName.Left(nPos);
+				CString strZipName = strBaseZipName;
+				strZipName.Append(PAPERS_EXT_NAME_4TY);
+				CString strSrcDirPath = ff.GetFilePath();
+				CString strSavePath = g_strCurrentPath + _T("Paper\\") + strBaseZipName;
+
+				char szZipName[100] = { 0 };
+				pCOMPRESSTASK pTask = new COMPRESSTASK;
+				pTask->strCompressFileName = T2A(strZipName);
+				pTask->strExtName = T2A(PAPERS_EXT_NAME_4TY);
+				pTask->strSavePath = T2A(strSavePath);
+				pTask->strSrcFilePath = T2A(strSrcDirPath);
+				g_fmCompressLock.lock();
+				g_lCompressTask.push_back(pTask);
+				g_fmCompressLock.unlock();
+			}
+			if ((nPos = ff.GetFileName().Find(_T("_ToCompress"))) >= 0 && (ff.GetFileName().Find(_T("_UnPwd")) == std::string::npos))
 			{
 				CString strFileName = ff.GetFileName();
 				CString strBaseZipName = strFileName.Left(nPos);
