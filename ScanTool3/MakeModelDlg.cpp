@@ -2090,6 +2090,8 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 		stRecogCharacterRt.nDilateKernel = m_nDilateKernel;
 		stRecogCharacterRt.rt = rtOri;
 
+		//重复字临时登记列表，后面删除所有重复的字
+		std::vector<std::string> vecRepeatWord;
 		do
 		{
 			const char* word = ri->GetUTF8Text(level);
@@ -2110,6 +2112,8 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 				stCharRt.fConfidence = conf;
 				stCharRt.rc.eCPType = CHARACTER_AREA;
 				stCharRt.rc.rt = rtSrc;
+				stCharRt.rc.nTH = stRecogCharacterRt.nIndex;	//记录下当前文字属于第几个大文字识别区
+				stCharRt.rc.nAnswer = nIndex;					//记录下当前文字属于当前文字识别区中的第几个识别的文字
 
 				stCharRt.rc.nThresholdValue = m_nCharacterThreshold;
 				stCharRt.rc.nGaussKernel = m_nGaussKernel;
@@ -2118,8 +2122,16 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 				stCharRt.rc.nDilateKernel = m_nDilateKernel;
 
 				stCharRt.strVal = CMyCodeConvert::Utf8ToGb2312(word);
+
+				//**********	需要删除所有重复的字，保证识别的文字没有重复字
+				for (auto item : stRecogCharacterRt.vecCharacterRt)
+					if (item.strVal == stCharRt.strVal)
+					{
+						vecRepeatWord.push_back(item.strVal);
+						break;
+					}
+
 				stRecogCharacterRt.vecCharacterRt.push_back(stCharRt);
-//				cv::rectangle(imgSrc, rtSrc, CV_RGB(255, 0, 0), 2);
 				nIndex++;
 			}
 		} while (ri->Next(level));
@@ -2128,6 +2140,16 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 		{
 			Mat tmp = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
 
+			//需要删除所有重复的字，保证识别的文字没有重复字
+			for (int i = 0; i < vecRepeatWord.size(); i++)
+			{
+				std::vector<ST_CHARACTER_ANCHOR_POINT>::iterator itCharAnchorPoint = stRecogCharacterRt.vecCharacterRt.begin();
+				for (; itCharAnchorPoint != stRecogCharacterRt.vecCharacterRt.end(); )
+					if (itCharAnchorPoint->strVal == vecRepeatWord[i])
+						itCharAnchorPoint = stRecogCharacterRt.vecCharacterRt.erase(itCharAnchorPoint);
+					else
+						itCharAnchorPoint++;
+			}
 			cv::Rect rtTmp = stRecogCharacterRt.rt;
 			cv::rectangle(imgSrc, rtTmp, CV_RGB(181, 115, 173), 2);
 			cv::rectangle(tmp, rtTmp, CV_RGB(170, 215, 111), -1);

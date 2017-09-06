@@ -602,6 +602,7 @@ int		GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, REC
 //bool	UnZipFile(CString strZipPath);
 pMODEL	LoadModelFile(CString strModelPath);		//加载模板文件
 bool	SortByCharAnchorArea(ST_CHARACTER_ANCHOR_AREA& st1, ST_CHARACTER_ANCHOR_AREA& st2);
+bool	SortByCharacterConfidence(ST_CHARACTER_ANCHOR_POINT& st1, ST_CHARACTER_ANCHOR_POINT& st2);
 bool	SortByArea(cv::Rect& rt1, cv::Rect& rt2);		//按面积排序
 bool	SortByPositionX(RECTINFO& rc1, RECTINFO& rc2);
 bool	SortByPositionY(RECTINFO& rc1, RECTINFO& rc2);
@@ -622,6 +623,8 @@ bool	FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lMod
 bool	FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//定点透视变换
 bool	FixWarpAffine2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);		//3个定点仿射变换，对90度旋转图像有效，目标矩形大小为原矩形最大值的正方形
 bool	FixwarpPerspective2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//4个定点透视变换，对90度旋转图像有效，目标矩形大小为原矩形最大值的正方形
+
+bool	GetFixPicTransfer(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel, cv::Mat& inverseMat);	//根据定点进行图像变换
 bool	PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);
 bool	PicTransfer2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//针对有3个或者4个定点的变换，而且是对90度图像旋转，目标矩形大小为原矩形最大值的正方形
 int		WriteRegKey(HKEY root, char * subDir, DWORD regType, char * regKey, char * regValue);

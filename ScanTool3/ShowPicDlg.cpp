@@ -356,7 +356,7 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 #ifdef WarpAffine_TEST
 		cv::Mat	inverseMat(2, 3, CV_32FC1);
 		if (pPaper->pModel)
-			PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
+			GetFixPicTransfer(i, matImg, *itPic, pPaper->pModel, inverseMat);		//PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
 #endif
 
 #ifdef Test_ShowOriPosition
@@ -411,8 +411,6 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 				cv::Rect rt = (*itSelRoi).rt;
 
 				char szCP[20] = { 0 };
-				// 				sprintf_s(szCP, "FIX%d", j);
-				// 				putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));	//CV_FONT_HERSHEY_COMPLEX
 				rectangle(tmp, rt, CV_RGB(0, 0, 255), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}

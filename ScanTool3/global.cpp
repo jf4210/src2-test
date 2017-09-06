@@ -50,6 +50,11 @@ bool SortByCharAnchorArea(ST_CHARACTER_ANCHOR_AREA& st1, ST_CHARACTER_ANCHOR_ARE
 	return st1.nIndex < st2.nIndex;
 }
 
+bool SortByCharacterConfidence(ST_CHARACTER_ANCHOR_POINT& st1, ST_CHARACTER_ANCHOR_POINT& st2)
+{
+	return st1.fConfidence > st2.fConfidence;
+}
+
 bool SortByArea(cv::Rect& rt1, cv::Rect& rt2)
 {
 	return rt1.area() > rt2.area() ? true : (rt1.area() < rt2.area() ? false : (rt1.x > rt2.x ? true : false));
@@ -2120,7 +2125,10 @@ bool GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt)
 {
 #ifdef USE_TESSERACT
 	//生成模板比较的定点
-
+	if(pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0)
+		return GetPosition(pPic->lFix, pPic->lModelFix, rt);
+	else
+		return GetPosition(pPic->lFix, pModel->vecPaperModel[nPic]->lFix, rt);
 #endif
 	return GetPosition(pPic->lFix, pModel->vecPaperModel[nPic]->lFix, rt);
 }
@@ -2132,23 +2140,154 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 
 	if (nModelCharArea <= 0 || nRealRecogCharArea <= 0) return false;
 
-	//识别出来的文字的准确度排序
+	pPic->lFix.clear();
+	int nNeedCount = 4;	//需要取的文字定点个数
 
-	if (nModelCharArea > 1)		//多个文字定位区
+	nNeedCount = nNeedCount > 4 ? 4 : nNeedCount;	//定点不超过4个
+
+	if (nRealRecogCharArea == 1)	//只识别出一个文字定位区，在这个识别区取 nNeedCount 个准确度最高的字作为定点
 	{
-		if (nRealRecogCharArea == 1)	//只识别出一个文字定位区
+		CHARACTER_ANCHOR_AREA_LIST::iterator it = pPic->lCharacterAnchorArea.begin();
+		
+		nNeedCount = it->vecCharacterRt.size() > nNeedCount ? nNeedCount : it->vecCharacterRt.size();
+
+// 		if (it->vecCharacterRt.size() >= nNeedCount)
+// 		{
+
+			std::sort(it->vecCharacterRt.begin(), it->vecCharacterRt.end(), SortByCharacterConfidence);
+			//取前两个字做定点, 并放入定点列表
+			for(int i = 0; i < nNeedCount; i++)
+				pPic->lFix.push_back(it->vecCharacterRt[i].rc);
+
+			//获取模板上的对应字的定点位置
+			for (auto itModelCharAnchorArea : pModel->vecPaperModel[nPic]->lCharacterAnchorArea)
+				if (itModelCharAnchorArea.nIndex == it->nIndex)
+				{
+					for (int i = 0; i < nNeedCount; i++)
+					{
+						for (auto itModelCharAnchorPoint : itModelCharAnchorArea.vecCharacterRt)
+						{
+							if (itModelCharAnchorPoint.strVal == it->vecCharacterRt[i].strVal)
+							{
+								pPic->lModelFix.push_back(itModelCharAnchorPoint.rc);
+								break;
+							}
+						}
+					}
+// 					for (auto itModelCharAnchorPoint : itModelCharAnchorArea.vecCharacterRt)
+// 					{
+// 						if (itModelCharAnchorPoint.strVal == it->vecCharacterRt[0].strVal)
+// 						{
+// 							pPic->lModelFix.push_back(itModelCharAnchorPoint.rc);
+// 							break;
+// 						}
+// 					}
+// 					for (auto itModelCharAnchorPoint : itModelCharAnchorArea.vecCharacterRt)
+// 					{
+// 						if (itModelCharAnchorPoint.strVal == it->vecCharacterRt[1].strVal)
+// 						{
+// 							pPic->lModelFix.push_back(itModelCharAnchorPoint.rc);
+// 							break;
+// 						}
+// 					}
+					break;
+				}
+// 		}
+// 		else
+// 		{
+// 			pPic->lFix.push_back(it->vecCharacterRt[0].rc);
+// 			//获取模板上的对应字的定点位置
+// 			for (auto itModelCharAnchorArea : pModel->vecPaperModel[nPic]->lCharacterAnchorArea)
+// 				if (itModelCharAnchorArea.nIndex == it->nIndex)
+// 				{
+// 					for (auto itModelCharAnchorPoint : itModelCharAnchorArea.vecCharacterRt)
+// 					{
+// 						if (itModelCharAnchorPoint.strVal == it->vecCharacterRt[0].strVal)
+// 						{
+// 							pPic->lModelFix.push_back(itModelCharAnchorPoint.rc);
+// 							break;
+// 						}
+// 					}
+// 					break;
+// 				}
+// 		}
+	}
+	else if (nRealRecogCharArea < nNeedCount)	//在所有识别区中所有文字识别准确度排序，依次在每个识别区取一个字并循环取，直到达到要求的文字数
+	{
+// 		std::vector<ST_CHARACTER_ANCHOR_POINT> vecTmpCharacterAnchorPoint;
+// 		for (auto it : pPic->lCharacterAnchorArea)
+// 			for (auto it2 : it.vecCharacterRt)
+// 				vecTmpCharacterAnchorPoint.push_back(it2);
+// 		std::sort(vecTmpCharacterAnchorPoint.begin(), vecTmpCharacterAnchorPoint.end(), SortByCharacterConfidence);
+
+		//每个识别区的文字识别准确度排序
+		for (auto item : pPic->lCharacterAnchorArea)
+			std::sort(item.vecCharacterRt.begin(), item.vecCharacterRt.end(), SortByCharacterConfidence);
+
+		for (int i = 0; i < nRealRecogCharArea; i++)
 		{
 		}
-		else
-		{
 
+
+		for (int i = 0; i < nNeedCount; i++)
+		{
+			int nItem = i / nRealRecogCharArea;
+
+			CHARACTER_ANCHOR_AREA_LIST::iterator it = pPic->lCharacterAnchorArea.begin();
+			for (int k = 0; k < i - nItem * nRealRecogCharArea; k++)
+			{
+				it++;
+				while(it->vecCharacterRt.size() < nItem + 1 )			//*********************		算法有问题	****************************************
+					it++;
+			}
+
+			pPic->lFix.push_back(it->vecCharacterRt[nItem].rc);
+
+			//获取模板上的对应字的定点位置
+			for (auto itModelCharAnchorArea : pModel->vecPaperModel[nPic]->lCharacterAnchorArea)
+				if (itModelCharAnchorArea.nIndex == it->nIndex)
+				{
+					for (auto itModelCharAnchorPoint : itModelCharAnchorArea.vecCharacterRt)
+					{
+						if (itModelCharAnchorPoint.strVal == it->vecCharacterRt[nItem].strVal)
+						{
+							pPic->lModelFix.push_back(itModelCharAnchorPoint.rc);
+							break;
+						}
+					}
+					break;
+				}
+		}
+
+	}
+	else		//识别出多个文字定位区，只在前 nNeedCount 个识别区取1个准确度最高的字作为定点
+	{
+		CHARACTER_ANCHOR_AREA_LIST::iterator it = pPic->lCharacterAnchorArea.begin();
+		for (int i = 0; it != pPic->lCharacterAnchorArea.end(); it++, i++)
+		{
+			if (i > nNeedCount) break;
+
+			if (it->vecCharacterRt.size() >= 2)
+				std::sort(it->vecCharacterRt.begin(), it->vecCharacterRt.end(), SortByCharacterConfidence);
+			//取准确度最高的点做定点, 并放入定点列表
+			pPic->lFix.push_back(it->vecCharacterRt[0].rc);
+
+			//获取模板上的对应字的定点位置
+			for (auto itModelCharAnchorArea : pModel->vecPaperModel[nPic]->lCharacterAnchorArea)
+				if (itModelCharAnchorArea.nIndex == it->nIndex)
+				{
+					for (auto itModelCharAnchorPoint : itModelCharAnchorArea.vecCharacterRt)
+					{
+						if (itModelCharAnchorPoint.strVal == it->vecCharacterRt[0].strVal)
+						{
+							pPic->lModelFix.push_back(itModelCharAnchorPoint.rc);
+							break;
+						}
+					}
+					break;
+				}
 		}
 	}
-	else
-	{
-
-	}
-	//查找模板上对应的文字位置
 
 	return true;
 }
@@ -2645,6 +2784,17 @@ bool FixwarpPerspective2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECT
 	TRACE(szTmpLog);
 
 	return true;
+}
+
+bool GetFixPicTransfer(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel, cv::Mat& inverseMat)
+{
+#ifdef USE_TESSERACT
+	if (pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0)
+		return PicTransfer(nPic, matCompPic, pPic->lFix, pPic->lModelFix, inverseMat);
+	else
+		return PicTransfer(nPic, matCompPic, pPic->lFix, pModel->vecPaperModel[nPic]->lFix, inverseMat);
+#endif
+	return PicTransfer(nPic, matCompPic, pPic->lFix, pModel->vecPaperModel[nPic]->lFix, inverseMat);
 }
 
 bool PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat)
