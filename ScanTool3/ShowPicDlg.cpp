@@ -403,6 +403,88 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
 		}
+	#if 1
+		if (pPaper->pModel && pPaper->pModel->vecPaperModel[i]->lCharacterAnchorArea.size() > 0)
+		{
+			if (pPaper->pModel)
+			{
+				CHARACTER_ANCHOR_AREA_LIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[i]->lCharacterAnchorArea.begin();			//显示文字定点的选择区
+				for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i]->lCharacterAnchorArea.end(); itSelRoi++, j++)
+				{
+					cv::Rect rt = (*itSelRoi).rt;
+
+					char szCP[20] = { 0 };
+					rectangle(tmp, rt, CV_RGB(0, 0, 255), 2);
+					rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+				}
+			}
+			RECTLIST::iterator itPicFix = (*itPic)->lFix.begin();														//显示识别出来的定点
+			for (int j = 0; itPicFix != (*itPic)->lFix.end(); itPicFix++, j++)
+			{
+				cv::Rect rt = (*itPicFix).rt;
+
+				char szCP[20] = { 0 };
+				sprintf_s(szCP, "R_F%d", j);
+				putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));	//CV_FONT_HERSHEY_COMPLEX
+				rectangle(tmp, rt, CV_RGB(0, 255, 0), 2);
+				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+			}
+			if (pPaper->pModel)
+			{
+				RECTLIST::iterator itFixRect = (*itPic)->lModelFix.begin();								//显示模板上的定点对应到此试卷上的新定点
+				for (int j = 0; itFixRect != (*itPic)->lModelFix.end(); itFixRect++, j++)
+				{
+					cv::Rect rt = (*itFixRect).rt;
+
+					char szCP[20] = { 0 };
+					sprintf_s(szCP, "M_F%d", j);
+					putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
+					rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+					rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+				}
+			}
+		}
+		else
+		{
+			if (pPaper->pModel)
+			{
+				RECTLIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[i]->lSelFixRoi.begin();													//显示识别定点的选择区
+				for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i]->lSelFixRoi.end(); itSelRoi++, j++)
+				{
+					cv::Rect rt = (*itSelRoi).rt;
+
+					char szCP[20] = { 0 };
+					rectangle(tmp, rt, CV_RGB(0, 0, 255), 2);
+					rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+				}
+			}
+			RECTLIST::iterator itPicFix = (*itPic)->lFix.begin();														//显示识别出来的定点
+			for (int j = 0; itPicFix != (*itPic)->lFix.end(); itPicFix++, j++)
+			{
+				cv::Rect rt = (*itPicFix).rt;
+
+				char szCP[20] = { 0 };
+				sprintf_s(szCP, "R_F%d", j);
+				putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));	//CV_FONT_HERSHEY_COMPLEX
+				rectangle(tmp, rt, CV_RGB(0, 255, 0), 2);
+				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+			}
+			if (pPaper->pModel)
+			{
+				RECTLIST::iterator itFixRect = pPaper->pModel->vecPaperModel[i]->lFix.begin();								//显示模板上的定点对应到此试卷上的新定点
+				for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[i]->lFix.end(); itFixRect++, j++)
+				{
+					cv::Rect rt = (*itFixRect).rt;
+
+					char szCP[20] = { 0 };
+					sprintf_s(szCP, "M_F%d", j);
+					putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
+					rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+					rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+				}
+			}
+		}
+	#else
 		if (pPaper->pModel)
 		{
 			RECTLIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[i]->lSelFixRoi.begin();													//显示识别定点的选择区
@@ -441,6 +523,7 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
 		}
+	#endif
 
 		addWeighted(tmp, 0.5, tmp2, 0.5, 0, tmp);
 		if (i >= m_nModelPicNums)

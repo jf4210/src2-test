@@ -307,8 +307,8 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			for (; itRect2 != itOmr->lSelAnswer.end(); itRect2++)
 			{
 				char szTmp[200] = { 0 };
-				sprintf_s(szTmp, "%c,密度=%.3f/%.3f, ", itRect2->nAnswer + 65, \
-						  itRect2->fRealDensity, itRect2->fStandardDensity);
+				sprintf_s(szTmp, "%c,密度=%.3f(%.3f/%.3f), ", itRect2->nAnswer + 65, \
+						  itRect2->fRealDensity / itRect2->fStandardDensity, itRect2->fRealDensity, itRect2->fStandardDensity);
 				strItemLog.append(szTmp);
 			}
 			strItemLog.append("\n");
@@ -363,7 +363,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			char szTmp[40] = { 0 };
 			sprintf_s(szTmp, "%s:%.5f ", vecOmrItemDensityDiff[i].szVal, _dDiffThread_Fix_ + fDensityThreshold * 0.5);
 			strItemLog.append(szTmp);
-			if ((vecOmrItemDensityDiff[i].fDiff >= _dDiffThread_Fix_ + fDensityThreshold * 0.5))
+//			if ((vecOmrItemDensityDiff[i].fDiff >= _dDiffThread_Fix_ + fDensityThreshold * 0.5))
 				fDensityThreshold += vecOmrItemDensityDiff[i].fDiff;
 		}
 		strItemLog.append("]");
@@ -2063,13 +2063,15 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				fThreld = vecOmrItemDiff[i].fFirst;
 				fDensityThreshold += vecOmrItemDiff[i].fDiff;
 			#ifdef Test_RecogFirst_NoThreshord
-// 				if (vecOmrItemDiff[i].fDiff > fDiffExit)	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
-// 					break;
+				if (vecOmrItemDiff[i].fDiff > fDiffExit)	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
+					break;
 			#else
 				if (vecOmrItemDiff[i].fDiff > fDiffExit && i + 1 >= vecVal_calcHist.size())	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
 					break;
 			#endif
 			}
+			else
+				fDensityThreshold += vecOmrItemDiff[i].fDiff;		//++ 2017.9.7
 		}
 		if (nFlag >= 0)
 		{

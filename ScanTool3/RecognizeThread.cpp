@@ -629,6 +629,12 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 	start = clock();
 	std::string strLog;
 	strLog = Poco::format("图片%s\n", pPic->strPicName);
+	if (pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() == 0)
+	{
+		strLog = Poco::format("图片%s没有文字定位点需要识别", pPic->strPicName);
+		g_pLogger->information(strLog);
+		return true;
+	}
 
 	CHARACTER_ANCHOR_AREA_LIST::iterator itBigRecogCharRt = pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.begin();
 	for (int i = 0; itBigRecogCharRt != pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.end(); i++, itBigRecogCharRt++)
@@ -658,7 +664,8 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 			SharpenImage(matCompRoi, matCompRoi, stBigRecogCharRt.nSharpKernel);
 
 			double dThread = threshold(matCompRoi, matCompRoi, stBigRecogCharRt.nThresholdValue, 255, THRESH_OTSU | THRESH_BINARY);
-
+		
+		#ifdef USE_TESSERACT
 			m_pTess->SetImage((uchar*)matCompRoi.data, matCompRoi.cols, matCompRoi.rows, 1, matCompRoi.cols);
 
 			std::string strWhiteList;
@@ -719,6 +726,7 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 				if (stRecogCharacterRt.vecCharacterRt.size() > 0)
 					pPic->lCharacterAnchorArea.push_back(stRecogCharacterRt);
 			}
+		#endif
 		}
 		catch (...)
 		{
@@ -3363,6 +3371,13 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 	start = clock();
 	std::string strLog;
 	strLog = Poco::format("图片%s\n", pPic->strPicName);
+
+	if (pModelInfo->pModel->vecPaperModel[nPic]->lSNInfo.size() == 0)
+	{
+		strLog = Poco::format("图片%s没有考号需要识别", pPic->strPicName);
+		g_pLogger->information(strLog);
+		return true;
+	}
 
 	SNLIST::iterator itSN = pModelInfo->pModel->vecPaperModel[nPic]->lSNInfo.begin();
 	for (; itSN != pModelInfo->pModel->vecPaperModel[nPic]->lSNInfo.end(); itSN++)

@@ -44,7 +44,7 @@ void CSearchThread::run()
 			CString strMsg;
 			if (pTask->nSearchType == 1)
 			{
-				char szCompare[10] = { 0 };
+				char szCompare[30] = { 0 };
 				sprintf_s(szCompare, "_%d-%d_", _pModel_->nExamID, _pModel_->nSubjectID);
 
 				strMsg.Format(_T("%s模板对应的试卷包搜索完成\r\n"), A2T(szCompare));
@@ -72,7 +72,7 @@ void CSearchThread::HandleTask(pST_SEARCH pTask)
 		std::string strDecompressDir = CMyCodeConvert::Utf8ToGb2312(pTask->strSearchPath) + "\\tmpDecompress";
 		TRACE("搜索目录: %s\n", CMyCodeConvert::Utf8ToGb2312(pTask->strSearchPath).c_str());
 
-		char szCompare[10] = { 0 };
+		char szCompare[20] = { 0 };
 		if (pTask->nSearchType == 1)
 			sprintf_s(szCompare, "%d-%d", _pModel_->nExamID, _pModel_->nSubjectID);
 
