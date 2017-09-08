@@ -52,7 +52,7 @@ typedef struct _PaperModelInfo_
 	std::vector<RECTINFO>	vecWhite;				//空白校验点
 	std::vector<OMR_QUESTION> vecOmr2;
 	std::vector<ELECTOMR_QUESTION> vecElectOmr;		//选做题信息
-	std::vector<ST_CHARACTER_ANCHOR_AREA> vecCharacterLocation;	//文字定位区域
+	std::vector<pST_CHARACTER_ANCHOR_AREA> vecCharacterLocation;	//文字定位区域
 	_PaperModelInfo_()
 	{
 		bFirstH = true;
@@ -70,6 +70,8 @@ typedef struct _PaperModelInfo_
 			itSn = lSN.erase(itSn);
 			SAFE_RELEASE(pSNItem);
 		}
+// 		for (int i = 0; i < vecCharacterLocation.size(); i++)		//这里不能释放，从模板加载后只有一份数据，在模板析构时释放
+// 			SAFE_RELEASE(vecCharacterLocation[i]);
 	}
 }PaperModelInfo, *pPaperModelInfo;
 

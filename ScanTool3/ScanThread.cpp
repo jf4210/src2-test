@@ -2303,7 +2303,7 @@ void CScanThread::TestMode()
 {
 	CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
 	USES_CONVERSION;
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < 20; i++)
 	{
 		int nStudentId = i / m_nModelPicNums + 1;
 		int nOrder = i % m_nModelPicNums + 1;

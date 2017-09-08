@@ -396,10 +396,6 @@ void CScanTool3Dlg::ReleaseThreads()
 	SAFE_RELEASE(m_pCompressObj);
 	g_eCompressThreadExit.wait();
 	SAFE_RELEASE(m_pCompressThread);
-
-
-	SAFE_RELEASE(_pModel_);
-	SAFE_RELEASE(_pCurrPapersInfo_);
 }
 
 void CScanTool3Dlg::ReleaseData()
@@ -823,6 +819,9 @@ void CScanTool3Dlg::OnDestroy()
 	ReleaseData();
 	ReleaseThreads();
 	ReleaseDlg();
+
+	SAFE_RELEASE(_pModel_);
+	SAFE_RELEASE(_pCurrPapersInfo_);
 }
 
 

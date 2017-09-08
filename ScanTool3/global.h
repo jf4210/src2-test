@@ -277,6 +277,16 @@ typedef struct _PicInfo_				//图片信息
 //		ptModelFix = cv::Point(0, 0);
 //		bImgOpen = false;
 	}
+	~_PicInfo_()
+	{
+		CHARACTER_ANCHOR_AREA_LIST::iterator itCharAnchorArea = lCharacterAnchorArea.begin();
+		for (; itCharAnchorArea != lCharacterAnchorArea.end();)
+		{
+			pST_CHARACTER_ANCHOR_AREA pCharAnchorArea = *itCharAnchorArea;
+			itCharAnchorArea = lCharacterAnchorArea.erase(itCharAnchorArea);
+			SAFE_RELEASE(pCharAnchorArea);
+		}
+	}
 }ST_PicInfo, *pST_PicInfo;
 typedef std::list<pST_PicInfo> PIC_LIST;	//图片列表定义
 
@@ -601,8 +611,8 @@ int		GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, REC
 //bool	ZipFile(CString strSrcPath, CString strDstPath, CString strExtName = _T(".zip"));
 //bool	UnZipFile(CString strZipPath);
 pMODEL	LoadModelFile(CString strModelPath);		//加载模板文件
-bool	SortByCharAnchorArea(ST_CHARACTER_ANCHOR_AREA& st1, ST_CHARACTER_ANCHOR_AREA& st2);
-bool	SortByCharacterConfidence(ST_CHARACTER_ANCHOR_POINT& st1, ST_CHARACTER_ANCHOR_POINT& st2);
+bool	SortByCharAnchorArea(pST_CHARACTER_ANCHOR_AREA& st1, pST_CHARACTER_ANCHOR_AREA& st2);
+bool	SortByCharacterConfidence(pST_CHARACTER_ANCHOR_POINT& st1, pST_CHARACTER_ANCHOR_POINT& st2);
 bool	SortByArea(cv::Rect& rt1, cv::Rect& rt2);		//按面积排序
 bool	SortByPositionX(RECTINFO& rc1, RECTINFO& rc2);
 bool	SortByPositionY(RECTINFO& rc1, RECTINFO& rc2);
@@ -614,6 +624,7 @@ bool	SortByOmrTH(OMR_QUESTION& rc1, OMR_QUESTION& rc2);
 bool	SortStringByDown(std::string& str1, std::string& str2);
 
 bool    GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel);	//使用文字定位时，生成文字定位的定点列表，只需要2个
+bool	GetFixDist(int nPic, pST_PicInfo pPic, pMODEL pModel);	//
 bool	GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt);
 bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 0, int nPicH = 0);
 std::string calcFileMd5(std::string strPath);

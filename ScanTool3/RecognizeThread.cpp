@@ -639,38 +639,38 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 	CHARACTER_ANCHOR_AREA_LIST::iterator itBigRecogCharRt = pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.begin();
 	for (int i = 0; itBigRecogCharRt != pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.end(); i++, itBigRecogCharRt++)
 	{
-		ST_CHARACTER_ANCHOR_AREA stBigRecogCharRt = *itBigRecogCharRt;
+		pST_CHARACTER_ANCHOR_AREA pstBigRecogCharRt = *itBigRecogCharRt;
 
 		std::vector<Rect>RectCompList;
 		try
 		{
-			if (stBigRecogCharRt.rt.x < 0) stBigRecogCharRt.rt.x = 0;
-			if (stBigRecogCharRt.rt.y < 0) stBigRecogCharRt.rt.y = 0;
-			if (stBigRecogCharRt.rt.br().x > matCompPic.cols)
+			if (pstBigRecogCharRt->rt.x < 0) pstBigRecogCharRt->rt.x = 0;
+			if (pstBigRecogCharRt->rt.y < 0) pstBigRecogCharRt->rt.y = 0;
+			if (pstBigRecogCharRt->rt.br().x > matCompPic.cols)
 			{
-				stBigRecogCharRt.rt.width = matCompPic.cols - stBigRecogCharRt.rt.x;
+				pstBigRecogCharRt->rt.width = matCompPic.cols - pstBigRecogCharRt->rt.x;
 			}
-			if (stBigRecogCharRt.rt.br().y > matCompPic.rows)
+			if (pstBigRecogCharRt->rt.br().y > matCompPic.rows)
 			{
-				stBigRecogCharRt.rt.height = matCompPic.rows - stBigRecogCharRt.rt.y;
+				pstBigRecogCharRt->rt.height = matCompPic.rows - pstBigRecogCharRt->rt.y;
 			}
 
 			Mat matCompRoi;
-			matCompRoi = matCompPic(stBigRecogCharRt.rt);
+			matCompRoi = matCompPic(pstBigRecogCharRt->rt);
 
 			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
-			GaussianBlur(matCompRoi, matCompRoi, cv::Size(stBigRecogCharRt.nGaussKernel, stBigRecogCharRt.nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
-			SharpenImage(matCompRoi, matCompRoi, stBigRecogCharRt.nSharpKernel);
+			GaussianBlur(matCompRoi, matCompRoi, cv::Size(pstBigRecogCharRt->nGaussKernel, pstBigRecogCharRt->nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
+			SharpenImage(matCompRoi, matCompRoi, pstBigRecogCharRt->nSharpKernel);
 
-			double dThread = threshold(matCompRoi, matCompRoi, stBigRecogCharRt.nThresholdValue, 255, THRESH_OTSU | THRESH_BINARY);
+			double dThread = threshold(matCompRoi, matCompRoi, pstBigRecogCharRt->nThresholdValue, 255, THRESH_OTSU | THRESH_BINARY);
 		
 		#ifdef USE_TESSERACT
 			m_pTess->SetImage((uchar*)matCompRoi.data, matCompRoi.cols, matCompRoi.rows, 1, matCompRoi.cols);
 
 			std::string strWhiteList;
-			for (auto itChar : stBigRecogCharRt.vecCharacterRt)
-				strWhiteList.append(itChar.strVal);
+			for (auto itChar : pstBigRecogCharRt->vecCharacterRt)
+				strWhiteList.append(itChar->strVal);
 			m_pTess->SetVariable("tessedit_char_whitelist", CMyCodeConvert::Gb2312ToUtf8(strWhiteList).c_str());
 
 			m_pTess->Recognize(0);
@@ -681,15 +681,17 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 			{
 				int nIndex = 1;
 
-				ST_CHARACTER_ANCHOR_AREA stRecogCharacterRt;
-				stRecogCharacterRt.nIndex = stBigRecogCharRt.nIndex;
-				stRecogCharacterRt.nThresholdValue = stBigRecogCharRt.nThresholdValue;
-				stRecogCharacterRt.nGaussKernel = stBigRecogCharRt.nGaussKernel;
-				stRecogCharacterRt.nSharpKernel = stBigRecogCharRt.nSharpKernel;
-				stRecogCharacterRt.nCannyKernel = stBigRecogCharRt.nCannyKernel;
-				stRecogCharacterRt.nDilateKernel = stBigRecogCharRt.nDilateKernel;
-				stRecogCharacterRt.rt = stBigRecogCharRt.rt;
+				pST_CHARACTER_ANCHOR_AREA pstRecogCharacterRt = new ST_CHARACTER_ANCHOR_AREA();
+				pstRecogCharacterRt->nIndex = pstBigRecogCharRt->nIndex;
+				pstRecogCharacterRt->nThresholdValue = pstBigRecogCharRt->nThresholdValue;
+				pstRecogCharacterRt->nGaussKernel = pstBigRecogCharRt->nGaussKernel;
+				pstRecogCharacterRt->nSharpKernel = pstBigRecogCharRt->nSharpKernel;
+				pstRecogCharacterRt->nCannyKernel = pstBigRecogCharRt->nCannyKernel;
+				pstRecogCharacterRt->nDilateKernel = pstBigRecogCharRt->nDilateKernel;
+				pstRecogCharacterRt->rt = pstBigRecogCharRt->rt;
 
+				//重复字临时登记列表，后面删除所有重复的字
+				std::vector<std::string> vecRepeatWord;
 				do
 				{
 					const char* word = ri->GetUTF8Text(level);
@@ -699,32 +701,100 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 						int x1, y1, x2, y2;
 						ri->BoundingBox(level, &x1, &y1, &x2, &y2);
 						Point start, end;
-						start.x = stBigRecogCharRt.rt.x + x1;
-						start.y = stBigRecogCharRt.rt.y + y1;
-						end.x = stBigRecogCharRt.rt.x + x2;
-						end.y = stBigRecogCharRt.rt.y + y2;
+						start.x = pstBigRecogCharRt->rt.x + x1;
+						start.y = pstBigRecogCharRt->rt.y + y1;
+						end.x = pstBigRecogCharRt->rt.x + x2;
+						end.y = pstBigRecogCharRt->rt.y + y2;
 						Rect rtSrc(start, end);
 
-						ST_CHARACTER_ANCHOR_POINT stCharRt;
-						stCharRt.nIndex = nIndex;
-						stCharRt.fConfidence = conf;
-						stCharRt.rc.eCPType = CHARACTER_AREA;
-						stCharRt.rc.rt = rtSrc;
+						pST_CHARACTER_ANCHOR_POINT pstCharRt = new ST_CHARACTER_ANCHOR_POINT();
+						pstCharRt->nIndex = nIndex;
+						pstCharRt->fConfidence = conf;
+						pstCharRt->rc.eCPType = CHARACTER_AREA;
+						pstCharRt->rc.rt = rtSrc;
 
-						stCharRt.rc.nThresholdValue = stBigRecogCharRt.nThresholdValue;
-						stCharRt.rc.nGaussKernel = stBigRecogCharRt.nGaussKernel;
-						stCharRt.rc.nSharpKernel = stBigRecogCharRt.nSharpKernel;
-						stCharRt.rc.nCannyKernel = stBigRecogCharRt.nCannyKernel;
-						stCharRt.rc.nDilateKernel = stBigRecogCharRt.nDilateKernel;
+						pstCharRt->rc.nThresholdValue = pstBigRecogCharRt->nThresholdValue;
+						pstCharRt->rc.nGaussKernel = pstBigRecogCharRt->nGaussKernel;
+						pstCharRt->rc.nSharpKernel = pstBigRecogCharRt->nSharpKernel;
+						pstCharRt->rc.nCannyKernel = pstBigRecogCharRt->nCannyKernel;
+						pstCharRt->rc.nDilateKernel = pstBigRecogCharRt->nDilateKernel;
 
-						stCharRt.strVal = CMyCodeConvert::Utf8ToGb2312(word);
-						stRecogCharacterRt.vecCharacterRt.push_back(stCharRt);
+						pstCharRt->strVal = CMyCodeConvert::Utf8ToGb2312(word);
+						pstRecogCharacterRt->vecCharacterRt.push_back(pstCharRt);
+
+						//**********	需要删除所有重复的字，保证识别的文字没有重复字
+						for (auto item : pstRecogCharacterRt->vecCharacterRt)
+							if (item->strVal == pstCharRt->strVal)
+							{
+								vecRepeatWord.push_back(item->strVal);
+								break;
+							}
+
 						nIndex++;
 					}
 				} while (ri->Next(level));
 				
-				if (stRecogCharacterRt.vecCharacterRt.size() > 0)
-					pPic->lCharacterAnchorArea.push_back(stRecogCharacterRt);
+				//要做字的重复检查，去除重复的字，即统一识别区中，不能存在重复的字，否则可能影响取字
+				for (int i = 0; i < vecRepeatWord.size(); i++)
+				{
+					std::vector<pST_CHARACTER_ANCHOR_POINT>::iterator itCharAnchorPoint = pstRecogCharacterRt->vecCharacterRt.begin();
+					for (; itCharAnchorPoint != pstRecogCharacterRt->vecCharacterRt.end(); )
+						if ((*itCharAnchorPoint)->strVal == vecRepeatWord[i])
+							itCharAnchorPoint = pstRecogCharacterRt->vecCharacterRt.erase(itCharAnchorPoint);
+						else
+							itCharAnchorPoint++;
+				}
+
+				if (pstRecogCharacterRt->vecCharacterRt.size() > 0)
+				{
+					pPic->lCharacterAnchorArea.push_back(pstRecogCharacterRt);
+
+					int nSize = pstRecogCharacterRt->vecCharacterRt.size();
+					if (nSize > 2)
+					{
+						//检查当前识别区中距离最远的两个点
+						std::sort(pstRecogCharacterRt->vecCharacterRt.begin(), pstRecogCharacterRt->vecCharacterRt.end(), [](pST_CHARACTER_ANCHOR_POINT st1, pST_CHARACTER_ANCHOR_POINT st2)
+						{
+							return st1->rc.rt.x < st2->rc.rt.x;
+						});
+						int nXStart, nXEnd;
+						nXStart = pstRecogCharacterRt->vecCharacterRt[0]->nIndex;
+						nXEnd = pstRecogCharacterRt->vecCharacterRt[nSize - 1]->nIndex;
+						int nXDist = abs(pstRecogCharacterRt->vecCharacterRt[nSize - 1]->rc.rt.x - pstRecogCharacterRt->vecCharacterRt[0]->rc.rt.x); //X轴最远距离
+
+						std::sort(pstRecogCharacterRt->vecCharacterRt.begin(), pstRecogCharacterRt->vecCharacterRt.end(), [](pST_CHARACTER_ANCHOR_POINT st1, pST_CHARACTER_ANCHOR_POINT st2)
+						{
+							return st1->rc.rt.y > st2->rc.rt.y;
+						});
+						int nYStart, nYEnd;
+						nYStart = pstRecogCharacterRt->vecCharacterRt[0]->nIndex;
+						nYEnd = pstRecogCharacterRt->vecCharacterRt[nSize - 1]->nIndex;
+						int nYDist = abs(pstRecogCharacterRt->vecCharacterRt[nSize - 1]->rc.rt.x - pstRecogCharacterRt->vecCharacterRt[0]->rc.rt.x); //X轴最远距离
+
+						if (nXDist > nYDist)
+						{
+							pstBigRecogCharRt->arryMaxDist[0] = nXStart;
+							pstBigRecogCharRt->arryMaxDist[1] = nXEnd;
+						}
+						else
+						{
+							pstBigRecogCharRt->arryMaxDist[0] = nYStart;
+							pstBigRecogCharRt->arryMaxDist[1] = nYEnd;
+						}
+					}
+					else if(nSize == 2)
+					{
+						pstBigRecogCharRt->arryMaxDist[0] = pstRecogCharacterRt->vecCharacterRt[0]->nIndex;
+						pstBigRecogCharRt->arryMaxDist[1] = pstRecogCharacterRt->vecCharacterRt[1]->nIndex;
+					}
+					else
+					{
+						pstBigRecogCharRt->arryMaxDist[0] = pstRecogCharacterRt->vecCharacterRt[0]->nIndex;
+						pstBigRecogCharRt->arryMaxDist[1] = -1;
+					}
+				}
+				else
+					SAFE_RELEASE(pstRecogCharacterRt);
 			}
 		#endif
 		}
@@ -756,8 +826,8 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 	std::string strRecogCharacter;
 	for (auto item : pPic->lCharacterAnchorArea)
 	{
-		for (auto item2 : item.vecCharacterRt)
-			strRecogCharacter.append(item2.strVal);
+		for (auto item2 : item->vecCharacterRt)
+			strRecogCharacter.append(item2->strVal);
 		strRecogCharacter.append("\t");
 	}
 	std::string strTime = Poco::format("识别文字定位区域时间: %dms, 识别文字: %s\n", (int)(end - start), strRecogCharacter);

@@ -411,7 +411,7 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 				CHARACTER_ANCHOR_AREA_LIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[i]->lCharacterAnchorArea.begin();			//显示文字定点的选择区
 				for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i]->lCharacterAnchorArea.end(); itSelRoi++, j++)
 				{
-					cv::Rect rt = (*itSelRoi).rt;
+					cv::Rect rt = (*itSelRoi)->rt;
 
 					char szCP[20] = { 0 };
 					rectangle(tmp, rt, CV_RGB(0, 0, 255), 2);

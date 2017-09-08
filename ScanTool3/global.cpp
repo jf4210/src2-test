@@ -45,14 +45,14 @@ void CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int
 #endif
 }
 
-bool SortByCharAnchorArea(ST_CHARACTER_ANCHOR_AREA& st1, ST_CHARACTER_ANCHOR_AREA& st2)
+bool SortByCharAnchorArea(pST_CHARACTER_ANCHOR_AREA& st1, pST_CHARACTER_ANCHOR_AREA& st2)
 {
-	return st1.nIndex < st2.nIndex;
+	return st1->nIndex < st2->nIndex;
 }
 
-bool SortByCharacterConfidence(ST_CHARACTER_ANCHOR_POINT& st1, ST_CHARACTER_ANCHOR_POINT& st2)
+bool SortByCharacterConfidence(pST_CHARACTER_ANCHOR_POINT& st1, pST_CHARACTER_ANCHOR_POINT& st2)
 {
-	return st1.fConfidence > st2.fConfidence;
+	return st1->fConfidence > st2->fConfidence;
 }
 
 bool SortByArea(cv::Rect& rt1, cv::Rect& rt2)
@@ -989,24 +989,24 @@ pMODEL LoadModelFile(CString strModelPath)
 				for (int i = 0; i < arrayCharacterAnchorArea->size(); i++)
 				{
 					Poco::JSON::Object::Ptr jsnRectInfoObj = arrayCharacterAnchorArea->getObject(i);
-					ST_CHARACTER_ANCHOR_AREA objCharacterAnchorArea;
-					objCharacterAnchorArea.nIndex = jsnRectInfoObj->get("nIndex").convert<int>();
-					objCharacterAnchorArea.nThresholdValue = jsnRectInfoObj->get("nThreshold").convert<int>();
-					objCharacterAnchorArea.nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
-					objCharacterAnchorArea.nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
-					objCharacterAnchorArea.nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();
-					objCharacterAnchorArea.nDilateKernel = jsnRectInfoObj->get("dilateKernel").convert<int>();
+					pST_CHARACTER_ANCHOR_AREA pobjCharacterAnchorArea = new ST_CHARACTER_ANCHOR_AREA();
+					pobjCharacterAnchorArea->nIndex = jsnRectInfoObj->get("nIndex").convert<int>();
+					pobjCharacterAnchorArea->nThresholdValue = jsnRectInfoObj->get("nThreshold").convert<int>();
+					pobjCharacterAnchorArea->nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
+					pobjCharacterAnchorArea->nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
+					pobjCharacterAnchorArea->nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();
+					pobjCharacterAnchorArea->nDilateKernel = jsnRectInfoObj->get("dilateKernel").convert<int>();
 
-					objCharacterAnchorArea.rt.x = jsnRectInfoObj->get("left").convert<int>();
-					objCharacterAnchorArea.rt.y = jsnRectInfoObj->get("top").convert<int>();
-					objCharacterAnchorArea.rt.width = jsnRectInfoObj->get("width").convert<int>();
-					objCharacterAnchorArea.rt.height = jsnRectInfoObj->get("height").convert<int>();
+					pobjCharacterAnchorArea->rt.x = jsnRectInfoObj->get("left").convert<int>();
+					pobjCharacterAnchorArea->rt.y = jsnRectInfoObj->get("top").convert<int>();
+					pobjCharacterAnchorArea->rt.width = jsnRectInfoObj->get("width").convert<int>();
+					pobjCharacterAnchorArea->rt.height = jsnRectInfoObj->get("height").convert<int>();
 
 					Poco::JSON::Array::Ptr omrList = jsnRectInfoObj->getArray("characterAnchorPointList");
 					for (int j = 0; j < omrList->size(); j++)
 					{
 						Poco::JSON::Object::Ptr jsnOmrObj = omrList->getObject(j);
-						ST_CHARACTER_ANCHOR_POINT stCharacterRt;
+						pST_CHARACTER_ANCHOR_POINT pstCharacterRt = new ST_CHARACTER_ANCHOR_POINT();;
 						RECTINFO rc;
 						rc.eCPType = (CPType)jsnOmrObj->get("eType").convert<int>();
 						rc.nThresholdValue = jsnOmrObj->get("thresholdValue").convert<int>();
@@ -1041,13 +1041,13 @@ pMODEL LoadModelFile(CString strModelPath)
 							rc.nDilateKernel = jsnOmrObj->get("dilateKernel").convert<int>();
 
 						//---------------
-						stCharacterRt.nIndex = jsnOmrObj->get("nIndex").convert<int>();
-						stCharacterRt.fConfidence = jsnOmrObj->get("fConfidence").convert<double>();
-						stCharacterRt.strVal = CMyCodeConvert::Utf8ToGb2312(jsnOmrObj->get("strRecogChar").convert<std::string>());
-						stCharacterRt.rc = rc;
-						objCharacterAnchorArea.vecCharacterRt.push_back(stCharacterRt);
+						pstCharacterRt->nIndex = jsnOmrObj->get("nIndex").convert<int>();
+						pstCharacterRt->fConfidence = jsnOmrObj->get("fConfidence").convert<double>();
+						pstCharacterRt->strVal = CMyCodeConvert::Utf8ToGb2312(jsnOmrObj->get("strRecogChar").convert<std::string>());
+						pstCharacterRt->rc = rc;
+						pobjCharacterAnchorArea->vecCharacterRt.push_back(pstCharacterRt);
 					}
-					paperModelInfo->lCharacterAnchorArea.push_back(objCharacterAnchorArea);
+					paperModelInfo->lCharacterAnchorArea.push_back(pobjCharacterAnchorArea);
 				}
 			}
 
@@ -1539,7 +1539,6 @@ inline cv::Point2d TriangleCoordinate(cv::Point ptA, cv::Point ptB, cv::Point pt
 		}
 	}
 	end = clock();
-//	TRACE("原C点的垂直点D(%f,%f), 新的C点坐标(%f, %f)或者(%f, %f),确定后为(%d,%d)耗时: %d\n", dDx, dDy, dXc1, dYc1, dXc2, dYc2, ptNewC.x, ptNewC.y, end - start);
 	TRACE("新的C点坐标(%f, %f)或者(%f, %f),确定后为(%f,%f)耗时: %d\n", dXc1, dYc1, dXc2, dYc2, ptNewC.x, ptNewC.y, end - start);
 	return ptNewC;
 }
@@ -2129,6 +2128,8 @@ bool GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt)
 	{
 		if (pPic->lFix.size() < 3)
 		{
+			clock_t start, end;
+			start = clock();
 			cv::Rect rtLT, rtRB;	//左上，右下两个矩形
 			rtLT = rt;
 			rtRB = rt;
@@ -2136,11 +2137,23 @@ bool GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt)
 			rtRB.y += rtRB.height;
 			GetPosition(pPic->lFix, pPic->lModelFix, rtLT);
 			GetPosition(pPic->lFix, pPic->lModelFix, rtRB);
-			rt.x = rtLT.x;
-			rt.y = rtLT.y;
-			rt.width = abs(rtRB.x - rtLT.x);
-			rt.height = abs(rtRB.y - rtLT.y);
+
+			int nWidth = abs(rtRB.x - rtLT.x);
+			int nHeight = abs(rtRB.y - rtLT.y);
+			rt.x = rtLT.x + nWidth / 2 - rt.width / 2;
+			rt.y = rtLT.y + nHeight / 2 - rt.height / 2;
+
+			end = clock();
+			TRACE("计算矩形位置时间: %dms\n", (int)(end - start));
 			return true;
+		}
+		else if (pPic->lFix.size() == 3)
+		{
+			RECTLIST lTmpFix, lTmpModelFix;
+			for (int i = 0; i < 3; i++)
+			{
+//				lTmpFix.push_back()
+			}
 		}
 		else
 			return GetPosition(pPic->lFix, pPic->lModelFix, rt);
@@ -2149,6 +2162,20 @@ bool GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt)
 		return GetPosition(pPic->lFix, pModel->vecPaperModel[nPic]->lFix, rt);
 #endif
 	return GetPosition(pPic->lFix, pModel->vecPaperModel[nPic]->lFix, rt);
+}
+
+bool GetFixDist(int nPic, pST_PicInfo pPic, pMODEL pModel)
+{
+	std::vector<pST_CHARACTER_ANCHOR_POINT> vecTmpAnchorPoint;
+	for (auto itAnchorArea : pPic->lCharacterAnchorArea)
+		for(auto itAnchorPoint : itAnchorArea->vecCharacterRt)
+		vecTmpAnchorPoint.push_back(itAnchorPoint);
+
+// 	std::sort(vecTmpAnchorPoint.begin(), vecTmpAnchorPoint.end(), [](ST_CHARACTER_ANCHOR_POINT& st1, ST_CHARACTER_ANCHOR_POINT&st2)
+// 	{
+// 		
+// 	});
+	return true;
 }
 
 bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
@@ -2169,37 +2196,69 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 	{
 		CHARACTER_ANCHOR_AREA_LIST::iterator it = pPic->lCharacterAnchorArea.begin();
 		
-		nNeedCount = it->vecCharacterRt.size() > nNeedCount ? nNeedCount : it->vecCharacterRt.size();
+		nNeedCount = (*it)->vecCharacterRt.size() > nNeedCount ? nNeedCount : (*it)->vecCharacterRt.size();
 
-		std::sort(it->vecCharacterRt.begin(), it->vecCharacterRt.end(), SortByCharacterConfidence);
-		//取前两个字做定点, 并放入定点列表
-		for (int i = 0; i < nNeedCount; i++)
-			pPic->lFix.push_back(it->vecCharacterRt[i].rc);
+	#if 1
+		//只对2个的情况，去首尾两个做定点
+		pPic->lFix.push_back((*it)->vecCharacterRt[0]->rc);
+		pPic->lFix.push_back((*it)->vecCharacterRt[(*it)->vecCharacterRt.size() - 1]->rc);
 
 		//获取模板上的对应字的定点位置
 		for (auto itModelCharAnchorArea : pModel->vecPaperModel[nPic]->lCharacterAnchorArea)
-			if (itModelCharAnchorArea.nIndex == it->nIndex)
+			if (itModelCharAnchorArea->nIndex == (*it)->nIndex)
+			{
+				for (auto itModelCharAnchorPoint : itModelCharAnchorArea->vecCharacterRt)
+				{
+					if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[0]->strVal)
+					{
+						pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
+						break;
+					}
+				}
+				for (auto itModelCharAnchorPoint : itModelCharAnchorArea->vecCharacterRt)
+				{
+					if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[(*it)->vecCharacterRt.size() - 1]->strVal)
+					{
+						pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
+						break;
+					}
+				}
+				break;
+			}
+	#else
+		//取前两个准确度最高的字做定点, 并放入定点列表
+		std::sort((*it)->vecCharacterRt.begin(), (*it)->vecCharacterRt.end(), [](pST_CHARACTER_ANCHOR_POINT& st1, pST_CHARACTER_ANCHOR_POINT& st2)
+		{
+			return st1->fConfidence > st2->fConfidence;
+		});
+		for (int i = 0; i < nNeedCount; i++)
+			pPic->lFix.push_back((*it)->vecCharacterRt[i]->rc);
+
+		//获取模板上的对应字的定点位置
+		for (auto itModelCharAnchorArea : pModel->vecPaperModel[nPic]->lCharacterAnchorArea)
+			if (itModelCharAnchorArea->nIndex == (*it)->nIndex)
 			{
 				for (int i = 0; i < nNeedCount; i++)
 				{
-					for (auto itModelCharAnchorPoint : itModelCharAnchorArea.vecCharacterRt)
+					for (auto itModelCharAnchorPoint : itModelCharAnchorArea->vecCharacterRt)
 					{
-						if (itModelCharAnchorPoint.strVal == it->vecCharacterRt[i].strVal)
+						if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[i]->strVal)
 						{
-							pPic->lModelFix.push_back(itModelCharAnchorPoint.rc);
+							pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
 							break;
 						}
 					}
 				}
 				break;
 			}
+	#endif
 	}
 	else if (nRealRecogCharArea < nNeedCount)	//在所有识别区中所有文字识别准确度排序，依次在每个识别区取一个字并循环取，直到达到要求的文字数
 	{
 		//每个识别区的文字识别准确度排序
 		CHARACTER_ANCHOR_AREA_LIST::iterator itAnchorArea = pPic->lCharacterAnchorArea.begin();
 		for(; itAnchorArea != pPic->lCharacterAnchorArea.end(); itAnchorArea++)
-			std::sort(itAnchorArea->vecCharacterRt.begin(), itAnchorArea->vecCharacterRt.end(), SortByCharacterConfidence);
+			std::sort((*itAnchorArea)->vecCharacterRt.begin(), (*itAnchorArea)->vecCharacterRt.end(), SortByCharacterConfidence);
 		
 		for (int i = 0; i < nNeedCount; i++)
 		{
@@ -2209,21 +2268,21 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 			for (int k = 0; k < i - nItem * nRealRecogCharArea; k++)
 			{
 				it++;
-				while(it->vecCharacterRt.size() < nItem + 1 )			//*********************		算法有问题	****************************************
+				while((*it)->vecCharacterRt.size() < nItem + 1 )			//*********************		算法有问题	****************************************
 					it++;
 			}
 
-			pPic->lFix.push_back(it->vecCharacterRt[nItem].rc);
+			pPic->lFix.push_back((*it)->vecCharacterRt[nItem]->rc);
 
 			//获取模板上的对应字的定点位置
 			for (auto itModelCharAnchorArea : pModel->vecPaperModel[nPic]->lCharacterAnchorArea)
-				if (itModelCharAnchorArea.nIndex == it->nIndex)
+				if (itModelCharAnchorArea->nIndex == (*it)->nIndex)
 				{
-					for (auto itModelCharAnchorPoint : itModelCharAnchorArea.vecCharacterRt)
+					for (auto itModelCharAnchorPoint : itModelCharAnchorArea->vecCharacterRt)
 					{
-						if (itModelCharAnchorPoint.strVal == it->vecCharacterRt[nItem].strVal)
+						if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[nItem]->strVal)
 						{
-							pPic->lModelFix.push_back(itModelCharAnchorPoint.rc);
+							pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
 							break;
 						}
 					}
@@ -2239,20 +2298,20 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 		{
 			if (i > nNeedCount) break;
 
-			if (it->vecCharacterRt.size() >= 2)
-				std::sort(it->vecCharacterRt.begin(), it->vecCharacterRt.end(), SortByCharacterConfidence);
+			if ((*it)->vecCharacterRt.size() >= 2)
+				std::sort((*it)->vecCharacterRt.begin(), (*it)->vecCharacterRt.end(), SortByCharacterConfidence);
 			//取准确度最高的点做定点, 并放入定点列表
-			pPic->lFix.push_back(it->vecCharacterRt[0].rc);
+			pPic->lFix.push_back((*it)->vecCharacterRt[0]->rc);
 
 			//获取模板上的对应字的定点位置
 			for (auto itModelCharAnchorArea : pModel->vecPaperModel[nPic]->lCharacterAnchorArea)
-				if (itModelCharAnchorArea.nIndex == it->nIndex)
+				if (itModelCharAnchorArea->nIndex == (*it)->nIndex)
 				{
-					for (auto itModelCharAnchorPoint : itModelCharAnchorArea.vecCharacterRt)
+					for (auto itModelCharAnchorPoint : itModelCharAnchorArea->vecCharacterRt)
 					{
-						if (itModelCharAnchorPoint.strVal == it->vecCharacterRt[0].strVal)
+						if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[0]->strVal)
 						{
-							pPic->lModelFix.push_back(itModelCharAnchorPoint.rc);
+							pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
 							break;
 						}
 					}
