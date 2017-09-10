@@ -753,23 +753,24 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 					if (nSize > 2)
 					{
 						//检查当前识别区中距离最远的两个点
-						std::sort(pstRecogCharacterRt->vecCharacterRt.begin(), pstRecogCharacterRt->vecCharacterRt.end(), [](pST_CHARACTER_ANCHOR_POINT st1, pST_CHARACTER_ANCHOR_POINT st2)
+						std::vector<pST_CHARACTER_ANCHOR_POINT> vecTmpCharacterRt(pstRecogCharacterRt->vecCharacterRt);
+						std::sort(vecTmpCharacterRt.begin(), vecTmpCharacterRt.end(), [](pST_CHARACTER_ANCHOR_POINT st1, pST_CHARACTER_ANCHOR_POINT st2)
 						{
 							return st1->rc.rt.x < st2->rc.rt.x;
 						});
 						int nXStart, nXEnd;
-						nXStart = pstRecogCharacterRt->vecCharacterRt[0]->nIndex;
-						nXEnd = pstRecogCharacterRt->vecCharacterRt[nSize - 1]->nIndex;
-						int nXDist = abs(pstRecogCharacterRt->vecCharacterRt[nSize - 1]->rc.rt.x - pstRecogCharacterRt->vecCharacterRt[0]->rc.rt.x); //X轴最远距离
+						nXStart = vecTmpCharacterRt[0]->nIndex;
+						nXEnd = vecTmpCharacterRt[nSize - 1]->nIndex;
+						int nXDist = abs(vecTmpCharacterRt[nSize - 1]->rc.rt.x - vecTmpCharacterRt[0]->rc.rt.x); //X轴最远距离
 
-						std::sort(pstRecogCharacterRt->vecCharacterRt.begin(), pstRecogCharacterRt->vecCharacterRt.end(), [](pST_CHARACTER_ANCHOR_POINT st1, pST_CHARACTER_ANCHOR_POINT st2)
+						std::sort(vecTmpCharacterRt.begin(), vecTmpCharacterRt.end(), [](pST_CHARACTER_ANCHOR_POINT st1, pST_CHARACTER_ANCHOR_POINT st2)
 						{
 							return st1->rc.rt.y > st2->rc.rt.y;
 						});
 						int nYStart, nYEnd;
-						nYStart = pstRecogCharacterRt->vecCharacterRt[0]->nIndex;
-						nYEnd = pstRecogCharacterRt->vecCharacterRt[nSize - 1]->nIndex;
-						int nYDist = abs(pstRecogCharacterRt->vecCharacterRt[nSize - 1]->rc.rt.x - pstRecogCharacterRt->vecCharacterRt[0]->rc.rt.x); //X轴最远距离
+						nYStart = vecTmpCharacterRt[0]->nIndex;
+						nYEnd = vecTmpCharacterRt[nSize - 1]->nIndex;
+						int nYDist = abs(vecTmpCharacterRt[nSize - 1]->rc.rt.x - vecTmpCharacterRt[0]->rc.rt.x); //X轴最远距离
 
 						if (nXDist > nYDist)
 						{

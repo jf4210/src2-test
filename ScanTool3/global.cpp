@@ -2199,32 +2199,84 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 		nNeedCount = (*it)->vecCharacterRt.size() > nNeedCount ? nNeedCount : (*it)->vecCharacterRt.size();
 
 	#if 1
-		//只对2个的情况，去首尾两个做定点
-		pPic->lFix.push_back((*it)->vecCharacterRt[0]->rc);
-		pPic->lFix.push_back((*it)->vecCharacterRt[(*it)->vecCharacterRt.size() - 1]->rc);
-
-		//获取模板上的对应字的定点位置
-		for (auto itModelCharAnchorArea : pModel->vecPaperModel[nPic]->lCharacterAnchorArea)
-			if (itModelCharAnchorArea->nIndex == (*it)->nIndex)
+		if ((*it)->vecCharacterRt.size() <= 2)	//只识别到1个或2个文字时，就选这两个做为文字定位点
+		{
+			for (int i = 0; i < nNeedCount; i++)
 			{
-				for (auto itModelCharAnchorPoint : itModelCharAnchorArea->vecCharacterRt)
-				{
-					if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[0]->strVal)
+				pPic->lFix.push_back((*it)->vecCharacterRt[i]->rc);
+
+				for (auto itModelCharAnchorArea : pModel->vecPaperModel[nPic]->lCharacterAnchorArea)
+					if (itModelCharAnchorArea->nIndex == (*it)->nIndex)
 					{
-						pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
+						for (auto itModelCharAnchorPoint : itModelCharAnchorArea->vecCharacterRt)
+						{
+							if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[i]->strVal)
+							{
+								pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
+								break;
+							}
+						}
 						break;
 					}
-				}
-				for (auto itModelCharAnchorPoint : itModelCharAnchorArea->vecCharacterRt)
-				{
-					if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[(*it)->vecCharacterRt.size() - 1]->strVal)
-					{
-						pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
-						break;
-					}
-				}
-				break;
 			}
+		}
+		else	//识别到2个以上文字时，取其中的某几个
+		{
+			for (int i = 0; i < nNeedCount; i++)
+			{
+				if (i < 2)
+				{
+					pPic->lFix.push_back((*it)->vecCharacterRt[(*it)->arryMaxDist[i] - 1]->rc);
+				}
+				else
+				{
+					//随机取点
+				}
+
+				for (auto itModelCharAnchorArea : pModel->vecPaperModel[nPic]->lCharacterAnchorArea)
+				if (itModelCharAnchorArea->nIndex == (*it)->nIndex)
+				{
+					for (auto itModelCharAnchorPoint : itModelCharAnchorArea->vecCharacterRt)
+					{
+						if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[i]->strVal)	//这里要改
+						{
+							pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
+							break;
+						}
+					}
+					break;
+				}
+			}
+		}
+
+		//-------------------------------------------------
+
+// 		//只对2个的情况，去首尾两个做定点
+// 		pPic->lFix.push_back((*it)->vecCharacterRt[0]->rc);
+// 		pPic->lFix.push_back((*it)->vecCharacterRt[(*it)->vecCharacterRt.size() - 1]->rc);
+// 
+// 		//获取模板上的对应字的定点位置
+// 		for (auto itModelCharAnchorArea : pModel->vecPaperModel[nPic]->lCharacterAnchorArea)
+// 			if (itModelCharAnchorArea->nIndex == (*it)->nIndex)
+// 			{
+// 				for (auto itModelCharAnchorPoint : itModelCharAnchorArea->vecCharacterRt)
+// 				{
+// 					if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[0]->strVal)
+// 					{
+// 						pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
+// 						break;
+// 					}
+// 				}
+// 				for (auto itModelCharAnchorPoint : itModelCharAnchorArea->vecCharacterRt)
+// 				{
+// 					if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[(*it)->vecCharacterRt.size() - 1]->strVal)
+// 					{
+// 						pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
+// 						break;
+// 					}
+// 				}
+// 				break;
+// 			}
 	#else
 		//取前两个准确度最高的字做定点, 并放入定点列表
 		std::sort((*it)->vecCharacterRt.begin(), (*it)->vecCharacterRt.end(), [](pST_CHARACTER_ANCHOR_POINT& st1, pST_CHARACTER_ANCHOR_POINT& st2)
