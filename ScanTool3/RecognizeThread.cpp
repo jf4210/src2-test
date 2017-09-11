@@ -720,7 +720,6 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 						pstCharRt->rc.nDilateKernel = pstBigRecogCharRt->nDilateKernel;
 
 						pstCharRt->strVal = CMyCodeConvert::Utf8ToGb2312(word);
-						pstRecogCharacterRt->vecCharacterRt.push_back(pstCharRt);
 
 						//**********	需要删除所有重复的字，保证识别的文字没有重复字
 						for (auto item : pstRecogCharacterRt->vecCharacterRt)
@@ -730,6 +729,7 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 								break;
 							}
 
+						pstRecogCharacterRt->vecCharacterRt.push_back(pstCharRt);
 						nIndex++;
 					}
 				} while (ri->Next(level));
@@ -753,35 +753,75 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 					if (nSize > 2)
 					{
 						//检查当前识别区中距离最远的两个点
-						std::vector<pST_CHARACTER_ANCHOR_POINT> vecTmpCharacterRt(pstRecogCharacterRt->vecCharacterRt);
-						std::sort(vecTmpCharacterRt.begin(), vecTmpCharacterRt.end(), [](pST_CHARACTER_ANCHOR_POINT st1, pST_CHARACTER_ANCHOR_POINT st2)
+						int nX_min = 0, nX_Max = 0;				//X轴的最小值、最大值
+						int nX_minIndex = 0, nX_maxIndex = 0;	//X轴的最小值、最大值对应的标签，即第几个
+						int nY_min = 0, nY_Max = 0;				//Y轴的最小值、最大值
+						int nY_minIndex = 0, nY_maxIndex = 0;	//Y轴的最小值、最大值对应的标签，即第几个
+						for (int i = 0; i < nSize; i++)
 						{
-							return st1->rc.rt.x < st2->rc.rt.x;
-						});
-						int nXStart, nXEnd;
-						nXStart = vecTmpCharacterRt[0]->nIndex;
-						nXEnd = vecTmpCharacterRt[nSize - 1]->nIndex;
-						int nXDist = abs(vecTmpCharacterRt[nSize - 1]->rc.rt.x - vecTmpCharacterRt[0]->rc.rt.x); //X轴最远距离
-
-						std::sort(vecTmpCharacterRt.begin(), vecTmpCharacterRt.end(), [](pST_CHARACTER_ANCHOR_POINT st1, pST_CHARACTER_ANCHOR_POINT st2)
-						{
-							return st1->rc.rt.y > st2->rc.rt.y;
-						});
-						int nYStart, nYEnd;
-						nYStart = vecTmpCharacterRt[0]->nIndex;
-						nYEnd = vecTmpCharacterRt[nSize - 1]->nIndex;
-						int nYDist = abs(vecTmpCharacterRt[nSize - 1]->rc.rt.x - vecTmpCharacterRt[0]->rc.rt.x); //X轴最远距离
-
+							if (nX_min > pstRecogCharacterRt->vecCharacterRt[i]->rc.rt.x)
+							{
+								nX_min = pstRecogCharacterRt->vecCharacterRt[i]->rc.rt.x;
+								nX_minIndex = i;
+							}
+							if (nX_Max < pstRecogCharacterRt->vecCharacterRt[i]->rc.rt.x)
+							{
+								nX_Max = pstRecogCharacterRt->vecCharacterRt[i]->rc.rt.x;
+								nX_maxIndex = i;
+							}
+							if (nY_min > pstRecogCharacterRt->vecCharacterRt[i]->rc.rt.y)
+							{
+								nY_min = pstRecogCharacterRt->vecCharacterRt[i]->rc.rt.y;
+								nY_minIndex = i;
+							}
+							if (nY_Max < pstRecogCharacterRt->vecCharacterRt[i]->rc.rt.y)
+							{
+								nY_Max = pstRecogCharacterRt->vecCharacterRt[i]->rc.rt.y;
+								nY_maxIndex = i;
+							}
+						}
+						int nXDist = nX_Max - nX_min;
+						int nYDist = nY_Max - nY_min;
 						if (nXDist > nYDist)
 						{
-							pstBigRecogCharRt->arryMaxDist[0] = nXStart;
-							pstBigRecogCharRt->arryMaxDist[1] = nXEnd;
+							pstBigRecogCharRt->arryMaxDist[0] = nX_minIndex;
+							pstBigRecogCharRt->arryMaxDist[1] = nX_maxIndex;
 						}
 						else
 						{
-							pstBigRecogCharRt->arryMaxDist[0] = nYStart;
-							pstBigRecogCharRt->arryMaxDist[1] = nYEnd;
+							pstBigRecogCharRt->arryMaxDist[0] = nY_minIndex;
+							pstBigRecogCharRt->arryMaxDist[1] = nY_maxIndex;
 						}
+
+// 						std::vector<pST_CHARACTER_ANCHOR_POINT> vecTmpCharacterRt(pstRecogCharacterRt->vecCharacterRt);
+// 						std::sort(vecTmpCharacterRt.begin(), vecTmpCharacterRt.end(), [](pST_CHARACTER_ANCHOR_POINT st1, pST_CHARACTER_ANCHOR_POINT st2)
+// 						{
+// 							return st1->rc.rt.x < st2->rc.rt.x;
+// 						});
+// 						int nXStart, nXEnd;
+// 						nXStart = vecTmpCharacterRt[0]->nIndex;
+// 						nXEnd = vecTmpCharacterRt[nSize - 1]->nIndex;
+// 						int nXDist = abs(vecTmpCharacterRt[nSize - 1]->rc.rt.x - vecTmpCharacterRt[0]->rc.rt.x); //X轴最远距离
+// 
+// 						std::sort(vecTmpCharacterRt.begin(), vecTmpCharacterRt.end(), [](pST_CHARACTER_ANCHOR_POINT st1, pST_CHARACTER_ANCHOR_POINT st2)
+// 						{
+// 							return st1->rc.rt.y > st2->rc.rt.y;
+// 						});
+// 						int nYStart, nYEnd;
+// 						nYStart = vecTmpCharacterRt[0]->nIndex;
+// 						nYEnd = vecTmpCharacterRt[nSize - 1]->nIndex;
+// 						int nYDist = abs(vecTmpCharacterRt[nSize - 1]->rc.rt.x - vecTmpCharacterRt[0]->rc.rt.x); //X轴最远距离
+// 
+// 						if (nXDist > nYDist)
+// 						{
+// 							pstBigRecogCharRt->arryMaxDist[0] = nXStart;
+// 							pstBigRecogCharRt->arryMaxDist[1] = nXEnd;
+// 						}
+// 						else
+// 						{
+// 							pstBigRecogCharRt->arryMaxDist[0] = nYStart;
+// 							pstBigRecogCharRt->arryMaxDist[1] = nYEnd;
+// 						}
 					}
 					else if(nSize == 2)
 					{

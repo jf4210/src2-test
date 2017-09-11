@@ -2147,16 +2147,34 @@ bool GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt)
 			TRACE("计算矩形位置时间: %dms\n", (int)(end - start));
 			return true;
 		}
-		else if (pPic->lFix.size() == 3)
+		else /*if (pPic->lFix.size() == 3)*/
 		{
-			RECTLIST lTmpFix, lTmpModelFix;
-			for (int i = 0; i < 3; i++)
+			clock_t start, end;
+			start = clock();
+			VEC_FIXRECTINFO lFixRtInfo;
+			VEC_NEWRTBY2FIX vecNewRt;
+
+			RECTLIST::iterator itFix = pPic->lFix.begin();
+			RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
+			for(; itFix != pPic->lFix.end(); itFix++, itModelFix++)
 			{
-//				lTmpFix.push_back()
+				GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rt);
 			}
+			int nX = 0, nY = 0;
+			for (auto newRt : vecNewRt)
+			{
+				nX += newRt.rt.x;
+				nY += newRt.rt.y;
+			}
+			rt.x = nX / vecNewRt.size();
+			rt.y = nY / vecNewRt.size();
+
+			end = clock();
+			TRACE("计算矩形位置时间: %dms\n", (int)(end - start));
+			return true;
 		}
-		else
-			return GetPosition(pPic->lFix, pPic->lModelFix, rt);
+// 		else
+// 			return GetPosition(pPic->lFix, pPic->lModelFix, rt);
 	}
 	else
 		return GetPosition(pPic->lFix, pModel->vecPaperModel[nPic]->lFix, rt);
@@ -2175,6 +2193,35 @@ bool GetFixDist(int nPic, pST_PicInfo pPic, pMODEL pModel)
 // 	{
 // 		
 // 	});
+	return true;
+}
+
+bool GetNewRt(RECTINFO rc, RECTINFO rcModel, VEC_FIXRECTINFO& lFixRtInfo, VEC_NEWRTBY2FIX& vecNewRt, cv::Rect rt)
+{
+	if (lFixRtInfo.size() < 1) return false;
+
+	VEC_FIXRECTINFO::iterator itFixRt = lFixRtInfo.begin();
+	for (int i = 0; itFixRt != lFixRtInfo.end(); itFixRt++, i++)
+	{
+		RECTLIST lTmpFix, lTmpModelFix;
+		lTmpFix.push_back(itFixRt->rcFix);
+		lTmpModelFix.push_back(itFixRt->rcModelFix);
+
+		lTmpFix.push_back(rc);
+		lTmpModelFix.push_back(rcModel);
+
+		ST_NEWRTBY2FIX stNewRt;
+		stNewRt.nFirstFix = i;
+		stNewRt.nSecondFix = lFixRtInfo.size();
+		stNewRt.rt = rt;
+		GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
+		vecNewRt.push_back(stNewRt);
+	}
+
+	ST_FIXRECTTINFO stFixRtInfo;
+	stFixRtInfo.rcFix = rc;
+	stFixRtInfo.rcModelFix = rcModel;
+	lFixRtInfo.push_back(stFixRtInfo);
 	return true;
 }
 
@@ -2222,15 +2269,32 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 		}
 		else	//识别到2个以上文字时，取其中的某几个
 		{
+			int* pTmpArry = new int[nNeedCount];
+
 			for (int i = 0; i < nNeedCount; i++)
 			{
 				if (i < 2)
 				{
 					pPic->lFix.push_back((*it)->vecCharacterRt[(*it)->arryMaxDist[i] - 1]->rc);
+					pTmpArry[i] = (*it)->arryMaxDist[i];
 				}
 				else
 				{
 					//随机取点
+					Poco::Random rnd;
+					rnd.seed();
+					int n = rnd.next(pPic->lFix.size());
+
+					for (int j = 0; j < i; j++)
+					{
+						if (pTmpArry[j] == n)
+						{
+							n++;
+							j = 0;
+						}
+					}
+					pTmpArry[i] = n;		//存储定点在列表中的的索引
+					pPic->lFix.push_back((*it)->vecCharacterRt[n]->rc);
 				}
 
 				for (auto itModelCharAnchorArea : pModel->vecPaperModel[nPic]->lCharacterAnchorArea)
@@ -2238,7 +2302,7 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 				{
 					for (auto itModelCharAnchorPoint : itModelCharAnchorArea->vecCharacterRt)
 					{
-						if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[i]->strVal)	//这里要改
+						if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[pTmpArry[i]]->strVal)	//这里要改
 						{
 							pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
 							break;
@@ -2247,6 +2311,7 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 					break;
 				}
 			}
+			SAFE_RELEASE_ARRY(pTmpArry);
 		}
 
 		//-------------------------------------------------

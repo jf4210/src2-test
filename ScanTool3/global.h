@@ -607,6 +607,26 @@ typedef struct stPlatformInfo
 }ST_PLATFORMINFO, *pST_PLATFORMINFO;
 typedef std::vector<pST_PLATFORMINFO> VEC_PLATFORM_TY;
 
+//----------------------------------------------
+//任意两个定点计算出的矩形位置
+typedef struct _tagNewRtBy2Fix_
+{
+	int nFirstFix;
+	int nSecondFix;
+	cv::Rect rt;
+}ST_NEWRTBY2FIX;
+typedef std::vector<ST_NEWRTBY2FIX> VEC_NEWRTBY2FIX;
+
+typedef struct _tagFixRectInfo_
+{
+	RECTINFO rcFix;
+	RECTINFO rcModelFix;
+}ST_FIXRECTTINFO;
+typedef std::vector<ST_FIXRECTTINFO> VEC_FIXRECTINFO;
+
+bool	GetNewRt(RECTINFO rc, RECTINFO rcModel, VEC_FIXRECTINFO& lFixRtInfo, VEC_NEWRTBY2FIX& vecNewRt, cv::Rect rt);
+//----------------------------------------------
+
 int		GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, RECTINFO*& pRc);
 //bool	ZipFile(CString strSrcPath, CString strDstPath, CString strExtName = _T(".zip"));
 //bool	UnZipFile(CString strZipPath);
