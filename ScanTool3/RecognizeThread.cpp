@@ -2219,7 +2219,30 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 // 				vecVal_threshold.push_back(rc.nAnswer);
 // 			}
 			omrResult.lSelAnswer.push_back(rc);
+			
+			//------------------------
+			VEC_FIXRECTINFO lFixRtInfo;
+			VEC_NEWRTBY2FIX vecNewRt;
+			RECTINFO rc2 = *itOmrItem;
 
+			RECTLIST::iterator itFix = pPic->lFix.begin();
+			RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
+			for (; itFix != pPic->lFix.end(); itFix++, itModelFix++)
+			{
+				GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rc2.rt);
+			}
+			for (auto newRt : vecNewRt)
+			{
+				RECTINFO rcTmp;
+				rcTmp = rc;
+				rcTmp.rt = newRt.rt;
+
+				rcTmp.rt.x += rcTmp.rt.width / 2;
+				rcTmp.rt.y += rcTmp.rt.height / 2;
+
+				pPic->lCalcRect.push_back(rcTmp);
+			}
+			//------------------------
 			#ifdef PaintOmrSnRect	//打印OMR、SN位置
 			pPic->lNormalRect.push_back(rc);
 			#endif
@@ -3541,6 +3564,29 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 #endif
 			pSn->lSN.push_back(rc);
 
+			//------------------------
+			VEC_FIXRECTINFO lFixRtInfo;
+			VEC_NEWRTBY2FIX vecNewRt;
+			RECTINFO rc2 = *itSnItem;
+
+			RECTLIST::iterator itFix = pPic->lFix.begin();
+			RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
+			for (; itFix != pPic->lFix.end(); itFix++, itModelFix++)
+			{
+				GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rc2.rt);
+			}
+			for (auto newRt : vecNewRt)
+			{
+				RECTINFO rcTmp;
+				rcTmp = rc;
+				rcTmp.rt = newRt.rt;
+
+				rcTmp.rt.x += rcTmp.rt.width / 2;
+				rcTmp.rt.y += rcTmp.rt.height / 2;
+
+				pPic->lCalcRect.push_back(rcTmp);
+			}
+			//------------------------
 #ifdef PaintOmrSnRect	//打印OMR、SN位置
 			pPic->lNormalRect.push_back(rc);
 #endif

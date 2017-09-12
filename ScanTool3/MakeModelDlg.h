@@ -70,8 +70,8 @@ typedef struct _PaperModelInfo_
 			itSn = lSN.erase(itSn);
 			SAFE_RELEASE(pSNItem);
 		}
-// 		for (int i = 0; i < vecCharacterLocation.size(); i++)		//这里不能释放，从模板加载后只有一份数据，在模板析构时释放
-// 			SAFE_RELEASE(vecCharacterLocation[i]);
+ 		for (int i = 0; i < vecCharacterLocation.size(); i++)		//这里不能释放，从模板加载后只有一份数据，在模板析构时释放
+ 			SAFE_RELEASE(vecCharacterLocation[i]);
 	}
 }PaperModelInfo, *pPaperModelInfo;
 

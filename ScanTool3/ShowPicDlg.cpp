@@ -443,6 +443,54 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 					rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 				}
 			}
+
+			//----------------------	Tmp	打印所有Omr点的计算的矩形位置
+
+			RECTLIST::iterator itTmpCalcRect = (*itPic)->lCalcRect.begin();								//显示模板上的定点对应到此试卷上的新定点
+			for (int j = 0; itTmpCalcRect != (*itPic)->lCalcRect.end(); itTmpCalcRect++, j++)
+			{
+				cv::Rect rt = (*itTmpCalcRect).rt;
+				int n = j % pPaper->pModel->nCharacterAnchorPoint;
+				if(n == 0)
+					cv::circle(tmp, rt.tl(), 2, cv::Scalar(0, 0, 255));//rectangle(tmp, rt, CV_RGB(0, 0, 255), 1);
+				else if(n == 1)
+					cv::circle(tmp, rt.tl(), 2, cv::Scalar(255, 0, 255));//rectangle(tmp, rt, CV_RGB(255, 0, 255), 1);
+				else if (n == 2)
+					cv::circle(tmp, rt.tl(), 2, cv::Scalar(255, 110, 200));//rectangle(tmp, rt, CV_RGB(255, 110, 200), 1);
+				else if (n == 3)
+					cv::circle(tmp, rt.tl(), 2, cv::Scalar(55, 50, 222));//rectangle(tmp, rt, CV_RGB(55, 50, 222), 1);
+				else if (n == 4)
+					cv::circle(tmp, rt.tl(), 2, cv::Scalar(155, 110, 55));//rectangle(tmp, rt, CV_RGB(155, 110, 55), 1);
+				else if (n == 5)
+					cv::circle(tmp, rt.tl(), 2, cv::Scalar(255, 20, 25));//rectangle(tmp, rt, CV_RGB(255, 20, 25), 1);
+				else
+					cv::circle(tmp, rt.tl(), 2, cv::Scalar(0, 255, 0));//rectangle(tmp, rt, CV_RGB(0, 255, 0), 1);
+			}
+// 			VEC_FIXRECTINFO lFixRtInfo;
+// 			VEC_NEWRTBY2FIX vecNewRt;
+// 
+// 			OMRLIST::iterator itOmr = pPaper->pModel->vecPaperModel[i]->lOMR2.begin();
+// 			for (; itOmr != pPaper->pModel->vecPaperModel[i]->lOMR2.end(); itOmr++)
+// 			{
+// 				pOMR_QUESTION pOmrQuestion = &(*itOmr);
+// 				RECTLIST::iterator itOmrItem = pOmrQuestion->lSelAnswer.begin();
+// 				for (; itOmrItem != pOmrQuestion->lSelAnswer.end(); itOmrItem++)
+// 				{
+// 					RECTINFO rc = *itOmrItem;
+// 
+// 					RECTLIST::iterator itFix = (*itPic)->lFix.begin();
+// 					RECTLIST::iterator itModelFix = (*itPic)->lModelFix.begin();
+// 					for (; itFix != (*itPic)->lFix.end(); itFix++, itModelFix++)
+// 					{
+// 						GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rc.rt);
+// 					}
+// 					for (auto newRt : vecNewRt)
+// 					{
+// 						rectangle(tmp, newRt.rt, CV_RGB(0, 0, 255), 1);
+// 					}
+// 				}
+// 			}
+			//----------------------
 		}
 		else
 		{

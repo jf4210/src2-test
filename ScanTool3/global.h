@@ -263,7 +263,8 @@ typedef struct _PicInfo_				//图片信息
 	RECTLIST		lFix;			//定点列表
 	RECTLIST		lNormalRect;	//识别出来的正常点位置
 	RECTLIST		lIssueRect;		//识别出来的问题试卷的问题点位置，只要出现问题点就不进行下一页的识别(严格模式)，或者存储已经发现的问题点，但是继续后面的识别(简单模式)
-	
+
+	RECTLIST		lCalcRect;		//通过定点计算出的点位置
 	RECTLIST		lModelFix;		//模板文字定点列表，在使用文字定位时有用
 	CHARACTER_ANCHOR_AREA_LIST lCharacterAnchorArea;	//文字定位区域
 // 	cv::Mat			matSrc;

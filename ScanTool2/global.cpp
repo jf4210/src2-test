@@ -359,6 +359,8 @@ pMODEL LoadModelFile(CString strModelPath)
 			pModel->nScanSize = objData->get("nScanSize").convert<int>();
 		if (objData->has("nScanType"))
 			pModel->nScanType = objData->get("nScanType").convert<int>();
+		if (objData->has("nCharacterAnchorPoint"))
+			pModel->nCharacterAnchorPoint = objData->get("nCharacterAnchorPoint").convert<int>();
 
 // 		if (objData->has("gaussKernel"))
 // 			pModel->nGaussKernel = objData->get("gaussKernel").convert<int>();

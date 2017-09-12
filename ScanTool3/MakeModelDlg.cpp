@@ -188,7 +188,26 @@ BOOL CMakeModelDlg::OnInitDialog()
 			CHARACTER_ANCHOR_AREA_LIST::iterator itRecogCharRt = m_pModel->vecPaperModel[i]->lCharacterAnchorArea.begin();
 			for (; itRecogCharRt != m_pModel->vecPaperModel[i]->lCharacterAnchorArea.end(); itRecogCharRt++)
 			{
-				pPaperModel->vecCharacterLocation.push_back(*itRecogCharRt);
+				pST_CHARACTER_ANCHOR_AREA pStCharacterAnchorArea = new ST_CHARACTER_ANCHOR_AREA();
+				pStCharacterAnchorArea->nIndex = (*itRecogCharRt)->nIndex;
+				pStCharacterAnchorArea->nCannyKernel = (*itRecogCharRt)->nCannyKernel;
+				pStCharacterAnchorArea->nDilateKernel = (*itRecogCharRt)->nDilateKernel;
+				pStCharacterAnchorArea->nGaussKernel = (*itRecogCharRt)->nGaussKernel;
+				pStCharacterAnchorArea->nSharpKernel = (*itRecogCharRt)->nSharpKernel;
+				pStCharacterAnchorArea->nThresholdValue = (*itRecogCharRt)->nThresholdValue;
+				pStCharacterAnchorArea->rt = (*itRecogCharRt)->rt;
+				for (auto itCharPoint : (*itRecogCharRt)->vecCharacterRt)
+				{
+					pST_CHARACTER_ANCHOR_POINT pStCharAnchorPoint = new ST_CHARACTER_ANCHOR_POINT();
+					pStCharAnchorPoint->nIndex = itCharPoint->nIndex;
+					pStCharAnchorPoint->fConfidence = itCharPoint->fConfidence;
+					pStCharAnchorPoint->rc = itCharPoint->rc;
+					pStCharAnchorPoint->strVal = itCharPoint->strVal;
+					pStCharacterAnchorArea->vecCharacterRt.push_back(pStCharAnchorPoint);
+				}
+				pPaperModel->vecCharacterLocation.push_back(pStCharacterAnchorArea);
+
+//				pPaperModel->vecCharacterLocation.push_back(*itRecogCharRt);
 			}
 			RECTLIST::iterator itSelHTracker = m_pModel->vecPaperModel[i]->lSelHTracker.begin();
 			for (; itSelHTracker != m_pModel->vecPaperModel[i]->lSelHTracker.end(); itSelHTracker++)
@@ -3484,6 +3503,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	jsnModel.set("nScanSize", pModel->nScanSize);				//扫描用的纸张类型，1-a4, 2-a3, 3-定制
 	jsnModel.set("nScanType", pModel->nScanType);				//扫描模式：1-灰度扫描，2-彩色扫描
 	jsnModel.set("nScanAutoCut", pModel->nAutoCut);				//扫描仪是否自动裁剪，超长卡不能裁剪
+	jsnModel.set("nCharacterAnchorPoint", pModel->nCharacterAnchorPoint);	//用来计算矩形位置的文字定点个数
 
 // 	jsnModel.set("gaussKernel", pModel->nGaussKernel);
 // 	jsnModel.set("sharpKernel", pModel->nSharpKernel);
@@ -7872,7 +7892,26 @@ void CMakeModelDlg::ReInitModel(pMODEL pModel)
 			CHARACTER_ANCHOR_AREA_LIST::iterator itRecogCharRt = m_pModel->vecPaperModel[i]->lCharacterAnchorArea.begin();
 			for (; itRecogCharRt != m_pModel->vecPaperModel[i]->lCharacterAnchorArea.end(); itRecogCharRt++)
 			{
-				pPaperModel->vecCharacterLocation.push_back(*itRecogCharRt);
+				pST_CHARACTER_ANCHOR_AREA pStCharacterAnchorArea = new ST_CHARACTER_ANCHOR_AREA();
+				pStCharacterAnchorArea->nIndex = (*itRecogCharRt)->nIndex;
+				pStCharacterAnchorArea->nCannyKernel = (*itRecogCharRt)->nCannyKernel;
+				pStCharacterAnchorArea->nDilateKernel = (*itRecogCharRt)->nDilateKernel;
+				pStCharacterAnchorArea->nGaussKernel = (*itRecogCharRt)->nGaussKernel;
+				pStCharacterAnchorArea->nSharpKernel = (*itRecogCharRt)->nSharpKernel;
+				pStCharacterAnchorArea->nThresholdValue = (*itRecogCharRt)->nThresholdValue;
+				pStCharacterAnchorArea->rt = (*itRecogCharRt)->rt;
+				for (auto itCharPoint : (*itRecogCharRt)->vecCharacterRt)
+				{
+					pST_CHARACTER_ANCHOR_POINT pStCharAnchorPoint = new ST_CHARACTER_ANCHOR_POINT();
+					pStCharAnchorPoint->nIndex = itCharPoint->nIndex;
+					pStCharAnchorPoint->fConfidence = itCharPoint->fConfidence;
+					pStCharAnchorPoint->rc = itCharPoint->rc;
+					pStCharAnchorPoint->strVal = itCharPoint->strVal;
+					pStCharacterAnchorArea->vecCharacterRt.push_back(pStCharAnchorPoint);
+				}
+				pPaperModel->vecCharacterLocation.push_back(pStCharacterAnchorArea);
+
+//				pPaperModel->vecCharacterLocation.push_back(*itRecogCharRt);
 			}
 			RECTLIST::iterator itSelHTracker = m_pModel->vecPaperModel[i]->lSelHTracker.begin();
 			for (; itSelHTracker != m_pModel->vecPaperModel[i]->lSelHTracker.end(); itSelHTracker++)
@@ -8139,7 +8178,26 @@ void CMakeModelDlg::SaveNewModel()
 		//--
 
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecCharacterLocation.size(); j++)
-			pPaperModel->lCharacterAnchorArea.push_back(m_vecPaperModelInfo[i]->vecCharacterLocation[j]);
+		{
+			pST_CHARACTER_ANCHOR_AREA pStCharacterAnchorArea = new ST_CHARACTER_ANCHOR_AREA();
+			pStCharacterAnchorArea->nIndex = m_vecPaperModelInfo[i]->vecCharacterLocation[j]->nIndex;
+			pStCharacterAnchorArea->nCannyKernel = m_vecPaperModelInfo[i]->vecCharacterLocation[j]->nCannyKernel;
+			pStCharacterAnchorArea->nDilateKernel = m_vecPaperModelInfo[i]->vecCharacterLocation[j]->nDilateKernel;
+			pStCharacterAnchorArea->nGaussKernel = m_vecPaperModelInfo[i]->vecCharacterLocation[j]->nGaussKernel;
+			pStCharacterAnchorArea->nSharpKernel = m_vecPaperModelInfo[i]->vecCharacterLocation[j]->nSharpKernel;
+			pStCharacterAnchorArea->nThresholdValue = m_vecPaperModelInfo[i]->vecCharacterLocation[j]->nThresholdValue;
+			pStCharacterAnchorArea->rt = m_vecPaperModelInfo[i]->vecCharacterLocation[j]->rt;
+			for (auto itCharPoint : m_vecPaperModelInfo[i]->vecCharacterLocation[j]->vecCharacterRt)
+			{
+				pST_CHARACTER_ANCHOR_POINT pStCharAnchorPoint = new ST_CHARACTER_ANCHOR_POINT();
+				pStCharAnchorPoint->nIndex = itCharPoint->nIndex;
+				pStCharAnchorPoint->fConfidence = itCharPoint->fConfidence;
+				pStCharAnchorPoint->rc = itCharPoint->rc;
+				pStCharAnchorPoint->strVal = itCharPoint->strVal;
+				pStCharacterAnchorArea->vecCharacterRt.push_back(pStCharAnchorPoint);
+			}
+			pPaperModel->lCharacterAnchorArea.push_back(pStCharacterAnchorArea);
+		}
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecHTracker.size(); j++)
 			pPaperModel->lSelHTracker.push_back(m_vecPaperModelInfo[i]->vecHTracker[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecVTracker.size(); j++)

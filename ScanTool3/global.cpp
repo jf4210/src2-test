@@ -374,6 +374,8 @@ pMODEL LoadModelFile(CString strModelPath)
 			pModel->nScanSize = objData->get("nScanSize").convert<int>();
 		if (objData->has("nScanType"))
 			pModel->nScanType = objData->get("nScanType").convert<int>();
+		if (objData->has("nCharacterAnchorPoint"))
+			pModel->nCharacterAnchorPoint = objData->get("nCharacterAnchorPoint").convert<int>();
 
 // 		if (objData->has("gaussKernel"))
 // 			pModel->nGaussKernel = objData->get("gaussKernel").convert<int>();
@@ -2161,14 +2163,41 @@ bool GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt)
 				GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rt);
 			}
 			int nX = 0, nY = 0;
+			int nXMin = 0, nXMax = 0;
+			int nYMin = 0, nYMax = 0;
 			for (auto newRt : vecNewRt)
 			{
 				nX += newRt.rt.x;
 				nY += newRt.rt.y;
+				nXMin = nXMin > newRt.rt.x ? newRt.rt.x : nXMin;
+				nXMax = nXMax < newRt.rt.x ? newRt.rt.x : nXMax;
+				nYMin = nYMin > newRt.rt.y ? newRt.rt.y : nYMin;
+				nYMax = nYMax < newRt.rt.y ? newRt.rt.y : nYMax;
 			}
-			rt.x = nX / vecNewRt.size();
-			rt.y = nY / vecNewRt.size();
+			int nXMean = nX / vecNewRt.size();
+			int nYMean = nY / vecNewRt.size();
 
+			int nY_MaxDist = rt.height;
+			int nX_MaxDist = rt.width;
+
+			//判断X轴、Y轴上>和<平均值的个数，
+			int nXLessMean = 0, nXGreaterMean = 0;
+			int nYLessMean = 0, nYGreaterMean = 0;
+			for (auto newRt : vecNewRt)
+			{
+				if (newRt.rt.x > nXMean)
+					nXGreaterMean++;
+				else if(newRt.rt.x < nXMean)
+					nXLessMean++;
+				if (newRt.rt.y > nYMean)
+					nYGreaterMean++;
+				else if (newRt.rt.y < nYMean)
+					nYLessMean++;
+			}
+
+// 			if (abs(nXMax - nXMin) > abs(nYMax - nYMin))
+// 			{
+// 			}
 			end = clock();
 			TRACE("计算矩形位置时间: %dms\n", (int)(end - start));
 			return true;
@@ -2198,7 +2227,7 @@ bool GetFixDist(int nPic, pST_PicInfo pPic, pMODEL pModel)
 
 bool GetNewRt(RECTINFO rc, RECTINFO rcModel, VEC_FIXRECTINFO& lFixRtInfo, VEC_NEWRTBY2FIX& vecNewRt, cv::Rect rt)
 {
-	if (lFixRtInfo.size() < 1) return false;
+//	if (lFixRtInfo.size() < 1) return false;
 
 	VEC_FIXRECTINFO::iterator itFixRt = lFixRtInfo.begin();
 	for (int i = 0; itFixRt != lFixRtInfo.end(); itFixRt++, i++)
@@ -2214,7 +2243,21 @@ bool GetNewRt(RECTINFO rc, RECTINFO rcModel, VEC_FIXRECTINFO& lFixRtInfo, VEC_NE
 		stNewRt.nFirstFix = i;
 		stNewRt.nSecondFix = lFixRtInfo.size();
 		stNewRt.rt = rt;
-		GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
+//		GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
+
+		cv::Rect rtLT, rtRB;	//左上，右下两个矩形
+		rtLT = rt;
+		rtRB = rt;
+		rtRB.x += rtRB.width;
+		rtRB.y += rtRB.height;
+		GetPosition(lTmpFix, lTmpModelFix, rtLT);
+		GetPosition(lTmpFix, lTmpModelFix, rtRB);
+
+		int nWidth = abs(rtRB.x - rtLT.x);
+		int nHeight = abs(rtRB.y - rtLT.y);
+		stNewRt.rt.x = rtLT.x + nWidth / 2 - rt.width / 2;
+		stNewRt.rt.y = rtLT.y + nHeight / 2 - rt.height / 2;
+
 		vecNewRt.push_back(stNewRt);
 	}
 
@@ -2233,7 +2276,7 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 	if (nModelCharArea <= 0 || nRealRecogCharArea <= 0) return false;
 
 	pPic->lFix.clear();
-	int nNeedCount = 2;	//需要取的文字定点个数
+	int nNeedCount = pModel->nCharacterAnchorPoint;	//需要取的文字定点个数
 
 	//2个定点时，选距离最远的两个，如何根据给成矩形左上点和右下点分别计算2个矩形并计算重合度，根据重合度最高的矩形的中心点作为结果矩形的中心点
 
@@ -2413,7 +2456,7 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 		CHARACTER_ANCHOR_AREA_LIST::iterator it = pPic->lCharacterAnchorArea.begin();
 		for (int i = 0; it != pPic->lCharacterAnchorArea.end(); it++, i++)
 		{
-			if (i > nNeedCount) break;
+			if (i > nNeedCount - 1) break;
 
 			if ((*it)->vecCharacterRt.size() >= 2)
 				std::sort((*it)->vecCharacterRt.begin(), (*it)->vecCharacterRt.end(), SortByCharacterConfidence);
@@ -2938,7 +2981,7 @@ bool GetFixPicTransfer(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL p
 {
 #ifdef USE_TESSERACT
 	if (pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0)
-		return PicTransfer(nPic, matCompPic, pPic->lFix, pPic->lModelFix, inverseMat);
+		return true;	// PicTransfer(nPic, matCompPic, pPic->lFix, pPic->lModelFix, inverseMat);
 	else
 		return PicTransfer(nPic, matCompPic, pPic->lFix, pModel->vecPaperModel[nPic]->lFix, inverseMat);
 #endif
