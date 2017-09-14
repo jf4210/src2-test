@@ -151,7 +151,7 @@ void CLoginDlg::InitCtrlPosition()
 	{
 		GetDlgItem(IDC_STATIC_Title)->GetWindowRect(rt1);
 		int nLen = _strMainTitle_.length() / 2;
-		int nMinLen = nLen * m_nStatusSize;
+		int nMinLen = nLen * (m_nStatusSize + 2);
 		rt1.right = rt1.left + nMinLen;
 		nTmpX = rt1.right + 5;
 		GetDlgItem(IDC_STATIC_Title)->MoveWindow(rt1);

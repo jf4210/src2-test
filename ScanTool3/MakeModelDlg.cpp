@@ -15,6 +15,7 @@
 #include "Net_Cmd_Protocol.h"
 //#include "./pdf2jpg/MuPDFConvert.h"
 #include "AdvancedSetDlg.h"
+#include "AdanceSetMgrDlg.h"
 #include "ScanModelPaperDlg.h"
 #include "ExamInfoDlg.h"
 #include "NewMessageBox.h"
@@ -2132,7 +2133,7 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 				pstCharRt->rc.eCPType = CHARACTER_AREA;
 				pstCharRt->rc.rt = rtSrc;
 				pstCharRt->rc.nTH = pstRecogCharacterRt->nIndex;	//记录下当前文字属于第几个大文字识别区
-				pstCharRt->rc.nAnswer = nIndex;					//记录下当前文字属于当前文字识别区中的第几个识别的文字
+				pstCharRt->rc.nAnswer = nIndex;						//记录下当前文字属于当前文字识别区中的第几个识别的文字
 
 				pstCharRt->rc.nThresholdValue = m_nCharacterThreshold;
 				pstCharRt->rc.nGaussKernel = m_nGaussKernel;
@@ -7767,6 +7768,27 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	stSensitiveParam.nCurrentOmrSensitivity = m_nDilateKernel_Common;
 	stSensitiveParam.nDefZkzhSensitivity = m_nDilateKernel_DefSn;
 	stSensitiveParam.nDefOmrSensitivity = m_nDilateKernel_DefCommon;
+#if 1
+	CAdanceSetMgrDlg dlg(m_pModel, stSensitiveParam);
+	if (dlg.DoModal() != IDOK)
+		return;
+	if (!m_pModel)
+	{
+		return;
+	}
+
+// 	m_pModel->nScanDpi = dlg.m_nScanDpi;
+// 	m_pModel->nAutoCut = dlg.m_nAutoCut;
+// 	if (dlg.m_nScanPaperSize == 0)
+// 		m_pModel->nScanSize = 1;
+// 	else if (dlg.m_nScanPaperSize == 1)
+// 		m_pModel->nScanSize = 2;
+// 	else
+// 		m_pModel->nScanSize = 3;
+// 	m_pModel->nScanType = dlg.m_nScanType;
+// 	m_nDilateKernel_Sn = dlg.m_nSensitiveZkzh;
+// 	m_nDilateKernel_Common = dlg.m_nSensitiveOmr;
+#else
 	CAdvancedSetDlg dlg(m_pModel, stSensitiveParam);
 	if (dlg.DoModal() != IDOK)
 		return;
@@ -7786,7 +7808,7 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	m_pModel->nScanType = dlg.m_nScanType;
 	m_nDilateKernel_Sn = dlg.m_nSensitiveZkzh;
 	m_nDilateKernel_Common = dlg.m_nSensitiveOmr;
-
+#endif
 	switch (m_eCurCPType)
 	{
 		case SN:

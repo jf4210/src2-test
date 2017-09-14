@@ -712,6 +712,8 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 						pstCharRt->fConfidence = conf;
 						pstCharRt->rc.eCPType = CHARACTER_AREA;
 						pstCharRt->rc.rt = rtSrc;
+						pstCharRt->rc.nTH = pstRecogCharacterRt->nIndex;	//记录下当前文字属于第几个大文字识别区
+						pstCharRt->rc.nAnswer = nIndex;						//记录下当前文字属于当前文字识别区中的第几个识别的文字
 
 						pstCharRt->rc.nThresholdValue = pstBigRecogCharRt->nThresholdValue;
 						pstCharRt->rc.nGaussKernel = pstBigRecogCharRt->nGaussKernel;
@@ -784,13 +786,13 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 						int nYDist = nY_Max - nY_min;
 						if (nXDist > nYDist)
 						{
-							pstBigRecogCharRt->arryMaxDist[0] = nX_minIndex;
-							pstBigRecogCharRt->arryMaxDist[1] = nX_maxIndex;
+							pstRecogCharacterRt->arryMaxDist[0] = nX_minIndex;
+							pstRecogCharacterRt->arryMaxDist[1] = nX_maxIndex;
 						}
 						else
 						{
-							pstBigRecogCharRt->arryMaxDist[0] = nY_minIndex;
-							pstBigRecogCharRt->arryMaxDist[1] = nY_maxIndex;
+							pstRecogCharacterRt->arryMaxDist[0] = nY_minIndex;
+							pstRecogCharacterRt->arryMaxDist[1] = nY_maxIndex;
 						}
 
 // 						std::vector<pST_CHARACTER_ANCHOR_POINT> vecTmpCharacterRt(pstRecogCharacterRt->vecCharacterRt);
@@ -825,13 +827,13 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 					}
 					else if(nSize == 2)
 					{
-						pstBigRecogCharRt->arryMaxDist[0] = pstRecogCharacterRt->vecCharacterRt[0]->nIndex;
-						pstBigRecogCharRt->arryMaxDist[1] = pstRecogCharacterRt->vecCharacterRt[1]->nIndex;
+						pstRecogCharacterRt->arryMaxDist[0] = pstRecogCharacterRt->vecCharacterRt[0]->nIndex;
+						pstRecogCharacterRt->arryMaxDist[1] = pstRecogCharacterRt->vecCharacterRt[1]->nIndex;
 					}
 					else
 					{
-						pstBigRecogCharRt->arryMaxDist[0] = pstRecogCharacterRt->vecCharacterRt[0]->nIndex;
-						pstBigRecogCharRt->arryMaxDist[1] = -1;
+						pstRecogCharacterRt->arryMaxDist[0] = pstRecogCharacterRt->vecCharacterRt[0]->nIndex;
+						pstRecogCharacterRt->arryMaxDist[1] = -1;
 					}
 				}
 				else
@@ -2221,8 +2223,30 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			omrResult.lSelAnswer.push_back(rc);
 			
 			//------------------------
-			VEC_FIXRECTINFO lFixRtInfo;
 			VEC_NEWRTBY2FIX vecNewRt;
+		#if 1
+			RECTLIST::iterator itFix = pPic->lFix.begin();
+			RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
+			itFix++;
+			itModelFix++;
+			for (int i = 1; itFix != pPic->lFix.end(); itFix++, itModelFix++, i++)
+			{
+				RECTLIST lTmpFix, lTmpModelFix;
+				lTmpFix.push_back(pPic->lFix.front());
+				lTmpModelFix.push_back(pPic->lModelFix.front());
+
+				lTmpFix.push_back(*itFix);
+				lTmpModelFix.push_back(*itModelFix);
+
+				ST_NEWRTBY2FIX stNewRt;
+				stNewRt.nFirstFix = 0;
+				stNewRt.nSecondFix = i;
+				stNewRt.rt = itOmrItem->rt;
+				GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
+				vecNewRt.push_back(stNewRt);
+			}
+		#else
+			VEC_FIXRECTINFO lFixRtInfo;
 			RECTINFO rc2 = *itOmrItem;
 
 			RECTLIST::iterator itFix = pPic->lFix.begin();
@@ -2231,14 +2255,15 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			{
 				GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rc2.rt);
 			}
+		#endif
 			for (auto newRt : vecNewRt)
 			{
 				RECTINFO rcTmp;
 				rcTmp = rc;
 				rcTmp.rt = newRt.rt;
 
-				rcTmp.rt.x += rcTmp.rt.width / 2;
-				rcTmp.rt.y += rcTmp.rt.height / 2;
+// 				rcTmp.rt.x += rcTmp.rt.width / 2;
+// 				rcTmp.rt.y += rcTmp.rt.height / 2;
 
 				pPic->lCalcRect.push_back(rcTmp);
 			}
@@ -3565,8 +3590,30 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			pSn->lSN.push_back(rc);
 
 			//------------------------
-			VEC_FIXRECTINFO lFixRtInfo;
 			VEC_NEWRTBY2FIX vecNewRt;
+		#if 1
+			RECTLIST::iterator itFix = pPic->lFix.begin();
+			RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
+			itFix++;
+			itModelFix++;
+			for (int i = 1; itFix != pPic->lFix.end(); itFix++, itModelFix++, i++)
+			{
+				RECTLIST lTmpFix, lTmpModelFix;
+				lTmpFix.push_back(pPic->lFix.front());
+				lTmpModelFix.push_back(pPic->lModelFix.front());
+
+				lTmpFix.push_back(*itFix);
+				lTmpModelFix.push_back(*itModelFix);
+
+				ST_NEWRTBY2FIX stNewRt;
+				stNewRt.nFirstFix = 0;
+				stNewRt.nSecondFix = i;
+				stNewRt.rt = itSnItem->rt;
+				GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
+				vecNewRt.push_back(stNewRt);
+			}
+		#else
+			VEC_FIXRECTINFO lFixRtInfo;
 			RECTINFO rc2 = *itSnItem;
 
 			RECTLIST::iterator itFix = pPic->lFix.begin();
@@ -3575,14 +3622,15 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			{
 				GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rc2.rt);
 			}
+		#endif
 			for (auto newRt : vecNewRt)
 			{
 				RECTINFO rcTmp;
 				rcTmp = rc;
 				rcTmp.rt = newRt.rt;
 
-				rcTmp.rt.x += rcTmp.rt.width / 2;
-				rcTmp.rt.y += rcTmp.rt.height / 2;
+// 				rcTmp.rt.x += rcTmp.rt.width / 2;
+// 				rcTmp.rt.y += rcTmp.rt.height / 2;
 
 				pPic->lCalcRect.push_back(rcTmp);
 			}

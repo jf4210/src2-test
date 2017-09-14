@@ -124,9 +124,9 @@
 
 #ifndef TO_WHTY
 	#ifdef PUBLISH_VERSION
-		#define SOFT_VERSION	_T("v2.2")
+		#define SOFT_VERSION	_T("v2.3")
 	#else
-		#define SOFT_VERSION	_T("v2.2-Pir")		//-Pri
+		#define SOFT_VERSION	_T("v2.3-Pir")		//-Pri
 	#endif
 #else
 	#define SOFT_VERSION	_T("v2.1")
@@ -626,6 +626,33 @@ typedef struct _tagFixRectInfo_
 typedef std::vector<ST_FIXRECTTINFO> VEC_FIXRECTINFO;
 
 bool	GetNewRt(RECTINFO rc, RECTINFO rcModel, VEC_FIXRECTINFO& lFixRtInfo, VEC_NEWRTBY2FIX& vecNewRt, cv::Rect rt);
+
+//点的距离权重，即在这个点的一个半径范围内，有多少其他点在其中，如果距离一个半径，则权重+2，如果距离2个半径，则距离+1
+typedef struct _tagPointDistWeight_
+{
+	int nWeight;
+	cv::Point pt;
+	_tagPointDistWeight_()
+	{
+		nWeight = 0;
+	}
+}ST_POINTDISTWEIGHT, *pST_POINTDISTWEIGHT;
+typedef std::vector<ST_POINTDISTWEIGHT> VEC_POINTDISTWEIGHT;
+
+bool GetPointDistWeight(int nRidus, cv::Point pt, VEC_POINTDISTWEIGHT& vecPointDistWeight);
+
+//点距离顶点的距离
+typedef struct _tagPointDist2Peak_
+{
+	int nDist;
+	pST_CHARACTER_ANCHOR_POINT pAnchorPoint;
+	_tagPointDist2Peak_()
+	{
+		nDist = 0;
+		pAnchorPoint = NULL;
+	}
+}ST_POINTDIST2PEAK, *pST_POINTDIST2PEAK;
+typedef std::vector<ST_POINTDIST2PEAK> VEC_POINTDIST2PEAK;
 //----------------------------------------------
 
 int		GetRectInfoByPoint(cv::Point pt, CPType eType, pPAPERMODEL pPaperModel, RECTINFO*& pRc);

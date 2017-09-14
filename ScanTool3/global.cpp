@@ -1393,8 +1393,8 @@ inline cv::Point2d TriangleSide(cv::Point ptChk, cv::Point2f ptA, cv::Point2f pt
 
 inline cv::Point2d TriangleCoordinate(cv::Point ptA, cv::Point ptB, cv::Point ptC, cv::Point ptNewA, cv::Point ptNewB)
 {
-	clock_t start, end;
-	start = clock();
+// 	clock_t start, end;
+// 	start = clock();
 	long double c02 = pow((ptB.x - ptA.x), 2) + pow((ptB.y - ptA.y), 2);
 	long double b02 = pow((ptC.x - ptA.x), 2) + pow((ptC.y - ptA.y), 2);
 	long double a02 = pow((ptC.x - ptB.x), 2) + pow((ptC.y - ptB.y), 2);
@@ -1540,8 +1540,8 @@ inline cv::Point2d TriangleCoordinate(cv::Point ptA, cv::Point ptB, cv::Point pt
 			ptNewC.y = dYc1;
 		}
 	}
-	end = clock();
-	TRACE("新的C点坐标(%f, %f)或者(%f, %f),确定后为(%f,%f)耗时: %d\n", dXc1, dYc1, dXc2, dYc2, ptNewC.x, ptNewC.y, end - start);
+// 	end = clock();
+// 	TRACE("新的C点坐标(%f, %f)或者(%f, %f),确定后为(%f,%f)耗时: %d\n", dXc1, dYc1, dXc2, dYc2, ptNewC.x, ptNewC.y, end - start);
 	return ptNewC;
 }
 bool GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW /*= 0*/, int nPicH /*= 0*/)
@@ -2149,66 +2149,115 @@ bool GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt)
 			TRACE("计算矩形位置时间: %dms\n", (int)(end - start));
 			return true;
 		}
-		else /*if (pPic->lFix.size() == 3)*/
+		else
 		{
 			clock_t start, end;
 			start = clock();
-			VEC_FIXRECTINFO lFixRtInfo;
 			VEC_NEWRTBY2FIX vecNewRt;
+#if 1		//根据距离顶点最远的点计算矩形位置，顶点默认防止队列第一个
+			RECTLIST::iterator itFix = pPic->lFix.begin();
+			RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
+			itFix++;
+			itModelFix++;
+			for (int i = 1; itFix != pPic->lFix.end(); itFix++, itModelFix++, i++)
+			{
+				RECTLIST lTmpFix, lTmpModelFix;
+				lTmpFix.push_back(pPic->lFix.front());
+				lTmpModelFix.push_back(pPic->lModelFix.front());
 
+				lTmpFix.push_back(*itFix);
+				lTmpModelFix.push_back(*itModelFix);
+
+				ST_NEWRTBY2FIX stNewRt;
+				stNewRt.nFirstFix = 0;
+				stNewRt.nSecondFix = i;
+				stNewRt.rt = rt;
+				GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
+				vecNewRt.push_back(stNewRt);
+			}
+#else
+			VEC_FIXRECTINFO lFixRtInfo;
 			RECTLIST::iterator itFix = pPic->lFix.begin();
 			RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
 			for(; itFix != pPic->lFix.end(); itFix++, itModelFix++)
 			{
 				GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rt);
 			}
-			int nX = 0, nY = 0;
-			int nXMin = 0, nXMax = 0;
-			int nYMin = 0, nYMax = 0;
+#endif
+			int nRidus = rt.width < rt.height ? rt.width * 0.5 : rt.height * 0.5;
+			nRidus = nRidus > 3 ? 3 : nRidus;
+			VEC_POINTDISTWEIGHT vecPointDistWeight;
 			for (auto newRt : vecNewRt)
 			{
-				nX += newRt.rt.x;
-				nY += newRt.rt.y;
-				nXMin = nXMin > newRt.rt.x ? newRt.rt.x : nXMin;
-				nXMax = nXMax < newRt.rt.x ? newRt.rt.x : nXMax;
-				nYMin = nYMin > newRt.rt.y ? newRt.rt.y : nYMin;
-				nYMax = nYMax < newRt.rt.y ? newRt.rt.y : nYMax;
+				GetPointDistWeight(nRidus, newRt.rt.tl(), vecPointDistWeight);
 			}
-			int nXMean = nX / vecNewRt.size();
-			int nYMean = nY / vecNewRt.size();
-
-			int nY_MaxDist = rt.height;
-			int nX_MaxDist = rt.width;
-
-			//判断X轴、Y轴上>和<平均值的个数，
-			int nXLessMean = 0, nXGreaterMean = 0;
-			int nYLessMean = 0, nYGreaterMean = 0;
-			for (auto newRt : vecNewRt)
+			VEC_POINTDISTWEIGHT::iterator itPoint = vecPointDistWeight.begin();
+			for (; itPoint != vecPointDistWeight.end(); )
 			{
-				if (newRt.rt.x > nXMean)
-					nXGreaterMean++;
-				else if(newRt.rt.x < nXMean)
-					nXLessMean++;
-				if (newRt.rt.y > nYMean)
-					nYGreaterMean++;
-				else if (newRt.rt.y < nYMean)
-					nYLessMean++;
+				if (itPoint->nWeight < 1)
+					itPoint = vecPointDistWeight.erase(itPoint);
+				else
+					itPoint++;
 			}
 
-// 			if (abs(nXMax - nXMin) > abs(nYMax - nYMin))
-// 			{
-// 			}
+			int nXCount = 0, nYCount = 0;
+			int nCount = 0;
+			if (vecPointDistWeight.size() > 0)
+			{
+				for (auto newPt : vecPointDistWeight)
+				{
+					nXCount += newPt.pt.x;
+					nYCount += newPt.pt.y;
+				}
+				nCount = vecPointDistWeight.size();
+			}
+			else
+			{
+				for (auto newRt : vecNewRt)
+				{
+					nXCount += newRt.rt.x;
+					nYCount += newRt.rt.y;
+				}
+				nCount = vecNewRt.size();
+			}
+			rt.x = nXCount / nCount;
+			rt.y = nYCount / nCount;
 			end = clock();
 			TRACE("计算矩形位置时间: %dms\n", (int)(end - start));
 			return true;
 		}
-// 		else
-// 			return GetPosition(pPic->lFix, pPic->lModelFix, rt);
 	}
 	else
 		return GetPosition(pPic->lFix, pModel->vecPaperModel[nPic]->lFix, rt);
 #endif
 	return GetPosition(pPic->lFix, pModel->vecPaperModel[nPic]->lFix, rt);
+}
+
+bool GetPointDistWeight(int nRidus, cv::Point pt, VEC_POINTDISTWEIGHT& vecPointDistWeight)
+{
+	ST_POINTDISTWEIGHT stPtDistWeight;
+	stPtDistWeight.pt = pt;
+
+	VEC_POINTDISTWEIGHT::iterator itPoint = vecPointDistWeight.begin();
+	for (int i = 0; itPoint != vecPointDistWeight.end(); itPoint++, i++)
+	{
+		double distance;
+		distance = powf((pt.x - itPoint->pt.x), 2) + powf((pt.y - itPoint->pt.y), 2);
+		distance = sqrtf(distance);
+		if (distance <= nRidus)
+		{
+			itPoint->nWeight += 2;
+			stPtDistWeight.nWeight += 2;
+		}
+		else if (distance < 2 * nRidus)
+		{
+			itPoint->nWeight += 1;
+			stPtDistWeight.nWeight += 1;
+		}
+	}
+	vecPointDistWeight.push_back(stPtDistWeight);
+
+	return true;
 }
 
 bool GetFixDist(int nPic, pST_PicInfo pPic, pMODEL pModel)
@@ -2243,8 +2292,9 @@ bool GetNewRt(RECTINFO rc, RECTINFO rcModel, VEC_FIXRECTINFO& lFixRtInfo, VEC_NE
 		stNewRt.nFirstFix = i;
 		stNewRt.nSecondFix = lFixRtInfo.size();
 		stNewRt.rt = rt;
-//		GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
-
+	#if 1
+		GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
+	#else
 		cv::Rect rtLT, rtRB;	//左上，右下两个矩形
 		rtLT = rt;
 		rtRB = rt;
@@ -2257,7 +2307,7 @@ bool GetNewRt(RECTINFO rc, RECTINFO rcModel, VEC_FIXRECTINFO& lFixRtInfo, VEC_NE
 		int nHeight = abs(rtRB.y - rtLT.y);
 		stNewRt.rt.x = rtLT.x + nWidth / 2 - rt.width / 2;
 		stNewRt.rt.y = rtLT.y + nHeight / 2 - rt.height / 2;
-
+	#endif
 		vecNewRt.push_back(stNewRt);
 	}
 
@@ -2267,6 +2317,67 @@ bool GetNewRt(RECTINFO rc, RECTINFO rcModel, VEC_FIXRECTINFO& lFixRtInfo, VEC_NE
 	lFixRtInfo.push_back(stFixRtInfo);
 	return true;
 }
+
+//-----------------------------------------
+#if 0
+#define  CIRCLE_RADIANS  6.283185307179586476925286766559
+
+//  Determines the radian angle of the specified point (as it relates to the origin).
+//
+//  Warning:  Do not pass zero in both parameters, as this will cause division-by-zero.
+double angleOf(double x, double y) 
+{
+
+	double  dist = sqrt(x*x + y*y);
+
+	if (y >= 0.) return acos(x / dist);
+	else       return acos(-x / dist) + .5*CIRCLE_RADIANS;
+}
+
+//  Pass in a set of 2D points in x,y,points.  Returns a polygon in polyX,polyY,polyCorners.
+//
+//  To be safe, polyX and polyY should have enough space to store all the points passed in x,y,points.
+void findSmallestPolygon(double *x, double *y, long points, double *polyX, double *polyY, long *polyCorners) 
+{
+	double  newX = x[0], newY = y[0], xDif, yDif, oldAngle = .5*CIRCLE_RADIANS, newAngle, angleDif, minAngleDif;
+	long    i;
+
+	//  Find a starting point.
+	for (i = 0; i < points; i++)
+		if (y[i] > newY || y[i] == newY && x[i] < newX)
+		{
+			newX = x[i]; newY = y[i];
+		}
+	*polyCorners = 0;
+
+	//  Polygon-construction loop.
+	while (!(*polyCorners) || newX != polyX[0] || newY != polyY[0]) 
+	{
+		polyX[*polyCorners] = newX;
+		polyY[*polyCorners] = newY;
+		minAngleDif = CIRCLE_RADIANS;
+		for (i = 0; i < points; i++) 
+		{
+			xDif = x[i] - polyX[*polyCorners];
+			yDif = y[i] - polyY[*polyCorners];
+			if (xDif || yDif) 
+			{
+				newAngle = angleOf(xDif, yDif); 
+				angleDif = oldAngle - newAngle;
+				while (angleDif < 0.) angleDif += CIRCLE_RADIANS;
+				while (angleDif >= CIRCLE_RADIANS) angleDif -= CIRCLE_RADIANS;
+				if (angleDif < minAngleDif) 
+				{
+					minAngleDif = angleDif; newX = x[i]; newY = y[i];
+				}
+			}
+		}
+		(*polyCorners)++; 
+		oldAngle += .5*CIRCLE_RADIANS - minAngleDif;
+	}
+}
+#endif
+//-----------------------------------------
 
 bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 {
@@ -2280,8 +2391,64 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 
 	//2个定点时，选距离最远的两个，如何根据给成矩形左上点和右下点分别计算2个矩形并计算重合度，根据重合度最高的矩形的中心点作为结果矩形的中心点
 
-	nNeedCount = nNeedCount > 4 ? 4 : nNeedCount;	//定点不超过4个
+//	nNeedCount = nNeedCount > 4 ? 4 : nNeedCount;	//定点不超过4个
+#if 1
+	//查找一个顶点，它的Y最大，X最小
+	pST_CHARACTER_ANCHOR_POINT ptPeak = pPic->lCharacterAnchorArea.front()->vecCharacterRt[0];
+	for (auto itArea : pPic->lCharacterAnchorArea)
+		for (auto itPoint : itArea->vecCharacterRt)
+			if ((itPoint->rc.rt.y > ptPeak->rc.rt.y) || (itPoint->rc.rt.y == ptPeak->rc.rt.y && itPoint->rc.rt.x < ptPeak->rc.rt.x))
+				ptPeak = itPoint;
 
+	pPic->lFix.push_back(ptPeak->rc);
+	for (auto itModelCharAnchorArea : pModel->vecPaperModel[nPic]->lCharacterAnchorArea)
+		if (itModelCharAnchorArea->nIndex == ptPeak->rc.nTH)
+		{
+			for (auto itModelCharAnchorPoint : itModelCharAnchorArea->vecCharacterRt)
+			{
+				if (itModelCharAnchorPoint->strVal == ptPeak->strVal)
+				{
+					pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
+					break;
+				}
+			}
+			break;
+		}
+
+	//遍历所有点，计算距离顶点的距离，将距离最大的点依次作为定点求矩形位置
+	VEC_POINTDIST2PEAK vecPeakDist;
+	for (auto itArea : pPic->lCharacterAnchorArea)
+		for (auto itPoint : itArea->vecCharacterRt)
+		{
+			ST_POINTDIST2PEAK stPtDist;
+			stPtDist.pAnchorPoint = itPoint;
+			stPtDist.nDist = sqrt((itPoint->rc.rt.x - ptPeak->rc.rt.x) * (itPoint->rc.rt.x - ptPeak->rc.rt.x) + (itPoint->rc.rt.y - ptPeak->rc.rt.y) * (itPoint->rc.rt.y - ptPeak->rc.rt.y));
+			vecPeakDist.push_back(stPtDist);
+		}
+	std::sort(vecPeakDist.begin(), vecPeakDist.end(), [](ST_POINTDIST2PEAK& s1, ST_POINTDIST2PEAK& s2)
+	{
+		return s1.nDist > s2.nDist;
+	});
+	for (int i = 0; i < nNeedCount; i++)
+	{
+		if(i >= vecPeakDist.size())
+			break;
+		pPic->lFix.push_back(vecPeakDist[i].pAnchorPoint->rc);
+		for (auto itModelCharAnchorArea : pModel->vecPaperModel[nPic]->lCharacterAnchorArea)
+			if (itModelCharAnchorArea->nIndex == vecPeakDist[i].pAnchorPoint->rc.nTH)
+			{
+				for (auto itModelCharAnchorPoint : itModelCharAnchorArea->vecCharacterRt)
+				{
+					if (itModelCharAnchorPoint->strVal == vecPeakDist[i].pAnchorPoint->strVal)
+					{
+						pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
+						break;
+					}
+				}
+				break;
+			}
+	}
+#else
 	if (nRealRecogCharArea == 1)	//只识别出一个文字定位区，在这个识别区取 nNeedCount 个准确度最高的字作为定点
 	{
 		CHARACTER_ANCHOR_AREA_LIST::iterator it = pPic->lCharacterAnchorArea.begin();
@@ -2318,7 +2485,7 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 			{
 				if (i < 2)
 				{
-					pPic->lFix.push_back((*it)->vecCharacterRt[(*it)->arryMaxDist[i] - 1]->rc);
+					pPic->lFix.push_back((*it)->vecCharacterRt[(*it)->arryMaxDist[i]]->rc);
 					pTmpArry[i] = (*it)->arryMaxDist[i];
 				}
 				else
@@ -2479,7 +2646,7 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 				}
 		}
 	}
-
+#endif
 	return true;
 }
 

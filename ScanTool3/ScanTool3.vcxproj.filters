@@ -453,6 +453,12 @@
     <ClInclude Include="RecogCharacterDlg.h">
       <Filter>模板界面\文字识别确认窗口</Filter>
     </ClInclude>
+    <ClInclude Include="MinimumBoundingPolygon.h">
+      <Filter>线程\识别</Filter>
+    </ClInclude>
+    <ClInclude Include="AdanceSetMgrDlg.h">
+      <Filter>模板界面\旧模板制作界面\高级参数设置</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -694,6 +700,9 @@
     </ClCompile>
     <ClCompile Include="RecogCharacterDlg.cpp">
       <Filter>模板界面\文字识别确认窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="AdanceSetMgrDlg.cpp">
+      <Filter>模板界面\旧模板制作界面\高级参数设置</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

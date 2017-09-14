@@ -127,6 +127,7 @@
     <ClInclude Include="..\..\include\twain\DSMInterface.h" />
     <ClInclude Include="..\..\include\twain\TwainApp.h" />
     <ClInclude Include="..\..\include\twain\TwainString.h" />
+    <ClInclude Include="AdanceSetMgrDlg.h" />
     <ClInclude Include="AdvancedSetDlg.h" />
     <ClInclude Include="BmpButton.h" />
     <ClInclude Include="ComboBoxExt.h" />
@@ -147,6 +148,7 @@
     <ClInclude Include="LocalPicSelDlg.h" />
     <ClInclude Include="LoginDlg.h" />
     <ClInclude Include="MakeModelDlg.h" />
+    <ClInclude Include="MinimumBoundingPolygon.h" />
     <ClInclude Include="ModelInfoDlg.h" />
     <ClInclude Include="ModelSaveDlg.h" />
     <ClInclude Include="MyVersion.h" />
@@ -235,6 +237,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="AdanceSetMgrDlg.cpp" />
     <ClCompile Include="AdvancedSetDlg.cpp" />
     <ClCompile Include="BmpButton.cpp" />
     <ClCompile Include="ComboBoxExt.cpp" />

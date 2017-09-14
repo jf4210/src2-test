@@ -19,7 +19,7 @@ typedef struct _SensitiveParam_
 	}
 }ST_SENSITIVE_PARAM;
 
-class CAdvancedSetDlg : public CTipBaseDlg
+class CAdvancedSetDlg : public CDialog
 {
 	DECLARE_DYNAMIC(CAdvancedSetDlg)
 
@@ -36,7 +36,6 @@ public:
 	CComboBox	m_combo_ScanType;
 	CButton		m_chkAutoCut;
 
-	CBmpButton		m_bmpBtnClose;
 	CSpinButtonCtrl m_Spin_Zkzh;
 	CSpinButtonCtrl m_Spin_Omr;
 	int			m_nSensitiveZkzh;
@@ -69,5 +68,4 @@ public:
 	afx_msg void OnDeltaposSpinZkzh(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnDeltaposSpinOmr(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-	afx_msg void OnBnClickedBtnClose();
 };
