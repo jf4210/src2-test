@@ -14,7 +14,6 @@
 //#include "ScanCtrlDlg.h"
 #include "Net_Cmd_Protocol.h"
 //#include "./pdf2jpg/MuPDFConvert.h"
-#include "AdvancedSetDlg.h"
 #include "AdanceSetMgrDlg.h"
 #include "ScanModelPaperDlg.h"
 #include "ExamInfoDlg.h"
@@ -31,7 +30,7 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_pModelPicShow(NULL), m_nGaussKernel(5), m_nSharpKernel(5), m_nThresholdKernel(150), m_nCannyKernel(90), m_nDilateKernel(6), m_nErodeKernel(2), m_nDilateKernel_DefCommon(6), m_nDilateKernel_DefSn(6)
 	, m_pModel(pModel), m_bNewModelFlag(false), m_nModelPicNums(1), m_nCurrTabSel(0), m_bSavedModelFlag(false), m_ncomboCurrentSel(0), m_eCurCPType(UNKNOWN)
 	, m_nCurListCtrlSel(0), m_nStartTH(0)
-	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nWJ_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200), m_nCharacterThreshold(150)
+	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nWJ_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200), m_nCharacterThreshold(150), m_nThreshold_DefSn(150), m_nThreshold_DefOmr(150)
 	, m_fHeadThresholdPercent(0.75), m_fABModelThresholdPercent(0.75), m_fCourseThresholdPercent(0.75), m_fQK_CPThresholdPercent_Fix(1.5), m_fWJ_CPThresholdPercent_Fix(1.5), m_fQK_CPThresholdPercent_Head(1.2), m_fWJ_CPThresholdPercent_Head(1.2), m_fFixThresholdPercent(0.80)
 	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75), m_fOMRThresholdPercent_Fix(1.5), m_fSNThresholdPercent_Fix(1.5), m_fOMRThresholdPercent_Head(1.2), m_fSNThresholdPercent_Head(1.2)
 	, m_pCurRectInfo(NULL), m_ptFixCP(0,0)
@@ -7432,6 +7431,9 @@ void CMakeModelDlg::InitParam()
 		m_nSN		= pConf->getInt("MakeModel_Threshold.sn", 200);
 		m_nCharacterThreshold	= pConf->getInt("MakeModel_Threshold.title", 150);
 
+		m_nThreshold_DefSn = m_nSN;
+		m_nThreshold_DefOmr = m_nOMR;
+
 		m_fHeadThresholdPercent		= pConf->getDouble("MakeModel_RecogPercent_Common.head", 0.75);
 		m_fABModelThresholdPercent	= pConf->getDouble("MakeModel_RecogPercent_Common.abModel", 0.75);
 		m_fCourseThresholdPercent	= pConf->getDouble("MakeModel_RecogPercent_Common.course", 0.75);		
@@ -7763,52 +7765,43 @@ bool CMakeModelDlg::UploadModel(CString strModelPath, pMODEL pModel)
 
 void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 {
-	ST_SENSITIVE_PARAM stSensitiveParam;
-	stSensitiveParam.nCurrentZkzhSensitivity = m_nDilateKernel_Sn;
-	stSensitiveParam.nCurrentOmrSensitivity = m_nDilateKernel_Common;
-	stSensitiveParam.nDefZkzhSensitivity = m_nDilateKernel_DefSn;
-	stSensitiveParam.nDefOmrSensitivity = m_nDilateKernel_DefCommon;
-#if 1
-	CAdanceSetMgrDlg dlg(m_pModel, stSensitiveParam);
+	AdvanceParam stAdvanceParam;
+	if (m_pModel)
+	{
+		stAdvanceParam.nScanDpi = m_pModel->nScanDpi;
+		stAdvanceParam.nScanPaperSize = m_pModel->nScanSize;
+		stAdvanceParam.nScanType = m_pModel->nScanType;
+		stAdvanceParam.nAutoCut = m_pModel->nAutoCut;
+	}
+	stAdvanceParam.nCurrentZkzhSensitivity = m_nDilateKernel_Sn;
+	stAdvanceParam.nCurrentOmrSensitivity = m_nDilateKernel_Common;
+	stAdvanceParam.nDefZkzhSensitivity	= m_nDilateKernel_DefSn;
+	stAdvanceParam.nDefOmrSensitivity	= m_nDilateKernel_DefCommon;
+	stAdvanceParam.nCurrentZkzhThreshold = m_nSN;
+	stAdvanceParam.nCurrentOmrThreshold = m_nOMR;
+	stAdvanceParam.nDefZkzhThreshold	= m_nThreshold_DefSn;
+	stAdvanceParam.nDefOmrThreshold		= m_nThreshold_DefOmr;
+
+	stAdvanceParam.nCharacterAnchorPoint	= m_pModel->nCharacterAnchorPoint;
+	stAdvanceParam.nDefCharacterAnchorPoint = 4;
+
+	CAdanceSetMgrDlg dlg(m_pModel, stAdvanceParam);
 	if (dlg.DoModal() != IDOK)
 		return;
 	if (!m_pModel)
 	{
 		return;
 	}
+	m_pModel->nScanDpi	= dlg._stSensitiveParam.nScanDpi;
+	m_pModel->nAutoCut	= dlg._stSensitiveParam.nAutoCut;
+	m_pModel->nScanSize = dlg._stSensitiveParam.nScanPaperSize;
+	m_pModel->nScanType = dlg._stSensitiveParam.nScanType;
+	m_nDilateKernel_Sn	= dlg._stSensitiveParam.nCurrentZkzhSensitivity;
+	m_nDilateKernel_Common = dlg._stSensitiveParam.nCurrentOmrSensitivity;
+	m_nSN	= dlg._stSensitiveParam.nCurrentZkzhThreshold;
+	m_nOMR	= dlg._stSensitiveParam.nCurrentOmrThreshold;
+	m_pModel->nCharacterAnchorPoint = dlg._stSensitiveParam.nCharacterAnchorPoint;
 
-// 	m_pModel->nScanDpi = dlg.m_nScanDpi;
-// 	m_pModel->nAutoCut = dlg.m_nAutoCut;
-// 	if (dlg.m_nScanPaperSize == 0)
-// 		m_pModel->nScanSize = 1;
-// 	else if (dlg.m_nScanPaperSize == 1)
-// 		m_pModel->nScanSize = 2;
-// 	else
-// 		m_pModel->nScanSize = 3;
-// 	m_pModel->nScanType = dlg.m_nScanType;
-// 	m_nDilateKernel_Sn = dlg.m_nSensitiveZkzh;
-// 	m_nDilateKernel_Common = dlg.m_nSensitiveOmr;
-#else
-	CAdvancedSetDlg dlg(m_pModel, stSensitiveParam);
-	if (dlg.DoModal() != IDOK)
-		return;
-	if (!m_pModel)
-	{
-		return;
-	}
-
-	m_pModel->nScanDpi = dlg.m_nScanDpi;
-	m_pModel->nAutoCut = dlg.m_nAutoCut;
-	if (dlg.m_nScanPaperSize == 0)
-		m_pModel->nScanSize = 1;
-	else if (dlg.m_nScanPaperSize == 1)
-		m_pModel->nScanSize = 2;
-	else
-		m_pModel->nScanSize = 3;
-	m_pModel->nScanType = dlg.m_nScanType;
-	m_nDilateKernel_Sn = dlg.m_nSensitiveZkzh;
-	m_nDilateKernel_Common = dlg.m_nSensitiveOmr;
-#endif
 	switch (m_eCurCPType)
 	{
 		case SN:

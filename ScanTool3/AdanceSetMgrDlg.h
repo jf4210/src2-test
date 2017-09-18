@@ -1,17 +1,46 @@
 #pragma once
 #include "BmpButton.h"
 #include "TipBaseDlg.h"
-#include "AdvancedSetDlg.h"
+#include "ScanParamSetDlg.h"
+#include "RecogParamSetDlg.h"
 
+class AdvanceParam
+{
+public:
+	AdvanceParam()
+	{
+		nCurrentZkzhSensitivity = 2;
+		nCurrentOmrSensitivity = 5;
+		nDefZkzhSensitivity = 2;
+		nDefOmrSensitivity = 5;
+		nDefZkzhThreshold = 180;
+		nDefOmrThreshold = 180;
+	}
+public:
+	int nCurrentZkzhSensitivity;
+	int nCurrentOmrSensitivity;
+	int nCurrentZkzhThreshold;
+	int nCurrentOmrThreshold;
+	int nDefZkzhSensitivity;
+	int nDefOmrSensitivity;
+	int nDefZkzhThreshold;
+	int nDefOmrThreshold;
 
-// CAdanceSetMgrDlg 对话框
+	int nCharacterAnchorPoint;		//文字定点个数
+	int nDefCharacterAnchorPoint;	//默认文字定点个数
+
+	int			nScanDpi;			//扫描DPI
+	int			nScanPaperSize;		//1:A4, 2:A3, 3:定制
+	int			nScanType;			//1:灰度扫描, 2: 彩色扫描
+	int			nAutoCut;			//扫描：是否自动裁剪
+};
 
 class CAdanceSetMgrDlg : public CTipBaseDlg
 {
 	DECLARE_DYNAMIC(CAdanceSetMgrDlg)
 
 public:
-	CAdanceSetMgrDlg(pMODEL	pModel, ST_SENSITIVE_PARAM stSensitiveParam, CWnd* pParent = NULL);   // 标准构造函数
+	CAdanceSetMgrDlg(pMODEL	pModel, AdvanceParam stSensitiveParam, CWnd* pParent = NULL);   // 标准构造函数
 	virtual ~CAdanceSetMgrDlg();
 
 // 对话框数据
@@ -22,10 +51,10 @@ public:
 
 	CTabCtrl		m_tabParamMgr;
 	CBmpButton		m_bmpBtnClose;
-	std::vector<CDialog*>	m_vecTabDlg;
+	std::vector<CBaseTabDlg*>	m_vecTabDlg;
 	int				m_nCurrTabSel;
 
-	ST_SENSITIVE_PARAM _stSensitiveParam;
+	AdvanceParam _stSensitiveParam;
 private:
 	pMODEL		m_pModel;
 protected:

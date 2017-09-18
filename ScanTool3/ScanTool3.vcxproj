@@ -128,7 +128,8 @@
     <ClInclude Include="..\..\include\twain\TwainApp.h" />
     <ClInclude Include="..\..\include\twain\TwainString.h" />
     <ClInclude Include="AdanceSetMgrDlg.h" />
-    <ClInclude Include="AdvancedSetDlg.h" />
+    <ClInclude Include="ScanParamSetDlg.h" />
+    <ClInclude Include="BaseTabDlg.h" />
     <ClInclude Include="BmpButton.h" />
     <ClInclude Include="ComboBoxExt.h" />
     <ClInclude Include="ComboBoxExtList.h" />
@@ -167,6 +168,7 @@
     <ClInclude Include="RecogCharacterDlg.h" />
     <ClInclude Include="RecogInfoDlg.h" />
     <ClInclude Include="RecognizeThread.h" />
+    <ClInclude Include="RecogParamSetDlg.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ScanDlg.h" />
     <ClInclude Include="ScanMgrDlg.h" />
@@ -238,7 +240,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="AdanceSetMgrDlg.cpp" />
-    <ClCompile Include="AdvancedSetDlg.cpp" />
+    <ClCompile Include="ScanParamSetDlg.cpp" />
     <ClCompile Include="BmpButton.cpp" />
     <ClCompile Include="ComboBoxExt.cpp" />
     <ClCompile Include="ComboBoxExtList.cpp" />
@@ -278,6 +280,7 @@
     <ClCompile Include="RecogCharacterDlg.cpp" />
     <ClCompile Include="RecogInfoDlg.cpp" />
     <ClCompile Include="RecognizeThread.cpp" />
+    <ClCompile Include="RecogParamSetDlg.cpp" />
     <ClCompile Include="ScanDlg.cpp" />
     <ClCompile Include="ScanMgrDlg.cpp" />
     <ClCompile Include="ScanModelPaperDlg.cpp" />

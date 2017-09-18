@@ -247,7 +247,8 @@ typedef enum _eDlgType_
 	DLG_DownloadModle,		//下载报名库与模板窗口
 	DLG_ScanStart,			//扫描开始窗口
 	Dlg_ScanProcess,		//扫描进度窗口
-	Dlg_ScanRecordMgr		//扫描记录管理窗口，报名库信息展示窗口
+	Dlg_ScanRecordMgr,		//扫描记录管理窗口，报名库信息展示窗口
+	Dlg_NewMakeModel,		//模板制作窗口
 }E_DLG_TYPE;
 extern E_DLG_TYPE		_eCurrDlgType_;	//当前显示的窗口，弹出窗口不算
 

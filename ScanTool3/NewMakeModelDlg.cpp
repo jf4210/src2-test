@@ -30,7 +30,7 @@ void CNewMakeModelDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BTN_ScanPaper, m_bmpBtnScan);
 	DDX_Control(pDX, IDC_BTN_SaveModel, m_bmpBtnSave);
 	DDX_Control(pDX, IDC_BTN_UploadPic, m_bmpBtnUpload);
-	DDX_Control(pDX, IDC_BTN_InputPic, m_bmpBtnDown);
+	DDX_Control(pDX, IDC_BTN_DownModel, m_bmpBtnDown);
 	DDX_Control(pDX, IDC_BTN_NewMakeModel, m_bmpBtnNew);
 	DDX_Control(pDX, IDC_COMBO_MakeModel_Subject, m_comboSubject);
 }
@@ -48,6 +48,7 @@ BEGIN_MESSAGE_MAP(CNewMakeModelDlg, CDialog)
 	ON_CBN_SELCHANGE(IDC_COMBO_MakeModel_Subject, &CNewMakeModelDlg::OnCbnSelchangeComboMakemodelSubject)
 	ON_BN_CLICKED(IDC_BTN_SaveModel, &CNewMakeModelDlg::OnBnClickedBtnSavemodel)
 	ON_BN_CLICKED(IDC_BTN_UploadPic, &CNewMakeModelDlg::OnBnClickedBtnUploadpic)
+	ON_BN_CLICKED(IDC_BTN_DownModel, &CNewMakeModelDlg::OnBnClickedBtnDownmodel)
 END_MESSAGE_MAP()
 
 
@@ -132,7 +133,7 @@ void CNewMakeModelDlg::InitCtrlPosition()
 		m_bmpBtnUpload.MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
 		nCurrLeft += (nBtnW + nGap);
 	}
-	if (m_bmpBtnScan.GetSafeHwnd())
+	if (m_bmpBtnScan.GetSafeHwnd() && m_bmpBtnScan.IsWindowVisible())
 	{
 		m_bmpBtnScan.MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);
 		nCurrLeft += (nBtnW + nGap);
@@ -268,7 +269,11 @@ void CNewMakeModelDlg::InitUI()
 	m_bmpBtnUpload.SetStateBitmap(IDB_MakeModel_Btn_Upload_Normal, 0, IDB_MakeModel_Btn_Upload_Down);
 	m_bmpBtnUpload.SetWindowText(_T("    上传图片"));
 	m_bmpBtnDown.SetStateBitmap(IDB_MakeModel_Btn_Download_normal, 0, IDB_MakeModel_Btn_Download_down);
-	m_bmpBtnDown.SetWindowText(_T("    导入图片"));
+	m_bmpBtnDown.SetWindowText(_T("    下载模板"));
+
+#ifdef _DEBUG
+	m_bmpBtnDown.ShowWindow(SW_SHOW);
+#endif
 
 	m_pNewModelDlg = new CNewModelDlg();
 	m_pNewModelDlg->Create(CNewModelDlg::IDD, this);
@@ -717,4 +722,42 @@ void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 		dlg.setShowInfo(3, 1, "添加上传任务完成！");
 		dlg.DoModal();
 	}
+}
+
+
+void CNewMakeModelDlg::OnBnClickedBtnDownmodel()
+{
+	//先查本地列表，如果没有则请求，如果有，计算crc，和服务器不同则下载
+	USES_CONVERSION;
+	CString modelPath = g_strCurrentPath + _T("Model");
+	modelPath = modelPath + _T("\\") + A2T(_pCurrSub_->strModelName.c_str());
+	std::string strModelPath = T2A(modelPath);
+
+	ST_DOWN_MODEL stModelInfo;
+	ZeroMemory(&stModelInfo, sizeof(ST_DOWN_MODEL));
+	stModelInfo.nExamID = _pCurrExam_->nExamID;
+	stModelInfo.nSubjectID = _pCurrSub_->nSubjID;
+	sprintf_s(stModelInfo.szUserNo, "%s", _strUserName_.c_str());
+	sprintf_s(stModelInfo.szModelName, "%s", _pCurrSub_->strModelName.c_str());
+
+	Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
+	if (fileModel.exists())
+	{
+		std::string strMd5 = calcFileMd5(strModelPath);
+		strncpy(stModelInfo.szMD5, strMd5.c_str(), strMd5.length());
+	}
+
+	std::string strLog = "请求下载模板: ";
+	strLog.append(stModelInfo.szModelName);
+	g_pLogger->information(strLog);
+
+	g_eDownLoadModel.reset();
+
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_NEED_DOWN_MODEL;
+	pTcpTask->nPkgLen = sizeof(ST_DOWN_MODEL);
+	memcpy(pTcpTask->szSendBuf, (char*)&stModelInfo, sizeof(ST_DOWN_MODEL));
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
 }

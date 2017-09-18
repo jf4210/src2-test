@@ -220,6 +220,7 @@ BOOL CRecogInfoDlg::OnEraseBkgnd(CDC* pDC)
 	GetClientRect(&rcClient);
 
 	pDC->FillRect(rcClient, &CBrush(RGB(255, 255, 255)));	//225, 242, 250
+//	ReleaseDC(pDC);
 
 	return TRUE;
 }

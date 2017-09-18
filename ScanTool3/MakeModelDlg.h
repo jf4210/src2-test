@@ -144,6 +144,8 @@ public:
 	int	m_nDilateKernel_Common;	//通用膨胀核因子，SN时不用
 	int m_nDilateKernel_DefSn;		//ZKZH识别时用的膨胀因子，默认值，从配置文件读取
 	int	m_nDilateKernel_DefCommon;	//通用膨胀核因子，SN时不用，默认值，从配置文件读取
+	int m_nThreshold_DefSn;			//默认ZKZH二值化识别阀值
+	int m_nThreshold_DefOmr;		//默认OMR二值化识别阀值
 
 	CString m_strModelPicPath;	
 	HZIP hz;					//压缩

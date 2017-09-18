@@ -1,6 +1,6 @@
 #pragma once
 #include "global.h"
-#include "ctrl/XPGroupBox.h"
+//#include "ctrl/XPGroupBox.h"
 
 // CRecogInfoDlg 对话框
 
@@ -26,7 +26,7 @@ public:
 private:
 	void		InitCtrlPosition();
 
-	CXPGroupBox m_GroupStatic;
+//	CXPGroupBox m_GroupStatic;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 

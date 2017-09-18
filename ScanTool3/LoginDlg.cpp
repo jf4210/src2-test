@@ -88,7 +88,7 @@ BOOL CLoginDlg::OnInitDialog()
 
 	//++加密版权、标题数据信息
 #if 0
-	std::string strTmpMain = "学情大数据扫描客户端";
+	std::string strTmpMain = "智能评阅扫描客户端";
 	std::string strTmpLitteTitle = "Jiafa big data scan tool";
 	std::string strTmpCopyright = "成都佳发安泰科技股份有限公司2017~2018版权所有";
 	encString(strTmpMain, _strMainTitle_);

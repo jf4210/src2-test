@@ -5,6 +5,7 @@
 #include "ScanTool3.h"
 #include "ScanTool3Dlg.h"
 #include "NewMessageBox.h"
+#include "NewMakeModelDlg.h"
 
 //extern Poco::Net::StreamSocket *pSs;
 

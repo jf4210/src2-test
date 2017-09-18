@@ -852,8 +852,9 @@ bool CScanTool3Dlg::HandleModel()
 		else
 			dlg.setShowInfo(2, 1, "未设置模板");
 		dlg.DoModal();
-//		AfxMessageBox(_T("获取模板失败"));
-		SwitchDlg(0);
+
+		if(_eCurrDlgType_ != Dlg_NewMakeModel)
+			SwitchDlg(0);
 	}
 	return nResult > 0;
 }

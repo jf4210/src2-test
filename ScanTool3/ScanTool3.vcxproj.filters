@@ -423,9 +423,6 @@
     <ClInclude Include="ModelInfoDlg.h">
       <Filter>模板界面\旧模板制作界面\创建新模板信息填写窗口</Filter>
     </ClInclude>
-    <ClInclude Include="AdvancedSetDlg.h">
-      <Filter>模板界面\旧模板制作界面\高级参数设置</Filter>
-    </ClInclude>
     <ClInclude Include="SNInfoSetDlg.h">
       <Filter>模板界面\旧模板制作界面\考号信息设置窗口</Filter>
     </ClInclude>
@@ -457,6 +454,15 @@
       <Filter>线程\识别</Filter>
     </ClInclude>
     <ClInclude Include="AdanceSetMgrDlg.h">
+      <Filter>模板界面\旧模板制作界面\高级参数设置</Filter>
+    </ClInclude>
+    <ClInclude Include="RecogParamSetDlg.h">
+      <Filter>模板界面\旧模板制作界面\高级参数设置</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseTabDlg.h">
+      <Filter>模板界面\旧模板制作界面\高级参数设置</Filter>
+    </ClInclude>
+    <ClInclude Include="ScanParamSetDlg.h">
       <Filter>模板界面\旧模板制作界面\高级参数设置</Filter>
     </ClInclude>
   </ItemGroup>
@@ -674,9 +680,6 @@
     <ClCompile Include="ModelInfoDlg.cpp">
       <Filter>模板界面\旧模板制作界面\创建新模板信息填写窗口</Filter>
     </ClCompile>
-    <ClCompile Include="AdvancedSetDlg.cpp">
-      <Filter>模板界面\旧模板制作界面\高级参数设置</Filter>
-    </ClCompile>
     <ClCompile Include="SNInfoSetDlg.cpp">
       <Filter>模板界面\旧模板制作界面\考号信息设置窗口</Filter>
     </ClCompile>
@@ -702,6 +705,12 @@
       <Filter>模板界面\文字识别确认窗口</Filter>
     </ClCompile>
     <ClCompile Include="AdanceSetMgrDlg.cpp">
+      <Filter>模板界面\旧模板制作界面\高级参数设置</Filter>
+    </ClCompile>
+    <ClCompile Include="RecogParamSetDlg.cpp">
+      <Filter>模板界面\旧模板制作界面\高级参数设置</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanParamSetDlg.cpp">
       <Filter>模板界面\旧模板制作界面\高级参数设置</Filter>
     </ClCompile>
   </ItemGroup>

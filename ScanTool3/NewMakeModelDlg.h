@@ -73,4 +73,5 @@ public:
 	afx_msg void OnCbnSelchangeComboMakemodelSubject();
 	afx_msg void OnBnClickedBtnSavemodel();
 	afx_msg void OnBnClickedBtnUploadpic();
+	afx_msg void OnBnClickedBtnDownmodel();
 };

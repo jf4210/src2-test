@@ -11,7 +11,7 @@
 
 IMPLEMENT_DYNAMIC(CAdanceSetMgrDlg, CDialog)
 
-CAdanceSetMgrDlg::CAdanceSetMgrDlg(pMODEL	pModel, ST_SENSITIVE_PARAM stSensitiveParam, CWnd* pParent /*=NULL*/)
+CAdanceSetMgrDlg::CAdanceSetMgrDlg(pMODEL	pModel, AdvanceParam stSensitiveParam, CWnd* pParent /*=NULL*/)
 	: CTipBaseDlg(IDD_ADANCESETMGRDLG, pParent)
 	, m_pModel(pModel), _stSensitiveParam(stSensitiveParam), m_nCurrTabSel(0)
 {
@@ -65,12 +65,20 @@ void CAdanceSetMgrDlg::InitUI()
 	strcpy_s(szTabHeadName, "识别参数");
 	m_tabParamMgr.InsertItem(1, A2T(szTabHeadName));
 
-	CAdvancedSetDlg* pScanSetDlg = new CAdvancedSetDlg(m_pModel, _stSensitiveParam);
-	pScanSetDlg->Create(CAdvancedSetDlg::IDD, &m_tabParamMgr);
+	CScanParamSetDlg* pScanSetDlg = new CScanParamSetDlg(this);
+	pScanSetDlg->Create(CScanParamSetDlg::IDD, &m_tabParamMgr);
 	pScanSetDlg->ShowWindow(SW_HIDE);
 	pScanSetDlg->MoveWindow(&rtTab);
+	pScanSetDlg->InitData(_stSensitiveParam);
 	m_vecTabDlg.push_back(pScanSetDlg);
 	
+	CRecogParamSetDlg* pRecogParamSetDlg = new CRecogParamSetDlg(this);
+	pRecogParamSetDlg->Create(CRecogParamSetDlg::IDD, &m_tabParamMgr);
+	pRecogParamSetDlg->ShowWindow(SW_HIDE);
+	pRecogParamSetDlg->MoveWindow(&rtTab);
+	pRecogParamSetDlg->InitData(_stSensitiveParam);
+	m_vecTabDlg.push_back(pRecogParamSetDlg);
+
 	m_tabParamMgr.SetCurSel(0);
 	if (m_vecTabDlg.size())
 	{
@@ -121,6 +129,10 @@ void CAdanceSetMgrDlg::OnBnClickedBtnClose()
 void CAdanceSetMgrDlg::OnBnClickedOk()
 {
 	UpdateData(TRUE);
+	for (int i = 0; i < m_vecTabDlg.size(); i++)
+		if (!m_vecTabDlg[i]->SaveParamData(_stSensitiveParam))
+			return;
+
 	CTipBaseDlg::OnOK();
 }
 
