@@ -27,6 +27,8 @@ public:
 	CSpinButtonCtrl m_Spin_CharacterAnchorPt;
 	int		m_nCharacterAnchorPt;		//文字定点个数
 	int		m_nDefCharacterAnchorPt;	//默认文字定点个数
+	int		m_nCharacterConfidence;		//文字识别要求的信心值
+	int		m_nDefCharacterConfidence;	//默认文字识别要求的信心值
 
 	CSpinButtonCtrl m_Spin_Zkzh;
 	CSpinButtonCtrl m_Spin_Omr;

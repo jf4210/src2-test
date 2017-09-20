@@ -128,6 +128,8 @@ public:
 	float m_fOMRThresholdPercent_Head;	//通过同步头识别
 	float m_fSNThresholdPercent_Head;	//通过同步头识别
 
+	int	 m_nCharacterConfidence;		//文字识别的信心阀值
+
 	std::vector<CPicShow*>	m_vecPicShow;	//存储图片显示窗口指针，有多个模板图片时，对应到不同的tab控件页面
 	int						m_nCurrTabSel;	//当前Tab控件选择的页面
 

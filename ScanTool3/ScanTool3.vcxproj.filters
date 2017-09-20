@@ -172,11 +172,11 @@
     <Filter Include="模板界面\新建模板窗口\本地图片选择窗口">
       <UniqueIdentifier>{2390a7a2-83e2-4a02-97aa-afd11edd54b4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="模板界面\新模板保存窗口">
-      <UniqueIdentifier>{615b50b9-e604-4892-98fe-57c1f7867746}</UniqueIdentifier>
-    </Filter>
     <Filter Include="模板界面\文字识别确认窗口">
       <UniqueIdentifier>{3abeeb64-8ff5-48c6-aca4-83797c1ed77c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="模板界面\下载模板">
+      <UniqueIdentifier>{858d0dd6-1279-4ed6-a679-5400e4d700f1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -465,6 +465,9 @@
     <ClInclude Include="ScanParamSetDlg.h">
       <Filter>模板界面\旧模板制作界面\高级参数设置</Filter>
     </ClInclude>
+    <ClInclude Include="GetModelDlg.h">
+      <Filter>模板界面\下载模板</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -712,6 +715,9 @@
     </ClCompile>
     <ClCompile Include="ScanParamSetDlg.cpp">
       <Filter>模板界面\旧模板制作界面\高级参数设置</Filter>
+    </ClCompile>
+    <ClCompile Include="GetModelDlg.cpp">
+      <Filter>模板界面\下载模板</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

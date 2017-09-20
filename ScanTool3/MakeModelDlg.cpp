@@ -30,7 +30,7 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_pModelPicShow(NULL), m_nGaussKernel(5), m_nSharpKernel(5), m_nThresholdKernel(150), m_nCannyKernel(90), m_nDilateKernel(6), m_nErodeKernel(2), m_nDilateKernel_DefCommon(6), m_nDilateKernel_DefSn(6)
 	, m_pModel(pModel), m_bNewModelFlag(false), m_nModelPicNums(1), m_nCurrTabSel(0), m_bSavedModelFlag(false), m_ncomboCurrentSel(0), m_eCurCPType(UNKNOWN)
 	, m_nCurListCtrlSel(0), m_nStartTH(0)
-	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nWJ_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200), m_nCharacterThreshold(150), m_nThreshold_DefSn(150), m_nThreshold_DefOmr(150)
+	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nWJ_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200), m_nCharacterThreshold(150), m_nThreshold_DefSn(150), m_nThreshold_DefOmr(150), m_nCharacterConfidence(60)
 	, m_fHeadThresholdPercent(0.75), m_fABModelThresholdPercent(0.75), m_fCourseThresholdPercent(0.75), m_fQK_CPThresholdPercent_Fix(1.5), m_fWJ_CPThresholdPercent_Fix(1.5), m_fQK_CPThresholdPercent_Head(1.2), m_fWJ_CPThresholdPercent_Head(1.2), m_fFixThresholdPercent(0.80)
 	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75), m_fOMRThresholdPercent_Fix(1.5), m_fSNThresholdPercent_Fix(1.5), m_fOMRThresholdPercent_Head(1.2), m_fSNThresholdPercent_Head(1.2)
 	, m_pCurRectInfo(NULL), m_ptFixCP(0,0)
@@ -195,6 +195,7 @@ BOOL CMakeModelDlg::OnInitDialog()
 				pStCharacterAnchorArea->nGaussKernel = (*itRecogCharRt)->nGaussKernel;
 				pStCharacterAnchorArea->nSharpKernel = (*itRecogCharRt)->nSharpKernel;
 				pStCharacterAnchorArea->nThresholdValue = (*itRecogCharRt)->nThresholdValue;
+				pStCharacterAnchorArea->nCharacterConfidence = (*itRecogCharRt)->nCharacterConfidence;
 				pStCharacterAnchorArea->rt = (*itRecogCharRt)->rt;
 				for (auto itCharPoint : (*itRecogCharRt)->vecCharacterRt)
 				{
@@ -2047,8 +2048,8 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 
 	GetThreshold(imgResult, imgResult);
 
-	Mat element = getStructuringElement(MORPH_RECT, Size(2, 2));	//Size(6, 6)	普通空白框可识别
-	erode(imgResult, imgResult, element);
+// 	Mat element = getStructuringElement(MORPH_RECT, Size(2, 2));
+// 	erode(imgResult, imgResult, element);
 
 #ifdef USE_TESSERACT
 	#if 0
@@ -2107,6 +2108,7 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 		pstRecogCharacterRt->nSharpKernel = m_nSharpKernel;
 		pstRecogCharacterRt->nCannyKernel = m_nCannyKernel;
 		pstRecogCharacterRt->nDilateKernel = m_nDilateKernel;
+		pstRecogCharacterRt->nCharacterConfidence = m_nCharacterConfidence;
 		pstRecogCharacterRt->rt = rtOri;
 
 		//重复字临时登记列表，后面删除所有重复的字
@@ -2115,7 +2117,7 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 		{
 			const char* word = ri->GetUTF8Text(level);
 			float conf = ri->Confidence(level);
-			if (word && strcmp(word, " ") != 0 && conf >= 60)
+			if (word && strcmp(word, " ") != 0 && conf >= pstRecogCharacterRt->nCharacterConfidence)
 			{
 				int x1, y1, x2, y2;
 				ri->BoundingBox(level, &x1, &y1, &x2, &y2);
@@ -3437,6 +3439,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			}
 			jsnCharacterAnchorAreaObj.set("nIndex", (*itRecogCharInfo)->nIndex);
 			jsnCharacterAnchorAreaObj.set("nThreshold", (*itRecogCharInfo)->nThresholdValue);
+			jsnCharacterAnchorAreaObj.set("nConfidence", (*itRecogCharInfo)->nCharacterConfidence);
 
 			jsnCharacterAnchorAreaObj.set("gaussKernel", (*itRecogCharInfo)->nGaussKernel);
 			jsnCharacterAnchorAreaObj.set("sharpKernel", (*itRecogCharInfo)->nSharpKernel);
@@ -7784,6 +7787,8 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 
 	stAdvanceParam.nCharacterAnchorPoint	= m_pModel->nCharacterAnchorPoint;
 	stAdvanceParam.nDefCharacterAnchorPoint = 4;
+	stAdvanceParam.nCharacterConfidence		= m_nCharacterConfidence;
+	stAdvanceParam.nDefCharacterConfidence	= 60;
 
 	CAdanceSetMgrDlg dlg(m_pModel, stAdvanceParam);
 	if (dlg.DoModal() != IDOK)
@@ -7801,6 +7806,7 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	m_nSN	= dlg._stSensitiveParam.nCurrentZkzhThreshold;
 	m_nOMR	= dlg._stSensitiveParam.nCurrentOmrThreshold;
 	m_pModel->nCharacterAnchorPoint = dlg._stSensitiveParam.nCharacterAnchorPoint;
+	m_nCharacterConfidence = dlg._stSensitiveParam.nCharacterConfidence;
 
 	switch (m_eCurCPType)
 	{
@@ -7914,6 +7920,7 @@ void CMakeModelDlg::ReInitModel(pMODEL pModel)
 				pStCharacterAnchorArea->nGaussKernel = (*itRecogCharRt)->nGaussKernel;
 				pStCharacterAnchorArea->nSharpKernel = (*itRecogCharRt)->nSharpKernel;
 				pStCharacterAnchorArea->nThresholdValue = (*itRecogCharRt)->nThresholdValue;
+				pStCharacterAnchorArea->nCharacterConfidence = (*itRecogCharRt)->nCharacterConfidence;
 				pStCharacterAnchorArea->rt = (*itRecogCharRt)->rt;
 				for (auto itCharPoint : (*itRecogCharRt)->vecCharacterRt)
 				{

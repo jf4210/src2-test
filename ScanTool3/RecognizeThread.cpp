@@ -688,6 +688,7 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 				pstRecogCharacterRt->nSharpKernel = pstBigRecogCharRt->nSharpKernel;
 				pstRecogCharacterRt->nCannyKernel = pstBigRecogCharRt->nCannyKernel;
 				pstRecogCharacterRt->nDilateKernel = pstBigRecogCharRt->nDilateKernel;
+				pstRecogCharacterRt->nCharacterConfidence = pstBigRecogCharRt->nCharacterConfidence;
 				pstRecogCharacterRt->rt = pstBigRecogCharRt->rt;
 
 				//重复字临时登记列表，后面删除所有重复的字
@@ -696,7 +697,7 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 				{
 					const char* word = ri->GetUTF8Text(level);
 					float conf = ri->Confidence(level);
-					if (word && strcmp(word, " ") != 0 && conf >= 75)
+					if (word && strcmp(word, " ") != 0 && conf >= pstRecogCharacterRt->nCharacterConfidence)
 					{
 						int x1, y1, x2, y2;
 						ri->BoundingBox(level, &x1, &y1, &x2, &y2);

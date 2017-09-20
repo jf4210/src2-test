@@ -521,11 +521,6 @@ void CSingleExamDlg::OnBnClickedBtnMakescanmodel()
 	return;
 #endif
 
-#ifndef TEST_NEW_MAKEMODEL
-	CMakeModelDlg dlg;
-	dlg.DoModal();
-#else
 	CNewMakeModelDlg dlg;
 	dlg.DoModal();
-#endif
 }

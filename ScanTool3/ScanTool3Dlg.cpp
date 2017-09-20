@@ -809,8 +809,6 @@ HCURSOR CScanTool3Dlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-
-
 void CScanTool3Dlg::OnDestroy()
 {
 	CDialogEx::OnDestroy();
@@ -823,7 +821,6 @@ void CScanTool3Dlg::OnDestroy()
 	SAFE_RELEASE(_pModel_);
 	SAFE_RELEASE(_pCurrPapersInfo_);
 }
-
 
 void CScanTool3Dlg::OnSize(UINT nType, int cx, int cy)
 {

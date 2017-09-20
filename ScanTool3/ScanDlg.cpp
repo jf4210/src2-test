@@ -406,8 +406,7 @@ void CScanDlg::OnBnClickedBtnScan()
 	{
 		SAFE_RELEASE(_pCurrPapersInfo_);
 		_pCurrPapersInfo_ = new PAPERSINFO();
-
-
+		
 		_nScanStatus_ = 1;
 		pST_SCANCTRL pScanCtrl = new ST_SCANCTRL();
 		pScanCtrl->nScannerId = pID->Id;
@@ -430,7 +429,6 @@ void CScanDlg::OnBnClickedBtnScan()
 	}
 	else
 	{
-		//		AfxMessageBox(_T("获取扫描源失败"));
 		CNewMessageBox	dlg;
 		dlg.setShowInfo(2, 1, "获取扫描源失败");
 		dlg.DoModal();

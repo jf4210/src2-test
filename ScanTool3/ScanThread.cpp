@@ -144,13 +144,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 
 	CDialog* pDlg;
 	if (m_nNotifyDlgType == 2)
-	{
-	#ifndef TEST_NEW_MAKEMODEL
-		pDlg = (CMakeModelDlg*)m_pDlg;
-	#else
 		pDlg = (CNewMakeModelDlg*)m_pDlg;
-	#endif
-	}
 	else
 		pDlg = (CScanMgrDlg*)m_pDlg;
 
@@ -2094,13 +2088,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 
 	CDialog* pDlg;
 	if (m_nNotifyDlgType == 2)
-	{
-	#ifndef TEST_NEW_MAKEMODEL
-		pDlg = (CMakeModelDlg*)m_pDlg;
-	#else
 		pDlg = (CNewMakeModelDlg*)m_pDlg;
-	#endif
-	}
 	else
 		pDlg = (CScanMgrDlg*)m_pDlg;
 

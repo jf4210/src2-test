@@ -36,6 +36,7 @@ void CRecogParamSetDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_STATIC_Sensitivity, m_groupSensitivity);
 	DDX_Control(pDX, IDC_STATIC_Threshold, m_groupThreshold);
 	DDX_Control(pDX, IDC_STATIC_Other, m_groupOther);
+	DDX_Text(pDX, IDC_EDIT_CharacterConfidence, m_nCharacterConfidence);
 }
 
 
@@ -90,6 +91,8 @@ void CRecogParamSetDlg::InitData(AdvanceParam& stParam)
 
 	m_nCharacterAnchorPt	= stParam.nCharacterAnchorPoint;
 	m_nDefCharacterAnchorPt = stParam.nDefCharacterAnchorPoint;
+	m_nCharacterConfidence	= stParam.nCharacterConfidence;
+	m_nDefCharacterConfidence = stParam.nDefCharacterConfidence;
 
 	UpdateData(FALSE);
 }
@@ -125,7 +128,8 @@ BOOL CRecogParamSetDlg::SaveParamData(AdvanceParam& stParam)
 	stParam.nCurrentOmrThreshold	= m_nThresholdOmr;
 
 	stParam.nCharacterAnchorPoint	= m_nCharacterAnchorPt;
-	stParam.nDefCharacterAnchorPoint = m_nDefThresholdOmr;
+//	stParam.nDefCharacterAnchorPoint = m_nDefThresholdOmr;
+	stParam.nCharacterConfidence	= m_nCharacterConfidence;
 	return TRUE;
 }
 
@@ -136,6 +140,7 @@ void CRecogParamSetDlg::OnBnClickedBtnDefParam()
 	m_nThresholdZkzh = m_nDefThresholdZkzh;
 	m_nThresholdOmr = m_nDefThresholdOmr;
 	m_nCharacterAnchorPt = m_nDefCharacterAnchorPt;
+	m_nCharacterConfidence = m_nDefCharacterConfidence;
 	UpdateData(FALSE);
 }
 

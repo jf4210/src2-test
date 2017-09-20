@@ -15,6 +15,7 @@ public:
 		nDefOmrSensitivity = 5;
 		nDefZkzhThreshold = 180;
 		nDefOmrThreshold = 180;
+		nDefCharacterConfidence = 60;
 	}
 public:
 	int nCurrentZkzhSensitivity;
@@ -28,6 +29,8 @@ public:
 
 	int nCharacterAnchorPoint;		//文字定点个数
 	int nDefCharacterAnchorPoint;	//默认文字定点个数
+	int nCharacterConfidence;		//文字识别要求的信心阀值
+	int nDefCharacterConfidence;	//默认文字识别信心阀值
 
 	int			nScanDpi;			//扫描DPI
 	int			nScanPaperSize;		//1:A4, 2:A3, 3:定制

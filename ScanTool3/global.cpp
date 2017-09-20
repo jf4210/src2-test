@@ -994,6 +994,8 @@ pMODEL LoadModelFile(CString strModelPath)
 					pST_CHARACTER_ANCHOR_AREA pobjCharacterAnchorArea = new ST_CHARACTER_ANCHOR_AREA();
 					pobjCharacterAnchorArea->nIndex = jsnRectInfoObj->get("nIndex").convert<int>();
 					pobjCharacterAnchorArea->nThresholdValue = jsnRectInfoObj->get("nThreshold").convert<int>();
+					if(jsnRectInfoObj->has("nConfidence"))
+						pobjCharacterAnchorArea->nCharacterConfidence = jsnRectInfoObj->get("nConfidence").convert<int>();
 					pobjCharacterAnchorArea->nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
 					pobjCharacterAnchorArea->nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
 					pobjCharacterAnchorArea->nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();

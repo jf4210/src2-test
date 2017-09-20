@@ -6,12 +6,7 @@
 #include "ScanModelPaperDlg.h"
 #include "afxdialogex.h"
 #include "NewMessageBox.h"
-
-#ifndef TEST_NEW_MAKEMODEL
-	#include "MakeModelDlg.h"
-#else
-	#include "NewMakeModelDlg.h"
-#endif
+#include "NewMakeModelDlg.h"
 
 // CScanModelPaperDlg ¶Ô»°¿ò
 
@@ -463,12 +458,8 @@ void CScanModelPaperDlg::OnBnClickedBtnMakemodelScan()
 	if (nNum == 0)
 		nNum = -1;
 
-#ifndef TEST_NEW_MAKEMODEL
-	CMakeModelDlg* pDlg = (CMakeModelDlg*)GetParent();
-#else
-//	CNewMakeModelDlg* pDlg = (CNewMakeModelDlg*)GetParent();
 	CNewMakeModelDlg* pDlg = (CNewMakeModelDlg*)m_pNotifyDlg;
-#endif
+
 	if (NULL != (pID = pDlg->GetScanSrc(index)))
 	{
 		SAFE_RELEASE(_pCurrPapersInfo_);

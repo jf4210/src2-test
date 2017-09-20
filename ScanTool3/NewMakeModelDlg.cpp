@@ -9,6 +9,7 @@
 #include "NewMessageBox.h"
 #include "CreateModelDlg.h"
 #include "Net_Cmd_Protocol.h"
+#include "GetModelDlg.h"
 // CMakeModelDlg 对话框
 
 IMPLEMENT_DYNAMIC(CNewMakeModelDlg, CDialog)
@@ -72,7 +73,6 @@ BOOL CNewMakeModelDlg::OnInitDialog()
 	//加载模板
 
 	InitCtrlPosition();
-
 
 	InitScanner();
 	m_scanThread.CreateThread();
@@ -270,11 +270,7 @@ void CNewMakeModelDlg::InitUI()
 	m_bmpBtnUpload.SetWindowText(_T("    上传图片"));
 	m_bmpBtnDown.SetStateBitmap(IDB_MakeModel_Btn_Download_normal, 0, IDB_MakeModel_Btn_Download_down);
 	m_bmpBtnDown.SetWindowText(_T("    下载模板"));
-
-#ifdef _DEBUG
-	m_bmpBtnDown.ShowWindow(SW_SHOW);
-#endif
-
+	
 	m_pNewModelDlg = new CNewModelDlg();
 	m_pNewModelDlg->Create(CNewModelDlg::IDD, this);
 	m_pNewModelDlg->ShowWindow(SW_HIDE);
@@ -724,40 +720,14 @@ void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 	}
 }
 
-
 void CNewMakeModelDlg::OnBnClickedBtnDownmodel()
 {
-	//先查本地列表，如果没有则请求，如果有，计算crc，和服务器不同则下载
 	USES_CONVERSION;
-	CString modelPath = g_strCurrentPath + _T("Model");
-	modelPath = modelPath + _T("\\") + A2T(_pCurrSub_->strModelName.c_str());
-	std::string strModelPath = T2A(modelPath);
-
-	ST_DOWN_MODEL stModelInfo;
-	ZeroMemory(&stModelInfo, sizeof(ST_DOWN_MODEL));
-	stModelInfo.nExamID = _pCurrExam_->nExamID;
-	stModelInfo.nSubjectID = _pCurrSub_->nSubjID;
-	sprintf_s(stModelInfo.szUserNo, "%s", _strUserName_.c_str());
-	sprintf_s(stModelInfo.szModelName, "%s", _pCurrSub_->strModelName.c_str());
-
-	Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
-	if (fileModel.exists())
-	{
-		std::string strMd5 = calcFileMd5(strModelPath);
-		strncpy(stModelInfo.szMD5, strMd5.c_str(), strMd5.length());
-	}
-
-	std::string strLog = "请求下载模板: ";
-	strLog.append(stModelInfo.szModelName);
-	g_pLogger->information(strLog);
-
-	g_eDownLoadModel.reset();
-
-	pTCP_TASK pTcpTask = new TCP_TASK;
-	pTcpTask->usCmd = USER_NEED_DOWN_MODEL;
-	pTcpTask->nPkgLen = sizeof(ST_DOWN_MODEL);
-	memcpy(pTcpTask->szSendBuf, (char*)&stModelInfo, sizeof(ST_DOWN_MODEL));
-	g_fmTcpTaskLock.lock();
-	g_lTcpTask.push_back(pTcpTask);
-	g_fmTcpTaskLock.unlock();
+	CGetModelDlg dlg(A2T(g_strCmdIP.c_str()), g_nCmdPort);
+	dlg.DoModal();
+	
+	SAFE_RELEASE(m_pModel);
+	m_pModel = LoadSubjectModel(_pCurrSub_);
+	if (m_pMakeModelDlg && m_pModel)
+		m_pMakeModelDlg->ReInitModel(m_pModel);
 }

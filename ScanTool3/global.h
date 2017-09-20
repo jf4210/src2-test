@@ -89,11 +89,6 @@
 	#endif
 #endif
 
-#define TEST_NEW_MAKEMODEL		//新模板测试
-#ifdef TEST_NEW_MAKEMODEL
-	#define MAKEMODEL_IN_NEW
-#endif
-
 #define Test_RecogOmr3			//第3种OMR识别方法测试
 #define TEST_MODIFY_ZKZH_CHIld	//将修改准考证号窗口嵌入当做子窗口，不做弹出窗口
 
@@ -268,16 +263,11 @@ typedef struct _PicInfo_				//图片信息
 	RECTLIST		lCalcRect;		//通过定点计算出的点位置
 	RECTLIST		lModelFix;		//模板文字定点列表，在使用文字定位时有用
 	CHARACTER_ANCHOR_AREA_LIST lCharacterAnchorArea;	//文字定位区域
-// 	cv::Mat			matSrc;
-// 	cv::Mat			matDest;
 	_PicInfo_()
 	{
 		nRecoged = 0;
 		bFindIssue = false;
 		pPaper = NULL;
-//		ptFix = cv::Point(0, 0);
-//		ptModelFix = cv::Point(0, 0);
-//		bImgOpen = false;
 	}
 	~_PicInfo_()
 	{
