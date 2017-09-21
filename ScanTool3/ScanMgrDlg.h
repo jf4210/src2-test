@@ -3,6 +3,7 @@
 #include "ScanDlg.h"
 #include "WaitDownloadDlg.h"
 #include "ScanProcessDlg.h"
+#include "PaperInputDlg.h"
 #include "ScanThread.h"
 #include "ScanRecordMgrDlg.h"
 #include "BmpButton.h"
@@ -28,7 +29,7 @@ public:
 	CScanRecordMgrDlg*	m_pScanRecordMgrDlg;
 
 	void	InitExamData();
-	int SearchModel();		//遍历所有模板
+	int		SearchModel();		//遍历所有模板
 	bool	DownLoadModel();	//下载模板
 	int		GetBmkInfo();		//下载报名库
 	void	ShowChildDlg(int n, int nOprater = 0);
@@ -67,6 +68,7 @@ private:
 	CScanDlg*			m_pScanDlg;
 	CScanProcessDlg*	m_pScanProcessDlg;
 //	CScanRecordMgrDlg*	m_pScanRecordMgrDlg;
+	CPaperInputDlg*		m_pPapersInputDlg;
 
 	CString				m_strExamName;
 	CComboBoxExt		m_comboSubject;

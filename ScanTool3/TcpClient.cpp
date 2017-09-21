@@ -594,7 +594,7 @@ void CTcpClient::HandleCmd()
 					//≤Â»Î ˝æ›ø‚
 					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
 					CStudentMgr studentMgr;
-					bool bResult = studentMgr.InitDB(strDbPath);
+					bool bResult = studentMgr.InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
 					std::string strTableName = Poco::format("T%d_%d", nExamID, nSubID);			//"student";
 					if (bResult) bResult = studentMgr.InitTable(strTableName);
 					if (bResult) bResult = studentMgr.InsertData(g_lBmkStudent, strTableName);
@@ -736,7 +736,7 @@ void CTcpClient::HandleCmd()
 				#if 1
 					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
 					CStudentMgr studentMgr;
-					bool bResult = studentMgr.InitDB(strDbPath);
+					bool bResult = studentMgr.InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
 					for (int k = 0; k < vecSubjectID.size(); k++)
 					{
 						STUDENT_LIST _tmpListBmkStudent;
@@ -767,7 +767,7 @@ void CTcpClient::HandleCmd()
 					{
 						std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
 						CStudentMgr studentMgr;
-						bool bResult = studentMgr.InitDB(strDbPath);
+						bool bResult = studentMgr.InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
 						std::string strTableName = Poco::format("T%d_%d", nExamID, nSubID);			//"student";
 						if (bResult) bResult = studentMgr.InitTable(strTableName);
 						if (bResult) bResult = studentMgr.InsertData(g_lBmkStudent, strTableName);

@@ -2224,49 +2224,50 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			omrResult.lSelAnswer.push_back(rc);
 			
 			//------------------------
-			VEC_NEWRTBY2FIX vecNewRt;
-		#if 1
-			RECTLIST::iterator itFix = pPic->lFix.begin();
-			RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
-			itFix++;
-			itModelFix++;
-			for (int i = 1; itFix != pPic->lFix.end(); itFix++, itModelFix++, i++)
+			if (pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0)
 			{
-				RECTLIST lTmpFix, lTmpModelFix;
-				lTmpFix.push_back(pPic->lFix.front());
-				lTmpModelFix.push_back(pPic->lModelFix.front());
 
-				lTmpFix.push_back(*itFix);
-				lTmpModelFix.push_back(*itModelFix);
+				VEC_NEWRTBY2FIX vecNewRt;
+#if 1
+				RECTLIST::iterator itFix = pPic->lFix.begin();
+				RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
+				itFix++;
+				itModelFix++;
+				for (int i = 1; itFix != pPic->lFix.end(); itFix++, itModelFix++, i++)
+				{
+					RECTLIST lTmpFix, lTmpModelFix;
+					lTmpFix.push_back(pPic->lFix.front());
+					lTmpModelFix.push_back(pPic->lModelFix.front());
 
-				ST_NEWRTBY2FIX stNewRt;
-				stNewRt.nFirstFix = 0;
-				stNewRt.nSecondFix = i;
-				stNewRt.rt = itOmrItem->rt;
-				GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
-				vecNewRt.push_back(stNewRt);
-			}
-		#else
-			VEC_FIXRECTINFO lFixRtInfo;
-			RECTINFO rc2 = *itOmrItem;
+					lTmpFix.push_back(*itFix);
+					lTmpModelFix.push_back(*itModelFix);
 
-			RECTLIST::iterator itFix = pPic->lFix.begin();
-			RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
-			for (; itFix != pPic->lFix.end(); itFix++, itModelFix++)
-			{
-				GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rc2.rt);
-			}
-		#endif
-			for (auto newRt : vecNewRt)
-			{
-				RECTINFO rcTmp;
-				rcTmp = rc;
-				rcTmp.rt = newRt.rt;
+					ST_NEWRTBY2FIX stNewRt;
+					stNewRt.nFirstFix = 0;
+					stNewRt.nSecondFix = i;
+					stNewRt.rt = itOmrItem->rt;
+					GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
+					vecNewRt.push_back(stNewRt);
+				}
+#else
+				VEC_FIXRECTINFO lFixRtInfo;
+				RECTINFO rc2 = *itOmrItem;
 
-// 				rcTmp.rt.x += rcTmp.rt.width / 2;
-// 				rcTmp.rt.y += rcTmp.rt.height / 2;
+				RECTLIST::iterator itFix = pPic->lFix.begin();
+				RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
+				for (; itFix != pPic->lFix.end(); itFix++, itModelFix++)
+				{
+					GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rc2.rt);
+				}
+#endif
+				for (auto newRt : vecNewRt)
+				{
+					RECTINFO rcTmp;
+					rcTmp = rc;
+					rcTmp.rt = newRt.rt;
 
-				pPic->lCalcRect.push_back(rcTmp);
+					pPic->lCalcRect.push_back(rcTmp);
+				}
 			}
 			//------------------------
 			#ifdef PaintOmrSnRect	//打印OMR、SN位置
@@ -3591,49 +3592,49 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			pSn->lSN.push_back(rc);
 
 			//------------------------
-			VEC_NEWRTBY2FIX vecNewRt;
-		#if 1
-			RECTLIST::iterator itFix = pPic->lFix.begin();
-			RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
-			itFix++;
-			itModelFix++;
-			for (int i = 1; itFix != pPic->lFix.end(); itFix++, itModelFix++, i++)
+			if (pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0)
 			{
-				RECTLIST lTmpFix, lTmpModelFix;
-				lTmpFix.push_back(pPic->lFix.front());
-				lTmpModelFix.push_back(pPic->lModelFix.front());
+				VEC_NEWRTBY2FIX vecNewRt;
+#if 1
+				RECTLIST::iterator itFix = pPic->lFix.begin();
+				RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
+				itFix++;
+				itModelFix++;
+				for (int i = 1; itFix != pPic->lFix.end(); itFix++, itModelFix++, i++)
+				{
+					RECTLIST lTmpFix, lTmpModelFix;
+					lTmpFix.push_back(pPic->lFix.front());
+					lTmpModelFix.push_back(pPic->lModelFix.front());
 
-				lTmpFix.push_back(*itFix);
-				lTmpModelFix.push_back(*itModelFix);
+					lTmpFix.push_back(*itFix);
+					lTmpModelFix.push_back(*itModelFix);
 
-				ST_NEWRTBY2FIX stNewRt;
-				stNewRt.nFirstFix = 0;
-				stNewRt.nSecondFix = i;
-				stNewRt.rt = itSnItem->rt;
-				GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
-				vecNewRt.push_back(stNewRt);
-			}
-		#else
-			VEC_FIXRECTINFO lFixRtInfo;
-			RECTINFO rc2 = *itSnItem;
+					ST_NEWRTBY2FIX stNewRt;
+					stNewRt.nFirstFix = 0;
+					stNewRt.nSecondFix = i;
+					stNewRt.rt = itSnItem->rt;
+					GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
+					vecNewRt.push_back(stNewRt);
+				}
+#else
+				VEC_FIXRECTINFO lFixRtInfo;
+				RECTINFO rc2 = *itSnItem;
 
-			RECTLIST::iterator itFix = pPic->lFix.begin();
-			RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
-			for (; itFix != pPic->lFix.end(); itFix++, itModelFix++)
-			{
-				GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rc2.rt);
-			}
-		#endif
-			for (auto newRt : vecNewRt)
-			{
-				RECTINFO rcTmp;
-				rcTmp = rc;
-				rcTmp.rt = newRt.rt;
+				RECTLIST::iterator itFix = pPic->lFix.begin();
+				RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
+				for (; itFix != pPic->lFix.end(); itFix++, itModelFix++)
+				{
+					GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rc2.rt);
+				}
+#endif
+				for (auto newRt : vecNewRt)
+				{
+					RECTINFO rcTmp;
+					rcTmp = rc;
+					rcTmp.rt = newRt.rt;
 
-// 				rcTmp.rt.x += rcTmp.rt.width / 2;
-// 				rcTmp.rt.y += rcTmp.rt.height / 2;
-
-				pPic->lCalcRect.push_back(rcTmp);
+					pPic->lCalcRect.push_back(rcTmp);
+				}
 			}
 			//------------------------
 #ifdef PaintOmrSnRect	//打印OMR、SN位置

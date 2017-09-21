@@ -42,6 +42,7 @@ private:
 
 	CBitmap			m_bmpBk;
 	CBmpButton		m_bmpBtnScan;
+	CBmpButton		m_bmpBtnPapersInput;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
 	virtual BOOL OnInitDialog();
@@ -55,4 +56,5 @@ public:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnBnClickedChkAdvancescan();
+	afx_msg void OnBnClickedBtnPapersinput();
 };

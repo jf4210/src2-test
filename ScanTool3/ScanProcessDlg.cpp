@@ -771,14 +771,9 @@ void CScanProcessDlg::ShowPapers(pPAPERSINFO pPapers)
 		m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
 		if (pPaper->bModifyZKZH)
-		{
-//			m_lcPicture.SetItemText(nCount, 2, _T("*"));
 			m_lcPicture.SetItemColors(nCount, 1, RGB(0, 0, 255), RGB(255, 255, 255));
-		}
 		if (pPaper->nZkzhInBmkStatus != 1 && _bGetBmk_)	//不在报名库中、重号
-		{
 			m_lcPicture.SetItemColors(nCount, 1, RGB(0, 255, 0), RGB(255, 255, 255));
-		}
 		if (pPaper->nPicsExchange != 0)	//试卷被调换顺序
 			m_lcPicture.SetItemColors(nCount, 1, RGB(0, 255, 255), RGB(255, 255, 255));
 
@@ -1229,12 +1224,7 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	g_fmCompressLock.lock();
 	g_lCompressTask.push_back(pTask);
 	g_fmCompressLock.unlock();
-
-// 	CString strInfo;
-// 	bool bWarn = false;
-// 	strInfo.Format(_T("正在保存%s..."), A2T(szZipName));
-// 	SetStatusShowInfo(strInfo, bWarn);
-
+	
 	//记录当前总共扫描多少人
 	_nScanPaperCount_ += _pCurrPapersInfo_->nPaperCount;
 

@@ -129,6 +129,8 @@
     <ClInclude Include="..\..\include\twain\TwainString.h" />
     <ClInclude Include="AdanceSetMgrDlg.h" />
     <ClInclude Include="GetModelDlg.h" />
+    <ClInclude Include="PaperInputDlg.h" />
+    <ClInclude Include="PapersMgr.h" />
     <ClInclude Include="ScanParamSetDlg.h" />
     <ClInclude Include="BaseTabDlg.h" />
     <ClInclude Include="BmpButton.h" />
@@ -242,6 +244,8 @@
     </ClCompile>
     <ClCompile Include="AdanceSetMgrDlg.cpp" />
     <ClCompile Include="GetModelDlg.cpp" />
+    <ClCompile Include="PaperInputDlg.cpp" />
+    <ClCompile Include="PapersMgr.cpp" />
     <ClCompile Include="ScanParamSetDlg.cpp" />
     <ClCompile Include="BmpButton.cpp" />
     <ClCompile Include="ComboBoxExt.cpp" />

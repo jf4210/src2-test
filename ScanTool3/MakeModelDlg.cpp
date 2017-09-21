@@ -4598,6 +4598,10 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 		{
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.size(); i++)
 			{
+				cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecRtSel[i].rt;
+				cv::rectangle(tmp, rtTmp, CV_RGB(181, 115, 173), 2);
+				cv::rectangle(tmp2, rtTmp, CV_RGB(170, 215, 111), -1);
+
 				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix[i].rt;
 				cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				cv::rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);

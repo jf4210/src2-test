@@ -178,6 +178,12 @@
     <Filter Include="模板界面\下载模板">
       <UniqueIdentifier>{858d0dd6-1279-4ed6-a679-5400e4d700f1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="扫描界面窗口\试卷袋导入窗口">
+      <UniqueIdentifier>{b7af6cbc-e92e-4cab-bea7-e2686e5da536}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描界面窗口\试卷袋管理类">
+      <UniqueIdentifier>{ef42ae4d-bdea-40da-99f3-373cf8d0b4f9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -468,6 +474,12 @@
     <ClInclude Include="GetModelDlg.h">
       <Filter>模板界面\下载模板</Filter>
     </ClInclude>
+    <ClInclude Include="PaperInputDlg.h">
+      <Filter>扫描界面窗口\试卷袋导入窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="PapersMgr.h">
+      <Filter>扫描界面窗口\试卷袋管理类</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -718,6 +730,12 @@
     </ClCompile>
     <ClCompile Include="GetModelDlg.cpp">
       <Filter>模板界面\下载模板</Filter>
+    </ClCompile>
+    <ClCompile Include="PaperInputDlg.cpp">
+      <Filter>扫描界面窗口\试卷袋导入窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="PapersMgr.cpp">
+      <Filter>扫描界面窗口\试卷袋管理类</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

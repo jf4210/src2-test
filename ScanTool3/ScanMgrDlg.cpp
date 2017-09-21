@@ -16,7 +16,7 @@ IMPLEMENT_DYNAMIC(CScanMgrDlg, CDialog)
 
 CScanMgrDlg::CScanMgrDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CScanMgrDlg::IDD, pParent)
-	, m_pScanDlg(NULL), m_pWaitDownloadDlg(NULL), m_pScanProcessDlg(NULL), m_pScanRecordMgrDlg(NULL)
+	, m_pScanDlg(NULL), m_pWaitDownloadDlg(NULL), m_pScanProcessDlg(NULL), m_pScanRecordMgrDlg(NULL), m_pPapersInputDlg(NULL)
 	, m_strExamName(_T("")), m_nStatusSize(30), _pTWAINApp(NULL)
 {
 
@@ -148,6 +148,8 @@ void CScanMgrDlg::InitCtrlPosition()
 		m_pScanProcessDlg->MoveWindow(m_rtChildDlg);
 	if (m_pScanRecordMgrDlg && m_pScanRecordMgrDlg->GetSafeHwnd())
 		m_pScanRecordMgrDlg->MoveWindow(m_rtChildDlg);
+	if (m_pPapersInputDlg && m_pPapersInputDlg->GetSafeHwnd())
+		m_pPapersInputDlg->MoveWindow(m_rtChildDlg);
 	Invalidate();
 }
 
@@ -169,6 +171,10 @@ void CScanMgrDlg::InitChildDlg()
 	m_pScanRecordMgrDlg = new CScanRecordMgrDlg(this);
 	m_pScanRecordMgrDlg->Create(CScanRecordMgrDlg::IDD, this);
 	m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
+
+	m_pPapersInputDlg = new CPaperInputDlg(_pModel_, this);
+	m_pPapersInputDlg->Create(CPaperInputDlg::IDD, this);
+	m_pPapersInputDlg->ShowWindow(SW_HIDE);
 }
 
 void CScanMgrDlg::ReleaseDlg()
@@ -192,6 +198,11 @@ void CScanMgrDlg::ReleaseDlg()
 	{
 		m_pScanRecordMgrDlg->DestroyWindow();
 		SAFE_RELEASE(m_pScanRecordMgrDlg);
+	}
+	if (m_pPapersInputDlg)
+	{
+		m_pPapersInputDlg->DestroyWindow();
+		SAFE_RELEASE(m_pPapersInputDlg);
 	}
 }
 
@@ -349,6 +360,7 @@ void CScanMgrDlg::ShowChildDlg(int n, int nOprater /*= 0*/)
 		m_pScanDlg->ShowWindow(SW_HIDE);
 		m_pScanProcessDlg->ShowWindow(SW_HIDE);
 		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
+		m_pPapersInputDlg->ShowWindow(SW_HIDE);
 
 		_eCurrDlgType_ = DLG_DownloadModle;
 		int nResult = GetBmkInfo();
@@ -395,6 +407,7 @@ void CScanMgrDlg::ShowChildDlg(int n, int nOprater /*= 0*/)
 		m_pScanDlg->ShowWindow(SW_SHOW);
 		m_pScanProcessDlg->ShowWindow(SW_HIDE);
 		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
+		m_pPapersInputDlg->ShowWindow(SW_HIDE);
 
 		m_pScanDlg->SetScanSrcInfo(m_vecScanSrc);
 		m_pScanProcessDlg->InitTmpSubjectBmk();
@@ -407,6 +420,7 @@ void CScanMgrDlg::ShowChildDlg(int n, int nOprater /*= 0*/)
 		m_pScanDlg->ShowWindow(SW_HIDE);
 		m_pScanProcessDlg->ShowWindow(SW_SHOW);
 		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
+		m_pPapersInputDlg->ShowWindow(SW_HIDE);
 
 		_eCurrDlgType_ = Dlg_ScanProcess;
 		if (/*_pCurrExam_->nModel == 1 && */nOprater == 1)
@@ -421,9 +435,21 @@ void CScanMgrDlg::ShowChildDlg(int n, int nOprater /*= 0*/)
 		m_pScanDlg->ShowWindow(SW_HIDE);
 		m_pScanProcessDlg->ShowWindow(SW_HIDE);
 		m_pScanRecordMgrDlg->ShowWindow(SW_SHOW);
+		m_pPapersInputDlg->ShowWindow(SW_HIDE);
 
 		_eCurrDlgType_ = Dlg_ScanRecordMgr;
 		m_pScanRecordMgrDlg->UpdateChildDlg();
+	}
+	else if (n == 5)
+	{
+		m_pWaitDownloadDlg->ShowWindow(SW_HIDE);
+		m_pScanDlg->ShowWindow(SW_HIDE);
+		m_pScanProcessDlg->ShowWindow(SW_HIDE);
+		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
+		m_pPapersInputDlg->ShowWindow(SW_SHOW);
+
+		_eCurrDlgType_ = Dlg_PapersInput;
+		m_pPapersInputDlg->ReInitData(_pModel_);
 	}
 }
 
@@ -448,6 +474,11 @@ void CScanMgrDlg::UpdateChildDlgInfo(int nType /*= 0*/)
 			else if (nType == 1)
 				m_pScanProcessDlg->ReShowCurrPapers();
 		}
+	}
+	else if (_eCurrDlgType_ == Dlg_PapersInput)
+	{
+		if (m_pPapersInputDlg)
+			m_pPapersInputDlg->ReShowPapers();
 	}
 }
 

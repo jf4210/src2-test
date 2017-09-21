@@ -8,7 +8,7 @@
 #include "ScanTool3Dlg.h"
 #include "ScanMgrDlg.h"
 #include "NewMessageBox.h"
-
+#include "PaperInputDlg.h"
 // CScanDlg ¶Ô»°¿ò
 
 IMPLEMENT_DYNAMIC(CScanDlg, CDialog)
@@ -32,6 +32,7 @@ void CScanDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_Scanner, m_comboScanner);
 	DDX_Control(pDX, IDC_COMBO_ScannerType, m_comboDuplex);
 	DDX_Control(pDX, IDC_BTN_Scan, m_bmpBtnScan);
+	DDX_Control(pDX, IDC_BTN_PapersInput, m_bmpBtnPapersInput);
 }
 
 
@@ -55,6 +56,7 @@ BEGIN_MESSAGE_MAP(CScanDlg, CDialog)
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
 	ON_BN_CLICKED(IDC_CHK_AdvanceScan, &CScanDlg::OnBnClickedChkAdvancescan)
+	ON_BN_CLICKED(IDC_BTN_PapersInput, &CScanDlg::OnBnClickedBtnPapersinput)
 END_MESSAGE_MAP()
 
 
@@ -94,7 +96,11 @@ void CScanDlg::InitUI()
 	m_bmpBk.DeleteObject();
 	m_bmpBk.LoadBitmap(IDB_Main_Bk);
 	m_bmpBtnScan.SetStateBitmap(IDB_ScanMgr_StartScanBtn, 0, IDB_ScanMgr_StartScanBtn_Hover);
-	
+	m_bmpBtnPapersInput.SetStateBitmap(IDB_ScanMgr_StartScanBtn, 0, IDB_ScanMgr_StartScanBtn_Hover);
+
+#ifdef TEST_PAPERS_INPUT
+	m_bmpBtnPapersInput.ShowWindow(SW_SHOW);
+#endif
 }
 
 void CScanDlg::InitCtrlPosition()
@@ -207,6 +213,13 @@ void CScanDlg::InitCtrlPosition()
 		int nH = nStaticH;
 		nCurrTop += (nScanBtnH / 2 - nH / 2);
 		GetDlgItem(IDC_CHK_AdvanceScan)->MoveWindow(nCurrLeft, nCurrTop, nW, nH);
+		nCurrTop += (nH + nGapH);
+	}
+
+	if (GetDlgItem(IDC_BTN_PapersInput)->GetSafeHwnd())
+	{
+		nCurrLeft = (cx - nLeftGap - nRightGap) * 0.5 - nScanBtnW / 2 - 50;
+		GetDlgItem(IDC_BTN_PapersInput)->MoveWindow(nCurrLeft, nCurrTop, nScanBtnW, nScanBtnH);
 	}
 
 	Invalidate();
@@ -237,6 +250,9 @@ void CScanDlg::SetFontSize(int nSize)
 	GetDlgItem(IDC_STATIC_ScanType)->SetFont(&m_fontStatus);
 	m_bmpBtnScan.SetBtnFont(m_fontScanBtn);
 	m_bmpBtnScan.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), 0);
+
+	m_bmpBtnPapersInput.SetBtnFont(m_fontScanBtn);
+	m_bmpBtnPapersInput.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), 0);
 }
 
 void CScanDlg::OnSize(UINT nType, int cx, int cy)
@@ -536,4 +552,11 @@ void CScanDlg::TestData()
 	pDlg->m_scanThread.PostThreadMessage(MSG_START_SCAN, 0, (LPARAM)pScanCtrl);
 
 	pDlg->ShowChildDlg(3);
+}
+
+
+void CScanDlg::OnBnClickedBtnPapersinput()
+{
+	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
+	pDlg->ShowChildDlg(5);
 }

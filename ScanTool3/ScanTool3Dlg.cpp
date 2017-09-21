@@ -695,7 +695,7 @@ void CScanTool3Dlg::SwitchModifyZkzkDlg(pMODEL pModel, pPAPERSINFO pPapersInfo, 
 	m_pExamInfoMgrDlg->ShowWindow(SW_HIDE);
 	m_pScanMgrDlg->ShowWindow(SW_HIDE);
 
-	m_pModifyZkzhDlg->ReInitData(_pModel_, _pCurrPapersInfo_, pStuMgr, pShowPaper);
+	m_pModifyZkzhDlg->ReInitData(_pModel_, pPapersInfo, pStuMgr, pShowPaper);
 	m_pModifyZkzhDlg->ShowWindow(SW_SHOW);
 }
 

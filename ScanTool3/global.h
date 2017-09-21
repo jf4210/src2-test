@@ -69,6 +69,7 @@
 	#define Test_Data			//测试数据，测试模式
 //	#define TEST_TIP_SHOW		//提示信息显示测试
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
+	#define TEST_PAPERS_INPUT	//试卷袋导入功能测试
 #else	//release版本
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
 	#define	 TEST_MODEL_NAME	//模板名称测试
@@ -244,6 +245,7 @@ typedef enum _eDlgType_
 	Dlg_ScanProcess,		//扫描进度窗口
 	Dlg_ScanRecordMgr,		//扫描记录管理窗口，报名库信息展示窗口
 	Dlg_NewMakeModel,		//模板制作窗口
+	Dlg_PapersInput			//试卷袋导入窗口
 }E_DLG_TYPE;
 extern E_DLG_TYPE		_eCurrDlgType_;	//当前显示的窗口，弹出窗口不算
 
