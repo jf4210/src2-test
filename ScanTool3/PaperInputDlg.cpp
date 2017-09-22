@@ -12,6 +12,7 @@
 #include "OmrRecog.h"
 #include "ModifyZkzhDlg.h"
 #include "PapersMgr.h"
+#include "NewMessageBox.h"
 
 using namespace cv;
 using namespace std;
@@ -33,6 +34,11 @@ CPaperInputDlg::~CPaperInputDlg()
 {
 	if (m_pModel != m_pOldModel)
 		SAFE_RELEASE(m_pModel);
+	if (m_pShowPicDlg)
+	{
+		m_pShowPicDlg->DestroyWindow();
+		SAFE_RELEASE(m_pShowPicDlg);
+	}
 }
 
 void CPaperInputDlg::DoDataExchange(CDataExchange* pDX)
@@ -40,9 +46,8 @@ void CPaperInputDlg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_Papers, m_lPapersCtrl);
 	DDX_Control(pDX, IDC_LIST_Paper, m_lPaperCtrl);
-	DDX_Control(pDX, IDC_LIST_IssuePaper, m_lIssuePaperCtrl);
+//	DDX_Control(pDX, IDC_LIST_IssuePaper, m_lIssuePaperCtrl);
 	DDX_Control(pDX, IDC_COMBO_ModelList, m_comboModel);
-//	DDX_Control(pDX, IDC_TAB_PicShow, m_tabPicShow);
 	DDX_Control(pDX, IDC_BTN_Broswer, m_btnBroswer);
 	DDX_Text(pDX, IDC_EDIT_PapersPath, m_strPapersPath);
 	DDX_Text(pDX, IDC_EDIT_ModelInfo, m_strModelName);
@@ -58,7 +63,7 @@ BEGIN_MESSAGE_MAP(CPaperInputDlg, CDialog)
 	ON_CBN_SELCHANGE(IDC_COMBO_ModelList, &CPaperInputDlg::OnCbnSelchangeComboModellist)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_Papers, &CPaperInputDlg::OnNMDblclkListPapers)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_Paper, &CPaperInputDlg::OnNMDblclkListPaper)
-	ON_NOTIFY(NM_DBLCLK, IDC_LIST_IssuePaper, &CPaperInputDlg::OnNMDblclkListIssuepaper)
+//	ON_NOTIFY(NM_DBLCLK, IDC_LIST_IssuePaper, &CPaperInputDlg::OnNMDblclkListIssuepaper)
 	ON_MESSAGE(WM_CV_LBTNDOWN, &CPaperInputDlg::RoiLBtnDown)
 	ON_BN_CLICKED(IDC_BTN_SAVE_PAPERSINPUTDLG, &CPaperInputDlg::OnBnClickedBtnSave)
 	ON_MESSAGE(MSG_ZKZH_RECOG, &CPaperInputDlg::MsgZkzhRecog)
@@ -103,26 +108,6 @@ void CPaperInputDlg::InitUI()
 		m_nModelPicNums = m_pModel->nPicNum;
 
 	USES_CONVERSION;
-#if 0
-	CRect rtTab;
-	m_tabPicShow.GetClientRect(&rtTab);
-	for (int i = 0; i < m_nModelPicNums; i++)
-	{
-		char szTabHeadName[20] = { 0 };
-		sprintf_s(szTabHeadName, "第%d页", i + 1);
-
-		m_tabPicShow.InsertItem(i, A2T(szTabHeadName));
-
-		CPicShow* pPicShow = new CPicShow(this);
-		pPicShow->Create(CPicShow::IDD, &m_tabPicShow);
-		pPicShow->ShowWindow(SW_HIDE);
-		pPicShow->MoveWindow(&rtTab);
-		m_vecPicShow.push_back(pPicShow);
-	}
-	m_tabPicShow.SetCurSel(0);
-	m_vecPicShow[0]->ShowWindow(SW_SHOW);
-	m_pCurrentPicShow = m_vecPicShow[0];
-#endif
 	if (!m_pShowPicDlg)
 	{
 		m_pShowPicDlg = new CShowPicDlg(this);
@@ -131,31 +116,32 @@ void CPaperInputDlg::InitUI()
 	}
 	m_pShowPicDlg->setShowModel(2);
 
+	m_lPapersCtrl.DeleteAllItems();
+
+	while (m_lPapersCtrl.DeleteColumn(0));
 	m_lPapersCtrl.SetExtendedStyle(m_lPapersCtrl.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lPapersCtrl.InsertColumn(0, _T("试卷袋名"), LVCFMT_CENTER, 80);
 	m_lPapersCtrl.InsertColumn(1, _T("数量"), LVCFMT_CENTER, 36);
 
+	m_lPaperCtrl.DeleteAllItems();
+	while (m_lPaperCtrl.DeleteColumn(0));
 	m_lPaperCtrl.SetExtendedStyle(m_lPaperCtrl.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lPaperCtrl.InsertColumn(0, _T("题卡"), LVCFMT_CENTER, 36); 
 //	m_lPaperCtrl.InsertColumn(1, _T("考生"), LVCFMT_CENTER, 36);
 	m_lPaperCtrl.InsertColumn(1, _T("试卷名"), LVCFMT_CENTER, 130);
 //	m_lPaperCtrl.InsertColumn(3, _T("*"), LVCFMT_CENTER, 20);
 
-	m_lIssuePaperCtrl.SetExtendedStyle(m_lIssuePaperCtrl.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
-	m_lIssuePaperCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36);
-	m_lIssuePaperCtrl.InsertColumn(1, _T("试卷名"), LVCFMT_CENTER, 80);
-	m_lIssuePaperCtrl.InsertColumn(2, _T("原因"), LVCFMT_LEFT, 100);
-	m_lIssuePaperCtrl.EnableToolTips(TRUE);
+// 	m_lIssuePaperCtrl.DeleteAllItems();
+// 	m_lIssuePaperCtrl.SetExtendedStyle(m_lIssuePaperCtrl.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
+// 	m_lIssuePaperCtrl.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36);
+// 	m_lIssuePaperCtrl.InsertColumn(1, _T("试卷名"), LVCFMT_CENTER, 80);
+// 	m_lIssuePaperCtrl.InsertColumn(2, _T("原因"), LVCFMT_LEFT, 100);
+// 	m_lIssuePaperCtrl.EnableToolTips(TRUE);
 
 	m_comboModel.AdjustDroppedWidth();
 
 	SetFontSize(m_nStatusSize);
-
-// 	int sx = MAX_DLG_WIDTH;
-// 	int sy = MAX_DLG_HEIGHT;
-// 	MoveWindow(0, 0, sx, sy);
-// 	CenterWindow();
-
+	
 	InitCtrlPosition();	
 }
 
@@ -233,38 +219,20 @@ void CPaperInputDlg::InitCtrlPosition()
 		m_lPaperCtrl.MoveWindow(nLeftGap + nPapersListWidth + nGap, nCurrentTop, nIssueListWdith, nPaperListHeight);
 		nCurrentTop = nCurrentTop + nPaperListHeight + nGap;
 	}
-	if (GetDlgItem(IDC_STATIC_IssueTips)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_STATIC_IssueTips)->MoveWindow(nLeftGap + nPapersListWidth + nGap, nCurrentTop, nIssueListWdith, nStaticHeight);
-		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
-	}
-	if (m_lIssuePaperCtrl.GetSafeHwnd())
-	{
-		m_lIssuePaperCtrl.MoveWindow(nLeftGap + nPapersListWidth + nGap, nCurrentTop, nIssueListWdith, nPaperListHeight);
-	}
+// 	if (GetDlgItem(IDC_STATIC_IssueTips)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_STATIC_IssueTips)->MoveWindow(nLeftGap + nPapersListWidth + nGap, nCurrentTop, nIssueListWdith, nStaticHeight);
+// 		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
+// 	}
+// 	if (m_lIssuePaperCtrl.GetSafeHwnd())
+// 	{
+// 		m_lIssuePaperCtrl.MoveWindow(nLeftGap + nPapersListWidth + nGap, nCurrentTop, nIssueListWdith, nPaperListHeight);
+// 	}
 
 	//Tab控件的位置
 	int nTabLeftPos = nLeftGap + nLeftCtrlWidth + nGap;
 	int nTabCtrlHeight = rcClient.Height() * 2 / 3;
 	int nTabCtrlWidth = rcClient.Width() - nLeftGap - nLeftCtrlWidth - nGap - nRightGap;
-#if 0
-	if (m_tabPicShow.GetSafeHwnd())
-	{
-		m_tabPicShow.MoveWindow(nTabLeftPos, nTopGap, nTabCtrlWidth, nTabCtrlHeight);
-		nCurrentTop = nTopGap + nTabCtrlHeight + nGap;
-
-		CRect rtTab;
-		m_tabPicShow.GetClientRect(&rtTab);
-		int nTabHead_H = 24;		//tab控件头的高度
-		CRect rtPic = rtTab;
-		rtPic.top = rtPic.top + nTabHead_H;
-		rtPic.left += 2;
-		rtPic.right -= 4;
-		rtPic.bottom -= 4;
-		for (int i = 0; i < m_vecPicShow.size(); i++)
-			m_vecPicShow[i]->MoveWindow(&rtPic);
-	}
-#endif
 	if (m_pShowPicDlg && m_pShowPicDlg->GetSafeHwnd())
 	{
 		m_pShowPicDlg->MoveWindow(nTabLeftPos, nTopGap, nTabCtrlWidth, nTabCtrlHeight);
@@ -508,12 +476,16 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 	UpdateData(TRUE);
 	if (m_strPapersPath == _T(""))
 	{
-		AfxMessageBox(_T("请设置试卷袋路径！"));
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "请设置试卷袋路径！");
+		dlg.DoModal();
 		return;
 	}
 	if (!m_pModel)
 	{
-		AfxMessageBox(_T("未设置检测的模板信息！"));
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "未设置检测的模板信息！");
+		dlg.DoModal();
 		return;
 	}
 
@@ -555,7 +527,11 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 			{
 				char szErrorInfo[MAX_PATH] = { 0 };
 				sprintf_s(szErrorInfo, "扫描到文件夹%s试卷数量%d,模板要求每考生%d张试卷, 请检查是否有考生试卷缺失", szDirName, lFileName.size(), m_pModel->nPicNum);
-				AfxMessageBox(A2T(szErrorInfo));
+				//AfxMessageBox(A2T(szErrorInfo));
+
+				CNewMessageBox	dlg;
+				dlg.setShowInfo(2, 1, szErrorInfo);
+				dlg.DoModal();
 				it++;
 				continue;
 			}
@@ -742,7 +718,7 @@ void CPaperInputDlg::OnNMDblclkListPapers(NMHDR *pNMHDR, LRESULT *pResult)
 	if (pNMItemActivate->iItem < 0) return;
 
 	m_lPaperCtrl.DeleteAllItems();
-	m_lIssuePaperCtrl.DeleteAllItems();
+//	m_lIssuePaperCtrl.DeleteAllItems();
 
 	USES_CONVERSION;
 	pPAPERSINFO pPapers = (pPAPERSINFO)m_lPapersCtrl.GetItemData(pNMItemActivate->iItem);
@@ -815,7 +791,8 @@ void CPaperInputDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 
 	//双击为空的准考证号时显示准考证号修改窗口
 	CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
-	if ((/*g_nOperatingMode == 1 *//*|| pDlg->m_bModifySN*/g_bModifySN) && m_pModel && pPaper && (pPaper->strSN.empty() || pPaper->bModifyZKZH))
+	if ((/*g_nOperatingMode == 1 *//*|| pDlg->m_bModifySN*/g_bModifySN) && m_pModel && pPaper && \
+		(pPaper->strSN.empty() || pPaper->bModifyZKZH || pPaper->bReScan || (_bGetBmk_ && pPaper->nZkzhInBmkStatus != 1) || pPaper->nPicsExchange != 0))
 	{
 		if (!m_pStudentMgr)
 		{
@@ -836,311 +813,14 @@ void CPaperInputDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	}
 }
 
-void CPaperInputDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
-{
-	PIC_LIST::iterator itPic = pPaper->lPic.begin();
-	for (int i = 0; itPic != pPaper->lPic.end(); itPic++, i++)
-	{
-		Mat matSrc = imread((*itPic)->strPicPath);
-#ifdef PIC_RECTIFY_TEST
-		Mat dst;
-		Mat rotMat;
-		PicRectify(matSrc, dst, rotMat);
-		Mat matImg;
-		if (dst.channels() == 1)
-			cvtColor(dst, matImg, CV_GRAY2BGR);
-		else
-			matImg = dst;
-// #ifdef WarpAffine_TEST
-// 			cv::Mat	inverseMat(2, 3, CV_32FC1);
-// 			PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
-// #endif
-#else
-		Mat matImg = matSrc;
-#endif
-
-#ifdef WarpAffine_TEST
-		cv::Mat	inverseMat(2, 3, CV_32FC1);
-		PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
-#endif
-
-#ifdef Test_ShowOriPosition
-		cv::Mat	inverseMat(2, 3, CV_32FC1);
-		GetInverseMat((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
-#endif
-
-		Mat tmp = matImg.clone();
-		Mat tmp2 = matImg.clone();
-
-		//++打印定点信息
-		//-----------------------
-		RECTLIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[i]->lSelFixRoi.begin();													//显示识别定点的选择区
-		for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i]->lSelFixRoi.end(); itSelRoi++, j++)
-		{
-			cv::Rect rt = (*itSelRoi).rt;
-
-			char szCP[20] = { 0 };
-			rectangle(tmp, rt, CV_RGB(0, 0, 255), 2);
-			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-		}
-
-		RECTLIST::iterator itPicFix = (*itPic)->lFix.begin();													//显示识别出来的定点
-		for (int j = 0; itPicFix != (*itPic)->lFix.end(); itPicFix++, j++)
-		{
-			cv::Rect rt = (*itPicFix).rt;
-
-			char szCP[20] = { 0 };
-			sprintf_s(szCP, "R_F%d", j);
-			putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));	//CV_FONT_HERSHEY_COMPLEX
-			rectangle(tmp, rt, CV_RGB(0, 255, 0), 2);
-			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-		}
-		RECTLIST::iterator itFixRect = pPaper->pModel->vecPaperModel[i]->lFix.begin();							//显示模板上的定点对应到此试卷上的新定点
-		for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[i]->lFix.end(); itFixRect++, j++)
-		{
-			cv::Rect rt = (*itFixRect).rt;
-
-			TRACE("模板定点矩形区: (%d, %d, %d, %d)\n", (*itFixRect).rt.x, (*itFixRect).rt.y, (*itFixRect).rt.width, (*itFixRect).rt.height);
-
-			char szCP[20] = { 0 };
-			sprintf_s(szCP, "M_F%d", j);
-			putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
-			rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
-			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-		}
-		//--
-
-		RECTLIST::iterator itNormalRect = (*itPic)->lNormalRect.begin();
-		for (int j = 0; itNormalRect != (*itPic)->lNormalRect.end(); itNormalRect++, j++)
-		{
-			cv::Rect rt = (*itNormalRect).rt;
-			if (itNormalRect->eCPType == SN || itNormalRect->eCPType == OMR)
-			{
-				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
-				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-			}
-			else
-			{
-				rectangle(tmp, rt, CV_RGB(250, 150, 20), 2);
-				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-			}
-		}
-
-		//打印OMR、SN位置
-#ifdef PaintOmrSnRect
-// 		SNLIST::iterator itSN = pPaper->pModel->vecPaperModel[i]->lSNInfo.begin();
-// 		for (; itSN != pPaper->pModel->vecPaperModel[i]->lSNInfo.end(); itSN++)
-// 		{
-// 			pSN_ITEM pSnItem = *itSN;
-// 			RECTLIST::iterator itSnItem = pSnItem->lSN.begin();
-// 			for (; itSnItem != pSnItem->lSN.end(); itSnItem++)
-// 			{
-// 				cv::Rect rt = (*itSnItem).rt;
-// #ifdef Test_ShowOriPosition
-// 				GetPosition2(inverseMat, rt, rt);
-// #else
-// 				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
-// #endif
-// 
-// 				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
-// 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-// 			}
-// 		}
-// 
-// 		OMRLIST::iterator itOmr = pPaper->pModel->vecPaperModel[i]->lOMR2.begin();
-// 		for (; itOmr != pPaper->pModel->vecPaperModel[i]->lOMR2.end(); itOmr++)
-// 		{
-// 			pOMR_QUESTION pOmrQuestion = &(*itOmr);
-// 			RECTLIST::iterator itOmrItem = pOmrQuestion->lSelAnswer.begin();
-// 			for (; itOmrItem != pOmrQuestion->lSelAnswer.end(); itOmrItem++)
-// 			{
-// 				cv::Rect rt = (*itOmrItem).rt;
-// #ifdef Test_ShowOriPosition
-// 				GetPosition2(inverseMat, rt, rt);
-// #else
-// 				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
-// #endif
-// 
-// 				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
-// 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-// 			}
-// 		}
-#endif
-		addWeighted(tmp, 0.5, tmp2, 0.5, 0, tmp);
-//		m_vecPicShow[i]->ShowPic(tmp);
-	}
-}
-
-void CPaperInputDlg::PaintIssueRect(pST_PaperInfo pPaper)
-{
-	PIC_LIST::iterator itPic = pPaper->lPic.begin();
-	for (int i = 0; itPic != pPaper->lPic.end(); itPic++, i++)
-	{
-		
-		if ((*itPic)->bFindIssue)
-		{
-			Point pt(0, 0);
-			Mat matSrc = imread((*itPic)->strPicPath);
-#ifdef PIC_RECTIFY_TEST
-			Mat dst;
-			Mat rotMat;
-			PicRectify(matSrc, dst, rotMat);
-			Mat matImg;
-			if (dst.channels() == 1)
-				cvtColor(dst, matImg, CV_GRAY2BGR);
-			else
-				matImg = dst;
-// #ifdef WarpAffine_TEST
-// 			cv::Mat	inverseMat(2, 3, CV_32FC1);
-// 			PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
-// #endif
-#else
-			Mat matImg = matSrc;
-#endif
-
-#ifdef WarpAffine_TEST
-			cv::Mat	inverseMat(2, 3, CV_32FC1);
-			PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
-#endif
-
-			Mat tmp = matImg.clone();
-			Mat tmp2 = matImg.clone();
-
-			//-----------------------
-			RECTLIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[i]->lSelFixRoi.begin();													//显示识别定点的选择区
-			for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i]->lSelFixRoi.end(); itSelRoi++, j++)
-			{
-				cv::Rect rt = (*itSelRoi).rt;
-//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
-
-				char szCP[20] = { 0 };
-				rectangle(tmp, rt, CV_RGB(0, 0, 255), 2);
-				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-			}
-
-			RECTLIST::iterator itPicFix = (*itPic)->lFix.begin();													//显示识别出来的定点
-			for (int j = 0; itPicFix != (*itPic)->lFix.end(); itPicFix++, j++)
-			{
-				cv::Rect rt = (*itPicFix).rt;
-//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
-
-				char szCP[20] = { 0 };
-				sprintf_s(szCP, "R_F%d", j);
-				putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));	//CV_FONT_HERSHEY_COMPLEX
-				rectangle(tmp, rt, CV_RGB(0, 255, 0), 2);
-				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-			}
-			RECTLIST::iterator itFixRect = pPaper->pModel->vecPaperModel[i]->lFix.begin();							//显示模板上的定点对应到此试卷上的新定点
-			for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[i]->lFix.end(); itFixRect++, j++)
-			{
-				cv::Rect rt = (*itFixRect).rt;
-//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
-
-				TRACE("模板定点矩形区: (%d, %d, %d, %d)\n", (*itFixRect).rt.x, (*itFixRect).rt.y, (*itFixRect).rt.width, (*itFixRect).rt.height);
-
-				char szCP[20] = { 0 };
-				sprintf_s(szCP, "M_F%d", j);
-				putText(tmp, szCP, Point(rt.x, rt.y + rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
-				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
-				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-			}
-
-			RECTLIST::iterator itNormal = (*itPic)->lNormalRect.begin();													//显示所有识别正常的点
-			for (int j = 0; itNormal != (*itPic)->lNormalRect.end(); itNormal++, j++)
-			{
-				cv::Rect rt = (*itNormal).rt;
-//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
-
-				char szCP[20] = { 0 };
-				rectangle(tmp, rt, CV_RGB(0, 255, 255), 2);
-				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
-			}
-			//----------------------------
-
-			RECTLIST::iterator itIssueRect = (*itPic)->lIssueRect.begin();
-			for (int j = 0; itIssueRect != (*itPic)->lIssueRect.end(); itIssueRect++, j++)
-			{
-				cv::Rect rt = (*itIssueRect).rt;
-//				GetPosition((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, rt);
-				if (j == 0)
-				{
-					pt = rt.tl();
-					pt.x = pt.x - 100;
-					pt.y = pt.y - 100;
-				}
-
-				char szCP[20] = { 0 };
-				sprintf_s(szCP, "Err%d", j);
-				putText(tmp, szCP, Point((*itIssueRect).rt.x, (*itIssueRect).rt.y + (*itIssueRect).rt.height / 2), CV_FONT_HERSHEY_PLAIN, 1, Scalar(255, 0, 0));	//CV_FONT_HERSHEY_COMPLEX
-				rectangle(tmp, (*itIssueRect).rt, CV_RGB(255, 20, 30), 2);
-				rectangle(tmp2, (*itIssueRect).rt, CV_RGB(255, 200, 100), -1);
-			}
-			addWeighted(tmp, 0.5, tmp2, 0.5, 0, tmp);
-//			m_vecPicShow[i]->ShowPic(tmp, pt);
-		}
-	}
-}
-
-void CPaperInputDlg::OnNMDblclkListIssuepaper(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
-	*pResult = 0;
-	
-	if (pNMItemActivate->iItem < 0)
-		return;
-
-	pST_PaperInfo pPaper = (pST_PaperInfo)m_lIssuePaperCtrl.GetItemData(pNMItemActivate->iItem);
-	m_pCurrentShowPaper = pPaper;
-
-	int nIssuePaper = 0;
-	PIC_LIST::iterator itPic = pPaper->lPic.begin();
-	for (int i = 0; itPic != pPaper->lPic.end(); itPic++, i++)
-	{
-		if ((*itPic)->bFindIssue)
-		{
-			nIssuePaper = i;
-//			m_nCurrTabSel = i;
-			break;
-		}
-	}
-
-// 	PaintIssueRect(pPaper);
-// 
-// 	m_tabPicShow.SetCurSel(nIssuePaper);
-// 	m_pCurrentPicShow = m_vecPicShow[nIssuePaper];
-// 	m_pCurrentPicShow->ShowWindow(SW_SHOW);
-// 	for (int i = 0; i < m_vecPicShow.size(); i++)
-// 	{
-// 		if (i != nIssuePaper)
-// 			m_vecPicShow[i]->ShowWindow(SW_HIDE);
-// 	}
-
-	m_pShowPicDlg->setShowPaper(pPaper);
-
-	//双击为空的准考证号时显示准考证号修改窗口
-	CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
-	if ((/*g_nOperatingMode == 1*/ /*|| pDlg->m_bModifySN*/g_bModifySN) && m_pModel && pPaper)
-	{
-		if (!m_pStudentMgr)
-		{
-			USES_CONVERSION;
-			m_pStudentMgr = new CStudentMgr();
-			std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
-			bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
-		}
-		CModifyZkzhDlg zkzhDlg(m_pModel, m_pCurrentPapers, m_pStudentMgr, pPaper);
-		zkzhDlg.DoModal();
-
-		ShowPapers(m_pCurrentPapers);
-	}
-}
-
 void CPaperInputDlg::OnBnClickedBtnSave()
 {
 	UpdateData(TRUE);
 	if (m_nCurrItemPapers < 0)
 	{
-		AfxMessageBox(_T("请先选中试卷袋"));
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "请先选中试卷袋");
+		dlg.DoModal();
 		return;
 	}
 
@@ -1148,7 +828,9 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	pPAPERSINFO pPapers = (pPAPERSINFO)m_lPapersCtrl.GetItemData(m_nCurrItemPapers);
 	if (!pPapers)
 	{
-		AfxMessageBox(_T("没有试卷袋信息"));
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "没有试卷袋信息");
+		dlg.DoModal();
 		return;
 	}
 
@@ -1157,14 +839,20 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	{
 		if (g_nOperatingMode == 2)
 		{
-			AfxMessageBox(_T("存在识别异常试卷，不能上传，请先处理异常试卷"));
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(2, 1, "存在识别异常试卷，不能上传，请先处理异常试卷");
+			dlg.DoModal();
 			return;
 		}
 		else
 		{
 			CString strMsg = _T("");
 			strMsg.Format(_T("存在%d份问题试卷，这些试卷需要单独找出扫描，此次将不上传这%d份试卷，是否确定上传?"), pPapers->lIssue.size(), pPapers->lIssue.size());
-			if (MessageBox(strMsg, _T("警告"), MB_YESNO) != IDYES)
+
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(2, 2, T2A(strMsg));
+			dlg.DoModal();
+			if (dlg.m_nResult != IDYES)
 				return;
 			pPapers->nPaperCount = pPapers->lPaper.size();		//修改扫描数量，将问题试卷删除，不算到扫描试卷中。
 		}
@@ -1180,6 +868,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	char szPapersSavePath[MAX_PATH] = { 0 };
 	sprintf_s(szPapersSavePath, "%sPaper\\%s\\", T2A(g_strCurrentPath), T2A(m_strPapersName));
 	papersMgr.setCurrSavePath(szPapersSavePath);
+	papersMgr.setExamInfo(_pCurrExam_, m_pModel);
 	bool bResult = papersMgr.SavePapers(pPapers);
 	if (!bResult)
 		return;
@@ -1546,7 +1235,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 LRESULT CPaperInputDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
 {
 	cv::Point pt = *(cv::Point*)(wParam);
-	ShowRectByPoint(pt, m_pCurrentShowPaper);
+//	ShowRectByPoint(pt, m_pCurrentShowPaper);
 	return TRUE;
 }
 
@@ -1642,6 +1331,8 @@ LRESULT CPaperInputDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 		{
 // 			m_lPaperCtrl.SetItemText(i, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
 // 			break;
+
+			m_lPaperCtrl.EnsureVisible(i, FALSE);
 
 			if (!pPaper->strSN.empty())
 			{

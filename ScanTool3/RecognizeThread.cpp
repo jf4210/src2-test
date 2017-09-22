@@ -367,8 +367,8 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			for (; itRect2 != itOmr->lSelAnswer.end(); itRect2++)
 			{
 				char szTmp[200] = { 0 };
-				sprintf_s(szTmp, "%c,ÃÜ¶È=%.3f/%.3f,»Ò¶È=%.3f(%.3f-%.3f) ", itRect2->nAnswer + 65, \
-						  itRect2->fRealDensity, itRect2->fStandardDensity, itRect2->fRealMeanGray - itRect2->fStandardMeanGray, itRect2->fRealMeanGray, itRect2->fStandardMeanGray);
+				sprintf_s(szTmp, "%c,ÃÜ¶È=%.3f(%.3f/%.3f), ", itRect2->nAnswer + 65, \
+						  itRect2->fRealDensity / itRect2->fStandardDensity, itRect2->fRealDensity, itRect2->fStandardDensity);
 				strItemLog.append(szTmp);
 			}
 			strItemLog.append("\n");
@@ -464,8 +464,8 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		char szOmrItem[3060] = { 0 };
 		if (itOmr->nDoubt)	//itOmr->nDoubt
 			sprintf_s(szOmrItem, "%d(%s):%s[%s -- %s -- %s] Doubt(%d)\t==>%s\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal1.c_str(), itOmr->strRecogVal2.c_str(), itOmr->strRecogVal3.c_str(), itOmr->nDoubt, strItemLog.c_str());	//szItemInfo
-		else
-			sprintf_s(szOmrItem, "%d(%s):%s[%s -- %s -- %s] Doubt(%d)\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal1.c_str(), itOmr->strRecogVal2.c_str(), itOmr->strRecogVal3.c_str(), itOmr->nDoubt);
+// 		else
+// 			sprintf_s(szOmrItem, "%d(%s):%s[%s -- %s -- %s] Doubt(%d)\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal1.c_str(), itOmr->strRecogVal2.c_str(), itOmr->strRecogVal3.c_str(), itOmr->nDoubt);
 
 		strPaperLog.append(szOmrItem);
 	}

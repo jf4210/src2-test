@@ -3622,6 +3622,9 @@ bool CMakeModelDlg::ShowRectByPoint(cv::Point pt)
 			{
 				if (i != nFind || m_pCurRectInfo->eCPType != m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix[i].eCPType)
 				{
+					cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecRtSel[i].rt;
+					cv::rectangle(tmp, rtTmp, CV_RGB(181, 115, 173), 2);
+
 					cv::Rect rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix[i].rt;
 					cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				}
@@ -3908,6 +3911,9 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 	{
 		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.size(); i++)
 		{
+			cv::Rect rtTmp1 = m_vecPaperModelInfo[m_nCurrTabSel]->vecRtSel[i].rt;
+			cv::rectangle(tmp, rtTmp1, CV_RGB(181, 115, 173), 2);
+
 			cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix[i].rt;
 			cv::rectangle(tmp2, rtTmp, CV_RGB(255, 233, 10), -1);
 		}
@@ -7438,6 +7444,8 @@ void CMakeModelDlg::InitParam()
 		m_nSN		= pConf->getInt("MakeModel_Threshold.sn", 200);
 		m_nCharacterThreshold	= pConf->getInt("MakeModel_Threshold.title", 150);
 
+		m_nThreshold_DefFix = m_nFixVal;
+		m_nThreshold_DefGray = m_nGrayVal;
 		m_nThreshold_DefSn = m_nSN;
 		m_nThreshold_DefOmr = m_nOMR;
 
@@ -7457,6 +7465,12 @@ void CMakeModelDlg::InitParam()
 		m_fWJ_CPThresholdPercent_Head = pConf->getDouble("MakeModel_RecogPercent_Head.wj", 1.2);
 		m_fOMRThresholdPercent_Head		= pConf->getDouble("MakeModel_RecogPercent_Head.omr", 1.2);
 		m_fSNThresholdPercent_Head		= pConf->getDouble("MakeModel_RecogPercent_Head.sn", 1.2);
+
+		m_fDefPersentFix = m_fFixThresholdPercent;
+		m_fDefPersentGray = m_fGrayThresholdPercent;
+		m_fDefPersentSN = m_fSNThresholdPercent_Fix;
+		m_fDefPersentOmr = m_fOMRThresholdPercent_Fix;
+
 		strLog = "读取参数完成";
 	}
 	catch (Poco::Exception& exc)
@@ -7784,12 +7798,27 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	stAdvanceParam.nCurrentOmrSensitivity = m_nDilateKernel_Common;
 	stAdvanceParam.nDefZkzhSensitivity	= m_nDilateKernel_DefSn;
 	stAdvanceParam.nDefOmrSensitivity	= m_nDilateKernel_DefCommon;
+	
+	stAdvanceParam.nCurrentFixThreshold = m_nFixVal;
+	stAdvanceParam.nCurrentGrayThreshold = m_nGrayVal;
 	stAdvanceParam.nCurrentZkzhThreshold = m_nSN;
 	stAdvanceParam.nCurrentOmrThreshold = m_nOMR;
+	stAdvanceParam.nDefFixThreshold		= m_nThreshold_DefFix;
+	stAdvanceParam.nDefGrayThreshold	= m_nThreshold_DefGray;
 	stAdvanceParam.nDefZkzhThreshold	= m_nThreshold_DefSn;
 	stAdvanceParam.nDefOmrThreshold		= m_nThreshold_DefOmr;
 
-	stAdvanceParam.nCharacterAnchorPoint	= m_pModel->nCharacterAnchorPoint;
+	stAdvanceParam.nPersentFix	= m_fFixThresholdPercent * 100;
+	stAdvanceParam.nPersentGray = m_fGrayThresholdPercent * 100;
+	stAdvanceParam.nPersentZkzh = m_fSNThresholdPercent_Fix * 100;
+	stAdvanceParam.nPersentOmr	= m_fOMRThresholdPercent_Fix * 100;
+	stAdvanceParam.nDefPersentFix	= m_fDefPersentFix * 100;
+	stAdvanceParam.nDefPersentGray	= m_fDefPersentGray * 100;
+	stAdvanceParam.nDefPersentZkzh	= m_fDefPersentSN * 100;
+	stAdvanceParam.nDefPersentOmr	= m_fDefPersentOmr * 100;
+
+	if (m_pModel)
+		stAdvanceParam.nCharacterAnchorPoint	= m_pModel->nCharacterAnchorPoint;
 	stAdvanceParam.nDefCharacterAnchorPoint = 4;
 	stAdvanceParam.nCharacterConfidence		= m_nCharacterConfidence;
 	stAdvanceParam.nDefCharacterConfidence	= 60;
@@ -7807,8 +7836,16 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	m_pModel->nScanType = dlg._stSensitiveParam.nScanType;
 	m_nDilateKernel_Sn	= dlg._stSensitiveParam.nCurrentZkzhSensitivity;
 	m_nDilateKernel_Common = dlg._stSensitiveParam.nCurrentOmrSensitivity;
+	
+	m_nFixVal	= dlg._stSensitiveParam.nCurrentFixThreshold;
+	m_nGrayVal	= dlg._stSensitiveParam.nCurrentGrayThreshold;
 	m_nSN	= dlg._stSensitiveParam.nCurrentZkzhThreshold;
 	m_nOMR	= dlg._stSensitiveParam.nCurrentOmrThreshold;
+	m_fFixThresholdPercent		= dlg._stSensitiveParam.nPersentFix / 100.0;
+	m_fGrayThresholdPercent		= dlg._stSensitiveParam.nPersentGray / 100.0;
+	m_fSNThresholdPercent_Fix	= dlg._stSensitiveParam.nPersentZkzh / 100.0;
+	m_fOMRThresholdPercent_Fix	= dlg._stSensitiveParam.nPersentOmr / 100.0;
+
 	m_pModel->nCharacterAnchorPoint = dlg._stSensitiveParam.nCharacterAnchorPoint;
 	m_nCharacterConfidence = dlg._stSensitiveParam.nCharacterConfidence;
 

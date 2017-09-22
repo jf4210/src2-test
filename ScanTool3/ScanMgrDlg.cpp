@@ -263,9 +263,12 @@ bool CScanMgrDlg::chkChangeExamLegal()
 		dlg.DoModal();
 		return false;
 	}
+	else if (_eCurrDlgType_ == Dlg_PapersInput)
+	{
+
+	}
 	if (_nScanStatus_ == 1)
 	{
-//		AfxMessageBox(_T("正在扫描, 请稍后。。。"));
 		CNewMessageBox	dlg;
 		dlg.setShowInfo(2, 1, "正在扫描, 请稍后。。。");
 		dlg.DoModal();

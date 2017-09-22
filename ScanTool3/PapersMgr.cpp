@@ -5,6 +5,8 @@
 
 CPapersMgr::CPapersMgr()
 {
+	_pCurrExam = NULL;
+	_pModel = NULL;
 }
 
 
@@ -38,8 +40,22 @@ bool CPapersMgr::SavePapers(pPAPERSINFO pPapers)
 		dlg.DoModal();
 		return bResult;
 	}
+	if (!_pCurrExam)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "没有考试信息");
+		dlg.DoModal();
+		return bResult;
+	}
+	if (!_pModel)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "未设置模板信息");
+		dlg.DoModal();
+		return bResult;
+	}
 
-	if (_pCurrExam_->nModel == 0 && _nScanAnswerModel_ != 2)	//网阅模式
+	if (_pCurrExam->nModel == 0 && _nScanAnswerModel_ != 2)	//网阅模式
 	{
 		bool bRecogComplete = true;
 		for (auto p : pPapers->lPaper)
@@ -65,8 +81,8 @@ bool CPapersMgr::SavePapers(pPAPERSINFO pPapers)
 	int nUserId = -1;
 
 	strUser = _strUserName_;
-	if (_pCurrExam_->nModel == 1)
-		strUser = _pCurrExam_->strPersonID;
+	if (_pCurrExam->nModel == 1)
+		strUser = _pCurrExam->strPersonID;
 	strEzs = _strEzs_;
 	nTeacherId = _nTeacherId_;
 	nUserId = _nUserId_;
@@ -94,8 +110,8 @@ bool CPapersMgr::SavePapers(pPAPERSINFO pPapers)
 	}
 
 	int nSubjectID = 0;
-	if (_pCurrExam_->nModel == 0)
-		nSubjectID = _pModel_->nSubjectID;
+	if (_pCurrExam->nModel == 0)
+		nSubjectID = _pModel->nSubjectID;
 	
 	bResult = WriteJsonFile(pPapers);
 	if (!bResult)
@@ -118,15 +134,15 @@ std::string CPapersMgr::AddPapersCompress(pPAPERSINFO pPapers)
 	int nUserId = -1;
 
 	strUser = _strUserName_;
-	if (_pCurrExam_->nModel == 1)
-		strUser = _pCurrExam_->strPersonID;
+	if (_pCurrExam->nModel == 1)
+		strUser = _pCurrExam->strPersonID;
 	strEzs = _strEzs_;
 	nTeacherId = _nTeacherId_;
 	nUserId = _nUserId_;
 
 	int nSubjectID = 0;
-	if (_pCurrExam_->nModel == 0)
-		nSubjectID = _pModel_->nSubjectID;
+	if (_pCurrExam->nModel == 0)
+		nSubjectID = _pModel->nSubjectID;
 
 	USES_CONVERSION;
 	char szPapersSavePath[500] = { 0 };
@@ -138,19 +154,19 @@ std::string CPapersMgr::AddPapersCompress(pPAPERSINFO pPapers)
 	sprintf_s(szTime, "%d%02d%02d%02d%02d%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
 
 	CString strExtName = _T("");
-	if (_pCurrExam_->nModel == 1)
+	if (_pCurrExam->nModel == 1)
 		strExtName = PAPERS_EXT_NAME_4TY;
 	else
 		strExtName = PAPERS_EXT_NAME;
-	if (_pCurrExam_->nModel == 0)
+	if (_pCurrExam->nModel == 0)
 	{
-		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s_%d", T2A(g_strCurrentPath), strUser.c_str(), _pModel_->nExamID, nSubjectID, szTime, pPapers->nPaperCount);
-		sprintf_s(szZipBaseName, "%s_%d-%d_%s_%d", strUser.c_str(), _pModel_->nExamID, nSubjectID, szTime, pPapers->nPaperCount);
-		sprintf_s(szZipName, "%s_%d-%d_%s_%d%s", strUser.c_str(), _pModel_->nExamID, nSubjectID, szTime, pPapers->nPaperCount, T2A(strExtName));
+		sprintf_s(szPapersSavePath, "%sPaper\\%s_%d-%d_%s_%d", T2A(g_strCurrentPath), strUser.c_str(), _pModel->nExamID, nSubjectID, szTime, pPapers->nPaperCount);
+		sprintf_s(szZipBaseName, "%s_%d-%d_%s_%d", strUser.c_str(), _pModel->nExamID, nSubjectID, szTime, pPapers->nPaperCount);
+		sprintf_s(szZipName, "%s_%d-%d_%s_%d%s", strUser.c_str(), _pModel->nExamID, nSubjectID, szTime, pPapers->nPaperCount, T2A(strExtName));
 	}
 	else
 	{
-		std::string strExamID = _pCurrExam_->strExamID;
+		std::string strExamID = _pCurrExam->strExamID;
 		sprintf_s(szPapersSavePath, "%sPaper\\%s_%s_%d_%s_%d", T2A(g_strCurrentPath), strUser.c_str(), strExamID.c_str(), nSubjectID, szTime, pPapers->nPaperCount);
 		sprintf_s(szZipBaseName, "%s_%s_%d_%s_%d", strUser.c_str(), strExamID.c_str(), nSubjectID, szTime, pPapers->nPaperCount);
 		sprintf_s(szZipName, "%s_%s_%d_%s_%d%s", strUser.c_str(), strExamID.c_str(), nSubjectID, szTime, pPapers->nPaperCount, T2A(strExtName));
@@ -163,7 +179,7 @@ std::string CPapersMgr::AddPapersCompress(pPAPERSINFO pPapers)
 		Poco::File tmpPath(CMyCodeConvert::Gb2312ToUtf8(_strCurrSavePath));
 
 		char szCompressDirPath[500] = { 0 };
-		if (_pCurrExam_->nModel == 1)	//手阅不用密码
+		if (_pCurrExam->nModel == 1)	//手阅不用密码
 			sprintf_s(szCompressDirPath, "%sPaper\\%s_ToCompress_UnPwd", T2A(g_strCurrentPath), szZipBaseName);
 		else
 			sprintf_s(szCompressDirPath, "%sPaper\\%s_ToCompress", T2A(g_strCurrentPath), szZipBaseName);
@@ -205,6 +221,12 @@ std::string CPapersMgr::AddPapersCompress(pPAPERSINFO pPapers)
 void CPapersMgr::setCurrSavePath(std::string strPath)
 {
 	_strCurrSavePath = strPath;
+}
+
+void CPapersMgr::setExamInfo(pEXAMINFO pCurrExam, pMODEL pModel)
+{
+	_pCurrExam = pCurrExam;
+	_pModel = pModel;
 }
 
 bool CPapersMgr::WriteJsonFile(pPAPERSINFO pPapers)
@@ -436,17 +458,17 @@ bool CPapersMgr::WriteJsonFile(pPAPERSINFO pPapers)
 
 	//写试卷袋信息到文件
 	std::string strUploader;
-	if (_pCurrExam_->nModel == 0)
+	if (_pCurrExam->nModel == 0)
 		strUploader = CMyCodeConvert::Gb2312ToUtf8(_strUserName_);
 	else
-		strUploader = CMyCodeConvert::Gb2312ToUtf8(_pCurrExam_->strPersonID);
+		strUploader = CMyCodeConvert::Gb2312ToUtf8(_pCurrExam->strPersonID);
 	std::string sEzs = _strEzs_;
 	Poco::JSON::Object jsnFileData;
 
-	if (_pCurrExam_->nModel == 0)		//手阅模式(即天喻版本)，服务器收到直接重命名zip文件，不需要识别其中的信息文件
+	if (_pCurrExam->nModel == 0)		//手阅模式(即天喻版本)，服务器收到直接重命名zip文件，不需要识别其中的信息文件
 	{
-		jsnFileData.set("examId", _pModel_->nExamID);
-		jsnFileData.set("subjectId", _pModel_->nSubjectID);
+		jsnFileData.set("examId", _pModel->nExamID);
+		jsnFileData.set("subjectId", _pModel->nSubjectID);
 	}
 	jsnFileData.set("uploader", strUploader);
 	jsnFileData.set("ezs", sEzs);

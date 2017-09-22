@@ -37,6 +37,12 @@ void CRecogParamSetDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_STATIC_Threshold, m_groupThreshold);
 	DDX_Control(pDX, IDC_STATIC_Other, m_groupOther);
 	DDX_Text(pDX, IDC_EDIT_CharacterConfidence, m_nCharacterConfidence);
+	DDX_Text(pDX, IDC_EDIT_Threshold_Fix, m_nCurrentFixThreshold);
+	DDX_Text(pDX, IDC_EDIT_Threshold_Gray, m_nCurrentGrayThreshold);
+	DDX_Text(pDX, IDC_EDIT_Persent_Fix, m_nPersentFix);
+	DDX_Text(pDX, IDC_EDIT_Persent_Gray, m_nPersentGray);
+	DDX_Text(pDX, IDC_EDIT_Persent_ZKZH, m_nPersentZkzh);
+	DDX_Text(pDX, IDC_EDIT_Persent_OMR, m_nPersentOmr);
 }
 
 
@@ -78,16 +84,29 @@ BOOL CRecogParamSetDlg::OnInitDialog()
 
 void CRecogParamSetDlg::InitData(AdvanceParam& stParam)
 {
-//	CAdanceSetMgrDlg* pDlg = (CAdanceSetMgrDlg*)GetParent();
 	m_nSensitiveZkzh	= stParam.nCurrentZkzhSensitivity;
 	m_nSensitiveOmr		= stParam.nCurrentOmrSensitivity;
 	m_nDefSensitiveZkzh = stParam.nDefZkzhSensitivity;
 	m_nDefSensitiveOmr	= stParam.nDefOmrSensitivity;
 
+	m_nCurrentFixThreshold = stParam.nCurrentFixThreshold;
+	m_nCurrentGrayThreshold = stParam.nCurrentGrayThreshold;
 	m_nThresholdZkzh	= stParam.nCurrentZkzhThreshold;
 	m_nThresholdOmr		= stParam.nCurrentOmrThreshold;
+	m_nDefFixThreshold	= stParam.nDefFixThreshold;
+	m_nDefGrayThreshold = stParam.nDefGrayThreshold;
 	m_nDefThresholdZkzh = stParam.nDefZkzhThreshold;
 	m_nDefThresholdOmr	= stParam.nDefOmrThreshold;
+
+	m_nPersentFix	= stParam.nPersentFix;
+	m_nPersentGray	= stParam.nPersentGray;
+	m_nPersentZkzh	= stParam.nPersentZkzh;
+	m_nPersentOmr	= stParam.nPersentOmr;
+	m_nDefPersentFix	= stParam.nDefPersentFix;
+	m_nDefPersentGray	= stParam.nDefPersentGray;
+	m_nDefPersentZkzh	= stParam.nDefPersentZkzh;
+	m_nDefPersentOmr	= stParam.nDefPersentOmr;
+
 
 	m_nCharacterAnchorPt	= stParam.nCharacterAnchorPoint;
 	m_nDefCharacterAnchorPt = stParam.nDefCharacterAnchorPoint;
@@ -124,11 +143,18 @@ BOOL CRecogParamSetDlg::SaveParamData(AdvanceParam& stParam)
 
 	stParam.nCurrentZkzhSensitivity = m_nSensitiveZkzh;
 	stParam.nCurrentOmrSensitivity	= m_nSensitiveOmr;
+	
+	stParam.nCurrentFixThreshold	= m_nCurrentFixThreshold;
+	stParam.nCurrentGrayThreshold	= m_nCurrentGrayThreshold;
 	stParam.nCurrentZkzhThreshold	= m_nThresholdZkzh;
 	stParam.nCurrentOmrThreshold	= m_nThresholdOmr;
 
+	stParam.nPersentFix		= m_nPersentFix;
+	stParam.nPersentGray	= m_nPersentGray;
+	stParam.nPersentZkzh	= m_nPersentZkzh;
+	stParam.nPersentOmr		= m_nPersentOmr;
+
 	stParam.nCharacterAnchorPoint	= m_nCharacterAnchorPt;
-//	stParam.nDefCharacterAnchorPoint = m_nDefThresholdOmr;
 	stParam.nCharacterConfidence	= m_nCharacterConfidence;
 	return TRUE;
 }
@@ -137,8 +163,17 @@ void CRecogParamSetDlg::OnBnClickedBtnDefParam()
 {
 	m_nSensitiveZkzh = m_nDefSensitiveZkzh;
 	m_nSensitiveOmr = m_nDefSensitiveOmr;
-	m_nThresholdZkzh = m_nDefThresholdZkzh;
-	m_nThresholdOmr = m_nDefThresholdOmr;
+
+	m_nCurrentFixThreshold = m_nDefFixThreshold;
+	m_nCurrentGrayThreshold = m_nDefGrayThreshold;
+	m_nThresholdZkzh	= m_nDefThresholdZkzh;
+	m_nThresholdOmr		= m_nDefThresholdOmr;
+
+	m_nPersentFix	= m_nDefPersentFix;
+	m_nPersentGray	= m_nDefPersentGray;
+	m_nPersentZkzh	= m_nDefPersentZkzh;
+	m_nPersentOmr	= m_nDefPersentOmr;
+
 	m_nCharacterAnchorPt = m_nDefCharacterAnchorPt;
 	m_nCharacterConfidence = m_nDefCharacterConfidence;
 	UpdateData(FALSE);

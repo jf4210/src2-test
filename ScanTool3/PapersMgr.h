@@ -10,10 +10,13 @@ public:
 	bool	SavePapers(pPAPERSINFO pPapers);
 	std::string AddPapersCompress(pPAPERSINFO pPapers);
 	void	setCurrSavePath(std::string strPath);
+	void	setExamInfo(pEXAMINFO pCurrExam, pMODEL pModel);
 
 private:
 	bool WriteJsonFile(pPAPERSINFO pPapers);
 
+	pEXAMINFO	_pCurrExam;
+	pMODEL		_pModel;
 	std::string _strCurrSavePath;	//gb2312
 };
 

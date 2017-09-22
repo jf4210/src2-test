@@ -128,6 +128,11 @@ public:
 	float m_fOMRThresholdPercent_Head;	//通过同步头识别
 	float m_fSNThresholdPercent_Head;	//通过同步头识别
 
+	float m_fDefPersentFix;
+	float m_fDefPersentGray;
+	float m_fDefPersentSN;		//(定点模式)
+	float m_fDefPersentOmr;
+
 	int	 m_nCharacterConfidence;		//文字识别的信心阀值
 
 	std::vector<CPicShow*>	m_vecPicShow;	//存储图片显示窗口指针，有多个模板图片时，对应到不同的tab控件页面
@@ -146,6 +151,8 @@ public:
 	int	m_nDilateKernel_Common;	//通用膨胀核因子，SN时不用
 	int m_nDilateKernel_DefSn;		//ZKZH识别时用的膨胀因子，默认值，从配置文件读取
 	int	m_nDilateKernel_DefCommon;	//通用膨胀核因子，SN时不用，默认值，从配置文件读取
+	int m_nThreshold_DefFix;
+	int m_nThreshold_DefGray;
 	int m_nThreshold_DefSn;			//默认ZKZH二值化识别阀值
 	int m_nThreshold_DefOmr;		//默认OMR二值化识别阀值
 

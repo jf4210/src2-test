@@ -16,16 +16,36 @@ public:
 		nDefZkzhThreshold = 180;
 		nDefOmrThreshold = 180;
 		nDefCharacterConfidence = 60;
+		nDefFixThreshold = 150;
+		nDefGrayThreshold = 150;
+		nDefPersentFix = 80;
+		nDefPersentGray = 70;
+		nDefPersentZkzh = 100;
+		nDefPersentOmr = 100;
 	}
 public:
 	int nCurrentZkzhSensitivity;
 	int nCurrentOmrSensitivity;
+
 	int nCurrentZkzhThreshold;
 	int nCurrentOmrThreshold;
 	int nDefZkzhSensitivity;
 	int nDefOmrSensitivity;
 	int nDefZkzhThreshold;
 	int nDefOmrThreshold;
+	int nCurrentFixThreshold;
+	int nCurrentGrayThreshold;
+	int nDefFixThreshold;
+	int nDefGrayThreshold;
+
+	int nPersentFix;
+	int nPersentGray;
+	int nPersentZkzh;
+	int nPersentOmr;
+	int nDefPersentFix;
+	int nDefPersentGray;
+	int nDefPersentZkzh;
+	int nDefPersentOmr;
 
 	int nCharacterAnchorPoint;		//文字定点个数
 	int nDefCharacterAnchorPoint;	//默认文字定点个数

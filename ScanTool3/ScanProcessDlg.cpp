@@ -820,6 +820,8 @@ LRESULT CScanProcessDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 		pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(i);
 		if (pItemPaper == pPaper)
 		{
+			m_lcPicture.EnsureVisible(i, FALSE);
+
 			if (!pPaper->strSN.empty())
 			{
 				m_lcPicture.SetItemText(i, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));

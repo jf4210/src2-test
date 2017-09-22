@@ -20,9 +20,9 @@ public:
 	enum { IDD = IDD_PAPERINPUTDLG };
 
 public:
-	CListCtrl	m_lPapersCtrl;		//试卷袋列表
+	CXListCtrl	m_lPapersCtrl;		//试卷袋列表
 	CXListCtrl	m_lPaperCtrl;		//试卷袋中的试卷列表
-	CXListCtrl	m_lIssuePaperCtrl;	//问题试卷列表
+//	CXListCtrl	m_lIssuePaperCtrl;	//问题试卷列表
 	CComboBoxExt	m_comboModel;		//模板下拉列表
 	CButton		m_btnBroswer;		//浏览按钮
 	
@@ -59,8 +59,8 @@ private:
 // 	int		CheckOrientation4Head(cv::Mat& matSrc, int n);	//同步头模式下的方向
 // 	int		CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan);	//检测图片方向
 
-	void	PaintRecognisedRect(pST_PaperInfo pPaper);		//画已识别的矩形
-	void	PaintIssueRect(pST_PaperInfo pPaper);			//画出已识别出来的问题矩形位置
+// 	void	PaintRecognisedRect(pST_PaperInfo pPaper);		//画已识别的矩形
+// 	void	PaintIssueRect(pST_PaperInfo pPaper);			//画出已识别出来的问题矩形位置
 
 	void	ShowPaperByItem(int nItem);
 	void	ShowPapers(pPAPERSINFO pPapers);
@@ -97,7 +97,6 @@ public:
 	afx_msg void OnCbnSelchangeComboModellist();
 	afx_msg void OnNMDblclkListPapers(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnNMDblclkListIssuepaper(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedBtnSave();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnBnClickedBtnTest();
