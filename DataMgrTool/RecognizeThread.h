@@ -1,5 +1,6 @@
 #pragma once
 #include "DMTDef.h"
+#include "OmrRecog.h"
 
 typedef struct _ModelInfo_
 {
@@ -65,5 +66,7 @@ private:
 	std::vector<std::vector<cv::Point>> m_vecContours;
 	std::vector<RECTINFO> m_vecH_Head;
 	std::vector<RECTINFO> m_vecV_Head;
+
+	COmrRecog	_chkRotationObj;
 };
 

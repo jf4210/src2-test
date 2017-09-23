@@ -2,7 +2,6 @@
 #include "RecognizeThread.h"
 #include "DataMgrTool.h"
 #include "DataMgrToolDlg.h"
-#include "OmrRecog.h"
 
 using namespace cv;
 CRecognizeThread::CRecognizeThread()
@@ -718,8 +717,8 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 bool CRecognizeThread::ChkPicRotation(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
 	bool bDoubleScan = pModelInfo->pModel->vecPaperModel.size() % 2 == 0 ? true : false;
-	COmrRecog omrObj;
-	int nResult = omrObj.GetRightPicOrientation(matCompPic, nPic, bDoubleScan);
+
+	int nResult = _chkRotationObj.GetRightPicOrientation(matCompPic, nPic, bDoubleScan);
 	std::string strDirection;
 	switch (nResult)
 	{
@@ -788,7 +787,7 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			{
 				rc.rt.height = matCompPic.rows - rc.rt.y;
 			}
-			Mat matCompRoi;
+			cv::Mat matCompRoi;
 			matCompRoi = matCompPic(rc.rt);
 		#endif
 			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);

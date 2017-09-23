@@ -3,6 +3,7 @@
 
 COmrRecog::COmrRecog()
 {
+	_nFristOrientation = 1;
 }
 
 
@@ -101,7 +102,7 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 			{
 				rc.rt.height = matCompPic.rows - rc.rt.y;
 			}
-			Mat matCompRoi;
+			cv::Mat matCompRoi;
 			matCompRoi = matCompPic(rc.rt);
 		#endif
 // 			if (rc.rt.x < 0) rc.rt.x = 0;
@@ -571,16 +572,15 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 	//*********************************
 	int nResult = 1;	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
 
-	static int nFristOrientation = 1;
 	if (bDoubleScan && n % 2 != 0)	//双面扫描, 且属于双面扫描的第二面的情况
 	{
 		int nCountBK = _pModel_->vecPaperModel[n]->lGray.size() + _pModel_->vecPaperModel[n]->lCourse.size();
 		if (nCountBK == 0)
 		{
-			if (nFristOrientation == 1) nResult = 1;
-			else if (nFristOrientation == 2) nResult = 3;
-			else if (nFristOrientation == 3) nResult = 2;
-			else if (nFristOrientation == 4) nResult = 4;
+			if (_nFristOrientation == 1) nResult = 1;
+			else if (_nFristOrientation == 2) nResult = 3;
+			else if (_nFristOrientation == 3) nResult = 2;
+			else if (_nFristOrientation == 4) nResult = 4;
 			end = clock();
 			TRACE("判断旋转方向时间: %dms\n", end - start);
 
@@ -606,7 +606,7 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 		nResult = CheckOrientation4Fix(matCom, n);
 
 	if (bDoubleScan && n % 2 == 0)		//双面扫描，且属于扫描的第一面
-		nFristOrientation = nResult;
+		_nFristOrientation = nResult;
 
 	end = clock();
 	TRACE("判断旋转方向时间: %dms\n", end - start);
