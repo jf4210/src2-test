@@ -1240,6 +1240,84 @@ bool FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lMod
 	return true;
 }
 
+bool FixWarpAffine2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat)
+{
+	if (lFix.size() < 3)
+		return false;
+
+	clock_t start, end;
+	start = clock();
+	char szTmpLog[400] = { 0 };
+
+	std::vector<cv::Point2f> vecFixPt;
+	std::vector<cv::Point2f> vecFixNewPt;
+	RECTLIST::iterator itCP2 = lFix.begin();
+	for (; itCP2 != lFix.end(); itCP2++)
+	{
+		cv::Point2f pt;
+
+		pt.x = itCP2->rt.x + itCP2->rt.width / 2;
+		pt.y = itCP2->rt.y + itCP2->rt.height / 2;
+
+		vecFixNewPt.push_back(pt);
+		//获取该定点属于第几个模板定点
+		RECTLIST::iterator itCP = lModelFix.begin();
+		for (int i = 0; itCP != lModelFix.end(); i++, itCP++)
+		{
+			if (i == itCP2->nTH)
+			{
+				cv::Point2f pt2;
+
+				pt2.x = itCP->rt.x + itCP->rt.width / 2;
+				pt2.y = itCP->rt.y + itCP->rt.height / 2;
+
+				vecFixPt.push_back(pt2);
+				break;
+			}
+		}
+	}
+
+	cv::Point2f srcTri[3];
+	cv::Point2f dstTri[3];
+	cv::Mat warp_mat(2, 3, CV_32FC1);
+	cv::Mat warp_dst, warp_rotate_dst;
+	for (int i = 0; i < vecFixPt.size(); i++)
+	{
+		srcTri[i] = vecFixNewPt[i];
+		dstTri[i] = vecFixPt[i];
+	}
+
+	//	warp_dst = Mat::zeros(matCompPic.rows, matCompPic.cols, matCompPic.type());
+	warp_mat = cv::getAffineTransform(srcTri, dstTri);
+	int nMax = matCompPic.cols > matCompPic.rows ? matCompPic.cols : matCompPic.rows;
+	cv::Mat st(nMax, nMax, CV_32FC1);
+	cv::warpAffine(matCompPic, matDstPic, warp_mat, st.size(), 1, 0, cv::Scalar(255, 255, 255));
+
+#if 1	//计算逆矩阵，计算相对模板的原坐标
+	cv::Mat warp_mat2(2, 3, CV_32FC1);
+	inverseMat = cv::getAffineTransform(dstTri, srcTri);
+#endif
+
+	// 	RECTLIST::iterator itCP3 = lFix.begin();
+	// 	for (; itCP3 != lFix.end(); itCP3++)
+	// 	{
+	// 		cv::Point2f pt;
+	// 
+	// 		pt.x = warp_mat.ptr<double>(0)[0] * itCP3->rt.x + warp_mat.ptr<double>(0)[1] * itCP3->rt.y + warp_mat.ptr<double>(0)[2];
+	// 		pt.y = warp_mat.ptr<double>(1)[0] * itCP3->rt.x + warp_mat.ptr<double>(1)[1] * itCP3->rt.y + warp_mat.ptr<double>(1)[2];
+	// 		itCP3->rt.x = pt.x;
+	// 		itCP3->rt.y = pt.y;
+	// 	}
+
+	end = clock();
+	sprintf_s(szTmpLog, "图像变换时间: %d, ptMod1(%.2f,%.2f), ptMod2(%.2f,%.2f), ptMod3(%.2f,%.2f), pt1(%.2f,%.2f), pt2(%.2f,%.2f), pt3(%.2f,%.2f)\n", end - start, \
+			  vecFixPt[0].x, vecFixPt[0].y, vecFixPt[1].x, vecFixPt[1].y, vecFixPt[2].x, vecFixPt[2].y, vecFixNewPt[0].x, vecFixNewPt[0].y, vecFixNewPt[1].x, vecFixNewPt[1].y, vecFixNewPt[2].x, vecFixNewPt[2].y);
+	g_Log.LogOut(szTmpLog);
+	TRACE(szTmpLog);
+
+	return true;
+}
+
 bool FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat)
 {
 	if (lFix.size() < 4)
@@ -1281,6 +1359,61 @@ bool FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST&
 	//	warp_dst = Mat::zeros(matCompPic.rows, matCompPic.cols, matCompPic.type());
 	warp_mat = cv::getPerspectiveTransform(srcTri, dstTri);
 	cv::warpPerspective(matCompPic, matCompPic, warp_mat, matCompPic.size(), 1, 0, cv::Scalar(255, 255, 255));
+
+	end = clock();
+	sprintf_s(szTmpLog, "图像变换时间: %d, ptMod1(%.2f,%.2f), ptMod2(%.2f,%.2f), ptMod3(%.2f,%.2f), ptMod4(%.2f,%.2f), pt1(%.2f,%.2f), pt2(%.2f,%.2f), pt3(%.2f,%.2f), pt4(%.2f,%.2f)\n", end - start, \
+			  vecFixPt[0].x, vecFixPt[0].y, vecFixPt[1].x, vecFixPt[1].y, vecFixPt[2].x, vecFixPt[2].y, vecFixPt[3].x, vecFixPt[3].y, \
+			  vecFixNewPt[0].x, vecFixNewPt[0].y, vecFixNewPt[1].x, vecFixNewPt[1].y, vecFixNewPt[2].x, vecFixNewPt[2].y, vecFixNewPt[3].x, vecFixNewPt[3].y);
+	g_Log.LogOut(szTmpLog);
+	TRACE(szTmpLog);
+
+	return true;
+}
+
+bool FixwarpPerspective2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat)
+{
+	if (lFix.size() < 4)
+		return false;
+
+	clock_t start, end;
+	start = clock();
+	char szTmpLog[400] = { 0 };
+
+	std::vector<cv::Point2f> vecFixPt;
+	RECTLIST::iterator itCP = lModelFix.begin();
+	for (; itCP != lModelFix.end(); itCP++)
+	{
+		cv::Point2f pt;
+		pt.x = itCP->rt.x + itCP->rt.width / 2;
+		pt.y = itCP->rt.y + itCP->rt.height / 2;
+		vecFixPt.push_back(pt);
+	}
+	std::vector<cv::Point2f> vecFixNewPt;
+	RECTLIST::iterator itCP2 = lFix.begin();
+	for (; itCP2 != lFix.end(); itCP2++)
+	{
+		cv::Point2f pt;
+		pt.x = itCP2->rt.x + itCP2->rt.width / 2;
+		pt.y = itCP2->rt.y + itCP2->rt.height / 2;
+		vecFixNewPt.push_back(pt);
+	}
+
+	cv::Point2f srcTri[4];
+	cv::Point2f dstTri[4];
+	cv::Mat warp_mat(2, 3, CV_32FC1);
+	cv::Mat warp_dst, warp_rotate_dst;
+	for (int i = 0; i < vecFixPt.size(); i++)
+	{
+		srcTri[i] = vecFixNewPt[i];
+		dstTri[i] = vecFixPt[i];
+	}
+
+	//	warp_dst = Mat::zeros(matCompPic.rows, matCompPic.cols, matCompPic.type());
+	warp_mat = cv::getPerspectiveTransform(srcTri, dstTri);
+	int nMax = matCompPic.cols > matCompPic.rows ? matCompPic.cols : matCompPic.rows;
+	//	cv::Mat st(matCompPic.cols, matCompPic.rows, CV_32FC1);
+	cv::Mat st(nMax, nMax, CV_32FC1);
+	cv::warpPerspective(matCompPic, matDstPic, warp_mat, st.size(), 1, 0, cv::Scalar(255, 255, 255));
 
 	end = clock();
 	sprintf_s(szTmpLog, "图像变换时间: %d, ptMod1(%.2f,%.2f), ptMod2(%.2f,%.2f), ptMod3(%.2f,%.2f), ptMod4(%.2f,%.2f), pt1(%.2f,%.2f), pt2(%.2f,%.2f), pt3(%.2f,%.2f), pt4(%.2f,%.2f)\n", end - start, \
@@ -2190,6 +2323,13 @@ bool SavePapersInfo(pPAPERSINFO pPapers)
 		jsnPaper.set("name", (*itNomarlPaper)->strStudentInfo);
 		jsnPaper.set("zkzh", (*itNomarlPaper)->strSN);
 		jsnPaper.set("qk", (*itNomarlPaper)->nQKFlag);
+		jsnPaper.set("wj", (*itNomarlPaper)->nWJFlag);
+		jsnPaper.set("standardAnswer", (*itNomarlPaper)->nStandardAnswer);		//0-正常试卷，1-Omr标答，2-主观题标答
+		
+		int nIssueFlag = 0;			//0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
+		if ((*itNomarlPaper)->strSN.empty() )
+			nIssueFlag = 2;
+		jsnPaper.set("issueFlag", nIssueFlag);
 
 		Poco::JSON::Array jsnSnDetailArry;
 		SNLIST::iterator itSn = (*itNomarlPaper)->lSnResult.begin();
@@ -2281,6 +2421,13 @@ bool SavePapersInfo(pPAPERSINFO pPapers)
 		jsnPaper.set("name", (*itIssuePaper)->strStudentInfo);
 		jsnPaper.set("zkzh", (*itIssuePaper)->strSN);
 		jsnPaper.set("qk", (*itIssuePaper)->nQKFlag);
+		jsnPaper.set("wj", (*itIssuePaper)->nWJFlag);
+		jsnPaper.set("standardAnswer", (*itIssuePaper)->nStandardAnswer);		//0-正常试卷，1-Omr标答，2-主观题标答
+
+		int nIssueFlag = 0;			//0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
+		if ((*itIssuePaper)->strSN.empty())
+			nIssueFlag = 2;
+		jsnPaper.set("issueFlag", nIssueFlag);
 
 		Poco::JSON::Array jsnSnDetailArry;
 		SNLIST::iterator itSn = (*itIssuePaper)->lSnResult.begin();
@@ -2379,6 +2526,7 @@ bool SavePapersInfo(pPAPERSINFO pPapers)
 	jsnFileData.set("nOmrDoubt", pPapers->nOmrDoubt);
 	jsnFileData.set("nOmrNull", pPapers->nOmrNull);
 	jsnFileData.set("nSnNull", pPapers->nSnNull);
+	jsnFileData.set("RecogMode", g_nRecogMode);			//识别模式，1-简单模式(遇到问题校验点不停止识别)，2-严格模式
 	std::stringstream jsnString;
 	jsnFileData.stringify(jsnString, 0);
 
@@ -2641,5 +2789,17 @@ bool InitModelRecog(pMODEL pModel, std::string strModelPath)
 	g_Log.LogOut(strLog);
 	std::cout << strLog << std::endl;
 	return bResult;
+}
+
+bool PicTransfer2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat)
+{
+	if (lModelFix.size() >= lFix.size())
+	{
+		if (lFix.size() == 3)
+			FixWarpAffine2(nPic, matCompPic, matDstPic, lFix, lModelFix, inverseMat);
+		else if (lFix.size() == 4)
+			FixwarpPerspective2(nPic, matCompPic, matDstPic, lFix, lModelFix, inverseMat);
+	}
+	return true;
 }
 

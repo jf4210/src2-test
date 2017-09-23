@@ -507,6 +507,10 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERSINFO pPapers
 			{
 				pPaper->nChkFlag = 1;	//此图片合法，在参数文件中可以找到
 
+				if (jsnPaperObj->has("wj"))
+					pPaper->nWJFlag = jsnPaperObj->get("wj").convert<int>();
+				if (jsnPaperObj->has("issueFlag"))
+					pPaper->nIssueFlag = jsnPaperObj->get("issueFlag").convert<int>();
 				if (jsnPaperObj->has("standardAnswer"))
 					pPaper->nStandardAnswer = jsnPaperObj->get("standardAnswer").convert<int>();
 			}

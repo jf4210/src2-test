@@ -41,6 +41,7 @@ LIST_SEND_HTTP			g_lHttpSend;			//发送HTTP任务列表
 
 std::string		g_strUploadUri;		//识别结果提交的uri地址
 int				g_nRecogMode = 1;		//识别模式，0-严格模式，1-简单模式
+int				g_nRecogChkRotation = 0;	//识别图像时检测并调整图像方向
 
 CLog g_Log;
 int	g_nExitFlag;
@@ -78,6 +79,7 @@ double	_dOmrThresholdPercent_Head_;	//同步头模式OMR识别可认为是选中的标准百分比
 double	_dSnThresholdPercent_Head_;		//同步头模式SN识别可认为是选中的标准百分比
 double	_dQKThresholdPercent_Head_;		//同步头模式QK识别可认为是选中的标准百分比
 
+double  _dAnswerSure_DensityFix_ = 1.5;	//密度算法确定为答案的比例
 double	_dCompThread_Fix_ = 1.2;
 double	_dDiffThread_Fix_ = 0.2;
 double	_dDiffExit_Fix_ = 0.3;
@@ -477,6 +479,7 @@ void CDataMgrToolDlg::InitParam()
 		g_nRecogGrayMin_OMR = pConf->getInt("RecogGray.omr_Min", 0);
 		g_RecogGrayMax_OMR = pConf->getInt("RecogGray.omr_Max", 235);
 
+		_dAnswerSure_DensityFix_ = pConf->getDouble("RecogOmrSn_Fix.fCompTread", 1.5);
 		_dCompThread_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fCompTread", 1.2);
 		_dDiffThread_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fDiffThread", 0.2);
 		_dDiffExit_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fDiffExit", 0.3);
@@ -833,7 +836,7 @@ void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
 		pDecompressTask->nSendEzs = dlg.m_nHandleResult;		//参数传递
 		pDecompressTask->nNoNeedRecogVal = dlg.m_nNoRecogVal;	//....
 		g_nRecogMode = dlg.m_nRecogMode;
-
+		g_nRecogChkRotation = dlg.m_nRecogChkRotation;
 
 		_fmDecompress_.lock();
 		_nDecompress_++;

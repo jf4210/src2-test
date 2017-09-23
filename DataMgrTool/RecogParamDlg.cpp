@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CRecogParamDlg, CDialog)
 
 CRecogParamDlg::CRecogParamDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CRecogParamDlg::IDD, pParent)
-	, m_nChkSN(1), m_nChkElectOmr(1), m_nChkOmr(1), m_nHandleResult(2), m_nNoRecogVal(0), m_nRecogMode(g_nRecogMode)
+	, m_nChkSN(1), m_nChkElectOmr(1), m_nChkOmr(1), m_nHandleResult(2), m_nNoRecogVal(0), m_nRecogMode(g_nRecogMode), m_nRecogChkRotation(g_nRecogChkRotation)
 {
 
 }
@@ -39,6 +39,7 @@ BEGIN_MESSAGE_MAP(CRecogParamDlg, CDialog)
 	ON_BN_CLICKED(IDC_RADIO_SendEZS, &CRecogParamDlg::OnBnClickedRadioSendezs)
 	ON_BN_CLICKED(IDC_RADIO_NoCompress, &CRecogParamDlg::OnBnClickedRadioNocompress)
 	ON_BN_CLICKED(IDC_CHK_RecogMode, &CRecogParamDlg::OnBnClickedChkRecogmode)
+	ON_BN_CLICKED(IDC_CHK_RecogChkRotation, &CRecogParamDlg::OnBnClickedChkRecogchkrotation)
 END_MESSAGE_MAP()
 
 BOOL CRecogParamDlg::OnInitDialog()
@@ -75,6 +76,7 @@ BOOL CRecogParamDlg::OnInitDialog()
 	}
 
 	((CButton*)GetDlgItem(IDC_CHK_RecogMode))->SetCheck(m_nRecogMode);
+	((CButton*)GetDlgItem(IDC_CHK_RecogChkRotation))->SetCheck(m_nRecogChkRotation);
 
 
 	UpdateData(FALSE);
@@ -194,3 +196,14 @@ void CRecogParamDlg::OnBnClickedRadioNocompress()
 }
 
 
+
+
+void CRecogParamDlg::OnBnClickedChkRecogchkrotation()
+{
+	if (((CButton*)GetDlgItem(IDC_CHK_RecogChkRotation))->GetCheck())
+	{
+		m_nRecogChkRotation = 1;
+	}
+	else
+		m_nRecogChkRotation = 0;
+}

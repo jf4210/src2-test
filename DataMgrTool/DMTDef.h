@@ -43,7 +43,7 @@
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION	_T("1.70907-1")
+#define SOFT_VERSION	_T("1.70923-1")
 #define SYS_BASE_NAME	_T("YKLX-DMT")
 //#define WH_CCBKS		//武汉楚才杯专用，解析二维码需要json解析
 
@@ -55,6 +55,7 @@ extern int	g_nExitFlag;
 
 extern CString				g_strCurrentPath;
 extern int					g_nRecogMode;		//识别模式，0-严格模式，1-简单模式
+extern int					g_nRecogChkRotation;	//识别图像时检测并调整图像方向
 
 extern std::string _strEncryptPwd_;
 extern pMODEL _pModel_;
@@ -82,6 +83,7 @@ extern double	_dOmrThresholdPercent_Head_;	//同步头模式OMR识别可认为是选中的标准
 extern double	_dSnThresholdPercent_Head_;		//同步头模式SN识别可认为是选中的标准百分比
 extern double	_dQKThresholdPercent_Head_;		//同步头模式QK识别可认为是选中的标准百分比
 
+extern double   _dAnswerSure_DensityFix_;	//密度算法确定为答案的比例
 extern double	_dCompThread_Fix_;
 extern double	_dDiffThread_Fix_;
 extern double	_dDiffExit_Fix_;
@@ -223,6 +225,7 @@ typedef struct _PaperInfo_
 	int			nChkFlag;			//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不進行圖片识别
 	int			nQKFlag;			//缺考标识
 	int			nWJFlag;			//违纪标识
+	int			nIssueFlag;		//问题标识，0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
 	int			nStandardAnswer;	//当前试卷表示：0-正常试卷，1-Omr标答，2-主观题标答
 	pMODEL		pModel;				//识别此学生试卷所用的模板
 	void*		pPapers;			//所属的试卷袋信息
@@ -494,7 +497,11 @@ bool	SortByPaper(const pST_PaperInfo& x, const pST_PaperInfo& y);
 bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 0, int nPicH = 0);
 bool	FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);		//定点进行仿射变换
 bool	FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//定点透视变换
+bool	FixWarpAffine2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);		//3个定点仿射变换，对90度旋转图像有效，目标矩形大小为原矩形最大值的正方形
+bool	FixwarpPerspective2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//4个定点透视变换，对90度旋转图像有效，目标矩形大小为原矩形最大值的正方形
+
 bool	PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);
+bool	PicTransfer2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//针对有3个或者4个定点的变换，而且是对90度图像旋转，目标矩形大小为原矩形最大值的正方形
 
 //----------------	OMR识别灰度差值比较	------------------
 typedef struct

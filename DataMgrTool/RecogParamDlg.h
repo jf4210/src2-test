@@ -20,6 +20,7 @@ public:
 	int		m_nChkElectOmr;
 	int		m_nNoRecogVal;		//试卷袋不识别阀值：omr怀疑 + omr空 + SN空总数大于此阀值才进行重识别
 	int		m_nRecogMode;		//识别模式，0-严格模式，1-简单模式
+	int		m_nRecogChkRotation;	//识别时检测并调整图像方向
 	CString		m_strEzsAddr;
 
 	int		m_nHandleResult;	//0-使用压缩包方式，1-直接发送结果给ezs，2-不发送结果也不压缩试卷包，测试模式，看识别率
@@ -37,4 +38,5 @@ public:
 	afx_msg void OnBnClickedRadioSendezs();
 	afx_msg void OnBnClickedRadioNocompress();
 	afx_msg void OnBnClickedChkRecogmode();
+	afx_msg void OnBnClickedChkRecogchkrotation();
 };

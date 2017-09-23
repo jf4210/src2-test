@@ -2,7 +2,7 @@
 #include "RecognizeThread.h"
 #include "DataMgrTool.h"
 #include "DataMgrToolDlg.h"
-
+#include "OmrRecog.h"
 
 using namespace cv;
 CRecognizeThread::CRecognizeThread()
@@ -202,6 +202,8 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		pPAPERSINFO pCurrentPapers = static_cast<pPAPERSINFO>(pPaper->pPapers);
 		if (g_nRecogMode == 1)		//pCurrentPapers->nRecogMode == 1
 		{
+			if (g_nRecogChkRotation)
+				ChkPicRotation(nPic, matCompPic, *itPic, pModelInfo);
 			bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
 		#ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
@@ -221,6 +223,8 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		}
 		else
 		{
+			if (g_nRecogChkRotation)
+				ChkPicRotation(nPic, matCompPic, *itPic, pModelInfo);
 			bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo);
 		#ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
@@ -370,12 +374,17 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 
 		//test日志
 		float fDensityMeanPer = 0.0;
+		float fDensityMeanPer2 = 0.0;
 		for (int i = 0; i < vecItemsDensityDesc.size(); i++)
+		{
 			fDensityMeanPer += vecItemsDensityDesc[i]->fRealValuePercent;
+			fDensityMeanPer2 += (vecItemsDensityDesc[i]->fRealDensity / vecItemsDensityDesc[i]->fStandardDensity);	//vecItemsDensityDesc[i]->fRealValuePercent
+		}
 		fDensityMeanPer = fDensityMeanPer / vecItemsDensityDesc.size();
+		fDensityMeanPer2 = fDensityMeanPer2 / vecItemsDensityDesc.size();
 
-		char szTmp2[40] = { 0 };
-		sprintf_s(szTmp2, "密度平均值:%.3f, ", fDensityMeanPer);
+		char szTmp2[100] = { 0 };
+		sprintf_s(szTmp2, "密度平均值:%.3f, 密度平均比值:%.3f, ", fDensityMeanPer, fDensityMeanPer2);
 		strItemLog.append(szTmp2);
 
 		strItemLog.append("与密度平均值差值:[");
@@ -384,6 +393,19 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			char szTmp[40] = { 0 };
 			sprintf_s(szTmp, "%c:%.5f ", vecItemsDensityDesc[i]->nAnswer + 65, vecItemsDensityDesc[i]->fRealValuePercent - fDensityMeanPer);
 			strItemLog.append(szTmp);
+		}
+		strItemLog.append("]\n");
+
+		float fDensityThreshold2 = 0.0;
+		strItemLog.append("与密度平均比值差值:[");
+		for (int i = 0; i < vecOmrItemDensityDiff.size(); i++)
+		{
+			char szTmp[40] = { 0 };
+			float fGrayThresholdGray = vecItemsDensityDesc[i]->fRealValuePercent - fDensityMeanPer2;
+			sprintf_s(szTmp, "%s:%.5f ", vecOmrItemDensityDiff[i].szVal, _dDiffThread_Fix_ + fGrayThresholdGray + fDensityThreshold2);
+			strItemLog.append(szTmp);
+
+			fDensityThreshold2 += vecOmrItemDensityDiff[i].fDiff / 2;
 		}
 		strItemLog.append("]");
 	#endif
@@ -691,6 +713,25 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 	}
 	
 	return bResult;
+}
+
+bool CRecognizeThread::ChkPicRotation(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
+{
+	bool bDoubleScan = pModelInfo->pModel->vecPaperModel.size() % 2 == 0 ? true : false;
+	COmrRecog omrObj;
+	int nResult = omrObj.GetRightPicOrientation(matCompPic, nPic, bDoubleScan);
+	std::string strDirection;
+	switch (nResult)
+	{
+		case 1: strDirection = "正向，不需要旋转"; break;
+		case 2: strDirection = "右旋90(模板图像旋转)"; break;
+		case 3: strDirection = "左旋90(模板图像旋转)"; break;
+		case 4: strDirection = "右旋180"; break;
+	}
+	std::string strLog = "图片" + pPic->strPicName + "方向判断结果：" + strDirection;
+	g_Log.LogOut(strLog);
+
+	return true;
 }
 
 bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, int nRecogMode /*= 2*/)
@@ -1964,6 +2005,11 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	int nNullCount_2 = 0;	//第二种方法识别出的空值
 	int nNullCount_3 = 0;	//第三种方法识别出的空值
 
+#ifdef _DEBUG
+	if (pPic->strPicName == "S18_2.jpg")
+		TRACE("%s\n", pPic->strPicName);
+#endif
+
 	clock_t start, end;
 	start = clock();
 	std::string strLog;
@@ -2008,7 +2054,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			bool bResult_Recog = Recog2(nPic, rc, matCompPic, pPic, pModelInfo);
 			if (bResult_Recog)
 			{
-				if (rc.fRealValuePercent > rc.fStandardValuePercent)
+				if (rc.fRealValuePercent > _dAnswerSure_DensityFix_)	//rc.fStandardValuePercent
 				{
 					vecVal_calcHist.push_back(rc.nAnswer);
 				}

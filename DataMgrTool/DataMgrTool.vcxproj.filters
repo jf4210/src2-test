@@ -120,6 +120,9 @@
     <ClInclude Include="SearchThread.h">
       <Filter>搜索目录pkg</Filter>
     </ClInclude>
+    <ClInclude Include="OmrRecog.h">
+      <Filter>识别</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataMgrTool.cpp">
@@ -178,6 +181,9 @@
     </ClCompile>
     <ClCompile Include="SearchThread.cpp">
       <Filter>搜索目录pkg</Filter>
+    </ClCompile>
+    <ClCompile Include="OmrRecog.cpp">
+      <Filter>识别</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
