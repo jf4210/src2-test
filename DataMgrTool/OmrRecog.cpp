@@ -66,6 +66,31 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 		std::vector<cv::Rect>RectCompList;
 		try
 		{
+		#if 1
+			float fModelW = pModel->vecPaperModel[nPic]->nPicW;
+			float fModelH = pModel->vecPaperModel[nPic]->nPicH;
+			int nRealW = matCompPic.cols;
+			int nRealH = matCompPic.rows;
+
+			cv::Rect rtTmp;
+			rtTmp.x = rc.rt.x * nRealW / fModelW;
+			rtTmp.y = rc.rt.y * nRealH / fModelH;
+			rtTmp.width = rc.rt.width * nRealW / fModelW;
+			rtTmp.height = rc.rt.height * nRealH / fModelH;
+
+			if (rtTmp.x < 0) rtTmp.x = 0;
+			if (rtTmp.y < 0) rtTmp.y = 0;
+			if (rtTmp.br().x > matCompPic.cols)
+			{
+				rtTmp.width = matCompPic.cols - rtTmp.x;
+			}
+			if (rtTmp.br().y > matCompPic.rows)
+			{
+				rtTmp.height = matCompPic.rows - rtTmp.y;
+			}
+			cv::Mat matCompRoi;
+			matCompRoi = matCompPic(rtTmp);
+		#else
 			if (rc.rt.x < 0) rc.rt.x = 0;
 			if (rc.rt.y < 0) rc.rt.y = 0;
 			if (rc.rt.br().x > matCompPic.cols)
@@ -76,9 +101,22 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 			{
 				rc.rt.height = matCompPic.rows - rc.rt.y;
 			}
-
-			cv::Mat matCompRoi;
+			Mat matCompRoi;
 			matCompRoi = matCompPic(rc.rt);
+		#endif
+// 			if (rc.rt.x < 0) rc.rt.x = 0;
+// 			if (rc.rt.y < 0) rc.rt.y = 0;
+// 			if (rc.rt.br().x > matCompPic.cols)
+// 			{
+// 				rc.rt.width = matCompPic.cols - rc.rt.x;
+// 			}
+// 			if (rc.rt.br().y > matCompPic.rows)
+// 			{
+// 				rc.rt.height = matCompPic.rows - rc.rt.y;
+// 			}
+// 
+// 			cv::Mat matCompRoi;
+// 			matCompRoi = matCompPic(rc.rt);
 
 			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
