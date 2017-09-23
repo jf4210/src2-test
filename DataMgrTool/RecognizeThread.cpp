@@ -2005,8 +2005,8 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	int nNullCount_2 = 0;	//第二种方法识别出的空值
 	int nNullCount_3 = 0;	//第三种方法识别出的空值
 
-#ifdef _DEBUG
-	if (pPic->strPicName == "S18_2.jpg")
+#if 1
+	if (pPic->strPicName == "S19_2.jpg")
 		TRACE("%s\n", pPic->strPicName);
 #endif
 
