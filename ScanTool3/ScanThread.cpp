@@ -2062,6 +2062,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 				g_pLogger->information(strLog);
 				TRACE("%s\n", strLog.c_str());
 				i = 1;
+				cvReleaseImage(&pIpl);
 				return NULL;
 			}
 			i++;
