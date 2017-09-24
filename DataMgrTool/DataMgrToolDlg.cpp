@@ -479,7 +479,7 @@ void CDataMgrToolDlg::InitParam()
 		g_nRecogGrayMin_OMR = pConf->getInt("RecogGray.omr_Min", 0);
 		g_RecogGrayMax_OMR = pConf->getInt("RecogGray.omr_Max", 235);
 
-		_dAnswerSure_DensityFix_ = pConf->getDouble("RecogOmrSn_Fix.fCompTread", 1.5);
+		_dAnswerSure_DensityFix_ = pConf->getDouble("RecogOmrSn_Fix.fAnswerSure", 1.5);
 		_dCompThread_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fCompTread", 1.2);
 		_dDiffThread_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fDiffThread", 0.2);
 		_dDiffExit_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fDiffExit", 0.3);
