@@ -286,7 +286,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		
 		int nPrintOmrVal = 0;
 	#ifdef PrintAllOmrVal
-		nPrintOmrVal = true;
+		nPrintOmrVal = itOmr->nDoubt;
 	#else
 		nPrintOmrVal = itOmr->nDoubt;
 	#endif
@@ -377,14 +377,31 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		for (int i = 0; i < vecItemsDensityDesc.size(); i++)
 		{
 			fDensityMeanPer += vecItemsDensityDesc[i]->fRealValuePercent;
-			fDensityMeanPer2 += (vecItemsDensityDesc[i]->fRealDensity / vecItemsDensityDesc[i]->fStandardDensity);	//vecItemsDensityDesc[i]->fRealValuePercent
 		}
 		fDensityMeanPer = fDensityMeanPer / vecItemsDensityDesc.size();
-		fDensityMeanPer2 = fDensityMeanPer2 / vecItemsDensityDesc.size();
+
+		for (int i = 0; i < vecOmrItemDensityDiff.size(); i++)
+			fDensityMeanPer2 += vecOmrItemDensityDiff[i].fDiff;
+		fDensityMeanPer2 = fDensityMeanPer2 / vecOmrItemDensityDiff.size();
 
 		char szTmp2[100] = { 0 };
-		sprintf_s(szTmp2, "密度平均值:%.3f, 密度平均比值:%.3f, ", fDensityMeanPer, fDensityMeanPer2);
+		sprintf_s(szTmp2, "密度平均值:%.3f, 密度差平均值值:%.3f, ", fDensityMeanPer, fDensityMeanPer2);
 		strItemLog.append(szTmp2);
+
+		float fDensityThreshold2 = 0.0;
+		strItemLog.append("\n[");
+		for (int i = 0; i < vecOmrItemDensityDiff.size(); i++)
+		{
+			char szTmp[40] = { 0 };
+			float fGrayThresholdGray = fDensityMeanPer2  - vecOmrItemDensityDiff[i].fDiff;
+			float fGrayMean1 = vecItemsDensityDesc[i]->fRealValuePercent - fDensityMeanPer;
+			float fGrayMean12 = -(vecItemsDensityDesc[i + 1]->fRealValuePercent - fDensityMeanPer);
+			sprintf_s(szTmp, "%s:%.5f ", vecOmrItemDensityDiff[i].szVal, _dDiffThread_Fix_ + fGrayMean1 * 0.5 + fGrayThresholdGray * 0.5 + fGrayMean12 * 0.5 + fDensityThreshold2);	//_dDiffThread_Fix_ + fGrayThresholdGray + fDensityThreshold2
+			strItemLog.append(szTmp);
+
+			fDensityThreshold2 += (_dDiffThread_Fix_ + fGrayMean1 * 0.5 + fGrayThresholdGray * 0.5 + fGrayMean12 * 0.5 + fDensityThreshold2) / 2;	//_dDiffThread_Fix_ + fGrayThresholdGray + fDensityThreshold2
+		}
+		strItemLog.append("]\n");
 
 		strItemLog.append("与密度平均值差值:[");
 		for (int i = 0; i < vecItemsDensityDesc.size(); i++)
@@ -392,19 +409,6 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			char szTmp[40] = { 0 };
 			sprintf_s(szTmp, "%c:%.5f ", vecItemsDensityDesc[i]->nAnswer + 65, vecItemsDensityDesc[i]->fRealValuePercent - fDensityMeanPer);
 			strItemLog.append(szTmp);
-		}
-		strItemLog.append("]\n");
-
-		float fDensityThreshold2 = 0.0;
-		strItemLog.append("与密度平均比值差值:[");
-		for (int i = 0; i < vecOmrItemDensityDiff.size(); i++)
-		{
-			char szTmp[40] = { 0 };
-			float fGrayThresholdGray = vecItemsDensityDesc[i]->fRealValuePercent - fDensityMeanPer2;
-			sprintf_s(szTmp, "%s:%.5f ", vecOmrItemDensityDiff[i].szVal, _dDiffThread_Fix_ + fGrayThresholdGray + fDensityThreshold2);
-			strItemLog.append(szTmp);
-
-			fDensityThreshold2 += vecOmrItemDensityDiff[i].fDiff / 2;
 		}
 		strItemLog.append("]");
 	#endif
@@ -2029,7 +2033,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	int nNullCount_3 = 0;	//第三种方法识别出的空值
 
 #ifdef _DEBUG
-	if (pPic->strPicName == "S18_2.jpg")
+	if (pPic->strPicName == "S6_1.jpg")
 		TRACE("%s\n", pPic->strPicName);
 #endif
 
@@ -2118,11 +2122,40 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			fDiffExit = _dDiffExit_Fix_;
 		}
 		
+		float fDensityMeanPer2 = 0.0;
+		for (int i = 0; i < vecItemsDesc.size(); i++)
+		{
+			fDensityMeanPer2 += vecItemsDesc[i]->fRealValuePercent;
+		}
+		fDensityMeanPer2 = fDensityMeanPer2 / vecItemsDesc.size();
+
+		float fDensityMeanPer = 0.0;
+		for (int i = 0; i < vecOmrItemDiff.size(); i++)
+			fDensityMeanPer += vecOmrItemDiff[i].fDiff;
+		fDensityMeanPer = fDensityMeanPer / vecOmrItemDiff.size();
+
 		int nFlag = -1;
 		float fThreld = 0.0;
 		float fDensityThreshold = 0.0;
 		for (int i = 0; i < vecOmrItemDiff.size(); i++)
 		{
+#if 1	//2017.9.23 for test
+			float fGrayThresholdGray = -(vecOmrItemDiff[i].fDiff - fDensityMeanPer);
+			float fGrayMean1 = vecItemsDesc[i]->fRealValuePercent - fDensityMeanPer2;
+			float fGrayMean12 = -(vecItemsDesc[i + 1]->fRealValuePercent - fDensityMeanPer2);
+			if ((vecOmrItemDiff[i].fDiff >= fDiffThread + fGrayMean1 * 0.5 + fGrayThresholdGray * 0.5 + fGrayMean12 * 0.5 + fDensityThreshold))
+			{
+				nFlag = i;
+				fThreld = vecOmrItemDiff[i].fFirst;
+				fDensityThreshold += (fDiffThread + fGrayMean1 * 0.5 + fGrayThresholdGray * 0.5 + fGrayMean12 * 0.5 + fDensityThreshold) / 2;
+			#ifdef Test_RecogFirst_NoThreshord
+				if (vecOmrItemDiff[i].fDiff > fDiffExit)	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
+					break;
+			#endif
+			}
+			else
+				fDensityThreshold += (fDiffThread + fGrayMean1 * 0.5 + fGrayThresholdGray * 0.5 + fGrayMean12 * 0.5 + fDensityThreshold) / 2;		//++ 2017.9.7
+#else
 			//根据所有选项灰度值排序，相邻灰度值差值超过阀值，同时其中第一个最大的灰度值超过1.0，就认为这个区间为选中的阀值区间
 			//(大于1.0是防止最小的灰度值很小的时候影响阀值判断)
 			float fDiff = (fCompThread - vecOmrItemDiff[i].fFirst) * 0.5;
@@ -2141,14 +2174,20 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			}
 			else
 				fDensityThreshold += vecOmrItemDiff[i].fDiff;		//++ 2017.9.7
+#endif
 		}
 		if (nFlag >= 0)
 		{
 			//++判断全选的情况
 			if (nFlag == vecOmrItemDiff.size() - 1)
 			{
-				if (vecItemsDesc[vecOmrItemDiff.size()]->fRealValuePercent >= fCompThread + fDiffExit)	//如果密度最低的选项，它的密度大于“最低比较密度 + 最大退出密度差”，则认为全选
-					fThreld = vecItemsDesc[vecOmrItemDiff.size()]->fRealValuePercent;
+				float fGrayThresholdGray = -(vecOmrItemDiff[nFlag].fDiff - fDensityMeanPer);
+				float fGrayMean1 = vecItemsDesc[nFlag]->fRealValuePercent - fDensityMeanPer2;
+				float fGrayMean12 = -(vecItemsDesc[nFlag + 1]->fRealValuePercent - fDensityMeanPer2);
+				if ((vecItemsDesc[nFlag + 1]->fRealValuePercent >= fDensityMeanPer2 - fDiffThread) && (vecOmrItemDiff[nFlag].fDiff < fDiffThread))
+					fThreld = vecItemsDesc[nFlag + 1]->fRealValuePercent;
+// 				if (vecItemsDesc[vecOmrItemDiff.size()]->fRealValuePercent >= fCompThread + fDiffExit)	//如果密度最低的选项，它的密度大于“最低比较密度 + 最大退出密度差”，则认为全选
+// 					fThreld = vecItemsDesc[vecOmrItemDiff.size()]->fRealValuePercent;
 			}
 			//--
 			RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
