@@ -396,10 +396,10 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			float fGrayThresholdGray = fDensityMeanPer2  - vecOmrItemDensityDiff[i].fDiff;
 			float fGrayMean1 = vecItemsDensityDesc[i]->fRealValuePercent - fDensityMeanPer;
 			float fGrayMean12 = -(vecItemsDensityDesc[i + 1]->fRealValuePercent - fDensityMeanPer);
-			sprintf_s(szTmp, "%s:%.5f ", vecOmrItemDensityDiff[i].szVal, _dDiffThread_Fix_ + fGrayMean1 * 0.5 + fGrayThresholdGray * 0.5 + fGrayMean12 * 0.5 + fDensityThreshold2);	//_dDiffThread_Fix_ + fGrayThresholdGray + fDensityThreshold2
+			sprintf_s(szTmp, "%s:%.5f ", vecOmrItemDensityDiff[i].szVal, _dDiffThread_Fix_ + fGrayThresholdGray * 0.5 + fDensityThreshold2);	//_dDiffThread_Fix_ + fGrayThresholdGray + fDensityThreshold2
 			strItemLog.append(szTmp);
 
-			fDensityThreshold2 += (_dDiffThread_Fix_ + fGrayMean1 * 0.5 + fGrayThresholdGray * 0.5 + fGrayMean12 * 0.5 + fDensityThreshold2) / 2;	//_dDiffThread_Fix_ + fGrayThresholdGray + fDensityThreshold2
+			fDensityThreshold2 += (_dDiffThread_Fix_ + vecOmrItemDensityDiff[i].fDiff * 0.5 + fGrayThresholdGray * 0.5 + fDensityThreshold2) / 2;	//_dDiffThread_Fix_ + fGrayThresholdGray + fDensityThreshold2
 		}
 		strItemLog.append("]\n");
 
@@ -2138,18 +2138,18 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			float fGrayThresholdGray = -(vecOmrItemDiff[i].fDiff - fDensityMeanPer);
 			float fGrayMean1 = vecItemsDesc[i]->fRealValuePercent - fDensityMeanPer2;
 			float fGrayMean12 = -(vecItemsDesc[i + 1]->fRealValuePercent - fDensityMeanPer2);
-			if ((vecOmrItemDiff[i].fDiff >= fDiffThread + fGrayMean1 * 0.5 + fGrayThresholdGray * 0.5 + fGrayMean12 * 0.5 + fDensityThreshold))
+			if ((vecOmrItemDiff[i].fDiff >= fDiffThread + vecOmrItemDiff[i].fDiff * 0.5 + fGrayThresholdGray * 0.5 + fDensityThreshold))
 			{
 				nFlag = i;
 				fThreld = vecOmrItemDiff[i].fFirst;
-				fDensityThreshold += (fDiffThread + fGrayMean1 * 0.5 + fGrayThresholdGray * 0.5 + fGrayMean12 * 0.5 + fDensityThreshold) / 2;
+				fDensityThreshold += (fDiffThread + vecOmrItemDiff[i].fDiff * 0.5 + fGrayThresholdGray * 0.5 + fDensityThreshold) / 2;
 			#ifdef Test_RecogFirst_NoThreshord
 				if (vecOmrItemDiff[i].fDiff > fDiffExit)	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
 					break;
 			#endif
 			}
 			else
-				fDensityThreshold += (fDiffThread + fGrayMean1 * 0.5 + fGrayThresholdGray * 0.5 + fGrayMean12 * 0.5 + fDensityThreshold) / 2;		//++ 2017.9.7
+				fDensityThreshold += (fDiffThread + vecOmrItemDiff[i].fDiff * 0.5 + fGrayThresholdGray * 0.5 + fDensityThreshold) / 2;		//++ 2017.9.7
 #else
 			//根据所有选项灰度值排序，相邻灰度值差值超过阀值，同时其中第一个最大的灰度值超过1.0，就认为这个区间为选中的阀值区间
 			//(大于1.0是防止最小的灰度值很小的时候影响阀值判断)
