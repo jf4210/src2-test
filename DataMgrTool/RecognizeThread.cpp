@@ -756,7 +756,7 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		std::vector<Rect>RectCompList;
 		try
 		{
-		#if 1
+		#if 0
 			float fModelW = pModelInfo->pModel->vecPaperModel[nPic]->nPicW;
 			float fModelH = pModelInfo->pModel->vecPaperModel[nPic]->nPicH;
 			int nRealW = matCompPic.cols;
