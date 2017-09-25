@@ -7,6 +7,7 @@
 #include "DataMgrToolDlg.h"
 #include "afxdialogex.h"
 #include "RecogParamDlg.h"
+#include "ShowPapersDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -189,6 +190,11 @@ void CDataMgrToolDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_MFCEDITBROWSE_ModelPath, m_strModelPath);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_ModelPath, m_mfcEdit_ModelPath);
 
+	DDX_Text(pDX, IDC_MFCEDITBROWSE_ModelPath_ShowPapers, m_strModelPath_showPapersDlg);
+	DDX_Control(pDX, IDC_MFCEDITBROWSE_ModelPath_ShowPapers, m_mfcEdit_ModelPath_showPapersDlg);
+	DDX_Text(pDX, IDC_MFCEDITBROWSE_RAR_Src_showPapers, m_strPkgPath_showPapersDlg);
+	DDX_Control(pDX, IDC_MFCEDITBROWSE_RAR_Src_showPapers, m_mfcEdit_PkgPath_showPapersDlg);
+
 	DDX_Text(pDX, IDC_EDIT_Per, _dDoubtPer_);
 }
 
@@ -216,6 +222,7 @@ BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_STOP, &CDataMgrToolDlg::OnBnClickedBtnStop)
 	ON_BN_CLICKED(IDC_BTN_DecompressLook, &CDataMgrToolDlg::OnBnClickedBtnDecompresslook)
 	ON_BN_CLICKED(IDC_BTN_WatchPic, &CDataMgrToolDlg::OnBnClickedBtnWatchpic)
+	ON_BN_CLICKED(IDC_BTN_WatchPapers, &CDataMgrToolDlg::OnBnClickedBtnWatchpapers)
 END_MESSAGE_MAP()
 
 
@@ -749,14 +756,18 @@ void CDataMgrToolDlg::showMsg(CString& strMsg)
 	m_edit_Msg.LineScroll(nLineCount);
 }
 
-
+void CDataMgrToolDlg::showPapers(pPAPERSINFO pPapers)
+{
+	CShowPapersDlg dlg;
+	dlg.setShowPapers(pPapers);
+	dlg.DoModal();
+}
 
 void CDataMgrToolDlg::OnBnClickedBtnClear()
 {
 	m_strMsg.Empty();
 	UpdateData(FALSE);
 }
-
 
 void CDataMgrToolDlg::OnBnClickedBtnRecogpkg()
 {
@@ -1280,7 +1291,34 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpic()
 
 	std::string strPkgPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strWatchPaper_PapersDir));
 	std::string strPaperInfo = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strWatchPaper_PaperInfo));
+#if 0
+	//++创建文件解压路径
+	CString strTmp = m_strWatchPaper_PapersDir + _T("\\查看试卷-解压路径");
+	std::string strDecompressPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strTmp));
+	try
+	{
+		Poco::File dir(strDecompressPath);
+		dir.createDirectories();
+	}
+	catch (Poco::Exception& e)
+	{
+	}
+	//--
 
+	std::string strPkgName;
+	std::string strPaperName;
+	strPkgName = strPaperInfo;
+
+	pST_SEARCH pDirTask = new ST_SEARCH;
+	pDirTask->nSearchType = 2;
+	pDirTask->strSearchPath = strPkgPath;
+	pDirTask->strSearchName = strPkgName;
+	pDirTask->strDecompressPath = CMyCodeConvert::Utf8ToGb2312(strDecompressPath);
+
+	_fmSearchPathList_.lock();
+	_SearchPathList_.push_back(pDirTask);
+	_fmSearchPathList_.unlock();
+#else
 	int nPos = strPaperInfo.find(":");
 	if (nPos == std::string::npos)
 	{
@@ -1314,4 +1352,72 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpic()
 	cv::Mat matPic = cv::imread(strPicPath_gb);
 	cv::namedWindow("试卷袋图像", 0);
 	cv::imshow("试卷袋图像", matPic);
+#endif
+}
+
+
+void CDataMgrToolDlg::OnBnClickedBtnWatchpapers()
+{
+	UpdateData(TRUE);
+	USES_CONVERSION;
+	std::string strPkgPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strPkgPath_showPapersDlg));
+//	std::string strModelPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strModelPath_showPapersDlg));
+
+	AfxMessageBox(_T("模板文件属于全局变量，确保不要在识别过程中来操作这里!!!"));
+
+	//++创建文件解压路径
+	CString strTmp = m_strWatchPaper_PapersDir + _T("\\查看试卷-解压路径");
+	std::string strDecompressPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strTmp));
+	try
+	{
+		Poco::File dir(strDecompressPath);
+		dir.createDirectories();
+	}
+	catch (Poco::Exception& e)
+	{
+	}
+	//--
+	std::string strModelPath = T2A(m_strModelPath_showPapersDlg);
+
+	int nPos1 = strModelPath.rfind('\\');
+	int nPos2 = strModelPath.rfind('.');
+
+	std::string strBaseName = strModelPath.substr(nPos1 + 1, nPos2 - nPos1 - 1);
+	std::string strSrcName = strModelPath.substr(nPos1 + 1, strModelPath.length() - nPos1 - 1);
+
+	std::string strBasePath = strModelPath.substr(0, nPos1);
+
+	pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+	pDecompressTask->nTaskType = 4;
+	pDecompressTask->strFilePath = T2A(m_strModelPath_showPapersDlg);
+	pDecompressTask->strFileBaseName = strBaseName;
+	pDecompressTask->strSrcFileName = strSrcName;
+	pDecompressTask->strDecompressDir = strBasePath;
+
+	_fmDecompress_.lock();
+	_nDecompress_++;
+	_fmDecompress_.unlock();
+
+	g_fmDecompressLock.lock();
+	g_lDecompressTask.push_back(pDecompressTask);
+	g_fmDecompressLock.unlock();
+	
+	Poco::Path filePath(strPkgPath);
+
+	pDECOMPRESSTASK pDecompressTask1 = new DECOMPRESSTASK;
+	pDecompressTask1->nTaskType = 6;
+	pDecompressTask1->strFilePath = T2A(m_strPkgPath_showPapersDlg);
+	pDecompressTask1->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(filePath.getBaseName());
+	pDecompressTask1->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(filePath.getFileName());
+	pDecompressTask1->strDecompressDir = T2A(strTmp);		//解压到的路径
+
+	_fmDecompress_.lock();
+	_nDecompress_++;
+	_fmDecompress_.unlock();
+
+	g_fmDecompressLock.lock();
+	g_lDecompressTask.push_back(pDecompressTask1);
+	g_fmDecompressLock.unlock();
+
+	
 }

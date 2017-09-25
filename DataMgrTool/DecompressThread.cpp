@@ -102,7 +102,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	std::string strOutDir = CMyCodeConvert::Gb2312ToUtf8(pTask->strDecompressDir + "\\" + pTask->strFileBaseName);
 
 	pPAPERSINFO pPapers = NULL;
-	if (pTask->nTaskType == 3 || pTask->nTaskType == 5)
+	if (pTask->nTaskType == 3 || pTask->nTaskType == 5 || pTask->nTaskType == 6)
 	{
 		pPapers = new PAPERSINFO;
 		pPapers->strPapersName = pTask->strFileBaseName;
@@ -170,7 +170,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	char szBaseDir[256] = { 0 };
 	strncpy_s(szBaseDir, strBaseDir.c_str(), strBaseDir.length());
 #endif
-	if (pTask->nTaskType != 6)
+	if (pTask->nTaskType != 7)
 		ret = do_extract_all(uf, opt_do_extract_withoutpath, opt_overwrite, password, szBaseDir);
 	else
 	{
@@ -203,10 +203,12 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
 		return;
 	}
+	strLog = "试卷包解压完成: " + pTask->strFilePath;
+	g_Log.LogOut(strLog);
 #ifndef DecompressTest
 	CHDIR(pTask->strDecompressDir.c_str());		//切换回解压根目录，否则删除压缩文件夹失败
 #endif
-	if (pTask->nTaskType == 3 || pTask->nTaskType == 5)
+	if (pTask->nTaskType == 3 || pTask->nTaskType == 5 || pTask->nTaskType == 6)
 	{
 		SearchExtractFile(pPapers, pPapers->strPapersPath);
 
@@ -413,8 +415,34 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		_fmRecogPapers_.lock();
 		_nRecogPapers_++;
 		_fmRecogPapers_.unlock();
+
+		g_fmPapers.lock();			//释放试卷袋列表
+		PAPERS_LIST::iterator itPapers = g_lPapers.begin();
+		for (; itPapers != g_lPapers.end(); itPapers++)
+		{
+			pPAPERSINFO pPapersTask = *itPapers;
+			if (pPapersTask == pPapers)
+			{
+				itPapers = g_lPapers.erase(itPapers);
+				SAFE_RELEASE(pPapersTask);
+				break;
+			}
+		}
+		g_fmPapers.unlock();
 	}
 	else if (pTask->nTaskType == 6)
+	{
+		//读取试卷袋文件夹里面的文件获取试卷袋信息
+		std::string strPapersFilePath = strOutDir + "\\papersInfo.dat";
+		bool bResult_Data = GetFileData2(CMyCodeConvert::Utf8ToGb2312(strPapersFilePath), pPapers);
+
+		CString strMsg;
+		strMsg.Format(_T("解压%s:%s完成\r\n"), A2T(pTask->strFileBaseName.c_str()), A2T(pTask->strDecompressPaperFile.c_str()));
+		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
+
+		((CDataMgrToolDlg*)m_pDlg)->showPapers(pPapers);
+	}
+	else if (pTask->nTaskType == 7)
 	{
 		CString strMsg;
 		strMsg.Format(_T("解压%s:%s完成\r\n"), A2T(pTask->strFileBaseName.c_str()), A2T(pTask->strDecompressPaperFile.c_str()));
@@ -636,6 +664,21 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 					pSN_ITEM pSnItem = new SN_ITEM;
 					pSnItem->nItem = jsnSnObj->get("sn").convert<int>();
 					pSnItem->nRecogVal = jsnSnObj->get("val").convert<int>();
+
+// 					Poco::JSON::Array::Ptr jsnPositionArry;
+// 					if(jsnSnObj->has("position"))
+// 						jsnPositionArry = jsnSnObj->getArray("position");
+// 					for (int j = 0; j < jsnPositionArry->size(); j++)
+// 					{
+// 						Poco::JSON::Object::Ptr jsnRectInfoObj = jsnPositionArry->getObject(j);
+// 						RECTINFO rc;
+// 						rc.rt.x = jsnRectInfoObj->get("x").convert<int>();
+// 						rc.rt.y = jsnRectInfoObj->get("y").convert<int>();
+// 						rc.rt.width = jsnRectInfoObj->get("w").convert<int>();
+// 						rc.rt.height = jsnRectInfoObj->get("h").convert<int>();
+// 						pSnItem->lSN.push_back(rc);
+// 					}
+
 					pPaper->lSnResult.push_back(pSnItem);
 				}
 
@@ -649,7 +692,24 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 					omrResult.strRecogVal = jsnOmrObj->get("value").convert<std::string>();
 					if (jsnOmrObj->has("value2"))
 						omrResult.strRecogVal2 = jsnOmrObj->get("value2").convert<std::string>();
+					if (jsnOmrObj->has("value3"))
+						omrResult.strRecogVal3 = jsnOmrObj->get("value3").convert<std::string>();
 					omrResult.nDoubt = jsnOmrObj->get("doubt").convert<int>();
+
+					Poco::JSON::Array::Ptr jsnPositionArry = jsnOmrObj->getArray("position");
+					for (int j = 0; j < jsnPositionArry->size(); j++)
+					{
+						Poco::JSON::Object::Ptr jsnRectInfoObj = jsnPositionArry->getObject(j);
+						RECTINFO rc;
+						std::string strChar = jsnRectInfoObj->get("val").convert<std::string>();
+						rc.nAnswer = (int)(strChar.c_str()) - 65;						
+						rc.rt.x = jsnRectInfoObj->get("x").convert<int>();
+						rc.rt.y = jsnRectInfoObj->get("y").convert<int>();
+						rc.rt.width = jsnRectInfoObj->get("w").convert<int>();
+						rc.rt.height = jsnRectInfoObj->get("h").convert<int>();
+						omrResult.lSelAnswer.push_back(rc);
+					}
+
 					pPaper->lOmrResult.push_back(omrResult);
 				}
 
@@ -660,10 +720,26 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 					{
 						Poco::JSON::Object::Ptr jsnElectOmrObj = jsnElectOmrArry->getObject(k);
 						ELECTOMR_QUESTION electOmrResult;
+						electOmrResult.nDoubt = jsnElectOmrObj->get("doubt").convert<int>();
 						electOmrResult.sElectOmrGroupInfo.nGroupID = jsnElectOmrObj->get("th").convert<int>();
 						electOmrResult.sElectOmrGroupInfo.nAllCount = jsnElectOmrObj->get("allItems").convert<int>();
 						electOmrResult.sElectOmrGroupInfo.nRealCount = jsnElectOmrObj->get("realItem").convert<int>();
 						electOmrResult.strRecogResult = jsnElectOmrObj->get("value").convert<std::string>();
+
+						Poco::JSON::Array::Ptr jsnPositionArry = jsnElectOmrObj->getArray("position");
+						for (int j = 0; j < jsnPositionArry->size(); j++)
+						{
+							Poco::JSON::Object::Ptr jsnRectInfoObj = jsnPositionArry->getObject(j);
+							RECTINFO rc;
+							std::string strChar = jsnRectInfoObj->get("val").convert<std::string>();
+							rc.nAnswer = (int)(strChar.c_str()) - 65;
+							rc.rt.x = jsnRectInfoObj->get("x").convert<int>();
+							rc.rt.y = jsnRectInfoObj->get("y").convert<int>();
+							rc.rt.width = jsnRectInfoObj->get("w").convert<int>();
+							rc.rt.height = jsnRectInfoObj->get("h").convert<int>();
+							electOmrResult.lItemInfo.push_back(rc);
+						}
+
 						pPaper->lElectOmrResult.push_back(electOmrResult);
 					}
 				}
@@ -763,6 +839,7 @@ void CDecompressThread::SearchExtractFile(pPAPERSINFO pPapers, std::string strPa
 				pPaper->pModel = _pModel_;
 				pPaper->pPapers = pPapers;
 				pPaper->pSrcDlg = m_pDlg;
+				pPaper->nIndex = atoi(strPaperName.substr(1).c_str());
 				pPapers->lPaper.push_back(pPaper);
 			}
 			pPapers->nTotalPics++;						//图片数增加一张

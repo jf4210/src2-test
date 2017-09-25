@@ -2803,3 +2803,14 @@ bool PicTransfer2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& l
 	return true;
 }
 
+
+bool GetFixPicTransfer(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel, cv::Mat& inverseMat)
+{
+#ifdef USE_TESSERACT
+	if (pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0)
+		return true;	// PicTransfer(nPic, matCompPic, pPic->lFix, pPic->lModelFix, inverseMat);
+	else
+		return PicTransfer(nPic, matCompPic, pPic->lFix, pModel->vecPaperModel[nPic]->lFix, inverseMat);
+#endif
+	return PicTransfer(nPic, matCompPic, pPic->lFix, pModel->vecPaperModel[nPic]->lFix, inverseMat);
+}

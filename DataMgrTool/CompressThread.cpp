@@ -92,6 +92,20 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 	#endif
 	}
 
+	g_fmPapers.lock();			//ÊÍ·ÅÊÔ¾í´üÁÐ±í
+	PAPERS_LIST::iterator itPapers = g_lPapers.begin();
+	for (; itPapers != g_lPapers.end(); itPapers++)
+	{
+		pPAPERSINFO pPapersTask = *itPapers;
+		if (pPapersTask == pTask->pPapers)
+		{
+			itPapers = g_lPapers.erase(itPapers);
+			SAFE_RELEASE(pPapersTask);
+			break;
+		}
+	}
+	g_fmPapers.unlock();
+
 	static_cast<CDataMgrToolDlg*>(m_pDlg)->showMsg(strInfo);
 }
 

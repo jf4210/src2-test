@@ -67,7 +67,7 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 		std::vector<cv::Rect>RectCompList;
 		try
 		{
-		#if 0
+		#if 1
 			float fModelW = pModel->vecPaperModel[nPic]->nPicW;
 			float fModelH = pModel->vecPaperModel[nPic]->nPicH;
 			int nRealW = matCompPic.cols;

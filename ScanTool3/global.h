@@ -290,6 +290,7 @@ typedef struct _PaperInfo_
 	bool		bModifyZKZH;		//准考证号人工修改标识
 	bool		bRecogComplete;		//该学生已经识别完成
 	bool		bReScan;			//重新扫描标识，在准考证号修改窗口中设置
+	bool		bRecogCourse;		//科目识别是否正确
 	int			nPicsExchange;		//图像调换标识，即第一页与第二页调换位置，调换次数，0-未调换，1-调换1次。。。
 	int			nQKFlag;			//缺考标识
 	int			nWJFlag;			//违纪标识
@@ -315,6 +316,7 @@ typedef struct _PaperInfo_
 		bModifyZKZH = false;
 		nZkzhInBmkStatus = 0;
 		bRecogComplete = false;
+		bRecogCourse = true;
 		bReScan = false;
 		nPicsExchange = 0;
 		nIndex = 0;

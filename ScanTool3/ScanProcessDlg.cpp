@@ -1311,7 +1311,8 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lcPicture.GetItemData(pNMItemActivate->iItem);
 	//***	注意：如果不在报名库中的同时报名库不空的也要允许修改	********	2017.6.4
 	if ((/*g_nOperatingMode == 1 ||*/ g_bModifySN) && _pModel_ && pItemPaper && \
-		(pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH || pItemPaper->bReScan || (_bGetBmk_ && pItemPaper->nZkzhInBmkStatus != 1) || pItemPaper->nPicsExchange != 0))
+		(pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH || pItemPaper->bReScan || (_bGetBmk_ && pItemPaper->nZkzhInBmkStatus != 1) || pItemPaper->nPicsExchange != 0 || \
+		 !pItemPaper->bRecogCourse))
 	{
 		if (!m_pStudentMgr)
 		{
@@ -1359,7 +1360,7 @@ void CScanProcessDlg::OnTimer(UINT_PTR nIDEvent)
 				bRecogComplete = false;
 				break;
 			}
-			if (p->strSN.empty() || (p->nZkzhInBmkStatus != 1 && _bGetBmk_))	//报名库列表存在时，检查准考证号是否在报名库中报名库
+			if (p->strSN.empty() || (p->nZkzhInBmkStatus != 1 && _bGetBmk_) || !p->bRecogCourse)	//报名库列表存在时，检查准考证号是否在报名库中报名库
 				bNeedShowZkzhDlg = true;
 		}
 

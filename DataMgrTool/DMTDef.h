@@ -37,9 +37,9 @@
 
 #define USES_GETTHRESHOLD_ZTFB	//使用正态分布方式获取校验点的阀值，未定义时使用固定阀值进行二值化查找矩形
 
-#define  MSG_ERR_RECOG		(WM_USER + 110)
-#define  MSG_RECOG_COMPLETE	(WM_USER + 111)
-#define  MSG_SENDRESULT_STATE (WM_USER + 112)
+#define  MSG_ERR_RECOG		(WM_USER + 210)
+#define  MSG_RECOG_COMPLETE	(WM_USER + 211)
+#define  MSG_SENDRESULT_STATE (WM_USER + 212)
 
 #define DecompressTest		//解压测试，多线程解压
 
@@ -122,12 +122,12 @@ typedef struct _DecompressTask_
 	int	 nNoNeedRecogVal;	////试卷袋不识别阀值：omr怀疑 + omr空 + SN空总数大于此阀值才进行重识别
 	//---------
 
-	int nTaskType;				//1-普通解压，2-区分试卷包到不同目录, 3-重新识别OMR和SN, 4-加载模板, 5-识别试卷包并统计识别正确率比例, 6-解压试卷袋中的特定文件
+	int nTaskType;				//1-普通解压，2-区分试卷包到不同目录, 3-重新识别OMR和SN, 4-加载模板, 5-识别试卷包并统计识别正确率比例, 6-解压并查看试卷袋识别结果，7-解压试卷袋中的特定文件
 	std::string strFileBaseName;
 	std::string strSrcFileName;
 	std::string strFilePath;
 	std::string strDecompressDir;
-	std::string strDecompressPaperFile;		//解压试卷袋中特定的文件，如S1，S2，nTaskType = 6 时有用
+	std::string strDecompressPaperFile;		//解压试卷袋中特定的文件，如S1，S2，nTaskType = 7 时有用
 	_DecompressTask_()
 	{
 		nTaskType = 1;
@@ -207,6 +207,10 @@ typedef struct _PicInfo_				//图片信息
 	RECTLIST		lIssueRect;		//识别出来的问题试卷的问题点位置，只要出现问题点就不进行下一页的识别
 	// 	cv::Mat			matSrc;
 	// 	cv::Mat			matDest;
+
+	RECTLIST		lCalcRect;		//通过定点计算出的点位置
+	RECTLIST		lModelFix;		//模板文字定点列表，在使用文字定位时有用
+	CHARACTER_ANCHOR_AREA_LIST lCharacterAnchorArea;	//文字定位区域
 	_PicInfo_()
 	{
 		bRecoged = false;
@@ -222,6 +226,8 @@ typedef std::list<pST_PicInfo> PIC_LIST;	//图片列表定义
 typedef struct _PaperInfo_
 {
 	bool		bIssuePaper;		//是否是问题试卷
+	bool		bRecogCourse;		//科目识别是否正确
+	int			nIndex;				//在试卷袋中的索引，即S1为1，S2为2，S3为3...
 	int			nChkFlag;			//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不進行圖片识别
 	int			nQKFlag;			//缺考标识
 	int			nWJFlag;			//违纪标识
@@ -247,8 +253,10 @@ typedef struct _PaperInfo_
 	PIC_LIST	lPic;
 	_PaperInfo_()
 	{
+		nIndex = 0;
 		nChkFlag = 0;
 		bIssuePaper = false;
+		bRecogCourse = true;
 		nQKFlag = 0;
 		nWJFlag = 0;
 		nStandardAnswer = 0;
@@ -499,6 +507,8 @@ bool	FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lMod
 bool	FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//定点透视变换
 bool	FixWarpAffine2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);		//3个定点仿射变换，对90度旋转图像有效，目标矩形大小为原矩形最大值的正方形
 bool	FixwarpPerspective2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//4个定点透视变换，对90度旋转图像有效，目标矩形大小为原矩形最大值的正方形
+
+bool	GetFixPicTransfer(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel, cv::Mat& inverseMat);	//根据定点进行图像变换
 
 bool	PicTransfer(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);
 bool	PicTransfer2(int nPic, cv::Mat& matCompPic, cv::Mat& matDstPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//针对有3个或者4个定点的变换，而且是对90度图像旋转，目标矩形大小为原矩形最大值的正方形

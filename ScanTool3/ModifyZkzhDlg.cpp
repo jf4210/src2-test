@@ -365,6 +365,8 @@ void CModifyZkzhDlg::InitData()
 					if (pPaper->nZkzhInBmkStatus == 0)
 						strDetailInfo = "图像有过调换，考号不在报名库";
 				}
+				if (!pPaper->bRecogCourse)
+					strDetailInfo = "科目校验失败";
 				if (pPaper->bReScan)
 					strDetailInfo = "图像有过调换，这份试卷将删除";
 			}
@@ -437,6 +439,8 @@ void CModifyZkzhDlg::InitData()
 			if (pPaper->nZkzhInBmkStatus == 0)
 				strDetailInfo = "考号不在报名库";
 		}
+		if (!pPaper->bRecogCourse)
+			strDetailInfo = "科目校验失败";
 		if (pPaper->bReScan)
 			strDetailInfo = "这份试卷将删除";
 

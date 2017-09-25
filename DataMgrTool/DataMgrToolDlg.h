@@ -46,9 +46,13 @@ public:
 	CMFCEditBrowseCtrl m_mfcEdit_PkgDir;
 	CMFCEditBrowseCtrl m_mfcEdit_RecogDir;
 	CMFCEditBrowseCtrl m_mfcEdit_ModelPath;
+	CMFCEditBrowseCtrl m_mfcEdit_ModelPath_showPapersDlg;
+	CMFCEditBrowseCtrl m_mfcEdit_PkgPath_showPapersDlg;
 	CString		m_strPkgPath;
 	CString		m_strRecogPath;
 	CString		m_strModelPath;
+	CString		m_strModelPath_showPapersDlg;
+	CString		m_strPkgPath_showPapersDlg;
 
 	CString		m_strWatchPaper_PapersDir;		//查看试卷--试卷袋搜索路径
 	CString		m_strWatchPaper_PaperInfo;		//查看试卷--试卷信息，格式(试卷袋名称:试卷编号，12345:S1)
@@ -57,6 +61,7 @@ public:
 	CStatusBar		m_wndStatusBar;
 
 	void	showMsg(CString& strMsg);
+	void	showPapers(pPAPERSINFO pPapers);
 
 	LRESULT MsgRecogErr(WPARAM wParam, LPARAM lParam);
 	LRESULT MsgRecogComplete (WPARAM wParam, LPARAM lParam);
@@ -110,4 +115,5 @@ public:
 	afx_msg void OnBnClickedBtnStop();
 	afx_msg void OnBnClickedBtnDecompresslook();
 	afx_msg void OnBnClickedBtnWatchpic();
+	afx_msg void OnBnClickedBtnWatchpapers();
 };

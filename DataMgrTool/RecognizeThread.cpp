@@ -517,6 +517,20 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 				std::string strErr = "删除文件夹(" + pPapers->strPapersPath + ")失败: " + exc.message();
 				g_Log.LogOutError(strErr);
 			}
+
+			g_fmPapers.lock();			//释放试卷袋列表
+			PAPERS_LIST::iterator itPapers = g_lPapers.begin();
+			for (; itPapers != g_lPapers.end(); itPapers++)
+			{
+				pPAPERSINFO pPapersTask = *itPapers;
+				if (pPapersTask == pPapers)
+				{
+					itPapers = g_lPapers.erase(itPapers);
+					SAFE_RELEASE(pPapersTask);
+					break;
+				}
+			}
+			g_fmPapers.unlock();
 			return;
 		}
 
@@ -756,7 +770,7 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		std::vector<Rect>RectCompList;
 		try
 		{
-		#if 0
+		#if 1
 			float fModelW = pModelInfo->pModel->vecPaperModel[nPic]->nPicW;
 			float fModelH = pModelInfo->pModel->vecPaperModel[nPic]->nPicH;
 			int nRealW = matCompPic.cols;
@@ -1732,6 +1746,7 @@ bool CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 	}
 	if (!bResult)
 	{
+		(static_cast<pST_PaperInfo>(pPic->pPaper))->bRecogCourse = false;
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别科目失败, 图片名: %s\n", pPic->strPicName.c_str());
 		strLog.append(szLog);

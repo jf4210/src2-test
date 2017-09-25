@@ -43,6 +43,15 @@
     <Filter Include="搜索目录pkg">
       <UniqueIdentifier>{89cba1f0-51d6-4b33-86c2-2c54dec1d1ae}</UniqueIdentifier>
     </Filter>
+    <Filter Include="查看试卷包试卷">
+      <UniqueIdentifier>{a1027158-a5ec-41d1-9e11-1b7eb73ba3b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="查看试卷包试卷\图片查看">
+      <UniqueIdentifier>{94f4b1f8-a151-429d-ac96-68dfd160db6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="查看试卷包试卷\图片查看\图片显示">
+      <UniqueIdentifier>{4114e6d2-d06b-4fbd-a74d-a1d6670485d1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -123,6 +132,24 @@
     <ClInclude Include="OmrRecog.h">
       <Filter>识别</Filter>
     </ClInclude>
+    <ClInclude Include="ShowPapersDlg.h">
+      <Filter>查看试卷包试卷</Filter>
+    </ClInclude>
+    <ClInclude Include="BmpButton.h">
+      <Filter>查看试卷包试卷\图片查看</Filter>
+    </ClInclude>
+    <ClInclude Include="ShowPicDlg.h">
+      <Filter>查看试卷包试卷\图片查看</Filter>
+    </ClInclude>
+    <ClInclude Include="picCtrl\CV_picture.h">
+      <Filter>查看试卷包试卷\图片查看\图片显示</Filter>
+    </ClInclude>
+    <ClInclude Include="picCtrl\CvvImage.h">
+      <Filter>查看试卷包试卷\图片查看\图片显示</Filter>
+    </ClInclude>
+    <ClInclude Include="PicShow.h">
+      <Filter>查看试卷包试卷\图片查看\图片显示</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataMgrTool.cpp">
@@ -185,6 +212,24 @@
     <ClCompile Include="OmrRecog.cpp">
       <Filter>识别</Filter>
     </ClCompile>
+    <ClCompile Include="ShowPapersDlg.cpp">
+      <Filter>查看试卷包试卷</Filter>
+    </ClCompile>
+    <ClCompile Include="BmpButton.cpp">
+      <Filter>查看试卷包试卷\图片查看</Filter>
+    </ClCompile>
+    <ClCompile Include="ShowPicDlg.cpp">
+      <Filter>查看试卷包试卷\图片查看</Filter>
+    </ClCompile>
+    <ClCompile Include="picCtrl\CV_picture.cpp">
+      <Filter>查看试卷包试卷\图片查看\图片显示</Filter>
+    </ClCompile>
+    <ClCompile Include="picCtrl\CvvImage.cpp">
+      <Filter>查看试卷包试卷\图片查看\图片显示</Filter>
+    </ClCompile>
+    <ClCompile Include="PicShow.cpp">
+      <Filter>查看试卷包试卷\图片查看\图片显示</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DataMgrTool.rc">
@@ -198,6 +243,15 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\DataMgrTool.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\第1页.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\第1页hover.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="skin\第2页.bmp">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>

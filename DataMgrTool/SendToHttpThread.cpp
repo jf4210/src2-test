@@ -470,6 +470,20 @@ void CSendToHttpThread::checkTaskStatus(pSEND_HTTP_TASK pTask, int nState)
 			std::string strErr = "É¾³ýÎÄ¼þ¼Ð(" + pTask->pPapers->strPapersPath + ")Ê§°Ü: " + exc.message();
 			g_Log.LogOutError(strErr);
 		}
+
+		g_fmPapers.lock();			//ÊÍ·ÅÊÔ¾í´üÁÐ±í
+		PAPERS_LIST::iterator itPapers = g_lPapers.begin();
+		for (; itPapers != g_lPapers.end(); itPapers++)
+		{
+			pPAPERSINFO pPapersTask = *itPapers;
+			if (pPapersTask == pTask->pPapers)
+			{
+				itPapers = g_lPapers.erase(itPapers);
+				SAFE_RELEASE(pPapersTask);
+				break;
+			}
+		}
+		g_fmPapers.unlock();
 	}
 }
 

@@ -10,7 +10,7 @@
 #define new DEBUG_NEW
 #endif
 
-
+CFont					g_fontBase;
 // CDataMgrToolApp
 
 BEGIN_MESSAGE_MAP(CDataMgrToolApp, CWinApp)
@@ -69,6 +69,29 @@ BOOL CDataMgrToolApp::InitInstance()
 	// TODO:  应适当修改该字符串，
 	// 例如修改为公司或组织名
 	SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
+
+	LOGFONT logfont;
+	if (::SystemParametersInfo(SPI_GETICONTITLELOGFONT,
+							   sizeof(logfont), &logfont, 0))
+	{
+		VERIFY(g_fontBase.CreateFontIndirect(&logfont));
+	}
+	else
+	{
+		memset(&logfont, 0, sizeof(logfont));
+		logfont.lfHeight = -11;
+		logfont.lfCharSet = DEFAULT_CHARSET;
+		logfont.lfOutPrecision = OUT_DEFAULT_PRECIS;
+		logfont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+		logfont.lfQuality = DEFAULT_QUALITY;
+		logfont.lfPitchAndFamily = DEFAULT_PITCH;
+		wcscpy_s(logfont.lfFaceName, _T("System"));
+
+		if (!g_fontBase.CreateFontIndirect(&logfont))
+		{
+			ASSERT(0);
+		}
+	}
 
 	CDataMgrToolDlg dlg;
 	m_pMainWnd = &dlg;

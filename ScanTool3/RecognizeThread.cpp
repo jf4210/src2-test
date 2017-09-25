@@ -910,6 +910,31 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 		std::vector<Rect>RectCompList;
 		try
 		{
+		#if 1
+			float fModelW = pModelInfo->pModel->vecPaperModel[nPic]->nPicW;
+			float fModelH = pModelInfo->pModel->vecPaperModel[nPic]->nPicH;
+			int nRealW = matCompPic.cols;
+			int nRealH = matCompPic.rows;
+
+			cv::Rect rtTmp;
+			rtTmp.x = rc.rt.x * nRealW / fModelW;
+			rtTmp.y = rc.rt.y * nRealH / fModelH;
+			rtTmp.width = rc.rt.width * nRealW / fModelW;
+			rtTmp.height = rc.rt.height * nRealH / fModelH;
+
+			if (rtTmp.x < 0) rtTmp.x = 0;
+			if (rtTmp.y < 0) rtTmp.y = 0;
+			if (rtTmp.br().x > matCompPic.cols)
+			{
+				rtTmp.width = matCompPic.cols - rtTmp.x;
+			}
+			if (rtTmp.br().y > matCompPic.rows)
+			{
+				rtTmp.height = matCompPic.rows - rtTmp.y;
+			}
+			cv::Mat matCompRoi;
+			matCompRoi = matCompPic(rtTmp);
+		#else
 			if (rc.rt.x < 0) rc.rt.x = 0;
 			if (rc.rt.y < 0) rc.rt.y = 0;
 			if (rc.rt.br().x > matCompPic.cols)
@@ -920,9 +945,9 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			{
 				rc.rt.height = matCompPic.rows - rc.rt.y;
 			}
-
-			Mat matCompRoi;
+			cv::Mat matCompRoi;
 			matCompRoi = matCompPic(rc.rt);
+		#endif
 
 			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
@@ -1865,6 +1890,7 @@ bool CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 	}
 	if (!bResult)
 	{
+		(static_cast<pST_PaperInfo>(pPic->pPaper))->bRecogCourse = false;
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别科目失败, 图片名: %s\n", pPic->strPicName.c_str());
 		strLog.append(szLog);
