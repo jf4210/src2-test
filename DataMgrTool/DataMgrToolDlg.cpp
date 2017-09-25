@@ -969,6 +969,39 @@ LRESULT CDataMgrToolDlg::MsgRecogComplete(WPARAM wParam, LPARAM lParam)
 	else
 		strMsg.Format(_T("\r\n****************\r\n%s识别出问题试卷, 问题卷数量=%d\r\n"), A2T(pPapers->strPapersName.c_str()), pPapers->lIssue.size());
 	showMsg(strMsg);
+
+	if (pPapers->nSendEzs == 3)
+	{
+		showPapers(pPapers);
+
+		//删除源文件夹
+		try
+		{
+			Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
+			if (srcFileDir.exists())
+				srcFileDir.remove(true);
+		}
+		catch (Poco::Exception& exc)
+		{
+			std::string strErr = "删除文件夹(" + pPapers->strPapersPath + ")失败: " + exc.message();
+			g_Log.LogOutError(strErr);
+		}
+
+// 		g_fmPapers.lock();			//释放试卷袋列表
+// 		PAPERS_LIST::iterator itPapers = g_lPapers.begin();
+// 		for (; itPapers != g_lPapers.end(); itPapers++)
+// 		{
+// 			pPAPERSINFO pPapersTask = *itPapers;
+// 			if (pPapersTask == pPapers)
+// 			{
+// 				itPapers = g_lPapers.erase(itPapers);
+// 				SAFE_RELEASE(pPapersTask);
+// 				break;
+// 			}
+// 		}
+// 		g_fmPapers.unlock();
+	}
+
 	return TRUE;
 }
 
@@ -1419,5 +1452,5 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpapers()
 	g_lDecompressTask.push_back(pDecompressTask1);
 	g_fmDecompressLock.unlock();
 
-	
+	g_nRecogChkRotation = 1;	//识别时检测方向
 }

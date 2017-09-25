@@ -290,7 +290,7 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	bool	bRecogOmr;			//直接发送识别结果时，是否发送OMR
 	bool	bRecogZkzh;			//直接发送识别结果时，是否发送准考证号
 	bool	bRecogElectOmr;		//直接发送识别结果时，是否发送选做题
-	int		nSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩	//0-使用压缩包方式，1-直接发送结果给ezs，2-不发送结果也不压缩试卷包，测试模式，看识别率
+	int		nSendEzs;			//是否在识别完成时直接发送给EZS，不进行压缩	//0-使用压缩包方式，1-直接发送结果给ezs，2-不发送结果也不压缩试卷包，测试模式，看识别率, 3-识别完这袋试卷后，显示识别结果窗口，不压缩不发送(测试模式)
 
 	int		nPaperCount;				//试卷袋中试卷总数量(学生数)
 	int		nRecogErrCount;				//识别错误试卷数量

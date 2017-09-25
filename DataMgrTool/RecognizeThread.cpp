@@ -476,7 +476,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		calcStatistics(pPapers);
 
 		(static_cast<CDialog*>(pPaper->pSrcDlg))->SendMessage(MSG_RECOG_COMPLETE, (WPARAM)pPaper, (LPARAM)pPapers);		//PostMessageW
-
+		
 // 		USES_CONVERSION;
 // 		CString strMsg;
 // 		if (pPapers->lIssue.size() == 0)
@@ -531,6 +531,10 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 				}
 			}
 			g_fmPapers.unlock();
+			return;
+		}
+		else if (pPapers->nSendEzs == 3)	//在主窗口显示试卷袋
+		{
 			return;
 		}
 

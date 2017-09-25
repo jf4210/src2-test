@@ -434,13 +434,26 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	{
 		//读取试卷袋文件夹里面的文件获取试卷袋信息
 		std::string strPapersFilePath = strOutDir + "\\papersInfo.dat";
-		bool bResult_Data = GetFileData2(CMyCodeConvert::Utf8ToGb2312(strPapersFilePath), pPapers);
+		bool bResult_Data = GetFileData(CMyCodeConvert::Utf8ToGb2312(strPapersFilePath), pPapers);
 
 		CString strMsg;
 		strMsg.Format(_T("解压%s:%s完成\r\n"), A2T(pTask->strFileBaseName.c_str()), A2T(pTask->strDecompressPaperFile.c_str()));
 		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
 
-		((CDataMgrToolDlg*)m_pDlg)->showPapers(pPapers);
+		pPapers->bRecogOmr = pTask->bRecogOmr;
+		pPapers->bRecogZkzh = pTask->bRecogZkzh;
+		pPapers->bRecogElectOmr = pTask->bRecogElectOmr;
+		pPapers->nSendEzs = 3;
+
+		//添加到识别任务列表
+		PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
+		for (; itPaper != pPapers->lPaper.end(); itPaper++)
+		{
+			pRECOGTASK pTask = new RECOGTASK;
+			pTask->pPaper = *itPaper;
+			g_lRecogTask.push_back(pTask);
+		}
+//		((CDataMgrToolDlg*)m_pDlg)->showPapers(pPapers);
 	}
 	else if (pTask->nTaskType == 7)
 	{
@@ -681,6 +694,16 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 
 					pPaper->lSnResult.push_back(pSnItem);
 				}
+				
+				int* pOmrCountArry = NULL;
+				if (_pModel_)
+				{
+					pOmrCountArry = new int[_pModel_->vecPaperModel.size()];
+					memset(pOmrCountArry, 0, _pModel_->vecPaperModel.size() * sizeof(int));
+					for (int i = 0; i < _pModel_->vecPaperModel.size(); i++)
+						pOmrCountArry[i] = _pModel_->vecPaperModel[i]->lOMR2.size();	//每页图片上有多少OMR题
+				}
+				int nOmrRectInfoCount = 0;
 
 				Poco::JSON::Array::Ptr jsnOmrArry = jsnPaperObj->getArray("omr");
 				for (int k = 0; k < jsnOmrArry->size(); k++)
@@ -696,6 +719,17 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 						omrResult.strRecogVal3 = jsnOmrObj->get("value3").convert<std::string>();
 					omrResult.nDoubt = jsnOmrObj->get("doubt").convert<int>();
 
+					//将OMR放入对应的页面信息中
+					nOmrRectInfoCount++;
+					int nPicOmrCount = 0;
+					PIC_LIST::iterator  itPic = pPaper->lPic.begin();
+					for (int m = 0; m < _pModel_->vecPaperModel.size(); m++, itPic++)
+					{
+						nPicOmrCount += pOmrCountArry[m];
+						if (nOmrRectInfoCount <= nPicOmrCount)
+							break;
+					}
+
 					Poco::JSON::Array::Ptr jsnPositionArry = jsnOmrObj->getArray("position");
 					for (int j = 0; j < jsnPositionArry->size(); j++)
 					{
@@ -708,10 +742,13 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 						rc.rt.width = jsnRectInfoObj->get("w").convert<int>();
 						rc.rt.height = jsnRectInfoObj->get("h").convert<int>();
 						omrResult.lSelAnswer.push_back(rc);
+
+						if (_pModel_) (*itPic)->lNormalRect.push_back(rc);
 					}
 
 					pPaper->lOmrResult.push_back(omrResult);
 				}
+				SAFE_RELEASE_ARRY(pOmrCountArry);
 
 				if (jsnPaperObj->has("electOmr"))
 				{
