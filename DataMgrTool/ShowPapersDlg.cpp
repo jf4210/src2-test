@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CShowPapersDlg, CDialog)
 
 CShowPapersDlg::CShowPapersDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(IDD_SHOWPAPERSDLG, pParent)
-	,m_pShowPicDlg(NULL), m_pPapers(NULL)
+	,m_pShowPicDlg(NULL), m_pPapers(NULL), m_nCurrItemPaperList(-1)
 {
 
 }
@@ -36,6 +36,7 @@ BEGIN_MESSAGE_MAP(CShowPapersDlg, CDialog)
 	ON_COMMAND(ID_LeftRotate, &CShowPapersDlg::LeftRotate)
 	ON_COMMAND(ID_RightRotate, &CShowPapersDlg::RightRotate)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_Papers, &CShowPapersDlg::OnNMDblclkListPapers)
+	ON_NOTIFY(LVN_KEYDOWN, IDC_LIST_Papers, &CShowPapersDlg::OnLvnKeydownListPapers)
 END_MESSAGE_MAP()
 
 
@@ -146,6 +147,12 @@ void CShowPapersDlg::ShowPapers(pPAPERSINFO pPapers)
 
 		m_listPaper.SetItemData(nCount, (DWORD_PTR)pPaper);
 	}
+	if (m_listPaper.GetItemCount() > 0)
+	{
+		m_nCurrItemPaperList = 0;
+		pST_PaperInfo pPaper = (pST_PaperInfo)m_listPaper.GetItemData(m_nCurrItemPaperList);
+		m_pShowPicDlg->setShowPaper(pPaper);
+	}
 }
 
 void CShowPapersDlg::ShowPaper(pST_PaperInfo pPaper)
@@ -186,7 +193,33 @@ void CShowPapersDlg::OnNMDblclkListPapers(NMHDR *pNMHDR, LRESULT *pResult)
 	if (pNMItemActivate->iItem < 0)
 		return;
 
+	m_nCurrItemPaperList = pNMItemActivate->iItem;
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_listPaper.GetItemData(pNMItemActivate->iItem);
-	m_pShowPicDlg->ShowWindow(SW_SHOW);
 	m_pShowPicDlg->setShowPaper(pPaper);
+}
+
+
+void CShowPapersDlg::OnLvnKeydownListPapers(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMLVKEYDOWN pLVKeyDow = reinterpret_cast<LPNMLVKEYDOWN>(pNMHDR);
+	*pResult = 0;
+
+	if (pLVKeyDow->wVKey == VK_UP)
+	{
+		m_nCurrItemPaperList--;
+		if (m_nCurrItemPaperList <= 0)
+			m_nCurrItemPaperList = 0;
+
+		pST_PaperInfo pPaper = (pST_PaperInfo)m_listPaper.GetItemData(m_nCurrItemPaperList);
+		m_pShowPicDlg->setShowPaper(pPaper);
+	}
+	else if (pLVKeyDow->wVKey == VK_DOWN)
+	{
+		m_nCurrItemPaperList++;
+		if (m_nCurrItemPaperList >= m_listPaper.GetItemCount() - 1)
+			m_nCurrItemPaperList = m_listPaper.GetItemCount() - 1;
+
+		pST_PaperInfo pPaper = (pST_PaperInfo)m_listPaper.GetItemData(m_nCurrItemPaperList);
+		m_pShowPicDlg->setShowPaper(pPaper);
+	}
 }

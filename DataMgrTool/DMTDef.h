@@ -43,7 +43,7 @@
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION	_T("1.70923-1")
+#define SOFT_VERSION	_T("1.70926-1")
 #define SYS_BASE_NAME	_T("YKLX-DMT")
 //#define WH_CCBKS		//武汉楚才杯专用，解析二维码需要json解析
 
@@ -56,6 +56,8 @@ extern int	g_nExitFlag;
 extern CString				g_strCurrentPath;
 extern int					g_nRecogMode;		//识别模式，0-严格模式，1-简单模式
 extern int					g_nRecogChkRotation;	//识别图像时检测并调整图像方向
+extern int					g_nRecogEasyModel;	//识别结果宽容模式(3选2且非空)，第2种识别方法准确度不高
+extern int					g_nRecogWithShowPkg;	//在重新识别试卷袋后显示此试卷袋信息
 
 extern std::string _strEncryptPwd_;
 extern pMODEL _pModel_;
@@ -198,6 +200,7 @@ typedef struct _PicInfo_				//图片信息
 {
 	bool			bRecoged;		//是否已经识别过
 	bool			bFindIssue;		//是否找到问题点
+	int				nRecogRotation;	//识别过程中判断需要调整的方向，1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
 	void*			pPaper;			//所属试卷的信息
 	cv::Rect		rtFix;			//定点矩形
 	std::string		strPicName;		//图片名称
@@ -213,12 +216,23 @@ typedef struct _PicInfo_				//图片信息
 	CHARACTER_ANCHOR_AREA_LIST lCharacterAnchorArea;	//文字定位区域
 	_PicInfo_()
 	{
+		nRecogRotation = 0;
 		bRecoged = false;
 		bFindIssue = false;
 		pPaper = NULL;
 		//		ptFix = cv::Point(0, 0);
 		//		ptModelFix = cv::Point(0, 0);
 		//		bImgOpen = false;
+	}
+	~_PicInfo_()
+	{
+		CHARACTER_ANCHOR_AREA_LIST::iterator itCharAnchorArea = lCharacterAnchorArea.begin();
+		for (; itCharAnchorArea != lCharacterAnchorArea.end();)
+		{
+			pST_CHARACTER_ANCHOR_AREA pCharAnchorArea = *itCharAnchorArea;
+			itCharAnchorArea = lCharacterAnchorArea.erase(itCharAnchorArea);
+			SAFE_RELEASE(pCharAnchorArea);
+		}
 	}
 }ST_PicInfo, *pST_PicInfo;
 typedef std::list<pST_PicInfo> PIC_LIST;	//图片列表定义

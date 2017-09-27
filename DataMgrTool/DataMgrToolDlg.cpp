@@ -43,6 +43,8 @@ LIST_SEND_HTTP			g_lHttpSend;			//发送HTTP任务列表
 std::string		g_strUploadUri;		//识别结果提交的uri地址
 int				g_nRecogMode = 1;		//识别模式，0-严格模式，1-简单模式
 int				g_nRecogChkRotation = 0;	//识别图像时检测并调整图像方向
+int				g_nRecogEasyModel = 0;	//识别结果宽容模式(3选2且非空)，第2种识别方法准确度不高
+int				g_nRecogWithShowPkg = 0;	//在重新识别试卷袋后显示此试卷袋信息
 
 CLog g_Log;
 int	g_nExitFlag;
@@ -848,6 +850,7 @@ void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
 		pDecompressTask->nNoNeedRecogVal = dlg.m_nNoRecogVal;	//....
 		g_nRecogMode = dlg.m_nRecogMode;
 		g_nRecogChkRotation = dlg.m_nRecogChkRotation;
+		g_nRecogEasyModel = dlg.m_nRecogEasyModel;
 
 		_fmDecompress_.lock();
 		_nDecompress_++;
@@ -1453,4 +1456,10 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpapers()
 	g_fmDecompressLock.unlock();
 
 	g_nRecogChkRotation = 1;	//识别时检测方向
+	if (((CButton*)GetDlgItem(IDC_CHK_NeedRecogPkg))->GetCheck())
+		g_nRecogWithShowPkg = 1;
+	else
+		g_nRecogWithShowPkg = 0;
+//	g_nRecogEasyModel = 1;
+
 }

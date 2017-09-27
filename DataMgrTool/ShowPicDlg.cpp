@@ -353,6 +353,41 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		Mat matImg = matSrc;
 #endif
 
+		if ((*itPic)->nRecogRotation != 0)
+		{
+			switch ((*itPic)->nRecogRotation)
+			{
+				case 1:	break;
+				case 2:
+					{
+						cv::Mat dst;
+						transpose(matImg, dst);	//×óÐý90£¬¾µÏñ 
+						flip(dst, matImg, 0);		//×óÐý90£¬Ä£°åÍ¼ÏñÐèÒªÓÒÐý90£¬Ô­Í¼¼´ÐèÒª×óÐý90
+					}
+					break;
+				case 3:
+					{
+						cv::Mat dst;
+						transpose(matImg, dst);	//×óÐý90£¬¾µÏñ 
+						flip(dst, matImg, 1);		//ÓÒÐý90£¬Ä£°åÍ¼ÏñÐèÒª×óÐý90£¬Ô­Í¼¼´ÐèÒªÓÒÐý90
+					}
+					break;
+				case 4:
+					{
+						cv::Mat dst;
+						transpose(matImg, dst);	//×óÐý90£¬¾µÏñ 
+						cv::Mat dst2;
+						flip(dst, dst2, 1);
+						cv::Mat dst5;
+						transpose(dst2, dst5);
+						flip(dst5, matImg, 1);	//ÓÒÐý180
+					}
+					break;
+				default:
+					break;
+			}
+		}
+
 #ifdef WarpAffine_TEST
 		cv::Mat	inverseMat(2, 3, CV_32FC1);
 		if (pPaper->pModel)

@@ -39,8 +39,10 @@ void CRecogParamSetDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_CharacterConfidence, m_nCharacterConfidence);
 	DDX_Text(pDX, IDC_EDIT_Threshold_Fix, m_nCurrentFixThreshold);
 	DDX_Text(pDX, IDC_EDIT_Threshold_Gray, m_nCurrentGrayThreshold);
+	DDX_Text(pDX, IDC_EDIT_Threshold_QkWj, m_nThresholdQkWj);
 	DDX_Text(pDX, IDC_EDIT_Persent_Fix, m_nPersentFix);
 	DDX_Text(pDX, IDC_EDIT_Persent_Gray, m_nPersentGray);
+	DDX_Text(pDX, IDC_EDIT_Persent_QkWj, m_nPersentQkWj);
 	DDX_Text(pDX, IDC_EDIT_Persent_ZKZH, m_nPersentZkzh);
 	DDX_Text(pDX, IDC_EDIT_Persent_OMR, m_nPersentOmr);
 }
@@ -91,19 +93,23 @@ void CRecogParamSetDlg::InitData(AdvanceParam& stParam)
 
 	m_nCurrentFixThreshold = stParam.nCurrentFixThreshold;
 	m_nCurrentGrayThreshold = stParam.nCurrentGrayThreshold;
+	m_nThresholdQkWj	= stParam.nCurrentQkWjThreshold;
 	m_nThresholdZkzh	= stParam.nCurrentZkzhThreshold;
 	m_nThresholdOmr		= stParam.nCurrentOmrThreshold;
 	m_nDefFixThreshold	= stParam.nDefFixThreshold;
 	m_nDefGrayThreshold = stParam.nDefGrayThreshold;
+	m_nDefThresholdQkWj = stParam.nDefQkWjThreshold;
 	m_nDefThresholdZkzh = stParam.nDefZkzhThreshold;
 	m_nDefThresholdOmr	= stParam.nDefOmrThreshold;
 
 	m_nPersentFix	= stParam.nPersentFix;
 	m_nPersentGray	= stParam.nPersentGray;
+	m_nPersentQkWj	= stParam.nPersentQkWj;
 	m_nPersentZkzh	= stParam.nPersentZkzh;
 	m_nPersentOmr	= stParam.nPersentOmr;
 	m_nDefPersentFix	= stParam.nDefPersentFix;
 	m_nDefPersentGray	= stParam.nDefPersentGray;
+	m_nDefPersentQkWj	= stParam.nDefPersentQkWj;
 	m_nDefPersentZkzh	= stParam.nDefPersentZkzh;
 	m_nDefPersentOmr	= stParam.nDefPersentOmr;
 
@@ -119,6 +125,27 @@ void CRecogParamSetDlg::InitData(AdvanceParam& stParam)
 BOOL CRecogParamSetDlg::SaveParamData(AdvanceParam& stParam)
 {
 	UpdateData(TRUE);
+	if (m_nCurrentFixThreshold > 255 || m_nCurrentFixThreshold < 0)
+	{
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "定点的识别阀值设置非法!");
+		dlg.DoModal();
+		return FALSE;
+	}
+	if (m_nCurrentGrayThreshold > 255 || m_nCurrentGrayThreshold < 0)
+	{
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "校验点的识别阀值设置非法!");
+		dlg.DoModal();
+		return FALSE;
+	}
+	if (m_nThresholdQkWj > 255 || m_nThresholdQkWj < 0)
+	{
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "缺考/违纪的识别阀值设置非法!");
+		dlg.DoModal();
+		return FALSE;
+	}
 	if (m_nThresholdZkzh > 255 || m_nThresholdZkzh < 0)
 	{
 		CNewMessageBox dlg;
@@ -146,11 +173,13 @@ BOOL CRecogParamSetDlg::SaveParamData(AdvanceParam& stParam)
 	
 	stParam.nCurrentFixThreshold	= m_nCurrentFixThreshold;
 	stParam.nCurrentGrayThreshold	= m_nCurrentGrayThreshold;
+	stParam.nCurrentQkWjThreshold	= m_nThresholdQkWj;
 	stParam.nCurrentZkzhThreshold	= m_nThresholdZkzh;
 	stParam.nCurrentOmrThreshold	= m_nThresholdOmr;
 
 	stParam.nPersentFix		= m_nPersentFix;
 	stParam.nPersentGray	= m_nPersentGray;
+	stParam.nPersentQkWj	= m_nPersentQkWj;
 	stParam.nPersentZkzh	= m_nPersentZkzh;
 	stParam.nPersentOmr		= m_nPersentOmr;
 

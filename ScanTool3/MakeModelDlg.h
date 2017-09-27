@@ -130,6 +130,7 @@ public:
 
 	float m_fDefPersentFix;
 	float m_fDefPersentGray;
+	float m_fDefPersentQkWj;
 	float m_fDefPersentSN;		//(定点模式)
 	float m_fDefPersentOmr;
 

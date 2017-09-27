@@ -13,37 +13,43 @@ public:
 		nCurrentOmrSensitivity = 5;
 		nDefZkzhSensitivity = 2;
 		nDefOmrSensitivity = 5;
+		nDefFixThreshold = 150;
+		nDefGrayThreshold = 150;
+		nDefQkWjThreshold = 150;
 		nDefZkzhThreshold = 180;
 		nDefOmrThreshold = 180;
 		nDefCharacterConfidence = 60;
-		nDefFixThreshold = 150;
-		nDefGrayThreshold = 150;
 		nDefPersentFix = 80;
 		nDefPersentGray = 70;
+		nDefPersentQkWj = 70;
 		nDefPersentZkzh = 100;
 		nDefPersentOmr = 100;
 	}
 public:
 	int nCurrentZkzhSensitivity;
 	int nCurrentOmrSensitivity;
-
-	int nCurrentZkzhThreshold;
-	int nCurrentOmrThreshold;
 	int nDefZkzhSensitivity;
 	int nDefOmrSensitivity;
-	int nDefZkzhThreshold;
-	int nDefOmrThreshold;
+
 	int nCurrentFixThreshold;
 	int nCurrentGrayThreshold;
+	int nCurrentQkWjThreshold;
+	int nCurrentZkzhThreshold;
+	int nCurrentOmrThreshold;
 	int nDefFixThreshold;
 	int nDefGrayThreshold;
+	int nDefQkWjThreshold;
+	int nDefZkzhThreshold;
+	int nDefOmrThreshold;
 
 	int nPersentFix;
 	int nPersentGray;
+	int nPersentQkWj;
 	int nPersentZkzh;
 	int nPersentOmr;
 	int nDefPersentFix;
 	int nDefPersentGray;
+	int nDefPersentQkWj;
 	int nDefPersentZkzh;
 	int nDefPersentOmr;
 

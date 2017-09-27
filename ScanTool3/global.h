@@ -120,9 +120,9 @@
 
 #ifndef TO_WHTY
 	#ifdef PUBLISH_VERSION
-		#define SOFT_VERSION	_T("v2.4")
+		#define SOFT_VERSION	_T("v2.5")
 	#else
-		#define SOFT_VERSION	_T("v2.4-Pir")		//-Pri
+		#define SOFT_VERSION	_T("v2.5-Pir")		//-Pri
 	#endif
 #else
 	#define SOFT_VERSION	_T("v2.1")
@@ -254,6 +254,7 @@ typedef struct _PicInfo_				//图片信息
 {
 	bool			bFindIssue;		//是否找到问题点
 	int 			nRecoged;		//是否已经识别过, 0-未识别，1-正在识别，2-识别完成
+	int				nRecogRotation;	//识别过程中判断需要调整的方向，1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
 	void*			pPaper;			//所属试卷的信息
 	cv::Rect		rtFix;			//定点矩形
 	std::string		strPicName;		//图片名称
@@ -267,6 +268,7 @@ typedef struct _PicInfo_				//图片信息
 	CHARACTER_ANCHOR_AREA_LIST lCharacterAnchorArea;	//文字定位区域
 	_PicInfo_()
 	{
+		nRecogRotation = 0;
 		nRecoged = 0;
 		bFindIssue = false;
 		pPaper = NULL;

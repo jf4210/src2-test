@@ -406,16 +406,18 @@ bool CScanProcessDlg::WriteJsonFile()
 			jsnSnItem.set("sn", (*itSn)->nItem);
 			jsnSnItem.set("val", (*itSn)->nRecogVal);
 
-			Poco::JSON::Object jsnSnPosition;
+			Poco::JSON::Array jsnSnValPosition;
 			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
 			for (; itRect != (*itSn)->lSN.end(); itRect++)
 			{
+				Poco::JSON::Object jsnSnPosition;
 				jsnSnPosition.set("x", itRect->rt.x);
 				jsnSnPosition.set("y", itRect->rt.y);
 				jsnSnPosition.set("w", itRect->rt.width);
 				jsnSnPosition.set("h", itRect->rt.height);
+				jsnSnValPosition.add(jsnSnPosition);
 			}
-			jsnSnItem.set("position", jsnSnPosition);
+			jsnSnItem.set("position", jsnSnValPosition);
 			jsnSnDetailArry.add(jsnSnItem);
 		}
 		jsnPaper.set("snDetail", jsnSnDetailArry);
@@ -481,6 +483,68 @@ bool CScanProcessDlg::WriteJsonFile()
 		}
 		if (jsnElectOmrArry.size() > 0)
 			jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
+
+		//-------------------------------------	记录定点缺考校验点等信息，在恢复查看试卷包时有用，不做其他用途
+		Poco::JSON::Array jsnPaperChkPointArry;
+		for (auto itPic : (*itNomarlPaper)->lPic)
+		{
+			Poco::JSON::Object jsnPicPoint;
+
+			Poco::JSON::Array jsnPaperFixArry;
+			RECTLIST::iterator itFix = itPic->lFix.begin();
+			for (int j = 0; itFix != itPic->lFix.end(); itFix++, j++)
+			{
+				Poco::JSON::Object jsnItem;
+				jsnItem.set("x", itFix->rt.x);
+				jsnItem.set("y", itFix->rt.y);
+				jsnItem.set("w", itFix->rt.width);
+				jsnItem.set("h", itFix->rt.height);
+				jsnPaperFixArry.add(jsnItem);
+			}
+			Poco::JSON::Array jsnPaperModelCharAncharPointArry;
+			RECTLIST::iterator itModelFix = itPic->lFix.begin();
+			for (int j = 0; itModelFix != itPic->lFix.end(); itModelFix++, j++)
+			{
+				Poco::JSON::Object jsnItem;
+				jsnItem.set("x", itModelFix->rt.x);
+				jsnItem.set("y", itModelFix->rt.y);
+				jsnItem.set("w", itModelFix->rt.width);
+				jsnItem.set("h", itModelFix->rt.height);
+				jsnPaperModelCharAncharPointArry.add(jsnItem);
+			}
+			Poco::JSON::Array jsnPaperCharAncharAreaArry;
+			CHARACTER_ANCHOR_AREA_LIST::iterator itCharAnchorArea = itPic->lCharacterAnchorArea.begin();
+			for (; itCharAnchorArea != itPic->lCharacterAnchorArea.end(); itCharAnchorArea++)
+			{
+				Poco::JSON::Object jsnItem;
+				jsnItem.set("x", (*itCharAnchorArea)->rt.x);
+				jsnItem.set("y", (*itCharAnchorArea)->rt.y);
+				jsnItem.set("w", (*itCharAnchorArea)->rt.width);
+				jsnItem.set("h", (*itCharAnchorArea)->rt.height);
+
+				Poco::JSON::Array jsnPaperCharAncharPointArry;
+				for (int j = 0; j < (*itCharAnchorArea)->vecCharacterRt.size(); j++)	//添加文字识别区已识别到的定点
+				{
+					Poco::JSON::Object jsnItem2;
+					jsnItem2.set("x", (*itCharAnchorArea)->vecCharacterRt[j]->rc.rt.x);
+					jsnItem2.set("y", (*itCharAnchorArea)->vecCharacterRt[j]->rc.rt.y);
+					jsnItem2.set("w", (*itCharAnchorArea)->vecCharacterRt[j]->rc.rt.width);
+					jsnItem2.set("h", (*itCharAnchorArea)->vecCharacterRt[j]->rc.rt.height);
+					jsnPaperCharAncharPointArry.add(jsnItem2);
+				}
+				jsnItem.set("AP", jsnPaperCharAncharPointArry);
+
+				jsnPaperCharAncharAreaArry.add(jsnItem);
+			}
+			jsnPicPoint.set("FL", jsnPaperFixArry);	//定点列表
+			jsnPicPoint.set("MFL", jsnPaperModelCharAncharPointArry);	//模板定点列表，与上面文字定点对应的文字点
+			jsnPicPoint.set("CL", jsnPaperCharAncharAreaArry);	//文字识别区列表
+
+			jsnPaperChkPointArry.add(jsnPicPoint);
+		}
+		jsnPaper.set("ChkPoint", jsnPaperChkPointArry);
+		//-------------------------------------
+
 		jsnPaperArry.add(jsnPaper);
 	}
 
@@ -518,16 +582,18 @@ bool CScanProcessDlg::WriteJsonFile()
 				jsnSnItem.set("sn", (*itSn)->nItem);
 				jsnSnItem.set("val", (*itSn)->nRecogVal);
 
-				Poco::JSON::Object jsnSnPosition;
+				Poco::JSON::Array jsnSnValPosition;
 				RECTLIST::iterator itRect = (*itSn)->lSN.begin();
 				for (; itRect != (*itSn)->lSN.end(); itRect++)
 				{
+					Poco::JSON::Object jsnSnPosition;
 					jsnSnPosition.set("x", itRect->rt.x);
 					jsnSnPosition.set("y", itRect->rt.y);
 					jsnSnPosition.set("w", itRect->rt.width);
 					jsnSnPosition.set("h", itRect->rt.height);
+					jsnSnValPosition.add(jsnSnPosition);
 				}
-				jsnSnItem.set("position", jsnSnPosition);
+				jsnSnItem.set("position", jsnSnValPosition);
 				jsnSnDetailArry.add(jsnSnItem);
 			}
 			jsnPaper.set("snDetail", jsnSnDetailArry);
@@ -592,10 +658,72 @@ bool CScanProcessDlg::WriteJsonFile()
 				jsnElectOmrArry.add(jsnElectOmr);
 			}
 			jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
+
+			//-------------------------------------	记录定点缺考校验点等信息，在恢复查看试卷包时有用，不做其他用途
+			Poco::JSON::Array jsnPaperChkPointArry;
+			for (auto itPic : (*itIssuePaper)->lPic)
+			{
+				Poco::JSON::Object jsnPicPoint;
+
+				Poco::JSON::Array jsnPaperFixArry;
+				RECTLIST::iterator itFix = itPic->lFix.begin();
+				for (int j = 0; itFix != itPic->lFix.end(); itFix++, j++)
+				{
+					Poco::JSON::Object jsnItem;
+					jsnItem.set("x", itFix->rt.x);
+					jsnItem.set("y", itFix->rt.y);
+					jsnItem.set("w", itFix->rt.width);
+					jsnItem.set("h", itFix->rt.height);
+					jsnPaperFixArry.add(jsnItem);
+				}
+				Poco::JSON::Array jsnPaperModelCharAncharPointArry;
+				RECTLIST::iterator itModelFix = itPic->lFix.begin();
+				for (int j = 0; itModelFix != itPic->lFix.end(); itModelFix++, j++)
+				{
+					Poco::JSON::Object jsnItem;
+					jsnItem.set("x", itModelFix->rt.x);
+					jsnItem.set("y", itModelFix->rt.y);
+					jsnItem.set("w", itModelFix->rt.width);
+					jsnItem.set("h", itModelFix->rt.height);
+					jsnPaperModelCharAncharPointArry.add(jsnItem);
+				}
+				Poco::JSON::Array jsnPaperCharAncharAreaArry;
+				CHARACTER_ANCHOR_AREA_LIST::iterator itCharAnchorArea = itPic->lCharacterAnchorArea.begin();
+				for (; itCharAnchorArea != itPic->lCharacterAnchorArea.end(); itCharAnchorArea++)
+				{
+					Poco::JSON::Object jsnItem;
+					jsnItem.set("x", (*itCharAnchorArea)->rt.x);
+					jsnItem.set("y", (*itCharAnchorArea)->rt.y);
+					jsnItem.set("w", (*itCharAnchorArea)->rt.width);
+					jsnItem.set("h", (*itCharAnchorArea)->rt.height);
+
+					Poco::JSON::Array jsnPaperCharAncharPointArry;
+					for (int j = 0; j < (*itCharAnchorArea)->vecCharacterRt.size(); j++)	//添加文字识别区已识别到的定点
+					{
+						Poco::JSON::Object jsnItem2;
+						jsnItem2.set("x", (*itCharAnchorArea)->vecCharacterRt[j]->rc.rt.x);
+						jsnItem2.set("y", (*itCharAnchorArea)->vecCharacterRt[j]->rc.rt.y);
+						jsnItem2.set("w", (*itCharAnchorArea)->vecCharacterRt[j]->rc.rt.width);
+						jsnItem2.set("h", (*itCharAnchorArea)->vecCharacterRt[j]->rc.rt.height);
+						jsnPaperCharAncharPointArry.add(jsnItem2);
+					}
+					jsnItem.set("AP", jsnPaperCharAncharPointArry);
+
+					jsnPaperCharAncharAreaArry.add(jsnItem);
+				}
+				jsnPicPoint.set("FL", jsnPaperFixArry);	//定点列表
+				jsnPicPoint.set("MFL", jsnPaperModelCharAncharPointArry);	//模板定点列表，与上面文字定点对应的文字点
+				jsnPicPoint.set("CL", jsnPaperCharAncharAreaArry);	//文字识别区列表
+
+				jsnPaperChkPointArry.add(jsnPicPoint);
+			}
+			jsnPaper.set("ChkPoint", jsnPaperChkPointArry);
+			//-------------------------------------
+
 			jsnPaperArry.add(jsnPaper);						//问题试卷也放入列表中
 		}
 	}
-
+	
 	//写试卷袋信息到文件
 	std::string strUploader;
 	if (_pCurrExam_->nModel == 0)

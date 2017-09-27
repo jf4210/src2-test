@@ -27,6 +27,7 @@ private:
 
 	CShowPicDlg* m_pShowPicDlg;
 
+	int			m_nCurrItemPaperList;
 	pPAPERSINFO m_pPapers;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
@@ -37,4 +38,5 @@ public:
 	afx_msg void OnDestroy();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnNMDblclkListPapers(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnLvnKeydownListPapers(NMHDR *pNMHDR, LRESULT *pResult);
 };

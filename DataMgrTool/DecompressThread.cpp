@@ -434,26 +434,34 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 	{
 		//读取试卷袋文件夹里面的文件获取试卷袋信息
 		std::string strPapersFilePath = strOutDir + "\\papersInfo.dat";
-		bool bResult_Data = GetFileData(CMyCodeConvert::Utf8ToGb2312(strPapersFilePath), pPapers);
 
 		CString strMsg;
 		strMsg.Format(_T("解压%s:%s完成\r\n"), A2T(pTask->strFileBaseName.c_str()), A2T(pTask->strDecompressPaperFile.c_str()));
 		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
 
-		pPapers->bRecogOmr = pTask->bRecogOmr;
-		pPapers->bRecogZkzh = pTask->bRecogZkzh;
-		pPapers->bRecogElectOmr = pTask->bRecogElectOmr;
-		pPapers->nSendEzs = 3;
-
-		//添加到识别任务列表
-		PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
-		for (; itPaper != pPapers->lPaper.end(); itPaper++)
+		if (g_nRecogWithShowPkg)
 		{
-			pRECOGTASK pTask = new RECOGTASK;
-			pTask->pPaper = *itPaper;
-			g_lRecogTask.push_back(pTask);
+			bool bResult_Data = GetFileData(CMyCodeConvert::Utf8ToGb2312(strPapersFilePath), pPapers);
+
+			pPapers->bRecogOmr = pTask->bRecogOmr;
+			pPapers->bRecogZkzh = pTask->bRecogZkzh;
+			pPapers->bRecogElectOmr = pTask->bRecogElectOmr;
+			pPapers->nSendEzs = 3;
+
+			//添加到识别任务列表
+			PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
+			for (; itPaper != pPapers->lPaper.end(); itPaper++)
+			{
+				pRECOGTASK pTask = new RECOGTASK;
+				pTask->pPaper = *itPaper;
+				g_lRecogTask.push_back(pTask);
+			}
 		}
-//		((CDataMgrToolDlg*)m_pDlg)->showPapers(pPapers);
+		else
+		{
+			bool bResult_Data = GetFileData2(CMyCodeConvert::Utf8ToGb2312(strPapersFilePath), pPapers);
+			((CDataMgrToolDlg*)m_pDlg)->showPapers(pPapers);
+		}
 	}
 	else if (pTask->nTaskType == 7)
 	{
@@ -678,19 +686,17 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 					pSnItem->nItem = jsnSnObj->get("sn").convert<int>();
 					pSnItem->nRecogVal = jsnSnObj->get("val").convert<int>();
 
-// 					Poco::JSON::Array::Ptr jsnPositionArry;
-// 					if(jsnSnObj->has("position"))
-// 						jsnPositionArry = jsnSnObj->getArray("position");
-// 					for (int j = 0; j < jsnPositionArry->size(); j++)
-// 					{
-// 						Poco::JSON::Object::Ptr jsnRectInfoObj = jsnPositionArry->getObject(j);
-// 						RECTINFO rc;
-// 						rc.rt.x = jsnRectInfoObj->get("x").convert<int>();
-// 						rc.rt.y = jsnRectInfoObj->get("y").convert<int>();
-// 						rc.rt.width = jsnRectInfoObj->get("w").convert<int>();
-// 						rc.rt.height = jsnRectInfoObj->get("h").convert<int>();
-// 						pSnItem->lSN.push_back(rc);
-// 					}
+					Poco::JSON::Array::Ptr jsnPositionArry = jsnSnObj->getArray("position");
+					for (int j = 0; j < jsnPositionArry->size(); j++)
+					{
+						Poco::JSON::Object::Ptr jsnRectInfoObj = jsnPositionArry->getObject(j);
+						RECTINFO rc;
+						rc.rt.x = jsnRectInfoObj->get("x").convert<int>();
+						rc.rt.y = jsnRectInfoObj->get("y").convert<int>();
+						rc.rt.width = jsnRectInfoObj->get("w").convert<int>();
+						rc.rt.height = jsnRectInfoObj->get("h").convert<int>();
+						pSnItem->lSN.push_back(rc);
+					}
 
 					pPaper->lSnResult.push_back(pSnItem);
 				}
@@ -780,6 +786,63 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 						pPaper->lElectOmrResult.push_back(electOmrResult);
 					}
 				}
+				//--------------------------------------------------
+				if (jsnPaperObj->has("ChkPoint"))
+				{
+					PIC_LIST::iterator itPic = pPaper->lPic.begin();
+
+					Poco::JSON::Array::Ptr jsnPaperFixArry = jsnPaperObj->getArray("ChkPoint");
+					for (int j = 0; j < jsnPaperFixArry->size(); j++, itPic++)
+					{
+						Poco::JSON::Object::Ptr jsnPicObj = jsnPaperFixArry->getObject(j);
+						Poco::JSON::Array::Ptr jsnPaperFixArry = jsnPicObj->getArray("FL");
+						for (int k = 0; k < jsnPaperFixArry->size(); k++)
+						{
+							Poco::JSON::Object::Ptr jsnRectInfoObj = jsnPaperFixArry->getObject(k);
+							RECTINFO rc;
+							rc.rt.x = jsnRectInfoObj->get("x").convert<int>();
+							rc.rt.y = jsnRectInfoObj->get("y").convert<int>();
+							rc.rt.width = jsnRectInfoObj->get("w").convert<int>();
+							rc.rt.height = jsnRectInfoObj->get("h").convert<int>();
+							(*itPic)->lFix.push_back(rc);
+						}
+						Poco::JSON::Array::Ptr jsnPaperModelCharAncharPointArry = jsnPicObj->getArray("MFL");
+						for (int k = 0; k < jsnPaperModelCharAncharPointArry->size(); k++)
+						{
+							Poco::JSON::Object::Ptr jsnRectInfoObj = jsnPaperModelCharAncharPointArry->getObject(k);
+							RECTINFO rc;
+							rc.rt.x = jsnRectInfoObj->get("x").convert<int>();
+							rc.rt.y = jsnRectInfoObj->get("y").convert<int>();
+							rc.rt.width = jsnRectInfoObj->get("w").convert<int>();
+							rc.rt.height = jsnRectInfoObj->get("h").convert<int>();
+							(*itPic)->lModelFix.push_back(rc);
+						}
+						Poco::JSON::Array::Ptr jsnPaperCharAncharAreaArry = jsnPicObj->getArray("CL");
+						for (int k = 0; k < jsnPaperCharAncharAreaArry->size(); k++)
+						{
+							Poco::JSON::Object::Ptr jsnRectInfoObj = jsnPaperCharAncharAreaArry->getObject(k);
+							pST_CHARACTER_ANCHOR_AREA pCharacterAnchorArea = new ST_CHARACTER_ANCHOR_AREA();
+							pCharacterAnchorArea->rt.x = jsnRectInfoObj->get("x").convert<int>();
+							pCharacterAnchorArea->rt.y = jsnRectInfoObj->get("y").convert<int>();
+							pCharacterAnchorArea->rt.width = jsnRectInfoObj->get("w").convert<int>();
+							pCharacterAnchorArea->rt.height = jsnRectInfoObj->get("h").convert<int>();
+							(*itPic)->lCharacterAnchorArea.push_back(pCharacterAnchorArea);
+
+							Poco::JSON::Array::Ptr jsnPaperCharAncharPointArry = jsnRectInfoObj->getArray("AP");
+							for (int m = 0; m < jsnPaperCharAncharPointArry->size(); m++)
+							{
+								Poco::JSON::Object::Ptr jsnRectInfoObj2 = jsnPaperCharAncharPointArry->getObject(m);
+								pST_CHARACTER_ANCHOR_POINT pCharactAnchorPoint = new ST_CHARACTER_ANCHOR_POINT();
+								pCharactAnchorPoint->rc.rt.x = jsnRectInfoObj2->get("x").convert<int>();
+								pCharactAnchorPoint->rc.rt.y = jsnRectInfoObj2->get("y").convert<int>();
+								pCharactAnchorPoint->rc.rt.width = jsnRectInfoObj2->get("w").convert<int>();
+								pCharactAnchorPoint->rc.rt.height = jsnRectInfoObj2->get("h").convert<int>();
+								pCharacterAnchorArea->vecCharacterRt.push_back(pCharactAnchorPoint);
+							}
+						}
+					}
+				}
+				//--------------------------------------------------
 			}
 			else
 			{

@@ -396,7 +396,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			float fGrayThresholdGray = fDensityMeanPer2  - vecOmrItemDensityDiff[i].fDiff;
 			float fGrayMean1 = vecItemsDensityDesc[i]->fRealValuePercent - fDensityMeanPer;
 			float fGrayMean12 = -(vecItemsDensityDesc[i + 1]->fRealValuePercent - fDensityMeanPer);
-			sprintf_s(szTmp, "%s:%.5f ", vecOmrItemDensityDiff[i].szVal, _dDiffThread_Fix_ + fGrayThresholdGray * 0.5 + fDensityThreshold2);	//_dDiffThread_Fix_ + fGrayThresholdGray + fDensityThreshold2
+			sprintf_s(szTmp, "%s:%.5f ", vecOmrItemDensityDiff[i].szVal, _dDiffThread_Fix_ + vecOmrItemDensityDiff[i].fDiff * 0.5 + fGrayThresholdGray * 0.5 + fDensityThreshold2);	//_dDiffThread_Fix_ + fGrayThresholdGray + fDensityThreshold2
 			strItemLog.append(szTmp);
 
 			fDensityThreshold2 += (_dDiffThread_Fix_ + vecOmrItemDensityDiff[i].fDiff * 0.5 + fGrayThresholdGray * 0.5 + fDensityThreshold2) / 2;	//_dDiffThread_Fix_ + fGrayThresholdGray + fDensityThreshold2
@@ -749,6 +749,7 @@ bool CRecognizeThread::ChkPicRotation(int nPic, cv::Mat& matCompPic, pST_PicInfo
 		case 3: strDirection = "×óÐý90(Ä£°åÍ¼ÏñÐý×ª)"; break;
 		case 4: strDirection = "ÓÒÐý180"; break;
 	}
+	pPic->nRecogRotation = nResult;
 	std::string strLog = "Í¼Æ¬" + pPic->strPicName + "·½ÏòÅÐ¶Ï½á¹û£º" + strDirection;
 	g_Log.LogOut(strLog);
 
@@ -2379,7 +2380,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			}
 			else
 			{
-				if (strRecogAnswer1 == strRecogAnswer2 || strRecogAnswer1 == strRecogAnswer3)
+				if (strRecogAnswer1 == strRecogAnswer2 || strRecogAnswer1 == strRecogAnswer3 || (g_nRecogEasyModel && strRecogAnswer2 == strRecogAnswer3 && strRecogAnswer3 != "")) //strRecogAnswer1 == strRecogAnswer2 || strRecogAnswer1 == strRecogAnswer3 
 				{
 					strRecogAnswer = strRecogAnswer1;
 					nDoubt = 0;

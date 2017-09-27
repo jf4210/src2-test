@@ -7468,6 +7468,7 @@ void CMakeModelDlg::InitParam()
 
 		m_fDefPersentFix = m_fFixThresholdPercent;
 		m_fDefPersentGray = m_fGrayThresholdPercent;
+		m_fDefPersentQkWj = m_fQK_CPThresholdPercent_Fix;
 		m_fDefPersentSN = m_fSNThresholdPercent_Fix;
 		m_fDefPersentOmr = m_fOMRThresholdPercent_Fix;
 
@@ -7801,6 +7802,7 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	
 	stAdvanceParam.nCurrentFixThreshold = m_nFixVal;
 	stAdvanceParam.nCurrentGrayThreshold = m_nGrayVal;
+	stAdvanceParam.nCurrentQkWjThreshold = m_nQK_CPVal;
 	stAdvanceParam.nCurrentZkzhThreshold = m_nSN;
 	stAdvanceParam.nCurrentOmrThreshold = m_nOMR;
 	stAdvanceParam.nDefFixThreshold		= m_nThreshold_DefFix;
@@ -7810,10 +7812,12 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 
 	stAdvanceParam.nPersentFix	= m_fFixThresholdPercent * 100;
 	stAdvanceParam.nPersentGray = m_fGrayThresholdPercent * 100;
+	stAdvanceParam.nPersentQkWj = m_fQK_CPThresholdPercent_Fix * 100;
 	stAdvanceParam.nPersentZkzh = m_fSNThresholdPercent_Fix * 100;
 	stAdvanceParam.nPersentOmr	= m_fOMRThresholdPercent_Fix * 100;
 	stAdvanceParam.nDefPersentFix	= m_fDefPersentFix * 100;
 	stAdvanceParam.nDefPersentGray	= m_fDefPersentGray * 100;
+	stAdvanceParam.nDefPersentQkWj	= m_fDefPersentQkWj * 100;
 	stAdvanceParam.nDefPersentZkzh	= m_fDefPersentSN * 100;
 	stAdvanceParam.nDefPersentOmr	= m_fDefPersentOmr * 100;
 
@@ -7839,10 +7843,14 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	
 	m_nFixVal	= dlg._stSensitiveParam.nCurrentFixThreshold;
 	m_nGrayVal	= dlg._stSensitiveParam.nCurrentGrayThreshold;
+	m_nQK_CPVal = dlg._stSensitiveParam.nCurrentQkWjThreshold;
+	m_nWJ_CPVal = dlg._stSensitiveParam.nCurrentQkWjThreshold;
 	m_nSN	= dlg._stSensitiveParam.nCurrentZkzhThreshold;
 	m_nOMR	= dlg._stSensitiveParam.nCurrentOmrThreshold;
 	m_fFixThresholdPercent		= dlg._stSensitiveParam.nPersentFix / 100.0;
 	m_fGrayThresholdPercent		= dlg._stSensitiveParam.nPersentGray / 100.0;
+	m_fQK_CPThresholdPercent_Fix = dlg._stSensitiveParam.nPersentQkWj / 100.0;
+	m_fWJ_CPThresholdPercent_Fix = dlg._stSensitiveParam.nPersentQkWj / 100.0;
 	m_fSNThresholdPercent_Fix	= dlg._stSensitiveParam.nPersentZkzh / 100.0;
 	m_fOMRThresholdPercent_Fix	= dlg._stSensitiveParam.nPersentOmr / 100.0;
 

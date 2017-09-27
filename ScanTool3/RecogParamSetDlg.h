@@ -19,22 +19,26 @@ public:
 	CXPGroupBox		m_groupThreshold;
 	CXPGroupBox		m_groupOther;
 
+	int		m_nCurrentFixThreshold;
+	int		m_nCurrentGrayThreshold;
+	int		m_nThresholdQkWj;
 	int		m_nThresholdZkzh;
 	int		m_nThresholdOmr;
+	int		m_nDefFixThreshold;
+	int		m_nDefGrayThreshold;
+	int		m_nDefThresholdQkWj;
 	int		m_nDefThresholdZkzh;	//默认考号二值化阀值
 	int		m_nDefThresholdOmr;		//默认Omr二值化阀值
 
-	int m_nCurrentFixThreshold;
-	int m_nCurrentGrayThreshold;
-	int m_nDefFixThreshold;
-	int m_nDefGrayThreshold;
 
 	int m_nPersentFix;
 	int m_nPersentGray;
+	int m_nPersentQkWj;
 	int m_nPersentZkzh;
 	int m_nPersentOmr;
 	int m_nDefPersentFix;
 	int m_nDefPersentGray;
+	int m_nDefPersentQkWj;
 	int m_nDefPersentZkzh;
 	int m_nDefPersentOmr;
 
