@@ -47,6 +47,8 @@ public:
 
 	void	ReShowPapers();
 	void	ReInitData(pMODEL pModel);
+
+	void	SetStatusShowInfo(CString strMsg, BOOL bWarn = FALSE);	//设置状态栏显示的消息
 private:
 	void	InitUI();
 	void	InitCtrlPosition(); 
@@ -85,7 +87,6 @@ private:
 	LRESULT MsgZkzhRecog(WPARAM wParam, LPARAM lParam);		//准考证号识别完成时的通知
 
 	void	SetFontSize(int nSize);
-	void	SetStatusShowInfo(CString strMsg, BOOL bWarn = FALSE);	//设置状态栏显示的消息
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

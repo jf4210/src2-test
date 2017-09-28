@@ -406,18 +406,25 @@ bool CScanProcessDlg::WriteJsonFile()
 			jsnSnItem.set("sn", (*itSn)->nItem);
 			jsnSnItem.set("val", (*itSn)->nRecogVal);
 
+			Poco::JSON::Object jsnSnPosition;
+			jsnSnPosition.set("x", (*itSn)->rt.x);
+			jsnSnPosition.set("y", (*itSn)->rt.y);
+			jsnSnPosition.set("w", (*itSn)->rt.width);
+			jsnSnPosition.set("h", (*itSn)->rt.height);
+			jsnSnItem.set("position", jsnSnPosition);
+			
 			Poco::JSON::Array jsnSnValPosition;
 			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
 			for (; itRect != (*itSn)->lSN.end(); itRect++)
 			{
-				Poco::JSON::Object jsnSnPosition;
-				jsnSnPosition.set("x", itRect->rt.x);
-				jsnSnPosition.set("y", itRect->rt.y);
-				jsnSnPosition.set("w", itRect->rt.width);
-				jsnSnPosition.set("h", itRect->rt.height);
-				jsnSnValPosition.add(jsnSnPosition);
+				Poco::JSON::Object jsnSnPosition2;
+				jsnSnPosition2.set("x", itRect->rt.x);
+				jsnSnPosition2.set("y", itRect->rt.y);
+				jsnSnPosition2.set("w", itRect->rt.width);
+				jsnSnPosition2.set("h", itRect->rt.height);
+				jsnSnValPosition.add(jsnSnPosition2);
 			}
-			jsnSnItem.set("position", jsnSnValPosition);
+			jsnSnItem.set("Pos", jsnSnValPosition);
 			jsnSnDetailArry.add(jsnSnItem);
 		}
 		jsnPaper.set("snDetail", jsnSnDetailArry);
@@ -502,8 +509,8 @@ bool CScanProcessDlg::WriteJsonFile()
 				jsnPaperFixArry.add(jsnItem);
 			}
 			Poco::JSON::Array jsnPaperModelCharAncharPointArry;
-			RECTLIST::iterator itModelFix = itPic->lFix.begin();
-			for (int j = 0; itModelFix != itPic->lFix.end(); itModelFix++, j++)
+			RECTLIST::iterator itModelFix = itPic->lModelFix.begin();
+			for (int j = 0; itModelFix != itPic->lModelFix.end(); itModelFix++, j++)
 			{
 				Poco::JSON::Object jsnItem;
 				jsnItem.set("x", itModelFix->rt.x);
@@ -582,18 +589,25 @@ bool CScanProcessDlg::WriteJsonFile()
 				jsnSnItem.set("sn", (*itSn)->nItem);
 				jsnSnItem.set("val", (*itSn)->nRecogVal);
 
+				Poco::JSON::Object jsnSnPosition;
+				jsnSnPosition.set("x", (*itSn)->rt.x);
+				jsnSnPosition.set("y", (*itSn)->rt.y);
+				jsnSnPosition.set("w", (*itSn)->rt.width);
+				jsnSnPosition.set("h", (*itSn)->rt.height);
+				jsnSnItem.set("position", jsnSnPosition);
+
 				Poco::JSON::Array jsnSnValPosition;
 				RECTLIST::iterator itRect = (*itSn)->lSN.begin();
 				for (; itRect != (*itSn)->lSN.end(); itRect++)
 				{
-					Poco::JSON::Object jsnSnPosition;
-					jsnSnPosition.set("x", itRect->rt.x);
-					jsnSnPosition.set("y", itRect->rt.y);
-					jsnSnPosition.set("w", itRect->rt.width);
-					jsnSnPosition.set("h", itRect->rt.height);
-					jsnSnValPosition.add(jsnSnPosition);
+					Poco::JSON::Object jsnSnPosition2;
+					jsnSnPosition2.set("x", itRect->rt.x);
+					jsnSnPosition2.set("y", itRect->rt.y);
+					jsnSnPosition2.set("w", itRect->rt.width);
+					jsnSnPosition2.set("h", itRect->rt.height);
+					jsnSnValPosition.add(jsnSnPosition2);
 				}
-				jsnSnItem.set("position", jsnSnValPosition);
+				jsnSnItem.set("Pos", jsnSnValPosition);
 				jsnSnDetailArry.add(jsnSnItem);
 			}
 			jsnPaper.set("snDetail", jsnSnDetailArry);
@@ -677,8 +691,8 @@ bool CScanProcessDlg::WriteJsonFile()
 					jsnPaperFixArry.add(jsnItem);
 				}
 				Poco::JSON::Array jsnPaperModelCharAncharPointArry;
-				RECTLIST::iterator itModelFix = itPic->lFix.begin();
-				for (int j = 0; itModelFix != itPic->lFix.end(); itModelFix++, j++)
+				RECTLIST::iterator itModelFix = itPic->lModelFix.begin();
+				for (int j = 0; itModelFix != itPic->lModelFix.end(); itModelFix++, j++)
 				{
 					Poco::JSON::Object jsnItem;
 					jsnItem.set("x", itModelFix->rt.x);

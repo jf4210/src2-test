@@ -64,7 +64,7 @@ std::string calcFileMd5(std::string strPath)
 			strLog.append(strPath);
 			g_Log.LogOutError(strLog);
 			std::cout << strLog << std::endl;
-			return false;
+			return strResult;
 		}
 		Poco::StreamCopier::copyStream(istr, dos);
 		dos.close();

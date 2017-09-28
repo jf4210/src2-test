@@ -686,18 +686,26 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 					pSnItem->nItem = jsnSnObj->get("sn").convert<int>();
 					pSnItem->nRecogVal = jsnSnObj->get("val").convert<int>();
 
-					Poco::JSON::Array::Ptr jsnPositionArry = jsnSnObj->getArray("position");
-					for (int j = 0; j < jsnPositionArry->size(); j++)
-					{
-						Poco::JSON::Object::Ptr jsnRectInfoObj = jsnPositionArry->getObject(j);
-						RECTINFO rc;
-						rc.rt.x = jsnRectInfoObj->get("x").convert<int>();
-						rc.rt.y = jsnRectInfoObj->get("y").convert<int>();
-						rc.rt.width = jsnRectInfoObj->get("w").convert<int>();
-						rc.rt.height = jsnRectInfoObj->get("h").convert<int>();
-						pSnItem->lSN.push_back(rc);
-					}
+					Poco::JSON::Object::Ptr jsnSnPosition = jsnSnObj->getObject("position");
+					pSnItem->rt.x = jsnSnPosition->get("x").convert<int>();
+					pSnItem->rt.y = jsnSnPosition->get("y").convert<int>();
+					pSnItem->rt.width = jsnSnPosition->get("w").convert<int>();
+					pSnItem->rt.height = jsnSnPosition->get("h").convert<int>();
 
+					if (jsnSnObj->has("Pos"))
+					{
+						Poco::JSON::Array::Ptr jsnPositionArry = jsnSnObj->getArray("Pos");
+						for (int j = 0; j < jsnPositionArry->size(); j++)
+						{
+							Poco::JSON::Object::Ptr jsnRectInfoObj = jsnPositionArry->getObject(j);
+							RECTINFO rc;
+							rc.rt.x = jsnRectInfoObj->get("x").convert<int>();
+							rc.rt.y = jsnRectInfoObj->get("y").convert<int>();
+							rc.rt.width = jsnRectInfoObj->get("w").convert<int>();
+							rc.rt.height = jsnRectInfoObj->get("h").convert<int>();
+							pSnItem->lSN.push_back(rc);
+						}
+					}
 					pPaper->lSnResult.push_back(pSnItem);
 				}
 				

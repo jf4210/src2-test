@@ -258,48 +258,7 @@ void CExamBmkRecordDlg::ResetBmkList()
 		return;
 
 	//insert data
-#if 1
 	GetBmkSearchResult();
-#else
-	for (auto objExamStudent : itFindExam->second)
-	{
-		int nCount = m_lcBmk.GetItemCount();
-		char szCount[10] = { 0 };
-		sprintf_s(szCount, "%d", nCount + 1);
-		m_lcBmk.InsertItem(nCount, NULL);
-
-		m_lcBmk.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
-		m_lcBmk.SetItemText(nCount, 1, (LPCTSTR)A2T(objExamStudent.strZkzh.c_str()));
-		m_lcBmk.SetItemText(nCount, 2, (LPCTSTR)A2T(objExamStudent.strName.c_str()));
-
-		int nScaned = 0;
-		int unScaned = 0;
-		for (auto examSubject : objExamStudent.lSubjectScanStatus)
-		{
-			int j = 0;
-			for (auto tmpSubject : _pCurrExam_->lSubjects)
-			{
-				if (examSubject.nSubjectID == tmpSubject->nSubjID)
-				{
-					std::string strScanStatus;
-					if (examSubject.nScaned)
-					{
-						strScanStatus = "OK";
-						nScaned++;
-					}
-					else
-					{
-						strScanStatus = "未扫";
-						unScaned++;
-					}
-					m_lcBmk.SetItemText(nCount, 3 + j, (LPCTSTR)A2T(strScanStatus.c_str()));
-					break;
-				}
-				++j;
-			}
-		}
-	}
-#endif
 }
 
 void CExamBmkRecordDlg::GetBmkSearchResult()
@@ -374,6 +333,8 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 							int nCount = m_lcBmk.GetItemCount();
 							if (!bInsertItem)
 							{
+								if (nCount > 2000) break;		//只显示前2000行数据
+
 								char szCount[10] = { 0 };
 								sprintf_s(szCount, "%d", nCount + 1);
 								m_lcBmk.InsertItem(nCount, NULL);
@@ -400,6 +361,8 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 									int nCount = m_lcBmk.GetItemCount();
 									if (!bInsertItem)
 									{
+										if (nCount > 2000) break;		//只显示前2000行数据
+
 										char szCount[10] = { 0 };
 										sprintf_s(szCount, "%d", nCount + 1);
 										m_lcBmk.InsertItem(nCount, NULL);
@@ -425,6 +388,8 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 									int nCount = m_lcBmk.GetItemCount();
 									if (!bInsertItem)
 									{
+										if (nCount > 2000) break;		//只显示前2000行数据
+
 										char szCount[10] = { 0 };
 										sprintf_s(szCount, "%d", nCount + 1);
 										m_lcBmk.InsertItem(nCount, NULL);
@@ -462,6 +427,8 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 							strScanStatus = "未扫";
 						}
 						int nCount = m_lcBmk.GetItemCount();
+						if (nCount > 2000) break;		//只显示前2000行数据
+
 						char szCount[10] = { 0 };
 						sprintf_s(szCount, "%d", nCount + 1);
 						m_lcBmk.InsertItem(nCount, NULL);
@@ -482,6 +449,8 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 							{
 								strScanStatus = "已扫";
 								int nCount = m_lcBmk.GetItemCount();
+								if (nCount > 2000) break;		//只显示前2000行数据
+
 								char szCount[10] = { 0 };
 								sprintf_s(szCount, "%d", nCount + 1);
 								m_lcBmk.InsertItem(nCount, NULL);
@@ -501,6 +470,8 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 							{
 								strScanStatus = "未扫";
 								int nCount = m_lcBmk.GetItemCount();
+								if (nCount > 2000) break;		//只显示前2000行数据
+
 								char szCount[10] = { 0 };
 								sprintf_s(szCount, "%d", nCount + 1);
 								m_lcBmk.InsertItem(nCount, NULL);

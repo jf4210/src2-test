@@ -210,7 +210,7 @@ std::string CPapersMgr::AddPapersCompress(pPAPERSINFO pPapers)
 	pTask->strExtName = T2A(strExtName);	//T2A(PAPERS_EXT_NAME);
 	pTask->strSavePath = szPapersSavePath;
 	pTask->strSrcFilePath = strSrcPicDirPath;
-	pTask->pPapersInfo = _pCurrPapersInfo_;
+	pTask->pPapersInfo = pPapers;
 	g_fmCompressLock.lock();
 	g_lCompressTask.push_back(pTask);
 	g_fmCompressLock.unlock();
@@ -266,18 +266,25 @@ bool CPapersMgr::WriteJsonFile(pPAPERSINFO pPapers)
 			jsnSnItem.set("sn", (*itSn)->nItem);
 			jsnSnItem.set("val", (*itSn)->nRecogVal);
 
+			Poco::JSON::Object jsnSnPosition;
+			jsnSnPosition.set("x", (*itSn)->rt.x);
+			jsnSnPosition.set("y", (*itSn)->rt.y);
+			jsnSnPosition.set("w", (*itSn)->rt.width);
+			jsnSnPosition.set("h", (*itSn)->rt.height);
+			jsnSnItem.set("position", jsnSnPosition);
+
 			Poco::JSON::Array jsnSnValPosition;
 			RECTLIST::iterator itRect = (*itSn)->lSN.begin();
 			for (; itRect != (*itSn)->lSN.end(); itRect++)
 			{
-				Poco::JSON::Object jsnSnPosition;
-				jsnSnPosition.set("x", itRect->rt.x);
-				jsnSnPosition.set("y", itRect->rt.y);
-				jsnSnPosition.set("w", itRect->rt.width);
-				jsnSnPosition.set("h", itRect->rt.height);
-				jsnSnValPosition.add(jsnSnPosition);
+				Poco::JSON::Object jsnSnPosition2;
+				jsnSnPosition2.set("x", itRect->rt.x);
+				jsnSnPosition2.set("y", itRect->rt.y);
+				jsnSnPosition2.set("w", itRect->rt.width);
+				jsnSnPosition2.set("h", itRect->rt.height);
+				jsnSnValPosition.add(jsnSnPosition2);
 			}
-			jsnSnItem.set("position", jsnSnValPosition);
+			jsnSnItem.set("Pos", jsnSnValPosition);
 			jsnSnDetailArry.add(jsnSnItem);
 		}
 		jsnPaper.set("snDetail", jsnSnDetailArry);
@@ -344,7 +351,7 @@ bool CPapersMgr::WriteJsonFile(pPAPERSINFO pPapers)
 		if (jsnElectOmrArry.size() > 0)
 			jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
 
-															//-------------------------------------	记录定点缺考校验点等信息，在恢复查看试卷包时有用，不做其他用途
+		//-------------------------------------	记录定点缺考校验点等信息，在恢复查看试卷包时有用，不做其他用途
 		Poco::JSON::Array jsnPaperChkPointArry;
 		for (auto itPic : (*itNomarlPaper)->lPic)
 		{
@@ -362,8 +369,8 @@ bool CPapersMgr::WriteJsonFile(pPAPERSINFO pPapers)
 				jsnPaperFixArry.add(jsnItem);
 			}
 			Poco::JSON::Array jsnPaperModelCharAncharPointArry;
-			RECTLIST::iterator itModelFix = itPic->lFix.begin();
-			for (int j = 0; itModelFix != itPic->lFix.end(); itModelFix++, j++)
+			RECTLIST::iterator itModelFix = itPic->lModelFix.begin();
+			for (int j = 0; itModelFix != itPic->lModelFix.end(); itModelFix++, j++)
 			{
 				Poco::JSON::Object jsnItem;
 				jsnItem.set("x", itModelFix->rt.x);
@@ -442,18 +449,25 @@ bool CPapersMgr::WriteJsonFile(pPAPERSINFO pPapers)
 				jsnSnItem.set("sn", (*itSn)->nItem);
 				jsnSnItem.set("val", (*itSn)->nRecogVal);
 
+				Poco::JSON::Object jsnSnPosition;
+				jsnSnPosition.set("x", (*itSn)->rt.x);
+				jsnSnPosition.set("y", (*itSn)->rt.y);
+				jsnSnPosition.set("w", (*itSn)->rt.width);
+				jsnSnPosition.set("h", (*itSn)->rt.height);
+				jsnSnItem.set("position", jsnSnPosition);
+
 				Poco::JSON::Array jsnSnValPosition;
 				RECTLIST::iterator itRect = (*itSn)->lSN.begin();
 				for (; itRect != (*itSn)->lSN.end(); itRect++)
 				{
-					Poco::JSON::Object jsnSnPosition;
-					jsnSnPosition.set("x", itRect->rt.x);
-					jsnSnPosition.set("y", itRect->rt.y);
-					jsnSnPosition.set("w", itRect->rt.width);
-					jsnSnPosition.set("h", itRect->rt.height);
-					jsnSnValPosition.add(jsnSnPosition);
+					Poco::JSON::Object jsnSnPosition2;
+					jsnSnPosition2.set("x", itRect->rt.x);
+					jsnSnPosition2.set("y", itRect->rt.y);
+					jsnSnPosition2.set("w", itRect->rt.width);
+					jsnSnPosition2.set("h", itRect->rt.height);
+					jsnSnValPosition.add(jsnSnPosition2);
 				}
-				jsnSnItem.set("position", jsnSnValPosition);
+				jsnSnItem.set("Pos", jsnSnValPosition);
 				jsnSnDetailArry.add(jsnSnItem);
 			}
 			jsnPaper.set("snDetail", jsnSnDetailArry);
@@ -519,7 +533,7 @@ bool CPapersMgr::WriteJsonFile(pPAPERSINFO pPapers)
 			}
 			jsnPaper.set("electOmr", jsnElectOmrArry);		//选做题结果
 
-															//-------------------------------------	记录定点缺考校验点等信息，在恢复查看试卷包时有用，不做其他用途
+			//-------------------------------------	记录定点缺考校验点等信息，在恢复查看试卷包时有用，不做其他用途
 			Poco::JSON::Array jsnPaperChkPointArry;
 			for (auto itPic : (*itIssuePaper)->lPic)
 			{
@@ -537,8 +551,8 @@ bool CPapersMgr::WriteJsonFile(pPAPERSINFO pPapers)
 					jsnPaperFixArry.add(jsnItem);
 				}
 				Poco::JSON::Array jsnPaperModelCharAncharPointArry;
-				RECTLIST::iterator itModelFix = itPic->lFix.begin();
-				for (int j = 0; itModelFix != itPic->lFix.end(); itModelFix++, j++)
+				RECTLIST::iterator itModelFix = itPic->lModelFix.begin();
+				for (int j = 0; itModelFix != itPic->lModelFix.end(); itModelFix++, j++)
 				{
 					Poco::JSON::Object jsnItem;
 					jsnItem.set("x", itModelFix->rt.x);

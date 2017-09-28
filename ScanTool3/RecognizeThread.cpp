@@ -3747,6 +3747,12 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		{
 			pSn->nRecogVal = vecItemVal[0];
 			vecSN.push_back(vecItemVal[0]);
+			for(auto itSn : pSn->lSN)
+				if (itSn.nSnVal == pSn->nRecogVal)
+				{
+					pSn->rt = itSn.rt;
+					break;
+				}
 		}
 		else
 		{
@@ -3757,7 +3763,14 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 
 			if (vecItemVal.size() == 0 && vecItemVal2.size() == 1)
 			{
+				pSn->nRecogVal = vecItemVal2[0];
 				vecSN.push_back(vecItemVal2[0]);
+				for (auto itSn : pSn->lSN)
+					if (itSn.nSnVal == pSn->nRecogVal)
+					{
+						pSn->rt = itSn.rt;
+						break;
+					}
 			}
 			else
 			{
@@ -3765,7 +3778,14 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 				RecogVal_Sn3(nPic, matCompPic, pPic, pModelInfo, pSn, vecItemVal3);
 				if (vecItemVal3.size())
 				{
+					pSn->nRecogVal = vecItemVal3[0];
 					vecSN.push_back(vecItemVal3[0]);
+					for (auto itSn : pSn->lSN)
+						if (itSn.nSnVal == pSn->nRecogVal)
+						{
+							pSn->rt = itSn.rt;
+							break;
+						}
 				}
 				else
 				{

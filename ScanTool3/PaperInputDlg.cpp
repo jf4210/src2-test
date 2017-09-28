@@ -24,7 +24,7 @@ CPaperInputDlg::CPaperInputDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	: CDialog(CPaperInputDlg::IDD, pParent)
 	, m_strPapersPath(_T("")), m_nModelPicNums(1), /*m_nCurrTabSel(0), m_pCurrentPicShow(NULL),*/ m_pModel(pModel), m_pOldModel(pModel)
 	, m_strModelName(_T("")), m_strPapersName(_T("")), m_strPapersDesc(_T("")), m_nCurrItemPapers(-1), m_nCurrItemPaper(-1)
-	, m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(35), m_pCurrentShowPaper(NULL), m_nCurrItemPaperList(-1), m_pCurrentPapers(NULL), m_pStudentMgr(NULL)
+	, m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(20), m_pCurrentShowPaper(NULL), m_nCurrItemPaperList(-1), m_pCurrentPapers(NULL), m_pStudentMgr(NULL)
 	, m_pShowPicDlg(NULL)
 {
 
@@ -98,7 +98,8 @@ BOOL CPaperInputDlg::OnInitDialog()
 	}
 	else
 		m_comboModel.SetCurSel(0);
-	
+
+	InitTmpSubjectBmk();
 	return TRUE;
 }
 
@@ -599,6 +600,7 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				i++;
 
 				//2016.8.29 for test
+			#if 0	//判断并调整方向
 				static int j = 0;
 				if ((i - 1) % m_pModel->nPicNum == 0)
 					j = 0;
@@ -609,6 +611,7 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 
 //				imwrite(pPic->strPicPath, mtPic);
 				j++;
+			#endif
 				//--
 			}
 
@@ -835,28 +838,28 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	}
 
 
-	if (pPapers->lIssue.size() > 0)
-	{
-		if (g_nOperatingMode == 2)
-		{
-			CNewMessageBox	dlg;
-			dlg.setShowInfo(2, 1, "存在识别异常试卷，不能上传，请先处理异常试卷");
-			dlg.DoModal();
-			return;
-		}
-		else
-		{
-			CString strMsg = _T("");
-			strMsg.Format(_T("存在%d份问题试卷，这些试卷需要单独找出扫描，此次将不上传这%d份试卷，是否确定上传?"), pPapers->lIssue.size(), pPapers->lIssue.size());
-
-			CNewMessageBox	dlg;
-			dlg.setShowInfo(2, 2, T2A(strMsg));
-			dlg.DoModal();
-			if (dlg.m_nResult != IDYES)
-				return;
-			pPapers->nPaperCount = pPapers->lPaper.size();		//修改扫描数量，将问题试卷删除，不算到扫描试卷中。
-		}
-	}
+// 	if (pPapers->lIssue.size() > 0)
+// 	{
+// 		if (g_nOperatingMode == 2)
+// 		{
+// 			CNewMessageBox	dlg;
+// 			dlg.setShowInfo(2, 1, "存在识别异常试卷，不能上传，请先处理异常试卷");
+// 			dlg.DoModal();
+// 			return;
+// 		}
+// 		else
+// 		{
+// 			CString strMsg = _T("");
+// 			strMsg.Format(_T("存在%d份问题试卷，这些试卷需要单独找出扫描，是否确定上传?"), pPapers->lIssue.size());
+// 
+// 			CNewMessageBox	dlg;
+// 			dlg.setShowInfo(2, 2, T2A(strMsg));
+// 			dlg.DoModal();
+// 			if (dlg.m_nResult != IDYES)
+// 				return;
+// 			pPapers->nPaperCount = pPapers->lPaper.size();		//修改扫描数量，将问题试卷删除，不算到扫描试卷中。
+// 		}
+// 	}
 
 	pPapers->strPapersDesc = T2A(m_strPapersDesc);
 	pPapers->strPapersName = T2A(m_strPapersName);
@@ -866,7 +869,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 #if 1
 	CPapersMgr papersMgr;
 	char szPapersSavePath[MAX_PATH] = { 0 };
-	sprintf_s(szPapersSavePath, "%sPaper\\%s\\", T2A(g_strCurrentPath), T2A(m_strPapersName));
+	sprintf_s(szPapersSavePath, "%sPaper\\%s", T2A(g_strCurrentPath), T2A(m_strPapersName));
 	papersMgr.setCurrSavePath(szPapersSavePath);
 	papersMgr.setExamInfo(_pCurrExam_, m_pModel);
 	bool bResult = papersMgr.SavePapers(pPapers);
@@ -1319,6 +1322,22 @@ LRESULT CPaperInputDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 	if (_pCurrExam_->nModel)
 		return FALSE;
 
+	CheckZkzhInBmk(pPaper);
+	if (pPaper->nZkzhInBmkStatus == -1)
+	{
+		bool bFind = false;
+		for (auto sn : m_vecCHzkzh)
+		{
+			if (sn == pPaper->strSN)
+			{
+				bFind = true;
+				break;
+			}
+		}
+
+		if (!bFind) m_vecCHzkzh.push_back(pPaper->strSN);	//重号的考号放入容器中，需要去重
+	}
+
 	if (pPapers != m_pCurrentPapers)
 		return FALSE;
 
@@ -1337,22 +1356,22 @@ LRESULT CPaperInputDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 			if (!pPaper->strSN.empty())
 			{
 				m_lPaperCtrl.SetItemText(i, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
-				CheckZkzhInBmk(pPaper);
 
-				if (pPaper->nZkzhInBmkStatus == -1)
-				{
-					bool bFind = false;
-					for (auto sn : m_vecCHzkzh)
-					{
-						if (sn == pPaper->strSN)
-						{
-							bFind = true;
-							break;
-						}
-					}
-
-					if (!bFind) m_vecCHzkzh.push_back(pPaper->strSN);	//重号的考号放入容器中，需要去重
-				}
+//				CheckZkzhInBmk(pPaper);
+// 				if (pPaper->nZkzhInBmkStatus == -1)
+// 				{
+// 					bool bFind = false;
+// 					for (auto sn : m_vecCHzkzh)
+// 					{
+// 						if (sn == pPaper->strSN)
+// 						{
+// 							bFind = true;
+// 							break;
+// 						}
+// 					}
+// 
+// 					if (!bFind) m_vecCHzkzh.push_back(pPaper->strSN);	//重号的考号放入容器中，需要去重
+// 				}
 
 				// 				if (_bGetBmk_ && pPaper->nZkzhInBmkStatus != 1)
 				// 					m_lcPicture.SetItemColors(i, 1, RGB(0, 255, 0), RGB(255, 255, 255));
@@ -1729,5 +1748,6 @@ void CPaperInputDlg::ReInitData(pMODEL pModel)
 	else
 		m_comboModel.SetCurSel(0);
 
+	InitTmpSubjectBmk();
 }
 

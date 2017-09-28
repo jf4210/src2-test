@@ -239,6 +239,8 @@ void CVagueSearchDlg::OnBnClickedBtnSearch()
 		for (auto obj : lResult)
 		{
 			int nCount = m_lcBmk.GetItemCount();
+			if(nCount > 999) break;	//超过1000个人不显示，已经无意义了
+
 			char szCount[10] = { 0 };
 			sprintf_s(szCount, "%d", nCount + 1);
 			m_lcBmk.InsertItem(nCount, NULL);

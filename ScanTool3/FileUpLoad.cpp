@@ -188,8 +188,7 @@ RESTART:
 					catch (CFileException* e)
 					{
 						CString strErr = _T("");
-						UINT uErr;
-						e->GetErrorMessage((LPTSTR)(LPCTSTR)strErr, uErr);
+						e->GetErrorMessage((LPTSTR)(LPCTSTR)strErr, 1024);
 						char szLog[300] = { 0 };
 						sprintf_s(szLog, "上传文件(%s)时发生文件异常，需要重新尝试。%s", strAnsName.c_str(), strErr);
 						g_pLogger->information(szLog);
