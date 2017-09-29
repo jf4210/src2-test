@@ -68,7 +68,6 @@ BEGIN_MESSAGE_MAP(CPaperInputDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_SAVE_PAPERSINPUTDLG, &CPaperInputDlg::OnBnClickedBtnSave)
 	ON_MESSAGE(MSG_ZKZH_RECOG, &CPaperInputDlg::MsgZkzhRecog)
 	ON_WM_CTLCOLOR()
-	ON_BN_CLICKED(IDC_BTN_Test, &CPaperInputDlg::OnBnClickedBtnTest)
 	ON_NOTIFY(LVN_KEYDOWN, IDC_LIST_Paper, &CPaperInputDlg::OnLvnKeydownListPaper)
 	ON_WM_TIMER()
 	ON_WM_ERASEBKGND()
@@ -162,9 +161,9 @@ void CPaperInputDlg::InitCtrlPosition()
 	int cx = rcClient.right;
 	int cy = rcClient.bottom;
 
-	int nGap = 5;	//控件的间隔
+	int nGap = 2;	//控件的间隔
 	int nTopGap = 2;	//距离上边边缘的间隔
-	int nBottomGap = 2;	//距离下边边缘的间隔
+	int nBottomGap = 0;	//距离下边边缘的间隔
 	int nLeftGap = 2;	//距离左边边缘的间隔
 	int nRightGap = 2;	//距离右边边缘的间隔
 	int nStaticHeight = 20;						//静态提示控件高度
@@ -173,31 +172,136 @@ void CPaperInputDlg::InitCtrlPosition()
 		nLeftCtrlWidth = 300;
 	int nListWidth = (nLeftCtrlWidth - nGap) / 2;	//List列表控件的宽度
 	int nCurrentTop = nTopGap;
+	int nCurrentLeft = nLeftGap;
 	if (GetDlgItem(IDC_STATIC_PathTips)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_STATIC_PathTips)->MoveWindow(nLeftGap, nCurrentTop, nLeftCtrlWidth, nStaticHeight);
+		GetDlgItem(IDC_STATIC_PathTips)->MoveWindow(nCurrentLeft, nCurrentTop, nLeftCtrlWidth, nStaticHeight);
 		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
 	}
 	if (GetDlgItem(IDC_EDIT_PapersPath)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_EDIT_PapersPath)->MoveWindow(nLeftGap, nCurrentTop, nLeftCtrlWidth - nGap - 20, nStaticHeight);
+		GetDlgItem(IDC_EDIT_PapersPath)->MoveWindow(nCurrentLeft, nCurrentTop, nLeftCtrlWidth - nGap - 20, nStaticHeight);
 //		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
 	}
 	if (m_btnBroswer.GetSafeHwnd())
 	{
-		m_btnBroswer.MoveWindow(nLeftGap + nLeftCtrlWidth - 20, nCurrentTop, 20, nStaticHeight);
+		m_btnBroswer.MoveWindow(nCurrentLeft + nLeftCtrlWidth - 20, nCurrentTop, 20, nStaticHeight);
 		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
 	}
 	int nModelStaticWidth = 65;		//模板列表提示控件的宽度
 	if (GetDlgItem(IDC_STATIC_ModelTips)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_STATIC_ModelTips)->MoveWindow(nLeftGap, nCurrentTop, nModelStaticWidth, nStaticHeight);
+		GetDlgItem(IDC_STATIC_ModelTips)->MoveWindow(nCurrentLeft, nCurrentTop, nModelStaticWidth, nStaticHeight);
+		nCurrentLeft += (nModelStaticWidth + nGap);
 	}
 	if (m_comboModel.GetSafeHwnd())
 	{
-		m_comboModel.MoveWindow(nLeftGap + nModelStaticWidth + nGap, nCurrentTop, nLeftCtrlWidth - nModelStaticWidth - nGap, nStaticHeight);
+		m_comboModel.MoveWindow(nCurrentLeft, nCurrentTop, nLeftCtrlWidth - nModelStaticWidth - nGap, nStaticHeight);
+		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
+		nCurrentLeft = nLeftGap;
+	}
+#if 1
+	if (GetDlgItem(IDC_STATIC_PapersTips)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_PapersTips)->MoveWindow(nCurrentLeft, nCurrentTop, nLeftCtrlWidth, nStaticHeight);
 		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
 	}
+	int nPapersListWidth = static_cast<int>(nLeftCtrlWidth * 0.4);
+	int nIssueListWdith = nLeftCtrlWidth - nPapersListWidth - nGap;
+	int nListH = (rcClient.Height() - nCurrentTop) * 0.6;
+	if (m_lPapersCtrl.GetSafeHwnd())
+	{
+		m_lPapersCtrl.MoveWindow(nCurrentLeft, nCurrentTop, nPapersListWidth, nListH);
+	}
+	if (GetDlgItem(IDC_STATIC_PaperTips)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_PaperTips)->MoveWindow(nCurrentLeft + nPapersListWidth + nGap, nCurrentTop - nStaticHeight - nGap, nIssueListWdith, nStaticHeight);		//与试卷袋列表提示齐平
+	}
+	int nPaperListHeight = (rcClient.Height() - nCurrentTop - nGap - nStaticHeight - nGap) / 2;		//试卷列表控件的高度
+	if (m_lPaperCtrl.GetSafeHwnd())
+	{
+		m_lPaperCtrl.MoveWindow(nCurrentLeft + nPapersListWidth + nGap, nCurrentTop, nIssueListWdith, nListH);
+		nCurrentTop = nCurrentTop + nListH + nGap;
+	}
+
+	int nBtnWidth = 70;
+	int nBtnHeight = 40;
+	int	nTipsHeight = 30;
+	if (GetDlgItem(IDC_BTN_Start)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_Start)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnWidth, nBtnHeight);
+		nCurrentTop += (nBtnHeight + nGap);
+	}
+	if (GetDlgItem(IDC_BTN_SAVE_PAPERSINPUTDLG)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_BTN_SAVE_PAPERSINPUTDLG)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnWidth, nBtnHeight);
+		//		nCurrentTop = nCurrentTop + nBtnHeight + nGap;
+	}
+	if (GetDlgItem(IDC_STATIC_TIPS)->GetSafeHwnd())
+	{
+		nCurrentTop = cy - nBottomGap - nTipsHeight;
+		GetDlgItem(IDC_STATIC_TIPS)->MoveWindow(nCurrentLeft, nCurrentTop, cx - nCurrentLeft - nRightGap, nTipsHeight);
+	}
+
+	//Tab控件的位置
+	int nTabLeftPos = nLeftGap + nLeftCtrlWidth + nGap;
+	int nTabCtrlHeight = rcClient.Height() * 2 / 3;
+	int nTabCtrlWidth = rcClient.Width() - nLeftGap - nLeftCtrlWidth - nGap - nRightGap;
+	if (m_pShowPicDlg && m_pShowPicDlg->GetSafeHwnd())
+	{
+		m_pShowPicDlg->MoveWindow(nTabLeftPos, nTopGap, nTabCtrlWidth, nTabCtrlHeight);
+		nCurrentTop = nTopGap + nTabCtrlHeight + nGap;
+	}
+
+// 	int nInfoStaticWidth = 100;			//试卷袋描述信息static控件的宽度
+// 	if (GetDlgItem(IDC_STATIC_PapersModel)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_STATIC_PapersModel)->MoveWindow(nTabLeftPos, nCurrentTop, nInfoStaticWidth, nStaticHeight);
+// 		//		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
+// 	}
+// 	if (GetDlgItem(IDC_EDIT_ModelInfo)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_EDIT_ModelInfo)->MoveWindow(nTabLeftPos + nInfoStaticWidth + nGap, nCurrentTop, nInfoStaticWidth * 1.5, nStaticHeight);
+// 		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
+// 	}
+// 	if (GetDlgItem(IDC_STATIC_PapersName)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_STATIC_PapersName)->MoveWindow(nTabLeftPos, nCurrentTop, nInfoStaticWidth, nStaticHeight);
+// 		//		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
+// 	}
+// 	if (GetDlgItem(IDC_EDIT_PapersName)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_EDIT_PapersName)->MoveWindow(nTabLeftPos + nInfoStaticWidth + nGap, nCurrentTop, nInfoStaticWidth * 1.5, nStaticHeight);
+// 		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
+// 	}
+// 	if (GetDlgItem(IDC_STATIC_PapersDesc)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_STATIC_PapersDesc)->MoveWindow(nTabLeftPos, nCurrentTop, nInfoStaticWidth, nStaticHeight);
+// 		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
+// 	}
+// 
+// 	int nPaperDescHeight = rcClient.Height() - nCurrentTop - nGap - nBtnHeight - nGap - nTipsHeight - nBottomGap;		//试卷描述信息控件的高度
+// 	if (GetDlgItem(IDC_EDIT_PapersDesc)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_EDIT_PapersDesc)->MoveWindow(nTabLeftPos, nCurrentTop, nTabCtrlWidth, nPaperDescHeight);
+// 		nCurrentTop = nCurrentTop + nPaperDescHeight + nGap;
+// 	}
+
+
+// 	if (GetDlgItem(IDC_BTN_Start)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_BTN_Start)->MoveWindow(nTabLeftPos, nCurrentTop, nBtnWidth, nBtnHeight);
+// 	}
+// 	if (GetDlgItem(IDC_BTN_SAVE_PAPERSINPUTDLG)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_BTN_SAVE_PAPERSINPUTDLG)->MoveWindow(nTabLeftPos + nBtnWidth + nGap, nCurrentTop, nBtnWidth, nBtnHeight);
+// 		//		nCurrentTop = nCurrentTop + nBtnHeight + nGap;
+// 	}
+// 	if (GetDlgItem(IDC_STATIC_TIPS)->GetSafeHwnd())
+// 	{
+// 		GetDlgItem(IDC_STATIC_TIPS)->MoveWindow(nTabLeftPos, nCurrentTop, nTabCtrlWidth, nTipsHeight);
+// 	}
+#else
 	if (GetDlgItem(IDC_STATIC_PapersTips)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_STATIC_PapersTips)->MoveWindow(nLeftGap, nCurrentTop, nLeftCtrlWidth, nStaticHeight);
@@ -220,15 +324,6 @@ void CPaperInputDlg::InitCtrlPosition()
 		m_lPaperCtrl.MoveWindow(nLeftGap + nPapersListWidth + nGap, nCurrentTop, nIssueListWdith, nPaperListHeight);
 		nCurrentTop = nCurrentTop + nPaperListHeight + nGap;
 	}
-// 	if (GetDlgItem(IDC_STATIC_IssueTips)->GetSafeHwnd())
-// 	{
-// 		GetDlgItem(IDC_STATIC_IssueTips)->MoveWindow(nLeftGap + nPapersListWidth + nGap, nCurrentTop, nIssueListWdith, nStaticHeight);
-// 		nCurrentTop = nCurrentTop + nStaticHeight + nGap;
-// 	}
-// 	if (m_lIssuePaperCtrl.GetSafeHwnd())
-// 	{
-// 		m_lIssuePaperCtrl.MoveWindow(nLeftGap + nPapersListWidth + nGap, nCurrentTop, nIssueListWdith, nPaperListHeight);
-// 	}
 
 	//Tab控件的位置
 	int nTabLeftPos = nLeftGap + nLeftCtrlWidth + nGap;
@@ -296,6 +391,7 @@ void CPaperInputDlg::InitCtrlPosition()
 	{
 		GetDlgItem(IDC_STATIC_TIPS)->MoveWindow(nTabLeftPos, nCurrentTop, nTabCtrlWidth, nTipsHeight);
 	}
+#endif
 }
 
 void CPaperInputDlg::OnBnClickedBtnBroswer()
@@ -881,6 +977,7 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	CString strInfo;
 	bool bWarn = false;
 	strInfo.Format(_T("正在保存%s..."), A2T(strZipName.c_str()));
+	SetStatusShowInfo(strInfo);
 #else
 	clock_t start, end;
 	start = clock();
@@ -1439,32 +1536,6 @@ HBRUSH CPaperInputDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}
 	return hbr;
-}
-
-void CPaperInputDlg::OnBnClickedBtnTest()
-{
-	std::string strStatisticsLog;
-	int nModelOmrCount = 0;
-	for (int k = 0; k < m_pModel->vecPaperModel.size(); k++)
-	{
-		nModelOmrCount += m_pModel->vecPaperModel[k]->lOMR2.size();
-	}
-
-	PAPERS_LIST::iterator itPapers = g_lPapers.begin();
-	for (; itPapers != g_lPapers.end(); itPapers++)
-	{
-		int nPapersCount = (*itPapers)->lPaper.size() + (*itPapers)->lIssue.size();
-		int nOmrCount = nModelOmrCount * nPapersCount;
-		if (nPapersCount == 0)
-			continue;
-
-		char szStatisticsInfo[300] = { 0 };
-		sprintf_s(szStatisticsInfo, "\n%s统计信息: omrDoubt = %.2f(%d/%d), omrNull = %.2f(%d/%d), zkzhNull = %.2f(%d/%d)\n", (*itPapers)->strPapersName.c_str(), (float)(*itPapers)->nOmrDoubt / nOmrCount, (*itPapers)->nOmrDoubt, nOmrCount, \
-				  (float)(*itPapers)->nOmrNull / nOmrCount, (*itPapers)->nOmrNull, nOmrCount, \
-				  (float)(*itPapers)->nSnNull / nPapersCount, (*itPapers)->nSnNull, nPapersCount);
-		strStatisticsLog.append(szStatisticsInfo);
-	}
-	g_pLogger->information(strStatisticsLog);
 }
 
 void CPaperInputDlg::ShowPaperByItem(int nItem)

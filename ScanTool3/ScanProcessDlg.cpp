@@ -9,6 +9,7 @@
 //#include "ModifyZkzhDlg.h"
 #include "NewMessageBox.h"
 #include "ScanTool3Dlg.h"
+#include "PapersMgr.h"
 // CScanProcessDlg 对话框
 
 IMPLEMENT_DYNAMIC(CScanProcessDlg, CDialog)
@@ -1204,6 +1205,33 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	SetStatusShow(2, str, 1);
 	return;
 #endif
+
+#if 1
+	USES_CONVERSION;
+	EnableBtn(FALSE);
+
+	CPapersMgr papersMgr;
+	char szPapersSavePath[MAX_PATH] = { 0 };
+	sprintf_s(szPapersSavePath, "%s", m_strCurrPicSavePath.c_str());
+	papersMgr.setCurrSavePath(szPapersSavePath);
+	papersMgr.setExamInfo(_pCurrExam_, _pModel_);
+	bool bResult = papersMgr.SavePapers(_pCurrPapersInfo_);
+	if (!bResult)
+	{
+		EnableBtn(TRUE);
+		return;
+	}
+
+	std::string strZipName = papersMgr.AddPapersCompress(_pCurrPapersInfo_);
+
+	//记录当前总共扫描多少人
+	_nScanPaperCount_ += _pCurrPapersInfo_->nPaperCount;
+
+	TRACE("------------------- 4\n");
+	CString strStatus = _T("正在保存");
+	strStatus.Format(_T("正在保存%s"), strZipName.c_str());
+	SetStatusShow(2, strStatus);
+#else
 	if (!_pCurrPapersInfo_)
 	{
 		CNewMessageBox	dlg;
@@ -1292,6 +1320,7 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	bool bResult = WriteJsonFile();
 	if (!bResult)
 	{
+		EnableBtn(TRUE);
 		CNewMessageBox	dlg;
 		dlg.setShowInfo(2, 1, "保存试卷袋信息到文件失败，请重试！");
 		dlg.DoModal();
@@ -1368,7 +1397,7 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	g_fmCompressLock.lock();
 	g_lCompressTask.push_back(pTask);
 	g_fmCompressLock.unlock();
-	
+
 	//记录当前总共扫描多少人
 	_nScanPaperCount_ += _pCurrPapersInfo_->nPaperCount;
 
@@ -1376,7 +1405,8 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	CString strStatus = _T("正在保存");
 	strStatus.Format(_T("正在保存%s"), A2T(szZipName));
 	SetStatusShow(2, strStatus);
-
+#endif
+	
 	UpdateExamBmk();
 
 	TRACE("------------------- 5\n");

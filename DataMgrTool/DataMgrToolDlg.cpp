@@ -1425,6 +1425,7 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpapers()
 
 	pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
 	pDecompressTask->nTaskType = 4;
+	pDecompressTask->nSearchPkg = 0;	//加载模板后，不用搜索Pkg目录，后面手动加载
 	pDecompressTask->strFilePath = T2A(m_strModelPath_showPapersDlg);
 	pDecompressTask->strFileBaseName = strBaseName;
 	pDecompressTask->strSrcFileName = strSrcName;

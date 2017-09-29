@@ -43,7 +43,7 @@
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION	_T("1.70926-1")
+#define SOFT_VERSION	_T("1.70929-1")
 #define SYS_BASE_NAME	_T("YKLX-DMT")
 //#define WH_CCBKS		//武汉楚才杯专用，解析二维码需要json解析
 
@@ -125,6 +125,7 @@ typedef struct _DecompressTask_
 	//---------
 
 	int nTaskType;				//1-普通解压，2-区分试卷包到不同目录, 3-重新识别OMR和SN, 4-加载模板, 5-识别试卷包并统计识别正确率比例, 6-解压并查看试卷袋识别结果，7-解压试卷袋中的特定文件
+	int nSearchPkg;				//nTaskType == 4时有用，在加载模板完成后，是否继续搜索目录解压Pkg包，默认搜索
 	std::string strFileBaseName;
 	std::string strSrcFileName;
 	std::string strFilePath;
@@ -133,6 +134,7 @@ typedef struct _DecompressTask_
 	_DecompressTask_()
 	{
 		nTaskType = 1;
+		nSearchPkg = 1;
 		bRecogElectOmr = true;
 		bRecogOmr = true;
 		bRecogZkzh = true;

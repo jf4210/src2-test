@@ -100,7 +100,6 @@ public:
 	afx_msg void OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedBtnSave();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-	afx_msg void OnBnClickedBtnTest();
 	afx_msg void OnLvnKeydownListPaper(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);

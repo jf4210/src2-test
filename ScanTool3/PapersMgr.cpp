@@ -255,7 +255,7 @@ bool CPapersMgr::WriteJsonFile(pPAPERSINFO pPapers)
 		jsnPaper.set("modify", (*itNomarlPaper)->bModifyZKZH);	//准考证号修改标识
 		jsnPaper.set("reScan", (*itNomarlPaper)->bReScan);		//重扫标识
 		jsnPaper.set("IssueList", 0);		//标识此考生属于问题列表，在上传服务器时无用，只在从Pkg恢复Papers时有用
-											//--
+		//--
 		jsnPaper.set("picExchangeTimes", (*itNomarlPaper)->nPicsExchange);	//这个学生的试卷被调换图像的次数，即第1页与第2页调换顺序的次数，偶数次相当于没有动，奇数次就被调换了
 
 		Poco::JSON::Array jsnSnDetailArry;

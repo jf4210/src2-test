@@ -375,17 +375,20 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		strMsg.Format(_T("模板加载(%s)完成\r\n"), A2T(pTask->strSrcFileName.c_str()));
 		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
 
-		pST_SEARCH pDirTask = new ST_SEARCH;
-		pDirTask->strSearchPath = _strPkgSearchPath_;
-		pDirTask->bRecogOmr		= pTask->bRecogOmr;
-		pDirTask->bRecogZkzh	= pTask->bRecogZkzh;
-		pDirTask->bRecogElectOmr = pTask->bRecogElectOmr;
-		pDirTask->nSendEzs		= pTask->nSendEzs;
-		pDirTask->nNoNeedRecogVal = pTask->nNoNeedRecogVal;
-		
-		_fmSearchPathList_.lock();
-		_SearchPathList_.push_back(pDirTask);
-		_fmSearchPathList_.unlock();
+		if (pTask->nSearchPkg)
+		{
+			pST_SEARCH pDirTask = new ST_SEARCH;
+			pDirTask->strSearchPath = _strPkgSearchPath_;
+			pDirTask->bRecogOmr = pTask->bRecogOmr;
+			pDirTask->bRecogZkzh = pTask->bRecogZkzh;
+			pDirTask->bRecogElectOmr = pTask->bRecogElectOmr;
+			pDirTask->nSendEzs = pTask->nSendEzs;
+			pDirTask->nNoNeedRecogVal = pTask->nNoNeedRecogVal;
+
+			_fmSearchPathList_.lock();
+			_SearchPathList_.push_back(pDirTask);
+			_fmSearchPathList_.unlock();
+		}
 	}
 	else if (pTask->nTaskType == 5)
 	{
