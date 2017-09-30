@@ -840,6 +840,8 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 	int nModelPicPersent = rtModelPic.width / rtModelPic.height;	//0||1
 	int nSrcPicPercent = matSrc.cols / matSrc.rows;
 
+	int nChkPointCount = _pModel_->vecPaperModel[n]->lGray.size() + _pModel_->vecPaperModel[n]->lCourse.size();		//校验点数量，在条码判断失败时进行校验点的判断
+
 	if (_pModel_->nZkzhType == 2)			//使用条码的时候，先通过条码来判断方向
 	{
 		if (nModelPicPersent == nSrcPicPercent)
@@ -847,7 +849,15 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			TRACE("与模板图片方向一致\n");
 			for (int i = 1; i <= 4; i = i + 3)
 			{
-				bool bResult = RecogZkzh(n, matSrc, _pModel_, i);
+				//先查定点
+				cv::Mat matTmp = matSrc.clone();
+				RECTLIST lFix;
+				bool bResult = RecogFixCP(n, matTmp, lFix, _pModel_, i);
+				#ifdef WarpAffine_TEST
+					cv::Mat	inverseMat(2, 3, CV_32FC1);
+					PicTransfer(0, matTmp, lFix, _pModel_->vecPaperModel[n]->lFix, inverseMat);
+				#endif
+				bResult = RecogZkzh(n, matTmp, _pModel_, 1);	//i
 				if (!bResult)
 					continue;
 
@@ -861,7 +871,15 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			TRACE("与模板图片方向不一致\n");
 			for (int i = 2; i <= 3; i++)
 			{
-				bool bResult = RecogZkzh(n, matSrc, _pModel_, i);
+				//先查定点
+				cv::Mat matTmp = matSrc.clone();
+				RECTLIST lFix;
+				bool bResult = RecogFixCP(n, matTmp, lFix, _pModel_, i);
+				#ifdef WarpAffine_TEST
+					cv::Mat	inverseMat(2, 3, CV_32FC1);
+					PicTransfer(0, matTmp, lFix, _pModel_->vecPaperModel[n]->lFix, inverseMat);
+				#endif
+				bResult = RecogZkzh(n, matTmp, _pModel_, 1);	//i
 				if (!bResult)
 					continue;
 
