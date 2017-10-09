@@ -23,9 +23,9 @@ IMPLEMENT_DYNAMIC(CPaperInputDlg, CDialog)
 CPaperInputDlg::CPaperInputDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 	: CDialog(CPaperInputDlg::IDD, pParent)
 	, m_strPapersPath(_T("")), m_nModelPicNums(1), /*m_nCurrTabSel(0), m_pCurrentPicShow(NULL),*/ m_pModel(pModel), m_pOldModel(pModel)
-	, m_strModelName(_T("")), m_strPapersName(_T("")), m_strPapersDesc(_T("")), m_nCurrItemPapers(-1), m_nCurrItemPaper(-1)
+	, m_strModelName(_T("")), m_strPapersName(_T("")), m_strPapersDesc(_T("")), m_nCurrItemPapers(-1)
 	, m_colorStatus(RGB(0, 0, 255)), m_nStatusSize(20), m_pCurrentShowPaper(NULL), m_nCurrItemPaperList(-1), m_pCurrentPapers(NULL), m_pStudentMgr(NULL)
-	, m_pShowPicDlg(NULL)
+	, m_pShowPicDlg(NULL), m_pAnswerShowDlg(NULL)
 {
 
 }
@@ -38,6 +38,11 @@ CPaperInputDlg::~CPaperInputDlg()
 	{
 		m_pShowPicDlg->DestroyWindow();
 		SAFE_RELEASE(m_pShowPicDlg);
+	}
+	if (m_pAnswerShowDlg)
+	{
+		m_pAnswerShowDlg->DestroyWindow();
+		SAFE_RELEASE(m_pAnswerShowDlg);
 	}
 }
 
@@ -71,6 +76,8 @@ BEGIN_MESSAGE_MAP(CPaperInputDlg, CDialog)
 	ON_NOTIFY(LVN_KEYDOWN, IDC_LIST_Paper, &CPaperInputDlg::OnLvnKeydownListPaper)
 	ON_WM_TIMER()
 	ON_WM_ERASEBKGND()
+	ON_NOTIFY(NM_HOVER, IDC_LIST_Paper, &CPaperInputDlg::OnNMHoverListPaper)
+	ON_NOTIFY(NM_HOVER, IDC_LIST_Papers, &CPaperInputDlg::OnNMHoverListPapers)
 END_MESSAGE_MAP()
 
 BOOL CPaperInputDlg::OnInitDialog()
@@ -115,6 +122,13 @@ void CPaperInputDlg::InitUI()
 		m_pShowPicDlg->ShowWindow(SW_SHOW);
 	}
 	m_pShowPicDlg->setShowModel(2);
+
+	if (!m_pAnswerShowDlg)
+	{
+		m_pAnswerShowDlg = new CAnswerShowDlg(this);
+		m_pAnswerShowDlg->Create(IDD_ANSWERSHOWDLG, this);
+		m_pAnswerShowDlg->ShowWindow(SW_SHOW);
+	}
 
 	m_lPapersCtrl.DeleteAllItems();
 
@@ -250,6 +264,13 @@ void CPaperInputDlg::InitCtrlPosition()
 	if (m_pShowPicDlg && m_pShowPicDlg->GetSafeHwnd())
 	{
 		m_pShowPicDlg->MoveWindow(nTabLeftPos, nTopGap, nTabCtrlWidth, nTabCtrlHeight);
+		nCurrentTop = nTopGap + nTabCtrlHeight + nGap;
+	}
+
+	if (m_pAnswerShowDlg && m_pAnswerShowDlg->GetSafeHwnd())
+	{
+		int nH = cy - nCurrentTop - nBottomGap - nTipsHeight - nGap;
+		m_pAnswerShowDlg->MoveWindow(nTabLeftPos, nCurrentTop, nTabCtrlWidth, nH);
 		nCurrentTop = nTopGap + nTabCtrlHeight + nGap;
 	}
 
@@ -786,6 +807,26 @@ void CPaperInputDlg::SeachModel()
 	g_pLogger->information(strLog);
 }
 
+void CPaperInputDlg::SetListCtrlHighLightShow(CXListCtrl& lCtrl, int nItem)
+{
+	if (nItem < 0) return;
+
+	lCtrl.GetItemColors(nItem, 0, crOldText, crOldBackground);
+	for (int i = 0; i < lCtrl.GetColumns(); i++)							//设置高亮显示(手动设置背景颜色)
+		lCtrl.SetItemColors(nItem, i, RGB(0, 0, 0), RGB(112, 180, 254));	//70, 70, 255
+}
+
+void CPaperInputDlg::UnSetListCtrlHighLightShow(CXListCtrl& lCtrl, int nItem)
+{
+	if (nItem < 0) return;
+
+	for (int i = 0; i < lCtrl.GetColumns(); i++)
+		if (!lCtrl.GetModified(nItem, i))
+			lCtrl.SetItemColors(nItem, i, crOldText, crOldBackground);
+		else
+			lCtrl.SetItemColors(nItem, i, RGB(255, 0, 0), crOldBackground);
+}
+
 void CPaperInputDlg::OnCbnSelchangeComboModellist()
 {
 	if (m_ncomboCurrentSel == m_comboModel.GetCurSel())
@@ -868,10 +909,13 @@ void CPaperInputDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	if (pNMItemActivate->iItem < 0)
 		return;
 
+	UnSetListCtrlHighLightShow(m_lPaperCtrl, m_nCurrItemPaperList);
+
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lPaperCtrl.GetItemData(pNMItemActivate->iItem);
-	m_nCurrItemPaper = pNMItemActivate->iItem;
 	m_pCurrentShowPaper = pPaper;
-	m_nCurrItemPaperList = m_nCurrItemPaper;
+	m_nCurrItemPaperList = pNMItemActivate->iItem;
+
+	SetListCtrlHighLightShow(m_lPaperCtrl, m_nCurrItemPaperList);
 
 // 	PaintRecognisedRect(pPaper);
 // 
@@ -887,6 +931,7 @@ void CPaperInputDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 // 	}
 
 	m_pShowPicDlg->setShowPaper(pPaper);
+	m_pAnswerShowDlg->InitData(pPaper);
 
 	//双击为空的准考证号时显示准考证号修改窗口
 	CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
@@ -1616,21 +1661,29 @@ void CPaperInputDlg::OnLvnKeydownListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMLVKEYDOWN pLVKeyDow = reinterpret_cast<LPNMLVKEYDOWN>(pNMHDR);
 	*pResult = 0;
+	
+	if (m_nCurrItemPaperList < 0) return;
 
 	if (pLVKeyDow->wVKey == VK_UP)
 	{
+		UnSetListCtrlHighLightShow(m_lPaperCtrl, m_nCurrItemPaperList);
+
 		m_nCurrItemPaperList--;
 		if (m_nCurrItemPaperList <= 0)
 			m_nCurrItemPaperList = 0;
 
+		SetListCtrlHighLightShow(m_lPaperCtrl, m_nCurrItemPaperList);
 		ShowPaperByItem(m_nCurrItemPaperList);
 	}
 	else if (pLVKeyDow->wVKey == VK_DOWN)
 	{
+		UnSetListCtrlHighLightShow(m_lPaperCtrl, m_nCurrItemPaperList);
+
 		m_nCurrItemPaperList++;
 		if (m_nCurrItemPaperList >= m_lPaperCtrl.GetItemCount() - 1)
 			m_nCurrItemPaperList = m_lPaperCtrl.GetItemCount() - 1;
 
+		SetListCtrlHighLightShow(m_lPaperCtrl, m_nCurrItemPaperList);
 		ShowPaperByItem(m_nCurrItemPaperList);
 	}
 }
@@ -1822,3 +1875,19 @@ void CPaperInputDlg::ReInitData(pMODEL pModel)
 	InitTmpSubjectBmk();
 }
 
+
+
+void CPaperInputDlg::OnNMHoverListPaper(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	*pResult = 1;		//**********	这里如果不响应，同时返回结果值不为1的话，	****************
+						//**********	就会产生产生TRACK SELECT，也就是鼠标悬停	****************
+						//**********	一段时间后，所在行自动被选中
+}
+
+
+void CPaperInputDlg::OnNMHoverListPapers(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	*pResult = 1;		//**********	这里如果不响应，同时返回结果值不为1的话，	****************
+						//**********	就会产生产生TRACK SELECT，也就是鼠标悬停	****************
+						//**********	一段时间后，所在行自动被选中
+}

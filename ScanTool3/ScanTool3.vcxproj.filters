@@ -184,6 +184,9 @@
     <Filter Include="扫描界面窗口\试卷袋管理类">
       <UniqueIdentifier>{ef42ae4d-bdea-40da-99f3-373cf8d0b4f9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="扫描界面窗口\扫描过程窗口\图像答案识别窗口">
+      <UniqueIdentifier>{41a927d8-5442-48e9-acc5-03c3390390d8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -480,6 +483,9 @@
     <ClInclude Include="PapersMgr.h">
       <Filter>扫描界面窗口\试卷袋管理类</Filter>
     </ClInclude>
+    <ClInclude Include="AnswerShowDlg.h">
+      <Filter>扫描界面窗口\扫描过程窗口\图像答案识别窗口</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -736,6 +742,9 @@
     </ClCompile>
     <ClCompile Include="PapersMgr.cpp">
       <Filter>扫描界面窗口\试卷袋管理类</Filter>
+    </ClCompile>
+    <ClCompile Include="AnswerShowDlg.cpp">
+      <Filter>扫描界面窗口\扫描过程窗口\图像答案识别窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

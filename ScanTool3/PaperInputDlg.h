@@ -6,6 +6,7 @@
 #include "ComboBoxExt.h"
 #include "XListCtrl.h"
 #include "StudentMgr.h"
+#include "AnswerShowDlg.h"
 // CPaperInputDlg 对话框
 
 class CPaperInputDlg : public CDialog
@@ -27,6 +28,7 @@ public:
 	CButton		m_btnBroswer;		//浏览按钮
 	
 	CShowPicDlg* m_pShowPicDlg;
+	CAnswerShowDlg* m_pAnswerShowDlg;
 
 	CString		m_strPapersPath;	//试卷袋文件夹路径
 	int			m_nModelPicNums;	//模板图片数，即一份模板有多少图片，对应多少试卷
@@ -39,7 +41,6 @@ public:
 	pMODEL		m_pModel;					//模板信息
 
 	int				m_nCurrItemPapers;		//试卷袋列表当前选择的项
-	int				m_nCurrItemPaper;		//试卷列表当前选择的项
 	int				m_ncomboCurrentSel;		//下拉列表当前选择项
 
 	int				m_nCurrItemPaperList;	//当前试卷列表选中的项
@@ -64,6 +65,9 @@ private:
 // 	void	PaintRecognisedRect(pST_PaperInfo pPaper);		//画已识别的矩形
 // 	void	PaintIssueRect(pST_PaperInfo pPaper);			//画出已识别出来的问题矩形位置
 
+	void	SetListCtrlHighLightShow(CXListCtrl& lCtrl, int nItem);		//设置列表高亮显示
+	void	UnSetListCtrlHighLightShow(CXListCtrl& lCtrl, int nItem);		//取消列表高亮显示
+
 	void	ShowPaperByItem(int nItem);
 	void	ShowPapers(pPAPERSINFO pPapers);
 	int		CheckZkzhInBmk(std::string strZkzh);
@@ -79,6 +83,8 @@ private:
 	pPAPERSINFO		m_pCurrentPapers;
 
 	CStudentMgr*	m_pStudentMgr;			//报名库管理对象
+
+	COLORREF		crOldText, crOldBackground;
 
 	void	ShowRectByPoint(cv::Point pt, pST_PaperInfo pPaper);
 	LRESULT RoiLBtnDown(WPARAM wParam, LPARAM lParam);		//鼠标左键按下的通知
@@ -103,4 +109,6 @@ public:
 	afx_msg void OnLvnKeydownListPaper(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg void OnNMHoverListPaper(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnNMHoverListPapers(NMHDR *pNMHDR, LRESULT *pResult);
 };

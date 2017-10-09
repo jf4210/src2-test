@@ -128,6 +128,7 @@
     <ClInclude Include="..\..\include\twain\TwainApp.h" />
     <ClInclude Include="..\..\include\twain\TwainString.h" />
     <ClInclude Include="AdanceSetMgrDlg.h" />
+    <ClInclude Include="AnswerShowDlg.h" />
     <ClInclude Include="GetModelDlg.h" />
     <ClInclude Include="PaperInputDlg.h" />
     <ClInclude Include="PapersMgr.h" />
@@ -243,6 +244,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="AdanceSetMgrDlg.cpp" />
+    <ClCompile Include="AnswerShowDlg.cpp" />
     <ClCompile Include="GetModelDlg.cpp" />
     <ClCompile Include="PaperInputDlg.cpp" />
     <ClCompile Include="PapersMgr.cpp" />

@@ -950,6 +950,11 @@ void CScanMgrDlg::InitScanner()
 		}
 		_pTWAINApp->disconnectDSM();
 	}
+	else
+	{
+		std::string strLog = "获取扫描仪列表 --> 连接扫描源失败";
+		g_pLogger->information(strLog);
+	}
 }
 
 void CScanMgrDlg::OnCbnSelchangeComboSubject()
