@@ -1229,7 +1229,7 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 
 	TRACE("------------------- 4\n");
 	CString strStatus = _T("正在保存");
-	strStatus.Format(_T("正在保存%s"), strZipName.c_str());
+	strStatus.Format(_T("正在保存%s"), A2T(strZipName.c_str()));
 	SetStatusShow(2, strStatus);
 #else
 	if (!_pCurrPapersInfo_)

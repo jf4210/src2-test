@@ -1,6 +1,6 @@
 #pragma once
 #include "XListCtrl.h"
-#include "global.h"
+#include "DMTDef.h"
 
 // CAnswerShowDlg ¶Ô»°¿ò
 

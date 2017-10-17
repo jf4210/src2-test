@@ -1051,7 +1051,7 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			{
 				CvRect aRect = cvBoundingRect(contour, 0);
 				Rect rm = aRect;
-				rm = rm + rc.rt.tl();
+				rm = rm + rtTmp.tl();	// rc.rt.tl();
 				RectCompList.push_back(rm);
 			}
 			cvReleaseMemStorage(&storage);
@@ -2503,7 +2503,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 					else if (strRecogAnswer3 == "" && strRecogAnswer2 != "")
 					{
 						strRecogAnswer = strRecogAnswer3;
-						nDoubt = 0;
+						nDoubt = 2;
 						nEqualCount++;
 					}
 					else if (strRecogAnswer2 != "" && strRecogAnswer3 != "")

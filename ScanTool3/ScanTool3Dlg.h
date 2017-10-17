@@ -31,6 +31,7 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV Ö§³Ö
 
+	void InitParam();
 	void InitFileUpLoadList();
 	void InitCompressList();
 	void InitThreads();

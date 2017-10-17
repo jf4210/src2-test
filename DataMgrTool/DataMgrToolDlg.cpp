@@ -243,15 +243,15 @@ BOOL CDataMgrToolDlg::OnInitDialog()
 	CMenu* pSysMenu = GetSystemMenu(FALSE);
 	if (pSysMenu != NULL)
 	{
-		BOOL bNameValid;
-		CString strAboutMenu;
-		bNameValid = strAboutMenu.LoadString(IDS_ABOUTBOX);
-		ASSERT(bNameValid);
-		if (!strAboutMenu.IsEmpty())
-		{
-			pSysMenu->AppendMenu(MF_SEPARATOR);
-			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
-		}
+// 		BOOL bNameValid;
+// 		CString strAboutMenu;
+// 		bNameValid = strAboutMenu.LoadString(IDS_ABOUTBOX);
+// 		ASSERT(bNameValid);
+// 		if (!strAboutMenu.IsEmpty())
+// 		{
+// 			pSysMenu->AppendMenu(MF_SEPARATOR);
+// 			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
+// 		}
 	}
 
 	// 设置此对话框的图标。  当应用程序主窗口不是对话框时，框架将自动

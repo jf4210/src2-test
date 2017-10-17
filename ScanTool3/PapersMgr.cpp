@@ -55,6 +55,19 @@ bool CPapersMgr::SavePapers(pPAPERSINFO pPapers)
 		return bResult;
 	}
 
+	if (_nScanAnswerModel_ == 1)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(1, 1, "注意: 当前处于保存 客观题(Omr) 答案模式！");
+		dlg.DoModal();
+	}
+	else if (_nScanAnswerModel_ == 2)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(1, 1, "注意: 当前处于保存 主观题 答案模式！");
+		dlg.DoModal();
+	}
+
 	if (_pCurrExam->nModel == 0 && _nScanAnswerModel_ != 2)	//网阅模式
 	{
 		bool bRecogComplete = true;

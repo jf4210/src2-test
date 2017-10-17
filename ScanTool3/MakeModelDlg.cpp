@@ -6556,7 +6556,7 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 			rc.nAnswer = x;
 			break;
 		case 25:
-			rc.nTH = nMaxCols - y - 1;
+			rc.nTH = nMaxRow - y - 1;	//nMaxCols - y - 1;
 			rc.nAnswer = x;
 			break;
 		case 22:

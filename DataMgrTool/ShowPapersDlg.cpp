@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CShowPapersDlg, CDialog)
 
 CShowPapersDlg::CShowPapersDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(IDD_SHOWPAPERSDLG, pParent)
-	,m_pShowPicDlg(NULL), m_pPapers(NULL), m_nCurrItemPaperList(-1)
+	,m_pShowPicDlg(NULL), m_pAnswerShowDlg(NULL), m_pPapers(NULL), m_nCurrItemPaperList(-1)
 {
 
 }
@@ -37,6 +37,7 @@ BEGIN_MESSAGE_MAP(CShowPapersDlg, CDialog)
 	ON_COMMAND(ID_RightRotate, &CShowPapersDlg::RightRotate)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_Papers, &CShowPapersDlg::OnNMDblclkListPapers)
 	ON_NOTIFY(LVN_KEYDOWN, IDC_LIST_Papers, &CShowPapersDlg::OnLvnKeydownListPapers)
+	ON_NOTIFY(NM_HOVER, IDC_LIST_Papers, &CShowPapersDlg::OnNMHoverListPapers)
 END_MESSAGE_MAP()
 
 
@@ -64,6 +65,13 @@ void CShowPapersDlg::InitUI()
 		m_pShowPicDlg->ShowWindow(SW_SHOW);
 	}
 	m_pShowPicDlg->setShowModel(2);
+
+	if (!m_pAnswerShowDlg)
+	{
+		m_pAnswerShowDlg = new CAnswerShowDlg();
+		m_pAnswerShowDlg->Create(IDD_ANSWERSHOWDLG, this);
+		m_pAnswerShowDlg->ShowWindow(SW_SHOW);
+	}
 
 	InitCtrlPosition();
 }
@@ -100,10 +108,18 @@ void CShowPapersDlg::InitCtrlPosition()
 	nCurrentLeft = nLeftWidth + nGap;
 	nCurrentTop = nTopGap;
 	int nPicShowTabCtrlWidth = cx - nCurrentLeft - nRightGap;
-	int nPicShowTabCtrlHigh = cy - nTopGap - nBottomGap;
+	int nPicShowTabCtrlHigh = (cy - nTopGap - nBottomGap) * 0.73;
 
 	if (m_pShowPicDlg && m_pShowPicDlg->GetSafeHwnd())
-		m_pShowPicDlg->MoveWindow(nCurrentLeft, nTopGap, nPicShowTabCtrlWidth, nPicShowTabCtrlHigh);
+	{
+		m_pShowPicDlg->MoveWindow(nCurrentLeft, nCurrentTop, nPicShowTabCtrlWidth, nPicShowTabCtrlHigh);
+		nCurrentTop += (nPicShowTabCtrlHigh + nGap);
+	}
+	if (m_pAnswerShowDlg && m_pAnswerShowDlg->GetSafeHwnd())
+	{
+		int nH = cy - nCurrentTop - nBottomGap;
+		m_pAnswerShowDlg->MoveWindow(nCurrentLeft, nCurrentTop, nPicShowTabCtrlWidth, nH);
+	}
 }
 
 void CShowPapersDlg::OnDestroy()
@@ -114,6 +130,11 @@ void CShowPapersDlg::OnDestroy()
 	{
 		m_pShowPicDlg->DestroyWindow();
 		SAFE_RELEASE(m_pShowPicDlg);
+	}
+	if (m_pAnswerShowDlg)
+	{
+		m_pAnswerShowDlg->DestroyWindow();
+		SAFE_RELEASE(m_pAnswerShowDlg);
 	}
 	Invalidate();
 }
@@ -152,12 +173,14 @@ void CShowPapersDlg::ShowPapers(pPAPERSINFO pPapers)
 		m_nCurrItemPaperList = 0;
 		pST_PaperInfo pPaper = (pST_PaperInfo)m_listPaper.GetItemData(m_nCurrItemPaperList);
 		m_pShowPicDlg->setShowPaper(pPaper);
+		m_pAnswerShowDlg->InitData(pPaper);
 	}
 }
 
 void CShowPapersDlg::ShowPaper(pST_PaperInfo pPaper)
 {
 	m_pShowPicDlg->setShowPaper(pPaper);
+	m_pAnswerShowDlg->InitData(pPaper);
 }
 
 void CShowPapersDlg::LeftRotate()
@@ -185,6 +208,26 @@ LRESULT CShowPapersDlg::RoiRBtnUp(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
+void CShowPapersDlg::SetListCtrlHighLightShow(CXListCtrl& lCtrl, int nItem)
+{
+	if (nItem < 0) return;
+
+	lCtrl.GetItemColors(nItem, 0, crOldText, crOldBackground);
+	for (int i = 0; i < lCtrl.GetColumns(); i++)							//设置高亮显示(手动设置背景颜色)
+		lCtrl.SetItemColors(nItem, i, RGB(0, 0, 0), RGB(112, 180, 254));	//70, 70, 255
+}
+
+void CShowPapersDlg::UnSetListCtrlHighLightShow(CXListCtrl& lCtrl, int nItem)
+{
+	if (nItem < 0) return;
+
+	for (int i = 0; i < lCtrl.GetColumns(); i++)
+		if (!lCtrl.GetModified(nItem, i))
+			lCtrl.SetItemColors(nItem, i, crOldText, crOldBackground);
+		else
+			lCtrl.SetItemColors(nItem, i, RGB(255, 0, 0), crOldBackground);
+}
+
 void CShowPapersDlg::OnNMDblclkListPapers(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
@@ -193,9 +236,16 @@ void CShowPapersDlg::OnNMDblclkListPapers(NMHDR *pNMHDR, LRESULT *pResult)
 	if (pNMItemActivate->iItem < 0)
 		return;
 
+	UnSetListCtrlHighLightShow(m_listPaper, m_nCurrItemPaperList);
+
 	m_nCurrItemPaperList = pNMItemActivate->iItem;
+
+	SetListCtrlHighLightShow(m_listPaper, m_nCurrItemPaperList);
+	m_listPaper.Invalidate();
+
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_listPaper.GetItemData(pNMItemActivate->iItem);
 	m_pShowPicDlg->setShowPaper(pPaper);
+	m_pAnswerShowDlg->InitData(pPaper);
 }
 
 
@@ -204,22 +254,42 @@ void CShowPapersDlg::OnLvnKeydownListPapers(NMHDR *pNMHDR, LRESULT *pResult)
 	LPNMLVKEYDOWN pLVKeyDow = reinterpret_cast<LPNMLVKEYDOWN>(pNMHDR);
 	*pResult = 0;
 
+	if (m_nCurrItemPaperList < 0) return;
+
 	if (pLVKeyDow->wVKey == VK_UP)
 	{
+		UnSetListCtrlHighLightShow(m_listPaper, m_nCurrItemPaperList);
+
 		m_nCurrItemPaperList--;
 		if (m_nCurrItemPaperList <= 0)
 			m_nCurrItemPaperList = 0;
 
+		SetListCtrlHighLightShow(m_listPaper, m_nCurrItemPaperList);
+
 		pST_PaperInfo pPaper = (pST_PaperInfo)m_listPaper.GetItemData(m_nCurrItemPaperList);
 		m_pShowPicDlg->setShowPaper(pPaper);
+		m_pAnswerShowDlg->InitData(pPaper);
 	}
 	else if (pLVKeyDow->wVKey == VK_DOWN)
 	{
+		UnSetListCtrlHighLightShow(m_listPaper, m_nCurrItemPaperList);
+
 		m_nCurrItemPaperList++;
 		if (m_nCurrItemPaperList >= m_listPaper.GetItemCount() - 1)
 			m_nCurrItemPaperList = m_listPaper.GetItemCount() - 1;
 
+		SetListCtrlHighLightShow(m_listPaper, m_nCurrItemPaperList);
+
 		pST_PaperInfo pPaper = (pST_PaperInfo)m_listPaper.GetItemData(m_nCurrItemPaperList);
 		m_pShowPicDlg->setShowPaper(pPaper);
+		m_pAnswerShowDlg->InitData(pPaper);
 	}
+}
+
+
+void CShowPapersDlg::OnNMHoverListPapers(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	*pResult = 1;		//**********	这里如果不响应，同时返回结果值不为1的话，	****************
+						//**********	就会产生产生TRACK SELECT，也就是鼠标悬停	****************
+						//**********	一段时间后，所在行自动被选中
 }

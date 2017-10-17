@@ -128,6 +128,8 @@ void CPaperInputDlg::InitUI()
 		m_pAnswerShowDlg = new CAnswerShowDlg(this);
 		m_pAnswerShowDlg->Create(IDD_ANSWERSHOWDLG, this);
 		m_pAnswerShowDlg->ShowWindow(SW_SHOW);
+
+//		m_pAnswerShowDlg->InitModel(m_pModel);
 	}
 
 	m_lPapersCtrl.DeleteAllItems();
@@ -259,7 +261,7 @@ void CPaperInputDlg::InitCtrlPosition()
 
 	//Tab控件的位置
 	int nTabLeftPos = nLeftGap + nLeftCtrlWidth + nGap;
-	int nTabCtrlHeight = rcClient.Height() * 2 / 3;
+	int nTabCtrlHeight = rcClient.Height() * 0.62;
 	int nTabCtrlWidth = rcClient.Width() - nLeftGap - nLeftCtrlWidth - nGap - nRightGap;
 	if (m_pShowPicDlg && m_pShowPicDlg->GetSafeHwnd())
 	{
@@ -814,6 +816,7 @@ void CPaperInputDlg::SetListCtrlHighLightShow(CXListCtrl& lCtrl, int nItem)
 	lCtrl.GetItemColors(nItem, 0, crOldText, crOldBackground);
 	for (int i = 0; i < lCtrl.GetColumns(); i++)							//设置高亮显示(手动设置背景颜色)
 		lCtrl.SetItemColors(nItem, i, RGB(0, 0, 0), RGB(112, 180, 254));	//70, 70, 255
+	lCtrl.Invalidate();
 }
 
 void CPaperInputDlg::UnSetListCtrlHighLightShow(CXListCtrl& lCtrl, int nItem)
@@ -849,6 +852,8 @@ void CPaperInputDlg::OnCbnSelchangeComboModellist()
 	m_ncomboCurrentSel = m_comboModel.GetCurSel();
 
 	m_nModelPicNums = m_pModel->nPicNum;
+
+//	m_pAnswerShowDlg->InitModel(m_pModel);
 }
 
 void CPaperInputDlg::OnNMDblclkListPapers(NMHDR *pNMHDR, LRESULT *pResult)
@@ -933,6 +938,10 @@ void CPaperInputDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	m_pShowPicDlg->setShowPaper(pPaper);
 	m_pAnswerShowDlg->InitData(pPaper);
 
+#ifdef Test_Data
+	return;
+#endif
+
 	//双击为空的准考证号时显示准考证号修改窗口
 	CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
 	if ((/*g_nOperatingMode == 1 *//*|| pDlg->m_bModifySN*/g_bModifySN) && m_pModel && pPaper && \
@@ -978,7 +987,6 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 		return;
 	}
 
-
 // 	if (pPapers->lIssue.size() > 0)
 // 	{
 // 		if (g_nOperatingMode == 2)
@@ -1023,6 +1031,9 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	bool bWarn = false;
 	strInfo.Format(_T("正在保存%s..."), A2T(strZipName.c_str()));
 	SetStatusShowInfo(strInfo);
+
+	//防止重复保存
+	m_lPapersCtrl.SetItemData(m_nCurrItemPapers, NULL);
 #else
 	clock_t start, end;
 	start = clock();
@@ -1608,6 +1619,7 @@ void CPaperInputDlg::ShowPaperByItem(int nItem)
 // 	}
 
 	m_pShowPicDlg->setShowPaper(pPaper);
+	m_pAnswerShowDlg->InitData(pPaper);
 }
 
 

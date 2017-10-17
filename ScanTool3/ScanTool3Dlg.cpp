@@ -171,6 +171,47 @@ void CScanTool3Dlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_STATIC_UserName, m_strUserName);
 }
 
+void CScanTool3Dlg::InitParam()
+{
+	std::string strLog;
+	std::string strFile = g_strCurrentPath + "param.dat";
+	std::string strUtf8Path = CMyCodeConvert::Gb2312ToUtf8(strFile);
+	try
+	{
+		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strUtf8Path));
+
+		g_nRecogGrayMin = pConf->getInt("RecogGray.gray_Min", 0);
+		g_nRecogGrayMax_White = pConf->getInt("RecogGray.white_Max", 255);
+		g_nRecogGrayMin_OMR = pConf->getInt("RecogGray.omr_Min", 0);
+		g_RecogGrayMax_OMR = pConf->getInt("RecogGray.omr_Max", 235);
+
+		_dCompThread_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fCompTread", 1.2);
+		_dDiffThread_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fDiffThread", 0.2);
+		_dDiffExit_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fDiffExit", 0.3);
+		_dCompThread_Head_ = pConf->getDouble("RecogOmrSn_Head.fCompTread", 1.2);
+		_dDiffThread_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffThread", 0.085);
+		_dDiffExit_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffExit", 0.15);
+
+		_nThreshold_Recog2_ = pConf->getInt("RecogOmrSn_Fun2.nThreshold_Fun2", 240);
+
+		_dCompThread_3_ = pConf->getDouble("RecogOmrSn_Fun3.fCompTread", 170);
+		_dDiffThread_3_ = pConf->getDouble("RecogOmrSn_Fun3.fDiffThread", 20);
+		_dDiffExit_3_ = pConf->getDouble("RecogOmrSn_Fun3.fDiffExit", 50);
+		_dAnswerSure_ = pConf->getDouble("RecogOmrSn_Fun3.fAnswerSure", 100);
+
+		strLog = "读取识别灰度参数完成";
+	}
+	catch (Poco::Exception& exc)
+	{
+		strLog = "读取参数失败，使用默认参数 " + CMyCodeConvert::Utf8ToGb2312(exc.displayText());
+		g_nRecogGrayMin = 0;
+		g_nRecogGrayMax_White = 255;
+		g_nRecogGrayMin_OMR = 0;
+		g_RecogGrayMax_OMR = 235;
+	}
+	g_pLogger->information(strLog);
+}
+
 void CScanTool3Dlg::InitFileUpLoadList()
 {
 	USES_CONVERSION;
@@ -764,6 +805,7 @@ BOOL CScanTool3Dlg::OnInitDialog()
 	m_pExamInfoMgrDlg->InitShowData();
 //	GetFileAddrs();
 
+	InitParam();
 	InitFileUpLoadList();
 	InitCompressList();
 //#ifndef _DEBUG

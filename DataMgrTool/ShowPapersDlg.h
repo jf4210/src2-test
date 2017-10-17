@@ -1,5 +1,7 @@
 #pragma once
 #include "ShowPicDlg.h"
+#include "AnswerShowDlg.h"
+#include "XListCtrl.h"
 
 // CShowPapersDlg 对话框
 
@@ -14,7 +16,7 @@ public:
 // 对话框数据
 	enum { IDD = IDD_SHOWPAPERSDLG };
 
-	CListCtrl	m_listPaper;
+	CXListCtrl	m_listPaper;
 	void setShowPapers(pPAPERSINFO pPapers);
 	void ShowPapers(pPAPERSINFO pPapers);
 	void ShowPaper(pST_PaperInfo pPaper);
@@ -25,7 +27,12 @@ private:
 	void	RightRotate();
 	LRESULT RoiRBtnUp(WPARAM wParam, LPARAM lParam);
 
+	void	SetListCtrlHighLightShow(CXListCtrl& lCtrl, int nItem);		//设置列表高亮显示
+	void	UnSetListCtrlHighLightShow(CXListCtrl& lCtrl, int nItem);		//取消列表高亮显示
+	COLORREF		crOldText, crOldBackground;
+
 	CShowPicDlg* m_pShowPicDlg;
+	CAnswerShowDlg* m_pAnswerShowDlg;
 
 	int			m_nCurrItemPaperList;
 	pPAPERSINFO m_pPapers;
@@ -39,4 +46,5 @@ public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnNMDblclkListPapers(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnLvnKeydownListPapers(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnNMHoverListPapers(NMHDR *pNMHDR, LRESULT *pResult);
 };

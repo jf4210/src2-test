@@ -688,7 +688,11 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 					if (jsnPaperObj->has("issueFlag"))
 						pPaper->nIssueFlag = jsnPaperObj->get("issueFlag").convert<int>();
 					if (jsnPaperObj->has("standardAnswer"))
+					{
 						pPaper->nStandardAnswer = jsnPaperObj->get("standardAnswer").convert<int>();
+						if (pPaper->nStandardAnswer > 0)
+							pPapers->nStandardAnswer = pPaper->nStandardAnswer;
+					}
 
 					Poco::JSON::Array::Ptr jsnSnArry = jsnPaperObj->getArray("snDetail");
 					Poco::JSON::Object jsnSn;

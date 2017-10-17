@@ -553,7 +553,7 @@ void CNewMakeModelDlg::OnBnClickedBtnNewmakemodel()
 
 		try
 		{
-			g_eGetModelPic.wait(10000);
+			g_eGetModelPic.wait(12000);
 		}
 		catch (Poco::TimeoutException &e)
 		{

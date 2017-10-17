@@ -917,7 +917,10 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 	pNewTask->strResult = jsnString.str();
 	pNewTask->pPapers	= pPapers;
 	pNewTask->strEzs	= pPapers->strEzs;
-	pNewTask->strUri	= SysSet.m_strBackUri + "/studentAnswerSheet";
+	if(pPapers->nStandardAnswer == 2)	//主观题标答时，提交另外的地址
+		pNewTask->strUri = SysSet.m_strBackUri + "/zganswer";
+	else
+		pNewTask->strUri	= SysSet.m_strBackUri + "/studentAnswerSheet";
 	g_fmHttpSend.lock();
 	g_lHttpSend.push_back(pNewTask);
 	g_fmHttpSend.unlock();
@@ -1256,13 +1259,16 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 		pTask->pPapers->nTaskCounts++;			//omr
 		pTask->pPapers->fmTask.unlock();
 		pTask->pPapers->strSendOmrResult = jsnOmrString.str();	//将结果信息保存到试卷袋结构体中，以防异常错误时需要重新计算 2017.1.19
-
+		
 		pSEND_HTTP_TASK pOmrTask = new SEND_HTTP_TASK;
 		pOmrTask->nTaskType = 3;
 		pOmrTask->strResult = jsnOmrString.str();
 		pOmrTask->pPapers = pTask->pPapers;
 		pOmrTask->strEzs = pTask->pPapers->strEzs;
-		pOmrTask->strUri = SysSet.m_strBackUri + "/omr";
+		if(pOmrTask->pPapers->nStandardAnswer == 1)		//提交客观题答案到另外地址
+			pOmrTask->strUri = SysSet.m_strBackUri + "/kgansweromr";
+		else
+			pOmrTask->strUri = SysSet.m_strBackUri + "/omr";
 		g_fmHttpSend.lock();
 		g_lHttpSend.push_back(pOmrTask);
 		g_fmHttpSend.unlock();

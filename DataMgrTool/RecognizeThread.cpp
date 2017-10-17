@@ -915,7 +915,7 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			{
 				CvRect aRect = cvBoundingRect(contour, 0);
 				Rect rm = aRect;
-				rm = rm + rc.rt.tl();
+				rm = rm + rtTmp.tl();	// rc.rt.tl();
 				RectCompList.push_back(rm);
 			}
 			cvReleaseMemStorage(&storage);
@@ -2360,10 +2360,10 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 						(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrDoubt++;
 						(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
 					}
-					else if (strRecogAnswer3 == "" && strRecogAnswer2 != "")
+					else if (strRecogAnswer3 == "" && strRecogAnswer2 != "")	//方法1与方法3为空时，认为选项为空
 					{
 						strRecogAnswer = strRecogAnswer3;
-						nDoubt = 0;
+						nDoubt = 2;
 						nEqualCount++;
 					}
 					else if (strRecogAnswer2 != "" && strRecogAnswer3 != "")

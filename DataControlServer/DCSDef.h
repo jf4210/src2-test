@@ -29,8 +29,8 @@
 #define DecompressTest		//解压测试，多线程解压
 
 #ifndef TO_WHTY
-	#define SOFT_VERSION "DataControlServer V1.70928-1"
-	#define SOFT_VERSION4TY "DataControlServer for TY V2.1-0928"
+	#define SOFT_VERSION "DataControlServer V1.71011-1"
+	#define SOFT_VERSION4TY "DataControlServer for TY V2.1-1011"
 #else
 	#define SOFT_VERSION "DataControlServer for TY V2.1-0309"
 #endif
@@ -226,6 +226,8 @@ typedef struct _Papers_
 	int		nOmrNull;				//OMR识别为空的数量
 	int		nSnNull;				//准考证号识别为空的数量
 	//--
+	int			nStandardAnswer;	//当前试卷袋表示：0-正常试卷，1-Omr标答，2-主观题标答
+
 	Poco::FastMutex fmResultState;	//对nResultSendState结果状态修改的锁
 	int		nResultSendState;		//试卷袋的图片MD5地址提交、OMR、准考证号、选做题结果发送给后端EZS的完成状态，
 									//采用位标识，从右往左数，第1位--图片地址提交完成，第2位--OMR结果提交完成，第3位--ZKZH提交完成，第4位--选做题信息提交完成
@@ -250,6 +252,7 @@ typedef struct _Papers_
 	_Papers_()
 	{
 		nTaskCounts = 0;
+		nStandardAnswer = 0;
 		nUserId = -1;
 		nTeacherId = -1;
 		nTotalPics = 0;

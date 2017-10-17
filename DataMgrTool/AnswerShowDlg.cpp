@@ -2,7 +2,7 @@
 //
 
 #include "stdafx.h"
-#include "ScanTool3.h"
+#include "DataMgrTool.h"
 #include "AnswerShowDlg.h"
 #include "afxdialogex.h"
 
@@ -94,15 +94,14 @@ void CAnswerShowDlg::InitData(pST_PaperInfo pPaper)
 		OMRRESULTLIST::iterator it = pPaper->lOmrResult.begin();
 		for (int i = 1; it != pPaper->lOmrResult.end(); it++, i++)
 		{
-// 			if (m_nShowType != 0 && ((m_nShowType == 1 && it->nDoubt != 1) || (m_nShowType == 2 && it->nDoubt != 2) ||\
-// 				(m_nShowType == 3 && it->nDoubt == 0) || (m_nShowType == 4 && it->nDoubt != 0)))	//只显示有怀疑和空的选项
-			if(m_nShowType == 0 || (m_nShowType == 1 && it->nDoubt != 0) || (m_nShowType == 2 && it->nDoubt != 1) || \
+			if (m_nShowType == 0 || (m_nShowType == 1 && it->nDoubt != 0) || (m_nShowType == 2 && it->nDoubt != 1) || \
 				(m_nShowType == 3 && it->nDoubt == 2) || (m_nShowType == 4 && it->nDoubt != 2) || \
-			   (m_nShowType == 5 && it->nDoubt == 1) || (m_nShowType == 6 && it->nDoubt == 0))
+				(m_nShowType == 5 && it->nDoubt == 1) || (m_nShowType == 6 && it->nDoubt == 0))
 			{
 				i--;
 				continue;
 			}
+
 			char szTh[10] = { 0 };
 			sprintf_s(szTh, "%d", it->nTH);
 			m_lAnswerListCtrl.InsertColumn(i, A2T(szTh), LVCFMT_CENTER, 45);
@@ -139,6 +138,7 @@ void CAnswerShowDlg::InitData(pST_PaperInfo pPaper)
 				i--;
 				continue;
 			}
+
 			nRow = 0;
 			char szType[10] = { 0 };
 			if (it->nSingle == 0)
@@ -160,7 +160,7 @@ void CAnswerShowDlg::InitData(pST_PaperInfo pPaper)
 			if (it->nDoubt == 1)
 				m_lAnswerListCtrl.SetItemText(nRow, i, _T("*"));
 		}
-	}	
+	}
 }
 
 void CAnswerShowDlg::InitModel(pMODEL pModel)
@@ -177,7 +177,7 @@ void CAnswerShowDlg::InitModel(pMODEL pModel)
 		for (int i = 0; i < m_pModel->vecPaperModel.size(); i++)
 		{
 			OMRLIST::iterator it = m_pModel->vecPaperModel[i]->lOMR2.begin();
-			for(int j = 1; it != m_pModel->vecPaperModel[i]->lOMR2.end(); it++, j++)
+			for (int j = 1; it != m_pModel->vecPaperModel[i]->lOMR2.end(); it++, j++)
 			{
 				char szTh[10] = { 0 };
 				sprintf_s(szTh, "%d", it->nTH);
@@ -281,7 +281,7 @@ void CAnswerShowDlg::InitUI()
 	++nRow;
 
 	setCheckStatus(m_nShowType);
-	
+
 	InitCtrlPosition();
 }
 
@@ -325,19 +325,19 @@ void CAnswerShowDlg::setCheckStatus(int nStatus)
 		m_btnChkDoubt.SetCheck(1);
 		m_btnChkNull.SetCheck(0);
 	}
-	else if(nStatus == 3)
+	else if (nStatus == 3)
 	{
 		m_btnChkRight.SetCheck(1);
 		m_btnChkDoubt.SetCheck(1);
 		m_btnChkNull.SetCheck(0);
 	}
-	else if(nStatus == 4)
+	else if (nStatus == 4)
 	{
 		m_btnChkRight.SetCheck(0);
 		m_btnChkDoubt.SetCheck(0);
 		m_btnChkNull.SetCheck(1);
 	}
-	else if(nStatus == 5)
+	else if (nStatus == 5)
 	{
 		m_btnChkRight.SetCheck(1);
 		m_btnChkDoubt.SetCheck(0);
@@ -349,7 +349,7 @@ void CAnswerShowDlg::setCheckStatus(int nStatus)
 		m_btnChkDoubt.SetCheck(1);
 		m_btnChkNull.SetCheck(1);
 	}
-	else if(nStatus == 7)
+	else if (nStatus == 7)
 	{
 		m_btnChkRight.SetCheck(1);
 		m_btnChkDoubt.SetCheck(1);
@@ -381,6 +381,7 @@ int CAnswerShowDlg::getCheckStatus()
 		nResult = 3;
 	else if (nRight && !nDoubt && nNull)	//101
 		nResult = 5;
+
 
 	return nResult;
 }
@@ -417,7 +418,6 @@ void CAnswerShowDlg::OnBnClickedChkRight()
 	m_nShowType = getCheckStatus();
 	InitData(m_pShowPaper);
 }
-
 
 void CAnswerShowDlg::OnBnClickedChkDoubt()
 {

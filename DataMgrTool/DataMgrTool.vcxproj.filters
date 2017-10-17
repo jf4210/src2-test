@@ -52,6 +52,12 @@
     <Filter Include="查看试卷包试卷\图片查看\图片显示">
       <UniqueIdentifier>{4114e6d2-d06b-4fbd-a74d-a1d6670485d1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="查看试卷包试卷\图像答案识别窗口">
+      <UniqueIdentifier>{0207afe2-d512-41f4-841a-af1384205b98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="查看试卷包试卷\图像答案识别窗口\XList">
+      <UniqueIdentifier>{b6fc554e-e307-4428-94d0-accaa18b073a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -150,6 +156,51 @@
     <ClInclude Include="PicShow.h">
       <Filter>查看试卷包试卷\图片查看\图片显示</Filter>
     </ClInclude>
+    <ClInclude Include="AnswerShowDlg.h">
+      <Filter>查看试卷包试卷\图像答案识别窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\AdvComboBox.h">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\AdvComboEdit.h">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\DropListBox.h">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\DropScrollBar.h">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\DropWnd.h">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\SortCStringArray.h">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\VisualStylesXP.h">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\XCombo.h">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\XComboList.h">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\XEdit.h">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\XHeaderCtrl.h">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\XListCtrl.h">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\XListMemDC.h">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClInclude>
+    <ClInclude Include="XListCtrl\XTrace.h">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataMgrTool.cpp">
@@ -230,6 +281,42 @@
     <ClCompile Include="PicShow.cpp">
       <Filter>查看试卷包试卷\图片查看\图片显示</Filter>
     </ClCompile>
+    <ClCompile Include="AnswerShowDlg.cpp">
+      <Filter>查看试卷包试卷\图像答案识别窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\AdvComboBox.cpp">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\AdvComboEdit.cpp">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\DropListBox.cpp">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\DropScrollBar.cpp">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\DropWnd.cpp">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\VisualStylesXP.cpp">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\XCombo.cpp">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\XComboList.cpp">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\XEdit.cpp">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\XHeaderCtrl.cpp">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClCompile>
+    <ClCompile Include="XListCtrl\XListCtrl.cpp">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DataMgrTool.rc">
@@ -253,6 +340,9 @@
     </Image>
     <Image Include="skin\第2页.bmp">
       <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="XListCtrl\checkboxes.bmp">
+      <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
     </Image>
   </ItemGroup>
 </Project>

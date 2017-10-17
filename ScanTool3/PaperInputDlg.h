@@ -65,6 +65,7 @@ private:
 // 	void	PaintRecognisedRect(pST_PaperInfo pPaper);		//画已识别的矩形
 // 	void	PaintIssueRect(pST_PaperInfo pPaper);			//画出已识别出来的问题矩形位置
 
+	COLORREF		crOldText, crOldBackground;
 	void	SetListCtrlHighLightShow(CXListCtrl& lCtrl, int nItem);		//设置列表高亮显示
 	void	UnSetListCtrlHighLightShow(CXListCtrl& lCtrl, int nItem);		//取消列表高亮显示
 
@@ -83,9 +84,7 @@ private:
 	pPAPERSINFO		m_pCurrentPapers;
 
 	CStudentMgr*	m_pStudentMgr;			//报名库管理对象
-
-	COLORREF		crOldText, crOldBackground;
-
+	
 	void	ShowRectByPoint(cv::Point pt, pST_PaperInfo pPaper);
 	LRESULT RoiLBtnDown(WPARAM wParam, LPARAM lParam);		//鼠标左键按下的通知
 	int		GetRectInfoByPoint(cv::Point pt, pST_PicInfo pPic, RECTINFO*& pRc);
