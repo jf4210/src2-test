@@ -380,6 +380,8 @@ bool CPapersMgr::WriteJsonFile(pPAPERSINFO pPapers)
 				jsnItem.set("y", itFix->rt.y);
 				jsnItem.set("w", itFix->rt.width);
 				jsnItem.set("h", itFix->rt.height);
+
+				jsnItem.set("Th", j);	//定点的题号是通框选的顺序确定的，在重识别时可查看3个定点的情况
 				jsnPaperFixArry.add(jsnItem);
 			}
 			Poco::JSON::Array jsnPaperModelCharAncharPointArry;
@@ -562,6 +564,8 @@ bool CPapersMgr::WriteJsonFile(pPAPERSINFO pPapers)
 					jsnItem.set("y", itFix->rt.y);
 					jsnItem.set("w", itFix->rt.width);
 					jsnItem.set("h", itFix->rt.height);
+
+					jsnItem.set("Th", j);	//定点的题号是通框选的顺序确定的，在重识别时可查看3个定点的情况
 					jsnPaperFixArry.add(jsnItem);
 				}
 				Poco::JSON::Array jsnPaperModelCharAncharPointArry;
