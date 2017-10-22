@@ -247,6 +247,17 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 				}
 				_mapUserLock_.unlock();
 
+				//¼ÇÂ¼sessionÓ³Éä¹ØÏµ
+				std::string strSessionKey = Poco::format("%s:%d", std::string(pTask->pUser->m_pIPAddress), (int)pTask->pUser->m_wPort);
+				_mapSessionLock_.lock();
+				_mapSession_[strSessionKey] = strEzs;
+// 				MAP_SESSION::iterator itFind2 = _mapSession_.find(strSessionKey);
+// 				if (itFind2 == _mapSession_.end())
+// 				{
+// 					_mapSession_.insert(MAP_SESSION::value_type(strSessionKey, strEzs));
+// 				}
+				_mapSessionLock_.unlock();
+
 				pTask->pUser->SendResponesInfo(USER_RESPONSE_LOGIN, ret, szLoginResult, sizeof(stResult));
 				return bResult;
 			}

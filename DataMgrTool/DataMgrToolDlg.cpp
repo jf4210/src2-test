@@ -1401,18 +1401,6 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpapers()
 
 	AfxMessageBox(_T("模板文件属于全局变量，确保不要在识别过程中来操作这里!!!"));
 
-	//++创建文件解压路径
-	CString strTmp = m_strWatchPaper_PapersDir + _T("\\查看试卷-解压路径");
-	std::string strDecompressPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strTmp));
-	try
-	{
-		Poco::File dir(strDecompressPath);
-		dir.createDirectories();
-	}
-	catch (Poco::Exception& e)
-	{
-	}
-	//--
 	std::string strModelPath = T2A(m_strModelPath_showPapersDlg);
 
 	int nPos1 = strModelPath.rfind('\\');
@@ -1439,6 +1427,19 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpapers()
 	g_lDecompressTask.push_back(pDecompressTask);
 	g_fmDecompressLock.unlock();
 	
+	//++创建文件解压路径
+	std::string strTmpPath = strBasePath + "\\查看试卷-解压路径";
+	CString strTmp = A2T(strTmpPath.c_str());
+	std::string strDecompressPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strTmp));
+	try
+	{
+		Poco::File dir(strDecompressPath);
+		dir.createDirectories();
+	}
+	catch (Poco::Exception& e)
+	{
+	}
+	//--
 	Poco::Path filePath(strPkgPath);
 
 	pDECOMPRESSTASK pDecompressTask1 = new DECOMPRESSTASK;

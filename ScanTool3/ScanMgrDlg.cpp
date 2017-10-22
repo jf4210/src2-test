@@ -526,6 +526,14 @@ LRESULT CScanMgrDlg::MsgCompressResult(WPARAM wParam, LPARAM lParam)
 void CScanMgrDlg::OnDestroy()
 {
 	CDialog::OnDestroy();
+	
+// 	m_scanThread.PostThreadMessage(WM_QUIT, NULL, NULL);
+// 	m_scanThread.m_bAutoDelete = FALSE;
+// 	DWORD dwRet = WaitForSingleObject(m_scanThread.m_hThread, INFINITE);
+// 	if (dwRet == WAIT_OBJECT_0)
+// 	{
+// 		TRACE("scanThread quit success");
+// 	}
 
 	if (_pTWAINApp)
 	{

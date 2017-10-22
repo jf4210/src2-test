@@ -63,3 +63,5 @@
 
 #include "Poco/Checksum.h"
 
+#include "Poco/Util/TimerTask.h"
+#include "Poco/Util/Timer.h"

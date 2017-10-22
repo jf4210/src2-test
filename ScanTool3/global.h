@@ -120,9 +120,9 @@
 
 #ifndef TO_WHTY
 	#ifdef PUBLISH_VERSION
-		#define SOFT_VERSION	_T("v2.5")
+		#define SOFT_VERSION	_T("v2.6")
 	#else
-		#define SOFT_VERSION	_T("v2.5-Pir")		//-Pri
+		#define SOFT_VERSION	_T("v2.6")		//-Pri
 	#endif
 #else
 	#define SOFT_VERSION	_T("v2.1")
@@ -196,6 +196,7 @@ extern int					g_nFilePort;
 extern std::string			g_strFileIp4HandModel;		//手阅模式时文件服务器地址
 extern int					g_nFilePort4HandModel;		//手阅模式时文件服务器端口
 
+extern double	_dAnswerSure_DensityFix_;	//密度算法确定为答案的比例
 extern double	_dCompThread_Fix_;
 extern double	_dDiffThread_Fix_;
 extern double	_dDiffExit_Fix_;

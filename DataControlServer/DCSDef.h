@@ -334,6 +334,10 @@ typedef std::map<std::string, pPAPERS_DETAIL> MAP_RESEND_PKG;
 extern Poco::FastMutex	_mapResendPkgLock_;
 extern MAP_RESEND_PKG _mapResendPkg_;
 
+typedef std::map<std::string, std::string> MAP_SESSION;		//用户与session映射表，与后端进行心跳，维持session存活
+extern Poco::FastMutex _mapSessionLock_;
+extern MAP_SESSION _mapSession_;
+
 bool encString(std::string& strSrc, std::string& strDst);
 bool decString(std::string& strSrc, std::string& strDst);
 

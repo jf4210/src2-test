@@ -53,6 +53,7 @@ public:
 private:
 	void	InitUI();
 	void	InitCtrlPosition(); 
+	void	InitParam();
 
 	void	SeachModel();
 // 	bool	UnZipModel(CString strZipPath);

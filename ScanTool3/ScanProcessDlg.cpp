@@ -442,6 +442,7 @@ bool CScanProcessDlg::WriteJsonFile()
 			jsnOmr.set("value2", itOmr->strRecogVal2);
 			jsnOmr.set("value3", itOmr->strRecogVal3);
 			jsnOmr.set("doubt", itOmr->nDoubt);
+			jsnOmr.set("pageId", itOmr->nPageId);
 			Poco::JSON::Array jsnPositionArry;
 			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
 			for (; itRect != itOmr->lSelAnswer.end(); itRect++)

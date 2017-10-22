@@ -35,6 +35,8 @@ MAP_PIC_ADDR	_mapPicAddr_;
 Poco::FastMutex	_mapResendPkgLock_;
 MAP_RESEND_PKG	_mapResendPkg_;		//需要重新发送数据包映射关系，防止多次解压，比如一个试卷包可能出现OMR、ZHZH、选做都提交失败的情况，此时包只有一个，只需要解压一次
 
+Poco::FastMutex _mapSessionLock_;
+MAP_SESSION		_mapSession_;			//用户与session映射表，与后端进行心跳，维持session存活
 //========================================
 int		g_nRecogGrayMin = 0;			//灰度点(除空白点,OMR外)计算灰度的最小考试范围
 int		g_nRecogGrayMax_White = 255;	//空白点校验点计算灰度的最大考试范围
@@ -82,6 +84,29 @@ int		_nWhiteVal_ = 150;
 int		_nOMR_ = 230;		//重新识别模板时，用来识别OMR的密度值的阀值
 int		_nSN_ = 200;		//重新识别模板时，用来识别ZKZH的密度值的阀值
 //========================================
+
+class TimerObj : public Poco::Util::TimerTask
+{
+public:
+	void run()
+	{
+		std::cout << "session定时器" << std::endl;
+
+		MAP_SESSION::iterator it = _mapSession_.begin();
+		for(; it != _mapSession_.end(); it++)
+		{
+			pSCAN_REQ_TASK pTask = NULL;
+			pTask = new SCAN_REQ_TASK;
+			pTask->strUri = SysSet.m_strBackUri + "/api/commons/keepalive";
+ 			pTask->strMsg = "sessionAlive";
+			pTask->strEzs = it->second;
+
+			g_fmScanReq.lock();
+			g_lScanReq.push_back(pTask);
+			g_fmScanReq.unlock();
+		}
+	}
+};
 
 class DCS : public Poco::Util::ServerApplication
 {
@@ -578,6 +603,9 @@ protected:
 		else
 			g_Log.LogOut("StartCmdChannel fail.");
 
+		TimerObj tmObj;
+		Poco::Util::Timer* timer_ = new Poco::Util::Timer();
+		timer_->schedule(&tmObj, 60 * 1000, 5 * 60 * 1000);	//60 * 1000, 5 * 60 * 1000
 
 #if 0	//test
 		char szIndex[50] = { 0 };

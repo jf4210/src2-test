@@ -22,7 +22,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 		{
 			ST_LOGIN_INFO  LoginInfo = *(pStLoginInfo)(pMission->m_pMissionData + HEAD_SIZE);
 			std::cout << "login info: " << LoginInfo.szUserNo << ", pwd: " << LoginInfo.szPWD << std::endl;
-
+			
 // 			_mapUserLock_.lock();
 // 			MAP_USER::iterator itFind = _mapUser_.find(LoginInfo.szUserNo);
 // 			if (itFind != _mapUser_.end())

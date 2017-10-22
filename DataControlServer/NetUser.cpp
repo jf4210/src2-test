@@ -92,6 +92,16 @@ void CNetUser::OnClose(void)
 	}
 	_mapUserLock_.unlock();
 
+	std::string strSessionKey = Poco::format("%s:%d", std::string(m_pIPAddress), (int)m_wPort);
+	_mapSessionLock_.lock();
+	_mapSession_.erase(strSessionKey);
+// 	MAP_SESSION::iterator itFind2 = _mapSession_.find(strSessionKey);
+// 	if (itFind2 != _mapSession_.end())
+// 	{
+// 		_mapSession_.erase(itFind2);
+// 	}
+	_mapSessionLock_.unlock();
+
 	CListUser::GetInstance()->RemoveUser(this);
 //	CListUser::GetFreeInstance()->AddUser(this);
 	m_bNoUse = TRUE;

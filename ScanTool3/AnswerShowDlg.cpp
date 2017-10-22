@@ -94,8 +94,6 @@ void CAnswerShowDlg::InitData(pST_PaperInfo pPaper)
 		OMRRESULTLIST::iterator it = pPaper->lOmrResult.begin();
 		for (int i = 1; it != pPaper->lOmrResult.end(); it++, i++)
 		{
-// 			if (m_nShowType != 0 && ((m_nShowType == 1 && it->nDoubt != 1) || (m_nShowType == 2 && it->nDoubt != 2) ||\
-// 				(m_nShowType == 3 && it->nDoubt == 0) || (m_nShowType == 4 && it->nDoubt != 0)))	//只显示有怀疑和空的选项
 			if(m_nShowType == 0 || (m_nShowType == 1 && it->nDoubt != 0) || (m_nShowType == 2 && it->nDoubt != 1) || \
 				(m_nShowType == 3 && it->nDoubt == 2) || (m_nShowType == 4 && it->nDoubt != 2) || \
 			   (m_nShowType == 5 && it->nDoubt == 1) || (m_nShowType == 6 && it->nDoubt == 0))

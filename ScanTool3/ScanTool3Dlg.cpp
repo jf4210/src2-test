@@ -81,6 +81,7 @@ EXAMBMK_MAP			g_mapBmkMgr;			//考试报名库管理哈希表
 #endif
 
 
+double  _dAnswerSure_DensityFix_ = 1.5;	//密度算法确定为答案的比例
 double	_dCompThread_Fix_ = 1.2;
 double	_dDiffThread_Fix_ = 0.2;
 double	_dDiffExit_Fix_ = 0.3;
@@ -185,6 +186,7 @@ void CScanTool3Dlg::InitParam()
 		g_nRecogGrayMin_OMR = pConf->getInt("RecogGray.omr_Min", 0);
 		g_RecogGrayMax_OMR = pConf->getInt("RecogGray.omr_Max", 235);
 
+		_dAnswerSure_DensityFix_ = pConf->getDouble("RecogOmrSn_Fix.fAnswerSure", 1.5);
 		_dCompThread_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fCompTread", 1.2);
 		_dDiffThread_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fDiffThread", 0.2);
 		_dDiffExit_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fDiffExit", 0.3);
@@ -441,6 +443,17 @@ void CScanTool3Dlg::ReleaseThreads()
 
 void CScanTool3Dlg::ReleaseData()
 {
+	//试卷袋列表
+	g_fmPapers.lock();
+	PAPERS_LIST::iterator itPapers = g_lPapers.begin();
+	for (; itPapers != g_lPapers.end();)
+	{
+		pPAPERSINFO pPapers = *itPapers;
+		itPapers = g_lPapers.erase(itPapers);
+		SAFE_RELEASE(pPapers);
+	}
+	g_fmPapers.unlock();
+
 	//考试列表
 	g_lfmExamList.lock();
 	EXAM_LIST::iterator itExam = g_lExamList.begin();

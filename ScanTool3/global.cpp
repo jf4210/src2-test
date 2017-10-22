@@ -441,7 +441,13 @@ pMODEL LoadModelFile(CString strModelPath)
 				arrayElectOmr = jsnPaperObj->getArray("electOmrList");
 			Poco::JSON::Array::Ptr arrayCharacterAnchorArea;
 			if (jsnPaperObj->has("characterAnchorArea"))
+			{
 				arrayCharacterAnchorArea = jsnPaperObj->getArray("characterAnchorArea");
+
+				//加载模板图像，只有存在文字定时时才需要，用到了模板匹配
+// 				CString strPicPath = g_strCurrentPath + _T("Model\\") + A2T(pModel->strModelName.c_str()) + _T("\\") + A2T(pModel->vecPaperModel[i]->strModelPicName.c_str());
+// 				pModel->vecPaperModel[0]->matModel = cv::imread((std::string)(CT2CA)strPicPath);
+			}
 
 			for (int i = 0; i < arrayFixCP->size(); i++)
 			{

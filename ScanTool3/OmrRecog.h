@@ -1,6 +1,12 @@
 #pragma once
 #include "global.h"
 
+typedef struct _WordMatchTempl_
+{
+	cv::Rect rtModel;	//对应文字的模板位置信息
+	RECTINFO rcReal;	//实际进行模板匹配后的信息
+}ST_WORDMATCHTEMPL, *pST_WORDMATCHTEMPL;
+
 class COmrRecog
 {
 public:
@@ -27,8 +33,15 @@ protected:
 //	cv::Rect	GetRectByOrientation(cv::Rect& rtPic, cv::Rect rt, int nOrientation);
 	float		GetRtDensity(cv::Mat& matSrc, cv::Rect rt, RECTINFO rcMod);
 	bool		bGetMaxRect(cv::Mat& matSrc, cv::Rect rt, RECTINFO rcMod, cv::Rect& rtMax);
+	bool		RecogCodeOrientation(cv::Mat& matSrc, int n, int& nResult);	//条码方向判断
+	void		PicRotate(cv::Mat& matSrc, int n);	//图像旋转，实际图像需要进行的旋转，1：正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+	bool		RecogWordOrientation(cv::Mat& matSrc, int n, int nRotation, int& nResult, std::string& strLog); //识别文字的方向，具体操作
+
+	bool	MatchingMethod(int method, cv::Mat& src, cv::Mat& templ, cv::Point& ptResult);	//模板匹配操作
+
 	int		CheckOrientation4Fix(cv::Mat& matSrc, int n);	//定点模式下的方向
 	int		CheckOrientation4Head(cv::Mat& matSrc, int n);	//同步头模式下的方向
+	int		CheckOrientation4Word(cv::Mat& matSrc, int n);	//文字定位模式下的方向判断
 	//检查图像旋转方向，在获取图像后将模板图像进行旋转
 	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
 	int		CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan);

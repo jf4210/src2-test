@@ -2141,6 +2141,8 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 				pstCharRt->rc.nSharpKernel = m_nSharpKernel;
 				pstCharRt->rc.nCannyKernel = m_nCannyKernel;
 				pstCharRt->rc.nDilateKernel = m_nDilateKernel;
+				Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtSrc);
+				RecogGrayValue(matSrcModel, pstCharRt->rc);
 
 				pstCharRt->strVal = CMyCodeConvert::Utf8ToGb2312(word);
 

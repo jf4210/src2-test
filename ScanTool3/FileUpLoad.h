@@ -14,12 +14,14 @@ typedef struct ST_UPLOAD_ANS
 {
 	BOOL	bUpload;
 	void*	pTask;
+	int		nPriority;		//上传优先级，越高越优先上传，不能中断现有上传文件
 	CString strAnsName;
 	CString strPath;
 	
 	ST_UPLOAD_ANS()
 	{
 		pTask	= NULL;
+		nPriority = 0;
 		strAnsName = _T("");
 		strPath = _T("");
 		bUpload = FALSE;

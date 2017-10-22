@@ -2208,6 +2208,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		OMR_RESULT omrResult;
 		omrResult.nTH = pOmrQuestion->nTH;
 		omrResult.nSingle = pOmrQuestion->nSingle;
+		omrResult.nPageId = nPic + 1;
 
 		std::vector<int> vecVal_calcHist;		//直方图灰度计算的识别结果
 		std::vector<int> vecVal_threshold;		//二值化计算的识别结果
@@ -2236,7 +2237,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			bool bResult_Recog = Recog2(nPic, rc, matCompPic, pPic, pModelInfo);
 			if (bResult_Recog)
 			{
-				if (rc.fRealValuePercent > rc.fStandardValuePercent)
+				if (rc.fRealValuePercent > _dAnswerSure_DensityFix_)	//rc.fStandardValuePercent
 				{
 					vecVal_calcHist.push_back(rc.nAnswer);
 				}
@@ -2523,6 +2524,12 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				if (strRecogAnswer1 == strRecogAnswer2 || strRecogAnswer1 == strRecogAnswer3)
 				{
 					strRecogAnswer = strRecogAnswer1;
+					nDoubt = 0;
+					nEqualCount++;
+				}
+				else if ((strRecogAnswer1 != strRecogAnswer2) && (strRecogAnswer2 == strRecogAnswer3 && strRecogAnswer3 != ""))		//2017.10.20
+				{
+					strRecogAnswer = strRecogAnswer3;
 					nDoubt = 0;
 					nEqualCount++;
 				}
