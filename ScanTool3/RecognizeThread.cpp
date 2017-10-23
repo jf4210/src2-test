@@ -352,7 +352,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			strcpy_s(szSingle, "多");
 		
 		std::string strItemLog;
-		if (itOmr->nDoubt)	//itOmr->nDoubt
+		if (1)	//itOmr->nDoubt
 		{
 			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
 			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
@@ -462,7 +462,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		//--------------------------
 		
 		char szOmrItem[3060] = { 0 };
-		if (itOmr->nDoubt)	//itOmr->nDoubt
+		if (1)	//itOmr->nDoubt
 			sprintf_s(szOmrItem, "%d(%s):%s[%s -- %s -- %s] Doubt(%d)\t==>%s\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal1.c_str(), itOmr->strRecogVal2.c_str(), itOmr->strRecogVal3.c_str(), itOmr->nDoubt, strItemLog.c_str());	//szItemInfo
 // 		else
 // 			sprintf_s(szOmrItem, "%d(%s):%s[%s -- %s -- %s] Doubt(%d)\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal1.c_str(), itOmr->strRecogVal2.c_str(), itOmr->strRecogVal3.c_str(), itOmr->nDoubt);
@@ -2371,6 +2371,47 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				{
 					char szVal[10] = { 0 };
 					sprintf_s(szVal, "%c", itItem->nAnswer + 65);
+					strRecogAnswer1.append(szVal);
+				}
+			}
+		}
+		else if (vecItemsDesc[0]->fRealValuePercent >= fCompThread && vecItemsDesc[vecOmrItemDiff.size()]->fRealValuePercent < fCompThread + fDiffExit)
+		{
+			int nFlag = -1;
+			float fThreld = 0.0;
+			for (int i = 0; i < vecOmrItemDiff.size(); i++)
+			{
+				//根据所有选项灰度值排序，相邻灰度值差值超过阀值，同时其中第一个最大的灰度值超过1.0，就认为这个区间为选中的阀值区间
+				//(大于1.0是防止最小的灰度值很小的时候影响阀值判断)
+				float fDiff = (fCompThread - vecOmrItemDiff[i].fFirst) * 0.1;
+				if ((vecOmrItemDiff[i].fDiff >= fDiffThread && vecOmrItemDiff[i].fFirst > fCompThread) ||
+					(vecOmrItemDiff[i].fDiff >= fDiffThread + fDiff && vecOmrItemDiff[i].fFirst > (fCompThread - 0.1) && fDiff > 0))
+				{
+					nFlag = i;
+					fThreld = vecOmrItemDiff[i].fFirst;
+					if (vecOmrItemDiff[i].fDiff > fDiffExit && i + 1 >= vecVal_calcHist.size())	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
+						break;
+				}
+			}
+			if (nFlag >= 0)
+			{
+				RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
+				for (; itItem != omrResult.lSelAnswer.end(); itItem++)
+				{
+					if (itItem->fRealValuePercent >= fThreld)
+					{
+						char szVal[2] = { 0 };
+						sprintf_s(szVal, "%c", itItem->nAnswer + 65);
+						strRecogAnswer1.append(szVal);
+					}
+				}
+			}
+			else
+			{
+				for (int i = 0; i < vecVal_calcHist.size(); i++)
+				{
+					char szVal[5] = { 0 };
+					sprintf_s(szVal, "%c", vecVal_calcHist[i] + 65);
 					strRecogAnswer1.append(szVal);
 				}
 			}

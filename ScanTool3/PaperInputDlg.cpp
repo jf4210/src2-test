@@ -762,7 +762,7 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				i++;
 
 				//2016.8.29 for test
-			#if 0	//判断并调整方向
+			#if 1	//判断并调整方向
 				static int j = 0;
 				if ((i - 1) % m_pModel->nPicNum == 0)
 					j = 0;
