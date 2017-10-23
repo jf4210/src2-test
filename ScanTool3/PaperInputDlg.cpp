@@ -642,7 +642,7 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 		dlg.DoModal();
 		return;
 	}
-	if (!m_pModel)
+	if (_pCurrExam_->nModel == 0 && !m_pModel)
 	{
 		CNewMessageBox	dlg;
 		dlg.setShowInfo(2, 1, "未设置检测的模板信息！");
@@ -651,6 +651,12 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 	}
 
 	InitParam();
+
+	int nModelPicNums = 0;
+	if (m_pModel)
+		nModelPicNums = m_pModel->nPicNum;
+	else
+		nModelPicNums = _nPicNum4Ty_;
 
 	USES_CONVERSION;
 	std::string strPaperPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strPapersPath));
@@ -686,7 +692,7 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				itSub++;
 			}
 
-			if (lFileName.size() % m_pModel->nPicNum != 0)
+			if (lFileName.size() % nModelPicNums != 0)
 			{
 				char szErrorInfo[MAX_PATH] = { 0 };
 				sprintf_s(szErrorInfo, "扫描到文件夹%s试卷数量%d,模板要求每考生%d张试卷, 请检查是否有考生试卷缺失", szDirName, lFileName.size(), m_pModel->nPicNum);
@@ -718,7 +724,7 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 			g_lPapers.push_back(pPapers);
 			g_fmPapers.unlock();
 
-			pPapers->nPaperCount = lFileName.size() / m_pModel->nPicNum;
+			pPapers->nPaperCount = lFileName.size() / nModelPicNums;
 			pPapers->strPapersName = szDirName;
 
 			int i = 0;
@@ -730,7 +736,7 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				TRACE("%s\n", (*itName).c_str());	//(*itName).c_str()
 
 				char szNewName[100] = { 0 };
-				sprintf_s(szNewName, "S%d_%s", i / m_pModel->nPicNum + 1, (*itName).c_str());
+				sprintf_s(szNewName, "S%d_%s", i / nModelPicNums + 1, (*itName).c_str());
 
 				std::string strNewName = szNewName;
 				std::string strNewFilePath = strSubPaperPath + "\\" + strNewName;
@@ -739,17 +745,17 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				Poco::File oldFile(strFileOldPath);
 				oldFile.copyTo(strNewFilePath);
 
-				if (i % m_pModel->nPicNum == 0)
+				if (i % nModelPicNums == 0)
 				{
 					pPaper = new ST_PaperInfo;
 					pPapers->lPaper.push_back(pPaper);
 					char szStudentInfo[20] = { 0 };
-					sprintf_s(szStudentInfo, "S%d", i / m_pModel->nPicNum + 1);
+					sprintf_s(szStudentInfo, "S%d", i / nModelPicNums + 1);
 					pPaper->strStudentInfo = szStudentInfo;
 					pPaper->pModel = m_pModel;
 					pPaper->pPapers = pPapers;
 					pPaper->pSrcDlg = this;
-					pPaper->nIndex = i / m_pModel->nPicNum + 1;
+					pPaper->nIndex = i / nModelPicNums + 1;
 				}
 				pST_PicInfo pPic = new ST_PicInfo;
 				pPaper->lPic.push_back(pPic);
@@ -761,20 +767,21 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				pPic->pPaper = pPaper;
 				i++;
 
-				//2016.8.29 for test
-			#if 1	//判断并调整方向
-				static int j = 0;
-				if ((i - 1) % m_pModel->nPicNum == 0)
-					j = 0;
-				Mat mtPic = imread(CMyCodeConvert::Utf8ToGb2312(strNewFilePath));
-				bool bDoubleScan = m_pModel->vecPaperModel.size() % 2 == 0 ? true : false;
-				COmrRecog omrObj;
-				omrObj.GetRightPicOrientation(mtPic, j, bDoubleScan);
+				if (m_pModel)
+				{
+				#if 0	//判断并调整方向
+					static int j = 0;
+					if ((i - 1) % nModelPicNums == 0)
+						j = 0;
+					Mat mtPic = imread(CMyCodeConvert::Utf8ToGb2312(strNewFilePath));
+					bool bDoubleScan = m_pModel->vecPaperModel.size() % 2 == 0 ? true : false;
+					COmrRecog omrObj;
+					omrObj.GetRightPicOrientation(mtPic, j, bDoubleScan);
 
-//				imwrite(pPic->strPicPath, mtPic);
-				j++;
-			#endif
-				//--
+					//imwrite(pPic->strPicPath, mtPic);
+					j++;
+				#endif
+				}
 			}
 
 			//更新试卷袋数量
@@ -783,14 +790,17 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 			m_lPapersCtrl.SetItemText(nPapersCount, 1, (LPCTSTR)A2T(szPapersCount));
 			m_lPapersCtrl.SetItemData(nPapersCount, (DWORD_PTR)pPapers);
 
-			//添加到识别任务列表
-			PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
-			for (; itPaper != pPapers->lPaper.end(); itPaper++)
+			if (_pCurrExam_->nModel == 0)
 			{
-				pRECOGTASK pTask = new RECOGTASK;
-				pTask->pPaper = *itPaper;
-				g_lRecogTask.push_back(pTask);
-			}			
+				//添加到识别任务列表
+				PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
+				for (; itPaper != pPapers->lPaper.end(); itPaper++)
+				{
+					pRECOGTASK pTask = new RECOGTASK;
+					pTask->pPaper = *itPaper;
+					g_lRecogTask.push_back(pTask);
+				}
+			}						
 		}
 		it++;
 	}

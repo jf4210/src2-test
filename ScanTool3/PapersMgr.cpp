@@ -47,7 +47,7 @@ bool CPapersMgr::SavePapers(pPAPERSINFO pPapers)
 		dlg.DoModal();
 		return bResult;
 	}
-	if (!_pModel)
+	if (_pCurrExam->nModel == 0 && !_pModel)
 	{
 		CNewMessageBox	dlg;
 		dlg.setShowInfo(2, 1, "未设置模板信息");
