@@ -445,8 +445,8 @@ pMODEL LoadModelFile(CString strModelPath)
 				arrayCharacterAnchorArea = jsnPaperObj->getArray("characterAnchorArea");
 
 				//加载模板图像，只有存在文字定时时才需要，用到了模板匹配
-// 				CString strPicPath = g_strCurrentPath + _T("Model\\") + A2T(pModel->strModelName.c_str()) + _T("\\") + A2T(pModel->vecPaperModel[i]->strModelPicName.c_str());
-// 				pModel->vecPaperModel[0]->matModel = cv::imread((std::string)(CT2CA)strPicPath);
+				CString strPicPath = g_strCurrentPath + _T("Model\\") + A2T(pModel->strModelName.c_str()) + _T("\\") + A2T(paperModelInfo->strModelPicName.c_str());
+				paperModelInfo->matModel = cv::imread((std::string)(CT2CA)strPicPath);
 			}
 
 			for (int i = 0; i < arrayFixCP->size(); i++)
@@ -2145,8 +2145,8 @@ bool GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt)
 			rtRB = rt;
 			rtRB.x += rtRB.width;
 			rtRB.y += rtRB.height;
-			GetPosition(pPic->lFix, pPic->lModelFix, rtLT);
-			GetPosition(pPic->lFix, pPic->lModelFix, rtRB);
+			GetPosition(pPic->lFix, pPic->lModelWordFix, rtLT);
+			GetPosition(pPic->lFix, pPic->lModelWordFix, rtRB);
 
 			int nWidth = abs(rtRB.x - rtLT.x);
 			int nHeight = abs(rtRB.y - rtLT.y);
@@ -2164,14 +2164,14 @@ bool GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt)
 			VEC_NEWRTBY2FIX vecNewRt;
 #if 1		//根据距离顶点最远的点计算矩形位置，顶点默认防止队列第一个
 			RECTLIST::iterator itFix = pPic->lFix.begin();
-			RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
+			RECTLIST::iterator itModelFix = pPic->lModelWordFix.begin();
 			itFix++;
 			itModelFix++;
 			for (int i = 1; itFix != pPic->lFix.end(); itFix++, itModelFix++, i++)
 			{
 				RECTLIST lTmpFix, lTmpModelFix;
 				lTmpFix.push_back(pPic->lFix.front());
-				lTmpModelFix.push_back(pPic->lModelFix.front());
+				lTmpModelFix.push_back(pPic->lModelWordFix.front());
 
 				lTmpFix.push_back(*itFix);
 				lTmpModelFix.push_back(*itModelFix);
@@ -2186,7 +2186,7 @@ bool GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt)
 #else
 			VEC_FIXRECTINFO lFixRtInfo;
 			RECTLIST::iterator itFix = pPic->lFix.begin();
-			RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
+			RECTLIST::iterator itModelFix = pPic->lModelWordFix.begin();
 			for(; itFix != pPic->lFix.end(); itFix++, itModelFix++)
 			{
 				GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rt);
@@ -2416,7 +2416,7 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 			{
 				if (itModelCharAnchorPoint->strVal == ptPeak->strVal)
 				{
-					pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
+					pPic->lModelWordFix.push_back(itModelCharAnchorPoint->rc);
 					break;
 				}
 			}
@@ -2449,7 +2449,7 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 				{
 					if (itModelCharAnchorPoint->strVal == vecPeakDist[i].pAnchorPoint->strVal)
 					{
-						pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
+						pPic->lModelWordFix.push_back(itModelCharAnchorPoint->rc);
 						break;
 					}
 				}
@@ -2477,7 +2477,7 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 						{
 							if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[i]->strVal)
 							{
-								pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
+								pPic->lModelWordFix.push_back(itModelCharAnchorPoint->rc);
 								break;
 							}
 						}
@@ -2522,7 +2522,7 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 					{
 						if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[pTmpArry[i]]->strVal)	//这里要改
 						{
-							pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
+							pPic->lModelWordFix.push_back(itModelCharAnchorPoint->rc);
 							break;
 						}
 					}
@@ -2579,7 +2579,7 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 					{
 						if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[i]->strVal)
 						{
-							pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
+							pPic->lModelWordFix.push_back(itModelCharAnchorPoint->rc);
 							break;
 						}
 					}
@@ -2617,7 +2617,7 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 					{
 						if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[nItem]->strVal)
 						{
-							pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
+							pPic->lModelWordFix.push_back(itModelCharAnchorPoint->rc);
 							break;
 						}
 					}
@@ -2646,7 +2646,7 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 					{
 						if (itModelCharAnchorPoint->strVal == (*it)->vecCharacterRt[0]->strVal)
 						{
-							pPic->lModelFix.push_back(itModelCharAnchorPoint->rc);
+							pPic->lModelWordFix.push_back(itModelCharAnchorPoint->rc);
 							break;
 						}
 					}

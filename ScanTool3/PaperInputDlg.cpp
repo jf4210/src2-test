@@ -778,7 +778,7 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 					COmrRecog omrObj;
 					omrObj.GetRightPicOrientation(mtPic, j, bDoubleScan);
 
-					//imwrite(pPic->strPicPath, mtPic);
+					imwrite(pPic->strPicPath, mtPic);
 					j++;
 				#endif
 				}

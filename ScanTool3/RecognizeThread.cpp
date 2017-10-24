@@ -351,8 +351,14 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		else
 			strcpy_s(szSingle, "多");
 		
+		int nPrintOmrVal = 0;
+	#ifdef PrintAllOmrVal
+		nPrintOmrVal = 1;
+	#else
+		nPrintOmrVal = itOmr->nDoubt;
+	#endif
 		std::string strItemLog;
-		if (1)	//itOmr->nDoubt
+		if (nPrintOmrVal)	//itOmr->nDoubt
 		{
 			RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
 			for (; itRect != itOmr->lSelAnswer.end(); itRect++)
@@ -462,7 +468,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		//--------------------------
 		
 		char szOmrItem[3060] = { 0 };
-		if (1)	//itOmr->nDoubt
+		if (nPrintOmrVal)	//itOmr->nDoubt
 			sprintf_s(szOmrItem, "%d(%s):%s[%s -- %s -- %s] Doubt(%d)\t==>%s\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal1.c_str(), itOmr->strRecogVal2.c_str(), itOmr->strRecogVal3.c_str(), itOmr->nDoubt, strItemLog.c_str());	//szItemInfo
 // 		else
 // 			sprintf_s(szOmrItem, "%d(%s):%s[%s -- %s -- %s] Doubt(%d)\n", itOmr->nTH, szSingle, itOmr->strRecogVal.c_str(), itOmr->strRecogVal1.c_str(), itOmr->strRecogVal2.c_str(), itOmr->strRecogVal3.c_str(), itOmr->nDoubt);
@@ -2257,14 +2263,14 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				VEC_NEWRTBY2FIX vecNewRt;
 #if 1
 				RECTLIST::iterator itFix = pPic->lFix.begin();
-				RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
+				RECTLIST::iterator itModelFix = pPic->lModelWordFix.begin();
 				itFix++;
 				itModelFix++;
 				for (int i = 1; itFix != pPic->lFix.end(); itFix++, itModelFix++, i++)
 				{
 					RECTLIST lTmpFix, lTmpModelFix;
 					lTmpFix.push_back(pPic->lFix.front());
-					lTmpModelFix.push_back(pPic->lModelFix.front());
+					lTmpModelFix.push_back(pPic->lModelWordFix.front());
 
 					lTmpFix.push_back(*itFix);
 					lTmpModelFix.push_back(*itModelFix);
@@ -2281,7 +2287,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				RECTINFO rc2 = *itOmrItem;
 
 				RECTLIST::iterator itFix = pPic->lFix.begin();
-				RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
+				RECTLIST::iterator itModelFix = pPic->lModelWordFix.begin();
 				for (; itFix != pPic->lFix.end(); itFix++, itModelFix++)
 				{
 					GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rc2.rt);
@@ -2401,6 +2407,21 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 					if (itItem->fRealValuePercent >= fThreld)
 					{
 						char szVal[2] = { 0 };
+						sprintf_s(szVal, "%c", itItem->nAnswer + 65);
+						strRecogAnswer1.append(szVal);
+					}
+				}
+			}
+			else if (vecItemsDesc[vecOmrItemDiff.size()]->fRealValuePercent > fCompThread && vecItemsDesc[vecOmrItemDiff.size()]->fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2)	//全选，最低密度>比较密度，同时此选项的灰度<(比较灰度 + 灰度答案确认值 + 灰度退出密度值)/2
+			{
+				fThreld = vecItemsDesc[vecOmrItemDiff.size()]->fRealValuePercent;
+
+				RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
+				for (; itItem != omrResult.lSelAnswer.end(); itItem++)
+				{
+					if (itItem->fRealValuePercent >= fThreld)
+					{
+						char szVal[10] = { 0 };
 						sprintf_s(szVal, "%c", itItem->nAnswer + 65);
 						strRecogAnswer1.append(szVal);
 					}
@@ -3671,14 +3692,14 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 				VEC_NEWRTBY2FIX vecNewRt;
 #if 1
 				RECTLIST::iterator itFix = pPic->lFix.begin();
-				RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
+				RECTLIST::iterator itModelFix = pPic->lModelWordFix.begin();
 				itFix++;
 				itModelFix++;
 				for (int i = 1; itFix != pPic->lFix.end(); itFix++, itModelFix++, i++)
 				{
 					RECTLIST lTmpFix, lTmpModelFix;
 					lTmpFix.push_back(pPic->lFix.front());
-					lTmpModelFix.push_back(pPic->lModelFix.front());
+					lTmpModelFix.push_back(pPic->lModelWordFix.front());
 
 					lTmpFix.push_back(*itFix);
 					lTmpModelFix.push_back(*itModelFix);
@@ -3695,7 +3716,7 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 				RECTINFO rc2 = *itSnItem;
 
 				RECTLIST::iterator itFix = pPic->lFix.begin();
-				RECTLIST::iterator itModelFix = pPic->lModelFix.begin();
+				RECTLIST::iterator itModelFix = pPic->lModelWordFix.begin();
 				for (; itFix != pPic->lFix.end(); itFix++, itModelFix++)
 				{
 					GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rc2.rt);

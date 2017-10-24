@@ -385,8 +385,8 @@ bool CPapersMgr::WriteJsonFile(pPAPERSINFO pPapers)
 				jsnPaperFixArry.add(jsnItem);
 			}
 			Poco::JSON::Array jsnPaperModelCharAncharPointArry;
-			RECTLIST::iterator itModelFix = itPic->lModelFix.begin();
-			for (int j = 0; itModelFix != itPic->lModelFix.end(); itModelFix++, j++)
+			RECTLIST::iterator itModelFix = itPic->lModelWordFix.begin();
+			for (int j = 0; itModelFix != itPic->lModelWordFix.end(); itModelFix++, j++)
 			{
 				Poco::JSON::Object jsnItem;
 				jsnItem.set("x", itModelFix->rt.x);
@@ -569,8 +569,8 @@ bool CPapersMgr::WriteJsonFile(pPAPERSINFO pPapers)
 					jsnPaperFixArry.add(jsnItem);
 				}
 				Poco::JSON::Array jsnPaperModelCharAncharPointArry;
-				RECTLIST::iterator itModelFix = itPic->lModelFix.begin();
-				for (int j = 0; itModelFix != itPic->lModelFix.end(); itModelFix++, j++)
+				RECTLIST::iterator itModelFix = itPic->lModelWordFix.begin();
+				for (int j = 0; itModelFix != itPic->lModelWordFix.end(); itModelFix++, j++)
 				{
 					Poco::JSON::Object jsnItem;
 					jsnItem.set("x", itModelFix->rt.x);

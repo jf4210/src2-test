@@ -944,6 +944,7 @@ int COmrRecog::CheckOrientation4Word(cv::Mat& matSrc, int n)
 			nResult = 2;	//如果出现无法判断图像方向时，默认模板需要右旋90度变成此图像方向，即默认返回方向为右旋90度，因为方向只有右旋90或者左旋90度两种选择，此处不返回默认的1，返回2
 		}
 	}
+	return nResult;
 }
 
 int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
@@ -1439,15 +1440,37 @@ bool COmrRecog::RecogWordOrientation(cv::Mat& matSrc, int n, int nRotation, int&
 		cv::Mat SrcCharactArea = matRealPic(itCharactArea->rt);
 		for (auto itCharactPoint : itCharactArea->vecCharacterRt)
 		{
+			if(nModelWordPoint > 8)
+				break;
 			cv::Mat CharactPointTempl = _pModel_->vecPaperModel[n]->matModel(itCharactPoint->rc.rt);
-			cv::Point ptResult;
-			MatchingMethod(0, SrcCharactArea, CharactPointTempl, ptResult);
+			cv::Point ptResult1;
+			MatchingMethod(0, SrcCharactArea, CharactPointTempl, ptResult1);
+
+			cv::Mat SrcTmp = SrcCharactArea.clone();
+			
+			cv::Point ptResult2;
+			MatchingMethod(1, SrcCharactArea, CharactPointTempl, ptResult2);
+			cv::Point ptResult3;
+			MatchingMethod(5, SrcCharactArea, CharactPointTempl, ptResult3);
+
+			rectangle(SrcTmp, ptResult1, cv::Point(ptResult1.x + CharactPointTempl.cols, ptResult1.y + CharactPointTempl.rows), CV_RGB(255, 0, 0), 2, 8, 0);
+			rectangle(SrcTmp, ptResult2, cv::Point(ptResult2.x + CharactPointTempl.cols, ptResult2.y + CharactPointTempl.rows), CV_RGB(0, 0, 255), 2, 8, 0);
+			rectangle(SrcTmp, ptResult3, cv::Point(ptResult3.x + CharactPointTempl.cols, ptResult3.y + CharactPointTempl.rows), CV_RGB(0, 255, 0), 2, 8, 0);
+
+			++nModelWordPoint;
+
+			//3中匹配中，2种以上位置差不多就认为匹配成功
+			bool bMatchRight1 = abs(ptResult1.x - ptResult2.x) < itCharactPoint->rc.rt.width * 0.5 ? (abs(ptResult1.y - ptResult2.y) < itCharactPoint->rc.rt.height * 0.5 ? true : false) : false;
+			bool bMatchRight2 = abs(ptResult1.x - ptResult3.x) < itCharactPoint->rc.rt.width * 0.5 ? (abs(ptResult1.y - ptResult3.y) < itCharactPoint->rc.rt.height * 0.5 ? true : false) : false;
+			bool bMatchRight3 = abs(ptResult3.x - ptResult2.x) < itCharactPoint->rc.rt.width * 0.5 ? (abs(ptResult3.y - ptResult2.y) < itCharactPoint->rc.rt.height * 0.5 ? true : false) : false;
+			if(!bMatchRight1 && !bMatchRight2 && !bMatchRight3)
+				continue;
 
 			//计算密度、灰度、位置比例信息
-			cv::Point ptReal(itCharactArea->rt.x + ptResult.x, itCharactArea->rt.y + ptResult.y);
+			cv::Point ptReal(itCharactArea->rt.x + ptResult1.x, itCharactArea->rt.y + ptResult1.y);
 
 			RECTINFO rcItem;
-			rcItem.eCPType = GRAY_CP;	//作为灰度点来识别
+			rcItem = itCharactPoint->rc;
 			rcItem.rt = cv::Rect(ptReal, cv::Point(ptReal.x + itCharactPoint->rc.rt.width, ptReal.y + itCharactPoint->rc.rt.height));
 			if (ptReal.x + itCharactPoint->rc.rt.width > itCharactArea->rt.x + itCharactArea->rt.width)
 				rcItem.rt.width = itCharactArea->rt.x + itCharactArea->rt.width - ptReal.x;
@@ -1469,8 +1492,6 @@ bool COmrRecog::RecogWordOrientation(cv::Mat& matSrc, int n, int nRotation, int&
 					TRACE("判断文字识别点的密度百分比: %f, 低于要求的: %f\n", rcItem.fRealValuePercent, itCharactPoint->rc.fStandardValuePercent);
 				}
 			}
-
-			++nModelWordPoint;
 		}
 	}
 
@@ -1484,7 +1505,8 @@ bool COmrRecog::RecogWordOrientation(cv::Mat& matSrc, int n, int nRotation, int&
 	}
 	else
 	{
-		if (vecMatchTemplPoint.size() >= (int)(nModelWordPoint * 0.9))
+		int nMinComp = (int)(nModelWordPoint * 0.7) > 3 ? (int)(nModelWordPoint * 0.7) : 3;
+		if (vecMatchTemplPoint.size() >= nMinComp)
 		{
 			bFind = true;
 			nResult = nRotation;
@@ -1527,6 +1549,7 @@ bool COmrRecog::MatchingMethod(int method, cv::Mat& src, cv::Mat& templ, cv::Poi
 		matchLoc = maxLoc;
 	}
 
+	ptResult = matchLoc;
 	return true;
 }
 

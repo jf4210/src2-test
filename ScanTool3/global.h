@@ -64,6 +64,7 @@
 #ifdef _DEBUG
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
 	#define PrintRecogLog		//打印识别日志
+	#define PrintAllOmrVal		//打印所有OMR选项值
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define	 TEST_MODEL_NAME	//模板名称测试
 	#define Test_Data			//测试数据，测试模式
@@ -265,7 +266,7 @@ typedef struct _PicInfo_				//图片信息
 	RECTLIST		lIssueRect;		//识别出来的问题试卷的问题点位置，只要出现问题点就不进行下一页的识别(严格模式)，或者存储已经发现的问题点，但是继续后面的识别(简单模式)
 
 	RECTLIST		lCalcRect;		//通过定点计算出的点位置
-	RECTLIST		lModelFix;		//模板文字定点列表，在使用文字定位时有用
+	RECTLIST		lModelWordFix;		//模板文字定点列表，在使用文字定位时有用
 	CHARACTER_ANCHOR_AREA_LIST lCharacterAnchorArea;	//文字定位区域
 	_PicInfo_()
 	{

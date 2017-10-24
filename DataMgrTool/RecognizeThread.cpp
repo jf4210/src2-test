@@ -286,7 +286,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		
 		int nPrintOmrVal = 0;
 	#ifdef PrintAllOmrVal
-		nPrintOmrVal = itOmr->nDoubt;
+		nPrintOmrVal = 1;
 	#else
 		nPrintOmrVal = itOmr->nDoubt;
 	#endif
@@ -2261,6 +2261,30 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 						sprintf_s(szVal, "%c", itItem->nAnswer + 65);
 						strRecogAnswer1.append(szVal);
 					}
+				}
+			}
+			else if (vecItemsDesc[vecOmrItemDiff.size()]->fRealValuePercent > fCompThread && vecItemsDesc[vecOmrItemDiff.size()]->fRealMeanGray < (_dCompThread_3_ +_dDiffExit_3_ + _dAnswerSure_) / 2)	//全选，最低密度>比较密度，同时此选项的灰度<(比较灰度 + 灰度答案确认值 + 灰度退出密度值)/2
+			{
+				fThreld = vecItemsDesc[vecOmrItemDiff.size()]->fRealValuePercent;
+
+				RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
+				for (; itItem != omrResult.lSelAnswer.end(); itItem++)
+				{
+					if (itItem->fRealValuePercent >= fThreld)
+					{
+						char szVal[10] = { 0 };
+						sprintf_s(szVal, "%c", itItem->nAnswer + 65);
+						strRecogAnswer1.append(szVal);
+					}
+				}
+			}
+			else
+			{
+				for (int i = 0; i < vecVal_calcHist.size(); i++)
+				{
+					char szVal[5] = { 0 };
+					sprintf_s(szVal, "%c", vecVal_calcHist[i] + 65);
+					strRecogAnswer1.append(szVal);
 				}
 			}
 		}
