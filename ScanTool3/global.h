@@ -66,16 +66,16 @@
 	#define PrintRecogLog		//打印识别日志
 	#define PrintAllOmrVal		//打印所有OMR选项值
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
-	#define	 TEST_MODEL_NAME	//模板名称测试
-	#define Test_Data			//测试数据，测试模式
+//	#define Test_Data			//测试数据，测试模式
 //	#define TEST_TIP_SHOW		//提示信息显示测试
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
 	#define TEST_PAPERS_INPUT	//试卷袋导入功能测试
 #else	//release版本
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
-	#define	 TEST_MODEL_NAME	//模板名称测试
-//	#define USE_TESSERACT		//使用Tesseract进行数字汉字识别
 	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
+
+//	#define USE_TESSERACT		//使用Tesseract进行数字汉字识别
+//	#define TEST_PAPERS_INPUT	//试卷袋导入功能测试
 #endif
 
 #ifdef USE_TESSERACT

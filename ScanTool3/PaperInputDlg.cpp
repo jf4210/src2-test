@@ -660,150 +660,163 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 
 	USES_CONVERSION;
 	std::string strPaperPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strPapersPath));
-	Poco::DirectoryIterator it(strPaperPath);
-	Poco::DirectoryIterator end;
-	while (it != end)
+	try
 	{
-		Poco::Path p(it->path());
-		if (it->isDirectory())
+		Poco::DirectoryIterator it(strPaperPath);
+		Poco::DirectoryIterator end;
+		while (it != end)
 		{
-			std::wstring strWInput;
-			Poco::UnicodeConverter::toUTF16(p.getFileName(), strWInput);
-			char szDirName[90] = { 0 };
-			sprintf_s(szDirName, "%s", T2A(strWInput.c_str()));
-			TRACE("%s\n", szDirName);
-			
-			std::vector<std::string> lFileName;
-			std::string strSubDirPath = p.toString();
-			Poco::DirectoryIterator itSub(strSubDirPath);
-			Poco::DirectoryIterator endSub;
-			while (itSub != endSub)
+			Poco::Path p(it->path());
+			if (it->isDirectory())
 			{
-				Poco::Path pSubFile(itSub->path());
-				if (itSub->isFile())
+				std::wstring strWInput;
+				Poco::UnicodeConverter::toUTF16(p.getFileName(), strWInput);
+				char szDirName[90] = { 0 };
+				sprintf_s(szDirName, "%s", T2A(strWInput.c_str()));
+				TRACE("%s\n", szDirName);
+
+				std::vector<std::string> lFileName;
+				std::string strSubDirPath = p.toString();
+				Poco::DirectoryIterator itSub(strSubDirPath);
+				Poco::DirectoryIterator endSub;
+				while (itSub != endSub)
 				{
-					std::string strOldFileName = pSubFile.getFileName();
-	
-					if (strOldFileName.find("papersInfo.dat") == std::string::npos)
+					Poco::Path pSubFile(itSub->path());
+					if (itSub->isFile())
 					{
-						lFileName.push_back(strOldFileName);
+						std::string strOldFileName = pSubFile.getFileName();
+
+						if (strOldFileName.find("papersInfo.dat") == std::string::npos)
+						{
+							lFileName.push_back(strOldFileName);
+						}
+					}
+					itSub++;
+				}
+
+				if (lFileName.size() % nModelPicNums != 0)
+				{
+					char szErrorInfo[MAX_PATH] = { 0 };
+					sprintf_s(szErrorInfo, "扫描到文件夹%s试卷数量%d,模板要求每考生%d张试卷, 请检查是否有考生试卷缺失", szDirName, lFileName.size(), m_pModel->nPicNum);
+					//AfxMessageBox(A2T(szErrorInfo));
+
+					CNewMessageBox	dlg;
+					dlg.setShowInfo(2, 1, szErrorInfo);
+					dlg.DoModal();
+					it++;
+					continue;
+				}
+
+				//插入试卷袋列表
+				char szPapersName[100] = { 0 };
+				sprintf_s(szPapersName, "%s", szDirName);
+				int nPapersCount = m_lPapersCtrl.GetItemCount();
+				m_lPapersCtrl.InsertItem(nPapersCount, NULL);
+				m_lPapersCtrl.SetItemText(nPapersCount, 0, (LPCTSTR)A2T(szPapersName));
+
+				//文件复制本地临时目录
+				std::string strSubPaperPath = g_strPaperSavePath + p.getFileName();
+				char szSubPaperPath[MAX_PATH] = { 0 };
+				sprintf_s(szSubPaperPath, "%s%s", g_strPaperSavePath.c_str(), szDirName);
+				Poco::File tmpPath(strSubPaperPath);
+				tmpPath.createDirectories();
+
+				pPAPERSINFO pPapers = new PAPERSINFO;
+				g_fmPapers.lock();
+				g_lPapers.push_back(pPapers);
+				g_fmPapers.unlock();
+
+				pPapers->nPaperCount = lFileName.size() / nModelPicNums;
+				pPapers->strPapersName = szDirName;
+
+				int i = 0;
+				pST_PaperInfo pPaper = NULL;
+				std::sort(lFileName.begin(), lFileName.end(), SortbyNumASC);
+				std::vector<std::string>::iterator itName = lFileName.begin();
+				for (; itName != lFileName.end(); itName++)
+				{
+					TRACE("%s\n", (*itName).c_str());	//(*itName).c_str()
+
+					char szNewName[100] = { 0 };
+					sprintf_s(szNewName, "S%d_%s", i / nModelPicNums + 1, (*itName).c_str());
+
+					std::string strNewName = szNewName;
+					std::string strNewFilePath = strSubPaperPath + "\\" + strNewName;
+
+					std::string strFileOldPath = strSubDirPath + "\\" + *itName;
+					Poco::File oldFile(strFileOldPath);
+					oldFile.copyTo(strNewFilePath);
+
+					if (i % nModelPicNums == 0)
+					{
+						pPaper = new ST_PaperInfo;
+						pPapers->lPaper.push_back(pPaper);
+						char szStudentInfo[20] = { 0 };
+						sprintf_s(szStudentInfo, "S%d", i / nModelPicNums + 1);
+						pPaper->strStudentInfo = szStudentInfo;
+						pPaper->pModel = m_pModel;
+						pPaper->pPapers = pPapers;
+						pPaper->pSrcDlg = this;
+						pPaper->nIndex = i / nModelPicNums + 1;
+					}
+					pST_PicInfo pPic = new ST_PicInfo;
+					pPaper->lPic.push_back(pPic);
+
+					char szNewFullPath[MAX_PATH] = { 0 };
+					sprintf_s(szNewFullPath, "%s\\%s", szSubPaperPath, strNewName.c_str());
+					pPic->strPicName = strNewName;
+					pPic->strPicPath = CMyCodeConvert::Utf8ToGb2312(strNewFilePath);	// strNewFilePath;
+					pPic->pPaper = pPaper;
+					i++;
+
+					if (m_pModel)
+					{
+					#if 1	//判断并调整方向
+						static int j = 0;
+						if ((i - 1) % nModelPicNums == 0)
+							j = 0;
+						Mat mtPic = imread(CMyCodeConvert::Utf8ToGb2312(strNewFilePath));
+						bool bDoubleScan = m_pModel->vecPaperModel.size() % 2 == 0 ? true : false;
+						COmrRecog omrObj;
+						omrObj.GetRightPicOrientation(mtPic, j, bDoubleScan);
+
+						imwrite(pPic->strPicPath, mtPic);
+						j++;
+					#endif
 					}
 				}
-				itSub++;
-			}
 
-			if (lFileName.size() % nModelPicNums != 0)
-			{
-				char szErrorInfo[MAX_PATH] = { 0 };
-				sprintf_s(szErrorInfo, "扫描到文件夹%s试卷数量%d,模板要求每考生%d张试卷, 请检查是否有考生试卷缺失", szDirName, lFileName.size(), m_pModel->nPicNum);
-				//AfxMessageBox(A2T(szErrorInfo));
+				//更新试卷袋数量
+				char szPapersCount[20] = { 0 };
+				sprintf_s(szPapersCount, "%d", pPapers->lPaper.size());
+				m_lPapersCtrl.SetItemText(nPapersCount, 1, (LPCTSTR)A2T(szPapersCount));
+				m_lPapersCtrl.SetItemData(nPapersCount, (DWORD_PTR)pPapers);
 
-				CNewMessageBox	dlg;
-				dlg.setShowInfo(2, 1, szErrorInfo);
-				dlg.DoModal();
-				it++;
-				continue;
-			}
-
-			//插入试卷袋列表
-			char szPapersName[100] = { 0 };
-			sprintf_s(szPapersName, "%s", szDirName);
-			int nPapersCount = m_lPapersCtrl.GetItemCount();
-			m_lPapersCtrl.InsertItem(nPapersCount, NULL);
-			m_lPapersCtrl.SetItemText(nPapersCount, 0, (LPCTSTR)A2T(szPapersName));
-
-			//文件复制本地临时目录
-			std::string strSubPaperPath = g_strPaperSavePath + p.getFileName();
-			char szSubPaperPath[MAX_PATH] = { 0 };
-			sprintf_s(szSubPaperPath, "%s%s", g_strPaperSavePath.c_str(), szDirName);
-			Poco::File tmpPath(strSubPaperPath);
-			tmpPath.createDirectories();
-
-			pPAPERSINFO pPapers = new PAPERSINFO;
-			g_fmPapers.lock();
-			g_lPapers.push_back(pPapers);
-			g_fmPapers.unlock();
-
-			pPapers->nPaperCount = lFileName.size() / nModelPicNums;
-			pPapers->strPapersName = szDirName;
-
-			int i = 0;
-			pST_PaperInfo pPaper = NULL;
-			std::sort(lFileName.begin(), lFileName.end(), SortbyNumASC);
-			std::vector<std::string>::iterator itName = lFileName.begin();
-			for (; itName != lFileName.end(); itName++)
-			{
-				TRACE("%s\n", (*itName).c_str());	//(*itName).c_str()
-
-				char szNewName[100] = { 0 };
-				sprintf_s(szNewName, "S%d_%s", i / nModelPicNums + 1, (*itName).c_str());
-
-				std::string strNewName = szNewName;
-				std::string strNewFilePath = strSubPaperPath + "\\" + strNewName;
-
-				std::string strFileOldPath = strSubDirPath + "\\" + *itName;
-				Poco::File oldFile(strFileOldPath);
-				oldFile.copyTo(strNewFilePath);
-
-				if (i % nModelPicNums == 0)
+				if (_pCurrExam_->nModel == 0)
 				{
-					pPaper = new ST_PaperInfo;
-					pPapers->lPaper.push_back(pPaper);
-					char szStudentInfo[20] = { 0 };
-					sprintf_s(szStudentInfo, "S%d", i / nModelPicNums + 1);
-					pPaper->strStudentInfo = szStudentInfo;
-					pPaper->pModel = m_pModel;
-					pPaper->pPapers = pPapers;
-					pPaper->pSrcDlg = this;
-					pPaper->nIndex = i / nModelPicNums + 1;
-				}
-				pST_PicInfo pPic = new ST_PicInfo;
-				pPaper->lPic.push_back(pPic);
-
-				char szNewFullPath[MAX_PATH] = { 0 };
-				sprintf_s(szNewFullPath, "%s\\%s", szSubPaperPath, strNewName.c_str());
-				pPic->strPicName = strNewName;
-				pPic->strPicPath = CMyCodeConvert::Utf8ToGb2312(strNewFilePath);	// strNewFilePath;
-				pPic->pPaper = pPaper;
-				i++;
-
-				if (m_pModel)
-				{
-				#if 0	//判断并调整方向
-					static int j = 0;
-					if ((i - 1) % nModelPicNums == 0)
-						j = 0;
-					Mat mtPic = imread(CMyCodeConvert::Utf8ToGb2312(strNewFilePath));
-					bool bDoubleScan = m_pModel->vecPaperModel.size() % 2 == 0 ? true : false;
-					COmrRecog omrObj;
-					omrObj.GetRightPicOrientation(mtPic, j, bDoubleScan);
-
-					imwrite(pPic->strPicPath, mtPic);
-					j++;
-				#endif
+					//添加到识别任务列表
+					PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
+					for (; itPaper != pPapers->lPaper.end(); itPaper++)
+					{
+						pRECOGTASK pTask = new RECOGTASK;
+						pTask->pPaper = *itPaper;
+						g_lRecogTask.push_back(pTask);
+					}
 				}
 			}
-
-			//更新试卷袋数量
-			char szPapersCount[20] = { 0 };
-			sprintf_s(szPapersCount, "%d", pPapers->lPaper.size());
-			m_lPapersCtrl.SetItemText(nPapersCount, 1, (LPCTSTR)A2T(szPapersCount));
-			m_lPapersCtrl.SetItemData(nPapersCount, (DWORD_PTR)pPapers);
-
-			if (_pCurrExam_->nModel == 0)
-			{
-				//添加到识别任务列表
-				PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
-				for (; itPaper != pPapers->lPaper.end(); itPaper++)
-				{
-					pRECOGTASK pTask = new RECOGTASK;
-					pTask->pPaper = *itPaper;
-					g_lRecogTask.push_back(pTask);
-				}
-			}						
+			it++;
 		}
-		it++;
 	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strErr = "获取文件异常，请检查设置信息是否正确！";
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, strErr);
+		dlg.DoModal();
+
+		strErr.append(exc.message());
+		g_pLogger->information(strErr);
+	}	
 }
 
 bool sortModelFile2(ST_MODELFILE& st1, ST_MODELFILE& st2)

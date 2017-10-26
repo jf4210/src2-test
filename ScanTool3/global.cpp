@@ -1002,6 +1002,8 @@ pMODEL LoadModelFile(CString strModelPath)
 					pobjCharacterAnchorArea->nThresholdValue = jsnRectInfoObj->get("nThreshold").convert<int>();
 					if(jsnRectInfoObj->has("nConfidence"))
 						pobjCharacterAnchorArea->nCharacterConfidence = jsnRectInfoObj->get("nConfidence").convert<int>();
+					if (jsnRectInfoObj->has("nRectsInArea"))
+						pobjCharacterAnchorArea->nRects = jsnRectInfoObj->get("nRectsInArea").convert<int>();
 					pobjCharacterAnchorArea->nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
 					pobjCharacterAnchorArea->nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
 					pobjCharacterAnchorArea->nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();

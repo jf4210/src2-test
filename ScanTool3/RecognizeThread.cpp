@@ -2257,7 +2257,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			omrResult.lSelAnswer.push_back(rc);
 			
 			//------------------------
-			if (pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0)
+			if (pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0 && pPic->lModelWordFix.size() > 0)
 			{
 
 				VEC_NEWRTBY2FIX vecNewRt;
@@ -3687,7 +3687,7 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			pSn->lSN.push_back(rc);
 
 			//------------------------
-			if (pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0)
+			if (pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0 && pPic->lModelWordFix.size() > 0)
 			{
 				VEC_NEWRTBY2FIX vecNewRt;
 #if 1

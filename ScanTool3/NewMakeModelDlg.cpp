@@ -327,12 +327,18 @@ pMODEL CNewMakeModelDlg::LoadSubjectModel(pEXAM_SUBJECT pSubModel)
 	if (!pSubModel)
 		return NULL;
 
-	if (pSubModel->strModelName.empty())
-		return NULL;
-
 	USES_CONVERSION;
+	std::string strModelName = pSubModel->strModelName;
+	if (strModelName.empty())
+	{
+		char szModelName[150] = { 0 };
+		sprintf_s(szModelName, "%s_%s_N_%d_%d.mod", _pCurrExam_->strExamName.c_str(), pSubModel->strSubjName.c_str(), _pCurrExam_->nExamID, pSubModel->nSubjID);
+		strModelName = szModelName;
+		//return NULL;
+	}		
+
 	std::string strModelPath = T2A(g_strCurrentPath + _T("Model"));
-	strModelPath = CMyCodeConvert::Utf8ToGb2312(g_strModelSavePath) + "\\" + pSubModel->strModelName;	//gb2312
+	strModelPath = CMyCodeConvert::Utf8ToGb2312(g_strModelSavePath) + "\\" + strModelName;	//gb2312
 	std::string strBaseModelName;
 	try
 	{

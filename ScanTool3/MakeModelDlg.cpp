@@ -1646,6 +1646,51 @@ void CMakeModelDlg::GetStandardValue(RECTINFO& rc)
 	}
 }
 
+int CMakeModelDlg::GetRectsInArea(cv::Mat& matSrc, RECTINFO rc, int nMinW, int nMaxW, int nMinH, int nMaxH, int nFindContoursModel /*= CV_RETR_EXTERNAL*/)
+{
+	cv::Mat imgResult = matSrc;
+
+	cv::cvtColor(imgResult, imgResult, CV_BGR2GRAY);
+	cv::GaussianBlur(imgResult, imgResult, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);
+	sharpenImage1(imgResult, imgResult);
+
+	cv::threshold(imgResult, imgResult, rc.nThresholdValue, 255, cv::THRESH_OTSU | cv::THRESH_BINARY);
+
+	cv::Canny(imgResult, imgResult, 0, rc.nCannyKernel, 5);
+	cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(rc.nDilateKernel, rc.nDilateKernel));	//Size(6, 6)	普通空白框可识别
+	cv::dilate(imgResult, imgResult, element);
+
+	IplImage ipl_img(imgResult);
+
+	//the parm. for cvFindContours  
+	CvMemStorage* storage = cvCreateMemStorage(0);
+	CvSeq* contour = 0;
+
+	//提取轮廓  
+	cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), nFindContoursModel, CV_CHAIN_APPROX_SIMPLE);
+
+	cv::Rect rtMax;		//记录最大矩形，识别同步头时用来排除非同步头框
+	bool bResult = false;
+	std::vector<cv::Rect>RectCompList;
+
+	for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++)
+	{
+		CvRect aRect = cvBoundingRect(contour, 0);
+		cv::Rect rm = aRect;
+
+		if (rm.width < nMinW || rm.height < nMinH || rm.width > nMaxW || rm.height > nMaxH)
+		{
+			//TRACE("过滤矩形:(%d,%d,%d,%d), 面积: %d\n", rm.x, rm.y, rm.width, rm.height, rm.area());
+			continue;
+		}
+
+		RectCompList.push_back(rm);
+	}
+	cvReleaseMemStorage(&storage);
+
+	return RectCompList.size();
+}
+
 inline void CMakeModelDlg::GetThreshold(cv::Mat& matSrc, cv::Mat& matDst)
 {
 	int nRealThreshold = -1;
@@ -2186,6 +2231,16 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 			std::sort(m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.begin(), m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.end(), SortByCharAnchorArea);
 
 			cv::addWeighted(imgSrc, 0.5, tmp, 0.5, 0, imgSrc);
+
+			//计算此文字识别区内的矩形数量，在进行图像方向判断时有用
+			cv::Mat matCharactArea = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtOri);
+			RECTINFO rcModelCharactArea = pstRecogCharacterRt->vecCharacterRt[0]->rc;
+			rcModelCharactArea.rt = pstRecogCharacterRt->rt;
+			int nMinW = pstRecogCharacterRt->vecCharacterRt[0]->rc.rt.width * 0.7;
+			int nMaxW = pstRecogCharacterRt->vecCharacterRt[0]->rc.rt.width * 1.3;
+			int nMinH = pstRecogCharacterRt->vecCharacterRt[0]->rc.rt.height * 0.7;
+			int nMaxH = pstRecogCharacterRt->vecCharacterRt[0]->rc.rt.height * 1.3;
+			pstRecogCharacterRt->nRects = GetRectsInArea(matCharactArea, rcModelCharactArea, nMinW, nMaxW, nMinH, nMaxH);
 		}
 		else
 			SAFE_RELEASE(pstRecogCharacterRt);
@@ -2781,11 +2836,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	else
 	{
 		char szModelName[150] = { 0 };
-	#ifdef TEST_MODEL_NAME
 		sprintf_s(szModelName, "%s_%s_N_%d_%d", T2A(dlg.m_strExamName), T2A(dlg.m_strSubjectName), dlg.m_nExamID, dlg.m_SubjectID);
-	#else
-		sprintf_s(szModelName, "%d_%d", dlg.m_nExamID, dlg.m_SubjectID);
-	#endif
 		char szModelDesc[300] = { 0 };
 		sprintf_s(szModelDesc, "考试名称: %s\r\n科目: %s\r\n年级: %s\r\n考试类型名称: %s", T2A(dlg.m_strExamName), T2A(dlg.m_strSubjectName), T2A(dlg.m_strGradeName), T2A(dlg.m_strExamTypeName));
 		m_pModel->nExamID		= dlg.m_nExamID;
@@ -3442,6 +3493,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnCharacterAnchorAreaObj.set("nIndex", (*itRecogCharInfo)->nIndex);
 			jsnCharacterAnchorAreaObj.set("nThreshold", (*itRecogCharInfo)->nThresholdValue);
 			jsnCharacterAnchorAreaObj.set("nConfidence", (*itRecogCharInfo)->nCharacterConfidence);
+			jsnCharacterAnchorAreaObj.set("nRectsInArea", (*itRecogCharInfo)->nRects);
 
 			jsnCharacterAnchorAreaObj.set("gaussKernel", (*itRecogCharInfo)->nGaussKernel);
 			jsnCharacterAnchorAreaObj.set("sharpKernel", (*itRecogCharInfo)->nSharpKernel);
@@ -5334,6 +5386,7 @@ void CMakeModelDlg::AddRecogSN()
 			rt.height = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.rows - rt.y;
 
 		RecogByHead(rt);
+		m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.nDilateKernel = m_nDilateKernel;
 		for (int i = 0; i < m_vecTmp.size(); i++)
 		{
 			bool bFind = false;
@@ -5628,6 +5681,7 @@ void CMakeModelDlg::RecognizeRectTracker()
 		Recognise(rt);
 		
 		ShowTmpRect();
+		m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.nDilateKernel = m_nDilateKernel;
 		for (int i = 0; i < m_vecTmp.size(); i++)
 		{
 			bool bFind = false;
@@ -8212,11 +8266,8 @@ void CMakeModelDlg::SaveNewModel()
 	USES_CONVERSION;
 	m_pModel->nSaveMode = 2;
 	char szModelName[150] = { 0 };
-#ifdef TEST_MODEL_NAME
 	sprintf_s(szModelName, "%s_%s_N_%d_%d", T2A(dlg.m_strExamName), T2A(dlg.m_strSubjectName), dlg.m_nExamID, dlg.m_SubjectID);
-#else
-	sprintf_s(szModelName, "%d_%d", dlg.m_nExamID, dlg.m_SubjectID);
-#endif
+
 	char szModelDesc[300] = { 0 };
 	sprintf_s(szModelDesc, "考试名称: %s\r\n科目: %s\r\n年级: %s\r\n考试类型名称: %s", T2A(dlg.m_strExamName), T2A(dlg.m_strSubjectName), T2A(dlg.m_strGradeName), T2A(dlg.m_strExamTypeName));
 	m_pModel->nExamID = dlg.m_nExamID;

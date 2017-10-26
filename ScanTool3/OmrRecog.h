@@ -35,7 +35,8 @@ protected:
 	bool		bGetMaxRect(cv::Mat& matSrc, cv::Rect rt, RECTINFO rcMod, cv::Rect& rtMax);
 	bool		RecogCodeOrientation(cv::Mat& matSrc, int n, int& nResult);	//条码方向判断
 	void		PicRotate(cv::Mat& matSrc, int n);	//图像旋转，实际图像需要进行的旋转，1：正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
-	bool		RecogWordOrientation(cv::Mat& matSrc, int n, int nRotation, int& nResult, std::string& strLog); //识别文字的方向，具体操作
+	bool		RecogWordOrientationByMatchTempl(cv::Mat& matSrc, int n, int nRotation, int& nResult, std::string& strLog); //通过模板的文字匹配来识别文字的方向，具体操作
+	bool		RecogWordOrientationByRectCount(cv::Mat& matSrc, int n, int nRotation, int& nResult, std::string& strLog); //通过矩形数量来识别文字的方向，具体操作
 
 	bool	MatchingMethod(int method, cv::Mat& src, cv::Mat& templ, cv::Point& ptResult);	//模板匹配操作
 
@@ -46,5 +47,8 @@ protected:
 	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
 	int		CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan);
 	//-------------------------------------------------------------
+
+
+	int			GetRectsInArea(cv::Mat& matSrc, RECTINFO rc, int nMinW, int nMaxW, int nMinH, int nMaxH, int nFindContoursModel = CV_RETR_EXTERNAL);	//获取给定区域内的矩形数量
 };
 

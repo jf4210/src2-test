@@ -245,9 +245,11 @@ private:
 	void GetElectOmrInfo(std::vector<cv::Rect>& rcList);	//黑白卡时获取框选的选做题信息
 	void GetStandardValue(RECTINFO& rc);	//获取自建提卡的标准实验值
 
+	int GetRectsInArea(cv::Mat& matSrc, RECTINFO rc, int nMinW, int nMaxW, int nMinH, int nMaxH, int nFindContoursModel = CV_RETR_EXTERNAL);
+
 	inline void GetThreshold(cv::Mat& matSrc, cv::Mat& matDst);			//二值化计算
 //	inline void ShowDetailRectInfo();
-	inline int GetStandardVal(CPType eType);
+//	inline int GetStandardVal(CPType eType);
 	inline int GetRectInfoByPoint(cv::Point pt, CPType eType, RECTINFO*& pRc);
 	bool ShowRectByPoint(cv::Point pt);
 	void ShowRectByItem(int nItem);
