@@ -6325,6 +6325,29 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 	int nMaxRow = 1;
 	int nMaxCols = 1;
 
+	//++计算平均的矩形大小，过滤污染点
+	int nMeanW = 0;
+	int nMeanH = 0;
+	for (int i = 0; i < rcList.size(); i++)
+	{
+		nMeanW += rcList[i].width;
+		nMeanH += rcList[i].height;
+	}
+	nMeanW = (float)nMeanW / rcList.size() + 0.5;
+	nMeanH = (float)nMeanH / rcList.size() + 0.5;
+	std::vector<cv::Rect>::iterator itTmp = rcList.begin();
+	for (; itTmp != rcList.end();)
+	{
+		if (itTmp->width < nMeanW * 0.6 && itTmp->height < nMeanH * 0.6)
+		{
+			TRACE("erase rect: (%d, %d, %d, %d)\n", itTmp->x, itTmp->y, itTmp->width, itTmp->height);
+			itTmp = rcList.erase(itTmp);
+		}
+		else
+			itTmp++;
+	}
+	//--
+
 	std::vector<Rect> rcList_X = rcList;
 	std::vector<Rect> rcList_XY = rcList;
 	std::sort(rcList_X.begin(), rcList_X.end(), SortByPositionX2);
@@ -6464,7 +6487,6 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 		{
 			CString strInfo = _T("");
 			strInfo.Format(_T("第%d个考号的选项%d密度值太低，可能阀值设置太低"), rc.nTH, rc.nSnVal);
-//			MessageBox(strInfo, _T("警告"), MB_OK);
 			USES_CONVERSION;
 			CNewMessageBox dlg;
 			dlg.setShowInfo(2, 1, T2A(strInfo));
@@ -6473,6 +6495,37 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 
 		m_vecTmp.push_back(rc);
 	}
+
+	//检查矩形重叠，并进行提醒
+	if (m_vecTmp.size() > 2)
+	{
+		bool bOverlap = false;
+		std::vector<RECTINFO>::iterator itTmpRC1 = m_vecTmp.begin();
+		for (; itTmpRC1 != m_vecTmp.end();)
+		{
+			std::vector<RECTINFO>::iterator itTmpRC2 = itTmpRC1 + 1;
+			for (; itTmpRC2 != m_vecTmp.end(); itTmpRC2++)
+			{
+				if (itTmpRC1->rt.contains(itTmpRC2->rt.tl()) || itTmpRC1->rt.contains(itTmpRC2->rt.br()) || itTmpRC2->rt.contains(itTmpRC1->rt.tl()) || itTmpRC2->rt.contains(itTmpRC1->rt.br()))
+				{
+					bOverlap = true;
+					break;
+				}
+			}
+			if (bOverlap)
+				break;
+			else
+				itTmpRC1++;
+		}
+		if (bOverlap)
+		{
+			std::string strOverlapTip = "检测到识别的矩形中有重叠的矩形，请仔细查看";
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, strOverlapTip);
+			dlg.DoModal();
+		}
+	}
+
 	std::sort(m_vecTmp.begin(), m_vecTmp.end(), SortByTH);
 
 	ShowTmpRect();
@@ -6485,6 +6538,29 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 		return;
 	int nMaxRow		= 1;
 	int nMaxCols	= 1;
+
+	//++计算平均的矩形大小，过滤污染点
+	int nMeanW = 0;
+	int nMeanH = 0;
+	for (int i = 0; i < rcList.size(); i++)
+	{
+		nMeanW += rcList[i].width;
+		nMeanH += rcList[i].height;
+	}
+	nMeanW = (float)nMeanW / rcList.size() + 0.5;
+	nMeanH = (float)nMeanH / rcList.size() + 0.5;
+	std::vector<cv::Rect>::iterator itTmp = rcList.begin();
+	for (; itTmp != rcList.end();)
+	{
+		if (itTmp->width < nMeanW * 0.7 && itTmp->height < nMeanH * 0.7)
+		{
+			TRACE("erase rect: (%d, %d, %d, %d)\n", itTmp->x, itTmp->y, itTmp->width, itTmp->height);
+			itTmp = rcList.erase(itTmp);
+		}
+		else
+			itTmp++;
+	}
+	//--
 
 	std::vector<Rect> rcList_X = rcList;
 	std::vector<Rect> rcList_XY = rcList;
@@ -6550,6 +6626,7 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 
 	TRACE("检测到框选了%d * %d的矩形区\n", nMaxRow, nMaxCols);
 
+	std::vector<int> vecLowThresholds;	//检查计算的密度阀值太低(接近0)的题号，后面删除此题号矩形
 	int x = 0, y = 0;	//x-列，y-行
 	for (int i = 0; i < rcList_XY.size(); i++)
 	{
@@ -6631,6 +6708,18 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 		RecogGrayValue(matSrcModel, rc);
 		if (rc.fStandardDensity < 0.1)
 		{
+			bool bFind = false;
+			for (auto nItem : vecLowThresholds)
+			{
+				if (rc.nTH == nItem)
+				{
+					bFind = true;
+					break;
+				}
+			}
+			if (!bFind)
+				vecLowThresholds.push_back(rc.nTH);
+
 			CString strInfo = _T("");
 			strInfo.Format(_T("第%d题的选项%c密度值太低，可能阀值设置太低"), rc.nTH, rc.nAnswer + 65);
 
@@ -6641,6 +6730,53 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 		}
 		m_vecTmp.push_back(rc);
 	}
+
+	//将已经提示密度值太低的题号矩形删除
+	for (auto nItem : vecLowThresholds)
+	{
+		std::vector<RECTINFO>::iterator itTmpRC = m_vecTmp.begin();
+		for (; itTmpRC != m_vecTmp.end();)
+		{
+			if (itTmpRC->nTH == nItem)
+			{
+				TRACE("erase 密度太低矩形: th = %d, (%d, %d, %d, %d)\n", itTmpRC->nTH, itTmpRC->rt.x, itTmpRC->rt.y, itTmpRC->rt.width, itTmpRC->rt.height);
+				itTmpRC = m_vecTmp.erase(itTmpRC);
+			}
+			else
+				itTmpRC++;
+		}
+	}
+
+	//检查矩形重叠，并进行提醒
+	if (m_vecTmp.size() > 2)
+	{
+		bool bOverlap = false;
+		std::vector<RECTINFO>::iterator itTmpRC1 = m_vecTmp.begin();
+		for (; itTmpRC1 != m_vecTmp.end();)
+		{
+			std::vector<RECTINFO>::iterator itTmpRC2 = itTmpRC1 + 1;
+			for (; itTmpRC2 != m_vecTmp.end(); itTmpRC2++)
+			{
+				if (itTmpRC1->rt.contains(itTmpRC2->rt.tl()) || itTmpRC1->rt.contains(itTmpRC2->rt.br()) || itTmpRC2->rt.contains(itTmpRC1->rt.tl()) || itTmpRC2->rt.contains(itTmpRC1->rt.br()))
+				{
+					bOverlap = true;
+					break;
+				}
+			}
+			if (bOverlap)
+				break;
+			else
+				itTmpRC1++;
+		}
+		if (bOverlap)
+		{
+			std::string strOverlapTip = "检测到识别的矩形中有重叠的矩形，请仔细查看";
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, strOverlapTip);
+			dlg.DoModal();
+		}
+	}
+
 	std::sort(m_vecTmp.begin(), m_vecTmp.end(), SortByTH);
 	if (m_pOmrInfoDlg->m_nSingle == 2)
 	{

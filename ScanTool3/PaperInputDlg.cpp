@@ -1714,7 +1714,7 @@ void CPaperInputDlg::ShowPapers(pPAPERSINFO pPapers)
 	{
 		int nCount = m_lPaperCtrl.GetItemCount();
 		char szCount[10] = { 0 };
-		sprintf_s(szCount, "%d", nCount + 1);
+		sprintf_s(szCount, "%d", pPaper->nIndex);	//nCount + 1
 		m_lPaperCtrl.InsertItem(nCount, NULL);
 		m_lPaperCtrl.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
 		m_lPaperCtrl.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
