@@ -16,7 +16,7 @@ cv::Rect COmrRecog::GetRectByOrientation(cv::Rect& rtPic, cv::Rect rt, int nOrie
 	int nW = rtPic.width;
 	int nH = rtPic.height;
 	cv::Rect rtResult;
-	if (nOrientation == 1)	//matSrc正向
+	if (nOrientation == 1)	//matSrc正向	模板图像的旋转方向
 	{
 		rtResult = rt;
 	}
@@ -105,19 +105,6 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 			cv::Mat matCompRoi;
 			matCompRoi = matCompPic(rc.rt);
 		#endif
-// 			if (rc.rt.x < 0) rc.rt.x = 0;
-// 			if (rc.rt.y < 0) rc.rt.y = 0;
-// 			if (rc.rt.br().x > matCompPic.cols)
-// 			{
-// 				rc.rt.width = matCompPic.cols - rc.rt.x;
-// 			}
-// 			if (rc.rt.br().y > matCompPic.rows)
-// 			{
-// 				rc.rt.height = matCompPic.rows - rc.rt.y;
-// 			}
-// 
-// 			cv::Mat matCompRoi;
-// 			matCompRoi = matCompPic(rc.rt);
 
 			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
@@ -609,6 +596,7 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 		_nFristOrientation = nResult;
 
 	end = clock();
+	std::string strTmp = Poco::format("判断旋转方向时间: %dms\n", (int)(end - start));
 	TRACE("判断旋转方向时间: %dms\n", end - start);
 
 	std::string strDirection;
@@ -620,12 +608,12 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 		case 4: strDirection = "右旋180"; break;
 	}
 	std::string strLog = "方向判断结果：" + strDirection;
+	strLog.append("\t" + strTmp);
 //	g_pLogger->information(strLog);
 	TRACE("%s\n", strLog.c_str());
 
 	return nResult;
 }
-
 
 int COmrRecog::CheckOrientation4Head(cv::Mat& matSrc, int n)
 {
@@ -820,6 +808,96 @@ int COmrRecog::CheckOrientation4Head(cv::Mat& matSrc, int n)
 	return nResult;
 }
 
+int COmrRecog::CheckOrientation4Word(cv::Mat& matSrc, int n)
+{
+	bool bFind = false;
+	int nResult = 1;	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+
+	if (_pModel_->vecPaperModel[n]->lCharacterAnchorArea.size() == 0)
+		return nResult;
+
+	std::string strLog;
+
+	cv::Rect rtModelPic;
+	rtModelPic.width = _pModel_->vecPaperModel[n]->nPicW;
+	rtModelPic.height = _pModel_->vecPaperModel[n]->nPicH;
+	cv::Rect rtSrcPic;
+	rtSrcPic.width = matSrc.cols;
+	rtSrcPic.height = matSrc.rows;
+
+	int nModelPicPersent = rtModelPic.width / rtModelPic.height;	//0||1
+	int nSrcPicPercent = matSrc.cols / matSrc.rows;
+
+	if (_pModel_->nZkzhType == 2)			//使用条码的时候，先通过条码来判断方向
+	{
+		if (RecogCodeOrientation(matSrc, n, nResult))
+			return nResult;
+
+		strLog.append("通过条形码或二维码判断试卷旋转方向失败，下面通过定位点判断\n");
+	}
+
+	if (nModelPicPersent == nSrcPicPercent)	//与模板图片方向一致，需判断正向还是反向一致
+	{
+		TRACE("与模板图片方向一致\n");
+
+		for (int i = 1; i <= 4; i = i + 3)
+		{
+			bFind = RecogWordOrientationByRectCount(matSrc, n, i, nResult, strLog);
+			if (bFind)
+				break;
+		}
+
+		if (!bFind)
+		{
+			for (int i = 1; i <= 4; i = i + 3)
+			{
+				bFind = RecogWordOrientationByMatchTempl(matSrc, n, i, nResult, strLog);
+				if (bFind)
+					break;
+			}
+		}
+		if (!bFind)
+		{
+			TRACE("无法判断图片方向\n");
+			strLog.append("无法判断图片方向\n");
+			//g_pLogger->information(strLog);
+			nResult = 1;
+		}
+	}
+	else
+	{
+		TRACE("与模板图片方向不一致\n");
+
+		for (int i = 2; i <= 3; i++)
+		{
+			bFind = RecogWordOrientationByRectCount(matSrc, n, i, nResult, strLog);
+			if (bFind)
+				break;
+		}
+		if (!bFind)
+		{
+			for (int i = 2; i <= 3; i++)
+			{
+				bFind = RecogWordOrientationByMatchTempl(matSrc, n, i, nResult, strLog);
+				if (bFind)
+					break;
+			}
+		}
+		if (!bFind)
+		{
+			TRACE("无法判断图片方向，采用默认右旋90度的方向\n");
+			strLog.append("无法判断图片方向，采用默认右旋90度的方向\n");
+			//g_pLogger->information(strLog);
+			nResult = 2;	//如果出现无法判断图像方向时，默认模板需要右旋90度变成此图像方向，即默认返回方向为右旋90度，因为方向只有右旋90或者左旋90度两种选择，此处不返回默认的1，返回2
+		}
+	}
+	//------------------------------------------
+// 	if(bFind)
+// 		g_pLogger->information(strLog);
+	//------------------------------------------
+	return nResult;
+}
+
 int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 {
 	bool bFind = false;
@@ -827,6 +905,12 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 
 	if (_pModel_->nHasHead)
 		return nResult;
+
+	if (_pModel_->vecPaperModel[n]->lCharacterAnchorArea.size() > 0)	//有文字定位时，不用定点
+	{
+		nResult = CheckOrientation4Word(matSrc, n);
+		return nResult;
+	}
 
 	std::string strLog;
 
@@ -844,59 +928,34 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 
 	if (_pModel_->nZkzhType == 2)			//使用条码的时候，先通过条码来判断方向
 	{
-		if (nModelPicPersent == nSrcPicPercent)
-		{
-			TRACE("与模板图片方向一致\n");
-			for (int i = 1; i <= 4; i = i + 3)
-			{
-				//先查定点
-				cv::Mat matTmp = matSrc.clone();
-				RECTLIST lFix;
-				bool bResult = RecogFixCP(n, matTmp, lFix, _pModel_, i);
-				#ifdef WarpAffine_TEST
-					cv::Mat	inverseMat(2, 3, CV_32FC1);
-					PicTransfer(0, matTmp, lFix, _pModel_->vecPaperModel[n]->lFix, inverseMat);
-				#endif
-				bResult = RecogZkzh(n, matTmp, _pModel_, 1);	//i
-				if (!bResult)
-					continue;
-
-				bFind = true;
-				nResult = i;
-				break;
-			}
-		}
-		else
-		{
-			TRACE("与模板图片方向不一致\n");
-			for (int i = 2; i <= 3; i++)
-			{
-				//先查定点
-				cv::Mat matTmp = matSrc.clone();
-				RECTLIST lFix;
-				bool bResult = RecogFixCP(n, matTmp, lFix, _pModel_, i);
-				#ifdef WarpAffine_TEST
-					cv::Mat	inverseMat(2, 3, CV_32FC1);
-					PicTransfer(0, matTmp, lFix, _pModel_->vecPaperModel[n]->lFix, inverseMat);
-				#endif
-				bResult = RecogZkzh(n, matTmp, _pModel_, 1);	//i
-				if (!bResult)
-					continue;
-
-				bFind = true;
-				nResult = i;
-				break;
-			}
-		}
-		if (bFind)
+		if (RecogCodeOrientation(matSrc, n, nResult))
 			return nResult;
-
 		strLog.append("通过条形码或二维码判断试卷旋转方向失败，下面通过定位点判断\n");
 	}
 
 	int nCount = _pModel_->vecPaperModel[n]->lGray.size() + _pModel_->vecPaperModel[n]->lCourse.size();
 	if (nCount == 0)
+	{
+		if (nModelPicPersent == nSrcPicPercent)	//与模板图片方向一致，需判断正向还是反向一致
+		{
+			for (int i = 1; i <= 4; i = i + 3)
+			{
+				bFind = RecogWordOrientationByRectCount(matSrc, n, i, nResult, strLog);
+				if (bFind)
+					break;
+			}
+		}
+		else
+		{
+			for (int i = 2; i <= 3; i++)
+			{
+				bFind = RecogWordOrientationByRectCount(matSrc, n, i, nResult, strLog);
+				if (bFind)
+					break;
+			}
+		}
 		return nResult;
+	}
 
 	if (nModelPicPersent == nSrcPicPercent)	//与模板图片方向一致，需判断正向还是反向一致
 	{
@@ -1045,6 +1104,15 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			}
 		}
 
+		if (!bFind)		//通过校验点无法判断方向时，尝试矩形数量来判断
+		{
+			for (int i = 1; i <= 4; i = i + 3)
+			{
+				bFind = RecogWordOrientationByRectCount(matSrc, n, i, nResult, strLog);
+				if (bFind)
+					break;
+			}
+		}
 		if (!bFind)
 		{
 			TRACE("无法判断图片方向\n");
@@ -1203,6 +1271,15 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			}
 		}
 
+		if (!bFind)	//通过校验点无法判断方向时，尝试矩形数量来判断
+		{
+			for (int i = 2; i <= 3; i++)
+			{
+				bFind = RecogWordOrientationByRectCount(matSrc, n, i, nResult, strLog);
+				if (bFind)
+					break;
+			}
+		}
 		if (!bFind)
 		{
 			TRACE("无法判断图片方向，采用默认右旋90度的方向\n");
@@ -1213,6 +1290,360 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 	}
 
 	return nResult;
+}
+
+bool COmrRecog::RecogCodeOrientation(cv::Mat& matSrc, int n, int& nResult)
+{
+	bool bFind = false;
+//	int nResult = 1;	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+
+	if (_pModel_->nZkzhType != 2)
+		return bFind;
+	
+	cv::Rect rtModelPic;
+	rtModelPic.width = _pModel_->vecPaperModel[n]->nPicW;
+	rtModelPic.height = _pModel_->vecPaperModel[n]->nPicH;
+	cv::Rect rtSrcPic;
+	rtSrcPic.width = matSrc.cols;
+	rtSrcPic.height = matSrc.rows;
+
+	int nModelPicPersent = rtModelPic.width / rtModelPic.height;	//0||1
+	int nSrcPicPercent = matSrc.cols / matSrc.rows;
+
+	if (nModelPicPersent == nSrcPicPercent)
+	{
+		TRACE("与模板图片方向一致\n");
+		for (int i = 1; i <= 4; i = i + 3)
+		{
+			bool bResult = RecogZkzh(n, matSrc, _pModel_, i);
+			if (!bResult)
+				continue;
+
+			bFind = true;
+			nResult = i;
+			break;
+		}
+	}
+	else
+	{
+		TRACE("与模板图片方向不一致\n");
+		for (int i = 2; i <= 3; i++)
+		{
+			bool bResult = RecogZkzh(n, matSrc, _pModel_, i);
+			if (!bResult)
+				continue;
+
+			bFind = true;
+			nResult = i;
+			break;
+		}
+	}
+// 	if (bFind)
+// 		return nResult;
+	
+	return bFind;
+}
+
+void COmrRecog::PicRotate(cv::Mat& matSrc, int n)
+{
+	clock_t start, end;
+	start = clock();
+	switch (n)	//1:实际图像需要进行的旋转，正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+	{
+		case 1:	break;
+		case 2:
+			{
+				cv::Mat dst;
+				transpose(matSrc, dst);	//左旋90，镜像 
+				flip(dst, matSrc, 0);		//左旋90，模板图像需要右旋90，原图即需要左旋90
+			}
+			break;
+		case 3:
+			{
+				cv::Mat dst;
+				transpose(matSrc, dst);	//左旋90，镜像 
+				flip(dst, matSrc, 1);		//右旋90，模板图像需要左旋90，原图即需要右旋90
+			}
+			break;
+		case 4:
+			{
+				cv::Mat dst;
+				transpose(matSrc, dst);	//左旋90，镜像 
+				cv::Mat dst2;
+				flip(dst, dst2, 1);
+				cv::Mat dst5;
+				transpose(dst2, dst5);
+				flip(dst5, matSrc, 1);	//右旋180
+			}
+			break;
+		default:
+			break;
+	}
+	end = clock();
+	TRACE("图像旋转time = %dms\n", end - start);
+}
+
+bool COmrRecog::RecogWordOrientationByMatchTempl(cv::Mat& matSrc, int n, int nRotation, int& nResult, std::string& strLog)
+{
+	bool bFind = false;
+	clock_t start, end;
+	start = clock();
+
+	int nRtCount = 0;
+	std::vector<ST_WORDMATCHTEMPL> vecMatchTemplPoint;	//模板匹配到的点
+	int nModelWordPoint = 0;
+
+	//----------------将图像旋转到模板一样的方向，方便进行模板匹配
+	cv::Mat matRealPic = matSrc.clone();
+	PicRotate(matRealPic, nRotation);
+	//----------------
+
+	//根据文字定位的个数进行模板匹配，然后计算多个匹配的灰度、密度、位置等信息并进行比较
+	int nMaxCompWordPint = 8;	//最多匹配模板定点的个数
+	for (auto itCharactArea : _pModel_->vecPaperModel[n]->lCharacterAnchorArea)
+	{
+		cv::Mat SrcCharactArea = matRealPic(itCharactArea->rt);
+		
+		for (auto itCharactPoint : itCharactArea->vecCharacterRt)
+		{
+			if(nModelWordPoint >= nMaxCompWordPint)
+				break;
+			cv::Mat CharactPointTempl = _pModel_->vecPaperModel[n]->matModel(itCharactPoint->rc.rt);
+			cv::Point ptResult1;
+			MatchingMethod(0, SrcCharactArea, CharactPointTempl, ptResult1);
+
+			cv::Point ptResult2;
+			MatchingMethod(1, SrcCharactArea, CharactPointTempl, ptResult2);
+			
+			bool bMatchRight1 = abs(ptResult1.x - ptResult2.x) < itCharactPoint->rc.rt.width * 0.5 ? (abs(ptResult1.y - ptResult2.y) < itCharactPoint->rc.rt.height * 0.5 ? true : false) : false;
+
+// 			cv::Mat SrcTmp = SrcCharactArea.clone();
+// 			rectangle(SrcTmp, ptResult1, cv::Point(ptResult1.x + CharactPointTempl.cols, ptResult1.y + CharactPointTempl.rows), CV_RGB(255, 0, 0), 2, 8, 0);
+// 			rectangle(SrcTmp, ptResult2, cv::Point(ptResult2.x + CharactPointTempl.cols, ptResult2.y + CharactPointTempl.rows), CV_RGB(0, 0, 255), 2, 8, 0);
+			
+			++nModelWordPoint;
+
+			bool bMatchRight2 = false;
+			bool bMatchRight3 = false;
+			cv::Point ptResult3;
+			if (!bMatchRight1)
+			{
+				MatchingMethod(5, SrcCharactArea, CharactPointTempl, ptResult3);
+				//rectangle(SrcTmp, ptResult3, cv::Point(ptResult3.x + CharactPointTempl.cols, ptResult3.y + CharactPointTempl.rows), CV_RGB(0, 255, 0), 2, 8, 0);
+
+				//3中匹配中，2种以上位置差不多就认为匹配成功
+				bMatchRight2 = abs(ptResult1.x - ptResult3.x) < itCharactPoint->rc.rt.width * 0.5 ? (abs(ptResult1.y - ptResult3.y) < itCharactPoint->rc.rt.height * 0.5 ? true : false) : false;
+				bMatchRight3 = abs(ptResult3.x - ptResult2.x) < itCharactPoint->rc.rt.width * 0.5 ? (abs(ptResult3.y - ptResult2.y) < itCharactPoint->rc.rt.height * 0.5 ? true : false) : false;
+				if (!bMatchRight1 && !bMatchRight2 && !bMatchRight3)
+					continue;
+			}
+
+			cv::Point ptResultTmp;
+			if (bMatchRight1) ptResultTmp = ptResult1;
+			if (bMatchRight2) ptResultTmp = ptResult1;
+			if (bMatchRight3) ptResultTmp = ptResult3;
+
+			//计算密度、灰度、位置比例信息
+			cv::Point ptReal(itCharactArea->rt.x + ptResultTmp.x, itCharactArea->rt.y + ptResultTmp.y);
+
+			RECTINFO rcItem;
+			rcItem = itCharactPoint->rc;
+			rcItem.rt = cv::Rect(ptReal, cv::Point(ptReal.x + itCharactPoint->rc.rt.width, ptReal.y + itCharactPoint->rc.rt.height));
+			if (ptReal.x + itCharactPoint->rc.rt.width > itCharactArea->rt.x + itCharactArea->rt.width)
+				rcItem.rt.width = itCharactArea->rt.x + itCharactArea->rt.width - ptReal.x;
+			if (ptReal.y + itCharactPoint->rc.rt.height > itCharactArea->rt.y + itCharactArea->rt.height)
+				rcItem.rt.height = itCharactArea->rt.y + itCharactArea->rt.height - ptReal.y;
+
+			if (RecogRtVal(rcItem, matRealPic))
+			{
+				if (rcItem.fRealDensity / itCharactPoint->rc.fStandardDensity > 0.9 && rcItem.fRealValue / itCharactPoint->rc.fStandardValue > 0.9 && \
+					rcItem.rt.area() / itCharactPoint->rc.rt.area() > 0.9)
+				{
+					ST_WORDMATCHTEMPL stWordMatchTempl;
+					stWordMatchTempl.rtModel = itCharactPoint->rc.rt;
+					stWordMatchTempl.rcReal = rcItem;
+					vecMatchTemplPoint.push_back(stWordMatchTempl);
+				}
+				else
+				{
+					TRACE("判断文字识别点的密度百分比: %f, 低于要求的: %f\n", rcItem.fRealValuePercent, itCharactPoint->rc.fStandardValuePercent);
+				}
+			}
+		}
+		if (nModelWordPoint >= nMaxCompWordPint)
+			break;
+	}
+
+	if (nModelWordPoint <= 3)
+	{
+		if (vecMatchTemplPoint.size() >= nModelWordPoint)
+		{
+			bFind = true;
+			nResult = nRotation;
+		}
+	}
+	else
+	{
+		int nMinComp = (int)(nModelWordPoint * 0.7) > 3 ? (int)(nModelWordPoint * 0.7) : 3;
+		if (vecMatchTemplPoint.size() >= nMinComp)
+		{
+			bFind = true;
+			nResult = nRotation;
+		}
+	}
+	end = clock();
+	int nTime = end - start;
+	std::string strTmpLog = Poco::format("总文字定点数=%d, 实际识别文字定点数=%d\n", nModelWordPoint, (int)vecMatchTemplPoint.size());
+	strLog.append(strTmpLog);
+
+	std::string strTmp = Poco::format("文字模板匹配判断旋转方向时间: %dms\n", (int)(end - start));
+	strLog.append(strTmp);
+
+	return bFind;
+}
+
+bool COmrRecog::RecogWordOrientationByRectCount(cv::Mat& matSrc, int n, int nRotation, int& nResult, std::string& strLog)
+{
+	bool bFind = false;
+	clock_t start, end;
+	start = clock();
+
+	if (_pModel_->vecPaperModel[n]->lSNInfo.size() > 0 && _pModel_->nZkzhType == 1)
+	{
+		//查找zkzh区域的矩形数量，根据准考证号的Omr框大小过滤矩形	**************************
+		SNLIST::iterator itSNGroup = _pModel_->vecPaperModel[n]->lSNInfo.begin();
+		if ((*itSNGroup)->lSN.size() > 0)
+		{
+			RECTLIST::iterator itSN = (*itSNGroup)->lSN.begin();
+
+			cv::Rect rtModelPic;
+			rtModelPic.width = _pModel_->vecPaperModel[n]->nPicW;
+			rtModelPic.height = _pModel_->vecPaperModel[n]->nPicH;
+			cv::Rect rtReal = GetRectByOrientation(rtModelPic, _pModel_->vecPaperModel[n]->rcSNTracker.rt, nRotation);
+
+			cv::Mat matRealSnArea = matSrc(rtReal);
+			RECTINFO rcModelSnTracker = _pModel_->vecPaperModel[n]->rcSNTracker;
+			rcModelSnTracker.nDilateKernel = itSN->nDilateKernel;
+			int nMinW = itSN->rt.width * 0.7;
+			int nMaxW = itSN->rt.width * 1.3;
+			int nMinH = itSN->rt.height * 0.7;
+			int nMaxH = itSN->rt.height * 1.3;
+			if (nRotation == 2 || nRotation == 3)
+			{
+				nMinW = itSN->rt.height * 0.7;
+				nMaxW = itSN->rt.height * 1.3;
+				nMinH = itSN->rt.width * 0.7;
+				nMaxH = itSN->rt.width * 1.3;
+			}
+			int nRealSzRects = GetRectsInArea(matRealSnArea, rcModelSnTracker, nMinW, nMaxW, nMinH, nMaxH, CV_RETR_LIST) / 2;	//查找内外轮廓矩形，实际数量要除2
+			int nModelSzRects = _pModel_->vecPaperModel[n]->lSNInfo.size() * (*itSNGroup)->lSN.size();
+			if (nRealSzRects > nModelSzRects * 0.7)
+			{
+				bFind = true;
+				nResult = nRotation;
+			}
+
+			std::string strTmpLog = Poco::format("总zkzh矩形数=%d, 实际识别zkzh矩形数=%d\n", nModelSzRects, nRealSzRects);
+			strLog.append(strTmpLog);
+		}
+	}
+
+	if (!bFind)
+	{
+		int nModelAnchorAreaRects = 0;
+		int nRealAnchorAreaRects = 0;
+		for (auto itCharactArea : _pModel_->vecPaperModel[n]->lCharacterAnchorArea)
+		{
+			cv::Rect rtModelPic;
+			rtModelPic.width = _pModel_->vecPaperModel[n]->nPicW;
+			rtModelPic.height = _pModel_->vecPaperModel[n]->nPicH;
+			cv::Rect rtReal = GetRectByOrientation(rtModelPic, itCharactArea->rt, nRotation);
+
+			cv::Mat SrcCharactArea = matSrc(rtReal);
+
+			RECTINFO rcCharactArea = itCharactArea->vecCharacterRt[0]->rc;
+			int nMinW = itCharactArea->vecCharacterRt[0]->rc.rt.width * 0.7;
+			int nMaxW = itCharactArea->vecCharacterRt[0]->rc.rt.width * 1.3;
+			int nMinH = itCharactArea->vecCharacterRt[0]->rc.rt.height * 0.7;
+			int nMaxH = itCharactArea->vecCharacterRt[0]->rc.rt.height * 1.3;
+			if (nRotation == 2 || nRotation == 3)
+			{
+				nMinW = itCharactArea->vecCharacterRt[0]->rc.rt.height * 0.7;
+				nMaxW = itCharactArea->vecCharacterRt[0]->rc.rt.height * 1.3;
+				nMinH = itCharactArea->vecCharacterRt[0]->rc.rt.width * 0.7;
+				nMaxH = itCharactArea->vecCharacterRt[0]->rc.rt.width * 1.3;
+			}
+			nRealAnchorAreaRects += GetRectsInArea(SrcCharactArea, rcCharactArea, nMinW, nMaxW, nMinH, nMaxH);
+
+			nModelAnchorAreaRects = itCharactArea->nRects;
+		}
+		if (nModelAnchorAreaRects > 0 && _pModel_->vecPaperModel[n]->lCharacterAnchorArea.size() > 0)
+		{
+			int nMinCount = 0;
+			if (nModelAnchorAreaRects < 3)
+				nMinCount = 2;
+			else
+				nMinCount = nModelAnchorAreaRects * 0.8;
+			if (nRealAnchorAreaRects > nMinCount)
+			{
+				bFind = true;
+				nResult = nRotation;
+			}
+			std::string strTmpLog = Poco::format("总文字定点矩形数=%d, 实际识别文字定点矩形数=%d\n", nModelAnchorAreaRects, nRealAnchorAreaRects);
+			strLog.append(strTmpLog);
+		}
+	}
+	end = clock();
+	int nTime = end - start;
+
+	std::string strTmp = Poco::format("矩形数量判断旋转方向时间: %dms\n", (int)(end - start));
+	strLog.append(strTmp);
+
+	TRACE("%s\n", strLog.c_str());
+
+	return bFind;
+}
+
+bool COmrRecog::MatchingMethod(int method, cv::Mat& src, cv::Mat& templ, cv::Point& ptResult)
+{
+	double t1, t2;
+	t1 = cvGetTickCount();
+
+	/// Create the result matrix
+	int result_cols = src.cols - templ.cols + 1;
+	int result_rows = src.rows - templ.rows + 1;
+
+	cv::Mat result;
+	result.create(result_rows, result_cols, CV_32FC1);
+
+	/// Do the Matching and Normalize
+	cv::matchTemplate(src, templ, result, method);
+	cv::normalize(result, result, 0, 1, cv::NORM_MINMAX, -1, cv::Mat());
+
+	/// Localizing the best match with minMaxLoc
+	double minVal; double maxVal; 
+	cv::Point minLoc; 
+	cv::Point maxLoc;
+	cv::Point matchLoc;
+
+	cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
+
+	/// For SQDIFF and SQDIFF_NORMED, the best matches are lower values. For all the other methods, the higher the better
+	if (method == CV_TM_SQDIFF || method == CV_TM_SQDIFF_NORMED)
+	{
+		matchLoc = minLoc;
+	}
+	else
+	{
+		matchLoc = maxLoc;
+	}
+
+	t2 = cvGetTickCount();
+	double dTime1 = (t2 - t1) / 1000.0 / cvGetTickFrequency();
+//	TRACE("模板匹配时间: %fms\n", dTime1);
+
+	ptResult = matchLoc;
+	return true;
 }
 
 int COmrRecog::GetRects(cv::Mat& matSrc, cv::Rect rt, pMODEL pModel, int nPic, int nOrientation, int nHead)
@@ -1684,3 +2115,76 @@ void COmrRecog::sharpenImage1(const cv::Mat &image, cv::Mat &result, int nKernel
 	//对图像进行滤波
 	cv::filter2D(image, result, image.depth(), kernel);
 }
+
+int COmrRecog::GetRectsInArea(cv::Mat& matSrc, RECTINFO rc, int nMinW, int nMaxW, int nMinH, int nMaxH, int nFindContoursModel)
+{
+	clock_t start, end;
+	start = clock();
+
+	cv::Mat imgResult = matSrc;
+
+	cv::cvtColor(imgResult, imgResult, CV_BGR2GRAY);
+	cv::GaussianBlur(imgResult, imgResult, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);
+	sharpenImage1(imgResult, imgResult, rc.nSharpKernel);
+
+	cv::threshold(imgResult, imgResult, rc.nThresholdValue, 255, cv::THRESH_OTSU | cv::THRESH_BINARY);
+
+	cv::Canny(imgResult, imgResult, 0, rc.nCannyKernel, 5);
+	cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(rc.nDilateKernel, rc.nDilateKernel));	//Size(6, 6)	普通空白框可识别
+	cv::dilate(imgResult, imgResult, element);
+
+	IplImage ipl_img(imgResult);
+
+	//the parm. for cvFindContours  
+	CvMemStorage* storage = cvCreateMemStorage(0);
+	CvSeq* contour = 0;
+
+	//提取轮廓  
+	cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), nFindContoursModel, CV_CHAIN_APPROX_SIMPLE);
+
+	cv::Rect rtMax;		//记录最大矩形，识别同步头时用来排除非同步头框
+	bool bResult = false;
+	std::vector<cv::Rect>RectCompList;
+	
+	for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++)
+	{
+		CvRect aRect = cvBoundingRect(contour, 0);
+		cv::Rect rm = aRect;
+
+		if (rm.width < nMinW || rm.height < nMinH || rm.width > nMaxW || rm.height > nMaxH)
+		{
+			//TRACE("过滤矩形:(%d,%d,%d,%d), 面积: %d\n", rm.x, rm.y, rm.width, rm.height, rm.area());
+			continue;
+		}
+		
+		RectCompList.push_back(rm);
+	}
+	cvReleaseMemStorage(&storage);
+
+	end = clock();
+//	TRACE("计算区域内矩形数--time = %dms, rect count = %d \n", end - start, RectCompList.size());
+
+// 	std::sort(RectCompList.begin(), RectCompList.end(), [](cv::Rect& rt1, cv::Rect& rt2) {
+// 		bool bResult = true;
+// 
+// 		if (abs(rt1.y - rt2.y) > 9)
+// 		{
+// 			return rt1.y < rt2.y ? true : false;
+// 		}
+// 		else
+// 		{
+// 			bResult = rt1.x < rt2.x ? true : false;
+// 			if (!bResult)
+// 				bResult = rt1.x == rt2.x ? rt1.y < rt2.y : false;
+// 		}
+// 		return bResult;
+// 	});
+// 	for (int i = 0; i < RectCompList.size(); i++)
+// 	{
+// 		rectangle(matSrc, RectCompList[i], CV_RGB(255, 0, 0), 2);
+// 		TRACE("识别矩形框: (%d,%d,%d,%d)\n", RectCompList[i].x, RectCompList[i].y, RectCompList[i].width, RectCompList[i].height);
+// 	}
+
+	return RectCompList.size();
+}
+

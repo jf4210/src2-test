@@ -62,6 +62,8 @@ public:
 	int			nScanPaperSize;		//1:A4, 2:A3, 3:定制
 	int			nScanType;			//1:灰度扫描, 2: 彩色扫描
 	int			nAutoCut;			//扫描：是否自动裁剪
+
+	int			nUseWordAnchorPoint;//使用文字作为定点
 };
 
 class CAdanceSetMgrDlg : public CTipBaseDlg

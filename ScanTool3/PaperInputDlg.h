@@ -7,6 +7,7 @@
 #include "XListCtrl.h"
 #include "StudentMgr.h"
 #include "AnswerShowDlg.h"
+#include "OmrRecog.h"
 // CPaperInputDlg 对话框
 
 class CPaperInputDlg : public CDialog
@@ -40,6 +41,7 @@ public:
 	pMODEL		m_pOldModel;				//旧模板信息，切换combox的时候不能把它释放
 	pMODEL		m_pModel;					//模板信息
 
+	COmrRecog	_chkRotationObj;
 	int				m_nCurrItemPapers;		//试卷袋列表当前选择的项
 	int				m_ncomboCurrentSel;		//下拉列表当前选择项
 

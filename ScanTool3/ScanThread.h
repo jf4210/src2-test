@@ -2,6 +2,7 @@
 #include "global.h"
 #include "CommonTWAIN.h"
 #include "TwainApp.h"
+#include "OmrRecog.h"
 
 #define OPENCV_TEST		//获取到图像数据后使用opencv写文件
 
@@ -118,6 +119,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 private:
+	COmrRecog	_chkRotationObj;
 };
 
 

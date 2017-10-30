@@ -15,7 +15,6 @@
 #include "CTiffWriter.h"
 
 #include "MakeModelDlg.h"
-#include "OmrRecog.h"
 // #ifdef USE_TESSERACT
 // #include "tesseract/baseapi.h"
 // #include "leptonica/allheaders.h"
@@ -2101,8 +2100,8 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 		if (_pModel_ && m_nNotifyDlgType == 1 && _nScanAnswerModel_ != 2/*&& m_pModel->nType*/)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
 		{
 		#if 1
-			COmrRecog omrObj;
-			omrObj.GetRightPicOrientation(matSrc, nOrder - 1, m_nDoubleScan == 0 ? false : true);
+			//COmrRecog omrObj;
+			_chkRotationObj.GetRightPicOrientation(matSrc, nOrder - 1, m_nDoubleScan == 0 ? false : true);
 		#else
 			int nResult = CheckOrientation(matSrc, nOrder - 1, m_nDoubleScan == 0 ? false : true);
 			switch (nResult)	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)

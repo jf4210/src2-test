@@ -4,6 +4,7 @@
 
 COmrRecog::COmrRecog()
 {
+	_nFristOrientation = 1;
 }
 
 
@@ -565,10 +566,10 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 		int nCountBK = _pModel_->vecPaperModel[n]->lGray.size() + _pModel_->vecPaperModel[n]->lCourse.size();
 		if (nCountBK == 0)
 		{
-			if (nFristOrientation == 1) nResult = 1;
-			else if (nFristOrientation == 2) nResult = 3;
-			else if (nFristOrientation == 3) nResult = 2;
-			else if (nFristOrientation == 4) nResult = 4;
+			if (_nFristOrientation == 1) nResult = 1;
+			else if (_nFristOrientation == 2) nResult = 3;
+			else if (_nFristOrientation == 3) nResult = 2;
+			else if (_nFristOrientation == 4) nResult = 4;
 			end = clock();
 			TRACE("判断旋转方向时间: %dms\n", end - start);
 
@@ -594,7 +595,7 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 		nResult = CheckOrientation4Fix(matCom, n);
 
 	if (bDoubleScan && n % 2 == 0)		//双面扫描，且属于扫描的第一面
-		nFristOrientation = nResult;
+		_nFristOrientation = nResult;
 
 	end = clock();
 	std::string strTmp = Poco::format("判断旋转方向时间: %dms\n", (int)(end - start));
@@ -927,41 +928,8 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 
 	if (_pModel_->nZkzhType == 2)			//使用条码的时候，先通过条码来判断方向
 	{
-	#if 1
 		if (RecogCodeOrientation(matSrc, n, nResult))
 			return nResult;
-	#else
-		if (nModelPicPersent == nSrcPicPercent)
-		{
-			TRACE("与模板图片方向一致\n");
-			for (int i = 1; i <= 4; i = i + 3)
-			{
-				bool bResult = RecogZkzh(n, matSrc, _pModel_, i);
-				if (!bResult)
-					continue;
-
-				bFind = true;
-				nResult = i;
-				break;
-			}
-		}
-		else
-		{
-			TRACE("与模板图片方向不一致\n");
-			for (int i = 2; i <= 3; i++)
-			{
-				bool bResult = RecogZkzh(n, matSrc, _pModel_, i);
-				if (!bResult)
-					continue;
-
-				bFind = true;
-				nResult = i;
-				break;
-			}
-		}
-		if (bFind)
-			return nResult;
-	#endif
 		strLog.append("通过条形码或二维码判断试卷旋转方向失败，下面通过定位点判断\n");
 	}
 

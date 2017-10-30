@@ -23,11 +23,14 @@ public:
 	CComboBox	m_combo_ScanType;
 	CButton		m_chkAutoCut;
 	CXPGroupBox m_groupScanInfo;
-	
+	CXPGroupBox m_groupModelInfo;
+	CButton		m_chkUseWordAnchorPoint;	//使用文字作为定点
+
 	int			m_nScanDpi;
 	int			m_nScanPaperSize;
 	int			m_nScanType;
 	int			m_nAutoCut;		//是否自动裁剪
+	int			m_nUseWordAnchorPoint;	//是否使用文字作为定点
 
 	void	InitData(AdvanceParam& stParam);
 	BOOL SaveParamData(AdvanceParam& stParam);
@@ -44,4 +47,5 @@ public:
 	afx_msg void OnCbnSelchangeComboScantype();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg void OnBnClickedChkUsewordanchorpoint();
 };

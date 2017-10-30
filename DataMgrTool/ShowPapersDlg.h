@@ -20,6 +20,7 @@ public:
 	void setShowPapers(pPAPERSINFO pPapers);
 	void ShowPapers(pPAPERSINFO pPapers);
 	void ShowPaper(pST_PaperInfo pPaper);
+	void ShowOmrTh(pST_PaperInfo pPaper, int nTh);	//œ‘ æÃ‚∫≈
 private:
 	void InitUI();
 	void InitCtrlPosition();
@@ -33,6 +34,8 @@ private:
 
 	CShowPicDlg* m_pShowPicDlg;
 	CAnswerShowDlg* m_pAnswerShowDlg;
+	CEdit			m_edit_OmrRecogInfo;
+	CString			m_strMsg;
 
 	int			m_nCurrItemPaperList;
 	pPAPERSINFO m_pPapers;

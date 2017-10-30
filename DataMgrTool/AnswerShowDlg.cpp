@@ -5,7 +5,7 @@
 #include "DataMgrTool.h"
 #include "AnswerShowDlg.h"
 #include "afxdialogex.h"
-
+#include "ShowPapersDlg.h"
 
 // CAnswerShowDlg ¶Ô»°¿ò
 
@@ -411,6 +411,21 @@ void CAnswerShowDlg::OnNMDblclkListAnswer(NMHDR *pNMHDR, LRESULT *pResult)
 	SetListCtrlHighLightShow(m_lAnswerListCtrl, m_nCurrentItem);
 
 	m_lAnswerListCtrl.Invalidate();
+
+	//-------------------------------------
+	HDITEM   hdi;
+	TCHAR     lpBuffer[256];
+	LPCTSTR   lpszmyString;
+	hdi.mask = HDI_TEXT;
+	hdi.pszText = lpBuffer;
+	hdi.cchTextMax = 256;
+	m_lAnswerListCtrl.GetHeaderCtrl()->GetItem(m_nCurrentItem, &hdi);
+	CString strColumnName = hdi.pszText; 
+	USES_CONVERSION;
+	int nTh = atoi(T2A(strColumnName));
+	((CShowPapersDlg*)GetParent())->ShowOmrTh(m_pShowPaper, nTh);
+// 	if (m_pShowPicDlg)
+// 		m_pShowPicDlg->PostMessage(MSG_SHOW_OMR_TH, nTh);
 }
 
 void CAnswerShowDlg::OnBnClickedChkRight()

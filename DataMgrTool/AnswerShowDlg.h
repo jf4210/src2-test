@@ -40,6 +40,8 @@ private:
 	pMODEL	m_pModel;
 	int		m_nShowType;	//显示类型：0-不显示，1-无怀疑, 2-显示怀疑，3-显示无怀疑和怀疑，4-显示空，5-显示无怀疑和空，6-显示怀疑和空, 7-显示所有
 	pST_PaperInfo m_pShowPaper;
+
+//	CDialog*	m_pShowPicDlg;
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

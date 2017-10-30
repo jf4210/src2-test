@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CScanParamSetDlg, CDialog)
 
 CScanParamSetDlg::CScanParamSetDlg(CWnd* pParent /*=NULL*/)
 : CBaseTabDlg(CScanParamSetDlg::IDD, pParent)
-	, m_nScanDpi(200), m_nAutoCut(1), m_nScanPaperSize(1), m_nScanType(2)
+	, m_nScanDpi(200), m_nAutoCut(1), m_nScanPaperSize(1), m_nScanType(2), m_nUseWordAnchorPoint(0)
 {
 
 }
@@ -30,6 +30,8 @@ void CScanParamSetDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHK_AutoCut, m_chkAutoCut);
 	DDX_Control(pDX, IDC_COMBO_ScanType, m_combo_ScanType);
 	DDX_Control(pDX, IDC_STATIC_G_Scan, m_groupScanInfo);
+	DDX_Control(pDX, IDC_STATIC_G_Model, m_groupModelInfo);
+	DDX_Control(pDX, IDC_CHK_UseWordAnchorPoint, m_chkUseWordAnchorPoint);
 }
 
 
@@ -38,6 +40,8 @@ BOOL CScanParamSetDlg::OnInitDialog()
 	CBaseTabDlg::OnInitDialog();
 	
 	m_groupScanInfo.SetCatptionTextColor(RGB(0, 0, 0))
+		.SetBackgroundColor(RGB(255, 255, 255));
+	m_groupModelInfo.SetCatptionTextColor(RGB(0, 0, 0))
 		.SetBackgroundColor(RGB(255, 255, 255));
 
 	return TRUE;
@@ -51,6 +55,7 @@ BEGIN_MESSAGE_MAP(CScanParamSetDlg, CBaseTabDlg)
 
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
+	ON_BN_CLICKED(IDC_CHK_UseWordAnchorPoint, &CScanParamSetDlg::OnBnClickedChkUsewordanchorpoint)
 END_MESSAGE_MAP()
 
 
@@ -106,6 +111,8 @@ void CScanParamSetDlg::InitData(AdvanceParam& stParam)
 	m_nAutoCut = stParam.nAutoCut;
 	m_chkAutoCut.SetCheck(m_nAutoCut);
 
+	m_nUseWordAnchorPoint = stParam.nUseWordAnchorPoint;
+	m_chkUseWordAnchorPoint.SetCheck(m_nUseWordAnchorPoint);
 	return;
 }
 
@@ -116,6 +123,7 @@ BOOL CScanParamSetDlg::SaveParamData(AdvanceParam& stParam)
 	stParam.nScanPaperSize = m_nScanPaperSize;
 	stParam.nScanType	= m_nScanType;
 	stParam.nAutoCut	= m_nAutoCut;
+	stParam.nUseWordAnchorPoint = m_nUseWordAnchorPoint;
 	return TRUE;
 }
 
@@ -158,7 +166,7 @@ HBRUSH CScanParamSetDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
 	UINT CurID = pWnd->GetDlgCtrlID();
-	if (CurID == IDC_CHK_AutoCut)
+	if (CurID == IDC_CHK_AutoCut || CurID == IDC_CHK_UseWordAnchorPoint)
 	{
 		HBRUSH hMYbr = ::CreateSolidBrush(RGB(255, 255, 255));	//62, 147, 254
 
@@ -174,8 +182,6 @@ HBRUSH CScanParamSetDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return hbr;
 }
 
-
-
 BOOL CScanParamSetDlg::OnEraseBkgnd(CDC* pDC)
 {
 	CRect rcClient;
@@ -185,4 +191,10 @@ BOOL CScanParamSetDlg::OnEraseBkgnd(CDC* pDC)
 	ReleaseDC(pDC);	
 
 	return CBaseTabDlg::OnEraseBkgnd(pDC);
+}
+
+
+void CScanParamSetDlg::OnBnClickedChkUsewordanchorpoint()
+{
+	m_nUseWordAnchorPoint = m_chkUseWordAnchorPoint.GetCheck();
 }

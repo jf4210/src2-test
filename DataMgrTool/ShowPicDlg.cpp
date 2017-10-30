@@ -330,7 +330,7 @@ HBRUSH CShowPicDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return hbr;
 }
 
-void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
+void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper, int nTH)
 {
 	PIC_LIST::iterator itPic = pPaper->lPic.begin();
 	for (int i = 0; itPic != pPaper->lPic.end(); itPic++, i++)
@@ -421,6 +421,10 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			}
 		}
 
+		int nTh_tl_x = -1;
+		int nTh_tl_y = -1;
+		int nTh_br_x = -1;
+		int nTh_br_y = -1;
 		RECTLIST::iterator itNormal = (*itPic)->lNormalRect.begin();													//显示识别正常的点
 		for (int j = 0; itNormal != (*itPic)->lNormalRect.end(); itNormal++, j++)
 		{
@@ -429,6 +433,18 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			char szCP[20] = { 0 };
 			if (itNormal->eCPType == SN || itNormal->eCPType == OMR)
 			{
+				if (itNormal->nTH == nTH)
+				{
+					if (nTh_tl_x == -1) nTh_tl_x = itNormal->rt.tl().x;
+					nTh_tl_x = itNormal->rt.tl().x > nTh_tl_x ? nTh_tl_x : itNormal->rt.tl().x;
+					if (nTh_tl_y == -1) nTh_tl_y = itNormal->rt.tl().y;
+					nTh_tl_y = itNormal->rt.tl().y > nTh_tl_y ? nTh_tl_y : itNormal->rt.tl().y;
+
+					if (nTh_br_x == -1) nTh_br_x = itNormal->rt.br().x;
+					nTh_br_x = itNormal->rt.br().x < nTh_br_x ? nTh_br_x : itNormal->rt.br().x;
+					if (nTh_br_y == -1) nTh_br_y = itNormal->rt.br().y;
+					nTh_br_y = itNormal->rt.br().y < nTh_br_y ? nTh_br_y : itNormal->rt.br().y;
+				}
 				rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
@@ -437,6 +453,11 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 				rectangle(tmp, rt, CV_RGB(50, 255, 55), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
+		}
+		if (nTH > 0)
+		{
+			cv::Rect rt(cv::Point(nTh_tl_x, nTh_tl_y) - cv::Point(10, 10), cv::Point(nTh_br_x, nTh_br_y) + cv::Point(10, 10));
+			rectangle(tmp, rt, CV_RGB(50, 20, 250), 3);
 		}
 	#if 1
 		if (pPaper->pModel && pPaper->pModel->vecPaperModel[i]->lCharacterAnchorArea.size() > 0)
@@ -648,4 +669,30 @@ void CShowPicDlg::showTmpPic(cv::Mat& matPic, cv::Point pt/* = cv::Point(0, 0)*/
 {
 	if (m_pCurrentPicShow)
 		m_pCurrentPicShow->ShowPic(matPic, pt, fShowPer, nDirection);
+}
+
+void CShowPicDlg::showPaperOmrTh(pST_PaperInfo pPaper, int nTh)
+{
+	m_pCurrPaper = pPaper;
+
+	PaintRecognisedRect(m_pCurrPaper, nTh);
+
+	if (m_nShowModel == 2)
+	{
+		for (int i = 0; i < m_vecBtn.size(); i++)
+		{
+			if (i == m_nCurrTabSel)
+				m_vecBtn[i]->CheckBtn(TRUE);
+			else
+				m_vecBtn[i]->CheckBtn(FALSE);
+		}
+	}
+
+	m_pCurrentPicShow = m_vecPicShow[m_nCurrTabSel];
+	m_pCurrentPicShow->ShowWindow(SW_SHOW);
+	for (int i = 0; i < m_vecPicShow.size(); i++)
+	{
+		if (i != m_nCurrTabSel)
+			m_vecPicShow[i]->ShowWindow(SW_HIDE);
+	}
 }

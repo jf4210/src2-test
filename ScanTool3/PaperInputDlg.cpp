@@ -9,7 +9,6 @@
 #include "afxdialogex.h"
 #include <string.h>
 #include <algorithm>
-#include "OmrRecog.h"
 #include "ModifyZkzhDlg.h"
 #include "PapersMgr.h"
 #include "NewMessageBox.h"
@@ -777,8 +776,8 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 							j = 0;
 						Mat mtPic = imread(CMyCodeConvert::Utf8ToGb2312(strNewFilePath));
 						bool bDoubleScan = m_pModel->vecPaperModel.size() % 2 == 0 ? true : false;
-						COmrRecog omrObj;
-						omrObj.GetRightPicOrientation(mtPic, j, bDoubleScan);
+						//COmrRecog omrObj;
+						_chkRotationObj.GetRightPicOrientation(mtPic, j, bDoubleScan);
 
 						imwrite(pPic->strPicPath, mtPic);
 						j++;

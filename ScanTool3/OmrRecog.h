@@ -50,5 +50,16 @@ protected:
 
 
 	int			GetRectsInArea(cv::Mat& matSrc, RECTINFO rc, int nMinW, int nMaxW, int nMinH, int nMaxH, int nFindContoursModel = CV_RETR_EXTERNAL);	//获取给定区域内的矩形数量
+
+private:
+	//*********************************
+	//*********	测试结论 **************
+	//前提：双面扫描
+	//1、正面不需要旋转 ==> 反面也不需要旋转
+	//2、正面需要右转90度 ==> 反面需要左转90度
+	//3、正面需要左转90度 ==> 反面需要右转90度
+	//4、正面需要旋转180度 ==> 反面也需要旋转180度
+	//*********************************
+	int		_nFristOrientation;
 };
 

@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CShowPapersDlg, CDialog)
 
 CShowPapersDlg::CShowPapersDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(IDD_SHOWPAPERSDLG, pParent)
-	,m_pShowPicDlg(NULL), m_pAnswerShowDlg(NULL), m_pPapers(NULL), m_nCurrItemPaperList(-1)
+	,m_pShowPicDlg(NULL), m_pAnswerShowDlg(NULL), m_pPapers(NULL), m_nCurrItemPaperList(-1), m_strMsg(_T(""))
 {
 
 }
@@ -26,6 +26,8 @@ void CShowPapersDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_Papers, m_listPaper);
+	DDX_Control(pDX, IDC_EDIT_OmrRecogINfo, m_edit_OmrRecogInfo);
+	DDX_Text(pDX, IDC_EDIT_OmrRecogINfo, m_strMsg);
 }
 
 
@@ -95,6 +97,7 @@ void CShowPapersDlg::InitCtrlPosition()
 	int nLeftWidth = 200;
 	int nStaticH = 20;
 	int nListW = nLeftWidth - nLeftGap;
+	int nEditH = (cy - nTopGap - nBottomGap) * 0.27 - nGap;
 	if (GetDlgItem(IDC_STATIC_ListTips)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_STATIC_ListTips)->MoveWindow(nCurrentLeft, nCurrentTop, nListW, nStaticH);
@@ -102,7 +105,13 @@ void CShowPapersDlg::InitCtrlPosition()
 	}
 	if (m_listPaper.GetSafeHwnd())
 	{
-		m_listPaper.MoveWindow(nCurrentLeft, nCurrentTop, nListW, cy - nCurrentTop - nBottomGap);
+		int nH = cy - nCurrentTop - nBottomGap - nEditH - nGap;
+		m_listPaper.MoveWindow(nCurrentLeft, nCurrentTop, nListW, nH);
+		nCurrentTop += (nH + nGap);
+	}
+	if (m_edit_OmrRecogInfo.GetSafeHwnd())
+	{
+		m_edit_OmrRecogInfo.MoveWindow(nCurrentLeft, nCurrentTop, nListW, nEditH);
 	}
 
 	nCurrentLeft = nLeftWidth + nGap;
@@ -181,6 +190,178 @@ void CShowPapersDlg::ShowPaper(pST_PaperInfo pPaper)
 {
 	m_pShowPicDlg->setShowPaper(pPaper);
 	m_pAnswerShowDlg->InitData(pPaper);
+}
+
+void CShowPapersDlg::ShowOmrTh(pST_PaperInfo pPaper, int nTh)
+{
+	m_pShowPicDlg->showPaperOmrTh(pPaper, nTh);
+
+	//+++++++++++++++++++++++++++++++++++++++++
+	//下面计算改题选中的阀值
+	//+++++++++++++++++++++++++++++++++++++++++
+	OMRRESULTLIST::iterator itOmr = pPaper->lOmrResult.begin();
+	for (; itOmr != pPaper->lOmrResult.end(); itOmr++)
+	{
+		if (itOmr->nTH == nTh)
+		{
+			break;
+		}
+		
+	}
+
+	std::string strShowInfo = "\r\n============\r\n";
+	if (itOmr != pPaper->lOmrResult.end())
+	{
+		RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
+		for (; itRect != itOmr->lSelAnswer.end(); itRect++)
+		{
+			char szTmp[200] = { 0 };
+			sprintf_s(szTmp, "%c,密度=%.3f(%.3f/%.3f), ", itRect->nAnswer + 65, \
+					  itRect->fRealDensity / itRect->fStandardDensity, itRect->fRealDensity, itRect->fStandardDensity);
+			strShowInfo.append(szTmp);
+		}
+		strShowInfo.append("\r\n");
+		RECTLIST::iterator itRect2 = itOmr->lSelAnswer.begin();
+		for (; itRect2 != itOmr->lSelAnswer.end(); itRect2++)
+		{
+			char szTmp[200] = { 0 };
+			sprintf_s(szTmp, "%c,灰度=%.3f(%.3f-%.3f), ", itRect2->nAnswer + 65, \
+					  itRect2->fRealMeanGray - itRect2->fStandardMeanGray, itRect2->fRealMeanGray, itRect2->fStandardMeanGray);
+			strShowInfo.append(szTmp);
+		}
+
+		//------------------------------
+		std::vector<pRECTINFO> vecItemsDensityDesc;
+		std::vector<ST_ITEM_DIFF> vecOmrItemDensityDiff;
+		RECTLIST::iterator itItem = itOmr->lSelAnswer.begin();
+		for (; itItem != itOmr->lSelAnswer.end(); itItem++)
+		{
+			vecItemsDensityDesc.push_back(&(*itItem));
+		}
+		std::sort(vecItemsDensityDesc.begin(), vecItemsDensityDesc.end(), SortByItemDensity);
+
+		for (int i = 0; i < vecItemsDensityDesc.size(); i++)
+		{
+			int j = i + 1;
+			if (j < vecItemsDensityDesc.size())
+			{
+				ST_ITEM_DIFF stDiff;
+				sprintf_s(stDiff.szVal, "%c%c", (char)(vecItemsDensityDesc[i]->nAnswer + 65), (char)(vecItemsDensityDesc[j]->nAnswer + 65));
+				stDiff.fDiff = vecItemsDensityDesc[i]->fRealValuePercent - vecItemsDensityDesc[j]->fRealValuePercent;
+				stDiff.fFirst = vecItemsDensityDesc[i]->fRealValuePercent;
+				stDiff.fSecond = vecItemsDensityDesc[j]->fRealValuePercent;
+				vecOmrItemDensityDiff.push_back(stDiff);
+			}
+		}
+		//------------------------------
+		strShowInfo.append("\r\n[");
+		for (int i = 0; i < vecOmrItemDensityDiff.size(); i++)
+		{
+			char szTmp[40] = { 0 };
+			sprintf_s(szTmp, "%s:%.5f ", vecOmrItemDensityDiff[i].szVal, vecOmrItemDensityDiff[i].fDiff);
+			strShowInfo.append(szTmp);
+		}
+		strShowInfo.append("]");
+
+		float fDensityMeanPer = 0.0;
+		float fDensityMeanPer2 = 0.0;
+		for (int i = 0; i < vecItemsDensityDesc.size(); i++)
+		{
+			fDensityMeanPer += vecItemsDensityDesc[i]->fRealValuePercent;
+		}
+		fDensityMeanPer = fDensityMeanPer / vecItemsDensityDesc.size();
+
+		for (int i = 0; i < vecOmrItemDensityDiff.size(); i++)
+			fDensityMeanPer2 += vecOmrItemDensityDiff[i].fDiff;
+		fDensityMeanPer2 = fDensityMeanPer2 / vecOmrItemDensityDiff.size();
+
+		char szTmp2[100] = { 0 };
+		sprintf_s(szTmp2, "密度平均值:%.3f, 密度差平均值值:%.3f, ", fDensityMeanPer, fDensityMeanPer2);
+		strShowInfo.append(szTmp2);
+
+		float fDensityThreshold2 = 0.0;
+		strShowInfo.append("\r\n密度选中:[");
+		for (int i = 0; i < vecOmrItemDensityDiff.size(); i++)
+		{
+			char szTmp[40] = { 0 };
+			float fGrayThresholdGray = fDensityMeanPer2 - vecOmrItemDensityDiff[i].fDiff;
+			float fGrayMean1 = vecItemsDensityDesc[i]->fRealValuePercent - fDensityMeanPer;
+			float fGrayMean12 = -(vecItemsDensityDesc[i + 1]->fRealValuePercent - fDensityMeanPer);
+			sprintf_s(szTmp, "%s:%.5f ", vecOmrItemDensityDiff[i].szVal, _dDiffThread_Fix_ + vecOmrItemDensityDiff[i].fDiff * 0.5 + fGrayThresholdGray * 0.5 + fDensityThreshold2);	//_dDiffThread_Fix_ + fGrayThresholdGray + fDensityThreshold2
+			strShowInfo.append(szTmp);
+
+			fDensityThreshold2 += (_dDiffThread_Fix_ + vecOmrItemDensityDiff[i].fDiff * 0.5 + fGrayThresholdGray * 0.5 + fDensityThreshold2) / 2;	//_dDiffThread_Fix_ + fGrayThresholdGray + fDensityThreshold2
+		}
+		strShowInfo.append("]\r\n");
+		//---------------------------------------------
+
+
+		//-----------------------------------	灰度
+		std::vector<pRECTINFO> vecItemsGrayDesc;
+		std::vector<ST_ITEM_DIFF> vecOmrItemGrayDiff;
+		RECTLIST::iterator itItem2 = itOmr->lSelAnswer.begin();
+		for (; itItem2 != itOmr->lSelAnswer.end(); itItem2++)
+		{
+			vecItemsGrayDesc.push_back(&(*itItem2));
+		}
+		std::sort(vecItemsGrayDesc.begin(), vecItemsGrayDesc.end(), SortByItemGray);
+
+		for (int i = 0; i < vecItemsGrayDesc.size(); i++)
+		{
+			int j = i + 1;
+			if (j < vecItemsGrayDesc.size())
+			{
+				ST_ITEM_DIFF stDiff;
+				sprintf_s(stDiff.szVal, "%c%c", (char)(vecItemsGrayDesc[i]->nAnswer + 65), (char)(vecItemsGrayDesc[j]->nAnswer + 65));
+				stDiff.fDiff = abs(vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[j]->fRealMeanGray);
+				stDiff.fFirst = vecItemsGrayDesc[i]->fRealMeanGray;
+				stDiff.fSecond = vecItemsGrayDesc[j]->fRealMeanGray;
+				vecOmrItemGrayDiff.push_back(stDiff);
+			}
+		}
+		//-----------------------------------
+
+		strShowInfo.append("[");
+		for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
+		{
+			char szTmp[40] = { 0 };
+			sprintf_s(szTmp, "%s:%.3f ", vecOmrItemGrayDiff[i].szVal, vecOmrItemGrayDiff[i].fDiff);
+			strShowInfo.append(szTmp);
+		}
+		strShowInfo.append("]");
+		float fMeanGrayDiff = 0.0;
+		for (int i = 0; i < vecItemsGrayDesc.size(); i++)
+		{
+			fMeanGrayDiff += (vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray);
+		}
+		fMeanGrayDiff = fMeanGrayDiff / vecItemsGrayDesc.size();
+		char szTmp1[40] = { 0 };
+		sprintf_s(szTmp1, "平均灰度差:%.3f, ", fMeanGrayDiff);
+		strShowInfo.append(szTmp1);
+		strShowInfo.append("\r\n灰度选中[");
+		float fThreld = 0.0;
+		float fGrayDiffLast = 0.0;		//对上一次判断选中的选项对下一个选项选中判断的增益
+		for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
+		{
+			float fGrayThresholdGray = vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray - fMeanGrayDiff;
+			char szTmp[40] = { 0 };
+			sprintf_s(szTmp, "%s:%.3f ", vecOmrItemGrayDiff[i].szVal, _dDiffThread_3_ + fGrayThresholdGray + fGrayDiffLast);
+			strShowInfo.append(szTmp);
+			fGrayDiffLast += abs(fGrayThresholdGray) / 2;
+		}
+		strShowInfo.append("]\r\n");
+	}
+
+	USES_CONVERSION;
+	if (m_strMsg.GetLength() > 10000)
+		m_strMsg.Empty();
+	m_strMsg.Append(A2T(strShowInfo.c_str()));
+
+	m_edit_OmrRecogInfo.SetWindowTextW(m_strMsg);
+
+
+	int nLineCount = m_edit_OmrRecogInfo.GetLineCount();
+	m_edit_OmrRecogInfo.LineScroll(nLineCount);
 }
 
 void CShowPapersDlg::LeftRotate()

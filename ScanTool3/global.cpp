@@ -374,6 +374,8 @@ pMODEL LoadModelFile(CString strModelPath)
 			pModel->nScanSize = objData->get("nScanSize").convert<int>();
 		if (objData->has("nScanType"))
 			pModel->nScanType = objData->get("nScanType").convert<int>();
+		if (objData->has("nUseWordAnchorPoint"))
+			pModel->nUseWordAnchorPoint = objData->get("nUseWordAnchorPoint").convert<int>();
 		if (objData->has("nCharacterAnchorPoint"))
 			pModel->nCharacterAnchorPoint = objData->get("nCharacterAnchorPoint").convert<int>();
 
@@ -2167,23 +2169,26 @@ bool GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt)
 #if 1		//根据距离顶点最远的点计算矩形位置，顶点默认防止队列第一个
 			RECTLIST::iterator itFix = pPic->lFix.begin();
 			RECTLIST::iterator itModelFix = pPic->lModelWordFix.begin();
-			itFix++;
-			itModelFix++;
-			for (int i = 1; itFix != pPic->lFix.end(); itFix++, itModelFix++, i++)
+			if (itModelFix != pPic->lModelWordFix.end())
 			{
-				RECTLIST lTmpFix, lTmpModelFix;
-				lTmpFix.push_back(pPic->lFix.front());
-				lTmpModelFix.push_back(pPic->lModelWordFix.front());
+				itFix++;
+				itModelFix++;
+				for (int i = 1; itFix != pPic->lFix.end(); itFix++, itModelFix++, i++)
+				{
+					RECTLIST lTmpFix, lTmpModelFix;
+					lTmpFix.push_back(pPic->lFix.front());
+					lTmpModelFix.push_back(pPic->lModelWordFix.front());
 
-				lTmpFix.push_back(*itFix);
-				lTmpModelFix.push_back(*itModelFix);
+					lTmpFix.push_back(*itFix);
+					lTmpModelFix.push_back(*itModelFix);
 
-				ST_NEWRTBY2FIX stNewRt;
-				stNewRt.nFirstFix = 0;
-				stNewRt.nSecondFix = i;
-				stNewRt.rt = rt;
-				GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
-				vecNewRt.push_back(stNewRt);
+					ST_NEWRTBY2FIX stNewRt;
+					stNewRt.nFirstFix = 0;
+					stNewRt.nSecondFix = i;
+					stNewRt.rt = rt;
+					GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
+					vecNewRt.push_back(stNewRt);
+				}
 			}
 #else
 			VEC_FIXRECTINFO lFixRtInfo;
@@ -2230,8 +2235,11 @@ bool GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt)
 				}
 				nCount = vecNewRt.size();
 			}
-			rt.x = nXCount / nCount;
-			rt.y = nYCount / nCount;
+			if (nCount > 0)
+			{
+				rt.x = nXCount / nCount;
+				rt.y = nYCount / nCount;
+			}
 			end = clock();
 			TRACE("计算矩形位置时间: %dms\n", (int)(end - start));
 			return true;

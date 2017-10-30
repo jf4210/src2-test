@@ -2759,18 +2759,36 @@ bool CMakeModelDlg::checkValidity()
 		for (int i = 0; i < m_vecPaperModelInfo.size(); i++)
 		{
 			int nCount = m_vecPaperModelInfo[i]->vecABModel.size() + m_vecPaperModelInfo[i]->vecCourse.size() + m_vecPaperModelInfo[i]->vecElectOmr.size() + m_vecPaperModelInfo[i]->vecGray.size() \
-					+ m_vecPaperModelInfo[i]->vecOmr2.size() + m_vecPaperModelInfo[i]->vecQK_CP.size() + m_vecPaperModelInfo[i]->vecWhite.size() + m_vecPaperModelInfo[i]->lSN.size();
-			if (nCount > 0 && m_vecPaperModelInfo[i]->vecRtFix.size() < 3)
+				+ m_vecPaperModelInfo[i]->vecOmr2.size() + m_vecPaperModelInfo[i]->vecQK_CP.size() + m_vecPaperModelInfo[i]->vecWhite.size() + m_vecPaperModelInfo[i]->lSN.size();
+			if (m_pModel->nUseWordAnchorPoint == 0)
 			{
-				char szTmp[50] = { 0 };
-// 				sprintf_s(szTmp, "第 %d 页定点设置数量太少，要求至少3个，建议设置4个", i + 1);
-// 				AfxMessageBox(A2T(szTmp));
-				sprintf_s(szTmp, "第 %d 页定点设置数量太少，建议设置4个", i + 1);
-				CNewMessageBox dlg;
-				dlg.setShowInfo(2, 1, szTmp);
-				dlg.DoModal();
-				bResult = false;
-				break;
+				if (nCount > 0 && m_vecPaperModelInfo[i]->vecRtFix.size() < 3)
+				{
+					char szTmp[50] = { 0 };
+					sprintf_s(szTmp, "第 %d 页定点设置数量太少，建议设置4个", i + 1);
+					CNewMessageBox dlg;
+					dlg.setShowInfo(2, 1, szTmp);
+					dlg.DoModal();
+					bResult = false;
+					break;
+				}
+			}
+			else
+			{
+				int nWordCount = 0;
+				for (auto item : m_vecPaperModelInfo[i]->vecCharacterLocation)
+					nWordCount += item->vecCharacterRt.size();
+
+				if (nCount > 0 && (m_vecPaperModelInfo[i]->vecCharacterLocation.size() <= 0 || nWordCount < m_pModel->nCharacterAnchorPoint))
+				{
+					char szTmp[100] = { 0 };
+					sprintf_s(szTmp, "第 %d 页文字识别点数量太少，至少需要识别到%d个字", i + 1, m_pModel->nCharacterAnchorPoint);
+					CNewMessageBox dlg;
+					dlg.setShowInfo(2, 1, szTmp);
+					dlg.DoModal();
+					bResult = false;
+					break;
+				}
 			}
 		}
 	}
@@ -3560,13 +3578,9 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	jsnModel.set("nScanSize", pModel->nScanSize);				//扫描用的纸张类型，1-a4, 2-a3, 3-定制
 	jsnModel.set("nScanType", pModel->nScanType);				//扫描模式：1-灰度扫描，2-彩色扫描
 	jsnModel.set("nScanAutoCut", pModel->nAutoCut);				//扫描仪是否自动裁剪，超长卡不能裁剪
+	jsnModel.set("nUseWordAnchorPoint", pModel->nUseWordAnchorPoint);		//是否使用文字定点来定位识别
 	jsnModel.set("nCharacterAnchorPoint", pModel->nCharacterAnchorPoint);	//用来计算矩形位置的文字定点个数
-
-// 	jsnModel.set("gaussKernel", pModel->nGaussKernel);
-// 	jsnModel.set("sharpKernel", pModel->nSharpKernel);
-// 	jsnModel.set("cannyKernel", pModel->nCannyKernel);
-// 	jsnModel.set("dilateKernel", pModel->nDilateKernel);
-
+	
 	jsnModel.set("nExamId", pModel->nExamID);
 	jsnModel.set("nSubjectId", pModel->nSubjectID);
 	jsnModel.set("paperInfo", jsnPicModel);
@@ -7986,6 +8000,8 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 		stAdvanceParam.nScanPaperSize = m_pModel->nScanSize;
 		stAdvanceParam.nScanType = m_pModel->nScanType;
 		stAdvanceParam.nAutoCut = m_pModel->nAutoCut;
+		
+		stAdvanceParam.nUseWordAnchorPoint = m_pModel->nUseWordAnchorPoint;
 	}
 	stAdvanceParam.nCurrentZkzhSensitivity = m_nDilateKernel_Sn;
 	stAdvanceParam.nCurrentOmrSensitivity = m_nDilateKernel_Common;
@@ -8046,8 +8062,9 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	m_fSNThresholdPercent_Fix	= dlg._stSensitiveParam.nPersentZkzh / 100.0;
 	m_fOMRThresholdPercent_Fix	= dlg._stSensitiveParam.nPersentOmr / 100.0;
 
+	m_pModel->nUseWordAnchorPoint	= dlg._stSensitiveParam.nUseWordAnchorPoint;
 	m_pModel->nCharacterAnchorPoint = dlg._stSensitiveParam.nCharacterAnchorPoint;
-	m_nCharacterConfidence = dlg._stSensitiveParam.nCharacterConfidence;
+	m_nCharacterConfidence			= dlg._stSensitiveParam.nCharacterConfidence;
 
 	switch (m_eCurCPType)
 	{
