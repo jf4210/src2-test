@@ -666,6 +666,8 @@ void CModifyZkzhDlg::ShowPaperByItem(int nItem)
 
 void CModifyZkzhDlg::SetZkzhStatus()
 {
+	if (g_nExitFlag)	//全局退出标识，关闭软件，不进行设置，防止出现内存不足的错误，列表的试卷信息对象已经无用
+		return;
 	std::vector<std::string> vecCHzkzh;		//检查重号的准考证号，进行2次遍历，
 											//防止出现第一次属于正常，后面出现重号后，前面第一次的试卷的状态还是属于正常的问题
 	int nCount = m_lcZkzh.GetItemCount();
@@ -1146,9 +1148,6 @@ LRESULT CModifyZkzhDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 
 void CModifyZkzhDlg::OnClose()
 {
-// 	if (!ReleaseData())
-// 		return;
-
 	CDialog::OnClose();
 }
 

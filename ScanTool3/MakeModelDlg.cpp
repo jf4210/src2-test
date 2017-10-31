@@ -718,20 +718,37 @@ void CMakeModelDlg::InitConf()
 		}
 		else
 		{
-			m_comboCheckPointType.ResetContent();
-			m_comboCheckPointType.AddString(_T(""));
-			m_comboCheckPointType.AddString(_T("定点"));
-			m_comboCheckPointType.AddString(_T("科目校验点"));
-			m_comboCheckPointType.AddString(_T("缺考校验点"));
-			m_comboCheckPointType.AddString(_T("违纪校验点"));
-			m_comboCheckPointType.AddString(_T("灰度校验点"));
-//			m_comboCheckPointType.AddString(_T("空白校验点"));
-			m_comboCheckPointType.AddString(_T("考号设置"));
-			m_comboCheckPointType.AddString(_T("选择/判断题"));
-			m_comboCheckPointType.AddString(_T("选做题"));
-		#ifdef USE_TESSERACT
-			m_comboCheckPointType.AddString(_T("文字定位区"));
-		#endif
+			if (m_pModel->nUseWordAnchorPoint)
+			{
+				m_comboCheckPointType.ResetContent();
+				m_comboCheckPointType.AddString(_T(""));
+				m_comboCheckPointType.AddString(_T("文字定位区"));
+				m_comboCheckPointType.AddString(_T("科目校验点"));
+				m_comboCheckPointType.AddString(_T("缺考校验点"));
+				m_comboCheckPointType.AddString(_T("违纪校验点"));
+				m_comboCheckPointType.AddString(_T("灰度校验点"));
+				//m_comboCheckPointType.AddString(_T("空白校验点"));
+				m_comboCheckPointType.AddString(_T("考号设置"));
+				m_comboCheckPointType.AddString(_T("选择/判断题"));
+				m_comboCheckPointType.AddString(_T("选做题"));
+			}
+			else
+			{
+				m_comboCheckPointType.ResetContent();
+				m_comboCheckPointType.AddString(_T(""));
+				m_comboCheckPointType.AddString(_T("定点"));
+				m_comboCheckPointType.AddString(_T("科目校验点"));
+				m_comboCheckPointType.AddString(_T("缺考校验点"));
+				m_comboCheckPointType.AddString(_T("违纪校验点"));
+				m_comboCheckPointType.AddString(_T("灰度校验点"));
+				//m_comboCheckPointType.AddString(_T("空白校验点"));
+				m_comboCheckPointType.AddString(_T("考号设置"));
+				m_comboCheckPointType.AddString(_T("选择/判断题"));
+				m_comboCheckPointType.AddString(_T("选做题"));
+// 			#ifdef USE_TESSERACT
+// 				m_comboCheckPointType.AddString(_T("文字定位区"));
+// 			#endif
+			}
 		}
 	}
 	m_comboCheckPointType.SetCurSel(0);
@@ -1361,38 +1378,31 @@ void CMakeModelDlg::OnBnClickedBtnReset()
 		{
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecRtSel.clear();
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.clear();
-//			if (m_pModel && m_pModel->vecPaperModel.size()) m_pModel->vecPaperModel[m_nCurrTabSel].lFix.clear();
-//			if (m_pModel && m_pModel->vecPaperModel.size())m_pModel->vecPaperModel[m_nCurrTabSel].lSelFixRoi.clear();
 		}
 	case H_HEAD:
 		if (m_eCurCPType == H_HEAD || m_eCurCPType == UNKNOWN)
 		{
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.clear();
-//			if (m_pModel && m_pModel->vecPaperModel.size()) m_pModel->vecPaperModel[m_nCurrTabSel].lH_Head.clear();
 		}
 	case V_HEAD:
 		if (m_eCurCPType == V_HEAD || m_eCurCPType == UNKNOWN)
 		{
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.clear();
-//			if (m_pModel && m_pModel->vecPaperModel.size()) m_pModel->vecPaperModel[m_nCurrTabSel].lV_Head.clear();
 		}
 	case ABMODEL:
 		if (m_eCurCPType == ABMODEL || m_eCurCPType == UNKNOWN)
 		{
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel.clear();
-//			if (m_pModel && m_pModel->vecPaperModel.size()) m_pModel->vecPaperModel[m_nCurrTabSel].lABModel.clear();
 		}
 	case COURSE:
 		if (m_eCurCPType == COURSE || m_eCurCPType == UNKNOWN)
 		{
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecCourse.clear();
-//			if (m_pModel && m_pModel->vecPaperModel.size()) m_pModel->vecPaperModel[m_nCurrTabSel].lCourse.clear();
 		}
 	case QK_CP:
 		if (m_eCurCPType == QK_CP || m_eCurCPType == UNKNOWN)
 		{
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.clear();
-//			if (m_pModel && m_pModel->vecPaperModel.size()) m_pModel->vecPaperModel[m_nCurrTabSel].lQK_CP.clear();
 		}
 	case WJ_CP:
 		if (m_eCurCPType == WJ_CP || m_eCurCPType == UNKNOWN)
@@ -1403,13 +1413,11 @@ void CMakeModelDlg::OnBnClickedBtnReset()
 		if (m_eCurCPType == GRAY_CP || m_eCurCPType == UNKNOWN)
 		{
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecGray.clear();
-//			if (m_pModel && m_pModel->vecPaperModel.size()) m_pModel->vecPaperModel[m_nCurrTabSel].lGray.clear();
 		}
 	case WHITE_CP:
 		if (m_eCurCPType == WHITE_CP || m_eCurCPType == UNKNOWN)
 		{
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.clear();
-//			if (m_pModel && m_pModel->vecPaperModel.size()) m_pModel->vecPaperModel[m_nCurrTabSel].lWhite.clear();
 		}
 	case SN:
 		if (m_eCurCPType == SN || m_eCurCPType == UNKNOWN)
@@ -1426,7 +1434,6 @@ void CMakeModelDlg::OnBnClickedBtnReset()
 		if (m_eCurCPType == OMR || m_eCurCPType == UNKNOWN)
 		{
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.clear();
-//			if (m_pModel && m_pModel->vecPaperModel.size()) m_pModel->vecPaperModel[m_nCurrTabSel].lOMR2.clear();
 		}
 	case ELECT_OMR:
 		if (m_eCurCPType == ELECT_OMR || m_eCurCPType == UNKNOWN)
@@ -4670,15 +4677,18 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 	case Fix_CP:
 		if (eType == Fix_CP || eType == UNKNOWN)
 		{
-			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.size(); i++)
+			if (!m_pModel->nUseWordAnchorPoint)	//只有在不使用文字定位点的时候显示定点
 			{
-				cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecRtSel[i].rt;
-				cv::rectangle(tmp, rtTmp, CV_RGB(181, 115, 173), 2);
-				cv::rectangle(tmp2, rtTmp, CV_RGB(170, 215, 111), -1);
+				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.size(); i++)
+				{
+					cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecRtSel[i].rt;
+					cv::rectangle(tmp, rtTmp, CV_RGB(181, 115, 173), 2);
+					cv::rectangle(tmp2, rtTmp, CV_RGB(170, 215, 111), -1);
 
-				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix[i].rt;
-				cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
-				cv::rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+					rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix[i].rt;
+					cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+					cv::rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+				}
 			}
 		}
 	case H_HEAD:
@@ -4859,18 +4869,21 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 	case CHARACTER_AREA:
 		if (eType == CHARACTER_AREA || eType == UNKNOWN)
 		{
-			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.size(); i++)
+			if (m_pModel->nUseWordAnchorPoint)
 			{
-				cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i]->rt;
-				cv::rectangle(tmp, rtTmp, CV_RGB(181, 115, 173), 2);
-				cv::rectangle(tmp2, rtTmp, CV_RGB(170, 215, 111), -1);
-				for(int j = 0; j < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i]->vecCharacterRt.size(); j++)
+				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.size(); i++)
 				{
-					RECTINFO rc = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i]->vecCharacterRt[j]->rc;
-					rt = rc.rt;
+					cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i]->rt;
+					cv::rectangle(tmp, rtTmp, CV_RGB(181, 115, 173), 2);
+					cv::rectangle(tmp2, rtTmp, CV_RGB(170, 215, 111), -1);
+					for (int j = 0; j < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i]->vecCharacterRt.size(); j++)
+					{
+						RECTINFO rc = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i]->vecCharacterRt[j]->rc;
+						rt = rc.rt;
 
-					cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
-					cv::rectangle(tmp2, rt, CV_RGB(168, 86, 157), -1);
+						cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+						cv::rectangle(tmp2, rt, CV_RGB(168, 86, 157), -1);
+					}
 				}
 			}
 		}
@@ -8062,7 +8075,30 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	m_fSNThresholdPercent_Fix	= dlg._stSensitiveParam.nPersentZkzh / 100.0;
 	m_fOMRThresholdPercent_Fix	= dlg._stSensitiveParam.nPersentOmr / 100.0;
 
-	m_pModel->nUseWordAnchorPoint	= dlg._stSensitiveParam.nUseWordAnchorPoint;
+	if (m_pModel->nUseWordAnchorPoint != dlg._stSensitiveParam.nUseWordAnchorPoint)
+	{
+		m_pModel->nUseWordAnchorPoint = dlg._stSensitiveParam.nUseWordAnchorPoint;
+		InitConf();
+		
+		m_ncomboCurrentSel = m_comboCheckPointType.GetCurSel();
+		m_eCurCPType = GetComboSelCpType();
+		UpdataCPList();
+		ShowRectByCPType(m_eCurCPType);
+
+		switch (m_eCurCPType)
+		{
+			case SN:
+				{
+					m_nDilateKernel = m_nDilateKernel_Sn;
+				}
+				break;
+			default:
+				m_nDilateKernel = m_nDilateKernel_Common;
+				break;
+		}
+
+		InitShowSnOmrDlg(m_eCurCPType);
+	}
 	m_pModel->nCharacterAnchorPoint = dlg._stSensitiveParam.nCharacterAnchorPoint;
 	m_nCharacterConfidence			= dlg._stSensitiveParam.nCharacterConfidence;
 

@@ -36,7 +36,7 @@ public:
 	int	m_nUpLoadElectOmr;	//上传选做题
 
 	//心跳监测间隔，单位秒
-	int m_nHeartPacketTime;
+	int m_nHeartPacketTime;			//维持session存活的时间
 	string m_strCurrentDir;			//utf8
 	string m_strUpLoadPath;			//gb2312	试卷袋处理路径
 	string m_strDecompressPath;		//utf8		试卷袋解压路径

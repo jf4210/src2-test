@@ -474,6 +474,17 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper, int nTH)
 					rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 				}
 			}
+			CHARACTER_ANCHOR_AREA_LIST::iterator itWordArea = (*itPic)->lCharacterAnchorArea.begin();				//显示识别出来的所有文字
+			for (; itWordArea != (*itPic)->lCharacterAnchorArea.end(); itWordArea++)
+			{
+				std::vector<pST_CHARACTER_ANCHOR_POINT>::iterator itWord = (*itWordArea)->vecCharacterRt.begin();
+				for (; itWord != (*itWordArea)->vecCharacterRt.end(); itWord++)
+				{
+					cv::Rect rt = (*itWord)->rc.rt;
+
+					rectangle(tmp, rt, CV_RGB(0, 255, 255), 2);
+				}
+			}
 			RECTLIST::iterator itPicFix = (*itPic)->lFix.begin();														//显示识别出来的定点
 			for (int j = 0; itPicFix != (*itPic)->lFix.end(); itPicFix++, j++)
 			{

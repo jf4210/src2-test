@@ -105,7 +105,8 @@ void CAnswerShowDlg::InitData(pST_PaperInfo pPaper)
 			sprintf_s(szTh, "%d", it->nTH);
 			m_lAnswerListCtrl.InsertColumn(i, A2T(szTh), LVCFMT_CENTER, 45);
 		}
-		if (m_lAnswerListCtrl.GetColumns() == 0)
+		int nColumns = m_lAnswerListCtrl.GetColumns();
+		if (nColumns == 0)
 			return;
 
 		int nRow = 0;
@@ -145,6 +146,8 @@ void CAnswerShowDlg::InitData(pST_PaperInfo pPaper)
 				strcpy_s(szType, "╤Ю");
 			else
 				strcpy_s(szType, "еп");
+			if(i >= nColumns)
+				break;
 			m_lAnswerListCtrl.SetItemText(nRow, i, A2T(szType));
 			++nRow;
 			m_lAnswerListCtrl.SetItemText(nRow, i, A2T(it->strRecogVal1.c_str()));

@@ -605,7 +605,7 @@ protected:
 
 		TimerObj tmObj;
 		Poco::Util::Timer* timer_ = new Poco::Util::Timer();
-		timer_->schedule(&tmObj, 60 * 1000, 5 * 60 * 1000);	//60 * 1000, 5 * 60 * 1000
+		timer_->schedule(&tmObj, 60 * 1000, SysSet.m_nHeartPacketTime * 1000);	//60 * 1000, 5 * 60 * 1000
 
 #if 0	//test
 		char szIndex[50] = { 0 };

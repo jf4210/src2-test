@@ -44,6 +44,11 @@ BOOL CScanParamSetDlg::OnInitDialog()
 	m_groupModelInfo.SetCatptionTextColor(RGB(0, 0, 0))
 		.SetBackgroundColor(RGB(255, 255, 255));
 
+#ifndef USE_TESSERACT
+	m_groupModelInfo.ShowWindow(SW_HIDE);
+	m_chkUseWordAnchorPoint.ShowWindow(SW_HIDE);
+#endif
+
 	return TRUE;
 }
 

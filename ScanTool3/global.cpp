@@ -2241,7 +2241,7 @@ bool GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt)
 				rt.y = nYCount / nCount;
 			}
 			end = clock();
-			TRACE("计算矩形位置时间: %dms\n", (int)(end - start));
+//			TRACE("计算矩形位置时间: %dms\n", (int)(end - start));
 			return true;
 		}
 	}
@@ -2438,6 +2438,7 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 	for (auto itArea : pPic->lCharacterAnchorArea)
 		for (auto itPoint : itArea->vecCharacterRt)
 		{
+			if(itPoint == ptPeak) continue;
 			ST_POINTDIST2PEAK stPtDist;
 			stPtDist.pAnchorPoint = itPoint;
 			stPtDist.nDist = sqrt((itPoint->rc.rt.x - ptPeak->rc.rt.x) * (itPoint->rc.rt.x - ptPeak->rc.rt.x) + (itPoint->rc.rt.y - ptPeak->rc.rt.y) * (itPoint->rc.rt.y - ptPeak->rc.rt.y));

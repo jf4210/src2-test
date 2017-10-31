@@ -243,11 +243,17 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 
 		if (g_nOperatingMode == 1)
 		{
-			bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo);
+			bool bResult;
+			if(pModelInfo->pModel->nUseWordAnchorPoint)
+				bResult = RecogCharacter(nPic, matCompPic, *itPic, pModelInfo);
+			else
+				bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo);
 
-		#ifdef USE_TESSERACT
-			bResult = RecogCharacter(nPic, matCompPic, *itPic, pModelInfo);
-		#endif
+// 			bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo);
+// 
+// 		#ifdef USE_TESSERACT
+// 			bResult = RecogCharacter(nPic, matCompPic, *itPic, pModelInfo);
+// 		#endif
 
 		#ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
@@ -269,11 +275,17 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		}
 		else
 		{
-			bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo);
+			bool bResult;
+			if (pModelInfo->pModel->nUseWordAnchorPoint)
+				bResult = RecogCharacter(nPic, matCompPic, *itPic, pModelInfo);
+			else
+				bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo);
 
-		#ifdef USE_TESSERACT
-			bResult = RecogCharacter(nPic, matCompPic, *itPic, pModelInfo);
-		#endif
+// 			bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo);
+// 
+// 		#ifdef USE_TESSERACT
+// 			bResult = RecogCharacter(nPic, matCompPic, *itPic, pModelInfo);
+// 		#endif
 
 		#ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
@@ -749,7 +761,11 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 					std::vector<pST_CHARACTER_ANCHOR_POINT>::iterator itCharAnchorPoint = pstRecogCharacterRt->vecCharacterRt.begin();
 					for (; itCharAnchorPoint != pstRecogCharacterRt->vecCharacterRt.end(); )
 						if ((*itCharAnchorPoint)->strVal == vecRepeatWord[i])
+						{
+							pST_CHARACTER_ANCHOR_POINT pstCharRt = *itCharAnchorPoint;
 							itCharAnchorPoint = pstRecogCharacterRt->vecCharacterRt.erase(itCharAnchorPoint);
+							SAFE_RELEASE(pstCharRt);
+						}
 						else
 							itCharAnchorPoint++;
 				}
@@ -2256,12 +2272,11 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 // 			}
 			omrResult.lSelAnswer.push_back(rc);
 			
-			//------------------------
+		#ifdef PrintWordRecogPoint
 			if (pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0 && pPic->lModelWordFix.size() > 0)
 			{
 
 				VEC_NEWRTBY2FIX vecNewRt;
-#if 1
 				RECTLIST::iterator itFix = pPic->lFix.begin();
 				RECTLIST::iterator itModelFix = pPic->lModelWordFix.begin();
 				itFix++;
@@ -2282,17 +2297,6 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 					GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
 					vecNewRt.push_back(stNewRt);
 				}
-#else
-				VEC_FIXRECTINFO lFixRtInfo;
-				RECTINFO rc2 = *itOmrItem;
-
-				RECTLIST::iterator itFix = pPic->lFix.begin();
-				RECTLIST::iterator itModelFix = pPic->lModelWordFix.begin();
-				for (; itFix != pPic->lFix.end(); itFix++, itModelFix++)
-				{
-					GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rc2.rt);
-				}
-#endif
 				for (auto newRt : vecNewRt)
 				{
 					RECTINFO rcTmp;
@@ -2302,10 +2306,11 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 					pPic->lCalcRect.push_back(rcTmp);
 				}
 			}
-			//------------------------
-			#ifdef PaintOmrSnRect	//打印OMR、SN位置
+		#endif
+			
+		#ifdef PaintOmrSnRect	//打印OMR、SN位置
 			pPic->lNormalRect.push_back(rc);
-			#endif
+		#endif
 		}
 
 	#if 1
@@ -3686,11 +3691,10 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 #endif
 			pSn->lSN.push_back(rc);
 
-			//------------------------
+		#ifdef PrintWordRecogPoint
 			if (pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0 && pPic->lModelWordFix.size() > 0)
 			{
 				VEC_NEWRTBY2FIX vecNewRt;
-#if 1
 				RECTLIST::iterator itFix = pPic->lFix.begin();
 				RECTLIST::iterator itModelFix = pPic->lModelWordFix.begin();
 				itFix++;
@@ -3711,17 +3715,6 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 					GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
 					vecNewRt.push_back(stNewRt);
 				}
-#else
-				VEC_FIXRECTINFO lFixRtInfo;
-				RECTINFO rc2 = *itSnItem;
-
-				RECTLIST::iterator itFix = pPic->lFix.begin();
-				RECTLIST::iterator itModelFix = pPic->lModelWordFix.begin();
-				for (; itFix != pPic->lFix.end(); itFix++, itModelFix++)
-				{
-					GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rc2.rt);
-				}
-#endif
 				for (auto newRt : vecNewRt)
 				{
 					RECTINFO rcTmp;
@@ -3731,10 +3724,10 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 					pPic->lCalcRect.push_back(rcTmp);
 				}
 			}
-			//------------------------
-#ifdef PaintOmrSnRect	//打印OMR、SN位置
+		#endif
+		#ifdef PaintOmrSnRect	//打印OMR、SN位置
 			pPic->lNormalRect.push_back(rc);
-#endif
+		#endif
 		}
 		if (!bResult)
 			break;
