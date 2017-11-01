@@ -90,7 +90,7 @@ class TimerObj : public Poco::Util::TimerTask
 public:
 	void run()
 	{
-		std::cout << "session定时器" << std::endl;
+		//std::cout << "session定时器" << std::endl;
 
 		MAP_SESSION::iterator it = _mapSession_.begin();
 		for(; it != _mapSession_.end(); it++)

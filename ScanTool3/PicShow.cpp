@@ -475,6 +475,33 @@ void CPicShow::RotateImg(int nDirection)
 
 void CPicShow::SetRotateDir(int nDirection)
 {
+	SetRotateDir(m_src_img, nDirection);
+
+// 	if (nDirection == 3)
+// 		++m_nRotateTimes;
+// 	if (nDirection == 2)
+// 		--m_nRotateTimes;
+// 	m_nRotateTimes = m_nRotateTimes < 0 ? m_nRotateTimes + 4 : m_nRotateTimes;
+// 	switch (m_nRotateTimes % 4)
+// 	{
+// 		case 0:
+// 			m_nDirection = 1;
+// 			break;
+// 		case 1:
+// 			m_nDirection = 3;
+// 			break;
+// 		case 2:
+// 			m_nDirection = 4;
+// 			break;
+// 		case 3:
+// 			m_nDirection = 2;
+// 			break;
+// 	}
+// 	ShowPic(m_src_img, m_ptBase, 1.0, nDirection);
+}
+
+void CPicShow::SetRotateDir(cv::Mat& imgMat, int nDirection)
+{
 	if (nDirection == 3)
 		++m_nRotateTimes;
 	if (nDirection == 2)
@@ -495,7 +522,7 @@ void CPicShow::SetRotateDir(int nDirection)
 			m_nDirection = 2;
 			break;
 	}
-	ShowPic(m_src_img, m_ptBase, 1.0, nDirection);
+	ShowPic(imgMat, m_ptBase, 1.0, nDirection);
 }
 
 LRESULT CPicShow::CvPaint(WPARAM wParam, LPARAM lParam)

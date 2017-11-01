@@ -33,7 +33,7 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nWJ_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200), m_nCharacterThreshold(150), m_nThreshold_DefSn(150), m_nThreshold_DefOmr(150), m_nCharacterConfidence(60)
 	, m_fHeadThresholdPercent(0.75), m_fABModelThresholdPercent(0.75), m_fCourseThresholdPercent(0.75), m_fQK_CPThresholdPercent_Fix(1.5), m_fWJ_CPThresholdPercent_Fix(1.5), m_fQK_CPThresholdPercent_Head(1.2), m_fWJ_CPThresholdPercent_Head(1.2), m_fFixThresholdPercent(0.80)
 	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75), m_fOMRThresholdPercent_Fix(1.5), m_fSNThresholdPercent_Fix(1.5), m_fOMRThresholdPercent_Head(1.2), m_fSNThresholdPercent_Head(1.2)
-	, m_pCurRectInfo(NULL), m_ptFixCP(0,0)
+	, m_pCurRectInfo(NULL)
 	, m_bFistHTracker(true), m_bFistVTracker(true), m_bFistSNTracker(true)
 	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL), m_pSNInfoDlg(NULL), m_pElectOmrDlg(NULL)
 	, m_bShiftKeyDown(false)/*, m_pScanThread(NULL)*/
@@ -106,6 +106,8 @@ BEGIN_MESSAGE_MAP(CMakeModelDlg, CDialog)
 	ON_COMMAND(ID_TrackerRecognize, &CMakeModelDlg::RecognizeRectTracker)
 	ON_COMMAND(ID_AddRecog, &CMakeModelDlg::AddRecogRectToList)
 	ON_COMMAND(ID_RecogSN, &CMakeModelDlg::AddRecogSN)
+	ON_COMMAND(ID_LeftRotate, &CMakeModelDlg::LeftRotate)
+	ON_COMMAND(ID_RightRotate, &CMakeModelDlg::RightRotate)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_CheckPoint, &CMakeModelDlg::OnNMDblclkListCheckpoint)
 	ON_NOTIFY(LVN_KEYDOWN, IDC_LIST_CheckPoint, &CMakeModelDlg::OnLvnKeydownListCheckpoint)
 //	ON_BN_CLICKED(IDC_BTN_SaveRecogInfo, &CMakeModelDlg::OnBnClickedBtnSaverecoginfo)
@@ -758,7 +760,19 @@ LRESULT CMakeModelDlg::RoiRBtnUp(WPARAM wParam, LPARAM lParam)
 {
 	cv::Point pt = *(cv::Point*)(wParam);
 	if (m_eCurCPType == UNKNOWN)
+	{
+	#ifdef TEST_MODEL_ROTATION
+		CMenu menu, *pPopup;
+		menu.LoadMenu(IDR_MENU_Rotation);
+		pPopup = menu.GetSubMenu(0);
+		CPoint myPoint;
+		ClientToScreen(&myPoint);
+		GetCursorPos(&myPoint); //鼠标位置  
+		pPopup->RemoveMenu(ID_PicsExchange, MF_BYCOMMAND);		//删除不需要的选项
+		pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, myPoint.x, myPoint.y, this);
+	#endif
 		return TRUE;
+	}
 
 	if (m_eCurCPType == H_HEAD || m_eCurCPType == V_HEAD)
 	{
@@ -816,7 +830,19 @@ LRESULT CMakeModelDlg::RoiRBtnUp(WPARAM wParam, LPARAM lParam)
 	RECTINFO* pRc = NULL;
 	nFind = GetRectInfoByPoint(pt, m_eCurCPType, pRc);
 	if (nFind < 0 || !pRc)
-		return FALSE;
+	{
+	#ifdef TEST_MODEL_ROTATION
+		CMenu menu, *pPopup;
+		menu.LoadMenu(IDR_MENU_Rotation);
+		pPopup = menu.GetSubMenu(0);
+		CPoint myPoint;
+		ClientToScreen(&myPoint);
+		GetCursorPos(&myPoint); //鼠标位置  
+		pPopup->RemoveMenu(ID_PicsExchange, MF_BYCOMMAND);		//删除不需要的选项
+		pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, myPoint.x, myPoint.y, this);
+	#endif
+		return TRUE;
+	}
 
 	//下面的这段代码, 不单单适应于ListCtrl  
 	CMenu menu, *pPopup;
@@ -2021,7 +2047,6 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 	{
 		if (RectCompList.size() > 0)
 		{
-			m_ptFixCP = cv::Point(0, 0);
 			std::sort(RectCompList.begin(), RectCompList.end(), SortByArea);
 			
 			RECTINFO rcFixSel;					//把定位点选择的矩形框存入，在扫描匹配的时候根据这个框来识别定点坐标
@@ -2949,7 +2974,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 		if (m_pModel->nHasHead && m_vecPaperModelInfo[i]->bFirstH && m_pModel->nType == 0)
 		{
 			m_ptHTracker1 = cv::Point(0, 0);
-			m_ptHTracker2 = cv::Point(m_vecPaperModelInfo[i]->matSrcImg.cols, 90);
+			m_ptHTracker2 = cv::Point(m_vecPaperModelInfo[i]->matDstImg.cols, 90);	//m_vecPaperModelInfo[i]->matSrcImg.cols
 //			m_vecPaperModelInfo[m_nCurrTabSel]->bFirstH = false;
 
 			m_vecPaperModelInfo[i]->rtHTracker.x = m_ptHTracker1.x;
@@ -2959,8 +2984,8 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 		}
 		if (m_pModel->nHasHead && m_vecPaperModelInfo[i]->bFirstV && m_pModel->nType == 0)
 		{
-			m_ptVTracker1 = cv::Point(m_vecPaperModelInfo[i]->matSrcImg.cols - 90, 0);
-			m_ptVTracker2 = cv::Point(m_vecPaperModelInfo[i]->matSrcImg.cols, m_vecPaperModelInfo[i]->matSrcImg.rows);
+			m_ptVTracker1 = cv::Point(m_vecPaperModelInfo[i]->matDstImg.cols - 90, 0);	//m_vecPaperModelInfo[i]->matSrcImg.cols
+			m_ptVTracker2 = cv::Point(m_vecPaperModelInfo[i]->matDstImg.cols, m_vecPaperModelInfo[i]->matDstImg.rows);	//m_vecPaperModelInfo[i]->matSrcImg.cols  m_vecPaperModelInfo[i]->matSrcImg.rows
 //			m_vecPaperModelInfo[m_nCurrTabSel]->bFirstV = false;
 
 			m_vecPaperModelInfo[i]->rtVTracker.x = m_ptVTracker1.x;
@@ -3986,16 +4011,16 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 	{
 		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.size(); i++)
 		{
-			cv::Rect rtTmp1 = m_vecPaperModelInfo[m_nCurrTabSel]->vecRtSel[i].rt;
+			cv::Rect rtTmp1 = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecRtSel[i].rt);
 			cv::rectangle(tmp, rtTmp1, CV_RGB(181, 115, 173), 2);
 
-			cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix[i].rt;
+			cv::Rect rtTmp = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix[i].rt);
 			cv::rectangle(tmp2, rtTmp, CV_RGB(255, 233, 10), -1);
 		}
 		if (!bFind && m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.size() > nCurItem)
 		{
 			bFind = true;
-			rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix[nCurItem].rt;
+			rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix[nCurItem].rt);
 			m_pCurRectInfo = &m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix[nCurItem];
 		}
 		if (m_eCurCPType == UNKNOWN)
@@ -4005,13 +4030,13 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 	{
 		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.size(); i++)
 		{
-			cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head[i].rt;
+			cv::Rect rtTmp = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head[i].rt);
 			cv::rectangle(tmp2, rtTmp, CV_RGB(255, 233, 10), -1);
 		}
 		if (!bFind && m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.size() > nCurItem)
 		{
 			bFind = true;
-			rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head[nCurItem].rt;
+			rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head[nCurItem].rt);
 			m_pCurRectInfo = &m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head[nCurItem];
 		}
 		if (m_eCurCPType == UNKNOWN)
@@ -4021,13 +4046,13 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 	{
 		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.size(); i++)
 		{
-			cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head[i].rt;
+			cv::Rect rtTmp = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head[i].rt);
 			cv::rectangle(tmp2, rtTmp, CV_RGB(255, 233, 10), -1);
 		}
 		if (!bFind && m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.size() > nCurItem)
 		{
 			bFind = true;
-			rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head[nCurItem].rt;
+			rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head[nCurItem].rt);
 			m_pCurRectInfo = &m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head[nCurItem];
 		}
 		if (m_eCurCPType == UNKNOWN)
@@ -4037,13 +4062,13 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 	{
 		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel.size(); i++)
 		{
-			cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel[i].rt;
+			cv::Rect rtTmp = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel[i].rt);
 			cv::rectangle(tmp2, rtTmp, CV_RGB(255, 233, 10), -1);
 		}
 		if (!bFind && m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel.size() > nCurItem)
 		{
 			bFind = true;
-			rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel[nCurItem].rt;
+			rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel[nCurItem].rt);
 			m_pCurRectInfo = &m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel[nCurItem];
 		}
 		if (m_eCurCPType == UNKNOWN)
@@ -4053,13 +4078,13 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 	{
 		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecCourse.size(); i++)
 		{
-			cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecCourse[i].rt;
+			cv::Rect rtTmp = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecCourse[i].rt);
 			cv::rectangle(tmp2, rtTmp, CV_RGB(255, 233, 10), -1);
 		}
 		if (!bFind && m_vecPaperModelInfo[m_nCurrTabSel]->vecCourse.size() > nCurItem)
 		{
 			bFind = true;
-			rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecCourse[nCurItem].rt;
+			rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecCourse[nCurItem].rt);
 			m_pCurRectInfo = &m_vecPaperModelInfo[m_nCurrTabSel]->vecCourse[nCurItem];
 		}
 		if (m_eCurCPType == UNKNOWN)
@@ -4069,13 +4094,13 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 	{
 		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.size(); i++)
 		{
-			cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP[i].rt;
+			cv::Rect rtTmp = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP[i].rt);
 			cv::rectangle(tmp2, rtTmp, CV_RGB(255, 233, 10), -1);
 		}
 		if (!bFind && m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.size() > nCurItem)
 		{
 			bFind = true;
-			rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP[nCurItem].rt;
+			rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP[nCurItem].rt);
 			m_pCurRectInfo = &m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP[nCurItem];
 		}
 		if (m_eCurCPType == UNKNOWN)
@@ -4085,13 +4110,13 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 	{
 		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.size(); i++)
 		{
-			cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[i].rt;
+			cv::Rect rtTmp = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[i].rt);
 			cv::rectangle(tmp2, rtTmp, CV_RGB(255, 233, 10), -1);
 		}
 		if (!bFind && m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.size() > nCurItem)
 		{
 			bFind = true;
-			rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[nCurItem].rt;
+			rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[nCurItem].rt);
 			m_pCurRectInfo = &m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[nCurItem];
 		}
 		if (m_eCurCPType == UNKNOWN)
@@ -4101,13 +4126,13 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 	{
 		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecGray.size(); i++)
 		{
-			cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecGray[i].rt;
+			cv::Rect rtTmp = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecGray[i].rt);
 			cv::rectangle(tmp2, rtTmp, CV_RGB(255, 233, 10), -1);
 		}
 		if (!bFind && m_vecPaperModelInfo[m_nCurrTabSel]->vecGray.size() > nCurItem)
 		{
 			bFind = true;
-			rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecGray[nCurItem].rt;
+			rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecGray[nCurItem].rt);
 			m_pCurRectInfo = &m_vecPaperModelInfo[m_nCurrTabSel]->vecGray[nCurItem];
 		}
 		if (m_eCurCPType == UNKNOWN)
@@ -4117,13 +4142,13 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 	{
 		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.size(); i++)
 		{
-			cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite[i].rt;
+			cv::Rect rtTmp = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite[i].rt);
 			cv::rectangle(tmp2, rtTmp, CV_RGB(255, 233, 10), -1);
 		}
 		if (!bFind && m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.size() > nCurItem)
 		{
 			bFind = true;
-			rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite[nCurItem].rt;
+			rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite[nCurItem].rt);
 			m_pCurRectInfo = &m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite[nCurItem];
 		}
 		if (m_eCurCPType == UNKNOWN)
@@ -4138,7 +4163,7 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 			for (; itSNRect != (*itSNItem)->lSN.end(); itSNRect++)
 			{
 				RECTINFO rc = *itSNRect;
-				cv::Rect rtTmp = rc.rt;
+				cv::Rect rtTmp = GetCurrRealRect(rc.rt);
 
 				char szAnswerVal[10] = { 0 };
 				sprintf_s(szAnswerVal, "%d_%d", rc.nTH, rc.nSnVal);
@@ -4161,7 +4186,7 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 						if (j == nCurItem)
 						{
 							RECTINFO rc = *itSNRect;
-							rt = rc.rt;
+							rt = GetCurrRealRect(rc.rt);
 							m_pCurRectInfo = &(*itSNRect);
 							bFindSN = true;
 							bFind = true;
@@ -4186,7 +4211,7 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 			for (; itAnswer != m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].lSelAnswer.end(); itAnswer++)
 			{
 				RECTINFO rc = *itAnswer;
-				cv::Rect rtTmp = rc.rt;
+				cv::Rect rtTmp = GetCurrRealRect(rc.rt);
 				
 				char szAnswerVal[10] = { 0 };
 				sprintf_s(szAnswerVal, "%d%c", rc.nTH, rc.nAnswer + 65);
@@ -4222,7 +4247,7 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 						{
 							bFindOmr = true;
 							bFind = true;
-							rt = itAnswer->rt;
+							rt = GetCurrRealRect(itAnswer->rt);
 							m_pCurRectInfo = &(*itAnswer);
 							break;
 						}
@@ -4245,7 +4270,7 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 			for (; itElectOmr != m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[i].lItemInfo.end(); itElectOmr++)
 			{
 				RECTINFO rc = *itElectOmr;
-				cv::Rect rtTmp = rc.rt;
+				cv::Rect rtTmp = GetCurrRealRect(rc.rt);
 
 				char szAnswerVal[10] = { 0 };
 				sprintf_s(szAnswerVal, "%d_%c", rc.nTH, rc.nAnswer + 65);
@@ -4268,7 +4293,7 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 						{
 							bFindElectOmr = true;
 							bFind = true;
-							rt = itAnswer->rt;
+							rt = GetCurrRealRect(itAnswer->rt);
 							m_pCurRectInfo = &(*itAnswer);
 							break;
 						}
@@ -4290,7 +4315,7 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 			for (int j = 0; j < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i]->vecCharacterRt.size(); j++)
 			{
 				RECTINFO rc = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i]->vecCharacterRt[j]->rc;
-				cv::Rect rtTmp = rc.rt;
+				cv::Rect rtTmp = GetCurrRealRect(rc.rt);
 
 				cv::rectangle(tmp2, rtTmp, CV_RGB(168, 86, 157), -1);
 			}
@@ -4308,7 +4333,7 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 						{
 							bFindCharacter = true;
 							bFind = true;
-							rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i]->vecCharacterRt[j]->rc.rt;
+							rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i]->vecCharacterRt[j]->rc.rt);
 							m_pCurRectInfo = &m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i]->vecCharacterRt[j]->rc;
 							break;
 						}
@@ -4663,12 +4688,6 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 		return;
 
 	cv::Rect rt;
-	cv::Point ptFix = cv::Point(0, 0);
-	if (m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.size())
-	{
-		cv::Rect rtFix = m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix[0].rt;
-		ptFix = m_ptFixCP;
-	}	
 	Mat tmp = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
 	Mat tmp2 = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
 	switch (eType)
@@ -4681,11 +4700,11 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 			{
 				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.size(); i++)
 				{
-					cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecRtSel[i].rt;
+					cv::Rect rtTmp = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecRtSel[i].rt);
 					cv::rectangle(tmp, rtTmp, CV_RGB(181, 115, 173), 2);
 					cv::rectangle(tmp2, rtTmp, CV_RGB(170, 215, 111), -1);
 
-					rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix[i].rt;
+					rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix[i].rt);
 					cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 					cv::rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 				}
@@ -4696,14 +4715,14 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 		{
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.size(); i++)
 			{
-				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head[i].rt;
+				rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head[i].rt);
 				cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				cv::rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
 			if (eType == H_HEAD && m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.size() == 0)
 			{
-				cv::Point pt1 = m_pModelPicShow->m_picShow.m_ptHTracker1;
-				cv::Point pt2 = m_pModelPicShow->m_picShow.m_ptHTracker2;
+				cv::Point pt1 = GetCurrRealPoint(m_pModelPicShow->m_picShow.m_ptHTracker1);
+				cv::Point pt2 = GetCurrRealPoint(m_pModelPicShow->m_picShow.m_ptHTracker2);
 
 				rt = cv::Rect(pt1, pt2);
 				cv::rectangle(tmp, rt, CV_RGB(255, 20, 50), 2);
@@ -4715,14 +4734,14 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 		{
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.size(); i++)
 			{
-				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head[i].rt;
+				rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head[i].rt);
 				cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				cv::rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
 			if (eType == V_HEAD && m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.size() == 0)
 			{
-				cv::Point pt1 = m_pModelPicShow->m_picShow.m_ptVTracker1;
-				cv::Point pt2 = m_pModelPicShow->m_picShow.m_ptVTracker2;
+				cv::Point pt1 = GetCurrRealPoint(m_pModelPicShow->m_picShow.m_ptVTracker1);
+				cv::Point pt2 = GetCurrRealPoint(m_pModelPicShow->m_picShow.m_ptVTracker2);
 
 				rt = cv::Rect(pt1, pt2);
 				cv::rectangle(tmp, rt, CV_RGB(255, 20, 50), 2);
@@ -4734,7 +4753,7 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 		{
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel.size(); i++)
 			{
-				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel[i].rt;
+				rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel[i].rt);
 				cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				cv::rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
@@ -4744,7 +4763,7 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 		{
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecCourse.size(); i++)
 			{
-				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecCourse[i].rt;
+				rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecCourse[i].rt);
 				cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				cv::rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
@@ -4754,7 +4773,7 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 		{
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.size(); i++)
 			{
-				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP[i].rt;
+				rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP[i].rt);
 				cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				cv::rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
@@ -4764,7 +4783,7 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 		{
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP.size(); i++)
 			{
-				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[i].rt;
+				rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecWJ_CP[i].rt);
 				cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				cv::rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
@@ -4774,7 +4793,7 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 		{
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecGray.size(); i++)
 			{
-				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecGray[i].rt;
+				rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecGray[i].rt);
 				cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				cv::rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
@@ -4784,7 +4803,7 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 		{
 			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.size(); i++)
 			{
-				rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite[i].rt;
+				rt = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite[i].rt);
 				cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				cv::rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
@@ -4799,7 +4818,7 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 				for (; itSNRect != (*itSNItem)->lSN.end(); itSNRect++)
 				{
 					RECTINFO rc = *itSNRect;
-					rt = rc.rt;
+					rt = GetCurrRealRect(rc.rt);
 
 					cv::rectangle(tmp, rt, CV_RGB(255, 255, 0), 2);	//CV_RGB(255, 0, 0)
 
@@ -4820,7 +4839,7 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 				for (; itAnswer != m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].lSelAnswer.end(); itAnswer++)
 				{
 					RECTINFO rc = *itAnswer;
-					rt = rc.rt;
+					rt = GetCurrRealRect(rc.rt);
 
 					cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 
@@ -4854,7 +4873,7 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 				for (; itElectOmr != m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr[i].lItemInfo.end(); itElectOmr++)
 				{
 					RECTINFO rc = *itElectOmr;
-					rt = rc.rt;
+					rt = GetCurrRealRect(rc.rt);
 
 					cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 
@@ -4873,13 +4892,13 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 			{
 				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation.size(); i++)
 				{
-					cv::Rect rtTmp = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i]->rt;
+					cv::Rect rtTmp = GetCurrRealRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i]->rt);
 					cv::rectangle(tmp, rtTmp, CV_RGB(181, 115, 173), 2);
 					cv::rectangle(tmp2, rtTmp, CV_RGB(170, 215, 111), -1);
 					for (int j = 0; j < m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i]->vecCharacterRt.size(); j++)
 					{
 						RECTINFO rc = m_vecPaperModelInfo[m_nCurrTabSel]->vecCharacterLocation[i]->vecCharacterRt[j]->rc;
-						rt = rc.rt;
+						rt = GetCurrRealRect(rc.rt);
 
 						cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 						cv::rectangle(tmp2, rt, CV_RGB(168, 86, 157), -1);
@@ -5006,7 +5025,7 @@ void CMakeModelDlg::UpdataCPList()
 		if (m_vecPaperModelInfo[m_nCurrTabSel]->bFirstH && m_bNewModelFlag)
 		{
 			m_ptHTracker1 = cv::Point(0, 0);
-			m_ptHTracker2 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols, 90);
+			m_ptHTracker2 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.cols, 90);	//m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols
 			m_vecPaperModelInfo[m_nCurrTabSel]->bFirstH = false;
 
 			m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.x = m_ptHTracker1.x;
@@ -5027,8 +5046,8 @@ void CMakeModelDlg::UpdataCPList()
 		m_pModelPicShow->SetShowTracker(false, true, false);
 		if (m_vecPaperModelInfo[m_nCurrTabSel]->bFirstV && m_bNewModelFlag)
 		{
-			m_ptVTracker1 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols - 90, 0);
-			m_ptVTracker2 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols, m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.rows);
+			m_ptVTracker1 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.cols - 90, 0);	//m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols
+			m_ptVTracker2 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.cols, m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.rows);	//m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols  m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.rows
 			m_vecPaperModelInfo[m_nCurrTabSel]->bFirstV = false;
 
 			m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.x = m_ptVTracker1.x;
@@ -6281,7 +6300,7 @@ bool CMakeModelDlg::PicRotate()
 	Point2f center(pt2.x, pt2.y);
 	Mat affine_matrix = getRotationMatrix2D(center, fAngle, 1.0);
 
-	Mat inputImg = m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg;
+	Mat inputImg = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg;	//m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg
 	Mat tmpImg;
 	warpAffine(inputImg, tmpImg, affine_matrix, inputImg.size());
 	namedWindow("warpAffine", 0);
@@ -7360,7 +7379,6 @@ LRESULT CMakeModelDlg::ShiftKeyUp(WPARAM wParam, LPARAM lParam)
 	m_bShiftKeyDown = false;
 	return TRUE;
 }
-
 
 void CMakeModelDlg::OnNMHoverListCheckpoint(NMHDR *pNMHDR, LRESULT *pResult)
 {
@@ -8562,7 +8580,7 @@ void CMakeModelDlg::SaveNewModel()
 		if (m_pModel->nHasHead && m_vecPaperModelInfo[i]->bFirstH && m_pModel->nType == 0)
 		{
 			m_ptHTracker1 = cv::Point(0, 0);
-			m_ptHTracker2 = cv::Point(m_vecPaperModelInfo[i]->matSrcImg.cols, 90);
+			m_ptHTracker2 = cv::Point(m_vecPaperModelInfo[i]->matDstImg.cols, 90);	//m_vecPaperModelInfo[i]->matSrcImg.cols
 			//			m_vecPaperModelInfo[m_nCurrTabSel]->bFirstH = false;
 
 			m_vecPaperModelInfo[i]->rtHTracker.x = m_ptHTracker1.x;
@@ -8572,8 +8590,8 @@ void CMakeModelDlg::SaveNewModel()
 		}
 		if (m_pModel->nHasHead && m_vecPaperModelInfo[i]->bFirstV && m_pModel->nType == 0)
 		{
-			m_ptVTracker1 = cv::Point(m_vecPaperModelInfo[i]->matSrcImg.cols - 90, 0);
-			m_ptVTracker2 = cv::Point(m_vecPaperModelInfo[i]->matSrcImg.cols, m_vecPaperModelInfo[i]->matSrcImg.rows);
+			m_ptVTracker1 = cv::Point(m_vecPaperModelInfo[i]->matDstImg.cols - 90, 0);		//m_vecPaperModelInfo[i]->matSrcImg.cols
+			m_ptVTracker2 = cv::Point(m_vecPaperModelInfo[i]->matDstImg.cols, m_vecPaperModelInfo[i]->matDstImg.rows);	//m_vecPaperModelInfo[i]->matSrcImg.cols  m_vecPaperModelInfo[i]->matSrcImg.rows
 			//			m_vecPaperModelInfo[m_nCurrTabSel]->bFirstV = false;
 
 			m_vecPaperModelInfo[i]->rtVTracker.x = m_ptVTracker1.x;
@@ -8625,5 +8643,186 @@ void CMakeModelDlg::SaveNewModel()
 	}
 
 	SetCursor(LoadCursor(NULL, IDC_ARROW));
+}
+
+
+void CMakeModelDlg::LeftRotate()
+{
+#if 1
+	++m_vecPaperModelInfo[m_nCurrTabSel]->nRotateTimes;
+	m_vecPaperModelInfo[m_nCurrTabSel]->nRotateTimes = m_vecPaperModelInfo[m_nCurrTabSel]->nRotateTimes < 0 ? m_vecPaperModelInfo[m_nCurrTabSel]->nRotateTimes + 4 : m_vecPaperModelInfo[m_nCurrTabSel]->nRotateTimes;
+	switch (m_vecPaperModelInfo[m_nCurrTabSel]->nRotateTimes % 4)
+	{
+		case 0:
+			m_vecPaperModelInfo[m_nCurrTabSel]->nDirection = 1;
+			break;
+		case 1:
+			m_vecPaperModelInfo[m_nCurrTabSel]->nDirection = 3;
+			break;
+		case 2:
+			m_vecPaperModelInfo[m_nCurrTabSel]->nDirection = 4;
+			break;
+		case 3:
+			m_vecPaperModelInfo[m_nCurrTabSel]->nDirection = 2;
+			break;
+	}
+ 	RotateImg(m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg, 3);	//原图进行旋转
+
+	ShowRectByCPType(m_eCurCPType);
+#else
+	m_pModelPicShow->SetRotateDir(3);	//设置旋转方向，1:针对原始图像需要进行的旋转，正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+
+//	ShowRectByCPType(m_eCurCPType);
+#endif
+}
+
+void CMakeModelDlg::RightRotate()
+{
+#if 1
+	--m_vecPaperModelInfo[m_nCurrTabSel]->nRotateTimes;
+	m_vecPaperModelInfo[m_nCurrTabSel]->nRotateTimes = m_vecPaperModelInfo[m_nCurrTabSel]->nRotateTimes < 0 ? m_vecPaperModelInfo[m_nCurrTabSel]->nRotateTimes + 4 : m_vecPaperModelInfo[m_nCurrTabSel]->nRotateTimes;
+	switch (m_vecPaperModelInfo[m_nCurrTabSel]->nRotateTimes % 4)
+	{
+		case 0:
+			m_vecPaperModelInfo[m_nCurrTabSel]->nDirection = 1;
+			break;
+		case 1:
+			m_vecPaperModelInfo[m_nCurrTabSel]->nDirection = 3;
+			break;
+		case 2:
+			m_vecPaperModelInfo[m_nCurrTabSel]->nDirection = 4;
+			break;
+		case 3:
+			m_vecPaperModelInfo[m_nCurrTabSel]->nDirection = 2;
+			break;
+	}
+	RotateImg(m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg, 2);	//原图进行旋转
+
+	ShowRectByCPType(m_eCurCPType);
+#else
+	m_pModelPicShow->SetRotateDir(2);	//设置旋转方向，1:针对原始图像需要进行的旋转，正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+#endif
+}
+
+cv::Rect CMakeModelDlg::GetRectByOrientation(cv::Rect& rtPic, cv::Rect rt, int nOrientation)
+{
+	int nW = rtPic.width;
+	int nH = rtPic.height;
+	cv::Rect rtResult;
+	if (nOrientation == 1)	//matSrc正向	模板图像的旋转方向
+	{
+		rtResult = rt;
+	}
+	else if (nOrientation == 2)	//matSrc右转90度
+	{
+		cv::Point pt1, pt2;
+		pt1.x = nH - rt.tl().y;
+		pt1.y = rt.tl().x;
+		pt2.x = nH - rt.br().y;
+		pt2.y = rt.br().x;
+		rtResult = cv::Rect(pt1, pt2);
+	}
+	else if (nOrientation == 3)	//matSrc左转90度
+	{
+		cv::Point pt1, pt2;
+		pt1.x = rt.tl().y;
+		pt1.y = nW - rt.tl().x;
+		pt2.x = rt.br().y;
+		pt2.y = nW - rt.br().x;
+		rtResult = cv::Rect(pt1, pt2);
+	}
+	else if (nOrientation == 4)	//matSrc右转180度
+	{
+		cv::Point pt1, pt2;
+		pt1.x = nW - rt.tl().x;
+		pt1.y = nH - rt.tl().y;
+		pt2.x = nW - rt.br().x;
+		pt2.y = nH - rt.br().y;
+		rtResult = cv::Rect(pt1, pt2);
+	}
+	return rtResult;
+}
+
+cv::Point CMakeModelDlg::GetPointByOrientation(cv::Rect& rtPic, cv::Point pt, int nOrientation)
+{
+	int nW = rtPic.width;
+	int nH = rtPic.height;
+	cv::Point ptResult;
+	if (nOrientation == 1)	//matSrc正向	模板图像的旋转方向
+	{
+		ptResult = pt;
+	}
+	else if (nOrientation == 2)	//matSrc右转90度
+	{
+		cv::Point pt1, pt2;
+		pt1.x = nH - pt.y;
+		pt1.y = pt.x;
+		ptResult = pt1;
+	}
+	else if (nOrientation == 3)	//matSrc左转90度
+	{
+		cv::Point pt1, pt2;
+		pt1.x = pt.y;
+		pt1.y = nW - pt.x;
+		ptResult = pt1;
+	}
+	else if (nOrientation == 4)	//matSrc右转180度
+	{
+		cv::Point pt1, pt2;
+		pt1.x = nW - pt.x;
+		pt1.y = nH - pt.y;
+		ptResult = pt1;
+	}
+	return ptResult;
+}
+
+void CMakeModelDlg::RotateImg(cv::Mat& imgMat, int nDirection /*= 1*/)
+{
+	switch (nDirection)
+	{
+		case 1:	break;
+		case 2:
+			{
+				Mat dst;
+				transpose(imgMat, dst);	//左旋90，镜像 
+				flip(dst, imgMat, 1);		//右旋90，模板图像需要左旋90，原图即需要右旋90
+			}
+			break;
+		case 3:
+			{
+				Mat dst;
+				transpose(imgMat, dst);	//左旋90，镜像 
+				flip(dst, imgMat, 0);		//左旋90，模板图像需要右旋90，原图即需要左旋90				 
+			}
+			break;
+		case 4:
+			{
+				Mat dst;
+				transpose(imgMat, dst);	//左旋90，镜像 
+				Mat dst2;
+				flip(dst, dst2, 1);
+				Mat dst5;
+				transpose(dst2, dst5);
+				flip(dst5, imgMat, 1);	//右旋180
+			}
+			break;
+		default: break;
+	}
+}
+
+cv::Rect CMakeModelDlg::GetCurrRealRect(cv::Rect rt)
+{
+	cv::Rect rtModelPic;
+	rtModelPic.width = m_vecPaperModelInfo[m_nCurrTabSel]->nPicW;
+	rtModelPic.height = m_vecPaperModelInfo[m_nCurrTabSel]->nPicH;
+	return GetRectByOrientation(rtModelPic, rt, m_vecPaperModelInfo[m_nCurrTabSel]->nDirection);
+}
+
+cv::Point CMakeModelDlg::GetCurrRealPoint(cv::Point pt)
+{
+	cv::Rect rtModelPic;
+	rtModelPic.width = m_vecPaperModelInfo[m_nCurrTabSel]->nPicW;
+	rtModelPic.height = m_vecPaperModelInfo[m_nCurrTabSel]->nPicH;
+	return GetPointByOrientation(rtModelPic, pt, m_vecPaperModelInfo[m_nCurrTabSel]->nDirection);
 }
 

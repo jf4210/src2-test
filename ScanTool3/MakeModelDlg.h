@@ -29,6 +29,9 @@ typedef struct _PaperModelInfo_
 	int			nPicW;					//图片宽
 	int			nPicH;					//图片高
 
+	int		nDirection;			//图像默认显示方向，1:针对原始图像需要进行的旋转，正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+	int		nRotateTimes;		//记录往左往右旋转次数
+
 	std::string	strModelPicName;	//模板图片的名称
 	CString		strModelPicPath;	//模板图片路径
 	cv::Mat		matSrcImg;			//原始图像的Mat
@@ -60,6 +63,8 @@ typedef struct _PaperModelInfo_
 		nPaper = 0;
 		nPicW = -1;
 		nPicH = -1;
+		nDirection = 1;
+		nRotateTimes = 0;
 	}
 	~_PaperModelInfo_()
 	{
@@ -156,7 +161,7 @@ public:
 	int m_nThreshold_DefGray;
 	int m_nThreshold_DefSn;			//默认ZKZH二值化识别阀值
 	int m_nThreshold_DefOmr;		//默认OMR二值化识别阀值
-
+	
 	CString m_strModelPicPath;	
 	HZIP hz;					//压缩
 
@@ -177,7 +182,6 @@ public:
 	int			m_ncomboCurrentSel; //当前校验点的所选项
 	int			m_nCurListCtrlSel;	//当前List列表所选的项
 	pRECTINFO	m_pCurRectInfo;		//当前点击时选择的识别点
-	cv::Point	m_ptFixCP;			//定点的坐标
 	std::vector<std::vector<cv::Point> > m_vecContours;
 	std::vector<RECTINFO>	m_vecTmp;	//有同步头时，保存选择的矩形用于显示
 
@@ -267,6 +271,16 @@ private:
 
 	LRESULT ShiftKeyDown(WPARAM wParam, LPARAM lParam);
 	LRESULT ShiftKeyUp(WPARAM wParam, LPARAM lParam);
+
+	//给定一个矩形，按给定方向旋转后的矩形
+	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+	cv::Rect GetRectByOrientation(cv::Rect& rtPic, cv::Rect rt, int nOrientation);
+	cv::Point GetPointByOrientation(cv::Rect& rtPic, cv::Point pt, int nOrientation);
+	void	RotateImg(cv::Mat& imgMat, int nDirection /*= 1*/);		//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+	cv::Rect GetCurrRealRect(cv::Rect rt);		//获取实际矩形的位置，内部根据方向自动获取矩形新位置
+	cv::Point GetCurrRealPoint(cv::Point pt);	//获取实际点的位置，内部根据方向自动获取点新位置
+	void	LeftRotate();
+	void	RightRotate();
 
 	inline bool checkOverlap(CPType eType, cv::Rect rtSrc);		//区域重叠检测
 
