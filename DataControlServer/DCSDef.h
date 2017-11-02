@@ -29,8 +29,8 @@
 #define DecompressTest		//解压测试，多线程解压
 
 #ifndef TO_WHTY
-	#define SOFT_VERSION "DataControlServer V2.61031-1"
-	#define SOFT_VERSION4TY "DataControlServer for TY V2.1-1031"
+	#define SOFT_VERSION "DataControlServer V2.61102-1"
+	#define SOFT_VERSION4TY "DataControlServer for TY V2.1-1102"
 #else
 	#define SOFT_VERSION "DataControlServer for TY V2.1-0309"
 #endif
@@ -309,6 +309,7 @@ typedef struct _ScanReqTask_
 {
 	int			nExamID;
 	int			nSubjectID;
+	int			nTeacherID;
 	CNetUser*	pUser;
 	std::string strRequest;
 	std::string strUri;
@@ -323,6 +324,7 @@ typedef struct _ScanReqTask_
 		pUser = NULL;
 		nExamID = 0;
 		nSubjectID = 0;
+		nTeacherID = 0;
 	}
 }SCAN_REQ_TASK, *pSCAN_REQ_TASK;
 typedef std::list<pSCAN_REQ_TASK> LIST_SCAN_REQ;
@@ -334,7 +336,22 @@ typedef std::map<std::string, pPAPERS_DETAIL> MAP_RESEND_PKG;
 extern Poco::FastMutex	_mapResendPkgLock_;
 extern MAP_RESEND_PKG _mapResendPkg_;
 
-typedef std::map<std::string, std::string> MAP_SESSION;		//用户与session映射表，与后端进行心跳，维持session存活
+typedef struct _UserSession_
+{
+	int nChkHeartPkgFailTimes;	//检测心跳包失败次数
+	int nTeacherID;
+	int nUserID;
+	CNetUser* pUser;
+	Poco::Timestamp tmStamp;
+	std::string strUser;
+	_UserSession_()
+	{
+		nChkHeartPkgFailTimes = 0;
+		nTeacherID = 0;
+		nUserID = 0;
+	}
+}ST_USER_SESSION, *pST_USER_SESSION;
+typedef std::map<std::string, ST_USER_SESSION> MAP_SESSION;		//用户与session映射表，与后端进行心跳，维持session存活
 extern Poco::FastMutex _mapSessionLock_;
 extern MAP_SESSION _mapSession_;
 

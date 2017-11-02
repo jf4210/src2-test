@@ -443,6 +443,8 @@ void CScanTool3Dlg::ReleaseThreads()
 
 void CScanTool3Dlg::ReleaseData()
 {
+	_timerKeepAlive.cancel();
+
 	//试卷袋列表
 	g_fmPapers.lock();
 	PAPERS_LIST::iterator itPapers = g_lPapers.begin();
@@ -821,6 +823,11 @@ BOOL CScanTool3Dlg::OnInitDialog()
 	InitParam();
 	InitFileUpLoadList();
 	InitCompressList();
+
+	//_timerKeepAlive = new Poco::Util::Timer();
+	_pTmKeepAliveObj = new TimerKeepAliveObj();
+	_timerKeepAlive.schedule(_pTmKeepAliveObj, 60 * 1000, 120 * 1000);		//2分钟一次心跳
+
 //#ifndef _DEBUG
 	StartGuardProcess();
 //#endif

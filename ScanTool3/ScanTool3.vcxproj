@@ -130,6 +130,7 @@
     <ClInclude Include="AdanceSetMgrDlg.h" />
     <ClInclude Include="AnswerShowDlg.h" />
     <ClInclude Include="GetModelDlg.h" />
+    <ClInclude Include="KeepAliveTimer.h" />
     <ClInclude Include="PaperInputDlg.h" />
     <ClInclude Include="PapersMgr.h" />
     <ClInclude Include="ScanParamSetDlg.h" />

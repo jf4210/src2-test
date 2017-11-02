@@ -49,6 +49,9 @@
 #include "Poco/Crypto/X509Certificate.h"
 #include "Poco/Crypto/CryptoStream.h"
 
+#include "Poco/Util/TimerTask.h"
+#include "Poco/Util/Timer.h"
+
 #include "zip.h"
 #include "unzip.h"
 #include "MyCodeConvert.h"

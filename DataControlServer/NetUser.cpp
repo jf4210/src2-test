@@ -92,15 +92,10 @@ void CNetUser::OnClose(void)
 	}
 	_mapUserLock_.unlock();
 
-	std::string strSessionKey = Poco::format("%s:%d", std::string(m_pIPAddress), (int)m_wPort);
-	_mapSessionLock_.lock();
-	_mapSession_.erase(strSessionKey);
-// 	MAP_SESSION::iterator itFind2 = _mapSession_.find(strSessionKey);
-// 	if (itFind2 != _mapSession_.end())
-// 	{
-// 		_mapSession_.erase(itFind2);
-// 	}
-	_mapSessionLock_.unlock();
+// 	std::string strSessionKey = Poco::format("%s:%d", std::string(m_pIPAddress), (int)m_wPort);
+// 	_mapSessionLock_.lock();
+// 	_mapSession_.erase(strSessionKey);
+// 	_mapSessionLock_.unlock();
 
 	CListUser::GetInstance()->RemoveUser(this);
 //	CListUser::GetFreeInstance()->AddUser(this);
@@ -135,7 +130,7 @@ void CNetUser::OnRead(char* pData, int nDataLen)
 	{
 // 		UpdateLastPacketTime();
  		m_pNetRecvBuffer->AddBuf(nDataLen);
-		std::cout << "OnRead-" << nDataLen << std::endl;
+//		std::cout << "OnRead-" << nDataLen << std::endl;
 	}
 	int nMissionSize = 0;
 	if (m_pNetRecvBuffer->GetMission(nMissionSize))

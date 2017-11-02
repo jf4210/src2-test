@@ -646,13 +646,15 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			#endif
 
 			std::string strEzs = stGetBmkInfo.szEzs;
+			
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
 			pTask->strUri = SysSet.m_strBackUri + "/getStudents";
 			pTask->nExamID = stGetBmkInfo.nExamID;
 			pTask->nSubjectID = stGetBmkInfo.nSubjectID;
+			pTask->nTeacherID = _mapSession_[strEzs].nTeacherID;
 
 			char szExamInfo[30] = { 0 };
-			sprintf(szExamInfo, "/%d/%d", stGetBmkInfo.nExamID, stGetBmkInfo.nSubjectID);
+			sprintf(szExamInfo, "/%d/%d/%d", stGetBmkInfo.nExamID, stGetBmkInfo.nSubjectID, pTask->nTeacherID);
 			pTask->strUri.append(szExamInfo);
 
 			pTask->pUser = pUser;
@@ -662,6 +664,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			Poco::JSON::Object obj;
 			obj.set("examId", stGetBmkInfo.nExamID);
 			obj.set("subjectId", stGetBmkInfo.nSubjectID);
+			obj.set("teacherId", pTask->nTeacherID);
 			stringstream ss;
 			obj.stringify(ss, 0);
 			pTask->strRequest = ss.str();
@@ -803,6 +806,24 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			}
 
 			pUser->SendResponesInfo(USER_RESPONSE_GET_MODEL_PIC, RESULT_GET_MODEL_PIC_SUCCESS, (char*)strSendData.c_str(), strSendData.length());
+		}
+		break;
+	case KEEPALIVE_PKG:
+		{
+			char szData[1024] = { 0 };
+			strncpy(szData, pMission->m_pMissionData + HEAD_SIZE, header.uPackSize);
+			std::string strEzs = szData;
+
+			MAP_SESSION::iterator itSession = _mapSession_.begin();
+			for (; itSession != _mapSession_.end(); itSession++)
+			{
+				if (itSession->first == strEzs)
+				{
+					itSession->second.tmStamp.update();
+					itSession->second.nChkHeartPkgFailTimes = 0;
+					break;
+				}
+			}
 		}
 		break;
 	default:

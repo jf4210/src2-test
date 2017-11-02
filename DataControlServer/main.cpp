@@ -92,19 +92,38 @@ public:
 	{
 		//std::cout << "session定时器" << std::endl;
 
+		std::vector<std::string> vecDelSession;
+
 		MAP_SESSION::iterator it = _mapSession_.begin();
 		for(; it != _mapSession_.end(); it++)
 		{
-			pSCAN_REQ_TASK pTask = NULL;
-			pTask = new SCAN_REQ_TASK;
-			pTask->strUri = SysSet.m_strBackUri + "/api/commons/keepalive";
- 			pTask->strMsg = "sessionAlive";
-			pTask->strEzs = it->second;
+			int nDiffTime = it->second.tmStamp.elapsed();
+			if (nDiffTime > 180 * 1000000)
+			{
+				++it->second.nChkHeartPkgFailTimes;
+			}
+			if (it->second.nChkHeartPkgFailTimes <= 3)
+			{
+				pSCAN_REQ_TASK pTask = NULL;
+				pTask = new SCAN_REQ_TASK;
+				pTask->strUri = SysSet.m_strBackUri + "/api/commons/keepalive";
+				pTask->strMsg = "sessionAlive";
+				pTask->strEzs = it->first;
 
-			g_fmScanReq.lock();
-			g_lScanReq.push_back(pTask);
-			g_fmScanReq.unlock();
+				g_fmScanReq.lock();
+				g_lScanReq.push_back(pTask);
+				g_fmScanReq.unlock();
+			}
+			else
+			{
+				vecDelSession.push_back(it->first);
+			}
 		}
+
+		_mapSessionLock_.lock();
+		for(int i = 0; i < vecDelSession.size(); i++)
+			_mapSession_.erase(vecDelSession[i]);
+		_mapSessionLock_.unlock();
 	}
 };
 
@@ -639,6 +658,8 @@ protected:
 		g_nExitFlag = 1;
 		examServerMgr.StopFileChannel();
 		examServerMgr.StopCmdChannel();
+
+		timer_->cancel(false);
 
 		//释放模板映射信息
 		_mapModelLock_.lock();

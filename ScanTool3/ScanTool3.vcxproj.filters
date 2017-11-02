@@ -187,6 +187,9 @@
     <Filter Include="扫描界面窗口\扫描过程窗口\图像答案识别窗口">
       <UniqueIdentifier>{41a927d8-5442-48e9-acc5-03c3390390d8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="定时器">
+      <UniqueIdentifier>{c1545ddd-a12e-40e7-b5c7-1901c74531dd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -485,6 +488,9 @@
     </ClInclude>
     <ClInclude Include="AnswerShowDlg.h">
       <Filter>扫描界面窗口\扫描过程窗口\图像答案识别窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="KeepAliveTimer.h">
+      <Filter>定时器</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

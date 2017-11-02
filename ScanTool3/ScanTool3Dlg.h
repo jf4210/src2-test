@@ -12,6 +12,7 @@
 #include "ScanThread.h"
 #include "BmpButton.h"
 #include "ModifyZkzhDlg.h"
+#include "KeepAliveTimer.h"
 
 // CScanTool2Dlg 对话框
 class CScanTool3Dlg : public CDialogEx
@@ -69,6 +70,8 @@ private:
 	CModifyZkzhDlg*		m_pModifyZkzhDlg;
 	//--
 
+	TimerKeepAliveObj* _pTmKeepAliveObj;
+	Poco::Util::Timer _timerKeepAlive;	//定时器
 
 	CBitmap		m_bmpBkg;
 	CBitmap		m_bmpTitle;

@@ -181,9 +181,9 @@ public:
 	CPType		m_eCurCPType;		//当前校验点类型
 	int			m_ncomboCurrentSel; //当前校验点的所选项
 	int			m_nCurListCtrlSel;	//当前List列表所选的项
-	pRECTINFO	m_pCurRectInfo;		//当前点击时选择的识别点
+	pRECTINFO	m_pCurRectInfo;		//当前点击时选择的识别点，真坐标
 	std::vector<std::vector<cv::Point> > m_vecContours;
-	std::vector<RECTINFO>	m_vecTmp;	//有同步头时，保存选择的矩形用于显示
+	std::vector<RECTINFO>	m_vecTmp;	//有同步头时，保存选择的矩形用于显示，真坐标
 
 	int			m_nStartTH;			//添加OMR时的起始题号
 
@@ -235,9 +235,9 @@ private:
 	void UpdataCPList();
 	void UpdateCPListByType();		//根据校验点类型更改显示样式
 	CPType GetComboSelCpType();
-	bool RecogByHead(cv::Rect rtOri);			//通过同步头来识别点
-	bool RecogCharacterArea(cv::Rect rtOri);			//标题区识别操作
-	bool Recognise(cv::Rect rtOri);				//识别操作
+	bool RecogByHead(cv::Rect rtOri);			//通过同步头来识别点, 传入真坐标
+	bool RecogCharacterArea(cv::Rect rtOri);			//标题区识别操作，传入真坐标
+	bool Recognise(cv::Rect rtOri);				//识别操作，传入真坐标
 	inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc);						//识别灰度值
 	
 //	bool PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat);						//图片纠偏
@@ -254,8 +254,8 @@ private:
 	inline void GetThreshold(cv::Mat& matSrc, cv::Mat& matDst);			//二值化计算
 //	inline void ShowDetailRectInfo();
 //	inline int GetStandardVal(CPType eType);
-	inline int GetRectInfoByPoint(cv::Point pt, CPType eType, RECTINFO*& pRc);
-	bool ShowRectByPoint(cv::Point pt);
+	inline int GetRectInfoByPoint(cv::Point pt, CPType eType, RECTINFO*& pRc);	//传入真坐标
+	bool ShowRectByPoint(cv::Point pt);		//传入假坐标
 	void ShowRectByItem(int nItem);
 	void ShowRectByCPType(CPType eType);
 	void ShowTmpRect();
@@ -274,15 +274,22 @@ private:
 
 	//给定一个矩形，按给定方向旋转后的矩形
 	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+	//（从真坐标到假坐标）
 	cv::Rect GetRectByOrientation(cv::Rect& rtPic, cv::Rect rt, int nOrientation);
 	cv::Point GetPointByOrientation(cv::Rect& rtPic, cv::Point pt, int nOrientation);
+	//（从假坐标到真坐标）
+	cv::Rect GetRectToSave(cv::Rect& rtPic, cv::Rect rt, int nOrientation);
+	cv::Point GetPointToSave(cv::Rect& rtPic, cv::Point pt, int nOrientation);
 	void	RotateImg(cv::Mat& imgMat, int nDirection /*= 1*/);		//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
-	cv::Rect GetCurrRealRect(cv::Rect rt);		//获取实际矩形的位置，内部根据方向自动获取矩形新位置
-	cv::Point GetCurrRealPoint(cv::Point pt);	//获取实际点的位置，内部根据方向自动获取点新位置
+	//真坐标：实际保存的坐标，原始图像没有旋转的坐标，假坐标：经过旋转后的图像坐标
+	cv::Rect GetShowFakePosRect(cv::Rect rt);		//获取实际矩形（从真坐标到假坐标）的位置，内部根据方向自动获取矩形新位置
+	cv::Point GetShowFakePosPoint(cv::Point pt);	//获取实际点（从真坐标到假坐标）的位置，内部根据方向自动获取点新位置
+	cv::Rect GetSrcSaveRect(cv::Rect rt);		//获取原始矩形，（从假坐标到真坐标）
+	cv::Point GetSrcSavePoint(cv::Point pt);	//获取原始坐标，（从假坐标到真坐标）
 	void	LeftRotate();
 	void	RightRotate();
 
-	inline bool checkOverlap(CPType eType, cv::Rect rtSrc);		//区域重叠检测
+	inline bool checkOverlap(CPType eType, cv::Rect rtSrc);		//区域重叠检测，传入真坐标
 
 	bool checkValidity();						//保存模板前合法性检查
 	bool SaveModelFile(pMODEL pModel);			//保存模板到文件
