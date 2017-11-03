@@ -333,7 +333,7 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 							int nCount = m_lcBmk.GetItemCount();
 							if (!bInsertItem)
 							{
-								if (nCount > 2000) break;		//只显示前2000行数据
+								if (nCount >= 2000) break;		//只显示前2000行数据
 
 								char szCount[10] = { 0 };
 								sprintf_s(szCount, "%d", nCount + 1);
@@ -361,7 +361,7 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 									int nCount = m_lcBmk.GetItemCount();
 									if (!bInsertItem)
 									{
-										if (nCount > 2000) break;		//只显示前2000行数据
+										if (nCount >= 2000) break;		//只显示前2000行数据
 
 										char szCount[10] = { 0 };
 										sprintf_s(szCount, "%d", nCount + 1);
@@ -388,7 +388,7 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 									int nCount = m_lcBmk.GetItemCount();
 									if (!bInsertItem)
 									{
-										if (nCount > 2000) break;		//只显示前2000行数据
+										if (nCount >= 2000) break;		//只显示前2000行数据
 
 										char szCount[10] = { 0 };
 										sprintf_s(szCount, "%d", nCount + 1);
@@ -427,7 +427,7 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 							strScanStatus = "未扫";
 						}
 						int nCount = m_lcBmk.GetItemCount();
-						if (nCount > 2000) break;		//只显示前2000行数据
+						if (nCount >= 2000) break;		//只显示前2000行数据
 
 						char szCount[10] = { 0 };
 						sprintf_s(szCount, "%d", nCount + 1);
@@ -449,7 +449,7 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 							{
 								strScanStatus = "已扫";
 								int nCount = m_lcBmk.GetItemCount();
-								if (nCount > 2000) break;		//只显示前2000行数据
+								if (nCount >= 2000) break;		//只显示前2000行数据
 
 								char szCount[10] = { 0 };
 								sprintf_s(szCount, "%d", nCount + 1);
@@ -470,7 +470,7 @@ void CExamBmkRecordDlg::GetBmkSearchResult()
 							{
 								strScanStatus = "未扫";
 								int nCount = m_lcBmk.GetItemCount();
-								if (nCount > 2000) break;		//只显示前2000行数据
+								if (nCount >= 2000) break;		//只显示前2000行数据
 
 								char szCount[10] = { 0 };
 								sprintf_s(szCount, "%d", nCount + 1);
@@ -547,6 +547,243 @@ void CExamBmkRecordDlg::OnBnClickedBtnExambmkExportscan()
 	}
 	strData.append("\r\n");
 
+#if 1
+	USES_CONVERSION;
+	CString strCurSub = _T("");
+	CString strCurScanStatus = _T("");
+	m_comboSubject.GetLBText(m_comboSubject.GetCurSel(), strCurSub);
+	m_comboScanStatus.GetLBText(m_comboScanStatus.GetCurSel(), strCurScanStatus);
+	std::string strCurrSubject = T2A(strCurSub);
+	std::string strCurrScanStatus = T2A(strCurScanStatus);
+
+	int nCurrSubID = m_comboSubject.GetItemData(m_comboSubject.GetCurSel());
+	int nCurrScanStatus = m_comboScanStatus.GetItemData(m_comboScanStatus.GetCurSel());
+
+	EXAMBMK_MAP::iterator itFindExam = g_mapBmkMgr.find(_pCurrExam_->nExamID);
+	if (itFindExam != g_mapBmkMgr.end())
+	{
+		int nStudentCounts = 0; //考生数量
+		for (auto objExamStudent : itFindExam->second)
+		{
+			if (strCurrScanStatus == "全部")	//显示所有科目
+			{
+				for (auto tmpSubject : _pCurrExam_->lSubjects)	//考试的科目列表，考试的科目数 >= 考生的科目数
+				{
+				}
+			}
+			else  //显示单个科目
+			{
+			}
+
+
+
+
+
+
+			bool bInsertItem = false;	//是否已经插入列表了
+			for (auto examSubject : objExamStudent.lSubjectScanStatus)	//考生的科目列表
+			{
+				if (strCurrSubject == "全部")
+				{
+					int j = 0;	//当前考生科目在总科目中的索引
+					for (auto tmpSubject : _pCurrExam_->lSubjects)	//考试的科目列表，考试的科目数 >= 考生的科目数
+					{
+						if (examSubject.nSubjectID == tmpSubject->nSubjID)
+						{
+							if (strCurrScanStatus == "全部")
+							{
+								std::string strScanStatus;
+								if (examSubject.nScaned)
+									strScanStatus = "已扫";
+								else
+									strScanStatus = "未扫";
+								int nCount = m_lcBmk.GetItemCount();
+								if (!bInsertItem)
+								{
+									char szCount[10] = { 0 };
+									sprintf_s(szCount, "%d", nStudentCounts + 1);
+									bInsertItem = true;
+
+									strData.append(szCount);
+									strData.append("\t\t");
+									strData.append(objExamStudent.strZkzh);
+									strData.append("\t\t");
+									strData.append(objExamStudent.strName);
+									strData.append("\t\t");
+									strData.append(strScanStatus);
+									strData.append("\t\t");
+								}
+								else
+								{
+									//m_lcBmk.SetItemText(nCount - 1, 3 + j, (LPCTSTR)A2T(strScanStatus.c_str()));
+									
+									strData.append(strScanStatus);
+									strData.append("\t\t");
+								}
+								break;
+							}
+							else
+							{
+								if (nCurrScanStatus == 1)	//已扫
+								{
+									std::string strScanStatus;
+									if (examSubject.nScaned)
+									{
+										strScanStatus = "已扫";
+										int nCount = m_lcBmk.GetItemCount();
+										if (!bInsertItem)
+										{
+											//if (nCount >= 2000) break;		//只显示前2000行数据
+
+											char szCount[10] = { 0 };
+											sprintf_s(szCount, "%d", nCount + 1);
+											bInsertItem = true;
+
+											strData.append(szCount);
+											strData.append("\t\t");
+											strData.append(objExamStudent.strZkzh);
+											strData.append("\t\t");
+											strData.append(objExamStudent.strName);
+											strData.append("\t\t");
+											strData.append(strScanStatus);
+											strData.append("\t\t");
+										}
+										else
+										{
+											//m_lcBmk.SetItemText(nCount - 1, 3 + j, (LPCTSTR)A2T(strScanStatus.c_str()));
+
+											strData.append(strScanStatus);
+											strData.append("\t\t");
+										}
+
+										break;
+									}
+								}
+								else
+								{
+									std::string strScanStatus;
+									if (examSubject.nScaned == 0)
+									{
+										strScanStatus = "未扫";
+										int nCount = m_lcBmk.GetItemCount();
+										if (!bInsertItem)
+										{
+											if (nCount >= 2000) break;		//只显示前2000行数据
+
+											char szCount[10] = { 0 };
+											sprintf_s(szCount, "%d", nCount + 1);
+											bInsertItem = true;
+
+											strData.append(szCount);
+											strData.append("\t\t");
+											strData.append(objExamStudent.strZkzh);
+											strData.append("\t\t");
+											strData.append(objExamStudent.strName);
+											strData.append("\t\t");
+											strData.append(strScanStatus);
+											strData.append("\t\t");
+										}
+										else
+										{
+											//m_lcBmk.SetItemText(nCount - 1, 3 + j, (LPCTSTR)A2T(strScanStatus.c_str()));
+
+											strData.append(strScanStatus);
+											strData.append("\t\t");
+										}
+
+										break;
+									}
+								}
+							}
+						}
+						++j;
+					}
+				}
+				else
+				{
+					if (examSubject.nSubjectID == nCurrSubID)
+					{
+						if (strCurrScanStatus == "全部")
+						{
+							std::string strScanStatus;
+							if (examSubject.nScaned)
+							{
+								strScanStatus = "已扫";
+							}
+							else
+							{
+								strScanStatus = "未扫";
+							}
+ 							int nCount = m_lcBmk.GetItemCount();
+// 							if (nCount >= 2000) break;		//只显示前2000行数据
+
+							char szCount[10] = { 0 };
+							sprintf_s(szCount, "%d", nCount + 1);
+
+							strData.append(szCount);
+							strData.append("\t\t");
+							strData.append(objExamStudent.strZkzh);
+							strData.append("\t\t");
+							strData.append(objExamStudent.strName);
+							strData.append("\t\t");
+							strData.append(strScanStatus);
+							strData.append("\t\t");
+							break;
+						}
+						else
+						{
+							if (nCurrScanStatus == 1)	//已扫
+							{
+								std::string strScanStatus;
+								if (examSubject.nScaned)
+								{
+									strScanStatus = "已扫";
+									int nCount = m_lcBmk.GetItemCount();
+									if (nCount >= 2000) break;		//只显示前2000行数据
+
+									char szCount[10] = { 0 };
+									sprintf_s(szCount, "%d", nCount + 1);
+
+									strData.append(szCount);
+									strData.append("\t\t");
+									strData.append(objExamStudent.strZkzh);
+									strData.append("\t\t");
+									strData.append(objExamStudent.strName);
+									strData.append("\t\t");
+									strData.append(strScanStatus);
+									strData.append("\t\t");
+									break;
+								}
+							}
+							else  //未扫
+							{
+								std::string strScanStatus;
+								if (examSubject.nScaned == 0)
+								{
+									strScanStatus = "未扫";
+									int nCount = m_lcBmk.GetItemCount();
+
+									char szCount[10] = { 0 };
+									sprintf_s(szCount, "%d", nCount + 1);
+
+									strData.append(szCount);
+									strData.append("\t\t");
+									strData.append(objExamStudent.strZkzh);
+									strData.append("\t\t");
+									strData.append(objExamStudent.strName);
+									strData.append("\t\t");
+									strData.append(strScanStatus);
+									strData.append("\t\t");
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+#else
 	int nCount = m_lcBmk.GetItemCount();
 	for (int i = 0; i < nCount; i++)
 	{
@@ -559,6 +796,7 @@ void CExamBmkRecordDlg::OnBnClickedBtnExambmkExportscan()
 		}
 		strData.append("\r\n");
 	}
+#endif
 
 	TCHAR szFilter[] = { _T("TXT Files (*.txt)|*.txt|Excel Files (*.xls)|*.xls||") };
 	CString fileName;

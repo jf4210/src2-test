@@ -654,7 +654,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			pTask->nTeacherID = _mapSession_[strEzs].nTeacherID;
 
 			char szExamInfo[30] = { 0 };
-			sprintf(szExamInfo, "/%d/%d/%d", stGetBmkInfo.nExamID, stGetBmkInfo.nSubjectID, pTask->nTeacherID);
+			sprintf(szExamInfo, "/%d/%d", stGetBmkInfo.nExamID, stGetBmkInfo.nSubjectID);
 			pTask->strUri.append(szExamInfo);
 
 			pTask->pUser = pUser;

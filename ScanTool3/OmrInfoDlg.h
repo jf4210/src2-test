@@ -31,7 +31,7 @@ public:
 	CButton		m_radioDirectFX;
 	
 	int			m_nSingle;		//题型，0-单选，1-多选，2-判断
-	int			m_nCurrentOmrVal;	//根据题号、选项、方向组合构成的6位二进制的值，标识8中情况
+	int			m_nCurrentOmrVal;	//根据题号、选项、方向组合构成的6位二进制的值，标识8中情况		//显示的假坐标下的值
 	void		ShowUI(int nOmrVal, int nSingleFlag);
 private:
 	int			m_nTHSel;		//题号选择	0-横向，1-纵向

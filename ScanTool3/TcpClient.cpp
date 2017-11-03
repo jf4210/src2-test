@@ -700,7 +700,8 @@ void CTcpClient::HandleCmd()
 					}
 					else
 					{
-						g_mapBmkMgr.insert(EXAMBMK_MAP::value_type(nExamID, _AllStudent));	//************************
+						if(_AllStudent.size() > 0)
+							g_mapBmkMgr.insert(EXAMBMK_MAP::value_type(nExamID, _AllStudent));	//************************
 					}
 
 					USES_CONVERSION;
@@ -777,11 +778,14 @@ void CTcpClient::HandleCmd()
 						_bGetBmk_ = true;
 					else
 					{
-						std::string strErrInfo;
-						strErrInfo.append("获取报名库失败: 无当前科目信息");
-						g_pLogger->information(strErrInfo);
-						CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
-						pDlg->PostMessage(MSG_CMD_GET_BMK_OK, 1, 1);
+						if (nSubID != 0)	//从考试列表中查看扫描进度窗口进入的，不发送科目报名库获取信息	nSubID != 0
+						{
+							std::string strErrInfo;
+							strErrInfo.append("获取报名库失败: 无当前科目信息");
+							g_pLogger->information(strErrInfo);
+							CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+							pDlg->PostMessage(MSG_CMD_GET_BMK_OK, 1, 1);
+						}
 					}
 				}
 				catch (Poco::Exception& jsone)	//Poco::JSON::JSONException

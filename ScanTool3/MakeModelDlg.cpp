@@ -754,6 +754,7 @@ void CMakeModelDlg::InitConf()
 		}
 	}
 	m_comboCheckPointType.SetCurSel(0);
+	m_eCurCPType = UNKNOWN;
 }
 
 LRESULT CMakeModelDlg::RoiRBtnUp(WPARAM wParam, LPARAM lParam)
@@ -2654,7 +2655,7 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 				rc.nThresholdValue = m_nSN;
 				rc.fStandardValuePercent = m_fSNThresholdPercent_Head;
 
-				switch (m_pSNInfoDlg->m_nCurrentSNVal)
+				switch (GetSnSavePosFlag(m_pSNInfoDlg->m_nCurrentSNVal))
 				{
 				case 10:
 					rc.nTH = j;
@@ -2673,7 +2674,7 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 					rc.nSnVal = nPosH_E - nPosH_B - j;
 					break;
 				}
-				rc.nRecogFlag = m_pSNInfoDlg->m_nCurrentSNVal;
+				rc.nRecogFlag = GetSnSavePosFlag(m_pSNInfoDlg->m_nCurrentSNVal);
 
 				Rect rtTmp = arr[i][j];
 				Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
@@ -2686,7 +2687,7 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 				rc.nThresholdValue = m_nOMR;
 				rc.fStandardValuePercent = m_fOMRThresholdPercent_Head;
 
-				switch (m_pOmrInfoDlg->m_nCurrentOmrVal)
+				switch (GetOmrSavePosFlag(m_pOmrInfoDlg->m_nCurrentOmrVal))
 				{
 				case 42:
 					rc.nTH = j;
@@ -2727,7 +2728,7 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 					rc.nSingle = 1;
 				else
 					rc.nSingle = 2;
-				rc.nRecogFlag = m_pOmrInfoDlg->m_nCurrentOmrVal;
+				rc.nRecogFlag = GetOmrSavePosFlag(m_pOmrInfoDlg->m_nCurrentOmrVal);
 
 				Rect rtTmp = arr[i][j];
 				Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
@@ -3709,9 +3710,9 @@ bool CMakeModelDlg::ShowRectByPoint(cv::Point pt)
 
 	InitShowSnOmrDlg(m_pCurRectInfo->eCPType);
 	if (m_pCurRectInfo->eCPType == SN && m_pSNInfoDlg)
-		m_pSNInfoDlg->ShowUI(m_pCurRectInfo->nRecogFlag);
+		m_pSNInfoDlg->ShowUI(GetSnShowFakePosFlag(m_pCurRectInfo->nRecogFlag));
 	else if (m_pCurRectInfo->eCPType == OMR && m_pOmrInfoDlg)
-		m_pOmrInfoDlg->ShowUI(m_pCurRectInfo->nRecogFlag, m_pCurRectInfo->nSingle);
+		m_pOmrInfoDlg->ShowUI(GetOmrShowFakePosFlag(m_pCurRectInfo->nRecogFlag), m_pCurRectInfo->nSingle);
 	else if (m_pCurRectInfo->eCPType == ELECT_OMR && m_pElectOmrDlg)
 		m_pElectOmrDlg->showUI(m_pCurRectInfo->nTH);
 
@@ -4365,10 +4366,10 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 	if (m_pCurRectInfo->eCPType == SN && m_pSNInfoDlg)
 	{
 		m_pSNInfoDlg->InitType(m_pCurRectInfo->nZkzhType);
-		m_pSNInfoDlg->ShowUI(m_pCurRectInfo->nRecogFlag);
+		m_pSNInfoDlg->ShowUI(GetSnShowFakePosFlag(m_pCurRectInfo->nRecogFlag));
 	}
 	else if (m_pCurRectInfo->eCPType == OMR && m_pOmrInfoDlg)
-		m_pOmrInfoDlg->ShowUI(m_pCurRectInfo->nRecogFlag, m_pCurRectInfo->nSingle);
+		m_pOmrInfoDlg->ShowUI(GetOmrShowFakePosFlag(m_pCurRectInfo->nRecogFlag), m_pCurRectInfo->nSingle);
 	else if (m_pCurRectInfo->eCPType == ELECT_OMR && m_pElectOmrDlg)
 		m_pElectOmrDlg->showUI(m_pCurRectInfo->nTH);
 
@@ -4626,10 +4627,10 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 	if (m_pCurRectInfo->eCPType == SN && m_pSNInfoDlg)
 	{
 		m_pSNInfoDlg->InitType(m_pCurRectInfo->nZkzhType);
-		m_pSNInfoDlg->ShowUI(m_pCurRectInfo->nRecogFlag);
+		m_pSNInfoDlg->ShowUI(GetSnShowFakePosFlag(m_pCurRectInfo->nRecogFlag));
 	}
 	else if (m_pCurRectInfo->eCPType == OMR && m_pOmrInfoDlg)
-		m_pOmrInfoDlg->ShowUI(m_pCurRectInfo->nRecogFlag, m_pCurRectInfo->nSingle);
+		m_pOmrInfoDlg->ShowUI(GetOmrShowFakePosFlag(m_pCurRectInfo->nRecogFlag), m_pCurRectInfo->nSingle);
 	else if (m_pCurRectInfo->eCPType == ELECT_OMR && m_pElectOmrDlg)
 		m_pElectOmrDlg->showUI(m_pCurRectInfo->nTH);
 
@@ -6369,7 +6370,7 @@ LRESULT CMakeModelDlg::SNTrackerChange(WPARAM wParam, LPARAM lParam)
 	m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt.width = m_ptSNTracker2.x - m_ptSNTracker1.x;
 	m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt.height = m_ptSNTracker2.y - m_ptSNTracker1.y;
 	
-	m_pSNInfoDlg->ShowUI(m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.nRecogFlag);
+	m_pSNInfoDlg->ShowUI(GetSnShowFakePosFlag(m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.nRecogFlag));
 	return true;
 }
 
@@ -6514,7 +6515,7 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 
 		rc.nThresholdValue = m_nSN;
 		rc.fStandardValuePercent = m_fSNThresholdPercent_Fix;
-		rc.nRecogFlag = m_pSNInfoDlg->m_nCurrentSNVal;
+		rc.nRecogFlag = GetSnSavePosFlag(m_pSNInfoDlg->m_nCurrentSNVal);
 
 		switch (m_pSNInfoDlg->m_nCurrentSNVal)
 		{
@@ -6720,7 +6721,7 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 
 		rc.nThresholdValue = m_nOMR;
 		rc.fStandardValuePercent = m_fOMRThresholdPercent_Fix;
-		rc.nRecogFlag = m_pOmrInfoDlg->m_nCurrentOmrVal;
+		rc.nRecogFlag = GetOmrSavePosFlag(m_pOmrInfoDlg->m_nCurrentOmrVal);
 
 		switch (m_pOmrInfoDlg->m_nCurrentOmrVal)
 		{
@@ -8958,5 +8959,281 @@ cv::Point CMakeModelDlg::GetSrcSavePoint(cv::Point pt)
 	rtModelPic.width = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.cols;
 	rtModelPic.height = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.rows;
 	return GetPointToSave(rtModelPic, pt, m_vecPaperModelInfo[m_nCurrTabSel]->nDirection);
+}
+
+int CMakeModelDlg::GetSnShowFakePosFlag(int nRecogFlag)
+{
+	int nResult = nRecogFlag;
+	switch (nRecogFlag)
+	{
+		case 10:	//1010
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 10;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 5;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 6;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 9;
+			break;
+		case 9:	//1001
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 9;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 6;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 5;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 10;
+			break;
+		case 6:	//0110
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 6;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 10;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 9;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 5;
+			break;
+		case 5:	//0101
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 5;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 9;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 10;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 6;
+			break;
+	}
+	return nResult;
+}
+
+int CMakeModelDlg::GetSnSavePosFlag(int nRecogFlag)
+{
+	int nResult = nRecogFlag;
+	switch (nRecogFlag)
+	{
+		case 10:	//1010
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 10;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 6;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 5;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 9;
+			break;
+		case 9:	//1001
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 9;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 5;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 6;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 10;
+			break;
+		case 6:	//0110
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 6;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 9;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 10;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 5;
+			break;
+		case 5:	//0101
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 5;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 10;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 9;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 6;
+			break;
+	}
+	return nResult;
+}
+
+int CMakeModelDlg::GetOmrShowFakePosFlag(int nRecogFlag)
+{
+	int nResult = nRecogFlag;
+	switch (nRecogFlag)
+	{
+		case 42: //101010
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 42;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 22;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 25;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 37;
+			break;
+		case 41:	//101001
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 41;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 21;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 26;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 38;
+			break;
+		case 38:	//100110
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 38;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 22;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 26;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 41;
+			break;
+		case 37:	//100101
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 37;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 25;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 22;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 42;
+			break;
+		case 26:	//011010
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 26;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 41;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 38;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 21;
+			break;
+		case 25:	//011001
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 25;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 42;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 37;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 22;
+			break;
+		case 22:	//010110
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 22;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 37;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 42;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 25;
+			break;
+		case 21:	//010101
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 21;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 38;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 41;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 26;
+			break;
+	}
+	return nResult;
+}
+
+int CMakeModelDlg::GetOmrSavePosFlag(int nRecogFlag)
+{
+	int nResult = nRecogFlag;
+	switch (nRecogFlag)
+	{
+		case 42: //101010
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 42;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 25;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 22;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 37;
+			break;
+		case 41:	//101001
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 41;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 26;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 21;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 38;
+			break;
+		case 38:	//100110
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 38;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 26;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 22;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 41;
+			break;
+		case 37:	//100101
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 37;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 22;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 25;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 42;
+			break;
+		case 26:	//011010
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 26;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 38;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 41;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 21;
+			break;
+		case 25:	//011001
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 25;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 37;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 42;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 22;
+			break;
+		case 22:	//010110
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 22;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 42;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 37;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 25;
+			break;
+		case 21:	//010101
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 1)
+				nResult = 21;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 2)	//src已经右转90了
+				nResult = 41;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 3)	//src左转90了
+				nResult = 38;
+			else if (m_vecPaperModelInfo[m_nCurrTabSel]->nDirection == 4)
+				nResult = 26;
+			break;
+	}
+	return nResult;
 }
 

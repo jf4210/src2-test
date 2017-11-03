@@ -520,10 +520,10 @@ void COmrInfoDlg::OnStnClickedStaticThH()
 	if (m_nTHSel != 0)
 	{
 		m_nTHSel = 0;
+		m_radioTH_H.SetCheck(1);
+		m_radioTH_V.SetCheck(0);
 		ShowOmrPic();
 	}
-	m_radioTH_H.SetCheck(1);
-	m_radioTH_V.SetCheck(0);
 }
 
 void COmrInfoDlg::OnStnClickedStaticThV()
@@ -531,10 +531,10 @@ void COmrInfoDlg::OnStnClickedStaticThV()
 	if (m_nTHSel != 1)
 	{
 		m_nTHSel = 1;
+		m_radioTH_H.SetCheck(0);
+		m_radioTH_V.SetCheck(1);
 		ShowOmrPic();
 	}
-	m_radioTH_H.SetCheck(0);
-	m_radioTH_V.SetCheck(1);
 }
 
 
@@ -543,10 +543,10 @@ void COmrInfoDlg::OnStnClickedStaticXxH()
 	if (m_nXXSel != 0)
 	{
 		m_nXXSel = 0;
+		m_radioXX_H.SetCheck(1);
+		m_radioXX_V.SetCheck(0);
 		ShowOmrPic();
 	}
-	m_radioXX_H.SetCheck(1);
-	m_radioXX_V.SetCheck(0);
 }
 
 
@@ -555,10 +555,10 @@ void COmrInfoDlg::OnStnClickedStaticXxV()
 	if (m_nXXSel != 1)
 	{
 		m_nXXSel = 1;
+		m_radioXX_H.SetCheck(0);
+		m_radioXX_V.SetCheck(1);
 		ShowOmrPic();
 	}
-	m_radioXX_H.SetCheck(0);
-	m_radioXX_V.SetCheck(1);
 }
 
 
@@ -567,10 +567,10 @@ void COmrInfoDlg::OnStnClickedStaticDirectZx()
 	if (m_nDirectSel != 0)
 	{
 		m_nDirectSel = 0;
+		m_radioDirectZX.SetCheck(1);
+		m_radioDirectFX.SetCheck(0);
 		ShowOmrPic();
 	}
-	m_radioDirectZX.SetCheck(1);
-	m_radioDirectFX.SetCheck(0);
 }
 
 
@@ -579,10 +579,10 @@ void COmrInfoDlg::OnStnClickedStaticDirectFx()
 	if (m_nDirectSel != 1)
 	{
 		m_nDirectSel = 1;
+		m_radioDirectZX.SetCheck(0);
+		m_radioDirectFX.SetCheck(1);
 		ShowOmrPic();
 	}
-	m_radioDirectZX.SetCheck(0);
-	m_radioDirectFX.SetCheck(1);
 }
 
 

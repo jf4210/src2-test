@@ -731,6 +731,7 @@ void CScanTool3Dlg::SwitchDlg(int nDlg, int nChildID /*= 1*/)
 	{
 		m_pExamInfoMgrDlg->ShowWindow(SW_HIDE);
 		m_pScanMgrDlg->ShowWindow(SW_SHOW);
+		m_pScanMgrDlg->ResetSubjectUI();
 		m_pScanMgrDlg->InitExamData();
 		if (nChildID == 4)
 			m_pScanMgrDlg->SetReturnDlg(1);

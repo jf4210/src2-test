@@ -968,7 +968,18 @@ void CScanMgrDlg::InitScanner()
 void CScanMgrDlg::OnCbnSelchangeComboSubject()
 {
 	if (!chkChangeExamLegal())
+	{
+		for (int i = 0; i < m_comboSubject.GetCount(); i++)
+		{
+			pEXAM_SUBJECT pTmp = (pEXAM_SUBJECT)m_comboSubject.GetItemDataPtr(i);
+			if (pTmp == _pCurrSub_)
+			{
+				m_comboSubject.SetCurSel(i);
+				break;
+			}
+		}
 		return;
+	}
 
 	int nItem = m_comboSubject.GetCurSel();
 	_pCurrSub_ = (pEXAM_SUBJECT)m_comboSubject.GetItemDataPtr(nItem);

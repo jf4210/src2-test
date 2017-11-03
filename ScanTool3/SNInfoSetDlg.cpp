@@ -375,10 +375,12 @@ void CSNInfoSetDlg::OnStnClickedStaticSnH()
 	if (m_nSNSel != 0)
 	{
 		m_nSNSel = 0;
+		m_radioSN_H.SetCheck(1);
+		m_radioSN_V.SetCheck(0);
+		m_radioADD_Z.SetWindowTextW(_T("从上到下"));
+		m_radioADD_F.SetWindowTextW(_T("从下到上"));
 		ShowSNPic();
 	}
-	m_radioSN_H.SetCheck(1);
-	m_radioSN_V.SetCheck(0);
 }
 
 
@@ -387,10 +389,12 @@ void CSNInfoSetDlg::OnStnClickedStaticSnV()
 	if (m_nSNSel != 1)
 	{
 		m_nSNSel = 1;
+		m_radioSN_H.SetCheck(0);
+		m_radioSN_V.SetCheck(1);
+		m_radioADD_Z.SetWindowTextW(_T("从左到右"));
+		m_radioADD_F.SetWindowTextW(_T("从右到左"));
 		ShowSNPic();
 	}
-	m_radioSN_H.SetCheck(0);
-	m_radioSN_V.SetCheck(1);
 }
 
 
@@ -399,10 +403,10 @@ void CSNInfoSetDlg::OnStnClickedStaticOption1()
 	if (m_nOptionSel != 0)
 	{
 		m_nOptionSel = 0;
+		m_radioADD_Z.SetCheck(1);
+		m_radioADD_F.SetCheck(0);
 		ShowSNPic();
 	}
-	m_radioADD_Z.SetCheck(1);
-	m_radioADD_F.SetCheck(0);
 }
 
 
@@ -411,8 +415,8 @@ void CSNInfoSetDlg::OnStnClickedStaticOption2()
 	if (m_nOptionSel != 1)
 	{
 		m_nOptionSel = 1;
+		m_radioADD_Z.SetCheck(0);
+		m_radioADD_F.SetCheck(1);
 		ShowSNPic();
 	}
-	m_radioADD_Z.SetCheck(0);
-	m_radioADD_F.SetCheck(1);
 }

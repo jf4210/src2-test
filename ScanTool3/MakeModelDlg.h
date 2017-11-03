@@ -282,10 +282,16 @@ private:
 	cv::Point GetPointToSave(cv::Rect& rtPic, cv::Point pt, int nOrientation);
 	void	RotateImg(cv::Mat& imgMat, int nDirection /*= 1*/);		//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
 	//真坐标：实际保存的坐标，原始图像没有旋转的坐标，假坐标：经过旋转后的图像坐标
-	cv::Rect GetShowFakePosRect(cv::Rect rt);		//获取实际矩形（从真坐标到假坐标）的位置，内部根据方向自动获取矩形新位置
-	cv::Point GetShowFakePosPoint(cv::Point pt);	//获取实际点（从真坐标到假坐标）的位置，内部根据方向自动获取点新位置
-	cv::Rect GetSrcSaveRect(cv::Rect rt);		//获取原始矩形，（从假坐标到真坐标）
-	cv::Point GetSrcSavePoint(cv::Point pt);	//获取原始坐标，（从假坐标到真坐标）
+	cv::Rect GetShowFakePosRect(cv::Rect rt);		//获取显示的假矩形（从真坐标到假坐标）的位置，内部根据方向自动获取矩形新位置
+	cv::Point GetShowFakePosPoint(cv::Point pt);	//获取显示的假点（从真坐标到假坐标）的位置，内部根据方向自动获取点新位置
+	cv::Rect GetSrcSaveRect(cv::Rect rt);		//获取保存时原始矩形，（从假坐标到真坐标）
+	cv::Point GetSrcSavePoint(cv::Point pt);	//获取保存时原始坐标，（从假坐标到真坐标）
+	//获取考号显示方向标识
+	int GetSnShowFakePosFlag(int nRecogFlag);	//从真实图像方向获取显示的图像方向标识（从真坐标到假坐标）
+	int GetSnSavePosFlag(int nRecogFlag);		//从显示的图像标识获取到真实保存的图像标识（从假坐标到真坐标）
+	int GetOmrShowFakePosFlag(int nRecogFlag);	//从真实图像方向获取显示的图像方向标识（从真坐标到假坐标）
+	int GetOmrSavePosFlag(int nRecogFlag);		//从显示的图像标识获取到真实保存的图像标识（从假坐标到真坐标）
+
 	void	LeftRotate();
 	void	RightRotate();
 
