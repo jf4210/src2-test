@@ -548,7 +548,6 @@ void CExamBmkRecordDlg::OnBnClickedBtnExambmkExportscan()
 	strData.append("\r\n");
 
 #if 1
-	USES_CONVERSION;
 	CString strCurSub = _T("");
 	CString strCurScanStatus = _T("");
 	m_comboSubject.GetLBText(m_comboSubject.GetCurSel(), strCurSub);
@@ -559,228 +558,211 @@ void CExamBmkRecordDlg::OnBnClickedBtnExambmkExportscan()
 	int nCurrSubID = m_comboSubject.GetItemData(m_comboSubject.GetCurSel());
 	int nCurrScanStatus = m_comboScanStatus.GetItemData(m_comboScanStatus.GetCurSel());
 
-	EXAMBMK_MAP::iterator itFindExam = g_mapBmkMgr.find(_pCurrExam_->nExamID);
-	if (itFindExam != g_mapBmkMgr.end())
+	EXAMBMK_MAP::iterator itFindExam2 = g_mapBmkMgr.find(_pCurrExam_->nExamID);
+	if (itFindExam2 != g_mapBmkMgr.end())
 	{
 		int nStudentCounts = 0; //考生数量
-		for (auto objExamStudent : itFindExam->second)
+		for (auto objExamStudent : itFindExam2->second)
 		{
-			if (strCurrScanStatus == "全部")	//显示所有科目
+			if (strCurrSubject == "全部")	//显示所有科目
 			{
-				for (auto tmpSubject : _pCurrExam_->lSubjects)	//考试的科目列表，考试的科目数 >= 考生的科目数
+				if (strCurrScanStatus == "全部")
 				{
-				}
-			}
-			else  //显示单个科目
-			{
-			}
-
-
-
-
-
-
-			bool bInsertItem = false;	//是否已经插入列表了
-			for (auto examSubject : objExamStudent.lSubjectScanStatus)	//考生的科目列表
-			{
-				if (strCurrSubject == "全部")
-				{
-					int j = 0;	//当前考生科目在总科目中的索引
+					bool bInsertStudent = false;	//当前考生是否已经插入考生姓名、准考证等信息
 					for (auto tmpSubject : _pCurrExam_->lSubjects)	//考试的科目列表，考试的科目数 >= 考生的科目数
 					{
-						if (examSubject.nSubjectID == tmpSubject->nSubjID)
+						std::string strScanStatus;
+						bool bFindSub = false;	//是否在考生科目列表中找到当前科目，没有就添加空字段
+						for (auto examSubject : objExamStudent.lSubjectScanStatus)	//考生的科目列表
 						{
-							if (strCurrScanStatus == "全部")
+							if (examSubject.nSubjectID == tmpSubject->nSubjID)
 							{
-								std::string strScanStatus;
+								bFindSub = true;
 								if (examSubject.nScaned)
 									strScanStatus = "已扫";
 								else
 									strScanStatus = "未扫";
-								int nCount = m_lcBmk.GetItemCount();
-								if (!bInsertItem)
-								{
-									char szCount[10] = { 0 };
-									sprintf_s(szCount, "%d", nStudentCounts + 1);
-									bInsertItem = true;
-
-									strData.append(szCount);
-									strData.append("\t\t");
-									strData.append(objExamStudent.strZkzh);
-									strData.append("\t\t");
-									strData.append(objExamStudent.strName);
-									strData.append("\t\t");
-									strData.append(strScanStatus);
-									strData.append("\t\t");
-								}
-								else
-								{
-									//m_lcBmk.SetItemText(nCount - 1, 3 + j, (LPCTSTR)A2T(strScanStatus.c_str()));
-									
-									strData.append(strScanStatus);
-									strData.append("\t\t");
-								}
 								break;
 							}
-							else
+						}
+
+						if (!bInsertStudent)
+						{
+							bInsertStudent = true;
+// 							char szCount[10] = { 0 };
+// 							sprintf_s(szCount, "%d", nStudentCounts + 1);
+// 
+// 							strData.append(szCount);
+// 							strData.append("\t\t");
+							strData.append(objExamStudent.strZkzh);
+							strData.append("\t\t");
+							strData.append(objExamStudent.strName);
+							strData.append("\t\t");
+						}
+						strData.append(strScanStatus);
+						strData.append("\t\t");
+					}
+					strData.append("\r\n");
+				}
+				else //显示已扫或者未扫考生
+				{
+					bool bInsertStudent = false;	//当前考生是否已经插入考生姓名、准考证等信息
+					for (auto tmpSubject : _pCurrExam_->lSubjects)	//考试的科目列表，考试的科目数 >= 考生的科目数
+					{
+						std::string strScanStatus;
+						bool bFindSub = false;	//是否在考生科目列表中找到当前科目，没有就添加空字段
+						for (auto examSubject : objExamStudent.lSubjectScanStatus)	//考生的科目列表
+						{
+							if (examSubject.nSubjectID == tmpSubject->nSubjID)
 							{
+								bFindSub = true;
 								if (nCurrScanStatus == 1)	//已扫
 								{
-									std::string strScanStatus;
 									if (examSubject.nScaned)
 									{
 										strScanStatus = "已扫";
-										int nCount = m_lcBmk.GetItemCount();
-										if (!bInsertItem)
+
+										if (!bInsertStudent)
 										{
-											//if (nCount >= 2000) break;		//只显示前2000行数据
-
-											char szCount[10] = { 0 };
-											sprintf_s(szCount, "%d", nCount + 1);
-											bInsertItem = true;
-
-											strData.append(szCount);
-											strData.append("\t\t");
+											bInsertStudent = true;
+// 											char szCount[10] = { 0 };
+// 											sprintf_s(szCount, "%d", nStudentCounts + 1);
+// 
+// 											strData.append(szCount);
+// 											strData.append("\t\t");
 											strData.append(objExamStudent.strZkzh);
 											strData.append("\t\t");
 											strData.append(objExamStudent.strName);
 											strData.append("\t\t");
-											strData.append(strScanStatus);
-											strData.append("\t\t");
 										}
-										else
-										{
-											//m_lcBmk.SetItemText(nCount - 1, 3 + j, (LPCTSTR)A2T(strScanStatus.c_str()));
-
-											strData.append(strScanStatus);
-											strData.append("\t\t");
-										}
-
-										break;
+										strData.append(strScanStatus);
+										strData.append("\t\t");
 									}
 								}
-								else
+								else //未扫
 								{
-									std::string strScanStatus;
-									if (examSubject.nScaned == 0)
+									if (!examSubject.nScaned)
 									{
 										strScanStatus = "未扫";
-										int nCount = m_lcBmk.GetItemCount();
-										if (!bInsertItem)
+
+										if (!bInsertStudent)
 										{
-											if (nCount >= 2000) break;		//只显示前2000行数据
-
-											char szCount[10] = { 0 };
-											sprintf_s(szCount, "%d", nCount + 1);
-											bInsertItem = true;
-
-											strData.append(szCount);
-											strData.append("\t\t");
+											bInsertStudent = true;
+// 											char szCount[10] = { 0 };
+// 											sprintf_s(szCount, "%d", nStudentCounts + 1);
+// 
+// 											strData.append(szCount);
+// 											strData.append("\t\t");
 											strData.append(objExamStudent.strZkzh);
 											strData.append("\t\t");
 											strData.append(objExamStudent.strName);
 											strData.append("\t\t");
-											strData.append(strScanStatus);
-											strData.append("\t\t");
 										}
-										else
-										{
-											//m_lcBmk.SetItemText(nCount - 1, 3 + j, (LPCTSTR)A2T(strScanStatus.c_str()));
-
-											strData.append(strScanStatus);
-											strData.append("\t\t");
-										}
-
-										break;
+										strData.append(strScanStatus);
+										strData.append("\t\t");
 									}
 								}
+								break;
 							}
 						}
-						++j;
 					}
+					strData.append("\r\n");
 				}
-				else
+			}
+			else  //显示单个科目
+			{
+				if (strCurrScanStatus == "全部")
 				{
-					if (examSubject.nSubjectID == nCurrSubID)
+					std::string strScanStatus;
+					bool bFindSub = false;	//是否在考生科目列表中找到当前科目，没有就添加空字段
+					for (auto examSubject : objExamStudent.lSubjectScanStatus)	//考生的科目列表
 					{
-						if (strCurrScanStatus == "全部")
+						std::string strScanStatus;
+						if (examSubject.nSubjectID == nCurrSubID)
 						{
-							std::string strScanStatus;
 							if (examSubject.nScaned)
-							{
 								strScanStatus = "已扫";
-							}
 							else
-							{
 								strScanStatus = "未扫";
-							}
- 							int nCount = m_lcBmk.GetItemCount();
-// 							if (nCount >= 2000) break;		//只显示前2000行数据
 
-							char szCount[10] = { 0 };
-							sprintf_s(szCount, "%d", nCount + 1);
-
-							strData.append(szCount);
-							strData.append("\t\t");
+// 							char szCount[10] = { 0 };
+// 							sprintf_s(szCount, "%d", nStudentCounts + 1);
+// 
+// 							strData.append(szCount);
+// 							strData.append("\t\t");
 							strData.append(objExamStudent.strZkzh);
 							strData.append("\t\t");
 							strData.append(objExamStudent.strName);
 							strData.append("\t\t");
 							strData.append(strScanStatus);
 							strData.append("\t\t");
+
 							break;
 						}
-						else
+					}
+					strData.append("\r\n");
+				}
+				else //显示已扫或者未扫考生
+				{
+					bool bInsertStudent = false;	//当前考生是否已经插入考生姓名、准考证等信息
+
+					std::string strScanStatus;
+					bool bFindSub = false;	//是否在考生科目列表中找到当前科目，没有就添加空字段
+					for (auto examSubject : objExamStudent.lSubjectScanStatus)	//考生的科目列表
+					{
+						if (examSubject.nSubjectID == nCurrSubID)
 						{
+							bFindSub = true;
 							if (nCurrScanStatus == 1)	//已扫
 							{
-								std::string strScanStatus;
 								if (examSubject.nScaned)
 								{
 									strScanStatus = "已扫";
-									int nCount = m_lcBmk.GetItemCount();
-									if (nCount >= 2000) break;		//只显示前2000行数据
 
-									char szCount[10] = { 0 };
-									sprintf_s(szCount, "%d", nCount + 1);
-
-									strData.append(szCount);
-									strData.append("\t\t");
+// 									char szCount[10] = { 0 };
+// 									sprintf_s(szCount, "%d", nStudentCounts + 1);
+// 
+// 									strData.append(szCount);
+// 									strData.append("\t\t");
 									strData.append(objExamStudent.strZkzh);
 									strData.append("\t\t");
 									strData.append(objExamStudent.strName);
 									strData.append("\t\t");
+
 									strData.append(strScanStatus);
 									strData.append("\t\t");
-									break;
 								}
 							}
-							else  //未扫
+							else //未扫
 							{
-								std::string strScanStatus;
-								if (examSubject.nScaned == 0)
+								if (!examSubject.nScaned)
 								{
 									strScanStatus = "未扫";
-									int nCount = m_lcBmk.GetItemCount();
 
-									char szCount[10] = { 0 };
-									sprintf_s(szCount, "%d", nCount + 1);
-
-									strData.append(szCount);
-									strData.append("\t\t");
+									bInsertStudent = true;
+// 									char szCount[10] = { 0 };
+// 									sprintf_s(szCount, "%d", nStudentCounts + 1);
+// 
+// 									strData.append(szCount);
+// 									strData.append("\t\t");
 									strData.append(objExamStudent.strZkzh);
 									strData.append("\t\t");
 									strData.append(objExamStudent.strName);
 									strData.append("\t\t");
+
 									strData.append(strScanStatus);
 									strData.append("\t\t");
-									break;
 								}
 							}
+							break;
 						}
 					}
+
+					strData.append("\r\n");
 				}
 			}
+
+			nStudentCounts++;
 		}
 	}
 #else
