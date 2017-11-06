@@ -236,7 +236,8 @@ private:
 	void UpdateCPListByType();		//根据校验点类型更改显示样式
 	CPType GetComboSelCpType();
 	bool RecogByHead(cv::Rect rtOri);			//通过同步头来识别点, 传入真坐标
-	bool RecogCharacterArea(cv::Rect rtOri);			//标题区识别操作，传入真坐标
+	bool RecogCharacterArea(cv::Rect rtOri);	//标题区识别操作，传入真坐标
+	bool RecogWhiteAreaGray(cv::Rect rtOri);	//识别空白区灰度，传入真坐标
 	bool Recognise(cv::Rect rtOri);				//识别操作，传入真坐标
 	inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc);						//识别灰度值
 	

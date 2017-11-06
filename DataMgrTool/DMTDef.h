@@ -203,6 +203,8 @@ typedef struct _PicInfo_				//图片信息
 	bool			bRecoged;		//是否已经识别过
 	bool			bFindIssue;		//是否找到问题点
 	int				nRecogRotation;	//识别过程中判断需要调整的方向，1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
+	float			fWhiteAreaGray;	//空白区域的灰度值
+	float			fWhiteAreaGrayModel;
 	void*			pPaper;			//所属试卷的信息
 	cv::Rect		rtFix;			//定点矩形
 	std::string		strPicName;		//图片名称
@@ -222,6 +224,8 @@ typedef struct _PicInfo_				//图片信息
 		bRecoged = false;
 		bFindIssue = false;
 		pPaper = NULL;
+		fWhiteAreaGray = 0.0;
+		fWhiteAreaGrayModel = 0.0;
 		//		ptFix = cv::Point(0, 0);
 		//		ptModelFix = cv::Point(0, 0);
 		//		bImgOpen = false;

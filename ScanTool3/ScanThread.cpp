@@ -2187,6 +2187,17 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 			}
 			else
 			{
+				if (NULL == m_pCurrPaper)
+				{
+					char szLog[300] = { 0 };
+					sprintf_s(szLog, "É¨Ãè´íÎó. detail: ¿¼ÉúÄÚ´æÐÅÏ¢²»´æÔÚ£¬É¨ÃèÊ§°Ü, nOrder = %d\n", nOrder);
+					g_pLogger->information(szLog);
+					TRACE(szLog);
+
+					SAFE_RELEASE(pPic);
+
+					return NULL;;
+				}
 				m_pCurrPaper->lPic.push_back(pPic);
 			}
 			pPic->pPaper = m_pCurrPaper;

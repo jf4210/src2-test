@@ -747,9 +747,9 @@ void CMakeModelDlg::InitConf()
 				m_comboCheckPointType.AddString(_T("考号设置"));
 				m_comboCheckPointType.AddString(_T("选择/判断题"));
 				m_comboCheckPointType.AddString(_T("选做题"));
-// 			#ifdef USE_TESSERACT
-// 				m_comboCheckPointType.AddString(_T("文字定位区"));
-// 			#endif
+			#ifdef TEST_GRAY_WHITE
+				m_comboCheckPointType.AddString(_T("空白校验区"));
+			#endif
 			}
 		}
 	}
@@ -887,6 +887,17 @@ LRESULT CMakeModelDlg::RoiLBtnUp(WPARAM wParam, LPARAM lParam)
 			RecogCharacterArea(Rt);
 			SortRect();
 			UpdataCPList();
+		}
+		else if (m_eCurCPType == WHITE_GRAY_AREA)
+		{
+			if (checkOverlap(m_eCurCPType, Rt))
+			{
+				CNewMessageBox dlg;
+				dlg.setShowInfo(2, 1, "检测到包含已选区域");
+				dlg.DoModal();
+				return FALSE;
+			}
+			RecogWhiteAreaGray(Rt);
 		}
 		else
 		{
@@ -2291,6 +2302,28 @@ bool CMakeModelDlg::RecogCharacterArea(cv::Rect rtOri)
 	m_pModelPicShow->ShowPic(imgSrc);
 #endif
 	return bResult;
+}
+
+bool CMakeModelDlg::RecogWhiteAreaGray(cv::Rect rtOri)
+{
+	//假坐标
+	cv::Rect rtShowRect = GetShowFakePosRect(rtOri);
+
+	RECTINFO rc;
+	rc.rt = rtOri;
+	rc.eCPType = m_eCurCPType;
+	rc.nGaussKernel = m_nGaussKernel;
+	rc.nSharpKernel = m_nSharpKernel;
+	rc.nCannyKernel = m_nCannyKernel;
+	rc.nDilateKernel = m_nDilateKernel;
+
+	rc.nThresholdValue = 220;
+
+	Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtShowRect);
+	RecogGrayValue(matSrcModel, rc);
+
+	m_vecPaperModelInfo[m_nCurrTabSel]->vecWhite.push_back(rc);
+	return true;
 }
 
 void CMakeModelDlg::horizontalProjectionMat(cv::Mat srcImg, VEC_PROJECT& vecResult)
@@ -4957,6 +4990,8 @@ CPType CMakeModelDlg::GetComboSelCpType()
 		eType = ELECT_OMR;
 	else if (strCheckPoint == "文字定位区")
 		eType = CHARACTER_AREA;
+	else if (strCheckPoint == "空白校验区")
+		eType = WHITE_GRAY_AREA;
 	return eType;
 }
 
@@ -6563,7 +6598,18 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 			std::vector<RECTINFO>::iterator itTmpRC2 = itTmpRC1 + 1;
 			for (; itTmpRC2 != m_vecTmp.end(); itTmpRC2++)
 			{
-				if (itTmpRC1->rt.contains(itTmpRC2->rt.tl()) || itTmpRC1->rt.contains(itTmpRC2->rt.br()) || itTmpRC2->rt.contains(itTmpRC1->rt.tl()) || itTmpRC2->rt.contains(itTmpRC1->rt.br()))
+				cv::Point pt1 = itTmpRC2->rt.tl();
+				cv::Point pt2 = itTmpRC2->rt.br();
+				cv::Point pt3 = cv::Point(itTmpRC2->rt.x + itTmpRC2->rt.width, itTmpRC2->rt.y);
+				cv::Point pt4 = cv::Point(itTmpRC2->rt.x, itTmpRC2->rt.y + itTmpRC2->rt.height);
+
+				cv::Point pt5 = itTmpRC1->rt.tl();
+				cv::Point pt6 = itTmpRC1->rt.br();
+				cv::Point pt7 = cv::Point(itTmpRC1->rt.x + itTmpRC1->rt.width, itTmpRC1->rt.y);
+				cv::Point pt8 = cv::Point(itTmpRC1->rt.x, itTmpRC1->rt.y + itTmpRC1->rt.height);
+				//if (itTmpRC1->rt.contains(itTmpRC2->rt.tl()) || itTmpRC1->rt.contains(itTmpRC2->rt.br()) || itTmpRC2->rt.contains(itTmpRC1->rt.tl()) || itTmpRC2->rt.contains(itTmpRC1->rt.br()))
+				if (itTmpRC1->rt.contains(pt1) || itTmpRC1->rt.contains(pt2) || itTmpRC1->rt.contains(pt3) || itTmpRC1->rt.contains(pt4) \
+					|| itTmpRC2->rt.contains(pt5) || itTmpRC2->rt.contains(pt6) || itTmpRC2->rt.contains(pt7) || itTmpRC2->rt.contains(pt8))
 				{
 					bOverlap = true;
 					break;
@@ -6814,7 +6860,18 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 			std::vector<RECTINFO>::iterator itTmpRC2 = itTmpRC1 + 1;
 			for (; itTmpRC2 != m_vecTmp.end(); itTmpRC2++)
 			{
-				if (itTmpRC1->rt.contains(itTmpRC2->rt.tl()) || itTmpRC1->rt.contains(itTmpRC2->rt.br()) || itTmpRC2->rt.contains(itTmpRC1->rt.tl()) || itTmpRC2->rt.contains(itTmpRC1->rt.br()))
+				cv::Point pt1 = itTmpRC2->rt.tl();
+				cv::Point pt2 = itTmpRC2->rt.br();
+				cv::Point pt3 = cv::Point(itTmpRC2->rt.x + itTmpRC2->rt.width, itTmpRC2->rt.y);
+				cv::Point pt4 = cv::Point(itTmpRC2->rt.x, itTmpRC2->rt.y + itTmpRC2->rt.height);
+
+				cv::Point pt5 = itTmpRC1->rt.tl();
+				cv::Point pt6 = itTmpRC1->rt.br();
+				cv::Point pt7 = cv::Point(itTmpRC1->rt.x + itTmpRC1->rt.width, itTmpRC1->rt.y);
+				cv::Point pt8 = cv::Point(itTmpRC1->rt.x, itTmpRC1->rt.y + itTmpRC1->rt.height);
+				//if (itTmpRC1->rt.contains(itTmpRC2->rt.tl()) || itTmpRC1->rt.contains(itTmpRC2->rt.br()) || itTmpRC2->rt.contains(itTmpRC1->rt.tl()) || itTmpRC2->rt.contains(itTmpRC1->rt.br()))
+				if (itTmpRC1->rt.contains(pt1) || itTmpRC1->rt.contains(pt2) || itTmpRC1->rt.contains(pt3) || itTmpRC1->rt.contains(pt4) \
+					|| itTmpRC2->rt.contains(pt5) || itTmpRC2->rt.contains(pt6) || itTmpRC2->rt.contains(pt7) || itTmpRC2->rt.contains(pt8))				
 				{
 					bOverlap = true;
 					break;

@@ -1521,76 +1521,110 @@ bool COmrRecog::RecogWordOrientationByRectCount(cv::Mat& matSrc, int n, int nRot
 			rtModelPic.height = _pModel_->vecPaperModel[n]->nPicH;
 			cv::Rect rtReal = GetRectByOrientation(rtModelPic, _pModel_->vecPaperModel[n]->rcSNTracker.rt, nRotation);
 
-			cv::Mat matRealSnArea = matSrc(rtReal);
-			RECTINFO rcModelSnTracker = _pModel_->vecPaperModel[n]->rcSNTracker;
-			rcModelSnTracker.nDilateKernel = itSN->nDilateKernel;
-			int nMinW = itSN->rt.width * 0.7;
-			int nMaxW = itSN->rt.width * 1.3;
-			int nMinH = itSN->rt.height * 0.7;
-			int nMaxH = itSN->rt.height * 1.3;
-			if (nRotation == 2 || nRotation == 3)
+			try
 			{
-				nMinW = itSN->rt.height * 0.7;
-				nMaxW = itSN->rt.height * 1.3;
-				nMinH = itSN->rt.width * 0.7;
-				nMaxH = itSN->rt.width * 1.3;
-			}
-			int nRealSzRects = GetRectsInArea(matRealSnArea, rcModelSnTracker, nMinW, nMaxW, nMinH, nMaxH, CV_RETR_LIST) / 2;	//查找内外轮廓矩形，实际数量要除2
-			int nModelSzRects = _pModel_->vecPaperModel[n]->lSNInfo.size() * (*itSNGroup)->lSN.size();
-			if (nRealSzRects > nModelSzRects * 0.7)
-			{
-				bFind = true;
-				nResult = nRotation;
-			}
+				if (rtReal.x < 0) rtReal.x = 0;
+				if (rtReal.y < 0) rtReal.y = 0;
+				if (rtReal.br().x > matSrc.cols)
+					rtReal.width = matSrc.cols - rtReal.x;
+				if (rtReal.br().y > matSrc.rows)
+					rtReal.height = matSrc.rows - rtReal.y;
 
-			std::string strTmpLog = Poco::format("总zkzh矩形数=%d, 实际识别zkzh矩形数=%d\n", nModelSzRects, nRealSzRects);
-			strLog.append(strTmpLog);
+				cv::Mat matRealSnArea = matSrc(rtReal);
+				RECTINFO rcModelSnTracker = _pModel_->vecPaperModel[n]->rcSNTracker;
+				rcModelSnTracker.nDilateKernel = itSN->nDilateKernel;
+				int nMinW = itSN->rt.width * 0.7;
+				int nMaxW = itSN->rt.width * 1.3;
+				int nMinH = itSN->rt.height * 0.7;
+				int nMaxH = itSN->rt.height * 1.3;
+				if (nRotation == 2 || nRotation == 3)
+				{
+					nMinW = itSN->rt.height * 0.7;
+					nMaxW = itSN->rt.height * 1.3;
+					nMinH = itSN->rt.width * 0.7;
+					nMaxH = itSN->rt.width * 1.3;
+				}
+				int nRealSzRects = GetRectsInArea(matRealSnArea, rcModelSnTracker, nMinW, nMaxW, nMinH, nMaxH, CV_RETR_LIST) / 2;	//查找内外轮廓矩形，实际数量要除2
+				int nModelSzRects = _pModel_->vecPaperModel[n]->lSNInfo.size() * (*itSNGroup)->lSN.size();
+				if (nRealSzRects > nModelSzRects * 0.7)
+				{
+					bFind = true;
+					nResult = nRotation;
+				}
+
+				std::string strTmpLog = Poco::format("总zkzh矩形数=%d, 实际识别zkzh矩形数=%d\n", nModelSzRects, nRealSzRects);
+				strLog.append(strTmpLog);
+			}
+			catch (cv::Exception& exc)
+			{
+				char szLog[300] = { 0 };
+				sprintf_s(szLog, "RecogWordOrientationByRectCount error1. detail: %s\n", exc.msg);
+//				g_pLogger->information(szLog);
+				TRACE(szLog);
+			}
 		}
 	}
 
 	if (!bFind)
 	{
-		int nModelAnchorAreaRects = 0;
-		int nRealAnchorAreaRects = 0;
-		for (auto itCharactArea : _pModel_->vecPaperModel[n]->lCharacterAnchorArea)
+		try
 		{
-			cv::Rect rtModelPic;
-			rtModelPic.width = _pModel_->vecPaperModel[n]->nPicW;
-			rtModelPic.height = _pModel_->vecPaperModel[n]->nPicH;
-			cv::Rect rtReal = GetRectByOrientation(rtModelPic, itCharactArea->rt, nRotation);
-
-			cv::Mat SrcCharactArea = matSrc(rtReal);
-
-			RECTINFO rcCharactArea = itCharactArea->vecCharacterRt[0]->rc;
-			int nMinW = itCharactArea->vecCharacterRt[0]->rc.rt.width * 0.7;
-			int nMaxW = itCharactArea->vecCharacterRt[0]->rc.rt.width * 1.3;
-			int nMinH = itCharactArea->vecCharacterRt[0]->rc.rt.height * 0.7;
-			int nMaxH = itCharactArea->vecCharacterRt[0]->rc.rt.height * 1.3;
-			if (nRotation == 2 || nRotation == 3)
+			int nModelAnchorAreaRects = 0;
+			int nRealAnchorAreaRects = 0;
+			for (auto itCharactArea : _pModel_->vecPaperModel[n]->lCharacterAnchorArea)
 			{
-				nMinW = itCharactArea->vecCharacterRt[0]->rc.rt.height * 0.7;
-				nMaxW = itCharactArea->vecCharacterRt[0]->rc.rt.height * 1.3;
-				nMinH = itCharactArea->vecCharacterRt[0]->rc.rt.width * 0.7;
-				nMaxH = itCharactArea->vecCharacterRt[0]->rc.rt.width * 1.3;
-			}
-			nRealAnchorAreaRects += GetRectsInArea(SrcCharactArea, rcCharactArea, nMinW, nMaxW, nMinH, nMaxH);
+				cv::Rect rtModelPic;
+				rtModelPic.width = _pModel_->vecPaperModel[n]->nPicW;
+				rtModelPic.height = _pModel_->vecPaperModel[n]->nPicH;
+				cv::Rect rtReal = GetRectByOrientation(rtModelPic, itCharactArea->rt, nRotation);
 
-			nModelAnchorAreaRects = itCharactArea->nRects;
+				if (rtReal.x < 0) rtReal.x = 0;
+				if (rtReal.y < 0) rtReal.y = 0;
+				if (rtReal.br().x > matSrc.cols)
+					rtReal.width = matSrc.cols - rtReal.x;
+				if (rtReal.br().y > matSrc.rows)
+					rtReal.height = matSrc.rows - rtReal.y;
+
+				cv::Mat SrcCharactArea = matSrc(rtReal);
+
+				RECTINFO rcCharactArea = itCharactArea->vecCharacterRt[0]->rc;
+				int nMinW = itCharactArea->vecCharacterRt[0]->rc.rt.width * 0.7;
+				int nMaxW = itCharactArea->vecCharacterRt[0]->rc.rt.width * 1.3;
+				int nMinH = itCharactArea->vecCharacterRt[0]->rc.rt.height * 0.7;
+				int nMaxH = itCharactArea->vecCharacterRt[0]->rc.rt.height * 1.3;
+				if (nRotation == 2 || nRotation == 3)
+				{
+					nMinW = itCharactArea->vecCharacterRt[0]->rc.rt.height * 0.7;
+					nMaxW = itCharactArea->vecCharacterRt[0]->rc.rt.height * 1.3;
+					nMinH = itCharactArea->vecCharacterRt[0]->rc.rt.width * 0.7;
+					nMaxH = itCharactArea->vecCharacterRt[0]->rc.rt.width * 1.3;
+				}
+				nRealAnchorAreaRects += GetRectsInArea(SrcCharactArea, rcCharactArea, nMinW, nMaxW, nMinH, nMaxH);
+
+				nModelAnchorAreaRects = itCharactArea->nRects;
+			}
+			if (nModelAnchorAreaRects > 0 && _pModel_->vecPaperModel[n]->lCharacterAnchorArea.size() > 0)
+			{
+				int nMinCount = 0;
+				if (nModelAnchorAreaRects < 3)
+					nMinCount = 2;
+				else
+					nMinCount = nModelAnchorAreaRects * 0.8;
+				if (nRealAnchorAreaRects > nMinCount)
+				{
+					bFind = true;
+					nResult = nRotation;
+				}
+				std::string strTmpLog = Poco::format("总文字定点矩形数=%d, 实际识别文字定点矩形数=%d\n", nModelAnchorAreaRects, nRealAnchorAreaRects);
+				strLog.append(strTmpLog);
+			}
 		}
-		if (nModelAnchorAreaRects > 0 && _pModel_->vecPaperModel[n]->lCharacterAnchorArea.size() > 0)
+		catch (cv::Exception& exc)
 		{
-			int nMinCount = 0;
-			if (nModelAnchorAreaRects < 3)
-				nMinCount = 2;
-			else
-				nMinCount = nModelAnchorAreaRects * 0.8;
-			if (nRealAnchorAreaRects > nMinCount)
-			{
-				bFind = true;
-				nResult = nRotation;
-			}
-			std::string strTmpLog = Poco::format("总文字定点矩形数=%d, 实际识别文字定点矩形数=%d\n", nModelAnchorAreaRects, nRealAnchorAreaRects);
-			strLog.append(strTmpLog);
+			char szLog[300] = { 0 };
+			sprintf_s(szLog, "RecogWordOrientationByRectCount error2. detail: %s\n", exc.msg);
+//			g_pLogger->information(szLog);
+			TRACE(szLog);
 		}
 	}
 	end = clock();

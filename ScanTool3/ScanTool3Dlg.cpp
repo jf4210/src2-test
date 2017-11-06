@@ -632,7 +632,7 @@ LRESULT CScanTool3Dlg::MsgCmdGetBmk(WPARAM wParam, LPARAM lParam)
 		{
 			_bGetBmk_ = false;
 			CNewMessageBox	dlg;
-			dlg.setShowInfo(1, 2, "获取考生报名库失败, 是否继续？");
+			dlg.setShowInfo(1, 2, "暂无考生报名信息, 是否继续？");
 			dlg.DoModal();
 			if (dlg.m_nResult != IDYES)
 			{
@@ -659,7 +659,7 @@ LRESULT CScanTool3Dlg::MsgCmdGetBmk(WPARAM wParam, LPARAM lParam)
 		if (bWarn)	// && (MessageBox(_T("获取考生报名库失败, 是否继续?"), _T("提示"), MB_YESNO) != IDYES)
 		{
 			CNewMessageBox	dlg;
-			dlg.setShowInfo(1, 2, "获取考生报名库失败, 是否继续？");
+			dlg.setShowInfo(1, 2, "暂无考生报名信息, 是否继续？");
 			dlg.DoModal();
 			if (dlg.m_nResult != IDYES)
 			{

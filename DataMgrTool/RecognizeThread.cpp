@@ -305,7 +305,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 				strItemLog.append(szTmp);
 			}
 			strItemLog.append("\n");
-		#if 1
+
 			RECTLIST::iterator itRect2 = itOmr->lSelAnswer.begin();
 			for (; itRect2 != itOmr->lSelAnswer.end(); itRect2++)
 			{
@@ -332,17 +332,10 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 						  itRect4->fRealStddev - itRect4->fStandardStddev, itRect4->fRealStddev, itRect4->fStandardStddev);
 				strItemLog.append(szTmp);
 			}
-		#else
-			RECTLIST::iterator itRect2 = itOmr->lSelAnswer.begin();
-			for (; itRect2 != itOmr->lSelAnswer.end(); itRect2++)
-			{
-				char szTmp[200] = { 0 };
-				sprintf_s(szTmp, "%c,密度=%.3f/%.3f,灰度=%.3f(%.3f-%.3f) ", itRect2->nAnswer + 65, \
-						  itRect2->fRealDensity, itRect2->fStandardDensity, itRect2->fRealMeanGray - itRect2->fStandardMeanGray, itRect2->fRealMeanGray, itRect2->fStandardMeanGray);
-//				strcat_s(szItemInfo, szTmp);
-				strItemLog.append(szTmp);
-			}
-		#endif
+
+			char szGrayTmp[200] = { 0 };
+			sprintf_s(szGrayTmp, "\n空白灰度差=%.3f(%.3f-%.3f)\n", itOmr->fWhiteAreaGray - itOmr->fWhiteAreaGrayModel, itOmr->fWhiteAreaGray, itOmr->fWhiteAreaGrayModel);
+			strItemLog.append(szGrayTmp);
 		}
 
 		//++++++++	test	++++++++
@@ -1969,6 +1962,8 @@ bool CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 bool CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, int nRecogMode /*= 2*/)
 {
 	bool bResult = true;
+	float fGrayCount = 0.0;
+	float fGrayModel = 0.0;
 	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lWhite.begin();
 	for (; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lWhite.end(); itCP++)
 	{
@@ -2015,6 +2010,9 @@ bool CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 			TRACE(szLog);
 		}
 
+		fGrayCount += rc.fStandardMeanGray;		//单块的空白区域的平均灰度值
+		fGrayModel += itCP->fStandardMeanGray;	//模板上的单块的空白区域的平均灰度值
+
 		pPic->bFindIssue = true;
 		pPic->lIssueRect.push_back(rc);
 		if (nRecogMode == 2)
@@ -2023,6 +2021,14 @@ bool CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 			break;
 		}
 	}
+
+	int nWhiteAreaCount = pModelInfo->pModel->vecPaperModel[nPic]->lWhite.size();
+	if (nWhiteAreaCount > 0)
+	{
+		pPic->fWhiteAreaGray = fGrayCount / nWhiteAreaCount;
+		pPic->fWhiteAreaGrayModel = fGrayModel / nWhiteAreaCount;
+	}
+
 	if (!bResult)
 	{
 		char szLog[MAX_PATH] = { 0 };
@@ -2531,6 +2537,9 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		omrResult.strRecogVal1 = strRecogAnswer1;
 		omrResult.strRecogVal2 = strRecogAnswer2;
 		omrResult.strRecogVal3 = strRecogAnswer3;
+
+		omrResult.fWhiteAreaGray = pPic->fWhiteAreaGray;
+		omrResult.fWhiteAreaGrayModel = pPic->fWhiteAreaGrayModel;
 		(static_cast<pST_PaperInfo>(pPic->pPaper))->lOmrResult.push_back(omrResult);
 	}
 	if (!bResult)
