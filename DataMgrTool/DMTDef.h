@@ -125,7 +125,7 @@ typedef struct _DecompressTask_
 	//---------
 
 	int nTaskType;				//1-普通解压，2-区分试卷包到不同目录, 3-重新识别OMR和SN, 4-加载模板, 5-识别试卷包并统计识别正确率比例, 6-解压并查看试卷袋识别结果，7-解压试卷袋中的特定文件
-	int nSearchPkg;				//nTaskType == 4时有用，在加载模板完成后，是否继续搜索目录解压Pkg包，默认搜索
+	int nExcuteTask;				//nTaskType == 4时有用，加载完模板后，执行的任务。1-搜索pkg目录，进行普通试卷袋pkg文件搜索，0-加载模板后，不做任何操作，2-搜索试卷袋文件夹，进行普通试卷jpg图像搜索
 	std::string strFileBaseName;
 	std::string strSrcFileName;
 	std::string strFilePath;
@@ -134,7 +134,7 @@ typedef struct _DecompressTask_
 	_DecompressTask_()
 	{
 		nTaskType = 1;
-		nSearchPkg = 1;
+		nExcuteTask = 1;
 		bRecogElectOmr = true;
 		bRecogOmr = true;
 		bRecogZkzh = true;
@@ -192,6 +192,7 @@ extern	Poco::FastMutex	_fmAddPkg_;
 extern	L_PKGINFO		_PkgInfoList_;
 extern	Poco::Event		_E_StartSearch_;
 extern	std::string		_strPkgSearchPath_;
+extern	std::string		_strJpgSearchPath_;		//试卷图像文件搜索路径,utf8
 
 extern	Poco::FastMutex	_fmSearchPathList_;
 extern	L_SearchTask	_SearchPathList_;

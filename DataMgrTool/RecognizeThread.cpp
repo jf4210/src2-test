@@ -334,7 +334,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			}
 
 			char szGrayTmp[200] = { 0 };
-			sprintf_s(szGrayTmp, "\n空白灰度差=%.3f(%.3f-%.3f)\n", itOmr->fWhiteAreaGray - itOmr->fWhiteAreaGrayModel, itOmr->fWhiteAreaGray, itOmr->fWhiteAreaGrayModel);
+			sprintf_s(szGrayTmp, "\n空白灰度差=%.3f(%.3f-%.3f)", itOmr->fWhiteAreaGray - itOmr->fWhiteAreaGrayModel, itOmr->fWhiteAreaGray, itOmr->fWhiteAreaGrayModel);
 			strItemLog.append(szGrayTmp);
 		}
 
@@ -1986,6 +1986,10 @@ bool CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 		else
 			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
 		bool bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
+
+		fGrayCount += rc.fRealMeanGray;		//单块的空白区域的平均灰度值
+		fGrayModel += itCP->fStandardMeanGray;	//模板上的单块的空白区域的平均灰度值
+
 		if (bResult_Recog)
 		{
 			if (rc.fRealValuePercent >= rc.fStandardValuePercent)
@@ -2009,10 +2013,7 @@ bool CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 			g_Log.LogOut(szLog);
 			TRACE(szLog);
 		}
-
-		fGrayCount += rc.fStandardMeanGray;		//单块的空白区域的平均灰度值
-		fGrayModel += itCP->fStandardMeanGray;	//模板上的单块的空白区域的平均灰度值
-
+		
 		pPic->bFindIssue = true;
 		pPic->lIssueRect.push_back(rc);
 		if (nRecogMode == 2)
@@ -2212,6 +2213,28 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 // 					fThreld = vecItemsDesc[vecOmrItemDiff.size()]->fRealValuePercent;
 			}
 			//--
+			//根据答案确定灰度再次判断
+			//如果根据灰度值之间判断确定答案的数量 > 灰度差值判断出的选项数
+			//即：灰度差判断出1个，直接答案判定数为3个，则再次判断，可针对全涂或者扫描很深的情况
+			if ((nFlag != vecOmrItemDiff.size() - 1) && (vecVal_calcHist.size() > nFlag + 1))
+			{
+				for (int i = 0; i < vecVal_calcHist.size(); i++)
+				{
+					//查找此选项对应的矩形信息
+					for (auto rcItem : omrResult.lSelAnswer)
+					{
+						if (rcItem.nAnswer == vecVal_calcHist[i])
+						{
+							if (rcItem.fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2)	//选项的灰度<(比较灰度 + 灰度答案确认值 + 灰度退出密度值) / 2
+							{
+								fThreld = rcItem.fRealValuePercent > fThreld ? fThreld : rcItem.fRealValuePercent;
+							}
+							break;
+						}
+					}
+				}
+			}
+
 			RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
 			for (; itItem != omrResult.lSelAnswer.end(); itItem++)
 			{

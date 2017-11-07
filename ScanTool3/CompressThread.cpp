@@ -79,6 +79,34 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 			return;
 		}
 
+		std::string strDelDir;
+		if (pTask->bDelSrcDir)
+		{
+			try
+			{
+				//删除会消耗较长的时间，此时关闭软件，会造成重启后重新压缩，但是内部文件是缺少不全的，
+				//所以先将此文件夹重命名，防止重启后再次压缩
+				int nPos = pTask->strSrcFilePath.find("_ToCompress");
+				strDelDir = pTask->strSrcFilePath.substr(0, nPos);
+				strDelDir.append("_NeedToDel");
+
+				Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pTask->strSrcFilePath));
+				srcFileDir.renameTo(CMyCodeConvert::Gb2312ToUtf8(strDelDir));
+
+				if (bResult)
+					strLog = "文件[" + pTask->strCompressFileName + "]压缩完成，源文件夹重命名" + strDelDir + "成功";
+				else
+					strLog = "文件[" + pTask->strCompressFileName + "]压缩失败，源文件夹重命名" + strDelDir + "成功";
+				g_pLogger->information(strLog);
+			}
+			catch (Poco::Exception& exc)
+			{
+				strDelDir = pTask->strSrcFilePath;
+				std::string strErr = "文件[" + pTask->strCompressFileName + "]压缩完成，重命名源文件夹(" + pTask->strSrcFilePath + ")失败: " + exc.message();
+				g_pLogger->information(strErr);
+			}
+		}
+
 		if (g_nManulUploadFile != 1)
 		{
 			char szFileFullPath[300] = { 0 };
@@ -97,7 +125,7 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 		{
 			try
 			{
-				Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pTask->strSrcFilePath));
+				Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(strDelDir));	//pTask->strSrcFilePath
 				if (srcFileDir.exists())
 					srcFileDir.remove(true);
 

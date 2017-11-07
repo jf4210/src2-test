@@ -748,7 +748,7 @@ void CMakeModelDlg::InitConf()
 				m_comboCheckPointType.AddString(_T("选择/判断题"));
 				m_comboCheckPointType.AddString(_T("选做题"));
 			#ifdef TEST_GRAY_WHITE
-				m_comboCheckPointType.AddString(_T("空白校验区"));
+				m_comboCheckPointType.AddString(_T("空白校验点"));	//空白校验区
 			#endif
 			}
 		}
@@ -888,7 +888,7 @@ LRESULT CMakeModelDlg::RoiLBtnUp(WPARAM wParam, LPARAM lParam)
 			SortRect();
 			UpdataCPList();
 		}
-		else if (m_eCurCPType == WHITE_GRAY_AREA)
+		else if (m_eCurCPType == WHITE_CP)	//WHITE_GRAY_AREA
 		{
 			if (checkOverlap(m_eCurCPType, Rt))
 			{

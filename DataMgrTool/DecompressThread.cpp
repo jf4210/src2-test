@@ -375,7 +375,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		strMsg.Format(_T("模板加载(%s)完成\r\n"), A2T(pTask->strSrcFileName.c_str()));
 		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
 
-		if (pTask->nSearchPkg)
+		if (pTask->nExcuteTask == 1)
 		{
 			pST_SEARCH pDirTask = new ST_SEARCH;
 			pDirTask->strSearchPath = _strPkgSearchPath_;
@@ -388,6 +388,33 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 			_fmSearchPathList_.lock();
 			_SearchPathList_.push_back(pDirTask);
 			_fmSearchPathList_.unlock();
+		}
+		else if (pTask->nExcuteTask == 2)
+		{
+			std::string strPapersName = _strJpgSearchPath_.substr(_strJpgSearchPath_.rfind('\\')+ 1, _strJpgSearchPath_.length());
+
+
+			pPapers = new PAPERSINFO;
+			pPapers->strPapersName = strPapersName;
+			pPapers->strPapersPath = CMyCodeConvert::Utf8ToGb2312(_strJpgSearchPath_);
+// 			pPapers->strSrcPapersPath = pTask->strFilePath;
+// 			pPapers->strSrcPapersFileName = pTask->strSrcFileName;
+
+			g_fmPapers.lock();
+			g_lPapers.push_back(pPapers);
+			g_fmPapers.unlock();
+
+			SearchExtractFile(pPapers, pPapers->strPapersPath);
+			pPapers->lPaper.sort(SortByPaper);
+
+			//添加到识别任务列表
+			PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
+			for (; itPaper != pPapers->lPaper.end(); itPaper++)
+			{
+				pRECOGTASK pTask = new RECOGTASK;
+				pTask->pPaper = *itPaper;
+				g_lRecogTask.push_back(pTask);
+			}
 		}
 	}
 	else if (pTask->nTaskType == 5)
@@ -911,54 +938,72 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 
 void CDecompressThread::SearchExtractFile(pPAPERSINFO pPapers, std::string strPath)
 {
+	USES_CONVERSION;
+	bool bErr = false;
+	std::string strErr;
 	std::string strPapersPath = CMyCodeConvert::Gb2312ToUtf8(strPath);
-	Poco::DirectoryIterator it(strPapersPath);
-	Poco::DirectoryIterator end;
-	while (it != end)
+	try
 	{
-		Poco::Path p(it->path());
-		if (it->isFile())
+		Poco::DirectoryIterator it(strPapersPath);
+		Poco::DirectoryIterator end;
+		while (it != end)
 		{
-			std::string strName = p.getFileName();
-			if (strName.find("papersInfo.dat") != std::string::npos)
+			Poco::Path p(it->path());
+			if (it->isFile())
 			{
-				it++;
-				continue;
-			}
-
-			pST_PicInfo pPic = new ST_PicInfo;
-			pPic->strPicName = strName;
-			pPic->strPicPath = pPapers->strPapersPath + "\\" + pPic->strPicName;
-
-			int nPos = pPic->strPicName.find("_");
-			std::string strPaperName = pPic->strPicName.substr(0, nPos);
-			bool bFind = false;
-			PAPER_LIST::iterator it = pPapers->lPaper.begin();
-			for (; it != pPapers->lPaper.end(); it++)
-			{
-				if ((*it)->strStudentInfo == strPaperName)
+				std::string strName = p.getFileName();
+				if (strName.find("papersInfo.dat") != std::string::npos)
 				{
-					(*it)->lPic.push_back(pPic);
-					pPic->pPaper = *it;
-					bFind = true;
-					break;
+					it++;
+					continue;
 				}
+
+				pST_PicInfo pPic = new ST_PicInfo;
+				pPic->strPicName = strName;
+				pPic->strPicPath = pPapers->strPapersPath + "\\" + pPic->strPicName;
+
+				int nPos = pPic->strPicName.find("_");
+				std::string strPaperName = pPic->strPicName.substr(0, nPos);
+				bool bFind = false;
+				PAPER_LIST::iterator it = pPapers->lPaper.begin();
+				for (; it != pPapers->lPaper.end(); it++)
+				{
+					if ((*it)->strStudentInfo == strPaperName)
+					{
+						(*it)->lPic.push_back(pPic);
+						pPic->pPaper = *it;
+						bFind = true;
+						break;
+					}
+				}
+				if (!bFind)
+				{
+					pST_PaperInfo pPaper = new ST_PaperInfo;
+					pPaper->lPic.push_back(pPic);
+					pPic->pPaper = pPaper;
+					pPaper->strStudentInfo = strPaperName;
+					pPaper->pModel = _pModel_;
+					pPaper->pPapers = pPapers;
+					pPaper->pSrcDlg = m_pDlg;
+					pPaper->nIndex = atoi(strPaperName.substr(1).c_str());
+					pPapers->lPaper.push_back(pPaper);
+				}
+				pPapers->nTotalPics++;						//图片数增加一张
 			}
-			if (!bFind)
-			{
-				pST_PaperInfo pPaper = new ST_PaperInfo;
-				pPaper->lPic.push_back(pPic);
-				pPic->pPaper = pPaper;
-				pPaper->strStudentInfo = strPaperName;
-				pPaper->pModel = _pModel_;
-				pPaper->pPapers = pPapers;
-				pPaper->pSrcDlg = m_pDlg;
-				pPaper->nIndex = atoi(strPaperName.substr(1).c_str());
-				pPapers->lPaper.push_back(pPaper);
-			}
-			pPapers->nTotalPics++;						//图片数增加一张
+			it++;
 		}
-		it++;
+	}
+	catch (Poco::Exception& exc)
+	{
+		strErr = "搜索文件夹图片失败，" + CMyCodeConvert::Utf8ToGb2312(exc.displayText());
+		bErr = true;
+	}
+
+	if (bErr)
+	{
+		CString strMsg;
+		strMsg.Format(_T("%s"), A2T(strErr.c_str()));
+		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
 	}
 }
 

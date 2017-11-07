@@ -16,6 +16,7 @@
 //------------------------------------
 Poco::Event		_E_StartSearch_;
 std::string		_strPkgSearchPath_;		//试卷袋搜索路径
+std::string		_strJpgSearchPath_;		//试卷图像文件搜索路径
 
 Poco::FastMutex	_fmSearchPathList_;
 L_SearchTask	_SearchPathList_;
@@ -776,36 +777,34 @@ void CDataMgrToolDlg::OnBnClickedBtnRecogpkg()
 	UpdateData(TRUE);
 	USES_CONVERSION;
 
-	try
-	{
-		std::string strPkgPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strPkgPath));
-		Poco::DirectoryIterator it(strPkgPath);
-		Poco::DirectoryIterator end;
-		while (it != end)
-		{
-			Poco::Path p(it->path());
-			if (it->isFile() && p.getExtension() == "pkg")
-			{
-				std::string strFileName = p.getFileName();
-				std::string strExtion = p.getExtension();
+	std::string strModelPath = T2A(m_strModelPath);
 
-				pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
-				pDecompressTask->nTaskType = 2;
-				pDecompressTask->strFilePath = CMyCodeConvert::Utf8ToGb2312(p.toString());
-				pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
-				pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(p.getFileName());
-				pDecompressTask->strDecompressDir = T2A(m_strRecogPath);
+	int nPos1 = strModelPath.rfind('\\');
+	int nPos2 = strModelPath.rfind('.');
 
-				g_fmDecompressLock.lock();
-				g_lDecompressTask.push_back(pDecompressTask);
-				g_fmDecompressLock.unlock();
-			}
-			it++;
-		}
-	}
-	catch (Poco::Exception& exc)
-	{
-	}
+	std::string strBaseName = strModelPath.substr(nPos1 + 1, nPos2 - nPos1 - 1);
+	std::string strSrcName = strModelPath.substr(nPos1 + 1, strModelPath.length() - nPos1 - 1);
+
+	std::string strBasePath = strModelPath.substr(0, nPos1);
+
+	pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+	pDecompressTask->nTaskType = 4;
+	pDecompressTask->nExcuteTask = 2;	//加载模板后，不用搜索Pkg目录，后面手动加载
+	pDecompressTask->strFilePath = T2A(m_strModelPath);
+	pDecompressTask->strFileBaseName = strBaseName;
+	pDecompressTask->strSrcFileName = strSrcName;
+	pDecompressTask->strDecompressDir = strBasePath;
+
+	_fmDecompress_.lock();
+	_nDecompress_++;
+	_fmDecompress_.unlock();
+
+	g_fmDecompressLock.lock();
+	g_lDecompressTask.push_back(pDecompressTask);
+	g_fmDecompressLock.unlock();
+
+	//*******************	识别试卷袋文件夹的试卷
+	_strJpgSearchPath_ = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strRecogPath));
 }
 
 void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
@@ -867,35 +866,6 @@ void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
 
 		m_strWatchPaper_PapersDir = m_strPkgPath;
 		UpdateData(FALSE);
-	#if 1
-// 		pST_SEARCH pTask = new ST_SEARCH;
-// 		pTask->strSearchPath = CMyCodeConvert::Gb2312ToUtf8(strPkgPath);
-// 		_SearchPathList_.push_back(pTask);
-	#else
-		Poco::DirectoryIterator it(strPkgPath);
-		Poco::DirectoryIterator end;
-		while (it != end)
-		{
-			Poco::Path p(it->path());
-			if (it->isFile() && p.getExtension() == "pkg")
-			{
-				std::string strFileName = p.getFileName();
-				std::string strExtion = p.getExtension();
-
-				pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
-				pDecompressTask->nTaskType = 3;
-				pDecompressTask->strFilePath = CMyCodeConvert::Utf8ToGb2312(p.toString());
-				pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
-				pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(p.getFileName());
-				pDecompressTask->strDecompressDir = T2A(strDecompressDir);
-
-				g_fmDecompressLock.lock();
-				g_lDecompressTask.push_back(pDecompressTask);
-				g_fmDecompressLock.unlock();
-			}
-			it++;
-		}
-	#endif
 	}
 	catch (Poco::Exception& exc)
 	{
@@ -1413,7 +1383,7 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpapers()
 
 	pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
 	pDecompressTask->nTaskType = 4;
-	pDecompressTask->nSearchPkg = 0;	//加载模板后，不用搜索Pkg目录，后面手动加载
+	pDecompressTask->nExcuteTask = 0;	//加载模板后，不用搜索Pkg目录，后面手动加载
 	pDecompressTask->strFilePath = T2A(m_strModelPath_showPapersDlg);
 	pDecompressTask->strFileBaseName = strBaseName;
 	pDecompressTask->strSrcFileName = strSrcName;
