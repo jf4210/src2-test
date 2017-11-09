@@ -6,6 +6,8 @@
 using namespace cv;
 CRecognizeThread::CRecognizeThread()
 {
+	m_nContract = 100;
+	m_nBright = 0;
 }
 
 CRecognizeThread::~CRecognizeThread()
@@ -195,8 +197,12 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 
 		bool bFind = false;
 		int nPic = i;
-
-		m_ptFixCP = Point(0, 0);
+		
+		if (g_nRecogWithContract)	//恢复默认值
+		{
+			m_nContract = 100;
+			m_nBright = 0;
+		}
 
 		pPAPERSINFO pCurrentPapers = static_cast<pPAPERSINFO>(pPaper->pPapers);
 		if (g_nRecogMode == 1)		//pCurrentPapers->nRecogMode == 1
@@ -591,6 +597,12 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 
 		Mat imag_src, img_comp;
 		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+		if ((rc.eCPType == OMR || rc.eCPType == SN) && g_nRecogWithContract)
+		{
+			AutoContractBright(matCompRoi);
+		}
+
 		cv::GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//_nGauseKernel_
 		SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
 
@@ -1002,9 +1014,6 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				bFindRect = true;
 			else
 			{
-				m_ptFixCP.x = static_cast<int>(rtFix.x + rtFix.width / 2 + 0.5 + rc.rt.x);
-				m_ptFixCP.y = static_cast<int>(rtFix.y + rtFix.height / 2 + 0.5 + rc.rt.y);
-
 				// 			rtFix.x = rtFix.x + rc.rt.x;
 				// 			rtFix.y = rtFix.y + rc.rt.y;
 
@@ -3370,6 +3379,19 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 	return bResult;
 }
 
+bool CRecognizeThread::AutoContractBright(cv::Mat& matComPic)
+{
+	for (int i = 0; i < matComPic.rows; i++)
+	{
+		for (int j = 0; j < matComPic.cols; j++)
+		{
+			int nTmp = matComPic.at<uchar>(i, j);
+			matComPic.at<uchar>(i, j) = saturate_cast<uchar>(m_nContract * 0.01 * (matComPic.at<uchar>(i, j)) + m_nBright);
+		}
+	}
+	return true;
+}
+
 int CRecognizeThread::calcOmrDensityDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemDiff)
 {
 #if 1	//下面将所有选项识别密度值降序排列并相邻比较
@@ -3509,7 +3531,7 @@ bool CRecognizeThread::Recog2(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_P
 				rc.rt.height = matCompPic.rows - rc.rt.y;
 			}
 			matCompRoi = matCompPic(rc.rt);
-
+			
 			cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 			//图片二值化

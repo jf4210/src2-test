@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CShowPapersDlg, CDialog)
 
 CShowPapersDlg::CShowPapersDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(IDD_SHOWPAPERSDLG, pParent)
-	,m_pShowPicDlg(NULL), m_pAnswerShowDlg(NULL), m_pPapers(NULL), m_nCurrItemPaperList(-1), m_strMsg(_T(""))
+	,m_pShowPicDlg(NULL), m_pAnswerShowDlg(NULL), m_pPapers(NULL), m_nCurrItemPaperList(-1), m_strMsg(_T("")), m_nPaperShowType(7)
 {
 
 }
@@ -28,6 +28,9 @@ void CShowPapersDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_Papers, m_listPaper);
 	DDX_Control(pDX, IDC_EDIT_OmrRecogINfo, m_edit_OmrRecogInfo);
 	DDX_Text(pDX, IDC_EDIT_OmrRecogINfo, m_strMsg);
+	DDX_Control(pDX, IDC_CHK_Normal, m_btnChkNormal);
+	DDX_Control(pDX, IDC_CHK_Doubt, m_btnChkDoubt);
+	DDX_Control(pDX, IDC_CHK_Null, m_btnChkNull);
 }
 
 
@@ -40,6 +43,9 @@ BEGIN_MESSAGE_MAP(CShowPapersDlg, CDialog)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_Papers, &CShowPapersDlg::OnNMDblclkListPapers)
 	ON_NOTIFY(LVN_KEYDOWN, IDC_LIST_Papers, &CShowPapersDlg::OnLvnKeydownListPapers)
 	ON_NOTIFY(NM_HOVER, IDC_LIST_Papers, &CShowPapersDlg::OnNMHoverListPapers)
+	ON_BN_CLICKED(IDC_CHK_Normal, &CShowPapersDlg::OnBnClickedChkNormal)
+	ON_BN_CLICKED(IDC_CHK_Doubt, &CShowPapersDlg::OnBnClickedChkDoubt)
+	ON_BN_CLICKED(IDC_CHK_Null, &CShowPapersDlg::OnBnClickedChkNull)
 END_MESSAGE_MAP()
 
 
@@ -75,6 +81,19 @@ void CShowPapersDlg::InitUI()
 		m_pAnswerShowDlg->ShowWindow(SW_SHOW);
 	}
 
+	setCheckStatus(m_nPaperShowType);
+
+	CRect rc;
+	::SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
+	int sx = rc.Width();
+	int sy = rc.Height();
+	if (sx > 1024)
+		sx = 1024;
+	if (sy > 768)
+		sy = 768;
+	MoveWindow(0, 0, sx, sy);
+	CenterWindow();
+
 	InitCtrlPosition();
 }
 
@@ -105,10 +124,27 @@ void CShowPapersDlg::InitCtrlPosition()
 	}
 	if (m_listPaper.GetSafeHwnd())
 	{
-		int nH = cy - nCurrentTop - nBottomGap - nEditH - nGap;
+		int nH = cy - nCurrentTop - nBottomGap - nStaticH - nGap - nEditH - nGap;
 		m_listPaper.MoveWindow(nCurrentLeft, nCurrentTop, nListW, nH);
 		nCurrentTop += (nH + nGap);
 	}
+	int nChkW = (nListW - 2 * nGap) / 3;
+	if (GetDlgItem(IDC_CHK_Normal)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_CHK_Normal)->MoveWindow(nCurrentLeft, nCurrentTop, nChkW, nStaticH);
+		nCurrentLeft += (nChkW + nGap);
+	}
+	if (GetDlgItem(IDC_CHK_Doubt)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_CHK_Doubt)->MoveWindow(nCurrentLeft, nCurrentTop, nChkW, nStaticH);
+		nCurrentLeft += (nChkW + nGap);
+	}
+	if (GetDlgItem(IDC_CHK_Null)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_CHK_Null)->MoveWindow(nCurrentLeft, nCurrentTop, nChkW, nStaticH);
+		nCurrentTop += (nStaticH + nGap);
+	}
+	nCurrentLeft = nLeftGap;
 	if (m_edit_OmrRecogInfo.GetSafeHwnd())
 	{
 		m_edit_OmrRecogInfo.MoveWindow(nCurrentLeft, nCurrentTop, nListW, nEditH);
@@ -128,6 +164,13 @@ void CShowPapersDlg::InitCtrlPosition()
 	{
 		int nH = cy - nCurrentTop - nBottomGap;
 		m_pAnswerShowDlg->MoveWindow(nCurrentLeft, nCurrentTop, nPicShowTabCtrlWidth, nH);
+	}
+
+	if (GetDlgItem(IDOK)->GetSafeHwnd())
+	{
+		int nBtnW = 80;
+		int nBtnH = 35;
+		GetDlgItem(IDOK)->MoveWindow(cx / 2 - nBtnW / 2, cy - nBottomGap + nGap, nBtnW, nBtnH);
 	}
 }
 
@@ -184,6 +227,8 @@ void CShowPapersDlg::ShowPapers(pPAPERSINFO pPapers)
 		m_pShowPicDlg->setShowPaper(pPaper);
 		m_pAnswerShowDlg->InitData(pPaper);
 	}
+
+	m_listPaper.GetItemColors(m_nCurrItemPaperList, 0, crOldText, crOldBackground);
 }
 
 void CShowPapersDlg::ShowPaper(pST_PaperInfo pPaper)
@@ -409,6 +454,160 @@ void CShowPapersDlg::UnSetListCtrlHighLightShow(CXListCtrl& lCtrl, int nItem)
 			lCtrl.SetItemColors(nItem, i, RGB(255, 0, 0), crOldBackground);
 }
 
+void CShowPapersDlg::ShowPaperListByType(int nType)
+{
+	m_nCurrItemPaperList = 0;
+	m_listPaper.DeleteAllItems();
+	//0-不显示，1-无怀疑, 2-显示怀疑，3-显示无怀疑和怀疑，4-显示空，5-显示无怀疑和空，6-显示怀疑和空, 7-显示所有
+
+	USES_CONVERSION;
+	for (auto pPaper : m_pPapers->lPaper)
+	{
+		bool bHasDoubt = false;
+		bool bHasNull = false;
+
+		for (auto itemOmr : pPaper->lOmrResult)
+		{
+			if (itemOmr.nDoubt == 1)
+			{
+				bHasDoubt = true;
+				break;
+			}
+			if (itemOmr.nDoubt == 2)
+			{
+				bHasNull = true;
+				break;
+			}
+		}
+
+		if(nType == 0)
+			break;
+		else if (nType == 1)
+		{
+			if(bHasDoubt || bHasNull)
+				continue;
+		}
+		else if (nType == 2)
+		{
+			if(!bHasDoubt)
+				continue;
+		}
+		else if (nType == 3)
+		{
+			if (bHasNull)
+				continue;
+		}
+		else if (nType == 4)
+		{
+			if (!bHasNull)
+				continue;
+		}
+		else if (nType == 5)
+		{
+			if (bHasDoubt)
+				continue;
+		}
+		else if (nType == 6)
+		{
+			if (!bHasDoubt && !bHasNull)
+				continue;
+		}
+		else if (nType == 7)
+		{
+		}
+
+		int nCount = m_listPaper.GetItemCount();
+		char szCount[10] = { 0 };
+		sprintf_s(szCount, "%d", pPaper->nIndex);	//nCount + 1
+		m_listPaper.InsertItem(nCount, NULL);
+		m_listPaper.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+		m_listPaper.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+
+		m_listPaper.SetItemData(nCount, (DWORD_PTR)pPaper);
+	}
+	m_listPaper.GetItemColors(m_nCurrItemPaperList, 0, crOldText, crOldBackground);
+}
+
+void CShowPapersDlg::setCheckStatus(int nStatus)
+{
+	if (nStatus == 0)
+	{
+		m_btnChkNormal.SetCheck(0);
+		m_btnChkDoubt.SetCheck(0);
+		m_btnChkNull.SetCheck(0);
+	}
+	else if (nStatus == 1)
+	{
+		m_btnChkNormal.SetCheck(1);
+		m_btnChkDoubt.SetCheck(0);
+		m_btnChkNull.SetCheck(0);
+	}
+	else if (nStatus == 2)
+	{
+		m_btnChkNormal.SetCheck(0);
+		m_btnChkDoubt.SetCheck(1);
+		m_btnChkNull.SetCheck(0);
+	}
+	else if (nStatus == 3)
+	{
+		m_btnChkNormal.SetCheck(1);
+		m_btnChkDoubt.SetCheck(1);
+		m_btnChkNull.SetCheck(0);
+	}
+	else if (nStatus == 4)
+	{
+		m_btnChkNormal.SetCheck(0);
+		m_btnChkDoubt.SetCheck(0);
+		m_btnChkNull.SetCheck(1);
+	}
+	else if (nStatus == 5)
+	{
+		m_btnChkNormal.SetCheck(1);
+		m_btnChkDoubt.SetCheck(0);
+		m_btnChkNull.SetCheck(1);
+	}
+	else if (nStatus == 6)
+	{
+		m_btnChkNormal.SetCheck(0);
+		m_btnChkDoubt.SetCheck(1);
+		m_btnChkNull.SetCheck(1);
+	}
+	else if (nStatus == 7)
+	{
+		m_btnChkNormal.SetCheck(1);
+		m_btnChkDoubt.SetCheck(1);
+		m_btnChkNull.SetCheck(1);
+	}
+}
+
+int CShowPapersDlg::getCheckStatus()
+{
+	//空|怀疑|无怀疑 --按位排序
+	// 1  1  1  --显示所有
+	// 1  1  0  --显示怀疑、空
+	int nNormal = m_btnChkNormal.GetCheck();
+	int nDoubt = m_btnChkDoubt.GetCheck();
+	int nNull = m_btnChkNull.GetCheck();
+
+	int nResult = 0;
+	if (nNormal && nDoubt && nNull)	//111
+		nResult = 7;
+	else if (!nNormal && nDoubt && !nNull)	//010
+		nResult = 2;
+	else if (!nNormal && !nDoubt && nNull)	//100
+		nResult = 4;
+	else if (!nNormal && nDoubt && nNull)	//110
+		nResult = 6;
+	else if (nNormal && !nDoubt && !nNull)	//001
+		nResult = 1;
+	else if (nNormal && nDoubt && !nNull)	//011
+		nResult = 3;
+	else if (nNormal && !nDoubt && nNull)	//101
+		nResult = 5;
+
+	return nResult;
+}
+
 void CShowPapersDlg::OnNMDblclkListPapers(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
@@ -473,4 +672,23 @@ void CShowPapersDlg::OnNMHoverListPapers(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 1;		//**********	这里如果不响应，同时返回结果值不为1的话，	****************
 						//**********	就会产生产生TRACK SELECT，也就是鼠标悬停	****************
 						//**********	一段时间后，所在行自动被选中
+}
+
+
+void CShowPapersDlg::OnBnClickedChkNormal()
+{
+	m_nPaperShowType = getCheckStatus();
+	ShowPaperListByType(m_nPaperShowType);
+}
+
+void CShowPapersDlg::OnBnClickedChkDoubt()
+{
+	m_nPaperShowType = getCheckStatus();
+	ShowPaperListByType(m_nPaperShowType);	
+}
+
+void CShowPapersDlg::OnBnClickedChkNull()
+{
+	m_nPaperShowType = getCheckStatus();
+	ShowPaperListByType(m_nPaperShowType);	
 }

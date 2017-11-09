@@ -46,6 +46,7 @@ int				g_nRecogMode = 1;		//识别模式，0-严格模式，1-简单模式
 int				g_nRecogChkRotation = 0;	//识别图像时检测并调整图像方向
 int				g_nRecogEasyModel = 0;	//识别结果宽容模式(3选2且非空)，第2种识别方法准确度不高
 int				g_nRecogWithShowPkg = 0;	//在重新识别试卷袋后显示此试卷袋信息
+int				g_nRecogWithContract = 0;	//重识别时使用自动对比度调节，即检查试卷的灰度与模板的平均灰度差，根据此差值调节Omr、Sn的对比度和亮度
 
 CLog g_Log;
 int	g_nExitFlag;
@@ -184,9 +185,11 @@ void CDataMgrToolDlg::DoDataExchange(CDataExchange* pDX)
 
 	DDX_Text(pDX, IDC_MFCEDITBROWSE_Pkg_DIR, m_strPkgPath);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_Pkg_DIR, m_mfcEdit_PkgDir);
+	DDX_Control(pDX, IDC_MFCEDITBROWSE_JpgPath_ShowPapers, m_mfcEdit_JpgPath);
 
 	DDX_Text(pDX, IDC_MFCEDITBROWSE_Pkg_PapersDIR, m_strWatchPaper_PapersDir);
 	DDX_Text(pDX, IDC_EDIT_DecompressPaper, m_strWatchPaper_PaperInfo);
+	DDX_Text(pDX, IDC_MFCEDITBROWSE_JpgPath_ShowPapers, m_strJpgPath);
 
 	DDX_Text(pDX, IDC_MFCEDITBROWSE_RecogDir, m_strRecogPath);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE_RecogDir, m_mfcEdit_RecogDir);
@@ -226,6 +229,7 @@ BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_DecompressLook, &CDataMgrToolDlg::OnBnClickedBtnDecompresslook)
 	ON_BN_CLICKED(IDC_BTN_WatchPic, &CDataMgrToolDlg::OnBnClickedBtnWatchpic)
 	ON_BN_CLICKED(IDC_BTN_WatchPapers, &CDataMgrToolDlg::OnBnClickedBtnWatchpapers)
+	ON_BN_CLICKED(IDC_BTN_WatchPaper, &CDataMgrToolDlg::OnBnClickedBtnWatchpaper)
 END_MESSAGE_MAP()
 
 
@@ -789,7 +793,7 @@ void CDataMgrToolDlg::OnBnClickedBtnRecogpkg()
 
 	pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
 	pDecompressTask->nTaskType = 4;
-	pDecompressTask->nExcuteTask = 2;	//加载模板后，不用搜索Pkg目录，后面手动加载
+	pDecompressTask->nExcuteTask = 3;	//加载模板后，不用搜索Pkg目录，后面手动加载
 	pDecompressTask->strFilePath = T2A(m_strModelPath);
 	pDecompressTask->strFileBaseName = strBaseName;
 	pDecompressTask->strSrcFileName = strSrcName;
@@ -850,6 +854,7 @@ void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
 		g_nRecogMode = dlg.m_nRecogMode;
 		g_nRecogChkRotation = dlg.m_nRecogChkRotation;
 		g_nRecogEasyModel = dlg.m_nRecogEasyModel;
+		g_nRecogWithContract = dlg.m_nAutoContract;
 
 		_fmDecompress_.lock();
 		_nDecompress_++;
@@ -1398,7 +1403,10 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpapers()
 	g_fmDecompressLock.unlock();
 	
 	//++创建文件解压路径
-	std::string strTmpPath = strBasePath + "\\查看试卷-解压路径";
+	std::string strPkgBasePath = T2A(m_strPkgPath_showPapersDlg);
+	strPkgBasePath = strPkgBasePath.substr(0, strPkgBasePath.rfind('\\'));
+
+	std::string strTmpPath = strPkgBasePath + "\\查看试卷-解压路径";
 	CString strTmp = A2T(strTmpPath.c_str());
 	std::string strDecompressPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strTmp));
 	try
@@ -1427,6 +1435,7 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpapers()
 	g_lDecompressTask.push_back(pDecompressTask1);
 	g_fmDecompressLock.unlock();
 
+	g_nRecogWithContract = 1;	//自动对比度控制
 	g_nRecogChkRotation = 1;	//识别时检测方向
 	if (((CButton*)GetDlgItem(IDC_CHK_NeedRecogPkg))->GetCheck())
 		g_nRecogWithShowPkg = 1;
@@ -1435,3 +1444,39 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpapers()
 //	g_nRecogEasyModel = 1;
 
 }
+
+void CDataMgrToolDlg::OnBnClickedBtnWatchpaper()
+{
+	UpdateData(TRUE);
+	USES_CONVERSION;
+
+	std::string strModelPath = T2A(m_strModelPath_showPapersDlg);
+
+	int nPos1 = strModelPath.rfind('\\');
+	int nPos2 = strModelPath.rfind('.');
+
+	std::string strBaseName = strModelPath.substr(nPos1 + 1, nPos2 - nPos1 - 1);
+	std::string strSrcName = strModelPath.substr(nPos1 + 1, strModelPath.length() - nPos1 - 1);
+
+	std::string strBasePath = strModelPath.substr(0, nPos1);
+
+	pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+	pDecompressTask->nTaskType = 4;
+	pDecompressTask->nExcuteTask = 2;	//加载模板后，不用搜索Pkg目录，后面手动加载
+	pDecompressTask->strFilePath = T2A(m_strModelPath_showPapersDlg);
+	pDecompressTask->strFileBaseName = strBaseName;
+	pDecompressTask->strSrcFileName = strSrcName;
+	pDecompressTask->strDecompressDir = strBasePath;
+
+	_fmDecompress_.lock();
+	_nDecompress_++;
+	_fmDecompress_.unlock();
+
+	g_fmDecompressLock.lock();
+	g_lDecompressTask.push_back(pDecompressTask);
+	g_fmDecompressLock.unlock();
+
+	//*******************	识别试卷袋文件夹的试卷
+	_strJpgSearchPath_ = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strJpgPath));
+}
+

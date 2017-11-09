@@ -21,6 +21,7 @@ public:
 	int		m_nNoRecogVal;		//试卷袋不识别阀值：omr怀疑 + omr空 + SN空总数大于此阀值才进行重识别
 	int		m_nRecogMode;		//识别模式，0-严格模式，1-简单模式
 	int		m_nRecogChkRotation;	//识别时检测并调整图像方向
+	int		m_nAutoContract;	//Omr、Sn自动对比度亮度调节
 	int		m_nRecogEasyModel;	//识别结果3选2，第2种方法准确度不高
 	CString		m_strEzsAddr;
 
@@ -41,4 +42,5 @@ public:
 	afx_msg void OnBnClickedChkRecogmode();
 	afx_msg void OnBnClickedChkRecogchkrotation();
 	afx_msg void OnBnClickedChkRecogeasymodel();
+	afx_msg void OnBnClickedChkRecogchkcontract();
 };

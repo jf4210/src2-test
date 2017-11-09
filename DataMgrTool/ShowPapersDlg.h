@@ -32,6 +32,16 @@ private:
 	void	UnSetListCtrlHighLightShow(CXListCtrl& lCtrl, int nItem);		//取消列表高亮显示
 	COLORREF		crOldText, crOldBackground;
 
+	int		m_nPaperShowType;	//显示类型：0-不显示，1-无怀疑, 2-显示怀疑，3-显示无怀疑和怀疑，4-显示空，5-显示无怀疑和空，6-显示怀疑和空, 7-显示所有
+	void ShowPaperListByType(int nType);	//显示类型：0-不显示，1-无怀疑, 2-显示怀疑，3-显示无怀疑和怀疑，4-显示空，5-显示无怀疑和空，6-显示怀疑和空, 7-显示所有
+
+
+	CButton		m_btnChkNormal;
+	CButton		m_btnChkDoubt;
+	CButton		m_btnChkNull;
+	void	setCheckStatus(int nStatus);
+	int		getCheckStatus();
+
 	CShowPicDlg* m_pShowPicDlg;
 	CAnswerShowDlg* m_pAnswerShowDlg;
 	CEdit			m_edit_OmrRecogInfo;
@@ -50,4 +60,7 @@ public:
 	afx_msg void OnNMDblclkListPapers(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnLvnKeydownListPapers(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMHoverListPapers(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedChkNormal();
+	afx_msg void OnBnClickedChkDoubt();
+	afx_msg void OnBnClickedChkNull();
 };

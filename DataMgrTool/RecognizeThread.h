@@ -22,11 +22,12 @@ public:
 
 	void PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInfo);
 
-	void sharpenImage1(const cv::Mat &image, cv::Mat &result);
 	inline bool Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo);
 	inline bool Recog2(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo);		//先识别此选项有几个矩形区，选取最大的一个矩形区进行识别，此方法用于防止出现框选到其他选项区的情况
 	inline bool RecogVal(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo);
 	inline bool RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, RECTLIST& lSelInfo, std::string& strResult);	//通过识别整个题的选项区，来判断选择项
+
+	bool AutoContractBright(cv::Mat& matComPic);
 
 	bool RecogVal_Sn2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, pSN_ITEM pSn, std::vector<int>& vecItemVal);		//第二种识别SN的方法
 	bool RecogVal_Sn3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, pSN_ITEM pSn, std::vector<int>& vecItemVal);		//第三种识别SN的方法
@@ -62,10 +63,12 @@ public:
 	Poco::Event		eExit;
 private:
 	std::map<pMODEL, pMODELINFO> _mapModel;		//本线程已经读取的模板列表，防止同样的模板多次读取浪费时间
-	cv::Point m_ptFixCP;
 	std::vector<std::vector<cv::Point>> m_vecContours;
 	std::vector<RECTINFO> m_vecH_Head;
 	std::vector<RECTINFO> m_vecV_Head;
+
+	int		m_nContract;	//对比度
+	int		m_nBright;		//亮度
 
 	COmrRecog	_chkRotationObj;
 };

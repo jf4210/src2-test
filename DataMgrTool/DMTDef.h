@@ -58,6 +58,7 @@ extern int					g_nRecogMode;		//识别模式，0-严格模式，1-简单模式
 extern int					g_nRecogChkRotation;	//识别图像时检测并调整图像方向
 extern int					g_nRecogEasyModel;	//识别结果宽容模式(3选2且非空)，第2种识别方法准确度不高
 extern int					g_nRecogWithShowPkg;	//在重新识别试卷袋后显示此试卷袋信息
+extern int					g_nRecogWithContract;	//重识别时使用自动对比度调节，即检查试卷的灰度与模板的平均灰度差，根据此差值调节Omr、Sn的对比度和亮度
 
 extern std::string _strEncryptPwd_;
 extern pMODEL _pModel_;
@@ -125,7 +126,7 @@ typedef struct _DecompressTask_
 	//---------
 
 	int nTaskType;				//1-普通解压，2-区分试卷包到不同目录, 3-重新识别OMR和SN, 4-加载模板, 5-识别试卷包并统计识别正确率比例, 6-解压并查看试卷袋识别结果，7-解压试卷袋中的特定文件
-	int nExcuteTask;				//nTaskType == 4时有用，加载完模板后，执行的任务。1-搜索pkg目录，进行普通试卷袋pkg文件搜索，0-加载模板后，不做任何操作，2-搜索试卷袋文件夹，进行普通试卷jpg图像搜索
+	int nExcuteTask;			//nTaskType == 4时有用，加载完模板后，执行的任务。1-搜索pkg目录，进行普通试卷袋pkg文件搜索，0-加载模板后，不做任何操作，2-搜索试卷袋文件夹，进行普通试卷jpg图像搜索, 3-搜索试卷袋文件夹，搜索的是文件夹(搜索文件夹A，A中包含文件夹B，B中是图片jpg)
 	std::string strFileBaseName;
 	std::string strSrcFileName;
 	std::string strFilePath;

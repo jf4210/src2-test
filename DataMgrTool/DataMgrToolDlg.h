@@ -46,10 +46,12 @@ public:
 	CMFCEditBrowseCtrl m_mfcEdit_PkgDir;
 	CMFCEditBrowseCtrl m_mfcEdit_RecogDir;
 	CMFCEditBrowseCtrl m_mfcEdit_ModelPath;
+	CMFCEditBrowseCtrl m_mfcEdit_JpgPath;
 	CMFCEditBrowseCtrl m_mfcEdit_ModelPath_showPapersDlg;
 	CMFCEditBrowseCtrl m_mfcEdit_PkgPath_showPapersDlg;
 	CString		m_strPkgPath;
 	CString		m_strRecogPath;
+	CString		m_strJpgPath;
 	CString		m_strModelPath;
 	CString		m_strModelPath_showPapersDlg;
 	CString		m_strPkgPath_showPapersDlg;
@@ -116,4 +118,5 @@ public:
 	afx_msg void OnBnClickedBtnDecompresslook();
 	afx_msg void OnBnClickedBtnWatchpic();
 	afx_msg void OnBnClickedBtnWatchpapers();
+	afx_msg void OnBnClickedBtnWatchpaper();
 };

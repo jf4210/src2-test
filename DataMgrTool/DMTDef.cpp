@@ -2686,7 +2686,19 @@ inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 	rc.fStandardDensity = rc.fStandardValue / rc.fStandardArea;
 
 
+#if 1
+	cv::MatND mean;
+	cv::MatND stddev;
+	cv::meanStdDev(matSrcRoi, mean, stddev);
 
+	IplImage *src;
+	src = &IplImage(mean);
+	rc.fStandardMeanGray = cvGetReal2D(src, 0, 0);
+
+	IplImage *src2;
+	src2 = &IplImage(stddev);
+	rc.fStandardStddev = cvGetReal2D(src2, 0, 0);
+#else
 	cv::MatND src_hist2;
 	const int histSize2[1] = { 256 };	//rc.nThresholdValue - g_nRecogGrayMin
 	const float* ranges2[1];
@@ -2701,6 +2713,7 @@ inline bool RecogGrayValue(cv::Mat& matSrcRoi, RECTINFO& rc)
 		nCount += i * src_hist2.at<float>(i);
 	}
 	rc.fStandardMeanGray = nCount / rc.fStandardArea;
+#endif
 	return true;
 }
 

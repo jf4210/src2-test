@@ -14,6 +14,7 @@ IMPLEMENT_DYNAMIC(CRecogParamDlg, CDialog)
 CRecogParamDlg::CRecogParamDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CRecogParamDlg::IDD, pParent)
 	, m_nChkSN(1), m_nChkElectOmr(1), m_nChkOmr(1), m_nHandleResult(2), m_nNoRecogVal(0), m_nRecogMode(g_nRecogMode), m_nRecogChkRotation(g_nRecogChkRotation), m_nRecogEasyModel(g_nRecogEasyModel)
+	, m_nAutoContract(g_nRecogWithContract)
 {
 
 }
@@ -41,6 +42,7 @@ BEGIN_MESSAGE_MAP(CRecogParamDlg, CDialog)
 	ON_BN_CLICKED(IDC_CHK_RecogMode, &CRecogParamDlg::OnBnClickedChkRecogmode)
 	ON_BN_CLICKED(IDC_CHK_RecogChkRotation, &CRecogParamDlg::OnBnClickedChkRecogchkrotation)
 	ON_BN_CLICKED(IDC_CHK_RecogEasyModel, &CRecogParamDlg::OnBnClickedChkRecogeasymodel)
+	ON_BN_CLICKED(IDC_CHK_RecogChkContract, &CRecogParamDlg::OnBnClickedChkRecogchkcontract)
 END_MESSAGE_MAP()
 
 BOOL CRecogParamDlg::OnInitDialog()
@@ -216,4 +218,13 @@ void CRecogParamDlg::OnBnClickedChkRecogeasymodel()
 		m_nRecogEasyModel = 1;
 	else
 		m_nRecogEasyModel = 0;
+}
+
+
+void CRecogParamDlg::OnBnClickedChkRecogchkcontract()
+{
+	if (((CButton*)GetDlgItem(IDC_CHK_RecogChkContract))->GetCheck())
+		m_nAutoContract = 1;
+	else
+		m_nAutoContract = 0;
 }

@@ -433,7 +433,7 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper, int nTH)
 			char szCP[20] = { 0 };
 			if (itNormal->eCPType == SN || itNormal->eCPType == OMR)
 			{
-				if (itNormal->nTH == nTH)
+				if (itNormal->eCPType == OMR && itNormal->nTH == nTH)
 				{
 					if (nTh_tl_x == -1) nTh_tl_x = itNormal->rt.tl().x;
 					nTh_tl_x = itNormal->rt.tl().x > nTh_tl_x ? nTh_tl_x : itNormal->rt.tl().x;

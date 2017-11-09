@@ -389,23 +389,18 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 			_SearchPathList_.push_back(pDirTask);
 			_fmSearchPathList_.unlock();
 		}
-		else if (pTask->nExcuteTask == 2)
+		else if (pTask->nExcuteTask == 2)	//搜索试卷袋文件夹，进行普通试卷jpg图像搜索
 		{
 			std::string strPapersName = _strJpgSearchPath_.substr(_strJpgSearchPath_.rfind('\\')+ 1, _strJpgSearchPath_.length());
 
-
 			pPapers = new PAPERSINFO;
-			pPapers->strPapersName = strPapersName;
-			pPapers->strPapersPath = CMyCodeConvert::Utf8ToGb2312(_strJpgSearchPath_);
-// 			pPapers->strSrcPapersPath = pTask->strFilePath;
-// 			pPapers->strSrcPapersFileName = pTask->strSrcFileName;
+			pPapers->nSendEzs = 3;
 
 			g_fmPapers.lock();
 			g_lPapers.push_back(pPapers);
 			g_fmPapers.unlock();
-
-			SearchExtractFile(pPapers, pPapers->strPapersPath);
-			pPapers->lPaper.sort(SortByPaper);
+			
+			SearchDirPaper(pPapers, CMyCodeConvert::Utf8ToGb2312(_strJpgSearchPath_));
 
 			//添加到识别任务列表
 			PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
@@ -415,6 +410,10 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 				pTask->pPaper = *itPaper;
 				g_lRecogTask.push_back(pTask);
 			}
+		}
+		else if (pTask->nExcuteTask == 3)	//(搜索文件夹A，A中包含文件夹B，B中是图片jpg)
+		{
+			SearchDirPapers(_strJpgSearchPath_);
 		}
 	}
 	else if (pTask->nTaskType == 5)
@@ -999,6 +998,169 @@ void CDecompressThread::SearchExtractFile(pPAPERSINFO pPapers, std::string strPa
 		bErr = true;
 	}
 
+	if (bErr)
+	{
+		CString strMsg;
+		strMsg.Format(_T("%s"), A2T(strErr.c_str()));
+		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
+	}
+}
+
+bool CDecompressThread::SearchDirPaper(pPAPERSINFO pPapers, std::string strPath)
+{
+	USES_CONVERSION;
+	bool bErr = false;
+	std::string strErr;
+	int nModelPicNums = _pModel_->nPicNum;
+	try
+	{
+		std::string strPapersName = strPath.substr(strPath.rfind('\\') + 1, strPath.length());
+
+		pPapers->strPapersName = strPapersName;
+
+		std::string strDirName = strPapersName;		//gb2312
+
+		std::vector<std::string> lFileName;
+		Poco::DirectoryIterator itSub(CMyCodeConvert::Gb2312ToUtf8(strPath));
+		Poco::DirectoryIterator endSub;
+		while (itSub != endSub)
+		{
+			Poco::Path pSubFile(itSub->path());
+			if (itSub->isFile())
+			{
+				std::string strOldFileName = pSubFile.getFileName();
+
+				if (pSubFile.getExtension() == "jpg")
+				{
+					lFileName.push_back(strOldFileName);
+				}
+			}
+			itSub++;
+		}
+
+		if (lFileName.size() % nModelPicNums != 0)
+		{
+			char szErrorInfo[MAX_PATH] = { 0 };
+			sprintf_s(szErrorInfo, "****************\r\n扫描到文件夹[%s]试卷数量 = %d,模板要求每考生 %d 张试卷, 请检查是否有考生试卷缺失\r\n****************\r\n", \
+					  strDirName.c_str(), lFileName.size(), nModelPicNums);
+
+			CString strMsg;
+			strMsg.Format(_T("%s"), A2T(szErrorInfo));
+			((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
+			return false;
+		}
+
+		//文件复制本地临时目录
+		std::string strSaveBasePath = CMyCodeConvert::Gb2312ToUtf8(T2A(g_strCurrentPath)) + "tmpDir\\";
+		std::string strSubPaperPath = strSaveBasePath + CMyCodeConvert::Gb2312ToUtf8(strDirName);
+		Poco::File tmpPath(strSubPaperPath);
+		if (tmpPath.exists())
+			tmpPath.remove(true);
+		tmpPath.createDirectories();
+
+		pPapers->strPapersPath = CMyCodeConvert::Utf8ToGb2312(strSubPaperPath);
+		pPapers->nPaperCount = lFileName.size() / nModelPicNums;
+		pPapers->strPapersName = strDirName;
+
+		int i = 0;
+		pST_PaperInfo pPaper = NULL;
+		std::sort(lFileName.begin(), lFileName.end(), SortbyNumASC);
+		std::vector<std::string>::iterator itName = lFileName.begin();
+		for (; itName != lFileName.end(); itName++)
+		{
+			TRACE("%s\n", (*itName).c_str());	//(*itName).c_str()
+
+			char szNewName[100] = { 0 };
+			sprintf_s(szNewName, "S%d_%s", i / nModelPicNums + 1, (*itName).c_str());
+
+			std::string strNewName = szNewName;
+			std::string strNewFilePath = strSubPaperPath + "\\" + strNewName;
+
+			std::string strFileOldPath = CMyCodeConvert::Gb2312ToUtf8(strPath) + "\\" + *itName;
+			Poco::File oldFile(strFileOldPath);
+			oldFile.copyTo(strNewFilePath);
+
+			if (i % nModelPicNums == 0)
+			{
+				pPaper = new ST_PaperInfo;
+				pPapers->lPaper.push_back(pPaper);
+				char szStudentInfo[20] = { 0 };
+				sprintf_s(szStudentInfo, "S%d", i / nModelPicNums + 1);
+				pPaper->strStudentInfo = szStudentInfo;
+				pPaper->pModel = _pModel_;
+				pPaper->pPapers = pPapers;
+				pPaper->pSrcDlg = m_pDlg;
+				pPaper->nIndex = i / nModelPicNums + 1;
+			}
+			pST_PicInfo pPic = new ST_PicInfo;
+			pPaper->lPic.push_back(pPic);
+
+			pPic->strPicName = strNewName;
+			pPic->strPicPath = CMyCodeConvert::Utf8ToGb2312(strNewFilePath);	// strNewFilePath;
+			pPic->pPaper = pPaper;
+			i++;
+		}
+	}
+	catch (Poco::Exception& exc)
+	{
+		strErr = "----------\r\n搜索文件夹图片失败，" + CMyCodeConvert::Utf8ToGb2312(exc.displayText()) + "----------\r\n";
+		bErr = true;
+	}
+	if (bErr)
+	{
+		CString strMsg;
+		strMsg.Format(_T("%s"), A2T(strErr.c_str()));
+		((CDataMgrToolDlg*)m_pDlg)->showMsg(strMsg);
+		return false;
+	}
+	return true;
+}
+
+void CDecompressThread::SearchDirPapers(std::string strPath)
+{
+	USES_CONVERSION;
+	bool bErr = false;
+	std::string strErr;
+	int nModelPicNums = _pModel_->nPicNum;
+	try
+	{
+		Poco::DirectoryIterator it(_strJpgSearchPath_);
+		Poco::DirectoryIterator end;
+		while (it != end)
+		{
+			Poco::Path p(it->path());
+			if (it->isDirectory())
+			{
+				std::string strDirName = p.getFileName();
+
+				pPAPERSINFO pPapers = NULL;
+				pPapers = new PAPERSINFO;
+
+				pPapers->nSendEzs = 2;
+
+				g_fmPapers.lock();
+				g_lPapers.push_back(pPapers);
+				g_fmPapers.unlock();
+				
+				SearchDirPaper(pPapers, CMyCodeConvert::Utf8ToGb2312(p.toString()));
+
+				//添加到识别任务列表
+				PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
+				for (; itPaper != pPapers->lPaper.end(); itPaper++)
+				{
+					pRECOGTASK pTask = new RECOGTASK;
+					pTask->pPaper = *itPaper;
+					g_lRecogTask.push_back(pTask);
+				}
+			}
+			it++;
+		}
+	}
+	catch (Poco::Exception& exc)
+	{
+		strErr = "----------\r\n搜索试卷袋文件夹失败，" + CMyCodeConvert::Utf8ToGb2312(exc.displayText()) + "----------\r\n";
+		bErr = true;
+	}
 	if (bErr)
 	{
 		CString strMsg;
