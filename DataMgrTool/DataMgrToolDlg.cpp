@@ -230,6 +230,7 @@ BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_WatchPic, &CDataMgrToolDlg::OnBnClickedBtnWatchpic)
 	ON_BN_CLICKED(IDC_BTN_WatchPapers, &CDataMgrToolDlg::OnBnClickedBtnWatchpapers)
 	ON_BN_CLICKED(IDC_BTN_WatchPaper, &CDataMgrToolDlg::OnBnClickedBtnWatchpaper)
+	ON_BN_CLICKED(IDC_CHK_AutoContract, &CDataMgrToolDlg::OnBnClickedChkAutocontract)
 END_MESSAGE_MAP()
 
 
@@ -275,6 +276,8 @@ BOOL CDataMgrToolDlg::OnInitDialog()
 	_nUseNewParam_ = false;
 	((CButton*)GetDlgItem(IDC_CHK_ReadParam))->SetCheck(0);
 	GetDlgItem(IDC_BTN_LoadParam)->EnableWindow(FALSE);
+
+	((CButton*)GetDlgItem(IDC_CHK_AutoContract))->SetCheck(g_nRecogWithContract);
 
 	SetTimer(TIMER_UPDATE_STARTBAR, 1000, NULL);
 
@@ -1435,7 +1438,6 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpapers()
 	g_lDecompressTask.push_back(pDecompressTask1);
 	g_fmDecompressLock.unlock();
 
-	g_nRecogWithContract = 1;	//自动对比度控制
 	g_nRecogChkRotation = 1;	//识别时检测方向
 	if (((CButton*)GetDlgItem(IDC_CHK_NeedRecogPkg))->GetCheck())
 		g_nRecogWithShowPkg = 1;
@@ -1478,5 +1480,14 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpaper()
 
 	//*******************	识别试卷袋文件夹的试卷
 	_strJpgSearchPath_ = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strJpgPath));
+
+	g_nRecogChkRotation = 1;	//识别时检测方向
 }
 
+void CDataMgrToolDlg::OnBnClickedChkAutocontract()
+{
+	if (((CButton*)GetDlgItem(IDC_CHK_AutoContract))->GetCheck())
+		g_nRecogWithContract = 1;
+	else
+		g_nRecogWithContract = 0;
+}

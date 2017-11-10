@@ -598,6 +598,7 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 		Mat imag_src, img_comp;
 		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
+		Mat matCompRoi2 = matCompRoi.clone();
 		if ((rc.eCPType == OMR || rc.eCPType == SN) && g_nRecogWithContract)
 		{
 			AutoContractBright(matCompRoi);
@@ -685,7 +686,7 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 		#if 1
 			MatND mean;
 			MatND stddev;
-			meanStdDev(matCompRoi, mean, stddev);
+			meanStdDev(matCompRoi, mean, stddev);	//matCompRoi
 
 			IplImage *src;
 			src = &IplImage(mean);
@@ -2037,6 +2038,13 @@ bool CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 	{
 		pPic->fWhiteAreaGray = fGrayCount / nWhiteAreaCount;
 		pPic->fWhiteAreaGrayModel = fGrayModel / nWhiteAreaCount;
+
+		if (g_nRecogWithContract)
+		{
+			float fDiff = pPic->fWhiteAreaGrayModel - pPic->fWhiteAreaGray;
+			m_nContract = 100 + fDiff;
+			m_nBright = fDiff;
+		}
 	}
 
 	if (!bResult)
@@ -2280,7 +2288,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				//(大于1.0是防止最小的灰度值很小的时候影响阀值判断)
 				float fDiff = (fCompThread - vecOmrItemDiff[i].fFirst) * 0.1;
 				if ((vecOmrItemDiff[i].fDiff >= fDiffThread && vecOmrItemDiff[i].fFirst > fCompThread) ||
-					(vecOmrItemDiff[i].fDiff >= fDiffThread + fDiff && vecOmrItemDiff[i].fFirst > (fCompThread - 0.1) && fDiff > 0))
+					(vecOmrItemDiff[i].fDiff >= fDiffThread + fDiff && (vecOmrItemDiff[i].fFirst > (fCompThread - 0.1) && fDiff > 0 && vecItemsDesc[i]->fRealMeanGray < _dCompThread_3_)))
 				{
 					nFlag = i;
 					fThreld = vecOmrItemDiff[i].fFirst;
@@ -2987,6 +2995,10 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 
 			cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
+			if ((itFirst->eCPType == OMR || itFirst->eCPType == SN) && g_nRecogWithContract)
+			{
+				AutoContractBright(matCompRoi);
+			}
 			//图片二值化
 			threshold(matCompRoi, matCompRoi, _nThreshold_Recog2_, 255, THRESH_BINARY_INV);				//200, 255
 
@@ -3052,6 +3064,11 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 //		matCompRoi.deallocate();
 		matCompRoi = matCompPic(cv::Rect(ptNew1, ptNew2));
 		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+		if ((itFirst->eCPType == OMR || itFirst->eCPType == SN) && g_nRecogWithContract)
+		{
+			AutoContractBright(matCompRoi);
+		}
 
 		//++先获取区域的平均值
 		int fAllMeanGray = 0.0;
@@ -4006,11 +4023,37 @@ bool CRecognizeThread::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 	}
 	else
 	{
-		for (int i = 0; i < vecVal_AnswerSuer.size(); i++)
+		bool bFind = false;
+		for (int i = 0; i < vecItemsGrayDesc.size(); i++)
 		{
-			char szVal[5] = { 0 };
-			sprintf_s(szVal, "%c", vecVal_AnswerSuer[i] + 65);
-			strRecogAnswer.append(szVal);
+			float fDiff = abs(vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray);
+			if (fDiff > fDiffThreshold && vecItemsGrayDesc[i]->fRealMeanGray < fCompThread)
+			{
+				fThreld = vecItemsGrayDesc[i]->fRealMeanGray > fThreld ? vecItemsGrayDesc[i]->fRealMeanGray : fThreld;
+				bFind = true;
+			}
+		}
+		if (bFind)
+		{
+			RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
+			for (; itItem != omrResult.lSelAnswer.end(); itItem++)
+			{
+				if (itItem->fRealMeanGray <= fThreld)
+				{
+					char szVal[2] = { 0 };
+					sprintf_s(szVal, "%c", itItem->nAnswer + 65);
+					strRecogAnswer.append(szVal);
+				}
+			}
+		}
+		else
+		{
+			for (int i = 0; i < vecVal_AnswerSuer.size(); i++)
+			{
+				char szVal[5] = { 0 };
+				sprintf_s(szVal, "%c", vecVal_AnswerSuer[i] + 65);
+				strRecogAnswer.append(szVal);
+			}
 		}
 	}
 #else

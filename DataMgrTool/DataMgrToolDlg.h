@@ -119,4 +119,5 @@ public:
 	afx_msg void OnBnClickedBtnWatchpic();
 	afx_msg void OnBnClickedBtnWatchpapers();
 	afx_msg void OnBnClickedBtnWatchpaper();
+	afx_msg void OnBnClickedChkAutocontract();
 };
