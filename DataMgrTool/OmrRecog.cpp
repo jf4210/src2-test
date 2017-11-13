@@ -368,6 +368,7 @@ bool COmrRecog::RecogZkzh(int nPic, cv::Mat& matCompPic, pMODEL	pModel, int nOri
 				if (strResult != "")
 				{
 					bResult = true;
+					TRACE("GetQR: %s\n", strResult.c_str());
 				}
 			}
 			catch (cv::Exception& exc)

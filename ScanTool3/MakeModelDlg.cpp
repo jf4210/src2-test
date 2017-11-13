@@ -2894,11 +2894,38 @@ bool CMakeModelDlg::checkValidity()
 	//准考证号检查
 	if (m_vecPaperModelInfo[0]->lSN.size() == 0)
 	{
-//		AfxMessageBox(_T("第1页准考证号未设置"));
 		CNewMessageBox dlg;
 		dlg.setShowInfo(2, 1, "第1页准考证号未设置");
 		dlg.DoModal();
 		bResult = false;
+	}
+
+	//omr漏点检查
+	for (int i = 0; i < m_vecPaperModelInfo.size(); i++)
+	{
+		int nOmrQuestions = m_vecPaperModelInfo[i]->vecOmr2.size();
+		for (int j = 0; j < nOmrQuestions; j++)
+		{
+			int nOmrItems = m_vecPaperModelInfo[i]->vecOmr2[j].lSelAnswer.size();
+			RECTLIST::iterator itOmr = m_vecPaperModelInfo[i]->vecOmr2[j].lSelAnswer.begin();
+			for (; itOmr != m_vecPaperModelInfo[i]->vecOmr2[j].lSelAnswer.end(); itOmr++)
+			{
+				if (itOmr->nAnswer > nOmrItems - 1)
+				{
+					char szTmp[100] = { 0 };
+					sprintf_s(szTmp, "第 %d 页第 %d 题选项数为%d个,实际选项顺序超出，请检查!", i + 1, m_vecPaperModelInfo[i]->vecOmr2[j].nTH, nOmrItems);
+					CNewMessageBox dlg;
+					dlg.setShowInfo(2, 1, szTmp);
+					dlg.DoModal();
+					bResult = false;
+					break;
+				}
+			}
+			if(!bResult)
+				break;
+		}
+		if (!bResult)
+			break;
 	}
 
 	return bResult;
@@ -6005,6 +6032,17 @@ BOOL CMakeModelDlg::DeleteRectInfo(CPType eType, int nItem)
 
 BOOL CMakeModelDlg::PreTranslateMessage(MSG* pMsg)
 {
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		if (pMsg->wParam == VK_ESCAPE)
+		{
+			return TRUE;
+		}
+		if (pMsg->wParam == VK_RETURN)
+		{
+			return TRUE;
+		}
+	}
 // 	if (ProcessMessage(*pMsg))
 // 		return TRUE;
 	return CDialog::PreTranslateMessage(pMsg);
@@ -6631,6 +6669,40 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 
 	std::sort(m_vecTmp.begin(), m_vecTmp.end(), SortByTH);
 
+	//SN漏点检查
+	if (m_pModel->nZkzhType == 1)
+	{
+		std::map<int, int> mapTH;
+		for (int i = 0; i < m_vecTmp.size(); i++)
+		{
+			bool bFind = false;
+			std::map<int, int>::iterator itMap = mapTH.begin();
+			for (; itMap != mapTH.end(); itMap++)
+			{
+				if (m_vecTmp[i].nTH == (int)itMap->first)
+				{
+					bFind = true;
+					itMap->second++;
+					break;
+				}
+			}
+			if (!bFind)
+				mapTH.insert(std::pair<int, int>(m_vecTmp[i].nTH, 1));
+		}
+		std::map<int, int>::iterator itMap = mapTH.begin();
+		for (; itMap != mapTH.end(); itMap++)
+		{
+			if (itMap->second != 10)
+			{
+				char szTmp[100] = { 0 };
+				sprintf_s(szTmp, "第 %d 列考号数为%d个，正常应该有10个，请检查!", (int)itMap->first, itMap->second);
+				CNewMessageBox dlg;
+				dlg.setShowInfo(2, 1, szTmp);
+				dlg.DoModal();
+			}
+		}
+	}
+
 	ShowTmpRect();
 }
 
@@ -6922,7 +6994,45 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 			m_vecTmp.clear();
 			return;
 		}
-	}	
+	}
+
+	//omr漏点检查
+	std::map<int, int> mapTH;
+	for (int i = 0; i < m_vecTmp.size(); i++)
+	{
+		bool bFind = false;
+		std::map<int, int>::iterator itMap = mapTH.begin();
+		for(; itMap != mapTH.end(); itMap++)
+		{
+			if (m_vecTmp[i].nTH == (int)itMap->first)
+			{
+				bFind = true;
+				itMap->second++;
+				break;
+			}
+		}
+		if (!bFind)
+			mapTH.insert(std::pair<int, int>(m_vecTmp[i].nTH, 1));
+	}
+	std::map<int, int>::iterator itMap = mapTH.begin();
+	for (; itMap != mapTH.end(); itMap++)
+	{
+		for (int i = 0; i < m_vecTmp.size(); i++)
+		{
+			if ((int)itMap->first == m_vecTmp[i].nTH)
+			{
+				if (m_vecTmp[i].nAnswer > itMap->second - 1)
+				{
+					char szTmp[100] = { 0 };
+					sprintf_s(szTmp, "第 %d 题选项数为%d个,实际选项顺序超出，请检查!", m_vecTmp[i].nTH, itMap->second);
+					CNewMessageBox dlg;
+					dlg.setShowInfo(2, 1, szTmp);
+					dlg.DoModal();
+					break;
+				}
+			}
+		}
+	}
 
 	ShowTmpRect();
 }

@@ -425,9 +425,19 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			}
 			if (bNeedDown)
 			{
-				Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(pModelInfo->strPath));
-				stModelInfo.nModelSize = static_cast<int>(fileModel.getSize());
-				pUser->SendResponesInfo(USER_RESPONSE_NEEDDOWN, RESULT_DOWNMODEL_OK, (char*)&stModelInfo, sizeof(stModelInfo));
+				try
+				{
+					Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(pModelInfo->strPath));
+					stModelInfo.nModelSize = static_cast<int>(fileModel.getSize());
+					pUser->SendResponesInfo(USER_RESPONSE_NEEDDOWN, RESULT_DOWNMODEL_OK, (char*)&stModelInfo, sizeof(stModelInfo));
+				}
+				catch (Poco::Exception& exc)
+				{
+					std::string strLog = "请求下载模板命令(" + std::string(szIndex) + ")-->检测模板文件路径异常: " + exc.displayText();
+					std::cout << strLog << std::endl;
+					g_Log.LogOut(strLog);
+					pUser->SendResult(USER_RESPONSE_NEEDDOWN, RESULT_DOWNMODEL_FAIL);
+				}
 			}
 			else
 				pUser->SendResult(USER_RESPONSE_NEEDDOWN, RESULT_DOWNMODEL_NONEED);

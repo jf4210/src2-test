@@ -995,6 +995,17 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			{
 				RECTINFO rcTmp = rcFix;
 				rcTmp.rt = RectCompList[k];
+
+				//根据定点左上点与右下点位置判断是否在试卷的边线上，如果在，则可能是折角或者边上有损坏
+				cv::Point pt1 = RectCompList[k].tl();
+				cv::Point pt2 = RectCompList[k].br();
+				int nDiff = 4;	//与图像边界的距离间隔在这个值之内，认为属于边界线上
+				if (pt1.x < nDiff || pt1.y < nDiff || matCompPic.cols - pt2.x < nDiff || matCompPic.rows - pt2.y < nDiff)
+				{
+					TRACE("矩形(%d,%d,%d,%d)位置距离边线太近，可能是折角或损坏\n", RectCompList[k].x, RectCompList[k].y, RectCompList[k].width, RectCompList[k].height);
+					continue;
+				}
+
 				Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
 				float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
 				float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
@@ -1015,9 +1026,6 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				bFindRect = true;
 			else
 			{
-				// 			rtFix.x = rtFix.x + rc.rt.x;
-				// 			rtFix.y = rtFix.y + rc.rt.y;
-
 				RECTINFO rcFixInfo = rc;
 				rcFixInfo.nTH = i;			//这是属于模板上定点列表的第几个
 				rcFixInfo.rt = rtFix;
@@ -2405,7 +2413,6 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				}
 			}
 	#endif
-
 
 	#ifdef Test_RecogOmr3
 		RecogVal_Omr2(nPic, matCompPic, pPic, pModelInfo, omrResult);
