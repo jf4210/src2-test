@@ -2051,7 +2051,7 @@ bool CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 		{
 			float fDiff = pPic->fWhiteAreaGrayModel - pPic->fWhiteAreaGray;
 			m_nContract = 100 + fDiff;
-			m_nBright = fDiff;
+			m_nBright = (200 + fDiff) * (1 - m_nContract / 100.0);
 		}
 	}
 
