@@ -89,6 +89,9 @@ private:
 
 	void InitParam();
 	void InitConfig();
+
+	static unsigned __stdcall ReleaseDirThread(void* pArguments);
+
 // й╣ож
 protected:
 	HICON m_hIcon;

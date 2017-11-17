@@ -703,17 +703,6 @@ bool	GetPosition2(cv::Mat& inverseMat, cv::Rect& rtSrc, cv::Rect& rtDst);
 
 void SharpenImage(const cv::Mat &image, cv::Mat &result, int nSharpKernel);
 
-//--------------	加载制卷工具导出的模板数据	-------------------
-// typedef struct _RectPos_
-// {
-// 	int nIndex;
-// 	cv::Rect rt;
-// }RECTPOS;
-// pMODEL	LoadMakePaperData(std::string strData);	//加载制卷工具导出的模板数据
-// bool Pdf2Jpg(std::string strPdfPath, std::string strBaseName);
-// bool InitModelRecog(pMODEL pModel);		//初始化制卷工具模板的识别参数
-//-----------------------------------------------------------------
-
 //----------------	OMR识别灰度差值比较	------------------
 typedef struct
 {

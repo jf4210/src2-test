@@ -102,6 +102,23 @@ bool InitConfig()
 	_strMainTitle_ = pConf->getString("Title.mainTitle", "慧学扫描客户端");
 	_strLitteTitle_ = pConf->getString("Title.littleTitle", "Tianyu big data scan tool");
 	_strCopyright_ = pConf->getString("Title.copyRight", "武汉天喻教育科技有限公司 2017~2018 版权所有");
+
+	try
+	{
+		CString strTitlePath = g_strCurrentPath;
+		strTitlePath.Append(_T("title.dat"));
+		std::string strTitleUtf8Path = CMyCodeConvert::Gb2312ToUtf8(T2A(strTitlePath));
+		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pTitleConf(new Poco::Util::IniFileConfiguration(strTitleUtf8Path));
+
+		_strMainTitle_ = pTitleConf->getString("Title.mainTitle", "慧学扫描客户端");
+		_strLitteTitle_ = pTitleConf->getString("Title.littleTitle", "Tianyu big data scan tool");
+		_strCopyright_ = pTitleConf->getString("Title.copyRight", "武汉天喻教育科技有限公司 2017~2018 版权所有");
+	}
+	catch (Poco::Exception exc)
+	{
+		TRACE("获取标题显示信息失败\n");
+	}
+
 	return true;
 }
 

@@ -674,6 +674,25 @@ void CDataMgrToolDlg::InitConfig()
 #endif
 }
 
+unsigned __stdcall CDataMgrToolDlg::ReleaseDirThread(void* pArguments)
+{
+	pPAPERSINFO   pPapers = (pPAPERSINFO)pArguments;
+
+	//删除源文件夹
+	try
+	{
+		Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
+		if (srcFileDir.exists())
+			srcFileDir.remove(true);
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strErr = "删除文件夹(" + pPapers->strPapersPath + ")失败: " + exc.message();
+		g_Log.LogOutError(strErr);
+	}
+	return 0;
+}
+
 void CDataMgrToolDlg::OnBnClickedMfcbuttonDecompress()
 {
 	UpdateData(TRUE);
@@ -955,18 +974,22 @@ LRESULT CDataMgrToolDlg::MsgRecogComplete(WPARAM wParam, LPARAM lParam)
 	{
 		showPapers(pPapers);
 
+
+		unsigned threadID;
+		_beginthreadex(NULL, 0, ReleaseDirThread, pPapers, 0, &threadID);
+
 		//删除源文件夹
-		try
-		{
-			Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
-			if (srcFileDir.exists())
-				srcFileDir.remove(true);
-		}
-		catch (Poco::Exception& exc)
-		{
-			std::string strErr = "删除文件夹(" + pPapers->strPapersPath + ")失败: " + exc.message();
-			g_Log.LogOutError(strErr);
-		}
+// 		try
+// 		{
+// 			Poco::File srcFileDir(CMyCodeConvert::Gb2312ToUtf8(pPapers->strPapersPath));
+// 			if (srcFileDir.exists())
+// 				srcFileDir.remove(true);
+// 		}
+// 		catch (Poco::Exception& exc)
+// 		{
+// 			std::string strErr = "删除文件夹(" + pPapers->strPapersPath + ")失败: " + exc.message();
+// 			g_Log.LogOutError(strErr);
+// 		}
 
 // 		g_fmPapers.lock();			//释放试卷袋列表
 // 		PAPERS_LIST::iterator itPapers = g_lPapers.begin();

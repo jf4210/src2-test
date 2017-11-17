@@ -280,6 +280,17 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 			{
 				RECTINFO rcTmp = rcFix;
 				rcTmp.rt = RectCompList[i];
+
+				//根据定点左上点与右下点位置判断是否在试卷的边线上，如果在，则可能是折角或者边上有损坏
+				cv::Point pt1 = RectCompList[i].tl();
+				cv::Point pt2 = RectCompList[i].br();
+				int nDiff = 4;	//与图像边界的距离间隔在这个值之内，认为属于边界线上
+				if (pt1.x < nDiff || pt1.y < nDiff || matCompPic.cols - pt2.x < nDiff || matCompPic.rows - pt2.y < nDiff)
+				{
+					TRACE("矩形(%d,%d,%d,%d)位置距离边线太近，可能是折角或损坏\n", RectCompList[i].x, RectCompList[i].y, RectCompList[i].width, RectCompList[i].height);
+					continue;
+				}
+
 				Recog(nPic, rcTmp, matCompPic, NULL, NULL);
 				float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
 				float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
@@ -957,6 +968,7 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 		return nResult;
 	}
 
+	cv::Mat matComp = matSrc.clone();
 	if (nModelPicPersent == nSrcPicPercent)	//与模板图片方向一致，需判断正向还是反向一致
 	{
 		TRACE("与模板图片方向一致\n");
@@ -964,12 +976,12 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 		{
 			//先查定点
 			RECTLIST lFix;
-			bool bResult = RecogFixCP(n, matSrc, lFix, _pModel_, i);
+			bool bResult = RecogFixCP(n, matComp, lFix, _pModel_, i);
 			// 			if (!bResult)
 			// 				continue;
 #ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
-			PicTransfer(0, matSrc, lFix, _pModel_->vecPaperModel[n]->lFix, inverseMat);
+			PicTransfer(0, matComp, lFix, _pModel_->vecPaperModel[n]->lFix, inverseMat);
 #endif
 
 			RECTLIST lModelTmp;
@@ -1016,7 +1028,7 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 				else
 					GetPosition(lFix, _pModel_->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
 
-				if (RecogRtVal(rcItem, matSrc))
+				if (RecogRtVal(rcItem, matComp))
 				{
 					if (rcItem.fRealDensity / rcGray.fStandardDensity > rcGray.fStandardValuePercent && rcItem.fRealValue / rcGray.fStandardValue > rcGray.fStandardValuePercent)
 					{
@@ -1056,7 +1068,7 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 				else
 					GetPosition(lFix, _pModel_->vecPaperModel[n]->lFix, rcItem.rt);		//根据实际定点个数获取矩形的相对位置，定点数为3或4时获取的实际上还是模板位置
 
-				if (RecogRtVal(rcItem, matSrc))
+				if (RecogRtVal(rcItem, matComp))
 				{
 					if (rcItem.fRealDensity / rcSubject.fStandardDensity > rcSubject.fStandardValuePercent && rcItem.fRealValue / rcSubject.fStandardValue > rcSubject.fStandardValuePercent)
 					{
@@ -1128,19 +1140,19 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 		{
 			//先查定点
 			RECTLIST lFix;
-			bool bResult = RecogFixCP(n, matSrc, lFix, _pModel_, i);
+			bool bResult = RecogFixCP(n, matComp, lFix, _pModel_, i);
 			// 			if (!bResult)
 			// 				continue;
 #ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
 			cv::Mat matDst;
-			PicTransfer2(0, matSrc, matDst, lFix, _pModel_->vecPaperModel[n]->lFix, inverseMat);
+			PicTransfer2(0, matComp, matDst, lFix, _pModel_->vecPaperModel[n]->lFix, inverseMat);
 #endif
 
 			RECTLIST lModelTmp;
 			if (lFix.size() < 3)
 			{
-				matDst = matSrc;
+				matDst = matComp;
 
 				RECTLIST::iterator itFix = lFix.begin();
 				for (auto itFix : lFix)
