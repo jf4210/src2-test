@@ -471,12 +471,10 @@ void CShowPapersDlg::ShowPaperListByType(int nType)
 			if (itemOmr.nDoubt == 1)
 			{
 				bHasDoubt = true;
-				break;
 			}
 			if (itemOmr.nDoubt == 2)
 			{
 				bHasNull = true;
-				break;
 			}
 		}
 
@@ -525,7 +523,8 @@ void CShowPapersDlg::ShowPaperListByType(int nType)
 
 		m_listPaper.SetItemData(nCount, (DWORD_PTR)pPaper);
 	}
-	m_listPaper.GetItemColors(m_nCurrItemPaperList, 0, crOldText, crOldBackground);
+	if(m_listPaper.GetItemCount() > m_nCurrItemPaperList)
+		m_listPaper.GetItemColors(m_nCurrItemPaperList, 0, crOldText, crOldBackground);
 }
 
 void CShowPapersDlg::setCheckStatus(int nStatus)

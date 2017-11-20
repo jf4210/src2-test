@@ -52,6 +52,8 @@ cv::Rect COmrRecog::GetRectByOrientation(cv::Rect& rtPic, cv::Rect rt, int nOrie
 
 bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODEL pModel, int nOrientation)
 {
+	TRACE("==> recogFixCP\n");
+
 	bool bResult = true;
 
 	RECTLIST::iterator itCP = pModel->vecPaperModel[nPic]->lSelFixRoi.begin();
@@ -106,9 +108,14 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 			matCompRoi = matCompPic(rc.rt);
 		#endif
 
+			TRACE("------>Recog Fix Sel 1: %d, rtTmp:(%d, %d, %d, %d), matCompRoi(%d, %d)\n", i, rtTmp.x, rtTmp.y, rtTmp.width, rtTmp.height, matCompRoi.cols, matCompRoi.rows);
+
 			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
+			TRACE("------>Recog Fix Sel 2: %d\n", i);
 			GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
+
+			TRACE("------>Recog Fix Sel 3: %d\n", i);
 			SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
 
 			int nRealThreshold = 150;
@@ -131,6 +138,7 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 			cv::MatND hist;
 			calcHist(&matCompRoi, 1, channels, cv::Mat(), hist, 1, histSize, ranges);	//histSize, ranges
 
+			TRACE("------>Recog Fix Sel 4: %d\n", i);
 			int nSum = 0;
 			int nDevSum = 0;
 			int nCount = 0;
@@ -163,6 +171,8 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 #else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
 #endif
+			TRACE("------>Recog Fix Sel 5: %d\n", i);
+
 			//去除干扰信息，先膨胀后腐蚀还原, 可去除一些线条干扰
 			cv::Mat element_Anticlutter = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(_nAnticlutterKernel_, _nAnticlutterKernel_));	//Size(6, 6)	普通空白框可识别		Size(3, 3)
 			dilate(matCompRoi, matCompRoi, element_Anticlutter);
@@ -289,8 +299,9 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 					TRACE("矩形(%d,%d,%d,%d)位置距离边线太近，可能是折角或损坏\n", RectCompList[i].x, RectCompList[i].y, RectCompList[i].width, RectCompList[i].height);
 					continue;
 				}
-
+				TRACE("--->recog gray val.\n");
 				Recog(nPic, rcTmp, matCompPic, NULL, NULL);
+				TRACE("<---recog gray val done.\n");
 				float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
 				float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
 				float fWper = (float)rcTmp.rt.width / rcFix.rt.width;			//查找的矩形的宽度与模板对应定点的宽度之比
@@ -521,6 +532,8 @@ bool COmrRecog::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo p
 
 int COmrRecog::GetRightPicOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 {
+	clock_t sTime, eTime;
+	sTime = clock();
 	int nResult = CheckOrientation(matSrc, n, bDoubleScan);
 	switch (nResult)	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
 	{
@@ -553,6 +566,8 @@ int COmrRecog::GetRightPicOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 		default: 
 			break;
 	}
+	eTime = clock();
+	TRACE("判断方向总时间: %d\n", eTime - sTime);
 	return nResult;
 }
 
@@ -980,6 +995,7 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 			bool bResult = RecogFixCP(n, matComp, lFix, _pModel_, i);
 			// 			if (!bResult)
 			// 				continue;
+			TRACE("recogFixCP done.\n");
 #ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
 			PicTransfer(0, matComp, lFix, _pModel_->vecPaperModel[n]->lFix, inverseMat);

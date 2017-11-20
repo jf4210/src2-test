@@ -50,6 +50,7 @@ void CDecompressThread::run()
 	eExit.reset();
 	while (!g_nExitFlag)
 	{
+		bool bSleepMoreTime = false;
 		pDECOMPRESSTASK pTask = NULL;
 		g_fmDecompressLock.lock();
 		DECOMPRESSTASKLIST::iterator it = g_lDecompressTask.begin();
@@ -57,6 +58,7 @@ void CDecompressThread::run()
 		{
 			if (g_lRecogTask.size() > 200)
 			{
+				bSleepMoreTime = true;
 				break;
 			}
 			pTask = *it;
@@ -66,7 +68,10 @@ void CDecompressThread::run()
 		g_fmDecompressLock.unlock();
 		if (NULL == pTask)
 		{
-			Poco::Thread::sleep(1000);
+			if (bSleepMoreTime)
+				Poco::Thread::sleep(3000);
+			else
+				Poco::Thread::sleep(1000);
 			continue;
 		}
 

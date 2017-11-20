@@ -52,6 +52,7 @@ void CRecognizeThread::run()
 		pTask = NULL;
 	}
 
+	_mapModelLock.lock();
 	std::map<pMODEL, pMODELINFO>::iterator it = _mapModel.begin();
 	for (; it != _mapModel.end();)
 	{
@@ -64,6 +65,8 @@ void CRecognizeThread::run()
 		}
 		it = _mapModel.erase(it);
 	}
+	_mapModelLock.unlock();
+
 	eExit.set();
 	TRACE("RecognizeThread exit 0\n");
 }
@@ -72,6 +75,7 @@ bool CRecognizeThread::HandleTask(pRECOGTASK pTask)
 {
 	//进行任务识别
 	pMODELINFO pModelInfo = NULL;
+	_mapModelLock.lock();
 	std::map<pMODEL, pMODELINFO>::iterator it = _mapModel.find(pTask->pPaper->pModel);		//pTask->pModel
 	if (it == _mapModel.end())
 	{
@@ -84,10 +88,14 @@ bool CRecognizeThread::HandleTask(pRECOGTASK pTask)
 		pModelInfo->pModel = pTask->pPaper->pModel;		//pTask->pModel;
 		bool bResult = LoadModel(pModelInfo);
 		if (!bResult)
+		{
+			_mapModelLock.unlock();
 			return bResult;
+		}
 	}
 	else
 		pModelInfo = it->second;
+	_mapModelLock.unlock();
 
 	PaperRecognise(pTask->pPaper, pModelInfo);
 
@@ -154,6 +162,8 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		if (!nCount)	//如果当前模板试卷没有校验点就不需要进行试卷打开操作，直接下一张试卷
 			continue;
 
+		TRACE("start recog: %s\n", (*itPic)->strPicName.c_str());
+
 		std::string strPicFileName = (*itPic)->strPicName;
 		Mat matCompSrcPic;
 		bool bOpenSucc = false;
@@ -203,28 +213,75 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			m_nContract = 100;
 			m_nBright = 0;
 		}
+		
+		clock_t sTimeTmp, eTimeTmp;
+		int nTime[15] = { 0 };		//每步操作耗时
+		sTimeTmp = clock();
 
 		pPAPERSINFO pCurrentPapers = static_cast<pPAPERSINFO>(pPaper->pPapers);
 		if (g_nRecogMode == 1)		//pCurrentPapers->nRecogMode == 1
 		{
 			if (g_nRecogChkRotation)
+			{
 				ChkPicRotation(nPic, matCompPic, *itPic, pModelInfo);
+				eTimeTmp = clock();
+				nTime[0] = eTimeTmp - sTimeTmp;
+				sTimeTmp = clock();
+			}
 			bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
+			eTimeTmp = clock();
+			nTime[1] = eTimeTmp - sTimeTmp;
+			sTimeTmp = clock();
 		#ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
 			bResult = PicTransfer(nPic, matCompPic, (*itPic)->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, inverseMat);
+			eTimeTmp = clock();
+			nTime[2] = eTimeTmp - sTimeTmp;
+			sTimeTmp = clock();
 		#endif
 			bResult = RecogHHead(nPic, matCompPic, *itPic, pModelInfo);
+			eTimeTmp = clock();
+			nTime[3] = eTimeTmp - sTimeTmp;
+			sTimeTmp = clock();
 			bResult = RecogVHead(nPic, matCompPic, *itPic, pModelInfo);
+			eTimeTmp = clock();
+			nTime[4] = eTimeTmp - sTimeTmp;
+			sTimeTmp = clock();
 			bResult = RecogABModel(nPic, matCompPic, *itPic, pModelInfo);
+			eTimeTmp = clock();
+			nTime[5] = eTimeTmp - sTimeTmp;
+			sTimeTmp = clock();
 			bResult = RecogCourse(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
+			eTimeTmp = clock();
+			nTime[6] = eTimeTmp - sTimeTmp;
+			sTimeTmp = clock();
 			bResult = RecogQKCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
+			eTimeTmp = clock();
+			nTime[7] = eTimeTmp - sTimeTmp;
+			sTimeTmp = clock();
 			bResult = RecogWJCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
+			eTimeTmp = clock();
+			nTime[8] = eTimeTmp - sTimeTmp;
+			sTimeTmp = clock();
 			bResult = RecogGrayCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
+			eTimeTmp = clock();
+			nTime[9] = eTimeTmp - sTimeTmp;
+			sTimeTmp = clock();
 			bResult = RecogWhiteCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode);
+			eTimeTmp = clock();
+			nTime[10] = eTimeTmp - sTimeTmp;
+			sTimeTmp = clock();
 			bResult = RecogSN(nPic, matCompPic, *itPic, pModelInfo);
+			eTimeTmp = clock();
+			nTime[11] = eTimeTmp - sTimeTmp;
+			sTimeTmp = clock();
 			bResult = RecogOMR(nPic, matCompPic, *itPic, pModelInfo);
+			eTimeTmp = clock();
+			nTime[12] = eTimeTmp - sTimeTmp;
+			sTimeTmp = clock();
 			bResult = RecogElectOmr(nPic, matCompPic, *itPic, pModelInfo);
+			eTimeTmp = clock();
+			nTime[13] = eTimeTmp - sTimeTmp;
 		}
 		else
 		{
@@ -256,8 +313,13 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		
 		end_pic = clock();
 		TRACE("试卷 %s 打开时间: %d, 识别总时间: %d\n", strPicFileName.c_str(), end1_pic - start_pic, end_pic - start_pic);
+
+		std::string strTimeTmp;
+		for (int i = 0; i < 14; i++)
+			strTimeTmp.append(Poco::format("%d:", nTime[i]));
+
 		char szLog[MAX_PATH] = { 0 };
-		sprintf_s(szLog, "试卷 %s 打开时间: %d, 识别总时间: %d\n", strPicFileName.c_str(), end1_pic - start_pic, end_pic - start_pic);
+		sprintf_s(szLog, "试卷 %s 打开时间: %d, time2 = %s, 识别总时间: %d\n", strPicFileName.c_str(), end1_pic - start_pic, strTimeTmp.c_str(), end_pic - start_pic);
 		g_Log.LogOut(szLog);
 	}
 
@@ -744,6 +806,8 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 
 bool CRecognizeThread::ChkPicRotation(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
+	TRACE("ChkPicRotation: %s\n", pPic->strPicName.c_str());
+
 	bool bDoubleScan = pModelInfo->pModel->vecPaperModel.size() % 2 == 0 ? true : false;
 
 	int nResult = _chkRotationObj.GetRightPicOrientation(matCompPic, nPic, bDoubleScan);
@@ -767,6 +831,8 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 	bool bResult = true;
 // 	if (pModelInfo->pModel->nHasHead != 0)	//有同步头的，不需要进行定点识别
 // 		return bResult;
+
+	TRACE("recog Fix: %s\n", pPic->strPicName.c_str());
 
 	clock_t start, end;
 	start = clock();
@@ -1063,6 +1129,8 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 	bool bResult = true;
 	if (pModelInfo->pModel->nHasHead == 0)
 		return true;
+
+	TRACE("recog HHead: %s\n", pPic->strPicName.c_str());
 
 	std::string strErrDesc;
 	m_vecH_Head.clear();
@@ -1361,6 +1429,8 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 	bool bResult = true;
 	if (pModelInfo->pModel->nHasHead == 0)
 		return true;
+
+	TRACE("recog VHead: %s\n", pPic->strPicName.c_str());
 
 	std::string strErrDesc;
 	m_vecV_Head.clear();
@@ -1979,6 +2049,8 @@ bool CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 
 bool CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, int nRecogMode /*= 2*/)
 {
+	TRACE("recog WhiteCP: %s\n", pPic->strPicName.c_str());
+
 	bool bResult = true;
 	float fGrayCount = 0.0;
 	float fGrayModel = 0.0;
@@ -2067,6 +2139,8 @@ bool CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 
 bool CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
+	TRACE("recog SN: %s\n", pPic->strPicName.c_str());
+
 	bool bResult = true;
 	if (pModelInfo->pModel->nZkzhType == 2)
 		bResult = RecogSn_code(nPic, matCompPic, pPic, pModelInfo);
@@ -2077,6 +2151,8 @@ bool CRecognizeThread::RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, 
 
 bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
+	TRACE("recog Omr: %s\n", pPic->strPicName.c_str());
+
 	int nNullCount = 0;
 	int nDoubtCount = 0;
 	int nEqualCount = 0;
@@ -2088,6 +2164,8 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	start = clock();
 	std::string strLog;
 	strLog = Poco::format("图片%s\n", pPic->strPicName);
+
+	std::string strTmpTime;
 
 	bool bRecogAll = true;
 	bool bResult = true;
@@ -2101,6 +2179,10 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		omrResult.nTH = pOmrQuestion->nTH;
 		omrResult.nSingle = pOmrQuestion->nSingle;
 		omrResult.nPageId = nPic + 1;
+
+		int nTmpTime[6] = { 0 };	//计算每步时间
+		clock_t sTime, eTime;
+		sTime = clock();
 
 		std::vector<int> vecVal_calcHist;		//直方图灰度计算的识别结果
 		std::vector<int> vecVal_threshold;		//二值化计算的识别结果
@@ -2146,6 +2228,10 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			pPic->lNormalRect.push_back(rc);
 			#endif
 		}
+
+		eTime = clock();
+		nTmpTime[0] = eTime - sTime;
+		sTime = clock();
 
 	#if 1
 		std::string strRecogAnswer;
@@ -2413,11 +2499,24 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				}
 			}
 	#endif
+		
+		eTime = clock();
+		nTmpTime[1] = eTime - sTime;
+		sTime = clock();
 
 	#ifdef Test_RecogOmr3
 		RecogVal_Omr2(nPic, matCompPic, pPic, pModelInfo, omrResult);
+
+		eTime = clock();
+		nTmpTime[2] = eTime - sTime;
+		sTime = clock();
+
 		RecogVal_Omr3(nPic, matCompPic, pPic, pModelInfo, omrResult);
-		
+
+		eTime = clock();
+		nTmpTime[3] = eTime - sTime;
+		sTime = clock();
+
 		std::string strRecogAnswer2 = omrResult.strRecogVal2;
 		std::string strRecogAnswer3 = omrResult.strRecogVal3;
 
@@ -2588,6 +2687,11 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		omrResult.fWhiteAreaGray = pPic->fWhiteAreaGray;
 		omrResult.fWhiteAreaGrayModel = pPic->fWhiteAreaGrayModel;
 		(static_cast<pST_PaperInfo>(pPic->pPaper))->lOmrResult.push_back(omrResult);
+
+
+		eTime = clock();
+		nTmpTime[4] = eTime - sTime;
+		strTmpTime.append(Poco::format("[TH:%d, %d:%d:%d:%d:%d] ", omrResult.nTH, nTmpTime[0], nTmpTime[1], nTmpTime[2], nTmpTime[3], nTmpTime[4]));
 	}
 	if (!bResult)
 	{
@@ -2615,7 +2719,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		strLog.append(szStatistics);
 	}	
 	end = clock();
-	std::string strTime = Poco::format("识别Omr时间: %dms\n", (int)(end - start));
+	std::string strTime = Poco::format("识别Omr时间: %dms\n%s\n", (int)(end - start), strTmpTime);
 	strLog.append(strTime);
 	g_Log.LogOut(strLog);
 	return bResult;
@@ -2623,6 +2727,8 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 
 bool CRecognizeThread::RecogElectOmr(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo)
 {
+	TRACE("recog ElectOmr: %s\n", pPic->strPicName.c_str());
+
 	bool bResult = true;
 
 	std::vector<int> vecOmr;
@@ -2939,6 +3045,9 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 				break;
 		}
 	}
+	if (pt1 == pt2)
+		return bResult;
+
 // 	pt1 = itItem->rt.tl() - cv::Point(3, 3);
 // 	pt2 = itEndItem->rt.br() + cv::Point(3, 3);
 	Rect rt = cv::Rect(pt1, pt2);	//ABCD整个题目的选项区
@@ -2982,6 +3091,11 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 	nOmrMinH = itFirst->rt.height * 0.4;
 	nAreaMin = itFirst->rt.area() * 0.3;
 	//根据大小、面积先过滤一下可能框选到题号的情况
+
+	std::string strTmpTime;
+	int nTmpTime[6] = { 0 };	//计算每步时间
+	clock_t sTime, eTime;
+	sTime = clock();
 
 	try
 	{
@@ -3067,6 +3181,11 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 			ptNew1 = pt1;
 			ptNew2 = pt2;
 		}
+
+		eTime = clock();
+		nTmpTime[0] = eTime - sTime;
+		sTime = clock();
+
 		//根据新的坐标点计算新选项区矩形的填涂情况
 //		matCompRoi.deallocate();
 		matCompRoi = matCompPic(cv::Rect(ptNew1, ptNew2));
@@ -3078,38 +3197,42 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 		}
 
 		//++先获取区域的平均值
-		int fAllMeanGray = 0.0;
-		int fAllGrayStddev = 0.0;
-		MatND mean;
-		MatND stddev;
-		meanStdDev(matCompRoi, mean, stddev);
-
-		IplImage *src;
-		src = &IplImage(mean);
-		for (int i = 0; i < mean.rows; i++)
-		{
-			for (int j = 0; j < mean.cols; j++)
-			{
-				double ImgPixelVal = cvGetReal2D(src, i, j);
-				fAllMeanGray = ImgPixelVal;
-				//输出像素值
-				TRACE("图像的均值: %f\n", ImgPixelVal);
-			}
-		}
-
-		IplImage *src2;
-		src2 = &IplImage(stddev);
-		for (int i = 0; i < stddev.rows; i++)
-		{
-			for (int j = 0; j < stddev.cols; j++)
-			{
-				double ImgPixelVal = cvGetReal2D(src2, i, j);
-				fAllGrayStddev = ImgPixelVal;
-				//输出像素值
-				TRACE("标准差: %f\n", ImgPixelVal);
-			}
-		}
+// 		int fAllMeanGray = 0.0;
+// 		int fAllGrayStddev = 0.0;
+// 		MatND mean;
+// 		MatND stddev;
+// 		meanStdDev(matCompRoi, mean, stddev);
+// 
+// 		IplImage *src;
+// 		src = &IplImage(mean);
+// 		for (int i = 0; i < mean.rows; i++)
+// 		{
+// 			for (int j = 0; j < mean.cols; j++)
+// 			{
+// 				double ImgPixelVal = cvGetReal2D(src, i, j);
+// 				fAllMeanGray = ImgPixelVal;
+// 				//输出像素值
+// 				TRACE("图像的均值: %f\n", ImgPixelVal);
+// 			}
+// 		}
+// 
+// 		IplImage *src2;
+// 		src2 = &IplImage(stddev);
+// 		for (int i = 0; i < stddev.rows; i++)
+// 		{
+// 			for (int j = 0; j < stddev.cols; j++)
+// 			{
+// 				double ImgPixelVal = cvGetReal2D(src2, i, j);
+// 				fAllGrayStddev = ImgPixelVal;
+// 				//输出像素值
+// 				TRACE("标准差: %f\n", ImgPixelVal);
+// 			}
+// 		}
 		//--
+
+		eTime = clock();
+		nTmpTime[1] = eTime - sTime;
+		sTime = clock();
 
 		//++先获取均值和标准差，再计算新的二值化阀值	2017.4.27
 		const int channels[1] = { 0 };
@@ -3153,6 +3276,11 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 		//图片二值化
 		threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY_INV);		//_nThreshold_Recog2_		//200, 255
 
+
+		eTime = clock();
+		nTmpTime[2] = eTime - sTime;
+		sTime = clock();
+
 		//这里进行开闭运算
 		//确定腐蚀和膨胀核的大小
 		Mat element = getStructuringElement(MORPH_RECT, Size(6, 6));	//Size(4, 4)
@@ -3195,6 +3323,10 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 					itRect++;
 			}
 		}		
+
+		eTime = clock();
+		nTmpTime[3] = eTime - sTime;
+		sTime = clock();
 
 		//接下来根据位置信息判断abcd
 		float fThreod;
@@ -3391,6 +3523,13 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 			}
 		}
 		strResult = strRecogAnswer;
+
+
+		eTime = clock();
+		nTmpTime[4] = eTime - sTime;
+
+		strTmpTime.append(Poco::format("recog omr 2: (%d:%d:%d:%d:%d) ", nTmpTime[0], nTmpTime[1], nTmpTime[2], nTmpTime[3], nTmpTime[4]));
+		TRACE(strTmpTime.c_str());
 	}
 	catch (cv::Exception &exc)
 	{

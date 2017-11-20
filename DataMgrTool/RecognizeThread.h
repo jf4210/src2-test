@@ -62,6 +62,7 @@ public:
 	int calcOmrGrayDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemDiff);
 	Poco::Event		eExit;
 private:
+	Poco::FastMutex	_mapModelLock;
 	std::map<pMODEL, pMODELINFO> _mapModel;		//本线程已经读取的模板列表，防止同样的模板多次读取浪费时间
 	std::vector<std::vector<cv::Point>> m_vecContours;
 	std::vector<RECTINFO> m_vecH_Head;
