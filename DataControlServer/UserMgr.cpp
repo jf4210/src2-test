@@ -95,14 +95,49 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			else
 			{
 				pTask = new SCAN_REQ_TASK;
-				pTask->strUri		= SysSet.m_strBackUri + "/login";
-				pTask->pUser		= pUser;
-				pTask->strMsg		= "login";
-				pTask->strUser		= LoginInfo.szUserNo;
-				pTask->strPwd		= LoginInfo.szPWD;
-				char szTmp[200] = { 0 };
-				sprintf(szTmp, "username=%s&password=%s", LoginInfo.szUserNo, LoginInfo.szPWD);
-				pTask->strRequest = szTmp;
+				pTask->pUser = pUser;
+				pTask->strUser = LoginInfo.szUserNo;
+				pTask->strPwd = LoginInfo.szPWD;
+
+				switch (SysSet.m_nUseThirdPlatform)
+				{
+					case 1:		//武汉天喻
+						{
+							std::string strAppKey = "SP0000000TEST";
+							std::string strAppValue = "63d4311d46714a39-a54cf2b0537a79b6TEST";
+							std::string strMsgFormat = "json";
+							std::string strMethod = "login111";
+							std::string strPwd = LoginInfo.szPWD;
+							std::string strUser = LoginInfo.szUserNo;
+							std::string strSha1Src = Poco::format("%sappKey%smessageFormat%smethod%spassword%susername%sv1.0%s", strAppValue, strAppKey, strMsgFormat, strMethod, strPwd, strUser, strAppValue);
+							Poco::SHA1Engine engine;
+							engine.update(strSha1Src);
+							std::string strSHA1 = Poco::DigestEngine::digestToHex(engine.digest());
+							std::string strSHA1_Up = Poco::toUpper(strSHA1);
+							std::string strUriValue = Poco::format("/router?appKey=%s&messageFormat=%s&method=%s&password=%s&sign=%s&username=%s&v=1.0", strAppKey, strMsgFormat, strMethod, strPwd, strSHA1_Up, strUser);
+
+							pTask->strUri = SysSet.m_str3PlatformUrl + strUriValue;
+							pTask->strMsg = "login2Ty";
+						}
+						break;
+					case 2:		//山西寰烁
+						{
+							pTask->strUri = SysSet.m_str3PlatformUrl + "?username=" + pTask->strUser + "&password=" + pTask->strPwd;
+							pTask->strMsg = "login_SanXi_huanshuo";
+						}
+						break;
+					default:	//默认易考乐学后端平台
+						{
+							pTask->strUri = SysSet.m_strBackUri + "/login";
+							pTask->strMsg = "login";
+							char szTmp[200] = { 0 };
+							sprintf(szTmp, "username=%s&password=%s", LoginInfo.szUserNo, LoginInfo.szPWD);
+							pTask->strRequest = szTmp;
+						}
+				}
+
+				std::string strLog = Poco::format("登录命令: msg = %s\nurl = %s", pTask->strMsg, pTask->strUri);
+				g_Log.LogOut(strLog);
 			}
 		#else
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
@@ -122,9 +157,10 @@ int CUserMgr::HandleHeader(CMission* pMission)
 		break;
 	case USER_LOGIN_4TY:
 		{
+			//2017.11.22  登录天喻多平台时，修改platformurl ==> platformUrl
 			ST_LOGIN_INFO4TY  LoginInfo = *(pStLoginInfo4TY)(pMission->m_pMissionData + HEAD_SIZE);
 			std::cout << "login info: " << LoginInfo.szUserNo << ", pwd: " << LoginInfo.szPWD << ", platformcode: " << LoginInfo.szPlatformCode <<
-				", encryption: " << LoginInfo.szEncryption << ", platformurl: " << LoginInfo.szPlatformUrl << std::endl;
+				", encryption: " << LoginInfo.szEncryption << ", platformUrl: " << LoginInfo.szPlatformUrl << std::endl;
 			std::string strAppKey = "SP0000000TEST";
 			std::string strAppValue = "63d4311d46714a39-a54cf2b0537a79b6TEST";
 			std::string strMsgFormat = "json";
@@ -144,7 +180,10 @@ int CUserMgr::HandleHeader(CMission* pMission)
 												   strAppKey, strEncryption, strMsgFormat, strMethod, strPwd, strPlatformCode, strPlatformUrl, strSHA1_Up, strUser);
 
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
-			pTask->strUri	= SysSet.m_strBackUri + strUriValue;
+			if (SysSet.m_nServerMode == 0)	//非天喻服务器模式，则进入此处为登录第3方天喻平台
+				pTask->strUri = SysSet.m_str3PlatformUrl + strUriValue;
+			else
+				pTask->strUri	= SysSet.m_strBackUri + strUriValue;
 			pTask->pUser	= pUser;
 			pTask->strMsg	= "login2Ty";
 			pTask->strUser	= LoginInfo.szUserNo;
@@ -461,8 +500,6 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			{
 				pMODELINFO pModelInfo = itFind->second;
 				
-				
-
  				std::string strFileData;
 
 				std::ifstream fin(pModelInfo->strPath, std::ifstream::binary);
@@ -479,7 +516,6 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				int nLen = strFileData.length();
 				std::cout << "模板长度: " << nLen << std::endl;
 				
-
 // 				ofstream out("1.mod", std::ios::binary);
 // 				std::stringstream buffer2;
 // 				buffer2.write(strFileData.c_str(), strFileData.length());
@@ -488,6 +524,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 // 				out.close();
 
 				pUser->SendResponesInfo(USER_RESPONSE_DOWNMODEL, RESULT_DOWNMODEL_RECV, (char*)strFileData.c_str(), strFileData.length());
+				std::cout << "下载考试模板文件完成: " << szIndex << std::endl;
 			}
 		}
 		break;
@@ -705,12 +742,14 @@ int CUserMgr::HandleHeader(CMission* pMission)
 
 // 			std::string strModelPicPath = Poco::format("%s\\%d\\%d_%d_%d_#_%s", CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strModelSavePath), stModelPic.nExamID,\
 // 												   stModelPic.nExamID, stModelPic.nSubjectID, stModelPic.nIndex, CMyCodeConvert::Gb2312ToUtf8(stModelPic.szPicName));
+			std::string strLog;
 			try
 			{
 				Poco::File modelPic(strModelPicPath);
 				if (!modelPic.exists())
 				{
 					nResult = RESULT_UP_MODEL_PIC_SEND;
+					strLog = "可以发送模板图片：" + strModelPicPath;
 					std::cout << "可以发送模板图片：" << strModelPicPath << std::endl;
 				}
 				else
@@ -719,22 +758,26 @@ int CUserMgr::HandleHeader(CMission* pMission)
 					if (strMd5 == stModelPic.szMD5)
 					{
 						nResult = RESULT_UP_MODEL_PIC_NONEED;
+						strLog = "不需要发送模板图片：" + strModelPicPath;
 						std::cout << "不需要发送模板图片：" << strModelPicPath << std::endl;
 					}
 					else
 					{
 						nResult = RESULT_UP_MODEL_PIC_SEND;
+						strLog = "可以发送模板图片：" + strModelPicPath;
 						std::cout << "可以发送模板图片：" << strModelPicPath << std::endl;
 					}
 				}
 			}
 			catch (Poco::Exception& e)
 			{
+				strLog = "检测模板图片路径异常：" + e.displayText();
 				std::cout << "检测模板图片路径异常: "<< e.displayText() << std::endl;
 				nResult = RESULT_UP_MODEL_PIC_SEND;
 			}
 			
 			pUser->SendResponesInfo(USER_RESPONSE_NEED_UP_MODEL_PIC, nResult, (char*)&stModelPic, sizeof(stModelPic));
+			g_Log.LogOut(strLog);
 		}
 		break;
 	case USER_GET_MODEL_PIC:

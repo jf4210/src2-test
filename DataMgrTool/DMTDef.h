@@ -17,6 +17,7 @@
 //#define PIC_RECTIFY_TEST	//图像旋转纠正测试
 #define WarpAffine_TEST		//仿射变换测试
 #define PaintOmrSnRect		//是否打印识别出来的OMR矩形
+#define PrintRunTime		//打印运行时间
 #ifdef _DEBUG
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define PrintAllOmrVal		//打印所有OMR选项值
@@ -43,7 +44,7 @@
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION	_T("1.71117-1")
+#define SOFT_VERSION	_T("1.71121-3")
 #define SYS_BASE_NAME	_T("YKLX-DMT")
 //#define WH_CCBKS		//武汉楚才杯专用，解析二维码需要json解析
 
@@ -59,6 +60,7 @@ extern int					g_nRecogChkRotation;	//识别图像时检测并调整图像方向
 extern int					g_nRecogEasyModel;	//识别结果宽容模式(3选2且非空)，第2种识别方法准确度不高
 extern int					g_nRecogWithShowPkg;	//在重新识别试卷袋后显示此试卷袋信息
 extern int					g_nRecogWithContract;	//重识别时使用自动对比度调节，即检查试卷的灰度与模板的平均灰度差，根据此差值调节Omr、Sn的对比度和亮度
+extern int					g_nFastRecogModel;		//进行快速识别模式，识别时减少写日志操作
 
 extern std::string _strEncryptPwd_;
 extern pMODEL _pModel_;

@@ -310,6 +310,7 @@ typedef struct _ScanReqTask_
 	int			nExamID;
 	int			nSubjectID;
 	int			nTeacherID;
+	int			nLoginFlag;		//登录第3方平台标识，要求先登录第3方，成功后再登录易考乐学后台平台, 0-第一次登录，1-第一次登录第3方平台成功
 	CNetUser*	pUser;
 	std::string strRequest;
 	std::string strUri;
@@ -325,6 +326,7 @@ typedef struct _ScanReqTask_
 		nExamID = 0;
 		nSubjectID = 0;
 		nTeacherID = 0;
+		nLoginFlag = 0;
 	}
 }SCAN_REQ_TASK, *pSCAN_REQ_TASK;
 typedef std::list<pSCAN_REQ_TASK> LIST_SCAN_REQ;

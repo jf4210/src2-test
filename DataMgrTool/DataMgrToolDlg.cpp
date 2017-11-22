@@ -47,6 +47,7 @@ int				g_nRecogChkRotation = 0;	//识别图像时检测并调整图像方向
 int				g_nRecogEasyModel = 0;	//识别结果宽容模式(3选2且非空)，第2种识别方法准确度不高
 int				g_nRecogWithShowPkg = 0;	//在重新识别试卷袋后显示此试卷袋信息
 int				g_nRecogWithContract = 0;	//重识别时使用自动对比度调节，即检查试卷的灰度与模板的平均灰度差，根据此差值调节Omr、Sn的对比度和亮度
+int				g_nFastRecogModel = 0;		//进行快速识别模式，识别时减少写日志操作
 
 CLog g_Log;
 int	g_nExitFlag;
@@ -877,6 +878,7 @@ void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
 		g_nRecogChkRotation = dlg.m_nRecogChkRotation;
 		g_nRecogEasyModel = dlg.m_nRecogEasyModel;
 		g_nRecogWithContract = dlg.m_nAutoContract;
+		g_nFastRecogModel = dlg.m_nFastRecogModel;
 
 		_fmDecompress_.lock();
 		_nDecompress_++;

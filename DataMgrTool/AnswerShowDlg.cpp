@@ -90,6 +90,7 @@ void CAnswerShowDlg::InitData(pST_PaperInfo pPaper)
 	{
 		while (m_lAnswerListCtrl.DeleteColumn(1));
 		m_lAnswerListCtrl.DeleteAllItems();
+		m_nCurrentItem = -1;
 
 		OMRRESULTLIST::iterator it = pPaper->lOmrResult.begin();
 		for (int i = 1; it != pPaper->lOmrResult.end(); it++, i++)
@@ -405,7 +406,8 @@ void CAnswerShowDlg::OnNMDblclkListAnswer(NMHDR *pNMHDR, LRESULT *pResult)
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 	*pResult = 0;
 
-	UnSetListCtrlHighLightShow(m_lAnswerListCtrl, m_nCurrentItem);
+	if(m_nCurrentItem < m_lAnswerListCtrl.GetColumns())
+		UnSetListCtrlHighLightShow(m_lAnswerListCtrl, m_nCurrentItem);
 	m_nCurrentItem = pNMItemActivate->iSubItem;
 
 	SetListCtrlHighLightShow(m_lAnswerListCtrl, m_nCurrentItem);

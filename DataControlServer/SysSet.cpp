@@ -44,8 +44,14 @@ bool CSysSet::Load(std::string& strConfPath)
 	m_strEncryptPwd		= pConf->getString("Sys.encryptPwd", "yklxTest");
 	m_strSessionName	= pConf->getString("Sys.sessionName", "ezs");
 	m_strVerServerIP	= pConf->getString("VerServerInfo.addr", "116.211.105.45");
-	m_strPicWwwNetAddr = pConf->getString("UpHttp.picWwwNetAddr", "");
-	m_nHeartPacketTime = pConf->getInt("UpHttp.sessionKeepAlive", 300);
+	m_strPicWwwNetAddr	= pConf->getString("UpHttp.picWwwNetAddr", "");
+	m_nHeartPacketTime	= pConf->getInt("UpHttp.sessionKeepAlive", 300);
+	m_nUseThirdPlatform = pConf->getInt("UpHttp.useThirdPlatform", 0);
+	m_str3PlatformUrl	= pConf->getString("ThirdPlatform.url");
+	m_strLoginYklxPwd	= pConf->getString("ThirdPlatform.loginYklxPwd", "12345678");
+
+	if (m_str3PlatformUrl.empty())	//若第3方平台的url为空，则不使用第3方登录平台登录
+		m_nUseThirdPlatform = 0;
 
 	//++获取不同类型文件上传的地址信息
 	std::string strBaseExtName;

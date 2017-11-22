@@ -22,6 +22,7 @@ public:
 	int m_nVerServerPort;	//版本控制服务器的地址信息
 
 	int	m_nServerMode;		//服务类型，0--易考乐学，1--天喻(登录和获取考试通过天喻接口)
+	int m_nUseThirdPlatform;	//是否使用第3方登录平台
 
 	int m_nHandleCmdThreads;	//处理接收到的网络命令线程
 	int m_nDecompressThreads;
@@ -52,6 +53,8 @@ public:
 	string m_strVerServerIP;	//版本控制服务器的地址信息
 	string m_strPicWwwNetAddr;	//图片的外网访问地址
 	string m_strFileAddrs;		//文件上传地址信息
+	string m_str3PlatformUrl;	//第3方登录平台url
+	string m_strLoginYklxPwd;	//登录第3方平台成功后，再登录易考乐学后端平台的默认密码
 };
 
 #define SysSet CSysSet::GetRef()

@@ -56,7 +56,7 @@ void CDecompressThread::run()
 		DECOMPRESSTASKLIST::iterator it = g_lDecompressTask.begin();
 		for (; it != g_lDecompressTask.end();)
 		{
-			if (g_lRecogTask.size() > 200)
+			if (g_lRecogTask.size() > 1000)
 			{
 				bSleepMoreTime = true;
 				break;
@@ -69,7 +69,7 @@ void CDecompressThread::run()
 		if (NULL == pTask)
 		{
 			if (bSleepMoreTime)
-				Poco::Thread::sleep(3000);
+				Poco::Thread::sleep(2000);
 			else
 				Poco::Thread::sleep(1000);
 			continue;

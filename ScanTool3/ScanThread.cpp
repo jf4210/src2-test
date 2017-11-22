@@ -183,7 +183,12 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	TW_INT16  twrc = TWRC_FAILURE;
 
 #if 1
+	#ifdef _DEBUG
+	twrc = set_CapabilityOneValue(ICAP_XFERMECH, TWSX_MEMORY, TWTY_UINT16);
+	#else
 	twrc = set_CapabilityOneValue(ICAP_XFERMECH, TWSX_NATIVE, TWTY_UINT16);
+	#endif
+//	twrc = set_CapabilityOneValue(ICAP_XFERMECH, TWSX_NATIVE, TWTY_UINT16);
 //	twrc = set_CapabilityOneValue(ICAP_XFERMECH, TWSX_MEMORY, TWTY_UINT16);
 #else	//Êä³öJPG
 	twrc = set_CapabilityOneValue(ICAP_XFERMECH, TWSX_FILE, TWTY_UINT16);

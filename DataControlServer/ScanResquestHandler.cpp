@@ -210,6 +210,13 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 				strResult = object->get("msg").convert<std::string>();
 			strResult = CMyCodeConvert::Utf8ToGb2312(strResult);
 
+			if (pTask->nLoginFlag == 1)
+			{
+				std::string strTmpLog = "易考乐学后端平台二次登录(" + pTask->strUser + "\t" + pTask->strPwd + ")完成: " + strResult;
+				std::cout << strTmpLog << std::endl;
+				g_Log.LogOut(strTmpLog);
+			}
+
 			if (bResult)
 			{
 				ret = RESULT_SUCCESS;
@@ -273,13 +280,76 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 				strSendData = strResult;
 			}
 		}
+		else if (pTask->strMsg == "login_SanXi_huanshuo")
+		{
+			int nResult = object->get("code").convert<int>();
+			bResult = (nResult == 200) ? true : false;
+			std::string strResult;
+			strResult = object->get("msg").convert<std::string>();
+			strResult = CMyCodeConvert::Utf8ToGb2312(strResult);
+
+			if (bResult)
+			{
+				ret = RESULT_SUCCESS;
+				
+				//登录第3方平台成功，开始登录易考乐学后端平台
+				pSCAN_REQ_TASK pNewTask = new SCAN_REQ_TASK;
+				pNewTask->pUser = pTask->pUser;
+				pNewTask->strUser = pTask->strUser;
+				pNewTask->strPwd = SysSet.m_strLoginYklxPwd;	//默认密码123456， pTask->strPwd;
+				pNewTask->nLoginFlag = 1;
+
+				pNewTask->strUri = SysSet.m_strBackUri + "/login";
+				pNewTask->strMsg = "login";
+				pNewTask->strRequest = "username=" + pNewTask->strUser + "&password=" + pNewTask->strPwd;
+
+				g_fmScanReq.lock();
+				g_lScanReq.push_back(pNewTask);
+				g_fmScanReq.unlock();
+
+				std::string strTmpLog = pTask->strMsg + ": 登录成功，开始易考乐学后端平台二次登录";
+				std::cout << strTmpLog << std::endl;
+				g_Log.LogOut(strTmpLog);
+				return bResult;
+			}
+			else
+			{
+				ret = RESULT_LOGIN_FAIL;
+				strSendData = strResult;
+			}
+		}
 		else if (pTask->strMsg == "login2Ty")
 		{
 			std::string strResult = object->get("result").convert<std::string>();
 			if (strResult == "000000")		//用户只在单平台存在的返回
 			{
-				std::string strSessionId = object->get("sessionId").convert<std::string>();
-				GetUserInfo4Ty(strSessionId, pTask);
+				if (SysSet.m_nServerMode == 0)	//非天喻服务器模式，则进入此处为登录第3方天喻平台
+				{
+					//登录第3方平台成功，开始登录易考乐学后端平台
+					pSCAN_REQ_TASK pNewTask = new SCAN_REQ_TASK;
+					pNewTask->pUser = pTask->pUser;
+					pNewTask->strUser = pTask->strUser;
+					pNewTask->strPwd = SysSet.m_strLoginYklxPwd;	//默认密码123456， pTask->strPwd;
+					pNewTask->nLoginFlag = 1;
+
+					pNewTask->strUri = SysSet.m_strBackUri + "/login";
+					pNewTask->strMsg = "login";
+					pNewTask->strRequest = "username=" + pNewTask->strUser + "&password=" + pNewTask->strPwd;
+
+					g_fmScanReq.lock();
+					g_lScanReq.push_back(pNewTask);
+					g_fmScanReq.unlock();
+
+					std::string strTmpLog = pTask->strMsg + ": 登录成功，开始易考乐学后端平台二次登录";
+					std::cout << strTmpLog << std::endl;
+					g_Log.LogOut(strTmpLog);
+					return bResult;
+				}
+				else	//天喻服务器模式
+				{
+					std::string strSessionId = object->get("sessionId").convert<std::string>();
+					GetUserInfo4Ty(strSessionId, pTask);
+				}
 				return true;
 			}
 			else if (strResult == "301000")		//用户在多个平台的返回
@@ -350,6 +420,8 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 			}
 			else
 			{
+				ret = RESULT_LOGIN_FAIL;
+				strSendData = "获取用户信息失败";
 			}
 		}
 		else if (pTask->strMsg == "ezs")
@@ -432,6 +504,7 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 				ret = RESULT_GET_BMK_FAIL;
 				strSendData = strResult;
 			}
+			std::cout << "获取考试报名库命令操作完成" << std::endl;
 		}
 		else if (pTask->strMsg == "createModel")
 		{
@@ -497,7 +570,7 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 	catch (Poco::JSON::JSONException& jsone)
 	{
 		std::string strErrInfo;
-		strErrInfo.append("Error when parse json: ");
+		strErrInfo.append(pTask->strMsg + " ==> Error when parse json: ");
 		strErrInfo.append(jsone.message() + "\tData:" + strGb2312);
 		g_Log.LogOutError(strErrInfo);
 		strSendData = "异常失败";
@@ -506,7 +579,7 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 	catch (Poco::Exception& exc)
 	{
 		std::string strErrInfo;
-		strErrInfo.append("Error: ");
+		strErrInfo.append(pTask->strMsg + " ==> Error: ");
 		strErrInfo.append(exc.message() + "\tData:" + strGb2312);
 		g_Log.LogOutError(strErrInfo);
 		strSendData = "异常失败";
@@ -515,7 +588,7 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 	catch (...)
 	{
 		std::string strErrInfo;
-		strErrInfo.append("Unknown error.\tData:" + strGb2312);
+		strErrInfo.append(pTask->strMsg + " ==> Unknown error.\tData:" + strGb2312);
 		g_Log.LogOutError(strErrInfo);
 		strSendData = "异常失败";
 		std::cout << strErrInfo << std::endl;
