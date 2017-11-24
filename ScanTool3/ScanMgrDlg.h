@@ -79,6 +79,10 @@ private:
 	std::vector<CString> m_vecScanSrc;
 
 	CBmpButton		m_bmpBtnChangeExam;
+
+#ifdef TEST_FAST_SCAN
+	COmrRecog _chkRotationObj;
+#endif
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
 	virtual BOOL OnInitDialog();

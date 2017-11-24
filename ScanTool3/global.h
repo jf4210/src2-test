@@ -77,6 +77,7 @@
 	#define TEST_MODEL_ROTATION	//模板旋转测试
 	
 	#define TEST_GRAY_WHITE		//空白处灰度测试
+	#define TEST_FAST_SCAN		//快速扫描模式，在扫描线程中不写文件
 #else	//release版本
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
 	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”

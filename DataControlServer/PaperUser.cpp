@@ -33,6 +33,13 @@ void CPaperUser::OnClose(void)
 	std::string strLog = Poco::format("file sender close, Current connecter: %z", m_PaperUserList.m_UserList.size());
 	strLog.append("\tfileName: ");
 	strLog.append(m_szFileName);
+
+	int nUnRecvLen = m_dwTotalFileSize - m_dwRecvFileSize;
+	if (nUnRecvLen > 0)
+	{
+		std::string strRecvFileInfo = Poco::format("\t未接收: %d(%d/%d)", (int)(m_dwTotalFileSize - m_dwRecvFileSize), (int)m_dwRecvFileSize, (int)m_dwTotalFileSize);
+		strLog.append(strRecvFileInfo);
+	}
 	
 	std::cout << strLog << std::endl;
 	g_Log.LogOut(strLog);
@@ -366,7 +373,10 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 
 											Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(strPicSavePath));
 											if (fileModel.exists())
+											{
+												strLog.append("\n移除原文件.");
 												fileModel.remove(true);
+											}
 
 											Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
 											fileList.renameTo(CMyCodeConvert::Gb2312ToUtf8(strPicSavePath));
@@ -374,8 +384,9 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 										catch (Poco::Exception &e)
 										{
 											std::cout << "接收模板图像检查路径时异常: " << e.displayText() << std::endl;
+											strLog.append("\n接收模板图像检查路径时异常: " + e.displayText());
 										}
-
+										g_Log.LogOut(strLog);
 									}
 								}
 							}

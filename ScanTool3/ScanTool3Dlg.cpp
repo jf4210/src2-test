@@ -617,6 +617,7 @@ BOOL CScanTool3Dlg::StartGuardProcess()
 
 LRESULT CScanTool3Dlg::MsgCmdDlModel(WPARAM wParam, LPARAM lParam)
 {
+	g_pLogger->information("获取模板完成");
 	HandleModel();
 	return 1;
 }
@@ -668,6 +669,7 @@ LRESULT CScanTool3Dlg::MsgCmdGetBmk(WPARAM wParam, LPARAM lParam)
 			}
 		}
 	}
+	g_pLogger->information("获取报名库完成");
 #else
 	if (g_lBmkStudent.size() == 0)
 	{
@@ -829,9 +831,9 @@ BOOL CScanTool3Dlg::OnInitDialog()
 	_pTmKeepAliveObj = new TimerKeepAliveObj();
 	_timerKeepAlive.schedule(_pTmKeepAliveObj, 60 * 1000, 120 * 1000);		//2分钟一次心跳
 
-//#ifndef _DEBUG
+#ifndef _DEBUG
 	StartGuardProcess();
-//#endif
+#endif
 	UpdateData(FALSE);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }

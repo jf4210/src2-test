@@ -45,6 +45,7 @@ typedef struct _tagScanCtrl_
 typedef struct _tagScanResult_
 {
 	bool		bScanOK;	//本次扫描完成？
+	bool		bDoubleScan;
 	int			nState;
 	int			nPaperId;
 	int			nPicId;
@@ -57,6 +58,7 @@ typedef struct _tagScanResult_
 	_tagScanResult_()
 	{
 		bScanOK = false;
+		bDoubleScan = true;
 		nState = 0;
 		nPaperId = 0;
 		nPicId = 0;

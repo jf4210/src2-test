@@ -265,9 +265,14 @@ void CScanProcessDlg::AddPaper(int nID, pST_PaperInfo pPaper)
 	}
 	else //ÊÖÔÄÄ£Ê½
 	{
+	#ifdef TEST_FAST_SCAN
+		m_pReminderDlg->ShowWindow(SW_SHOW);
+		m_pShowPicDlg->ShowWindow(SW_HIDE);
+	#else
 		m_pReminderDlg->ShowWindow(SW_HIDE);
 		m_pShowPicDlg->ShowWindow(SW_SHOW);
-//		m_pShowPicDlg->setShowPaper(pPaper);
+	#endif
+		m_lcPicture.EnsureVisible(nCount, FALSE);
 	}
 }
 

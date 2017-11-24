@@ -307,7 +307,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 			DispatchMessage((LPMSG)&Msg);
 		}
 	}
-
+	
 	// At this point the source has sent us a callback saying that it is ready to
 	// transfer the image.
 
@@ -323,7 +323,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	{
 		nScanResult = -4;	//扫描关闭，没扫描
 	}
-	
+		
 	// Scan is done, disable the ds, thus moving us back to state 4 where we
 	// can negotiate caps again.
 	disableDS();
@@ -2072,6 +2072,9 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 			i++;
 		}
 	}
+	
+	clock_t start, end, end1, end2, end3;
+	start = clock();
 
 	int nStudentId = _nScanCount_ / m_nModelPicNums + 1;
 	int nOrder = _nScanCount_ % m_nModelPicNums + 1;
@@ -2097,6 +2100,98 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 	else
 		pDlg = (CScanMgrDlg*)m_pDlg;
 
+#ifdef TEST_FAST_SCAN
+	try
+	{
+		cv::Mat matSrc = cv::cvarrToMat(pIpl);
+		cv::Mat matShow = matSrc.clone();
+		cvReleaseImage(&pIpl);
+
+		if (m_nNotifyDlgType == 2)
+		{
+			pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
+			pResult->bScanOK = false;
+			pResult->bDoubleScan = (m_nDoubleScan == 0 ? false : true);
+			pResult->nState = 1;			//标识正在扫描
+			pResult->nPaperId = nStudentId;
+			pResult->nPicId = nOrder;
+			pResult->pPaper = NULL;
+			pResult->strPicName = szPicName;
+			pResult->strPicPath = szPicPath;
+			pResult->matShowPic = matShow;
+			pResult->strResult = "获得模板图像";
+			pResult->strResult.append(szPicName);
+
+			TRACE("%s\n", pResult->strResult.c_str());
+			pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
+		}
+		else
+		{
+			//++添加试卷
+			pST_PicInfo pPic = new ST_PicInfo;
+			pPic->strPicName = szPicName;
+			pPic->strPicPath = szPicPath;
+			if (nOrder == 1)	//第一页的时候创建新的试卷信息
+			{
+				CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
+
+				char szStudentName[30] = { 0 };
+				sprintf_s(szStudentName, "S%d", nStudentId);
+				m_pCurrPaper = new ST_PaperInfo;
+				m_pCurrPaper->nIndex = nStudentId;
+				m_pCurrPaper->strStudentInfo = szStudentName;
+				m_pCurrPaper->pModel = _pModel_;
+				m_pCurrPaper->pPapers = _pCurrPapersInfo_;
+				m_pCurrPaper->pSrcDlg = pDlg->GetScanMainDlg();		//m_pDlg;
+				m_pCurrPaper->lPic.push_back(pPic);
+
+				_pCurrPapersInfo_->fmlPaper.lock();
+				_pCurrPapersInfo_->lPaper.push_back(m_pCurrPaper);
+				_pCurrPapersInfo_->fmlPaper.unlock();
+			}
+			else
+			{
+				if (NULL == m_pCurrPaper)
+				{
+					char szLog[300] = { 0 };
+					sprintf_s(szLog, "扫描错误. detail: 考生内存信息不存在，扫描失败, nOrder = %d\n", nOrder);
+					g_pLogger->information(szLog);
+					TRACE(szLog);
+
+					SAFE_RELEASE(pPic);
+
+					return NULL;
+				}
+				m_pCurrPaper->lPic.push_back(pPic);
+			}
+			pPic->pPaper = m_pCurrPaper;
+			//--
+
+			pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
+			pResult->bScanOK = false;
+			pResult->bDoubleScan = (m_nDoubleScan == 0 ? false : true);
+			pResult->nState = 1;			//标识正在扫描
+			pResult->nPaperId = nStudentId;
+			pResult->nPicId = nOrder;
+			pResult->pPaper = m_pCurrPaper;
+			pResult->matShowPic = matShow;
+			pResult->strPicName = szPicName;
+			pResult->strPicPath = szPicPath;
+			pResult->strResult = "获得图像";
+			pResult->strResult.append(szPicName);
+
+			TRACE("%s\n", pResult->strResult.c_str());
+			pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
+		}
+	}
+	catch (...)
+	{
+	}	
+	end = clock();
+	char szTmpLog[200] = { 0 };
+	sprintf_s(szTmpLog, "save pic(%s) time: %d\n", szPicName, end - start);
+	OutputDebugStringA(szTmpLog);
+#else
 	try
 	{
 		cv::Mat matSrc = cv::cvarrToMat(pIpl);
@@ -2104,51 +2199,20 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 		//++ 2016.8.26 判断扫描图片方向，并进行旋转
 		if (_pModel_ && m_nNotifyDlgType == 1 && _nScanAnswerModel_ != 2/*&& m_pModel->nType*/)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
 		{
-		#if 1
 			//COmrRecog omrObj;
 			_chkRotationObj.GetRightPicOrientation(matSrc, nOrder - 1, m_nDoubleScan == 0 ? false : true);
-		#else
-			int nResult = CheckOrientation(matSrc, nOrder - 1, m_nDoubleScan == 0 ? false : true);
-			switch (nResult)	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
-			{
-				case 1:	break;
-				case 2:
-				{
-						  cv::Mat dst;
-						  transpose(matSrc, dst);	//左旋90，镜像 
-						  flip(dst, matSrc, 0);		//左旋90，模板图像需要右旋90，原图即需要左旋90
-				}
-					break;
-				case 3:
-				{
-						  cv::Mat dst;
-						  transpose(matSrc, dst);	//左旋90，镜像 
-						  flip(dst, matSrc, 1);		//右旋90，模板图像需要左旋90，原图即需要右旋90
-				}
-					break;
-				case 4:
-				{
-						  cv::Mat dst;
-						  transpose(matSrc, dst);	//左旋90，镜像 
-						  cv::Mat dst2;
-						  flip(dst, dst2, 1);
-						  cv::Mat dst5;
-						  transpose(dst2, dst5);
-						  flip(dst5, matSrc, 1);	//右旋180
-				}
-					break;
-				default: break;
-			}
-		#endif
 		}
 		//--
 
+		end1 = clock();
 		cv::Mat matShow = matSrc.clone();
+		end2 = clock();
 
 		std::string strPicName = szPicPath;
 		imwrite(strPicName, matSrc);
 		cvReleaseImage(&pIpl);
-		
+		end3 = clock();
+
 		if (m_nNotifyDlgType == 2)
 		{
 			pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
@@ -2201,7 +2265,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 
 					SAFE_RELEASE(pPic);
 
-					return NULL;;
+					return NULL;
 				}
 				m_pCurrPaper->lPic.push_back(pPic);
 			}
@@ -2235,6 +2299,11 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 	catch (cv::Exception& exc)
 	{
 	}
+	end = clock();
+	char szTmpLog[200] = { 0 };
+	sprintf_s(szTmpLog, "save pic(%s) time: %d:%d:%d\n", szPicName, end1 - start, end2 - start, end3 - start, end - start);
+	OutputDebugStringA(szTmpLog);
+#endif
 
 	return NULL;
 }
@@ -2320,6 +2389,18 @@ void CScanThread::TestMode()
 		pPic->strPicPath = szPicPath;
 
 		cv::Mat matSrc = cv::imread(pPic->strPicPath);
+
+// 		clock_t start_pic, end_pic;
+// 		start_pic = clock();
+// 		char szTmpPath[MAX_PATH] = { 0 };
+// 		sprintf_s(szTmpPath, "%sPaper\\TestPic_write\\S%d_%d.jpg", T2A(g_strCurrentPath), nStudentId, nOrder);
+// 		std::string strPicName = szTmpPath;
+// 		imwrite(strPicName, matSrc);
+// 		end_pic = clock();
+// 		char szTmpLog[200] = { 0 };
+// 		sprintf_s(szTmpLog, "imwrite(%s) time: %d\n", szTmpPath, end_pic - start_pic);
+// 		OutputDebugStringA(szTmpLog);
+// 		TRACE("imwrite(%s) time: %d\n", szTmpPath, end_pic - start_pic);
 
 //		pDlg->ChildDlgShowPic(matSrc);
 

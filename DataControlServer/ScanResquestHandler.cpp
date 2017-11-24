@@ -597,6 +597,8 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 	int nCmd = 0;
 	if (pTask->strMsg == "login")
 		nCmd = USER_RESPONSE_LOGIN;
+	else if (pTask->strMsg == "login_SanXi_huanshuo")
+		nCmd = USER_RESPONSE_LOGIN;
 	else if (pTask->strMsg == "login2Ty")
 		nCmd = USER_RESPONSE_LOGIN;
 	else if (pTask->strMsg == "getUserInfo4Ty")
@@ -621,6 +623,8 @@ void CScanResquestHandler::HandleHttpFail(pSCAN_REQ_TASK pTask, std::string strS
 {
 	int nCmd = 0;
 	if (pTask->strMsg == "login")
+		nCmd = USER_RESPONSE_LOGIN;
+	else if (pTask->strMsg == "login_SanXi_huanshuo")
 		nCmd = USER_RESPONSE_LOGIN;
 	else if (pTask->strMsg == "login2Ty")
 		nCmd = USER_RESPONSE_LOGIN;

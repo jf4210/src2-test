@@ -47,7 +47,7 @@ bool CSysSet::Load(std::string& strConfPath)
 	m_strPicWwwNetAddr	= pConf->getString("UpHttp.picWwwNetAddr", "");
 	m_nHeartPacketTime	= pConf->getInt("UpHttp.sessionKeepAlive", 300);
 	m_nUseThirdPlatform = pConf->getInt("UpHttp.useThirdPlatform", 0);
-	m_str3PlatformUrl	= pConf->getString("ThirdPlatform.url");
+	m_str3PlatformUrl	= pConf->getString("ThirdPlatform.url", "");
 	m_strLoginYklxPwd	= pConf->getString("ThirdPlatform.loginYklxPwd", "12345678");
 
 	if (m_str3PlatformUrl.empty())	//若第3方平台的url为空，则不使用第3方登录平台登录

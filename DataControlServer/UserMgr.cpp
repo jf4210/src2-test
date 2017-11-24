@@ -136,7 +136,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 						}
 				}
 
-				std::string strLog = Poco::format("登录命令: msg = %s\nurl = %s", pTask->strMsg, pTask->strUri);
+				std::string strLog = Poco::format("登录命令: msg = %s(%s:%s)\nurl = %s", pTask->strMsg, pTask->strUser, pTask->strPwd, pTask->strUri);
 				g_Log.LogOut(strLog);
 			}
 		#else
@@ -157,7 +157,6 @@ int CUserMgr::HandleHeader(CMission* pMission)
 		break;
 	case USER_LOGIN_4TY:
 		{
-			//2017.11.22  登录天喻多平台时，修改platformurl ==> platformUrl
 			ST_LOGIN_INFO4TY  LoginInfo = *(pStLoginInfo4TY)(pMission->m_pMissionData + HEAD_SIZE);
 			std::cout << "login info: " << LoginInfo.szUserNo << ", pwd: " << LoginInfo.szPWD << ", platformcode: " << LoginInfo.szPlatformCode <<
 				", encryption: " << LoginInfo.szEncryption << ", platformUrl: " << LoginInfo.szPlatformUrl << std::endl;
@@ -170,14 +169,14 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			std::string strEncryption = LoginInfo.szEncryption;
 			std::string strPlatformCode = LoginInfo.szPlatformCode;
 			std::string strPlatformUrl = LoginInfo.szPlatformUrl;
-			std::string strSha1Src = Poco::format("%sappKey%sencryption%smessageFormat%smethod%spassword%splatformcode%splatformurl%susername%sv1.0%s", \
-												  strAppValue, strAppKey, strEncryption, strMsgFormat, strMethod, strPwd, strPlatformCode, strPlatformUrl, strUser, strAppValue);
+			std::string strSha1Src = Poco::format("%sappKey%sencryption%smessageFormat%smethod%spassword%splatformUrl%splatformcode%susername%sv1.0%s", \
+												  strAppValue, strAppKey, strEncryption, strMsgFormat, strMethod, strPwd, strPlatformUrl, strPlatformCode, strUser, strAppValue);
 			Poco::SHA1Engine engine;
 			engine.update(strSha1Src);
 			std::string strSHA1 = Poco::DigestEngine::digestToHex(engine.digest());
 			std::string strSHA1_Up = Poco::toUpper(strSHA1);
-			std::string strUriValue = Poco::format("/router?appKey=%s&encryption=%s&messageFormat=%s&method=%s&password=%s&platformcode=%s&platformurl=%s&sign=%s&username=%s&v=1.0",\
-												   strAppKey, strEncryption, strMsgFormat, strMethod, strPwd, strPlatformCode, strPlatformUrl, strSHA1_Up, strUser);
+			std::string strUriValue = Poco::format("/router?appKey=%s&encryption=%s&messageFormat=%s&method=%s&password=%s&platformUrl=%s&platformcode=%s&sign=%s&username=%s&v=1.0",\
+												   strAppKey, strEncryption, strMsgFormat, strMethod, strPwd, strPlatformUrl, strPlatformCode, strSHA1_Up, strUser);
 
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
 			if (SysSet.m_nServerMode == 0)	//非天喻服务器模式，则进入此处为登录第3方天喻平台
@@ -343,15 +342,15 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			sprintf(szIndex, "%d_%d", stModelInfo.nExamID, stModelInfo.nSubjectID);
 
 			std::cout << "设置考试模板命令: " << szIndex << std::endl;
+			std::stringstream ssLog;
+			ssLog << "设置考试模板命令: " << szIndex << "\n";
 
 			MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
 			if (itFind == _mapModel_.end())
 			{
 				bNeedSend = true;
-				std::string strLog = "模板信息映射表中未找到";
-				strLog.append(szIndex);
-				strLog.append("的信息，可以发送此模板的信息");
-				g_Log.LogOut(strLog);
+				ssLog << "模板信息映射表中未找到" << szIndex << "的信息，可以发送此模板的信息\n";
+				//g_Log.LogOut(strLog);
 
 				pST_MODELINFO pStModelInfo = new ST_MODELINFO;
 				memcpy(pStModelInfo, &stModelInfo, sizeof(stModelInfo));
@@ -367,9 +366,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				_mapModel_.insert(MAP_MODEL::value_type(szIndex, pModelInfo));
 				_mapModelLock_.unlock();
 
-				strLog = "添加新的模板信息，等待接收模板文件";
-				strLog.append(stModelInfo.szModelName);
-				g_Log.LogOut(strLog);
+				ssLog << "添加新的模板信息，等待接收模板文件\n" << stModelInfo.szModelName;
 			}
 			else
 			{
@@ -394,11 +391,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 					pModelInfo->pUploadModelInfo = pStModelInfo;
 					pModelInfo->pUser = pUser;
 
-
-					std::string strLog = "模板信息映射表中";
-					strLog.append(szIndex);
-					strLog.append("的文件MD5与需要上传的文件MD5信息不一致，可以发送此模板的信息");
-					g_Log.LogOut(strLog);
+					ssLog << "模板信息映射表中" << szIndex << "的文件MD5与需要上传的文件MD5信息不一致，可以发送此模板的信息";
 				}
 				else
 					std::cout << "文件未修改，不需要重传" << std::endl;
@@ -437,6 +430,8 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			}
 			else
 				pUser->SendResult(USER_RESPONSE_MODELINFO, RESULT_SETMODELINFO_NO);
+
+			g_Log.LogOut(ssLog.str());
 		}
 		break;
 	case USER_NEED_DOWN_MODEL:
@@ -448,12 +443,15 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			sprintf(szIndex, "%d_%d", stModelInfo.nExamID, stModelInfo.nSubjectID);
 
 			std::cout << "请求下载模板命令: " << szIndex << std::endl;
+			std::stringstream ssLog;
+			ssLog << "请求下载模板命令: " << szIndex << "\n";
 
 			pMODELINFO pModelInfo = NULL;
 			MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
 			if (itFind == _mapModel_.end())
 			{
 				pUser->SendResult(USER_RESPONSE_NEEDDOWN, RESULT_DOWNMODEL_FAIL);
+				ssLog << "请求下载的模板文件不存在\n";
 				break;
 			}
 			else
@@ -469,17 +467,22 @@ int CUserMgr::HandleHeader(CMission* pMission)
 					Poco::File fileModel(CMyCodeConvert::Gb2312ToUtf8(pModelInfo->strPath));
 					stModelInfo.nModelSize = static_cast<int>(fileModel.getSize());
 					pUser->SendResponesInfo(USER_RESPONSE_NEEDDOWN, RESULT_DOWNMODEL_OK, (char*)&stModelInfo, sizeof(stModelInfo));
+					ssLog << "可以正常下载";
 				}
 				catch (Poco::Exception& exc)
 				{
 					std::string strLog = "请求下载模板命令(" + std::string(szIndex) + ")-->检测模板文件路径异常: " + exc.displayText();
 					std::cout << strLog << std::endl;
-					g_Log.LogOut(strLog);
+					ssLog << strLog;
 					pUser->SendResult(USER_RESPONSE_NEEDDOWN, RESULT_DOWNMODEL_FAIL);
 				}
 			}
 			else
+			{
 				pUser->SendResult(USER_RESPONSE_NEEDDOWN, RESULT_DOWNMODEL_NONEED);
+				ssLog << "不需要重新下载模板\n";
+			}
+			g_Log.LogOut(ssLog.str());
 		}
 		break;
 	case USER_DOWN_MODEL:
@@ -491,6 +494,8 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			sprintf(szIndex, "%d_%d", stModelInfo.nExamID, stModelInfo.nSubjectID);
 
 			std::cout << "开始下载考试模板命令: " << szIndex << std::endl;
+			std::stringstream ssLog;
+			ssLog << "开始下载考试模板命令: " << szIndex << "\n";
 
 			MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
 			if (itFind == _mapModel_.end())
@@ -515,7 +520,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 
 				int nLen = strFileData.length();
 				std::cout << "模板长度: " << nLen << std::endl;
-				
+				ssLog << "模板长度: " << nLen << "\n";
 // 				ofstream out("1.mod", std::ios::binary);
 // 				std::stringstream buffer2;
 // 				buffer2.write(strFileData.c_str(), strFileData.length());
@@ -525,6 +530,8 @@ int CUserMgr::HandleHeader(CMission* pMission)
 
 				pUser->SendResponesInfo(USER_RESPONSE_DOWNMODEL, RESULT_DOWNMODEL_RECV, (char*)strFileData.c_str(), strFileData.length());
 				std::cout << "下载考试模板文件完成: " << szIndex << std::endl;
+				ssLog << "下载考试模板文件完成: " << szIndex;
+				g_Log.LogOut(ssLog.str());
 			}
 		}
 		break;
@@ -614,6 +621,8 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			ST_GET_BMK_INFO stGetBmkInfo = *(pStGetBmkInfo)(pMission->m_pMissionData + HEAD_SIZE);
 
 			std::cout << "请求报名库命令: " << stGetBmkInfo.nExamID << "_" << stGetBmkInfo.nSubjectID << std::endl;
+			std::string strLog = Poco::format("请求考试的报名库命令: %d_%d", stGetBmkInfo.nExamID, stGetBmkInfo.nSubjectID);
+			g_Log.LogOut(strLog);
 
 			std::string strEzs = stGetBmkInfo.szEzs;
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
@@ -648,6 +657,8 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			ST_GET_BMK_INFO stGetBmkInfo = *(pStGetBmkInfo)(pMission->m_pMissionData + HEAD_SIZE);
 
 			std::cout << "请求考试的报名库命令: " << stGetBmkInfo.nExamID << std::endl;
+			std::string strLog = Poco::format("请求考试的报名库命令: %d", stGetBmkInfo.nExamID);
+			g_Log.LogOut(strLog);
 
 //			#ifdef _DEBUG	//测试数据，后期要删
 			#if 0
@@ -749,7 +760,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				if (!modelPic.exists())
 				{
 					nResult = RESULT_UP_MODEL_PIC_SEND;
-					strLog = "可以发送模板图片：" + strModelPicPath;
+					strLog = "请求上传模板图像命令 ==> 可以发送模板图片：" + strModelPicPath;
 					std::cout << "可以发送模板图片：" << strModelPicPath << std::endl;
 				}
 				else
@@ -758,20 +769,20 @@ int CUserMgr::HandleHeader(CMission* pMission)
 					if (strMd5 == stModelPic.szMD5)
 					{
 						nResult = RESULT_UP_MODEL_PIC_NONEED;
-						strLog = "不需要发送模板图片：" + strModelPicPath;
+						strLog = "请求上传模板图像命令 ==> 不需要发送模板图片：" + strModelPicPath;
 						std::cout << "不需要发送模板图片：" << strModelPicPath << std::endl;
 					}
 					else
 					{
 						nResult = RESULT_UP_MODEL_PIC_SEND;
-						strLog = "可以发送模板图片：" + strModelPicPath;
+						strLog = "请求上传模板图像命令 ==> 可以发送模板图片：" + strModelPicPath;
 						std::cout << "可以发送模板图片：" << strModelPicPath << std::endl;
 					}
 				}
 			}
 			catch (Poco::Exception& e)
 			{
-				strLog = "检测模板图片路径异常：" + e.displayText();
+				strLog = "请求上传模板图像命令 ==> 检测模板图片路径异常：" + e.displayText();
 				std::cout << "检测模板图片路径异常: "<< e.displayText() << std::endl;
 				nResult = RESULT_UP_MODEL_PIC_SEND;
 			}

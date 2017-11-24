@@ -349,6 +349,7 @@ RESTART:
 					delete pMd5;
 					TRACE0("end send ans file\n");
 					m_rNotify.SendFileComplete(stAnsInfo.szFileName, T2A(pTask->strPath));
+					bFindTask = false;
 				}
 			}
 			if (!bFindTask)	Sleep(1000);

@@ -625,6 +625,15 @@ void CTcpClient::HandleCmd()
 				pDlg->PostMessage(MSG_CMD_GET_BMK_OK, NULL, NULL);
 			}
 			break;
+			default:
+			{
+				std::string strLog = "报名库下载失败(无法解析结果): " + CMyCodeConvert::Utf8ToGb2312(strResult);
+				TRACE(strLog.c_str());
+				g_pLogger->information(strLog);
+
+				CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+				pDlg->PostMessage(MSG_CMD_GET_BMK_OK, NULL, NULL);
+			}
 		}
 		SAFE_RELEASE_ARRY(pBuff);
 		g_eGetBmk.set();

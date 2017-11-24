@@ -824,6 +824,25 @@ LRESULT CScanMgrDlg::ScanDone(WPARAM wParam, LPARAM lParam)
 		TRACE("扫描完成消息。%s\n", pResult->strResult.c_str());
 		g_pLogger->information(pResult->strResult);
 
+	#ifdef TEST_FAST_SCAN
+		if (!pResult->bScanOK)
+		{
+			if (_pModel_ && _nScanAnswerModel_ != 2/*&& m_pModel->nType*/)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
+			{
+				_chkRotationObj.GetRightPicOrientation(pResult->matShowPic, pResult->nPicId - 1, pResult->bDoubleScan);
+			}
+			cv::imwrite(pResult->strPicPath, pResult->matShowPic);
+
+			//添加到识别任务列表
+			if (_pModel_ && _pCurrExam_->nModel == 0 && _nScanAnswerModel_ != 2)	//网阅模式下的试卷才加入识别队列, 扫描主观题答案不加入识别
+			{
+				pRECOGTASK pTask = new RECOGTASK;
+				pTask->pPaper = pResult->pPaper;
+				g_lRecogTask.push_back(pTask);
+			}
+		}
+	#endif
+
 		if (pResult->nState == 1)
 		{
 			//试卷列表显示扫描试卷
@@ -834,7 +853,9 @@ LRESULT CScanMgrDlg::ScanDone(WPARAM wParam, LPARAM lParam)
 			
 			if (_pCurrExam_->nModel == 1)
 			{
+			#ifndef TEST_FAST_SCAN
 				ChildDlgShowPic(pResult->matShowPic);
+			#endif
 			}
 		}
 
