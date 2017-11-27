@@ -67,10 +67,10 @@
       <OutputFile>..\..\bin\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\lib\x86</AdditionalLibraryDirectories>
       <AdditionalDependencies>opencv_world310d.lib;libzbar-0.lib;libeay32.lib;ssleay32.lib</AdditionalDependencies>
-      <HeapReserveSize>30000000</HeapReserveSize>
-      <HeapCommitSize>30000000</HeapCommitSize>
-      <StackReserveSize>30000000</StackReserveSize>
-      <StackCommitSize>30000000</StackCommitSize>
+      <HeapReserveSize>20000000</HeapReserveSize>
+      <HeapCommitSize>20000000</HeapCommitSize>
+      <StackReserveSize>20000000</StackReserveSize>
+      <StackCommitSize>20000000</StackCommitSize>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>

@@ -1463,7 +1463,7 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpapers()
 	g_lDecompressTask.push_back(pDecompressTask1);
 	g_fmDecompressLock.unlock();
 
-	g_nRecogChkRotation = 1;	//识别时检测方向
+	//g_nRecogChkRotation = 1;	//识别时检测方向
 	if (((CButton*)GetDlgItem(IDC_CHK_NeedRecogPkg))->GetCheck())
 		g_nRecogWithShowPkg = 1;
 	else

@@ -66,7 +66,7 @@
 #define WarpAffine_TEST		//仿射变换测试
 #ifdef _DEBUG
 	#define PaintOmrSnRect		//是否打印识别出来的OMR矩形
-//	#define PrintRecogLog		//打印识别日志
+	#define PrintRecogLog		//打印识别日志
 	#define PrintAllOmrVal		//打印所有OMR选项值
 	#define PrintWordRecogPoint		//打印通过文字定位时计算出来的矩形坐标点位置
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
@@ -77,7 +77,7 @@
 	#define TEST_MODEL_ROTATION	//模板旋转测试
 	
 	#define TEST_GRAY_WHITE		//空白处灰度测试
-	#define TEST_FAST_SCAN		//快速扫描模式，在扫描线程中不写文件
+//	#define TEST_FAST_SCAN		//快速扫描模式，在扫描线程中不写文件
 #else	//release版本
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
 	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”

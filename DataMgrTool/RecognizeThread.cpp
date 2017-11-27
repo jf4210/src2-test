@@ -3566,7 +3566,7 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 		eTime = clock();
 		nTmpTime[4] = eTime - sTime;
 
-		strTmpTime.append(Poco::format("recog omr 2: (%d:%d:%d:%d:%d) ", nTmpTime[0], nTmpTime[1], nTmpTime[2], nTmpTime[3], nTmpTime[4]));
+		strTmpTime.append(Poco::format("recog omr 2: (%d:%d:%d:%d:%d)\n", nTmpTime[0], nTmpTime[1], nTmpTime[2], nTmpTime[3], nTmpTime[4]));
 		TRACE(strTmpTime.c_str());
 	}
 	catch (cv::Exception &exc)

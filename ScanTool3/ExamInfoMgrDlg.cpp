@@ -306,6 +306,7 @@ void CExamInfoMgrDlg::InitShowData()
 {
 	InitSearchData();
 	GetSearchResultExamList();
+	ReleaseDlgData();
 	m_nCurrShowPaper = 1;
 	ShowExamList(m_lExamList, m_nCurrShowPaper);
 }

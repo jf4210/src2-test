@@ -9,6 +9,7 @@
 #include "global.h"
 #include "NewMessageBox.h"
 #include "Net_Cmd_Protocol.h"
+#include "LoginDlg.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -772,6 +773,8 @@ BEGIN_MESSAGE_MAP(CScanTool3Dlg, CDialogEx)
 	ON_WM_ERASEBKGND()
 	ON_WM_CTLCOLOR()
 	ON_MESSAGE(MSG_NOTIFY_UPDATE, CScanTool3Dlg::MSG_UpdateNotify)
+	ON_COMMAND(ID_LOGIN_Relogin, &CScanTool3Dlg::OnCmdRelogin)
+	ON_WM_CONTEXTMENU()
 END_MESSAGE_MAP()
 
 
@@ -813,7 +816,7 @@ BOOL CScanTool3Dlg::OnInitDialog()
 
 	try
 	{
-		g_eGetExamList.wait(10000);
+		g_eGetExamList.wait(15000);
 	}
 	catch (Poco::TimeoutException &e)
 	{
@@ -942,7 +945,9 @@ LRESULT CScanTool3Dlg::OnNcHitTest(CPoint point)
 	CRect rcWndRect;
 	GetWindowRect(rcWndRect);
 	//	rcWndRect.bottom = rcWndRect.top + 40;	//40
-	if (rcWndRect.PtInRect(point))
+	CRect rcUserPic;
+	m_bmpBtnUserPic.GetWindowRect(rcUserPic);
+	if (rcWndRect.PtInRect(point) && !rcUserPic.PtInRect(point))
 		return HTCAPTION;
 	return CDialog::OnNcHitTest(point);
 }
@@ -1071,4 +1076,62 @@ void CScanTool3Dlg::GetFileAddrs()
 	g_fmTcpTaskLock.lock();
 	g_lTcpTask.push_back(pTcpTask);
 	g_fmTcpTaskLock.unlock();
+}
+
+
+void CScanTool3Dlg::OnCmdRelogin()
+{
+	USES_CONVERSION;
+	CLoginDlg loginDlg(A2T(g_strCmdIP.c_str()), g_nCmdPort);
+	if (loginDlg.DoModal() != IDOK)
+		return;
+
+	_bLogin_ = TRUE;
+	_strUserName_ = T2A(loginDlg.m_strUserName);
+	_strNickName_ = T2A(loginDlg.m_strNickName);
+	_strPwd_ = T2A(loginDlg.m_strPwd);
+	_strEzs_ = T2A(loginDlg.m_strEzs);
+	_strPersonID_ = T2A(loginDlg.m_strPersonId);
+	_strSchoolID_ = T2A(loginDlg.m_strSchoolID);
+	_nTeacherId_ = loginDlg.m_nTeacherId;
+	_nUserId_ = loginDlg.m_nUserId;
+
+	//考试列表
+	g_lfmExamList.lock();
+	EXAM_LIST::iterator itExam = g_lExamList.begin();
+	for (; itExam != g_lExamList.end();)
+	{
+		pEXAMINFO pExam = *itExam;
+		itExam = g_lExamList.erase(itExam);
+		SAFE_RELEASE(pExam);
+	}
+	g_lfmExamList.unlock();
+	m_pExamInfoMgrDlg->InitShowData();
+
+	try
+	{
+		g_eGetExamList.wait(15000);
+	}
+	catch (Poco::TimeoutException &e)
+	{
+		TRACE("获取报名库超时\n");
+	}
+	m_pExamInfoMgrDlg->InitShowData();
+}
+
+void CScanTool3Dlg::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
+{
+	TRACE("CScanTool3Dlg::OnContextMenu\n");
+	CRect rtUserPic;
+	m_bmpBtnUserPic.GetWindowRect(rtUserPic);
+	if (rtUserPic.PtInRect(point))
+	{
+		CMenu menu, *pPopup;
+		menu.LoadMenu(IDR_MENU_ReLogin);
+		pPopup = menu.GetSubMenu(0);
+		CPoint myPoint;
+		ClientToScreen(&myPoint);
+		GetCursorPos(&myPoint); //鼠标位置  
+		pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, myPoint.x, myPoint.y, this);//GetParent()
+	}
 }

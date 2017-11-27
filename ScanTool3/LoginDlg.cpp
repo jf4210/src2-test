@@ -61,7 +61,7 @@ void CLoginDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BTN_Login, m_bmpBtnLogin);
 	DDX_Control(pDX, IDC_BTN_CLOSE, m_bmpBtnExit);
 	DDX_Control(pDX, IDC_BTN_Min, m_bmpBtnMin);
-	DDX_Text(pDX, IDC_STATIC_Title, m_strTitle);
+	DDX_Text(pDX, IDC_STATIC_LoginTitle, m_strTitle);
 	DDX_Text(pDX, IDC_STATIC_Version, m_strVersion);
 	DDX_Text(pDX, IDC_STATIC_Bottom, m_strCopyright);
 }
@@ -147,14 +147,16 @@ void CLoginDlg::InitCtrlPosition()
 
 	CRect rt1, rt2;
 	int nTmpX = 0;
-	if (GetDlgItem(IDC_STATIC_Title)->GetSafeHwnd())
+	if (GetDlgItem(IDC_STATIC_LoginTitle)->GetSafeHwnd())
 	{
-		GetDlgItem(IDC_STATIC_Title)->GetWindowRect(rt1);
+		GetDlgItem(IDC_STATIC_LoginTitle)->GetWindowRect(rt1);
 		int nLen = _strMainTitle_.length() / 2;
 		int nMinLen = nLen * (m_nStatusSize + 2);
 		rt1.right = rt1.left + nMinLen;
 		nTmpX = rt1.right + 5;
-		GetDlgItem(IDC_STATIC_Title)->MoveWindow(rt1);
+		
+		ScreenToClient(rt1);
+		GetDlgItem(IDC_STATIC_LoginTitle)->MoveWindow(rt1);
 	}
 	if (GetDlgItem(IDC_STATIC_Version)->GetSafeHwnd())
 	{
@@ -163,9 +165,9 @@ void CLoginDlg::InitCtrlPosition()
 		rt2.left = nTmpX;
 		rt2.right = rt2.left + nW;
 
+		ScreenToClient(rt2);
 		GetDlgItem(IDC_STATIC_Version)->MoveWindow(rt2);
 	}
-
 }
 
 BOOL CLoginDlg::PreTranslateMessage(MSG* pMsg)
@@ -764,7 +766,7 @@ HBRUSH CLoginDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}
-	else if (CurID == IDC_STATIC_Title )
+	else if (CurID == IDC_STATIC_LoginTitle )
 	{
 		pDC->SetTextColor(RGB(255, 255, 255));
 		pDC->SetBkMode(TRANSPARENT);
@@ -818,7 +820,7 @@ void CLoginDlg::SetFontSize(int nSize)
 							 DEFAULT_QUALITY,
 							 DEFAULT_PITCH | FF_SWISS,
 							 _T("свт╡"));	//Arial
-	GetDlgItem(IDC_STATIC_Title)->SetFont(&m_fontTitle);
+	GetDlgItem(IDC_STATIC_LoginTitle)->SetFont(&m_fontTitle);
 	GetDlgItem(IDC_STATIC_Version)->SetFont(&m_fontVersion);
 	m_bmpBtnLogin.SetBtnFont(m_fontLogin);
 }

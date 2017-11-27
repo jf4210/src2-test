@@ -797,6 +797,8 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			strncpy(szData, pMission->m_pMissionData + HEAD_SIZE, header.uPackSize);
 			std::string strModelPicInfo = szData;
 			std::cout << "请求下载模板图像命令: " << strModelPicInfo << std::endl;
+			std::stringstream ssLog;
+			ssLog<< "请求下载模板图像命令: " << strModelPicInfo << std::endl;
 
 			int nPos = strModelPicInfo.find("_");
 			std::string strExamID = strModelPicInfo.substr(0, nPos);
@@ -814,6 +816,8 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				if (!modlePicDir.exists())
 				{
 					pUser->SendResult(USER_RESPONSE_GET_MODEL_PIC, RESULT_GET_MODEL_PIC_NOPIC);
+					ssLog << "模板图像不存在";
+					g_Log.LogOut(ssLog.str());
 					return false;
 				}
 			}
@@ -841,6 +845,8 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			if (vecModelPicPath.size() == 0)
 			{
 				pUser->SendResult(USER_RESPONSE_GET_MODEL_PIC, RESULT_GET_MODEL_PIC_NOPIC);
+				ssLog << "模板图像不存在";
+				g_Log.LogOut(ssLog.str());
 				return false;
 			}
 
@@ -852,6 +858,8 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				if (!fin)
 				{
 					pUser->SendResult(USER_RESPONSE_GET_MODEL_PIC, RESULT_ERROR_FILEIO);
+					ssLog << "读取模板文件失败";
+					g_Log.LogOut(ssLog.str());
 					return false;
 				}
 				std::stringstream buffer;
@@ -870,6 +878,8 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			}
 
 			pUser->SendResponesInfo(USER_RESPONSE_GET_MODEL_PIC, RESULT_GET_MODEL_PIC_SUCCESS, (char*)strSendData.c_str(), strSendData.length());
+			ssLog << "模板文件发送完成";
+			g_Log.LogOut(ssLog.str());
 		}
 		break;
 	case KEEPALIVE_PKG:
