@@ -2425,6 +2425,29 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 						break;
 				}
 			}
+			if (omrResult.nSingle == 0 && nFlag > 0)	//单选, 识别到多个
+			{
+				for (int i = 0; i <= nFlag; i++)
+				{
+					if (vecOmrItemDiff[i].fDiff < fDiffThread)
+					{
+						fThreld = vecOmrItemDiff[i].fSecond;
+					}
+					else if (vecOmrItemDiff[i].fDiff >= fDiffThread && vecOmrItemDiff[i].fSecond > _dAnswerSure_DensityFix_)
+					{
+						fThreld = vecOmrItemDiff[i].fSecond;
+					}
+					else if (vecOmrItemDiff[i].fDiff >= fDiffThread && (vecItemsDesc[i + 1]->fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2 || \
+																		abs(vecItemsDesc[i]->fRealMeanGray - vecItemsDesc[i + 1]->fRealMeanGray) < _dDiffThread_3_))
+					{
+						fThreld = vecOmrItemDiff[i].fSecond;
+					}
+					else
+					{
+						fThreld = vecOmrItemDiff[i].fFirst;
+					}
+				}
+			}
 			if (nFlag >= 0)
 			{
 				RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();

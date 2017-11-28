@@ -130,9 +130,9 @@
 
 #ifndef TO_WHTY
 	#ifdef PUBLISH_VERSION
-		#define SOFT_VERSION	_T("v2.6")
+		#define SOFT_VERSION	_T("v2.7")
 	#else
-		#define SOFT_VERSION	_T("v2.6")		//-Pri
+		#define SOFT_VERSION	_T("v2.7")		//-Pri
 	#endif
 #else
 	#define SOFT_VERSION	_T("v2.1")

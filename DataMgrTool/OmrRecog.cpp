@@ -110,7 +110,8 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 
 			TRACE("------>Recog Fix Sel 1: %d, rtTmp:(%d, %d, %d, %d), matCompRoi(%d, %d)\n", i, rtTmp.x, rtTmp.y, rtTmp.width, rtTmp.height, matCompRoi.cols, matCompRoi.rows);
 
-			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+			if (matCompRoi.channels() == 3)
+				cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 			TRACE("------>Recog Fix Sel 2: %d\n", i);
 			GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
@@ -380,8 +381,9 @@ bool COmrRecog::RecogZkzh(int nPic, cv::Mat& matCompPic, pMODEL	pModel, int nOri
 
 				cv::Mat matCompRoi;
 				matCompRoi = matCompPic(rc.rt);
-
-				cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+				
+				if(matCompRoi.channels() == 3)
+					cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 				string strTypeName;
 				string strResult = GetQR(matCompRoi, strTypeName);
@@ -424,7 +426,8 @@ bool COmrRecog::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo p
 		matCompRoi = matCompPic(rt);
 
 		cv::Mat imag_src, img_comp;
-		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+		if (matCompRoi.channels() == 3)
+			cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 		cv::GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//_nGauseKernel_
 		SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
 
@@ -612,8 +615,22 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 			return nResult;
 		}
 	}
-
+#if 1
 	cv::Mat matCom = matSrc.clone();
+	if(matCom.channels() == 3)
+		cvtColor(matCom, matCom, CV_BGR2GRAY);
+#else
+	cv::Mat matCom;
+	try
+	{
+		matCom = matSrc.clone();
+	}
+	catch (cv::Exception& exc)
+	{
+		TRACE("err: matSrc.clone(). %s\n", exc.what());
+		matCom = matSrc;
+	}
+#endif
 	if (_pModel_->nHasHead)
 		nResult = CheckOrientation4Head(matCom, n);
 	else
@@ -1729,7 +1746,8 @@ int COmrRecog::GetRects(cv::Mat& matSrc, cv::Rect rt, pMODEL pModel, int nPic, i
 		cv::Mat matCompRoi;
 		matCompRoi = matSrc(rt);
 
-		cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+		if(matCompRoi.channels() == 3)
+			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 		GaussianBlur(matCompRoi, matCompRoi, cv::Size(5, 5), 0, 0);
 		sharpenImage1(matCompRoi, matCompRoi, 3);
@@ -2186,7 +2204,8 @@ int COmrRecog::GetRectsInArea(cv::Mat& matSrc, RECTINFO rc, int nMinW, int nMaxW
 
 	cv::Mat imgResult = matSrc;
 
-	cv::cvtColor(imgResult, imgResult, CV_BGR2GRAY);
+	if (imgResult.channels() == 3)
+		cv::cvtColor(imgResult, imgResult, CV_BGR2GRAY);
 	cv::GaussianBlur(imgResult, imgResult, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);
 	sharpenImage1(imgResult, imgResult, rc.nSharpKernel);
 
