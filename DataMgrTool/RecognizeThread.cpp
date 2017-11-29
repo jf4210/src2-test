@@ -684,7 +684,8 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
  		matCompRoi = matCompPic(rt);
 
 		Mat imag_src, img_comp;
-		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+		if (matCompRoi.channels() == 3)
+			cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 		Mat matCompRoi2 = matCompRoi.clone();
 		if ((rc.eCPType == OMR || rc.eCPType == SN) && g_nRecogWithContract)
@@ -910,7 +911,8 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			cv::Mat matCompRoi;
 			matCompRoi = matCompPic(rc.rt);
 		#endif
-			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+			if(matCompRoi.channels() == 3)
+				cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 			GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
 			SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
@@ -1183,7 +1185,8 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			Mat matCompRoi;
 			matCompRoi = matCompPic(rc.rt);
 
-			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+			if (matCompRoi.channels() == 3)
+				cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 			GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
 			SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
@@ -1483,7 +1486,8 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			Mat matCompRoi;
 			matCompRoi = matCompPic(rc.rt);
 
-			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+			if (matCompRoi.channels() == 3)
+				cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 			GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//_nGauseKernel_
 			SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
@@ -2290,7 +2294,14 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			fDiffThread = _dDiffThread_Fix_;
 			fDiffExit = _dDiffExit_Fix_;
 		}
-		
+
+		int nMaybeAnswer = 0;	//可能的答案数
+		for (int j = 0; j < vecItemsDesc.size(); j++)
+		{
+			if (vecItemsDesc[j]->fRealValuePercent > fDiffThread)
+				nMaybeAnswer++;
+		}
+
 		float fDensityMeanPer2 = 0.0;
 		for (int i = 0; i < vecItemsDesc.size(); i++)
 		{
@@ -2345,6 +2356,14 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				fDensityThreshold += vecOmrItemDiff[i].fDiff;		//++ 2017.9.7
 #endif
 		}
+		if (nFlag < 0 && nMaybeAnswer == 1)	//通过上面的方法没有识别到选项，但是存在差值 > 比较差值(0.2)的选项，即第1项的差值大于比较差值
+		{
+			if (vecOmrItemDiff[0].fDiff > fDiffThread && vecItemsDesc[0]->fRealMeanGray < _dCompThread_3_)
+			{
+				nFlag = 0;
+				fThreld = vecOmrItemDiff[0].fFirst;
+			}
+		}
 		if (nFlag >= 0)
 		{
 			//++判断全选的情况
@@ -2380,6 +2399,32 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 					}
 				}
 			}
+			else
+			{
+				if (omrResult.nSingle == 0 && nFlag > 0)	//单选, 识别到多个
+				{
+					for (int i = 0; i < nFlag; i++)
+					{
+						if (vecOmrItemDiff[i].fDiff < fDiffThread && vecItemsDesc[i + 1]->fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2)
+						{
+							fThreld = vecOmrItemDiff[i].fSecond;
+						}
+						else if (vecOmrItemDiff[i].fDiff >= fDiffThread && vecOmrItemDiff[i].fSecond > _dAnswerSure_DensityFix_)
+						{
+							fThreld = vecOmrItemDiff[i].fSecond;
+						}
+						else if (vecOmrItemDiff[i].fDiff >= fDiffThread && (vecItemsDesc[i + 1]->fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2 || \
+																			abs(vecItemsDesc[i]->fRealMeanGray - vecItemsDesc[i + 1]->fRealMeanGray) < _dDiffThread_3_))
+						{
+							fThreld = vecOmrItemDiff[i].fSecond;
+						}
+						else
+						{
+							fThreld = vecOmrItemDiff[i].fFirst;
+						}
+					}
+				}
+			}
 
 			RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
 			for (; itItem != omrResult.lSelAnswer.end(); itItem++)
@@ -2407,7 +2452,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				}
 			}
 		}
-		else if (vecItemsDesc[0]->fRealValuePercent >= fCompThread && vecItemsDesc[vecOmrItemDiff.size()]->fRealValuePercent < fCompThread + fDiffExit)
+		else if (vecItemsDesc[0]->fRealValuePercent >= fCompThread && vecItemsDesc[vecOmrItemDiff.size()]->fRealValuePercent < (fCompThread + fDiffExit > _dAnswerSure_DensityFix_ ? fCompThread + fDiffExit : _dAnswerSure_DensityFix_))
 		{
 			int nFlag = -1;
 			float fThreld = 0.0;
@@ -2427,9 +2472,9 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			}
 			if (omrResult.nSingle == 0 && nFlag > 0)	//单选, 识别到多个
 			{
-				for (int i = 0; i <= nFlag; i++)
+				for (int i = 0; i < nFlag; i++)
 				{
-					if (vecOmrItemDiff[i].fDiff < fDiffThread)
+					if (vecOmrItemDiff[i].fDiff < fDiffThread && vecItemsDesc[i + 1]->fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2)
 					{
 						fThreld = vecOmrItemDiff[i].fSecond;
 					}
@@ -2447,6 +2492,34 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 						fThreld = vecOmrItemDiff[i].fFirst;
 					}
 				}
+			}
+			if (nFlag < 0)	//通过上面的方法没有识别到选项，但是存在差值 > 比较差值(0.2)的选项，即第1项的差值大于比较差值
+			{
+				if (nMaybeAnswer > 0)
+				{
+					int nThreld1 = _dDiffExit_3_ + _dAnswerSure_;
+					int nThreld2 = (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2;
+					for (int i = 0; i < vecItemsDesc.size(); i++)
+					{
+						if(vecItemsDesc[i]->fRealValuePercent > fCompThread && vecItemsDesc[i]->fRealMeanGray < max(nThreld1, nThreld2))
+							fThreld = vecItemsDesc[i]->fRealValuePercent < fThreld ? vecItemsDesc[i]->fRealValuePercent : fThreld;
+					}
+					//**********************	用上面还是下面
+					for (int i = 0; i < vecOmrItemDiff.size(); i++)
+					{
+						if (vecOmrItemDiff[i].fDiff > fDiffThread && vecItemsDesc[i]->fRealMeanGray < _dCompThread_3_)
+						{
+							nFlag = i;
+							fThreld = vecOmrItemDiff[i].fFirst;
+						}
+					}
+				}
+
+// 				if (vecOmrItemDiff[0].fDiff > fDiffThread && vecItemsDesc[0]->fRealMeanGray < _dCompThread_3_)
+// 				{
+// 					nFlag = 0;
+// 					fThreld = vecOmrItemDiff[0].fFirst;
+// 				}
 			}
 			if (nFlag >= 0)
 			{
@@ -2953,7 +3026,8 @@ bool CRecognizeThread::RecogVal(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST
 		matCompRoi = matCompPic(rt);
 
 		Mat imag_src, img_comp;
-		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+		if (matCompRoi.channels() == 3)
+			cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 		//图片二值化
 		threshold(matCompRoi, matCompRoi, 240, 255, THRESH_BINARY_INV);				//200, 255
@@ -3175,7 +3249,8 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 			}
 			matCompRoi = matCompPic(rt);
 
-			cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+			if (matCompRoi.channels() == 3)
+				cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 			if ((itFirst->eCPType == OMR || itFirst->eCPType == SN) && g_nRecogWithContract)
 			{
@@ -3250,7 +3325,8 @@ inline bool CRecognizeThread::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicIn
 		//根据新的坐标点计算新选项区矩形的填涂情况
 //		matCompRoi.deallocate();
 		matCompRoi = matCompPic(cv::Rect(ptNew1, ptNew2));
-		cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+		if (matCompRoi.channels() == 3)
+			cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 		if ((itFirst->eCPType == OMR || itFirst->eCPType == SN) && g_nRecogWithContract)
 		{
@@ -3756,7 +3832,8 @@ bool CRecognizeThread::Recog2(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_P
 			}
 			matCompRoi = matCompPic(rc.rt);
 			
-			cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+			if (matCompRoi.channels() == 3)
+				cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 			//图片二值化
 			// 局部自适应阈值的图像二值化
@@ -4113,7 +4190,8 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 				Mat matCompRoi;
 				matCompRoi = matCompPic(rc.rt);
 
-				cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+				if (matCompRoi.channels() == 3)
+					cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 				string strTypeName;
 				string strResult = GetQR(matCompRoi, strTypeName);
@@ -4148,6 +4226,7 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 
 bool CRecognizeThread::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, OMR_RESULT& omrResult)
 {
+	int nMaybeAnswer = 0;	//可能的答案数
 	std::vector<int> vecVal_AnswerSuer;
 	RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
 	for (; itItem != omrResult.lSelAnswer.end(); itItem++)
@@ -4156,6 +4235,8 @@ bool CRecognizeThread::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 		{
 			vecVal_AnswerSuer.push_back(itItem->nAnswer);
 		}
+		if (itItem->fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2)
+			nMaybeAnswer++;
 	}
 
 	std::string strRecogAnswer;
@@ -4205,6 +4286,23 @@ bool CRecognizeThread::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 			}
 		}
 		//--
+		//if (nFlag == 0 && vecOmrItemGrayDiff[0].fDiff < fDiffThreshold)
+		if(nFlag < nMaybeAnswer - 1)
+		{
+			int nThreld1 = _dDiffExit_3_ + _dAnswerSure_;
+			int nThreld2 = (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2;
+			for (int i = 0; i < vecItemsGrayDesc.size(); i++)
+			{
+				if (vecItemsGrayDesc[i]->fRealMeanGray < min(nThreld1, nThreld2))
+				{
+					fThreld = vecItemsGrayDesc[i]->fRealMeanGray < fThreld ? fThreld : vecItemsGrayDesc[i]->fRealMeanGray;
+				}
+				else if (vecItemsGrayDesc[i]->fRealMeanGray < max(nThreld1, nThreld2) && vecItemsGrayDesc[i]->fRealValuePercent > _dCompThread_Fix_)
+				{
+					fThreld = vecItemsGrayDesc[i]->fRealMeanGray < fThreld ? fThreld : vecItemsGrayDesc[i]->fRealMeanGray;
+				}
+			}
+		}
 		RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
 		for (; itItem != omrResult.lSelAnswer.end(); itItem++)
 		{

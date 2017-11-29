@@ -761,6 +761,8 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 					omrResult.nTH = jsnOmrObj->get("th").convert<int>();
 					omrResult.nSingle = jsnOmrObj->get("type").convert<int>() - 1;
 					omrResult.strRecogVal = jsnOmrObj->get("value").convert<std::string>();
+					if (jsnOmrObj->has("value1"))
+						omrResult.strRecogVal1 = jsnOmrObj->get("value1").convert<std::string>();
 					if (jsnOmrObj->has("value2"))
 						omrResult.strRecogVal2 = jsnOmrObj->get("value2").convert<std::string>();
 					if (jsnOmrObj->has("value3"))

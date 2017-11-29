@@ -617,8 +617,15 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 	}
 #if 1
 	cv::Mat matCom = matSrc.clone();
-	if(matCom.channels() == 3)
-		cvtColor(matCom, matCom, CV_BGR2GRAY);
+	try
+	{
+		if (matCom.channels() == 3)
+			cvtColor(matCom, matCom, CV_BGR2GRAY);
+	}
+	catch (cv::Exception& exc)
+	{
+		TRACE("err: cvtColor. %s\n", exc.what());
+	}
 #else
 	cv::Mat matCom;
 	try
