@@ -230,7 +230,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 				nTime[0] = eTimeTmp - sTimeTmp;
 				sTimeTmp = clock();
 			}
-			bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode, strRecogFixLog);
+			bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo, g_nRecogMode, strRecogFixLog);
 			eTimeTmp = clock();
 			nTime[1] = eTimeTmp - sTimeTmp;
 			sTimeTmp = clock();
@@ -253,23 +253,23 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			eTimeTmp = clock();
 			nTime[5] = eTimeTmp - sTimeTmp;
 			sTimeTmp = clock();
-			bResult = RecogCourse(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode, strRecogCourseLog);
+			bResult = RecogCourse(nPic, matCompPic, *itPic, pModelInfo, g_nRecogMode, strRecogCourseLog);
 			eTimeTmp = clock();
 			nTime[6] = eTimeTmp - sTimeTmp;
 			sTimeTmp = clock();
-			bResult = RecogQKCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode, strRecogQKLog);
+			bResult = RecogQKCP(nPic, matCompPic, *itPic, pModelInfo, g_nRecogMode, strRecogQKLog);
 			eTimeTmp = clock();
 			nTime[7] = eTimeTmp - sTimeTmp;
 			sTimeTmp = clock();
-			bResult = RecogWJCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode, strRecogWJLog);
+			bResult = RecogWJCP(nPic, matCompPic, *itPic, pModelInfo, g_nRecogMode, strRecogWJLog);
 			eTimeTmp = clock();
 			nTime[8] = eTimeTmp - sTimeTmp;
 			sTimeTmp = clock();
-			bResult = RecogGrayCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode, strRecogGrayLog);
+			bResult = RecogGrayCP(nPic, matCompPic, *itPic, pModelInfo, g_nRecogMode, strRecogGrayLog);
 			eTimeTmp = clock();
 			nTime[9] = eTimeTmp - sTimeTmp;
 			sTimeTmp = clock();
-			bResult = RecogWhiteCP(nPic, matCompPic, *itPic, pModelInfo, pCurrentPapers->nRecogMode, strRecogWhiteLog);
+			bResult = RecogWhiteCP(nPic, matCompPic, *itPic, pModelInfo, g_nRecogMode, strRecogWhiteLog);
 			eTimeTmp = clock();
 			nTime[10] = eTimeTmp - sTimeTmp;
 			sTimeTmp = clock();
@@ -2298,7 +2298,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		int nMaybeAnswer = 0;	//可能的答案数
 		for (int j = 0; j < vecItemsDesc.size(); j++)
 		{
-			if (vecItemsDesc[j]->fRealValuePercent > fDiffThread)
+			if (vecItemsDesc[j]->fRealValuePercent > fCompThread)
 				nMaybeAnswer++;
 		}
 
@@ -2317,6 +2317,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		int nFlag = -1;
 		float fThreld = 0.0;
 		float fDensityThreshold = 0.0;
+		bool bDiffExit = false;		//判断过程中是否存在直接退出判断的情况
 		for (int i = 0; i < vecOmrItemDiff.size(); i++)
 		{
 #if 1	//2017.9.23 for test
@@ -2330,7 +2331,10 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				fDensityThreshold += (fDiffThread + vecOmrItemDiff[i].fDiff * 0.5 + fGrayThresholdGray * 0.5 + fDensityThreshold) / 2;
 			#ifdef Test_RecogFirst_NoThreshord
 				if (vecOmrItemDiff[i].fDiff > fDiffExit)	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
+				{
+					bDiffExit = true;
 					break;
+				}
 			#endif
 			}
 			else
@@ -2378,9 +2382,52 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 // 					fThreld = vecItemsDesc[vecOmrItemDiff.size()]->fRealValuePercent;
 			}
 			//--
+
+			if (!bDiffExit && nMaybeAnswer > 0 && nFlag < nMaybeAnswer)	//通过上面的方法没有识别到选项，但是存在差值 > 比较差值(0.2)的选项，即第1项的差值大于比较差值
+			{
+				int nThreld1 = _dDiffExit_3_ + _dAnswerSure_;
+				int nThreld2 = (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2;
+				int nFlag1 = -1;
+				int nFlag2 = -1;
+				int nFlag3 = -1;
+				for (int i = 0; i < vecItemsDesc.size(); i++)
+				{
+					if (vecItemsDesc[i]->fRealValuePercent > fCompThread && vecItemsDesc[i]->fRealMeanGray < max(nThreld1, nThreld2))
+					{
+						nFlag1 = i;
+					}
+				}
+				for (int i = 0; i < vecOmrItemDiff.size(); i++)
+				{
+					if (vecOmrItemDiff[i].fDiff > fDiffThread && vecItemsDesc[i]->fRealMeanGray < _dCompThread_3_)
+					{
+						nFlag2 = i;
+					}
+				}
+				if (nFlag1 == nFlag2 && nFlag1 != -1)
+				{
+					nFlag3 = nFlag1;
+				}
+				else if (nFlag1 > nFlag2)
+				{
+					nFlag3 = nFlag1;
+				}
+				else if (nFlag1 < nFlag2)
+				{
+					nFlag3 = nFlag2;
+				}
+
+				if (nFlag < nFlag3)		//nFlag >= nFlag3时，保留默认判断值
+				{
+					nFlag = nFlag3;
+					fThreld = vecItemsDesc[nFlag]->fRealValuePercent;
+				}
+			}
+
 			//根据答案确定灰度再次判断
 			//如果根据灰度值直接判断确定答案的数量 > 灰度差值判断出的选项数
 			//即：灰度差判断出1个，直接答案判定数为3个，则再次判断，可针对全涂或者扫描很深的情况
+			//若有答案退出判断标志，则不参与此判断，因存在此标志时，一般密度差较大
 			if ((nFlag != vecOmrItemDiff.size() - 1) && (vecVal_calcHist.size() > nFlag + 1))
 			{
 				for (int i = 0; i < vecVal_calcHist.size(); i++)
@@ -2390,7 +2437,8 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 					{
 						if (rcItem.nAnswer == vecVal_calcHist[i])
 						{
-							if (rcItem.fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2)	//选项的灰度<(比较灰度 + 灰度答案确认值 + 灰度退出密度值) / 2
+							if (rcItem.fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2 || \
+								rcItem.fRealValuePercent - fDensityMeanPer2 > fDiffThread)	//选项的灰度<(比较灰度 + 灰度答案确认值 + 灰度退出密度值) / 2，或者选项的密度 - 选项平均密度 > 比较灰度
 							{
 								fThreld = rcItem.fRealValuePercent > fThreld ? fThreld : rcItem.fRealValuePercent;
 							}
@@ -2401,7 +2449,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			}
 			else
 			{
-				if (omrResult.nSingle == 0 && nFlag > 0)	//单选, 识别到多个
+				if (omrResult.nSingle != 1 && nFlag > 0 && !bDiffExit)	//单选,判断, 识别到多个，没有直接退出判断标志
 				{
 					for (int i = 0; i < nFlag; i++)
 					{
@@ -2414,7 +2462,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 							fThreld = vecOmrItemDiff[i].fSecond;
 						}
 						else if (vecOmrItemDiff[i].fDiff >= fDiffThread && (vecItemsDesc[i + 1]->fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2 || \
-																			abs(vecItemsDesc[i]->fRealMeanGray - vecItemsDesc[i + 1]->fRealMeanGray) < _dDiffThread_3_))
+							(abs(vecItemsDesc[i]->fRealMeanGray - vecItemsDesc[i + 1]->fRealMeanGray) < _dDiffThread_3_ && vecItemsDesc[i + 1]->fRealValuePercent > fCompThread)))
 						{
 							fThreld = vecOmrItemDiff[i].fSecond;
 						}
@@ -2467,10 +2515,53 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 					nFlag = i;
 					fThreld = vecOmrItemDiff[i].fFirst;
 					if (vecOmrItemDiff[i].fDiff > fDiffExit && i + 1 >= vecVal_calcHist.size())	//灰度值变化较大，直接退出，如果阀值直接判断出来的个数超过当前判断的数量，就不能马上退
+					{
+						bDiffExit = true;
 						break;
+					}
 				}
 			}
-			if (omrResult.nSingle == 0 && nFlag > 0)	//单选, 识别到多个
+			if (!bDiffExit && nMaybeAnswer > 0 && nFlag < nMaybeAnswer)	//通过上面的方法没有识别到选项，但是存在差值 > 比较差值(0.2)的选项，即第1项的差值大于比较差值
+			{
+				int nThreld1 = _dDiffExit_3_ + _dAnswerSure_;
+				int nThreld2 = (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2;
+				int nFlag1 = -1;
+				int nFlag2 = -1;
+				int nFlag3 = -1;
+				for (int i = 0; i < vecItemsDesc.size(); i++)
+				{
+					if (vecItemsDesc[i]->fRealValuePercent > fCompThread && vecItemsDesc[i]->fRealMeanGray < max(nThreld1, nThreld2))
+					{
+						nFlag1 = i;
+					}
+				}
+				for (int i = 0; i < vecOmrItemDiff.size(); i++)
+				{
+					if (vecOmrItemDiff[i].fDiff > fDiffThread && vecItemsDesc[i]->fRealMeanGray < _dCompThread_3_)
+					{
+						nFlag2 = i;
+					}
+				}
+				if (nFlag1 == nFlag2 && nFlag1 != -1)
+				{
+					nFlag3 = nFlag1;
+				}
+				else if (nFlag1 > nFlag2)
+				{
+					nFlag3 = nFlag1;
+				}
+				else if (nFlag1 < nFlag2)
+				{
+					nFlag3 = nFlag2;
+				}
+
+				if (nFlag < nFlag3)		//nFlag >= nFlag3时，保留默认判断值
+				{
+					nFlag = nFlag3;
+					fThreld = vecItemsDesc[nFlag]->fRealValuePercent;
+				}
+			}
+			if (omrResult.nSingle != 1 && nFlag > 0 && !bDiffExit)	//单选,判断, 识别到多个，没有直接退出判断标志
 			{
 				for (int i = 0; i < nFlag; i++)
 				{
@@ -2483,7 +2574,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 						fThreld = vecOmrItemDiff[i].fSecond;
 					}
 					else if (vecOmrItemDiff[i].fDiff >= fDiffThread && (vecItemsDesc[i + 1]->fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2 || \
-																		abs(vecItemsDesc[i]->fRealMeanGray - vecItemsDesc[i + 1]->fRealMeanGray) < _dDiffThread_3_))
+							(abs(vecItemsDesc[i]->fRealMeanGray - vecItemsDesc[i + 1]->fRealMeanGray) < _dDiffThread_3_ && vecItemsDesc[i + 1]->fRealValuePercent > fCompThread)))
 					{
 						fThreld = vecOmrItemDiff[i].fSecond;
 					}
@@ -2492,34 +2583,6 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 						fThreld = vecOmrItemDiff[i].fFirst;
 					}
 				}
-			}
-			if (nFlag < 0)	//通过上面的方法没有识别到选项，但是存在差值 > 比较差值(0.2)的选项，即第1项的差值大于比较差值
-			{
-				if (nMaybeAnswer > 0)
-				{
-					int nThreld1 = _dDiffExit_3_ + _dAnswerSure_;
-					int nThreld2 = (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2;
-					for (int i = 0; i < vecItemsDesc.size(); i++)
-					{
-						if(vecItemsDesc[i]->fRealValuePercent > fCompThread && vecItemsDesc[i]->fRealMeanGray < max(nThreld1, nThreld2))
-							fThreld = vecItemsDesc[i]->fRealValuePercent < fThreld ? vecItemsDesc[i]->fRealValuePercent : fThreld;
-					}
-					//**********************	用上面还是下面
-					for (int i = 0; i < vecOmrItemDiff.size(); i++)
-					{
-						if (vecOmrItemDiff[i].fDiff > fDiffThread && vecItemsDesc[i]->fRealMeanGray < _dCompThread_3_)
-						{
-							nFlag = i;
-							fThreld = vecOmrItemDiff[i].fFirst;
-						}
-					}
-				}
-
-// 				if (vecOmrItemDiff[0].fDiff > fDiffThread && vecItemsDesc[0]->fRealMeanGray < _dCompThread_3_)
-// 				{
-// 					nFlag = 0;
-// 					fThreld = vecOmrItemDiff[0].fFirst;
-// 				}
 			}
 			if (nFlag >= 0)
 			{
