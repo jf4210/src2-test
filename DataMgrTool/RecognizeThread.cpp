@@ -2383,7 +2383,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			}
 			//--
 
-			if (!bDiffExit && nMaybeAnswer > 0 && nFlag < nMaybeAnswer)	//通过上面的方法没有识别到选项，但是存在差值 > 比较差值(0.2)的选项，即第1项的差值大于比较差值
+			if (!bDiffExit && nMaybeAnswer > 0 && nFlag < nMaybeAnswer - 1)	//通过上面的方法没有识别到选项，但是存在差值 > 比较差值(0.2)的选项，即第1项的差值大于比较差值
 			{
 				int nThreld1 = _dDiffExit_3_ + _dAnswerSure_;
 				int nThreld2 = (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2;
@@ -2430,6 +2430,8 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			//若有答案退出判断标志，则不参与此判断，因存在此标志时，一般密度差较大
 			if ((nFlag != vecOmrItemDiff.size() - 1) && (vecVal_calcHist.size() > nFlag + 1))
 			{
+				int nThreld1 = _dCompThread_3_;
+				int nThreld2 = (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2;
 				for (int i = 0; i < vecVal_calcHist.size(); i++)
 				{
 					//查找此选项对应的矩形信息
@@ -2437,8 +2439,8 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 					{
 						if (rcItem.nAnswer == vecVal_calcHist[i])
 						{
-							if (rcItem.fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2 || \
-								rcItem.fRealValuePercent - fDensityMeanPer2 > fDiffThread)	//选项的灰度<(比较灰度 + 灰度答案确认值 + 灰度退出密度值) / 2，或者选项的密度 - 选项平均密度 > 比较灰度
+							if (rcItem.fRealMeanGray < min(nThreld1, nThreld2) || \
+								(rcItem.fRealValuePercent - fDensityMeanPer2 > fDiffThread) && rcItem.fRealMeanGray < max(nThreld1, nThreld2))	//选项的灰度<(比较灰度 + 灰度答案确认值 + 灰度退出密度值) / 2，或者选项的密度 - 选项平均密度 > 比较灰度
 							{
 								fThreld = rcItem.fRealValuePercent > fThreld ? fThreld : rcItem.fRealValuePercent;
 							}
@@ -2449,7 +2451,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			}
 			else
 			{
-				if (omrResult.nSingle != 1 && nFlag > 0 && !bDiffExit)	//单选,判断, 识别到多个，没有直接退出判断标志
+				if (omrResult.nSingle != 1 && nFlag > 0 /*&& !bDiffExit*/)	//单选,判断, 识别到多个，没有直接退出判断标志
 				{
 					for (int i = 0; i < nFlag; i++)
 					{
@@ -2457,7 +2459,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 						{
 							fThreld = vecOmrItemDiff[i].fSecond;
 						}
-						else if (vecOmrItemDiff[i].fDiff >= fDiffThread && vecOmrItemDiff[i].fSecond > _dAnswerSure_DensityFix_)
+						else if (vecOmrItemDiff[i].fDiff >= fDiffThread && vecOmrItemDiff[i].fSecond > _dAnswerSure_DensityFix_ && fDensityMeanPer2 < _dAnswerSure_DensityFix_)
 						{
 							fThreld = vecOmrItemDiff[i].fSecond;
 						}
@@ -2472,6 +2474,12 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 						}
 					}
 				}
+// 				else if (bDiffExit && omrResult.nSingle != 1 && nFlag > 0)
+// 				{
+// 					for (int i = 0; i < nFlag; i++)
+// 					{
+// 					}
+// 				}
 			}
 
 			RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
@@ -2521,7 +2529,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 					}
 				}
 			}
-			if (!bDiffExit && nMaybeAnswer > 0 && nFlag < nMaybeAnswer)	//通过上面的方法没有识别到选项，但是存在差值 > 比较差值(0.2)的选项，即第1项的差值大于比较差值
+			if (!bDiffExit && nMaybeAnswer > 0 && nFlag < nMaybeAnswer - 1)	//通过上面的方法没有识别到选项，但是存在差值 > 比较差值(0.2)的选项，即第1项的差值大于比较差值
 			{
 				int nThreld1 = _dDiffExit_3_ + _dAnswerSure_;
 				int nThreld2 = (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2;
@@ -2561,7 +2569,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 					fThreld = vecItemsDesc[nFlag]->fRealValuePercent;
 				}
 			}
-			if (omrResult.nSingle != 1 && nFlag > 0 && !bDiffExit)	//单选,判断, 识别到多个，没有直接退出判断标志
+			if (omrResult.nSingle != 1 && nFlag > 0 /*&& !bDiffExit*/)	//单选,判断, 识别到多个，没有直接退出判断标志
 			{
 				for (int i = 0; i < nFlag; i++)
 				{
@@ -2569,7 +2577,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 					{
 						fThreld = vecOmrItemDiff[i].fSecond;
 					}
-					else if (vecOmrItemDiff[i].fDiff >= fDiffThread && vecOmrItemDiff[i].fSecond > _dAnswerSure_DensityFix_)
+					else if (vecOmrItemDiff[i].fDiff >= fDiffThread && vecOmrItemDiff[i].fSecond > _dAnswerSure_DensityFix_ && fDensityMeanPer2 < _dAnswerSure_DensityFix_)
 					{
 						fThreld = vecOmrItemDiff[i].fSecond;
 					}
