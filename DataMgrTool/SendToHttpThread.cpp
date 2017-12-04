@@ -183,22 +183,29 @@ void CSendToHttpThread::run()
 			{
 				std::string strLog;
 				int nCode = response.getStatus();
+				stringstream ssLog;
 				if (pTask->nTaskType == 3)
 				{
-					strLog = "post omr result failed: " + pTask->pPapers->strPapersName + "\tErrCode: " + response.getReason() + "\tName: " + pTask->pPapers->strPapersName + "\nResult info: ..." /*+ pTask->strResult*/;
-					g_Log.LogOutError(strLog);
+// 					strLog = "post omr result failed: " + pTask->pPapers->strPapersName + "\tErrCode: " + response.getReason() + "\tName: " + pTask->pPapers->strPapersName + "\nResult info: ..." /*+ pTask->strResult*/;
+// 					g_Log.LogOutError(strLog);
+					ssLog << "post omr result failed: " << pTask->pPapers->strPapersName << "\tErrCode(Http´íÎóÂë): " << response.getReason() << "(" << nCode << ")\tName: " << pTask->pPapers->strPapersName << "\nResult info: " << pTask->strResult;
+					g_Log.LogOutError(ssLog.str());
 //					std::cout << strLog << std::endl;
 				}
 				else if (pTask->nTaskType == 4)
 				{
-					strLog = "post zkzh result failed: " + pTask->pPapers->strPapersName + "\tErrCode: " + response.getReason() + "\tName: " + pTask->pPapers->strPapersName + "\nResult info: ..." /*+ pTask->strResult*/;
-					g_Log.LogOutError(strLog);
+// 					strLog = "post zkzh result failed: " + pTask->pPapers->strPapersName + "\tErrCode: " + response.getReason() + "\tName: " + pTask->pPapers->strPapersName + "\nResult info: ..." /*+ pTask->strResult*/;
+// 					g_Log.LogOutError(strLog);
+					ssLog << "post zkzh result failed: " << pTask->pPapers->strPapersName << "\tErrCode(Http´íÎóÂë): " << response.getReason() << "(" << nCode << ")\tName: " << pTask->pPapers->strPapersName << "\nResult info: " << pTask->strResult;
+					g_Log.LogOutError(ssLog.str());
 //					std::cout << strLog << std::endl;
 				}
 				else if (pTask->nTaskType == 5)
 				{
-					strLog = "post ElectOmr result failed: " + pTask->pPapers->strPapersName + "\tErrCode: " + response.getReason() + "\tName: " + pTask->pPapers->strPapersName + "\nResult info: ..." /*+ pTask->strResult*/;
-					g_Log.LogOutError(strLog);
+// 					strLog = "post ElectOmr result failed: " + pTask->pPapers->strPapersName + "\tErrCode: " + response.getReason() + "\tName: " + pTask->pPapers->strPapersName + "\nResult info: ..." /*+ pTask->strResult*/;
+// 					g_Log.LogOutError(strLog);
+					ssLog << "post ElectOmr result failed: " << pTask->pPapers->strPapersName << "\tErrCode(Http´íÎóÂë): " << response.getReason() << "(" << nCode << ")\tName: " << pTask->pPapers->strPapersName << "\nResult info: " << pTask->strResult;
+					g_Log.LogOutError(ssLog.str());
 //					std::cout << strLog << std::endl;
 				}
 				pTask->nSendFlag++;

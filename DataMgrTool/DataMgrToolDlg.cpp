@@ -795,8 +795,9 @@ void CDataMgrToolDlg::showPapers(pPAPERSINFO pPapers)
 
 void CDataMgrToolDlg::OnBnClickedBtnClear()
 {
-	m_strMsg.Empty();
 	UpdateData(TRUE);
+	m_strMsg.Empty();
+	UpdateData(FALSE);
 }
 
 void CDataMgrToolDlg::OnBnClickedBtnRecogpkg()

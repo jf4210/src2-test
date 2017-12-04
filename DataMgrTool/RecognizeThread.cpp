@@ -2435,6 +2435,20 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				for (int i = 0; i < vecVal_calcHist.size(); i++)
 				{
 					//查找此选项对应的矩形信息
+				#if 1
+					for(int j = 0; j < vecItemsDesc.size(); j++)
+					{
+						if (vecItemsDesc[j]->nAnswer == vecVal_calcHist[i])
+						{
+							if (vecItemsDesc[j]->fRealMeanGray < min(nThreld1, nThreld2) || \
+								(vecItemsDesc[j]->fRealValuePercent - fDensityMeanPer2 > fDiffThread) && vecItemsDesc[j]->fRealMeanGray < max(nThreld1, nThreld2))	//选项的灰度<(比较灰度 + 灰度答案确认值 + 灰度退出密度值) / 2，或者选项的密度 - 选项平均密度 > 比较灰度
+							{
+								fThreld = vecItemsDesc[j]->fRealValuePercent > fThreld ? fThreld : vecItemsDesc[j]->fRealValuePercent;
+							}
+							break;
+						}
+					}
+				#else
 					for (auto rcItem : omrResult.lSelAnswer)
 					{
 						if (rcItem.nAnswer == vecVal_calcHist[i])
@@ -2447,6 +2461,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 							break;
 						}
 					}
+				#endif
 				}
 			}
 			else
@@ -2455,7 +2470,8 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				{
 					for (int i = 0; i < nFlag; i++)
 					{
-						if (vecOmrItemDiff[i].fDiff < fDiffThread && vecItemsDesc[i + 1]->fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2)
+						if (vecOmrItemDiff[i].fDiff < fDiffThread && ((vecItemsDesc[i + 1]->fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2) || \
+							vecItemsDesc[i + 1]->fRealValuePercent - fDensityMeanPer2 > fDiffThread))
 						{
 							fThreld = vecOmrItemDiff[i].fSecond;
 						}
@@ -2464,7 +2480,8 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 							fThreld = vecOmrItemDiff[i].fSecond;
 						}
 						else if (vecOmrItemDiff[i].fDiff >= fDiffThread && (vecItemsDesc[i + 1]->fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2 || \
-							(abs(vecItemsDesc[i]->fRealMeanGray - vecItemsDesc[i + 1]->fRealMeanGray) < _dDiffThread_3_ && vecItemsDesc[i + 1]->fRealValuePercent > fCompThread)))
+							(abs(vecItemsDesc[i]->fRealMeanGray - vecItemsDesc[i + 1]->fRealMeanGray) < _dDiffThread_3_ && vecItemsDesc[i + 1]->fRealValuePercent > fCompThread) /*|| \*/
+							/*(vecItemsDesc[i + 1]->fRealValuePercent - fDensityMeanPer2 > fDiffExit)*/))
 						{
 							fThreld = vecOmrItemDiff[i].fSecond;
 						}
@@ -2573,7 +2590,8 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			{
 				for (int i = 0; i < nFlag; i++)
 				{
-					if (vecOmrItemDiff[i].fDiff < fDiffThread && vecItemsDesc[i + 1]->fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2)
+					if (vecOmrItemDiff[i].fDiff < fDiffThread && ((vecItemsDesc[i + 1]->fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2) || \
+						vecItemsDesc[i + 1]->fRealValuePercent - fDensityMeanPer2 > fDiffThread))
 					{
 						fThreld = vecOmrItemDiff[i].fSecond;
 					}

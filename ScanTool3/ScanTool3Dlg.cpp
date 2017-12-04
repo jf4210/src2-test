@@ -14,9 +14,7 @@
 #define new DEBUG_NEW
 #endif
 
-
 // CScanTool2Dlg 对话框
-
 //++全局变量
 using namespace std;
 using namespace cv;

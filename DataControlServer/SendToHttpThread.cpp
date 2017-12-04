@@ -278,11 +278,13 @@ void CSendToHttpThread::run()
 			{
 				std::string strLog;
 				int nCode = response.getStatus();
+				stringstream ssLog;
 				if (pTask->nTaskType == 1 || pTask->nTaskType == 6)
 				{
-					std::string strErrCode = Poco::format("%d", (int)response.getStatus());
-					strLog = "send file fail: " + pTask->pPic->strFileName + "\tErrCode(Http´íÎóÂë): " + response.getReason() + "(" + strErrCode + ")" + "\tPath: " + pTask->pPic->strFilePath;
-					g_Log.LogOutError(strLog);
+// 					std::string strErrCode = Poco::format("%d", (int)response.getStatus());
+// 					strLog = "send file fail: " + pTask->pPic->strFileName + "\tErrCode(Http´íÎóÂë): " + response.getReason() + "(" + strErrCode + ")" + "\tPath: " + pTask->pPic->strFilePath;
+					ssLog << "send file fail: " << pTask->pPic->strFileName << "\tErrCode(Http´íÎóÂë): " << response.getReason() << "(" << nCode << ")\tPath: " << pTask->pPic->strFilePath;
+					g_Log.LogOutError(ssLog.str());
 					std::cout << strLog << std::endl;
 
 					pTask->pPic->bUpLoadFlag = false;
@@ -293,30 +295,38 @@ void CSendToHttpThread::run()
 				}
 				else if (pTask->nTaskType == 2)
 				{
-					std::string strErrCode = Poco::format("%d", (int)response.getStatus());
-					strLog = "post papers result failed: " + pTask->pPapers->strPapersName + "\tErrCode(Http´íÎóÂë): " + response.getReason() + "(" + strErrCode + ")" + "\tPath: " + pTask->pPapers->strPapersPath + "\nResult info: ..." /*+ pTask->strResult*/;
-					g_Log.LogOutError(strLog);
+// 					std::string strErrCode = Poco::format("%d", (int)response.getStatus());
+// 					strLog = "post papers result failed: " + pTask->pPapers->strPapersName + "\tErrCode(Http´íÎóÂë): " + response.getReason() + "(" + strErrCode + ")" + "\tPath: " + pTask->pPapers->strPapersPath + "\nResult info: ..." /*+ pTask->strResult*/;
+// 					g_Log.LogOutError(strLog);
+					ssLog << "post papers result failed: " << pTask->pPic->strFileName << "\tErrCode(Http´íÎóÂë): " << response.getReason() << "(" << nCode << ")\tPath: " << pTask->pPic->strFilePath;
+					g_Log.LogOutError(ssLog.str());
 					std::cout << strLog << std::endl;
 				}
 				else if (pTask->nTaskType == 3)
 				{
-					std::string strErrCode = Poco::format("%d", (int)response.getStatus());
-					strLog = "post omr result failed: " + pTask->pPapers->strPapersName + "\tErrCode(Http´íÎóÂë): " + response.getReason() + "(" + strErrCode + ")" + "\tName: " + pTask->pPapers->strPapersName + "\nResult info: ..." /*+ pTask->strResult*/;
-					g_Log.LogOutError(strLog);
+// 					std::string strErrCode = Poco::format("%d", (int)response.getStatus());
+// 					strLog = "post omr result failed: " + pTask->pPapers->strPapersName + "\tErrCode(Http´íÎóÂë): " + response.getReason() + "(" + strErrCode + ")" + "\tName: " + pTask->pPapers->strPapersName + "\nResult info: ..." /*+ pTask->strResult*/;
+// 					g_Log.LogOutError(strLog);
+					ssLog << "post omr result failed: " << pTask->pPic->strFileName << "\tErrCode(Http´íÎóÂë): " << response.getReason() << "(" << nCode << ")\tPath: " << pTask->pPic->strFilePath;
+					g_Log.LogOutError(ssLog.str());
 					std::cout << strLog << std::endl;
 				}
 				else if (pTask->nTaskType == 4)
 				{
-					std::string strErrCode = Poco::format("%d", (int)response.getStatus());
-					strLog = "post zkzh result failed: " + pTask->pPapers->strPapersName + "\tErrCode(Http´íÎóÂë): " + response.getReason() + "(" + strErrCode + ")" + "\tName: " + pTask->pPapers->strPapersName + "\nResult info: ..." /*+ pTask->strResult*/;
-					g_Log.LogOutError(strLog);
+// 					std::string strErrCode = Poco::format("%d", (int)response.getStatus());
+// 					strLog = "post zkzh result failed: " + pTask->pPapers->strPapersName + "\tErrCode(Http´íÎóÂë): " + response.getReason() + "(" + strErrCode + ")" + "\tName: " + pTask->pPapers->strPapersName + "\nResult info: ..." /*+ pTask->strResult*/;
+// 					g_Log.LogOutError(strLog);
+					ssLog << "post zkzh result failed: " << pTask->pPic->strFileName << "\tErrCode(Http´íÎóÂë): " << response.getReason() << "(" << nCode << ")\tPath: " << pTask->pPic->strFilePath;
+					g_Log.LogOutError(ssLog.str());
 					std::cout << strLog << std::endl;
 				}
 				else if (pTask->nTaskType == 5)
 				{
-					std::string strErrCode = Poco::format("%d", (int)response.getStatus());
-					strLog = "post ElectOmr result failed: " + pTask->pPapers->strPapersName + "\tErrCode(Http´íÎóÂë): " + response.getReason() + "(" + strErrCode + ")" + "\tName: " + pTask->pPapers->strPapersName + "\nResult info: ..." /*+ pTask->strResult*/;
-					g_Log.LogOutError(strLog);
+// 					std::string strErrCode = Poco::format("%d", (int)response.getStatus());
+// 					strLog = "post ElectOmr result failed: " + pTask->pPapers->strPapersName + "\tErrCode(Http´íÎóÂë): " + response.getReason() + "(" + strErrCode + ")" + "\tName: " + pTask->pPapers->strPapersName + "\nResult info: ..." /*+ pTask->strResult*/;
+// 					g_Log.LogOutError(strLog);
+					ssLog << "post ElectOmr result failed: " << pTask->pPic->strFileName << "\tErrCode(Http´íÎóÂë): " << response.getReason() << "(" << nCode << ")\tPath: " << pTask->pPic->strFilePath;
+					g_Log.LogOutError(ssLog.str());
 					std::cout << strLog << std::endl;
 				}
 				pTask->nSendFlag++;
