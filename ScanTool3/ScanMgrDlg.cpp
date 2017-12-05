@@ -258,10 +258,14 @@ bool CScanMgrDlg::chkChangeExamLegal()
 	}
 	else if (_eCurrDlgType_ == DLG_DownloadModle)
 	{
-		CNewMessageBox	dlg;
-		dlg.setShowInfo(2, 1, "正在下载报名库和模板，请稍后。。。");
-		dlg.DoModal();
-		return false;
+		int nDiffTime = tmStampDLG_DownloadModle.elapsed();
+		if (nDiffTime < 20 * 1000000)
+		{
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(2, 1, "正在下载报名库和模板，请稍后。。。");
+			dlg.DoModal();
+			return false;
+		}
 	}
 	else if (_eCurrDlgType_ == Dlg_PapersInput)
 	{
@@ -364,6 +368,7 @@ void CScanMgrDlg::ShowChildDlg(int n, int nOprater /*= 0*/)
 		m_pScanProcessDlg->ShowWindow(SW_HIDE);
 		m_pScanRecordMgrDlg->ShowWindow(SW_HIDE);
 		m_pPapersInputDlg->ShowWindow(SW_HIDE);
+		tmStampDLG_DownloadModle.update();			//记录在下载模板等待界面的等待时间，超过一定时间时可退出
 
 		_eCurrDlgType_ = DLG_DownloadModle;
 		int nResult = GetBmkInfo();
@@ -701,6 +706,7 @@ bool CScanMgrDlg::DownLoadModel()
 	g_pLogger->information(strLog);
 
 	g_eDownLoadModel.reset();
+	tmStampDLG_DownloadModle.update();			//记录在下载模板等待界面的等待时间，超过一定时间时可退出
 
 	pTCP_TASK pTcpTask = new TCP_TASK;
 	pTcpTask->usCmd = USER_NEED_DOWN_MODEL;
@@ -739,6 +745,7 @@ int CScanMgrDlg::GetBmkInfo()
 	strcpy(stGetBmkInfo.szEzs, _strEzs_.c_str());
 
 	g_eGetBmk.reset();
+	tmStampDLG_DownloadModle.update();			//记录在下载模板等待界面的等待时间，超过一定时间时可退出
 
 	pTCP_TASK pTcpTask = new TCP_TASK;
 	pTcpTask->usCmd = USER_GET_EXAM_BMK;

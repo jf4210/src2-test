@@ -116,7 +116,7 @@ void CShowPapersDlg::InitCtrlPosition()
 	int nLeftWidth = 200;
 	int nStaticH = 20;
 	int nListW = nLeftWidth - nLeftGap;
-	int nEditH = (cy - nTopGap - nBottomGap) * 0.27 - nGap;
+	int nEditH = (cy - nTopGap - nBottomGap) * 0.5 - nGap;	//(cy - nTopGap - nBottomGap) * 0.27 - nGap;
 	if (GetDlgItem(IDC_STATIC_ListTips)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_STATIC_ListTips)->MoveWindow(nCurrentLeft, nCurrentTop, nListW, nStaticH);
@@ -338,6 +338,32 @@ void CShowPapersDlg::ShowOmrTh(pST_PaperInfo pPaper, int nTh)
 			fDensityThreshold2 += (_dDiffThread_Fix_ + vecOmrItemDensityDiff[i].fDiff * 0.5 + fGrayThresholdGray * 0.5 + fDensityThreshold2) / 2;	//_dDiffThread_Fix_ + fGrayThresholdGray + fDensityThreshold2
 		}
 		strShowInfo.append("]\r\n");
+		
+		//++ 2017.12.5 test
+		float fRealMeanDensity = 0.0;
+		for (int i = 0; i < vecItemsDensityDesc.size(); i++)
+			fRealMeanDensity += vecItemsDensityDesc[i]->fRealDensity;
+		fRealMeanDensity = fRealMeanDensity / vecItemsDensityDesc.size();
+
+		char szTmp3[100] = { 0 };
+		sprintf_s(szTmp3, "实际密度平均值:%.3f, 与实际平均密度的比值[", fRealMeanDensity);
+		strShowInfo.append(szTmp3);
+		for (int i = 0; i < vecItemsDensityDesc.size(); i++)
+		{
+			char szTmp[40] = { 0 };
+			sprintf_s(szTmp, "%c:%.5f ", (char)(vecItemsDensityDesc[i]->nAnswer + 65), vecItemsDensityDesc[i]->fRealDensity / fRealMeanDensity);
+			strShowInfo.append(szTmp);
+		}
+		strShowInfo.append("]\r\n");
+
+		for (int i = 0; i < vecItemsDensityDesc.size(); i++)
+		{
+			char szTmp[40] = { 0 };
+			sprintf_s(szTmp, "%c%c:%.5f ", (char)(vecItemsDensityDesc[i]->nAnswer + 65), (char)(vecItemsDensityDesc[i + 1]->nAnswer + 65), vecItemsDensityDesc[i]->fRealDensity / fRealMeanDensity - vecItemsDensityDesc[i + 1]->fRealDensity / fRealMeanDensity);
+			strShowInfo.append(szTmp);
+		}
+		strShowInfo.append("]\r\n");
+		//--
 		//---------------------------------------------
 
 
@@ -367,21 +393,25 @@ void CShowPapersDlg::ShowOmrTh(pST_PaperInfo pPaper, int nTh)
 		//-----------------------------------
 
 		strShowInfo.append("[");
+		float fMeanGrayDiff = 0.0;
 		for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
 		{
 			char szTmp[40] = { 0 };
 			sprintf_s(szTmp, "%s:%.3f ", vecOmrItemGrayDiff[i].szVal, vecOmrItemGrayDiff[i].fDiff);
 			strShowInfo.append(szTmp);
+			fMeanGrayDiff += vecOmrItemGrayDiff[i].fDiff;
 		}
 		strShowInfo.append("]");
-		float fMeanGrayDiff = 0.0;
+		fMeanGrayDiff = fMeanGrayDiff / vecOmrItemGrayDiff.size();
+
+		float fMeanModelGrayDiff = 0.0;
 		for (int i = 0; i < vecItemsGrayDesc.size(); i++)
 		{
-			fMeanGrayDiff += (vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray);
+			fMeanModelGrayDiff += (vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray);
 		}
-		fMeanGrayDiff = fMeanGrayDiff / vecItemsGrayDesc.size();
-		char szTmp1[40] = { 0 };
-		sprintf_s(szTmp1, "平均灰度差:%.3f, ", fMeanGrayDiff);
+		fMeanModelGrayDiff = fMeanModelGrayDiff / vecItemsGrayDesc.size();
+		char szTmp1[80] = { 0 };
+		sprintf_s(szTmp1, "平均灰度差:%.3f, 与模板的平均灰度差:%.3f", fMeanGrayDiff, fMeanModelGrayDiff);
 		strShowInfo.append(szTmp1);
 		strShowInfo.append("\r\n灰度选中[");
 		float fThreld = 0.0;

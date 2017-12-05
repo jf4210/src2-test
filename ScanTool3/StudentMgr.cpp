@@ -162,7 +162,7 @@ bool CStudentMgr::InsertMemData(STUDENT_LIST& lData, std::string strTable)
 		
 		bResult = true;
 		sw.stop();
-		std::string strLog = Poco::format("插入报名库数据完成[%.6fs]", (double)sw.elapsed() / 1000000);
+		std::string strLog = Poco::format("插入报名库数据完成[%.6fms]", (double)sw.elapsed() / 1000);
 		g_pLogger->information(strLog);
 		TRACE("%s\n", strLog.c_str());
 	}

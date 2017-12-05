@@ -502,22 +502,28 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			std::vector<pRECTINFO> vecItemsGrayDesc;
 			std::vector<ST_ITEM_DIFF> vecOmrItemGrayDiff;
 			calcOmrGrayDiffVal(itOmr->lSelAnswer, vecItemsGrayDesc, vecOmrItemGrayDiff);
+
+			float fMeanGrayDiff = 0.0;
 			strItemLog.append("\n[");
 			for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
 			{
 				char szTmp[40] = { 0 };
 				sprintf_s(szTmp, "%s:%.3f ", vecOmrItemGrayDiff[i].szVal, vecOmrItemGrayDiff[i].fDiff);
 				strItemLog.append(szTmp);
+
+				fMeanGrayDiff += vecOmrItemGrayDiff[i].fDiff;
 			}
 			strItemLog.append("]");
-			float fMeanGrayDiff = 0.0;
+			fMeanGrayDiff = fMeanGrayDiff / vecOmrItemGrayDiff.size();
+
+			float fMeanModelGrayDiff = 0.0;
 			for (int i = 0; i < vecItemsGrayDesc.size(); i++)
 			{
-				fMeanGrayDiff += (vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray);
+				fMeanModelGrayDiff += (vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray);
 			}
-			fMeanGrayDiff = fMeanGrayDiff / vecItemsGrayDesc.size();
-			char szTmp1[40] = { 0 };
-			sprintf_s(szTmp1, "平均灰度差:%.3f, ", fMeanGrayDiff);
+			fMeanModelGrayDiff = fMeanModelGrayDiff / vecItemsGrayDesc.size();
+			char szTmp1[80] = { 0 };
+			sprintf_s(szTmp1, "平均灰度差:%.3f, 与模板的平均灰度差:%.3f\n", fMeanGrayDiff, fMeanModelGrayDiff);
 			strItemLog.append(szTmp1);
 			strItemLog.append("灰度选中的阀值[");
 			float fThreld = 0.0;
@@ -2302,18 +2308,21 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				nMaybeAnswer++;
 		}
 
-		float fDensityMeanPer2 = 0.0;
+		float fDensityMeanPer2 = 0.0;	//密度比值，与模板的密度比值
+		float fRealMeanDensity = 0.0;	//实际选项的密度值，不是与模板的比值
 		for (int i = 0; i < vecItemsDesc.size(); i++)
 		{
-			fDensityMeanPer2 += vecItemsDesc[i]->fRealValuePercent;
+			fDensityMeanPer2 += vecItemsDesc[i]->fRealValuePercent; 
+			fRealMeanDensity += vecItemsDesc[i]->fRealDensity;
 		}
 		fDensityMeanPer2 = fDensityMeanPer2 / vecItemsDesc.size();
+		fRealMeanDensity = fRealMeanDensity / vecItemsDesc.size();
 
 		float fDensityMeanPer = 0.0;
 		for (int i = 0; i < vecOmrItemDiff.size(); i++)
 			fDensityMeanPer += vecOmrItemDiff[i].fDiff;
 		fDensityMeanPer = fDensityMeanPer / vecOmrItemDiff.size();
-
+		
 		int nFlag = -1;
 		float fThreld = 0.0;
 		float fDensityThreshold = 0.0;
@@ -2440,8 +2449,12 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 					{
 						if (vecItemsDesc[j]->nAnswer == vecVal_calcHist[i])
 						{
+							//选项的灰度<(比较灰度 + 灰度答案确认值 + 灰度退出密度值) / 2，
+							//或者选项的密度 - 选项平均密度 > 比较灰度
+							//或者选项的实际密度 / 所有选项的平均密度 > 退出密度1.2
 							if (vecItemsDesc[j]->fRealMeanGray < min(nThreld1, nThreld2) || \
-								(vecItemsDesc[j]->fRealValuePercent - fDensityMeanPer2 > fDiffThread) && vecItemsDesc[j]->fRealMeanGray < max(nThreld1, nThreld2))	//选项的灰度<(比较灰度 + 灰度答案确认值 + 灰度退出密度值) / 2，或者选项的密度 - 选项平均密度 > 比较灰度
+								((vecItemsDesc[j]->fRealValuePercent - fDensityMeanPer2 > fDiffThread) && vecItemsDesc[j]->fRealMeanGray < max(nThreld1, nThreld2)) || \
+								(vecItemsDesc[j]->fRealDensity / fRealMeanDensity > fDiffExit /*|| (vecItemsDesc[j]->fRealDensity / fRealMeanDensity > fCompThread && )*/))
 							{
 								fThreld = vecItemsDesc[j]->fRealValuePercent > fThreld ? fThreld : vecItemsDesc[j]->fRealValuePercent;
 							}
@@ -2481,7 +2494,8 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 						}
 						else if (vecOmrItemDiff[i].fDiff >= fDiffThread && (vecItemsDesc[i + 1]->fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2 || \
 							(abs(vecItemsDesc[i]->fRealMeanGray - vecItemsDesc[i + 1]->fRealMeanGray) < _dDiffThread_3_ && vecItemsDesc[i + 1]->fRealValuePercent > fCompThread) /*|| \*/
-							/*(vecItemsDesc[i + 1]->fRealValuePercent - fDensityMeanPer2 > fDiffExit)*/))
+							/*(vecItemsDesc[i + 1]->fRealValuePercent - fDensityMeanPer2 >= fDiffExit && (vecItemsDesc[i + 1]->fRealValuePercent - fDensityMeanPer2 >= fDensityMeanPer) && \
+							(vecItemsDesc[i + 1] - vecItemsDesc[i + 2]的灰度差 > 平均灰度差) && (vecItemsDesc[i] - vecItemsDesc[i + 1]的灰度差 < 直接退出灰度)*/))
 						{
 							fThreld = vecOmrItemDiff[i].fSecond;
 						}

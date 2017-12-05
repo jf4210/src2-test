@@ -79,7 +79,7 @@ private:
 	std::vector<CString> m_vecScanSrc;
 
 	CBmpButton		m_bmpBtnChangeExam;
-
+	Poco::Timestamp tmStampDLG_DownloadModle;
 #ifdef TEST_FAST_SCAN
 	COmrRecog _chkRotationObj;
 #endif
