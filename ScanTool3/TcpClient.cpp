@@ -888,16 +888,18 @@ void CTcpClient::HandleCmd()
 						pST_SENDER pObjSender = itSender->second;
 						pObjSender->strIP = strIP;
 						pObjSender->nPort = nPort;
-						pObjSender->pUpLoad->ReConnectAddr(A2T(strIP.c_str()), nPort);
+						if(pObjSender->pUpLoad != NULL)
+							pObjSender->pUpLoad->ReConnectAddr(A2T(strIP.c_str()), nPort);
 					}
 					else
 					{
-// 						pST_SENDER pObjSender = new ST_SENDER;
-// 						pObjSender->strIP = strIP;
-// 						pObjSender->nPort = nPort;
-// 						pObjSender->pUpLoad = new CFileUpLoad(*this);
-// 						pObjSender->pUpLoad->InitUpLoadTcp(A2T(strIP.c_str()), nPort);
-// 						_mapSender_.insert(MAP_FILESENDER::value_type(strExtName, pObjSender));
+						pST_SENDER pObjSender = new ST_SENDER;
+						pObjSender->strIP = strIP;
+						pObjSender->nPort = nPort;
+						pObjSender->pUpLoad = new CFileUpLoad(NULL);
+						pObjSender->pUpLoad->SetSendExtType(strExtName);
+						pObjSender->pUpLoad->InitUpLoadTcp(A2T(strIP.c_str()), nPort);
+						_mapSender_.insert(MAP_FILESENDER::value_type(strExtName, pObjSender));
 					}
 					_fmMapSender_.unlock();
 				#endif
@@ -921,15 +923,14 @@ void CTcpClient::HandleCmd()
 	else if (pstHead->usCmd == USER_RESPONSE_NEED_UP_MODEL_PIC)
 	{
 		pST_MODELPIC pstModelPic = (pST_MODELPIC)(m_pRecvBuff + HEAD_SIZE);
+		std::stringstream ssLog;
 		switch (pstHead->usResult)
 		{
 			case RESULT_UP_MODEL_PIC_SEND:
 			{
 				TRACE("可以发送模板图片: %s\n", pstModelPic->szPicPath);
-
-				std::string strLog = "可以发送模板图片: ";
-				strLog.append(pstModelPic->szPicPath);
-				g_pLogger->information(strLog);
+				ssLog << "可以发送模板图片(" << pstModelPic->nExamID << "_" << pstModelPic->nSubjectID << "): " << pstModelPic->szPicPath;
+				g_pLogger->information(ssLog.str());
 			#if 1
 				char szModelPicName[100] = { 0 };
 				sprintf_s(szModelPicName, "%d_%d_%d_#_%s", pstModelPic->nExamID, pstModelPic->nSubjectID, pstModelPic->nIndex, pstModelPic->szPicName);
@@ -982,9 +983,8 @@ void CTcpClient::HandleCmd()
 			case RESULT_UP_MODEL_PIC_NONEED:
 			{
 				TRACE("不需要发送模板图片: %s\n", pstModelPic->szPicPath);
-				std::string strLog = "不需要重新发送模板文件";
-				strLog.append(pstModelPic->szPicPath);
-				g_pLogger->information(strLog);
+				ssLog << "不需要重新发送模板文件(" << pstModelPic->nExamID << "_" << pstModelPic->nSubjectID << "): " << pstModelPic->szPicPath;
+				g_pLogger->information(ssLog.str());
 			}
 				break;
 			default:

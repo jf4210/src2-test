@@ -818,7 +818,7 @@ BOOL CScanTool3Dlg::OnInitDialog()
 	}
 	catch (Poco::TimeoutException &e)
 	{
-		TRACE("获取报名库超时\n");
+		TRACE("获取考试列表超时\n");
 	}
 	InitUI();
 	m_pExamInfoMgrDlg->InitShowData();
@@ -831,6 +831,8 @@ BOOL CScanTool3Dlg::OnInitDialog()
 	//_timerKeepAlive = new Poco::Util::Timer();
 	_pTmKeepAliveObj = new TimerKeepAliveObj();
 	_timerKeepAlive.schedule(_pTmKeepAliveObj, 60 * 1000, 120 * 1000);		//2分钟一次心跳
+
+	UpLoadDumpFile();
 
 #ifndef _DEBUG
 	StartGuardProcess();
@@ -1112,9 +1114,12 @@ void CScanTool3Dlg::OnCmdRelogin()
 	}
 	catch (Poco::TimeoutException &e)
 	{
-		TRACE("获取报名库超时\n");
+		TRACE("获取考试列表超时\n");
 	}
+	m_strUserName = A2T(_strNickName_.c_str());
 	m_pExamInfoMgrDlg->InitShowData();
+	UpdateData(FALSE);
+	Invalidate();
 }
 
 void CScanTool3Dlg::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
@@ -1133,3 +1138,53 @@ void CScanTool3Dlg::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 		pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, myPoint.x, myPoint.y, this);//GetParent()
 	}
 }
+
+void CScanTool3Dlg::UpLoadDumpFile()
+{
+	USES_CONVERSION;
+	std::string strDumpFile = g_strCurrentPath + "ScanTool.dmp";
+	try
+	{
+		Poco::File fDump(CMyCodeConvert::Gb2312ToUtf8(strDumpFile));
+		if (!fDump.exists())
+			return;
+
+		Poco::Timestamp mTime = fDump.getLastModified();
+		Poco::DateTime  dt(mTime);
+		std::string strModifyTime = Poco::DateTimeFormatter::format(mTime, Poco::DateTimeFormat::SORTABLE_FORMAT);
+		strModifyTime = Poco::format("%04d-%02d-%02d %02d %02d %02d", dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute(), dt.second());
+		dt.makeLocal(3600 * 8);
+		strModifyTime = Poco::format("%04d-%02d-%02d %02d %02d %02d", dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute(), dt.second());
+
+// 		int nLastDumpRecordTime = 0;
+// 		char* ret;
+// 		ret = new char[50];
+// 		ret[0] = '\0';
+// 		if (ReadRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "DumpTime", ret) == 0)
+// 		{
+// 			nLastDumpRecordTime = atoi(ret);
+// 		}
+// 		SAFE_RELEASE_ARRY(ret);
+
+// 		if (mTime != nLastDumpRecordTime)	//可以上传dump文件
+// 		{
+			pSENDTASK pTask = new SENDTASK;
+			pTask->strFileName = "ScanTool_" + strModifyTime + ".dmp";
+			pTask->strPath = strDumpFile;
+			g_fmSendLock.lock();
+			g_lSendTask.push_back(pTask);
+			g_fmSendLock.unlock();
+
+// 			char szRet[50] = { 0 };
+// 			sprintf_s(szRet, "%d", mTime);
+			//WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "DumpTime", szRet);
+//		}
+	}
+	catch (Poco::Exception& exc)
+	{
+		return;
+	}
+
+	
+}
+

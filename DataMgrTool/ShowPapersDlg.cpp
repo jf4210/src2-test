@@ -255,6 +255,8 @@ void CShowPapersDlg::ShowOmrTh(pST_PaperInfo pPaper, int nTh)
 	}
 
 	std::string strShowInfo = "\r\n============\r\n";
+	std::string strTHinfo = Poco::format("%s:%d, %s-%s-%s", pPaper->strStudentInfo, nTh, itOmr->strRecogVal1, itOmr->strRecogVal2, itOmr->strRecogVal3);
+	strShowInfo.append(strTHinfo + "\r\n============\r\n");
 	if (itOmr != pPaper->lOmrResult.end())
 	{
 		RECTLIST::iterator itRect = itOmr->lSelAnswer.begin();
@@ -356,7 +358,7 @@ void CShowPapersDlg::ShowOmrTh(pST_PaperInfo pPaper, int nTh)
 		}
 		strShowInfo.append("]\r\n");
 
-		for (int i = 0; i < vecItemsDensityDesc.size(); i++)
+		for (int i = 0; i < vecItemsDensityDesc.size() - 1; i++)
 		{
 			char szTmp[40] = { 0 };
 			sprintf_s(szTmp, "%c%c:%.5f ", (char)(vecItemsDensityDesc[i]->nAnswer + 65), (char)(vecItemsDensityDesc[i + 1]->nAnswer + 65), vecItemsDensityDesc[i]->fRealDensity / fRealMeanDensity - vecItemsDensityDesc[i + 1]->fRealDensity / fRealMeanDensity);
@@ -418,7 +420,7 @@ void CShowPapersDlg::ShowOmrTh(pST_PaperInfo pPaper, int nTh)
 		float fGrayDiffLast = 0.0;		//对上一次判断选中的选项对下一个选项选中判断的增益
 		for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
 		{
-			float fGrayThresholdGray = vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray - fMeanGrayDiff;
+			float fGrayThresholdGray = vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray - fMeanModelGrayDiff;
 			char szTmp[40] = { 0 };
 			sprintf_s(szTmp, "%s:%.3f ", vecOmrItemGrayDiff[i].szVal, _dDiffThread_3_ + fGrayThresholdGray + fGrayDiffLast);
 			strShowInfo.append(szTmp);

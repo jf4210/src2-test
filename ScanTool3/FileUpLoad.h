@@ -28,11 +28,17 @@ typedef struct ST_UPLOAD_ANS
 	}
 }stUpLoadAns, *pStUpLoadAns;
 
+typedef struct ST_UpLoadAddr
+{
+	int		nPort;
+	string strIP;
+}stUpLoadAddr, *pstUpLoadAddr;
+
 class CSendFileThread;
 class CFileUpLoad : public ITcpClientNotify,public CThread
 {
 public:
-	CFileUpLoad(CSendFileThread& rNotify);
+	CFileUpLoad(CSendFileThread* rNotify);
 	~CFileUpLoad(void);
 
 	void		OnTcpClientNotifyReceivedData(const char* pData,int nLen);
@@ -50,6 +56,8 @@ public:
 	BOOL		CheckUpLoadFile();
 
 	void		ReConnectAddr(CString strAddr, USHORT usPort);
+	void		SetNotifyObj(CSendFileThread* rNotify);
+	void		SetSendExtType(std::string strExtType);
 
 	std::list<stUpLoadAns*>		m_listFile; 
 	std::vector<stUpLoadAns*> m_VecAns;
@@ -60,7 +68,7 @@ public:
 
 	ITcpClient	*m_pITcpClient;
 	UINT		m_uThreadType;
-	CString		m_strAddr;
+	CString		m_strAddr;		//当前使用的连接地址
 	USHORT		m_usPort;
 	char		m_szSendBuf[FILE_BUFF];		//发送缓存
  	CRITICAL_SECTION m_csCrit;
@@ -72,6 +80,10 @@ public:
 	BOOL		m_bSendOK;
 	BOOL		m_bReadyOK;
 	DWORD       staticTimer; //计时
-	CSendFileThread& m_rNotify;
+	CSendFileThread* m_pNotifyObj;
 	BOOL		m_bStop;
+
+	int		m_nConnectFails;	//连接当前服务器地址失败的次数
+	std::string	m_strSendExtType;	//此发送线程发送的文件类型，pkg  typkg
+	std::list<pstUpLoadAddr>	m_UpLoadAddrList;	//上传的服务器地址，针对3大运营商的情况，电信不行换移动。。。
 };

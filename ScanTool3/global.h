@@ -553,6 +553,10 @@ typedef struct _SendInfo_
 	CFileUpLoad* pUpLoad;
 	int			nPort;
 	std::string strIP;
+	_SendInfo_()
+	{
+		pUpLoad = NULL;
+	}
 }ST_SENDER, *pST_SENDER;
 typedef std::map<std::string, pST_SENDER> MAP_FILESENDER;
 

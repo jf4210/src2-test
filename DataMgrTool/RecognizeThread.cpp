@@ -2323,6 +2323,18 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			fDensityMeanPer += vecOmrItemDiff[i].fDiff;
 		fDensityMeanPer = fDensityMeanPer / vecOmrItemDiff.size();
 		
+		//++2017.12.6 灰度部分
+		std::vector<pRECTINFO> vecItemsGrayDesc;
+		std::vector<ST_ITEM_DIFF> vecOmrItemGrayDiff;
+		calcOmrGrayDiffVal(omrResult.lSelAnswer, vecItemsGrayDesc, vecOmrItemGrayDiff);
+		float fMeanGrayDiff = 0.0;		//平均灰度差
+		for (int i = 0; i < vecItemsGrayDesc.size(); i++)
+		{
+			fMeanGrayDiff += (vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray);
+		}
+		fMeanGrayDiff = fMeanGrayDiff / vecItemsGrayDesc.size();
+		//--
+
 		int nFlag = -1;
 		float fThreld = 0.0;
 		float fDensityThreshold = 0.0;
@@ -2451,12 +2463,32 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 						{
 							//选项的灰度<(比较灰度 + 灰度答案确认值 + 灰度退出密度值) / 2，
 							//或者选项的密度 - 选项平均密度 > 比较灰度
-							//或者选项的实际密度 / 所有选项的平均密度 > 退出密度1.2
+							//或者选项的实际密度 / 所有选项的平均密度 > 直接答案判定密度1.6
 							if (vecItemsDesc[j]->fRealMeanGray < min(nThreld1, nThreld2) || \
 								((vecItemsDesc[j]->fRealValuePercent - fDensityMeanPer2 > fDiffThread) && vecItemsDesc[j]->fRealMeanGray < max(nThreld1, nThreld2)) || \
-								(vecItemsDesc[j]->fRealDensity / fRealMeanDensity > fDiffExit /*|| (vecItemsDesc[j]->fRealDensity / fRealMeanDensity > fCompThread && )*/))
+								(vecItemsDesc[j]->fRealDensity / fRealMeanDensity > _dAnswerSure_DensityFix_))
 							{
 								fThreld = vecItemsDesc[j]->fRealValuePercent > fThreld ? fThreld : vecItemsDesc[j]->fRealValuePercent;
+							}
+							else
+							{
+								//实际密度与选项平均密度比值 > 1, 同时与前一项的灰度差低于灰度判定值，
+								float fGrayDiff = fMeanGrayDiff > _dDiffThread_3_ ? _dDiffThread_3_ : fMeanGrayDiff;
+								if (j > 0 && vecItemsDesc[j]->fRealMeanGray - vecItemsDesc[j - 1]->fRealMeanGray < fMeanGrayDiff && vecItemsDesc[j]->fRealDensity / fRealMeanDensity > 1)
+								{
+									fThreld = vecItemsDesc[j]->fRealValuePercent > fThreld ? fThreld : vecItemsDesc[j]->fRealValuePercent;
+// 									bool bExitFlag = false;
+// 									for (int k = 0; k < j; k++)
+// 									{
+// 										if (vecOmrItemDiff[k].fDiff >= fDiffExit)
+// 										{
+// 											bExitFlag = true;
+// 											break;
+// 										}
+// 									}
+// 									if (!bExitFlag)
+// 										fThreld = vecItemsDesc[j]->fRealValuePercent > fThreld ? fThreld : vecItemsDesc[j]->fRealValuePercent;
+								}
 							}
 							break;
 						}
@@ -2484,11 +2516,12 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 					for (int i = 0; i < nFlag; i++)
 					{
 						if (vecOmrItemDiff[i].fDiff < fDiffThread && ((vecItemsDesc[i + 1]->fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2) || \
-							vecItemsDesc[i + 1]->fRealValuePercent - fDensityMeanPer2 > fDiffThread))
+							(vecItemsDesc[i + 1]->fRealValuePercent - fDensityMeanPer2 > fDiffThread && vecItemsDesc[i + 1]->fRealDensity / fRealMeanDensity > 1)))
 						{
 							fThreld = vecOmrItemDiff[i].fSecond;
 						}
-						else if (vecOmrItemDiff[i].fDiff >= fDiffThread && vecOmrItemDiff[i].fSecond > _dAnswerSure_DensityFix_ && fDensityMeanPer2 < _dAnswerSure_DensityFix_)
+						else if (vecOmrItemDiff[i].fDiff >= fDiffThread && vecOmrItemDiff[i].fSecond > _dAnswerSure_DensityFix_ && fDensityMeanPer2 < _dAnswerSure_DensityFix_ && \
+								 abs(vecItemsDesc[i]->fRealMeanGray - vecItemsDesc[i + 1]->fRealMeanGray) < _dDiffExit_3_)
 						{
 							fThreld = vecOmrItemDiff[i].fSecond;
 						}
@@ -2605,7 +2638,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				for (int i = 0; i < nFlag; i++)
 				{
 					if (vecOmrItemDiff[i].fDiff < fDiffThread && ((vecItemsDesc[i + 1]->fRealMeanGray < (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2) || \
-						vecItemsDesc[i + 1]->fRealValuePercent - fDensityMeanPer2 > fDiffThread))
+						(vecItemsDesc[i + 1]->fRealValuePercent - fDensityMeanPer2 > fDiffThread && vecItemsDesc[i + 1]->fRealDensity / fRealMeanDensity > 1)))
 					{
 						fThreld = vecOmrItemDiff[i].fSecond;
 					}

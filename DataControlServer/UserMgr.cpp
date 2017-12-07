@@ -740,6 +740,9 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				nResult = RESULT_GET_FILE_ADDR_FAIL;
 			std::string strVerAddr = SysSet.m_strFileAddrs;
 			pUser->SendResponesInfo(USER_RESPONSE_GET_FILE_UPLOAD_ADDR, nResult, (char*)strVerAddr.c_str(), strVerAddr.length());
+
+			std::string strLog = "请求不同格式文件服务器地址信息命令: \n" + strVerAddr;
+			g_Log.LogOut(strLog);
 		}
 		break;
 	case USER_NEED_UP_MODEL_PIC:

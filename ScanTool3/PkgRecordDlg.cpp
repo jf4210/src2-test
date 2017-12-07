@@ -131,6 +131,9 @@ void CPkgRecordDlg::UpdateChildDlg()
 	USES_CONVERSION;
 	for (auto item : g_lSendTask)
 	{
+// 		if (item->strFileName.find(".dmp") != std::string::npos)	//dump文件不显示
+// 			continue;
+
 		bool bFind = false;
 		int nCount = m_lcPkg.GetItemCount();
 		int i = 0;

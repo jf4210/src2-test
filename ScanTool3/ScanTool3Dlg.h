@@ -36,6 +36,7 @@ protected:
 	void InitFileUpLoadList();
 	void InitCompressList();
 	void InitThreads();
+	void UpLoadDumpFile();		//上传dump文件到服务器
 	void ReleaseThreads();
 	void InitCtrlPositon();
 	void ReleaseData();

@@ -172,13 +172,26 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 		pST_SENDER pObjSender = new ST_SENDER;
 		pObjSender->strIP = _strIp;
 		pObjSender->nPort = _nPort;
-		pObjSender->pUpLoad = new CFileUpLoad(*this);
+		pObjSender->pUpLoad = new CFileUpLoad(this);
+		pObjSender->pUpLoad->SetSendExtType(strKey);
 		pObjSender->pUpLoad->InitUpLoadTcp(A2T(_strIp.c_str()), _nPort);
 		_mapSender_.insert(MAP_FILESENDER::value_type(strKey, pObjSender));
 		pUpLoad = pObjSender->pUpLoad;
 	}
 	else
+	{
+		if (itSender->second->pUpLoad == NULL)	//未创建发送线程对象
+		{
+			_strIp = itSender->second->strIP;
+			_nPort = itSender->second->nPort;
+
+			itSender->second->pUpLoad = new CFileUpLoad(this);
+			itSender->second->pUpLoad->SetSendExtType(strKey);
+			itSender->second->pUpLoad->InitUpLoadTcp(A2T(_strIp.c_str()), _nPort);
+		}
 		pUpLoad = itSender->second->pUpLoad;
+		pUpLoad->SetNotifyObj(this);
+	}
 	_fmMapSender_.unlock();
 
 
@@ -211,6 +224,15 @@ void CSendFileThread::SendFileComplete(char* pName, char* pSrcPath)
 	std::string strFileNewPath = g_strPaperBackupPath + CMyCodeConvert::Gb2312ToUtf8(pName);
 	try
 	{
+		if (strName.find(".dmp") != std::string::npos)	//dmp文件，上传成功后删除
+		{
+			Poco::File fileDmp(CMyCodeConvert::Gb2312ToUtf8(pSrcPath));
+			if (fileDmp.exists())
+			{
+				fileDmp.remove();
+				return;
+			}
+		}
 		Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pSrcPath));
 		filePapers.moveTo(strFileNewPath);
 		std::string strFileName = pName;

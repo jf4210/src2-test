@@ -9,15 +9,16 @@ Poco::Event		g_eFileUpLoadThreadExit;
 CMutex	mutexObj(FALSE, _T("mutex1"));
 #endif
 
-CFileUpLoad::CFileUpLoad(CSendFileThread& rNotify)
+CFileUpLoad::CFileUpLoad(CSendFileThread* rNotify)
  :m_pITcpClient(NULL)
 ,m_uThreadType(0)
 ,m_bConnect(FALSE)
 ,m_bUpLoad(TRUE)
 ,m_bSendOK(FALSE)
 ,m_bReadyOK(FALSE)
-, m_rNotify(rNotify)
+, m_pNotifyObj(rNotify)
 , m_bStop(FALSE)
+, m_nConnectFails(0)
 {
 	ZeroMemory(m_szSendBuf, FILE_BUFF);
 	m_hAddAnsEvent=CreateEventW(NULL,TRUE,FALSE,NULL);
@@ -80,7 +81,7 @@ BOOL CFileUpLoad::SendAnsFile(CString strFilePath, CString strFileName, void* pT
 	m_VecAns.push_back(stAns);
 #endif
 
-	TRACE("add ans file %s\n", strFileName);
+	TRACE(_T("add ans file %s\n"), strFileName);
 	SetEvent(m_hAddAnsEvent);
 	return TRUE;
 	
@@ -111,24 +112,60 @@ RESTART:
 					m_pITcpClient = NULL;
 				}
 
-				TRACE(_T("connect server: %s:%d\n"), m_strAddr, m_usPort);
+				TRACE(_T("connect server(%s): %s:%d\n"), A2T(m_strSendExtType.c_str()), m_strAddr, m_usPort);
 				m_pITcpClient = CreateTcpClient(*this, T2A(m_strAddr), m_usPort);
 				if (m_pITcpClient == NULL)
 				{
+					m_nConnectFails++;
+
 					//TRACE0("\nconect to File Server failed!\n");
+					if (m_UpLoadAddrList.size() > 1 && m_nConnectFails >= 3)
+					{
+						bool bFindAddr = false;
+						std::list<pstUpLoadAddr>::iterator itAddr = m_UpLoadAddrList.begin();
+						for (; itAddr != m_UpLoadAddrList.end(); itAddr++)
+						{
+							if ((*itAddr)->strIP == T2A(m_strAddr) && m_usPort == (*itAddr)->nPort)
+							{
+								bFindAddr = true;
+								pstUpLoadAddr pUpLoadAddr = *itAddr;
+								m_UpLoadAddrList.erase(itAddr);
+								m_UpLoadAddrList.push_back(pUpLoadAddr);	//将此地址移动到最后
+								break;
+							}
+						}
+						if (!bFindAddr)
+						{
+							pstUpLoadAddr pUpLoadAddr = new stUpLoadAddr;
+							pUpLoadAddr->nPort = m_usPort;
+							pUpLoadAddr->strIP = T2A(m_strAddr);
+							m_UpLoadAddrList.push_back(pUpLoadAddr);	//将此地址移动到最后
+						}
+						//切换ip地址
+						std::list<pstUpLoadAddr>::iterator itFirstAddr = m_UpLoadAddrList.begin();
+						std::string strLog = Poco::format("切换文件连接地址%s:%d==>%s:%d(%s)", string(T2A(m_strAddr)), (int)m_usPort, (*itFirstAddr)->strIP, (*itFirstAddr)->nPort, m_strSendExtType);
+						g_pLogger->information(strLog);
+						TRACE("%s\n", strLog.c_str());
+
+						m_strAddr = A2T((*itFirstAddr)->strIP.c_str());
+						m_usPort = (*itFirstAddr)->nPort;
+						m_nConnectFails = 0;
+					}
+
 					g_bFileConnect = false;
 					Sleep(100);
 					continue;
 				}
 				else
 				{
-					TRACE0("\nconect to File Server Success!\n");
+					TRACE("\nconect to File Server Success!(%s)\n", m_strSendExtType.c_str());
 					char szLog[300] = { 0 };
-					sprintf_s(szLog, "连接服务器成功(%s:%d)", T2A(m_strAddr), m_usPort);
+					sprintf_s(szLog, "连接文件服务器成功(%s)(%s:%d)", m_strSendExtType.c_str(), T2A(m_strAddr), m_usPort);
 					g_pLogger->information(szLog);
 					m_bConnect = TRUE;
 					m_uThreadType = 2;
 					g_bFileConnect = true;
+					m_nConnectFails = 0;
 					goto RESTART;
 				}
 			}
@@ -163,6 +200,8 @@ RESTART:
 					}
 					bFindTask = true;
 #if 1
+					(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
+					(reinterpret_cast<pSENDTASK>(pTask->pTask))->nSendState = 1;
 					char	*szFileBuff = NULL;
 					std::string strAnsName = T2A(pTask->strAnsName);
 					DWORD Length = 0;
@@ -179,6 +218,8 @@ RESTART:
 					}
 					catch (CMemoryException* e)
 					{
+						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
+						(reinterpret_cast<pSENDTASK>(pTask->pTask))->nSendState = 3;
 						char szLog[100] = { 0 };
 						sprintf_s(szLog, "上传文件(%s)时内存申请失败，需要重新尝试。", strAnsName.c_str());
 						g_pLogger->information(szLog);
@@ -187,6 +228,8 @@ RESTART:
 					}
 					catch (CFileException* e)
 					{
+						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
+						(reinterpret_cast<pSENDTASK>(pTask->pTask))->nSendState = 3;
 						CString strErr = _T("");
 						e->GetErrorMessage((LPTSTR)(LPCTSTR)strErr, 1024);
 						char szLog[300] = { 0 };
@@ -197,6 +240,8 @@ RESTART:
 					}
 					catch (...)
 					{
+						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
+						(reinterpret_cast<pSENDTASK>(pTask->pTask))->nSendState = 3;
 						char szLog[100] = { 0 };
 						sprintf_s(szLog, "上传文件(%s)时发生异常，需要重新尝试。", strAnsName.c_str());
 						g_pLogger->information(szLog);
@@ -348,7 +393,7 @@ RESTART:
 					delete szFileBuff;
 					delete pMd5;
 					TRACE0("end send ans file\n");
-					m_rNotify.SendFileComplete(stAnsInfo.szFileName, T2A(pTask->strPath));
+					if(m_pNotifyObj) m_pNotifyObj->SendFileComplete(stAnsInfo.szFileName, T2A(pTask->strPath));
 					bFindTask = false;
 				}
 			}
@@ -364,6 +409,32 @@ BOOL CFileUpLoad::InitUpLoadTcp(CString strAddr,USHORT usPort)
 	m_strAddr = strAddr;
 	m_usPort  = usPort;
 	m_uThreadType=1;
+
+
+	USES_CONVERSION;
+	bool bFindAddr = false;
+	std::list<pstUpLoadAddr>::iterator itAddr = m_UpLoadAddrList.begin();
+	for (; itAddr != m_UpLoadAddrList.end(); itAddr++)
+	{
+		if ((*itAddr)->strIP == T2A(m_strAddr) && m_usPort == (*itAddr)->nPort)
+		{
+			bFindAddr = true;
+			pstUpLoadAddr pUpLoadAddr = *itAddr;
+			m_UpLoadAddrList.erase(itAddr);
+			m_UpLoadAddrList.push_front(pUpLoadAddr);	//将此地址移动到最前
+			break;
+		}
+	}
+	if (!bFindAddr)
+	{
+		pstUpLoadAddr pUpLoadAddr = new stUpLoadAddr;
+		pUpLoadAddr->nPort = m_usPort;
+		pUpLoadAddr->strIP = T2A(m_strAddr);
+		m_UpLoadAddrList.push_front(pUpLoadAddr);	//将此地址移动到最前
+		TRACE("InitUpLoadTcp(%s) --> add server addr: %s_%d\n", m_strSendExtType.c_str(), pUpLoadAddr->strIP.c_str(), (int)m_usPort);
+	}
+	m_nConnectFails = 0;
+
 	return CThread::StartThread();
 }
 
@@ -441,7 +512,7 @@ void CFileUpLoad::ProcessUpLoadDone( BOOL bFlag )
 void CFileUpLoad::UnInit()
 {
 	m_bStop = TRUE;
-	m_bConnect=FALSE;
+	m_bConnect = FALSE;
 	g_bFileConnect = false;
 	m_bUpLoad = FALSE;
 
@@ -452,7 +523,7 @@ void CFileUpLoad::UnInit()
 	if (m_pITcpClient)
 	{
 		m_pITcpClient->ReleaseConnections();
-		m_pITcpClient=NULL;
+		m_pITcpClient = NULL;
 	}
 
 	mutexObj.Lock();
@@ -467,14 +538,20 @@ void CFileUpLoad::UnInit()
 	mutexObj.Unlock();
 	// 	m_VecAns.clear();
 	std::vector<stUpLoadAns*>::iterator it = m_VecAns.begin();
-	for (;it!=m_VecAns.end();it++)
+	for (; it != m_VecAns.end(); it++)
 	{
 		if (*it)
 		{
 			delete (*it);
-			(*it)=NULL;
+			(*it) = NULL;
 		}
-
+	}
+	std::list<pstUpLoadAddr>::iterator itAddr = m_UpLoadAddrList.begin();
+	for (; itAddr != m_UpLoadAddrList.end();)
+	{
+		pstUpLoadAddr pUpLoadAddr = *itAddr;
+		itAddr = m_UpLoadAddrList.erase(itAddr);
+		SAFE_RELEASE(pUpLoadAddr);
 	}
 }
 
@@ -484,4 +561,39 @@ void CFileUpLoad::ReConnectAddr(CString strAddr, USHORT usPort)
 	m_usPort = usPort;
 	m_uThreadType = 1;
 	m_bConnect = FALSE;
+
+	USES_CONVERSION;
+	bool bFindAddr = false;
+	std::list<pstUpLoadAddr>::iterator itAddr = m_UpLoadAddrList.begin();
+	for (; itAddr != m_UpLoadAddrList.end(); itAddr++)
+	{
+		if ((*itAddr)->strIP == T2A(m_strAddr) && m_usPort == (*itAddr)->nPort)
+		{
+			bFindAddr = true;
+			pstUpLoadAddr pUpLoadAddr = *itAddr;
+			m_UpLoadAddrList.erase(itAddr);
+			m_UpLoadAddrList.push_front(pUpLoadAddr);	//将此地址移动到最前
+			break;
+		}
+	}
+	if (!bFindAddr)
+	{
+		pstUpLoadAddr pUpLoadAddr = new stUpLoadAddr;
+		pUpLoadAddr->nPort = m_usPort;
+		pUpLoadAddr->strIP = T2A(m_strAddr);
+		m_UpLoadAddrList.push_front(pUpLoadAddr);	//将此地址移动到最前
+		TRACE("ReConnectAddr(%s) --> add server addr: %s_%d\n", m_strSendExtType.c_str(), pUpLoadAddr->strIP.c_str(), (int)m_usPort);
+	}
+	m_nConnectFails = 0;
+}
+
+void CFileUpLoad::SetNotifyObj(CSendFileThread* rNotify)
+{
+	m_pNotifyObj = rNotify;
+}
+
+void CFileUpLoad::SetSendExtType(std::string strExtType)
+{
+	USES_CONVERSION;
+	m_strSendExtType = strExtType;
 }

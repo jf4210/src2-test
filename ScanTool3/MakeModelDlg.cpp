@@ -1861,7 +1861,7 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 		if (rm.width < 10 || rm.height < 7 || rm.width > 90 || rm.height > 90 || rm.area() < 40 || rm.area() > 8100)
 		{//10,7
 			TRACE("过滤矩形:(%d,%d,%d,%d), 面积: %d\n", rm.x, rm.y, rm.width, rm.height, rm.area());
-			g_pLogger->information("过滤矩形:(%d,%d,%d,%d), 面积: %d\n", rm.x, rm.y, rm.width, rm.height, rm.area());
+			g_pLogger->information("过滤矩形:(%d,%d,%d,%d), 面积: %d", rm.x, rm.y, rm.width, rm.height, rm.area());
 			continue;
 		}
 

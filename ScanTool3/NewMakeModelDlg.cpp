@@ -335,7 +335,7 @@ pMODEL CNewMakeModelDlg::LoadSubjectModel(pEXAM_SUBJECT pSubModel)
 		sprintf_s(szModelName, "%s_%s_N_%d_%d.mod", _pCurrExam_->strExamName.c_str(), pSubModel->strSubjName.c_str(), _pCurrExam_->nExamID, pSubModel->nSubjID);
 		strModelName = szModelName;
 		//return NULL;
-	}		
+	}
 
 	std::string strModelPath = T2A(g_strCurrentPath + _T("Model"));
 	strModelPath = CMyCodeConvert::Utf8ToGb2312(g_strModelSavePath) + "\\" + strModelName;	//gb2312
@@ -349,7 +349,7 @@ pMODEL CNewMakeModelDlg::LoadSubjectModel(pEXAM_SUBJECT pSubModel)
 			g_pLogger->information(strLog);
 			return NULL;
 		}
-		
+
 		Poco::Path pathModel(CMyCodeConvert::Gb2312ToUtf8(strModelPath));
 		strBaseModelName = CMyCodeConvert::Utf8ToGb2312(pathModel.getBaseName());
 	}
@@ -363,6 +363,11 @@ pMODEL CNewMakeModelDlg::LoadSubjectModel(pEXAM_SUBJECT pSubModel)
 
 	CString strModelFilePath = g_strCurrentPath + _T("Model\\") + A2T(strBaseModelName.c_str());
 	pMODEL pModel = LoadModelFile(strModelFilePath);
+	if (pModel)
+	{
+		std::string strLog = "加载模板(" + pModel->strModelName + ")完成";
+		g_pLogger->information(strLog);
+	}
 
 	return pModel;
 }
@@ -661,6 +666,7 @@ void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 		return;
 	}
 
+	std::stringstream ssLog;
 	bool bFailFlag = false;
 	for (int i = 0; i < m_vecModelPicPath.size(); i++)
 	{
@@ -695,8 +701,11 @@ void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 		}
 		catch (Poco::Exception &e)
 		{
+			ssLog << "上传模板图片(" << strPicPath << ")异常: " << e.displayText() << "\n";
 			continue;
 		}
+
+		ssLog << "添加["<< m_pModel->nExamID << m_pModel->nSubjectID <<"]模板上传图片: " << strPicName << "(" << strPicPath << ")\n";
 
 		strMd5 = calcFileMd5(strPath);
 		
@@ -724,6 +733,7 @@ void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 		dlg.setShowInfo(3, 1, "添加上传任务完成！");
 		dlg.DoModal();
 	}
+	g_pLogger->information(ssLog.str());
 }
 
 void CNewMakeModelDlg::OnBnClickedBtnDownmodel()

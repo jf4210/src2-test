@@ -330,6 +330,34 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 									g_lDecompressTask.push_back(pDecompressTask);
 									g_fmDecompressLock.unlock();
 								}
+								else if (strExtFileName == ".dmp")
+								{
+									Poco::LocalDateTime now;
+									std::string strDay = Poco::format("%04d-%02d-%02d", now.year(), now.month(), now.day());
+									std::string strDumpDir = SysSet.m_strCurrentDir + "DumpDir\\" + strDay;	//utf8
+									std::string strDumpFilePath = strDumpDir + "\\" + CMyCodeConvert::Gb2312ToUtf8(m_szFileName);
+
+									try
+									{
+										Poco::File fDumpDir(CMyCodeConvert::Gb2312ToUtf8(strDumpDir));
+										fDumpDir.createDirectories();
+
+										Poco::File fileModel(strDumpFilePath);
+										if (fileModel.exists())
+										{
+											//strLog.append("\n移除原文件.");
+											fileModel.remove(true);
+										}
+
+										Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
+										fileList.renameTo(CMyCodeConvert::Gb2312ToUtf8(strDumpFilePath));
+									}
+									catch (Poco::Exception &e)
+									{
+										std::cout << "接收客户端.dmp检查路径时异常: " << e.displayText() << std::endl;
+										//strLog.append("\n接收客户端.dmp检查路径时异常: " + e.displayText());
+									}
+								}
 								else	//上传的模板图像
 								{
 									//								MAP_MODEL_PIC::iterator itFind = _mapModelPic__.find(szIndex);
