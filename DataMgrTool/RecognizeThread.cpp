@@ -2327,12 +2327,16 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		std::vector<pRECTINFO> vecItemsGrayDesc;
 		std::vector<ST_ITEM_DIFF> vecOmrItemGrayDiff;
 		calcOmrGrayDiffVal(omrResult.lSelAnswer, vecItemsGrayDesc, vecOmrItemGrayDiff);
-		float fMeanGrayDiff = 0.0;		//平均灰度差
+		float fMeanGrayDiff = 0.0;		//与模板灰度的平均灰度差
 		for (int i = 0; i < vecItemsGrayDesc.size(); i++)
 		{
 			fMeanGrayDiff += (vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray);
 		}
 		fMeanGrayDiff = fMeanGrayDiff / vecItemsGrayDesc.size();
+		float fMeanGrayDiff2 = 0.0;		//选项间的平均灰度差
+		for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
+			fMeanGrayDiff2 += vecOmrItemGrayDiff[i].fDiff;
+		fMeanGrayDiff2 = fMeanGrayDiff2 / vecOmrItemGrayDiff.size();
 		//--
 
 		int nFlag = -1;
@@ -2474,20 +2478,10 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 							{
 								//实际密度与选项平均密度比值 > 1, 同时与前一项的灰度差低于灰度判定值，
 								float fGrayDiff = fMeanGrayDiff > _dDiffThread_3_ ? _dDiffThread_3_ : fMeanGrayDiff;
+								fGrayDiff = fGrayDiff > fMeanGrayDiff2 ? fMeanGrayDiff2 : fGrayDiff;
 								if (j > 0 && vecItemsDesc[j]->fRealMeanGray - vecItemsDesc[j - 1]->fRealMeanGray < fMeanGrayDiff && vecItemsDesc[j]->fRealDensity / fRealMeanDensity > 1)
 								{
 									fThreld = vecItemsDesc[j]->fRealValuePercent > fThreld ? fThreld : vecItemsDesc[j]->fRealValuePercent;
-// 									bool bExitFlag = false;
-// 									for (int k = 0; k < j; k++)
-// 									{
-// 										if (vecOmrItemDiff[k].fDiff >= fDiffExit)
-// 										{
-// 											bExitFlag = true;
-// 											break;
-// 										}
-// 									}
-// 									if (!bExitFlag)
-// 										fThreld = vecItemsDesc[j]->fRealValuePercent > fThreld ? fThreld : vecItemsDesc[j]->fRealValuePercent;
 								}
 							}
 							break;
@@ -2538,12 +2532,6 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 						}
 					}
 				}
-// 				else if (bDiffExit && omrResult.nSingle != 1 && nFlag > 0)
-// 				{
-// 					for (int i = 0; i < nFlag; i++)
-// 					{
-// 					}
-// 				}
 			}
 
 			RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();

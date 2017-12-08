@@ -23,6 +23,7 @@ public:
 
 	//获取图片的正确方向，和模板一样
 	int GetRightPicOrientation(cv::Mat& matSrc, int n, bool bDoubleScan);
+
 protected:	
 	//识别矩形灰度、密度等信息
 	inline bool Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL	pModel);

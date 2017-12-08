@@ -64,6 +64,7 @@ public:
 	int			nAutoCut;			//扫描：是否自动裁剪
 
 	int			nUseWordAnchorPoint;//使用文字作为定点
+	int			nUsePagination;		//使用页码，针对多页试卷的情况
 };
 
 class CAdanceSetMgrDlg : public CTipBaseDlg

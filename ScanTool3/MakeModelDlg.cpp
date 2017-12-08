@@ -242,6 +242,13 @@ BOOL CMakeModelDlg::OnInitDialog()
 			{
 				pPaperModel->vecV_Head.push_back(*itVHead);
 			}
+		#ifdef TEST_PAGINATION
+			RECTLIST::iterator itPage = m_pModel->vecPaperModel[i]->lPagination.begin();
+			for (; itPage != m_pModel->vecPaperModel[i]->lPagination.end(); itPage++)
+			{
+				pPaperModel->vecPagination.push_back(*itPage);
+			}
+		#endif
 			RECTLIST::iterator itABModel = m_pModel->vecPaperModel[i]->lABModel.begin();
 			for (; itABModel != m_pModel->vecPaperModel[i]->lABModel.end(); itABModel++)
 			{
@@ -725,6 +732,8 @@ void CMakeModelDlg::InitConf()
 				m_comboCheckPointType.ResetContent();
 				m_comboCheckPointType.AddString(_T(""));
 				m_comboCheckPointType.AddString(_T("文字定位区"));
+				if (m_pModel->nUsePagination)
+					m_comboCheckPointType.AddString(_T("页码"));
 				m_comboCheckPointType.AddString(_T("科目校验点"));
 				m_comboCheckPointType.AddString(_T("缺考校验点"));
 				m_comboCheckPointType.AddString(_T("违纪校验点"));
@@ -739,6 +748,8 @@ void CMakeModelDlg::InitConf()
 				m_comboCheckPointType.ResetContent();
 				m_comboCheckPointType.AddString(_T(""));
 				m_comboCheckPointType.AddString(_T("定点"));
+				if (m_pModel->nUsePagination)
+					m_comboCheckPointType.AddString(_T("页码"));
 				m_comboCheckPointType.AddString(_T("科目校验点"));
 				m_comboCheckPointType.AddString(_T("缺考校验点"));
 				m_comboCheckPointType.AddString(_T("违纪校验点"));
@@ -1372,6 +1383,10 @@ void CMakeModelDlg::OnBnClickedBtnSelpic()
 	//重新选择图片后，需要重置本页面的所有点信息
 	if (m_vecPaperModelInfo.size() <= 0 || m_vecPaperModelInfo.size() <= m_nCurrTabSel)
 		return;
+
+	//旋转方向重置
+	m_vecPaperModelInfo[m_nCurrTabSel]->nRotateTimes = 0;
+	m_vecPaperModelInfo[m_nCurrTabSel]->nDirection = 1;
 
 	m_cpListCtrl.DeleteAllItems();
 	m_vecPaperModelInfo[m_nCurrTabSel]->vecRtSel.clear();
@@ -2834,8 +2849,13 @@ bool CMakeModelDlg::checkValidity()
 	{
 		for (int i = 0; i < m_vecPaperModelInfo.size(); i++)
 		{
+		#ifdef TEST_PAGINATION
+			int nCount = m_vecPaperModelInfo[i]->vecPagination.size() + m_vecPaperModelInfo[i]->vecABModel.size() + m_vecPaperModelInfo[i]->vecCourse.size() + m_vecPaperModelInfo[i]->vecElectOmr.size() + m_vecPaperModelInfo[i]->vecGray.size() \
+				+ m_vecPaperModelInfo[i]->vecOmr2.size() + m_vecPaperModelInfo[i]->vecQK_CP.size() + m_vecPaperModelInfo[i]->vecWhite.size() + m_vecPaperModelInfo[i]->lSN.size();
+		#else
 			int nCount = m_vecPaperModelInfo[i]->vecABModel.size() + m_vecPaperModelInfo[i]->vecCourse.size() + m_vecPaperModelInfo[i]->vecElectOmr.size() + m_vecPaperModelInfo[i]->vecGray.size() \
 				+ m_vecPaperModelInfo[i]->vecOmr2.size() + m_vecPaperModelInfo[i]->vecQK_CP.size() + m_vecPaperModelInfo[i]->vecWhite.size() + m_vecPaperModelInfo[i]->lSN.size();
+		#endif
 			if (m_pModel->nUseWordAnchorPoint == 0)
 			{
 				if (nCount > 0 && m_vecPaperModelInfo[i]->vecRtFix.size() < 3)
@@ -2890,6 +2910,26 @@ bool CMakeModelDlg::checkValidity()
 // 			}
 // 		}
 	}
+
+#ifdef TEST_PAGINATION
+	if (bResult)
+	{
+		//页码检查
+		for (int i = 0; i < m_vecPaperModelInfo.size(); i++)
+		{
+			if (m_vecPaperModelInfo[i]->vecPagination.size() <= 0)
+			{
+				char szTmp[50] = { 0 };
+				sprintf_s(szTmp, "第 %d 页未设置\"页码标识\"", i + 1);
+				CNewMessageBox dlg;
+				dlg.setShowInfo(2, 1, szTmp);
+				dlg.DoModal();
+				bResult = false;
+				break;
+			}
+		}
+	}
+#endif
 
 	//准考证号检查
 	if (m_vecPaperModelInfo[0]->lSN.size() == 0)
@@ -3006,6 +3046,10 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 			pPaperModel->lH_Head.push_back(m_vecPaperModelInfo[i]->vecH_Head[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecV_Head.size(); j++)
 			pPaperModel->lV_Head.push_back(m_vecPaperModelInfo[i]->vecV_Head[j]);
+	#ifdef TEST_PAGINATION
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecPagination.size(); j++)
+			pPaperModel->lPagination.push_back(m_vecPaperModelInfo[i]->vecPagination[j]);
+	#endif
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecABModel.size(); j++)
 			pPaperModel->lABModel.push_back(m_vecPaperModelInfo[i]->vecABModel[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecCourse.size(); j++)
@@ -3169,6 +3213,9 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		Poco::JSON::Array jsnFixCPArry;
 		Poco::JSON::Array jsnHHeadArry;
 		Poco::JSON::Array jsnVHeadArry;
+	#ifdef TEST_PAGINATION
+		Poco::JSON::Array jsnPaginationArry;
+	#endif
 		Poco::JSON::Array jsnABModelArry;
 		Poco::JSON::Array jsnCourseArry;
 		Poco::JSON::Array jsnQKArry;
@@ -3247,6 +3294,33 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("dilateKernel", itVHead->nDilateKernel);
 			jsnVHeadArry.add(jsnObj);
 		}
+	#ifdef TEST_PAGINATION
+		RECTLIST::iterator itPage = pModel->vecPaperModel[i]->lPagination.begin();
+		for (; itPage != pModel->vecPaperModel[i]->lPagination.end(); itPage++)
+		{
+			Poco::JSON::Object jsnObj;
+			jsnObj.set("eType", (int)itPage->eCPType);
+			jsnObj.set("left", itPage->rt.x);
+			jsnObj.set("top", itPage->rt.y);
+			jsnObj.set("width", itPage->rt.width);
+			jsnObj.set("height", itPage->rt.height);
+			jsnObj.set("hHeadItem", itPage->nHItem);
+			jsnObj.set("vHeadItem", itPage->nVItem);
+			jsnObj.set("thresholdValue", itPage->nThresholdValue);
+			jsnObj.set("standardValPercent", itPage->fStandardValuePercent);
+			jsnObj.set("standardVal", itPage->fStandardValue);
+			jsnObj.set("standardArea", itPage->fStandardArea);
+			jsnObj.set("standardDensity", itPage->fStandardDensity);
+			jsnObj.set("standardMeanGray", itPage->fStandardMeanGray);
+			jsnObj.set("standardStddev", itPage->fStandardStddev);
+
+			jsnObj.set("gaussKernel", itPage->nGaussKernel);
+			jsnObj.set("sharpKernel", itPage->nSharpKernel);
+			jsnObj.set("cannyKernel", itPage->nCannyKernel);
+			jsnObj.set("dilateKernel", itPage->nDilateKernel);
+			jsnPaginationArry.add(jsnObj);
+		}
+	#endif
 		RECTLIST::iterator itABModel = pModel->vecPaperModel[i]->lABModel.begin();
 		for (; itABModel != pModel->vecPaperModel[i]->lABModel.end(); itABModel++)
 		{
@@ -3634,6 +3708,9 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		jsnPaperObj.set("FixCP", jsnFixCPArry);
 		jsnPaperObj.set("H_Head", jsnHHeadArry);
 		jsnPaperObj.set("V_Head", jsnVHeadArry);
+	#ifdef TEST_PAGINATION
+		jsnPaperObj.set("Pagination", jsnPaginationArry);
+	#endif
 		jsnPaperObj.set("ABModel", jsnABModelArry);
 		jsnPaperObj.set("Course", jsnCourseArry);
 		jsnPaperObj.set("QKCP", jsnQKArry);
@@ -5019,6 +5096,8 @@ CPType CMakeModelDlg::GetComboSelCpType()
 		eType = CHARACTER_AREA;
 	else if (strCheckPoint == "空白校验区")
 		eType = WHITE_GRAY_AREA;
+	else if (strCheckPoint == "页码")
+		eType = PAGINATION;
 	return eType;
 }
 
@@ -8205,12 +8284,13 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	AdvanceParam stAdvanceParam;
 	if (m_pModel)
 	{
-		stAdvanceParam.nScanDpi = m_pModel->nScanDpi;
+		stAdvanceParam.nScanDpi		= m_pModel->nScanDpi;
 		stAdvanceParam.nScanPaperSize = m_pModel->nScanSize;
-		stAdvanceParam.nScanType = m_pModel->nScanType;
-		stAdvanceParam.nAutoCut = m_pModel->nAutoCut;
+		stAdvanceParam.nScanType	= m_pModel->nScanType;
+		stAdvanceParam.nAutoCut		= m_pModel->nAutoCut;
 		
-		stAdvanceParam.nUseWordAnchorPoint = m_pModel->nUseWordAnchorPoint;
+		stAdvanceParam.nUseWordAnchorPoint	= m_pModel->nUseWordAnchorPoint;
+		stAdvanceParam.nUsePagination		= m_pModel->nUsePagination;
 	}
 	stAdvanceParam.nCurrentZkzhSensitivity = m_nDilateKernel_Sn;
 	stAdvanceParam.nCurrentOmrSensitivity = m_nDilateKernel_Common;
@@ -8271,9 +8351,11 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	m_fSNThresholdPercent_Fix	= dlg._stSensitiveParam.nPersentZkzh / 100.0;
 	m_fOMRThresholdPercent_Fix	= dlg._stSensitiveParam.nPersentOmr / 100.0;
 
-	if (m_pModel->nUseWordAnchorPoint != dlg._stSensitiveParam.nUseWordAnchorPoint)
+	if (m_pModel->nUseWordAnchorPoint != dlg._stSensitiveParam.nUseWordAnchorPoint || \
+		m_pModel->nUsePagination != dlg._stSensitiveParam.nUsePagination)
 	{
-		m_pModel->nUseWordAnchorPoint = dlg._stSensitiveParam.nUseWordAnchorPoint;
+		m_pModel->nUseWordAnchorPoint	= dlg._stSensitiveParam.nUseWordAnchorPoint;
+		m_pModel->nUsePagination		= dlg._stSensitiveParam.nUsePagination;
 		InitConf();
 		
 		m_ncomboCurrentSel = m_comboCheckPointType.GetCurSel();
@@ -8719,6 +8801,10 @@ void CMakeModelDlg::SaveNewModel()
 			pPaperModel->lH_Head.push_back(m_vecPaperModelInfo[i]->vecH_Head[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecV_Head.size(); j++)
 			pPaperModel->lV_Head.push_back(m_vecPaperModelInfo[i]->vecV_Head[j]);
+	#ifdef TEST_PAGINATION
+		for (int j = 0; j < m_vecPaperModelInfo[i]->vecPagination.size(); j++)
+			pPaperModel->lPagination.push_back(m_vecPaperModelInfo[i]->vecPagination[j]);
+	#endif
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecABModel.size(); j++)
 			pPaperModel->lABModel.push_back(m_vecPaperModelInfo[i]->vecABModel[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecCourse.size(); j++)

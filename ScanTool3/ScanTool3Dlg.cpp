@@ -14,6 +14,7 @@
 #define new DEBUG_NEW
 #endif
 
+#pragma comment(lib,"Version.lib")
 // CScanTool2Dlg 对话框
 //++全局变量
 using namespace std;
@@ -35,6 +36,7 @@ CString				g_strCurrentPath;
 std::string			g_strPaperSavePath;	//试卷扫描后保存的总路径
 std::string			g_strModelSavePath;
 std::string			g_strPaperBackupPath;	//试卷发送完成后的备份路径
+std::string			g_strFileVersion;	//文件版本，2.7.12.8
 Poco::Logger*		g_pLogger;
 Poco::FastMutex		g_fmRecog;		//识别线程获取任务锁
 RECOGTASKLIST		g_lRecogTask;	//识别任务列表
@@ -797,6 +799,7 @@ BOOL CScanTool3Dlg::OnInitDialog()
 	m_strUserName = A2T(_strNickName_.c_str());
 
 	SetWindowText(_T("YKLX-ScanTool GuideDlg"));
+	g_strFileVersion = LoadFileVersion();
 
 	m_pExamInfoMgrDlg = new CExamInfoMgrDlg(this);
 	m_pExamInfoMgrDlg->Create(CExamInfoMgrDlg::IDD, this);
@@ -1139,10 +1142,102 @@ void CScanTool3Dlg::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 	}
 }
 
+std::string CScanTool3Dlg::LoadFileVersion()
+{
+	DWORD dwHandle = 0;
+	char* pInfoData = NULL;
+	std::string strFileVersion;
+
+	WCHAR szSelfName[MAX_PATH + 1] = { 0 };
+	if (::GetModuleFileNameW(NULL, szSelfName, MAX_PATH + 1))
+	{
+		DWORD dwInfoSize = GetFileVersionInfoSize(szSelfName, &dwHandle);
+		if (dwInfoSize > 0)
+		{
+			pInfoData = new char[dwInfoSize];
+			memset(pInfoData, 0, dwInfoSize);
+			if (GetFileVersionInfo(szSelfName, dwHandle, dwInfoSize, pInfoData))
+			{
+				VS_FIXEDFILEINFO* vs_file_info = NULL;
+				unsigned int size = 0;
+				if (VerQueryValue(pInfoData, L"\\", (LPVOID*)&vs_file_info, &size))
+				{
+					strFileVersion = Poco::format("%d.%d.%d.%d", (int)HIWORD(vs_file_info->dwFileVersionMS), (int)LOWORD(vs_file_info->dwFileVersionMS), (int)HIWORD(vs_file_info->dwFileVersionLS), (int)LOWORD(vs_file_info->dwFileVersionLS));
+				}
+			#if 0	//设置版本失败
+				//获取语言
+				char* pLanValue = NULL;
+				UINT nLen2 = 0;
+				VerQueryValue(pInfoData, L"VarFileInfo\\Translation", (LPVOID*)&pLanValue, &nLen2);
+				//修改资源
+				vs_file_info->dwFileVersionLS = 1234;
+				vs_file_info->dwFileVersionMS = 4321;
+				vs_file_info->dwProductVersionLS = 101;
+				vs_file_info->dwProductVersionMS = 1010;
+				HANDLE handle = BeginUpdateResource(szSelfName, FALSE);
+				BOOL result = UpdateResourceW(handle
+											 , RT_VERSION
+											 , MAKEINTRESOURCE(1)
+											 , LANG_USER_DEFAULT
+											 , pInfoData
+											 , dwInfoSize);	//stlang.wLanguageID
+				if (result == FALSE)
+				{
+					AfxMessageBox(_T("Updata Resource False."));
+				}
+				EndUpdateResource(handle, FALSE);
+			#endif
+			}
+			SAFE_RELEASE_ARRY(pInfoData);
+		}
+	}
+	return strFileVersion;
+}
+
 void CScanTool3Dlg::UpLoadDumpFile()
 {
 	USES_CONVERSION;
-	std::string strDumpFile = g_strCurrentPath + "ScanTool.dmp";
+	std::string strDumpFile;
+#if 1
+	CFileFind ff;
+	BOOL bFind = ff.FindFile(g_strCurrentPath + _T("*"), 0);
+	while (bFind)
+	{
+		bFind = ff.FindNextFileW();
+		if (ff.GetFileName() == _T(".") || ff.GetFileName() == _T(".."))
+			continue;
+		else if (ff.IsArchived())
+		{
+			if (ff.GetFileName().Find(_T(".dmp")) >= 0)
+			{
+				try
+				{
+					strDumpFile = T2A(ff.GetFilePath());
+					Poco::File fDump(CMyCodeConvert::Gb2312ToUtf8(strDumpFile));
+					Poco::Path fDumpPath(CMyCodeConvert::Gb2312ToUtf8(strDumpFile));
+
+					Poco::Timestamp mTime = fDump.getLastModified();
+					Poco::DateTime  dt(mTime);
+					std::string strModifyTime;
+					dt.makeLocal(3600 * 8);
+					strModifyTime = Poco::format("%04d-%02d-%02d %02d %02d %02d", dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute(), dt.second());
+
+					pSENDTASK pTask = new SENDTASK;
+					pTask->strFileName = CMyCodeConvert::Utf8ToGb2312(fDumpPath.getBaseName()) + "@" + strModifyTime + ".dmp";
+					pTask->strPath = strDumpFile;
+					g_fmSendLock.lock();
+					g_lSendTask.push_back(pTask);
+					g_fmSendLock.unlock();
+				}
+				catch (Poco::Exception& exc)
+				{
+					continue;
+				}
+			}
+		}
+	}
+#else
+	strDumpFile = g_strCurrentPath + "ScanTool.dmp";
 	try
 	{
 		Poco::File fDump(CMyCodeConvert::Gb2312ToUtf8(strDumpFile));
@@ -1156,35 +1251,17 @@ void CScanTool3Dlg::UpLoadDumpFile()
 		dt.makeLocal(3600 * 8);
 		strModifyTime = Poco::format("%04d-%02d-%02d %02d %02d %02d", dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute(), dt.second());
 
-// 		int nLastDumpRecordTime = 0;
-// 		char* ret;
-// 		ret = new char[50];
-// 		ret[0] = '\0';
-// 		if (ReadRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "DumpTime", ret) == 0)
-// 		{
-// 			nLastDumpRecordTime = atoi(ret);
-// 		}
-// 		SAFE_RELEASE_ARRY(ret);
-
-// 		if (mTime != nLastDumpRecordTime)	//可以上传dump文件
-// 		{
-			pSENDTASK pTask = new SENDTASK;
-			pTask->strFileName = "ScanTool_" + strModifyTime + ".dmp";
-			pTask->strPath = strDumpFile;
-			g_fmSendLock.lock();
-			g_lSendTask.push_back(pTask);
-			g_fmSendLock.unlock();
-
-// 			char szRet[50] = { 0 };
-// 			sprintf_s(szRet, "%d", mTime);
-			//WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "DumpTime", szRet);
-//		}
+		pSENDTASK pTask = new SENDTASK;
+		pTask->strFileName = "ScanTool_" + g_strFileVersion + "@" + strModifyTime + ".dmp";
+		pTask->strPath = strDumpFile;
+		g_fmSendLock.lock();
+		g_lSendTask.push_back(pTask);
+		g_fmSendLock.unlock();
 	}
 	catch (Poco::Exception& exc)
 	{
 		return;
 	}
-
-	
+#endif
 }
 

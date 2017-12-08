@@ -32,6 +32,7 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV Ö§³Ö
 
+	std::string LoadFileVersion();
 	void InitParam();
 	void InitFileUpLoadList();
 	void InitCompressList();
