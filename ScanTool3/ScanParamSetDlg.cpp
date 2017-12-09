@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CScanParamSetDlg, CDialog)
 
 CScanParamSetDlg::CScanParamSetDlg(CWnd* pParent /*=NULL*/)
 : CBaseTabDlg(CScanParamSetDlg::IDD, pParent)
-	, m_nScanDpi(200), m_nAutoCut(1), m_nScanPaperSize(1), m_nScanType(2), m_nUseWordAnchorPoint(0)
+	, m_nScanDpi(200), m_nAutoCut(1), m_nScanPaperSize(1), m_nScanType(2), m_nUseWordAnchorPoint(0), m_nUsePagination(0)
 {
 
 }
@@ -32,6 +32,7 @@ void CScanParamSetDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_STATIC_G_Scan, m_groupScanInfo);
 	DDX_Control(pDX, IDC_STATIC_G_Model, m_groupModelInfo);
 	DDX_Control(pDX, IDC_CHK_UseWordAnchorPoint, m_chkUseWordAnchorPoint);
+	DDX_Control(pDX, IDC_CHK_UsePagination, m_chkUsePagination);
 }
 
 
@@ -45,11 +46,46 @@ BOOL CScanParamSetDlg::OnInitDialog()
 		.SetBackgroundColor(RGB(255, 255, 255));
 
 #ifndef USE_TESSERACT
+	#ifndef TEST_PAGINATION
 	m_groupModelInfo.ShowWindow(SW_HIDE);
 	m_chkUseWordAnchorPoint.ShowWindow(SW_HIDE);
+	m_chkUsePagination.ShowWindow(SW_HIDE);
+	#else
+	m_chkUseWordAnchorPoint.ShowWindow(SW_HIDE);
+	#endif
+#else
+	#ifndef TEST_PAGINATION
+	m_chkUsePagination.ShowWindow(SW_HIDE);
+	#endif
 #endif
 
+// #if !defined(USE_TESSERACT) && !defined(TEST_PAGINATION)
+// 	m_groupModelInfo.ShowWindow(SW_HIDE);
+// 	m_chkUseWordAnchorPoint.ShowWindow(SW_HIDE);
+// 	m_chkUsePagination.ShowWindow(SW_HIDE);
+// #elif !defined(USE_TESSERACT) && defined(TEST_PAGINATION)
+// 	m_chkUseWordAnchorPoint.ShowWindow(SW_HIDE);
+// #elif defined(USE_TESSERACT) && !defined(TEST_PAGINATION)
+// 	m_chkUsePagination.ShowWindow(SW_HIDE);
+// #endif
+
 	return TRUE;
+}
+
+BOOL CScanParamSetDlg::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		if (pMsg->wParam == VK_ESCAPE)
+		{
+			return TRUE;
+		}
+		if (pMsg->wParam == VK_RETURN)
+		{
+			return TRUE;
+		}
+	}
+	return CDialog::PreTranslateMessage(pMsg);
 }
 
 BEGIN_MESSAGE_MAP(CScanParamSetDlg, CBaseTabDlg)
@@ -61,6 +97,7 @@ BEGIN_MESSAGE_MAP(CScanParamSetDlg, CBaseTabDlg)
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
 	ON_BN_CLICKED(IDC_CHK_UseWordAnchorPoint, &CScanParamSetDlg::OnBnClickedChkUsewordanchorpoint)
+	ON_BN_CLICKED(IDC_CHK_UsePagination, &CScanParamSetDlg::OnBnClickedChkUsepagination)
 END_MESSAGE_MAP()
 
 
@@ -116,8 +153,10 @@ void CScanParamSetDlg::InitData(AdvanceParam& stParam)
 	m_nAutoCut = stParam.nAutoCut;
 	m_chkAutoCut.SetCheck(m_nAutoCut);
 
-	m_nUseWordAnchorPoint = stParam.nUseWordAnchorPoint;
+	m_nUseWordAnchorPoint	= stParam.nUseWordAnchorPoint;
 	m_chkUseWordAnchorPoint.SetCheck(m_nUseWordAnchorPoint);
+	m_nUsePagination		= stParam.nUsePagination;
+	m_chkUsePagination.SetCheck(m_nUsePagination);
 	return;
 }
 
@@ -129,6 +168,7 @@ BOOL CScanParamSetDlg::SaveParamData(AdvanceParam& stParam)
 	stParam.nScanType	= m_nScanType;
 	stParam.nAutoCut	= m_nAutoCut;
 	stParam.nUseWordAnchorPoint = m_nUseWordAnchorPoint;
+	stParam.nUsePagination		= m_nUsePagination;
 	return TRUE;
 }
 
@@ -202,4 +242,10 @@ BOOL CScanParamSetDlg::OnEraseBkgnd(CDC* pDC)
 void CScanParamSetDlg::OnBnClickedChkUsewordanchorpoint()
 {
 	m_nUseWordAnchorPoint = m_chkUseWordAnchorPoint.GetCheck();
+}
+
+
+void CScanParamSetDlg::OnBnClickedChkUsepagination()
+{
+	m_nUsePagination = m_chkUsePagination.GetCheck();
 }

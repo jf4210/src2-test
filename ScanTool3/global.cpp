@@ -428,6 +428,11 @@ pMODEL LoadModelFile(CString strModelPath)
 			Poco::JSON::Array::Ptr arrayFixCP = jsnPaperObj->getArray("FixCP");
 			Poco::JSON::Array::Ptr arrayHHead = jsnPaperObj->getArray("H_Head");
 			Poco::JSON::Array::Ptr arrayVHead = jsnPaperObj->getArray("V_Head");
+		#ifdef TEST_PAGINATION
+			Poco::JSON::Array::Ptr arrayPage;
+			if(jsnPaperObj->has("Pagination"))
+				arrayPage = jsnPaperObj->getArray("Pagination");
+		#endif
 			Poco::JSON::Array::Ptr arrayABModel = jsnPaperObj->getArray("ABModel");
 			Poco::JSON::Array::Ptr arrayCourse = jsnPaperObj->getArray("Course");
 			Poco::JSON::Array::Ptr arrayQKCP = jsnPaperObj->getArray("QKCP");
@@ -553,6 +558,47 @@ pMODEL LoadModelFile(CString strModelPath)
 
 				paperModelInfo->lV_Head.push_back(rc);
 			}
+		#ifdef TEST_PAGINATION
+			if (jsnPaperObj->has("Pagination"))
+			{
+				for (int i = 0; i < arrayPage->size(); i++)
+				{
+					Poco::JSON::Object::Ptr jsnRectInfoObj = arrayPage->getObject(i);
+					RECTINFO rc;
+					rc.eCPType = (CPType)jsnRectInfoObj->get("eType").convert<int>();
+					rc.fStandardValuePercent = jsnRectInfoObj->get("standardValPercent").convert<float>();
+					rc.fStandardValue = jsnRectInfoObj->get("standardVal").convert<float>();
+
+					if (jsnRectInfoObj->has("standardArea"))
+						rc.fStandardArea = jsnRectInfoObj->get("standardArea").convert<float>();
+					if (jsnRectInfoObj->has("standardDensity"))
+						rc.fStandardDensity = jsnRectInfoObj->get("standardDensity").convert<float>();
+					if (jsnRectInfoObj->has("standardMeanGray"))
+						rc.fStandardMeanGray = jsnRectInfoObj->get("standardMeanGray").convert<float>();
+					if (jsnRectInfoObj->has("standardStddev"))
+						rc.fStandardStddev = jsnRectInfoObj->get("standardStddev").convert<float>();
+
+					rc.nThresholdValue = jsnRectInfoObj->get("thresholdValue").convert<int>();
+					rc.nHItem = jsnRectInfoObj->get("hHeadItem").convert<int>();
+					rc.nVItem = jsnRectInfoObj->get("vHeadItem").convert<int>();
+					rc.rt.x = jsnRectInfoObj->get("left").convert<int>();
+					rc.rt.y = jsnRectInfoObj->get("top").convert<int>();
+					rc.rt.width = jsnRectInfoObj->get("width").convert<int>();
+					rc.rt.height = jsnRectInfoObj->get("height").convert<int>();
+
+					if (jsnRectInfoObj->has("gaussKernel"))
+						rc.nGaussKernel = jsnRectInfoObj->get("gaussKernel").convert<int>();
+					if (jsnRectInfoObj->has("sharpKernel"))
+						rc.nSharpKernel = jsnRectInfoObj->get("sharpKernel").convert<int>();
+					if (jsnRectInfoObj->has("cannyKernel"))
+						rc.nCannyKernel = jsnRectInfoObj->get("cannyKernel").convert<int>();
+					if (jsnRectInfoObj->has("dilateKernel"))
+						rc.nDilateKernel = jsnRectInfoObj->get("dilateKernel").convert<int>();
+
+					paperModelInfo->lPagination.push_back(rc);
+				}
+			}
+		#endif
 			for (int i = 0; i < arrayABModel->size(); i++)
 			{
 				Poco::JSON::Object::Ptr jsnRectInfoObj = arrayABModel->getObject(i);

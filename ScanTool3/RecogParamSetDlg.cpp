@@ -84,6 +84,22 @@ BOOL CRecogParamSetDlg::OnInitDialog()
 	return TRUE;
 }
 
+BOOL CRecogParamSetDlg::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		if (pMsg->wParam == VK_ESCAPE)
+		{
+			return TRUE;
+		}
+		if (pMsg->wParam == VK_RETURN)
+		{
+			return TRUE;
+		}
+	}
+	return CDialog::PreTranslateMessage(pMsg);
+}
+
 void CRecogParamSetDlg::InitData(AdvanceParam& stParam)
 {
 	m_nSensitiveZkzh	= stParam.nCurrentZkzhSensitivity;

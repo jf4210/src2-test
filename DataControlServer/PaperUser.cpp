@@ -336,7 +336,7 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 									std::string strDay = Poco::format("%04d-%02d-%02d", now.year(), now.month(), now.day());
 									std::string strDumpDir = SysSet.m_strCurrentDir + "DumpDir\\" + strDay;	//utf8
 									std::string strDumpFilePath = strDumpDir + "\\" + CMyCodeConvert::Gb2312ToUtf8(m_szFileName);
-
+									std::string strTmp = CMyCodeConvert::Utf8ToGb2312(strDumpFilePath);
 									try
 									{
 										Poco::File fDumpDir(CMyCodeConvert::Gb2312ToUtf8(strDumpDir));
@@ -350,7 +350,7 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 										}
 
 										Poco::File fileList(CMyCodeConvert::Gb2312ToUtf8(m_szFilePath));
-										fileList.renameTo(CMyCodeConvert::Gb2312ToUtf8(strDumpFilePath));
+										fileList.renameTo(strDumpFilePath);
 									}
 									catch (Poco::Exception &e)
 									{

@@ -53,6 +53,7 @@ typedef struct _PaperModelInfo_
 	std::vector<RECTINFO>	vecWJ_CP;				//违纪校验点
 	std::vector<RECTINFO>	vecGray;				//灰度校验点
 	std::vector<RECTINFO>	vecWhite;				//空白校验点
+	std::vector<RECTINFO>	vecPagination;			//页码
 	std::vector<OMR_QUESTION> vecOmr2;
 	std::vector<ELECTOMR_QUESTION> vecElectOmr;		//选做题信息
 	std::vector<pST_CHARACTER_ANCHOR_AREA> vecCharacterLocation;	//文字定位区域
