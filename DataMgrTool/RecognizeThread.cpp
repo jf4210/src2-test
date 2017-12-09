@@ -2333,6 +2333,10 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			fMeanGrayDiff += (vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray);
 		}
 		fMeanGrayDiff = fMeanGrayDiff / vecItemsGrayDesc.size();
+		float fMeanGrayDiff2 = 0.0;
+		for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
+			fMeanGrayDiff2 += vecOmrItemGrayDiff[i].fDiff;
+		fMeanGrayDiff2 = fMeanGrayDiff2 / vecOmrItemGrayDiff.size();
 		//--
 
 		int nFlag = -1;
@@ -2474,6 +2478,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 							{
 								//实际密度与选项平均密度比值 > 1, 同时与前一项的灰度差低于灰度判定值，
 								float fGrayDiff = fMeanGrayDiff > _dDiffThread_3_ ? _dDiffThread_3_ : fMeanGrayDiff;
+								fGrayDiff = fMeanGrayDiff > fMeanGrayDiff2 ? fMeanGrayDiff2 : fMeanGrayDiff;			//2017.12.7 20:45:00 for test
 								if (j > 0 && vecItemsDesc[j]->fRealMeanGray - vecItemsDesc[j - 1]->fRealMeanGray < fMeanGrayDiff && vecItemsDesc[j]->fRealDensity / fRealMeanDensity > 1)
 								{
 									fThreld = vecItemsDesc[j]->fRealValuePercent > fThreld ? fThreld : vecItemsDesc[j]->fRealValuePercent;
