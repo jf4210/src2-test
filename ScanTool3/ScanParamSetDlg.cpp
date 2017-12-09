@@ -6,6 +6,7 @@
 #include "ScanParamSetDlg.h"
 #include "afxdialogex.h"
 #include "AdanceSetMgrDlg.h"
+#include "global.h"
 
 // CAdvancedSetDlg ¶Ô»°¿ò
 
@@ -44,30 +45,16 @@ BOOL CScanParamSetDlg::OnInitDialog()
 		.SetBackgroundColor(RGB(255, 255, 255));
 	m_groupModelInfo.SetCatptionTextColor(RGB(0, 0, 0))
 		.SetBackgroundColor(RGB(255, 255, 255));
-
-#ifndef USE_TESSERACT
-	#ifndef TEST_PAGINATION
+	
+#if !defined(USE_TESSERACT) && !defined(TEST_PAGINATION)
 	m_groupModelInfo.ShowWindow(SW_HIDE);
 	m_chkUseWordAnchorPoint.ShowWindow(SW_HIDE);
 	m_chkUsePagination.ShowWindow(SW_HIDE);
-	#else
+#elif !defined(USE_TESSERACT) && defined(TEST_PAGINATION)
 	m_chkUseWordAnchorPoint.ShowWindow(SW_HIDE);
-	#endif
-#else
-	#ifndef TEST_PAGINATION
+#elif defined(USE_TESSERACT) && !defined(TEST_PAGINATION)
 	m_chkUsePagination.ShowWindow(SW_HIDE);
-	#endif
 #endif
-
-// #if !defined(USE_TESSERACT) && !defined(TEST_PAGINATION)
-// 	m_groupModelInfo.ShowWindow(SW_HIDE);
-// 	m_chkUseWordAnchorPoint.ShowWindow(SW_HIDE);
-// 	m_chkUsePagination.ShowWindow(SW_HIDE);
-// #elif !defined(USE_TESSERACT) && defined(TEST_PAGINATION)
-// 	m_chkUseWordAnchorPoint.ShowWindow(SW_HIDE);
-// #elif defined(USE_TESSERACT) && !defined(TEST_PAGINATION)
-// 	m_chkUsePagination.ShowWindow(SW_HIDE);
-// #endif
 
 	return TRUE;
 }
