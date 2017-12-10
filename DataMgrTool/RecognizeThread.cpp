@@ -2477,12 +2477,21 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 							else
 							{
 								//实际密度与选项平均密度比值 > 1, 同时与前一项的灰度差低于灰度判定值，
-								float fGrayDiff = fMeanGrayDiff > _dDiffThread_3_ ? _dDiffThread_3_ : fMeanGrayDiff;
-								fGrayDiff = fGrayDiff > fMeanGrayDiff2 ? fMeanGrayDiff2 : fGrayDiff;
-								if (j > 0 && vecItemsDesc[j]->fRealMeanGray - vecItemsDesc[j - 1]->fRealMeanGray < fMeanGrayDiff && vecItemsDesc[j]->fRealDensity / fRealMeanDensity > 1)
+// 								float fGrayDiff = abs(fMeanGrayDiff) > _dDiffThread_3_ ? _dDiffThread_3_ : abs(fMeanGrayDiff);
+// 								fGrayDiff = fGrayDiff > fMeanGrayDiff2 ? fMeanGrayDiff2 : fGrayDiff;
+								float fGrayDiff = fMeanGrayDiff2 > _dDiffThread_3_ ? _dDiffThread_3_ : fMeanGrayDiff2;
+								float fGrayDiff2 = fMeanGrayDiff2 + fMeanGrayDiff2 - _dDiffThread_3_;	//fMeanGrayDiff2 > _dDiffThread_3_
+								fGrayDiff2 = fMeanGrayDiff2 > _dDiffThread_3_ ? (fMeanGrayDiff2 + fMeanGrayDiff2 - _dDiffThread_3_) : (_dDiffThread_3_ + abs(fMeanGrayDiff2 - _dDiffThread_3_));
+								fGrayDiff2 = fGrayDiff2 > (_dDiffThread_3_ + _dDiffExit_3_) / 2 ? (_dDiffThread_3_ + _dDiffExit_3_) / 2 : fGrayDiff2;
+								if (j > 0 && vecItemsDesc[j]->fRealMeanGray - vecItemsDesc[j - 1]->fRealMeanGray < fGrayDiff && vecItemsDesc[j]->fRealDensity / fRealMeanDensity > 1)
 								{
 									fThreld = vecItemsDesc[j]->fRealValuePercent > fThreld ? fThreld : vecItemsDesc[j]->fRealValuePercent;
 								}
+// 								else if (j > 0 && vecItemsDesc[j]->fRealMeanGray - vecItemsDesc[j - 1]->fRealMeanGray < fGrayDiff2 && vecItemsDesc[j]->fRealDensity / fRealMeanDensity > 1 && \
+// 										 vecOmrItemDiff[j].fDiff > fDensityMeanPer)
+// 								{
+// 									fThreld = vecItemsDesc[j]->fRealValuePercent > fThreld ? fThreld : vecItemsDesc[j]->fRealValuePercent;
+// 								}
 							}
 							break;
 						}
