@@ -238,9 +238,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 
 		bool bFind = false;
 		int nPic = i;
-
-		m_ptFixCP = Point(0, 0);
-
+		
 		if (g_nOperatingMode == 1)
 		{
 			bool bResult;
@@ -1178,9 +1176,6 @@ bool CRecognizeThread::RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 				bFindRect = true;
 			else
 			{
-				m_ptFixCP.x = static_cast<int>(rtFix.x + rtFix.width / 2 + 0.5 + rc.rt.x);
-				m_ptFixCP.y = static_cast<int>(rtFix.y + rtFix.height / 2 + 0.5 + rc.rt.y);
-
 				// 			rtFix.x = rtFix.x + rc.rt.x;
 				// 			rtFix.y = rtFix.y + rc.rt.y;
 

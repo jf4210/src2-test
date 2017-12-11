@@ -22,6 +22,7 @@ public:
 	bool RecogZkzh(int nPic, cv::Mat& matCompPic, pMODEL pModel, int nOrientation);	//识别二维码或者条码，根据识别成功与否来判断图像方向
 
 	//获取图片的正确方向，和模板一样
+	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转), 0-正向，无法识别，故不旋转
 	int GetRightPicOrientation(cv::Mat& matSrc, int n, bool bDoubleScan);
 
 protected:	
@@ -60,6 +61,7 @@ private:
 	//2、正面需要右转90度 ==> 反面需要左转90度
 	//3、正面需要左转90度 ==> 反面需要右转90度
 	//4、正面需要旋转180度 ==> 反面也需要旋转180度
+	//0、正面无法判断旋转方向，采用默认方向，不需要旋转==> 反面也采用默认方向，不需要旋转
 	//*********************************
 	int		_nFristOrientation;
 };

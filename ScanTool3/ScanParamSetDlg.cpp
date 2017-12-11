@@ -198,7 +198,7 @@ HBRUSH CScanParamSetDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
 	UINT CurID = pWnd->GetDlgCtrlID();
-	if (CurID == IDC_CHK_AutoCut || CurID == IDC_CHK_UseWordAnchorPoint)
+	if (CurID == IDC_CHK_AutoCut || CurID == IDC_CHK_UseWordAnchorPoint || CurID == IDC_CHK_UsePagination)
 	{
 		HBRUSH hMYbr = ::CreateSolidBrush(RGB(255, 255, 255));	//62, 147, 254
 

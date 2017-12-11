@@ -30,8 +30,8 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_pModelPicShow(NULL), m_nGaussKernel(5), m_nSharpKernel(5), m_nThresholdKernel(150), m_nCannyKernel(90), m_nDilateKernel(6), m_nErodeKernel(2), m_nDilateKernel_DefCommon(6), m_nDilateKernel_DefSn(6)
 	, m_pModel(pModel), m_bNewModelFlag(false), m_nModelPicNums(1), m_nCurrTabSel(0), m_bSavedModelFlag(false), m_ncomboCurrentSel(0), m_eCurCPType(UNKNOWN)
 	, m_nCurListCtrlSel(0), m_nStartTH(0)
-	, m_nWhiteVal(225), m_nHeadVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nWJ_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200), m_nCharacterThreshold(150), m_nThreshold_DefSn(150), m_nThreshold_DefOmr(150), m_nCharacterConfidence(60)
-	, m_fHeadThresholdPercent(0.75), m_fABModelThresholdPercent(0.75), m_fCourseThresholdPercent(0.75), m_fQK_CPThresholdPercent_Fix(1.5), m_fWJ_CPThresholdPercent_Fix(1.5), m_fQK_CPThresholdPercent_Head(1.2), m_fWJ_CPThresholdPercent_Head(1.2), m_fFixThresholdPercent(0.80)
+	, m_nWhiteVal(225), m_nHeadVal(150), m_nPaginationVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nWJ_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200), m_nCharacterThreshold(150), m_nThreshold_DefSn(150), m_nThreshold_DefOmr(150), m_nCharacterConfidence(60)
+	, m_fHeadThresholdPercent(0.75), m_fPaginationThresholdPercent(0.75), m_fABModelThresholdPercent(0.75), m_fCourseThresholdPercent(0.75), m_fQK_CPThresholdPercent_Fix(1.5), m_fWJ_CPThresholdPercent_Fix(1.5), m_fQK_CPThresholdPercent_Head(1.2), m_fWJ_CPThresholdPercent_Head(1.2), m_fFixThresholdPercent(0.80)
 	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75), m_fOMRThresholdPercent_Fix(1.5), m_fSNThresholdPercent_Fix(1.5), m_fOMRThresholdPercent_Head(1.2), m_fSNThresholdPercent_Head(1.2)
 	, m_pCurRectInfo(NULL)
 	, m_bFistHTracker(true), m_bFistVTracker(true), m_bFistSNTracker(true)
@@ -242,13 +242,11 @@ BOOL CMakeModelDlg::OnInitDialog()
 			{
 				pPaperModel->vecV_Head.push_back(*itVHead);
 			}
-		#ifdef TEST_PAGINATION
 			RECTLIST::iterator itPage = m_pModel->vecPaperModel[i]->lPagination.begin();
 			for (; itPage != m_pModel->vecPaperModel[i]->lPagination.end(); itPage++)
 			{
 				pPaperModel->vecPagination.push_back(*itPage);
 			}
-		#endif
 			RECTLIST::iterator itABModel = m_pModel->vecPaperModel[i]->lABModel.begin();
 			for (; itABModel != m_pModel->vecPaperModel[i]->lABModel.end(); itABModel++)
 			{
@@ -1019,7 +1017,18 @@ LRESULT CMakeModelDlg::RoiLBtnDown(WPARAM wParam, LPARAM lParam)
 		rc.eCPType = m_eCurCPType;
 		rc.nHItem = nPosH;
 		rc.nVItem = nPosV;
-		if (m_eCurCPType == ABMODEL)
+		if (m_eCurCPType == PAGINATION)
+		{
+			rc.nThresholdValue = m_nPaginationVal;
+			rc.fStandardValuePercent = m_fPaginationThresholdPercent;
+
+			Rect rtTmp = rc.rt;
+			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+			RecogGrayValue(matSrcModel, rc);
+
+			m_vecTmp.push_back(rc);
+		}
+		else if (m_eCurCPType == ABMODEL)
 		{
 			rc.nThresholdValue = m_nABModelVal;
 			rc.fStandardValuePercent = m_fABModelThresholdPercent;
@@ -1393,6 +1402,7 @@ void CMakeModelDlg::OnBnClickedBtnSelpic()
 	m_vecPaperModelInfo[m_nCurrTabSel]->vecRtFix.clear();
 	m_vecPaperModelInfo[m_nCurrTabSel]->vecH_Head.clear();
 	m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.clear();
+	m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.clear();
 	m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel.clear();
 	m_vecPaperModelInfo[m_nCurrTabSel]->vecCourse.clear();
 	m_vecPaperModelInfo[m_nCurrTabSel]->vecQK_CP.clear();
@@ -1763,6 +1773,7 @@ inline void CMakeModelDlg::GetThreshold(cv::Mat& matSrc, cv::Mat& matDst)
 	case Fix_CP: nRealThreshold = m_nFixVal; break;
 	case H_HEAD: nRealThreshold = m_nHeadVal; break;
 	case V_HEAD: nRealThreshold = m_nHeadVal; break;
+	case PAGINATION: nRealThreshold = m_nPaginationVal; break;
 	case ABMODEL: nRealThreshold = m_nABModelVal; break;
 	case COURSE: nRealThreshold = m_nCourseVal; break;
 	case QK_CP: nRealThreshold = m_nQK_CPVal; break;
@@ -1926,6 +1937,17 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 				rtMax = GetSrcSaveRect(rm);
 
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.push_back(rc);
+		}
+		else if (m_eCurCPType == PAGINATION)
+		{
+			rc.nThresholdValue = m_nPaginationVal;
+			rc.fStandardValuePercent = m_fPaginationThresholdPercent;
+
+			Rect rtTmp = rm;
+			Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+			RecogGrayValue(matSrcModel, rc);
+
+			m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.push_back(rc);
 		}
 		else if (m_eCurCPType == ABMODEL)
 		{
@@ -2632,7 +2654,18 @@ bool CMakeModelDlg::RecogByHead(cv::Rect rtOri)
 			rc.nCannyKernel = m_nCannyKernel;
 			rc.nDilateKernel = m_nDilateKernel;
 #if 1
-			if (m_eCurCPType == ABMODEL)
+			if (m_eCurCPType == PAGINATION)
+			{
+				rc.nThresholdValue = m_nPaginationVal;
+				rc.fStandardValuePercent = m_fPaginationThresholdPercent;
+
+				Rect rtTmp = arr[i][j];
+				Mat matSrcModel = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg(rtTmp);
+				RecogGrayValue(matSrcModel, rc);
+
+				m_vecTmp.push_back(rc);
+			}
+			else if (m_eCurCPType == ABMODEL)
 			{
 				rc.nThresholdValue = m_nABModelVal;
 				rc.fStandardValuePercent = m_fABModelThresholdPercent;
@@ -2849,13 +2882,17 @@ bool CMakeModelDlg::checkValidity()
 	{
 		for (int i = 0; i < m_vecPaperModelInfo.size(); i++)
 		{
-		#ifdef TEST_PAGINATION
-			int nCount = m_vecPaperModelInfo[i]->vecPagination.size() + m_vecPaperModelInfo[i]->vecABModel.size() + m_vecPaperModelInfo[i]->vecCourse.size() + m_vecPaperModelInfo[i]->vecElectOmr.size() + m_vecPaperModelInfo[i]->vecGray.size() \
-				+ m_vecPaperModelInfo[i]->vecOmr2.size() + m_vecPaperModelInfo[i]->vecQK_CP.size() + m_vecPaperModelInfo[i]->vecWhite.size() + m_vecPaperModelInfo[i]->lSN.size();
-		#else
-			int nCount = m_vecPaperModelInfo[i]->vecABModel.size() + m_vecPaperModelInfo[i]->vecCourse.size() + m_vecPaperModelInfo[i]->vecElectOmr.size() + m_vecPaperModelInfo[i]->vecGray.size() \
-				+ m_vecPaperModelInfo[i]->vecOmr2.size() + m_vecPaperModelInfo[i]->vecQK_CP.size() + m_vecPaperModelInfo[i]->vecWhite.size() + m_vecPaperModelInfo[i]->lSN.size();
-		#endif
+			int nCount = 0;
+			if (m_pModel->nUsePagination)
+			{
+				nCount = m_vecPaperModelInfo[i]->vecPagination.size() + m_vecPaperModelInfo[i]->vecABModel.size() + m_vecPaperModelInfo[i]->vecCourse.size() + m_vecPaperModelInfo[i]->vecElectOmr.size() + m_vecPaperModelInfo[i]->vecGray.size() \
+					+ m_vecPaperModelInfo[i]->vecOmr2.size() + m_vecPaperModelInfo[i]->vecQK_CP.size() + m_vecPaperModelInfo[i]->vecWhite.size() + m_vecPaperModelInfo[i]->lSN.size();
+			}
+			else
+			{
+				nCount = m_vecPaperModelInfo[i]->vecABModel.size() + m_vecPaperModelInfo[i]->vecCourse.size() + m_vecPaperModelInfo[i]->vecElectOmr.size() + m_vecPaperModelInfo[i]->vecGray.size() \
+					+ m_vecPaperModelInfo[i]->vecOmr2.size() + m_vecPaperModelInfo[i]->vecQK_CP.size() + m_vecPaperModelInfo[i]->vecWhite.size() + m_vecPaperModelInfo[i]->lSN.size();
+			}
 			if (m_pModel->nUseWordAnchorPoint == 0)
 			{
 				if (nCount > 0 && m_vecPaperModelInfo[i]->vecRtFix.size() < 3)
@@ -2911,8 +2948,7 @@ bool CMakeModelDlg::checkValidity()
 // 		}
 	}
 
-#ifdef TEST_PAGINATION
-	if (bResult)
+	if (m_pModel->nUsePagination && bResult)
 	{
 		//页码检查
 		for (int i = 0; i < m_vecPaperModelInfo.size(); i++)
@@ -2925,19 +2961,29 @@ bool CMakeModelDlg::checkValidity()
 				dlg.setShowInfo(2, 1, szTmp);
 				dlg.DoModal();
 				bResult = false;
-				break;
+			}
+			//准考证号检查
+			if (i % 2 == 0 && m_vecPaperModelInfo[i]->lSN.size() == 0)	//奇数页检查准考证号是否设置，默认是双面扫描，背面不需要检查准考证号
+			{
+				char szTmp[50] = { 0 };
+				sprintf_s(szTmp, "第 %d 页准考证号未设置", i + 1);
+				CNewMessageBox dlg;
+				dlg.setShowInfo(2, 1, szTmp);
+				dlg.DoModal();
+				bResult = false;
 			}
 		}
 	}
-#endif
-
-	//准考证号检查
-	if (m_vecPaperModelInfo[0]->lSN.size() == 0)
+	else if (m_pModel->nUsePagination == 0)
 	{
-		CNewMessageBox dlg;
-		dlg.setShowInfo(2, 1, "第1页准考证号未设置");
-		dlg.DoModal();
-		bResult = false;
+		//准考证号检查
+		if (m_vecPaperModelInfo[0]->lSN.size() == 0)
+		{
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, "第1页准考证号未设置");
+			dlg.DoModal();
+			bResult = false;
+		}
 	}
 
 	//omr漏点检查
@@ -3046,10 +3092,8 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 			pPaperModel->lH_Head.push_back(m_vecPaperModelInfo[i]->vecH_Head[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecV_Head.size(); j++)
 			pPaperModel->lV_Head.push_back(m_vecPaperModelInfo[i]->vecV_Head[j]);
-	#ifdef TEST_PAGINATION
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecPagination.size(); j++)
 			pPaperModel->lPagination.push_back(m_vecPaperModelInfo[i]->vecPagination[j]);
-	#endif
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecABModel.size(); j++)
 			pPaperModel->lABModel.push_back(m_vecPaperModelInfo[i]->vecABModel[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecCourse.size(); j++)
@@ -3213,9 +3257,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		Poco::JSON::Array jsnFixCPArry;
 		Poco::JSON::Array jsnHHeadArry;
 		Poco::JSON::Array jsnVHeadArry;
-	#ifdef TEST_PAGINATION
 		Poco::JSON::Array jsnPaginationArry;
-	#endif
 		Poco::JSON::Array jsnABModelArry;
 		Poco::JSON::Array jsnCourseArry;
 		Poco::JSON::Array jsnQKArry;
@@ -3294,7 +3336,6 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("dilateKernel", itVHead->nDilateKernel);
 			jsnVHeadArry.add(jsnObj);
 		}
-	#ifdef TEST_PAGINATION
 		RECTLIST::iterator itPage = pModel->vecPaperModel[i]->lPagination.begin();
 		for (; itPage != pModel->vecPaperModel[i]->lPagination.end(); itPage++)
 		{
@@ -3320,7 +3361,6 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 			jsnObj.set("dilateKernel", itPage->nDilateKernel);
 			jsnPaginationArry.add(jsnObj);
 		}
-	#endif
 		RECTLIST::iterator itABModel = pModel->vecPaperModel[i]->lABModel.begin();
 		for (; itABModel != pModel->vecPaperModel[i]->lABModel.end(); itABModel++)
 		{
@@ -3708,9 +3748,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		jsnPaperObj.set("FixCP", jsnFixCPArry);
 		jsnPaperObj.set("H_Head", jsnHHeadArry);
 		jsnPaperObj.set("V_Head", jsnVHeadArry);
-	#ifdef TEST_PAGINATION
 		jsnPaperObj.set("Pagination", jsnPaginationArry);
-	#endif
 		jsnPaperObj.set("ABModel", jsnABModelArry);
 		jsnPaperObj.set("Course", jsnCourseArry);
 		jsnPaperObj.set("QKCP", jsnQKArry);
@@ -3760,6 +3798,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	jsnModel.set("nScanAutoCut", pModel->nAutoCut);				//扫描仪是否自动裁剪，超长卡不能裁剪
 	jsnModel.set("nUseWordAnchorPoint", pModel->nUseWordAnchorPoint);		//是否使用文字定点来定位识别
 	jsnModel.set("nCharacterAnchorPoint", pModel->nCharacterAnchorPoint);	//用来计算矩形位置的文字定点个数
+	jsnModel.set("nUsePagination", pModel->nUsePagination);					//是否使用页码标识
 	
 	jsnModel.set("nExamId", pModel->nExamID);
 	jsnModel.set("nSubjectId", pModel->nSubjectID);
@@ -3898,6 +3937,18 @@ bool CMakeModelDlg::ShowRectByPoint(cv::Point pt)
 				if (i != nFind || m_pCurRectInfo->eCPType != m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head[i].eCPType)
 				{
 					cv::Rect rt = GetShowFakePosRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head[i].rt);
+					cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
+				}
+			}
+		}
+	case PAGINATION:
+		if (eType == PAGINATION || eType == UNKNOWN)
+		{
+			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.size(); i++)
+			{
+				if (i != nFind || m_pCurRectInfo->eCPType != m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination[i].eCPType)
+				{
+					cv::Rect rt = GetShowFakePosRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination[i].rt);
 					cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				}
 			}
@@ -4205,6 +4256,22 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 		}
 		if (m_eCurCPType == UNKNOWN)
 			nCurItem -= m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.size();
+	}
+	if (m_eCurCPType == PAGINATION || m_eCurCPType == UNKNOWN)
+	{
+		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.size(); i++)
+		{
+			cv::Rect rtTmp = GetShowFakePosRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination[i].rt);
+			cv::rectangle(tmp2, rtTmp, CV_RGB(255, 233, 10), -1);
+		}
+		if (!bFind && m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.size() > nCurItem)
+		{
+			bFind = true;
+			rt = GetShowFakePosRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination[nCurItem].rt);
+			m_pCurRectInfo = &m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination[nCurItem];
+		}
+		if (m_eCurCPType == UNKNOWN)
+			nCurItem -= m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.size();
 	}
 	if (m_eCurCPType == ABMODEL || m_eCurCPType == UNKNOWN)
 	{
@@ -4566,6 +4633,17 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 		if (m_eCurCPType == UNKNOWN)
 			nCurItem -= m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.size();
 	}
+	if (m_eCurCPType == PAGINATION || m_eCurCPType == UNKNOWN)
+	{
+		if (!bFind && m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.size() > nCurItem)
+		{
+			bFind = true;
+			rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination[nCurItem].rt;
+			m_pCurRectInfo = &m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination[nCurItem];
+		}
+		if (m_eCurCPType == UNKNOWN)
+			nCurItem -= m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.size();
+	}
 	if (m_eCurCPType == ABMODEL || m_eCurCPType == UNKNOWN)
 	{
 		if (!bFind && m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel.size() > nCurItem)
@@ -4893,6 +4971,16 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 
 				rt = cv::Rect(pt1, pt2);
 				cv::rectangle(tmp, rt, CV_RGB(255, 20, 50), 2);
+				cv::rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+			}
+		}
+	case PAGINATION:
+		if (eType == PAGINATION || eType == UNKNOWN)
+		{
+			for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.size(); i++)
+			{
+				rt = GetShowFakePosRect(m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination[i].rt);
+				cv::rectangle(tmp, rt, CV_RGB(255, 0, 0), 2);
 				cv::rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
 		}
@@ -5292,6 +5380,22 @@ void CMakeModelDlg::UpdataCPList()
 		if (m_eCurCPType == UNKNOWN)
 			nCount += m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.size();
 	}
+	if (m_eCurCPType == PAGINATION || m_eCurCPType == UNKNOWN)
+	{
+		for (int i = nCount; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.size() + nCount; i++)
+		{
+			RECTINFO rcInfo = m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination[i - nCount];
+			char szPosition[50] = { 0 };
+			sprintf_s(szPosition, "(%d,%d,%d,%d)", rcInfo.rt.x, rcInfo.rt.y, rcInfo.rt.width, rcInfo.rt.height);
+			char szCount[10] = { 0 };
+			sprintf_s(szCount, "%d", i + 1);
+			m_cpListCtrl.InsertItem(i, NULL);
+			m_cpListCtrl.SetItemText(i, 0, (LPCTSTR)A2T(szCount));
+			m_cpListCtrl.SetItemText(i, 1, (LPCTSTR)A2T(szPosition));
+		}
+		if (m_eCurCPType == UNKNOWN)
+			nCount += m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.size();
+	}
 	if (m_eCurCPType == ABMODEL || m_eCurCPType == UNKNOWN)
 	{
 		for (int i = nCount; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel.size() + nCount; i++)
@@ -5663,6 +5767,10 @@ void CMakeModelDlg::AddRecogRectToList()
 	int nAddTH = 0;
 	for (int i = 0; i < m_vecTmp.size(); i++)
 	{
+		if (m_eCurCPType == PAGINATION)
+		{
+			m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.push_back(m_vecTmp[i]);
+		}
 		if (m_eCurCPType == ABMODEL)
 		{
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel.push_back(m_vecTmp[i]);
@@ -6010,6 +6118,13 @@ BOOL CMakeModelDlg::DeleteRectInfo(CPType eType, int nItem)
 		if (it != m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.end())
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.erase(it);
 		break;
+	case PAGINATION:
+		if (m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.size() < 0)
+			return FALSE;
+		it = m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.begin() + nItem;
+		if (it != m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.end())
+			m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.erase(it);
+		break;
 	case ABMODEL:
 		if (m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel.size() < 0)
 			return FALSE;
@@ -6186,6 +6301,9 @@ void CMakeModelDlg::SortRect()
 	case V_HEAD:
 		std::sort(m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.begin(), m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head.end(), SortByPositionY);
 		break;
+	case PAGINATION:
+		std::sort(m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.begin(), m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.end(), SortByPositionX);
+		break;
 	case ABMODEL:
 		std::sort(m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel.begin(), m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel.end(), SortByPositionX);
 		break;
@@ -6254,6 +6372,22 @@ inline int CMakeModelDlg::GetRectInfoByPoint(cv::Point pt, CPType eType, RECTINF
 						{
 							nFind = i;
 							pRc = &m_vecPaperModelInfo[m_nCurrTabSel]->vecV_Head[i];
+							break;
+						}
+					}
+				}
+			}
+		case PAGINATION:
+			if (eType == PAGINATION || eType == UNKNOWN)
+			{
+				if (nFind < 0)
+				{
+					for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.size(); i++)
+					{
+						if (m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination[i].rt.contains(pt))
+						{
+							nFind = i;
+							pRc = &m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination[i];
 							break;
 						}
 					}
@@ -7721,6 +7855,29 @@ inline bool CMakeModelDlg::checkOverlap(CPType eType, cv::Rect rtSrc)
 				}
 			}
 			break;
+		case PAGINATION:
+			{
+				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.size(); i++)
+				{
+					cv::Rect rt = m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination[i].rt;
+					if (rt.contains(rtSrc.tl()) || rt.contains(rtSrc.br()) || rtSrc.contains(rt.tl()) || rtSrc.contains(rt.br()))
+					{
+						bResult = true;
+						break;
+					}
+					if (rt.tl().x >= rtSrc.tl().x && rt.br().x <= rtSrc.br().x && rt.tl().y <= rtSrc.tl().y && rt.br().y >= rtSrc.br().y)
+					{
+						bResult = true;
+						break;
+					}
+					if (rtSrc.tl().x >= rt.tl().x && rtSrc.br().x <= rt.br().x && rtSrc.tl().y <= rt.tl().y && rtSrc.br().y >= rt.br().y)
+					{
+						bResult = true;
+						break;
+					}
+				}
+			}
+			break;
 		case ABMODEL:
 			{
 				for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecABModel.size(); i++)
@@ -7928,6 +8085,7 @@ void CMakeModelDlg::InitParam()
 
 		m_nWhiteVal = pConf->getInt("MakeModel_Threshold.white", 225);
 		m_nHeadVal	= pConf->getInt("MakeModel_Threshold.head", 136);
+		m_nPaginationVal = pConf->getInt("MakeModel_Threshold.pagination", 150);
 		m_nABModelVal = pConf->getInt("MakeModel_Threshold.abModel", 150);
 		m_nCourseVal = pConf->getInt("MakeModel_Threshold.course", 150);
 		m_nQK_CPVal = pConf->getInt("MakeModel_Threshold.qk", 150);
@@ -7944,6 +8102,7 @@ void CMakeModelDlg::InitParam()
 		m_nThreshold_DefOmr = m_nOMR;
 
 		m_fHeadThresholdPercent		= pConf->getDouble("MakeModel_RecogPercent_Common.head", 0.75);
+		m_fPaginationThresholdPercent = pConf->getDouble("MakeModel_RecogPercent_Common.pagination", 0.75);
 		m_fABModelThresholdPercent	= pConf->getDouble("MakeModel_RecogPercent_Common.abModel", 0.75);
 		m_fCourseThresholdPercent	= pConf->getDouble("MakeModel_RecogPercent_Common.course", 0.75);		
 		m_fFixThresholdPercent		= pConf->getDouble("MakeModel_RecogPercent_Common.fix", 0.8);
@@ -7984,6 +8143,7 @@ void CMakeModelDlg::InitParam()
 
 		m_nWhiteVal = 225;
 		m_nHeadVal	= 136;
+		m_nPaginationVal = 150;
 		m_nABModelVal = 150;
 		m_nCourseVal = 150;
 		m_nQK_CPVal = 150;
@@ -7995,6 +8155,7 @@ void CMakeModelDlg::InitParam()
 		m_nCharacterThreshold	= 150;
 
 		m_fHeadThresholdPercent		= 0.75;
+		m_fPaginationThresholdPercent = 0.75;
 		m_fABModelThresholdPercent	= 0.75;
 		m_fCourseThresholdPercent	= 0.75;
 		m_fQK_CPThresholdPercent_Head	= 1.2;
@@ -8537,6 +8698,11 @@ void CMakeModelDlg::ReInitModel(pMODEL pModel)
 			{
 				pPaperModel->vecV_Head.push_back(*itVHead);
 			}
+			RECTLIST::iterator itPage = m_pModel->vecPaperModel[i]->lPagination.begin();
+			for (; itPage != m_pModel->vecPaperModel[i]->lPagination.end(); itPage++)
+			{
+				pPaperModel->vecPagination.push_back(*itPage);
+			}
 			RECTLIST::iterator itABModel = m_pModel->vecPaperModel[i]->lABModel.begin();
 			for (; itABModel != m_pModel->vecPaperModel[i]->lABModel.end(); itABModel++)
 			{
@@ -8801,10 +8967,8 @@ void CMakeModelDlg::SaveNewModel()
 			pPaperModel->lH_Head.push_back(m_vecPaperModelInfo[i]->vecH_Head[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecV_Head.size(); j++)
 			pPaperModel->lV_Head.push_back(m_vecPaperModelInfo[i]->vecV_Head[j]);
-	#ifdef TEST_PAGINATION
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecPagination.size(); j++)
 			pPaperModel->lPagination.push_back(m_vecPaperModelInfo[i]->vecPagination[j]);
-	#endif
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecABModel.size(); j++)
 			pPaperModel->lABModel.push_back(m_vecPaperModelInfo[i]->vecABModel[j]);
 		for (int j = 0; j < m_vecPaperModelInfo[i]->vecCourse.size(); j++)

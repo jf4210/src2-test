@@ -158,6 +158,7 @@ void CRecogInfoDlg::ShowDetailRectInfo(pRECTINFO pCurRectInfo)
 	case Fix_CP:	m_strCPTypeName	= _T("定点"); break;
 	case H_HEAD:	m_strCPTypeName	= _T("水平同步头"); break;
 	case V_HEAD:	m_strCPTypeName	= _T("垂直同步头"); break;
+	case PAGINATION:m_strCPTypeName = _T("页码"); break;
 	case ABMODEL:	m_strCPTypeName	= _T("卷型点"); break;
 	case COURSE:	m_strCPTypeName	= _T("科目点"); break;
 	case QK_CP:		m_strCPTypeName = _T("缺考点"); break;

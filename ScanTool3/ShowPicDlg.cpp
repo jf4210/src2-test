@@ -91,7 +91,7 @@ void CShowPicDlg::InitCtrlPosition()
 		int nCurrTop = nTopGap;
 		for (int i = 0; i < m_vecBtn.size(); i++)
 		{
-			nCurrLeft = nCurrLeft + i * (nBtnW + 1);
+			nCurrLeft = nLeftGap + i * (nBtnW + 1);
 			if (m_vecBtn[i]->GetSafeHwnd())
 			{
 				m_vecBtn[i]->MoveWindow(nCurrLeft, nCurrTop, nBtnW, nBtnH);

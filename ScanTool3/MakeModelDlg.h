@@ -25,7 +25,7 @@ typedef struct _PaperModelInfo_
 {
 	bool bFirstH;		//第一次展示水平同步头
 	bool bFirstV;		//第一次展示垂直同步头
-	int nPaper;			//第几张试卷
+	int			nPaper;			//第几张试卷
 	int			nPicW;					//图片宽
 	int			nPicH;					//图片高
 
@@ -110,6 +110,7 @@ public:
 // 	float		m_fThresholdValPercent;	//校验点达到阀值的比例
 	int	m_nFixVal;
 	int	m_nHeadVal;				//水平垂直同步头的阀值
+	int	m_nPaginationVal;
 	int	m_nABModelVal;
 	int	m_nCourseVal;
 	int	m_nQK_CPVal;
@@ -121,6 +122,7 @@ public:
 	int m_nCharacterThreshold;
 	float m_fFixThresholdPercent;
 	float m_fHeadThresholdPercent;	//同步头达到阀值的比例
+	float m_fPaginationThresholdPercent;
 	float m_fABModelThresholdPercent;
 	float m_fCourseThresholdPercent;
 	float m_fQK_CPThresholdPercent_Head;	//通过同步头识别

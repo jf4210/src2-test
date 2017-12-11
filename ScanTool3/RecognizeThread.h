@@ -63,7 +63,6 @@ public:
 	Poco::Event		eExit;
 private:
 	std::map<pMODEL, pMODELINFO> _mapModel;		//本线程已经读取的模板列表，防止同样的模板多次读取浪费时间
-	cv::Point m_ptFixCP;
 	std::vector<std::vector<cv::Point>> m_vecContours;
 	std::vector<RECTINFO> m_vecH_Head;
 	std::vector<RECTINFO> m_vecV_Head;

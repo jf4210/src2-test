@@ -539,8 +539,9 @@ int COmrRecog::GetRightPicOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 	clock_t sTime, eTime;
 	sTime = clock();
 	int nResult = CheckOrientation(matSrc, n, bDoubleScan);
-	switch (nResult)	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
+	switch (nResult)	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转), 0-正向，无法识别，故不旋转
 	{
+		case 0:
 		case 1:	break;
 		case 2:
 		{
@@ -587,10 +588,10 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 	//2、正面需要右转90度 ==> 反面需要左转90度
 	//3、正面需要左转90度 ==> 反面需要右转90度
 	//4、正面需要旋转180度 ==> 反面也需要旋转180度
+	//0、正面无法判断旋转方向，采用默认方向，不需要旋转==> 反面也采用默认方向，不需要旋转
 	//*********************************
-	int nResult = 1;	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
+	int nResult = 1;	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180, 0-正向，无法识别，故不旋转
 
-	static int nFristOrientation = 1;
 	if (bDoubleScan && n % 2 != 0)	//双面扫描, 且属于双面扫描的第二面的情况
 	{
 		int nCountBK = _pModel_->vecPaperModel[n]->lGray.size() + _pModel_->vecPaperModel[n]->lCourse.size();
@@ -600,6 +601,7 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 			else if (_nFristOrientation == 2) nResult = 3;
 			else if (_nFristOrientation == 3) nResult = 2;
 			else if (_nFristOrientation == 4) nResult = 4;
+			else if (_nFristOrientation == 0) nResult = 0;
 			end = clock();
 			TRACE("判断旋转方向时间: %dms\n", end - start);
 
@@ -610,6 +612,7 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 				case 2: strDirection = "右旋90"; break;
 				case 3: strDirection = "左旋90"; break;
 				case 4: strDirection = "右旋180"; break;
+				case 0: strDirection = "正向，无法识别，故不旋转"; break;
 			}
 			std::string strLog = "双面扫描第二面，根据第一面方向判断结果：" + strDirection;
 			g_pLogger->information(strLog);
@@ -659,6 +662,7 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 		case 2: strDirection = "右旋90"; break;
 		case 3: strDirection = "左旋90"; break;
 		case 4: strDirection = "右旋180"; break;
+		case 0: strDirection = "正向，无法识别，故不旋转"; break;
 	}
 	std::string strLog = "方向判断结果：" + strDirection;
 	strLog.append("\t" + strTmp);

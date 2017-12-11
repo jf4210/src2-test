@@ -378,6 +378,8 @@ pMODEL LoadModelFile(CString strModelPath)
 			pModel->nUseWordAnchorPoint = objData->get("nUseWordAnchorPoint").convert<int>();
 		if (objData->has("nCharacterAnchorPoint"))
 			pModel->nCharacterAnchorPoint = objData->get("nCharacterAnchorPoint").convert<int>();
+		if (objData->has("nUsePagination"))
+			pModel->nUsePagination = objData->get("nUsePagination").convert<int>();
 
 // 		if (objData->has("gaussKernel"))
 // 			pModel->nGaussKernel = objData->get("gaussKernel").convert<int>();
@@ -428,11 +430,9 @@ pMODEL LoadModelFile(CString strModelPath)
 			Poco::JSON::Array::Ptr arrayFixCP = jsnPaperObj->getArray("FixCP");
 			Poco::JSON::Array::Ptr arrayHHead = jsnPaperObj->getArray("H_Head");
 			Poco::JSON::Array::Ptr arrayVHead = jsnPaperObj->getArray("V_Head");
-		#ifdef TEST_PAGINATION
 			Poco::JSON::Array::Ptr arrayPage;
 			if(jsnPaperObj->has("Pagination"))
 				arrayPage = jsnPaperObj->getArray("Pagination");
-		#endif
 			Poco::JSON::Array::Ptr arrayABModel = jsnPaperObj->getArray("ABModel");
 			Poco::JSON::Array::Ptr arrayCourse = jsnPaperObj->getArray("Course");
 			Poco::JSON::Array::Ptr arrayQKCP = jsnPaperObj->getArray("QKCP");
@@ -558,7 +558,6 @@ pMODEL LoadModelFile(CString strModelPath)
 
 				paperModelInfo->lV_Head.push_back(rc);
 			}
-		#ifdef TEST_PAGINATION
 			if (jsnPaperObj->has("Pagination"))
 			{
 				for (int i = 0; i < arrayPage->size(); i++)
@@ -598,7 +597,6 @@ pMODEL LoadModelFile(CString strModelPath)
 					paperModelInfo->lPagination.push_back(rc);
 				}
 			}
-		#endif
 			for (int i = 0; i < arrayABModel->size(); i++)
 			{
 				Poco::JSON::Object::Ptr jsnRectInfoObj = arrayABModel->getObject(i);

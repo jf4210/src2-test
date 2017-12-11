@@ -562,8 +562,10 @@ int CScanThread::GetImgMemory()
 					{
 					}
 					ss.str("");
-					
+				
+				#ifndef TEST_FAST_SCAN			
 					updateEXTIMAGEINFO();
+				#endif
 					break;
 				}
 			}
@@ -785,7 +787,9 @@ int CScanThread::GetImgNative()
 			_DSM_Free(hImg);
 			pDIB = 0;
 
+		#ifndef TEST_FAST_SCAN
 			updateEXTIMAGEINFO();
+		#endif
 
 			// see if there are any more transfers to do
 			PrintCMDMessage("app: Checking to see if there are more images to transfer...\n");
@@ -2301,7 +2305,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 	}
 	end = clock();
 	char szTmpLog[200] = { 0 };
-	sprintf_s(szTmpLog, "save pic(%s) time: %d:%d:%d\n", szPicName, end1 - start, end2 - start, end3 - start, end - start);
+	sprintf_s(szTmpLog, "save pic(%s) time: %d:%d:%d:%d\n", szPicName, end1 - start, end2 - end1, end3 - end2, end - end3);
 	OutputDebugStringA(szTmpLog);
 #endif
 
