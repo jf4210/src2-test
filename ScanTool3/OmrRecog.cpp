@@ -539,9 +539,8 @@ int COmrRecog::GetRightPicOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 	clock_t sTime, eTime;
 	sTime = clock();
 	int nResult = CheckOrientation(matSrc, n, bDoubleScan);
-	switch (nResult)	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转), 0-正向，无法识别，故不旋转
+	switch (nResult)	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
 	{
-		case 0:
 		case 1:	break;
 		case 2:
 		{
@@ -590,7 +589,7 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 	//4、正面需要旋转180度 ==> 反面也需要旋转180度
 	//0、正面无法判断旋转方向，采用默认方向，不需要旋转==> 反面也采用默认方向，不需要旋转
 	//*********************************
-	int nResult = 1;	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180, 0-正向，无法识别，故不旋转
+	int nResult = 1;	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
 
 	if (bDoubleScan && n % 2 != 0)	//双面扫描, 且属于双面扫描的第二面的情况
 	{
@@ -601,7 +600,7 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 			else if (_nFristOrientation == 2) nResult = 3;
 			else if (_nFristOrientation == 3) nResult = 2;
 			else if (_nFristOrientation == 4) nResult = 4;
-			else if (_nFristOrientation == 0) nResult = 0;
+			//else if (_nFristOrientation == 0) nResult = 0;
 			end = clock();
 			TRACE("判断旋转方向时间: %dms\n", end - start);
 
@@ -612,7 +611,7 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 				case 2: strDirection = "右旋90"; break;
 				case 3: strDirection = "左旋90"; break;
 				case 4: strDirection = "右旋180"; break;
-				case 0: strDirection = "正向，无法识别，故不旋转"; break;
+				//case 0: strDirection = "正向，无法识别，故不旋转"; break;
 			}
 			std::string strLog = "双面扫描第二面，根据第一面方向判断结果：" + strDirection;
 			g_pLogger->information(strLog);
@@ -662,7 +661,7 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 		case 2: strDirection = "右旋90"; break;
 		case 3: strDirection = "左旋90"; break;
 		case 4: strDirection = "右旋180"; break;
-		case 0: strDirection = "正向，无法识别，故不旋转"; break;
+		//case 0: strDirection = "正向，无法识别，故不旋转"; break;
 	}
 	std::string strLog = "方向判断结果：" + strDirection;
 	strLog.append("\t" + strTmp);
@@ -887,7 +886,7 @@ int COmrRecog::CheckOrientation4Word(cv::Mat& matSrc, int n)
 
 	if (_pModel_->nZkzhType == 2)			//使用条码的时候，先通过条码来判断方向
 	{
-		if (RecogCodeOrientation(matSrc, n, nResult))
+		if (RecogCodeOrientation(matSrc, n, _pModel_, nResult))
 			return nResult;
 
 		strLog.append("通过条形码或二维码判断试卷旋转方向失败，下面通过定位点判断\n");
@@ -983,7 +982,7 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 
 	if (_pModel_->nZkzhType == 2)			//使用条码的时候，先通过条码来判断方向
 	{
-		if (RecogCodeOrientation(matSrc, n, nResult))
+		if (RecogCodeOrientation(matSrc, n, _pModel_, nResult))
 			return nResult;
 		strLog.append("通过条形码或二维码判断试卷旋转方向失败，下面通过定位点判断\n");
 	}
@@ -1349,7 +1348,7 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 	return nResult;
 }
 
-bool COmrRecog::RecogCodeOrientation(cv::Mat& matSrc, int n, int& nResult)
+bool COmrRecog::RecogCodeOrientation(cv::Mat& matSrc, int n, pMODEL pModel, int& nResult)
 {
 	bool bFind = false;
 //	int nResult = 1;	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
@@ -1372,7 +1371,7 @@ bool COmrRecog::RecogCodeOrientation(cv::Mat& matSrc, int n, int& nResult)
 		TRACE("与模板图片方向一致\n");
 		for (int i = 1; i <= 4; i = i + 3)
 		{
-			bool bResult = RecogZkzh(n, matSrc, _pModel_, i);
+			bool bResult = RecogZkzh(n, matSrc, pModel, i);
 			if (!bResult)
 				continue;
 
@@ -1386,7 +1385,7 @@ bool COmrRecog::RecogCodeOrientation(cv::Mat& matSrc, int n, int& nResult)
 		TRACE("与模板图片方向不一致\n");
 		for (int i = 2; i <= 3; i++)
 		{
-			bool bResult = RecogZkzh(n, matSrc, _pModel_, i);
+			bool bResult = RecogZkzh(n, matSrc, pModel, i);
 			if (!bResult)
 				continue;
 
@@ -2279,5 +2278,98 @@ int COmrRecog::GetRectsInArea(cv::Mat& matSrc, RECTINFO rc, int nMinW, int nMaxW
 // 	}
 
 	return RectCompList.size();
+}
+
+bool COmrRecog::IsFirstPic(int nPic, cv::Mat& matCompPic, pMODEL pModel)
+{
+	bool bResult = false;
+
+	clock_t sTime, eTime;
+	sTime = clock();
+
+	std::string strLog;
+	cv::Rect rtModelPic;
+	rtModelPic.width = _pModel_->vecPaperModel[nPic]->nPicW;
+	rtModelPic.height = _pModel_->vecPaperModel[nPic]->nPicH;
+	cv::Rect rtSrcPic;
+	rtSrcPic.width = matCompPic.cols;
+	rtSrcPic.height = matCompPic.rows;
+
+	int nModelPicPersent = rtModelPic.width / rtModelPic.height;	//0||1
+	int nSrcPicPercent = matCompPic.cols / matCompPic.rows;
+
+	int nRotateResult;	//方向
+	if (_pModel_->nZkzhType == 2)			//使用条码的时候，先通过条码来判断
+	{
+		bResult = RecogCodeOrientation(matCompPic, nPic, _pModel_, nRotateResult);
+
+		if (!bResult)
+		{
+			strLog.append("通过条形码或二维码判断试卷是否为第一面失败\n");
+
+			//使用条码时，需要找一种方法判断属于条码，如直线
+		}
+	}
+
+	if (!bResult)
+	{
+		//通过准考证号的矩形数量判断	
+		bool bFind = false;
+		if (nModelPicPersent == nSrcPicPercent)	//与模板图片方向一致，需判断正向还是反向一致
+		{
+			strLog.append("与模板图片方向一致\n");
+
+			for (int i = 1; i <= 4; i = i + 3)
+			{
+				bResult = RecogWordOrientationByRectCount(matCompPic, nPic, i, nRotateResult, strLog);
+				if (bResult)
+					break;
+			}
+
+			if (!bResult && _pModel_->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0)	//通过文字定位点判断
+			{
+				for (int i = 1; i <= 4; i = i + 3)
+				{
+					bResult = RecogWordOrientationByMatchTempl(matCompPic, nPic, i, nRotateResult, strLog);
+					if (bResult)
+						break;
+				}
+			}
+
+			if (!bResult)
+				TRACE("无法判断图片正反面\n");
+		}
+		else
+		{
+			strLog.append("与模板图片方向不一致\n");
+
+			for (int i = 2; i <= 3; i++)
+			{
+				bResult = RecogWordOrientationByRectCount(matCompPic, nPic, i, nRotateResult, strLog);
+				if (bResult)
+					break;
+			}
+			if (!bResult && _pModel_->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0)	//通过文字定位点判断
+			{
+				for (int i = 2; i <= 3; i++)
+				{
+					bResult = RecogWordOrientationByMatchTempl(matCompPic, nPic, i, nRotateResult, strLog);
+					if (bResult)
+						break;
+				}
+			}
+			if (!bResult)
+				TRACE("无法判断图片正反面，采用默认右旋90度的方向\n");
+		}
+	}
+
+	eTime = clock();
+	char szTmp[200] = { 0 };
+	sprintf_s(szTmp, "判断正反面结果: %s, 耗时: %d\n", bResult ? "正面" : "反面(判断失败)", (int)(eTime - sTime));
+	strLog.append(szTmp);
+	TRACE(strLog.c_str());
+	g_pLogger->information(strLog);
+
+	return bResult;
 }
 

@@ -2204,6 +2204,9 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 		if (_pModel_ && m_nNotifyDlgType == 1 && _nScanAnswerModel_ != 2/*&& m_pModel->nType*/)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
 		{
 			//COmrRecog omrObj;
+		#ifdef TEST_PAGINATION
+			_chkRotationObj.IsFirstPic(nOrder - 1, matSrc, _pModel_);
+		#endif
 			_chkRotationObj.GetRightPicOrientation(matSrc, nOrder - 1, m_nDoubleScan == 0 ? false : true);
 		}
 		//--

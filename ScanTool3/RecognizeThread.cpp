@@ -188,6 +188,11 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			(*itPic)->nRecoged = 2;
 			continue;
 		}
+		
+	#ifdef TEST_PAGINATION
+		TRACE("页码测试模式，不进行试卷识别\n");
+		continue;
+	#endif
 
 		std::string strPicFileName = (*itPic)->strPicName;
 		Mat matCompSrcPic;

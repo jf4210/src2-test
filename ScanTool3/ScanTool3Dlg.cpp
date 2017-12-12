@@ -232,12 +232,15 @@ void CScanTool3Dlg::InitFileUpLoadList()
 			{
 				if (ff.GetFileName().Find(PAPERS_EXT_NAME) >= 0 || ff.GetFileName().Find(PAPERS_EXT_NAME_4TY) >= 0)
 				{
-					pSENDTASK pTask = new SENDTASK;
-					pTask->strFileName = T2A(ff.GetFileName());
-					pTask->strPath = T2A(ff.GetFilePath());
-					g_fmSendLock.lock();
-					g_lSendTask.push_back(pTask);
-					g_fmSendLock.unlock();
+					if (ff.GetLength() > 0)
+					{
+						pSENDTASK pTask = new SENDTASK;
+						pTask->strFileName = T2A(ff.GetFileName());
+						pTask->strPath = T2A(ff.GetFilePath());
+						g_fmSendLock.lock();
+						g_lSendTask.push_back(pTask);
+						g_fmSendLock.unlock();
+					}
 				}
 			}
 		}
@@ -1216,18 +1219,21 @@ void CScanTool3Dlg::UpLoadDumpFile()
 					Poco::File fDump(CMyCodeConvert::Gb2312ToUtf8(strDumpFile));
 					Poco::Path fDumpPath(CMyCodeConvert::Gb2312ToUtf8(strDumpFile));
 
-					Poco::Timestamp mTime = fDump.getLastModified();
-					Poco::DateTime  dt(mTime);
-					std::string strModifyTime;
-					dt.makeLocal(3600 * 8);
-					strModifyTime = Poco::format("%04d-%02d-%02d %02d %02d %02d", dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute(), dt.second());
+					if (fDump.getSize() > 0)
+					{
+						Poco::Timestamp mTime = fDump.getLastModified();
+						Poco::DateTime  dt(mTime);
+						std::string strModifyTime;
+						dt.makeLocal(3600 * 8);
+						strModifyTime = Poco::format("%04d-%02d-%02d %02d %02d %02d", dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute(), dt.second());
 
-					pSENDTASK pTask = new SENDTASK;
-					pTask->strFileName = CMyCodeConvert::Utf8ToGb2312(fDumpPath.getBaseName()) + "@" + strModifyTime + ".dmp";
-					pTask->strPath = strDumpFile;
-					g_fmSendLock.lock();
-					g_lSendTask.push_back(pTask);
-					g_fmSendLock.unlock();
+						pSENDTASK pTask = new SENDTASK;
+						pTask->strFileName = CMyCodeConvert::Utf8ToGb2312(fDumpPath.getBaseName()) + "@" + strModifyTime + ".dmp";
+						pTask->strPath = strDumpFile;
+						g_fmSendLock.lock();
+						g_lSendTask.push_back(pTask);
+						g_fmSendLock.unlock();
+					}
 				}
 				catch (Poco::Exception& exc)
 				{

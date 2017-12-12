@@ -22,9 +22,12 @@ public:
 	bool RecogZkzh(int nPic, cv::Mat& matCompPic, pMODEL pModel, int nOrientation);	//识别二维码或者条码，根据识别成功与否来判断图像方向
 
 	//获取图片的正确方向，和模板一样
-	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转), 0-正向，无法识别，故不旋转
+	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转), #不用0-正向，无法识别，故不旋转
 	int GetRightPicOrientation(cv::Mat& matSrc, int n, bool bDoubleScan);
 
+	//判断一张图像的正反面
+	//参数nPic为模板上的含准考证号区的页面
+	bool IsFirstPic(int nPic, cv::Mat& matCompPic, pMODEL pModel);
 protected:	
 	//识别矩形灰度、密度等信息
 	inline bool Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL	pModel);
@@ -35,7 +38,7 @@ protected:
 //	cv::Rect	GetRectByOrientation(cv::Rect& rtPic, cv::Rect rt, int nOrientation);
 	float		GetRtDensity(cv::Mat& matSrc, cv::Rect rt, RECTINFO rcMod);
 	bool		bGetMaxRect(cv::Mat& matSrc, cv::Rect rt, RECTINFO rcMod, cv::Rect& rtMax);
-	bool		RecogCodeOrientation(cv::Mat& matSrc, int n, int& nResult);	//条码方向判断
+	bool		RecogCodeOrientation(cv::Mat& matSrc, int n, pMODEL pModel, int& nResult);	//条码方向判断
 	void		PicRotate(cv::Mat& matSrc, int n);	//图像旋转，实际图像需要进行的旋转，1：正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
 	bool		RecogWordOrientationByMatchTempl(cv::Mat& matSrc, int n, int nRotation, int& nResult, std::string& strLog); //通过模板的文字匹配来识别文字的方向，具体操作
 	bool		RecogWordOrientationByRectCount(cv::Mat& matSrc, int n, int nRotation, int& nResult, std::string& strLog); //通过矩形数量来识别文字的方向，具体操作
@@ -61,7 +64,7 @@ private:
 	//2、正面需要右转90度 ==> 反面需要左转90度
 	//3、正面需要左转90度 ==> 反面需要右转90度
 	//4、正面需要旋转180度 ==> 反面也需要旋转180度
-	//0、正面无法判断旋转方向，采用默认方向，不需要旋转==> 反面也采用默认方向，不需要旋转
+	//#不用0、正面无法判断旋转方向，采用默认方向，不需要旋转==> 反面也采用默认方向，不需要旋转
 	//*********************************
 	int		_nFristOrientation;
 };

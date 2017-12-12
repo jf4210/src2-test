@@ -777,6 +777,9 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 						Mat mtPic = imread(CMyCodeConvert::Utf8ToGb2312(strNewFilePath));
 						bool bDoubleScan = m_pModel->vecPaperModel.size() % 2 == 0 ? true : false;
 						//COmrRecog omrObj;
+					#ifdef TEST_PAGINATION
+						_chkRotationObj.IsFirstPic(0, mtPic, _pModel_);
+					#endif
 						_chkRotationObj.GetRightPicOrientation(mtPic, j, bDoubleScan);
 
 						imwrite(pPic->strPicPath, mtPic);
