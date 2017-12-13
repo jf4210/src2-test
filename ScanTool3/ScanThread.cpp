@@ -2205,7 +2205,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 		{
 			//COmrRecog omrObj;
 		#ifdef TEST_PAGINATION
-			_chkRotationObj.IsFirstPic(nOrder - 1, matSrc, _pModel_);
+			bool bResult = _chkRotationObj.IsFirstPic(nOrder - 1, matSrc, _pModel_);
 		#endif
 			_chkRotationObj.GetRightPicOrientation(matSrc, nOrder - 1, m_nDoubleScan == 0 ? false : true);
 		}

@@ -172,7 +172,7 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 							return;
 						m_end = clock();
 						char szLog[300] = { 0 };
-						sprintf(szLog, "recv file: %s completed. time = %.2f", m_szFilePath, (m_end - m_start)/1000.0);
+						sprintf(szLog, "recv file: %s completed. time = %.2f, transmissionSpeed = %.2fKB/s", m_szFilePath, (m_end - m_start)/1000.0, m_dwTotalFileSize / ((m_end - m_start) / 1000.0));
 						g_Log.LogOut(szLog);
 						std::cout << szLog << std::endl;
 

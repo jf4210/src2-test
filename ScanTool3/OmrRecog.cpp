@@ -536,9 +536,10 @@ bool COmrRecog::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo p
 
 int COmrRecog::GetRightPicOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 {
+	_strLog.clear();
 	clock_t sTime, eTime;
 	sTime = clock();
-	int nResult = CheckOrientation(matSrc, n, bDoubleScan);
+	int nResult = CheckOrientation(matSrc, n, bDoubleScan, _strLog);
 	switch (nResult)	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
 	{
 		case 1:	break;
@@ -575,10 +576,11 @@ int COmrRecog::GetRightPicOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 	return nResult;
 }
 
-int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
+int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan, std::string& strLog)
 {
 	clock_t start, end;
 	start = clock();
+	strLog.append("************>\n检测图像方向:\n");
 
 	//*********************************
 	//*********	测试结论 **************
@@ -613,8 +615,9 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 				case 4: strDirection = "右旋180"; break;
 				//case 0: strDirection = "正向，无法识别，故不旋转"; break;
 			}
-			std::string strLog = "双面扫描第二面，根据第一面方向判断结果：" + strDirection;
-			g_pLogger->information(strLog);
+			strLog.append("双面扫描第二面，根据第一面方向判断结果：" + strDirection);
+			strLog.append("<************\n");
+			//g_pLogger->information(strLog);
 			TRACE("%s\n", strLog.c_str());
 			return nResult;
 		}
@@ -645,7 +648,7 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 	if (_pModel_->nHasHead)
 		nResult = CheckOrientation4Head(matCom, n);
 	else
-		nResult = CheckOrientation4Fix(matCom, n);
+		nResult = CheckOrientation4Fix(matCom, n, strLog);
 
 	if (bDoubleScan && n % 2 == 0)		//双面扫描，且属于扫描的第一面
 		_nFristOrientation = nResult;
@@ -663,9 +666,10 @@ int COmrRecog::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 		case 4: strDirection = "右旋180"; break;
 		//case 0: strDirection = "正向，无法识别，故不旋转"; break;
 	}
-	std::string strLog = "方向判断结果：" + strDirection;
+	strLog.append("方向判断结果：" + strDirection);
 	strLog.append("\t" + strTmp);
-	g_pLogger->information(strLog);
+	strLog.append("<************\n");
+	//g_pLogger->information(strLog);
 	TRACE("%s\n", strLog.c_str());
 
 	return nResult;
@@ -954,7 +958,7 @@ int COmrRecog::CheckOrientation4Word(cv::Mat& matSrc, int n)
 	return nResult;
 }
 
-int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
+int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n, std::string& strLog)
 {
 	bool bFind = false;
 	int nResult = 1;	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
@@ -967,9 +971,7 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 		nResult = CheckOrientation4Word(matSrc, n);
 		return nResult;
 	}
-
-	std::string strLog;
-
+	
 	cv::Rect rtModelPic;
 	rtModelPic.width = _pModel_->vecPaperModel[n]->nPicW;
 	rtModelPic.height = _pModel_->vecPaperModel[n]->nPicH;
@@ -1173,7 +1175,7 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 		{
 			TRACE("无法判断图片方向\n");
 			strLog.append("无法判断图片方向\n");
-			g_pLogger->information(strLog);
+			//g_pLogger->information(strLog);
 			nResult = 1;
 		}
 	}
@@ -1340,7 +1342,7 @@ int COmrRecog::CheckOrientation4Fix(cv::Mat& matSrc, int n)
 		{
 			TRACE("无法判断图片方向，采用默认右旋90度的方向\n");
 			strLog.append("无法判断图片方向，采用默认右旋90度的方向\n");
-			g_pLogger->information(strLog);
+			//g_pLogger->information(strLog);
 			nResult = 2;	//如果出现无法判断图像方向时，默认模板需要右旋90度变成此图像方向，即默认返回方向为右旋90度，因为方向只有右旋90或者左旋90度两种选择，此处不返回默认的1，返回2
 		}
 	}
@@ -2284,13 +2286,20 @@ bool COmrRecog::IsFirstPic(int nPic, cv::Mat& matCompPic, pMODEL pModel)
 {
 	bool bResult = false;
 
+	_strLog.clear();
+
 	clock_t sTime, eTime;
 	sTime = clock();
 
-	std::string strLog;
+	int nFrontPage = floor(nPic / 2) * 2;		//对双面扫描，和图像的正面进行判断，对于多页的情况，都和当前纸张的正面比较
+												//如第0、1页，使用模板的第0页信息来判断，第2、3页使用模板的第2页来判断
+	char szTmp1[200] = { 0 };
+	sprintf_s(szTmp1, "===========>\n检测第%d页正反面\n", nPic + 1);
+	_strLog.append(szTmp1);
+
 	cv::Rect rtModelPic;
-	rtModelPic.width = _pModel_->vecPaperModel[nPic]->nPicW;
-	rtModelPic.height = _pModel_->vecPaperModel[nPic]->nPicH;
+	rtModelPic.width = _pModel_->vecPaperModel[nFrontPage]->nPicW;
+	rtModelPic.height = _pModel_->vecPaperModel[nFrontPage]->nPicH;
 	cv::Rect rtSrcPic;
 	rtSrcPic.width = matCompPic.cols;
 	rtSrcPic.height = matCompPic.rows;
@@ -2301,11 +2310,11 @@ bool COmrRecog::IsFirstPic(int nPic, cv::Mat& matCompPic, pMODEL pModel)
 	int nRotateResult;	//方向
 	if (_pModel_->nZkzhType == 2)			//使用条码的时候，先通过条码来判断
 	{
-		bResult = RecogCodeOrientation(matCompPic, nPic, _pModel_, nRotateResult);
+		bResult = RecogCodeOrientation(matCompPic, nFrontPage, _pModel_, nRotateResult);
 
 		if (!bResult)
 		{
-			strLog.append("通过条形码或二维码判断试卷是否为第一面失败\n");
+			_strLog.append("通过条形码或二维码判断试卷是否为第一面失败\n");
 
 			//使用条码时，需要找一种方法判断属于条码，如直线
 		}
@@ -2317,20 +2326,20 @@ bool COmrRecog::IsFirstPic(int nPic, cv::Mat& matCompPic, pMODEL pModel)
 		bool bFind = false;
 		if (nModelPicPersent == nSrcPicPercent)	//与模板图片方向一致，需判断正向还是反向一致
 		{
-			strLog.append("与模板图片方向一致\n");
+			_strLog.append("与模板图片方向一致\n");
 
 			for (int i = 1; i <= 4; i = i + 3)
 			{
-				bResult = RecogWordOrientationByRectCount(matCompPic, nPic, i, nRotateResult, strLog);
+				bResult = RecogWordOrientationByRectCount(matCompPic, nFrontPage, i, nRotateResult, _strLog);
 				if (bResult)
 					break;
 			}
 
-			if (!bResult && _pModel_->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0)	//通过文字定位点判断
+			if (!bResult && _pModel_->vecPaperModel[nFrontPage]->lCharacterAnchorArea.size() > 0)	//通过文字定位点判断
 			{
 				for (int i = 1; i <= 4; i = i + 3)
 				{
-					bResult = RecogWordOrientationByMatchTempl(matCompPic, nPic, i, nRotateResult, strLog);
+					bResult = RecogWordOrientationByMatchTempl(matCompPic, nFrontPage, i, nRotateResult, _strLog);
 					if (bResult)
 						break;
 				}
@@ -2341,19 +2350,19 @@ bool COmrRecog::IsFirstPic(int nPic, cv::Mat& matCompPic, pMODEL pModel)
 		}
 		else
 		{
-			strLog.append("与模板图片方向不一致\n");
+			_strLog.append("与模板图片方向不一致\n");
 
 			for (int i = 2; i <= 3; i++)
 			{
-				bResult = RecogWordOrientationByRectCount(matCompPic, nPic, i, nRotateResult, strLog);
+				bResult = RecogWordOrientationByRectCount(matCompPic, nFrontPage, i, nRotateResult, _strLog);
 				if (bResult)
 					break;
 			}
-			if (!bResult && _pModel_->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0)	//通过文字定位点判断
+			if (!bResult && _pModel_->vecPaperModel[nFrontPage]->lCharacterAnchorArea.size() > 0)	//通过文字定位点判断
 			{
 				for (int i = 2; i <= 3; i++)
 				{
-					bResult = RecogWordOrientationByMatchTempl(matCompPic, nPic, i, nRotateResult, strLog);
+					bResult = RecogWordOrientationByMatchTempl(matCompPic, nFrontPage, i, nRotateResult, _strLog);
 					if (bResult)
 						break;
 				}
@@ -2365,11 +2374,16 @@ bool COmrRecog::IsFirstPic(int nPic, cv::Mat& matCompPic, pMODEL pModel)
 
 	eTime = clock();
 	char szTmp[200] = { 0 };
-	sprintf_s(szTmp, "判断正反面结果: %s, 耗时: %d\n", bResult ? "正面" : "反面(判断失败)", (int)(eTime - sTime));
-	strLog.append(szTmp);
-	TRACE(strLog.c_str());
-	g_pLogger->information(strLog);
+	sprintf_s(szTmp, "第%d页的判断正反面结果: %s, 耗时: %d\n<===========\n", nPic + 1, bResult ? "正面" : "反面(判断失败)", (int)(eTime - sTime));
+	_strLog.append(szTmp);
+	TRACE(_strLog.c_str());
+	//g_pLogger->information(strLog);
 
 	return bResult;
+}
+
+std::string COmrRecog::GetRecogLog()
+{
+	return _strLog;
 }
 

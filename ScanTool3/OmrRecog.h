@@ -28,6 +28,8 @@ public:
 	//判断一张图像的正反面
 	//参数nPic为模板上的含准考证号区的页面
 	bool IsFirstPic(int nPic, cv::Mat& matCompPic, pMODEL pModel);
+
+	std::string GetRecogLog();	//获取识别过程的日志
 protected:	
 	//识别矩形灰度、密度等信息
 	inline bool Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL	pModel);
@@ -45,12 +47,12 @@ protected:
 
 	bool	MatchingMethod(int method, cv::Mat& src, cv::Mat& templ, cv::Point& ptResult);	//模板匹配操作
 
-	int		CheckOrientation4Fix(cv::Mat& matSrc, int n);	//定点模式下的方向
+	int CheckOrientation4Fix(cv::Mat& matSrc, int n, std::string& strLog);	//定点模式下的方向
 	int		CheckOrientation4Head(cv::Mat& matSrc, int n);	//同步头模式下的方向
 	int		CheckOrientation4Word(cv::Mat& matSrc, int n);	//文字定位模式下的方向判断
 	//检查图像旋转方向，在获取图像后将模板图像进行旋转
 	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
-	int		CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan);
+	int CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan, std::string& strLog);
 	//-------------------------------------------------------------
 
 
@@ -67,5 +69,6 @@ private:
 	//#不用0、正面无法判断旋转方向，采用默认方向，不需要旋转==> 反面也采用默认方向，不需要旋转
 	//*********************************
 	int		_nFristOrientation;
+	std::string _strLog;
 };
 

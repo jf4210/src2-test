@@ -68,6 +68,8 @@ private:
 // 	void	PaintRecognisedRect(pST_PaperInfo pPaper);		//画已识别的矩形
 // 	void	PaintIssueRect(pST_PaperInfo pPaper);			//画出已识别出来的问题矩形位置
 
+	void	ChkAdjustFirstPic(pST_PaperInfo pPaper);	//检测并调整一个学生的试卷的所有正反面
+
 	COLORREF		crOldText, crOldBackground;
 	void	SetListCtrlHighLightShow(CXListCtrl& lCtrl, int nItem);		//设置列表高亮显示
 	void	UnSetListCtrlHighLightShow(CXListCtrl& lCtrl, int nItem);		//取消列表高亮显示

@@ -302,9 +302,9 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		std::ifstream inp(pTask->strFilePath.c_str(), std::ios::binary);
 		if (!inp)
 		{
-			SAFE_RELEASE(pPapers);
 			strLog = "打开试卷包文件失败";
 			g_Log.LogOutError(strLog);
+			SAFE_RELEASE(pPapers);
 			return;
 		}
 
@@ -346,10 +346,10 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 
 		if (uf == NULL)
 		{
-			SAFE_RELEASE(pPapers);
 			std::string strLog = "打开压缩文件失败:" + pPapers->strPapersPath;
 			g_Log.LogOutError(strLog);
 			std::cout << strLog << std::endl;
+			SAFE_RELEASE(pPapers);
 			return;
 		}
 		int ret = 0;
@@ -361,10 +361,10 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		#ifndef DecompressTest
 		if (CHDIR(pPapers->strPapersPath.c_str()))
 		{
-			SAFE_RELEASE(pPapers);
 			std::string strLog = "切换目录失败:" + pPapers->strPapersPath;
 			g_Log.LogOutError(strLog);
 			std::cout << strLog << std::endl;
+			SAFE_RELEASE(pPapers);
 			return;
 		}
 		#else
@@ -381,12 +381,12 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		if (ret != 0)
 		{
 			//************	注意：解压失败需要再次尝试	*************************
-			SAFE_RELEASE(pPapers);
 			std::string strLog = "解压试卷包(";
 			strLog.append(pPapers->strPapersName);
 			strLog.append(")失败, 路径: " + pPapers->strPapersPath);
 			g_Log.LogOutError(strLog);
 			std::cout << strLog << std::endl;
+			SAFE_RELEASE(pPapers);
 			return;
 		}
 

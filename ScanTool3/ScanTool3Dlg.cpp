@@ -36,7 +36,7 @@ CString				g_strCurrentPath;
 std::string			g_strPaperSavePath;	//试卷扫描后保存的总路径
 std::string			g_strModelSavePath;
 std::string			g_strPaperBackupPath;	//试卷发送完成后的备份路径
-std::string			g_strFileVersion;	//文件版本，2.7.12.8
+std::string			g_strFileVersion;	//文件版本，如2.7.12.8
 Poco::Logger*		g_pLogger;
 Poco::FastMutex		g_fmRecog;		//识别线程获取任务锁
 RECOGTASKLIST		g_lRecogTask;	//识别任务列表
@@ -1233,6 +1233,10 @@ void CScanTool3Dlg::UpLoadDumpFile()
 						g_fmSendLock.lock();
 						g_lSendTask.push_back(pTask);
 						g_fmSendLock.unlock();
+					}
+					else
+					{
+						fDump.remove();
 					}
 				}
 				catch (Poco::Exception& exc)

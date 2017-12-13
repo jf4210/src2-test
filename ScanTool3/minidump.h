@@ -153,9 +153,10 @@ LONG WINAPI UnhandledExceptionFilterEx(struct _EXCEPTION_POINTERS *pException)
 
 	if (pFind)
 	{
+		USES_CONVERSION;
 		*(pFind + 1) = 0;
-		TCHAR szDumpName[50] = { 0 };
-		swprintf_s(szDumpName, _T("ScanTool_%s.dmp"), g_strFileVersion.c_str());
+		TCHAR szDumpName[100] = { 0 };
+		swprintf_s(szDumpName, _T("ScanTool_%s.dmp"), A2T(g_strFileVersion.c_str()));
 		_tcscat(szMbsFile, szDumpName);		//_T("ScanTool.dmp")
 		CreateMiniDump(pException, szMbsFile);
 	}
