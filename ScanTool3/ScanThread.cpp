@@ -2059,9 +2059,9 @@ int CScanThread::CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan)
 
 void* CScanThread::SaveFile(IplImage *pIpl)
 {
-	if (_nScanAnswerModel_ != 2 && m_nNotifyDlgType != 2 && m_nDoubleScan)	//如果是双面扫描，需要判断模板为奇数时舍弃最后一张图片的情况
+	if (_nScanAnswerModel_ != 2 && m_nNotifyDlgType != 2 && m_nDoubleScan )	//如果是双面扫描，需要判断模板为奇数时舍弃最后一张图片的情况
 	{
-		if (m_nModelPicNums % 2 != 0)
+		if (m_nModelPicNums % 2 != 0 && (_pCurrExam_->nModel == 0 && _pModel_ && _pModel_->nUsePagination == 0))	//对存在多页标识时，即扫描多张试卷，必须使用双面扫描，不能删除试卷
 		{
 			static int i = 1;
 			if (i % (m_nModelPicNums + 1) == 0)
@@ -2200,13 +2200,24 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 	{
 		cv::Mat matSrc = cv::cvarrToMat(pIpl);
 
+		bool bFirstPic = false;
+		bool bPreviousFirstPic = false;
+		cv::Mat mtPreviousPic;					//记录前一页试卷的数据，省去IO读的时间
+
 		//++ 2016.8.26 判断扫描图片方向，并进行旋转
 		if (_pModel_ && m_nNotifyDlgType == 1 && _nScanAnswerModel_ != 2/*&& m_pModel->nType*/)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
 		{
-			//COmrRecog omrObj;
 		#ifdef TEST_PAGINATION
-			bool bResult = _chkRotationObj.IsFirstPic(nOrder - 1, matSrc, _pModel_);
+			if (!bPreviousFirstPic)
+			{
+				bFirstPic = _chkRotationObj.IsFirstPic(nOrder - 1, matSrc, _pModel_);
+				if (nOrder - 1 % 2 == 0 && !bFirstPic)	//如果获取到的试卷是一张试卷的第一面，同时不能判断为正面时，将此图片存入列表，另外线程判断正反，或者在此线程判断，影响扫描速度
+				{
+
+				}
+			}
 		#endif
+			//COmrRecog omrObj;
 			_chkRotationObj.GetRightPicOrientation(matSrc, nOrder - 1, m_nDoubleScan == 0 ? false : true);
 		}
 		//--
@@ -2216,7 +2227,12 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 		end2 = clock();
 
 		std::string strPicName = szPicPath;
+	#ifdef TEST_PAGINATION
+		//if (m_nNotifyDlgType == 2)		//在扫描模板图片时，直接写文件，扫描试卷时，先不写，在扫描2张后判断正反面再写文件
 		imwrite(strPicName, matSrc);
+	#else
+		imwrite(strPicName, matSrc);
+	#endif
 		cvReleaseImage(&pIpl);
 		end3 = clock();
 

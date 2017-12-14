@@ -776,6 +776,8 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 							j = 0;
 						Mat mtPic = imread(CMyCodeConvert::Utf8ToGb2312(strNewFilePath));
 						bool bDoubleScan = m_pModel->vecPaperModel.size() % 2 == 0 ? true : false;
+						if (m_pModel->nUsePagination || m_pModel->vecPaperModel.size() > 2)		//对于多页模式，必须是双面扫描，防止掉试卷，即防止空白页替换真试卷
+							bDoubleScan = true;
 						//COmrRecog omrObj;
 						_chkRotationObj.GetRightPicOrientation(mtPic, j, bDoubleScan);
 
@@ -2011,10 +2013,15 @@ void CPaperInputDlg::ChkAdjustFirstPic(pST_PaperInfo pPaper)
 	PIC_LIST::iterator itPic = pPaper->lPic.begin();
 	for (int i = 0; itPic != pPaper->lPic.end(); i++, itPic++)
 	{
+		if (i == pPaper->lPic.size() - 1 && floor(i / 2) * 2 == i)	//(*itPic) == (*itEndPic)
+		{
+			ssLog << "考生试卷的最后一页"<< (*itPic)->strPicName << "(" << i + 1 << "/" << pPaper->lPic.size() << "), 属于最后一张试卷只有单独一面的情况，不需要检测正反面.\n";
+			continue;
+		}
 		if (bPreviousFirstPic)
 		{
 			bPreviousFirstPic = false;
-			ssLog << "图像" << (*itPic)->strPicName << "属于第" << floor(i / 2) << "张试卷的第" << i / 2 << "页，不需要检测，上一页试卷是正面\n";
+			ssLog << "图像" << (*itPic)->strPicName << "属于第" << floor(i / 2) << "张试卷的第" << i % 2 << "页(考生总试卷的第" << i << "面)，不需要检测，上一页试卷是正面\n";
 			continue;
 		}
 		mT0 = clock();
@@ -2031,7 +2038,7 @@ void CPaperInputDlg::ChkAdjustFirstPic(pST_PaperInfo pPaper)
 			int nFrontPage = floor(i / 2) * 2;
 			if (nFrontPage != i)	//说明该纸张的背面经过判断是正面，需要掉转两张图片
 			{
-				ssLog << "图像" << pPic->strPicName << "检测到属于第" << floor(i / 2) << "张试卷的正面, 开始与上一页试卷" << pPreviousPic->strPicName << "调换. " << (int)(mT1 - mT0) << ":" << (int)(mT2 - mT1) << "ms\n";
+				ssLog << "图像" << pPic->strPicName << "检测到属于第" << floor(i / 2) << "张试卷的正面(" << i + 1 << "/" << pPaper->lPic.size() << "), 开始与上一页试卷" << pPreviousPic->strPicName << "调换. " << (int)(mT1 - mT0) << ":" << (int)(mT2 - mT1) << "ms\n";
 				//图像重命名
 				bool bPicsExchangeSucc = true;
 				pST_PicInfo pPic1 = pPic;
@@ -2062,7 +2069,7 @@ void CPaperInputDlg::ChkAdjustFirstPic(pST_PaperInfo pPaper)
 					clock_t sT, eT1, eT2;
 					sT = clock();
 
-					bool bDoubleScan = m_pModel->vecPaperModel.size() % 2 == 0 ? true : false;
+					bool bDoubleScan = true;	//使用此功能必须是双面扫描。	 m_pModel->vecPaperModel.size() % 2 == 0 ? true : false;
 					COmrRecog omrObj;
 					int nResult1 = omrObj.GetRightPicOrientation(mtPic, nFrontPage, bDoubleScan);
 					eT1 = clock();
@@ -2077,7 +2084,7 @@ void CPaperInputDlg::ChkAdjustFirstPic(pST_PaperInfo pPaper)
 					}
 
 					sT = clock();
-					int nResult2 = omrObj.GetRightPicOrientation(mtPreviousPic, i, _nDoubleScan_ == 0 ? false : true);
+					int nResult2 = omrObj.GetRightPicOrientation(mtPreviousPic, i, bDoubleScan);
 					eT1 = clock();
 					ssLog << "新图像" << pPic1->strPicName << "方向调整: " << nResult1 << "(1:不需要旋转，2：右转90, 3：左转90, 4：右转180). " << (int)(eT1 - sT) << "ms\n";
 
@@ -2094,19 +2101,19 @@ void CPaperInputDlg::ChkAdjustFirstPic(pST_PaperInfo pPaper)
 			{
 				//第1页为正面，第2页可以不需要判断
 				bPreviousFirstPic = true;
-				ssLog << "图像" << pPic->strPicName << "检测到属于第" << floor(i / 2) << "张试卷的正面, 下一页试卷不需要检测. " << (int)(mT1 - mT0) << ":" << (int)(mT2 - mT1) << "ms\n";
+				ssLog << "图像" << pPic->strPicName << "检测到属于第" << floor(i / 2) << "张试卷的正面(" << i + 1 << "/" << pPaper->lPic.size() << "), 下一页试卷不需要检测. " << (int)(mT1 - mT0) << ":" << (int)(mT2 - mT1) << "ms\n";
 			}
 		}
 		else
 		{
 			bPreviousFirstPic = false;
-			ssLog << "判断" << pPic->strPicName << "属于第" << floor(i / 2) << "张试卷的正面失败，不能确定为正面. " << (int)(mT1 - sTime) << ":" << (int)(mT2 - mT1) << "ms\n";
+			ssLog << "判断" << pPic->strPicName << "属于第" << floor(i / 2) << "张试卷的正面失败(" << i + 1 << "/" << pPaper->lPic.size() << ")，不能确定为正面. " << (int)(mT1 - sTime) << ":" << (int)(mT2 - mT1) << "ms\n";
 		}
 		pPreviousPic = pPic;
 		mtPreviousPic = mtPic;
 	}
 	eTime = clock();
-	ssLog << "判断正反面结束(" << (int)(eTime - sTime) << "ms)\n";
+	ssLog << "判断考生(" << pPaper->strStudentInfo << ")正反面结束(" << (int)(eTime - sTime) << "ms)\n";
 	TRACE(ssLog.str().c_str());
 	g_pLogger->information(ssLog.str());
 }

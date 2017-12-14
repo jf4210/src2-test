@@ -2298,8 +2298,8 @@ bool COmrRecog::IsFirstPic(int nPic, cv::Mat& matCompPic, pMODEL pModel)
 	_strLog.append(szTmp1);
 
 	cv::Rect rtModelPic;
-	rtModelPic.width = _pModel_->vecPaperModel[nFrontPage]->nPicW;
-	rtModelPic.height = _pModel_->vecPaperModel[nFrontPage]->nPicH;
+	rtModelPic.width = pModel->vecPaperModel[nFrontPage]->nPicW;
+	rtModelPic.height = pModel->vecPaperModel[nFrontPage]->nPicH;
 	cv::Rect rtSrcPic;
 	rtSrcPic.width = matCompPic.cols;
 	rtSrcPic.height = matCompPic.rows;
@@ -2308,9 +2308,9 @@ bool COmrRecog::IsFirstPic(int nPic, cv::Mat& matCompPic, pMODEL pModel)
 	int nSrcPicPercent = matCompPic.cols / matCompPic.rows;
 
 	int nRotateResult;	//方向
-	if (_pModel_->nZkzhType == 2)			//使用条码的时候，先通过条码来判断
+	if (pModel->nZkzhType == 2)			//使用条码的时候，先通过条码来判断
 	{
-		bResult = RecogCodeOrientation(matCompPic, nFrontPage, _pModel_, nRotateResult);
+		bResult = RecogCodeOrientation(matCompPic, nFrontPage, pModel, nRotateResult);
 
 		if (!bResult)
 		{
@@ -2335,7 +2335,7 @@ bool COmrRecog::IsFirstPic(int nPic, cv::Mat& matCompPic, pMODEL pModel)
 					break;
 			}
 
-			if (!bResult && _pModel_->vecPaperModel[nFrontPage]->lCharacterAnchorArea.size() > 0)	//通过文字定位点判断
+			if (!bResult && pModel->vecPaperModel[nFrontPage]->lCharacterAnchorArea.size() > 0)	//通过文字定位点判断
 			{
 				for (int i = 1; i <= 4; i = i + 3)
 				{
@@ -2358,7 +2358,7 @@ bool COmrRecog::IsFirstPic(int nPic, cv::Mat& matCompPic, pMODEL pModel)
 				if (bResult)
 					break;
 			}
-			if (!bResult && _pModel_->vecPaperModel[nFrontPage]->lCharacterAnchorArea.size() > 0)	//通过文字定位点判断
+			if (!bResult && pModel->vecPaperModel[nFrontPage]->lCharacterAnchorArea.size() > 0)	//通过文字定位点判断
 			{
 				for (int i = 2; i <= 3; i++)
 				{
@@ -2374,7 +2374,7 @@ bool COmrRecog::IsFirstPic(int nPic, cv::Mat& matCompPic, pMODEL pModel)
 
 	eTime = clock();
 	char szTmp[200] = { 0 };
-	sprintf_s(szTmp, "第%d页的判断正反面结果: %s, 耗时: %d\n<===========\n", nPic + 1, bResult ? "正面" : "反面(判断失败)", (int)(eTime - sTime));
+	sprintf_s(szTmp, "第%d页的判断正反面结果: %s, 耗时: %d\n<===========\n", nPic + 1, bResult ? "正面" : "反面(失败，无法判断是正面)", (int)(eTime - sTime));
 	_strLog.append(szTmp);
 	TRACE(_strLog.c_str());
 	//g_pLogger->information(strLog);

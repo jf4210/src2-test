@@ -304,6 +304,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		{
 			strLog = "打开试卷包文件失败";
 			g_Log.LogOutError(strLog);
+			MoveErrPkg(pPapers, strLog);
 			SAFE_RELEASE(pPapers);
 			return;
 		}
@@ -320,6 +321,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 			std::string strErrInfo = Poco::format("创建解压目录(%s)失败,%s", CMyCodeConvert::Utf8ToGb2312(strOutDir), exc.message());
 			g_Log.LogOutError(strErrInfo);
 			std::cout << strErrInfo << std::endl;
+			MoveErrPkg(pPapers, strLog);
 			SAFE_RELEASE(pPapers);
 			return;
 		}
@@ -346,9 +348,10 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 
 		if (uf == NULL)
 		{
-			std::string strLog = "打开压缩文件失败:" + pPapers->strPapersPath;
+			strLog = "打开压缩文件失败:" + pPapers->strPapersPath;
 			g_Log.LogOutError(strLog);
 			std::cout << strLog << std::endl;
+			MoveErrPkg(pPapers, strLog);
 			SAFE_RELEASE(pPapers);
 			return;
 		}
@@ -386,6 +389,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 			strLog.append(")失败, 路径: " + pPapers->strPapersPath);
 			g_Log.LogOutError(strLog);
 			std::cout << strLog << std::endl;
+			MoveErrPkg(pPapers, strLog);
 			SAFE_RELEASE(pPapers);
 			return;
 		}
@@ -421,7 +425,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 			std::cout << strLog << std::endl;
 			SAFE_RELEASE(pPapers);
 
-			Poco::Thread::sleep(500);
+			Poco::Thread::sleep(1000);
 			pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
 			pDecompressTask->nTimes = pTask->nTimes + 1;
 			pDecompressTask->strFilePath = pTask->strFilePath;
@@ -990,4 +994,28 @@ void CDecompressThread::UploadModelPic(pPAPERS_DETAIL pPapers, std::string strPa
 	}
 }
 
+void CDecompressThread::MoveErrPkg(pPAPERS_DETAIL pPapers, std::string strErrInfo)
+{
+	//错误包，移动到指定目录，等待人工处理
+	Poco::LocalDateTime now;
+	std::string strErrorDir = Poco::format("%s\\%04d-%02d-%02d", CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strErrorPkg), now.year(), now.month(), now.day());
+	std::string strErrorPath = strErrorDir + "\\" + CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersFileName);
+	try
+	{
+		Poco::File fileErrDir(strErrorDir);
+		if (!fileErrDir.exists())
+			fileErrDir.createDirectories();
+
+		Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersPath));
+		filePapers.moveTo(strErrorPath);
+		std::string strLog = "试卷袋(" + pPapers->strSrcPapersFileName + ")解压失败，原因: " + strErrInfo;
+		g_Log.LogOut(strLog);
+		std::cout << "\n\n*************************\n" << strLog << "\n*************************\n\n\n" << std::endl;
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strErr = "移动错误试卷袋(" + pPapers->strPapersPath + ")失败，此试卷袋解压失败(" + strErrInfo + ")" + exc.message();
+		g_Log.LogOutError(strErr);
+	}
+}
 

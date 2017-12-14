@@ -15,5 +15,6 @@ public:
 
 	void SearchExtractFile(pPAPERS_DETAIL pPapers, std::string strPath);
 	void UploadModelPic(pPAPERS_DETAIL pPapers, std::string strPath);
+	void MoveErrPkg(pPAPERS_DETAIL pPapers, std::string strErrInfo);
 };
 

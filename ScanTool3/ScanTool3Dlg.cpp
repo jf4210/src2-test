@@ -56,6 +56,9 @@ EXAM_LIST			g_lExamList;	//当前账号对应的考试列表
 Poco::FastMutex		g_fmCompressLock;		//压缩文件列表锁
 COMPRESSTASKLIST	g_lCompressTask;		//解压文件列表
 
+Poco::FastMutex		g_fmScanPicListLock;	//从扫描仪获取的图像信息的列表锁
+SCAN_PIC_LIST		g_lScanPicTask;			//从扫描仪获取的图像信息的列表
+
 //++线程退出完成事件
 Poco::Event			g_eTcpThreadExit;
 Poco::Event			g_eSendFileThreadExit;

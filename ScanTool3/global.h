@@ -85,7 +85,9 @@
 
 	#define TEST_MODEL_ROTATION	//模板旋转测试
 //	#define USE_TESSERACT		//使用Tesseract进行数字汉字识别
-//	#define TEST_PAPERS_INPUT	//试卷袋导入功能测试
+
+// 	#define TEST_PAPERS_INPUT	//试卷袋导入功能测试
+// 	#define TEST_PAGINATION		//页码测试，多页试卷的情况，多页A3、A4
 #endif
 
 #ifdef USE_TESSERACT
@@ -605,6 +607,21 @@ extern Poco::Event			g_eTcpThreadExit;
 extern Poco::Event			g_eSendFileThreadExit;
 extern Poco::Event			g_eFileUpLoadThreadExit;
 extern Poco::Event			g_eCompressThreadExit;
+
+//从扫描仪获取的图像信息
+typedef struct _ScanPic
+{
+	int nOrder;					//考生的试卷顺序，1.jpg、2.jpg ...(S1_1,S1_2,S1_3中的1、2、3)
+	int nStudentID;				//考生的索引，S1、S2、S3 ...
+	void*	pNotifyDlg;			//处理完成的通知窗口
+	std::string strPicName;
+	std::string strPicPath;
+	cv::Mat mtPic;
+}ST_SCAN_PIC, *pST_SCAN_PIC;
+typedef std::list<pST_SCAN_PIC> SCAN_PIC_LIST;			//从扫描仪获取的图像信息的列表
+extern Poco::FastMutex			g_fmScanPicListLock;	//从扫描仪获取的图像信息的列表锁
+extern SCAN_PIC_LIST			g_lScanPicTask;			//从扫描仪获取的图像信息的列表
+
 
 //模板文件信息
 typedef struct _ModelFile

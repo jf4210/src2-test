@@ -2132,7 +2132,7 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 				rcFixRt.nThresholdValue = m_nFixVal;
 				rcFixRt.fStandardValuePercent = m_fFixThresholdPercent;
 				RecogGrayValue(matSrcModel, rcFixRt);
-				if (rcFixRt.fStandardDensity > 0.4)
+				if (rcFixRt.fStandardDensity > 0.3)
 				{
 					bFind = true;
 					break;
@@ -3872,6 +3872,9 @@ void CMakeModelDlg::ShowRectTracker()
 }
 bool CMakeModelDlg::ShowRectByPoint(cv::Point pt)
 {
+	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
+		return false;
+
 	int  nFind = 0;
 
 	m_pCurRectInfo = NULL;
@@ -8517,6 +8520,8 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	{
 		m_pModel->nUseWordAnchorPoint	= dlg._stSensitiveParam.nUseWordAnchorPoint;
 		m_pModel->nUsePagination		= dlg._stSensitiveParam.nUsePagination;
+		if (m_pModel->vecPaperModel.size() <= 2)	//如果模板页数不超过2张，则不设置多页模式，多页模式必须3张以上，且扫描用双面扫描
+			m_pModel->nUsePagination = 0;
 		InitConf();
 		
 		m_ncomboCurrentSel = m_comboCheckPointType.GetCurSel();
@@ -9348,6 +9353,9 @@ void CMakeModelDlg::RotateImg(cv::Mat& imgMat, int nDirection /*= 1*/)
 
 cv::Rect CMakeModelDlg::GetShowFakePosRect(cv::Rect rt)
 {
+	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
+		return rt;
+
 	cv::Rect rtModelPic;
 	rtModelPic.width = m_vecPaperModelInfo[m_nCurrTabSel]->nPicW;
 	rtModelPic.height = m_vecPaperModelInfo[m_nCurrTabSel]->nPicH;
@@ -9356,6 +9364,9 @@ cv::Rect CMakeModelDlg::GetShowFakePosRect(cv::Rect rt)
 
 cv::Point CMakeModelDlg::GetShowFakePosPoint(cv::Point pt)
 {
+	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
+		return pt;
+
 	cv::Rect rtModelPic;
 	rtModelPic.width = m_vecPaperModelInfo[m_nCurrTabSel]->nPicW;
 	rtModelPic.height = m_vecPaperModelInfo[m_nCurrTabSel]->nPicH;
@@ -9364,6 +9375,9 @@ cv::Point CMakeModelDlg::GetShowFakePosPoint(cv::Point pt)
 
 cv::Rect CMakeModelDlg::GetSrcSaveRect(cv::Rect rt)
 {
+	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
+		return rt;
+
 	cv::Rect rtModelPic;
 	rtModelPic.width = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.cols;
 	rtModelPic.height = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.rows;
@@ -9372,6 +9386,9 @@ cv::Rect CMakeModelDlg::GetSrcSaveRect(cv::Rect rt)
 
 cv::Point CMakeModelDlg::GetSrcSavePoint(cv::Point pt)
 {
+	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
+		return pt;
+
 	cv::Rect rtModelPic;
 	rtModelPic.width = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.cols;
 	rtModelPic.height = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.rows;
