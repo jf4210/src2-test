@@ -111,6 +111,8 @@ private:
 
 	int		m_nDoubleScan;	//是否双面扫描
 
+	pST_SCAN_PAPER m_pScanPaper;
+
 	int		CheckOrientation4Fix(cv::Mat& matSrc, int n);	//定点模式下的方向
 	int		CheckOrientation4Head(cv::Mat& matSrc, int n);	//同步头模式下的方向
 	int		CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan);

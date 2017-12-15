@@ -705,7 +705,7 @@ void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 			continue;
 		}
 
-		ssLog << "添加["<< m_pModel->nExamID << m_pModel->nSubjectID <<"]模板上传图片: " << strPicName << "(" << strPicPath << ")\n";
+		ssLog << "添加["<< m_pModel->nExamID << "_" << m_pModel->nSubjectID <<"]模板上传图片: " << strPicName << "(" << strPicPath << ")\n";
 
 		strMd5 = calcFileMd5(strPath);
 		

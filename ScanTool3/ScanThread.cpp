@@ -2190,6 +2190,9 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 	}
 	catch (...)
 	{
+		std::string strTmpLog = "保存扫描图像数据到文件发生异常: " + exc.msg;
+		g_pLogger->information(strTmpLog);
+		cvReleaseImage(&pIpl);
 	}	
 	end = clock();
 	char szTmpLog[200] = { 0 };
@@ -2200,39 +2203,62 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 	{
 		cv::Mat matSrc = cv::cvarrToMat(pIpl);
 
-		bool bFirstPic = false;
-		bool bPreviousFirstPic = false;
-		cv::Mat mtPreviousPic;					//记录前一页试卷的数据，省去IO读的时间
+		bool bNoDisposes = false;	//不需要在此线程处理，图像已经放到图像队列中去处理了
+#ifdef TEST_PAGINATION
+		if (_pModel_->nUsePagination && m_nNotifyDlgType == 1 && _nScanAnswerModel_ != 2)
+		{
+			bNoDisposes = true;
+			pST_SCAN_PIC pScanPic = new ST_SCAN_PIC();
+			pScanPic->nOrder = nOrder;
+			pScanPic->nStudentID = nStudentId;
+			pScanPic->pNotifyDlg = m_pDlg;
+			pScanPic->strPicName = szPicName;
+			pScanPic->strPicPath = szPicPath;
+			pScanPic->mtPic = matSrc.clone();
+
+			if (!m_pScanPaper)
+				m_pScanPaper = new ST_SCAN_PAPER();
+			m_pScanPaper->bDoubleScan = m_nDoubleScan == 0 ? false : true;
+			m_pScanPaper->nPaperID = nStudentId;
+			m_pScanPaper->vecScanPic.push_back(pScanPic);
+// 			if (m_nDoubleScan && m_nModelPicNums % 2 != 0)	//双面扫描，且模板数不为奇数，因为模板数为奇数会舍弃图像
+// 			{
+// 				if ((nOrder - 1) % 2 == 0)	//扫描一张试卷后，获取到的第一面
+// 					m_pScanPaper->pScanPic1 = pScanPic;
+// 				else
+// 					m_pScanPaper->pScanPic2 = pScanPic;
+// 			}
+// 			else
+// 				m_pScanPaper->pScanPic1 = pScanPic;
+
+			if (m_nDoubleScan && (nOrder - 1) % 2 != 0 || !m_nDoubleScan)	//双面扫描且获取到第2面图像时，或者单面扫描时，将此试卷的图像信息放入扫描图像列表
+			{
+				g_fmScanPaperListLock.lock();
+				g_lScanPaperTask.push_back(m_pScanPaper);
+				m_pScanPaper = NULL;
+				g_fmScanPaperListLock.unlock();
+			}
+		}
+#endif
 
 		//++ 2016.8.26 判断扫描图片方向，并进行旋转
-		if (_pModel_ && m_nNotifyDlgType == 1 && _nScanAnswerModel_ != 2/*&& m_pModel->nType*/)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
+		if (!bNoDisposes && _pModel_ && m_nNotifyDlgType == 1 && _nScanAnswerModel_ != 2/*&& m_pModel->nType*/)	//只针对使用制卷工具自动生成的模板使用旋转检测功能，因为制卷工具的图片方向固定
 		{
-		#ifdef TEST_PAGINATION
-			if (!bPreviousFirstPic)
-			{
-				bFirstPic = _chkRotationObj.IsFirstPic(nOrder - 1, matSrc, _pModel_);
-				if (nOrder - 1 % 2 == 0 && !bFirstPic)	//如果获取到的试卷是一张试卷的第一面，同时不能判断为正面时，将此图片存入列表，另外线程判断正反，或者在此线程判断，影响扫描速度
-				{
-
-				}
-			}
-		#endif
 			//COmrRecog omrObj;
 			_chkRotationObj.GetRightPicOrientation(matSrc, nOrder - 1, m_nDoubleScan == 0 ? false : true);
 		}
 		//--
 
 		end1 = clock();
-		cv::Mat matShow = matSrc.clone();
+		cv::Mat matShow;
+		if(!bNoDisposes)
+			matShow = matSrc.clone();
 		end2 = clock();
 
 		std::string strPicName = szPicPath;
-	#ifdef TEST_PAGINATION
-		//if (m_nNotifyDlgType == 2)		//在扫描模板图片时，直接写文件，扫描试卷时，先不写，在扫描2张后判断正反面再写文件
-		imwrite(strPicName, matSrc);
-	#else
-		imwrite(strPicName, matSrc);
-	#endif
+		if (!bNoDisposes)		//在扫描模板图片时，直接写文件，扫描试卷时，先不写，在扫描2张后判断正反面再写文件
+			imwrite(strPicName, matSrc);
+
 		cvReleaseImage(&pIpl);
 		end3 = clock();
 
@@ -2255,72 +2281,78 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 		}
 		else
 		{
-			//++添加试卷
-			pST_PicInfo pPic = new ST_PicInfo;
-			pPic->strPicName = szPicName;
-			pPic->strPicPath = szPicPath;
-			if (nOrder == 1)	//第一页的时候创建新的试卷信息
+			if (!bNoDisposes)	//图像没有移动到图像队列中，就在本线程处理
 			{
-				CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
-
-				char szStudentName[30] = { 0 };
-				sprintf_s(szStudentName, "S%d", nStudentId);
-				m_pCurrPaper = new ST_PaperInfo;
-				m_pCurrPaper->nIndex = nStudentId;
-				m_pCurrPaper->strStudentInfo = szStudentName;
-				m_pCurrPaper->pModel = _pModel_;
-				m_pCurrPaper->pPapers = _pCurrPapersInfo_;
-				m_pCurrPaper->pSrcDlg = pDlg->GetScanMainDlg();		//m_pDlg;
-				m_pCurrPaper->lPic.push_back(pPic);
-
-				_pCurrPapersInfo_->fmlPaper.lock();
-				_pCurrPapersInfo_->lPaper.push_back(m_pCurrPaper);
-				_pCurrPapersInfo_->fmlPaper.unlock();
-			}
-			else
-			{
-				if (NULL == m_pCurrPaper)
+				//++添加试卷
+				pST_PicInfo pPic = new ST_PicInfo;
+				pPic->strPicName = szPicName;
+				pPic->strPicPath = szPicPath;
+				if (nOrder == 1)	//第一页的时候创建新的试卷信息
 				{
-					char szLog[300] = { 0 };
-					sprintf_s(szLog, "扫描错误. detail: 考生内存信息不存在，扫描失败, nOrder = %d\n", nOrder);
-					g_pLogger->information(szLog);
-					TRACE(szLog);
+					CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
 
-					SAFE_RELEASE(pPic);
+					char szStudentName[30] = { 0 };
+					sprintf_s(szStudentName, "S%d", nStudentId);
+					m_pCurrPaper = new ST_PaperInfo;
+					m_pCurrPaper->nIndex = nStudentId;
+					m_pCurrPaper->strStudentInfo = szStudentName;
+					m_pCurrPaper->pModel = _pModel_;
+					m_pCurrPaper->pPapers = _pCurrPapersInfo_;
+					m_pCurrPaper->pSrcDlg = pDlg->GetScanMainDlg();		//m_pDlg;
+					m_pCurrPaper->lPic.push_back(pPic);
 
-					return NULL;
+					_pCurrPapersInfo_->fmlPaper.lock();
+					_pCurrPapersInfo_->lPaper.push_back(m_pCurrPaper);
+					_pCurrPapersInfo_->fmlPaper.unlock();
 				}
-				m_pCurrPaper->lPic.push_back(pPic);
-			}
-			pPic->pPaper = m_pCurrPaper;
-			//--
+				else
+				{
+					if (NULL == m_pCurrPaper)
+					{
+						char szLog[300] = { 0 };
+						sprintf_s(szLog, "扫描错误. detail: 考生内存信息不存在，扫描失败, nOrder = %d\n", nOrder);
+						g_pLogger->information(szLog);
+						TRACE(szLog);
 
-			pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
-			pResult->bScanOK = false;
-			pResult->nState = 1;			//标识正在扫描
-			pResult->nPaperId = nStudentId;
-			pResult->nPicId = nOrder;
-			pResult->pPaper = m_pCurrPaper;
-			pResult->matShowPic = matShow;
-			pResult->strPicName = szPicName;
-			pResult->strPicPath = szPicPath;
-			pResult->strResult = "获得图像";
-			pResult->strResult.append(szPicName);
+						SAFE_RELEASE(pPic);
 
-			TRACE("%s\n", pResult->strResult.c_str());
-			pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
+						return NULL;
+					}
+					m_pCurrPaper->lPic.push_back(pPic);
+				}
+				pPic->pPaper = m_pCurrPaper;
+				//--
 
-			//添加到识别任务列表
-			if (_pModel_ && _pCurrExam_->nModel == 0 && _nScanAnswerModel_ != 2)	//网阅模式下的试卷才加入识别队列, 扫描主观题答案不加入识别
-			{
-				pRECOGTASK pTask = new RECOGTASK;
-				pTask->pPaper = m_pCurrPaper;
-				g_lRecogTask.push_back(pTask);
+				pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
+				pResult->bScanOK = false;
+				pResult->nState = 1;			//标识正在扫描
+				pResult->nPaperId = nStudentId;
+				pResult->nPicId = nOrder;
+				pResult->pPaper = m_pCurrPaper;
+				pResult->matShowPic = matShow;
+				pResult->strPicName = szPicName;
+				pResult->strPicPath = szPicPath;
+				pResult->strResult = "获得图像";
+				pResult->strResult.append(szPicName);
+
+				TRACE("%s\n", pResult->strResult.c_str());
+				pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
+
+				//添加到识别任务列表
+				if (_pModel_ && _pCurrExam_->nModel == 0 && _nScanAnswerModel_ != 2)	//网阅模式下的试卷才加入识别队列, 扫描主观题答案不加入识别
+				{
+					pRECOGTASK pTask = new RECOGTASK;
+					pTask->pPaper = m_pCurrPaper;
+					g_lRecogTask.push_back(pTask);
+				}
 			}
 		}		
 	}
 	catch (cv::Exception& exc)
 	{
+		std::string strTmpLog = "保存扫描图像数据到文件发生异常: " + exc.msg;
+		g_pLogger->information(strTmpLog);
+		cvReleaseImage(&pIpl);
 	}
 	end = clock();
 	char szTmpLog[200] = { 0 };

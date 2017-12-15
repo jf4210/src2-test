@@ -618,9 +618,34 @@ typedef struct _ScanPic
 	std::string strPicPath;
 	cv::Mat mtPic;
 }ST_SCAN_PIC, *pST_SCAN_PIC;
-typedef std::list<pST_SCAN_PIC> SCAN_PIC_LIST;			//从扫描仪获取的图像信息的列表
-extern Poco::FastMutex			g_fmScanPicListLock;	//从扫描仪获取的图像信息的列表锁
-extern SCAN_PIC_LIST			g_lScanPicTask;			//从扫描仪获取的图像信息的列表
+typedef struct _ScanPaper
+{
+	bool bDoubleScan;			//是否双面扫描，单面扫描时，pScanPic2不可用
+	int  nPaperID;				//第几个学生的试卷
+// 	pST_SCAN_PIC pScanPic1;		//从扫描仪获取到的一张试卷的第一面
+// 	pST_SCAN_PIC pScanPic2;		//从扫描仪获取到的一张试卷的第二面
+	std::vector<pST_SCAN_PIC> vecScanPic;
+	_ScanPaper()
+	{
+		bDoubleScan = true;
+		nPaperID = 0;
+// 		pScanPic1 = NULL;
+// 		pScanPic2 = NULL;
+	}
+	~_ScanPaper()
+	{
+		for (int i = 0; i < vecScanPic.size(); i++)
+		{
+			pST_SCAN_PIC pScanPic = vecScanPic[i];
+			SAFE_RELEASE(pScanPic);
+		}
+// 		SAFE_RELEASE(pScanPic1);
+// 		SAFE_RELEASE(pScanPic2);
+	}
+}ST_SCAN_PAPER, *pST_SCAN_PAPER;
+typedef std::list<pST_SCAN_PAPER> SCAN_PAPER_LIST;			//从扫描仪获取的图像信息的列表
+extern Poco::FastMutex			g_fmScanPaperListLock;		//从扫描仪获取的图像信息的列表锁
+extern SCAN_PAPER_LIST			g_lScanPaperTask;			//从扫描仪获取的图像信息的列表
 
 
 //模板文件信息

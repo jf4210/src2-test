@@ -34,6 +34,11 @@ void CPaperUser::OnClose(void)
 	strLog.append("\tfileName: ");
 	strLog.append(m_szFileName);
 
+	if (m_pf)
+	{
+		fclose(m_pf);
+		m_pf = NULL;
+	}
 	int nUnRecvLen = m_dwTotalFileSize - m_dwRecvFileSize;
 	if (nUnRecvLen > 0)
 	{

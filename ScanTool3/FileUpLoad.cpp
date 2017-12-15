@@ -160,7 +160,7 @@ RESTART:
 				{
 					TRACE("\nconect to File Server Success!(%s)\n", m_strSendExtType.c_str());
 					char szLog[300] = { 0 };
-					sprintf_s(szLog, "连接文件服务器成功(%s)(%s:%d)", m_strSendExtType.c_str(), T2A(m_strAddr), m_usPort);
+					sprintf_s(szLog, "连接文件服务器成功(%s)(%s:%d)[%s]", m_strSendExtType.c_str(), T2A(m_strAddr), m_usPort, g_strFileVersion.c_str());
 					g_pLogger->information(szLog);
 					m_bConnect = TRUE;
 					m_uThreadType = 2;
@@ -199,7 +199,7 @@ RESTART:
 						continue;
 					}
 					bFindTask = true;
-#if 1
+
 					(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
 					(reinterpret_cast<pSENDTASK>(pTask->pTask))->nSendState = 1;
 					char	*szFileBuff = NULL;
@@ -220,9 +220,9 @@ RESTART:
 					{
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->nSendState = 3;
-						char szLog[100] = { 0 };
-						sprintf_s(szLog, "上传文件(%s)时内存申请失败，需要重新尝试。", strAnsName.c_str());
-						g_pLogger->information(szLog);
+						std::stringstream ssTmpLog;
+						ssTmpLog << "上传文件(" << strAnsName << ")[" << pTask->strPath << "]时内存申请失败，需要重新尝试。";
+						g_pLogger->information(ssTmpLog.str());
 						Sleep(500);
 						continue;
 					}
@@ -232,9 +232,9 @@ RESTART:
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->nSendState = 3;
 						CString strErr = _T("");
 						e->GetErrorMessage((LPTSTR)(LPCTSTR)strErr, 1024);
-						char szLog[300] = { 0 };
-						sprintf_s(szLog, "上传文件(%s)时发生文件异常，需要重新尝试。%s", strAnsName.c_str(), strErr);
-						g_pLogger->information(szLog);
+						std::stringstream ssTmpLog;
+						ssTmpLog << "上传文件(" << strAnsName << ")[" << pTask->strPath << "]时发生文件异常，需要重新尝试。" << strErr;
+						g_pLogger->information(ssTmpLog.str());
 						Sleep(500);
 						continue;
 					}
@@ -242,38 +242,16 @@ RESTART:
 					{
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->nSendState = 3;
-						char szLog[100] = { 0 };
-						sprintf_s(szLog, "上传文件(%s)时发生异常，需要重新尝试。", strAnsName.c_str());
-						g_pLogger->information(szLog);
+						std::stringstream ssTmpLog;
+						ssTmpLog << "上传文件(" << strAnsName << ")[" << pTask->strPath << "]时发生未知异常，需要重新尝试。";
+						g_pLogger->information(ssTmpLog.str());
 						Sleep(500);
 						continue;
 					}
 					
-#else
-					CFile MyFileSend(pTask->strPath, CFile::modeRead);
-					DWORD Length = MyFileSend.GetLength();
-					char	*szFileBuff = NULL;
-					std::string strAnsName = T2A(pTask->strAnsName);
-					try
-					{
-						szFileBuff = new char[Length];
-					}
-					catch (...)
-					{
-						char szLog[100] = { 0 };
-						sprintf_s(szLog, "上传文件(%s)时内存申请失败，需要重新尝试。", strAnsName);
-						g_pLogger->information(szLog);
-						Sleep(500);
-						continue;
-					}
-					
-					MyFileSend.Seek(0, CFile::begin);
-					MyFileSend.Read(szFileBuff, Length);
-					MyFileSend.Close();
-#endif
 					TRACE0("start send ans file\n");
 					char szLog[300] = { 0 };
-					sprintf_s(szLog, "开始上传文件: %s", T2A(pTask->strAnsName));
+					sprintf_s(szLog, "开始上传文件(%s): %s", T2A(pTask->strAnsName), g_strFileVersion.c_str());
 					g_pLogger->information(szLog);
 					//上传文件
 					ST_CMD_HEADER stHead;
@@ -293,6 +271,7 @@ RESTART:
 					if (!m_bConnect)
 					{
 						delete szFileBuff;
+						delete pMd5;
 						m_uThreadType = 1;
 						g_bFileConnect = false;
 						break;
@@ -303,6 +282,7 @@ RESTART:
 						g_pLogger->information(szLog);
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
 						delete szFileBuff;
+						delete pMd5;
 						break;
 					}
 					if (!sendData(m_szSendBuf, HEAD_SIZE + sizeof(ST_FILE_INFO), pTask))
@@ -312,6 +292,7 @@ RESTART:
 
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
 						delete szFileBuff;
+						delete pMd5;
 
 						m_bConnect = FALSE;
 						break;
@@ -352,6 +333,7 @@ RESTART:
 
 						(reinterpret_cast<pSENDTASK>(pTask->pTask))->fSendPercent = 0;
 						delete szFileBuff;
+						delete pMd5;
 
 						m_bConnect = FALSE;
 						break;
@@ -581,8 +563,11 @@ void CFileUpLoad::ReConnectAddr(CString strAddr, USHORT usPort)
 		pstUpLoadAddr pUpLoadAddr = new stUpLoadAddr;
 		pUpLoadAddr->nPort = m_usPort;
 		pUpLoadAddr->strIP = T2A(m_strAddr);
-		m_UpLoadAddrList.push_front(pUpLoadAddr);	//将此地址移动到最前
-		TRACE("ReConnectAddr(%s) --> add server addr: %s_%d\n", m_strSendExtType.c_str(), pUpLoadAddr->strIP.c_str(), (int)m_usPort);
+		m_UpLoadAddrList.push_back(pUpLoadAddr);	//不移动最前	//push_front(pUpLoadAddr);	//将此地址移动到最前
+		std::stringstream ssLog;
+		ssLog << "ReConnectAddr(" << m_strSendExtType << ") --> add server addr: " << pUpLoadAddr->strIP << "_" << m_usPort;
+		g_pLogger->information(ssLog.str());
+		TRACE(ssLog.str());
 	}
 	m_nConnectFails = 0;
 }

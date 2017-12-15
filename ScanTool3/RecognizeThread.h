@@ -15,6 +15,7 @@ public:
 
 	virtual void run();
 
+	bool HandleScanPicTask(pST_SCAN_PAPER pScanPicTask);
 	bool HandleTask(pRECOGTASK pTask);
 
 	bool LoadModel(pMODELINFO pModelInfo);

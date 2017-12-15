@@ -56,8 +56,8 @@ EXAM_LIST			g_lExamList;	//当前账号对应的考试列表
 Poco::FastMutex		g_fmCompressLock;		//压缩文件列表锁
 COMPRESSTASKLIST	g_lCompressTask;		//解压文件列表
 
-Poco::FastMutex		g_fmScanPicListLock;	//从扫描仪获取的图像信息的列表锁
-SCAN_PIC_LIST		g_lScanPicTask;			//从扫描仪获取的图像信息的列表
+Poco::FastMutex		g_fmScanPaperListLock;	//从扫描仪获取的图像信息的列表锁
+SCAN_PAPER_LIST		g_lScanPaperTask;		//从扫描仪获取的图像信息的列表
 
 //++线程退出完成事件
 Poco::Event			g_eTcpThreadExit;
@@ -451,6 +451,17 @@ void CScanTool3Dlg::ReleaseThreads()
 void CScanTool3Dlg::ReleaseData()
 {
 	_timerKeepAlive.cancel();
+
+	//扫描仪获取的图像列表
+	g_fmScanPaperListLock.lock();
+	SCAN_PAPER_LIST::iterator itScanPaper = g_lScanPaperTask.begin();
+	for (; itScanPaper != g_lScanPaperTask.end();)
+	{
+		pST_SCAN_PAPER pScanPic = *itScanPaper;
+		itScanPaper = g_lScanPaperTask.erase(itScanPaper);
+		SAFE_RELEASE(pScanPic);
+	}
+	g_fmScanPaperListLock.unlock();
 
 	//试卷袋列表
 	g_fmPapers.lock();

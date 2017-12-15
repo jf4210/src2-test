@@ -136,7 +136,7 @@ void CRecogInfoDlg::OnBnClickedBtnSaverecoginfo()
 	if (nOldThresholdVal != m_nThresholdVal)
 	{
 		cv::Rect rm = m_pCurRectInfo->rt;
-		cv::Mat imgResult = ((CMakeModelDlg*)GetParent())->m_vecPaperModelInfo[((CMakeModelDlg*)GetParent())->m_nCurrTabSel]->matDstImg(rm);
+		cv::Mat imgResult = ((CMakeModelDlg*)GetParent())->m_vecPaperModelInfo[((CMakeModelDlg*)GetParent())->m_nCurrTabSel]->matSrcImg(rm);
 		((CMakeModelDlg*)GetParent())->RecogNewGrayValue(imgResult, *m_pCurRectInfo);
 	}
 //	AfxMessageBox(_T("ÐÞ¸Ä³É¹¦"));

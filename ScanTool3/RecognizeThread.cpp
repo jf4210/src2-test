@@ -1,7 +1,8 @@
 #include "stdafx.h"
 #include "RecognizeThread.h"
 #include "ScanTool3.h"
-
+#include "OmrRecog.h"
+#include "ScanMgrDlg.h"
 
 using namespace cv;
 CRecognizeThread::CRecognizeThread()
@@ -26,6 +27,22 @@ void CRecognizeThread::run()
 
 	while (!g_nExitFlag)
 	{
+		//===========================
+		pST_SCAN_PAPER pScanPaperTask = NULL;
+		g_fmScanPaperListLock.lock();
+		SCAN_PAPER_LIST::iterator itScanPaper = g_lScanPaperTask.begin();
+		for (; itScanPaper != g_lScanPaperTask.end();)
+		{
+			pScanPaperTask = *itScanPaper;
+			itScanPaper = g_lScanPaperTask.erase(itScanPaper);
+			break;
+		}
+		g_fmScanPaperListLock.unlock();
+
+		if(pScanPaperTask) HandleScanPicTask(pScanPaperTask);
+		SAFE_RELEASE(pScanPaperTask);
+		//===========================
+
 		pRECOGTASK pTask = NULL;
 		g_fmRecog.lock();
 		RECOGTASKLIST::iterator it = g_lRecogTask.begin();
@@ -66,6 +83,74 @@ void CRecognizeThread::run()
 	SAFE_RELEASE(m_pTess);
 #endif
 	TRACE("RecognizeThread exit 0\n");
+}
+
+bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
+{
+	clock_t sTime, mT0, mT1, mT2, mT3, eTime;
+	sTime = clock();
+	std::stringstream ssLog;
+	ssLog << "检测试卷(S" << pScanPaperTask->nPaperID << ")的图像正反面:\n";
+
+	pST_PaperInfo pCurrentPaper = NULL;
+	if (pScanPaperTask->vecScanPic.size() <= 1)
+	{
+		ssLog << "这张试卷只有" << pScanPaperTask->vecScanPic.size() << "页图片, 不需要判断正反，直接判断旋转方向\n";
+		if (pScanPaperTask->vecScanPic.size())
+		{
+			pST_SCAN_PIC pScanPic = pScanPaperTask->vecScanPic[0];
+
+			clock_t sT, eT1, eT2;
+			sT = clock();
+			COmrRecog chkRotationObj;
+			int nResult1 = chkRotationObj.GetRightPicOrientation(pScanPic->mtPic, 0, pScanPaperTask->bDoubleScan);
+			eT1 = clock();
+			ssLog << "新图像" << pScanPic->strPicName << "方向调整: " << nResult1 << "(1:不需要旋转，2：右转90, 3：左转90, 4：右转180). " << (int)(eT1 - sT) << "ms\n";
+
+			imwrite(pScanPic->strPicPath, pScanPic->mtPic);
+			eT2 = clock();
+			ssLog << "新图像" << pScanPic->strPicName << "写文件完成. " << (int)(eT2 - eT1) << "ms\n";
+
+			//++添加试卷
+			pST_PicInfo pPic = new ST_PicInfo;
+			pPic->strPicName = pScanPic->strPicName;
+			pPic->strPicPath = pScanPic->strPicPath;
+			if (pScanPic->nOrder == 1)	//第一页的时候创建新的试卷信息
+			{
+				CScanMgrDlg* pDlg = static_cast<CScanMgrDlg*>(pScanPic->pNotifyDlg);
+
+				char szStudentName[30] = { 0 };
+				sprintf_s(szStudentName, "S%d", pScanPic->nStudentID);
+				pCurrentPaper = new ST_PaperInfo;
+				pCurrentPaper->nIndex = pScanPic->nStudentID;
+				pCurrentPaper->strStudentInfo = szStudentName;
+				pCurrentPaper->pModel = _pModel_;
+				pCurrentPaper->pPapers = _pCurrPapersInfo_;
+				pCurrentPaper->pSrcDlg = pDlg->GetScanMainDlg();		//m_pDlg;
+				pCurrentPaper->lPic.push_back(pPic);
+
+				_pCurrPapersInfo_->fmlPaper.lock();
+				_pCurrPapersInfo_->lPaper.push_back(pCurrentPaper);
+				_pCurrPapersInfo_->fmlPaper.unlock();
+			}
+			else
+			{
+				pCurrentPaper->lPic.push_back(pPic);
+			}
+			pPic->pPaper = pCurrentPaper;
+		}
+		else
+			ssLog << "错误：该试卷没有发现有扫描的图片信息\n";
+	}
+	else
+	{
+
+
+// 		COmrRecog chkRotationObj;
+// 		bool bResult = chkRotationObj.IsFirstPic(i, mtPic, m_pModel);
+// 		ssLog << chkRotationObj.GetRecogLog();
+	}
+	return true;
 }
 
 bool CRecognizeThread::HandleTask(pRECOGTASK pTask)
