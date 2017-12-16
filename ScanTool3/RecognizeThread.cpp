@@ -144,8 +144,30 @@ bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 	}
 	else
 	{
+		COmrRecog chkRotationObj;
+		bool bPreviousFirstPic = false;	//检测一张试卷时，上一页试卷是否为正面
+		for (int i = 0; i < pScanPaperTask->vecScanPic.size(); i++)
+		{
+			pST_SCAN_PIC pScanPic = pScanPaperTask->vecScanPic[i];
 
+			mT1 = clock();
+			bool bResult = chkRotationObj.IsFirstPic(i, pScanPic->mtPic, _pModel_);
+			ssLog << chkRotationObj.GetRecogLog();
+			mT2 = clock();
 
+			if (bResult)
+			{
+				if (i % 2 == 0)
+				{
+					//第1页为正面，第2页可以不需要判断
+					bPreviousFirstPic = true;
+					ssLog << "图像" << pScanPic->strPicName << "检测到属于这张试卷的正面, 下一页试卷不需要检测正反. 开始方向判断. " << (int)(mT2 - mT1) << "ms\n";
+				}
+				else
+				{
+				}
+			}
+		}
 // 		COmrRecog chkRotationObj;
 // 		bool bResult = chkRotationObj.IsFirstPic(i, mtPic, m_pModel);
 // 		ssLog << chkRotationObj.GetRecogLog();
