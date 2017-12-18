@@ -567,7 +567,7 @@ void CFileUpLoad::ReConnectAddr(CString strAddr, USHORT usPort)
 		std::stringstream ssLog;
 		ssLog << "ReConnectAddr(" << m_strSendExtType << ") --> add server addr: " << pUpLoadAddr->strIP << "_" << m_usPort;
 		g_pLogger->information(ssLog.str());
-		TRACE(ssLog.str());
+		TRACE(ssLog.str().c_str());
 	}
 	m_nConnectFails = 0;
 }

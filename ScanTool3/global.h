@@ -621,14 +621,18 @@ typedef struct _ScanPic
 typedef struct _ScanPaper
 {
 	bool bDoubleScan;			//是否双面扫描，单面扫描时，pScanPic2不可用
+	int  nSrcDlgType;			//0-来自扫描线程的数据，1-来自试卷导入窗口的数据
 	int  nPaperID;				//第几个学生的试卷
+	pPAPERSINFO pPapersInfo;
 // 	pST_SCAN_PIC pScanPic1;		//从扫描仪获取到的一张试卷的第一面
 // 	pST_SCAN_PIC pScanPic2;		//从扫描仪获取到的一张试卷的第二面
 	std::vector<pST_SCAN_PIC> vecScanPic;
 	_ScanPaper()
 	{
 		bDoubleScan = true;
+		nSrcDlgType = 0;
 		nPaperID = 0;
+		pPapersInfo = NULL;
 // 		pScanPic1 = NULL;
 // 		pScanPic2 = NULL;
 	}

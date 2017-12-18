@@ -110,34 +110,6 @@ bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 			imwrite(pScanPic->strPicPath, pScanPic->mtPic);
 			eT2 = clock();
 			ssLog << "新图像" << pScanPic->strPicName << "写文件完成. " << (int)(eT2 - eT1) << "ms\n";
-
-			//++添加试卷
-			pST_PicInfo pPic = new ST_PicInfo;
-			pPic->strPicName = pScanPic->strPicName;
-			pPic->strPicPath = pScanPic->strPicPath;
-			if (pScanPic->nOrder == 1)	//第一页的时候创建新的试卷信息
-			{
-				CScanMgrDlg* pDlg = static_cast<CScanMgrDlg*>(pScanPic->pNotifyDlg);
-
-				char szStudentName[30] = { 0 };
-				sprintf_s(szStudentName, "S%d", pScanPic->nStudentID);
-				pCurrentPaper = new ST_PaperInfo;
-				pCurrentPaper->nIndex = pScanPic->nStudentID;
-				pCurrentPaper->strStudentInfo = szStudentName;
-				pCurrentPaper->pModel = _pModel_;
-				pCurrentPaper->pPapers = _pCurrPapersInfo_;
-				pCurrentPaper->pSrcDlg = pDlg->GetScanMainDlg();		//m_pDlg;
-				pCurrentPaper->lPic.push_back(pPic);
-
-				_pCurrPapersInfo_->fmlPaper.lock();
-				_pCurrPapersInfo_->lPaper.push_back(pCurrentPaper);
-				_pCurrPapersInfo_->fmlPaper.unlock();
-			}
-			else
-			{
-				pCurrentPaper->lPic.push_back(pPic);
-			}
-			pPic->pPaper = pCurrentPaper;
 		}
 		else
 			ssLog << "错误：该试卷没有发现有扫描的图片信息\n";
@@ -146,9 +118,33 @@ bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 	{
 		COmrRecog chkRotationObj;
 		bool bPreviousFirstPic = false;	//检测一张试卷时，上一页试卷是否为正面
+		pST_SCAN_PIC pPreviousPic = NULL;
 		for (int i = 0; i < pScanPaperTask->vecScanPic.size(); i++)
 		{
 			pST_SCAN_PIC pScanPic = pScanPaperTask->vecScanPic[i];
+
+			//一张试卷的前一页是正面，或者已经是最后一页单独的试卷
+			if (bPreviousFirstPic || (i == pScanPaperTask->vecScanPic.size() - 1 && floor(i / 2) * 2 == i))
+			{
+				if (bPreviousFirstPic)
+				{
+					bPreviousFirstPic = false;
+					ssLog << "图像" << pScanPic->strPicName << "属于这张试卷的第2页(考生总试卷的第" << i + 1 << "面)，不需要检测正反面，上一页试卷是正面，开始旋转方向判断\n";
+				}
+				else if(i == pScanPaperTask->vecScanPic.size() - 1 && floor(i / 2) * 2 == i)
+					ssLog << "这份试卷的最后一页" << pScanPic->strPicName << "(" << i + 1 << "/" << pScanPaperTask->vecScanPic.size() << "), 属于最后一张试卷只有单独一面的情况，不需要检测正反面. 开始旋转方向判断\n";
+
+				clock_t sT, eT1, eT2;
+				sT = clock();
+				int nResult1 = chkRotationObj.GetRightPicOrientation(pScanPic->mtPic, i, pScanPaperTask->bDoubleScan);
+				eT1 = clock();
+				ssLog << "新图像" << pScanPic->strPicName << "方向调整: " << nResult1 << "(1:不需要旋转，2：右转90, 3：左转90, 4：右转180). " << (int)(eT1 - sT) << "ms\n";
+
+				imwrite(pScanPic->strPicPath, pScanPic->mtPic);
+				eT2 = clock();
+				ssLog << "新图像" << pScanPic->strPicName << "写文件完成. " << (int)(eT2 - eT1) << "ms\n";
+				continue;
+			}
 
 			mT1 = clock();
 			bool bResult = chkRotationObj.IsFirstPic(i, pScanPic->mtPic, _pModel_);
@@ -157,20 +153,166 @@ bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 
 			if (bResult)
 			{
+				int nFrontPage = floor(i / 2) * 2;
 				if (i % 2 == 0)
 				{
 					//第1页为正面，第2页可以不需要判断
+					pPreviousPic = pScanPic;
 					bPreviousFirstPic = true;
-					ssLog << "图像" << pScanPic->strPicName << "检测到属于这张试卷的正面, 下一页试卷不需要检测正反. 开始方向判断. " << (int)(mT2 - mT1) << "ms\n";
+					ssLog << "图像" << pScanPic->strPicName << "检测到属于这张试卷的正面, 下一页试卷不需要检测正反. 开始旋转方向判断. " << (int)(mT2 - mT1) << "ms\n";
+
+					clock_t sT, eT1, eT2;
+					sT = clock();
+					int nResult1 = chkRotationObj.GetRightPicOrientation(pScanPic->mtPic, i, pScanPaperTask->bDoubleScan);
+					eT1 = clock();
+					ssLog << "新图像" << pScanPic->strPicName << "方向调整: " << nResult1 << "(1:不需要旋转，2：右转90, 3：左转90, 4：右转180). " << (int)(eT1 - sT) << "ms\n";
+
+					imwrite(pScanPic->strPicPath, pScanPic->mtPic);
+					eT2 = clock();
+					ssLog << "新图像" << pScanPic->strPicName << "写文件完成. " << (int)(eT2 - eT1) << "ms\n";
 				}
 				else
 				{
+					//第2页为正面
+					ssLog << "图像" << pScanPic->strPicName << "检测到属于这张试卷的正面, 开始与上一页试卷" << pPreviousPic->strPicName << "调换. " << (int)(mT2 - mT1) << "ms\n";
+					//图像重命名
+					bool bPicsExchangeSucc = true;
+					pST_SCAN_PIC pPic1 = pScanPic;
+					pST_SCAN_PIC pPic2 = pPreviousPic;
+				#if 1	//在这里，原图像数据还没有写到文件，直接交换图像存储的路径
+					std::string strTmp = pPic1->strPicPath;
+					pPic1->strPicPath = pPic2->strPicPath;
+					pPic2->strPicPath = strTmp;
+				#else
+					try
+					{
+						Poco::File fPic1(pPic1->strPicPath);
+						fPic1.renameTo(pPic1->strPicPath + "_tmp");
+
+						Poco::File fPic2(pPic2->strPicPath);
+						fPic2.renameTo(pPic1->strPicPath);
+
+						fPic1.renameTo(pPic2->strPicPath);
+					}
+					catch (Poco::Exception &e)
+					{
+						bPicsExchangeSucc = false;
+						std::string strErr = e.displayText();
+
+						ssLog << "图像" << pScanPic->strPicName << "与" << pPreviousPic->strPicName << "调换重命名失败: " << strErr << "\n";
+					}
+				#endif
+					mT3 = clock();
+
+					if (bPicsExchangeSucc)
+					{
+						ssLog << "图像调换成功，开始重写原图. " << (int)(mT3 - mT2) << "ms\n";
+						clock_t sT, eT1, eT2;
+						sT = clock();
+
+						bool bDoubleScan = pScanPaperTask->bDoubleScan;	//使用此功能必须是双面扫描。	 m_pModel->vecPaperModel.size() % 2 == 0 ? true : false;
+						int nResult1 = chkRotationObj.GetRightPicOrientation(pScanPic->mtPic, nFrontPage, bDoubleScan);
+						eT1 = clock();
+						ssLog << "新图像" << pPic1->strPicName << "方向调整: " << nResult1 << "(1:不需要旋转，2：右转90, 3：左转90, 4：右转180). " << (int)(eT1 - sT) << "ms\n";
+
+						std::string strPicPath1 = pPic2->strPicPath;
+						//if (nResult1 >= 2 && nResult1 <= 4)
+						//{
+							imwrite(strPicPath1, pScanPic->mtPic);
+							eT2 = clock();
+							ssLog << "新图像" << pPic1->strPicName << "写文件完成. " << (int)(eT2 - eT1) << "ms\n";
+						//}
+
+						sT = clock();
+						int nResult2 = chkRotationObj.GetRightPicOrientation(pPreviousPic->mtPic, i, bDoubleScan);
+						eT1 = clock();
+						ssLog << "新图像" << pPic2->strPicName << "方向调整: " << nResult2 << "(1:不需要旋转，2：右转90, 3：左转90, 4：右转180). " << (int)(eT1 - sT) << "ms\n";
+
+						std::string strPicPath2 = pPic1->strPicPath;
+						//if (nResult2 >= 2 && nResult2 <= 4)
+						//{
+							imwrite(strPicPath2, pPreviousPic->mtPic);
+							eT2 = clock();
+							ssLog << "新图像" << pPic2->strPicName << "写文件完成. " << (int)(eT2 - eT1) << "ms\n";
+						//}
+
+						bPreviousFirstPic = false;	//这张试卷的正反已经判断完了，重置
+
+						//交换原始图像信息
+						cv::Mat mtTmp = pPreviousPic->mtPic;
+						pPreviousPic->mtPic = pScanPic->mtPic;
+						pScanPic->mtPic = mtTmp;
+					}
 				}
 			}
+			else
+			{
+				pPreviousPic = pScanPic;
+				bPreviousFirstPic = false;
+				ssLog << "判断" << pScanPic->strPicName << "属于这张试卷的正面失败，不能确定为正面. " << (int)(mT2 - mT1) << "ms\n";
+			}
 		}
-// 		COmrRecog chkRotationObj;
-// 		bool bResult = chkRotationObj.IsFirstPic(i, mtPic, m_pModel);
-// 		ssLog << chkRotationObj.GetRecogLog();
+	}
+	eTime = clock();
+	ssLog << "判断考生(S" << pScanPaperTask->nPaperID << ")正反面结束(" << (int)(eTime - sTime) << "ms)\n";
+	TRACE(ssLog.str().c_str());
+	g_pLogger->information(ssLog.str());
+
+	//++添加试卷
+	for (int i = 0; i < pScanPaperTask->vecScanPic.size(); i++)
+	{
+		pST_SCAN_PIC pScanPic = pScanPaperTask->vecScanPic[i];
+		CScanMgrDlg* pDlg = static_cast<CScanMgrDlg*>(pScanPic->pNotifyDlg);
+
+		pST_PicInfo pPic = new ST_PicInfo;
+		pPic->strPicName = pScanPic->strPicName;
+		pPic->strPicPath = pScanPic->strPicPath;
+		if ((pScanPic->nOrder + 1) % 2 == 0)	//第1、3、5...页的时候创建新的试卷信息，如果是多页模式时，每一张试卷创建一个考生信息，最后根据准考证号合并考生
+		{
+			char szStudentName[30] = { 0 };
+			sprintf_s(szStudentName, "S%d", pScanPic->nStudentID);
+			pCurrentPaper = new ST_PaperInfo;
+			pCurrentPaper->nIndex = pScanPic->nStudentID;
+			pCurrentPaper->strStudentInfo = szStudentName;
+			pCurrentPaper->pModel = _pModel_;
+			pCurrentPaper->pPapers = pScanPaperTask->pPapersInfo;
+			pCurrentPaper->pSrcDlg = pScanPaperTask->nSrcDlgType == 1 ? pScanPic->pNotifyDlg : pDlg->GetScanMainDlg();		//m_pDlg;
+			pCurrentPaper->lPic.push_back(pPic);
+
+			pScanPaperTask->pPapersInfo->fmlPaper.lock();
+			pScanPaperTask->pPapersInfo->lPaper.push_back(pCurrentPaper);
+			pScanPaperTask->pPapersInfo->fmlPaper.unlock();
+		}
+		else
+		{
+			pCurrentPaper->lPic.push_back(pPic);
+		}
+		pPic->pPaper = pCurrentPaper;
+
+		if (pScanPaperTask->nSrcDlgType == 0)
+		{
+			pST_SCAN_RESULT pResult = new ST_SCAN_RESULT();
+			pResult->bScanOK = false;
+			pResult->nState = 1;			//标识正在扫描
+			pResult->nPaperId = pScanPaperTask->nPaperID;
+			pResult->nPicId = i + 1;
+			pResult->pPaper = pCurrentPaper;
+			pResult->matShowPic = pScanPic->mtPic;
+			pResult->strPicName = pScanPic->strPicName;
+			pResult->strPicPath = pScanPic->strPicPath;
+			pResult->strResult = "获得图像";
+			pResult->strResult.append(pScanPic->strPicName);
+
+			TRACE("%s\n", pResult->strResult.c_str());
+			pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
+		}
+		//添加到识别任务列表
+		if (_pModel_ && _pCurrExam_->nModel == 0 && _nScanAnswerModel_ != 2)	//网阅模式下的试卷才加入识别队列, 扫描主观题答案不加入识别
+		{
+			pRECOGTASK pTask = new RECOGTASK;
+			pTask->pPaper = pCurrentPaper;
+			g_lRecogTask.push_back(pTask);
+		}
 	}
 	return true;
 }
@@ -279,17 +421,19 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			continue;
 
 		(*itPic)->nRecoged = 1;
+		int nPic = i;
 
-		if (i >= pModelInfo->pModel->vecPaperModel.size())
+		if (nPic >= pModelInfo->pModel->vecPaperModel.size())
 		{
 			(*itPic)->nRecoged = 2;
 			continue;
 		}
 
-		int nCount = pModelInfo->pModel->vecPaperModel[i]->lH_Head.size() + pModelInfo->pModel->vecPaperModel[i]->lV_Head.size() + pModelInfo->pModel->vecPaperModel[i]->lABModel.size()
-			+ pModelInfo->pModel->vecPaperModel[i]->lCourse.size() + pModelInfo->pModel->vecPaperModel[i]->lQK_CP.size() + pModelInfo->pModel->vecPaperModel[i]->lWJ_CP.size() + pModelInfo->pModel->vecPaperModel[i]->lGray.size()
-			+ pModelInfo->pModel->vecPaperModel[i]->lWhite.size() + pModelInfo->pModel->vecPaperModel[i]->lSNInfo.size() + pModelInfo->pModel->vecPaperModel[i]->lOMR2.size()
-			+ pModelInfo->pModel->vecPaperModel[i]->lElectOmr.size();
+		int nCount = pModelInfo->pModel->vecPaperModel[nPic]->lH_Head.size() + pModelInfo->pModel->vecPaperModel[nPic]->lV_Head.size()
+			+ pModelInfo->pModel->vecPaperModel[nPic]->lPagination.size() + pModelInfo->pModel->vecPaperModel[nPic]->lABModel.size() + pModelInfo->pModel->vecPaperModel[nPic]->lCourse.size()
+			+ pModelInfo->pModel->vecPaperModel[nPic]->lQK_CP.size() + pModelInfo->pModel->vecPaperModel[nPic]->lWJ_CP.size() + pModelInfo->pModel->vecPaperModel[nPic]->lGray.size()
+			+ pModelInfo->pModel->vecPaperModel[nPic]->lWhite.size() + pModelInfo->pModel->vecPaperModel[nPic]->lSNInfo.size() + pModelInfo->pModel->vecPaperModel[nPic]->lOMR2.size()
+			+ pModelInfo->pModel->vecPaperModel[nPic]->lElectOmr.size();
 		if (!nCount)	//如果当前模板试卷没有校验点就不需要进行试卷打开操作，直接下一张试卷
 		{
 			(*itPic)->nRecoged = 2;
@@ -297,14 +441,14 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		}
 		
 	#ifdef TEST_PAGINATION
-		TRACE("页码测试模式，不进行试卷识别\n");
-		continue;
+// 		TRACE("页码测试模式，不进行试卷识别\n");
+// 		continue;
 	#endif
 
 		std::string strPicFileName = (*itPic)->strPicName;
 		Mat matCompSrcPic;
 		bool bOpenSucc = false;
-		for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
 		{
 			if (!bOpenSucc)
 			{
@@ -349,7 +493,6 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		clock_t end1_pic = clock();
 
 		bool bFind = false;
-		int nPic = i;
 		
 		if (g_nOperatingMode == 1)
 		{

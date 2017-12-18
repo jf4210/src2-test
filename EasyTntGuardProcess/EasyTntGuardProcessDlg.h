@@ -3,7 +3,7 @@
 //
 
 #pragma once
-
+#include <string>
 
 // CEasyTntGuardProcessDlg 对话框
 class CEasyTntGuardProcessDlg : public CDialogEx
@@ -21,6 +21,7 @@ public:
 	HANDLE m_hThread;
 private:
 	void InitConf();
+	std::string LoadFileVersion();
 // 实现
 protected:
 	HICON m_hIcon;

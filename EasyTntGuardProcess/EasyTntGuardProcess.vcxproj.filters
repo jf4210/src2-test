@@ -22,6 +22,9 @@
     <Filter Include="common">
       <UniqueIdentifier>{99900f04-5b9a-49f2-b654-5d0144ccd191}</UniqueIdentifier>
     </Filter>
+    <Filter Include="dump">
+      <UniqueIdentifier>{fa44d6d4-2caa-4093-9b7c-31642344f090}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -56,6 +59,9 @@
     </ClInclude>
     <ClInclude Include="..\..\common\md5.h">
       <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="minidump.h">
+      <Filter>dump</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

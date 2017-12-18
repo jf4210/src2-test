@@ -12,6 +12,8 @@
 #define new DEBUG_NEW
 #endif
 
+#pragma comment(lib,"Version.lib")
+
 BOOL bContinue = TRUE;
 CString g_strAppPath = _T("");
 CString g_strInitServerIP = _T("");
@@ -28,6 +30,7 @@ CMutex			g_mutex_DFL;
 LIST_FILEINFO	g_VerServerFileList;
 LIST_NEED_DOWNLOAD	g_DownLoadFileList;
 MAP_FILEINFO	g_LocalFileMap;
+std::string		g_strFileVersion;
 
 BOOL		g_bShowUpdateMsg = TRUE;		//是否通知扫描程序进行版本更新，如果第一次打开扫描软件，提示时选择不更新，那么在扫描软件运行期间一直不提示，直到软件有关闭
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
@@ -117,6 +120,7 @@ BOOL CEasyTntGuardProcessDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	SetWindowText(_T("EasyTntGuardProcess"));
+	g_strFileVersion = LoadFileVersion();
 
 	//后台运行
 	ModifyStyleEx(WS_EX_APPWINDOW, WS_EX_TOOLWINDOW);
@@ -284,4 +288,58 @@ void CEasyTntGuardProcessDlg::InitConf()
 	GetPrivateProfileString(_T("Server"), _T("cmdIP"), _T("116.211.105.45"), szServerAddr, 50, strConfigPath);
 	g_nInitServerPort = GetPrivateProfileInt(_T("Server"), _T("cmdPort"), 19991, strConfigPath);
 	g_strInitServerIP = szServerAddr;
+}
+
+std::string CEasyTntGuardProcessDlg::LoadFileVersion()
+{
+	DWORD dwHandle = 0;
+	char* pInfoData = NULL;
+	std::string strFileVersion;
+
+	WCHAR szSelfName[MAX_PATH + 1] = { 0 };
+	if (::GetModuleFileNameW(NULL, szSelfName, MAX_PATH + 1))
+	{
+		DWORD dwInfoSize = GetFileVersionInfoSize(szSelfName, &dwHandle);
+		if (dwInfoSize > 0)
+		{
+			pInfoData = new char[dwInfoSize];
+			memset(pInfoData, 0, dwInfoSize);
+			if (GetFileVersionInfo(szSelfName, dwHandle, dwInfoSize, pInfoData))
+			{
+				VS_FIXEDFILEINFO* vs_file_info = NULL;
+				unsigned int size = 0;
+				if (VerQueryValue(pInfoData, L"\\", (LPVOID*)&vs_file_info, &size))
+				{
+					char szTmp[100] = { 0 };
+					sprintf(szTmp, "%d.%d.%d.%d", (int)HIWORD(vs_file_info->dwFileVersionMS), (int)LOWORD(vs_file_info->dwFileVersionMS), (int)HIWORD(vs_file_info->dwFileVersionLS), (int)LOWORD(vs_file_info->dwFileVersionLS));
+					strFileVersion = szTmp;
+				}
+#if 0	//设置版本失败
+				//获取语言
+				char* pLanValue = NULL;
+				UINT nLen2 = 0;
+				VerQueryValue(pInfoData, L"VarFileInfo\\Translation", (LPVOID*)&pLanValue, &nLen2);
+				//修改资源
+				vs_file_info->dwFileVersionLS = 1234;
+				vs_file_info->dwFileVersionMS = 4321;
+				vs_file_info->dwProductVersionLS = 101;
+				vs_file_info->dwProductVersionMS = 1010;
+				HANDLE handle = BeginUpdateResource(szSelfName, FALSE);
+				BOOL result = UpdateResourceW(handle
+											  , RT_VERSION
+											  , MAKEINTRESOURCE(1)
+											  , LANG_USER_DEFAULT
+											  , pInfoData
+											  , dwInfoSize);	//stlang.wLanguageID
+				if (result == FALSE)
+				{
+					AfxMessageBox(_T("Updata Resource False."));
+				}
+				EndUpdateResource(handle, FALSE);
+#endif
+			}
+			SAFE_RELEASE_ARRY(pInfoData);
+		}
+	}
+	return strFileVersion;
 }

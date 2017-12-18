@@ -8520,8 +8520,13 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	{
 		m_pModel->nUseWordAnchorPoint	= dlg._stSensitiveParam.nUseWordAnchorPoint;
 		m_pModel->nUsePagination		= dlg._stSensitiveParam.nUsePagination;
-		if (m_pModel->vecPaperModel.size() <= 2)	//如果模板页数不超过2张，则不设置多页模式，多页模式必须3张以上，且扫描用双面扫描
-			m_pModel->nUsePagination = 0;
+// 		if (m_pModel->vecPaperModel.size() <= 2)	//如果模板页数不超过2张，则不设置多页模式，多页模式必须3张以上，且扫描用双面扫描
+// 		{
+// 			m_pModel->nUsePagination = 0;
+// 			CNewMessageBox dlg;
+// 			dlg.setShowInfo(2, 1, "模板页数不超过2张，不需要设置多页模式");
+// 			dlg.DoModal();
+// 		}
 		InitConf();
 		
 		m_ncomboCurrentSel = m_comboCheckPointType.GetCurSel();

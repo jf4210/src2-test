@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "EasyTntGuardProcess.h"
 #include "EasyTntGuardProcessDlg.h"
+#include "minidump.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -72,6 +73,8 @@ BOOL CEasyTntGuardProcessApp::InitInstance()
 	// TODO:  应适当修改该字符串，
 	// 例如修改为公司或组织名
 	SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
+
+	RunCrashHandler();
 
 	CEasyTntGuardProcessDlg dlg;
 	m_pMainWnd = &dlg;

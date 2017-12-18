@@ -92,7 +92,7 @@ TW_UINT16 FAR PASCAL DSMCallback(pTW_IDENTITY _pOrigin,
 IMPLEMENT_DYNCREATE(CScanThread, CWinThread)
 
 CScanThread::CScanThread():
-m_bStop(false), m_pDlg(NULL), m_nStartSaveIndex(0), m_pCurrPaper(NULL), m_nNotifyDlgType(1), m_nDoubleScan(1)
+m_bStop(false), m_pDlg(NULL), m_nStartSaveIndex(0), m_pCurrPaper(NULL), m_nNotifyDlgType(1), m_nDoubleScan(1), m_pScanPaper(NULL)
 {
 }
 
@@ -133,6 +133,7 @@ void CScanThread::StartScan(WPARAM wParam, LPARAM lParam)
 	ST_SCANCTRL stScanCtrl = *pScanCtrl;
 	delete pScanCtrl;
 	pScanCtrl = NULL;
+	m_pScanPaper = NULL;
 	
 	_nScanStatus_ = 1;
 
@@ -2220,6 +2221,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 				m_pScanPaper = new ST_SCAN_PAPER();
 			m_pScanPaper->bDoubleScan = m_nDoubleScan == 0 ? false : true;
 			m_pScanPaper->nPaperID = nStudentId;
+			m_pScanPaper->pPapersInfo = _pCurrPapersInfo_;
 			m_pScanPaper->vecScanPic.push_back(pScanPic);
 // 			if (m_nDoubleScan && m_nModelPicNums % 2 != 0)	//双面扫描，且模板数不为奇数，因为模板数为奇数会舍弃图像
 // 			{

@@ -732,6 +732,74 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				pST_PaperInfo pPaper = NULL;
 				std::sort(lFileName.begin(), lFileName.end(), SortbyNumASC);
 				std::vector<std::string>::iterator itName = lFileName.begin();
+			#if 1
+				pST_SCAN_PAPER pScanPaper = NULL;
+				for (; itName != lFileName.end(); itName++)
+				{
+					TRACE("%s\n", (*itName).c_str());	//(*itName).c_str()
+
+					char szNewName[100] = { 0 };
+					sprintf_s(szNewName, "S%d_%s", i / nModelPicNums + 1, (*itName).c_str());
+
+					std::string strNewName = szNewName;
+					std::string strNewFilePath = strSubPaperPath + "\\" + strNewName;
+
+					std::string strFileOldPath = strSubDirPath + "\\" + *itName;
+					//Poco::File oldFile(strFileOldPath);
+					//oldFile.copyTo(strNewFilePath);
+
+					pST_SCAN_PIC pScanPic = new ST_SCAN_PIC();
+					pScanPic->nOrder = i % nModelPicNums + 1;
+					pScanPic->nStudentID = i / nModelPicNums + 1;
+					pScanPic->pNotifyDlg = this;
+					pScanPic->strPicName = strNewName;
+					pScanPic->strPicPath = CMyCodeConvert::Utf8ToGb2312(strNewFilePath);
+					Mat mtPic = imread(CMyCodeConvert::Utf8ToGb2312(strFileOldPath));
+					pScanPic->mtPic = mtPic.clone();
+
+					if (!pScanPaper)
+						pScanPaper = new ST_SCAN_PAPER();
+					pScanPaper->bDoubleScan = true;			//m_pModel->vecPaperModel.size() % 2 == 0 ? true : false;
+					pScanPaper->nPaperID = i / nModelPicNums + 1;
+					pScanPaper->pPapersInfo = pPapers;
+					pScanPaper->nSrcDlgType = 1;
+					pScanPaper->vecScanPic.push_back(pScanPic);
+
+					if (pScanPaper->bDoubleScan && (i + 1) % nModelPicNums == 0 || !pScanPaper->bDoubleScan)	//双面扫描且获取到第2面图像时，或者单面扫描时，将此试卷的图像信息放入扫描图像列表
+					{
+						g_fmScanPaperListLock.lock();
+						g_lScanPaperTask.push_back(pScanPaper);
+						pScanPaper = NULL;
+						g_fmScanPaperListLock.unlock();
+					}
+// 					if (i % nModelPicNums == 0)
+// 					{
+// 						pPaper = new ST_PaperInfo;
+// 						pPapers->lPaper.push_back(pPaper);
+// 						char szStudentInfo[20] = { 0 };
+// 						sprintf_s(szStudentInfo, "S%d", i / nModelPicNums + 1);
+// 						pPaper->strStudentInfo = szStudentInfo;
+// 						pPaper->pModel = m_pModel;
+// 						pPaper->pPapers = pPapers;
+// 						pPaper->pSrcDlg = this;
+// 						pPaper->nIndex = i / nModelPicNums + 1;
+// 					}
+// 					pST_PicInfo pPic = new ST_PicInfo;
+// 					pPaper->lPic.push_back(pPic);
+// 
+// 					char szNewFullPath[MAX_PATH] = { 0 };
+// 					sprintf_s(szNewFullPath, "%s\\%s", szSubPaperPath, strNewName.c_str());
+// 					pPic->strPicName = strNewName;
+// 					pPic->strPicPath = CMyCodeConvert::Utf8ToGb2312(strNewFilePath);	// strNewFilePath;
+// 					pPic->pPaper = pPaper;
+					i++;
+				}
+				//更新试卷袋数量
+				char szPapersCount[20] = { 0 };
+				sprintf_s(szPapersCount, "%d", lFileName.size() / nModelPicNums);
+				m_lPapersCtrl.SetItemText(nPapersCount, 1, (LPCTSTR)A2T(szPapersCount));
+				m_lPapersCtrl.SetItemData(nPapersCount, (DWORD_PTR)pPapers);
+			#else
 				for (; itName != lFileName.end(); itName++)
 				{
 					TRACE("%s\n", (*itName).c_str());	//(*itName).c_str()
@@ -816,6 +884,7 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 						g_lRecogTask.push_back(pTask);
 					}
 				}
+			#endif
 			}
 			it++;
 		}
@@ -1590,6 +1659,7 @@ LRESULT CPaperInputDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 
 	USES_CONVERSION;
 	int nCount = m_lPaperCtrl.GetItemCount();
+	bool bFind = false;
 	for (int i = 0; i < nCount; i++)
 	{
 		pST_PaperInfo pItemPaper = (pST_PaperInfo)(DWORD_PTR)m_lPaperCtrl.GetItemData(i);
@@ -1598,6 +1668,7 @@ LRESULT CPaperInputDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 // 			m_lPaperCtrl.SetItemText(i, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
 // 			break;
 
+			bFind = true;
 			m_lPaperCtrl.EnsureVisible(i, FALSE);
 
 			if (!pPaper->strSN.empty())
@@ -1638,6 +1709,39 @@ LRESULT CPaperInputDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		}
+	}
+	if (!bFind)
+	{
+		int nCount = m_lPaperCtrl.GetItemCount();
+		char szCount[10] = { 0 };
+		sprintf_s(szCount, "%d", pPaper->nIndex);	//nCount + 1
+		m_lPaperCtrl.InsertItem(nCount, NULL);
+		m_lPaperCtrl.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
+		m_lPaperCtrl.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+		if (!pPaper->strSN.empty())
+		{
+			m_lPaperCtrl.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+		}
+		else
+		{
+			if (pPaper->strRecogSN4Search.empty())
+			{
+				m_lPaperCtrl.SetItemText(nCount, 1, _T("考号识别为空"));
+			}
+			else
+			{
+				m_lPaperCtrl.SetItemText(nCount, 1, _T("考号识别不完全"));
+			}
+		}
+
+// 		if (pPaper->bModifyZKZH)
+// 			m_lPaperCtrl.SetItemColors(nCount, 1, RGB(0, 0, 255), RGB(255, 255, 255));
+// 		if (pPaper->nZkzhInBmkStatus != 1 && _bGetBmk_)	//不在报名库中、重号
+// 			m_lPaperCtrl.SetItemColors(nCount, 1, RGB(0, 255, 0), RGB(255, 255, 255));
+// 		if (pPaper->nPicsExchange != 0)	//试卷被调换顺序
+// 			m_lPaperCtrl.SetItemColors(nCount, 1, RGB(0, 255, 255), RGB(255, 255, 255));
+
+		m_lPaperCtrl.SetItemData(nCount, (DWORD_PTR)pPaper);
 	}
 	return TRUE;
 }
@@ -2086,7 +2190,7 @@ void CPaperInputDlg::ChkAdjustFirstPic(pST_PaperInfo pPaper)
 					sT = clock();
 					int nResult2 = omrObj.GetRightPicOrientation(mtPreviousPic, i, bDoubleScan);
 					eT1 = clock();
-					ssLog << "新图像" << pPic1->strPicName << "方向调整: " << nResult1 << "(1:不需要旋转，2：右转90, 3：左转90, 4：右转180). " << (int)(eT1 - sT) << "ms\n";
+					ssLog << "新图像" << pPic2->strPicName << "方向调整: " << nResult2 << "(1:不需要旋转，2：右转90, 3：左转90, 4：右转180). " << (int)(eT1 - sT) << "ms\n";
 
 					std::string strPicPath2 = pPic1->strPicPath;
 					if (nResult2 >= 2 && nResult2 <= 4)
@@ -2095,6 +2199,8 @@ void CPaperInputDlg::ChkAdjustFirstPic(pST_PaperInfo pPaper)
 						eT2 = clock();
 						ssLog << "新图像" << pPic2->strPicName << "写文件完成. " << (int)(eT2 - eT1) << "ms\n";
 					}
+
+					bPreviousFirstPic = false;	//这张试卷的正反已经判断完了，重置
 				}
 			}
 			else

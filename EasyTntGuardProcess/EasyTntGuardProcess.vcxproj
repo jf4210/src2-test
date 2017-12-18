@@ -113,6 +113,7 @@
     <ClInclude Include="EasyTntGuardProcess.h" />
     <ClInclude Include="EasyTntGuardProcessDlg.h" />
     <ClInclude Include="GPDef.h" />
+    <ClInclude Include="minidump.h" />
     <ClInclude Include="MyCodeConvert.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />

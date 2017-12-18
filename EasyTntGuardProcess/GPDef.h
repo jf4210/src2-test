@@ -44,6 +44,7 @@ extern BOOL		g_bShowUpdateMsg;		//是否通知扫描程序进行版本更新，如果第一次打开扫
 extern CMutex			g_mutex_VSFL;
 extern CMutex			g_mutex_LFM;
 extern CMutex			g_mutex_DFL;
+extern std::string		g_strFileVersion;
 
 typedef struct _FileInfo_
 {

@@ -1617,7 +1617,8 @@ bool COmrRecog::RecogWordOrientationByRectCount(cv::Mat& matSrc, int n, int nRot
 			{
 				char szLog[300] = { 0 };
 				sprintf_s(szLog, "RecogWordOrientationByRectCount error1. detail: %s\n", exc.msg);
-				g_pLogger->information(szLog);
+				strLog.append(szLog);
+				//g_pLogger->information(szLog);
 				TRACE(szLog);
 			}
 		}
@@ -1681,7 +1682,8 @@ bool COmrRecog::RecogWordOrientationByRectCount(cv::Mat& matSrc, int n, int nRot
 		{
 			char szLog[300] = { 0 };
 			sprintf_s(szLog, "RecogWordOrientationByRectCount error2. detail: %s\n", exc.msg);
-			g_pLogger->information(szLog);
+			strLog.append(szLog);
+			//g_pLogger->information(szLog);
 			TRACE(szLog);
 		}
 	}
