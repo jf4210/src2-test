@@ -61,7 +61,7 @@ std::string calcFileMd5(std::string strPath)
 		if (!istr)
 		{
 			string strLog = "calc MD5 failed 1: ";
-			strLog.append(strPath);
+			strLog.append(strgb);
 			g_Log.LogOutError(strLog);
 			std::cout << strLog << std::endl;
 			return strResult;
@@ -75,7 +75,7 @@ std::string calcFileMd5(std::string strPath)
 	catch (...)
 	{
 		string strLog = "calc MD5 failed 3: ";
-		strLog.append(strPath);
+		strLog.append(CMyCodeConvert::Utf8ToGb2312(strPath));
 		g_Log.LogOutError(strLog);
 		std::cout << strLog << std::endl;
 		return strResult;

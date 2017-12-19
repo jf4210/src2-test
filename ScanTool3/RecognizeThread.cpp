@@ -87,12 +87,24 @@ void CRecognizeThread::run()
 
 bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 {
+#if 1
+	clock_t sTime, eTime;
+	sTime = clock();
+
+	CAdjustPaperPic AdjustPaperObj;
+	AdjustPaperObj.AdjustScanPaperToModel(pScanPaperTask);
+	AdjustPaperObj.SaveScanPaperPic(pScanPaperTask);
+	eTime = clock();
+	std::stringstream ssLog;
+	ssLog << "试卷(S" << pScanPaperTask->nPaperID << ")正反、方向调整及保存完成. " << (int)(eTime - sTime) << "\n";
+	std::string strLog = AdjustPaperObj.GetLog();
+	g_pLogger->information(strLog + ssLog.str());
+#else
 	clock_t sTime, mT0, mT1, mT2, mT3, eTime;
 	sTime = clock();
 	std::stringstream ssLog;
 	ssLog << "检测试卷(S" << pScanPaperTask->nPaperID << ")的图像正反面:\n";
 
-	pST_PaperInfo pCurrentPaper = NULL;
 	if (pScanPaperTask->vecScanPic.size() <= 1)
 	{
 		ssLog << "这张试卷只有" << pScanPaperTask->vecScanPic.size() << "页图片, 不需要判断正反，直接判断旋转方向\n";
@@ -257,8 +269,9 @@ bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 	ssLog << "判断考生(S" << pScanPaperTask->nPaperID << ")正反面结束(" << (int)(eTime - sTime) << "ms)\n";
 	TRACE(ssLog.str().c_str());
 	g_pLogger->information(ssLog.str());
-
+#endif
 	//++添加试卷
+	pST_PaperInfo pCurrentPaper = NULL;
 	for (int i = 0; i < pScanPaperTask->vecScanPic.size(); i++)
 	{
 		pST_SCAN_PIC pScanPic = pScanPaperTask->vecScanPic[i];

@@ -2389,3 +2389,214 @@ std::string COmrRecog::GetRecogLog()
 	return _strLog;
 }
 
+//------------------------------------------------------
+CAdjustPaperPic::CAdjustPaperPic()
+{
+}
+
+CAdjustPaperPic::~CAdjustPaperPic()
+{
+}
+
+std::string CAdjustPaperPic::GetLog()
+{
+	return _strLog;
+}
+
+void CAdjustPaperPic::AdjustScanPaperToModel(pST_SCAN_PAPER pScanPaperTask)
+{
+	_strLog.clear();
+
+	clock_t sTime, mT0, mT1, mT2, mT3, eTime;
+	sTime = clock();
+	std::stringstream ssLog;
+	ssLog << "检测试卷(S" << pScanPaperTask->nPaperID << ")的图像正反面:\n";
+
+	if (pScanPaperTask->vecScanPic.size() <= 1)
+	{
+		ssLog << "这张试卷只有" << pScanPaperTask->vecScanPic.size() << "页图片, 不需要判断正反，直接判断旋转方向\n";
+		if (pScanPaperTask->vecScanPic.size())
+		{
+			pST_SCAN_PIC pScanPic = pScanPaperTask->vecScanPic[0];
+
+			clock_t sT, eT1, eT2;
+			sT = clock();
+			COmrRecog chkRotationObj;
+			int nResult1 = chkRotationObj.GetRightPicOrientation(pScanPic->mtPic, 0, pScanPaperTask->bDoubleScan);
+			eT1 = clock();
+			ssLog << "新图像" << pScanPic->strPicName << "方向调整: " << nResult1 << "(1:不需要旋转，2：右转90, 3：左转90, 4：右转180). " << (int)(eT1 - sT) << "ms\n";
+
+// 			imwrite(pScanPic->strPicPath, pScanPic->mtPic);
+// 			eT2 = clock();
+// 			ssLog << "新图像" << pScanPic->strPicName << "写文件完成. " << (int)(eT2 - eT1) << "ms\n";
+		}
+		else
+			ssLog << "错误：该试卷没有发现有扫描的图片信息\n";
+	}
+	else
+	{
+		//COmrRecog chkRotationObj;
+		bool bPreviousFirstPic = false;	//检测一张试卷时，上一页试卷是否为正面
+		pST_SCAN_PIC pPreviousPic = NULL;
+		for (int i = 0; i < pScanPaperTask->vecScanPic.size(); i++)
+		{
+			pST_SCAN_PIC pScanPic = pScanPaperTask->vecScanPic[i];
+
+			//一张试卷的前一页是正面，或者已经是最后一页单独的试卷
+			if (bPreviousFirstPic || (i == pScanPaperTask->vecScanPic.size() - 1 && floor(i / 2) * 2 == i))
+			{
+				if (bPreviousFirstPic)
+				{
+					bPreviousFirstPic = false;
+					ssLog << "图像" << pScanPic->strPicName << "属于这张试卷的第2页(考生总试卷的第" << i + 1 << "面)，不需要检测正反面，上一页试卷是正面，开始旋转方向判断\n";
+				}
+				else if (i == pScanPaperTask->vecScanPic.size() - 1 && floor(i / 2) * 2 == i)
+					ssLog << "这份试卷的最后一页" << pScanPic->strPicName << "(" << i + 1 << "/" << pScanPaperTask->vecScanPic.size() << "), 属于最后一张试卷只有单独一面的情况，不需要检测正反面. 开始旋转方向判断\n";
+
+				clock_t sT, eT1, eT2;
+				sT = clock();
+				int nResult1 = GetRightPicOrientation(pScanPic->mtPic, i, pScanPaperTask->bDoubleScan);
+				eT1 = clock();
+				ssLog << "新图像" << pScanPic->strPicName << "方向调整: " << nResult1 << "(1:不需要旋转，2：右转90, 3：左转90, 4：右转180). " << (int)(eT1 - sT) << "ms\n";
+
+// 				imwrite(pScanPic->strPicPath, pScanPic->mtPic);
+// 				eT2 = clock();
+// 				ssLog << "新图像" << pScanPic->strPicName << "写文件完成. " << (int)(eT2 - eT1) << "ms\n";
+				continue;
+			}
+
+			mT1 = clock();
+			bool bResult = IsFirstPic(i, pScanPic->mtPic, _pModel_);
+			ssLog << GetRecogLog();
+			mT2 = clock();
+
+			if (bResult)
+			{
+				int nFrontPage = floor(i / 2) * 2;
+				if (i % 2 == 0)
+				{
+					//第1页为正面，第2页可以不需要判断
+					pPreviousPic = pScanPic;
+					bPreviousFirstPic = true;
+					ssLog << "图像" << pScanPic->strPicName << "检测到属于这张试卷的正面, 下一页试卷不需要检测正反. 开始旋转方向判断. " << (int)(mT2 - mT1) << "ms\n";
+
+					clock_t sT, eT1, eT2;
+					sT = clock();
+					int nResult1 = GetRightPicOrientation(pScanPic->mtPic, i, pScanPaperTask->bDoubleScan);
+					eT1 = clock();
+					ssLog << "新图像" << pScanPic->strPicName << "方向调整: " << nResult1 << "(1:不需要旋转，2：右转90, 3：左转90, 4：右转180). " << (int)(eT1 - sT) << "ms\n";
+
+// 					imwrite(pScanPic->strPicPath, pScanPic->mtPic);
+// 					eT2 = clock();
+// 					ssLog << "新图像" << pScanPic->strPicName << "写文件完成. " << (int)(eT2 - eT1) << "ms\n";
+				}
+				else
+				{
+					//第2页为正面
+					ssLog << "图像" << pScanPic->strPicName << "检测到属于这张试卷的正面, 开始与上一页试卷" << pPreviousPic->strPicName << "调换. " << (int)(mT2 - mT1) << "ms\n";
+					//图像重命名
+					bool bPicsExchangeSucc = true;
+					pST_SCAN_PIC pPic1 = pScanPic;
+					pST_SCAN_PIC pPic2 = pPreviousPic;
+				#if 1	//在这里，原图像数据还没有写到文件，直接交换图像存储的路径
+					std::string strTmp = pPic1->strPicPath;
+					pPic1->strPicPath = pPic2->strPicPath;
+					pPic2->strPicPath = strTmp;
+				#else
+					try
+					{
+						Poco::File fPic1(pPic1->strPicPath);
+						fPic1.renameTo(pPic1->strPicPath + "_tmp");
+
+						Poco::File fPic2(pPic2->strPicPath);
+						fPic2.renameTo(pPic1->strPicPath);
+
+						fPic1.renameTo(pPic2->strPicPath);
+					}
+					catch (Poco::Exception &e)
+					{
+						bPicsExchangeSucc = false;
+						std::string strErr = e.displayText();
+
+						ssLog << "图像" << pScanPic->strPicName << "与" << pPreviousPic->strPicName << "调换重命名失败: " << strErr << "\n";
+					}
+				#endif
+					mT3 = clock();
+
+					if (bPicsExchangeSucc)
+					{
+						ssLog << "图像调换成功，开始重写原图. " << (int)(mT3 - mT2) << "ms\n";
+						clock_t sT, eT1, eT2;
+						sT = clock();
+
+						bool bDoubleScan = pScanPaperTask->bDoubleScan;	//使用此功能必须是双面扫描。	 m_pModel->vecPaperModel.size() % 2 == 0 ? true : false;
+						int nResult1 = GetRightPicOrientation(pScanPic->mtPic, nFrontPage, bDoubleScan);
+						eT1 = clock();
+						ssLog << "新图像" << pPic1->strPicName << "方向调整: " << nResult1 << "(1:不需要旋转，2：右转90, 3：左转90, 4：右转180). " << (int)(eT1 - sT) << "ms\n";
+
+						std::string strPicPath1 = pPic2->strPicPath;
+						//if (nResult1 >= 2 && nResult1 <= 4)
+						//{
+// 						imwrite(strPicPath1, pScanPic->mtPic);
+// 						eT2 = clock();
+// 						ssLog << "新图像" << pPic1->strPicName << "写文件完成. " << (int)(eT2 - eT1) << "ms\n";
+						//}
+
+						sT = clock();
+						int nResult2 = GetRightPicOrientation(pPreviousPic->mtPic, i, bDoubleScan);
+						eT1 = clock();
+						ssLog << "新图像" << pPic2->strPicName << "方向调整: " << nResult2 << "(1:不需要旋转，2：右转90, 3：左转90, 4：右转180). " << (int)(eT1 - sT) << "ms\n";
+
+						std::string strPicPath2 = pPic1->strPicPath;
+						//if (nResult2 >= 2 && nResult2 <= 4)
+						//{
+// 						imwrite(strPicPath2, pPreviousPic->mtPic);
+// 						eT2 = clock();
+// 						ssLog << "新图像" << pPic2->strPicName << "写文件完成. " << (int)(eT2 - eT1) << "ms\n";
+						//}
+
+						bPreviousFirstPic = false;	//这张试卷的正反已经判断完了，重置
+
+						//交换原始图像信息
+						cv::Mat mtTmp = pPreviousPic->mtPic;
+						pPreviousPic->mtPic = pScanPic->mtPic;
+						pScanPic->mtPic = mtTmp;
+						pScanPic->strPicPath = strPicPath1;
+						pPreviousPic->strPicPath = strPicPath2;
+					}
+				}
+			}
+			else
+			{
+				pPreviousPic = pScanPic;
+				bPreviousFirstPic = false;
+				ssLog << "判断" << pScanPic->strPicName << "属于这张试卷的正面失败，不能确定为正面. " << (int)(mT2 - mT1) << "ms\n";
+			}
+		}
+	}
+	eTime = clock();
+	ssLog << "判断试卷(S" << pScanPaperTask->nPaperID << ")正反面结束(" << (int)(eTime - sTime) << "ms)\n";
+	_strLog.append(ssLog.str());
+}
+
+void CAdjustPaperPic::SaveScanPaperPic(pST_SCAN_PAPER pScanPaperTask)
+{
+	clock_t sT, eT1, eT2;
+	sT = clock();
+	std::stringstream ssLog; 
+	ssLog << "开始保存试卷(S" << pScanPaperTask->nPaperID << ")到文件.\n";
+	#pragma omp parallel for
+	for (int i = 0; i < pScanPaperTask->vecScanPic.size(); i++)
+	{
+		eT1 = clock();
+		pST_SCAN_PIC pScanPic = pScanPaperTask->vecScanPic[i];
+		imwrite(pScanPic->strPicPath, pScanPic->mtPic);
+		eT2 = clock();
+		#pragma omp critical
+		{
+			ssLog << "\t新图像" << pScanPic->strPicName << "写文件完成. " << (int)(eT2 - eT1) << "ms\n";
+		}
+	}
+	ssLog << "试卷(S" << pScanPaperTask->nPaperID << ")保存每页图片数据完成. " << (int)(eT2 - sT) << "ms\n";
+	_strLog.append(ssLog.str());
+}

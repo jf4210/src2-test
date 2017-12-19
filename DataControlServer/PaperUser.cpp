@@ -90,7 +90,7 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 			ST_FILE_INFO AnswerInfo = *(ST_FILE_INFO*)(m_PacketBuf + HEAD_SIZE);
 			strcpy_s(m_szFileName, AnswerInfo.szFileName);
 			char szLog[300] = { 0 };
-			sprintf(szLog, "start recv file: %s", AnswerInfo.szFileName);
+			sprintf(szLog, "start recv file: %s(%.3fM)", AnswerInfo.szFileName, AnswerInfo.dwFileLen / (1024.0 * 1024.0));
 			g_Log.LogOut(szLog);
 			std::cout << szLog << std::endl;
 

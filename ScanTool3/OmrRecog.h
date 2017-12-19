@@ -47,12 +47,12 @@ protected:
 
 	bool	MatchingMethod(int method, cv::Mat& src, cv::Mat& templ, cv::Point& ptResult);	//模板匹配操作
 
-	int CheckOrientation4Fix(cv::Mat& matSrc, int n, std::string& strLog);	//定点模式下的方向
+	int		CheckOrientation4Fix(cv::Mat& matSrc, int n, std::string& strLog);	//定点模式下的方向
 	int		CheckOrientation4Head(cv::Mat& matSrc, int n);	//同步头模式下的方向
 	int		CheckOrientation4Word(cv::Mat& matSrc, int n);	//文字定位模式下的方向判断
 	//检查图像旋转方向，在获取图像后将模板图像进行旋转
 	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
-	int CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan, std::string& strLog);
+	int		CheckOrientation(cv::Mat& matSrc, int n, bool bDoubleScan, std::string& strLog);
 	//-------------------------------------------------------------
 
 
@@ -72,3 +72,16 @@ private:
 	std::string _strLog;
 };
 
+class CAdjustPaperPic : public COmrRecog
+{
+
+public:
+	CAdjustPaperPic();
+	~CAdjustPaperPic();
+
+	std::string GetLog();
+	void AdjustScanPaperToModel(pST_SCAN_PAPER pScanPaperTask);	//将扫描的图片调整到和模板一致(正反、方向)
+	void SaveScanPaperPic(pST_SCAN_PAPER pScanPaperTask);
+private:
+	std::string _strLog;
+};

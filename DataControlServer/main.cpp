@@ -240,6 +240,103 @@ protected:
 					g_lDecompressTask.push_back(pDecompressTask);
 					g_fmDecompressLock.unlock();
 				}
+				else if (p.getExtension() == "mod")
+				{
+					Poco::File filePath(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strModelSavePath));
+					if (!filePath.exists())
+						filePath.createDirectories();
+
+					std::string strFileName = CMyCodeConvert::Utf8ToGb2312(p.getFileName());
+					std::string strModelNewPath = SysSet.m_strModelSavePath + "\\";
+					strModelNewPath.append(strFileName);
+
+					try
+					{
+						std::string strUtf8OldPath = p.toString();
+						std::string strUtf8ModelPath = CMyCodeConvert::Gb2312ToUtf8(strModelNewPath);
+
+						Poco::File modelPicPath(strUtf8OldPath);
+						modelPicPath.moveTo(strUtf8ModelPath);
+
+						std::string strModelName = strFileName;
+						std::string strExamID;
+						std::string strSubjectID;
+						int nPos = 0;
+						int nOldPos = 0;
+						nPos = strModelName.find("_N_");
+						if (nPos != std::string::npos)	//新模板名称
+						{
+							int nPos2 = strModelName.find("_", nPos + 3);
+
+							strExamID = strModelName.substr(nPos + 3, nPos2 - nPos - 3);
+							nOldPos = nPos2;
+							nPos2 = strModelName.find(".", nPos2 + 1);
+							strSubjectID = strModelName.substr(nOldPos + 1, nPos2 - nOldPos - 1);
+						}
+						else
+						{
+							nPos = strModelName.find("_");
+							strExamID = strModelName.substr(0, nPos);
+							nOldPos = nPos;
+							nPos = strModelName.find(".", nPos + 1);
+							strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+						}
+
+						std::string strLog;
+
+						pMODELINFO pModelInfo = NULL;
+						char szIndex[50] = { 0 };
+						sprintf(szIndex, "%s_%s", strExamID.c_str(), strSubjectID.c_str());
+						MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
+						if (itFind == _mapModel_.end())
+						{
+							pModelInfo = new MODELINFO;
+							pModelInfo->nExamID = atoi(strExamID.c_str());
+							pModelInfo->nSubjectID = atoi(strSubjectID.c_str());
+							pModelInfo->strName = strFileName;
+							pModelInfo->strPath = strModelNewPath;
+							pModelInfo->strMd5 = calcFileMd5(strUtf8ModelPath);
+
+							_mapModelLock_.lock();
+							_mapModel_.insert(MAP_MODEL::value_type(szIndex, pModelInfo));
+							_mapModelLock_.unlock();
+
+							strLog = "get a new modelinfo. modelName = ";
+							strLog.append(strFileName);
+						}
+						else
+						{
+							pModelInfo = itFind->second;
+							pModelInfo->strName = strFileName;
+							pModelInfo->strPath = strModelNewPath;
+							pModelInfo->strMd5 = calcFileMd5(strUtf8ModelPath);
+
+							strLog = "modify modelinfo. modelName = ";
+							strLog.append(strFileName);
+						}
+						g_Log.LogOut(strLog);
+						std::cout << strLog << std::endl;
+
+						//++模板上传完成后，需要解压，向zimg提交图片给后端
+						pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+						pDecompressTask->nType = 2;
+						pDecompressTask->strFilePath = strModelNewPath;
+						pDecompressTask->strFileBaseName = strFileName;
+						pDecompressTask->strFileBaseName = pDecompressTask->strFileBaseName.substr(0, nPos);	//pDecompressTask->strFileBaseName.length() - 4
+						pDecompressTask->strSrcFileName = strFileName;
+						g_fmDecompressLock.lock();
+						g_lDecompressTask.push_back(pDecompressTask);
+						g_fmDecompressLock.unlock();
+						//--
+					}
+					catch (Poco::Exception &exc)
+					{
+						std::string strLog;
+						strLog.append("model move error: " + exc.displayText() + "\tmodelPath: ");
+						strLog.append(CMyCodeConvert::Utf8ToGb2312(p.toString()));
+						g_Log.LogOutError(strLog);
+					}
+				}
 			}
 			it++;
 		}
