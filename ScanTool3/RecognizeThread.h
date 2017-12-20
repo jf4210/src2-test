@@ -36,6 +36,7 @@ public:
 
 	void InitCharacterRecog();		//文字识别初始化
 
+	bool RecogPagination(pST_PaperInfo  pPaper, pMODELINFO pModelInfo);				//识别页码
 	bool RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo);	//识别文字
 	bool RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo);		//识别水平同步头
 	bool RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo);		//识别水平同步头
@@ -60,6 +61,8 @@ public:
 	int calcOmrGrayDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemDiff);
 
 	void HandleWithErrPaper(pST_PaperInfo pPaper);	//处理识别错误的试卷
+
+	bool RecogFixCP2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, RECTLIST& lFixResult);	//识别给定页面的定点
 
 	Poco::Event		eExit;
 private:

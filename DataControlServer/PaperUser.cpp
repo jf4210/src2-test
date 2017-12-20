@@ -176,8 +176,15 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 						if (!SendResult(NOTIFY_RECVANSWERFIN, RESULT_SUCCESS))
 							return;
 						m_end = clock();
+
+						float fSpeed = (m_dwTotalFileSize / 1024.0) / ((m_end - m_start) / 1000.0);
+						char szSpeed[50] = { 0 };
+						if (fSpeed > 1024)
+							sprintf_s(szSpeed, "%.3fMB/s", fSpeed / 1024);
+						else
+							sprintf_s(szSpeed, "%.3fKB/s", fSpeed);
 						char szLog[300] = { 0 };
-						sprintf(szLog, "recv file: %s completed. time = %.2f, transmissionSpeed = %.2fKB/s", m_szFilePath, (m_end - m_start)/1000.0, m_dwTotalFileSize / ((m_end - m_start) / 1000.0));
+						sprintf(szLog, "recv file: %s completed. time = %.2f, transmissionSpeed = %s", m_szFilePath, (m_end - m_start)/1000.0, szSpeed);
 						g_Log.LogOut(szLog);
 						std::cout << szLog << std::endl;
 

@@ -898,7 +898,7 @@ inline bool CRecognizeThread::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic,
 	{
 		char szLog[300] = { 0 };
 		sprintf_s(szLog, "CRecognizeThread::Recog error. detail: %s\n", exc.msg);
-		g_pLogger->information(szLog);
+		//g_pLogger->information(szLog);
 		TRACE(szLog);
 	}
 	
@@ -4333,6 +4333,40 @@ void CRecognizeThread::InitCharacterRecog()
 #endif
 }
 
+bool CRecognizeThread::RecogPagination(pST_PaperInfo  pPaper, pMODELINFO pModelInfo)
+{
+	TRACE("识别页码\n");
+	clock_t start, end;
+	start = clock();
+	std::string strLog;
+	strLog = Poco::format("试卷S%d\n", pPaper->nIndex);
+
+	bool bResult = true;
+	if (pModelInfo->pModel->nUsePagination == 0)
+		return true;
+
+	if (pModelInfo->pModel->vecPaperModel.size() <= 2)	//模板图片数量 <= 2，必须用计算这张试卷属于模板的第几张
+		return true;
+
+	//识别每页的定点，然后根据透视变换反向计算实际页码点的位置
+
+
+
+	if (!bResult)
+	{
+		//(static_cast<pST_PaperInfo>(pPic->pPaper))->bRecogCourse = false;
+		char szLog[MAX_PATH] = { 0 };
+		//sprintf_s(szLog, "识别页码失败, 图片名: %s\n", pPic->strPicName.c_str());
+		strLog.append(szLog);
+		TRACE(szLog);
+	}
+	end = clock();
+	std::string strTime = Poco::format("识别页码校验点时间: %dms\n", (int)(end - start));
+	strLog.append(strTime);
+	g_pLogger->information(strLog);
+	return bResult;
+}
+
 bool CRecognizeThread::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, OMR_RESULT& omrResult)
 {
 	std::vector<int> vecVal_AnswerSuer;
@@ -4620,4 +4654,222 @@ void CRecognizeThread::HandleWithErrPaper(pST_PaperInfo pPaper)
 	pPapers->fmlIssue.unlock();
 
 	(static_cast<CDialog*>(pPaper->pSrcDlg))->SendMessage(MSG_ERR_RECOG, (WPARAM)pPaper, (LPARAM)pPapers);		//PostMessageW
+}
+
+bool CRecognizeThread::RecogFixCP2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, RECTLIST& lFixResult)
+{
+	bool bResult = true;
+
+	clock_t start, end;
+	start = clock();
+	std::string strLog;
+	strLog = Poco::format("开始识别页面%d的定点，图片%s\n", nPic, pPic->strPicName);
+
+	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.begin();
+	for (int i = 0; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.end(); i++, itCP++)
+	{
+		RECTINFO rc = *itCP;
+
+		std::vector<Rect>RectCompList;
+		try
+		{
+			float fModelW = pModelInfo->pModel->vecPaperModel[nPic]->nPicW;
+			float fModelH = pModelInfo->pModel->vecPaperModel[nPic]->nPicH;
+			int nRealW = matCompPic.cols;
+			int nRealH = matCompPic.rows;
+
+			cv::Rect rtTmp;
+			rtTmp.x = rc.rt.x * nRealW / fModelW;
+			rtTmp.y = rc.rt.y * nRealH / fModelH;
+			rtTmp.width = rc.rt.width * nRealW / fModelW;
+			rtTmp.height = rc.rt.height * nRealH / fModelH;
+
+			if (rtTmp.x < 0) rtTmp.x = 0;
+			if (rtTmp.y < 0) rtTmp.y = 0;
+			if (rtTmp.br().x > matCompPic.cols)
+				rtTmp.width = matCompPic.cols - rtTmp.x;
+			if (rtTmp.br().y > matCompPic.rows)
+				rtTmp.height = matCompPic.rows - rtTmp.y;
+
+			cv::Mat matCompRoi;
+			matCompRoi = matCompPic(rtTmp);
+
+			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+			GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
+			SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
+
+			int nRealThreshold = 150;
+			RECTLIST::iterator itFix = pModelInfo->pModel->vecPaperModel[nPic]->lFix.begin();
+			for (int j = 0; itFix != pModelInfo->pModel->vecPaperModel[nPic]->lFix.end(); j++, itFix++)
+			{
+				if (j == i)
+				{
+					nRealThreshold = itFix->nThresholdValue;
+					break;
+				}
+			}
+
+			const int channels[1] = { 0 };
+			const int histSize[1] = { nRealThreshold };	//150
+			float hranges[2] = { 0, nRealThreshold };	//150
+			const float* ranges[1];
+			ranges[0] = hranges;
+			MatND hist;
+			calcHist(&matCompRoi, 1, channels, Mat(), hist, 1, histSize, ranges);	//histSize, ranges
+
+			int nSum = 0;
+			int nDevSum = 0;
+			int nCount = 0;
+			for (int h = 0; h < hist.rows; h++)	//histSize
+			{
+				float binVal = hist.at<float>(h);
+
+				nCount += static_cast<int>(binVal);
+				nSum += h*binVal;
+			}
+			int nThreshold = nRealThreshold;		//150
+			if (nCount > 0)
+			{
+				float fMean = (float)nSum / nCount;		//均值
+
+				for (int h = 0; h < hist.rows; h++)	//histSize
+				{
+					float binVal = hist.at<float>(h);
+
+					nDevSum += pow(h - fMean, 2)*binVal;
+				}
+				float fStdev = sqrt(nDevSum / nCount);
+				nThreshold = fMean + 2 * fStdev;
+				if (fStdev > fMean)
+					nThreshold = fMean + fStdev;
+			}
+
+			if (nThreshold > nRealThreshold) nThreshold = nRealThreshold;	//150
+			threshold(matCompRoi, matCompRoi, nThreshold, 255, THRESH_BINARY);
+
+			//去除干扰信息，先膨胀后腐蚀还原, 可去除一些线条干扰
+			Mat element_Anticlutter = getStructuringElement(MORPH_RECT, Size(_nAnticlutterKernel_, _nAnticlutterKernel_));	//Size(6, 6)	普通空白框可识别		Size(3, 3)
+			dilate(matCompRoi, matCompRoi, element_Anticlutter);
+			erode(matCompRoi, matCompRoi, element_Anticlutter);
+
+			cv::Canny(matCompRoi, matCompRoi, 0, rc.nCannyKernel, 5);	//_nCannyKernel_
+			Mat element = getStructuringElement(MORPH_RECT, Size(rc.nDilateKernel, rc.nDilateKernel));	//Size(6, 6)	普通空白框可识别	Size(_nDilateKernel_, _nDilateKernel_)
+			dilate(matCompRoi, matCompRoi, element);
+
+			IplImage ipl_img(matCompRoi);
+
+			//the parm. for cvFindContours  
+			CvMemStorage* storage = cvCreateMemStorage(0);
+			CvSeq* contour = 0;
+
+			//提取轮廓  
+			cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+			for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
+			{
+				CvRect aRect = cvBoundingRect(contour, 0);
+				Rect rm = aRect;
+				rm = rm + rtTmp.tl();	// rc.rt.tl();
+				RectCompList.push_back(rm);
+			}
+			cvReleaseMemStorage(&storage);
+		}
+		catch (cv::Exception& exc)
+		{
+			std::string strLog2 = Poco::format("识别定点(%d)异常: %s\n", i, exc.msg.c_str());
+			strLog.append(strLog2);
+			TRACE(strLog2.c_str());
+
+			if (g_nOperatingMode == 2)
+			{
+				bResult = false;						//找到问题点
+				break;
+			}
+		}
+
+		std::string strLog2;	//临时日志，记录矩形具体识别结果
+		bool bFindRect = false;
+		if (RectCompList.size() == 0)
+			bFindRect = true;
+		else
+		{
+			std::sort(RectCompList.begin(), RectCompList.end(), SortByArea);
+			Rect& rtFix = RectCompList[0];
+
+			RECTINFO rcFix;
+			RECTLIST::iterator itFix = pModelInfo->pModel->vecPaperModel[nPic]->lFix.begin();
+			for (int j = 0; itFix != pModelInfo->pModel->vecPaperModel[nPic]->lFix.end(); j++, itFix++)
+			{
+				if (j == i)
+				{
+					rcFix = *itFix;
+					break;
+				}
+			}
+
+			bool bOnlyOne = false;		//只有一个矩形，需要判断面积和灰度，但是比例可以降低
+			bool bFind = false;
+
+			//通过灰度值来判断
+			for (int k = 0; k < RectCompList.size(); k++)
+			{
+				RECTINFO rcTmp = rcFix;
+				rcTmp.rt = RectCompList[k];
+
+				//根据定点左上点与右下点位置判断是否在试卷的边线上，如果在，则可能是折角或者边上有损坏
+				cv::Point pt1 = RectCompList[k].tl();
+				cv::Point pt2 = RectCompList[k].br();
+				int nDiff = 4;	//与图像边界的距离间隔在这个值之内，认为属于边界线上
+				if (pt1.x < nDiff || pt1.y < nDiff || matCompPic.cols - pt2.x < nDiff || matCompPic.rows - pt2.y < nDiff)
+				{
+					TRACE("矩形(%d,%d,%d,%d)位置距离边线太近，可能是折角或损坏\n", RectCompList[k].x, RectCompList[k].y, RectCompList[k].width, RectCompList[k].height);
+					continue;
+				}
+
+				Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
+				float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
+				float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
+				float fWper = (float)rcTmp.rt.width / rcFix.rt.width;			//查找的矩形的宽度与模板对应定点的宽度之比
+				float fHper = (float)rcTmp.rt.height / rcFix.rt.height;			//查找的矩形的宽度与模板对应定点的高度之比
+				std::string strTmpLog = Poco::format("第%d个矩形:area=%f, Density=%f\t", k, (double)fArea, (double)fDensity);
+				strLog2.append(strTmpLog);
+				if ((bOnlyOne && fArea > 0.4 && fArea < 2.5 && fDensity > rcTmp.fStandardValuePercent * 0.9 && fWper < 2.0 && fWper > 0.4 && fHper < 2.0 && fHper > 0.4) || \
+					(fArea > 0.5 && fArea < 2.0 && fDensity > rcTmp.fStandardValuePercent && fWper < 2.0 && fWper > 0.4 && fHper < 2.0 && fHper > 0.4))	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
+				{
+					bFind = true;
+					rtFix = RectCompList[k];
+					break;
+				}
+			}
+
+			if (!bFind)
+				bFindRect = true;
+			else
+			{
+				RECTINFO rcFixInfo = rc;
+				rcFixInfo.nTH = i;			//这是属于模板上定点列表的第几个
+				rcFixInfo.rt = rtFix;
+				lFixResult.push_back(rcFixInfo);
+				TRACE("定点矩形: (%d,%d,%d,%d)\n", rtFix.x, rtFix.y, rtFix.width, rtFix.height);
+			}
+		}
+		if (bFindRect)
+		{
+			std::string strLog3 = Poco::format("识别定点(%d)失败 -- %s\n", i, strLog2);
+			strLog.append(strLog3);
+			bResult = false;						//找到问题点
+		}
+	}
+	if (!bResult)
+	{
+		char szLog[MAX_PATH] = { 0 };
+		sprintf_s(szLog, "识别页面%d的定点失败, 图片名: %s\n", nPic, pPic->strPicName.c_str());
+		strLog.append(szLog);
+	}
+	end = clock();
+	std::string strTime = Poco::format("识别页面%d的定点时间: %dms\n", nPic, (int)(end - start));
+	strLog.append(strTime);
+	
+	return bResult;
 }
