@@ -5764,6 +5764,56 @@ void CMakeModelDlg::AddRecogRectToList()
 		if (dlg.DoModal() != IDOK)
 			return;
 
+		//检查是否已经添加过题号
+		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.size(); i++)
+		{
+			if (m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].nTH == dlg.m_nStartTH)
+			{
+				std::string strInfo = Poco::format("检测到已经添加过题号%d，请不要重复添加", dlg.m_nStartTH);
+				CNewMessageBox dlg;
+				dlg.setShowInfo(2, 1, strInfo);
+				dlg.DoModal();
+				return;
+			}
+		}
+		//检测矩形是否和现有选项重叠
+		bool bOverlap = false;
+		std::string strTmpLog;
+		for (int i = 0; i < m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.size(); i++)
+		{
+			RECTLIST::iterator itOmr = m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].lSelAnswer.begin();
+			for (; itOmr != m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2[i].lSelAnswer.end(); itOmr++)
+			{
+				cv::Point pt1 = itOmr->rt.tl();
+				cv::Point pt2 = itOmr->rt.br();
+				cv::Point pt3 = cv::Point(itOmr->rt.x + itOmr->rt.width, itOmr->rt.y);
+				cv::Point pt4 = cv::Point(itOmr->rt.x, itOmr->rt.y + itOmr->rt.height);
+				for (int j = 0; j < m_vecTmp.size(); j++)
+				{
+					cv::Point pt5 = m_vecTmp[j].rt.tl();
+					cv::Point pt6 = m_vecTmp[j].rt.br();
+					cv::Point pt7 = cv::Point(m_vecTmp[j].rt.x + m_vecTmp[j].rt.width, m_vecTmp[j].rt.y);
+					cv::Point pt8 = cv::Point(m_vecTmp[j].rt.x, m_vecTmp[j].rt.y + m_vecTmp[j].rt.height);
+					if (m_vecTmp[j].rt.contains(pt1) || m_vecTmp[j].rt.contains(pt2) || m_vecTmp[j].rt.contains(pt3) || m_vecTmp[j].rt.contains(pt4) \
+						|| itOmr->rt.contains(pt5) || itOmr->rt.contains(pt6) || itOmr->rt.contains(pt7) || itOmr->rt.contains(pt8))
+					{
+						strTmpLog = Poco::format("检测到新框的%d_%c矩形区与现有选项%d_%c有重叠，请检查", m_vecTmp[j].nTH, (char)(m_vecTmp[j].nAnswer + 65), itOmr->nTH, (char)(itOmr->nAnswer + 65));
+						bOverlap = true;
+						break;
+					}
+				}
+				if(bOverlap) break;
+			}
+			if(bOverlap) break;
+		}
+		if (bOverlap)
+		{
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, strTmpLog);
+			dlg.DoModal();
+			return;
+		}
+
 		m_nStartTH = dlg.m_nStartTH;
 	}
 

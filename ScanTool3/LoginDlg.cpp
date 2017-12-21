@@ -191,6 +191,18 @@ void CLoginDlg::OnBnClickedBtnLogin()
 	UpdateData(TRUE);
 	USES_CONVERSION;
 
+	//检查账号的非法字符
+ 	std::string strChkUserName = T2A(m_strUserName);
+	if (strChkUserName.find('\\') != std::string::npos || strChkUserName.find('\/') != std::string::npos || strChkUserName.find('\:') != std::string::npos || strChkUserName.find('\*') != std::string::npos
+		|| strChkUserName.find('\?') != std::string::npos || strChkUserName.find('\"') != std::string::npos || strChkUserName.find('\<') != std::string::npos || strChkUserName.find('\>') != std::string::npos
+		|| strChkUserName.find('\|') != std::string::npos)
+	{
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "用户名中含有非法字符或者隐藏字符, 请仔细检查！");
+		dlg.DoModal();
+		return;
+	}
+
 	if (m_bRecordPwd)
 	{
 		char szRet[50] = { 0 };

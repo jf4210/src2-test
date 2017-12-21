@@ -186,12 +186,12 @@ std::string CPapersMgr::AddPapersCompress(pPAPERSINFO pPapers)
 	}
 
 	//临时目录改名，以便压缩时继续扫描
+	char szCompressDirPath[500] = { 0 };
 	std::string strSrcPicDirPath;
 	try
 	{
 		Poco::File tmpPath(CMyCodeConvert::Gb2312ToUtf8(_strCurrSavePath));
 
-		char szCompressDirPath[500] = { 0 };
 		if (_pCurrExam->nModel == 1)	//手阅不用密码
 			sprintf_s(szCompressDirPath, "%sPaper\\%s_ToCompress_UnPwd", T2A(g_strCurrentPath), szZipBaseName);
 		else
@@ -205,7 +205,9 @@ std::string CPapersMgr::AddPapersCompress(pPAPERSINFO pPapers)
 	catch (Poco::Exception& exc)
 	{
 		std::string strLog = "临时文件夹重命名失败(" + exc.message() + "): ";
-		strLog.append(_strCurrSavePath);
+		strLog.append("原文件夹(" + _strCurrSavePath + "), 要命名文件夹(");
+		strLog.append(szCompressDirPath);
+		strLog.append(")");
 		g_pLogger->information(strLog);
 		strSrcPicDirPath = _strCurrSavePath;
 

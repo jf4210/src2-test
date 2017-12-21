@@ -51,6 +51,13 @@ bool CZipObj::ZipFile(CString strSrcPath, CString strDstPath, CString strExtName
 	else
 		hz = CreateZip(zipName, NULL);
 
+	if (!hz)
+	{
+		std::string strErr = Poco::format("创建压缩文件(%s)失败。", std::string(T2A(zipName)));	//T2A(strSrcPath)
+		RecordLog(strErr);
+		return false;
+	}
+
 	Poco::DirectoryIterator it(strUtf8ModelPath);	//strModelPath
 	Poco::DirectoryIterator end;
 	while (it != end)

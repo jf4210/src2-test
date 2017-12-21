@@ -407,13 +407,16 @@ void CShowPapersDlg::ShowOmrTh(pST_PaperInfo pPaper, int nTh)
 		fMeanGrayDiff = fMeanGrayDiff / vecOmrItemGrayDiff.size();
 
 		float fMeanModelGrayDiff = 0.0;
+		float fMeanGray = 0.0;
 		for (int i = 0; i < vecItemsGrayDesc.size(); i++)
 		{
 			fMeanModelGrayDiff += (vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray);
+			fMeanGray += vecItemsGrayDesc[i]->fRealMeanGray;
 		}
 		fMeanModelGrayDiff = fMeanModelGrayDiff / vecItemsGrayDesc.size();
-		char szTmp1[80] = { 0 };
-		sprintf_s(szTmp1, "平均灰度差:%.3f, 与模板的平均灰度差:%.3f", fMeanGrayDiff, fMeanModelGrayDiff);
+		fMeanGray = fMeanGray / vecItemsGrayDesc.size();
+		char szTmp1[150] = { 0 };
+		sprintf_s(szTmp1, "平均灰度: %.3f, 平均灰度差:%.3f, 与模板的平均灰度差:%.3f", fMeanGray, fMeanGrayDiff, fMeanModelGrayDiff);
 		strShowInfo.append(szTmp1);
 		strShowInfo.append("\r\n灰度选中[");
 		float fThreld = 0.0;

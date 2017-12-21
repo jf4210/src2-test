@@ -270,6 +270,11 @@ bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 	TRACE(ssLog.str().c_str());
 	g_pLogger->information(ssLog.str());
 #endif
+
+	//识别页面
+	RecogPagination(pScanPaperTask, _pModel_);
+
+
 	//++添加试卷
 	pST_PaperInfo pCurrentPaper = NULL;
 	for (int i = 0; i < pScanPaperTask->vecScanPic.size(); i++)
@@ -4333,23 +4338,89 @@ void CRecognizeThread::InitCharacterRecog()
 #endif
 }
 
-bool CRecognizeThread::RecogPagination(pST_PaperInfo  pPaper, pMODELINFO pModelInfo)
+bool CRecognizeThread::RecogPagination(pST_SCAN_PAPER pScanPaperTask, pMODEL pModel)
 {
 	TRACE("识别页码\n");
 	clock_t start, end;
 	start = clock();
 	std::string strLog;
-	strLog = Poco::format("试卷S%d\n", pPaper->nIndex);
+	strLog = Poco::format("试卷S%d\n", pScanPaperTask->nPaperID);
 
 	bool bResult = true;
-	if (pModelInfo->pModel->nUsePagination == 0)
+	if (pModel->nUsePagination == 0)
 		return true;
 
-	if (pModelInfo->pModel->vecPaperModel.size() <= 2)	//模板图片数量 <= 2，必须用计算这张试卷属于模板的第几张
-		return true;
+// 	if (pModel->vecPaperModel.size() <= 2)	//模板图片数量 <= 2，必须用计算这张试卷属于模板的第几张
+// 		return true;
 
 	//识别每页的定点，然后根据透视变换反向计算实际页码点的位置
+	for(int i = 0; i < pScanPaperTask->vecScanPic.size(); i++)
+	{
+		pST_SCAN_PIC pScanPic = pScanPaperTask->vecScanPic[i];
+		for (int j = 0; j < pModel->vecPaperModel.size(); j++)
+		{
+			RECTLIST lFixResult;
+			RecogFixCP2(i, pScanPic->mtPic, NULL, pModel, lFixResult);
+			
+			//透视变换
+			std::vector<cv::Point2f> vecFixPt;
+			RECTLIST::iterator itCP = pModel->vecPaperModel[j]->lFix.begin();
+			for (; itCP != pModel->vecPaperModel[j]->lFix.end(); itCP++)
+			{
+				cv::Point2f pt;
+				pt.x = itCP->rt.x + itCP->rt.width / 2;
+				pt.y = itCP->rt.y + itCP->rt.height / 2;
+				vecFixPt.push_back(pt);
+			}
+			std::vector<cv::Point2f> vecFixNewPt;
+			RECTLIST::iterator itCP2 = lFixResult.begin();
+			for (; itCP2 != lFixResult.end(); itCP2++)
+			{
+				cv::Point2f pt;
+				pt.x = itCP2->rt.x + itCP2->rt.width / 2;
+				pt.y = itCP2->rt.y + itCP2->rt.height / 2;
+				vecFixNewPt.push_back(pt);
+			}
 
+			cv::Point2f srcTri[4];
+			cv::Point2f dstTri[4];
+			cv::Mat warp_mat(3, 3, CV_32FC1);		//warp_mat(2, 3, CV_32FC1);
+			cv::Mat warp_dst, warp_rotate_dst;
+			for (int i = 0; i < vecFixPt.size(); i++)
+			{
+				srcTri[i] = vecFixNewPt[i];
+				dstTri[i] = vecFixPt[i];
+			}
+
+			warp_mat = cv::getPerspectiveTransform(srcTri, dstTri);
+			//cv::warpPerspective(pScanPic->mtPic, pScanPic->mtPic, warp_mat, pScanPic->mtPic.size(), 1, 0, cv::Scalar(255, 255, 255));
+			//反向计算模板上点对应的实际图像的点
+			cv::Mat warp_mat_inv = warp_mat.inv();	//逆矩阵
+
+			std::vector<Point2f> vecPoint;
+			RECTLIST::iterator itPage = pModel->vecPaperModel[j]->lPagination.begin();
+			for(int k = 0; itPage != pModel->vecPaperModel[j]->lPagination.end(); itPage++, k++)
+			{
+				Point2f pt1 = (*itPage).rt.tl();
+				Point2f pt2 = (*itPage).rt.br();
+				Point2f p1 = Point2f(0, 0);
+				Point2f p2 = Point2f(0, 0);
+				p1.x = warp_mat_inv.ptr<double>(0)[0] * pt1.x + warp_mat_inv.ptr<double>(0)[1] * pt1.y + warp_mat_inv.ptr<double>(0)[2];
+				p1.y = warp_mat_inv.ptr<double>(1)[0] * pt1.x + warp_mat_inv.ptr<double>(1)[1] * pt1.y + warp_mat_inv.ptr<double>(1)[2];
+
+				p2.x = warp_mat_inv.ptr<double>(0)[0] * pt2.x + warp_mat_inv.ptr<double>(0)[1] * pt2.y + warp_mat_inv.ptr<double>(0)[2];
+				p2.y = warp_mat_inv.ptr<double>(1)[0] * pt2.x + warp_mat_inv.ptr<double>(1)[1] * pt2.y + warp_mat_inv.ptr<double>(1)[2];
+				vecPoint.push_back(pt1);
+				vecPoint.push_back(pt2);
+			}
+			//标出关键点
+			for (int m = 0; m < vecPoint.size(); m++)
+			{
+				circle(pScanPic->mtPic, vecPoint[m], 2, Scalar(0, 0, 255));
+			}
+		}
+
+	}
 
 
 	if (!bResult)
@@ -4656,25 +4727,25 @@ void CRecognizeThread::HandleWithErrPaper(pST_PaperInfo pPaper)
 	(static_cast<CDialog*>(pPaper->pSrcDlg))->SendMessage(MSG_ERR_RECOG, (WPARAM)pPaper, (LPARAM)pPapers);		//PostMessageW
 }
 
-bool CRecognizeThread::RecogFixCP2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, RECTLIST& lFixResult)
+bool CRecognizeThread::RecogFixCP2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel, RECTLIST& lFixResult)
 {
 	bool bResult = true;
 
 	clock_t start, end;
 	start = clock();
 	std::string strLog;
-	strLog = Poco::format("开始识别页面%d的定点，图片%s\n", nPic, pPic->strPicName);
+//	strLog = Poco::format("开始识别页面%d的定点，图片%s\n", nPic, pPic->strPicName);
 
-	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.begin();
-	for (int i = 0; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.end(); i++, itCP++)
+	RECTLIST::iterator itCP = pModel->vecPaperModel[nPic]->lSelFixRoi.begin();
+	for (int i = 0; itCP != pModel->vecPaperModel[nPic]->lSelFixRoi.end(); i++, itCP++)
 	{
 		RECTINFO rc = *itCP;
 
 		std::vector<Rect>RectCompList;
 		try
 		{
-			float fModelW = pModelInfo->pModel->vecPaperModel[nPic]->nPicW;
-			float fModelH = pModelInfo->pModel->vecPaperModel[nPic]->nPicH;
+			float fModelW = pModel->vecPaperModel[nPic]->nPicW;
+			float fModelH = pModel->vecPaperModel[nPic]->nPicH;
 			int nRealW = matCompPic.cols;
 			int nRealH = matCompPic.rows;
 
@@ -4700,8 +4771,8 @@ bool CRecognizeThread::RecogFixCP2(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
 
 			int nRealThreshold = 150;
-			RECTLIST::iterator itFix = pModelInfo->pModel->vecPaperModel[nPic]->lFix.begin();
-			for (int j = 0; itFix != pModelInfo->pModel->vecPaperModel[nPic]->lFix.end(); j++, itFix++)
+			RECTLIST::iterator itFix = pModel->vecPaperModel[nPic]->lFix.begin();
+			for (int j = 0; itFix != pModel->vecPaperModel[nPic]->lFix.end(); j++, itFix++)
 			{
 				if (j == i)
 				{
@@ -4781,11 +4852,11 @@ bool CRecognizeThread::RecogFixCP2(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			strLog.append(strLog2);
 			TRACE(strLog2.c_str());
 
-			if (g_nOperatingMode == 2)
-			{
-				bResult = false;						//找到问题点
-				break;
-			}
+// 			if (g_nOperatingMode == 2)
+// 			{
+// 				bResult = false;						//找到问题点
+// 				break;
+// 			}
 		}
 
 		std::string strLog2;	//临时日志，记录矩形具体识别结果
@@ -4798,8 +4869,8 @@ bool CRecognizeThread::RecogFixCP2(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			Rect& rtFix = RectCompList[0];
 
 			RECTINFO rcFix;
-			RECTLIST::iterator itFix = pModelInfo->pModel->vecPaperModel[nPic]->lFix.begin();
-			for (int j = 0; itFix != pModelInfo->pModel->vecPaperModel[nPic]->lFix.end(); j++, itFix++)
+			RECTLIST::iterator itFix = pModel->vecPaperModel[nPic]->lFix.begin();
+			for (int j = 0; itFix != pModel->vecPaperModel[nPic]->lFix.end(); j++, itFix++)
 			{
 				if (j == i)
 				{
@@ -4827,7 +4898,7 @@ bool CRecognizeThread::RecogFixCP2(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 					continue;
 				}
 
-				Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
+				Recog(nPic, rcTmp, matCompPic, pPic, NULL);
 				float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
 				float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
 				float fWper = (float)rcTmp.rt.width / rcFix.rt.width;			//查找的矩形的宽度与模板对应定点的宽度之比

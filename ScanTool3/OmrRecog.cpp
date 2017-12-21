@@ -2600,3 +2600,10 @@ void CAdjustPaperPic::SaveScanPaperPic(pST_SCAN_PAPER pScanPaperTask)
 	ssLog << "试卷(S" << pScanPaperTask->nPaperID << ")保存每页图片数据完成. " << (int)(eT2 - sT) << "ms\n";
 	_strLog.append(ssLog.str());
 }
+
+bool CAdjustPaperPic::RecogPanination(pST_SCAN_PAPER pScanPaperTask)
+{
+	bool bResult = false;
+
+	return bResult;
+}

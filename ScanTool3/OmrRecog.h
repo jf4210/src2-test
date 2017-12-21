@@ -82,6 +82,7 @@ public:
 	std::string GetLog();
 	void AdjustScanPaperToModel(pST_SCAN_PAPER pScanPaperTask);	//将扫描的图片调整到和模板一致(正反、方向)
 	void SaveScanPaperPic(pST_SCAN_PAPER pScanPaperTask);
+	bool RecogPanination(pST_SCAN_PAPER pScanPaperTask);
 private:
 	std::string _strLog;
 };
