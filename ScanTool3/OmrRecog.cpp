@@ -406,6 +406,116 @@ bool COmrRecog::RecogZkzh(int nPic, cv::Mat& matCompPic, pMODEL	pModel, int nOri
 	return bResult;
 }
 
+cv::Mat COmrRecog::GetRotMat(RECTLIST lFixRealPic, RECTLIST lFixModelPic)
+{
+	cv::Mat matResult;
+	if (lFixRealPic.size() == 3)	//仿射变换
+	{
+		std::vector<cv::Point2f> vecFixPt;
+		std::vector<cv::Point2f> vecFixNewPt;
+		RECTLIST::iterator itCP2 = lFixRealPic.begin();
+		for (; itCP2 != lFixRealPic.end(); itCP2++)
+		{
+			cv::Point2f pt;
+
+			pt.x = itCP2->rt.x + itCP2->rt.width / 2;
+			pt.y = itCP2->rt.y + itCP2->rt.height / 2;
+
+			vecFixNewPt.push_back(pt);
+			//获取该定点属于第几个模板定点
+			RECTLIST::iterator itCP = lFixModelPic.begin();
+			for (int i = 0; itCP != lFixModelPic.end(); i++, itCP++)
+			{
+				if (i == itCP2->nTH)
+				{
+					cv::Point2f pt2;
+
+					pt2.x = itCP->rt.x + itCP->rt.width / 2;
+					pt2.y = itCP->rt.y + itCP->rt.height / 2;
+
+					vecFixPt.push_back(pt2);
+					break;
+				}
+			}
+		}
+		cv::Point2f srcTri[3];
+		cv::Point2f dstTri[3];
+		cv::Mat rot_mat(2, 3, CV_32FC1);
+		for (int i = 0; i < vecFixPt.size(); i++)
+		{
+			srcTri[i] = vecFixNewPt[i];
+			dstTri[i] = vecFixPt[i];
+		}
+		rot_mat = cv::getAffineTransform(srcTri, dstTri);
+
+		//反向计算模板上点对应的实际图像的点
+		cv::Mat rot_mat_inv = rot_mat.inv();	//逆矩阵
+		matResult = rot_mat_inv;
+	}
+	else if (lFixRealPic.size() == 4)	//透视逆变换
+	{
+		std::vector<cv::Point2f> vecFixPt;
+		RECTLIST::iterator itCP = lFixModelPic.begin();
+		for (; itCP != lFixModelPic.end(); itCP++)
+		{
+			cv::Point2f pt;
+			pt.x = itCP->rt.x + itCP->rt.width / 2;
+			pt.y = itCP->rt.y + itCP->rt.height / 2;
+			vecFixPt.push_back(pt);
+		}
+		std::vector<cv::Point2f> vecFixNewPt;
+		RECTLIST::iterator itCP2 = lFixRealPic.begin();
+		for (; itCP2 != lFixRealPic.end(); itCP2++)
+		{
+			cv::Point2f pt;
+			pt.x = itCP2->rt.x + itCP2->rt.width / 2;
+			pt.y = itCP2->rt.y + itCP2->rt.height / 2;
+			vecFixNewPt.push_back(pt);
+		}
+
+		cv::Point2f srcTri[4];
+		cv::Point2f dstTri[4];
+		cv::Mat rot_mat(3, 3, CV_32FC1);		//warp_mat(2, 3, CV_32FC1);
+		for (int i = 0; i < vecFixPt.size(); i++)
+		{
+			srcTri[i] = vecFixNewPt[i];
+			dstTri[i] = vecFixPt[i];
+		}
+		rot_mat = cv::getPerspectiveTransform(srcTri, dstTri);
+
+		cv::Mat rot_mat_inv = rot_mat.inv();	//逆矩阵
+		matResult = rot_mat_inv;
+	}
+	return matResult;
+}
+
+cv::Rect COmrRecog::GetRealRtFromModel(cv::Rect rtModel, RECTLIST lFixRealPic, RECTLIST lFixModelPic, cv::Mat rot_mat_inv)
+{
+	cv::Rect rtResult;
+	if (lFixRealPic.size() <= 2)
+	{
+		rtResult = rtModel;
+		GetPosition(lFixRealPic, lFixModelPic, rtResult);
+	}
+	if (lFixRealPic.size() == 3 || lFixRealPic.size() == 4)
+	{
+		//cv::Mat rot_mat_inv = GetRotMat(lFixRealPic, lFixModelPic);
+
+		cv::Point2f pt1 = rtModel.tl();
+		cv::Point2f pt2 = rtModel.br();
+		cv::Point2f p1 = cv::Point2f(0, 0);
+		cv::Point2f p2 = cv::Point2f(0, 0);
+		p1.x = rot_mat_inv.ptr<double>(0)[0] * pt1.x + rot_mat_inv.ptr<double>(0)[1] * pt1.y + rot_mat_inv.ptr<double>(0)[2];
+		p1.y = rot_mat_inv.ptr<double>(1)[0] * pt1.x + rot_mat_inv.ptr<double>(1)[1] * pt1.y + rot_mat_inv.ptr<double>(1)[2];
+
+		p2.x = rot_mat_inv.ptr<double>(0)[0] * pt2.x + rot_mat_inv.ptr<double>(0)[1] * pt2.y + rot_mat_inv.ptr<double>(0)[2];
+		p2.y = rot_mat_inv.ptr<double>(1)[0] * pt2.x + rot_mat_inv.ptr<double>(1)[1] * pt2.y + rot_mat_inv.ptr<double>(1)[2];
+		rtResult = cv::Rect(p1, p2);
+	}
+
+	return rtResult;
+}
+
 bool COmrRecog::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel)
 {
 	cv::Mat matCompRoi;

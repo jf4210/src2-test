@@ -459,8 +459,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		}
 		
 	#ifdef TEST_PAGINATION
-// 		TRACE("页码测试模式，不进行试卷识别\n");
-// 		continue;
+		//if(nPic != pPaper->)
 	#endif
 
 		std::string strPicFileName = (*itPic)->strPicName;
@@ -4343,8 +4342,6 @@ bool CRecognizeThread::RecogPagination(pST_SCAN_PAPER pScanPaperTask, pMODEL pMo
 	TRACE("识别页码\n");
 	clock_t start, end;
 	start = clock();
-	std::string strLog;
-	strLog = Poco::format("试卷S%d\n", pScanPaperTask->nPaperID);
 
 	bool bResult = true;
 	if (pModel->nUsePagination == 0)
@@ -4353,15 +4350,73 @@ bool CRecognizeThread::RecogPagination(pST_SCAN_PAPER pScanPaperTask, pMODEL pMo
 // 	if (pModel->vecPaperModel.size() <= 2)	//模板图片数量 <= 2，必须用计算这张试卷属于模板的第几张
 // 		return true;
 
+	std::stringstream ssLog;
+	ssLog << "开始判断试卷(S" << pScanPaperTask->nPaperID << ")属于模板的第几张试卷:\n";
+
+	bool bFindPagination = false;	//是否找到页码属于第几页试卷
 	//识别每页的定点，然后根据透视变换反向计算实际页码点的位置
 	for(int i = 0; i < pScanPaperTask->vecScanPic.size(); i++)
 	{
 		pST_SCAN_PIC pScanPic = pScanPaperTask->vecScanPic[i];
 		for (int j = 0; j < pModel->vecPaperModel.size(); j++)
 		{
+			clock_t sT1, sT2, sT3, sT4, sT5, sT6, eT1;
+			sT1 = clock();
+
 			RECTLIST lFixResult;
 			RecogFixCP2(i, pScanPic->mtPic, NULL, pModel, lFixResult);
-			
+			sT2 = clock();
+		#if 1
+			if (lFixResult.size() == 0)
+			{
+				ssLog << "检测试卷的第" << i + 1 << "页是否属于用模板的第" << j + 1 << "页时，检测到定点数 = 0, 不需要后续比较，直接检测模板的下一页\n";
+				continue;
+			}
+
+			COmrRecog omrReocgObj;
+			cv::Mat rot_mat_inv = omrReocgObj.GetRotMat(lFixResult, pModel->vecPaperModel[j]->lFix);
+			sT3 = clock();
+
+			ssLog<<"获取定点和旋转矩阵完毕. "<< sT2 - sT1 << ":" << sT3 - sT2 << "(定:旋)ms\n";
+
+			int nRecogPagination = 0;	//已经识别到的页码点
+			RECTLIST::iterator itPage = pModel->vecPaperModel[j]->lPagination.begin();
+			for (int k = 0; itPage != pModel->vecPaperModel[j]->lPagination.end(); itPage++, k++)
+			{
+				RECTINFO rc = *itPage;
+				cv::Rect rtPageCode = rc.rt;
+				cv::Rect rtRealPic = omrReocgObj.GetRealRtFromModel(rtPageCode, lFixResult, pModel->vecPaperModel[j]->lFix, rot_mat_inv);
+				rc.rt = rtRealPic;
+				bool bResult_Recog = Recog(j, rc, pScanPic->mtPic, NULL, NULL);
+				if (bResult_Recog)
+				{
+					if (rc.fRealValuePercent >= rc.fStandardValuePercent)
+					{
+						nRecogPagination++;
+					}
+					else
+					{
+						char szLog[MAX_PATH] = { 0 };
+						sprintf_s(szLog, "试卷(第%d页)尝试识别模板(第%d页)的页码点失败, 灰度百分比: %f, 问题点: (%d,%d,%d,%d)\n", i + 1, j + 1, rc.fRealValuePercent * 100, rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
+						ssLog << szLog;
+						TRACE(szLog);
+					}
+				}
+			}
+			sT4 = clock();
+			if (nRecogPagination == pModel->vecPaperModel[j]->lPagination.size())
+			{
+				bFindPagination = true;
+				pScanPaperTask->nModelPaperID = j / 2;
+				ssLog << "检测到试卷的第" << i + 1 << "页属于用模板的第" << j + 1 << "页, 下一页试卷不需要判断, " << sT4 - sT3 << "ms\n";
+				break;
+			}
+			else
+			{
+				ssLog << "检测试卷的第" << i + 1 << "页是否属于用模板的第" << j + 1 << "页时，检测到页码" << nRecogPagination << "个，实际模板上有" 
+					<< pModel->vecPaperModel[j]->lPagination.size() << "个，不符合条件，进行下一页模板比较. " << sT4 - sT3 << "ms\n";
+			}
+		#else
 			//透视变换
 			std::vector<cv::Point2f> vecFixPt;
 			RECTLIST::iterator itCP = pModel->vecPaperModel[j]->lFix.begin();
@@ -4391,11 +4446,16 @@ bool CRecognizeThread::RecogPagination(pST_SCAN_PAPER pScanPaperTask, pMODEL pMo
 				srcTri[i] = vecFixNewPt[i];
 				dstTri[i] = vecFixPt[i];
 			}
-
+			sT3 = clock();
 			warp_mat = cv::getPerspectiveTransform(srcTri, dstTri);
-			//cv::warpPerspective(pScanPic->mtPic, pScanPic->mtPic, warp_mat, pScanPic->mtPic.size(), 1, 0, cv::Scalar(255, 255, 255));
+			sT4 = clock();
+
+			//cv::Mat matPerspective = pScanPic->mtPic.clone();
+			//cv::warpPerspective(matPerspective, matPerspective, warp_mat, matPerspective.size(), 1, 0, cv::Scalar(255, 255, 255));
 			//反向计算模板上点对应的实际图像的点
 			cv::Mat warp_mat_inv = warp_mat.inv();	//逆矩阵
+
+			sT5 = clock();
 
 			std::vector<Point2f> vecPoint;
 			RECTLIST::iterator itPage = pModel->vecPaperModel[j]->lPagination.begin();
@@ -4410,31 +4470,42 @@ bool CRecognizeThread::RecogPagination(pST_SCAN_PAPER pScanPaperTask, pMODEL pMo
 
 				p2.x = warp_mat_inv.ptr<double>(0)[0] * pt2.x + warp_mat_inv.ptr<double>(0)[1] * pt2.y + warp_mat_inv.ptr<double>(0)[2];
 				p2.y = warp_mat_inv.ptr<double>(1)[0] * pt2.x + warp_mat_inv.ptr<double>(1)[1] * pt2.y + warp_mat_inv.ptr<double>(1)[2];
-				vecPoint.push_back(pt1);
-				vecPoint.push_back(pt2);
+				vecPoint.push_back(p1);
+				vecPoint.push_back(p2);
+
+				//cv::rectangle(matPerspective, (*itPage).rt, CV_RGB(255, 0, 0), 2);
 			}
+			eT1 = clock();
+			std::string strTmpLog = Poco::format("各阶段耗时: %d:%d:%d:%d:%d, all: %dms\n", (int)(sT2 - sT1), (int)(sT3 - sT2), (int)(sT4 - sT3), (int)(sT5 - sT4), (int)(eT1 - sT5), (int)(eT1 - sT1));
+			TRACE(strTmpLog.c_str());
+
 			//标出关键点
 			for (int m = 0; m < vecPoint.size(); m++)
 			{
-				circle(pScanPic->mtPic, vecPoint[m], 2, Scalar(0, 0, 255));
+				circle(pScanPic->mtPic, vecPoint[m], 2, Scalar(255, 0, 0));
+				//circle(matPerspective, vecPoint[m], 2, Scalar(255, 0, 0));
 			}
+		#endif
 		}
-
-	}
-
-
-	if (!bResult)
-	{
-		//(static_cast<pST_PaperInfo>(pPic->pPaper))->bRecogCourse = false;
-		char szLog[MAX_PATH] = { 0 };
-		//sprintf_s(szLog, "识别页码失败, 图片名: %s\n", pPic->strPicName.c_str());
-		strLog.append(szLog);
-		TRACE(szLog);
+		//在当前页已经发现页码匹配了，不需要进行第二页的页码检查
+		if (bFindPagination)
+			break;
+		else
+			ssLog << "试卷的第" << i + 1 << "页在模板上没有发现匹配的页面，开始下一页试卷在模板上的比较\n";
 	}
 	end = clock();
-	std::string strTime = Poco::format("识别页码校验点时间: %dms\n", (int)(end - start));
-	strLog.append(strTime);
-	g_pLogger->information(strLog);
+	if (!bFindPagination)
+	{
+		//根据页码查找此试卷属于模板的第几张试卷失败
+		pScanPaperTask->bCanRecog = false;		//设置不可识别，在人工确认后再识别
+		bResult = false;
+		ssLog << "判断完成, 试卷(S" << pScanPaperTask->nPaperID << ")无法确定属于模板的第几张试卷, 此试卷不参与识别，后续人工判定再识别\n";
+	}
+	else
+		ssLog<< "判断完成, 试卷(S" << pScanPaperTask->nPaperID << ")属于模板的第" << pScanPaperTask->nModelPaperID + 1 << "张试卷\n";
+
+	g_pLogger->information(ssLog.str());
+	TRACE(ssLog.str().c_str());
 	return bResult;
 }
 
@@ -4922,7 +4993,7 @@ bool CRecognizeThread::RecogFixCP2(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 				rcFixInfo.nTH = i;			//这是属于模板上定点列表的第几个
 				rcFixInfo.rt = rtFix;
 				lFixResult.push_back(rcFixInfo);
-				TRACE("定点矩形: (%d,%d,%d,%d)\n", rtFix.x, rtFix.y, rtFix.width, rtFix.height);
+				//TRACE("定点矩形: (%d,%d,%d,%d)\n", rtFix.x, rtFix.y, rtFix.width, rtFix.height);
 			}
 		}
 		if (bFindRect)

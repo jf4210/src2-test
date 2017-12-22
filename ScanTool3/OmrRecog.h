@@ -21,6 +21,13 @@ public:
 	bool RecogRtVal(RECTINFO& rc, cv::Mat& matCompPic);			//识别给定的一个矩形的灰度、密度等信息
 	bool RecogZkzh(int nPic, cv::Mat& matCompPic, pMODEL pModel, int nOrientation);	//识别二维码或者条码，根据识别成功与否来判断图像方向
 
+	//=============================================================================================
+	//进行仿射变换或透视变换，获取转换矩阵
+	cv::Mat		GetRotMat(RECTLIST lFixRealPic, RECTLIST lFixModelPic);
+	//根据模板上矩形来获取实际图像上的矩形
+	cv::Rect GetRealRtFromModel(cv::Rect rtModel, RECTLIST lFixRealPic, RECTLIST lFixModelPic, cv::Mat rot_mat_inv);
+	//=============================================================================================
+
 	//获取图片的正确方向，和模板一样
 	//1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转), #不用0-正向，无法识别，故不旋转
 	int GetRightPicOrientation(cv::Mat& matSrc, int n, bool bDoubleScan);
@@ -57,7 +64,7 @@ protected:
 
 
 	int			GetRectsInArea(cv::Mat& matSrc, RECTINFO rc, int nMinW, int nMaxW, int nMinH, int nMaxH, int nFindContoursModel = CV_RETR_EXTERNAL);	//获取给定区域内的矩形数量
-
+	
 private:
 	//*********************************
 	//*********	测试结论 **************
@@ -83,6 +90,7 @@ public:
 	void AdjustScanPaperToModel(pST_SCAN_PAPER pScanPaperTask);	//将扫描的图片调整到和模板一致(正反、方向)
 	void SaveScanPaperPic(pST_SCAN_PAPER pScanPaperTask);
 	bool RecogPanination(pST_SCAN_PAPER pScanPaperTask);
+
 private:
 	std::string _strLog;
 };

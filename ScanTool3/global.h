@@ -315,6 +315,7 @@ typedef struct _PaperInfo_
 	//++从Pkg恢复Papers时的参数
 	int			nChkFlag;			//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不進行圖片识别
 	//--
+	int			nScanIndex;			//从扫描获取到一张试卷的信息后构建的试卷，在整袋试卷识别完后再合并
 	int			nIndex;				//在试卷袋中的索引，即S1为1，S2为2，S3为3...
 	pMODEL		pModel;				//识别此学生试卷所用的模板
 	void*		pPapers;			//所属的试卷袋信息
@@ -621,8 +622,10 @@ typedef struct _ScanPic
 typedef struct _ScanPaper
 {
 	bool bDoubleScan;			//是否双面扫描，单面扫描时，pScanPic2不可用
+	bool bCanRecog;				//是否可以进行识别，使用多页模式时生效，在根据页码查找这张试卷属于模板的第几张试卷失败，需要人工确认，之后再识别
 	int  nSrcDlgType;			//0-来自扫描线程的数据，1-来自试卷导入窗口的数据
-	int  nPaperID;				//第几个学生的试卷
+	int  nPaperID;				//扫描的第几张试卷
+	int  nModelPaperID;			//这张试卷在模板上属于第几张试卷
 	pPAPERSINFO pPapersInfo;
 // 	pST_SCAN_PIC pScanPic1;		//从扫描仪获取到的一张试卷的第一面
 // 	pST_SCAN_PIC pScanPic2;		//从扫描仪获取到的一张试卷的第二面
@@ -630,8 +633,10 @@ typedef struct _ScanPaper
 	_ScanPaper()
 	{
 		bDoubleScan = true;
+		bCanRecog = true;
 		nSrcDlgType = 0;
 		nPaperID = 0;
+		nModelPaperID = 0;
 		pPapersInfo = NULL;
 // 		pScanPic1 = NULL;
 // 		pScanPic2 = NULL;
