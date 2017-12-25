@@ -592,7 +592,7 @@ void CModifyZkzhDlg::PicsExchange()
 	m_pCurrentShowPaper->nPicsExchange++;		//记录当前试卷被调换次数
 	m_pCurrentShowPaper->pSrcDlg = this;
 	m_pCurrentShowPaper->bIssuePaper = false;
-	m_pCurrentShowPaper->nQKFlag = false;
+	m_pCurrentShowPaper->nQKFlag = 0;
 	m_pCurrentShowPaper->bRecogComplete = false;
 	m_pCurrentShowPaper->strSN = "";
 	m_pCurrentShowPaper->strRecogSN4Search = "";

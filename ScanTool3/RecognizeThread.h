@@ -36,6 +36,7 @@ public:
 
 	void InitCharacterRecog();		//文字识别初始化
 
+	void MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel);	//多页模式，合并扫描的试卷到完整的试卷袋
 	//页码检测前提：
 	//1、不同页的页码位置不一样
 	//2、一个页码标识的位置在其他页的相同位置上没有干扰，即其他页的相同位置处为空白

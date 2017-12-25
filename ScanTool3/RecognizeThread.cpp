@@ -274,7 +274,6 @@ bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 	//识别页面
 	RecogPagination(pScanPaperTask, _pModel_);
 
-
 	//++添加试卷
 	pST_PaperInfo pCurrentPaper = NULL;
 	for (int i = 0; i < pScanPaperTask->vecScanPic.size(); i++)
@@ -285,7 +284,11 @@ bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 		pST_PicInfo pPic = new ST_PicInfo;
 		pPic->strPicName = pScanPic->strPicName;
 		pPic->strPicPath = pScanPic->strPicPath;
-		if ((pScanPic->nOrder + 1) % 2 == 0)	//第1、3、5...页的时候创建新的试卷信息，如果是多页模式时，每一张试卷创建一个考生信息，最后根据准考证号合并考生
+		if (pScanPaperTask->bDoubleScan)
+			pPic->nPicModelIndex = pScanPaperTask->nModelPaperID * 2 + i;	//设置图片是属于模板的第几页
+		else
+			pPic->nPicModelIndex = i;
+		if (pScanPic->nOrder == 1)	//(pScanPic->nOrder + 1) % 2 == 0	第1、3、5...页的时候创建新的试卷信息，如果是多页模式时，每一张试卷创建一个考生信息，最后根据准考证号合并考生
 		{
 			char szStudentName[30] = { 0 };
 			sprintf_s(szStudentName, "S%d", pScanPic->nStudentID);
@@ -296,6 +299,11 @@ bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 			pCurrentPaper->pPapers = pScanPaperTask->pPapersInfo;
 			pCurrentPaper->pSrcDlg = pScanPaperTask->nSrcDlgType == 1 ? pScanPic->pNotifyDlg : pDlg->GetScanMainDlg();		//m_pDlg;
 			pCurrentPaper->lPic.push_back(pPic);
+
+			if (!pScanPaperTask->bCanRecog)
+				pCurrentPaper->nPaginationStatus = 0;	//没有识别到页码，不能参与识别，设置问题卷，人工确认后再识别
+			else
+				pCurrentPaper->nPaginationStatus = 1;	//识别完页码，可以识别，不能确定具体属于哪个学生(默认)
 
 			pScanPaperTask->pPapersInfo->fmlPaper.lock();
 			pScanPaperTask->pPapersInfo->lPaper.push_back(pCurrentPaper);
@@ -324,13 +332,13 @@ bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 			TRACE("%s\n", pResult->strResult.c_str());
 			pDlg->PostMessage(MSG_SCAN_DONE, (WPARAM)pResult, NULL);
 		}
-		//添加到识别任务列表
-		if (_pModel_ && _pCurrExam_->nModel == 0 && _nScanAnswerModel_ != 2)	//网阅模式下的试卷才加入识别队列, 扫描主观题答案不加入识别
-		{
-			pRECOGTASK pTask = new RECOGTASK;
-			pTask->pPaper = pCurrentPaper;
-			g_lRecogTask.push_back(pTask);
-		}
+	}
+	//添加到识别任务列表
+	if (_pModel_ && _pCurrExam_->nModel == 0 && _nScanAnswerModel_ != 2)	//网阅模式下的试卷才加入识别队列, 扫描主观题答案不加入识别
+	{
+		pRECOGTASK pTask = new RECOGTASK;
+		pTask->pPaper = pCurrentPaper;
+		g_lRecogTask.push_back(pTask);
 	}
 	return true;
 }
@@ -373,6 +381,8 @@ bool CRecognizeThread::HandleTask(pRECOGTASK pTask)
 		TRACE("----->设置试卷(%s)识别完成\n", pTask->pPaper->strStudentInfo.c_str());
 		pTask->pPaper->bRecogComplete = true;
 	}
+
+	MergeScanPaper(static_cast<pPAPERSINFO>(pTask->pPaper->pPapers), pModelInfo->pModel);
 
 	return true;
 }
@@ -438,9 +448,19 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		if ((*itPic)->nRecoged)		//已经识别过，不再识别
 			continue;
 
-		(*itPic)->nRecoged = 1;
+	#ifdef TEST_PAGINATION
+		int nPic = (*itPic)->nPicModelIndex;
+		if (pModelInfo->pModel->nUsePagination && pPaper->nPaginationStatus == 0)
+		{
+			pPaper->bIssuePaper = true;
+			(*itPic)->nRecoged = 2;			//先临时设置识别完成标识，后面在人工确认完成后需要重新识别
+			continue;
+		}
+	#else
 		int nPic = i;
+	#endif
 
+		(*itPic)->nRecoged = 1;
 		if (nPic >= pModelInfo->pModel->vecPaperModel.size())
 		{
 			(*itPic)->nRecoged = 2;
@@ -458,10 +478,6 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			continue;
 		}
 		
-	#ifdef TEST_PAGINATION
-		//if(nPic != pPaper->)
-	#endif
-
 		std::string strPicFileName = (*itPic)->strPicName;
 		Mat matCompSrcPic;
 		bool bOpenSucc = false;
@@ -4265,6 +4281,12 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 			}
 		}
 	}
+	if ((static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.empty())
+	{
+		(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmSnStatistics.lock();
+		(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nSnNull++;
+		(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmSnStatistics.unlock();
+	}
 	end = clock();
 	std::string strTime = Poco::format("识别考号时间: %dms\n", (int)(end - start));
 	strLog.append(strTime);
@@ -4335,6 +4357,142 @@ void CRecognizeThread::InitCharacterRecog()
 	m_pTess = new tesseract::TessBaseAPI();
 	m_pTess->Init(NULL, "chi_sim", tesseract::OEM_DEFAULT);
 #endif
+}
+
+void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
+{
+	if (!pPapers) return;
+	if (pModel->nUsePagination == 0) return;
+
+	//全部识别完成才进行合并操作
+	bool bRecogComplete = true;
+	for (auto objPaper : pPapers->lPaper)
+	{
+		if (!objPaper->bRecogComplete)
+		{
+			bRecogComplete = false;
+			break;
+		}
+	}
+	if (!bRecogComplete) return;
+
+	//多页模式时，每个考生的试卷可能是乱的，需要把每张试卷的合并到对应考生
+	pPAPERSINFO pNewPapers = new PAPERSINFO();
+	pNewPapers->strPapersName = pPapers->strPapersName;
+	pNewPapers->strPapersDesc = pPapers->strPapersDesc;
+	pNewPapers->nOmrDoubt = pPapers->nOmrDoubt;
+	pNewPapers->nOmrNull = pPapers->nOmrNull;
+	PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
+	for (; itPaper != pPapers->lPaper.end(); )
+	{
+		pST_PaperInfo pCurrentPaper = *itPaper;
+		bool bFindSN = false;
+		pST_PaperInfo pNewPaper = NULL;
+		for (auto objPaper : pNewPapers->lPaper)
+		{
+			if (!objPaper->strSN.empty() && objPaper->strSN == pCurrentPaper->strSN)
+			{
+				bFindSN = true;
+				pNewPaper = objPaper;
+				break;
+			}
+		}
+		if (!bFindSN)
+		{
+			//将此试卷信息放入新试卷袋中
+			pNewPapers->lPaper.push_back(pCurrentPaper);
+			pCurrentPaper->pPapers = pNewPapers;
+			pCurrentPaper->nPaginationStatus = 2;
+			pCurrentPaper->nIndex = pNewPapers->lPaper.size();
+			pCurrentPaper->strStudentInfo = Poco::format("S%d", pCurrentPaper->nIndex);
+
+			itPaper = pPapers->lPaper.erase(itPaper);
+		}
+		else
+		{
+			//试卷的信息合并到新试卷中
+			if (!pNewPaper->bIssuePaper)	pNewPaper->bIssuePaper = pCurrentPaper->bIssuePaper;
+			if (!pNewPaper->bModifyZKZH)	pNewPaper->bModifyZKZH = pCurrentPaper->bModifyZKZH;
+			if (!pNewPaper->bReScan)		pNewPaper->bReScan = pCurrentPaper->bReScan;
+			if (!pNewPaper->bRecogCourse)	pNewPaper->bRecogCourse = pCurrentPaper->bRecogCourse;
+			pNewPaper->nPicsExchange += pCurrentPaper->nPicsExchange;
+			pNewPaper->nPaginationStatus = 2;
+			if (pNewPaper->nQKFlag == 0)	pNewPaper->nQKFlag = pCurrentPaper->nQKFlag;
+			if (pNewPaper->nWJFlag == 0)	pNewPaper->nWJFlag = pCurrentPaper->nWJFlag;
+			pNewPaper->nZkzhInBmkStatus = pCurrentPaper->nZkzhInBmkStatus;
+			//pNewPaper->strRecogSN4Search
+			//pNewPaper->lSnResult
+			for (auto omrObj : pCurrentPaper->lOmrResult)
+				pNewPaper->lOmrResult.push_back(omrObj);
+			for (auto electOmrObj : pCurrentPaper->lElectOmrResult)
+				pNewPaper->lElectOmrResult.push_back(electOmrObj);
+
+			PIC_LIST::iterator itPic = pCurrentPaper->lPic.begin();
+			for (; itPic != pCurrentPaper->lPic.end(); )
+			{
+				pST_PicInfo pPic = *itPic;
+				itPic = pCurrentPaper->lPic.erase(itPic);
+
+				pPic->pPaper = pNewPaper;
+				bool bInsert = false;
+				PIC_LIST::iterator itNewPic = pNewPaper->lPic.begin();
+				for (; itNewPic != pNewPaper->lPic.end(); itNewPic++)
+				{
+					if ((*itNewPic)->nPicModelIndex > pPic->nPicModelIndex)
+					{
+						bInsert = true;
+						pNewPaper->lPic.insert(itNewPic, pPic);
+						break;
+					}
+				}
+				if (!bInsert)
+					pNewPaper->lPic.push_back(pPic);
+			}
+			if (pCurrentPaper->strSN.empty())
+				pNewPapers->nSnNull++;
+
+			itPaper++;
+		}
+	}
+	pNewPapers->nPaperCount = pNewPapers->lPaper.size();
+
+	SAFE_RELEASE(pPapers);
+	pPapers = pNewPapers;
+
+	//图片重命名
+	std::string strLog;
+	PAPER_LIST::iterator itReNamePaper = pPapers->lPaper.begin();
+	for (; itReNamePaper != pPapers->lPaper.end(); )
+	{
+		pST_PaperInfo pCurrentPaper = *itReNamePaper;
+		PIC_LIST::iterator itPic = pCurrentPaper->lPic.begin();
+		for (; itPic != pCurrentPaper->lPic.end(); itPic++)
+		{
+			pST_PicInfo pPic = *itPic;
+			std::string strNewPicName = Poco::format("%s_%d.jpg", pCurrentPaper->strStudentInfo, pPic->nPicModelIndex + 1);
+			int nPos = pPic->strPicPath.rfind('\\');
+			std::string strBasePath = pPic->strPicPath.substr(0, nPos);
+			std::string strNewPath = strBasePath + strNewPicName;
+			if (strNewPicName != pPic->strPicName)
+			{
+				try
+				{
+					Poco::File fNewPic(CMyCodeConvert::Gb2312ToUtf8(pPic->strPicPath));
+					fNewPic.renameTo(CMyCodeConvert::Gb2312ToUtf8(strNewPath));
+					pPic->strPicPath = strNewPath;
+					pPic->strPicName = strNewPicName;
+				}
+				catch (Poco::Exception& exc)
+				{
+					std::string strTmpLog;
+					strTmpLog = Poco::format("图片(%s)重命名(%s)失败, 原因: %s\n", pPic->strPicName, strNewPicName, exc.what());
+					strLog.append(strTmpLog);
+				}
+			}
+		}
+	}
+	if(!strLog.empty())
+		g_pLogger->information(strLog);
 }
 
 bool CRecognizeThread::RecogPagination(pST_SCAN_PAPER pScanPaperTask, pMODEL pModel)

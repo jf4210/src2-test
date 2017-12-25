@@ -270,6 +270,7 @@ typedef struct _PicInfo_				//图片信息
 	bool			bFindIssue;		//是否找到问题点
 	int 			nRecoged;		//是否已经识别过, 0-未识别，1-正在识别，2-识别完成
 	int				nRecogRotation;	//识别过程中判断需要调整的方向，1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
+	int				nPicModelIndex;	//图片索引, 设置图片是属于模板的第几页
 	void*			pPaper;			//所属试卷的信息
 	cv::Rect		rtFix;			//定点矩形
 	std::string		strPicName;		//图片名称
@@ -287,6 +288,7 @@ typedef struct _PicInfo_				//图片信息
 		nRecoged = 0;
 		bFindIssue = false;
 		pPaper = NULL;
+		nPicModelIndex = 0;
 	}
 	~_PicInfo_()
 	{
@@ -309,13 +311,15 @@ typedef struct _PaperInfo_
 	bool		bReScan;			//重新扫描标识，在准考证号修改窗口中设置
 	bool		bRecogCourse;		//科目识别是否正确
 	int			nPicsExchange;		//图像调换标识，即第一页与第二页调换位置，调换次数，0-未调换，1-调换1次。。。
+	int			nPaginationStatus;	//多页模式时的试卷状态，
+									//0-没有识别到页码，不能参与识别，设置问题卷，人工确认后再识别；1-识别完页码，可以识别，不能确定具体属于哪个学生(默认)；2-整袋识别完，可以确定属于哪个考生的哪张试卷
 	int			nQKFlag;			//缺考标识
 	int			nWJFlag;			//违纪标识
 	int			nZkzhInBmkStatus;	//准考证号是否在报名库中存在，在报名库列表不存在时，此项无效, 0--报名库中不存在，1--报名库中存在，-1--扫描时重号了
 	//++从Pkg恢复Papers时的参数
 	int			nChkFlag;			//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不進行圖片识别
 	//--
-	int			nScanIndex;			//从扫描获取到一张试卷的信息后构建的试卷，在整袋试卷识别完后再合并
+	int			nScanTmpIndex;		//从扫描获取到一张试卷的信息后直接构建的临时试卷，在整袋试卷识别完后再合并到具体的考生
 	int			nIndex;				//在试卷袋中的索引，即S1为1，S2为2，S3为3...
 	pMODEL		pModel;				//识别此学生试卷所用的模板
 	void*		pPapers;			//所属的试卷袋信息
@@ -337,6 +341,8 @@ typedef struct _PaperInfo_
 		bRecogCourse = true;
 		bReScan = false;
 		nPicsExchange = 0;
+		nScanTmpIndex = 0;
+		nPaginationStatus = 1;
 		nIndex = 0;
 		nQKFlag = 0;
 		nWJFlag = 0;
@@ -616,7 +622,7 @@ typedef struct _ScanPic
 	int nStudentID;				//考生的索引，S1、S2、S3 ...
 	void*	pNotifyDlg;			//处理完成的通知窗口
 	std::string strPicName;
-	std::string strPicPath;
+	std::string strPicPath;		//gb2312
 	cv::Mat mtPic;
 }ST_SCAN_PIC, *pST_SCAN_PIC;
 typedef struct _ScanPaper

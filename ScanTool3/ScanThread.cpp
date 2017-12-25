@@ -2136,6 +2136,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 			pST_PicInfo pPic = new ST_PicInfo;
 			pPic->strPicName = szPicName;
 			pPic->strPicPath = szPicPath;
+			pPic->nPicModelIndex = nOrder - 1;
 			if (nOrder == 1)	//第一页的时候创建新的试卷信息
 			{
 				CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
@@ -2289,6 +2290,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 				pST_PicInfo pPic = new ST_PicInfo;
 				pPic->strPicName = szPicName;
 				pPic->strPicPath = szPicPath;
+				pPic->nPicModelIndex = nOrder - 1;
 				if (nOrder == 1)	//第一页的时候创建新的试卷信息
 				{
 					CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;
