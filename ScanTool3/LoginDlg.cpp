@@ -192,6 +192,7 @@ void CLoginDlg::OnBnClickedBtnLogin()
 	USES_CONVERSION;
 
 	//检查账号的非法字符
+	m_strUserName = m_strUserName.Trim();
  	std::string strChkUserName = T2A(m_strUserName);
 	if (strChkUserName.find('\\') != std::string::npos || strChkUserName.find('\/') != std::string::npos || strChkUserName.find('\:') != std::string::npos || strChkUserName.find('\*') != std::string::npos
 		|| strChkUserName.find('\?') != std::string::npos || strChkUserName.find('\"') != std::string::npos || strChkUserName.find('\<') != std::string::npos || strChkUserName.find('\>') != std::string::npos

@@ -381,8 +381,8 @@ bool CRecognizeThread::HandleTask(pRECOGTASK pTask)
 		TRACE("----->设置试卷(%s)识别完成\n", pTask->pPaper->strStudentInfo.c_str());
 		pTask->pPaper->bRecogComplete = true;
 	}
-
-	MergeScanPaper(static_cast<pPAPERSINFO>(pTask->pPaper->pPapers), pModelInfo->pModel);
+	if(g_lScanPaperTask.size() == 0 && g_lRecogTask.size() == 0)	//整袋都识别完成后，合并扫描试卷
+		MergeScanPaper(static_cast<pPAPERSINFO>(pTask->pPaper->pPapers), pModelInfo->pModel);
 
 	return true;
 }
@@ -4361,8 +4361,8 @@ void CRecognizeThread::InitCharacterRecog()
 
 void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
 {
-	if (!pPapers) return;
-	if (pModel->nUsePagination == 0) return;
+	if (!pPapers) return ;
+	if (pModel->nUsePagination == 0) return ;
 
 	//全部识别完成才进行合并操作
 	bool bRecogComplete = true;
@@ -4374,7 +4374,7 @@ void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
 			break;
 		}
 	}
-	if (!bRecogComplete) return;
+	if (!bRecogComplete) return ;
 
 	//多页模式时，每个考生的试卷可能是乱的，需要把每张试卷的合并到对应考生
 	pPAPERSINFO pNewPapers = new PAPERSINFO();
@@ -4401,7 +4401,7 @@ void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
 		{
 			//将此试卷信息放入新试卷袋中
 			pNewPapers->lPaper.push_back(pCurrentPaper);
-			pCurrentPaper->pPapers = pNewPapers;
+			//pCurrentPaper->pPapers = pNewPapers;
 			pCurrentPaper->nPaginationStatus = 2;
 			pCurrentPaper->nIndex = pNewPapers->lPaper.size();
 			pCurrentPaper->strStudentInfo = Poco::format("S%d", pCurrentPaper->nIndex);
@@ -4456,21 +4456,56 @@ void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
 	}
 	pNewPapers->nPaperCount = pNewPapers->lPaper.size();
 
-	SAFE_RELEASE(pPapers);
-	pPapers = pNewPapers;
+// 	SAFE_RELEASE(pPapers);
+// 	pPapers = pNewPapers;
+
+	PAPER_LIST::iterator itPaper1 = pPapers->lPaper.begin();
+	for (; itPaper1 != pPapers->lPaper.end();)
+	{
+		pST_PaperInfo pPaper = *itPaper1;
+		SAFE_RELEASE(pPaper);
+		itPaper1 = pPapers->lPaper.erase(itPaper1);
+	}
+	PAPER_LIST::iterator itPaper2 = pPapers->lIssue.begin();
+	for (; itPaper2 != pPapers->lIssue.end();)
+	{
+		pST_PaperInfo pPaper = *itPaper2;
+		SAFE_RELEASE(pPaper);
+		itPaper2 = pPapers->lIssue.erase(itPaper2);
+	}
+// 	PAPER_LIST::iterator itPaper3 = pNewPapers->lPaper.begin();
+// 	for (; itPaper3 != pNewPapers->lPaper.end(); )
+// 	{
+// 		pST_PaperInfo pCurrentPaper = *itPaper3;
+// 		pPapers->lPaper.push_back(pCurrentPaper);
+// 		itPaper3 = pNewPapers->lPaper.erase(itPaper3);
+// 	}
+// 	PAPER_LIST::iterator itPaper4 = pNewPapers->lIssue.begin();
+// 	for (; itPaper3 != pNewPapers->lIssue.end(); )
+// 	{
+// 		pST_PaperInfo pCurrentPaper = *itPaper3;
+// 		pPapers->lPaper.push_back(pCurrentPaper);
+// 		itPaper3 = pNewPapers->lIssue.erase(itPaper3);
+// 	}
+	memcpy(pPapers, pNewPapers, sizeof(PAPERSINFO));
+	pNewPapers->lPaper.clear();
+	pNewPapers->lIssue.clear();
+	SAFE_RELEASE(pNewPapers);
+
 
 	//图片重命名
 	std::string strLog;
 	PAPER_LIST::iterator itReNamePaper = pPapers->lPaper.begin();
-	for (; itReNamePaper != pPapers->lPaper.end(); )
+	for (; itReNamePaper != pPapers->lPaper.end(); itReNamePaper++)
 	{
 		pST_PaperInfo pCurrentPaper = *itReNamePaper;
+		int nLastPicModelIndex = -1;
 		PIC_LIST::iterator itPic = pCurrentPaper->lPic.begin();
 		for (; itPic != pCurrentPaper->lPic.end(); itPic++)
 		{
 			pST_PicInfo pPic = *itPic;
 			std::string strNewPicName = Poco::format("%s_%d.jpg", pCurrentPaper->strStudentInfo, pPic->nPicModelIndex + 1);
-			int nPos = pPic->strPicPath.rfind('\\');
+			int nPos = pPic->strPicPath.rfind('\\') + 1;
 			std::string strBasePath = pPic->strPicPath.substr(0, nPos);
 			std::string strNewPath = strBasePath + strNewPicName;
 			if (strNewPicName != pPic->strPicName)

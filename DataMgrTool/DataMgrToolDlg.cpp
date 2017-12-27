@@ -271,6 +271,16 @@ BOOL CDataMgrToolDlg::OnInitDialog()
 	strTitle.Format(_T("%s %s"), SYS_BASE_NAME, SOFT_VERSION);
 	SetWindowText(strTitle);
 
+#if 0
+	std::string strStudentInfo = "1442644904_1152-2779_20171225163200_69_S45";
+	Poco::MD5Engine md5;
+	Poco::DigestOutputStream outstr(md5);
+	outstr << strStudentInfo;
+	outstr.flush();
+	const Poco::DigestEngine::Digest& digest = md5.digest();
+	std::string strMd5 = Poco::DigestEngine::digestToHex(digest);
+#endif
+
 	InitConfig();
 	InitParam();
 	
@@ -1331,34 +1341,19 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpic()
 
 	std::string strPkgPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strWatchPaper_PapersDir));
 	std::string strPaperInfo = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strWatchPaper_PaperInfo));
+
+	std::string strStudentInfo = strPaperInfo;
+	Poco::MD5Engine md5;
+	Poco::DigestOutputStream outstr(md5);
+	outstr << strStudentInfo;
+	outstr.flush();
+	const Poco::DigestEngine::Digest& digest = md5.digest();
+	std::string strMd5 = Poco::DigestEngine::digestToHex(digest);
+	CString strMsg = _T("");
+	strMsg.Format(_T("MD5(%s):\r\n%s\r\n"), A2T(strPaperInfo.c_str()), A2T(strMd5.c_str()));
+	showMsg(strMsg);
+
 #if 0
-	//++创建文件解压路径
-	CString strTmp = m_strWatchPaper_PapersDir + _T("\\查看试卷-解压路径");
-	std::string strDecompressPath = CMyCodeConvert::Gb2312ToUtf8(T2A(strTmp));
-	try
-	{
-		Poco::File dir(strDecompressPath);
-		dir.createDirectories();
-	}
-	catch (Poco::Exception& e)
-	{
-	}
-	//--
-
-	std::string strPkgName;
-	std::string strPaperName;
-	strPkgName = strPaperInfo;
-
-	pST_SEARCH pDirTask = new ST_SEARCH;
-	pDirTask->nSearchType = 2;
-	pDirTask->strSearchPath = strPkgPath;
-	pDirTask->strSearchName = strPkgName;
-	pDirTask->strDecompressPath = CMyCodeConvert::Utf8ToGb2312(strDecompressPath);
-
-	_fmSearchPathList_.lock();
-	_SearchPathList_.push_back(pDirTask);
-	_fmSearchPathList_.unlock();
-#else
 	int nPos = strPaperInfo.find(":");
 	if (nPos == std::string::npos)
 	{

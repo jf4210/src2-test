@@ -2541,6 +2541,9 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 						}
 					}
 				}
+				else if (omrResult.nSingle == 1 && nFlag == 0)	//多选但是只识别到一个的情况
+				{
+				}
 			}
 
 			RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
