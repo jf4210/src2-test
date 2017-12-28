@@ -133,6 +133,7 @@
     <ClInclude Include="AnswerShowDlg.h" />
     <ClInclude Include="GetModelDlg.h" />
     <ClInclude Include="KeepAliveTimer.h" />
+    <ClInclude Include="MultiPageExceptionDlg.h" />
     <ClInclude Include="PaperInputDlg.h" />
     <ClInclude Include="PapersMgr.h" />
     <ClInclude Include="ScanParamSetDlg.h" />
@@ -249,6 +250,7 @@
     <ClCompile Include="AdanceSetMgrDlg.cpp" />
     <ClCompile Include="AnswerShowDlg.cpp" />
     <ClCompile Include="GetModelDlg.cpp" />
+    <ClCompile Include="MultiPageExceptionDlg.cpp" />
     <ClCompile Include="PaperInputDlg.cpp" />
     <ClCompile Include="PapersMgr.cpp" />
     <ClCompile Include="ScanParamSetDlg.cpp" />

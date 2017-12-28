@@ -311,8 +311,10 @@ typedef struct _PaperInfo_
 	bool		bReScan;			//重新扫描标识，在准考证号修改窗口中设置
 	bool		bRecogCourse;		//科目识别是否正确
 	int			nPicsExchange;		//图像调换标识，即第一页与第二页调换位置，调换次数，0-未调换，1-调换1次。。。
-	int			nPaginationStatus;	//多页模式时的试卷状态，
-									//0-没有识别到页码，不能参与识别，设置问题卷，人工确认后再识别；1-识别完页码，可以识别，不能确定具体属于哪个学生(默认)；2-整袋识别完，可以确定属于哪个考生的哪张试卷
+	int			nPaginationStatus;	/*多页模式时的试卷状态，
+									0-没有识别到页码，不能参与识别，设置问题卷，人工确认后再识别；1-识别完页码，可以识别，不能确定具体属于哪个学生(默认)；2-整袋识别完，可以确定属于哪个考生的哪张试卷
+									3-图片数量与模板不一致，4-存在重复的页码
+									*/
 	int			nQKFlag;			//缺考标识
 	int			nWJFlag;			//违纪标识
 	int			nZkzhInBmkStatus;	//准考证号是否在报名库中存在，在报名库列表不存在时，此项无效, 0--报名库中不存在，1--报名库中存在，-1--扫描时重号了
@@ -620,6 +622,7 @@ typedef struct _ScanPic
 {
 	int nOrder;					//考生的试卷顺序，1.jpg、2.jpg ...(S1_1,S1_2,S1_3中的1、2、3)
 	int nStudentID;				//考生的索引，S1、S2、S3 ...
+	int nModelPicID;			//这张试卷在模板上属于第几页试卷, 从0开始
 	void*	pNotifyDlg;			//处理完成的通知窗口
 	std::string strPicName;
 	std::string strPicPath;		//gb2312

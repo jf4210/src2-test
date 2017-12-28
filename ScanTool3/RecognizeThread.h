@@ -40,6 +40,7 @@ public:
 	//页码检测前提：
 	//1、不同页的页码位置不一样
 	//2、一个页码标识的位置在其他页的相同位置上没有干扰，即其他页的相同位置处为空白
+	//3、传入的数据是一张试卷的页码数据，即最多有2页图像
 	bool RecogPagination(pST_SCAN_PAPER pScanPaperTask, pMODEL pModel);				//识别页码
 	bool RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo);	//识别文字
 	bool RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo);		//识别水平同步头

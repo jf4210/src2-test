@@ -190,6 +190,9 @@
     <Filter Include="定时器">
       <UniqueIdentifier>{c1545ddd-a12e-40e7-b5c7-1901c74531dd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="扫描界面窗口\扫描过程窗口\异常处理窗口\多页模式异常处理">
+      <UniqueIdentifier>{c90bf60e-402b-49af-a63a-bc9729c3c6b6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -492,6 +495,9 @@
     <ClInclude Include="KeepAliveTimer.h">
       <Filter>定时器</Filter>
     </ClInclude>
+    <ClInclude Include="MultiPageExceptionDlg.h">
+      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\多页模式异常处理</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -751,6 +757,9 @@
     </ClCompile>
     <ClCompile Include="AnswerShowDlg.cpp">
       <Filter>扫描界面窗口\扫描过程窗口\图像答案识别窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="MultiPageExceptionDlg.cpp">
+      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\多页模式异常处理</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

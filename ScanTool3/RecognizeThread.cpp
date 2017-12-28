@@ -4473,24 +4473,55 @@ void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
 		SAFE_RELEASE(pPaper);
 		itPaper2 = pPapers->lIssue.erase(itPaper2);
 	}
-// 	PAPER_LIST::iterator itPaper3 = pNewPapers->lPaper.begin();
-// 	for (; itPaper3 != pNewPapers->lPaper.end(); )
-// 	{
-// 		pST_PaperInfo pCurrentPaper = *itPaper3;
-// 		pPapers->lPaper.push_back(pCurrentPaper);
-// 		itPaper3 = pNewPapers->lPaper.erase(itPaper3);
-// 	}
-// 	PAPER_LIST::iterator itPaper4 = pNewPapers->lIssue.begin();
-// 	for (; itPaper3 != pNewPapers->lIssue.end(); )
-// 	{
-// 		pST_PaperInfo pCurrentPaper = *itPaper3;
-// 		pPapers->lPaper.push_back(pCurrentPaper);
-// 		itPaper3 = pNewPapers->lIssue.erase(itPaper3);
-// 	}
-	memcpy(pPapers, pNewPapers, sizeof(PAPERSINFO));
-	pNewPapers->lPaper.clear();
-	pNewPapers->lIssue.clear();
+	pPapers->nPaperCount = pNewPapers->nPaperCount;
+	pPapers->nRecogErrCount = pNewPapers->nRecogErrCount;
+	pPapers->strPapersName = pNewPapers->strPapersName;
+	pPapers->strPapersDesc = pNewPapers->strPapersDesc;
+	pPapers->nOmrDoubt = pNewPapers->nOmrDoubt;
+	pPapers->nOmrNull = pNewPapers->nOmrNull;
+	PAPER_LIST::iterator itPaper3 = pNewPapers->lPaper.begin();
+	for (; itPaper3 != pNewPapers->lPaper.end(); )
+	{
+		pST_PaperInfo pCurrentPaper = *itPaper3;
+		pPapers->lPaper.push_back(pCurrentPaper);
+		itPaper3 = pNewPapers->lPaper.erase(itPaper3);
+	}
+	PAPER_LIST::iterator itPaper4 = pNewPapers->lIssue.begin();
+	for (; itPaper4 != pNewPapers->lIssue.end(); )
+	{
+		pST_PaperInfo pCurrentPaper = *itPaper4;
+		pPapers->lPaper.push_back(pCurrentPaper);
+		itPaper4 = pNewPapers->lIssue.erase(itPaper4);
+	}
+	//memcpy(pPapers, pNewPapers, sizeof(PAPERSINFO));
+	//pNewPapers->lPaper.clear();
+	//pNewPapers->lIssue.clear();
 	SAFE_RELEASE(pNewPapers);
+
+	//试卷合法性检测，即检查测每个考生的每张试卷是否都是合法的
+	PAPER_LIST::iterator itReNamePaper = pPapers->lPaper.begin();
+	for (; itReNamePaper != pPapers->lPaper.end(); itReNamePaper++)
+	{
+		pST_PaperInfo pCurrentPaper = *itReNamePaper;
+		if (pCurrentPaper->lPic.size() != pModel->vecPaperModel.size())
+			pCurrentPaper->nPaginationStatus = 3;
+		else
+		{
+			//图片的页码是否存在重复的
+			int nLastPicIndex = -1;
+			PIC_LIST::iterator itPic = pCurrentPaper->lPic.begin();		//图片在插入的时候已经初步排序
+			for (; itPic != pCurrentPaper->lPic.end(); itPic++)
+			{
+				pST_PicInfo pPic = *itPic;
+				if (nLastPicIndex == pPic->nPicModelIndex)
+				{
+					pCurrentPaper->nPaginationStatus = 4;
+					break;
+				}
+				nLastPicIndex = pPic->nPicModelIndex;
+			}
+		}
+	}
 
 
 	//图片重命名
@@ -4499,7 +4530,7 @@ void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
 	for (; itReNamePaper != pPapers->lPaper.end(); itReNamePaper++)
 	{
 		pST_PaperInfo pCurrentPaper = *itReNamePaper;
-		int nLastPicModelIndex = -1;
+
 		PIC_LIST::iterator itPic = pCurrentPaper->lPic.begin();
 		for (; itPic != pCurrentPaper->lPic.end(); itPic++)
 		{
@@ -4520,7 +4551,7 @@ void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
 				catch (Poco::Exception& exc)
 				{
 					std::string strTmpLog;
-					strTmpLog = Poco::format("图片(%s)重命名(%s)失败, 原因: %s\n", pPic->strPicName, strNewPicName, exc.what());
+					strTmpLog = Poco::format("原始图片(%s)重命名为(%s)失败, 原因: %s\n", pPic->strPicName, strNewPicName, std::string(exc.what()));
 					strLog.append(strTmpLog);
 				}
 			}
@@ -4538,19 +4569,43 @@ bool CRecognizeThread::RecogPagination(pST_SCAN_PAPER pScanPaperTask, pMODEL pMo
 
 	bool bResult = true;
 	if (pModel->nUsePagination == 0)
+	{
+		for (int i = 0; i < pScanPaperTask->vecScanPic.size(); i++)
+			pScanPaperTask->vecScanPic[i]->nModelPicID = i;
 		return true;
+	}
 
 // 	if (pModel->vecPaperModel.size() <= 2)	//模板图片数量 <= 2，必须用计算这张试卷属于模板的第几张
+// 	{
+// 		for (int i = 0; i < pScanPaperTask->vecScanPic.size(); i++)
+// 			pScanPaperTask->vecScanPic[i]->nModelPicID = i;
 // 		return true;
+// 	}
 
 	std::stringstream ssLog;
-	ssLog << "开始判断试卷(S" << pScanPaperTask->nPaperID << ")属于模板的第几张试卷:\n";
+	if (pScanPaperTask->vecScanPic.size() > 2)
+	{
+		ssLog << "扫描试卷(P" << pScanPaperTask->nPaperID << ")的图片数(" << pScanPaperTask->vecScanPic.size() << "页)超过2页, 不进行判断\n";
+		TRACE(ssLog.str().c_str());
+		return true;
+	}
+	ssLog << "开始判断试卷(P" << pScanPaperTask->nPaperID << ")属于模板的第几张试卷:\n";
 
 	bool bFindPagination = false;	//是否找到页码属于第几页试卷
 	//识别每页的定点，然后根据透视变换反向计算实际页码点的位置
 	for(int i = 0; i < pScanPaperTask->vecScanPic.size(); i++)
 	{
 		pST_SCAN_PIC pScanPic = pScanPaperTask->vecScanPic[i];
+
+// 		if (bFindPagination)
+// 		{
+// 			bFindPagination = false;
+// 			pScanPic->nModelPicID = pScanPaperTask->vecScanPic[i - 1]->nModelPicID + 1;
+// 			ssLog << "已经判断到试卷的第" << i << "页属于用模板的第" << pScanPaperTask->vecScanPic[i - 1]->nModelPicID + 1 << "页, 故该试卷的第" << i + 1 \\
+// 				<< "页属于模板的第" << pScanPic->nModelPicID + 1 << "页\n";
+// 			continue;
+// 		}
+
 		for (int j = 0; j < pModel->vecPaperModel.size(); j++)
 		{
 			clock_t sT1, sT2, sT3, sT4, sT5, sT6, eT1;
@@ -4591,7 +4646,7 @@ bool CRecognizeThread::RecogPagination(pST_SCAN_PAPER pScanPaperTask, pMODEL pMo
 					{
 						char szLog[MAX_PATH] = { 0 };
 						sprintf_s(szLog, "试卷(第%d页)尝试识别模板(第%d页)的页码点失败, 灰度百分比: %f, 问题点: (%d,%d,%d,%d)\n", i + 1, j + 1, rc.fRealValuePercent * 100, rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
-						ssLog << szLog;
+						//ssLog << szLog;
 						TRACE(szLog);
 					}
 				}
@@ -4601,6 +4656,11 @@ bool CRecognizeThread::RecogPagination(pST_SCAN_PAPER pScanPaperTask, pMODEL pMo
 			{
 				bFindPagination = true;
 				pScanPaperTask->nModelPaperID = j / 2;
+				pScanPic->nModelPicID = j;
+				if(i % 2 == 0)		//设置这张试卷的另一页的图片属于模板的第几页
+					pScanPaperTask->vecScanPic[i + 1]->nModelPicID = j + 1;
+				else
+					pScanPaperTask->vecScanPic[i - 1]->nModelPicID = j - 1;
 				ssLog << "检测到试卷的第" << i + 1 << "页属于用模板的第" << j + 1 << "页, 下一页试卷不需要判断, " << sT4 - sT3 << "ms\n";
 				break;
 			}
@@ -4692,10 +4752,10 @@ bool CRecognizeThread::RecogPagination(pST_SCAN_PAPER pScanPaperTask, pMODEL pMo
 		//根据页码查找此试卷属于模板的第几张试卷失败
 		pScanPaperTask->bCanRecog = false;		//设置不可识别，在人工确认后再识别
 		bResult = false;
-		ssLog << "判断完成, 试卷(S" << pScanPaperTask->nPaperID << ")无法确定属于模板的第几张试卷, 此试卷不参与识别，后续人工判定再识别\n";
+		ssLog << "判断完成, 试卷(P" << pScanPaperTask->nPaperID << ")无法确定属于模板的第几张试卷, 此试卷不参与识别，后续人工判定再识别. " << end - start << "ms\n";
 	}
 	else
-		ssLog<< "判断完成, 试卷(S" << pScanPaperTask->nPaperID << ")属于模板的第" << pScanPaperTask->nModelPaperID + 1 << "张试卷\n";
+		ssLog<< "判断完成, 试卷(P" << pScanPaperTask->nPaperID << ")属于模板的第" << pScanPaperTask->nModelPaperID + 1 << "张试卷. " << end - start << "ms\n";
 
 	g_pLogger->information(ssLog.str());
 	TRACE(ssLog.str().c_str());

@@ -77,7 +77,7 @@ protected:
 public:
 	afx_msg void OnNMDblclkListZkzh(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMHoverListZkzh(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnBnClickedBtnSave();
+	//afx_msg void OnBnClickedBtnSave();
 	afx_msg void OnNMDblclkListZkzhsearchresult(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnClose();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);

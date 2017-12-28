@@ -49,11 +49,7 @@ BEGIN_MESSAGE_MAP(CModifyZkzhDlg, CDialog)
 	ON_NOTIFY(NM_HOVER, IDC_LIST_Zkzh, &CModifyZkzhDlg::OnNMHoverListZkzh)
 	ON_REGISTERED_MESSAGE(WM_XLISTCTRL_EDIT_END, OnEditEnd)
 	ON_REGISTERED_MESSAGE(WM_XLISTCTRL_LBUTTONDOWN_EDIT_CLICKED, OnLBtnDownEdit)
-	ON_BN_CLICKED(IDC_BTN_SAVE_ModifiSnDlg, &CModifyZkzhDlg::OnBnClickedBtnSave)
-// 	ON_BN_CLICKED(IDC_RADIO_SearchZkzh, &CModifyZkzhDlg::OnBnClickedRadioSearchzkzh)
-// 	ON_BN_CLICKED(IDC_RADIO_SearchName, &CModifyZkzhDlg::OnBnClickedRadioSearchname)
-// 	ON_BN_CLICKED(IDC_BTN_Search, &CModifyZkzhDlg::OnBnClickedBtnSearch)
-//	ON_NOTIFY(NM_DBLCLK, IDC_LIST_ZkzhSearchResult, &CModifyZkzhDlg::OnNMDblclkListZkzhsearchresult)
+//	ON_BN_CLICKED(IDC_BTN_SAVE_ModifiSnDlg, &CModifyZkzhDlg::OnBnClickedBtnSave)
 	ON_MESSAGE(WM_CV_RBTNUP, &CModifyZkzhDlg::RoiRBtnUp)
 	ON_COMMAND(ID_LeftRotate, &CModifyZkzhDlg::LeftRotate)
 	ON_COMMAND(ID_RightRotate, &CModifyZkzhDlg::RightRotate)
@@ -226,28 +222,6 @@ void CModifyZkzhDlg::InitCtrlPosition()
 //		int nH = cy - nBottomGap - nCurrentTop;
 		m_pVagueSearchDlg->MoveWindow(nCurrentLeft, nCurrentTop, nListCtrlWidth, nVagueSearchDlgH);
 	}
-	//------------------------------------------------后期可删除，已经隐藏
-	if (GetDlgItem(IDC_STATIC_Zkzh_S2)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_STATIC_Zkzh_S2)->MoveWindow(nCurrentLeft, nCurrentTop, nListCtrlWidth, nStaticTip);
-		nCurrentTop += (nStaticTip + nGap);
-	}
-	if (GetDlgItem(IDC_STATIC_Zkzh_S3)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_STATIC_Zkzh_S3)->MoveWindow(nCurrentLeft, nCurrentTop, 35, nBtnH);
-		nCurrentLeft += (35 + nGap);
-	}
-	if (GetDlgItem(IDC_EDIT_Zkzh)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_EDIT_Zkzh)->MoveWindow(nCurrentLeft, nCurrentTop, nListCtrlWidth - nGap - 35 - nGap - nBtnW, nBtnH);
-		nCurrentLeft += (nListCtrlWidth - nGap - 35 - nGap - nBtnW + nGap);
-	}
-	if (GetDlgItem(IDC_BTN_SAVE_ModifiSnDlg)->GetSafeHwnd())
-	{
-		GetDlgItem(IDC_BTN_SAVE_ModifiSnDlg)->MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
-		nCurrentLeft = nLeftGap + nListCtrlWidth + nGap;
-	}
-	//-------------------------------------------------
 
 	//tab
 	nCurrentLeft = nLeftGap + nListCtrlWidth + nGap;
@@ -872,7 +846,7 @@ LRESULT CModifyZkzhDlg::OnLBtnDownEdit(WPARAM nItem, LPARAM nSubItem)
 	}
 	return 0;
 }
-
+#if 0
 void CModifyZkzhDlg::OnBnClickedBtnSave()
 {
 	UpdateData(TRUE);
@@ -921,7 +895,7 @@ void CModifyZkzhDlg::OnBnClickedBtnSave()
 		m_nCurrentSelItem = 0;
 	ShowPaperByItem(m_nCurrentSelItem);
 }
-
+#endif
 bool CModifyZkzhDlg::ReleaseData()
 {
 	if (!g_nExitFlag)

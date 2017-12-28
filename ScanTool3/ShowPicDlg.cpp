@@ -259,6 +259,9 @@ void CShowPicDlg::OnTcnSelchangeTabPicshow(NMHDR *pNMHDR, LRESULT *pResult)
 void CShowPicDlg::setShowPaper(pST_PaperInfo pPaper)
 {
 	m_pCurrPaper = pPaper;
+	
+	for (int i = 0; i < m_vecPicShow.size(); i++)
+		m_vecPicShow[i]->ReInit();
 
 	PaintRecognisedRect(m_pCurrPaper);
 
@@ -353,6 +356,11 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		Mat matImg = matSrc;
 #endif
 
+	#ifdef TEST_PAGINATION
+		int nPic = (*itPic)->nPicModelIndex;
+	#else
+		int nPic = i;
+	#endif
 		if ((*itPic)->nRecogRotation != 0)
 		{
 			switch ((*itPic)->nRecogRotation)
@@ -391,28 +399,28 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 #ifdef WarpAffine_TEST
 		cv::Mat	inverseMat(2, 3, CV_32FC1);
 		if (pPaper->pModel)
-			GetFixPicTransfer(i, matImg, *itPic, pPaper->pModel, inverseMat);		//PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
+			GetFixPicTransfer(nPic, matImg, *itPic, pPaper->pModel, inverseMat);		//PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
 #endif
 
 #ifdef Test_ShowOriPosition
 		cv::Mat	inverseMat(2, 3, CV_32FC1);
-		GetInverseMat((*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
+		GetInverseMat((*itPic)->lFix, pPaper->pModel->vecPaperModel[nPic]->lFix, inverseMat);
 #endif
 		Mat tmp = matImg;	// matSrc.clone();
 		Mat tmp2 = matImg.clone();
 
 		if (pPaper->pModel)
 		{
-			RECTLIST::iterator itHTracker = pPaper->pModel->vecPaperModel[i]->lSelHTracker.begin();
-			for (int j = 0; itHTracker != pPaper->pModel->vecPaperModel[i]->lSelHTracker.end(); itHTracker++, j++)
+			RECTLIST::iterator itHTracker = pPaper->pModel->vecPaperModel[nPic]->lSelHTracker.begin();
+			for (int j = 0; itHTracker != pPaper->pModel->vecPaperModel[nPic]->lSelHTracker.end(); itHTracker++, j++)
 			{
 				cv::Rect rt = (*itHTracker).rt;
 
 				rectangle(tmp, rt, CV_RGB(25, 200, 20), 2);
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
-			RECTLIST::iterator itVTracker = pPaper->pModel->vecPaperModel[i]->lSelVTracker.begin();
-			for (int j = 0; itVTracker != pPaper->pModel->vecPaperModel[i]->lSelVTracker.end(); itVTracker++, j++)
+			RECTLIST::iterator itVTracker = pPaper->pModel->vecPaperModel[nPic]->lSelVTracker.begin();
+			for (int j = 0; itVTracker != pPaper->pModel->vecPaperModel[nPic]->lSelVTracker.end(); itVTracker++, j++)
 			{
 				cv::Rect rt = (*itVTracker).rt;
 
@@ -439,12 +447,12 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			}
 		}
 	#if 1
-		if (pPaper->pModel && pPaper->pModel->vecPaperModel[i]->lCharacterAnchorArea.size() > 0)
+		if (pPaper->pModel && pPaper->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0)
 		{
 			if (pPaper->pModel)
 			{
-				CHARACTER_ANCHOR_AREA_LIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[i]->lCharacterAnchorArea.begin();			//显示文字定点的选择区
-				for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i]->lCharacterAnchorArea.end(); itSelRoi++, j++)
+				CHARACTER_ANCHOR_AREA_LIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.begin();			//显示文字定点的选择区
+				for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.end(); itSelRoi++, j++)
 				{
 					cv::Rect rt = (*itSelRoi)->rt;
 
@@ -517,8 +525,8 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		{
 			if (pPaper->pModel)
 			{
-				RECTLIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[i]->lSelFixRoi.begin();													//显示识别定点的选择区
-				for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[i]->lSelFixRoi.end(); itSelRoi++, j++)
+				RECTLIST::iterator itSelRoi = pPaper->pModel->vecPaperModel[nPic]->lSelFixRoi.begin();													//显示识别定点的选择区
+				for (int j = 0; itSelRoi != pPaper->pModel->vecPaperModel[nPic]->lSelFixRoi.end(); itSelRoi++, j++)
 				{
 					cv::Rect rt = (*itSelRoi).rt;
 
@@ -540,8 +548,8 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 			}
 			if (pPaper->pModel)
 			{
-				RECTLIST::iterator itFixRect = pPaper->pModel->vecPaperModel[i]->lFix.begin();								//显示模板上的定点对应到此试卷上的新定点
-				for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[i]->lFix.end(); itFixRect++, j++)
+				RECTLIST::iterator itFixRect = pPaper->pModel->vecPaperModel[nPic]->lFix.begin();								//显示模板上的定点对应到此试卷上的新定点
+				for (int j = 0; itFixRect != pPaper->pModel->vecPaperModel[nPic]->lFix.end(); itFixRect++, j++)
 				{
 					cv::Rect rt = (*itFixRect).rt;
 
@@ -595,9 +603,9 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 	#endif
 
 		addWeighted(tmp, 0.5, tmp2, 0.5, 0, tmp);
-		if (i >= m_nModelPicNums)
+		if (nPic >= m_nModelPicNums)
 			break;
-		m_vecPicShow[i]->ShowPic(tmp);
+		m_vecPicShow[nPic]->ShowPic(tmp);
 	}
 }
 

@@ -608,6 +608,15 @@ LRESULT CPicShow::RoiRbtnUp(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
+void CPicShow::ReInit()
+{
+	m_picShow.OnInit(1);
+
+	m_scrollBarV.ShowScrollBar(m_bShowScrolV);
+	m_scrollBarH.ShowScrollBar(m_bShowScrolH);
+	Invalidate();
+}
+
 void CPicShow::SetShowTracker(bool bShowH, bool bShowV, bool bShowSN)
 {
 	m_picShow.SetShowRectTracker(bShowH, bShowV, bShowSN);

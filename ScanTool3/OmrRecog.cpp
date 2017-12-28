@@ -2520,7 +2520,7 @@ void CAdjustPaperPic::AdjustScanPaperToModel(pST_SCAN_PAPER pScanPaperTask)
 	clock_t sTime, mT0, mT1, mT2, mT3, eTime;
 	sTime = clock();
 	std::stringstream ssLog;
-	ssLog << "检测试卷(S" << pScanPaperTask->nPaperID << ")的图像正反面:\n";
+	ssLog << "检测试卷(P" << pScanPaperTask->nPaperID << ")的图像正反面:\n";
 
 	if (pScanPaperTask->vecScanPic.size() <= 1)
 	{
@@ -2685,7 +2685,7 @@ void CAdjustPaperPic::AdjustScanPaperToModel(pST_SCAN_PAPER pScanPaperTask)
 		}
 	}
 	eTime = clock();
-	ssLog << "判断试卷(S" << pScanPaperTask->nPaperID << ")正反面结束(" << (int)(eTime - sTime) << "ms)\n";
+	ssLog << "判断试卷(P" << pScanPaperTask->nPaperID << ")正反面结束(" << (int)(eTime - sTime) << "ms)\n";
 	_strLog.append(ssLog.str());
 }
 
@@ -2694,7 +2694,7 @@ void CAdjustPaperPic::SaveScanPaperPic(pST_SCAN_PAPER pScanPaperTask)
 	clock_t sT, eT1, eT2;
 	sT = clock();
 	std::stringstream ssLog; 
-	ssLog << "开始保存试卷(S" << pScanPaperTask->nPaperID << ")到文件.\n";
+	ssLog << "开始保存试卷(P" << pScanPaperTask->nPaperID << ")到文件.\n";
 	#pragma omp parallel for
 	for (int i = 0; i < pScanPaperTask->vecScanPic.size(); i++)
 	{
@@ -2707,7 +2707,7 @@ void CAdjustPaperPic::SaveScanPaperPic(pST_SCAN_PAPER pScanPaperTask)
 			ssLog << "\t新图像" << pScanPic->strPicName << "写文件完成. " << (int)(eT2 - eT1) << "ms\n";
 		}
 	}
-	ssLog << "试卷(S" << pScanPaperTask->nPaperID << ")保存每页图片数据完成. " << (int)(eT2 - sT) << "ms\n";
+	ssLog << "试卷(P" << pScanPaperTask->nPaperID << ")保存每页图片数据完成. " << (int)(eT2 - sT) << "ms\n";
 	_strLog.append(ssLog.str());
 }
 

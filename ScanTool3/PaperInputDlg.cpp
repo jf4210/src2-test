@@ -657,6 +657,9 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 	else
 		nModelPicNums = _nPicNum4Ty_;
 
+	if (m_pModel && m_pModel->nUsePagination)
+		nModelPicNums = 2;
+
 	USES_CONVERSION;
 	std::string strPaperPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strPapersPath));
 	try
@@ -718,6 +721,8 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				char szSubPaperPath[MAX_PATH] = { 0 };
 				sprintf_s(szSubPaperPath, "%s%s", g_strPaperSavePath.c_str(), szDirName);
 				Poco::File tmpPath(strSubPaperPath);
+				if (tmpPath.exists())
+					tmpPath.remove(true);
 				tmpPath.createDirectories();
 
 				pPAPERSINFO pPapers = new PAPERSINFO;
@@ -739,7 +744,10 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 					TRACE("%s\n", (*itName).c_str());	//(*itName).c_str()
 
 					char szNewName[100] = { 0 };
-					sprintf_s(szNewName, "S%d_%s", i / nModelPicNums + 1, (*itName).c_str());
+					if (m_pModel && m_pModel->nUsePagination)
+						sprintf_s(szNewName, "P%d_%s", i / nModelPicNums + 1, (*itName).c_str());
+					else
+						sprintf_s(szNewName, "S%d_%s", i / nModelPicNums + 1, (*itName).c_str());
 
 					std::string strNewName = szNewName;
 					std::string strNewFilePath = strSubPaperPath + "\\" + strNewName;
@@ -1094,7 +1102,8 @@ void CPaperInputDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	//双击为空的准考证号时显示准考证号修改窗口
 	CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
 	if ((/*g_nOperatingMode == 1 *//*|| pDlg->m_bModifySN*/g_bModifySN) && m_pModel && pPaper && \
-		(pPaper->strSN.empty() || pPaper->bModifyZKZH || pPaper->bReScan || (_bGetBmk_ && pPaper->nZkzhInBmkStatus != 1) || pPaper->nPicsExchange != 0))
+		(pPaper->strSN.empty() || pPaper->bModifyZKZH || pPaper->bReScan || (_bGetBmk_ && pPaper->nZkzhInBmkStatus != 1) || pPaper->nPicsExchange != 0) || \
+		(m_pModel->nUsePagination && pPaper->nPaginationStatus != 2))
 	{
 		if (!m_pStudentMgr)
 		{
