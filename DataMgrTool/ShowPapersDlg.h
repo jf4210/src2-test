@@ -46,6 +46,7 @@ private:
 	CAnswerShowDlg* m_pAnswerShowDlg;
 	CEdit			m_edit_OmrRecogInfo;
 	CString			m_strMsg;
+	CString			m_strSearchZKZH;
 
 	int			m_nCurrItemPaperList;
 	pPAPERSINFO m_pPapers;
@@ -63,4 +64,5 @@ public:
 	afx_msg void OnBnClickedChkNormal();
 	afx_msg void OnBnClickedChkDoubt();
 	afx_msg void OnBnClickedChkNull();
+	afx_msg void OnBnClickedBtnSearchzkzh();
 };

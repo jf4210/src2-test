@@ -270,17 +270,7 @@ BOOL CDataMgrToolDlg::OnInitDialog()
 	CString strTitle = _T("");
 	strTitle.Format(_T("%s %s"), SYS_BASE_NAME, SOFT_VERSION);
 	SetWindowText(strTitle);
-
-#if 0
-	std::string strStudentInfo = "1442644904_1152-2779_20171225163200_69_S45";
-	Poco::MD5Engine md5;
-	Poco::DigestOutputStream outstr(md5);
-	outstr << strStudentInfo;
-	outstr.flush();
-	const Poco::DigestEngine::Digest& digest = md5.digest();
-	std::string strMd5 = Poco::DigestEngine::digestToHex(digest);
-#endif
-
+	
 	InitConfig();
 	InitParam();
 	
@@ -1350,7 +1340,7 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpic()
 	const Poco::DigestEngine::Digest& digest = md5.digest();
 	std::string strMd5 = Poco::DigestEngine::digestToHex(digest);
 	CString strMsg = _T("");
-	strMsg.Format(_T("MD5(%s):\r\n%s\r\n"), A2T(strPaperInfo.c_str()), A2T(strMd5.c_str()));
+	strMsg.Format(_T("MD5(%s)=\r\n%s\r\n"), A2T(strPaperInfo.c_str()), A2T(strMd5.c_str()));
 	showMsg(strMsg);
 
 #if 0
@@ -1398,8 +1388,9 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpapers()
 	std::string strPkgPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strPkgPath_showPapersDlg));
 //	std::string strModelPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strModelPath_showPapersDlg));
 
-	AfxMessageBox(_T("模板文件属于全局变量，确保不要在识别过程中来操作这里!!!"));
-
+	if (MessageBox(_T("模板文件属于全局变量，确保不要在识别过程中来操作这里!!!"), _T(""), MB_OKCANCEL) != IDOK)
+		return;
+	
 	std::string strModelPath = T2A(m_strModelPath_showPapersDlg);
 
 	int nPos1 = strModelPath.rfind('\\');

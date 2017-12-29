@@ -4395,6 +4395,12 @@ bool CRecognizeThread::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 		fMeanGrayDiff += (vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray);
 	}
 	fMeanGrayDiff = fMeanGrayDiff / vecItemsGrayDesc.size();
+	float fMeanGray = 0.0;		//平均灰度
+	for (int i = 0; i < vecItemsGrayDesc.size(); i++)
+	{
+		fMeanGray += vecItemsGrayDesc[i]->fRealMeanGray;
+	}
+	fMeanGray = fMeanGray / vecItemsGrayDesc.size();
 
 	int nFlag = -1;
 	float fThreld = 0.0;
@@ -4423,7 +4429,7 @@ bool CRecognizeThread::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 		}
 		//--
 		//if (nFlag == 0 && vecOmrItemGrayDiff[0].fDiff < fDiffThreshold)
-		if(nFlag < nMaybeAnswer - 1)
+		if(fMeanGray > (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2 && nFlag < nMaybeAnswer - 1)
 		{
 			int nThreld1 = _dDiffExit_3_ + _dAnswerSure_;
 			int nThreld2 = (_dCompThread_3_ + _dDiffExit_3_ + _dAnswerSure_) / 2;
@@ -4450,7 +4456,8 @@ bool CRecognizeThread::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 			}
 		}
 	}
-	else if (vecItemsGrayDesc[vecOmrItemGrayDiff.size()]->fRealMeanGray <= fCompThread)		//++判断全都选中的情况
+	else if (vecItemsGrayDesc[vecOmrItemGrayDiff.size()]->fRealMeanGray <= fCompThread && \
+			 vecItemsGrayDesc[vecOmrItemGrayDiff.size()]->fRealMeanGray < vecItemsGrayDesc[vecOmrItemGrayDiff.size()]->fStandardMeanGray)		//++判断全都选中的情况
 	{
 		fThreld = vecItemsGrayDesc[vecOmrItemGrayDiff.size()]->fRealMeanGray;
 		RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
@@ -4470,7 +4477,7 @@ bool CRecognizeThread::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 		for (int i = 0; i < vecItemsGrayDesc.size(); i++)
 		{
 			float fDiff = abs(vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray);
-			if (fDiff > fDiffThreshold && vecItemsGrayDesc[i]->fRealMeanGray < fCompThread)
+			if (fDiff > fDiffThreshold && vecItemsGrayDesc[i]->fRealMeanGray < fCompThread && vecItemsGrayDesc[i]->fRealMeanGray < vecItemsGrayDesc[i]->fStandardMeanGray)
 			{
 				fThreld = vecItemsGrayDesc[i]->fRealMeanGray > fThreld ? vecItemsGrayDesc[i]->fRealMeanGray : fThreld;
 				bFind = true;

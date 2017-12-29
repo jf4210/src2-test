@@ -31,6 +31,7 @@ void CShowPapersDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHK_Normal, m_btnChkNormal);
 	DDX_Control(pDX, IDC_CHK_Doubt, m_btnChkDoubt);
 	DDX_Control(pDX, IDC_CHK_Null, m_btnChkNull);
+	DDX_Text(pDX, IDC_EDIT_SearchZKZH, m_strSearchZKZH);
 }
 
 
@@ -46,6 +47,7 @@ BEGIN_MESSAGE_MAP(CShowPapersDlg, CDialog)
 	ON_BN_CLICKED(IDC_CHK_Normal, &CShowPapersDlg::OnBnClickedChkNormal)
 	ON_BN_CLICKED(IDC_CHK_Doubt, &CShowPapersDlg::OnBnClickedChkDoubt)
 	ON_BN_CLICKED(IDC_CHK_Null, &CShowPapersDlg::OnBnClickedChkNull)
+	ON_BN_CLICKED(IDC_BTN_SearchZKZH, &CShowPapersDlg::OnBnClickedBtnSearchzkzh)
 END_MESSAGE_MAP()
 
 
@@ -117,10 +119,24 @@ void CShowPapersDlg::InitCtrlPosition()
 	int nStaticH = 20;
 	int nListW = nLeftWidth - nLeftGap;
 	int nEditH = (cy - nTopGap - nBottomGap) * 0.5 - nGap;	//(cy - nTopGap - nBottomGap) * 0.27 - nGap;
+	int nBtnH = 25;
 	if (GetDlgItem(IDC_STATIC_ListTips)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_STATIC_ListTips)->MoveWindow(nCurrentLeft, nCurrentTop, nListW, nStaticH);
 		nCurrentTop += (nStaticH + nGap);
+	}
+	if (GetDlgItem(IDC_EDIT_SearchZKZH)->GetSafeHwnd())
+	{
+		int nW = (nListW - nGap) * 0.7;
+		GetDlgItem(IDC_EDIT_SearchZKZH)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nBtnH);
+		nCurrentLeft += (nW + nGap);
+	}
+	if (GetDlgItem(IDC_BTN_SearchZKZH)->GetSafeHwnd())
+	{
+		int nW = (nListW - nGap) * 0.3;
+		GetDlgItem(IDC_BTN_SearchZKZH)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nBtnH);
+		nCurrentTop += (nBtnH + nGap);
+		nCurrentLeft = nLeftGap;
 	}
 	if (m_listPaper.GetSafeHwnd())
 	{
@@ -725,4 +741,32 @@ void CShowPapersDlg::OnBnClickedChkNull()
 {
 	m_nPaperShowType = getCheckStatus();
 	ShowPaperListByType(m_nPaperShowType);	
+}
+
+
+void CShowPapersDlg::OnBnClickedBtnSearchzkzh()
+{
+	UpdateData(TRUE);
+	if (m_strSearchZKZH == "")
+		return;
+
+	m_nPaperShowType = 7;
+	setCheckStatus(m_nPaperShowType);
+	ShowPaperListByType(m_nPaperShowType);
+	for (int i = 0; i < m_listPaper.GetItemCount(); i++)
+	{
+		CString strSN = m_listPaper.GetItemText(i, 1);
+		if (strSN == m_strSearchZKZH)
+		{
+			UnSetListCtrlHighLightShow(m_listPaper, m_nCurrItemPaperList);
+			m_nCurrItemPaperList = i;
+			SetListCtrlHighLightShow(m_listPaper, m_nCurrItemPaperList);
+			m_listPaper.Invalidate();
+
+			pST_PaperInfo pPaper = (pST_PaperInfo)m_listPaper.GetItemData(i);
+			m_pShowPicDlg->setShowPaper(pPaper);
+			m_pAnswerShowDlg->InitData(pPaper);
+			break;
+		}
+	}
 }

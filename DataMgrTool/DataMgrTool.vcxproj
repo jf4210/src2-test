@@ -135,6 +135,7 @@
     <ClInclude Include="DMTDef.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="Log.h" />
+    <ClInclude Include="minidump.h" />
     <ClInclude Include="miniunz\crypt.h" />
     <ClInclude Include="miniunz\ioapi.h" />
     <ClInclude Include="miniunz\iowin32.h" />

@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "DataMgrTool.h"
 #include "DataMgrToolDlg.h"
+#include "minidump.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -92,6 +93,7 @@ BOOL CDataMgrToolApp::InitInstance()
 			ASSERT(0);
 		}
 	}
+	RunCrashHandler();
 
 	CDataMgrToolDlg dlg;
 	m_pMainWnd = &dlg;

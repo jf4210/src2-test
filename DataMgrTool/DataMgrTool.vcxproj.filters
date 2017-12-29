@@ -58,6 +58,9 @@
     <Filter Include="查看试卷包试卷\图像答案识别窗口\XList">
       <UniqueIdentifier>{b6fc554e-e307-4428-94d0-accaa18b073a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="dump">
+      <UniqueIdentifier>{3d7077a6-5c86-4de5-af3a-c0b549aedb27}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -200,6 +203,9 @@
     </ClInclude>
     <ClInclude Include="XListCtrl\XTrace.h">
       <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClInclude>
+    <ClInclude Include="minidump.h">
+      <Filter>dump</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
