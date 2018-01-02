@@ -275,6 +275,7 @@ typedef struct _PicInfo_				//图片信息
 	cv::Rect		rtFix;			//定点矩形
 	std::string		strPicName;		//图片名称
 	std::string		strPicPath;		//图片路径	gb2312
+	std::string		strPicZKZH;		//多页模式生效，图片所属的准考证号
 	RECTLIST		lFix;			//定点列表
 	RECTLIST		lNormalRect;	//识别出来的正常点位置
 	RECTLIST		lIssueRect;		//识别出来的问题试卷的问题点位置，只要出现问题点就不进行下一页的识别(严格模式)，或者存储已经发现的问题点，但是继续后面的识别(简单模式)

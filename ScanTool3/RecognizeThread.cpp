@@ -4499,10 +4499,10 @@ void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
 	SAFE_RELEASE(pNewPapers);
 
 	//试卷合法性检测，即检查测每个考生的每张试卷是否都是合法的
-	PAPER_LIST::iterator itReNamePaper = pPapers->lPaper.begin();
-	for (; itReNamePaper != pPapers->lPaper.end(); itReNamePaper++)
+	PAPER_LIST::iterator itPaperValid = pPapers->lPaper.begin();
+	for (; itPaperValid != pPapers->lPaper.end(); itPaperValid++)
 	{
-		pST_PaperInfo pCurrentPaper = *itReNamePaper;
+		pST_PaperInfo pCurrentPaper = *itPaperValid;
 		if (pCurrentPaper->lPic.size() != pModel->vecPaperModel.size())
 			pCurrentPaper->nPaginationStatus = 3;
 		else
