@@ -39,8 +39,8 @@ void CRecognizeThread::run()
 		}
 		g_fmScanPaperListLock.unlock();
 
-		if(pScanPaperTask) HandleScanPicTask(pScanPaperTask);
-		SAFE_RELEASE(pScanPaperTask);
+		if(pScanPaperTask) HandleScanPicTask(pScanPaperTask);	//原始扫描的试卷信息放入对应的考试试卷列表中，右试卷列表去释放
+		//SAFE_RELEASE(pScanPaperTask);
 		//===========================
 
 		pRECOGTASK pTask = NULL;
@@ -284,6 +284,7 @@ bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 		pST_PicInfo pPic = new ST_PicInfo;
 		pPic->strPicName = pScanPic->strPicName;
 		pPic->strPicPath = pScanPic->strPicPath;
+		pPic->pSrcScanPic = pScanPic;
 		if (pScanPaperTask->bDoubleScan)
 			pPic->nPicModelIndex = pScanPaperTask->nModelPaperID * 2 + i;	//设置图片是属于模板的第几页
 		else
@@ -299,6 +300,7 @@ bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 			pCurrentPaper->pPapers = pScanPaperTask->pPapersInfo;
 			pCurrentPaper->pSrcDlg = pScanPaperTask->nSrcDlgType == 1 ? pScanPic->pNotifyDlg : pDlg->GetScanMainDlg();		//m_pDlg;
 			pCurrentPaper->lPic.push_back(pPic);
+			pCurrentPaper->lSrcScanPaper.push_back(pScanPaperTask);
 
 			if (!pScanPaperTask->bCanRecog)
 				pCurrentPaper->nPaginationStatus = 0;	//没有识别到页码，不能参与识别，设置问题卷，人工确认后再识别
@@ -374,6 +376,10 @@ bool CRecognizeThread::HandleTask(pRECOGTASK pTask)
 		{
 			bRecogAllPic = false;
 			break;
+		}
+		if (objPic->pSrcScanPic)
+		{
+			objPic->pSrcScanPic->mtPic.release();	//释放已经识别过的图片内存，防止内存持续增加
 		}
 	}
 	if (bRecogAllPic)
@@ -4422,6 +4428,14 @@ void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
 			pNewPaper->nZkzhInBmkStatus = pCurrentPaper->nZkzhInBmkStatus;
 			//pNewPaper->strRecogSN4Search
 			//pNewPaper->lSnResult
+
+			SCAN_PAPER_LIST::iterator itSrcScanPaper = pCurrentPaper->lSrcScanPaper.begin();
+			for (; itSrcScanPaper != pCurrentPaper->lSrcScanPaper.end();)
+			{
+				pST_SCAN_PAPER pScanPaper = *itSrcScanPaper;
+				pNewPaper->lSrcScanPaper.push_back(pScanPaper);
+				itSrcScanPaper = pCurrentPaper->lSrcScanPaper.erase(itSrcScanPaper);
+			}
 			for (auto omrObj : pCurrentPaper->lOmrResult)
 				pNewPaper->lOmrResult.push_back(omrObj);
 			for (auto electOmrObj : pCurrentPaper->lElectOmrResult)
@@ -4455,10 +4469,7 @@ void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
 		}
 	}
 	pNewPapers->nPaperCount = pNewPapers->lPaper.size();
-
-// 	SAFE_RELEASE(pPapers);
-// 	pPapers = pNewPapers;
-
+	
 	PAPER_LIST::iterator itPaper1 = pPapers->lPaper.begin();
 	for (; itPaper1 != pPapers->lPaper.end();)
 	{

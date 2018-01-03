@@ -772,6 +772,7 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 					pScanPaper->pPapersInfo = pPapers;
 					pScanPaper->nSrcDlgType = 1;
 					pScanPaper->vecScanPic.push_back(pScanPic);
+					pScanPic->pParentScanPaper = pScanPaper;
 
 					if (pScanPaper->bDoubleScan && (i + 1) % nModelPicNums == 0 || !pScanPaper->bDoubleScan)	//双面扫描且获取到第2面图像时，或者单面扫描时，将此试卷的图像信息放入扫描图像列表
 					{

@@ -29,7 +29,7 @@ public:
 	pST_PaperInfo	m_pCurrentShowPaper;
 	int				m_nCurrentSelItem;		//当前选择的项
 
-	CString			m_strCurZkzh;
+	//CString			m_strCurZkzh;
 	COLORREF		crOldText, crOldBackground;
 	CBmpButton		m_bmpBtnReturn;
 

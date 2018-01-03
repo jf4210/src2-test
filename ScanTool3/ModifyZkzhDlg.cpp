@@ -28,7 +28,7 @@ void CModifyZkzhDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_Zkzh, m_lcZkzh);
-	DDX_Text(pDX, IDC_EDIT_Zkzh, m_strCurZkzh);
+	//DDX_Text(pDX, IDC_EDIT_Zkzh, m_strCurZkzh);
 	DDX_Control(pDX, IDC_BTN_Back, m_bmpBtnReturn);
 }
 
@@ -611,10 +611,10 @@ void CModifyZkzhDlg::ShowPaperByItem(int nItem)
 	for (int i = 0; i < m_lcZkzh.GetColumns(); i++)							//设置高亮显示(手动设置背景颜色)
 		m_lcZkzh.SetItemColors(nItem, i, RGB(0, 0, 0), RGB(112, 180, 254));	//70, 70, 255
 
-	USES_CONVERSION;
-	m_strCurZkzh = pPaper->strSN.c_str();
-	GetDlgItem(IDC_STATIC_Zkzh_S3)->SetWindowText(A2T(std::string(pPaper->strStudentInfo + ":").c_str()));
-	GetDlgItem(IDC_EDIT_Zkzh)->SetFocus();
+	//USES_CONVERSION;
+	//m_strCurZkzh = pPaper->strSN.c_str();
+	//GetDlgItem(IDC_STATIC_Zkzh_S3)->SetWindowText(A2T(std::string(pPaper->strStudentInfo + ":").c_str()));
+	//GetDlgItem(IDC_EDIT_Zkzh)->SetFocus();
 
 	m_pShowPicDlg->setShowPaper(pPaper);
 #else
@@ -629,10 +629,10 @@ void CModifyZkzhDlg::ShowPaperByItem(int nItem)
 	for (int i = 0; i < m_lcZkzh.GetColumns(); i++)							//设置高亮显示(手动设置背景颜色)
 		m_lcZkzh.SetItemColors(nItem, i, RGB(0, 0, 0), RGB(70, 70, 255));
 
-	USES_CONVERSION;
-	m_strCurZkzh = pPaper->strSN.c_str();
-	GetDlgItem(IDC_STATIC_Zkzh_S3)->SetWindowText(A2T(std::string(pPaper->strStudentInfo + ":").c_str()));
-	GetDlgItem(IDC_EDIT_Zkzh)->SetFocus();
+// 	USES_CONVERSION;
+// 	m_strCurZkzh = pPaper->strSN.c_str();
+// 	GetDlgItem(IDC_STATIC_Zkzh_S3)->SetWindowText(A2T(std::string(pPaper->strStudentInfo + ":").c_str()));
+// 	GetDlgItem(IDC_EDIT_Zkzh)->SetFocus();
 #endif
 	UpdateData(FALSE);
 	m_lcZkzh.Invalidate();
@@ -759,8 +759,8 @@ LRESULT CModifyZkzhDlg::OnEditEnd(WPARAM nItem, LPARAM nSubItem)
 		CString strText = m_lcZkzh.GetItemText(nItem, nSubItem);
 		pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(nItem);
 		pPaper->strSN = T2A(strText);
-		m_strCurZkzh = strText;
-		GetDlgItem(IDC_STATIC_Zkzh_S3)->SetWindowText(A2T(std::string(pPaper->strStudentInfo + ":").c_str()));
+// 		m_strCurZkzh = strText;
+// 		GetDlgItem(IDC_STATIC_Zkzh_S3)->SetWindowText(A2T(std::string(pPaper->strStudentInfo + ":").c_str()));
 
 //		m_lcZkzh.SetItemState(nItem, 0, LVIS_DROPHILITED);
 		for (int i = 0; i < m_lcZkzh.GetColumns(); i++)						//取消高亮显示(手动设置背景颜色)
@@ -816,8 +816,8 @@ LRESULT CModifyZkzhDlg::OnLBtnDownEdit(WPARAM nItem, LPARAM nSubItem)
 		USES_CONVERSION;
 		CString strText = m_lcZkzh.GetItemText(nItem, nSubItem);
 		pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(nItem);
-		m_strCurZkzh = strText;
-		GetDlgItem(IDC_STATIC_Zkzh_S3)->SetWindowText(A2T(std::string(pPaper->strStudentInfo + ":").c_str()));
+// 		m_strCurZkzh = strText;
+// 		GetDlgItem(IDC_STATIC_Zkzh_S3)->SetWindowText(A2T(std::string(pPaper->strStudentInfo + ":").c_str()));
 
 		//		m_lcZkzh.SetItemState(nItem, 0, LVIS_DROPHILITED);
 		for (int i = 0; i < m_lcZkzh.GetColumns(); i++)						//取消高亮显示(手动设置背景颜色)
@@ -846,56 +846,7 @@ LRESULT CModifyZkzhDlg::OnLBtnDownEdit(WPARAM nItem, LPARAM nSubItem)
 	}
 	return 0;
 }
-#if 0
-void CModifyZkzhDlg::OnBnClickedBtnSave()
-{
-	UpdateData(TRUE);
-	USES_CONVERSION;
-	std::string strOldVal = m_pCurrentShowPaper->strSN;
-	m_pCurrentShowPaper->strSN = T2A(m_strCurZkzh);
-	CString strText = A2T(m_pCurrentShowPaper->strSN.c_str());
 
-//	m_lcZkzh.SetItemState(m_nCurrentSelItem, 0, LVIS_DROPHILITED);
-	for (int i = 0; i < m_lcZkzh.GetColumns(); i++)						//取消高亮显示(手动设置背景颜色)
-		if (!m_lcZkzh.GetModified(m_nCurrentSelItem, i))
-			m_lcZkzh.SetItemColors(m_nCurrentSelItem, i, crOldText, crOldBackground);
-		else
-			m_lcZkzh.SetItemColors(m_nCurrentSelItem, i, RGB(255, 0, 0), crOldBackground);
-#ifdef NewListModelTest
-		COLORREF crText, crBackground;
-		m_lcZkzh.GetItemColors(m_nCurrentSelItem, 1, crText, crBackground);
-		if (strOldVal != m_pCurrentShowPaper->strSN)
-		{
-			m_lcZkzh.SetItemText(m_nCurrentSelItem, 1, strText, RGB(255, 0, 0), crBackground);
-			m_lcZkzh.SetModified(m_nCurrentSelItem, 1, TRUE);
-			m_pCurrentShowPaper->bModifyZKZH = true;
-		}
-		else
-		{
-			m_lcZkzh.SetItemText(m_nCurrentSelItem, 1, strText, RGB(0, 0, 0), crBackground);
-		}
-#else
-	COLORREF crText, crBackground;
-	m_lcZkzh.GetItemColors(m_nCurrentSelItem, 2, crText, crBackground);
-	if (strOldVal != m_pCurrentShowPaper->strSN)
-	{
-		m_lcZkzh.SetItemText(m_nCurrentSelItem, 2, strText, RGB(255, 0, 0), crBackground);
-		m_lcZkzh.SetModified(m_nCurrentSelItem, 2, TRUE);
-		m_pCurrentShowPaper->bModifyZKZH = true;
-	}
-	else
-	{
-		m_lcZkzh.SetItemText(m_nCurrentSelItem, 2, strText, RGB(0, 0, 0), crBackground);
-	}
-#endif
-
-	if (m_nCurrentSelItem < m_lcZkzh.GetColumns())
-		m_nCurrentSelItem = m_nCurrentSelItem + 1;
-	else
-		m_nCurrentSelItem = 0;
-	ShowPaperByItem(m_nCurrentSelItem);
-}
-#endif
 bool CModifyZkzhDlg::ReleaseData()
 {
 	if (!g_nExitFlag)

@@ -318,6 +318,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		}
 		catch (Poco::Exception& exc)
 		{
+			inp.close();
 			std::string strErrInfo = Poco::format("创建解压目录(%s)失败,%s", CMyCodeConvert::Utf8ToGb2312(strOutDir), exc.message());
 			g_Log.LogOutError(strErrInfo);
 			std::cout << strErrInfo << std::endl;
@@ -348,6 +349,8 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 
 		if (uf == NULL)
 		{
+			inp.close();
+			unzClose(uf);
 			strLog = "打开压缩文件失败:" + pPapers->strPapersPath;
 			g_Log.LogOutError(strLog);
 			std::cout << strLog << std::endl;
@@ -380,6 +383,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		else
 			ret = do_extract_onefile(uf, "papersInfo.dat", opt_do_extract_withoutpath, opt_overwrite, password, szBaseDir);
 		unzClose(uf);
+		inp.close();
 
 		if (ret != 0)
 		{
@@ -423,6 +427,32 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 			std::string strLog = Poco::format("试卷袋(%s),解压后数据不一致，需要重新解压,已解压次数%d", pPapers->strPapersName, pTask->nTimes + 1);
 			g_Log.LogOutError(strLog);
 			std::cout << strLog << std::endl;
+			if (pTask->nTimes >= 10)	//解压失败超过10次，放入错误文件夹
+			{
+				//错误包，移动到指定目录，等待人工处理
+				Poco::LocalDateTime now;
+				std::string strErrorDir = Poco::format("%s\\%04d-%02d-%02d\\%s", CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strErrorPkg), now.year(), now.month(), now.day(), CMyCodeConvert::Gb2312ToUtf8("解压失败"));
+				std::string strErrorPath = strErrorDir + "\\" + CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersFileName);
+				try
+				{
+					Poco::File fileErrDir(strErrorDir);
+					if (!fileErrDir.exists())
+						fileErrDir.createDirectories();
+
+					Poco::File filePapers(CMyCodeConvert::Gb2312ToUtf8(pPapers->strSrcPapersPath));
+					filePapers.moveTo(strErrorPath);
+					std::string strLog = "试卷袋(" + pPapers->strSrcPapersFileName + ")解压失败超过10次，已移入错误文件夹，需要人工检查";
+					g_Log.LogOut(strLog);
+					std::cout << "\n\n*************************\n" << strLog << "\n*************************\n\n\n" << std::endl;
+				}
+				catch (Poco::Exception& exc)
+				{
+					std::string strErr = "移动解压失败的试卷袋(" + pPapers->strPapersPath + ")失败，解压失败超过10次，需要人工检查: " + exc.what();	//exc.message()
+					g_Log.LogOutError(strErr);
+				}
+				SAFE_RELEASE(pPapers);
+				return;
+			}
 			SAFE_RELEASE(pPapers);
 
 			Poco::Thread::sleep(1000);

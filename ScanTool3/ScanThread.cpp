@@ -2207,7 +2207,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 
 		bool bNoDisposes = false;	//不需要在此线程处理，图像已经放到图像队列中去处理了
 #ifdef TEST_PAGINATION
-		if (_pModel_->nUsePagination && m_nNotifyDlgType == 1 && _nScanAnswerModel_ != 2)
+		if (_pModel_ && _pModel_->nUsePagination && m_nNotifyDlgType == 1 && _nScanAnswerModel_ != 2)
 		{
 			bNoDisposes = true;
 			pST_SCAN_PIC pScanPic = new ST_SCAN_PIC();
@@ -2224,6 +2224,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 			m_pScanPaper->nPaperID = nStudentId;
 			m_pScanPaper->pPapersInfo = _pCurrPapersInfo_;
 			m_pScanPaper->vecScanPic.push_back(pScanPic);
+			pScanPic->pParentScanPaper = m_pScanPaper;
 // 			if (m_nDoubleScan && m_nModelPicNums % 2 != 0)	//双面扫描，且模板数不为奇数，因为模板数为奇数会舍弃图像
 // 			{
 // 				if ((nOrder - 1) % 2 == 0)	//扫描一张试卷后，获取到的第一面

@@ -210,13 +210,16 @@ void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
 	std::string strCurrZkzh = T2A(m_strPicZKZH);
 	if (pPic->nPicModelIndex != m_nPicPagination - 1)
 	{
+		pPic->nPicModelIndex = m_nPicPagination - 1;
 		if (strCurrZkzh == static_cast<pST_PaperInfo>(pPic->pPaper)->strSN)
 		{
-
+			std::sort(static_cast<pST_PaperInfo>(pPic->pPaper)->lPic.begin(), static_cast<pST_PaperInfo>(pPic->pPaper)->lPic.end(), [](pST_PicInfo pPic1, pST_PicInfo pPic2)
+			{return pPic1->nPicModelIndex < pPic2->nPicModelIndex;});
 		}
 		else
 		{
-
+			//考号与试卷不一致，重新划分到对应的试卷中去
+			//如果图片只有2张，又是双面扫描，则不需要重新构建试卷
 		}
 	}
 	else

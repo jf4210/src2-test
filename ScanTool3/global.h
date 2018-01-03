@@ -87,7 +87,7 @@
 //	#define USE_TESSERACT		//使用Tesseract进行数字汉字识别
 
 // 	#define TEST_PAPERS_INPUT	//试卷袋导入功能测试
-// 	#define TEST_PAGINATION		//页码测试，多页试卷的情况，多页A3、A4
+ 	#define TEST_PAGINATION		//页码测试，多页试卷的情况，多页A3、A4
 #endif
 
 #ifdef USE_TESSERACT
@@ -133,9 +133,9 @@
 
 #ifndef TO_WHTY
 	#ifdef PUBLISH_VERSION
-		#define SOFT_VERSION	_T("v2.7")
+		#define SOFT_VERSION	_T("v2.8")
 	#else
-		#define SOFT_VERSION	_T("v2.7")		//-Pri
+		#define SOFT_VERSION	_T("v2.8")		//-Pri
 	#endif
 #else
 	#define SOFT_VERSION	_T("v2.1")
@@ -264,6 +264,50 @@ typedef enum _eDlgType_
 }E_DLG_TYPE;
 extern E_DLG_TYPE		_eCurrDlgType_;	//当前显示的窗口，弹出窗口不算
 
+
+//从扫描仪获取的图像信息
+typedef struct _ScanPic
+{
+	int nOrder;					//考生的试卷顺序，1.jpg、2.jpg ...(S1_1,S1_2,S1_3中的1、2、3)
+	int nStudentID;				//考生的索引，S1、S2、S3 ...
+	int nModelPicID;			//这张试卷在模板上属于第几页试卷, 从0开始
+	void*	pNotifyDlg;			//处理完成的通知窗口
+	pST_SCAN_PAPER pParentScanPaper;	//所属的扫描试卷
+	std::string strPicName;
+	std::string strPicPath;		//gb2312
+	cv::Mat mtPic;
+}ST_SCAN_PIC, *pST_SCAN_PIC;
+typedef struct _ScanPaper
+{
+	bool bDoubleScan;			//是否双面扫描，单面扫描时，pScanPic2不可用
+	bool bCanRecog;				//是否可以进行识别，使用多页模式时生效，在根据页码查找这张试卷属于模板的第几张试卷失败，需要人工确认，之后再识别
+	int  nSrcDlgType;			//0-来自扫描线程的数据，1-来自试卷导入窗口的数据
+	int  nPaperID;				//扫描的第几张试卷
+	int  nModelPaperID;			//这张试卷在模板上属于第几张试卷
+	pPAPERSINFO pPapersInfo;
+	std::vector<pST_SCAN_PIC> vecScanPic;
+	_ScanPaper()
+	{
+		bDoubleScan = true;
+		bCanRecog = true;
+		nSrcDlgType = 0;
+		nPaperID = 0;
+		nModelPaperID = 0;
+		pPapersInfo = NULL;
+	}
+	~_ScanPaper()
+	{
+		for (int i = 0; i < vecScanPic.size(); i++)
+		{
+			pST_SCAN_PIC pScanPic = vecScanPic[i];
+			SAFE_RELEASE(pScanPic);
+		}
+	}
+}ST_SCAN_PAPER, *pST_SCAN_PAPER;
+typedef std::list<pST_SCAN_PAPER> SCAN_PAPER_LIST;			//从扫描仪获取的图像信息的列表
+extern Poco::FastMutex			g_fmScanPaperListLock;		//从扫描仪获取的图像信息的列表锁
+extern SCAN_PAPER_LIST			g_lScanPaperTask;			//从扫描仪获取的图像信息的列表
+
 #if 1
 typedef struct _PicInfo_				//图片信息
 {
@@ -272,6 +316,7 @@ typedef struct _PicInfo_				//图片信息
 	int				nRecogRotation;	//识别过程中判断需要调整的方向，1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
 	int				nPicModelIndex;	//图片索引, 设置图片是属于模板的第几页
 	void*			pPaper;			//所属试卷的信息
+	pST_SCAN_PIC	pSrcScanPic;	//原始扫描的图像信息
 	cv::Rect		rtFix;			//定点矩形
 	std::string		strPicName;		//图片名称
 	std::string		strPicPath;		//图片路径	gb2312
@@ -290,6 +335,7 @@ typedef struct _PicInfo_				//图片信息
 		bFindIssue = false;
 		pPaper = NULL;
 		nPicModelIndex = 0;
+		pSrcScanPic = NULL;
 	}
 	~_PicInfo_()
 	{
@@ -330,7 +376,8 @@ typedef struct _PaperInfo_
 	std::string strStudentInfo;		//学生信息, S1、S2、S3...
 	std::string strSN;				//识别出的考号、准考证号
 	std::string strRecogSN4Search;	//用于模糊搜索的考号，将未识别出来的部分用#代替，后期进行模糊搜索
-	
+	SCAN_PAPER_LIST lSrcScanPaper;	//原始扫描的试卷信息
+
 	SNLIST				lSnResult;
 	OMRRESULTLIST		lOmrResult;			//OMRRESULTLIST
 	ELECTOMR_LIST		lElectOmrResult;	//识别的选做题OMR结果
@@ -372,6 +419,12 @@ typedef struct _PaperInfo_
 			SAFE_RELEASE(pSNItem);
 		}
 #endif
+		for (auto itScanPaper : lSrcScanPaper)
+		{
+			pST_SCAN_PAPER pScanPaper = itScanPaper;
+			SAFE_RELEASE(pScanPaper);
+		}
+		lSrcScanPaper.clear();
 
 		PIC_LIST::iterator itPic = lPic.begin();
 		for (; itPic != lPic.end();)
@@ -617,55 +670,6 @@ extern Poco::Event			g_eTcpThreadExit;
 extern Poco::Event			g_eSendFileThreadExit;
 extern Poco::Event			g_eFileUpLoadThreadExit;
 extern Poco::Event			g_eCompressThreadExit;
-
-//从扫描仪获取的图像信息
-typedef struct _ScanPic
-{
-	int nOrder;					//考生的试卷顺序，1.jpg、2.jpg ...(S1_1,S1_2,S1_3中的1、2、3)
-	int nStudentID;				//考生的索引，S1、S2、S3 ...
-	int nModelPicID;			//这张试卷在模板上属于第几页试卷, 从0开始
-	void*	pNotifyDlg;			//处理完成的通知窗口
-	std::string strPicName;
-	std::string strPicPath;		//gb2312
-	cv::Mat mtPic;
-}ST_SCAN_PIC, *pST_SCAN_PIC;
-typedef struct _ScanPaper
-{
-	bool bDoubleScan;			//是否双面扫描，单面扫描时，pScanPic2不可用
-	bool bCanRecog;				//是否可以进行识别，使用多页模式时生效，在根据页码查找这张试卷属于模板的第几张试卷失败，需要人工确认，之后再识别
-	int  nSrcDlgType;			//0-来自扫描线程的数据，1-来自试卷导入窗口的数据
-	int  nPaperID;				//扫描的第几张试卷
-	int  nModelPaperID;			//这张试卷在模板上属于第几张试卷
-	pPAPERSINFO pPapersInfo;
-// 	pST_SCAN_PIC pScanPic1;		//从扫描仪获取到的一张试卷的第一面
-// 	pST_SCAN_PIC pScanPic2;		//从扫描仪获取到的一张试卷的第二面
-	std::vector<pST_SCAN_PIC> vecScanPic;
-	_ScanPaper()
-	{
-		bDoubleScan = true;
-		bCanRecog = true;
-		nSrcDlgType = 0;
-		nPaperID = 0;
-		nModelPaperID = 0;
-		pPapersInfo = NULL;
-// 		pScanPic1 = NULL;
-// 		pScanPic2 = NULL;
-	}
-	~_ScanPaper()
-	{
-		for (int i = 0; i < vecScanPic.size(); i++)
-		{
-			pST_SCAN_PIC pScanPic = vecScanPic[i];
-			SAFE_RELEASE(pScanPic);
-		}
-// 		SAFE_RELEASE(pScanPic1);
-// 		SAFE_RELEASE(pScanPic2);
-	}
-}ST_SCAN_PAPER, *pST_SCAN_PAPER;
-typedef std::list<pST_SCAN_PAPER> SCAN_PAPER_LIST;			//从扫描仪获取的图像信息的列表
-extern Poco::FastMutex			g_fmScanPaperListLock;		//从扫描仪获取的图像信息的列表锁
-extern SCAN_PAPER_LIST			g_lScanPaperTask;			//从扫描仪获取的图像信息的列表
-
 
 //模板文件信息
 typedef struct _ModelFile
