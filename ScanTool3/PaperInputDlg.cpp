@@ -1024,6 +1024,31 @@ void CPaperInputDlg::OnNMDblclkListPapers(NMHDR *pNMHDR, LRESULT *pResult)
 
 	USES_CONVERSION;
 	pPAPERSINFO pPapers = (pPAPERSINFO)m_lPapersCtrl.GetItemData(pNMItemActivate->iItem);
+	if (m_pModel && m_pModel->nUsePagination)	//多页模式时，需要等所有试卷都识别完成再显示，因为有试卷合并
+	{
+		//检查是否都识别完成
+		bool bRecogComplete = true;
+		for (auto p : pPapers->lPaper)
+		{
+			if (!p->bRecogComplete)
+			{
+				bRecogComplete = false;
+				break;
+			}
+		}
+		if (!bRecogComplete)
+		{
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(2, 1, "多页模式，请等待所有试卷识别完成");
+			dlg.DoModal();
+			return;
+		}
+		//更新试卷袋数量
+		char szPapersCount[20] = { 0 };
+		sprintf_s(szPapersCount, "%d", pPapers->lPaper.size());
+		m_lPapersCtrl.SetItemText(pNMItemActivate->iItem, 1, (LPCTSTR)A2T(szPapersCount));
+	}
+
 	m_pCurrentPapers = pPapers;
 
 	m_nCurrItemPapers = pNMItemActivate->iItem;
@@ -2033,7 +2058,14 @@ void CPaperInputDlg::CheckZkzhInBmk(pST_PaperInfo pPaper)
 	if (nResult == 1)
 		pPaper->nZkzhInBmkStatus = 1;
 	else if (nResult == -1)
+	{
+		if (_pModel_->nUsePagination)	//多页模式时，不检查重号
+		{
+			pPaper->nZkzhInBmkStatus = 1;
+			return;
+		}
 		pPaper->nZkzhInBmkStatus = -1;
+	}
 	else
 		pPaper->nZkzhInBmkStatus = 0;
 }

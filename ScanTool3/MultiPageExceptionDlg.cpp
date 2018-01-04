@@ -5,7 +5,7 @@
 #include "ScanTool3.h"
 #include "MultiPageExceptionDlg.h"
 #include "afxdialogex.h"
-
+#include "MultiPageMgr.h"
 
 // CMultiPageExceptionDlg 对话框
 
@@ -210,17 +210,95 @@ void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
 	std::string strCurrZkzh = T2A(m_strPicZKZH);
 	if (pPic->nPicModelIndex != m_nPicPagination - 1)
 	{
-		pPic->nPicModelIndex = m_nPicPagination - 1;
-		if (strCurrZkzh == static_cast<pST_PaperInfo>(pPic->pPaper)->strSN)
-		{
-			std::sort(static_cast<pST_PaperInfo>(pPic->pPaper)->lPic.begin(), static_cast<pST_PaperInfo>(pPic->pPaper)->lPic.end(), [](pST_PicInfo pPic1, pST_PicInfo pPic2)
-			{return pPic1->nPicModelIndex < pPic2->nPicModelIndex;});
-		}
-		else
-		{
-			//考号与试卷不一致，重新划分到对应的试卷中去
-			//如果图片只有2张，又是双面扫描，则不需要重新构建试卷
-		}
+		CMultiPageMgr multiPageObj;
+		multiPageObj.ModifyPicPagination(pPic, m_nPicPagination);
+
+		//修改选择题和选择题的页码ID信息
+
+ 		if (strCurrZkzh == static_cast<pST_PaperInfo>(pPic->pPaper)->strSN)
+ 		{
+			static_cast<pST_PaperInfo>(pPic->pPaper)->lPic.sort([](pST_PicInfo pPic1, pST_PicInfo pPic2)
+			{return pPic1->nPicModelIndex < pPic2->nPicModelIndex; });
+ 		}
+ 		else
+ 		{
+ 			//考号与试卷不一致，重新划分到对应的试卷中去
+ 			if (static_cast<pST_SCAN_PAPER>(pPic->pSrcScanPic->pParentScanPaper)->bDoubleScan)
+ 			{
+ 				pST_PaperInfo pCurrentPaper = static_cast<pST_PaperInfo>(pPic->pPaper);
+ 				if (pCurrentPaper->lPic.size() <= 2)		//如果图片只有2张，又是双面扫描，则不需要重新构建试卷
+ 				{
+ 					bool bFind = false;		//是否在现有试卷袋中发现相同准考证号
+ 					PAPER_LIST::iterator itPaper = m_pPapers->lPaper.begin();
+ 					for (; itPaper != m_pPapers->lPaper.end(); )
+ 					{
+ 						pST_PaperInfo pNewPaper = *itPaper;
+ 						if (pNewPaper == pCurrentPaper)
+ 						{
+ 							itPaper = m_pPapers->lPaper.erase(itPaper);
+ 							continue;
+ 						}
+ 						if (strCurrZkzh == pNewPaper->strSN)
+ 						{
+ 							bFind = true;
+
+ 							//试卷合并
+ 							if (!pNewPaper->bIssuePaper)	pNewPaper->bIssuePaper = pCurrentPaper->bIssuePaper;
+ 							if (!pNewPaper->bModifyZKZH)	pNewPaper->bModifyZKZH = pCurrentPaper->bModifyZKZH;
+ 							if (!pNewPaper->bReScan)		pNewPaper->bReScan = pCurrentPaper->bReScan;
+ 							if (!pNewPaper->bRecogCourse)	pNewPaper->bRecogCourse = pCurrentPaper->bRecogCourse;
+ 							pNewPaper->nPicsExchange += pCurrentPaper->nPicsExchange;
+ 							pNewPaper->nPaginationStatus = 2;
+ 							if (pNewPaper->nQKFlag == 0)	pNewPaper->nQKFlag = pCurrentPaper->nQKFlag;
+ 							if (pNewPaper->nWJFlag == 0)	pNewPaper->nWJFlag = pCurrentPaper->nWJFlag;
+ 							pNewPaper->nZkzhInBmkStatus = pCurrentPaper->nZkzhInBmkStatus;
+ 							//pPaper->strRecogSN4Search
+ 							//pPaper->lSnResult
+ 
+							SCAN_PAPER_LIST::iterator itSrcScanPaper = pCurrentPaper->lSrcScanPaper.begin();
+ 							for (; itSrcScanPaper != pCurrentPaper->lSrcScanPaper.end();)
+ 							{
+								pST_SCAN_PAPER pScanPaper = *itSrcScanPaper;
+ 								pNewPaper->lSrcScanPaper.push_back(pScanPaper);
+ 								itSrcScanPaper = pCurrentPaper->lSrcScanPaper.erase(itSrcScanPaper);
+ 							}
+ 							for (auto omrObj : pCurrentPaper->lOmrResult)
+ 								pNewPaper->lOmrResult.push_back(omrObj);
+ 							for (auto electOmrObj : pCurrentPaper->lElectOmrResult)
+ 								pNewPaper->lElectOmrResult.push_back(electOmrObj);
+ 
+ 							PIC_LIST::iterator itPic = pCurrentPaper->lPic.begin();
+ 							for (; itPic != pCurrentPaper->lPic.end(); )
+ 							{
+ 								pST_PicInfo pPic = *itPic;
+ 								itPic = pCurrentPaper->lPic.erase(itPic);
+ 
+ 								pPic->pPaper = pNewPaper;
+ 								bool bInsert = false;
+ 								PIC_LIST::iterator itNewPic = pNewPaper->lPic.begin();
+ 								for (; itNewPic != pNewPaper->lPic.end(); itNewPic++)
+ 								{
+ 									if ((*itNewPic)->nPicModelIndex > pPic->nPicModelIndex)
+ 									{
+ 										bInsert = true;
+ 										pNewPaper->lPic.insert(itNewPic, pPic);
+ 										break;
+ 									}
+ 								}
+ 								if (!bInsert)
+ 									pNewPaper->lPic.push_back(pPic);
+ 							}
+ 							if (pCurrentPaper->strSN.empty())
+ 								m_pPapers->nSnNull--;
+
+							break;
+ 						} 
+ 						itPaper++;
+ 					}
+					if(bFind) SAFE_RELEASE(pCurrentPaper);
+ 				}
+ 			}
+ 		}
 	}
 	else
 	{

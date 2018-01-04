@@ -498,6 +498,9 @@
     <ClInclude Include="MultiPageExceptionDlg.h">
       <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\多页模式异常处理</Filter>
     </ClInclude>
+    <ClInclude Include="MultiPageMgr.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -760,6 +763,9 @@
     </ClCompile>
     <ClCompile Include="MultiPageExceptionDlg.cpp">
       <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\多页模式异常处理</Filter>
+    </ClCompile>
+    <ClCompile Include="MultiPageMgr.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

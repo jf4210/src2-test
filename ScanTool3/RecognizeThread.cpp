@@ -307,9 +307,9 @@ bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 			else
 				pCurrentPaper->nPaginationStatus = 1;	//识别完页码，可以识别，不能确定具体属于哪个学生(默认)
 
-			pScanPaperTask->pPapersInfo->fmlPaper.lock();
-			pScanPaperTask->pPapersInfo->lPaper.push_back(pCurrentPaper);
-			pScanPaperTask->pPapersInfo->fmlPaper.unlock();
+			static_cast<pPAPERSINFO>(pScanPaperTask->pPapersInfo)->fmlPaper.lock();
+			static_cast<pPAPERSINFO>(pScanPaperTask->pPapersInfo)->lPaper.push_back(pCurrentPaper);
+			static_cast<pPAPERSINFO>(pScanPaperTask->pPapersInfo)->fmlPaper.unlock();
 		}
 		else
 		{
@@ -325,7 +325,7 @@ bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 			pResult->nPaperId = pScanPaperTask->nPaperID;
 			pResult->nPicId = i + 1;
 			pResult->pPaper = pCurrentPaper;
-			pResult->matShowPic = pScanPic->mtPic;
+			pResult->matShowPic = pScanPic->mtPic.clone();
 			pResult->strPicName = pScanPic->strPicName;
 			pResult->strPicPath = pScanPic->strPicPath;
 			pResult->strResult = "获得图像";
@@ -377,10 +377,10 @@ bool CRecognizeThread::HandleTask(pRECOGTASK pTask)
 			bRecogAllPic = false;
 			break;
 		}
-		if (objPic->pSrcScanPic)
-		{
-			objPic->pSrcScanPic->mtPic.release();	//释放已经识别过的图片内存，防止内存持续增加
-		}
+// 		if (objPic->pSrcScanPic)
+// 		{
+// 			objPic->pSrcScanPic->mtPic.release();	//释放已经识别过的图片内存，防止内存持续增加
+// 		}
 	}
 	if (bRecogAllPic)
 	{
@@ -2999,6 +2999,7 @@ bool CRecognizeThread::RecogElectOmr(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 		pELECTOMR_QUESTION pOmrQuestion = &(*itElectOmr);
 
 		ELECTOMR_QUESTION omrResult;
+		omrResult.nPageId = nPic + 1;
 		omrResult.sElectOmrGroupInfo = pOmrQuestion->sElectOmrGroupInfo;
 
 		std::vector<int> vecVal_calcHist;		//直方图灰度计算的识别结果

@@ -495,6 +495,12 @@ void CPaperUser::SetAnswerInfo(ST_FILE_INFO info)
 	string strFilePath = SysSet.m_strRecvFilePath;
 	strFilePath.append(info.szFileName);
 
+	if (m_pf)
+	{
+		fclose(m_pf);
+		m_pf = NULL;
+	}
+
 	try
 	{
 		Poco::File upLoadPath(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strRecvFilePath));
@@ -521,11 +527,7 @@ void CPaperUser::SetAnswerInfo(ST_FILE_INFO info)
 	m_start = clock();
 
 	m_bIOError = false;
-	if (m_pf)
-	{
-		fclose(m_pf);
-		m_pf = NULL;
-	}
+	
 	try
 	{
 		m_pf = fopen(m_szFilePath, "wb");

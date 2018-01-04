@@ -1645,7 +1645,14 @@ void CScanProcessDlg::CheckZkzhInBmk(pST_PaperInfo pPaper)
 	if (nResult == 1)
 		pPaper->nZkzhInBmkStatus = 1;
 	else if (nResult == -1)
+	{
+		if (_pModel_->nUsePagination)	//多页模式时，不检查重号
+		{
+			pPaper->nZkzhInBmkStatus = 1;
+			return;
+		}
 		pPaper->nZkzhInBmkStatus = -1;
+	}
 	else 
 		pPaper->nZkzhInBmkStatus = 0;
 }

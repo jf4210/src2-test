@@ -264,7 +264,6 @@ typedef enum _eDlgType_
 }E_DLG_TYPE;
 extern E_DLG_TYPE		_eCurrDlgType_;	//当前显示的窗口，弹出窗口不算
 
-
 //从扫描仪获取的图像信息
 typedef struct _ScanPic
 {
@@ -272,7 +271,7 @@ typedef struct _ScanPic
 	int nStudentID;				//考生的索引，S1、S2、S3 ...
 	int nModelPicID;			//这张试卷在模板上属于第几页试卷, 从0开始
 	void*	pNotifyDlg;			//处理完成的通知窗口
-	pST_SCAN_PAPER pParentScanPaper;	//所属的扫描试卷
+	void* pParentScanPaper;		//所属的扫描试卷
 	std::string strPicName;
 	std::string strPicPath;		//gb2312
 	cv::Mat mtPic;
@@ -284,7 +283,7 @@ typedef struct _ScanPaper
 	int  nSrcDlgType;			//0-来自扫描线程的数据，1-来自试卷导入窗口的数据
 	int  nPaperID;				//扫描的第几张试卷
 	int  nModelPaperID;			//这张试卷在模板上属于第几张试卷
-	pPAPERSINFO pPapersInfo;
+	void* pPapersInfo;			//所属试卷袋
 	std::vector<pST_SCAN_PIC> vecScanPic;
 	_ScanPaper()
 	{
@@ -516,7 +515,6 @@ extern RECOGTASKLIST		g_lRecogTask;	//识别任务列表
 
 extern Poco::FastMutex		g_fmPapers;		//操作试卷袋列表的任务锁
 extern PAPERS_LIST			g_lPapers;		//所有的试卷袋信息
-
 
 //TCP命令任务
 typedef struct _TcpTask_
