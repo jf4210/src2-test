@@ -311,9 +311,13 @@ extern SCAN_PAPER_LIST			g_lScanPaperTask;			//从扫描仪获取的图像信息的列表
 typedef struct _PicInfo_				//图片信息
 {
 	bool			bFindIssue;		//是否找到问题点
+	bool			bRecogCourse;		//科目识别是否正确
 	int 			nRecoged;		//是否已经识别过, 0-未识别，1-正在识别，2-识别完成
 	int				nRecogRotation;	//识别过程中判断需要调整的方向，1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
-	int				nPicModelIndex;	//图片索引, 设置图片是属于模板的第几页
+	int				nPicModelIndex;	//图片索引, 设置图片是属于模板的第几页，从0计数
+	int				nPicOldModelIndex;	//针对多页模式，修改图片的模板索引时，记录移动前属于模板的第几页，在移动图片所属试卷的omr等信息时有用
+	int				nQKFlag;			//缺考标识
+	int				nWJFlag;			//违纪标识
 	void*			pPaper;			//所属试卷的信息
 	pST_SCAN_PIC	pSrcScanPic;	//原始扫描的图像信息
 	cv::Rect		rtFix;			//定点矩形
@@ -323,6 +327,8 @@ typedef struct _PicInfo_				//图片信息
 	RECTLIST		lFix;			//定点列表
 	RECTLIST		lNormalRect;	//识别出来的正常点位置
 	RECTLIST		lIssueRect;		//识别出来的问题试卷的问题点位置，只要出现问题点就不进行下一页的识别(严格模式)，或者存储已经发现的问题点，但是继续后面的识别(简单模式)
+	OMRRESULTLIST		lOmrResult;			//OMRRESULTLIST
+	ELECTOMR_LIST		lElectOmrResult;	//识别的选做题OMR结果
 
 	RECTLIST		lCalcRect;		//通过定点计算出的点位置
 	RECTLIST		lModelWordFix;		//模板文字定点列表，在使用文字定位时有用
@@ -331,10 +337,14 @@ typedef struct _PicInfo_				//图片信息
 	{
 		nRecogRotation = 0;
 		nRecoged = 0;
+		nQKFlag = 0;
+		nWJFlag = 0;
 		bFindIssue = false;
 		pPaper = NULL;
 		nPicModelIndex = 0;
+		nPicOldModelIndex = 0;
 		pSrcScanPic = NULL;
+		bRecogCourse = true;
 	}
 	~_PicInfo_()
 	{
@@ -367,7 +377,7 @@ typedef struct _PaperInfo_
 	//++从Pkg恢复Papers时的参数
 	int			nChkFlag;			//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不進行圖片识别
 	//--
-	int			nScanTmpIndex;		//从扫描获取到一张试卷的信息后直接构建的临时试卷，在整袋试卷识别完后再合并到具体的考生
+	//int			nScanTmpIndex;		//从扫描获取到一张试卷的信息后直接构建的临时试卷，在整袋试卷识别完后再合并到具体的考生
 	int			nIndex;				//在试卷袋中的索引，即S1为1，S2为2，S3为3...
 	pMODEL		pModel;				//识别此学生试卷所用的模板
 	void*		pPapers;			//所属的试卷袋信息
@@ -390,7 +400,7 @@ typedef struct _PaperInfo_
 		bRecogCourse = true;
 		bReScan = false;
 		nPicsExchange = 0;
-		nScanTmpIndex = 0;
+		//nScanTmpIndex = 0;
 		nPaginationStatus = 1;
 		nIndex = 0;
 		nQKFlag = 0;

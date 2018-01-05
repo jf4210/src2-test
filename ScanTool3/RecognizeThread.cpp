@@ -286,9 +286,15 @@ bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 		pPic->strPicPath = pScanPic->strPicPath;
 		pPic->pSrcScanPic = pScanPic;
 		if (pScanPaperTask->bDoubleScan)
+		{
 			pPic->nPicModelIndex = pScanPaperTask->nModelPaperID * 2 + i;	//设置图片是属于模板的第几页
+			pPic->nPicOldModelIndex = pPic->nPicModelIndex;
+		}
 		else
+		{
 			pPic->nPicModelIndex = i;
+			pPic->nPicOldModelIndex = pPic->nPicModelIndex;
+		}
 		if (pScanPic->nOrder == 1)	//(pScanPic->nOrder + 1) % 2 == 0	第1、3、5...页的时候创建新的试卷信息，如果是多页模式时，每一张试卷创建一个考生信息，最后根据准考证号合并考生
 		{
 			char szStudentName[30] = { 0 };
@@ -377,10 +383,10 @@ bool CRecognizeThread::HandleTask(pRECOGTASK pTask)
 			bRecogAllPic = false;
 			break;
 		}
-// 		if (objPic->pSrcScanPic)
-// 		{
-// 			objPic->pSrcScanPic->mtPic.release();	//释放已经识别过的图片内存，防止内存持续增加
-// 		}
+		if (objPic->pSrcScanPic)
+		{
+			objPic->pSrcScanPic->mtPic.release();	//释放已经识别过的图片内存，防止内存持续增加
+		}
 	}
 	if (bRecogAllPic)
 	{
@@ -2213,6 +2219,7 @@ bool CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 	if (!bResult)
 	{
 		(static_cast<pST_PaperInfo>(pPic->pPaper))->bRecogCourse = false;
+		pPic->bRecogCourse = false;
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别科目失败, 图片名: %s\n", pPic->strPicName.c_str());
 		strLog.append(szLog);
@@ -2257,6 +2264,7 @@ bool CRecognizeThread::RecogQKCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 			if (rc.fRealValuePercent >= rc.fStandardValuePercent)
 			{
 				((pST_PaperInfo)pPic->pPaper)->nQKFlag = 1;			//设置学生缺考
+				pPic->nQKFlag = 1;
 			}
 			pPic->lNormalRect.push_back(rc);
 			bResult = true;
@@ -2319,6 +2327,7 @@ bool CRecognizeThread::RecogWJCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 			if (rc.fRealValuePercent >= rc.fStandardValuePercent)
 			{
 				((pST_PaperInfo)pPic->pPaper)->nWJFlag = 1;			//设置学生违纪
+				pPic->nWJFlag = 1;
 			}
 			pPic->lNormalRect.push_back(rc);
 			bResult = true;
@@ -2955,6 +2964,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		omrResult.strRecogVal2 = strRecogAnswer2;
 		omrResult.strRecogVal3 = strRecogAnswer3;
 		(static_cast<pST_PaperInfo>(pPic->pPaper))->lOmrResult.push_back(omrResult);
+		pPic->lOmrResult.push_back(omrResult);
 	}
 	if (!bResult)
 	{
@@ -3132,7 +3142,7 @@ bool CRecognizeThread::RecogElectOmr(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 		omrResult.nDoubt = nDoubt;
 		omrResult.strRecogResult = strRecogAnswer1;
 		(static_cast<pST_PaperInfo>(pPic->pPaper))->lElectOmrResult.push_back(omrResult);
-
+		pPic->lElectOmrResult.push_back(omrResult);
 	}
 	if (!bResult)
 	{

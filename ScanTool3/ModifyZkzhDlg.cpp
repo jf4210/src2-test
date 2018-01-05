@@ -566,7 +566,9 @@ void CModifyZkzhDlg::PicsExchange()
 	m_pCurrentShowPaper->nPicsExchange++;		//记录当前试卷被调换次数
 	m_pCurrentShowPaper->pSrcDlg = this;
 	m_pCurrentShowPaper->bIssuePaper = false;
+	m_pCurrentShowPaper->bRecogCourse = true;
 	m_pCurrentShowPaper->nQKFlag = 0;
+	m_pCurrentShowPaper->nWJFlag = 0;
 	m_pCurrentShowPaper->bRecogComplete = false;
 	m_pCurrentShowPaper->strSN = "";
 	m_pCurrentShowPaper->strRecogSN4Search = "";
@@ -582,15 +584,25 @@ void CModifyZkzhDlg::PicsExchange()
 
 	pPic1->bFindIssue = false;
 	pPic1->nRecoged = 0;
+	pPic1->bRecogCourse = true;
+	pPic1->nQKFlag = 0;
+	pPic1->nWJFlag = 0;
 	pPic1->lFix.clear();
 	pPic1->lIssueRect.clear();
 	pPic1->lNormalRect.clear();
+	pPic1->lOmrResult.clear();
+	pPic1->lElectOmrResult.clear();
 
 	pPic2->bFindIssue = false;
 	pPic2->nRecoged = 0;
+	pPic2->bRecogCourse = true;
+	pPic2->nQKFlag = 0;
+	pPic2->nWJFlag = 0;
 	pPic2->lFix.clear();
 	pPic2->lIssueRect.clear();
 	pPic2->lNormalRect.clear();
+	pPic2->lOmrResult.clear();
+	pPic2->lElectOmrResult.clear();
 
 	pRECOGTASK pTask = new RECOGTASK;
 	pTask->pPaper = m_pCurrentShowPaper;
