@@ -459,6 +459,14 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper, int nTH)
 			cv::Rect rt(cv::Point(nTh_tl_x, nTh_tl_y) - cv::Point(10, 10), cv::Point(nTh_br_x, nTh_br_y) + cv::Point(10, 10));
 			rectangle(tmp, rt, CV_RGB(50, 20, 250), 3);
 		}
+		RECTLIST::iterator itIssue = (*itPic)->lIssueRect.begin();													//显示识别正常的点
+		for (int j = 0; itIssue != (*itPic)->lIssueRect.end(); itIssue++, j++)
+		{
+			cv::Rect rt = (*itIssue).rt;
+
+			rectangle(tmp, rt, CV_RGB(255, 233, 10), 2);
+			rectangle(tmp2, rt, CV_RGB(50, 20, 250), -1);
+		}
 	#if 1
 		if (pPaper->pModel && pPaper->pModel->vecPaperModel[i]->lCharacterAnchorArea.size() > 0)
 		{
