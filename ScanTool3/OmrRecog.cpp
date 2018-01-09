@@ -111,14 +111,15 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 
 			TRACE("------>Recog Fix Sel 1: %d, rtTmp:(%d, %d, %d, %d), matCompRoi(%d, %d)\n", i, rtTmp.x, rtTmp.y, rtTmp.width, rtTmp.height, matCompRoi.cols, matCompRoi.rows);
 
-			if (matCompRoi.channels() == 3)
-				cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+			cv::Mat matCompRoi2 = matCompRoi.clone();
+			if (matCompRoi2.channels() == 3)
+				cvtColor(matCompRoi2, matCompRoi2, CV_BGR2GRAY);
 
 			TRACE("------>Recog Fix Sel 2: %d\n", i);
-			GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
+			GaussianBlur(matCompRoi2, matCompRoi2, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
 
 			TRACE("------>Recog Fix Sel 3: %d\n", i);
-			SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
+			SharpenImage(matCompRoi2, matCompRoi2, rc.nSharpKernel);
 
 			int nRealThreshold = 150;
 			RECTLIST::iterator itFix = pModel->vecPaperModel[nPic]->lFix.begin();
@@ -138,7 +139,7 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 			const float* ranges[1];
 			ranges[0] = hranges;
 			cv::MatND hist;
-			calcHist(&matCompRoi, 1, channels, cv::Mat(), hist, 1, histSize, ranges);	//histSize, ranges
+			calcHist(&matCompRoi2, 1, channels, cv::Mat(), hist, 1, histSize, ranges);	//histSize, ranges
 
 			TRACE("------>Recog Fix Sel 4: %d\n", i);
 			int nSum = 0;
@@ -169,7 +170,7 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 			}
 
 			if (nThreshold > nRealThreshold) nThreshold = nRealThreshold;
-			threshold(matCompRoi, matCompRoi, nThreshold, 255, cv::THRESH_BINARY);
+			threshold(matCompRoi2, matCompRoi2, nThreshold, 255, cv::THRESH_BINARY);
 #else
 			threshold(matCompRoi, matCompRoi, 60, 255, THRESH_BINARY);
 #endif
@@ -177,12 +178,12 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 
 			//去除干扰信息，先膨胀后腐蚀还原, 可去除一些线条干扰
 			cv::Mat element_Anticlutter = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(_nAnticlutterKernel_, _nAnticlutterKernel_));	//Size(6, 6)	普通空白框可识别		Size(3, 3)
-			dilate(matCompRoi, matCompRoi, element_Anticlutter);
-			erode(matCompRoi, matCompRoi, element_Anticlutter);
+			dilate(matCompRoi2, matCompRoi2, element_Anticlutter);
+			erode(matCompRoi2, matCompRoi2, element_Anticlutter);
 
-			cv::Canny(matCompRoi, matCompRoi, 0, rc.nCannyKernel, 5);	//_nCannyKernel_
+			cv::Canny(matCompRoi2, matCompRoi2, 0, rc.nCannyKernel, 5);	//_nCannyKernel_
 			cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(rc.nDilateKernel, rc.nDilateKernel));	//Size(6, 6)	普通空白框可识别	Size(_nDilateKernel_, _nDilateKernel_)
-			dilate(matCompRoi, matCompRoi, element);
+			dilate(matCompRoi2, matCompRoi2, element);
 
 #if 1
 			//		std::vector<std::vector<cv::Point> > vecContours;		//轮廓信息存储
@@ -207,7 +208,7 @@ bool COmrRecog::RecogFixCP(int nPic, cv::Mat& matCompPic, RECTLIST& rlFix, pMODE
 			// 			matTmp.release();
 			// 		}
 
-			IplImage ipl_img(matCompRoi);
+			IplImage ipl_img(matCompRoi2);
 
 			//the parm. for cvFindContours  
 			CvMemStorage* storage = cvCreateMemStorage(0);
@@ -382,12 +383,13 @@ bool COmrRecog::RecogZkzh(int nPic, cv::Mat& matCompPic, pMODEL	pModel, int nOri
 
 				cv::Mat matCompRoi;
 				matCompRoi = matCompPic(rc.rt);
-				
-				if(matCompRoi.channels() == 3)
-					cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+				cv::Mat matCompRoi2 = matCompRoi.clone();
+				if (matCompRoi2.channels() == 3)
+					cvtColor(matCompRoi2, matCompRoi2, CV_BGR2GRAY);
 
 				string strTypeName;
-				string strResult = GetQR(matCompRoi, strTypeName);
+				string strResult = GetQR(matCompRoi2, strTypeName);
 
 				std::string strLog;
 				if (strResult != "")
@@ -539,8 +541,9 @@ bool COmrRecog::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo p
 		cv::Mat imag_src, img_comp;
 		if (matCompRoi.channels() == 3)
 			cv::cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
-		cv::GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//_nGauseKernel_
-		SharpenImage(matCompRoi, matCompRoi, rc.nSharpKernel);
+		cv::Mat matCompRoi2 = matCompRoi.clone();
+		cv::GaussianBlur(matCompRoi2, matCompRoi2, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//_nGauseKernel_
+		SharpenImage(matCompRoi2, matCompRoi2, rc.nSharpKernel);
 
 		const int channels[1] = { 0 };
 		const float* ranges[1];
@@ -581,7 +584,7 @@ bool COmrRecog::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo p
 		}
 #endif
 		cv::MatND src_hist, comp_hist;
-		cv::calcHist(&matCompRoi, 1, channels, cv::Mat(), comp_hist, 1, histSize, ranges, false);
+		cv::calcHist(&matCompRoi2, 1, channels, cv::Mat(), comp_hist, 1, histSize, ranges, false);
 
 		double maxValComp = 0;
 		double minValComp = 0;
@@ -625,7 +628,7 @@ bool COmrRecog::Recog(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo p
 		hranges2[0] = 0;
 		hranges2[1] = 255;
 		ranges2[0] = hranges2;
-		cv::calcHist(&matCompRoi, 1, channels, cv::Mat(), src_hist2, 1, histSize2, ranges2, true, false);
+		cv::calcHist(&matCompRoi2, 1, channels, cv::Mat(), src_hist2, 1, histSize2, ranges2, true, false);
 		int nCount = 0;
 		for (int i = 0; i < 256; i++)
 		{
@@ -2326,20 +2329,22 @@ int COmrRecog::GetRectsInArea(cv::Mat& matSrc, RECTINFO rc, int nMinW, int nMaxW
 	clock_t start, end;
 	start = clock();
 
-	cv::Mat imgResult = matSrc;
+	cv::Mat matCompRoi = matSrc;
 
-	if (imgResult.channels() == 3)
-		cv::cvtColor(imgResult, imgResult, CV_BGR2GRAY);
-	cv::GaussianBlur(imgResult, imgResult, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);
-	sharpenImage1(imgResult, imgResult, rc.nSharpKernel);
+	cv::Mat matCompRoi2 = matCompRoi.clone();
+	if (matCompRoi2.channels() == 3)
+		cvtColor(matCompRoi2, matCompRoi2, CV_BGR2GRAY);
 
-	cv::threshold(imgResult, imgResult, rc.nThresholdValue, 255, cv::THRESH_OTSU | cv::THRESH_BINARY);
+	cv::GaussianBlur(matCompRoi2, matCompRoi2, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);
+	sharpenImage1(matCompRoi2, matCompRoi2, rc.nSharpKernel);
 
-	cv::Canny(imgResult, imgResult, 0, rc.nCannyKernel, 5);
+	cv::threshold(matCompRoi2, matCompRoi2, rc.nThresholdValue, 255, cv::THRESH_OTSU | cv::THRESH_BINARY);
+
+	cv::Canny(matCompRoi2, matCompRoi2, 0, rc.nCannyKernel, 5);
 	cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(rc.nDilateKernel, rc.nDilateKernel));	//Size(6, 6)	普通空白框可识别
-	cv::dilate(imgResult, imgResult, element);
+	cv::dilate(matCompRoi2, matCompRoi2, element);
 
-	IplImage ipl_img(imgResult);
+	IplImage ipl_img(matCompRoi2);
 
 	//the parm. for cvFindContours  
 	CvMemStorage* storage = cvCreateMemStorage(0);

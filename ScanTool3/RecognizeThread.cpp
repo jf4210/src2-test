@@ -4407,7 +4407,7 @@ void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
 		pST_PaperInfo pNewPaper = NULL;
 		for (auto objPaper : pNewPapers->lPaper)
 		{
-			if (!objPaper->strSN.empty() && objPaper->strSN == pCurrentPaper->strSN)
+			if (!objPaper->strSN.empty() && objPaper->strSN == pCurrentPaper->strSN && objPaper != pCurrentPaper)
 			{
 				bFindSN = true;
 				pNewPaper = objPaper;
@@ -4544,7 +4544,6 @@ void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
 			}
 		}
 	}
-
 
 	//Í¼Æ¬ÖØÃüÃû
 	std::string strLog;

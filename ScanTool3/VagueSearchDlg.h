@@ -5,7 +5,7 @@
 #include "BmpButton.h"
 
 // CVagueSearchDlg 对话框
-
+#define MSG_VAGUESEARCH_ZKZH	(WM_USER + 400)		//模糊搜索结果
 class CVagueSearchDlg : public CDialog
 {
 	DECLARE_DYNAMIC(CVagueSearchDlg)
@@ -17,6 +17,7 @@ public:
 // 对话框数据
 	enum { IDD = IDD_VAGUESEARCHDLG };
 
+	void setNotifyDlg(CDialog* pDlg);
 	void setExamInfo(CStudentMgr* pMgr, pMODEL pModel);
 	bool vagueSearch(pST_PaperInfo pPaper);
 private:
@@ -30,6 +31,7 @@ private:
 	CBmpButton		m_bmpBtnSearch;
 
 	HBITMAP			m_bitmap_scrollbar;
+	CDialog*		m_pNotifyDlg;		//消息通知窗口
 private:
 	void	InitUI();
 	void	InitCtrlPosition();

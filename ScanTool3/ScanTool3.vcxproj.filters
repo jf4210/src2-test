@@ -190,7 +190,13 @@
     <Filter Include="定时器">
       <UniqueIdentifier>{c1545ddd-a12e-40e7-b5c7-1901c74531dd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="扫描界面窗口\扫描过程窗口\异常处理窗口\多页模式异常处理">
+    <Filter Include="扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口">
+      <UniqueIdentifier>{c4310edb-c201-46c4-967d-957d17f36048}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\准考证号异常处理">
+      <UniqueIdentifier>{113e3bfb-1f8d-4dcd-a006-d28bacec25e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\多页模式异常处理">
       <UniqueIdentifier>{c90bf60e-402b-49af-a63a-bc9729c3c6b6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -496,10 +502,16 @@
       <Filter>定时器</Filter>
     </ClInclude>
     <ClInclude Include="MultiPageExceptionDlg.h">
-      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\多页模式异常处理</Filter>
+      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\多页模式异常处理</Filter>
     </ClInclude>
     <ClInclude Include="MultiPageMgr.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZkzhShowMgrDlg.h">
+      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口</Filter>
+    </ClInclude>
+    <ClInclude Include="ZkzhExceptionDlg.h">
+      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\准考证号异常处理</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -762,10 +774,16 @@
       <Filter>扫描界面窗口\扫描过程窗口\图像答案识别窗口</Filter>
     </ClCompile>
     <ClCompile Include="MultiPageExceptionDlg.cpp">
-      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\多页模式异常处理</Filter>
+      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\多页模式异常处理</Filter>
     </ClCompile>
     <ClCompile Include="MultiPageMgr.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ZkzhShowMgrDlg.cpp">
+      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ZkzhExceptionDlg.cpp">
+      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\准考证号异常处理</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

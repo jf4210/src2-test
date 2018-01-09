@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CVagueSearchDlg, CDialog)
 
 CVagueSearchDlg::CVagueSearchDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CVagueSearchDlg::IDD, pParent)
-	, m_nSearchType(2)
+	, m_nSearchType(2), m_pNotifyDlg(NULL)
 {
 
 }
@@ -260,6 +260,11 @@ void CVagueSearchDlg::OnBnClickedBtnSearch()
 	}
 }
 
+void CVagueSearchDlg::setNotifyDlg(CDialog* pDlg)
+{
+	m_pNotifyDlg = pDlg;
+}
+
 void CVagueSearchDlg::setExamInfo(CStudentMgr* pMgr, pMODEL pModel)
 {
 	m_pStudentMgr	= pMgr;
@@ -327,26 +332,26 @@ void CVagueSearchDlg::OnNMDblclkListZkzhsearchresult(NMHDR *pNMHDR, LRESULT *pRe
 	if (pNMItemActivate->iItem < 0)
 		return;
 
-	CModifyZkzhDlg* pDlg = (CModifyZkzhDlg*)GetParent();
-
 	USES_CONVERSION;
 	CString strZkzh = m_lcBmk.GetItemText(pNMItemActivate->iItem, 2);
+
+#ifdef TEST_EXCEPTION_DLG
+	if (m_pNotifyDlg)
+	{
+		m_pNotifyDlg->SendMessage(MSG_VAGUESEARCH_ZKZH, (WPARAM)(LPCTSTR)strZkzh);
+	}
+#else
+	CModifyZkzhDlg* pDlg = (CModifyZkzhDlg*)GetParent();
+
 	pDlg->m_pCurrentShowPaper->strSN = T2A(strZkzh);
 	pDlg->m_pCurrentShowPaper->bModifyZKZH = true;
-
-//	CheckZkzhInBmk(pDlg->m_pCurrentShowPaper);
-
-// 	if (pDlg->m_pCurrentShowPaper->nZkzhInBmkStatus == 0)	//永远无法执行
-// 	{
-// 		SetZkzhScaned(pDlg->m_pCurrentShowPaper->strSN);
-// 		pDlg->m_pCurrentShowPaper->nZkzhInBmkStatus = 1;
-// 	}
-
+	
 	//需要刷新未识别准考证号列表
 
 	COLORREF crText, crBackground;
 	pDlg->m_lcZkzh.GetItemColors(pDlg->m_nCurrentSelItem, 1, crText, crBackground);
 	pDlg->m_lcZkzh.SetItemText(pDlg->m_nCurrentSelItem, 1, strZkzh, RGB(255, 0, 0), crBackground);
+#endif
 }
 
 void CVagueSearchDlg::SetZkzhScaned(std::string strZkzh)

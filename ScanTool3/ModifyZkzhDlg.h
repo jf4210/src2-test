@@ -6,10 +6,11 @@
 #include "StudentMgr.h"
 #include "VagueSearchDlg.h"
 #include "ShowPicDlg.h"
+#include "ZkzhShowMgrDlg.h"
+
 //#include "TipBaseDlg.h"
 // CModifyZkzhDlg 对话框
 
-#define	NewListModelTest	//测试
 
 class CModifyZkzhDlg : public CDialog
 {
@@ -39,9 +40,13 @@ public:
 private:
 //	std::vector<std::string> m_vecCHzkzh;	//重号的准考证号，在同一袋试卷时进行检查当前试卷袋中所有重号的试卷（防止出现第1份试卷正常后面出现重号的，在前面重号的试卷无法检测的问题）
 	CStudentMgr*	m_pStudentMgr;
-	pST_PaperInfo	m_pShowPaper;		//默认显示的试卷
+	pST_PaperInfo	m_pDefShowPaper;		//默认显示的试卷
 	CVagueSearchDlg* m_pVagueSearchDlg;	//模糊搜索窗口
 	CShowPicDlg*	m_pShowPicDlg;		//图片显示窗口
+
+#ifdef TEST_EXCEPTION_DLG
+	CZkzhShowMgrDlg*	m_pZkzhShowMgrDlg;
+#endif
 private:
 	void	InitUI();
 	void	InitTab();

@@ -15,7 +15,10 @@ IMPLEMENT_DYNAMIC(CModifyZkzhDlg, CDialog)
 CModifyZkzhDlg::CModifyZkzhDlg(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper, CWnd* pParent /*=NULL*/)
 : CDialog(CModifyZkzhDlg::IDD, pParent)
 	, m_pModel(pModel), m_pPapers(pPapersInfo), m_pCurrentShowPaper(NULL), m_pVagueSearchDlg(NULL), m_pShowPicDlg(NULL)
-	, m_nCurrentSelItem(0), m_pStudentMgr(pStuMgr), m_pShowPaper(pShowPaper)
+	, m_nCurrentSelItem(0), m_pStudentMgr(pStuMgr), m_pDefShowPaper(pShowPaper)
+#ifdef TEST_EXCEPTION_DLG
+	, m_pZkzhShowMgrDlg(NULL)
+#endif
 {
 
 }
@@ -71,15 +74,13 @@ void CModifyZkzhDlg::ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudent
 	m_pPapers			= pPapersInfo;
 	m_pStudentMgr		= pStuMgr;
 	m_pCurrentShowPaper = pShowPaper;
-	m_pShowPaper		= pShowPaper;
+	m_pDefShowPaper		= pShowPaper;
 
 	if (_bGetBmk_)
 	{
 		m_lBmkStudent.clear();
 		m_lBmkStudent = g_lBmkStudent;
 	}
-
-//	InitUI();
 
 	if (!m_pVagueSearchDlg)
 	{
@@ -97,6 +98,17 @@ void CModifyZkzhDlg::ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudent
 	m_pShowPicDlg->setShowModel(2);
 	m_pVagueSearchDlg->setExamInfo(m_pStudentMgr, m_pModel);
 
+#ifdef TEST_EXCEPTION_DLG
+	if (!m_pZkzhShowMgrDlg)
+	{
+		m_pZkzhShowMgrDlg = new CZkzhShowMgrDlg(m_pModel, m_pPapers, m_pStudentMgr, m_pDefShowPaper);
+		m_pZkzhShowMgrDlg->Create(IDD_ZKZHSHOWMGRDLG, this);
+		m_pZkzhShowMgrDlg->ShowWindow(SW_SHOW);
+	}
+	m_pZkzhShowMgrDlg->SetDlgInfo(m_pShowPicDlg, m_pVagueSearchDlg);
+	m_pZkzhShowMgrDlg->ReInitData(pModel, pPapersInfo, pStuMgr, pShowPaper);
+#endif
+
 	InitData();
 	ShowPaperByItem(m_nCurrentSelItem);
 	InitCtrlPosition();
@@ -104,7 +116,6 @@ void CModifyZkzhDlg::ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudent
 
 void CModifyZkzhDlg::InitUI()
 {
-#ifdef NewListModelTest
 	m_lcZkzh.SetExtendedStyle(m_lcZkzh.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcZkzh.InsertColumn(0, _T("考生"), LVCFMT_CENTER, 50);
 	m_lcZkzh.InsertColumn(1, _T("准考证号(可编辑)"), LVCFMT_CENTER, 110);
@@ -122,26 +133,6 @@ void CModifyZkzhDlg::InitUI()
 		m_lcZkzh.m_HeaderCtrl.SetItem(i, &hditem);
 	}
 	m_lcZkzh.EnableToolTips(TRUE);
-#else
-	m_lcZkzh.SetExtendedStyle(m_lcZkzh.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
-	m_lcZkzh.InsertColumn(0, _T("顺序"), LVCFMT_CENTER, 40);
-	m_lcZkzh.InsertColumn(1, _T("学生标识"), LVCFMT_CENTER, 110);
-	m_lcZkzh.InsertColumn(2, _T("准考证号(可编辑)"), LVCFMT_CENTER, 110);
-	m_lcZkzh.InsertColumn(3, _T("删除重扫"), LVCFMT_CENTER, 80);	//重扫标识
-
-	HDITEM hditem;
-	for(int i = 0; i < m_lcZkzh.m_HeaderCtrl.GetItemCount(); i++)
-	{
-		hditem.mask = HDI_IMAGE | HDI_FORMAT;
-		m_lcZkzh.m_HeaderCtrl.GetItem(i, &hditem);
-		hditem.fmt |= HDF_IMAGE;
-		if (i == 3)
-			hditem.iImage = XHEADERCTRL_UNCHECKED_IMAGE;
-		m_lcZkzh.m_HeaderCtrl.SetItem(i, &hditem);
-	}
-	// call EnableToolTips to enable tooltip display
-	m_lcZkzh.EnableToolTips(TRUE);
-#endif
 
 	m_bmpBtnReturn.SetStateBitmap(IDB_RecordDlg_Btn, 0, IDB_RecordDlg_Btn_Hover);
 	m_bmpBtnReturn.SetWindowText(_T("返回"));
@@ -161,6 +152,19 @@ void CModifyZkzhDlg::InitUI()
 		TRACE("***************===========	new CVagueSearchDlg()1 ===========*************************\n");
 	}
 	m_pVagueSearchDlg->setExamInfo(m_pStudentMgr, m_pModel);
+
+#ifdef TEST_EXCEPTION_DLG
+	if (!m_pZkzhShowMgrDlg)
+	{
+		m_pZkzhShowMgrDlg = new CZkzhShowMgrDlg(m_pModel, m_pPapers, m_pStudentMgr, m_pDefShowPaper);
+		m_pZkzhShowMgrDlg->Create(IDD_ZKZHSHOWMGRDLG, this);
+		m_pZkzhShowMgrDlg->ShowWindow(SW_SHOW);
+	}
+	m_pZkzhShowMgrDlg->SetDlgInfo(m_pShowPicDlg, m_pVagueSearchDlg);
+
+	m_lcZkzh.ShowWindow(SW_HIDE);
+	GetDlgItem(IDC_STATIC_Zkzh_S1)->ShowWindow(SW_HIDE);
+#endif
 
 #ifndef TEST_MODIFY_ZKZH_CHIld
 	MoveWindow(0, 0, 1024, 650);
@@ -222,6 +226,14 @@ void CModifyZkzhDlg::InitCtrlPosition()
 //		int nH = cy - nBottomGap - nCurrentTop;
 		m_pVagueSearchDlg->MoveWindow(nCurrentLeft, nCurrentTop, nListCtrlWidth, nVagueSearchDlgH);
 	}
+
+#ifdef TEST_EXCEPTION_DLG
+	if (m_pZkzhShowMgrDlg && m_pZkzhShowMgrDlg->GetSafeHwnd())
+	{
+		int nH = cy - nTopGap - nGap - nVagueSearchDlgH - nBottomH - nBottomGap;
+		m_pZkzhShowMgrDlg->MoveWindow(nCurrentLeft, nTopGap, nListCtrlWidth, nH);
+	}
+#endif
 
 	//tab
 	nCurrentLeft = nLeftGap + nListCtrlWidth + nGap;
@@ -295,7 +307,7 @@ void CModifyZkzhDlg::InitData()
 			char szCount[10] = { 0 };
 			sprintf_s(szCount, "%d", pPaper->nIndex);	//nCount + 1
 			m_lcZkzh.InsertItem(nCount, NULL);
-#ifdef NewListModelTest
+
 			m_lcZkzh.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));	//pPaper->strStudentInfo.c_str()
 			m_lcZkzh.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
 
@@ -346,7 +358,7 @@ void CModifyZkzhDlg::InitData()
 			}
 			m_lcZkzh.SetItemText(nCount, 3, (LPCTSTR)A2T(strDetailInfo.c_str()));
 
-			if (pPaper == m_pShowPaper)
+			if (pPaper == m_pDefShowPaper)
 			{
 				bFindFirstShow = true;
 				m_nCurrentSelItem = nCount;
@@ -359,34 +371,10 @@ void CModifyZkzhDlg::InitData()
 			m_lcZkzh.SetItemToolTipText(nCount, 1, (LPCTSTR)strTips);
 			strTips = _T("勾选此项，这份试卷将需要重新扫描");
 			m_lcZkzh.SetItemToolTipText(nCount, 2, (LPCTSTR)strTips);
-#else
-			m_lcZkzh.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
-			m_lcZkzh.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
-			m_lcZkzh.SetItemText(nCount, 2, (LPCTSTR)A2T(pPaper->strSN.c_str()));
-
-			int nReScan = 0;
-			if (pPaper->bReScan) nReScan = 1;
-			m_lcZkzh.SetItemText(nCount, 3, _T(""));	//重扫
-			m_lcZkzh.SetCheckbox(nCount, 3, nReScan);
-			m_lcZkzh.SetItemData(nCount, (DWORD_PTR)pPaper);
-			m_lcZkzh.SetEdit(nCount, 2);
-
-			if (pPaper == m_pShowPaper)
-				m_nCurrentSelItem = nCount;
-
-			CString strTips = _T("双击显示此考生试卷");
-			m_lcZkzh.SetItemToolTipText(nCount, 0, (LPCTSTR)strTips);
-			m_lcZkzh.SetItemToolTipText(nCount, 1, (LPCTSTR)strTips);
-			strTips = _T("点击修改准考证号");
-			m_lcZkzh.SetItemToolTipText(nCount, 2, (LPCTSTR)strTips);
-			strTips = _T("勾选此项，这份试卷将需要重新扫描");
-			m_lcZkzh.SetItemToolTipText(nCount, 3, (LPCTSTR)strTips);
-#endif
 		}
 	}
 	for (auto pPaper : m_pPapers->lIssue)
 	{
-#ifdef NewListModelTest
 		int nCount = m_lcZkzh.GetItemCount();
 		char szCount[10] = { 0 };
 		sprintf_s(szCount, "%d", pPaper->nIndex);
@@ -420,7 +408,7 @@ void CModifyZkzhDlg::InitData()
 
 		m_lcZkzh.SetItemText(nCount, 3, (LPCTSTR)A2T(strDetailInfo.c_str()));
 
-		if (pPaper == m_pShowPaper)
+		if (pPaper == m_pDefShowPaper)
 		{
 			bFindFirstShow = true;
 			m_nCurrentSelItem = nCount;
@@ -433,34 +421,6 @@ void CModifyZkzhDlg::InitData()
 		m_lcZkzh.SetItemToolTipText(nCount, 1, (LPCTSTR)strTips);
 		strTips = _T("勾选此项，这份试卷将需要重新扫描");
 		m_lcZkzh.SetItemToolTipText(nCount, 2, (LPCTSTR)strTips);
-#else
-		int nCount = m_lcZkzh.GetItemCount();
-		char szCount[10] = { 0 };
-		sprintf_s(szCount, "%d", nCount + 1);
-		m_lcZkzh.InsertItem(nCount, NULL);
-
-		m_lcZkzh.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
-		m_lcZkzh.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strStudentInfo.c_str()));
-		m_lcZkzh.SetItemText(nCount, 2, (LPCTSTR)A2T(pPaper->strSN.c_str()));
-
-		int nReScan = 0;
-		if (pPaper->bReScan) nReScan = 1;
-		m_lcZkzh.SetItemText(nCount, 3, _T(""));	//重扫
-		m_lcZkzh.SetCheckbox(nCount, 3, nReScan);
-		m_lcZkzh.SetItemData(nCount, (DWORD_PTR)pPaper);
-		m_lcZkzh.SetEdit(nCount, 2);
-
-		if (pPaper == m_pShowPaper)
-			m_nCurrentSelItem = nCount;
-
-		CString strTips = _T("双击显示此考生试卷");
-		m_lcZkzh.SetItemToolTipText(nCount, 0, (LPCTSTR)strTips);
-		m_lcZkzh.SetItemToolTipText(nCount, 1, (LPCTSTR)strTips);
-		strTips = _T("点击修改准考证号");
-		m_lcZkzh.SetItemToolTipText(nCount, 2, (LPCTSTR)strTips);
-		strTips = _T("勾选此项，这份试卷将需要重新扫描");
-		m_lcZkzh.SetItemToolTipText(nCount, 3, (LPCTSTR)strTips);
-#endif
 	}
 
 	if (!bFindFirstShow)
@@ -861,6 +821,7 @@ LRESULT CModifyZkzhDlg::OnLBtnDownEdit(WPARAM nItem, LPARAM nSubItem)
 
 bool CModifyZkzhDlg::ReleaseData()
 {
+#ifndef TEST_EXCEPTION_DLG
 	if (!g_nExitFlag)
 	{
 		int nCount = m_lcZkzh.GetItemCount();
@@ -880,7 +841,7 @@ bool CModifyZkzhDlg::ReleaseData()
 				}
 			}
 		}
-	#ifdef NewListModelTest
+
 		for (int i = 0; i < nCount; i++)
 		{
 			pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
@@ -889,16 +850,6 @@ bool CModifyZkzhDlg::ReleaseData()
 			else
 				pPaper->bReScan = false;
 		}
-	#else
-		for (int i = 0; i < nCount; i++)
-		{
-			pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
-			if (m_lcZkzh.GetCheckbox(i, 3))
-				pPaper->bReScan = true;			//设置此试卷需要重新扫描
-			else
-				pPaper->bReScan = false;
-		}
-	#endif
 
 		//如果此试卷已经被修改正常，从问题列表删除
 		if (m_pPapers)
@@ -933,7 +884,12 @@ bool CModifyZkzhDlg::ReleaseData()
 	}
 
 	SetZkzhStatus();
-
+#endif
+	if (m_pZkzhShowMgrDlg)
+	{
+		m_pZkzhShowMgrDlg->DestroyWindow();
+		SAFE_RELEASE(m_pZkzhShowMgrDlg);
+	}
 	if (m_pVagueSearchDlg)
 	{
 		m_pVagueSearchDlg->DestroyWindow();
@@ -1176,7 +1132,6 @@ void CModifyZkzhDlg::CheckZkzhInBmk(pST_PaperInfo pPaper)
 	else
 		pPaper->nZkzhInBmkStatus = 0;
 }
-
 
 void CModifyZkzhDlg::OnSize(UINT nType, int cx, int cy)
 {

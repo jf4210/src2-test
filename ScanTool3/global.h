@@ -79,6 +79,8 @@
 	#define TEST_GRAY_WHITE		//空白处灰度测试
 //	#define TEST_FAST_SCAN		//快速扫描模式，在扫描线程中不写文件
 	#define TEST_PAGINATION		//页码测试，多页试卷的情况，多页A3、A4
+
+	#define	TEST_EXCEPTION_DLG	//新的异常处理窗口测试
 #else	//release版本
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
 	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”

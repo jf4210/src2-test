@@ -171,6 +171,9 @@ bool CMultiPageMgr::ModifyPicPagination(pST_PicInfo pPic, int nNewPage)
 bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPage, std::string strZKZH)
 {
 	bool bResult = true;
+	if (nNewPage < 1 || strZKZH.empty())
+		return false;
+
 	//检查页码修改
 	if (pPic->nPicModelIndex != nNewPage - 1)
 	{
@@ -184,36 +187,37 @@ bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPag
 	if (pCurrentPaper->strSN == strZKZH)	//准考证号没有修改，不需要进行试卷合并
 	{
 		pCurrentPaper->lPic.sort([](pST_PicInfo pPic1, pST_PicInfo pPic2)
-		{return pPic1->nPicModelIndex < pPic2->nPicModelIndex; });
+		{return pPic1->nPicModelIndex < pPic2->nPicModelIndex;});
 	}
 	else
 	{
 		//准考证号有修改，需要检查试卷袋是否存在此新准考证号，存在则合并，
-		//不存在时，分两种情况，1、当前试卷的图片<=2张，不需要新构建试卷，2、当前试卷的图片>2张，需要从原试卷移除，并新构建试卷
 
 		pST_SCAN_PAPER pScanPaperTask = static_cast<pST_SCAN_PAPER>(pPic->pSrcScanPic->pParentScanPaper);
-		//如果图片只有2张，又是双面扫描，或者，单面扫描，试卷只有1张，则不需要重新构建试卷，将当前试卷整张合并到新试卷
+		//如果图片只有2张，又是双面扫描，或者，单面扫描，试卷只有1张，则当不存在此新准考证号时，不需要重新构建试卷，将当前试卷整张合并到新试卷
 		if (pScanPaperTask->bDoubleScan && pCurrentPaper->lPic.size() <= 2 || \
 			!pScanPaperTask->bDoubleScan && pCurrentPaper->lPic.size() <= 1)
 		{
 			bool bFindZKZH = false;
+			PAPER_LIST::iterator itCurrentPaper;
 			PAPER_LIST::iterator itNewPaper = pPapers->lPaper.begin();
 			for (; itNewPaper != pPapers->lPaper.end(); )
 			{
 				pST_PaperInfo pNewPaper = *itNewPaper;
-				if (pNewPaper->strSN == strZKZH)
+				if (pNewPaper->strSN == strZKZH && pCurrentPaper != pNewPaper)
 				{
 					bFindZKZH = true;
 					MergePaper(pCurrentPaper, pNewPaper);
-					//itNewPaper = pPapers->lPaper.erase(itNewPaper);
-					//break;
 				}
 				if (pCurrentPaper == pNewPaper)
-					itNewPaper = pPapers->lPaper.erase(itNewPaper);
+					itCurrentPaper = itNewPaper;
 				itNewPaper++;
 			}
-			if (bFindZKZH) SAFE_RELEASE(pCurrentPaper);
-
+			if (bFindZKZH) 
+			{
+				pPapers->lPaper.erase(itCurrentPaper);
+				SAFE_RELEASE(pCurrentPaper);
+			}
 			//如果没发现相同的准考证号，则不需要重新添加到试卷袋
 		}
 		else	//图片超过2张，则当前试卷不需要从试卷袋移除
@@ -223,7 +227,7 @@ bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPag
 			for (; itNewPaper != pPapers->lPaper.end(); )
 			{
 				pST_PaperInfo pNewPaper = *itNewPaper;
-				if (pNewPaper->strSN == strZKZH)
+				if (pNewPaper->strSN == strZKZH && pCurrentPaper != pNewPaper)
 				{
 					bFindZKZH = true;
 					//先找当前图片所在纸张的所有扫描图片
@@ -249,6 +253,7 @@ bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPag
 					{
 						MergePic(pCurrentPaper, pMergePic, pNewPaper);
 					}
+					ChkPaperValid(pNewPaper, _pModel);
 					break;
 				}
 				itNewPaper++;
@@ -379,6 +384,8 @@ void CMultiPageMgr::ChkPapersValid(pPAPERSINFO pPapers)
 
 void CMultiPageMgr::ChkPaperValid(pST_PaperInfo pPaper, pMODEL pModel)
 {
+	if (!pModel) return;
+
 	if (pPaper->lPic.size() != pModel->vecPaperModel.size())
 		pPaper->nPaginationStatus = 3;
 	else
@@ -397,5 +404,42 @@ void CMultiPageMgr::ChkPaperValid(pST_PaperInfo pPaper, pMODEL pModel)
 			nLastPicIndex = pPic->nPicModelIndex;
 		}
 	}
+}
+
+void CMultiPageMgr::ReNamePicInPapers(pPAPERSINFO pPapers)
+{
+	std::string strLog;
+	PAPER_LIST::iterator itReNamePaper = pPapers->lPaper.begin();
+	for (; itReNamePaper != pPapers->lPaper.end(); itReNamePaper++)
+	{
+		pST_PaperInfo pCurrentPaper = *itReNamePaper;
+
+		PIC_LIST::iterator itPic = pCurrentPaper->lPic.begin();
+		for (; itPic != pCurrentPaper->lPic.end(); itPic++)
+		{
+			pST_PicInfo pPic = *itPic;
+			std::string strNewPicName = Poco::format("%s_%d.jpg", pCurrentPaper->strStudentInfo, pPic->nPicModelIndex + 1);
+			int nPos = pPic->strPicPath.rfind('\\') + 1;
+			std::string strBasePath = pPic->strPicPath.substr(0, nPos);
+			std::string strNewPath = strBasePath + strNewPicName;
+			if (strNewPicName != pPic->strPicName)
+			{
+				try
+				{
+					Poco::File fNewPic(CMyCodeConvert::Gb2312ToUtf8(pPic->strPicPath));
+					fNewPic.renameTo(CMyCodeConvert::Gb2312ToUtf8(strNewPath));
+					pPic->strPicPath = strNewPath;
+					pPic->strPicName = strNewPicName;
+				}
+				catch (Poco::Exception& exc)
+				{
+					std::string strTmpLog;
+					strTmpLog = Poco::format("原始图片(%s)重命名为(%s)失败, 原因: %s\n", pPic->strPicName, strNewPicName, std::string(exc.what()));
+					strLog.append(strTmpLog);
+				}
+			}
+		}
+	}
+	_strLog.append(strLog);
 }
 

@@ -31,6 +31,7 @@ CPaperInputDlg::CPaperInputDlg(pMODEL pModel, CWnd* pParent /*=NULL*/)
 
 CPaperInputDlg::~CPaperInputDlg()
 {
+	SAFE_RELEASE(m_pStudentMgr);
 	if (m_pModel != m_pOldModel)
 		SAFE_RELEASE(m_pModel);
 	if (m_pShowPicDlg)

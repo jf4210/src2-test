@@ -38,6 +38,7 @@ BEGIN_MESSAGE_MAP(CMultiPageExceptionDlg, CDialog)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_Pics, &CMultiPageExceptionDlg::OnNMDblclkListPics)
 	ON_NOTIFY(NM_HOVER, IDC_LIST_Paper, &CMultiPageExceptionDlg::OnNMHoverListPaper)
 	ON_NOTIFY(NM_HOVER, IDC_LIST_Pics, &CMultiPageExceptionDlg::OnNMHoverListPics)
+	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 // CMultiPageExceptionDlg 消息处理程序
@@ -128,12 +129,14 @@ void CMultiPageExceptionDlg::InitCtrlPosition()
 	if (GetDlgItem(IDC_STATIC_BelongsZKZH)->GetSafeHwnd())
 	{
 		int nW = (cx - nLeftGap - nRightGap - nGap) * 0.5;
+		nW = (nW - nGap) * 0.4;
 		GetDlgItem(IDC_STATIC_BelongsZKZH)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nStaticTip);
 		nCurrentLeft += (nW + nGap);
 	}
 	if (GetDlgItem(IDC_EDIT_BelongsZKZH)->GetSafeHwnd())
 	{
 		int nW = (cx - nLeftGap - nRightGap - nGap) * 0.5;
+		nW = (nW - nGap) * 0.6;
 		GetDlgItem(IDC_EDIT_BelongsZKZH)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nStaticTip);
 		nCurrentLeft = nTmpLeft;
 		nCurrentTop += (nStaticTip + nGap);
@@ -141,21 +144,21 @@ void CMultiPageExceptionDlg::InitCtrlPosition()
 	if (GetDlgItem(IDC_STATIC_ModelPageIndex)->GetSafeHwnd())
 	{
 		int nW = (cx - nLeftGap - nRightGap - nGap) * 0.5;
-		nW = (nW - nGap * 2) * 0.6;
+		nW = (nW - nGap * 2) * 0.4;
 		GetDlgItem(IDC_STATIC_ModelPageIndex)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nStaticTip);
-		nCurrentLeft = (nW + nGap);
+		nCurrentLeft += (nW + nGap);
 	}
 	if (GetDlgItem(IDC_EDIT_ModelPageIndex)->GetSafeHwnd())
 	{
 		int nW = (cx - nLeftGap - nRightGap - nGap) * 0.5;
-		nW = (nW - nGap * 2) * 0.3;
+		nW = (nW - nGap * 2) * 0.4;
 		GetDlgItem(IDC_EDIT_ModelPageIndex)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nStaticTip);
-		nCurrentLeft = (nW + nGap);
+		nCurrentLeft += (nW + nGap);
 	}
 	if (GetDlgItem(IDC_STATIC_ModelPageIndex2)->GetSafeHwnd())
 	{
 		int nW = (cx - nLeftGap - nRightGap - nGap) * 0.5;
-		nW = (nW - nGap * 2) * 0.1;
+		nW = (nW - nGap * 2) * 0.2;
 		GetDlgItem(IDC_STATIC_ModelPageIndex2)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nStaticTip);
 		nCurrentTop += (nStaticTip + nGap);
 	}
@@ -210,8 +213,8 @@ void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
 	std::string strCurrZkzh = T2A(m_strPicZKZH);
 	if (pPic->nPicModelIndex != m_nPicPagination - 1)
 	{
-		CMultiPageMgr multiPageObj;
-		multiPageObj.ModifyPicPagination(pPic, m_nPicPagination);
+		CMultiPageMgr multiPageObj(_pModel_);
+		//multiPageObj.ModifyPicPagination(pPic, m_nPicPagination);
 
 		//修改选择题和选择题的页码ID信息
 
@@ -451,4 +454,12 @@ void CMultiPageExceptionDlg::OnNMHoverListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 void CMultiPageExceptionDlg::OnNMHoverListPics(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	*pResult = 1;
+}
+
+
+void CMultiPageExceptionDlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialog::OnSize(nType, cx, cy);
+
+	InitCtrlPosition();
 }

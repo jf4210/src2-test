@@ -4196,10 +4196,14 @@ std::string GetQRInBinImg(cv::Mat binImg, std::string& strTypeName)
 //main function
 std::string GetQR(cv::Mat img, std::string& strTypeName)
 {
+	std::string result;
+	result = GetQRInBinImg(img, strTypeName);
+ 	if (!result.empty())
+ 		return result;
+
 	cv::Mat binImg;
 	//在otsu二值结果的基础上，不断增加阈值，用于识别模糊图像
 	int thre = threshold(img, binImg, 0, 255, cv::THRESH_OTSU);
-	std::string result;
 	while (result.empty() && thre < 255)
 	{
 		threshold(img, binImg, thre, 255, cv::THRESH_BINARY);

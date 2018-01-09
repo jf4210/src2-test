@@ -219,6 +219,8 @@
     <ClInclude Include="XListCtrl\XListMemDC.h" />
     <ClInclude Include="XListCtrl\XTrace.h" />
     <ClInclude Include="ZipObj.h" />
+    <ClInclude Include="ZkzhExceptionDlg.h" />
+    <ClInclude Include="ZkzhShowMgrDlg.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\common\md5.cpp" />
@@ -335,6 +337,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="ZipObj.cpp" />
+    <ClCompile Include="ZkzhExceptionDlg.cpp" />
+    <ClCompile Include="ZkzhShowMgrDlg.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ScanTool3.rc" />
