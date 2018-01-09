@@ -98,7 +98,7 @@ void CMultiPageExceptionDlg::InitCtrlPosition()
 	const int nRightGap = 2;	//右边的空白间隔
 	const int nGap = 2;			//普通控件的间隔
 
-	int nStaticTip = 15;		//列表提示static控件高度
+	int nStaticTip = 20;		//列表提示static控件高度
 	int nListCtrlWidth = cx - nLeftGap - nRightGap;	//图片列表控件宽度
 	int nListH = (cy - nTopGap - nBottomGap - nStaticTip * 2 - nGap * 3) * 0.7;
 	int nCurrentTop = nTopGap;

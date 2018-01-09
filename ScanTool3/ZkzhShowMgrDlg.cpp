@@ -227,8 +227,8 @@ LRESULT CZkzhShowMgrDlg::DefWindowProc(UINT message, WPARAM wParam, LPARAM lPara
 		{
 			m_vecBtn[0]->CheckBtn(FALSE);
 			m_vecBtn[1]->CheckBtn(TRUE);
-			m_pZkzhExceptionDlg->ShowWindow(SW_SHOW);
-			if (m_pMultiPageExceptionDlg) m_pMultiPageExceptionDlg->ShowWindow(SW_HIDE);
+			m_pZkzhExceptionDlg->ShowWindow(SW_HIDE);
+			if (m_pMultiPageExceptionDlg) m_pMultiPageExceptionDlg->ShowWindow(SW_SHOW);
 		}
 	}
 	return CDialog::DefWindowProc(message, wParam, lParam);
