@@ -105,8 +105,8 @@ void CModifyZkzhDlg::ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudent
 		m_pZkzhShowMgrDlg->Create(IDD_ZKZHSHOWMGRDLG, this);
 		m_pZkzhShowMgrDlg->ShowWindow(SW_SHOW);
 	}
-	m_pZkzhShowMgrDlg->SetDlgInfo(m_pShowPicDlg, m_pVagueSearchDlg);
 	m_pZkzhShowMgrDlg->ReInitData(pModel, pPapersInfo, pStuMgr, pShowPaper);
+	m_pZkzhShowMgrDlg->SetDlgInfo(m_pShowPicDlg, m_pVagueSearchDlg);
 #endif
 
 	InitData();

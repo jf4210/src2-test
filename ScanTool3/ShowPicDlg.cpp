@@ -112,28 +112,7 @@ void CShowPicDlg::InitUI()
 {
 	if (m_nShowModel == 1)
 	{
-		for (int i = 0; i < m_vecBtn.size(); i++)
-		{
-			CButton* pBtn = m_vecBtn[i];
-			SAFE_RELEASE(pBtn);
-			m_vecBtn[i] = NULL;
-		}
-		m_vecBtn.clear();
-
-// 		if (_pModel_)
-// 		{
-			std::vector<CPicShow*>::iterator itPic = m_vecPicShow.begin();
-			for (; itPic != m_vecPicShow.end();)
-			{
-				CPicShow* pModelPicShow = *itPic;
-				if (pModelPicShow)
-				{
-					delete pModelPicShow;
-					pModelPicShow = NULL;
-				}
-				itPic = m_vecPicShow.erase(itPic);
-			}
-//		}
+		ReleaseData();
 		m_tabPicShowCtrl.DeleteAllItems();
 
 		if (_pModel_)
@@ -182,34 +161,13 @@ void CShowPicDlg::InitUI()
 	else
 	{
 		m_tabPicShowCtrl.ShowWindow(SW_HIDE);
-// 		if (_pModel_)
-// 		{
-			std::vector<CPicShow*>::iterator itPic = m_vecPicShow.begin();
-			for (; itPic != m_vecPicShow.end();)
-			{
-				CPicShow* pModelPicShow = *itPic;
-				if (pModelPicShow)
-				{
-					delete pModelPicShow;
-					pModelPicShow = NULL;
-				}
-				itPic = m_vecPicShow.erase(itPic);
-			}
-//		}
+		ReleaseData();
 		
 		if (_pModel_)
 			m_nModelPicNums = _pModel_->nPicNum;
 		else
 			m_nModelPicNums = _nPicNum4Ty_;
-
-		for (int i = 0; i < m_vecBtn.size(); i++)
-		{
-			CButton* pBtn = m_vecBtn[i];
-			SAFE_RELEASE(pBtn);
-			m_vecBtn[i] = NULL;
-		}
-		m_vecBtn.clear();
-
+		
 		USES_CONVERSION;
 		for (int i = 0; i < m_nModelPicNums; i++)
 		{
@@ -256,8 +214,178 @@ void CShowPicDlg::OnTcnSelchangeTabPicshow(NMHDR *pNMHDR, LRESULT *pResult)
 	}
 }
 
-void CShowPicDlg::setShowPaper(pST_PaperInfo pPaper)
+void CShowPicDlg::ReInitUI(pST_PaperInfo pPaper)
 {
+	if (m_nShowModel == 1)
+	{
+		//ReleaseData();
+		m_tabPicShowCtrl.DeleteAllItems();
+
+		m_nModelPicNums = pPaper->lPic.size();
+		int nOldVecBtn = m_vecBtn.size();
+		
+		USES_CONVERSION;
+		CRect rtTab;
+		m_tabPicShowCtrl.GetClientRect(&rtTab);
+
+		PIC_LIST::iterator itPic1 = pPaper->lPic.begin();
+		for(int i = 0; itPic1 != pPaper->lPic.end(); itPic1++, i++)
+		{
+			char szTabHeadName[20] = { 0 };
+			sprintf_s(szTabHeadName, "第%d页", (*itPic1)->nPicModelIndex + 1);
+
+			if (i > nOldVecBtn - 1)
+			{
+				m_tabPicShowCtrl.InsertItem(i, A2T(szTabHeadName));
+
+				CPicShow* pPicShow = new CPicShow(this);
+				pPicShow->Create(CPicShow::IDD, &m_tabPicShowCtrl);
+				pPicShow->ShowWindow(SW_HIDE);
+				pPicShow->MoveWindow(&rtTab);
+				m_vecPicShow.push_back(pPicShow);
+			}
+			else
+			{
+				TCITEM tcItem;
+				tcItem.mask = TCIF_TEXT;
+				m_tabPicShowCtrl.GetItem(i, &tcItem);
+				tcItem.pszText = A2T(szTabHeadName);
+				m_tabPicShowCtrl.SetItem(i, &tcItem);
+			}
+		}
+
+		if (m_nModelPicNums < nOldVecBtn)
+		{
+			for (int i = 0; i < nOldVecBtn; i++)
+			{
+				if (i >= m_nModelPicNums)
+					m_tabPicShowCtrl.DeleteItem(i);
+			}
+			std::vector<CPicShow *>::iterator itPic = m_vecPicShow.begin();
+			for (int i = 0; itPic != m_vecPicShow.end(); i++)
+			{
+				if (i > m_nModelPicNums)
+				{
+					CPicShow* pPic = *itPic;
+					SAFE_RELEASE(pPic);
+					itPic = m_vecPicShow.erase(itPic);
+				}
+				else
+					itPic++;
+			}
+		}
+
+		m_nCurrTabSel = 0;
+		m_tabPicShowCtrl.SetCurSel(m_nCurrTabSel);
+		if (m_vecPicShow.size())
+		{
+			m_vecPicShow[m_nCurrTabSel]->ShowWindow(SW_SHOW);
+			m_pCurrentPicShow = m_vecPicShow[m_nCurrTabSel];
+		}
+
+		if (m_tabPicShowCtrl.GetSafeHwnd())
+		{
+			CRect rtTab;
+			m_tabPicShowCtrl.GetClientRect(&rtTab);
+			int nTabHead_H = 24;		//tab控件头的高度
+			CRect rtPic = rtTab;
+			rtPic.top = rtPic.top + nTabHead_H;
+			rtPic.left += 2;
+			rtPic.right -= 4;
+			rtPic.bottom -= 4;
+			for (int i = 0; i < m_vecPicShow.size(); i++)
+				m_vecPicShow[i]->MoveWindow(&rtPic);
+		}
+	}
+	else
+	{
+		m_tabPicShowCtrl.ShowWindow(SW_HIDE);
+		
+		//ReleaseData();
+
+		m_nModelPicNums = pPaper->lPic.size();
+		int nOldVecBtn = m_vecBtn.size();
+
+		USES_CONVERSION;
+		//for (int i = 0; i < m_nModelPicNums; i++)
+		PIC_LIST::iterator itPic2 = pPaper->lPic.begin();
+		for (int i = 0; itPic2 != pPaper->lPic.end(); itPic2++, i++)
+		{
+			char szTabHeadName[20] = { 0 };
+			sprintf_s(szTabHeadName, "第%d页", (*itPic2)->nPicModelIndex + 1);
+
+			if (i > nOldVecBtn - 1)
+			{
+				CBmpButton* pNewButton = new CBmpButton();// 也可以定义为类的成员变量。
+				pNewButton->SetStateBitmap(IDB_RecordDlg_Btn_Over, IDB_RecordDlg_Btn, IDB_RecordDlg_Btn_Hover, 0, IDB_RecordDlg_Btn);
+				CRect rcButton(10, 10, 50, 30); // 按钮在对话框中的位置。
+				pNewButton->Create(A2T(szTabHeadName), 0, rcButton, this, (i + 1) * 100);	//设置索引从101开始
+				pNewButton->ShowWindow(SW_SHOW);
+				m_vecBtn.push_back(pNewButton);
+
+				CPicShow* pPicShow = new CPicShow(this);
+				pPicShow->Create(CPicShow::IDD, this);	//pNewButton
+				pPicShow->ShowWindow(SW_HIDE);
+				m_vecPicShow.push_back(pPicShow);
+			}
+			else
+			{
+				m_vecBtn[i]->ShowWindow(SW_SHOW);
+				//m_vecBtn[i]->SetWindowText(A2T(szTabHeadName));
+				m_vecBtn[i]->SetBmpBtnText(A2T(szTabHeadName));
+				CRect rt;
+				m_vecBtn[i]->GetClientRect(&rt);
+				m_vecBtn[i]->InvalidateRect(rt);
+			}
+		}
+		if (m_nModelPicNums < nOldVecBtn)
+		{
+			std::vector<CBmpButton *>::iterator itBtn = m_vecBtn.begin();
+			for (int i = 0; itBtn != m_vecBtn.end(); i++)
+			{
+				if (i >= m_nModelPicNums)
+				{
+					(*itBtn)->ShowWindow(SW_HIDE);
+					itBtn++;
+					//CBmpButton* pBtn = *itBtn;
+					//SAFE_RELEASE(pBtn);
+					//itBtn = m_vecBtn.erase(itBtn);
+				}
+				else
+					itBtn++;
+			}
+			std::vector<CPicShow *>::iterator itPic = m_vecPicShow.begin();
+			for (int i = 0; itPic != m_vecPicShow.end(); i++)
+			{
+				if (i > m_nModelPicNums)
+				{
+					(*itPic)->ShowWindow(SW_HIDE);
+					itPic++;
+					//CPicShow* pPic = *itPic;
+					//SAFE_RELEASE(pPic);
+					//itPic = m_vecPicShow.erase(itPic);
+				}
+				else
+					itPic++;
+			}
+		}
+		m_nCurrTabSel = 0;
+		m_vecBtn[m_nCurrTabSel]->CheckBtn(TRUE);
+
+		if (m_vecPicShow.size())
+		{
+			m_vecPicShow[m_nCurrTabSel]->ShowWindow(SW_SHOW);
+			m_pCurrentPicShow = m_vecPicShow[m_nCurrTabSel];
+		}
+	}
+	InitCtrlPosition();
+}
+
+void CShowPicDlg::setShowPaper(pST_PaperInfo pPaper, int nDefShow /*= 0*/)
+{
+	if (nDefShow > m_vecPicShow.size() - 1)
+		return;
+
 	m_pCurrPaper = pPaper;
 	
 	for (int i = 0; i < m_vecPicShow.size(); i++)
@@ -269,18 +397,18 @@ void CShowPicDlg::setShowPaper(pST_PaperInfo pPaper)
 	{
 		for (int i = 0; i < m_vecBtn.size(); i++)
 		{
-			if (i == 0)
+			if (i == nDefShow)
 				m_vecBtn[i]->CheckBtn(TRUE);
 			else
 				m_vecBtn[i]->CheckBtn(FALSE);
 		}
 	}
 
-	m_pCurrentPicShow = m_vecPicShow[0];
+	m_pCurrentPicShow = m_vecPicShow[nDefShow];
 	m_pCurrentPicShow->ShowWindow(SW_SHOW);
 	for (int i = 0; i < m_vecPicShow.size(); i++)
 	{
-		if (i != 0)
+		if (i != nDefShow)
 			m_vecPicShow[i]->ShowWindow(SW_HIDE);
 	}
 }
@@ -335,10 +463,32 @@ HBRUSH CShowPicDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 {
+	if (!pPaper) return;
+
+	clock_t sT, eT;
+	sT = clock();
+ 	std::vector<pST_PicInfo> vecPic;
+// 	PIC_LIST::iterator itPic1 = pPaper->lPic.begin();
+// 	for (int i = 0; itPic1 != pPaper->lPic.end(); itPic1++, i++)
+// 	{
+// 		vecPic.push_back(*itPic1);
+// 	}
+// #pragma omp for
+// 	for (int i = 0; i < vecPic.size(); i++)
+// 	{
+// 		cv::Mat matPic = imread(vecPic[i]->strPicPath);
+// 		vecPic[i]->pSrcScanPic->mtPic = matPic;
+// 	}
+
 	PIC_LIST::iterator itPic = pPaper->lPic.begin();
 	for (int i = 0; itPic != pPaper->lPic.end(); itPic++, i++)
 	{
+// #ifdef TEST_PAGINATION
+// 		Mat matSrc = (*itPic)->pSrcScanPic->mtPic;
+// #else
 		Mat matSrc = imread((*itPic)->strPicPath);
+//#endif
+
 #ifdef PIC_RECTIFY_TEST
 		Mat dst;
 		Mat rotMat;
@@ -603,10 +753,19 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 	#endif
 
 		addWeighted(tmp, 0.5, tmp2, 0.5, 0, tmp);
-		if (nPic >= m_nModelPicNums)
+		if (i >= m_nModelPicNums)
 			break;
-		m_vecPicShow[nPic]->ShowPic(tmp);
+		m_vecPicShow[i]->ShowPic(tmp);
 	}
+
+#ifdef TEST_PAGINATION
+	for (int i = 0; i < vecPic.size(); i++)
+	{
+		vecPic[i]->pSrcScanPic->mtPic.release();
+	}
+#endif
+	eT = clock();
+	TRACE("------------------\n图像显示时间: %d\n--------------------\n", (int)(eT - sT));
 }
 
 LRESULT CShowPicDlg::DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam)
@@ -645,7 +804,11 @@ LRESULT CShowPicDlg::DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 void CShowPicDlg::OnDestroy()
 {
 	CDialog::OnDestroy();
+	ReleaseData();
+}
 
+void CShowPicDlg::ReleaseData()
+{
 	std::vector<CPicShow*>::iterator itPic = m_vecPicShow.begin();
 	for (; itPic != m_vecPicShow.end();)
 	{

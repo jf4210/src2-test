@@ -256,8 +256,11 @@ void CShowPicDlg::OnTcnSelchangeTabPicshow(NMHDR *pNMHDR, LRESULT *pResult)
 	}
 }
 
-void CShowPicDlg::setShowPaper(pST_PaperInfo pPaper)
+void CShowPicDlg::setShowPaper(pST_PaperInfo pPaper, int nDefShow /*= 0*/)
 {
+	if (nDefShow > m_vecPicShow.size() - 1)
+		return;
+
 	m_pCurrPaper = pPaper;
 
 	PaintRecognisedRect(m_pCurrPaper);

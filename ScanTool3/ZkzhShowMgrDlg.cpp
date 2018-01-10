@@ -159,12 +159,14 @@ void CZkzhShowMgrDlg::ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStuden
 	m_pDefShowPaper = pShowPaper;
 
 	InitUI();
-	m_pZkzhExceptionDlg->ReInitData(pModel, pPapersInfo, pStuMgr, pShowPaper);
+	m_pZkzhExceptionDlg->ReInitData(m_pModel, m_pPapers, m_pStudentMgr, m_pDefShowPaper);
+	m_pMultiPageExceptionDlg->ReInitData(m_pModel, m_pPapers);
 }
 
 void CZkzhShowMgrDlg::SetDlgInfo(CShowPicDlg* pShowDlg, CVagueSearchDlg* pSearchDlg)
 {
 	m_pZkzhExceptionDlg->SetDlgInfo(pShowDlg, pSearchDlg);
+	if(m_pMultiPageExceptionDlg) m_pMultiPageExceptionDlg->SetDlgInfo(pShowDlg, pSearchDlg);
 }
 
 void CZkzhShowMgrDlg::InitData()
@@ -221,6 +223,7 @@ LRESULT CZkzhShowMgrDlg::DefWindowProc(UINT message, WPARAM wParam, LPARAM lPara
 			m_vecBtn[0]->CheckBtn(TRUE);
 			m_vecBtn[1]->CheckBtn(FALSE);
 			m_pZkzhExceptionDlg->ShowWindow(SW_SHOW);
+			m_pZkzhExceptionDlg->ReInitData(m_pModel, m_pPapers, m_pStudentMgr, m_pDefShowPaper);
 			if (m_pMultiPageExceptionDlg) m_pMultiPageExceptionDlg->ShowWindow(SW_HIDE);
 		}
 		else if(wID == 202)
@@ -228,7 +231,11 @@ LRESULT CZkzhShowMgrDlg::DefWindowProc(UINT message, WPARAM wParam, LPARAM lPara
 			m_vecBtn[0]->CheckBtn(FALSE);
 			m_vecBtn[1]->CheckBtn(TRUE);
 			m_pZkzhExceptionDlg->ShowWindow(SW_HIDE);
-			if (m_pMultiPageExceptionDlg) m_pMultiPageExceptionDlg->ShowWindow(SW_SHOW);
+			if (m_pMultiPageExceptionDlg)
+			{
+				m_pMultiPageExceptionDlg->ShowWindow(SW_SHOW);
+				m_pMultiPageExceptionDlg->ReInitData(m_pModel, m_pPapers);
+			}
 		}
 	}
 	return CDialog::DefWindowProc(message, wParam, lParam);

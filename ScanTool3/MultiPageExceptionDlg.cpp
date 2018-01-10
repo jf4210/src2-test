@@ -13,7 +13,8 @@ IMPLEMENT_DYNAMIC(CMultiPageExceptionDlg, CDialog)
 
 CMultiPageExceptionDlg::CMultiPageExceptionDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(IDD_MULTIPAGEEXCEPTIONDLG, pParent)
-, m_pModel(NULL), m_pPapers(NULL), m_nPicPagination(0), m_nCurrentPaperID(0), m_nCurrentPicID(0), m_strPicZKZH(_T(""))
+, m_pModel(NULL), m_pPapers(NULL), m_nPicPagination(0), m_nCurrentPaperID(0), m_nCurrentPicID(0), m_strPicZKZH(_T("")), m_pCurrentShowPaper(NULL)
+, m_pVagueSearchDlg(NULL), m_pShowPicDlg(NULL)
 {
 
 }
@@ -47,6 +48,7 @@ BOOL CMultiPageExceptionDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	InitUI();
+	InitData();
 
 	return TRUE;
 }
@@ -98,9 +100,9 @@ void CMultiPageExceptionDlg::InitCtrlPosition()
 	const int nRightGap = 2;	//右边的空白间隔
 	const int nGap = 2;			//普通控件的间隔
 
-	int nStaticTip = 20;		//列表提示static控件高度
+	int nStaticTip = 17;		//列表提示static控件高度
 	int nListCtrlWidth = cx - nLeftGap - nRightGap;	//图片列表控件宽度
-	int nListH = (cy - nTopGap - nBottomGap - nStaticTip * 2 - nGap * 3) * 0.7;
+	int nListH = (cy - nTopGap - nBottomGap - nStaticTip * 2 - nGap * 3) * 0.5;
 	int nCurrentTop = nTopGap;
 	int nCurrentLeft = nLeftGap;
 	if (GetDlgItem(IDC_STATIC_Paper)->GetSafeHwnd())
@@ -126,41 +128,42 @@ void CMultiPageExceptionDlg::InitCtrlPosition()
 		nCurrentLeft += (nW + nGap);
 	}
 	int nTmpLeft = nCurrentLeft;
+	int nNewStaticTipH = 20;
 	if (GetDlgItem(IDC_STATIC_BelongsZKZH)->GetSafeHwnd())
 	{
 		int nW = (cx - nLeftGap - nRightGap - nGap) * 0.5;
 		nW = (nW - nGap) * 0.4;
-		GetDlgItem(IDC_STATIC_BelongsZKZH)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nStaticTip);
+		GetDlgItem(IDC_STATIC_BelongsZKZH)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nNewStaticTipH);
 		nCurrentLeft += (nW + nGap);
 	}
 	if (GetDlgItem(IDC_EDIT_BelongsZKZH)->GetSafeHwnd())
 	{
 		int nW = (cx - nLeftGap - nRightGap - nGap) * 0.5;
 		nW = (nW - nGap) * 0.6;
-		GetDlgItem(IDC_EDIT_BelongsZKZH)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nStaticTip);
+		GetDlgItem(IDC_EDIT_BelongsZKZH)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nNewStaticTipH);
 		nCurrentLeft = nTmpLeft;
-		nCurrentTop += (nStaticTip + nGap);
+		nCurrentTop += (nNewStaticTipH + nGap);
 	}
 	if (GetDlgItem(IDC_STATIC_ModelPageIndex)->GetSafeHwnd())
 	{
 		int nW = (cx - nLeftGap - nRightGap - nGap) * 0.5;
 		nW = (nW - nGap * 2) * 0.4;
-		GetDlgItem(IDC_STATIC_ModelPageIndex)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nStaticTip);
+		GetDlgItem(IDC_STATIC_ModelPageIndex)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nNewStaticTipH);
 		nCurrentLeft += (nW + nGap);
 	}
 	if (GetDlgItem(IDC_EDIT_ModelPageIndex)->GetSafeHwnd())
 	{
 		int nW = (cx - nLeftGap - nRightGap - nGap) * 0.5;
 		nW = (nW - nGap * 2) * 0.4;
-		GetDlgItem(IDC_EDIT_ModelPageIndex)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nStaticTip);
+		GetDlgItem(IDC_EDIT_ModelPageIndex)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nNewStaticTipH);
 		nCurrentLeft += (nW + nGap);
 	}
 	if (GetDlgItem(IDC_STATIC_ModelPageIndex2)->GetSafeHwnd())
 	{
 		int nW = (cx - nLeftGap - nRightGap - nGap) * 0.5;
 		nW = (nW - nGap * 2) * 0.2;
-		GetDlgItem(IDC_STATIC_ModelPageIndex2)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nStaticTip);
-		nCurrentTop += (nStaticTip + nGap);
+		GetDlgItem(IDC_STATIC_ModelPageIndex2)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nNewStaticTipH);
+		nCurrentTop += (nNewStaticTipH + nGap);
 	}
 }
 
@@ -187,21 +190,28 @@ void CMultiPageExceptionDlg::ShowPaperDetail(pST_PaperInfo pPaper)
 		m_lcIssuePics.SetItemData(nCount, (DWORD_PTR)pPic);
 	}
 	m_nCurrentPicID = 0;
+	m_lcIssuePics.GetItemColors(m_nCurrentPicID, 0, crPicOldText, crPicOldBackground);
+
 	pST_PicInfo pPic = (pST_PicInfo)m_lcIssuePics.GetItemData(m_nCurrentPicID);
 	ShowPicDetail(pPic);
+	if(m_pShowPicDlg) ShowPaperByItem(m_nCurrentPaperID);
 }
 
-void CMultiPageExceptionDlg::ShowPicDetail(pST_PicInfo pPic)
+void CMultiPageExceptionDlg::ShowPicDetail(pST_PicInfo pPic, bool bShowPic /*= false*/)
 {
 	if (!pPic) return;
 
-	m_lcIssuePics.GetItemColors(m_nCurrentPicID, 0, crPicOldText, crPicOldBackground);
+	//m_lcIssuePics.GetItemColors(m_nCurrentPicID, 0, crPicOldText, crPicOldBackground);
 	for (int i = 0; i < m_lcIssuePics.GetColumns(); i++)							//设置高亮显示(手动设置背景颜色)
 		m_lcIssuePics.SetItemColors(m_nCurrentPicID, i, RGB(0, 0, 0), RGB(112, 180, 254));	//70, 70, 255
 
 	m_strPicZKZH = (static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.c_str();
 	m_nPicPagination = pPic->nPicModelIndex + 1;
+
+	if(m_pShowPicDlg && bShowPic) m_pShowPicDlg->setShowPaper(m_pCurrentShowPaper, m_nCurrentPicID);
+
 	UpdateData(FALSE);
+	m_lcIssuePics.Invalidate();
 }
 
 void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
@@ -321,6 +331,27 @@ void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
 	}
 }
 
+void CMultiPageExceptionDlg::ShowPaperByItem(int nItem)
+{
+	if (nItem < 0)
+		return;
+	if (nItem >= m_lcIssuePaper.GetItemCount())
+		return;
+
+	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcIssuePaper.GetItemData(nItem);
+
+	m_pCurrentShowPaper = pPaper;
+	//m_lcIssuePaper.GetItemColors(nItem, 0, crPaperOldText, crPaperOldBackground);
+	for (int i = 0; i < m_lcIssuePaper.GetColumns(); i++)							//设置高亮显示(手动设置背景颜色)
+		m_lcIssuePaper.SetItemColors(nItem, i, RGB(0, 0, 0), RGB(112, 180, 254));	//70, 70, 255
+
+	m_pShowPicDlg->ReInitUI(pPaper);
+	m_pShowPicDlg->setShowPaper(pPaper);
+
+	UpdateData(FALSE);
+	m_lcIssuePaper.Invalidate();
+}
+
 BOOL CMultiPageExceptionDlg::PreTranslateMessage(MSG* pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN)
@@ -361,6 +392,26 @@ HBRUSH CMultiPageExceptionDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return hbr;
 }
 
+void CMultiPageExceptionDlg::SetDlgInfo(CShowPicDlg* pShowDlg, CVagueSearchDlg* pSearchDlg)
+{
+	m_pShowPicDlg = pShowDlg;
+	m_pVagueSearchDlg = pSearchDlg;
+}
+
+void CMultiPageExceptionDlg::ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo)
+{
+	m_pModel = pModel;
+	m_pPapers = pPapersInfo;
+
+	m_nPicPagination = 0;
+	m_strPicZKZH = "";
+	m_nCurrentPaperID = 0;
+	m_nCurrentPicID = 0;
+
+	InitData();
+	UpdateData(FALSE);
+}
+
 void CMultiPageExceptionDlg::InitData()
 {
 	if (!m_pPapers) return;
@@ -399,8 +450,9 @@ void CMultiPageExceptionDlg::InitData()
 			m_lcIssuePaper.SetItemToolTipText(nCount, 2, (LPCTSTR)strTips);
 		}
 	}
-
 	m_nCurrentPaperID = 0;
+	m_lcIssuePaper.GetItemColors(m_nCurrentPaperID, 0, crPaperOldText, crPaperOldBackground);
+
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcIssuePaper.GetItemData(m_nCurrentPaperID);
 	ShowPaperDetail(pPaper);
 }
@@ -441,7 +493,7 @@ void CMultiPageExceptionDlg::OnNMDblclkListPics(NMHDR *pNMHDR, LRESULT *pResult)
 	m_nCurrentPicID = pNMItemActivate->iItem;
  
 	pST_PicInfo pPic = (pST_PicInfo)m_lcIssuePics.GetItemData(m_nCurrentPicID);
-	ShowPicDetail(pPic);
+	ShowPicDetail(pPic, true);
 
 	*pResult = 0;
 }

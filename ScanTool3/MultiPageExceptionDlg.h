@@ -1,6 +1,8 @@
 #pragma once
 #include "global.h"
 #include "XListCtrl.h"
+#include "VagueSearchDlg.h"
+#include "ShowPicDlg.h"
 
 
 // CMultiPageExceptionDlg 对话框
@@ -23,21 +25,32 @@ public:
 
 	pMODEL			m_pModel;				//扫描试卷时的校验模板
 	pPAPERSINFO		m_pPapers;
+	pST_PaperInfo	m_pCurrentShowPaper;
 	int				m_nCurrentPaperID;
 	int				m_nCurrentPicID;
+	
+	CVagueSearchDlg* m_pVagueSearchDlg;	//模糊搜索窗口
+	CShowPicDlg*	m_pShowPicDlg;		//图片显示窗口
+
 	COLORREF		crPaperOldText, crPaperOldBackground;
 	COLORREF		crPicOldText, crPicOldBackground;
 
 	CString			m_strPicZKZH;
 	int				m_nPicPagination;		//图片的页码
 public:
+	void	SetDlgInfo(CShowPicDlg* pShowDlg, CVagueSearchDlg* pSearchDlg);
+	void	ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo);
+private:
 	void	InitData();
 	void	InitUI();
 	void	InitCtrlPosition();
 	void	ShowPaperDetail(pST_PaperInfo pPaper);
-	void	ShowPicDetail(pST_PicInfo pPic);
+	void	ShowPicDetail(pST_PicInfo pPic, bool bShowPic = false);
 	void	SetPicInfo(pST_PicInfo pPic);
+	void	ShowPaperByItem(int nItem);
+
 	BOOL	PreTranslateMessage(MSG* pMsg);
+
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

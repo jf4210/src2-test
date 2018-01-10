@@ -15,7 +15,8 @@ public:
 // 对话框数据
 	enum { IDD = IDD_SHOWPICDLG };
 
-	void	setShowPaper(pST_PaperInfo pPaper);
+	void	ReInitUI(pST_PaperInfo pPaper);
+	void	setShowPaper(pST_PaperInfo pPaper, int nDefShow = 0);
 	void	UpdateUI();
 	void	setShowModel(int nModel);	//显示模式，1--使用tab控件显示，2--使用按钮控件代替tab分页
 	void	setRotate(int nDirection);	//设置旋转方向，1:针对原始图像需要进行的旋转，正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
@@ -34,6 +35,7 @@ private:
 
 	void	InitUI();
 	void	InitCtrlPosition();
+	void	ReleaseData();
 	void	PaintRecognisedRect(pST_PaperInfo pPaper);
 
 	virtual LRESULT DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam);
