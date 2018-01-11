@@ -193,11 +193,16 @@ void CZkzhExceptionDlg::InitData()
 		strTips = _T("勾选此项，这份试卷将需要重新扫描");
 		m_lcZkzh.SetItemToolTipText(nCount, 2, (LPCTSTR)strTips);
 	}
+	int nCount = m_lcZkzh.GetItemCount();
+	if (nCount > 0)
+	{
+		if (!bFindFirstShow)
+			m_nCurrentSelItem = 0;
 
-	if (!bFindFirstShow)
-		m_nCurrentSelItem = 0;
-
-	m_lcZkzh.GetItemColors(m_nCurrentSelItem, 0, crOldText, crOldBackground);
+		m_lcZkzh.GetItemColors(m_nCurrentSelItem, 0, crOldText, crOldBackground);
+		ShowPaperByItem(m_nCurrentSelItem);
+		VagueSearch(m_nCurrentSelItem);	//模糊搜索考号
+	}
 }
 
 void CZkzhExceptionDlg::ReleaseData()
@@ -366,6 +371,8 @@ void CZkzhExceptionDlg::ShowPaperByItem(int nItem)
 		return;
 	if (nItem >= m_lcZkzh.GetItemCount())
 		return;
+	if (!m_pShowPicDlg)
+		return;
 
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(nItem);
 
@@ -374,6 +381,7 @@ void CZkzhExceptionDlg::ShowPaperByItem(int nItem)
 	for (int i = 0; i < m_lcZkzh.GetColumns(); i++)							//设置高亮显示(手动设置背景颜色)
 		m_lcZkzh.SetItemColors(nItem, i, RGB(0, 0, 0), RGB(112, 180, 254));	//70, 70, 255
 
+	m_pShowPicDlg->ReInitUI(pPaper);
 	m_pShowPicDlg->setShowPaper(pPaper);
 
 	UpdateData(FALSE);
@@ -386,6 +394,8 @@ bool CZkzhExceptionDlg::VagueSearch(int nItem)
 	if (nItem < 0)
 		return bResult;
 	if (nItem >= m_lcZkzh.GetItemCount())
+		return bResult;
+	if (!m_pVagueSearchDlg)
 		return bResult;
 
 	m_pVagueSearchDlg->setNotifyDlg(this);

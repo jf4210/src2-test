@@ -330,12 +330,8 @@ void CShowPicDlg::ReInitUI(pST_PaperInfo pPaper)
 			}
 			else
 			{
+				m_vecBtn[i]->SetWindowText(A2T(szTabHeadName));
 				m_vecBtn[i]->ShowWindow(SW_SHOW);
-				//m_vecBtn[i]->SetWindowText(A2T(szTabHeadName));
-				m_vecBtn[i]->SetBmpBtnText(A2T(szTabHeadName));
-				CRect rt;
-				m_vecBtn[i]->GetClientRect(&rt);
-				m_vecBtn[i]->InvalidateRect(rt);
 			}
 		}
 		if (m_nModelPicNums < nOldVecBtn)
@@ -465,29 +461,38 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 {
 	if (!pPaper) return;
 
-	clock_t sT, eT;
+	clock_t sT, eT, eT1;
 	sT = clock();
  	std::vector<pST_PicInfo> vecPic;
-// 	PIC_LIST::iterator itPic1 = pPaper->lPic.begin();
-// 	for (int i = 0; itPic1 != pPaper->lPic.end(); itPic1++, i++)
-// 	{
-// 		vecPic.push_back(*itPic1);
-// 	}
-// #pragma omp for
-// 	for (int i = 0; i < vecPic.size(); i++)
-// 	{
-// 		cv::Mat matPic = imread(vecPic[i]->strPicPath);
-// 		vecPic[i]->pSrcScanPic->mtPic = matPic;
-// 	}
+	std::vector<int> vecTime;
+
+#ifdef TEST_PAGINATION
+	PIC_LIST::iterator itPic1 = pPaper->lPic.begin();
+	for (int i = 0; itPic1 != pPaper->lPic.end(); itPic1++, i++)
+	{
+		vecPic.push_back(*itPic1);
+	}
+	#pragma omp parallel for
+	for (int i = 0; i < vecPic.size(); i++)
+	{
+		cv::Mat matPic = imread(vecPic[i]->strPicPath);
+		vecPic[i]->pSrcScanPic->mtPic = matPic;
+	}
+	eT1 = clock();
+	vecTime.push_back(eT1 - sT);
+#endif
 
 	PIC_LIST::iterator itPic = pPaper->lPic.begin();
 	for (int i = 0; itPic != pPaper->lPic.end(); itPic++, i++)
 	{
-// #ifdef TEST_PAGINATION
-// 		Mat matSrc = (*itPic)->pSrcScanPic->mtPic;
-// #else
+		clock_t t1, t2, t3;
+		t1 = clock();
+#ifdef TEST_PAGINATION
+		Mat matSrc = (*itPic)->pSrcScanPic->mtPic;
+#else
 		Mat matSrc = imread((*itPic)->strPicPath);
-//#endif
+		#endif
+		t2 = clock();
 
 #ifdef PIC_RECTIFY_TEST
 		Mat dst;
@@ -551,6 +556,9 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		if (pPaper->pModel)
 			GetFixPicTransfer(nPic, matImg, *itPic, pPaper->pModel, inverseMat);		//PicTransfer(i, matImg, (*itPic)->lFix, pPaper->pModel->vecPaperModel[i]->lFix, inverseMat);
 #endif
+		t3 = clock();
+		vecTime.push_back(t2 - t1);
+		vecTime.push_back(t3 - t2);
 
 #ifdef Test_ShowOriPosition
 		cv::Mat	inverseMat(2, 3, CV_32FC1);
@@ -765,7 +773,10 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 	}
 #endif
 	eT = clock();
-	TRACE("------------------\n图像显示时间: %d\n--------------------\n", (int)(eT - sT));
+	std::string strTmp;
+	for (int i = 0; i < vecTime.size(); i++)
+		strTmp.append(std::string(Poco::format("%d:", vecTime[i])));
+	TRACE("\n------------------\n图像显示时间: %d, %s\n--------------------\n", (int)(eT - sT), strTmp.c_str());
 }
 
 LRESULT CShowPicDlg::DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam)

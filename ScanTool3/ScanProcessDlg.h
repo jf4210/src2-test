@@ -35,7 +35,7 @@ private:
 	void	InitUI();
 	void	InitCtrlPosition();
 	void	EnableBtn(BOOL bEnable);
-	bool WriteJsonFile();
+	bool	WriteJsonFile();
 	void	SetFontSize();
 
 	void	ShowPapers(pPAPERSINFO pPapers);

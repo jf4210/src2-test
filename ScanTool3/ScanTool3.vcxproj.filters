@@ -504,14 +504,14 @@
     <ClInclude Include="MultiPageExceptionDlg.h">
       <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\多页模式异常处理</Filter>
     </ClInclude>
-    <ClInclude Include="MultiPageMgr.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="ZkzhShowMgrDlg.h">
       <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口</Filter>
     </ClInclude>
     <ClInclude Include="ZkzhExceptionDlg.h">
       <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\准考证号异常处理</Filter>
+    </ClInclude>
+    <ClInclude Include="MultiPageMgr.h">
+      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\多页模式异常处理</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -776,14 +776,14 @@
     <ClCompile Include="MultiPageExceptionDlg.cpp">
       <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\多页模式异常处理</Filter>
     </ClCompile>
-    <ClCompile Include="MultiPageMgr.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="ZkzhShowMgrDlg.cpp">
       <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口</Filter>
     </ClCompile>
     <ClCompile Include="ZkzhExceptionDlg.cpp">
       <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\准考证号异常处理</Filter>
+    </ClCompile>
+    <ClCompile Include="MultiPageMgr.cpp">
+      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\多页模式异常处理</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

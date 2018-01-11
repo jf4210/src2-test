@@ -34,6 +34,7 @@ public:
 
 	COLORREF		crPaperOldText, crPaperOldBackground;
 	COLORREF		crPicOldText, crPicOldBackground;
+	CBmpButton		m_bmpBtnApply;
 
 	CString			m_strPicZKZH;
 	int				m_nPicPagination;		//Í¼Æ¬µÄÒ³Âë
@@ -64,4 +65,5 @@ public:
 	afx_msg void OnNMHoverListPaper(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMHoverListPics(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnBnClickedBtnApply();
 };

@@ -1953,7 +1953,7 @@ void CPaperInputDlg::OnTimer(UINT_PTR nIDEvent)
 				bRecogComplete = false;
 				break;
 			}
-			if (p->strSN.empty() || (p->nZkzhInBmkStatus != 1 && _bGetBmk_))
+			if (p->strSN.empty() || (p->nZkzhInBmkStatus != 1 && _bGetBmk_) || (m_pModel->nUsePagination && p->nPaginationStatus != 2))
 				bNeedShowZkzhDlg = true;
 		}
 		if (bRecogComplete)

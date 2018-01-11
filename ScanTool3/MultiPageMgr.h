@@ -31,7 +31,7 @@ private:
 	//更新当前试卷的Omr、选做题信息
 	void UpdateOmrInfo(pST_PaperInfo pPaper);
 	//添加试卷，从扫描试卷对象中构建新的考生试卷对象
-	pST_PaperInfo GetNewPaperFromScanPaper(pST_SCAN_PAPER pScanPaper, pPAPERSINFO pPapers, void* pNotifyDlg);
+	pST_PaperInfo GetNewPaperFromScanPaper(pST_SCAN_PAPER pScanPaper, pPAPERSINFO pPapers, void* pNotifyDlg, std::string strSN);
 
 private:
 	std::string _strLog;

@@ -30,6 +30,7 @@ void CMultiPageExceptionDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_Pics, m_lcIssuePics);
 	DDX_Text(pDX, IDC_EDIT_ModelPageIndex, m_nPicPagination);
 	DDX_Text(pDX, IDC_EDIT_BelongsZKZH, m_strPicZKZH);
+	DDX_Control(pDX, IDC_BTN_Apply, m_bmpBtnApply);
 }
 
 BEGIN_MESSAGE_MAP(CMultiPageExceptionDlg, CDialog)
@@ -40,6 +41,7 @@ BEGIN_MESSAGE_MAP(CMultiPageExceptionDlg, CDialog)
 	ON_NOTIFY(NM_HOVER, IDC_LIST_Paper, &CMultiPageExceptionDlg::OnNMHoverListPaper)
 	ON_NOTIFY(NM_HOVER, IDC_LIST_Pics, &CMultiPageExceptionDlg::OnNMHoverListPics)
 	ON_WM_SIZE()
+	ON_BN_CLICKED(IDC_BTN_Apply, &CMultiPageExceptionDlg::OnBnClickedBtnApply)
 END_MESSAGE_MAP()
 
 // CMultiPageExceptionDlg 消息处理程序
@@ -83,6 +85,10 @@ void CMultiPageExceptionDlg::InitUI()
 		m_lcIssuePics.m_HeaderCtrl.SetItem(i, &hditem2);
 	}
 	m_lcIssuePics.EnableToolTips(TRUE);
+
+	m_bmpBtnApply.SetStateBitmap(IDB_ScanMgr_BtnSave, 0, IDB_ScanMgr_BtnSave_Hover);
+	m_bmpBtnApply.SetWindowText(_T("应用"));
+	m_bmpBtnApply.SetBtnTextColor(RGB(255, 255, 255), RGB(255, 255, 255), RGB(255, 255, 255), RGB(116, 116, 116));
 
 	InitCtrlPosition();
 }
@@ -163,7 +169,16 @@ void CMultiPageExceptionDlg::InitCtrlPosition()
 		int nW = (cx - nLeftGap - nRightGap - nGap) * 0.5;
 		nW = (nW - nGap * 2) * 0.2;
 		GetDlgItem(IDC_STATIC_ModelPageIndex2)->MoveWindow(nCurrentLeft, nCurrentTop, nW, nNewStaticTipH);
-		nCurrentTop += (nNewStaticTipH + nGap);
+		nCurrentTop += (nNewStaticTipH + nGap * 2);
+		nCurrentLeft = nTmpLeft;
+	}
+	int nBtnH = 30;
+	if (GetDlgItem(IDC_BTN_Apply)->GetSafeHwnd())
+	{
+		int nW = (cx - nLeftGap - nRightGap - nGap) * 0.5;
+		int nBtnW = nW * 0.5;
+		GetDlgItem(IDC_BTN_Apply)->MoveWindow(nCurrentLeft + nW * 0.25, nCurrentTop, nBtnW, nBtnH);
+		nCurrentTop += (nBtnH + nGap);
 	}
 }
 
@@ -171,7 +186,7 @@ void CMultiPageExceptionDlg::ShowPaperDetail(pST_PaperInfo pPaper)
 {
 	if (!pPaper) return;
 
-	m_lcIssuePaper.GetItemColors(m_nCurrentPaperID, 0, crPaperOldText, crPaperOldBackground);
+	//m_lcIssuePaper.GetItemColors(m_nCurrentPaperID, 0, crPaperOldText, crPaperOldBackground);
 	for (int i = 0; i < m_lcIssuePaper.GetColumns(); i++)							//设置高亮显示(手动设置背景颜色)
 		m_lcIssuePaper.SetItemColors(m_nCurrentPaperID, i, RGB(0, 0, 0), RGB(112, 180, 254));	//70, 70, 255
 
@@ -210,8 +225,8 @@ void CMultiPageExceptionDlg::ShowPicDetail(pST_PicInfo pPic, bool bShowPic /*= f
 
 	if(m_pShowPicDlg && bShowPic) m_pShowPicDlg->setShowPaper(m_pCurrentShowPaper, m_nCurrentPicID);
 
-	UpdateData(FALSE);
-	m_lcIssuePics.Invalidate();
+ 	UpdateData(FALSE);
+ 	m_lcIssuePics.Invalidate();
 }
 
 void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
@@ -221,10 +236,15 @@ void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
 
 	USES_CONVERSION;
 	std::string strCurrZkzh = T2A(m_strPicZKZH);
+	CMultiPageMgr multiPageObj(_pModel_);
+	if(multiPageObj.ModifyPic(pPic, m_pPapers, m_nPicPagination, strCurrZkzh))
+		ReInitData(m_pModel, m_pPapers);
+
+#if 0
 	if (pPic->nPicModelIndex != m_nPicPagination - 1)
 	{
 		CMultiPageMgr multiPageObj(_pModel_);
-		//multiPageObj.ModifyPicPagination(pPic, m_nPicPagination);
+		multiPageObj.ModifyPic(pPic, m_pPapers, m_nPicPagination, strCurrZkzh);
 
 		//修改选择题和选择题的页码ID信息
 
@@ -329,6 +349,7 @@ void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
 	{
 
 	}
+#endif
 }
 
 void CMultiPageExceptionDlg::ShowPaperByItem(int nItem)
@@ -450,11 +471,14 @@ void CMultiPageExceptionDlg::InitData()
 			m_lcIssuePaper.SetItemToolTipText(nCount, 2, (LPCTSTR)strTips);
 		}
 	}
-	m_nCurrentPaperID = 0;
-	m_lcIssuePaper.GetItemColors(m_nCurrentPaperID, 0, crPaperOldText, crPaperOldBackground);
+	if (m_lcIssuePaper.GetItemCount() > 0)
+	{
+		m_nCurrentPaperID = 0;
+		m_lcIssuePaper.GetItemColors(m_nCurrentPaperID, 0, crPaperOldText, crPaperOldBackground);
 
-	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcIssuePaper.GetItemData(m_nCurrentPaperID);
-	ShowPaperDetail(pPaper);
+		pST_PaperInfo pPaper = (pST_PaperInfo)m_lcIssuePaper.GetItemData(m_nCurrentPaperID);
+		ShowPaperDetail(pPaper);
+	}
 }
 
 void CMultiPageExceptionDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
@@ -508,10 +532,15 @@ void CMultiPageExceptionDlg::OnNMHoverListPics(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 1;
 }
 
-
 void CMultiPageExceptionDlg::OnSize(UINT nType, int cx, int cy)
 {
 	CDialog::OnSize(nType, cx, cy);
 
 	InitCtrlPosition();
+}
+
+void CMultiPageExceptionDlg::OnBnClickedBtnApply()
+{
+	pST_PicInfo pPic = (pST_PicInfo)m_lcIssuePics.GetItemData(m_nCurrentPicID);
+	SetPicInfo(pPic);
 }

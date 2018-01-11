@@ -85,7 +85,7 @@ LRESULT CSingleExamDlg::DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam
 		WORD wID = LOWORD(wParam);
 		for (auto pSub : _pExamInfo->lSubjects)
 		{
-			if (wID == (pSub->nSubjID * 10 + pSub->nSubjID))
+			if (wID == (pSub->nSubjID * 10 + pSub->nSubjID + _pExamInfo->nExamID))
 			{
 				_pCurrExam_ = _pExamInfo;
 				_pCurrSub_	= pSub;
@@ -383,7 +383,7 @@ void CSingleExamDlg::SetExamInfo(pEXAMINFO pExamInfo)
 		CBmpButton* pNewButton = new CBmpButton();// 也可以定义为类的成员变量。
 		pNewButton->SetStateBitmap(IDB_Exam_SubjectBtn, 0, IDB_Exam_SubjectBtn_Hover);
 		CRect rcButton(10, 10, 50, 30); // 按钮在对话框中的位置。
-		pNewButton->Create(A2T(pSub->strSubjName.c_str()), 0, rcButton, this, pSubject->nSubjID * 10 + pSubject->nSubjID);
+		pNewButton->Create(A2T(pSub->strSubjName.c_str()), 0, rcButton, this, pSubject->nSubjID * 10 + pSubject->nSubjID + _pExamInfo->nExamID);
 		pNewButton->ShowWindow(SW_SHOW);
 		m_vecBtn.push_back(pNewButton);
 	}

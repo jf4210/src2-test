@@ -171,7 +171,7 @@ bool CMultiPageMgr::ModifyPicPagination(pST_PicInfo pPic, int nNewPage)
 bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPage, std::string strZKZH)
 {
 	bool bResult = true;
-	if (nNewPage < 1 || strZKZH.empty())
+	if (nNewPage < 1 || strZKZH.empty() || !pPic || !pPapers)
 		return false;
 
 	//检查页码修改
@@ -199,6 +199,7 @@ bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPag
 			!pScanPaperTask->bDoubleScan && pCurrentPaper->lPic.size() <= 1)
 		{
 			bool bFindZKZH = false;
+			pST_PaperInfo pDstPaper = NULL;
 			PAPER_LIST::iterator itCurrentPaper;
 			PAPER_LIST::iterator itNewPaper = pPapers->lPaper.begin();
 			for (; itNewPaper != pPapers->lPaper.end(); )
@@ -207,6 +208,7 @@ bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPag
 				if (pNewPaper->strSN == strZKZH && pCurrentPaper != pNewPaper)
 				{
 					bFindZKZH = true;
+					pDstPaper = pNewPaper;
 					MergePaper(pCurrentPaper, pNewPaper);
 				}
 				if (pCurrentPaper == pNewPaper)
@@ -217,6 +219,7 @@ bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPag
 			{
 				pPapers->lPaper.erase(itCurrentPaper);
 				SAFE_RELEASE(pCurrentPaper);
+				ChkPaperValid(pDstPaper, _pModel);
 			}
 			//如果没发现相同的准考证号，则不需要重新添加到试卷袋
 		}
@@ -253,6 +256,7 @@ bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPag
 					{
 						MergePic(pCurrentPaper, pMergePic, pNewPaper);
 					}
+					ChkPaperValid(pCurrentPaper, _pModel);
 					ChkPaperValid(pNewPaper, _pModel);
 					break;
 				}
@@ -260,7 +264,7 @@ bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPag
 			}
 			if (!bFindZKZH)		//如果没发现相同的准考证号，则重新构建试卷并加入到试卷袋
 			{
-				pST_PaperInfo pNewPaper = GetNewPaperFromScanPaper(pScanPaperTask, pPapers, pCurrentPaper->pSrcDlg);
+				pST_PaperInfo pNewPaper = GetNewPaperFromScanPaper(pScanPaperTask, pPapers, pCurrentPaper->pSrcDlg, strZKZH);
 				UpdateOmrInfo(pNewPaper);
 				ChkPaperValid(pNewPaper, _pModel);
 
@@ -275,6 +279,7 @@ bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPag
 				}
 				//对原试卷的考生信息进行修改
 				UpdateOmrInfo(pCurrentPaper);
+				ChkPaperValid(pCurrentPaper, _pModel);
 			}
 		}
 	}
@@ -324,7 +329,7 @@ void CMultiPageMgr::UpdateOmrInfo(pST_PaperInfo pPaper)
 	}
 }
 
-pST_PaperInfo CMultiPageMgr::GetNewPaperFromScanPaper(pST_SCAN_PAPER pScanPaper, pPAPERSINFO pPapers, void* pNotifyDlg)
+pST_PaperInfo CMultiPageMgr::GetNewPaperFromScanPaper(pST_SCAN_PAPER pScanPaper, pPAPERSINFO pPapers, void* pNotifyDlg, std::string strSN)
 {
 	pST_PaperInfo pNewPaper = NULL;
 	for (int i = 0; i < pScanPaper->vecScanPic.size(); i++)
@@ -353,6 +358,7 @@ pST_PaperInfo CMultiPageMgr::GetNewPaperFromScanPaper(pST_SCAN_PAPER pScanPaper,
 			pNewPaper = new ST_PaperInfo;
 			pNewPaper->nIndex = pScanPic->nStudentID;
 			pNewPaper->strStudentInfo = szStudentName;
+			pNewPaper->strSN = strSN;
 			pNewPaper->pModel = _pModel_;
 			pNewPaper->pPapers = pScanPaper->pPapersInfo;
 			pNewPaper->pSrcDlg = pNotifyDlg;		//m_pDlg;

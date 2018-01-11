@@ -242,7 +242,7 @@ void CSendFileThread::SendFileComplete(char* pName, char* pSrcPath)
 	catch (Poco::Exception& exc)
 	{
 		std::string strFileName = pName;
-		std::string strErrInfo = Poco::format("ÒÆ¶¯ÊÔ¾í´ü(%s)Ê§°Ü,%s", strFileName, exc.message());
+		std::string strErrInfo = Poco::format("ÒÆ¶¯ÊÔ¾í´ü(%s)Ê§°Ü,%s", strFileName, std::string(exc.what()));
 		g_pLogger->information(strErrInfo);
 	}
 }
