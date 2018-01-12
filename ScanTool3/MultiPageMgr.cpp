@@ -125,9 +125,7 @@ void CMultiPageMgr::MergePic(pST_PaperInfo pSrcPaper, pST_PicInfo pSrcPic, pST_P
 
 bool CMultiPageMgr::ModifyPicPagination(pST_PicInfo pPic, int nNewPage)
 {
-	bool bResult = true; 
-// 	bResult = ChkModifyPagination(pPic, nNewPage);
-// 	if (!bResult) return bResult;
+	if (!ChkModifyPagination(pPic, nNewPage)) return false;
 
 	pPic->nPicOldModelIndex = pPic->nPicModelIndex;
 	pPic->nPicModelIndex = nNewPage - 1;
@@ -165,7 +163,7 @@ bool CMultiPageMgr::ModifyPicPagination(pST_PicInfo pPic, int nNewPage)
 			}
 		}
 	}
-	return bResult;
+	return true;
 }
 
 bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPage, std::string strZKZH)
@@ -174,12 +172,14 @@ bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPag
 	if (nNewPage < 1 || strZKZH.empty() || !pPic || !pPapers)
 		return false;
 
+	clock_t sT, eT;
+	sT = clock();
+	std::stringstream ssLog;
 	//检查页码修改
 	if (pPic->nPicModelIndex != nNewPage - 1)
 	{
-		bResult = ModifyPicPagination(pPic, nNewPage);
-		if (!bResult)
-			return bResult;
+		if (!ModifyPicPagination(pPic, nNewPage))
+			return false;
 	}
 
 	//检查准考证号修改
@@ -192,7 +192,6 @@ bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPag
 	else
 	{
 		//准考证号有修改，需要检查试卷袋是否存在此新准考证号，存在则合并，
-
 		pST_SCAN_PAPER pScanPaperTask = static_cast<pST_SCAN_PAPER>(pPic->pSrcScanPic->pParentScanPaper);
 		//如果图片只有2张，又是双面扫描，或者，单面扫描，试卷只有1张，则当不存在此新准考证号时，不需要重新构建试卷，将当前试卷整张合并到新试卷
 		if (pScanPaperTask->bDoubleScan && pCurrentPaper->lPic.size() <= 2 || \
@@ -233,71 +232,31 @@ bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPag
 				if (pNewPaper->strSN == strZKZH && pCurrentPaper != pNewPaper)
 				{
 					bFindZKZH = true;
-					//先找当前图片所在纸张的所有扫描图片
-					std::vector<pST_PicInfo> vecScanPaper;
-					for (auto pScanPic : pCurrentPaper->lPic)
-					{
-						if (pScanPic->pSrcScanPic->pParentScanPaper == pPic->pSrcScanPic->pParentScanPaper)
-							vecScanPaper.push_back(pScanPic);
-					}
-					SCAN_PAPER_LIST::iterator itSrcScanPaper = pCurrentPaper->lSrcScanPaper.begin();
-					for (; itSrcScanPaper != pCurrentPaper->lSrcScanPaper.end();)
-					{
-						pST_SCAN_PAPER pScanPaper = *itSrcScanPaper;
-						if (pScanPaper == pPic->pSrcScanPic->pParentScanPaper)		//当前图片所属的扫描试卷移动到新考生试卷，并从原考生扫描试卷列表中删除
-						{
-							pNewPaper->lSrcScanPaper.push_back(pScanPaper);
-							itSrcScanPaper = pCurrentPaper->lSrcScanPaper.erase(itSrcScanPaper);
-						}
-						else
-							itSrcScanPaper++;
-					}
-					for (auto pMergePic : vecScanPaper)
-					{
-						MergePic(pCurrentPaper, pMergePic, pNewPaper);
-					}
-					ChkPaperValid(pCurrentPaper, _pModel);
-					ChkPaperValid(pNewPaper, _pModel);
+					MergeScanPaperToDstPaper(pScanPaperTask, pCurrentPaper, pNewPaper);
 					break;
 				}
 				itNewPaper++;
 			}
 			if (!bFindZKZH)		//如果没发现相同的准考证号，则重新构建试卷并加入到试卷袋
 			{
-				pST_PaperInfo pNewPaper = GetNewPaperFromScanPaper(pScanPaperTask, pPapers, pCurrentPaper->pSrcDlg, strZKZH);
-				UpdateOmrInfo(pNewPaper);
-				ChkPaperValid(pNewPaper, _pModel);
-
-				PIC_LIST::iterator itPic = pCurrentPaper->lPic.begin();
-				for (; itPic != pCurrentPaper->lPic.end(); )
-				{
-					pST_PicInfo pCurrentPic = *itPic;
-					if (pCurrentPic->pSrcScanPic->pParentScanPaper == pPic->pSrcScanPic->pParentScanPaper)
-						itPic = pCurrentPaper->lPic.erase(itPic);
-					else
-						itPic++;
-				}
-				//对原试卷的考生信息进行修改
-				UpdateOmrInfo(pCurrentPaper);
-				ChkPaperValid(pCurrentPaper, _pModel);
+				pST_PaperInfo pNewPaper = GetBaseNewPaperFromScanPaper(pScanPaperTask, pPapers, pCurrentPaper, strZKZH);
+				MergeScanPaperToDstPaper(pScanPaperTask, pCurrentPaper, pNewPaper);
 			}
 		}
 	}
+	eT = clock();
+	ssLog << "设置图片(" << pPic->strPicName << ")所属的扫描试卷完成. " << (int)(eT - sT) << "ms\n";
+	std::string strTmpLog = ssLog.str();
+	TRACE(strTmpLog.c_str());
+
 	return bResult;
 }
 
 bool CMultiPageMgr::ChkModifyPagination(pST_PicInfo pPic, int nNewPage)
 {
 	bool bResult = true;
-	pST_PaperInfo pCurrentPaper = static_cast<pST_PaperInfo>(pPic->pPaper);
-	for (auto pTmpPic : pCurrentPaper->lPic)
-	{
-		if (pTmpPic->nPicModelIndex == nNewPage - 1)
-		{
-			bResult = false;
-			break;
-		}
-	}
+	if (nNewPage > _pModel->vecPaperModel.size())
+		bResult = false;
 	return bResult;
 }
 
@@ -329,9 +288,43 @@ void CMultiPageMgr::UpdateOmrInfo(pST_PaperInfo pPaper)
 	}
 }
 
-pST_PaperInfo CMultiPageMgr::GetNewPaperFromScanPaper(pST_SCAN_PAPER pScanPaper, pPAPERSINFO pPapers, void* pNotifyDlg, std::string strSN)
+pST_PaperInfo CMultiPageMgr::GetBaseNewPaperFromScanPaper(pST_SCAN_PAPER pScanPaper, pPAPERSINFO pPapers, pST_PaperInfo pCurrentPaper, std::string strSN)
 {
 	pST_PaperInfo pNewPaper = NULL;
+#if 1
+	char szStudentName[30] = { 0 };
+	sprintf_s(szStudentName, "S%d", pScanPaper->vecScanPic[0]->nStudentID);
+	pNewPaper = new ST_PaperInfo;
+	pNewPaper->nIndex = pScanPaper->vecScanPic[0]->nStudentID;
+	pNewPaper->strStudentInfo = szStudentName;
+	pNewPaper->strSN = strSN;
+	pNewPaper->pModel = _pModel_;
+	pNewPaper->pPapers = pScanPaper->pPapersInfo;
+	pNewPaper->pSrcDlg = pCurrentPaper->pSrcDlg;		//m_pDlg;
+	//pNewPaper->lSrcScanPaper.push_back(pScanPaper);
+
+	SCAN_PAPER_LIST::iterator itSrcScanPaper = pCurrentPaper->lSrcScanPaper.begin();
+	for (; itSrcScanPaper != pCurrentPaper->lSrcScanPaper.end();)
+	{
+		pST_SCAN_PAPER pScanPaper = *itSrcScanPaper;
+		if (pScanPaper == pScanPaper)		//当前图片所属的扫描试卷移动到新考生试卷，并从原考生扫描试卷列表中删除
+		{
+			pNewPaper->lSrcScanPaper.push_back(pScanPaper);
+			itSrcScanPaper = pCurrentPaper->lSrcScanPaper.erase(itSrcScanPaper);
+		}
+		else
+			itSrcScanPaper++;
+	}
+
+	if (!pScanPaper->bCanRecog)
+		pNewPaper->nPaginationStatus = 0;	//没有识别到页码，不能参与识别，设置问题卷，人工确认后再识别
+	else
+		pNewPaper->nPaginationStatus = 1;	//识别完页码，可以识别，不能确定具体属于哪个学生(默认)
+
+	pPapers->fmlPaper.lock();
+	pPapers->lPaper.push_back(pNewPaper);
+	pPapers->fmlPaper.unlock();
+#else
 	for (int i = 0; i < pScanPaper->vecScanPic.size(); i++)
 	{
 		pST_SCAN_PIC pScanPic = pScanPaper->vecScanPic[i];
@@ -361,7 +354,7 @@ pST_PaperInfo CMultiPageMgr::GetNewPaperFromScanPaper(pST_SCAN_PAPER pScanPaper,
 			pNewPaper->strSN = strSN;
 			pNewPaper->pModel = _pModel_;
 			pNewPaper->pPapers = pScanPaper->pPapersInfo;
-			pNewPaper->pSrcDlg = pNotifyDlg;		//m_pDlg;
+			pNewPaper->pSrcDlg = pCurrentPaper->pSrcDlg;		//m_pDlg;
 			pNewPaper->lPic.push_back(pPic);
 			pNewPaper->lSrcScanPaper.push_back(pScanPaper);
 
@@ -380,12 +373,37 @@ pST_PaperInfo CMultiPageMgr::GetNewPaperFromScanPaper(pST_SCAN_PAPER pScanPaper,
 		}
 		pPic->pPaper = pNewPaper;
 	}
+#endif
 	return pNewPaper;
 }
 
-void CMultiPageMgr::ChkPapersValid(pPAPERSINFO pPapers)
+void CMultiPageMgr::MergeScanPaperToDstPaper(pST_SCAN_PAPER pScanPaper, pST_PaperInfo pCurrentPaper, pST_PaperInfo pDstPaper)
 {
-
+	//先找当前图片所在纸张的所有扫描图片
+	std::vector<pST_PicInfo> vecScanPaper;
+	for (auto pScanPic : pCurrentPaper->lPic)
+	{
+		if (pScanPic->pSrcScanPic->pParentScanPaper == pScanPaper)
+			vecScanPaper.push_back(pScanPic);
+	}
+	SCAN_PAPER_LIST::iterator itSrcScanPaper = pCurrentPaper->lSrcScanPaper.begin();
+	for (; itSrcScanPaper != pCurrentPaper->lSrcScanPaper.end();)
+	{
+		pST_SCAN_PAPER pTmpScanPaper = *itSrcScanPaper;
+		if (pTmpScanPaper == pScanPaper)		//当前图片所属的扫描试卷移动到新考生试卷，并从原考生扫描试卷列表中删除
+		{
+			pDstPaper->lSrcScanPaper.push_back(pTmpScanPaper);
+			itSrcScanPaper = pCurrentPaper->lSrcScanPaper.erase(itSrcScanPaper);
+		}
+		else
+			itSrcScanPaper++;
+	}
+	for (auto pMergePic : vecScanPaper)
+	{
+		MergePic(pCurrentPaper, pMergePic, pDstPaper);
+	}
+	ChkPaperValid(pCurrentPaper, _pModel);
+	ChkPaperValid(pDstPaper, _pModel);
 }
 
 void CMultiPageMgr::ChkPaperValid(pST_PaperInfo pPaper, pMODEL pModel)

@@ -514,7 +514,7 @@ void CPaperUser::SetAnswerInfo(ST_FILE_INFO info)
 	catch (Poco::Exception &exc)
 	{
 		std::string strLog;
-		strLog.append("upLoadPath createDirectories or filePath remove error: " + exc.displayText());
+		strLog.append("upLoadPath createDirectories or filePath remove error: " + std::string(exc.what()));
 		g_Log.LogOutError(strLog);
 		std::cout << strLog << std::endl;
 	}
@@ -555,7 +555,7 @@ bool CPaperUser::CheckAnswerFile(void)
 		std::ifstream istr(m_szFilePath, std::ios::binary);
 		if (!istr)
 		{
-			string strLog = "calc MD5 failed 1: ";
+			string strLog = "calc MD5 failed 1(open file fail): ";
 			strLog.append(m_szFilePath);
 			g_Log.LogOutError(strLog);
 			std::cout << strLog << std::endl;
@@ -569,6 +569,8 @@ bool CPaperUser::CheckAnswerFile(void)
 		{
 			string strLog = "calc MD5 failed 2: ";
 			strLog.append(m_szFilePath);
+			strLog.append("serverMd5: " + strMd5 + ", clientMd5: ");
+			strLog.append(m_szAnswerMd5);
 			g_Log.LogOutError(strLog);
 			std::cout << strLog << std::endl;
 			return false;
@@ -576,7 +578,7 @@ bool CPaperUser::CheckAnswerFile(void)
 	}
 	catch (...)
 	{
-		string strLog = "calc MD5 failed 3: ";
+		string strLog = "calc MD5 failed 3(unknow): ";
 		strLog.append(m_szFilePath);
 		g_Log.LogOutError(strLog);
 		std::cout << strLog << std::endl;

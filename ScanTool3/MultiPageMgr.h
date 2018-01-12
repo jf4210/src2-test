@@ -17,12 +17,8 @@ public:
 	void ReNamePicInPapers(pPAPERSINFO pPapers);
 
 private:
-	//试卷袋合法性检测
-	void ChkPapersValid(pPAPERSINFO pPapers);
 	void ChkPaperValid(pST_PaperInfo pPaper, pMODEL pModel);
-	//检查是否可以进行修改页码，如果当前试卷已经存在此页码，则不允许修改，
-	//例如：考生有1、2、3、4共4页图片，当新图片(页码3、4)添加进来，或者页码3、4修改成页码1、2时，3、4对应的选择题、选做题信息的页码信息会对应修改，
-	//如果又将此页修改其他页码，则原来的页码1、2对应的omr、选做题信息也会被修改
+	//检查是否可以进行修改页码，允许页码重复，不允许页码超过模板总页数
 	bool ChkModifyPagination(pST_PicInfo pPic, int nNewPage);
 
 	//修改页码, 页码从1开始，注意不能设置已经存在的页码
@@ -30,9 +26,10 @@ private:
 	bool ModifyPicPagination(pST_PicInfo pPic, int nNewPage);
 	//更新当前试卷的Omr、选做题信息
 	void UpdateOmrInfo(pST_PaperInfo pPaper);
-	//添加试卷，从扫描试卷对象中构建新的考生试卷对象
-	pST_PaperInfo GetNewPaperFromScanPaper(pST_SCAN_PAPER pScanPaper, pPAPERSINFO pPapers, void* pNotifyDlg, std::string strSN);
-
+	//添加试卷，从扫描试卷对象中构建一份含有基本信息的新考生试卷对象(没有图片的答案等已识别信息)
+	pST_PaperInfo GetBaseNewPaperFromScanPaper(pST_SCAN_PAPER pScanPaper, pPAPERSINFO pPapers, pST_PaperInfo pCurrentPaper, std::string strSN);
+	//将扫描试卷信息合并到新试卷中
+	void MergeScanPaperToDstPaper(pST_SCAN_PAPER pScanPaper, pST_PaperInfo pCurrentPaper, pST_PaperInfo pDstPaper);
 private:
 	std::string _strLog;
 	pMODEL _pModel;
