@@ -22,6 +22,7 @@ void CMultiPageMgr::MergePaper(pST_PaperInfo pSrcPaper, pST_PaperInfo pDstPaper)
 	//试卷合并
 	if (!pDstPaper->bIssuePaper)	pDstPaper->bIssuePaper = pSrcPaper->bIssuePaper;
 	if (!pDstPaper->bModifyZKZH)	pDstPaper->bModifyZKZH = pSrcPaper->bModifyZKZH;
+	if (!pDstPaper->bModifyPagination)	pDstPaper->bModifyPagination = true;
 	if (!pDstPaper->bReScan)		pDstPaper->bReScan = pSrcPaper->bReScan;
 	if (!pDstPaper->bRecogCourse)	pDstPaper->bRecogCourse = pSrcPaper->bRecogCourse;
 	pDstPaper->nPicsExchange += pSrcPaper->nPicsExchange;
@@ -115,6 +116,9 @@ void CMultiPageMgr::MergePic(pST_PaperInfo pSrcPaper, pST_PicInfo pSrcPic, pST_P
 		else
 			itPic++;
 	}
+	//设置试卷修改标识
+	pDstPaper->bModifyPagination = true;
+	pSrcPaper->bModifyPagination = true;
 	//移动Omr和选做题信息到新试卷，同时移除原试卷对应信息
 	UpdateOmrInfo(pSrcPaper);
 	for (auto omrResult : pSrcPic->lOmrResult)
@@ -130,6 +134,7 @@ bool CMultiPageMgr::ModifyPicPagination(pST_PicInfo pPic, int nNewPage)
 	pPic->nPicOldModelIndex = pPic->nPicModelIndex;
 	pPic->nPicModelIndex = nNewPage - 1;
 	pST_PaperInfo pCurrentPaper = static_cast<pST_PaperInfo>(pPic->pPaper);
+	pCurrentPaper->bModifyPagination = true;
 	if (static_cast<pST_SCAN_PAPER>(pPic->pSrcScanPic->pParentScanPaper)->bDoubleScan)
 	{
 		//双面扫描时，修改这页试卷页码后，修改对应的另一页的试卷页码，如果不修改，后面可能出现不知道属于那张试卷的情况

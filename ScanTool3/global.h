@@ -365,6 +365,7 @@ typedef struct _PaperInfo_
 {
 	bool		bIssuePaper;		//是否是问题试卷
 	bool		bModifyZKZH;		//准考证号人工修改标识
+	bool		bModifyPagination;	//多页模式时，在页码异常界面中有过修改
 	bool		bRecogComplete;		//该学生已经识别完成
 	bool		bReScan;			//重新扫描标识，在准考证号修改窗口中设置
 	bool		bRecogCourse;		//科目识别是否正确
@@ -397,6 +398,7 @@ typedef struct _PaperInfo_
 	{
 		bIssuePaper = false;
 		bModifyZKZH = false;
+		bModifyPagination = false;
 		nZkzhInBmkStatus = 0;
 		bRecogComplete = false;
 		bRecogCourse = true;

@@ -1878,6 +1878,8 @@ void CPaperInputDlg::ShowPapers(pPAPERSINFO pPapers)
 			m_lPaperCtrl.SetItemColors(nCount, 1, RGB(0, 255, 0), RGB(255, 255, 255));
 		if (pPaper->nPicsExchange != 0)	//ÊÔ¾í±»µ÷»»Ë³Ðò
 			m_lPaperCtrl.SetItemColors(nCount, 1, RGB(0, 255, 255), RGB(255, 255, 255));
+		if(pPaper->bModifyPagination)
+			m_lPaperCtrl.SetItemColors(nCount, 1, RGB(100, 255, 0), RGB(255, 255, 255));
 
 		m_lPaperCtrl.SetItemData(nCount, (DWORD_PTR)pPaper);
 	}

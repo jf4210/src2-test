@@ -569,7 +569,7 @@ bool CPaperUser::CheckAnswerFile(void)
 		{
 			string strLog = "calc MD5 failed 2: ";
 			strLog.append(m_szFilePath);
-			strLog.append("serverMd5: " + strMd5 + ", clientMd5: ");
+			strLog.append(", serverMd5: " + strMd5 + ", clientMd5: ");
 			strLog.append(m_szAnswerMd5);
 			g_Log.LogOutError(strLog);
 			std::cout << strLog << std::endl;
