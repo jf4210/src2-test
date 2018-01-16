@@ -35,6 +35,10 @@
 
 
 
+#ifdef USE_TESSERACT
+	#include "tesseract/tesscallback.h"
+#endif
+
 
 
 

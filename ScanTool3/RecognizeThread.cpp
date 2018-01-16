@@ -25,6 +25,13 @@ void CRecognizeThread::run()
 
 	InitCharacterRecog();
 
+#ifdef XINJIANG_TMP_JINJI
+	USES_CONVERSION;
+	m_pStudentMgr = new CStudentMgr();
+	std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+	bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+#endif
+
 	while (!g_nExitFlag)
 	{
 		//===========================
@@ -81,6 +88,9 @@ void CRecognizeThread::run()
 
 #ifdef USE_TESSERACT
 	SAFE_RELEASE(m_pTess);
+#endif
+#ifdef XINJIANG_TMP_JINJI
+	SAFE_RELEASE(m_pStudentMgr);
 #endif
 	TRACE("RecognizeThread exit 0\n");
 }
@@ -4276,6 +4286,11 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 				string strTypeName;
 				string strResult = GetQR(matCompRoi, strTypeName);
 
+				#ifdef  XINJIANG_TMP_JINJI
+					if(strResult.empty())
+						RecogSN_code_Character(matCompPic, rc, strResult);
+				#endif
+
 				std::string strTmpLog;
 				if (strResult != "")
 				{
@@ -4309,6 +4324,170 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 	strLog.append(strTime);
 	g_pLogger->information(strLog);
 	return bResult;
+}
+
+bool CRecognizeThread::RecogSN_code_Character(cv::Mat& matCompPic, RECTINFO rc, std::string& strRecogSN)
+{
+	clock_t sT, eT, mT1, mT2, mT3;
+	sT = clock();
+
+	//提取条码下面的考号
+	Mat matCompRoi;
+	matCompRoi = matCompPic(rc.rt);
+
+	cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+	GaussianBlur(matCompRoi, matCompRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);
+	sharpenImage1(matCompRoi, matCompRoi);
+	int blockSize = 25;		//25
+	int constValue = 10;
+	cv::Mat local;
+	cv::adaptiveThreshold(matCompRoi, matCompRoi, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, blockSize, constValue);
+
+	cv::Canny(matCompRoi, matCompRoi, 0, rc.nCannyKernel, 5);
+#if 1
+	Mat element = getStructuringElement(MORPH_RECT, Size(4, 4));	//Size(6, 6)	普通空白框可识别
+	dilate(matCompRoi, matCompRoi, element);
+	IplImage ipl_img(matCompRoi);
+
+	std::vector<Rect>RectCompList;
+	//the parm. for cvFindContours  
+	CvMemStorage* storage = cvCreateMemStorage(0);
+	CvSeq* contour = 0;
+
+	Mat matTmpShow;
+	matTmpShow = matCompPic(rc.rt);
+	//提取轮廓  
+	cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+	for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
+	{
+		CvRect aRect = cvBoundingRect(contour, 0);
+		Rect rm = aRect;
+		int nMaxW = rc.rt.width * 0.3;
+		int nMaxH = rc.rt.height * 0.5;
+		if (rm.width > nMaxW || rm.height > nMaxH || rm.height < rm.width * 2 || rm.width < 10 || rm.height > rm.width * 6 || \
+			rm.x > rc.rt.width * 0.5 || rm.y > rc.rt.height * 0.5)
+		{
+			rectangle(matTmpShow, rm, CV_RGB(255, 0, 0), 2);
+			continue;
+		}
+
+		rm = rm + rc.rt.tl();	// rc.rt.tl();
+		RectCompList.push_back(rm);
+	}
+	cvReleaseMemStorage(&storage);
+#else
+	Mat element = getStructuringElement(MORPH_RECT, Size(4, 4));	//Size(6, 6)	普通空白框可识别
+	dilate(matCompRoi, matCompRoi, element);
+	IplImage ipl_img(matCompRoi);
+
+	std::vector<Rect>RectCompList;
+	//the parm. for cvFindContours  
+	CvMemStorage* storage = cvCreateMemStorage(0);
+	CvSeq* contour = 0;
+	//提取轮廓  
+	cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+	for (int iteratorIdx = 0; contour != 0; contour = contour->h_next, iteratorIdx++/*更新迭代索引*/)
+	{
+		CvRect aRect = cvBoundingRect(contour, 0);
+		Rect rm = aRect;
+		int nMaxW = rc.rt.width * 0.3;
+		int nMaxH = rc.rt.height * 0.5;
+		if(rm.width > nMaxW || rm.height > nMaxH || rm.height < rm.width * 5 || rm.width < 10)
+			continue;
+
+		rm = rm + rc.rt.tl();	// rc.rt.tl();
+		RectCompList.push_back(rm);
+	}
+	cvReleaseMemStorage(&storage);
+#endif
+	if (RectCompList.size() == 0)
+		return false;
+
+	Mat matZkzhRoi;
+	matZkzhRoi = matCompPic(RectCompList[0]);
+
+	cvtColor(matZkzhRoi, matZkzhRoi, CV_BGR2GRAY);
+// 	GaussianBlur(matZkzhRoi, matZkzhRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);
+// 	sharpenImage1(matZkzhRoi, matZkzhRoi);
+
+	cv::adaptiveThreshold(matZkzhRoi, matZkzhRoi, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, blockSize, constValue);
+
+	mT1 = clock();
+
+	//左旋90
+	cv::Mat dst;
+	transpose(matZkzhRoi, dst);	//左旋90，镜像 
+	flip(dst, matZkzhRoi, 0);
+
+	mT2 = clock();
+#if 1
+	m_pTess->SetImage((uchar*)matZkzhRoi.data, matZkzhRoi.cols, matZkzhRoi.rows, 1, matZkzhRoi.cols);
+	m_pTess->Recognize(0);
+
+	std::vector<std::string> vecWord;
+	tesseract::ResultIterator* ri = m_pTess->GetIterator();
+	tesseract::PageIteratorLevel level = tesseract::RIL_SYMBOL;	//RIL_WORD
+	if (ri != 0)
+	{
+		do
+		{
+			const char* word = ri->GetUTF8Text(level);
+			float conf = ri->Confidence(level);
+			if (word && strcmp(word, " ") != 0 && conf >= 0.5)
+			{
+				vecWord.push_back(CMyCodeConvert::Utf8ToGb2312(word));
+				strRecogSN.append(CMyCodeConvert::Utf8ToGb2312(word));
+			}
+		} while (ri->Next(level));
+
+	}
+#else
+	m_pTess->SetPageSegMode(tesseract::PSM_SINGLE_BLOCK);	//PSM_SINGLE_BLOCK
+	m_pTess->SetImage((uchar*)matZkzhRoi.data, matZkzhRoi.cols, matZkzhRoi.rows, 1, matZkzhRoi.cols);
+
+	char* out = m_pTess->GetUTF8Text();
+	strRecogSN = CMyCodeConvert::Utf8ToGb2312(out);
+#endif
+	mT3 = clock();
+
+#ifdef XINJIANG_TMP_JINJI
+	bool bFind = false;
+	int nMaxTime = vecWord.size() > 5 ? 5 : vecWord.size();
+	for (int i = 0; i <= nMaxTime; i++)
+	{
+		STUDENT_LIST lResult;
+		std::string strTable = Poco::format("T%d_%d", _pModel_->nExamID, _pModel_->nSubjectID);
+		if (m_pStudentMgr && !strRecogSN.empty() && m_pStudentMgr->SearchStudent(strTable, strRecogSN, 1, lResult))
+		{
+			if (lResult.size() >= 1)
+			{
+				bFind = true;
+				STUDENT_LIST::iterator itStudent = lResult.begin();
+				strRecogSN = itStudent->strZkzh;
+				break;
+			}
+		}
+		strRecogSN = "";
+		for (int j = 0; j < vecWord.size(); j++)
+		{
+			if (j != i)
+				strRecogSN.append(vecWord[j]);
+			else
+				strRecogSN.append("%");
+		}
+	}
+	if (!bFind)
+	{
+		strRecogSN = "";
+		for (int j = 0; j < vecWord.size(); j++)
+			strRecogSN.append(vecWord[j]);
+	}
+#endif
+	eT = clock();
+
+	USES_CONVERSION;
+	TRACE(_T("考号识别(文字识别): %s, %d:%d:%d:%d == %d\n"), A2T(strRecogSN.c_str()), (int)(mT1 - sT), (int)(mT2 - mT1), (int)(mT3 - mT2), (int)(eT - mT3), (int)(eT - sT));
+	return true;
 }
 
 bool CRecognizeThread::RecogVal_ElectOmr2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pELECTOMR_QUESTION pOmrQuestion, OMR_RESULT& omrResult)
@@ -4419,7 +4598,8 @@ void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
 			//将此试卷信息放入新试卷袋中
 			pNewPapers->lPaper.push_back(pCurrentPaper);
 			//pCurrentPaper->pPapers = pNewPapers;
-			pCurrentPaper->nPaginationStatus = 2;
+			if(pCurrentPaper->nPaginationStatus == 1)
+				pCurrentPaper->nPaginationStatus = 2;
 			pCurrentPaper->nIndex = pNewPapers->lPaper.size();
 			pCurrentPaper->strStudentInfo = Poco::format("S%d", pCurrentPaper->nIndex);
 
@@ -5280,7 +5460,7 @@ bool CRecognizeThread::RecogFixCP2(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 	if (!bResult)
 	{
 		char szLog[MAX_PATH] = { 0 };
-		sprintf_s(szLog, "识别页面%d的定点失败, 图片名: %s\n", nPic, pPic->strPicName.c_str());
+		sprintf_s(szLog, "识别页面%d的定点失败\n", nPic);
 		strLog.append(szLog);
 	}
 	end = clock();

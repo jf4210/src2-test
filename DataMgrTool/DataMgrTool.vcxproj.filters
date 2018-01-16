@@ -61,6 +61,9 @@
     <Filter Include="dump">
       <UniqueIdentifier>{3d7077a6-5c86-4de5-af3a-c0b549aedb27}</UniqueIdentifier>
     </Filter>
+    <Filter Include="报名库管理">
+      <UniqueIdentifier>{b1e4561b-49e4-4f82-b114-2f86ba306714}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -207,6 +210,12 @@
     <ClInclude Include="minidump.h">
       <Filter>dump</Filter>
     </ClInclude>
+    <ClInclude Include="StudentMgr.h">
+      <Filter>报名库管理</Filter>
+    </ClInclude>
+    <ClInclude Include="StudentDef.h">
+      <Filter>报名库管理</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataMgrTool.cpp">
@@ -322,6 +331,9 @@
     </ClCompile>
     <ClCompile Include="XListCtrl\XListCtrl.cpp">
       <Filter>查看试卷包试卷\图像答案识别窗口\XList</Filter>
+    </ClCompile>
+    <ClCompile Include="StudentMgr.cpp">
+      <Filter>报名库管理</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

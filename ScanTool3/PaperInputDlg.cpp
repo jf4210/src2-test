@@ -738,7 +738,7 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				pST_PaperInfo pPaper = NULL;
 				std::sort(lFileName.begin(), lFileName.end(), SortbyNumASC);
 				std::vector<std::string>::iterator itName = lFileName.begin();
-			#if 1
+			#if 0
 				pST_SCAN_PAPER pScanPaper = NULL;
 				for (; itName != lFileName.end(); itName++)
 				{

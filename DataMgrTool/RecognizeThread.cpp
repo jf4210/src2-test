@@ -24,6 +24,13 @@ void CRecognizeThread::run()
 	TRACE("RecognizeThread start...\n");
 	eExit.reset();
 
+	InitCharacterRecog();
+
+	USES_CONVERSION;
+	m_pStudentMgr = new CStudentMgr();
+	std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+	bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+
 	while (!g_nExitFlag)
 	{
 		pRECOGTASK pTask = NULL;
@@ -66,6 +73,12 @@ void CRecognizeThread::run()
 		it = _mapModel.erase(it);
 	}
 	_mapModelLock.unlock();
+
+	SAFE_RELEASE(m_pStudentMgr);
+
+#ifdef USE_TESSERACT
+	SAFE_RELEASE(m_pTess);
+#endif
 
 	eExit.set();
 	TRACE("RecognizeThread exit 0\n");
@@ -230,7 +243,12 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 				nTime[0] = eTimeTmp - sTimeTmp;
 				sTimeTmp = clock();
 			}
-			bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo, g_nRecogMode, strRecogFixLog);
+
+			bool bResult = false;
+			if (pModelInfo->pModel->nUseWordAnchorPoint)
+				bResult = RecogCharacter(nPic, matCompPic, *itPic, pModelInfo, g_nRecogMode);
+			else
+				bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo, g_nRecogMode, strRecogFixLog);
 			eTimeTmp = clock();
 			nTime[1] = eTimeTmp - sTimeTmp;
 			sTimeTmp = clock();
@@ -289,7 +307,13 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		{
 			if (g_nRecogChkRotation)
 				ChkPicRotation(nPic, matCompPic, *itPic, pModelInfo, strChkPicRotationLog);
-			bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo, 2, strRecogFixLog);
+			
+			bool bResult = false;
+			if (pModelInfo->pModel->nUseWordAnchorPoint)
+				bResult = RecogCharacter(nPic, matCompPic, *itPic, pModelInfo, 2);
+			else
+				bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo, 2, strRecogFixLog);
+
 		#ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
 			if (bResult) bResult = PicTransfer(nPic, matCompPic, (*itPic)->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, inverseMat);
@@ -4544,6 +4568,258 @@ bool CRecognizeThread::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 #endif
 	omrResult.strRecogVal3 = strRecogAnswer;
 	return true;
+}
+
+void CRecognizeThread::InitCharacterRecog()
+{
+#ifdef USE_TESSERACT
+	m_pTess = new tesseract::TessBaseAPI();
+	m_pTess->Init(NULL, "chi_sim", tesseract::OEM_DEFAULT);
+#endif
+}
+
+bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, int nRecogMode /*= 1*/)
+{
+	bool bResult = true;
+
+	clock_t start, end;
+	start = clock();
+	std::string strLog;
+	strLog = Poco::format("图片%s\n", pPic->strPicName);
+	if (pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() == 0)
+	{
+		strLog = Poco::format("图片%s没有文字定位点需要识别", pPic->strPicName);
+		//g_pLogger->information(strLog);
+		return true;
+	}
+
+	CHARACTER_ANCHOR_AREA_LIST::iterator itBigRecogCharRt = pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.begin();
+	for (int i = 0; itBigRecogCharRt != pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.end(); i++, itBigRecogCharRt++)
+	{
+		pST_CHARACTER_ANCHOR_AREA pstBigRecogCharRt = *itBigRecogCharRt;
+
+		std::vector<Rect>RectCompList;
+		try
+		{
+			if (pstBigRecogCharRt->rt.x < 0) pstBigRecogCharRt->rt.x = 0;
+			if (pstBigRecogCharRt->rt.y < 0) pstBigRecogCharRt->rt.y = 0;
+			if (pstBigRecogCharRt->rt.br().x > matCompPic.cols)
+			{
+				pstBigRecogCharRt->rt.width = matCompPic.cols - pstBigRecogCharRt->rt.x;
+			}
+			if (pstBigRecogCharRt->rt.br().y > matCompPic.rows)
+			{
+				pstBigRecogCharRt->rt.height = matCompPic.rows - pstBigRecogCharRt->rt.y;
+			}
+
+			Mat matCompRoi;
+			matCompRoi = matCompPic(pstBigRecogCharRt->rt);
+
+			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+			GaussianBlur(matCompRoi, matCompRoi, cv::Size(pstBigRecogCharRt->nGaussKernel, pstBigRecogCharRt->nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
+			SharpenImage(matCompRoi, matCompRoi, pstBigRecogCharRt->nSharpKernel);
+
+			double dThread = threshold(matCompRoi, matCompRoi, pstBigRecogCharRt->nThresholdValue, 255, THRESH_OTSU | THRESH_BINARY);
+
+#ifdef USE_TESSERACT
+			m_pTess->SetImage((uchar*)matCompRoi.data, matCompRoi.cols, matCompRoi.rows, 1, matCompRoi.cols);
+
+			std::string strWhiteList;
+			for (auto itChar : pstBigRecogCharRt->vecCharacterRt)
+				strWhiteList.append(itChar->strVal);
+			m_pTess->SetVariable("tessedit_char_whitelist", CMyCodeConvert::Gb2312ToUtf8(strWhiteList).c_str());
+
+			m_pTess->Recognize(0);
+
+			tesseract::ResultIterator* ri = m_pTess->GetIterator();
+			tesseract::PageIteratorLevel level = tesseract::RIL_SYMBOL;	//RIL_WORD
+			if (ri != 0)
+			{
+				int nIndex = 1;
+
+				pST_CHARACTER_ANCHOR_AREA pstRecogCharacterRt = new ST_CHARACTER_ANCHOR_AREA();
+				pstRecogCharacterRt->nIndex = pstBigRecogCharRt->nIndex;
+				pstRecogCharacterRt->nThresholdValue = pstBigRecogCharRt->nThresholdValue;
+				pstRecogCharacterRt->nGaussKernel = pstBigRecogCharRt->nGaussKernel;
+				pstRecogCharacterRt->nSharpKernel = pstBigRecogCharRt->nSharpKernel;
+				pstRecogCharacterRt->nCannyKernel = pstBigRecogCharRt->nCannyKernel;
+				pstRecogCharacterRt->nDilateKernel = pstBigRecogCharRt->nDilateKernel;
+				pstRecogCharacterRt->nCharacterConfidence = pstBigRecogCharRt->nCharacterConfidence;
+				pstRecogCharacterRt->rt = pstBigRecogCharRt->rt;
+
+				//重复字临时登记列表，后面删除所有重复的字
+				std::vector<std::string> vecRepeatWord;
+				do
+				{
+					const char* word = ri->GetUTF8Text(level);
+					float conf = ri->Confidence(level);
+					if (word && strcmp(word, " ") != 0 && conf >= pstRecogCharacterRt->nCharacterConfidence)
+					{
+						int x1, y1, x2, y2;
+						ri->BoundingBox(level, &x1, &y1, &x2, &y2);
+						Point start, end;
+						start.x = pstBigRecogCharRt->rt.x + x1;
+						start.y = pstBigRecogCharRt->rt.y + y1;
+						end.x = pstBigRecogCharRt->rt.x + x2;
+						end.y = pstBigRecogCharRt->rt.y + y2;
+						Rect rtSrc(start, end);
+
+						pST_CHARACTER_ANCHOR_POINT pstCharRt = new ST_CHARACTER_ANCHOR_POINT();
+						pstCharRt->nIndex = nIndex;
+						pstCharRt->fConfidence = conf;
+						pstCharRt->rc.eCPType = CHARACTER_AREA;
+						pstCharRt->rc.rt = rtSrc;
+						pstCharRt->rc.nTH = pstRecogCharacterRt->nIndex;	//记录下当前文字属于第几个大文字识别区
+						pstCharRt->rc.nAnswer = nIndex;						//记录下当前文字属于当前文字识别区中的第几个识别的文字
+
+						pstCharRt->rc.nThresholdValue = pstBigRecogCharRt->nThresholdValue;
+						pstCharRt->rc.nGaussKernel = pstBigRecogCharRt->nGaussKernel;
+						pstCharRt->rc.nSharpKernel = pstBigRecogCharRt->nSharpKernel;
+						pstCharRt->rc.nCannyKernel = pstBigRecogCharRt->nCannyKernel;
+						pstCharRt->rc.nDilateKernel = pstBigRecogCharRt->nDilateKernel;
+
+						pstCharRt->strVal = CMyCodeConvert::Utf8ToGb2312(word);
+
+						//**********	需要删除所有重复的字，保证识别的文字没有重复字
+						for (auto item : pstRecogCharacterRt->vecCharacterRt)
+							if (item->strVal == pstCharRt->strVal)
+							{
+								vecRepeatWord.push_back(item->strVal);
+								break;
+							}
+
+						pstRecogCharacterRt->vecCharacterRt.push_back(pstCharRt);
+						nIndex++;
+					}
+				} while (ri->Next(level));
+
+				//要做字的重复检查，去除重复的字，即统一识别区中，不能存在重复的字，否则可能影响取字
+				for (int i = 0; i < vecRepeatWord.size(); i++)
+				{
+					std::vector<pST_CHARACTER_ANCHOR_POINT>::iterator itCharAnchorPoint = pstRecogCharacterRt->vecCharacterRt.begin();
+					for (; itCharAnchorPoint != pstRecogCharacterRt->vecCharacterRt.end(); )
+						if ((*itCharAnchorPoint)->strVal == vecRepeatWord[i])
+						{
+							pST_CHARACTER_ANCHOR_POINT pstCharRt = *itCharAnchorPoint;
+							itCharAnchorPoint = pstRecogCharacterRt->vecCharacterRt.erase(itCharAnchorPoint);
+							SAFE_RELEASE(pstCharRt);
+						}
+						else
+							itCharAnchorPoint++;
+				}
+
+				if (pstRecogCharacterRt->vecCharacterRt.size() > 0)
+				{
+					pPic->lCharacterAnchorArea.push_back(pstRecogCharacterRt);
+
+					int nSize = pstRecogCharacterRt->vecCharacterRt.size();
+					if (nSize > 2)
+					{
+						//检查当前识别区中距离最远的两个点
+						int nX_min = 0, nX_Max = 0;				//X轴的最小值、最大值
+						int nX_minIndex = 0, nX_maxIndex = 0;	//X轴的最小值、最大值对应的标签，即第几个
+						int nY_min = 0, nY_Max = 0;				//Y轴的最小值、最大值
+						int nY_minIndex = 0, nY_maxIndex = 0;	//Y轴的最小值、最大值对应的标签，即第几个
+						for (int i = 0; i < nSize; i++)
+						{
+							if (nX_min > pstRecogCharacterRt->vecCharacterRt[i]->rc.rt.x)
+							{
+								nX_min = pstRecogCharacterRt->vecCharacterRt[i]->rc.rt.x;
+								nX_minIndex = i;
+							}
+							if (nX_Max < pstRecogCharacterRt->vecCharacterRt[i]->rc.rt.x)
+							{
+								nX_Max = pstRecogCharacterRt->vecCharacterRt[i]->rc.rt.x;
+								nX_maxIndex = i;
+							}
+							if (nY_min > pstRecogCharacterRt->vecCharacterRt[i]->rc.rt.y)
+							{
+								nY_min = pstRecogCharacterRt->vecCharacterRt[i]->rc.rt.y;
+								nY_minIndex = i;
+							}
+							if (nY_Max < pstRecogCharacterRt->vecCharacterRt[i]->rc.rt.y)
+							{
+								nY_Max = pstRecogCharacterRt->vecCharacterRt[i]->rc.rt.y;
+								nY_maxIndex = i;
+							}
+						}
+						int nXDist = nX_Max - nX_min;
+						int nYDist = nY_Max - nY_min;
+						if (nXDist > nYDist)
+						{
+							pstRecogCharacterRt->arryMaxDist[0] = nX_minIndex;
+							pstRecogCharacterRt->arryMaxDist[1] = nX_maxIndex;
+						}
+						else
+						{
+							pstRecogCharacterRt->arryMaxDist[0] = nY_minIndex;
+							pstRecogCharacterRt->arryMaxDist[1] = nY_maxIndex;
+						}
+					}
+					else if (nSize == 2)
+					{
+						pstRecogCharacterRt->arryMaxDist[0] = pstRecogCharacterRt->vecCharacterRt[0]->nIndex;
+						pstRecogCharacterRt->arryMaxDist[1] = pstRecogCharacterRt->vecCharacterRt[1]->nIndex;
+					}
+					else
+					{
+						pstRecogCharacterRt->arryMaxDist[0] = pstRecogCharacterRt->vecCharacterRt[0]->nIndex;
+						pstRecogCharacterRt->arryMaxDist[1] = -1;
+					}
+				}
+				else
+					SAFE_RELEASE(pstRecogCharacterRt);
+			}
+#endif
+		}
+		catch (...)
+		{
+			std::string strLog2 = Poco::format("识别文字定位区域(%d)异常\n", i);
+			strLog.append(strLog2);
+			TRACE(strLog2.c_str());
+
+			// 			pPic->bFindIssue = true;
+			// 			pPic->lIssueRect.push_back(stBigRecogCharRt);
+			if (nRecogMode == 2)
+			{
+				bResult = false;						//找到问题点
+				break;
+			}
+		}
+
+	}
+	if (!bResult)
+	{
+		char szLog[MAX_PATH] = { 0 };
+		sprintf_s(szLog, "识别文字定位区域失败, 图片名: %s\n", pPic->strPicName.c_str());
+		strLog.append(szLog);
+		TRACE(szLog);
+	}
+	end = clock();
+
+	std::string strRecogCharacter;
+	for (auto item : pPic->lCharacterAnchorArea)
+	{
+		for (auto item2 : item->vecCharacterRt)
+			strRecogCharacter.append(item2->strVal);
+		strRecogCharacter.append("\t");
+	}
+	std::string strTime = Poco::format("识别文字定位区域时间: %dms, 识别文字: %s\n", (int)(end - start), strRecogCharacter);
+	strLog.append(strTime);
+
+#if 1	 //重置定点，在识别出来的文字中选2个作为定点
+	if (!GetPicFix(nPic, pPic, pModelInfo->pModel))
+	{
+		std::string strGetAnchorPoint = "\n获取图片的文字定位点失败\n";
+		strLog.append(strGetAnchorPoint);
+	}
+	cv::Mat matTmp = matCompPic.clone();
+	for (auto item : pPic->lFix)
+		cv::rectangle(matTmp, item.rt, CV_RGB(255, 0, 0), 2);
+#endif
+	//g_pLogger->information(strLog);
+	return bResult;
 }
 
 bool CRecognizeThread::RecogVal_Sn3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, pSN_ITEM pSn, std::vector<int>& vecItemVal)

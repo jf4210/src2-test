@@ -11,6 +11,7 @@ CPaperUser::CPaperUser(ITcpContext* pTcpContext, CListPaperUser& PaperUserList)
 {
 	ZeroMemory(m_szFileName, sizeof(m_szFileName));
 	ZeroMemory(m_szFilePath, sizeof(m_szFilePath));
+	ZeroMemory(m_szTmpFileName, sizeof(m_szTmpFileName));
 	if (m_pTcpContext)
 	{
 		m_pTcpContext->SetTcpContextNotify(this);
@@ -89,8 +90,12 @@ void CPaperUser::OnRead(char* pData, int nDataLen)
 
 			ST_FILE_INFO AnswerInfo = *(ST_FILE_INFO*)(m_PacketBuf + HEAD_SIZE);
 			strcpy_s(m_szFileName, AnswerInfo.szFileName);
+			Poco::Random rnd;
+			rnd.seed();
+			sprintf_s(m_szTmpFileName, "%s_%06d", AnswerInfo.szFileName, rnd.next(999999));
+
 			char szLog[300] = { 0 };
-			sprintf(szLog, "start recv file: %s(%.3fM)", AnswerInfo.szFileName, AnswerInfo.dwFileLen / (1024.0 * 1024.0));
+			sprintf(szLog, "start recv file: %s(%.3fM)", m_szTmpFileName/*AnswerInfo.szFileName*/, AnswerInfo.dwFileLen / (1024.0 * 1024.0));
 			g_Log.LogOut(szLog);
 			std::cout << szLog << std::endl;
 
@@ -493,7 +498,8 @@ bool CPaperUser::SendResult(unsigned short usCmd, int nResultCode)
 void CPaperUser::SetAnswerInfo(ST_FILE_INFO info)
 {
 	string strFilePath = SysSet.m_strRecvFilePath;
-	strFilePath.append(info.szFileName);
+	//strFilePath.append(info.szFileName);
+	strFilePath.append(m_szTmpFileName);
 
 	if (m_pf)
 	{
@@ -620,7 +626,7 @@ int CPaperUser::WriteAnswerFile(char* pData, int nDataLen)
 			if (!m_pf)
 			{
 				std::string strLog = "文件句柄打开失败，文件名: ";
-				strLog.append(m_szFileName);
+				strLog.append(m_szTmpFileName);		//m_szFileName
 				g_Log.LogOutError(strLog);
 				m_dwRecvFileSize += nDataLen;	//++8.18
 				return 0;
@@ -631,7 +637,7 @@ int CPaperUser::WriteAnswerFile(char* pData, int nDataLen)
 		if (ret <= 0)
 		{
 			std::string strLog = "写文件失败，文件名: ";
-			strLog.append(m_szFileName);
+			strLog.append(m_szTmpFileName);		//m_szFileName
 			g_Log.LogOutError(strLog);
 			OutputDebugStringA(strLog.c_str());
 
@@ -676,7 +682,7 @@ int CPaperUser::WriteAnswerFile(char* pData, int nDataLen)
 	catch (...)
 	{
 		std::string strLog = "写文件失败，文件名: ";
-		strLog.append(m_szFileName);
+		strLog.append(m_szTmpFileName);		//m_szFileName
 		g_Log.LogOutError(strLog);
 		OutputDebugStringA(strLog.c_str());
 		

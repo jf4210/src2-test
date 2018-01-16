@@ -862,7 +862,7 @@ bool CDecompressThread::GetFileData2(std::string strFilePath, pPAPERSINFO pPaper
 							rc.rt.y = jsnRectInfoObj->get("y").convert<int>();
 							rc.rt.width = jsnRectInfoObj->get("w").convert<int>();
 							rc.rt.height = jsnRectInfoObj->get("h").convert<int>();
-							(*itPic)->lModelFix.push_back(rc);
+							(*itPic)->lModelWordFix.push_back(rc);
 						}
 						Poco::JSON::Array::Ptr jsnPaperCharAncharAreaArry = jsnPicObj->getArray("CL");
 						for (int k = 0; k < jsnPaperCharAncharAreaArry->size(); k++)

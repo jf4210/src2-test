@@ -885,11 +885,13 @@ bool CModifyZkzhDlg::ReleaseData()
 
 	SetZkzhStatus();
 #endif
+#ifdef TEST_EXCEPTION_DLG
 	if (m_pZkzhShowMgrDlg)
 	{
 		m_pZkzhShowMgrDlg->DestroyWindow();
 		SAFE_RELEASE(m_pZkzhShowMgrDlg);
 	}
+#endif
 	if (m_pVagueSearchDlg)
 	{
 		m_pVagueSearchDlg->DestroyWindow();

@@ -404,6 +404,10 @@ BOOL CFileUpLoad::InitUpLoadTcp(CString strAddr,USHORT usPort)
 			pstUpLoadAddr pUpLoadAddr = *itAddr;
 			m_UpLoadAddrList.erase(itAddr);
 			m_UpLoadAddrList.push_front(pUpLoadAddr);	//将此地址移动到最前
+
+			std::stringstream ssLog;
+			ssLog << "InitUpLoadTcp(" << m_strSendExtType << ") --> move front. server addr: " << pUpLoadAddr->strIP << "_" << m_usPort << "\n";
+			TRACE(ssLog.str().c_str());
 			break;
 		}
 	}
@@ -539,37 +543,41 @@ void CFileUpLoad::UnInit()
 
 void CFileUpLoad::ReConnectAddr(CString strAddr, USHORT usPort)
 {
-	m_strAddr = strAddr;
-	m_usPort = usPort;
-	m_uThreadType = 1;
-	m_bConnect = FALSE;
+// 	m_strAddr = strAddr;
+// 	m_usPort = usPort;
+// 	m_uThreadType = 1;
+// 	m_bConnect = FALSE;
 
 	USES_CONVERSION;
 	bool bFindAddr = false;
 	std::list<pstUpLoadAddr>::iterator itAddr = m_UpLoadAddrList.begin();
 	for (; itAddr != m_UpLoadAddrList.end(); itAddr++)
 	{
-		if ((*itAddr)->strIP == T2A(m_strAddr) && m_usPort == (*itAddr)->nPort)
+		if ((*itAddr)->strIP == T2A(strAddr) && usPort == (*itAddr)->nPort)
 		{
 			bFindAddr = true;
 			pstUpLoadAddr pUpLoadAddr = *itAddr;
 			m_UpLoadAddrList.erase(itAddr);
 			m_UpLoadAddrList.push_front(pUpLoadAddr);	//将此地址移动到最前
+			
+			std::stringstream ssLog;
+			ssLog << "ReConnectAddr(" << m_strSendExtType << ") --> move front. server addr: " << pUpLoadAddr->strIP << "_" << usPort << "\n";
+			TRACE(ssLog.str().c_str());
 			break;
 		}
 	}
 	if (!bFindAddr)
 	{
 		pstUpLoadAddr pUpLoadAddr = new stUpLoadAddr;
-		pUpLoadAddr->nPort = m_usPort;
-		pUpLoadAddr->strIP = T2A(m_strAddr);
+		pUpLoadAddr->nPort = usPort;
+		pUpLoadAddr->strIP = T2A(strAddr);
 		m_UpLoadAddrList.push_back(pUpLoadAddr);	//不移动最前	//push_front(pUpLoadAddr);	//将此地址移动到最前
 		std::stringstream ssLog;
-		ssLog << "ReConnectAddr(" << m_strSendExtType << ") --> add server addr: " << pUpLoadAddr->strIP << "_" << m_usPort;
+		ssLog << "ReConnectAddr(" << m_strSendExtType << ") --> add server addr: " << pUpLoadAddr->strIP << "_" << usPort << "\n";
 		g_pLogger->information(ssLog.str());
 		TRACE(ssLog.str().c_str());
 	}
-	m_nConnectFails = 0;
+//	m_nConnectFails = 0;
 }
 
 void CFileUpLoad::SetNotifyObj(CSendFileThread* rNotify)

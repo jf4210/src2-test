@@ -690,6 +690,10 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 		std::string strUploader = objData->get("uploader").convert<std::string>();
 		std::string strEzs	= objData->get("ezs").convert<std::string>();
 
+#ifdef XINJIANG_TMP_JINJI
+		nStudentNum = pPapers->lPaper.size();
+#endif
+
 		if (pTask->nType <= 3)
 		{
 			bool bFindDeff = false;
@@ -720,7 +724,13 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 					if (jsnPaperObj->has("wj"))
 						pPaper->nWjFlag = jsnPaperObj->get("wj").convert<int>();
 					if (jsnPaperObj->has("issueFlag"))
+					{
 						pPaper->nIssueFlag = jsnPaperObj->get("issueFlag").convert<int>();
+					#ifdef XINJIANG_TMP_JINJI
+						if (pPaper->nIssueFlag == 2)
+							pPaper->nIssueFlag = 1;
+					#endif
+					}
 					if (jsnPaperObj->has("standardAnswer"))
 					{
 						pPaper->nStandardAnswer = jsnPaperObj->get("standardAnswer").convert<int>();
@@ -752,24 +762,28 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 					pPaper->strSnDetail = jsnSnString.str();
 
 					Poco::JSON::Array::Ptr jsnOmrArry = jsnPaperObj->getArray("omr");
-					Poco::JSON::Object jsnOmr;
+					if (jsnOmrArry->size() > 0)
+					{
+						Poco::JSON::Object jsnOmr;
 #if 1	//test
-					strExamID = Poco::format("%d", nExamId);
-					jsnOmr.set("examId", strExamID);
+						strExamID = Poco::format("%d", nExamId);
+						jsnOmr.set("examId", strExamID);
 #else
-					jsnOmr.set("examId", nExamId);
+						jsnOmr.set("examId", nExamId);
 #endif
-//					jsnOmr.set("examId", nExamId);
-					jsnOmr.set("subjectId", nSubjectId);
-					jsnOmr.set("userId", nUserId);
-					jsnOmr.set("teacherId", nTeacherId);
-					jsnOmr.set("zkzh", pPaper->strZkzh);
-					jsnOmr.set("nOmrAnswerFlag", pPaper->nStandardAnswer);
-					jsnOmr.set("papers", pPapers->strPapersName);
-					jsnOmr.set("omr", jsnOmrArry);
-					std::stringstream jsnOmrString;
-					jsnOmr.stringify(jsnOmrString, 0);
-					pPaper->strOmrDetail = jsnOmrString.str();
+						//					jsnOmr.set("examId", nExamId);
+						jsnOmr.set("subjectId", nSubjectId);
+						jsnOmr.set("userId", nUserId);
+						jsnOmr.set("teacherId", nTeacherId);
+						jsnOmr.set("zkzh", pPaper->strZkzh);
+						jsnOmr.set("nOmrAnswerFlag", pPaper->nStandardAnswer);
+						jsnOmr.set("papers", pPapers->strPapersName);
+						jsnOmr.set("omr", jsnOmrArry);
+						std::stringstream jsnOmrString;
+						jsnOmr.stringify(jsnOmrString, 0);
+						pPaper->strOmrDetail = jsnOmrString.str();
+						pPaper->nHasOmr = 1;
+					}
 
 					if (jsnPaperObj->has("electOmr"))
 					{

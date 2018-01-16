@@ -1,6 +1,7 @@
 #pragma once
 #include "DMTDef.h"
 #include "OmrRecog.h"
+#include "StudentMgr.h"
 
 typedef struct _ModelInfo_
 {
@@ -34,6 +35,9 @@ public:
 	bool RecogVal_Omr2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, OMR_RESULT& omrResult);		//第二种识别OMR的方法
 	bool RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, OMR_RESULT& omrResult);		//第三种识别OMR的方法
 
+	void InitCharacterRecog();		//文字识别初始化
+
+	bool RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, int nRecogMode = 1);	//识别文字
 	bool ChkPicRotation(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, std::string& strLog);
 	bool RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, int nRecogMode, std::string& strLog);		//识别定点，nRecogMode：2-严格模式，1-简单模式
 	bool RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo);		//识别水平同步头
@@ -72,5 +76,12 @@ private:
 	int		m_nBright;		//亮度
 
 	COmrRecog	_chkRotationObj;
+
+#ifdef USE_TESSERACT
+	tesseract::TessBaseAPI* m_pTess;
+#endif
+//#ifdef XINJIANG_TMP_JINJI
+	CStudentMgr* m_pStudentMgr;
+//#endif
 };
 

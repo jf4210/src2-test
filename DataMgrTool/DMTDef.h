@@ -2,6 +2,7 @@
 #include "global.h"
 #include "Log.h"
 #include "MyCodeConvert.h"
+#include "StudentDef.h"
 
 #include "zbar.h"   
 
@@ -50,6 +51,20 @@
 
 #define CHK_NUM		//將試卷袋中不在參數文件列表中的文件从试卷袋信息中剔除
 //#define WIN_THREAD_TEST		//使用window线程，不用poco创建线程
+
+
+#ifdef USE_TESSERACT
+	#include "tesseract/baseapi.h"
+	#include "leptonica/allheaders.h"
+#endif
+
+#ifdef USE_TESSERACT
+	#ifdef _DEBUG
+		#pragma comment(lib, "libtesseract304d.lib")
+	#else
+		#pragma comment(lib, "libtesseract304.lib")
+	#endif
+#endif
 
 extern CLog g_Log;
 extern int	g_nExitFlag;
@@ -220,7 +235,7 @@ typedef struct _PicInfo_				//图片信息
 	// 	cv::Mat			matDest;
 
 	RECTLIST		lCalcRect;		//通过定点计算出的点位置
-	RECTLIST		lModelFix;		//模板文字定点列表，在使用文字定位时有用
+	RECTLIST		lModelWordFix;		//模板文字定点列表，在使用文字定位时有用
 	CHARACTER_ANCHOR_AREA_LIST lCharacterAnchorArea;	//文字定位区域
 	_PicInfo_()
 	{
@@ -494,6 +509,57 @@ extern Poco::FastMutex		g_fmHttpSend;
 extern LIST_SEND_HTTP		g_lHttpSend;		//发送HTTP任务列表
 
 
+//----------------------------------------------
+//任意两个定点计算出的矩形位置
+typedef struct _tagNewRtBy2Fix_
+{
+	int nFirstFix;
+	int nSecondFix;
+	cv::Rect rt;
+}ST_NEWRTBY2FIX;
+typedef std::vector<ST_NEWRTBY2FIX> VEC_NEWRTBY2FIX;
+
+typedef struct _tagFixRectInfo_
+{
+	RECTINFO rcFix;
+	RECTINFO rcModelFix;
+}ST_FIXRECTTINFO;
+typedef std::vector<ST_FIXRECTTINFO> VEC_FIXRECTINFO;
+
+bool	GetNewRt(RECTINFO rc, RECTINFO rcModel, VEC_FIXRECTINFO& lFixRtInfo, VEC_NEWRTBY2FIX& vecNewRt, cv::Rect rt);
+
+//点的距离权重，即在这个点的一个半径范围内，有多少其他点在其中，如果距离一个半径，则权重+2，如果距离2个半径，则距离+1
+typedef struct _tagPointDistWeight_
+{
+	int nWeight;
+	cv::Point pt;
+	_tagPointDistWeight_()
+	{
+		nWeight = 0;
+	}
+}ST_POINTDISTWEIGHT, *pST_POINTDISTWEIGHT;
+typedef std::vector<ST_POINTDISTWEIGHT> VEC_POINTDISTWEIGHT;
+
+bool GetPointDistWeight(int nRidus, cv::Point pt, VEC_POINTDISTWEIGHT& vecPointDistWeight);
+
+//点距离顶点的距离
+typedef struct _tagPointDist2Peak_
+{
+	int nDist;
+	pST_CHARACTER_ANCHOR_POINT pAnchorPoint;
+	_tagPointDist2Peak_()
+	{
+		nDist = 0;
+		pAnchorPoint = NULL;
+	}
+}ST_POINTDIST2PEAK, *pST_POINTDIST2PEAK;
+typedef std::vector<ST_POINTDIST2PEAK> VEC_POINTDIST2PEAK;
+//----------------------------------------------
+
+
+//报名库学生信息
+typedef std::list<ST_STUDENT> STUDENT_LIST;	//报名库列表
+extern STUDENT_LIST		g_lBmkStudent;	//报名库学生列表
 
 typedef struct _RecogTask_
 {
@@ -526,6 +592,7 @@ bool	SortByPositionY2(cv::Rect& rt1, cv::Rect& rt2);
 bool	SortbyNumASC(const std::string& x, const std::string& y);
 bool	SortByPaper(const pST_PaperInfo& x, const pST_PaperInfo& y);
 
+bool    GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel);	//使用文字定位时，生成文字定位的定点列表，只需要2个
 bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 0, int nPicH = 0);
 bool	FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);		//定点进行仿射变换
 bool	FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//定点透视变换

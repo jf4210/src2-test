@@ -20,6 +20,7 @@
 #define USES_FILE_CRYPTOGRAM			//是否对文件使用密码
 //#define USE_POCO_UNZIP			//使用poco解压缩zip文件,解压无加密文件
 
+#define XINJIANG_TMP_JINJI			//新疆项目紧急处理
 
 //#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
 #ifdef TO_WHTY
@@ -29,8 +30,8 @@
 #define DecompressTest		//解压测试，多线程解压
 
 #ifndef TO_WHTY
-	#define SOFT_VERSION "DataControlServer V2.70104-1"
-	#define SOFT_VERSION4TY "DataControlServer for TY V2.7-0104"
+	#define SOFT_VERSION "DataControlServer V2.70116-1-xinjiang"
+	#define SOFT_VERSION4TY "DataControlServer for TY V2.7-0115"
 #else
 	#define SOFT_VERSION "DataControlServer for TY V2.1-0309"
 #endif
@@ -171,6 +172,7 @@ typedef struct _Paper_
 	int			nChkFlag;	//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不往zimg图像服务器提交
 	int			nQkFlag;	//缺考标识,0-未缺考, 1-缺考
 	int			nWjFlag;	//违纪标识,0-未违纪，1-违纪
+	int			nHasOmr;	//是否有omr选择题
 	int			nHasElectOmr;	//是否有多选题
 	int			nStandardAnswer;//当前试卷表示：0-正常试卷，1-Omr标答，2-主观题标答
 	int			nIssueFlag;		//问题标识，0 - 正常试卷，完全机器识别正常的，无人工干预，1 - 正常试卷，扫描员手动修改过，2-准考证号为空，扫描员没有修改，3-扫描员标识了需要重扫的试卷。
@@ -191,6 +193,7 @@ typedef struct _Paper_
 		nQkFlag = 0;
 		nWjFlag = 0;
 		nHasElectOmr = 0;
+		nHasOmr = 0;
 		nIssueFlag = 0;
 		nStandardAnswer = 0;
 	}

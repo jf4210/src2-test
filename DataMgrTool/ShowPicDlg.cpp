@@ -509,8 +509,8 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper, int nTH)
 			}
 			if (pPaper->pModel)
 			{
-				RECTLIST::iterator itFixRect = (*itPic)->lModelFix.begin();								//显示模板上的定点对应到此试卷上的新定点
-				for (int j = 0; itFixRect != (*itPic)->lModelFix.end(); itFixRect++, j++)
+				RECTLIST::iterator itFixRect = (*itPic)->lModelWordFix.begin();								//显示模板上的定点对应到此试卷上的新定点
+				for (int j = 0; itFixRect != (*itPic)->lModelWordFix.end(); itFixRect++, j++)
 				{
 					cv::Rect rt = (*itFixRect).rt;
 

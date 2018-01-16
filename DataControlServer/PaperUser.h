@@ -28,6 +28,7 @@ public:
 	//文件名
 	char			m_szFileName[256];
 	char			m_szFilePath[256];
+	char			m_szTmpFileName[256];	//临时文件名
 	// 文件的总长度
 	unsigned int	m_dwTotalFileSize;
 	// 已经接收的文件长度

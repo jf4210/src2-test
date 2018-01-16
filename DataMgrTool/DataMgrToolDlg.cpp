@@ -124,6 +124,8 @@ Poco::FastMutex _fmRecog_;
 Poco::FastMutex _fmRecogPapers_;
 Poco::FastMutex _fmCompress_;
 
+STUDENT_LIST		g_lBmkStudent;					//报名库学生列表
+
 double	_dDoubtPer_ = 0.0;	//重新识别时，新识别的试卷袋的怀疑率超过此阀值时，将此试卷袋压缩到另一个目录
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框

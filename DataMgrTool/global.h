@@ -30,6 +30,8 @@
 
 #include "Poco/Random.h"
 
+#include "Poco/Stopwatch.h"
+#include "Poco/LocalDateTime.h"
 
 #include "Poco/MD5Engine.h"
 #include "Poco/DigestStream.h"
@@ -61,6 +63,9 @@
 #include "Poco/Crypto/CryptoStream.h"
 
 #include "Poco/Checksum.h"
+
+#include "Poco/Util/TimerTask.h"
+#include "Poco/Util/Timer.h"
 
 #include "modelInfo.h"
 

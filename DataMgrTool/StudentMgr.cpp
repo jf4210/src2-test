@@ -44,7 +44,7 @@ bool CStudentMgr::InitDB(std::string strPath)
 	catch (Poco::Exception& e)
 	{
 		std::string strErr = "DB初始化时session创建失败(" + e.displayText() + ")";
-		g_pLogger->information(strErr);
+		g_Log.LogOutError(strErr);
 	}
 	
 	return _session != NULL ? true : false;
@@ -65,7 +65,7 @@ bool CStudentMgr::InitTable(std::string strTableName)
 	catch (Poco::Exception& e)
 	{
 		std::string strErr = "InitTable初始化失败(" + e.displayText() + ")";
-		g_pLogger->information(strErr);
+		g_Log.LogOutError(strErr);
 		return false;
 	}
 #else
@@ -121,13 +121,13 @@ bool CStudentMgr::InsertData(STUDENT_LIST& lData, std::string strTable)
 		bResult = true;
 		sw.stop();
 		std::string strLog = Poco::format("插入报名库数据完成[%.6fs]", (double)sw.elapsed()/1000000);
-		g_pLogger->information(strLog);
+		g_Log.LogOut(strLog);
 		TRACE("%s\n", strLog.c_str());
 	}
 	catch (Poco::Exception& e)
 	{
 		std::string strErr = "报名库InsertData失败(" + e.displayText() + ")";
-		g_pLogger->information(strErr);
+		g_Log.LogOutError(strErr);
 		TRACE("%s\n", strErr.c_str());
 		bResult = false;
 	}
@@ -163,13 +163,13 @@ bool CStudentMgr::InsertMemData(STUDENT_LIST& lData, std::string strTable)
 		bResult = true;
 		sw.stop();
 		std::string strLog = Poco::format("插入报名库数据完成[%.6fms]", (double)sw.elapsed() / 1000);
-		g_pLogger->information(strLog);
+		//g_pLogger->information(strLog);
 		TRACE("%s\n", strLog.c_str());
 	}
 	catch (Poco::Exception& e)
 	{
 		std::string strErr = "报名库InsertMemData失败(" + e.displayText() + ")";
-		g_pLogger->information(strErr);
+		g_Log.LogOutError(strErr);
 		TRACE("%s\n", strErr.c_str());
 		bResult = false;
 	}
@@ -223,12 +223,12 @@ bool CStudentMgr::UpdateStudentStatus(std::string strTable, std::string strZkzh,
 		stmt.execute();
 		bResult = true;
 		std::string strLog = Poco::format("更新考生(%s)扫描状态%d", strZkzh, nStatus);
-		g_pLogger->information(strLog);
+		//g_pLogger->information(strLog);
 	}
 	catch (Poco::Exception& e)
 	{
 		std::string strErr = "更新考生" + strZkzh + "扫描状态失败(" + e.displayText() + ")";
-		g_pLogger->information(strErr);
+		g_Log.LogOutError(strErr);
 		bResult = false;
 	}
 	return bResult;

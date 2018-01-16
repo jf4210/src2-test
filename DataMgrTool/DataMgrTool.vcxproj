@@ -56,7 +56,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;XLISTCTRLLIB_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;XLISTCTRLLIB_STATIC;USE_TESSERACT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\include;..\..\common;.\picCtrl;./XListCtrl</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BrowseInformation>true</BrowseInformation>
@@ -156,6 +156,8 @@
     <ClInclude Include="ShowPapersDlg.h" />
     <ClInclude Include="ShowPicDlg.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="StudentDef.h" />
+    <ClInclude Include="StudentMgr.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ThreadMgr.h" />
     <ClInclude Include="XListCtrl\AdvComboBox.h" />
@@ -236,6 +238,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="StudentMgr.cpp" />
     <ClCompile Include="ThreadMgr.cpp" />
     <ClCompile Include="XListCtrl\AdvComboBox.cpp" />
     <ClCompile Include="XListCtrl\AdvComboEdit.cpp" />

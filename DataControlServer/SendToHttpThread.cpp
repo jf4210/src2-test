@@ -1132,6 +1132,7 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 	std::string strLog = "开始提交OMR、ZKZH、选做题信息(" + pTask->pPapers->strPapersName + ")";
 	g_Log.LogOut(strLog);
 	bool bHasElectOmr = false;
+	bool bHasOmr = false;
 	Poco::JSON::Array snArry;
 	Poco::JSON::Array omrArry;
 	Poco::JSON::Array electOmrArry;
@@ -1180,34 +1181,38 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 			std::cout << strShowInfo << std::endl;
 		}
 
-		Poco::JSON::Parser parserOmr;
-		Poco::Dynamic::Var resultOmr;
-		try
+		if (pPaper->nHasOmr)
 		{
-			resultOmr = parserOmr.parse(pPaper->strOmrDetail);
-			Poco::JSON::Object::Ptr omrObj = resultOmr.extract<Poco::JSON::Object::Ptr>();
-
-			omrObj->set("studentKey", pPaper->strMd5Key);
-			omrArry.add(omrObj);
-		}
-		catch (Poco::JSON::JSONException& jsone)
-		{
-			char szItem[20] = { 0 };
-			sprintf_s(szItem, "%d --- ", i);
-			std::string strErrInfo;
-			strErrInfo.append("Error when parse Omr: ");
-			strErrInfo.append(szItem);
-			strErrInfo.append(jsone.message() + "\tData:" + pPaper->strOmrDetail);
-			g_Log.LogOutError(strErrInfo);
-			std::string strShowInfo;
-			if (strErrInfo.length() > 1000)
+			bHasOmr = true;
+			Poco::JSON::Parser parserOmr;
+			Poco::Dynamic::Var resultOmr;
+			try
 			{
-				strShowInfo = strErrInfo.substr(0, 1000);
-				strShowInfo.append("...");
+				resultOmr = parserOmr.parse(pPaper->strOmrDetail);
+				Poco::JSON::Object::Ptr omrObj = resultOmr.extract<Poco::JSON::Object::Ptr>();
+
+				omrObj->set("studentKey", pPaper->strMd5Key);
+				omrArry.add(omrObj);
 			}
-			else
-				strShowInfo = strErrInfo;
-			std::cout << strShowInfo << std::endl;
+			catch (Poco::JSON::JSONException& jsone)
+			{
+				char szItem[20] = { 0 };
+				sprintf_s(szItem, "%d --- ", i);
+				std::string strErrInfo;
+				strErrInfo.append("Error when parse Omr: ");
+				strErrInfo.append(szItem);
+				strErrInfo.append(jsone.message() + "\tData:" + pPaper->strOmrDetail);
+				g_Log.LogOutError(strErrInfo);
+				std::string strShowInfo;
+				if (strErrInfo.length() > 1000)
+				{
+					strShowInfo = strErrInfo.substr(0, 1000);
+					strShowInfo.append("...");
+				}
+				else
+					strShowInfo = strErrInfo;
+				std::cout << strShowInfo << std::endl;
+			}
 		}
 
 		if (pPaper->nHasElectOmr)
@@ -1246,7 +1251,8 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 	}
 
 	snArry.stringify(jsnSnString, 0);
-	omrArry.stringify(jsnOmrString, 0);
+	if(bHasOmr)
+		omrArry.stringify(jsnOmrString, 0);
 	if (bHasElectOmr)
 		electOmrArry.stringify(jsnElectOmrString, 0);
 
@@ -1270,23 +1276,26 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 	
 	if (SysSet.m_nUpLoadOmrData)
 	{
-		pTask->pPapers->fmTask.lock();
-		pTask->pPapers->nTaskCounts++;			//omr
-		pTask->pPapers->fmTask.unlock();
-		pTask->pPapers->strSendOmrResult = jsnOmrString.str();	//将结果信息保存到试卷袋结构体中，以防异常错误时需要重新计算 2017.1.19
-		
-		pSEND_HTTP_TASK pOmrTask = new SEND_HTTP_TASK;
-		pOmrTask->nTaskType = 3;
-		pOmrTask->strResult = jsnOmrString.str();
-		pOmrTask->pPapers = pTask->pPapers;
-		pOmrTask->strEzs = pTask->pPapers->strEzs;
-		if(pOmrTask->pPapers->nStandardAnswer == 1)		//提交客观题答案到另外地址
-			pOmrTask->strUri = SysSet.m_strBackUri + "/kgansweromr";
-		else
-			pOmrTask->strUri = SysSet.m_strBackUri + "/omr";
-		g_fmHttpSend.lock();
-		g_lHttpSend.push_back(pOmrTask);
-		g_fmHttpSend.unlock();
+		if (bHasOmr)
+		{
+			pTask->pPapers->fmTask.lock();
+			pTask->pPapers->nTaskCounts++;			//omr
+			pTask->pPapers->fmTask.unlock();
+			pTask->pPapers->strSendOmrResult = jsnOmrString.str();	//将结果信息保存到试卷袋结构体中，以防异常错误时需要重新计算 2017.1.19
+
+			pSEND_HTTP_TASK pOmrTask = new SEND_HTTP_TASK;
+			pOmrTask->nTaskType = 3;
+			pOmrTask->strResult = jsnOmrString.str();
+			pOmrTask->pPapers = pTask->pPapers;
+			pOmrTask->strEzs = pTask->pPapers->strEzs;
+			if (pOmrTask->pPapers->nStandardAnswer == 1)		//提交客观题答案到另外地址
+				pOmrTask->strUri = SysSet.m_strBackUri + "/kgansweromr";
+			else
+				pOmrTask->strUri = SysSet.m_strBackUri + "/omr";
+			g_fmHttpSend.lock();
+			g_lHttpSend.push_back(pOmrTask);
+			g_fmHttpSend.unlock();
+		}
 	}
 	
 	if (SysSet.m_nUpLoadElectOmr)
