@@ -88,7 +88,7 @@
 	#define TEST_MODEL_ROTATION	//模板旋转测试
 //	#define USE_TESSERACT		//使用Tesseract进行数字汉字识别
 
- 	#define TEST_PAPERS_INPUT	//试卷袋导入功能测试
+// 	#define TEST_PAPERS_INPUT	//试卷袋导入功能测试
 // 	#define TEST_PAGINATION		//页码测试，多页试卷的情况，多页A3、A4
 #endif
 
@@ -167,7 +167,9 @@ extern std::string _strMainTitle_;
 extern std::string _strLitteTitle_;
 //--
 
-//++登录信息
+extern int				_nUseNameRecogSn_;		//使用文字识别准考证号
+
+													//++登录信息
 extern bool	_bHandModel_;			//是否是手阅模式，手阅模式是天喻用
 extern bool	_bLogin_;				//是否已经登录
 extern std::string _strUserName_;	//登录用户名

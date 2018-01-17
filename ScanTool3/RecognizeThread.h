@@ -30,7 +30,7 @@ public:
 	inline bool RecogVal(int nPic, RECTINFO& rc, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo);
 	inline bool RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, RECTLIST& lSelInfo, std::string& strResult);	//通过识别整个题的选项区，来判断选择项
 
-	bool RecogSN_code_Character(cv::Mat& matCompPic, RECTINFO rc, std::string& strRecogSN);	//准考证号使用文字识别
+	bool RecogSN_code_Character(cv::Mat& matCompPic, RECTINFO rc, pST_PicInfo pPic, std::string& strRecogSN);	//准考证号使用文字识别
 	bool RecogVal_Sn2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, pSN_ITEM pSn, std::vector<int>& vecItemVal);		//第二种识别SN的方法
 	bool RecogVal_Sn3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, pSN_ITEM pSn, std::vector<int>& vecItemVal);		//第三种识别SN的方法
 	bool RecogVal_Omr2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODELINFO pModelInfo, OMR_RESULT& omrResult);		//第二种识别OMR的方法

@@ -685,7 +685,7 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				while (itSub != endSub)
 				{
 					Poco::Path pSubFile(itSub->path());
-					if (itSub->isFile())
+					if (itSub->isFile() && pSubFile.getExtension() == "jpg")
 					{
 						std::string strOldFileName = pSubFile.getFileName();
 

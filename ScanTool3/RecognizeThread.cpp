@@ -4287,8 +4287,10 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 				string strResult = GetQR(matCompRoi, strTypeName);
 
 				#ifdef  XINJIANG_TMP_JINJI
-					if(strResult.empty())
-						RecogSN_code_Character(matCompPic, rc, strResult);
+				if (strResult.empty())
+				{
+					RecogSN_code_Character(matCompPic, rc, pPic, strResult);
+				}
 				#endif
 
 				std::string strTmpLog;
@@ -4326,7 +4328,7 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 	return bResult;
 }
 
-bool CRecognizeThread::RecogSN_code_Character(cv::Mat& matCompPic, RECTINFO rc, std::string& strRecogSN)
+bool CRecognizeThread::RecogSN_code_Character(cv::Mat& matCompPic, RECTINFO rc, pST_PicInfo pPic, std::string& strRecogSN)
 {
 	clock_t sT, eT, mT1, mT2, mT3;
 	sT = clock();
@@ -4341,12 +4343,18 @@ bool CRecognizeThread::RecogSN_code_Character(cv::Mat& matCompPic, RECTINFO rc, 
 	int blockSize = 25;		//25
 	int constValue = 10;
 	cv::Mat local;
-	cv::adaptiveThreshold(matCompRoi, matCompRoi, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, blockSize, constValue);
+	//cv::adaptiveThreshold(matCompRoi, matCompRoi, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, blockSize, constValue);
+
+	threshold(matCompRoi, matCompRoi, 130, 255, THRESH_BINARY);
 
 	cv::Canny(matCompRoi, matCompRoi, 0, rc.nCannyKernel, 5);
 #if 1
 	Mat element = getStructuringElement(MORPH_RECT, Size(4, 4));	//Size(6, 6)	ÆÕÍ¨¿Õ°×¿ò¿ÉÊ¶±ð
 	dilate(matCompRoi, matCompRoi, element);
+
+	Mat element_Anticlutter = getStructuringElement(MORPH_RECT, Size(2, 2));
+	//erode(matCompRoi, matCompRoi, element_Anticlutter);
+
 	IplImage ipl_img(matCompRoi);
 
 	std::vector<Rect>RectCompList;
@@ -4364,9 +4372,19 @@ bool CRecognizeThread::RecogSN_code_Character(cv::Mat& matCompPic, RECTINFO rc, 
 		Rect rm = aRect;
 		int nMaxW = rc.rt.width * 0.3;
 		int nMaxH = rc.rt.height * 0.5;
-		if (rm.width > nMaxW || rm.height > nMaxH || rm.height < rm.width * 2 || rm.width < 10 || rm.height > rm.width * 6 || \
+		if (rm.width < 15 || rm.height < 20 ||rm.x > rc.rt.width * 0.5 || rm.y > rc.rt.height * 0.5)
+			continue;
+		if (rm.width > nMaxW || rm.height > nMaxH || rm.height < rm.width * 1.5 || rm.width < 20 || rm.height > rm.width * 6 || \
 			rm.x > rc.rt.width * 0.5 || rm.y > rc.rt.height * 0.5)
 		{
+			Mat matTmpGray = matCompPic(rm + rc.rt.tl());
+			MatND mean;
+			MatND stddev;
+			meanStdDev(matTmpGray, mean, stddev);
+
+			IplImage *src;
+			src = &IplImage(mean);
+			float fRealMeanGray = cvGetReal2D(src, 0, 0);
 			rectangle(matTmpShow, rm, CV_RGB(255, 0, 0), 2);
 			continue;
 		}
@@ -4403,30 +4421,30 @@ bool CRecognizeThread::RecogSN_code_Character(cv::Mat& matCompPic, RECTINFO rc, 
 	if (RectCompList.size() == 0)
 		return false;
 
-	Mat matZkzhRoi;
-	matZkzhRoi = matCompPic(RectCompList[0]);
-
-	cvtColor(matZkzhRoi, matZkzhRoi, CV_BGR2GRAY);
+	Mat matNameRoi;
+	matNameRoi = matCompPic(RectCompList[0]);
+	
+	cvtColor(matNameRoi, matNameRoi, CV_BGR2GRAY);
 // 	GaussianBlur(matZkzhRoi, matZkzhRoi, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);
 // 	sharpenImage1(matZkzhRoi, matZkzhRoi);
 
-	cv::adaptiveThreshold(matZkzhRoi, matZkzhRoi, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, blockSize, constValue);
+	cv::adaptiveThreshold(matNameRoi, matNameRoi, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 3, 10);	//blockSize, constValue
 
 	mT1 = clock();
 
 	//×óÐý90
 	cv::Mat dst;
-	transpose(matZkzhRoi, dst);	//×óÐý90£¬¾µÏñ 
-	flip(dst, matZkzhRoi, 0);
+	transpose(matNameRoi, dst);	//×óÐý90£¬¾µÏñ 
+	flip(dst, matNameRoi, 0);
 
 	mT2 = clock();
 #if 1
-	m_pTess->SetImage((uchar*)matZkzhRoi.data, matZkzhRoi.cols, matZkzhRoi.rows, 1, matZkzhRoi.cols);
+	m_pTess->SetImage((uchar*)matNameRoi.data, matNameRoi.cols, matNameRoi.rows, 1, matNameRoi.cols);
 	m_pTess->Recognize(0);
 
 	std::vector<std::string> vecWord;
 	tesseract::ResultIterator* ri = m_pTess->GetIterator();
-	tesseract::PageIteratorLevel level = tesseract::RIL_SYMBOL;	//RIL_WORD
+	tesseract::PageIteratorLevel level = tesseract::RIL_SYMBOL;	//RIL_WORD	RIL_SYMBOL
 	if (ri != 0)
 	{
 		do
@@ -4439,11 +4457,10 @@ bool CRecognizeThread::RecogSN_code_Character(cv::Mat& matCompPic, RECTINFO rc, 
 				strRecogSN.append(CMyCodeConvert::Utf8ToGb2312(word));
 			}
 		} while (ri->Next(level));
-
 	}
 #else
 	m_pTess->SetPageSegMode(tesseract::PSM_SINGLE_BLOCK);	//PSM_SINGLE_BLOCK
-	m_pTess->SetImage((uchar*)matZkzhRoi.data, matZkzhRoi.cols, matZkzhRoi.rows, 1, matZkzhRoi.cols);
+	m_pTess->SetImage((uchar*)matNameRoi.data, matNameRoi.cols, matNameRoi.rows, 1, matNameRoi.cols);
 
 	char* out = m_pTess->GetUTF8Text();
 	strRecogSN = CMyCodeConvert::Utf8ToGb2312(out);
@@ -4457,9 +4474,9 @@ bool CRecognizeThread::RecogSN_code_Character(cv::Mat& matCompPic, RECTINFO rc, 
 	{
 		STUDENT_LIST lResult;
 		std::string strTable = Poco::format("T%d_%d", _pModel_->nExamID, _pModel_->nSubjectID);
-		if (m_pStudentMgr && !strRecogSN.empty() && m_pStudentMgr->SearchStudent(strTable, strRecogSN, 1, lResult))
+		if (m_pStudentMgr && !strRecogSN.empty() && strRecogSN != "%" && m_pStudentMgr->SearchStudent(strTable, strRecogSN, 1, lResult))
 		{
-			if (lResult.size() >= 1)
+			if (lResult.size() >= 1 && lResult.size() <= 2)
 			{
 				bFind = true;
 				STUDENT_LIST::iterator itStudent = lResult.begin();
@@ -4481,6 +4498,7 @@ bool CRecognizeThread::RecogSN_code_Character(cv::Mat& matCompPic, RECTINFO rc, 
 		strRecogSN = "";
 		for (int j = 0; j < vecWord.size(); j++)
 			strRecogSN.append(vecWord[j]);
+		(static_cast<pST_PaperInfo>(pPic->pPaper))->strRecogSN4Search = strRecogSN;
 	}
 #endif
 	eT = clock();

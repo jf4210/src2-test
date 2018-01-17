@@ -120,6 +120,8 @@ int					g_nFilePort4HandModel;		//手阅模式时文件服务器端口
 
 int				_nReocgThreads_ = 3;		//识别线程数量
 
+int				_nUseNameRecogSn_ = 0;		//使用文字识别准考证号
+
 //++标题信息
 std::string _strCopyright_;
 std::string _strMainTitle_;

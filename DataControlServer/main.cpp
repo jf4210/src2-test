@@ -1,4 +1,4 @@
-﻿
+﻿#include <thread>
 #include <Poco/Util/ServerApplication.h>
 #include "ExamServerMgr.h"
 #include "DCSDef.h"
@@ -85,6 +85,464 @@ int		_nOMR_ = 230;		//重新识别模板时，用来识别OMR的密度值的阀�
 int		_nSN_ = 200;		//重新识别模板时，用来识别ZKZH的密度值的阀值
 //========================================
 
+void  InitModelInfo()
+{
+	std::cout << "开始初始化模板信息..." << std::endl;
+	std::string strModelPath = CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strModelSavePath);
+
+	try
+	{
+		Poco::DirectoryIterator it(strModelPath);
+		Poco::DirectoryIterator end;
+		while (it != end)
+		{
+			Poco::Path p(it->path());
+			if (it->isFile() && p.getExtension() == "mod")
+			{
+				std::string strName = p.getFileName();
+				std::string strPath = p.toString();
+				//在_mapModel_中把本地文件信息插入
+
+				std::string strModelName = strName;
+				std::string strExamID;
+				std::string strSubjectID;
+				int nPos = 0;
+				int nOldPos = 0;
+				nPos = strModelName.find("_N_");
+				if (nPos != std::string::npos)	//新模板名称
+				{
+					int nPos2 = strModelName.find("_", nPos + 3);
+
+					strExamID = strModelName.substr(nPos + 3, nPos2 - nPos - 3);
+					nOldPos = nPos2;
+					nPos2 = strModelName.find(".", nPos2 + 1);
+					strSubjectID = strModelName.substr(nOldPos + 1, nPos2 - nOldPos - 1);
+				}
+				else
+				{
+					nPos = strModelName.find("_");
+					strExamID = strModelName.substr(0, nPos);
+					nOldPos = nPos;
+					nPos = strModelName.find(".", nPos + 1);
+					strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+				}
+
+				char szIndex[50] = { 0 };
+				sprintf(szIndex, "%s_%s", strExamID.c_str(), strSubjectID.c_str());
+
+				pMODELINFO pModelInfo = new MODELINFO;
+				pModelInfo->nExamID = atoi(strExamID.c_str());
+				pModelInfo->nSubjectID = atoi(strSubjectID.c_str());
+				pModelInfo->strName = CMyCodeConvert::Utf8ToGb2312(strName);
+				pModelInfo->strPath = CMyCodeConvert::Utf8ToGb2312(strPath);
+				pModelInfo->strMd5 = calcFileMd5(strPath);
+
+				_mapModelLock_.lock();
+				_mapModel_.insert(MAP_MODEL::value_type(szIndex, pModelInfo));
+				_mapModelLock_.unlock();
+			}
+			++it;
+		}
+	}
+	catch (Poco::FileException& exc)
+	{
+		std::cerr << exc.displayText() << std::endl;
+		return;
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::cerr << exc.displayText() << std::endl;
+		return;
+	}
+	std::cout << "模板初始化完成\n";
+}
+
+//启动的时候，检测本地文件接收文件夹，将其中所有文件都加入压缩列表，目的：如果有异常退出，已接收文件还需要继续处理
+void  InitPapersList()
+{
+	bool bFind = false;
+	std::string strLog = "添加上次关闭未处理完成的试卷袋列表:";
+	std::string strPapersPath = CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strUpLoadPath);
+	Poco::DirectoryIterator it(strPapersPath);
+	Poco::DirectoryIterator end;
+	while (it != end)
+	{
+		Poco::Path p(it->path());
+		if (it->isFile())
+		{
+			if (p.getExtension() == "pkg")
+			{
+				bFind = true;
+				pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+				pDecompressTask->strFilePath = CMyCodeConvert::Utf8ToGb2312(p.toString());
+				pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(p.getBaseName());
+				pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(p.getFileName());
+
+				strLog.append(pDecompressTask->strFileBaseName + " ");
+				g_fmDecompressLock.lock();
+				g_lDecompressTask.push_back(pDecompressTask);
+				g_fmDecompressLock.unlock();
+			}
+			else if (p.getExtension() == "mod")
+			{
+				Poco::File filePath(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strModelSavePath));
+				if (!filePath.exists())
+					filePath.createDirectories();
+
+				std::string strFileName = CMyCodeConvert::Utf8ToGb2312(p.getFileName());
+				std::string strModelNewPath = SysSet.m_strModelSavePath + "\\";
+				strModelNewPath.append(strFileName);
+
+				try
+				{
+					std::string strUtf8OldPath = p.toString();
+					std::string strUtf8ModelPath = CMyCodeConvert::Gb2312ToUtf8(strModelNewPath);
+
+					Poco::File modelPicPath(strUtf8OldPath);
+					modelPicPath.moveTo(strUtf8ModelPath);
+
+					std::string strModelName = strFileName;
+					std::string strExamID;
+					std::string strSubjectID;
+					int nPos = 0;
+					int nOldPos = 0;
+					nPos = strModelName.find("_N_");
+					if (nPos != std::string::npos)	//新模板名称
+					{
+						int nPos2 = strModelName.find("_", nPos + 3);
+
+						strExamID = strModelName.substr(nPos + 3, nPos2 - nPos - 3);
+						nOldPos = nPos2;
+						nPos2 = strModelName.find(".", nPos2 + 1);
+						strSubjectID = strModelName.substr(nOldPos + 1, nPos2 - nOldPos - 1);
+					}
+					else
+					{
+						nPos = strModelName.find("_");
+						strExamID = strModelName.substr(0, nPos);
+						nOldPos = nPos;
+						nPos = strModelName.find(".", nPos + 1);
+						strSubjectID = strModelName.substr(nOldPos + 1, nPos - nOldPos - 1);
+					}
+
+					std::string strLog;
+
+					pMODELINFO pModelInfo = NULL;
+					char szIndex[50] = { 0 };
+					sprintf(szIndex, "%s_%s", strExamID.c_str(), strSubjectID.c_str());
+					MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
+					if (itFind == _mapModel_.end())
+					{
+						pModelInfo = new MODELINFO;
+						pModelInfo->nExamID = atoi(strExamID.c_str());
+						pModelInfo->nSubjectID = atoi(strSubjectID.c_str());
+						pModelInfo->strName = strFileName;
+						pModelInfo->strPath = strModelNewPath;
+						pModelInfo->strMd5 = calcFileMd5(strUtf8ModelPath);
+
+						_mapModelLock_.lock();
+						_mapModel_.insert(MAP_MODEL::value_type(szIndex, pModelInfo));
+						_mapModelLock_.unlock();
+
+						strLog = "get a new modelinfo. modelName = ";
+						strLog.append(strFileName);
+					}
+					else
+					{
+						pModelInfo = itFind->second;
+						pModelInfo->strName = strFileName;
+						pModelInfo->strPath = strModelNewPath;
+						pModelInfo->strMd5 = calcFileMd5(strUtf8ModelPath);
+
+						strLog = "modify modelinfo. modelName = ";
+						strLog.append(strFileName);
+					}
+					g_Log.LogOut(strLog);
+					std::cout << strLog << std::endl;
+
+					//++模板上传完成后，需要解压，向zimg提交图片给后端
+					pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;
+					pDecompressTask->nType = 2;
+					pDecompressTask->strFilePath = strModelNewPath;
+					pDecompressTask->strFileBaseName = strFileName;
+					pDecompressTask->strFileBaseName = pDecompressTask->strFileBaseName.substr(0, nPos);	//pDecompressTask->strFileBaseName.length() - 4
+					pDecompressTask->strSrcFileName = strFileName;
+					g_fmDecompressLock.lock();
+					g_lDecompressTask.push_back(pDecompressTask);
+					g_fmDecompressLock.unlock();
+					//--
+				}
+				catch (Poco::Exception &exc)
+				{
+					std::string strLog;
+					strLog.append("model move error: " + exc.displayText() + "\tmodelPath: ");
+					strLog.append(CMyCodeConvert::Utf8ToGb2312(p.toString()));
+					g_Log.LogOutError(strLog);
+				}
+			}
+		}
+		it++;
+	}
+	if (bFind)
+	{
+		g_Log.LogOut(strLog);
+		std::cout << strLog << std::endl;
+	}
+}
+
+std::string GetFileData(std::string& strPath)
+{
+	std::string strJsnData;
+	std::ifstream in(strPath);
+	if (!in)
+		return "";
+
+	std::string strJsnLine;
+	while (!in.eof())
+	{
+		getline(in, strJsnLine);					//不过滤空格
+		strJsnData.append(strJsnLine);
+	}
+	in.close();
+	return strJsnData;
+}
+
+//启动时，检测重新发送文件夹中是否有文件，有的话需要重新生成对应的任务列表，放入解压线程中操作
+void  InitReSendInfo()
+{
+	bool bFindData = false;
+	std::string strLog = "添加上次关闭发送失败需要重新上传的信息:";
+	std::string strFilePath = CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strReSendPkg);
+	Poco::DirectoryIterator it(strFilePath);
+	Poco::DirectoryIterator end;
+	while (it != end)
+	{
+		Poco::Path p(it->path());
+		if (it->isFile())
+		{
+			std::string strBaseName = p.getBaseName();
+			if (p.getExtension() == "txt")
+			{
+				bool bFind = false;
+				int nPos = -1;
+				std::string strPkgBaseName;
+				std::string strPkgPath;
+				std::string strTxtData;
+				pDECOMPRESSTASK pDecompressTask = NULL;
+				if ((nPos = strBaseName.find("_#_pics")) != std::string::npos)
+				{
+					strTxtData = GetFileData(CMyCodeConvert::Utf8ToGb2312(p.toString()));
+
+					strPkgBaseName = strBaseName.substr(0, nPos);
+					strPkgPath = strFilePath + strPkgBaseName + ".pkg";
+					Poco::File pkgFile(strPkgPath);
+					if (!pkgFile.exists())
+					{
+						strLog.append(strPkgBaseName + ".pkg(提交图片地址-未发现此包)");
+						continue;
+					}
+
+					if (strTxtData != "")
+					{
+						strLog.append(strPkgBaseName + ".pkg(提交图片地址) ");
+
+						bFind = true;
+						pDecompressTask = new DECOMPRESSTASK;
+						pDecompressTask->nType = 3;
+					}
+					else
+					{
+						std::string strErrInfo = "\n试卷袋(" + strPkgBaseName + ")需要提交的图片地址数据为空，不进行提交操作\n";
+						strLog.append(strErrInfo);
+						std::cout << strErrInfo << std::endl;
+					}
+				}
+				else if ((nPos = strBaseName.find("_#_omr")) != std::string::npos)
+				{
+					strTxtData = GetFileData(CMyCodeConvert::Utf8ToGb2312(p.toString()));
+
+					strPkgBaseName = strBaseName.substr(0, nPos);
+					strPkgPath = strFilePath + strPkgBaseName + ".pkg";
+					Poco::File pkgFile(strPkgPath);
+					if (!pkgFile.exists())
+					{
+						strLog.append(strPkgBaseName + ".pkg(提交OMR-未发现此包)");
+						continue;
+					}
+
+					if (strTxtData != "")
+					{
+						strLog.append(strPkgBaseName + ".pkg(提交OMR) ");
+
+						bFind = true;
+						pDecompressTask = new DECOMPRESSTASK;
+						pDecompressTask->nType = 4;
+					}
+					else
+					{
+						std::string strErrInfo = "\n试卷袋(" + strPkgBaseName + ")需要提交的OMR数据为空，不进行提交操作\n";
+						strLog.append(strErrInfo);
+						std::cout << strErrInfo << std::endl;
+					}
+				}
+				else if ((nPos = strBaseName.find("_#_zkzh")) != std::string::npos)
+				{
+					strTxtData = GetFileData(CMyCodeConvert::Utf8ToGb2312(p.toString()));
+
+					strPkgBaseName = strBaseName.substr(0, nPos);
+					strPkgPath = strFilePath + strPkgBaseName + ".pkg";
+					Poco::File pkgFile(strPkgPath);
+					if (!pkgFile.exists())
+					{
+						strLog.append(strPkgBaseName + ".pkg(提交ZKZH-未发现此包)");
+						continue;
+					}
+
+					if (strTxtData != "")
+					{
+						strLog.append(strPkgBaseName + ".pkg(提交ZKZH) ");
+
+						bFind = true;
+						pDecompressTask = new DECOMPRESSTASK;
+						pDecompressTask->nType = 5;
+					}
+					else
+					{
+						std::string strErrInfo = "\n试卷袋(" + strPkgBaseName + ")需要提交的ZKZH数据为空，不进行提交操作\n";
+						strLog.append(strErrInfo);
+						std::cout << strErrInfo << std::endl;
+					}
+				}
+				else if ((nPos = strBaseName.find("_#_electOmr")) != std::string::npos)
+				{
+					strTxtData = GetFileData(CMyCodeConvert::Utf8ToGb2312(p.toString()));
+
+					strPkgBaseName = strBaseName.substr(0, nPos);
+					strPkgPath = strFilePath + strPkgBaseName + ".pkg";
+					Poco::File pkgFile(strPkgPath);
+					if (!pkgFile.exists())
+					{
+						strLog.append(strPkgBaseName + ".pkg(提交选做题-未发现此包)");
+						continue;
+					}
+
+					if (strTxtData != "")
+					{
+						strLog.append(strPkgBaseName + ".pkg(提交选做题) ");
+
+						bFind = true;
+						pDecompressTask = new DECOMPRESSTASK;
+						pDecompressTask->nType = 6;
+					}
+					else
+					{
+						std::string strErrInfo = "\n试卷袋(" + strPkgBaseName + ")需要提交的选做题数据为空，不进行提交操作\n";
+						strLog.append(strErrInfo);
+						std::cout << strErrInfo << std::endl;
+					}
+				}
+
+				if (bFind)
+				{
+					bFindData = true;
+					pDecompressTask->strFilePath = CMyCodeConvert::Utf8ToGb2312(strPkgPath);
+					pDecompressTask->strFileBaseName = CMyCodeConvert::Utf8ToGb2312(strPkgBaseName);
+					pDecompressTask->strSrcFileName = CMyCodeConvert::Utf8ToGb2312(strPkgBaseName + ".pkg");
+					pDecompressTask->strTransferData = strTxtData;
+					pDecompressTask->strTransferFilePath = p.toString();
+
+					g_fmDecompressLock.lock();
+					g_lDecompressTask.push_back(pDecompressTask);
+					g_fmDecompressLock.unlock();
+				}
+			}
+		}
+		it++;
+	}
+	if (!bFindData)
+		strLog.append("无数据");
+	g_Log.LogOut(strLog);
+	std::cout << strLog << std::endl;
+}
+
+void InitParam(std::string strCurrPath)
+{
+	std::string strCurrentPath = strCurrPath;
+	std::string strParamPath = strCurrentPath + "param.dat";
+	std::string strLog;
+	try
+	{
+		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strParamPath));
+
+		g_nRecogGrayMin = pConf->getInt("RecogGray.gray_Min", 0);
+		g_nRecogGrayMax_White = pConf->getInt("RecogGray.white_Max", 255);
+		// 			g_nRecogGrayMin_OMR = pConf->getInt("RecogGray.omr_Min", 0);
+		// 			g_RecogGrayMax_OMR = pConf->getInt("RecogGray.omr_Max", 235);
+
+		_fHeadThresholdPercent_ = pConf->getDouble("MakeModel_RecogPercent_Common.head", 0.75);
+		_fABModelThresholdPercent_ = pConf->getDouble("MakeModel_RecogPercent_Common.abModel", 0.75);
+		_fCourseThresholdPercent_ = pConf->getDouble("MakeModel_RecogPercent_Common.course", 0.75);
+		_fFixThresholdPercent_ = pConf->getDouble("MakeModel_RecogPercent_Common.fix", 0.8);
+		_fGrayThresholdPercent_ = pConf->getDouble("MakeModel_RecogPercent_Common.gray", 0.75);
+		_fWhiteThresholdPercent_ = pConf->getDouble("MakeModel_RecogPercent_Common.white", 0.75);
+
+		// 			_dCompThread_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fCompTread", 1.2);
+		// 			_dDiffThread_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fDiffThread", 0.2);
+		// 			_dDiffExit_Fix_ = pConf->getDouble("RecogOmrSn_Fix.fDiffExit", 0.3);
+		// 			_dCompThread_Head_ = pConf->getDouble("RecogOmrSn_Head.fCompTread", 1.2);
+		// 			_dDiffThread_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffThread", 0.085);
+		// 			_dDiffExit_Head_ = pConf->getDouble("RecogOmrSn_Head.fDiffExit", 0.15);
+		// 			_nThreshold_Recog2_ = pConf->getInt("RecogOmrSn_Fun2.nThreshold_Fun2", 240);
+		// 			_dCompThread_3_ = pConf->getDouble("RecogOmrSn_Fun3.fCompTread", 170);
+		// 			_dDiffThread_3_ = pConf->getDouble("RecogOmrSn_Fun3.fDiffThread", 20);
+		// 			_dDiffExit_3_ = pConf->getDouble("RecogOmrSn_Fun3.fDiffExit", 50);
+		// 			_dAnswerSure_ = pConf->getDouble("RecogOmrSn_Fun3.fAnswerSure", 100);
+
+		_nGaussKernel_ = pConf->getInt("MakeModel_Recog.gauseKernel", 5);
+		_nSharpKernel_ = pConf->getInt("MakeModel_Recog.sharpKernel", 5);
+		_nCannyKernel_ = pConf->getInt("MakeModel_Recog.cannyKernel", 90);
+		_nDilateKernel_ = pConf->getInt("MakeModel_Recog.delateKernel", 3);
+		_nErodeKernel_ = pConf->getInt("MakeModel_Recog.eRodeKernel", 2);
+
+		_nWhiteVal_ = pConf->getInt("MakeModel_Threshold.white", 225);
+		_nHeadVal_ = pConf->getInt("MakeModel_Threshold.head", 136);
+		_nABModelVal_ = pConf->getInt("MakeModel_Threshold.abModel", 150);
+		_nCourseVal_ = pConf->getInt("MakeModel_Threshold.course", 150);
+		_nQK_CPVal_ = pConf->getInt("MakeModel_Threshold.qk", 150);
+		_nGrayVal_ = pConf->getInt("MakeModel_Threshold.gray", 150);
+		_nFixVal_ = pConf->getInt("MakeModel_Threshold.fix", 150);
+		_nOMR_ = pConf->getInt("MakeModel_Threshold.omr", 230);
+		_nSN_ = pConf->getInt("MakeModel_Threshold.sn", 200);
+
+		_dQKThresholdPercent_Fix_ = pConf->getDouble("MakeModel_RecogPercent_Fix.qk", 1.5);
+		_dOmrThresholdPercent_Fix_ = pConf->getDouble("MakeModel_RecogPercent_Fix.omr", 1.5);
+		_dSnThresholdPercent_Fix_ = pConf->getDouble("MakeModel_RecogPercent_Fix.sn", 1.5);
+
+		_dQKThresholdPercent_Head_ = pConf->getDouble("MakeModel_RecogPercent_Head.qk", 1.5);
+		_dOmrThresholdPercent_Head_ = pConf->getDouble("MakeModel_RecogPercent_Head.omr", 1.5);
+		_dSnThresholdPercent_Head_ = pConf->getDouble("MakeModel_RecogPercent_Head.sn", 1.5);
+
+		strLog = "读取参数完成";
+	}
+	catch (Poco::Exception& exc)
+	{
+		strLog = "读取参数失败，使用默认参数 " + CMyCodeConvert::Utf8ToGb2312(exc.displayText());
+		g_nRecogGrayMin = 0;
+		g_nRecogGrayMax_White = 255;
+		// 			g_nRecogGrayMin_OMR = 0;
+		// 			g_RecogGrayMax_OMR = 235;
+	}
+	g_Log.LogOut(strLog);
+	std::cout << strLog << std::endl;
+}
+
+void InitDataThread(std::string strCurrentDir)
+{
+	InitModelInfo();
+	InitPapersList();
+	InitReSendInfo();
+}
+
 class TimerObj : public Poco::Util::TimerTask
 {
 public:
@@ -143,9 +601,11 @@ protected:
 	{
 		ServerApplication::uninitialize();
 	}
-	
+
+#ifndef THREAD_INIT_START
 	void  InitModelInfo()
 	{
+		std::cout << "开始初始化模板信息..." << std::endl;
 		std::string strModelPath = CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strModelSavePath);
 
 		try
@@ -212,6 +672,7 @@ protected:
 			std::cerr << exc.displayText() << std::endl;
 			return ;
 		}
+		std::cout << "模板初始化完成\n";
 	}
 
 	//启动的时候，检测本地文件接收文件夹，将其中所有文件都加入压缩列表，目的：如果有异常退出，已接收文件还需要继续处理
@@ -521,6 +982,7 @@ protected:
 		g_Log.LogOut(strLog);
 		std::cout << strLog << std::endl;
 	}
+#endif
 
 	void InitParam()
 	{
@@ -673,10 +1135,18 @@ protected:
 			waitForTerminationRequest();
 			return 0;
 		}
+// 		unsigned threadID;
+// 		_beginthreadex(NULL, 0, ReleaseDirThread, pPapers, 0, &threadID);
+		
 
+	#ifdef THREAD_INIT_START
+		std::thread tInit(InitDataThread, config().getString("application.dir"));
+		tInit.detach();
+	#else
 		InitModelInfo();
 		InitPapersList();
 		InitReSendInfo();
+	#endif
 
 		std::vector<CDecompressThread*> vecDecompressThreadObj;
 		Poco::Thread* pDecompressThread = new Poco::Thread[SysSet.m_nDecompressThreads];

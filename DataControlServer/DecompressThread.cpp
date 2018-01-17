@@ -667,7 +667,7 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 	Poco::Dynamic::Var result;
 	try
 	{
-		result = parser.parse(strFileData);		//strJsnData
+		result = parser.parse(CMyCodeConvert::Gb2312ToUtf8(strFileData));		//strJsnData
 		Poco::JSON::Object::Ptr objData = result.extract<Poco::JSON::Object::Ptr>();
 
 		int nOmrDoubt = -1;

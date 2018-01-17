@@ -340,14 +340,14 @@ RESTART:
 					}
 //					DWORD dwResult = WaitForSingleObject(m_hSendDoneEvent, INFINITE);
 					bRecvResult = false;	//接收服务器是否接收完成数据的结果命令
-					DWORD dwResult = WaitForSingleObject(m_hSendDoneEvent, 10 * 1000);
+					DWORD dwResult = WaitForSingleObject(m_hSendDoneEvent, 30 * 1000);
 					switch (dwResult)
 					{
 						case WAIT_OBJECT_0:
 							bRecvResult = true;
 							break;
 						case WAIT_TIMEOUT:
-							sprintf_s(szLog, "文件数据发送完成，接收服务器回复命令失败(%s)失败(10s超时)", T2A(pTask->strAnsName));
+							sprintf_s(szLog, "文件数据发送完成，接收服务器回复命令失败(%s)失败(30s超时)", T2A(pTask->strAnsName));
 							g_pLogger->information(szLog);
 							break;
 					}
