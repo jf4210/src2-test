@@ -199,6 +199,9 @@
     <Filter Include="扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\多页模式异常处理">
       <UniqueIdentifier>{c90bf60e-402b-49af-a63a-bc9729c3c6b6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="识别模板管理">
+      <UniqueIdentifier>{7bb9bc08-c3de-4146-b4c3-e125206363e9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -513,6 +516,12 @@
     <ClInclude Include="MultiPageMgr.h">
       <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\多页模式异常处理</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\common\BasePocoHead.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\ModelMgr.h">
+      <Filter>识别模板管理</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -784,6 +793,9 @@
     </ClCompile>
     <ClCompile Include="MultiPageMgr.cpp">
       <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\多页模式异常处理</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\ModelMgr.cpp">
+      <Filter>识别模板管理</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

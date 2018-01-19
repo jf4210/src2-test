@@ -10,6 +10,7 @@
 #include "ZipObj.h"
 #include "ScanTool3Dlg.h"
 #include "NewMessageBox.h"
+#include "ModelMgr.h"
 // CScanMgrDlg ¶Ô»°¿ò
 
 IMPLEMENT_DYNAMIC(CScanMgrDlg, CDialog)
@@ -652,9 +653,17 @@ int CScanMgrDlg::SearchModel()
 		zipObj.setLogger(g_pLogger);
 		zipObj.UnZipFile(A2T(strModelFullPath.c_str()));
 
+	#ifdef TEST_ModelMgr
+		std::string modelPath = T2A(g_strCurrentPath + _T("Model\\"));
+		std::string strModelFilePath = modelPath + strModelName.substr(0, strModelName.rfind('.'));
+		CModelMgr modelObj;
+		modelObj.SeBaseInfo(modelPath, g_strEncPwd);
+		_pModel_ = modelObj.LoadModelFile(strModelFilePath);
+	#else
 		CString strModelFilePath = g_strCurrentPath + _T("Model\\") + A2T(strModelName.c_str());
 		strModelFilePath = strModelFilePath.Left(strModelFilePath.ReverseFind('.'));
 		_pModel_ = LoadModelFile(strModelFilePath);
+	#endif
 		std::string strLog;
 		if (_pModel_)
 		{

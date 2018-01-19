@@ -1453,80 +1453,89 @@ bool COmrRecog::RecogWordOrientationByMatchTempl(cv::Mat& matSrc, int n, int nRo
 	PicRotate(matRealPic, nRotation);
 	//----------------
 
-	//根据文字定位的个数进行模板匹配，然后计算多个匹配的灰度、密度、位置等信息并进行比较
-	int nMaxCompWordPint = 8;	//最多匹配模板定点的个数
-	for (auto itCharactArea : _pModel_->vecPaperModel[n]->lCharacterAnchorArea)
+	try
 	{
-		cv::Mat SrcCharactArea = matRealPic(itCharactArea->rt);
-		
-		for (auto itCharactPoint : itCharactArea->vecCharacterRt)
+		//根据文字定位的个数进行模板匹配，然后计算多个匹配的灰度、密度、位置等信息并进行比较
+		int nMaxCompWordPint = 8;	//最多匹配模板定点的个数
+		for (auto itCharactArea : _pModel_->vecPaperModel[n]->lCharacterAnchorArea)
 		{
-			if(nModelWordPoint >= nMaxCompWordPint)
+			cv::Mat SrcCharactArea = matRealPic(itCharactArea->rt);
+
+			for (auto itCharactPoint : itCharactArea->vecCharacterRt)
+			{
+				if (nModelWordPoint >= nMaxCompWordPint)
+					break;
+				cv::Mat CharactPointTempl = _pModel_->vecPaperModel[n]->matModel(itCharactPoint->rc.rt);
+				cv::Point ptResult1;
+				MatchingMethod(0, SrcCharactArea, CharactPointTempl, ptResult1);
+
+				cv::Point ptResult2;
+				MatchingMethod(1, SrcCharactArea, CharactPointTempl, ptResult2);
+
+				bool bMatchRight1 = abs(ptResult1.x - ptResult2.x) < itCharactPoint->rc.rt.width * 0.5 ? (abs(ptResult1.y - ptResult2.y) < itCharactPoint->rc.rt.height * 0.5 ? true : false) : false;
+
+				// 			cv::Mat SrcTmp = SrcCharactArea.clone();
+				// 			rectangle(SrcTmp, ptResult1, cv::Point(ptResult1.x + CharactPointTempl.cols, ptResult1.y + CharactPointTempl.rows), CV_RGB(255, 0, 0), 2, 8, 0);
+				// 			rectangle(SrcTmp, ptResult2, cv::Point(ptResult2.x + CharactPointTempl.cols, ptResult2.y + CharactPointTempl.rows), CV_RGB(0, 0, 255), 2, 8, 0);
+
+				++nModelWordPoint;
+
+				bool bMatchRight2 = false;
+				bool bMatchRight3 = false;
+				cv::Point ptResult3;
+				if (!bMatchRight1)
+				{
+					MatchingMethod(5, SrcCharactArea, CharactPointTempl, ptResult3);
+					//rectangle(SrcTmp, ptResult3, cv::Point(ptResult3.x + CharactPointTempl.cols, ptResult3.y + CharactPointTempl.rows), CV_RGB(0, 255, 0), 2, 8, 0);
+
+					//3中匹配中，2种以上位置差不多就认为匹配成功
+					bMatchRight2 = abs(ptResult1.x - ptResult3.x) < itCharactPoint->rc.rt.width * 0.5 ? (abs(ptResult1.y - ptResult3.y) < itCharactPoint->rc.rt.height * 0.5 ? true : false) : false;
+					bMatchRight3 = abs(ptResult3.x - ptResult2.x) < itCharactPoint->rc.rt.width * 0.5 ? (abs(ptResult3.y - ptResult2.y) < itCharactPoint->rc.rt.height * 0.5 ? true : false) : false;
+					if (!bMatchRight1 && !bMatchRight2 && !bMatchRight3)
+						continue;
+				}
+
+				cv::Point ptResultTmp;
+				if (bMatchRight1) ptResultTmp = ptResult1;
+				if (bMatchRight2) ptResultTmp = ptResult1;
+				if (bMatchRight3) ptResultTmp = ptResult3;
+
+				//计算密度、灰度、位置比例信息
+				cv::Point ptReal(itCharactArea->rt.x + ptResultTmp.x, itCharactArea->rt.y + ptResultTmp.y);
+
+				RECTINFO rcItem;
+				rcItem = itCharactPoint->rc;
+				rcItem.rt = cv::Rect(ptReal, cv::Point(ptReal.x + itCharactPoint->rc.rt.width, ptReal.y + itCharactPoint->rc.rt.height));
+				if (ptReal.x + itCharactPoint->rc.rt.width > itCharactArea->rt.x + itCharactArea->rt.width)
+					rcItem.rt.width = itCharactArea->rt.x + itCharactArea->rt.width - ptReal.x;
+				if (ptReal.y + itCharactPoint->rc.rt.height > itCharactArea->rt.y + itCharactArea->rt.height)
+					rcItem.rt.height = itCharactArea->rt.y + itCharactArea->rt.height - ptReal.y;
+
+				if (RecogRtVal(rcItem, matRealPic))
+				{
+					if (rcItem.fRealDensity / itCharactPoint->rc.fStandardDensity > 0.9 && rcItem.fRealValue / itCharactPoint->rc.fStandardValue > 0.9 && \
+						rcItem.rt.area() / itCharactPoint->rc.rt.area() > 0.9)
+					{
+						ST_WORDMATCHTEMPL stWordMatchTempl;
+						stWordMatchTempl.rtModel = itCharactPoint->rc.rt;
+						stWordMatchTempl.rcReal = rcItem;
+						vecMatchTemplPoint.push_back(stWordMatchTempl);
+					}
+					else
+					{
+						TRACE("判断文字识别点的密度百分比: %f, 低于要求的: %f\n", rcItem.fRealValuePercent, itCharactPoint->rc.fStandardValuePercent);
+					}
+				}
+			}
+			if (nModelWordPoint >= nMaxCompWordPint)
 				break;
-			cv::Mat CharactPointTempl = _pModel_->vecPaperModel[n]->matModel(itCharactPoint->rc.rt);
-			cv::Point ptResult1;
-			MatchingMethod(0, SrcCharactArea, CharactPointTempl, ptResult1);
-
-			cv::Point ptResult2;
-			MatchingMethod(1, SrcCharactArea, CharactPointTempl, ptResult2);
-			
-			bool bMatchRight1 = abs(ptResult1.x - ptResult2.x) < itCharactPoint->rc.rt.width * 0.5 ? (abs(ptResult1.y - ptResult2.y) < itCharactPoint->rc.rt.height * 0.5 ? true : false) : false;
-
-// 			cv::Mat SrcTmp = SrcCharactArea.clone();
-// 			rectangle(SrcTmp, ptResult1, cv::Point(ptResult1.x + CharactPointTempl.cols, ptResult1.y + CharactPointTempl.rows), CV_RGB(255, 0, 0), 2, 8, 0);
-// 			rectangle(SrcTmp, ptResult2, cv::Point(ptResult2.x + CharactPointTempl.cols, ptResult2.y + CharactPointTempl.rows), CV_RGB(0, 0, 255), 2, 8, 0);
-			
-			++nModelWordPoint;
-
-			bool bMatchRight2 = false;
-			bool bMatchRight3 = false;
-			cv::Point ptResult3;
-			if (!bMatchRight1)
-			{
-				MatchingMethod(5, SrcCharactArea, CharactPointTempl, ptResult3);
-				//rectangle(SrcTmp, ptResult3, cv::Point(ptResult3.x + CharactPointTempl.cols, ptResult3.y + CharactPointTempl.rows), CV_RGB(0, 255, 0), 2, 8, 0);
-
-				//3中匹配中，2种以上位置差不多就认为匹配成功
-				bMatchRight2 = abs(ptResult1.x - ptResult3.x) < itCharactPoint->rc.rt.width * 0.5 ? (abs(ptResult1.y - ptResult3.y) < itCharactPoint->rc.rt.height * 0.5 ? true : false) : false;
-				bMatchRight3 = abs(ptResult3.x - ptResult2.x) < itCharactPoint->rc.rt.width * 0.5 ? (abs(ptResult3.y - ptResult2.y) < itCharactPoint->rc.rt.height * 0.5 ? true : false) : false;
-				if (!bMatchRight1 && !bMatchRight2 && !bMatchRight3)
-					continue;
-			}
-
-			cv::Point ptResultTmp;
-			if (bMatchRight1) ptResultTmp = ptResult1;
-			if (bMatchRight2) ptResultTmp = ptResult1;
-			if (bMatchRight3) ptResultTmp = ptResult3;
-
-			//计算密度、灰度、位置比例信息
-			cv::Point ptReal(itCharactArea->rt.x + ptResultTmp.x, itCharactArea->rt.y + ptResultTmp.y);
-
-			RECTINFO rcItem;
-			rcItem = itCharactPoint->rc;
-			rcItem.rt = cv::Rect(ptReal, cv::Point(ptReal.x + itCharactPoint->rc.rt.width, ptReal.y + itCharactPoint->rc.rt.height));
-			if (ptReal.x + itCharactPoint->rc.rt.width > itCharactArea->rt.x + itCharactArea->rt.width)
-				rcItem.rt.width = itCharactArea->rt.x + itCharactArea->rt.width - ptReal.x;
-			if (ptReal.y + itCharactPoint->rc.rt.height > itCharactArea->rt.y + itCharactArea->rt.height)
-				rcItem.rt.height = itCharactArea->rt.y + itCharactArea->rt.height - ptReal.y;
-
-			if (RecogRtVal(rcItem, matRealPic))
-			{
-				if (rcItem.fRealDensity / itCharactPoint->rc.fStandardDensity > 0.9 && rcItem.fRealValue / itCharactPoint->rc.fStandardValue > 0.9 && \
-					rcItem.rt.area() / itCharactPoint->rc.rt.area() > 0.9)
-				{
-					ST_WORDMATCHTEMPL stWordMatchTempl;
-					stWordMatchTempl.rtModel = itCharactPoint->rc.rt;
-					stWordMatchTempl.rcReal = rcItem;
-					vecMatchTemplPoint.push_back(stWordMatchTempl);
-				}
-				else
-				{
-					TRACE("判断文字识别点的密度百分比: %f, 低于要求的: %f\n", rcItem.fRealValuePercent, itCharactPoint->rc.fStandardValuePercent);
-				}
-			}
 		}
-		if (nModelWordPoint >= nMaxCompWordPint)
-			break;
+	}
+	catch (cv::Exception& exc)
+	{
+		char szLog[300] = { 0 };
+		sprintf_s(szLog, "RecogWordOrientationByMatchTempl error1. detail: %s\n", exc.msg);
+		TRACE(szLog);
 	}
 
 	if (nModelWordPoint <= 3)

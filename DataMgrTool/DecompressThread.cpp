@@ -6,7 +6,7 @@
 #endif
 #include "DataMgrTool.h"
 #include "DataMgrToolDlg.h"
-
+#include "ModelMgr.h"
 
 
 
@@ -56,7 +56,7 @@ void CDecompressThread::run()
 		DECOMPRESSTASKLIST::iterator it = g_lDecompressTask.begin();
 		for (; it != g_lDecompressTask.end();)
 		{
-			if (g_lRecogTask.size() > 1000)
+			if (g_lRecogTask.size() > 500)
 			{
 				bSleepMoreTime = true;
 				break;
@@ -373,7 +373,12 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		}
 
 		std::string strModelPath = CMyCodeConvert::Utf8ToGb2312(strOutDir);
-		_pModel_ = LoadModelFile(A2T(strModelPath.c_str()));
+		std::string modelPath = T2A(g_strCurrentPath + _T("Model\\"));
+		CModelMgr modelObj;
+		modelObj.SeBaseInfo(strModelPath, _strEncryptPwd_);
+		_pModel_ = modelObj.LoadModelFile(strModelPath);
+
+		//_pModel_ = LoadModelFile(A2T(strModelPath.c_str()));
 		if (_nUseNewParam_)
 			InitModelRecog(_pModel_, strModelPath);
 

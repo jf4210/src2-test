@@ -19,6 +19,7 @@
 #include "ExamInfoDlg.h"
 #include "NewMessageBox.h"
 #include "RecogCharacterDlg.h"
+#include "ModelMgr.h"
 using namespace std;
 using namespace cv;
 // CMakeModelDlg 对话框
@@ -3073,7 +3074,8 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 	{
 		pPAPERMODEL pPaperModel = new PAPERMODEL;
 		pPaperModel->strModelPicName = m_vecPaperModelInfo[i]->strModelPicName;
-		
+		pPaperModel->strModelPicPath = T2A(m_vecPaperModelInfo[i]->strModelPicPath);
+
 		//++同步头模式时，添加4个定点
 		RecogFixWithHead(i);
 		//--
@@ -3200,6 +3202,12 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 {
 	USES_CONVERSION;
+#ifdef TEST_ModelMgr
+	std::string modelPath = T2A(g_strCurrentPath + _T("Model\\"));
+	CModelMgr modelObj;
+	modelObj.SeBaseInfo(modelPath, g_strEncPwd);
+	return modelObj.SaveModelFile(pModel);
+#else
 	CString modelPath = g_strCurrentPath + _T("Model");
 	DWORD dwAttr = GetFileAttributesA(T2A(modelPath));
 	if (dwAttr == 0xFFFFFFFF)
@@ -3823,6 +3831,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	out.close();
 	
 	return true;
+#endif
 }
 
 void CMakeModelDlg::OnBnClickedBtnExitmodeldlg()
@@ -8493,6 +8502,40 @@ bool CMakeModelDlg::UploadModel(CString strModelPath, pMODEL pModel)
 }
 
 
+void CMakeModelDlg::GetPicRotation()
+{
+	//根据omr、准考证号等信息判断图像的方向
+	//***********************************************	很重要	***********************
+	//在文字识别时有用
+
+	//0:未知方向，1: 正常视觉方向(考试作答方向)，2-正常方向左旋90后的方向，3-正常方向右旋90后的方向，4-正常方向旋转180度后的方向
+	int nRotation = 0;
+	for (int i = 0; i < m_pModel->vecPaperModel.size(); i++)
+	{
+		if (m_pModel->nZkzhType == 1 && m_pModel->vecPaperModel[i]->lSNInfo.size() > 1)
+		{
+			SNLIST::iterator itFirstSNItem = m_pModel->vecPaperModel[i]->lSNInfo.begin();
+			//SNLIST::iterator itSecondSNItem = ++m_pModel->vecPaperModel[i]->lSNInfo.begin();
+			pSN_ITEM pFirstSnItem = *itFirstSNItem;
+			//根据一组考号的0-9位置，判断从上到下还是从下到上
+			RECTLIST::iterator itFirstRc = pFirstSnItem->lSN.begin();
+			RECTLIST::iterator itSecondRc = ++pFirstSnItem->lSN.begin();
+			if (itFirstRc->nSnVal < itSecondRc->nSnVal)
+			{
+				if (abs(itFirstRc->rt.y - itSecondRc->rt.y) > itFirstRc->rt.height)
+					nRotation = itFirstRc->rt.y < itSecondRc->rt.y ? 1 : 4;
+				else
+					nRotation = itFirstRc->rt.x < itSecondRc->rt.x ? 2 : 3;
+			}
+		}
+		if (0 == nRotation)		//通过准考证号无法判断，使用选择题omr
+		{
+
+		}
+	}
+
+}
+
 void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 {
 	AdvanceParam stAdvanceParam;
@@ -8989,6 +9032,7 @@ void CMakeModelDlg::SaveNewModel()
 	{
 		pPAPERMODEL pPaperModel = new PAPERMODEL;
 		pPaperModel->strModelPicName = m_vecPaperModelInfo[i]->strModelPicName;
+		pPaperModel->strModelPicPath = T2A(m_vecPaperModelInfo[i]->strModelPicPath);
 
 		//++同步头模式时，添加4个定点
 		RecogFixWithHead(i);

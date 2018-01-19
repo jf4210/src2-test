@@ -64,6 +64,9 @@
     <Filter Include="报名库管理">
       <UniqueIdentifier>{b1e4561b-49e4-4f82-b114-2f86ba306714}</UniqueIdentifier>
     </Filter>
+    <Filter Include="识别模板管理">
+      <UniqueIdentifier>{f18d0410-ae92-456c-9aa5-2de2b61597ff}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -216,6 +219,12 @@
     <ClInclude Include="StudentDef.h">
       <Filter>报名库管理</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\common\BasePocoHead.h">
+      <Filter>global</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common\ModelMgr.h">
+      <Filter>识别模板管理</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataMgrTool.cpp">
@@ -334,6 +343,9 @@
     </ClCompile>
     <ClCompile Include="StudentMgr.cpp">
       <Filter>报名库管理</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\ModelMgr.cpp">
+      <Filter>识别模板管理</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

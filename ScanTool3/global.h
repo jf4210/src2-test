@@ -4,53 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <opencv2\opencv.hpp>
-
-#include "Poco/Runnable.h"
-#include "Poco/Exception.h"
-
-#include "Poco/AutoPtr.h"  
-#include "Poco/Logger.h"
-#include "Poco/PatternFormatter.h"
-#include "Poco/FormattingChannel.h"
-#include "Poco/FileChannel.h"
-#include "Poco/Message.h"
-
-#include "Poco/DirectoryIterator.h"
-#include "Poco/File.h"
-#include "Poco/Path.h"
-
-#include "Poco/JSON/JSON.h"
-#include "Poco/JSON/Parser.h"
-#include "Poco/Dynamic/Var.h"
-#include "Poco/JSON/Object.h"
-
-#include "Poco/AutoPtr.h"  
-#include "Poco/Util/IniFileConfiguration.h" 
-
-#include "Poco/Random.h"
-
-#include "Poco/MD5Engine.h"
-#include "Poco/DigestStream.h"
-#include "Poco/StreamCopier.h"
-
-#include "Poco/Stopwatch.h"
-#include "Poco/LocalDateTime.h"
-
-#include "Poco/Net/HTTPClientSession.h"
-#include "Poco/Net/HTTPRequest.h"
-#include "Poco/Net/HTTPResponse.h"
-#include "Poco/URI.h"
-#include "Poco/Net/NetException.h"
-#include "Poco/Net/TCPServer.h"
-
-#include "Poco/Crypto/CipherFactory.h"
-#include "Poco/Crypto/Cipher.h"
-#include "Poco/Crypto/CipherKey.h"
-#include "Poco/Crypto/X509Certificate.h"
-#include "Poco/Crypto/CryptoStream.h"
-
-#include "Poco/Util/TimerTask.h"
-#include "Poco/Util/Timer.h"
+#include "BasePocoHead.h"
 
 #include "zip.h"
 #include "unzip.h"
@@ -81,6 +35,7 @@
 //	#define TEST_PAGINATION		//页码测试，多页试卷的情况，多页A3、A4
 
 //	#define	TEST_EXCEPTION_DLG	//新的异常处理窗口测试
+	#define TEST_ModelMgr		//使用模板保存测试类保存模板
 #else	//release版本
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
 	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”

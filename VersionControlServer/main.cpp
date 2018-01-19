@@ -39,33 +39,14 @@ protected:
 				pST_FILEINFO pFileInfo = new ST_FILEINFO;
 				g_lFileInfo.push_back(pFileInfo);
 
-				pFileInfo->strFileName = CMyCodeConvert::Utf8ToGb2312(p.getFileName());
+				pFileInfo->strFileName = CMyCodeConvert::Utf8ToGb2312(strParentDirName + p.getFileName());
 				pFileInfo->strFilePath = CMyCodeConvert::Utf8ToGb2312(p.toString());
 				pFileInfo->strMd5 = calcFileMd5(p.toString());
 			}
 			else if (it->isDirectory())
 			{
 				std::string strDir = strParentDirName + p.getFileName();
-				Poco::DirectoryIterator it2(p.toString());
-				Poco::DirectoryIterator end2;
-				while (it2 != end2)
-				{
-					Poco::Path p2(it2->path());
-					if (it2->isFile())
-					{
-						pST_FILEINFO pFileInfo = new ST_FILEINFO;
-						g_lFileInfo.push_back(pFileInfo);
-
-						pFileInfo->strFileName = CMyCodeConvert::Utf8ToGb2312(strDir + "\\" + p2.getFileName());
-						pFileInfo->strFilePath = CMyCodeConvert::Utf8ToGb2312(p2.toString());
-						pFileInfo->strMd5 = calcFileMd5(p2.toString());
-					}
-					else if (it2->isDirectory())
-					{
-						GetDirFileInfo(p2.toString(), p.getFileName() + "\\");
-					}
-					it2++;
-				}
+				GetDirFileInfo(p.toString(), strDir + "\\");
 			}
 			it++;
 		}
@@ -75,42 +56,6 @@ protected:
 	{
 		std::string strVerFilePath = CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strFileDir);
 		GetDirFileInfo(strVerFilePath, "");
-// 		Poco::DirectoryIterator it(strVerFilePath);
-// 		Poco::DirectoryIterator end;
-// 		while (it != end)
-// 		{
-// 			Poco::Path p(it->path());
-// 			if (it->isFile())
-// 			{
-// 				pST_FILEINFO pFileInfo = new ST_FILEINFO;
-// 				g_lFileInfo.push_back(pFileInfo);
-// 
-// 				pFileInfo->strFileName = CMyCodeConvert::Utf8ToGb2312(p.getFileName());
-// 				pFileInfo->strFilePath = CMyCodeConvert::Utf8ToGb2312(p.toString());
-// 				pFileInfo->strMd5 = calcFileMd5(p.toString());
-// 			}
-// 			else if (it->isDirectory())
-// 			{
-// 				std::string strDir = p.getFileName();
-// 				Poco::DirectoryIterator it2(p.toString());
-// 				Poco::DirectoryIterator end2;
-// 				while (it2 != end2)
-// 				{
-// 					Poco::Path p2(it2->path());
-// 					if (it2->isFile())
-// 					{
-// 						pST_FILEINFO pFileInfo = new ST_FILEINFO;
-// 						g_lFileInfo.push_back(pFileInfo);
-// 
-// 						pFileInfo->strFileName = CMyCodeConvert::Utf8ToGb2312(strDir + "\\" + p2.getFileName());
-// 						pFileInfo->strFilePath = CMyCodeConvert::Utf8ToGb2312(p2.toString());
-// 						pFileInfo->strMd5 = calcFileMd5(p2.toString());
-// 					}
-// 					it2++;
-// 				}
-// 			}
-// 			it++;
-// 		}
 	}
 
 	int main(const std::vector < std::string > & args)

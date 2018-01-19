@@ -46,6 +46,7 @@ protected:
 	void InitUI();
 	void DrawBorder(CDC *pDC);
 
+	void CheNewGuardProcess();
 	BOOL StartGuardProcess();
 	void GetFileAddrs();		//获取其他格式的文件上传地址
 

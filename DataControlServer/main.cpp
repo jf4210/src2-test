@@ -37,6 +37,9 @@ MAP_RESEND_PKG	_mapResendPkg_;		//需要重新发送数据包映射关系，防�
 
 Poco::FastMutex _mapSessionLock_;
 MAP_SESSION		_mapSession_;			//用户与session映射表，与后端进行心跳，维持session存活
+
+std::string		_strNewGuardExeMd5_;	//新守护进程的MD5，不存在时为空
+
 //========================================
 int		g_nRecogGrayMin = 0;			//灰度点(除空白点,OMR外)计算灰度的最小考试范围
 int		g_nRecogGrayMax_White = 255;	//空白点校验点计算灰度的最大考试范围
@@ -465,6 +468,12 @@ void  InitReSendInfo()
 	std::cout << strLog << std::endl;
 }
 
+void InitGuardExeInfo()
+{
+	std::string strGuardExePath = SysSet.m_strNewGuardProcessPath + "EasyTntGuardProcess.exe";
+	_strNewGuardExeMd5_ = calcFileMd5(CMyCodeConvert::Gb2312ToUtf8(strGuardExePath));
+}
+
 void InitParam(std::string strCurrPath)
 {
 	std::string strCurrentPath = strCurrPath;
@@ -541,6 +550,7 @@ void InitDataThread(std::string strCurrentDir)
 	InitModelInfo();
 	InitPapersList();
 	InitReSendInfo();
+	InitGuardExeInfo();
 }
 
 class TimerObj : public Poco::Util::TimerTask
@@ -982,6 +992,11 @@ protected:
 		g_Log.LogOut(strLog);
 		std::cout << strLog << std::endl;
 	}
+	void InitGuardExeInfo()
+	{
+		std::string strGuardExePath = SysSet.m_strNewGuardProcessPath + "EasyTntGuardProcess.exe";
+		_strNewGuardExeMd5_ = calcFileMd5(CMyCodeConvert::Gb2312ToUtf8(strGuardExePath));
+	}
 #endif
 
 	void InitParam()
@@ -1054,7 +1069,7 @@ protected:
 		g_Log.LogOut(strLog);
 		std::cout << strLog << std::endl;
 	}
-
+	
 	int main(const std::vector < std::string > & args) 
 	{
 		Poco::Net::HTTPStreamFactory::registerFactory();
@@ -1074,9 +1089,8 @@ protected:
 		SysSet.m_strRecvFilePath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath + "tmpFileRecv\\");
 		SysSet.m_strErrorPkg = CMyCodeConvert::Utf8ToGb2312(strCurrentPath + "errorPkg\\");
 		SysSet.m_strReSendPkg = CMyCodeConvert::Utf8ToGb2312(strCurrentPath + "ReSendInfo\\");
-
+		SysSet.m_strNewGuardProcessPath = CMyCodeConvert::Utf8ToGb2312(strCurrentPath + "NewGuardProcess\\");
 		
-
 		InitParam();
 		
 #ifdef POCO_OS_FAMILY_WINDOWS
@@ -1091,13 +1105,33 @@ protected:
 		Poco::UnicodeConverter::toUTF16(szTitle, wstrTitle);
 		SetConsoleTitle(wstrTitle.c_str());
 #endif
-		
+		std::thread tDelFiles([]() {
+			try 
+			{
+				Poco::File decompressDir(SysSet.m_strDecompressPath);
+				if (decompressDir.exists())
+					decompressDir.remove(true);
+				decompressDir.createDirectories();
+			}
+			catch (Poco::Exception& exc)
+			{
+				std::string strErrInfo;
+				strErrInfo.append("删除解压文件夹异常: ");
+				strErrInfo.append(exc.message());
+				g_Log.LogOutError(strErrInfo);
+				std::cout << strErrInfo << std::endl;
+				return 0;
+			}
+			std::cout << "删除解压文件夹完成。\n";
+		});
+		tDelFiles.detach();
+
 		try
 		{
-			Poco::File decompressDir(SysSet.m_strDecompressPath);
-			if (decompressDir.exists())
-				decompressDir.remove(true);
-			decompressDir.createDirectories();
+// 			Poco::File decompressDir(SysSet.m_strDecompressPath);
+// 			if (decompressDir.exists())
+// 				decompressDir.remove(true);
+// 			decompressDir.createDirectories();
 
 			Poco::File fileRecvDir(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strUpLoadPath));
 			if (!fileRecvDir.exists())
@@ -1124,6 +1158,10 @@ protected:
 			Poco::File reSendDir(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strReSendPkg));
 			if (!reSendDir.exists())
 				reSendDir.createDirectories();
+
+			Poco::File newGuardExe(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strNewGuardProcessPath));
+			if (!newGuardExe.exists())
+				newGuardExe.createDirectories();
 		}
 		catch (Poco::Exception& exc)
 		{
@@ -1137,7 +1175,8 @@ protected:
 		}
 // 		unsigned threadID;
 // 		_beginthreadex(NULL, 0, ReleaseDirThread, pPapers, 0, &threadID);
-		
+
+		std::cout << "文件夹初始化完成" << std::endl;
 
 	#ifdef THREAD_INIT_START
 		std::thread tInit(InitDataThread, config().getString("application.dir"));
@@ -1145,7 +1184,8 @@ protected:
 	#else
 		InitModelInfo();
 		InitPapersList();
-		InitReSendInfo();
+		InitReSendInfo(); 
+		InitGuardExeInfo();
 	#endif
 
 		std::vector<CDecompressThread*> vecDecompressThreadObj;

@@ -543,7 +543,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			sprintf(szIndex, "%d_%d", stModelInfo.nExamID, stModelInfo.nSubjectID);
 
 			std::cout << "请求自动创建模板命令: " << szIndex << std::endl;
-		#if 1
+
 			_mapModelLock_.lock();
 			pMODELINFO pModelInfo = NULL;
 			MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
@@ -570,41 +570,6 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			g_fmScanReq.lock();
 			g_lScanReq.push_back(pTask);
 			g_fmScanReq.unlock();
-		#else
-			_mapModelLock_.lock();
-			pMODELINFO pModelInfo = NULL;
-			MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
-			if (itFind == _mapModel_.end())		//服务器上没有模板，请求后端提供数据生成模板
-			{
-				pModelInfo = new MODELINFO;
-				pModelInfo->nExamID = stModelInfo.nExamID;
-				pModelInfo->nSubjectID = stModelInfo.nSubjectID;
-
-				_mapModel_.insert(MAP_MODEL::value_type(szIndex, pModelInfo));
-				_mapModelLock_.unlock();
-
-				pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
-				pTask->strUri = Poco::format("%s/sheet/data/%d/%d", SysSet.m_strBackUri, stModelInfo.nExamID, stModelInfo.nSubjectID);
-				pTask->pUser = pUser;
-				pTask->strMsg = "createModel";
-				pTask->nExamID = stModelInfo.nExamID;
-				pTask->nSubjectID = stModelInfo.nSubjectID;
-				pTask->strEzs = stModelInfo.szEzs;
-
-				g_fmScanReq.lock();
-				g_lScanReq.push_back(pTask);
-				g_fmScanReq.unlock();
-			}
-			else	//已经存在此模板
-			{
-				_mapModelLock_.unlock();
-				pModelInfo = itFind->second;
-				if (pModelInfo->strMd5.empty())
-					pUser->SendResult(USER_RESPONSE_CREATE_MODEL, RESULT_CREATE_MODEL_DOING);
-				else
-					pUser->SendResult(USER_RESPONSE_CREATE_MODEL, RESULT_CREATE_MODEL_NONEED);
-			}
-		#endif
 		}
 		break;
 	case GET_VERSERVER_ADDR:
@@ -629,8 +594,6 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			pTask->strUri = SysSet.m_strBackUri + "/getStudents";
 			pTask->nExamID = stGetBmkInfo.nExamID;
 			pTask->nSubjectID = stGetBmkInfo.nSubjectID;
-// 			pTask->nExamID = 501;
-// 			pTask->nSubjectID = 383;
 
 			char szExamInfo[30] = { 0 };
 			sprintf(szExamInfo, "/%d/%d", stGetBmkInfo.nExamID, stGetBmkInfo.nSubjectID);
@@ -883,6 +846,22 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			pUser->SendResponesInfo(USER_RESPONSE_GET_MODEL_PIC, RESULT_GET_MODEL_PIC_SUCCESS, (char*)strSendData.c_str(), strSendData.length());
 			ssLog << "模板文件发送完成";
 			g_Log.LogOut(ssLog.str());
+		}
+		break;
+	case USER_CHK_NEW_GUARDEXE:
+		{
+			char szData[1024] = { 0 };
+			strncpy(szData, pMission->m_pMissionData + HEAD_SIZE, header.uPackSize);
+			std::string strClientGuardExeMd5 = szData;
+			if (_strNewGuardExeMd5_.empty())
+			{
+				pUser->SendResult(USER_RESPONSE_CHK_NEW_GUARDEXE, RESULT_GET_NEW_GUARDEXE_NOFILE);
+				return false;
+			}
+
+
+
+
 		}
 		break;
 	case KEEPALIVE_PKG:

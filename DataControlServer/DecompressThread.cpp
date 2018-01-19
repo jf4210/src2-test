@@ -236,11 +236,17 @@ void CDecompressThread::run()
 {
 	while (!g_nExitFlag)
 	{
+		bool bSleepMoreTime = false;
 		pDECOMPRESSTASK pTask = NULL;
 		g_fmDecompressLock.lock();
 		DECOMPRESSTASKLIST::iterator it = g_lDecompressTask.begin();
 		for (; it != g_lDecompressTask.end();)
 		{
+			if (g_lHttpSend.size() > 1000)
+			{
+				bSleepMoreTime = true;
+				break;
+			}
 			pTask = *it;
 			it = g_lDecompressTask.erase(it);
 			break;
@@ -248,7 +254,10 @@ void CDecompressThread::run()
 		g_fmDecompressLock.unlock();
 		if (NULL == pTask)
 		{
-			Poco::Thread::sleep(200);
+			if (bSleepMoreTime)
+				Poco::Thread::sleep(2000);
+			else
+				Poco::Thread::sleep(1000);
 			continue;
 		}
 

@@ -194,6 +194,51 @@ BOOL GetVerServerAddr()
 	return TRUE;
 }
 
+void GetFileList(CString strPath, CString strParentDirName)
+{
+	USES_CONVERSION;
+	CFileFind ff;
+	BOOL bFind = ff.FindFile(strPath + _T("*"), 0);
+	while (bFind)
+	{
+		bFind = ff.FindNextFileW();
+		if (ff.GetFileName() == _T(".") || ff.GetFileName() == _T(".."))
+			continue;
+		else if (ff.IsDirectory())
+		{
+			CString strDirName = ff.GetFileName();
+			if (strDirName == _T("updateVersion"))
+				continue;
+
+			CString strPath = ff.GetFilePath();
+			GetFileList(strPath + _T("\\"), strParentDirName + ff.GetFileName() + _T("\\"));
+		}
+		else
+		{
+			CString strName = strParentDirName + ff.GetFileName();
+			if (strName.Find(_T(".Log")) != -1 || strName.Find(_T(".log")) != -1 || \
+				strName.Find(_T(".pkg")) != -1 || strName.Find(_T(".typkg")) != -1 || strName.Find(_T(".mod")) != -1 || \
+				strName.Find(_T(".dmp")) != -1)
+				continue;
+
+			MAP_FILEINFO::iterator itFile = g_LocalFileMap.find(T2A(strName));
+			if (itFile != g_LocalFileMap.end())
+				continue;
+
+			pST_FILEINFO pFileInfo = new ST_FILEINFO;
+			pFileInfo->strFileName = T2A(strName);
+			pFileInfo->strFilePath = T2A(ff.GetFilePath());
+			char *pMd5 = MD5File(T2A(ff.GetFilePath()));
+			pFileInfo->strMd5 = pMd5;
+
+			g_mutex_LFM.Lock();
+			g_LocalFileMap.insert(MAP_FILEINFO::value_type(pFileInfo->strFileName, pFileInfo));
+			g_mutex_LFM.Unlock();
+		}
+	}
+	ff.Close();
+}
+
 BOOL GetLocalFileList()
 {
 	g_mutex_LFM.Lock();
@@ -214,74 +259,7 @@ BOOL GetLocalFileList()
 	g_mutex_LFM.Unlock();
 
 	TRACE("开始获取本地文件列表。。。\n");
-	USES_CONVERSION;
-	CFileFind ff;
-	BOOL bFind = ff.FindFile(g_strAppPath + _T("*"), 0);
-	while (bFind)
-	{
-		bFind = ff.FindNextFileW();
-		if (ff.GetFileName() == _T(".") || ff.GetFileName() == _T(".."))
-			continue;
-		else if (ff.IsDirectory())
-		{
-			CString strDirName = ff.GetFileName();
-			if (strDirName == _T("updateVersion"))
-				continue;
-
-			CString strPath = ff.GetFilePath();
-			CFileFind ff2;
-			BOOL bFind2 = ff2.FindFile(ff.GetFilePath() + _T("\\*"));
-			while (bFind2)
-			{
-				bFind2 = ff2.FindNextFileW();
-				if (ff2.GetFileName() == _T(".") || ff2.GetFileName() == _T(".."))
-					continue;
-				else if (ff2.IsArchived())	//!ff2.IsDirectory()
-				{
-					CString strName = ff2.GetFileName();
-					if (strName.Find(_T(".pkg")) != -1 || strName.Find(_T(".typkg")) != -1 || strName.Find(_T(".mod")) != -1)
-						continue;
-
-					MAP_FILEINFO::iterator itFile = g_LocalFileMap.find(T2A(strDirName + _T("\\") + ff2.GetFileName()));
-					if (itFile != g_LocalFileMap.end())
-						continue;
-
-					pST_FILEINFO pFileInfo = new ST_FILEINFO;
-					pFileInfo->strFileName = T2A(strDirName + _T("\\") + ff2.GetFileName());
-					pFileInfo->strFilePath = T2A(ff2.GetFilePath());
-					char *pMd5 = MD5File(T2A(ff2.GetFilePath()));
-					pFileInfo->strMd5 = pMd5;
-
-					g_mutex_LFM.Lock();
-					g_LocalFileMap.insert(MAP_FILEINFO::value_type(pFileInfo->strFileName, pFileInfo));
-					g_mutex_LFM.Unlock();
-				}
-			}
-			ff2.Close();
-		}
-		else
-		{
-			CString strName = ff.GetFileName();
-			if (strName.Find(_T(".Log")) != -1 || strName.Find(_T(".log")) != -1)
-				continue;
-
-			MAP_FILEINFO::iterator itFile = g_LocalFileMap.find(T2A(ff.GetFileName()));
-			if (itFile != g_LocalFileMap.end())
-				continue;
-
-			pST_FILEINFO pFileInfo = new ST_FILEINFO;
-			pFileInfo->strFileName = T2A(ff.GetFileName());
-			pFileInfo->strFilePath = T2A(ff.GetFilePath());
-			char *pMd5 = MD5File(T2A(ff.GetFilePath()));
-			pFileInfo->strMd5 = pMd5;
-
-			g_mutex_LFM.Lock();
-			g_LocalFileMap.insert(MAP_FILEINFO::value_type(pFileInfo->strFileName, pFileInfo));
-			g_mutex_LFM.Unlock();
-		}
-	}
-	ff.Close();
-
+	GetFileList(g_strAppPath, _T(""));
 	TRACE("获取本地文件列表成功\n");
 	return TRUE;
 }
@@ -314,8 +292,8 @@ BOOL GetFileList()
 		return FALSE;
 	}
 
-	char szRecvBuf[BUFSIZE * 2] = { 0 };
-	int recvLen = recv(g_sock, szRecvBuf, BUFSIZE * 2, 0);
+	char szRecvBuf[BUFSIZE * 20] = { 0 };
+	int recvLen = recv(g_sock, szRecvBuf, BUFSIZE * 20, 0);
 	if (recvLen <= 0)
 	{
 		g_bConnect = FALSE;
@@ -458,10 +436,18 @@ BOOL DownLoadFile(std::string& strName)
 			int nPos = strName.find("\\");
 			if (nPos != std::string::npos)
 			{
-				CString strSubDir = strUpdatePath + A2T(strName.substr(0, nPos).c_str());
-				DWORD dwAttr = GetFileAttributesA(T2A(strSubDir));
-				if (dwAttr == 0xFFFFFFFF)
-					CreateDirectoryA(T2A(strSubDir), NULL);
+				while (nPos != std::string::npos)
+				{
+					CString strSubDir = strUpdatePath + A2T(strName.substr(0, nPos).c_str());
+					DWORD dwAttr = GetFileAttributesA(T2A(strSubDir));
+					if (dwAttr == 0xFFFFFFFF)
+						CreateDirectoryA(T2A(strSubDir), NULL);
+					nPos = strName.find("\\", nPos + 1);
+				}
+// 				CString strSubDir = strUpdatePath + A2T(strName.substr(0, nPos).c_str());
+// 				DWORD dwAttr = GetFileAttributesA(T2A(strSubDir));
+// 				if (dwAttr == 0xFFFFFFFF)
+// 					CreateDirectoryA(T2A(strSubDir), NULL);
 			}
 
 			CString strFilePath = strUpdatePath + A2T(strName.c_str());
@@ -567,7 +553,7 @@ BOOL DownLoadAllFile()
 				bFind = true;
 				CString strNewFilePath = g_strAppPath + _T("updateVersion\\") + A2T(strDLName.c_str());
 				char *pMd5 = MD5File(T2A(strNewFilePath));
-				if (pFileInfo->strMd5 == pMd5)
+				if (pFileInfo->strMd5 == std::string(pMd5))
 				{
 					nFailTimes = 0;
 					g_mutex_DFL.Lock();
@@ -618,7 +604,6 @@ BOOL SendUpdataResult(std::string& strResult)
 
 DWORD WINAPI MyWork(LPVOID lParam)
 {
-	char recvbuf[BUFSIZE] = { 0 };
 	int ret;
 	int nConnectFailTimes = 0;		//连接版本控制服务器失败次数，如果连续超过10次，重新请求版本控制服务器地址
 	BOOL bGetVerServerAddr = FALSE;

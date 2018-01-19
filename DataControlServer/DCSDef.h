@@ -31,7 +31,7 @@
 #define THREAD_INIT_START	//启动时在线程中初始化
 
 #ifndef TO_WHTY
-	#define SOFT_VERSION "DataControlServer V2.70117-2-xinjiang"
+	#define SOFT_VERSION "DataControlServer V2.70119-2-xinjiang"
 	#define SOFT_VERSION4TY "DataControlServer for TY V2.7-0115"
 #else
 	#define SOFT_VERSION "DataControlServer for TY V2.1-0309"
@@ -41,6 +41,7 @@
 
 extern CLog g_Log;
 extern int	g_nExitFlag;
+extern std::string		_strNewGuardExeMd5_;	//新守护进程的MD5，不存在时为空
 
 //===========================
 extern int		g_nRecogGrayMin;		//灰度点(除空白点,OMR外)计算灰度的最小考试范围

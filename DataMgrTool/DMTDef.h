@@ -14,11 +14,13 @@
 //****************************************************************
 //****************************************************************
 
+#define TMP_RECOG_CHARACT	//识别文字时的临时设置，方向左旋90，后面记得改正	*************************************
 
 //#define PIC_RECTIFY_TEST	//图像旋转纠正测试
 #define WarpAffine_TEST		//仿射变换测试
 #define PaintOmrSnRect		//是否打印识别出来的OMR矩形
 #define PrintRunTime		//打印运行时间
+#define PrintWordRecogPoint	//打印通过文字定位时计算出来的矩形坐标点位置
 #ifdef _DEBUG
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define PrintAllOmrVal		//打印所有OMR选项值
@@ -45,7 +47,7 @@
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION	_T("1.80106-1")
+#define SOFT_VERSION	_T("1.80119-1-Test")
 #define SYS_BASE_NAME	_T("YKLX-DMT")
 //#define WH_CCBKS		//武汉楚才杯专用，解析二维码需要json解析
 

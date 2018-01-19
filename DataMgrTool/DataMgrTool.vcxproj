@@ -125,7 +125,9 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\common\BasePocoHead.h" />
     <ClInclude Include="..\..\common\modelInfo.h" />
+    <ClInclude Include="..\..\common\ModelMgr.h" />
     <ClInclude Include="AnswerShowDlg.h" />
     <ClInclude Include="BmpButton.h" />
     <ClInclude Include="CompressThread.h" />
@@ -176,6 +178,7 @@
     <ClInclude Include="XListCtrl\XTrace.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\common\ModelMgr.cpp" />
     <ClCompile Include="AnswerShowDlg.cpp" />
     <ClCompile Include="BmpButton.cpp" />
     <ClCompile Include="CompressThread.cpp" />

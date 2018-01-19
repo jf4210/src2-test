@@ -234,6 +234,7 @@ private:
 	void InitConf();
 	void InitParam();
 	bool UploadModel(CString strModelPath, pMODEL pModel);		//上传模板文件
+	void GetPicRotation();		//获取图像的保存方向
 
 	void UpdataCPList();
 	void UpdateCPListByType();		//根据校验点类型更改显示样式

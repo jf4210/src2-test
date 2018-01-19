@@ -12,7 +12,7 @@
 #include "ModifyZkzhDlg.h"
 #include "PapersMgr.h"
 #include "NewMessageBox.h"
-
+#include "ModelMgr.h"
 using namespace cv;
 using namespace std;
 // CPaperInputDlg ¶Ô»°¿ò
@@ -1006,7 +1006,16 @@ void CPaperInputDlg::OnCbnSelchangeComboModellist()
 		delete m_pModel;
 		m_pModel = NULL;
 	}
+#ifdef TEST_ModelMgr
+	USES_CONVERSION;
+	std::string modelPath = T2A(g_strCurrentPath + _T("Model\\"));
+	std::string strModelFilePath = modelPath + T2A(strModelName);
+	CModelMgr modelObj;
+	modelObj.SeBaseInfo(modelPath, g_strEncPwd);
+	m_pModel = modelObj.LoadModelFile(strModelFilePath);
+#else
 	m_pModel = LoadModelFile(strModelPath);
+#endif
 	m_ncomboCurrentSel = m_comboModel.GetCurSel();
 
 	m_nModelPicNums = m_pModel->nPicNum;

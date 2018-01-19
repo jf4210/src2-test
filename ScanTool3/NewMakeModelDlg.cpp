@@ -10,6 +10,7 @@
 #include "CreateModelDlg.h"
 #include "Net_Cmd_Protocol.h"
 #include "GetModelDlg.h"
+#include "ModelMgr.h"
 // CMakeModelDlg 对话框
 
 IMPLEMENT_DYNAMIC(CNewMakeModelDlg, CDialog)
@@ -360,9 +361,16 @@ pMODEL CNewMakeModelDlg::LoadSubjectModel(pEXAM_SUBJECT pSubModel)
 	CZipObj zipObj;
 	zipObj.setLogger(g_pLogger);
 	zipObj.UnZipFile(A2T(strModelPath.c_str()));
-
+#ifdef TEST_ModelMgr
+	std::string modelPath = T2A(g_strCurrentPath + _T("Model\\"));
+	std::string strModelFilePath = modelPath + strBaseModelName;
+	CModelMgr modelObj;
+	modelObj.SeBaseInfo(modelPath, g_strEncPwd);
+	pMODEL pModel = modelObj.LoadModelFile(strModelFilePath);
+#else
 	CString strModelFilePath = g_strCurrentPath + _T("Model\\") + A2T(strBaseModelName.c_str());
 	pMODEL pModel = LoadModelFile(strModelFilePath);
+#endif
 	if (pModel)
 	{
 		std::string strLog = "加载模板(" + pModel->strModelName + ")完成";

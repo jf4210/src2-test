@@ -2293,6 +2293,41 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 // 			}
 			omrResult.lSelAnswer.push_back(rc);
 
+			#ifdef PrintWordRecogPoint
+			if (pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0 && pPic->lModelWordFix.size() > 0)
+			{
+
+				VEC_NEWRTBY2FIX vecNewRt;
+				RECTLIST::iterator itFix = pPic->lFix.begin();
+				RECTLIST::iterator itModelFix = pPic->lModelWordFix.begin();
+				itFix++;
+				itModelFix++;
+				for (int i = 1; itFix != pPic->lFix.end(); itFix++, itModelFix++, i++)
+				{
+					RECTLIST lTmpFix, lTmpModelFix;
+					lTmpFix.push_back(pPic->lFix.front());
+					lTmpModelFix.push_back(pPic->lModelWordFix.front());
+
+					lTmpFix.push_back(*itFix);
+					lTmpModelFix.push_back(*itModelFix);
+
+					ST_NEWRTBY2FIX stNewRt;
+					stNewRt.nFirstFix = 0;
+					stNewRt.nSecondFix = i;
+					stNewRt.rt = itOmrItem->rt;
+					GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
+					vecNewRt.push_back(stNewRt);
+				}
+				for (auto newRt : vecNewRt)
+				{
+					RECTINFO rcTmp;
+					rcTmp = rc;
+					rcTmp.rt = newRt.rt;
+
+					pPic->lCalcRect.push_back(rcTmp);
+				}
+			}
+			#endif
 			#ifdef PaintOmrSnRect	//´òÓ¡OMR¡¢SNÎ»ÖÃ
 			pPic->lNormalRect.push_back(rc);
 			#endif
@@ -4129,6 +4164,40 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 #endif
 			pSn->lSN.push_back(rc);
 
+#ifdef PrintWordRecogPoint
+			if (pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0 && pPic->lModelWordFix.size() > 0)
+			{
+				VEC_NEWRTBY2FIX vecNewRt;
+				RECTLIST::iterator itFix = pPic->lFix.begin();
+				RECTLIST::iterator itModelFix = pPic->lModelWordFix.begin();
+				itFix++;
+				itModelFix++;
+				for (int i = 1; itFix != pPic->lFix.end(); itFix++, itModelFix++, i++)
+				{
+					RECTLIST lTmpFix, lTmpModelFix;
+					lTmpFix.push_back(pPic->lFix.front());
+					lTmpModelFix.push_back(pPic->lModelWordFix.front());
+
+					lTmpFix.push_back(*itFix);
+					lTmpModelFix.push_back(*itModelFix);
+
+					ST_NEWRTBY2FIX stNewRt;
+					stNewRt.nFirstFix = 0;
+					stNewRt.nSecondFix = i;
+					stNewRt.rt = itSnItem->rt;
+					GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
+					vecNewRt.push_back(stNewRt);
+				}
+				for (auto newRt : vecNewRt)
+				{
+					RECTINFO rcTmp;
+					rcTmp = rc;
+					rcTmp.rt = newRt.rt;
+
+					pPic->lCalcRect.push_back(rcTmp);
+				}
+			}
+#endif
 #ifdef PaintOmrSnRect	//´òÓ¡OMR¡¢SNÎ»ÖÃ
 			pPic->lNormalRect.push_back(rc);
 #endif
@@ -4614,12 +4683,17 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo
 
 			Mat matCompRoi;
 			matCompRoi = matCompPic(pstBigRecogCharRt->rt);
+		#ifdef TMP_RECOG_CHARACT
+			cv::Mat dst;
+			transpose(matCompRoi, dst);	//×óÐý90£¬¾µÏñ 
+			flip(dst, matCompRoi, 0);		//×óÐý90£¬Ä£°åÍ¼ÏñÐèÒªÓÒÐý90£¬Ô­Í¼¼´ÐèÒª×óÐý90
+		#endif
 
 			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
 			GaussianBlur(matCompRoi, matCompRoi, cv::Size(pstBigRecogCharRt->nGaussKernel, pstBigRecogCharRt->nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
 			SharpenImage(matCompRoi, matCompRoi, pstBigRecogCharRt->nSharpKernel);
-
+			
 			double dThread = threshold(matCompRoi, matCompRoi, pstBigRecogCharRt->nThresholdValue, 255, THRESH_OTSU | THRESH_BINARY);
 
 #ifdef USE_TESSERACT

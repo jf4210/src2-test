@@ -118,8 +118,10 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\common\BasePocoHead.h" />
     <ClInclude Include="..\..\common\md5.h" />
     <ClInclude Include="..\..\common\modelInfo.h" />
+    <ClInclude Include="..\..\common\ModelMgr.h" />
     <ClInclude Include="..\..\common\Net_Cmd_Protocol.h" />
     <ClInclude Include="..\..\common\unzip.h" />
     <ClInclude Include="..\..\common\zip.h" />
@@ -224,6 +226,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\common\md5.cpp" />
+    <ClCompile Include="..\..\common\ModelMgr.cpp" />
     <ClCompile Include="..\..\common\unzip.cpp" />
     <ClCompile Include="..\..\common\zip.cpp" />
     <ClCompile Include="..\..\include\twain\CommonTWAIN.cpp">

@@ -989,6 +989,18 @@ void CScanTool3Dlg::DrawBorder(CDC *pDC)
 	pPen.Detach();
 }
 
+void CScanTool3Dlg::CheNewGuardProcess()
+{
+	//如果本地存在守护进程则检查是否有新的守护进程
+
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_CHK_NEW_GUARDEXE;
+	pTcpTask->nPkgLen = 0;
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
+}
+
 BOOL CScanTool3Dlg::OnEraseBkgnd(CDC* pDC)
 {
 	CDialog::OnEraseBkgnd(pDC);
