@@ -3068,6 +3068,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 
 	m_pModel->nZkzhType = m_pSNInfoDlg->m_nZkzhType;
 	bool bHasElectOmr = false;
+	GetPicRotation();
 
 	m_pModel->nPicNum = m_vecPaperModelInfo.size();
 	for (int i = 0; i < m_pModel->nPicNum; i++)
@@ -3162,6 +3163,7 @@ void CMakeModelDlg::OnBnClickedBtnSave()
 
 		pPaperModel->nPicW = m_vecPaperModelInfo[i]->nPicW;
 		pPaperModel->nPicH = m_vecPaperModelInfo[i]->nPicH;
+		pPaperModel->nPicSaveRotation = m_vecPaperModelInfo[i]->nPicSaveRotation;
 
 		m_pModel->vecPaperModel.push_back(pPaperModel);
 	}
@@ -3771,6 +3773,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 		jsnPaperObj.set("electOmrList", jsnElectOmrArry);
 		jsnPaperObj.set("characterAnchorArea", jsnCharacterAnchorAreaArry);
 
+		jsnPaperObj.set("picSaveRotion", pModel->vecPaperModel[i]->nPicSaveRotation);
 		jsnPaperObj.set("picW", pModel->vecPaperModel[i]->nPicW);		//add on 16.8.29
 		jsnPaperObj.set("picH", pModel->vecPaperModel[i]->nPicH);		//add on 16.8.29
 		jsnPaperObj.set("rtHTracker.x", pModel->vecPaperModel[i]->rtHTracker.x);
@@ -8510,12 +8513,12 @@ void CMakeModelDlg::GetPicRotation()
 
 	//0:未知方向，1: 正常视觉方向(考试作答方向)，2-正常方向左旋90后的方向，3-正常方向右旋90后的方向，4-正常方向旋转180度后的方向
 	int nRotation = 0;
-	for (int i = 0; i < m_pModel->vecPaperModel.size(); i++)
+	for (int i = 0; i < m_vecPaperModelInfo.size(); i++)
 	{
-		if (m_pModel->nZkzhType == 1 && m_pModel->vecPaperModel[i]->lSNInfo.size() > 1)
+		if (m_pModel->nZkzhType == 1 && m_vecPaperModelInfo[i]->lSN.size() > 1)
 		{
-			SNLIST::iterator itFirstSNItem = m_pModel->vecPaperModel[i]->lSNInfo.begin();
-			//SNLIST::iterator itSecondSNItem = ++m_pModel->vecPaperModel[i]->lSNInfo.begin();
+			SNLIST::iterator itFirstSNItem = m_vecPaperModelInfo[i]->lSN.begin();
+			//SNLIST::iterator itSecondSNItem = ++m_vecPaperModelInfo[i]->lSN.begin();
 			pSN_ITEM pFirstSnItem = *itFirstSNItem;
 			//根据一组考号的0-9位置，判断从上到下还是从下到上
 			RECTLIST::iterator itFirstRc = pFirstSnItem->lSN.begin();
@@ -8530,10 +8533,23 @@ void CMakeModelDlg::GetPicRotation()
 		}
 		if (0 == nRotation)		//通过准考证号无法判断，使用选择题omr
 		{
-
+			if (m_vecPaperModelInfo[i]->vecOmr2.size() > 1)
+			{
+				//OMRLIST::iterator itFirstOmrItem = m_pModel->vecPaperModel[i]->lOMR2.begin();
+				RECTLIST::iterator itFirstRc = m_vecPaperModelInfo[i]->vecOmr2[0].lSelAnswer.begin();
+				//RECTLIST::iterator itSecondRc = ++itFirstOmrItem->lSelAnswer.begin();
+				if (itFirstRc->nRecogFlag == 26 || itFirstRc->nRecogFlag == 42)
+					nRotation = 1;
+				else if (itFirstRc->nRecogFlag == 38 || itFirstRc->nRecogFlag == 25)
+					nRotation = 2;
+				else if (itFirstRc->nRecogFlag == 41 || itFirstRc->nRecogFlag == 22)
+					nRotation = 3;
+				else if (itFirstRc->nRecogFlag == 21 || itFirstRc->nRecogFlag == 37)
+					nRotation = 4;
+			}
 		}
+		m_vecPaperModelInfo[i]->nPicSaveRotation = nRotation;
 	}
-
 }
 
 void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
@@ -9026,6 +9042,7 @@ void CMakeModelDlg::SaveNewModel()
 
 	m_pModel->nZkzhType = m_pSNInfoDlg->m_nZkzhType;
 	bool bHasElectOmr = false;
+	GetPicRotation();
 
 	m_pModel->nPicNum = m_vecPaperModelInfo.size();
 	for (int i = 0; i < m_pModel->nPicNum; i++)
@@ -9139,6 +9156,7 @@ void CMakeModelDlg::SaveNewModel()
 
 		pPaperModel->nPicW = m_vecPaperModelInfo[i]->nPicW;
 		pPaperModel->nPicH = m_vecPaperModelInfo[i]->nPicH;
+		pPaperModel->nPicSaveRotation = m_vecPaperModelInfo[i]->nPicSaveRotation;
 
 		m_pModel->vecPaperModel.push_back(pPaperModel);
 	}

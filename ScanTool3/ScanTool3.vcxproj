@@ -133,6 +133,7 @@
     <ClInclude Include="..\..\include\twain\TwainString.h" />
     <ClInclude Include="AdanceSetMgrDlg.h" />
     <ClInclude Include="AnswerShowDlg.h" />
+    <ClInclude Include="CoordinationConvert.h" />
     <ClInclude Include="GetModelDlg.h" />
     <ClInclude Include="KeepAliveTimer.h" />
     <ClInclude Include="MultiPageExceptionDlg.h" />
@@ -255,6 +256,7 @@
     </ClCompile>
     <ClCompile Include="AdanceSetMgrDlg.cpp" />
     <ClCompile Include="AnswerShowDlg.cpp" />
+    <ClCompile Include="CoordinationConvert.cpp" />
     <ClCompile Include="GetModelDlg.cpp" />
     <ClCompile Include="MultiPageExceptionDlg.cpp" />
     <ClCompile Include="MultiPageMgr.cpp" />

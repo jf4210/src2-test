@@ -3,6 +3,7 @@
 #include "ScanTool3.h"
 #include "OmrRecog.h"
 #include "ScanMgrDlg.h"
+#include "CoordinationConvert.h"
 
 using namespace cv;
 CRecognizeThread::CRecognizeThread()
@@ -25,12 +26,13 @@ void CRecognizeThread::run()
 
 	InitCharacterRecog();
 
-#ifdef XINJIANG_TMP_JINJI
-	USES_CONVERSION;
-	m_pStudentMgr = new CStudentMgr();
-	std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
-	bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
-#endif
+	if (_nUseOcrRecogSn_)
+	{
+		USES_CONVERSION;
+		m_pStudentMgr = new CStudentMgr();
+		std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+		bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+	}
 
 	while (!g_nExitFlag)
 	{
@@ -89,9 +91,7 @@ void CRecognizeThread::run()
 #ifdef USE_TESSERACT
 	SAFE_RELEASE(m_pTess);
 #endif
-#ifdef XINJIANG_TMP_JINJI
 	SAFE_RELEASE(m_pStudentMgr);
-#endif
 	TRACE("RecognizeThread exit 0\n");
 }
 
@@ -982,15 +982,49 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 			}
 
 			Mat matCompRoi;
-			matCompRoi = matCompPic(pstBigRecogCharRt->rt);
+			matCompRoi = matCompPic(pstBigRecogCharRt->rt);		//真坐标
 
 			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
+			switch (pModelInfo->pModel->vecPaperModel[nPic]->nPicSaveRotation)
+			{
+				case 1:	break;
+				case 3:			//图像需要调整到正常的视觉方向(作答方向)，则模板是右旋90，则实际图片需左旋90
+					{
+						cv::Mat dst;
+						transpose(matCompRoi, dst);	//左旋90，镜像 
+						flip(dst, matCompRoi, 0);	//左旋90，模板图像需要右旋90，原图即需要左旋90
+					}
+					break;
+				case 2:			//图像需要调整到正常的视觉方向(作答方向)，则模板是左旋90，则实际图片需右旋90
+					{
+						cv::Mat dst;
+						transpose(matCompRoi, dst);	//左旋90，镜像 
+						flip(dst, matCompRoi, 1);	//右旋90，模板图像需要左旋90，原图即需要右旋90
+					}
+					break;
+				case 4:
+					{
+						cv::Mat dst;
+						transpose(matCompRoi, dst);	//左旋90，镜像 
+						cv::Mat dst2;
+						flip(dst, dst2, 1);
+						cv::Mat dst5;
+						transpose(dst2, dst5);
+						flip(dst5, matCompRoi, 1);	//右旋180
+					}
+					break;
+				default:
+					break;
+			}
+			
 			GaussianBlur(matCompRoi, matCompRoi, cv::Size(pstBigRecogCharRt->nGaussKernel, pstBigRecogCharRt->nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
 			SharpenImage(matCompRoi, matCompRoi, pstBigRecogCharRt->nSharpKernel);
 
 			double dThread = threshold(matCompRoi, matCompRoi, pstBigRecogCharRt->nThresholdValue, 255, THRESH_OTSU | THRESH_BINARY);
 		
+			CCoordinationConvert convertObj(matCompPic);	//坐标转换对象
+			cv::Rect rtShowRect = convertObj.GetShowFakePosRect(pstBigRecogCharRt->rt, pModelInfo->pModel->vecPaperModel[nPic]->nPicSaveRotation);
 		#ifdef USE_TESSERACT
 			m_pTess->SetImage((uchar*)matCompRoi.data, matCompRoi.cols, matCompRoi.rows, 1, matCompRoi.cols);
 
@@ -1015,7 +1049,9 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 				pstRecogCharacterRt->nCannyKernel = pstBigRecogCharRt->nCannyKernel;
 				pstRecogCharacterRt->nDilateKernel = pstBigRecogCharRt->nDilateKernel;
 				pstRecogCharacterRt->nCharacterConfidence = pstBigRecogCharRt->nCharacterConfidence;
-				pstRecogCharacterRt->rt = pstBigRecogCharRt->rt;
+				pstRecogCharacterRt->rt = pstBigRecogCharRt->rt;	//真坐标
+
+				convertObj.SetPicRect(matCompPic.rows, matCompPic.cols);	//改变参照图像的大小，后面计算从假坐标到真坐标时，基准图像的大小已经变化
 
 				//重复字临时登记列表，后面删除所有重复的字
 				std::vector<std::string> vecRepeatWord;
@@ -1028,17 +1064,17 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 						int x1, y1, x2, y2;
 						ri->BoundingBox(level, &x1, &y1, &x2, &y2);
 						Point start, end;
-						start.x = pstBigRecogCharRt->rt.x + x1;
-						start.y = pstBigRecogCharRt->rt.y + y1;
-						end.x = pstBigRecogCharRt->rt.x + x2;
-						end.y = pstBigRecogCharRt->rt.y + y2;
-						Rect rtSrc(start, end);
+						start.x = rtShowRect.x + x1;
+						start.y = rtShowRect.y + y1;
+						end.x = rtShowRect.x + x2;
+						end.y = rtShowRect.y + y2;
+						Rect rtSrc(start, end);		//假坐标
 
 						pST_CHARACTER_ANCHOR_POINT pstCharRt = new ST_CHARACTER_ANCHOR_POINT();
 						pstCharRt->nIndex = nIndex;
 						pstCharRt->fConfidence = conf;
 						pstCharRt->rc.eCPType = CHARACTER_AREA;
-						pstCharRt->rc.rt = rtSrc;
+						pstCharRt->rc.rt = convertObj.GetSrcSaveRect(rtSrc, pModelInfo->pModel->vecPaperModel[nPic]->nPicSaveRotation);
 						pstCharRt->rc.nTH = pstRecogCharacterRt->nIndex;	//记录下当前文字属于第几个大文字识别区
 						pstCharRt->rc.nAnswer = nIndex;						//记录下当前文字属于当前文字识别区中的第几个识别的文字
 
@@ -4286,12 +4322,10 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 				string strTypeName;
 				string strResult = GetQR(matCompRoi, strTypeName);
 
-				#ifdef  XINJIANG_TMP_JINJI
-				if (strResult.empty())
+				if (strResult.empty() && _nUseOcrRecogSn_)
 				{
-					RecogSN_code_Character(matCompPic, rc, pPic, strResult);
+					RecogSN_code_Character(matCompPic, rc, pPic, pModelInfo->pModel->vecPaperModel[nPic]->nPicSaveRotation, strResult);
 				}
-				#endif
 
 				std::string strTmpLog;
 				if (strResult != "")
@@ -4313,6 +4347,12 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 				strLog.append(strTmpLog);
 				break;
 			}
+			catch (...)
+			{
+				std::string strTmpLog = "识别二维码或条码失败(" + pPic->strPicName + "), 未知异常.\n";
+				strLog.append(strTmpLog);
+				break;
+			}
 		}
 	}
 	if ((static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.empty())
@@ -4328,7 +4368,7 @@ bool CRecognizeThread::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 	return bResult;
 }
 
-bool CRecognizeThread::RecogSN_code_Character(cv::Mat& matCompPic, RECTINFO rc, pST_PicInfo pPic, std::string& strRecogSN)
+bool CRecognizeThread::RecogSN_code_Character(cv::Mat& matCompPic, RECTINFO rc, pST_PicInfo pPic, int nPicSrcRotation, std::string& strRecogSN)
 {
 	clock_t sT, eT, mT1, mT2, mT3;
 	sT = clock();
@@ -4432,42 +4472,73 @@ bool CRecognizeThread::RecogSN_code_Character(cv::Mat& matCompPic, RECTINFO rc, 
 
 	mT1 = clock();
 
-	//左旋90
-	cv::Mat dst;
-	transpose(matNameRoi, dst);	//左旋90，镜像 
-	flip(dst, matNameRoi, 0);
+	switch (nPicSrcRotation)
+	{
+		case 1:	break;
+		case 3:			//图像需要调整到正常的视觉方向(作答方向)，则模板是右旋90，则实际图片需左旋90
+			{
+				cv::Mat dst;
+				transpose(matNameRoi, dst);	//左旋90，镜像 
+				flip(dst, matNameRoi, 0);	//左旋90，模板图像需要右旋90，原图即需要左旋90
+			}
+			break;
+		case 2:			//图像需要调整到正常的视觉方向(作答方向)，则模板是左旋90，则实际图片需右旋90
+			{
+				cv::Mat dst;
+				transpose(matNameRoi, dst);	//左旋90，镜像 
+				flip(dst, matNameRoi, 1);	//右旋90，模板图像需要左旋90，原图即需要右旋90
+			}
+			break;
+		case 4:
+			{
+				cv::Mat dst;
+				transpose(matNameRoi, dst);	//左旋90，镜像 
+				cv::Mat dst2;
+				flip(dst, dst2, 1);
+				cv::Mat dst5;
+				transpose(dst2, dst5);
+				flip(dst5, matNameRoi, 1);	//右旋180
+			}
+			break;
+		default:
+			break;
+	}
 
 	mT2 = clock();
-#if 1
-	m_pTess->SetImage((uchar*)matNameRoi.data, matNameRoi.cols, matNameRoi.rows, 1, matNameRoi.cols);
-	m_pTess->Recognize(0);
 
 	std::vector<std::string> vecWord;
-	tesseract::ResultIterator* ri = m_pTess->GetIterator();
-	tesseract::PageIteratorLevel level = tesseract::RIL_SYMBOL;	//RIL_WORD	RIL_SYMBOL
-	if (ri != 0)
+	try
 	{
-		do
-		{
-			const char* word = ri->GetUTF8Text(level);
-			float conf = ri->Confidence(level);
-			if (word && strcmp(word, " ") != 0 && conf >= 0.5)
-			{
-				vecWord.push_back(CMyCodeConvert::Utf8ToGb2312(word));
-				strRecogSN.append(CMyCodeConvert::Utf8ToGb2312(word));
-			}
-		} while (ri->Next(level));
-	}
-#else
-	m_pTess->SetPageSegMode(tesseract::PSM_SINGLE_BLOCK);	//PSM_SINGLE_BLOCK
-	m_pTess->SetImage((uchar*)matNameRoi.data, matNameRoi.cols, matNameRoi.rows, 1, matNameRoi.cols);
+		m_pTess->SetImage((uchar*)matNameRoi.data, matNameRoi.cols, matNameRoi.rows, 1, matNameRoi.cols);
+		m_pTess->Recognize(0);
 
-	char* out = m_pTess->GetUTF8Text();
-	strRecogSN = CMyCodeConvert::Utf8ToGb2312(out);
-#endif
+		tesseract::ResultIterator* ri = m_pTess->GetIterator();
+		tesseract::PageIteratorLevel level = tesseract::RIL_SYMBOL;	//RIL_WORD	RIL_SYMBOL
+		if (ri != 0)
+		{
+			do
+			{
+				const char* word = ri->GetUTF8Text(level);
+				float conf = ri->Confidence(level);
+				if (word && strcmp(word, " ") != 0 && conf >= 0.5)
+				{
+					vecWord.push_back(CMyCodeConvert::Utf8ToGb2312(word));
+					strRecogSN.append(CMyCodeConvert::Utf8ToGb2312(word));
+				}
+			} while (ri->Next(level));
+		}
+// 		m_pTess->SetPageSegMode(tesseract::PSM_SINGLE_BLOCK);	//PSM_SINGLE_BLOCK
+// 		m_pTess->SetImage((uchar*)matNameRoi.data, matNameRoi.cols, matNameRoi.rows, 1, matNameRoi.cols);
+// 		char* out = m_pTess->GetUTF8Text();
+// 		strRecogSN = CMyCodeConvert::Utf8ToGb2312(out);
+	}
+	catch (...)
+	{
+		std::string strTmpLog;
+		strTmpLog = "识别ocr异常.\n";
+	}
 	mT3 = clock();
 
-#ifdef XINJIANG_TMP_JINJI
 	bool bFind = false;
 	int nMaxTime = vecWord.size() > 5 ? 5 : vecWord.size();
 	for (int i = 0; i <= nMaxTime; i++)
@@ -4500,7 +4571,6 @@ bool CRecognizeThread::RecogSN_code_Character(cv::Mat& matCompPic, RECTINFO rc, 
 			strRecogSN.append(vecWord[j]);
 		(static_cast<pST_PaperInfo>(pPic->pPaper))->strRecogSN4Search = strRecogSN;
 	}
-#endif
 	eT = clock();
 
 	USES_CONVERSION;

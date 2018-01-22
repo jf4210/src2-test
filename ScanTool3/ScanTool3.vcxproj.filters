@@ -522,6 +522,9 @@
     <ClInclude Include="..\..\common\ModelMgr.h">
       <Filter>识别模板管理</Filter>
     </ClInclude>
+    <ClInclude Include="CoordinationConvert.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -796,6 +799,9 @@
     </ClCompile>
     <ClCompile Include="..\..\common\ModelMgr.cpp">
       <Filter>识别模板管理</Filter>
+    </ClCompile>
+    <ClCompile Include="CoordinationConvert.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

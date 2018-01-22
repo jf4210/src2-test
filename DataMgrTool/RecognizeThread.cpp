@@ -2,6 +2,7 @@
 #include "RecognizeThread.h"
 #include "DataMgrTool.h"
 #include "DataMgrToolDlg.h"
+#include "CoordinationConvert.h"
 
 using namespace cv;
 CRecognizeThread::CRecognizeThread()
@@ -4683,19 +4684,48 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo
 
 			Mat matCompRoi;
 			matCompRoi = matCompPic(pstBigRecogCharRt->rt);
-		#ifdef TMP_RECOG_CHARACT
-			cv::Mat dst;
-			transpose(matCompRoi, dst);	//左旋90，镜像 
-			flip(dst, matCompRoi, 0);		//左旋90，模板图像需要右旋90，原图即需要左旋90
-		#endif
 
 			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
+
+			switch (pModelInfo->pModel->vecPaperModel[nPic]->nPicSaveRotation)
+			{
+				case 1:	break;
+				case 3:			//图像需要调整到正常的视觉方向(作答方向)，则模板是右旋90，则实际图片需左旋90
+					{
+						cv::Mat dst;
+						transpose(matCompRoi, dst);	//左旋90，镜像 
+						flip(dst, matCompRoi, 0);	//左旋90，模板图像需要右旋90，原图即需要左旋90
+					}
+					break;
+				case 2:			//图像需要调整到正常的视觉方向(作答方向)，则模板是左旋90，则实际图片需右旋90
+					{
+						cv::Mat dst;
+						transpose(matCompRoi, dst);	//左旋90，镜像 
+						flip(dst, matCompRoi, 1);	//右旋90，模板图像需要左旋90，原图即需要右旋90
+					}
+					break;
+				case 4:
+					{
+						cv::Mat dst;
+						transpose(matCompRoi, dst);	//左旋90，镜像 
+						cv::Mat dst2;
+						flip(dst, dst2, 1);
+						cv::Mat dst5;
+						transpose(dst2, dst5);
+						flip(dst5, matCompRoi, 1);	//右旋180
+					}
+					break;
+				default:
+					break;
+			}
 
 			GaussianBlur(matCompRoi, matCompRoi, cv::Size(pstBigRecogCharRt->nGaussKernel, pstBigRecogCharRt->nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
 			SharpenImage(matCompRoi, matCompRoi, pstBigRecogCharRt->nSharpKernel);
 			
 			double dThread = threshold(matCompRoi, matCompRoi, pstBigRecogCharRt->nThresholdValue, 255, THRESH_OTSU | THRESH_BINARY);
-
+			
+			CCoordinationConvert convertObj(matCompPic);	//坐标转换对象
+			cv::Rect rtShowRect = convertObj.GetShowFakePosRect(pstBigRecogCharRt->rt, pModelInfo->pModel->vecPaperModel[nPic]->nPicSaveRotation);
 #ifdef USE_TESSERACT
 			m_pTess->SetImage((uchar*)matCompRoi.data, matCompRoi.cols, matCompRoi.rows, 1, matCompRoi.cols);
 
@@ -4720,7 +4750,9 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo
 				pstRecogCharacterRt->nCannyKernel = pstBigRecogCharRt->nCannyKernel;
 				pstRecogCharacterRt->nDilateKernel = pstBigRecogCharRt->nDilateKernel;
 				pstRecogCharacterRt->nCharacterConfidence = pstBigRecogCharRt->nCharacterConfidence;
-				pstRecogCharacterRt->rt = pstBigRecogCharRt->rt;
+				pstRecogCharacterRt->rt = pstBigRecogCharRt->rt;	//真坐标
+
+				convertObj.SetPicRect(matCompPic.rows, matCompPic.cols);	//改变参照图像的大小，后面计算从假坐标到真坐标时，基准图像的大小已经变化
 
 				//重复字临时登记列表，后面删除所有重复的字
 				std::vector<std::string> vecRepeatWord;
@@ -4743,7 +4775,7 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo
 						pstCharRt->nIndex = nIndex;
 						pstCharRt->fConfidence = conf;
 						pstCharRt->rc.eCPType = CHARACTER_AREA;
-						pstCharRt->rc.rt = rtSrc;
+						pstCharRt->rc.rt = convertObj.GetSrcSaveRect(rtSrc, pModelInfo->pModel->vecPaperModel[nPic]->nPicSaveRotation);;
 						pstCharRt->rc.nTH = pstRecogCharacterRt->nIndex;	//记录下当前文字属于第几个大文字识别区
 						pstCharRt->rc.nAnswer = nIndex;						//记录下当前文字属于当前文字识别区中的第几个识别的文字
 

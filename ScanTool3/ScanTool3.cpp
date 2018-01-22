@@ -99,7 +99,7 @@ bool InitConfig()
 	g_nCmdPort = pConf->getInt("Server.cmdPort", 19980);
 	_nPicNum4Ty_ = pConf->getInt("WHTY.picNums", 2);
 
-	_nUseNameRecogSn_ = pConf->getInt("Recog.useNameRecogSn", 0);
+	_nUseOcrRecogSn_ = pConf->getInt("Recog.useOcrRecogSn", 0);
 
 	_strMainTitle_ = pConf->getString("Title.mainTitle", "»ÛÑ§É¨Ãè¿Í»§¶Ë");
 	_strLitteTitle_ = pConf->getString("Title.littleTitle", "Tianyu big data scan tool");

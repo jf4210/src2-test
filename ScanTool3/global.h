@@ -52,8 +52,6 @@
 	#include "leptonica/allheaders.h"
 #endif
 
-#define XINJIANG_TMP_JINJI		//新疆项目紧急处理
-
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法
 	#ifndef TriangleSide_TEST
@@ -122,7 +120,7 @@ extern std::string _strMainTitle_;
 extern std::string _strLitteTitle_;
 //--
 
-extern int				_nUseNameRecogSn_;		//使用文字识别准考证号
+extern int				_nUseOcrRecogSn_;		//使用OCR识别准考证号
 
 													//++登录信息
 extern bool	_bHandModel_;			//是否是手阅模式，手阅模式是天喻用
@@ -274,6 +272,8 @@ typedef struct _PicInfo_				//图片信息
 	bool			bRecogCourse;		//科目识别是否正确
 	int 			nRecoged;		//是否已经识别过, 0-未识别，1-正在识别，2-识别完成
 	int				nRecogRotation;	//识别过程中判断需要调整的方向，1:针对模板图像需要进行的旋转，正向，不需要旋转，2：右转90(模板图像旋转), 3：左转90(模板图像旋转), 4：右转180(模板图像旋转)
+	int				nPicSaveRotation;/*图像的原始方向，相对视觉的方向(即考试作答方向)，在文字识别时要调整到视觉正常方向，模板保存时设置
+									0:未知方向，1: 正常视觉方向(考试作答方向)，2-正常方向左旋90后的方向，3-正常方向右旋90后的方向，4-正常方向旋转180度后的方向*/
 	int				nPicModelIndex;	//图片索引, 设置图片是属于模板的第几页，从0计数
 	int				nPicOldModelIndex;	//针对多页模式，修改图片的模板索引时，记录移动前属于模板的第几页，在移动图片所属试卷的omr等信息时有用
 	int				nQKFlag;			//缺考标识
@@ -296,6 +296,7 @@ typedef struct _PicInfo_				//图片信息
 	_PicInfo_()
 	{
 		nRecogRotation = 0;
+		nPicSaveRotation = 0;
 		nRecoged = 0;
 		nQKFlag = 0;
 		nWJFlag = 0;

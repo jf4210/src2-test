@@ -31,7 +31,8 @@ typedef struct _PaperModelInfo_
 
 	int		nDirection;			//图像默认显示方向，1:针对原始图像需要进行的旋转，正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
 	int		nRotateTimes;		//记录往左往右旋转次数
-
+	int		nPicSaveRotation;	/*图像的原始方向，相对视觉的方向(即考试作答方向)，在文字识别时要调整到视觉正常方向，模板保存时设置
+								0:未知方向，1: 正常视觉方向(考试作答方向)，2-正常方向左旋90后的方向，3-正常方向右旋90后的方向，4-正常方向旋转180度后的方向*/
 	std::string	strModelPicName;	//模板图片的名称
 	CString		strModelPicPath;	//模板图片路径
 	cv::Mat		matSrcImg;			//原始图像的Mat
@@ -61,6 +62,7 @@ typedef struct _PaperModelInfo_
 	{
 		bFirstH = true;
 		bFirstV = true;
+		nPicSaveRotation = 0;
 		nPaper = 0;
 		nPicW = -1;
 		nPicH = -1;
