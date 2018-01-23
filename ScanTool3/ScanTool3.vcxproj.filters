@@ -202,6 +202,9 @@
     <Filter Include="识别模板管理">
       <UniqueIdentifier>{7bb9bc08-c3de-4146-b4c3-e125206363e9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="真假坐标转换">
+      <UniqueIdentifier>{b8e5a26d-9fb4-4179-b6fb-d9d58add9ebb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -523,7 +526,7 @@
       <Filter>识别模板管理</Filter>
     </ClInclude>
     <ClInclude Include="CoordinationConvert.h">
-      <Filter>头文件</Filter>
+      <Filter>真假坐标转换</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -801,7 +804,7 @@
       <Filter>识别模板管理</Filter>
     </ClCompile>
     <ClCompile Include="CoordinationConvert.cpp">
-      <Filter>源文件</Filter>
+      <Filter>真假坐标转换</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

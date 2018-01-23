@@ -554,6 +554,7 @@ typedef struct _examInfo_
 	_examInfo_()
 	{
 		nModel = 0;
+		nExamID = 0;
 	}
 	~_examInfo_()
 	{

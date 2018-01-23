@@ -188,6 +188,7 @@ void  InitPapersList()
 			}
 			else if (p.getExtension() == "mod")
 			{
+				//模板文件目前无法提交，需要ezs信息
 				Poco::File filePath(CMyCodeConvert::Gb2312ToUtf8(SysSet.m_strModelSavePath));
 				if (!filePath.exists())
 					filePath.createDirectories();
@@ -262,6 +263,7 @@ void  InitPapersList()
 					}
 					g_Log.LogOut(strLog);
 					std::cout << strLog << std::endl;
+					//选做题信息无法设置
 
 					//++模板上传完成后，需要解压，向zimg提交图片给后端
 					pDECOMPRESSTASK pDecompressTask = new DECOMPRESSTASK;

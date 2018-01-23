@@ -595,6 +595,7 @@ bool	SortbyNumASC(const std::string& x, const std::string& y);
 bool	SortByPaper(const pST_PaperInfo& x, const pST_PaperInfo& y);
 
 bool    GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel);	//使用文字定位时，生成文字定位的定点列表，只需要2个
+bool	GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt);
 bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 0, int nPicH = 0);
 bool	FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);		//定点进行仿射变换
 bool	FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//定点透视变换

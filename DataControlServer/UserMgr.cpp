@@ -359,6 +359,9 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				pModelInfo->nExamID = stModelInfo.nExamID;
 				pModelInfo->nSubjectID = stModelInfo.nSubjectID;
 				pModelInfo->strName = stModelInfo.szModelName;
+				pModelInfo->strEzs = stModelInfo.szEzs;
+				pModelInfo->strElectOmr = stModelInfo.szElectOmr;
+				pModelInfo->strMd5 = stModelInfo.szMD5;
 				pModelInfo->pUploadModelInfo = pStModelInfo;
 				pModelInfo->pUser = pUser;
 

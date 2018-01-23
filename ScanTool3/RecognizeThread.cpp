@@ -8,6 +8,7 @@
 using namespace cv;
 CRecognizeThread::CRecognizeThread()
 {
+	m_pStudentMgr = NULL;
 }
 
 CRecognizeThread::~CRecognizeThread()
@@ -4507,6 +4508,7 @@ bool CRecognizeThread::RecogSN_code_Character(cv::Mat& matCompPic, RECTINFO rc, 
 	mT2 = clock();
 
 	std::vector<std::string> vecWord;
+#ifdef USE_TESSERACT
 	try
 	{
 		m_pTess->SetImage((uchar*)matNameRoi.data, matNameRoi.cols, matNameRoi.rows, 1, matNameRoi.cols);
@@ -4537,6 +4539,7 @@ bool CRecognizeThread::RecogSN_code_Character(cv::Mat& matCompPic, RECTINFO rc, 
 		std::string strTmpLog;
 		strTmpLog = "Ê¶±ðocrÒì³£.\n";
 	}
+#endif
 	mT3 = clock();
 
 	bool bFind = false;

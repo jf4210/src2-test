@@ -91,7 +91,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>XLISTCTRLLIB_STATIC;WIN32;_WINDOWS;NDEBUG;USE_TESSERACT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>XLISTCTRLLIB_STATIC;WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\include;..\..\include\twain\;.\picCtrl;..\..\common;./XListCtrl</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>

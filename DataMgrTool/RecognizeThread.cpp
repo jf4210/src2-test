@@ -1462,7 +1462,7 @@ bool CRecognizeThread::RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			strErrDesc = Poco::format("水平同步头数量为%u, 与模板水平同步头数量(%u)不一致", m_vecH_Head.size(), pModelInfo->pModel->vecPaperModel[nPic]->lH_Head.size());
 		}
 #else
-		GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic].lFix, rc.rt);
+		GetRecogPosition(nPic, pPic, pModelInfo->pModel, rc.rt);		//GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic].lFix, rc.rt);
 		bool bFindRect = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
 
 		if (bFindRect)
@@ -1762,7 +1762,7 @@ bool CRecognizeThread::RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPi
 			strErrDesc = Poco::format("垂直同步头数量为%u, 与模板垂直同步头数量(%u)不一致", m_vecV_Head.size(), pModelInfo->pModel->vecPaperModel[nPic]->lV_Head.size());
 		}
 #else
-		GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic].lFix, rc.rt);
+		GetRecogPosition(nPic, pPic, pModelInfo->pModel, rc.rt);		//GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic].lFix, rc.rt);
 		bool bFindRect = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
 		if (bFindRect)
 		{
@@ -1808,7 +1808,7 @@ bool CRecognizeThread::RecogABModel(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 			rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
 		}
 		else
-			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
+			GetRecogPosition(nPic, pPic, pModelInfo->pModel, rc.rt);		//GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
 		bool bFindRect = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
 		if (bFindRect)
 		{
@@ -1857,7 +1857,7 @@ bool CRecognizeThread::RecogCourse(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
 		}
 		else
-			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
+			GetRecogPosition(nPic, pPic, pModelInfo->pModel, rc.rt);		//GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
 		bool bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
 		if (bResult_Recog)
 		{
@@ -1932,7 +1932,7 @@ bool CRecognizeThread::RecogQKCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 			rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
 		}
 		else
-			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
+			GetRecogPosition(nPic, pPic, pModelInfo->pModel, rc.rt);		//GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
 		bool bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
 		if (bResult_Recog)
 		{
@@ -1996,7 +1996,7 @@ bool CRecognizeThread::RecogWJCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 			rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
 		}
 		else
-			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
+			GetRecogPosition(nPic, pPic, pModelInfo->pModel, rc.rt);		//GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
 		bool bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
 		if (bResult_Recog)
 		{
@@ -2065,7 +2065,7 @@ bool CRecognizeThread::RecogGrayCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
 		}
 		else
-			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
+			GetRecogPosition(nPic, pPic, pModelInfo->pModel, rc.rt);		//GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
 		bool bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
 		if (bResult_Recog)
 		{
@@ -2142,7 +2142,7 @@ bool CRecognizeThread::RecogWhiteCP(int nPic, cv::Mat& matCompPic, pST_PicInfo p
 			rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
 		}
 		else
-			GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
+			GetRecogPosition(nPic, pPic, pModelInfo->pModel, rc.rt);		//GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
 		bool bResult_Recog = Recog(nPic, rc, matCompPic, pPic, pModelInfo);
 
 		fGrayCount += rc.fRealMeanGray;		//单块的空白区域的平均灰度值
@@ -2276,7 +2276,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
 			}
 			else
-				GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
+				GetRecogPosition(nPic, pPic, pModelInfo->pModel, rc.rt);		//GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
 
 			bool bResult_Recog = Recog2(nPic, rc, matCompPic, pPic, pModelInfo);
 			if (bResult_Recog)
@@ -3091,7 +3091,7 @@ bool CRecognizeThread::RecogElectOmr(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 				rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
 			}
 			else
-				GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
+				GetRecogPosition(nPic, pPic, pModelInfo->pModel, rc.rt);		//GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
 
 			bool bResult_Recog = Recog2(nPic, rc, matCompPic, pPic, pModelInfo);
 			if (bResult_Recog)
@@ -4144,7 +4144,7 @@ bool CRecognizeThread::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 				rc.rt.height = m_vecV_Head[rc.nVItem].rt.height;
 			}
 			else
-				GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
+				GetRecogPosition(nPic, pPic, pModelInfo->pModel, rc.rt);	//GetPosition(pPic->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, rc.rt);
 #if 1
 			bool bResult_Recog = Recog2(nPic, rc, matCompPic, pPic, pModelInfo);
 			if (bResult_Recog)
@@ -4683,7 +4683,7 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo
 			}
 
 			Mat matCompRoi;
-			matCompRoi = matCompPic(pstBigRecogCharRt->rt);
+			matCompRoi = matCompPic(pstBigRecogCharRt->rt);		//真坐标
 
 			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
@@ -4721,12 +4721,12 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo
 
 			GaussianBlur(matCompRoi, matCompRoi, cv::Size(pstBigRecogCharRt->nGaussKernel, pstBigRecogCharRt->nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
 			SharpenImage(matCompRoi, matCompRoi, pstBigRecogCharRt->nSharpKernel);
-			
+
 			double dThread = threshold(matCompRoi, matCompRoi, pstBigRecogCharRt->nThresholdValue, 255, THRESH_OTSU | THRESH_BINARY);
-			
+
 			CCoordinationConvert convertObj(matCompPic);	//坐标转换对象
 			cv::Rect rtShowRect = convertObj.GetShowFakePosRect(pstBigRecogCharRt->rt, pModelInfo->pModel->vecPaperModel[nPic]->nPicSaveRotation);
-#ifdef USE_TESSERACT
+		#ifdef USE_TESSERACT
 			m_pTess->SetImage((uchar*)matCompRoi.data, matCompRoi.cols, matCompRoi.rows, 1, matCompRoi.cols);
 
 			std::string strWhiteList;
@@ -4765,17 +4765,17 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo
 						int x1, y1, x2, y2;
 						ri->BoundingBox(level, &x1, &y1, &x2, &y2);
 						Point start, end;
-						start.x = pstBigRecogCharRt->rt.x + x1;
-						start.y = pstBigRecogCharRt->rt.y + y1;
-						end.x = pstBigRecogCharRt->rt.x + x2;
-						end.y = pstBigRecogCharRt->rt.y + y2;
-						Rect rtSrc(start, end);
+						start.x = rtShowRect.x + x1;
+						start.y = rtShowRect.y + y1;
+						end.x = rtShowRect.x + x2;
+						end.y = rtShowRect.y + y2;
+						Rect rtSrc(start, end);		//假坐标
 
 						pST_CHARACTER_ANCHOR_POINT pstCharRt = new ST_CHARACTER_ANCHOR_POINT();
 						pstCharRt->nIndex = nIndex;
 						pstCharRt->fConfidence = conf;
 						pstCharRt->rc.eCPType = CHARACTER_AREA;
-						pstCharRt->rc.rt = convertObj.GetSrcSaveRect(rtSrc, pModelInfo->pModel->vecPaperModel[nPic]->nPicSaveRotation);;
+						pstCharRt->rc.rt = convertObj.GetSrcSaveRect(rtSrc, pModelInfo->pModel->vecPaperModel[nPic]->nPicSaveRotation);
 						pstCharRt->rc.nTH = pstRecogCharacterRt->nIndex;	//记录下当前文字属于第几个大文字识别区
 						pstCharRt->rc.nAnswer = nIndex;						//记录下当前文字属于当前文字识别区中的第几个识别的文字
 
@@ -4862,6 +4862,36 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo
 							pstRecogCharacterRt->arryMaxDist[0] = nY_minIndex;
 							pstRecogCharacterRt->arryMaxDist[1] = nY_maxIndex;
 						}
+
+						// 						std::vector<pST_CHARACTER_ANCHOR_POINT> vecTmpCharacterRt(pstRecogCharacterRt->vecCharacterRt);
+						// 						std::sort(vecTmpCharacterRt.begin(), vecTmpCharacterRt.end(), [](pST_CHARACTER_ANCHOR_POINT st1, pST_CHARACTER_ANCHOR_POINT st2)
+						// 						{
+						// 							return st1->rc.rt.x < st2->rc.rt.x;
+						// 						});
+						// 						int nXStart, nXEnd;
+						// 						nXStart = vecTmpCharacterRt[0]->nIndex;
+						// 						nXEnd = vecTmpCharacterRt[nSize - 1]->nIndex;
+						// 						int nXDist = abs(vecTmpCharacterRt[nSize - 1]->rc.rt.x - vecTmpCharacterRt[0]->rc.rt.x); //X轴最远距离
+						// 
+						// 						std::sort(vecTmpCharacterRt.begin(), vecTmpCharacterRt.end(), [](pST_CHARACTER_ANCHOR_POINT st1, pST_CHARACTER_ANCHOR_POINT st2)
+						// 						{
+						// 							return st1->rc.rt.y > st2->rc.rt.y;
+						// 						});
+						// 						int nYStart, nYEnd;
+						// 						nYStart = vecTmpCharacterRt[0]->nIndex;
+						// 						nYEnd = vecTmpCharacterRt[nSize - 1]->nIndex;
+						// 						int nYDist = abs(vecTmpCharacterRt[nSize - 1]->rc.rt.x - vecTmpCharacterRt[0]->rc.rt.x); //X轴最远距离
+						// 
+						// 						if (nXDist > nYDist)
+						// 						{
+						// 							pstBigRecogCharRt->arryMaxDist[0] = nXStart;
+						// 							pstBigRecogCharRt->arryMaxDist[1] = nXEnd;
+						// 						}
+						// 						else
+						// 						{
+						// 							pstBigRecogCharRt->arryMaxDist[0] = nYStart;
+						// 							pstBigRecogCharRt->arryMaxDist[1] = nYEnd;
+						// 						}
 					}
 					else if (nSize == 2)
 					{
@@ -4877,7 +4907,7 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo
 				else
 					SAFE_RELEASE(pstRecogCharacterRt);
 			}
-#endif
+		#endif
 		}
 		catch (...)
 		{

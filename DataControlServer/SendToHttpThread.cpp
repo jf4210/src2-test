@@ -696,12 +696,12 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 		}
 		if (pModelInfo)
 		{
-			if (!pModelInfo->pUploadModelInfo)
-			{
-				std::string strLog = "模板不能设置，模板信息为空";
-				g_Log.LogOutError(strLog);
-				return false;
-			}
+// 			if (!pModelInfo->pUploadModelInfo)
+// 			{
+// 				std::string strLog = "模板不能设置，模板信息为空";
+// 				g_Log.LogOutError(strLog);
+// 				return false;
+// 			}
 			Poco::JSON::Array arryModelPics;
 			LIST_PAPER_INFO::iterator itPaper = pPapers->lPaper.begin();
 			for (int i = 1; itPaper != pPapers->lPaper.end(); i++, itPaper++)
@@ -725,19 +725,19 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 
 			try
 			{
-				resultElectOmr = parserElectOmr.parse(pModelInfo->pUploadModelInfo->szElectOmr);
+				resultElectOmr = parserElectOmr.parse(pModelInfo->strElectOmr);	//pModelInfo->pUploadModelInfo->szElectOmr
 				electOmrArry = resultElectOmr.extract<Poco::JSON::Array::Ptr>();
 			}
 			catch (...)
 			{
 			}
 			Poco::JSON::Object jsnModel;
-			jsnModel.set("examId", pModelInfo->pUploadModelInfo->nExamID);
-			jsnModel.set("subjectId", pModelInfo->pUploadModelInfo->nSubjectID);
-			jsnModel.set("tmplateName", CMyCodeConvert::Gb2312ToUtf8(pModelInfo->pUploadModelInfo->szModelName));
+			jsnModel.set("examId", pModelInfo->nExamID);		//pModelInfo->pUploadModelInfo->nExamID
+			jsnModel.set("subjectId", pModelInfo->nSubjectID);//pModelInfo->pUploadModelInfo->nSubjectID
+			jsnModel.set("tmplateName", CMyCodeConvert::Gb2312ToUtf8(pModelInfo->strName));//pModelInfo->pUploadModelInfo->szModelName
 			jsnModel.set("netAddr", SysSet.m_strPicWwwNetAddr);
 			jsnModel.set("paper", arryModelPics);
-			if (strlen(pModelInfo->pUploadModelInfo->szElectOmr) > 0)
+			if (pModelInfo->strElectOmr.length() > 0)	//strlen(pModelInfo->pUploadModelInfo->szElectOmr) > 0
 				jsnModel.set("modelElectOmr", electOmrArry);	//pModelInfo->pUploadModelInfo->szElectOmr
 
 			std::stringstream jsnString;
@@ -746,7 +746,7 @@ bool CSendToHttpThread::GenerateResult(pPAPERS_DETAIL pPapers, pSEND_HTTP_TASK p
 			std::string strLog = "提交模板图片给zimg服务器完成，设置模板名称，提交给后端的数据: " + jsnString.str();
 			g_Log.LogOut(strLog);
 
-			std::string strEzs = pModelInfo->pUploadModelInfo->szEzs;
+			std::string strEzs = pModelInfo->strEzs;	//pModelInfo->pUploadModelInfo->szEzs
 			pSCAN_REQ_TASK pTask = new SCAN_REQ_TASK;
 			pTask->nExamID = pModelInfo->nExamID;
 			pTask->nSubjectID = pModelInfo->nSubjectID;

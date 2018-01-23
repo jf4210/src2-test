@@ -108,7 +108,9 @@ typedef struct _ModelInfo_
 	CNetUser* pUser;
 	std::string strMd5;
 	std::string strName;
+	std::string strEzs;
 	std::string strPath;
+	std::string strElectOmr;
 	_ModelInfo_()
 	{
 		nExamID = 0;

@@ -548,6 +548,123 @@ bool GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 	return true;
 }
 
+bool GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt)
+{
+#ifdef USE_TESSERACT
+	//生成模板比较的定点
+	if (pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0)
+	{
+		if (pPic->lFix.size() < 3)
+		{
+			clock_t start, end;
+			start = clock();
+			cv::Rect rtLT, rtRB;	//左上，右下两个矩形
+			rtLT = rt;
+			rtRB = rt;
+			rtRB.x += rtRB.width;
+			rtRB.y += rtRB.height;
+			GetPosition(pPic->lFix, pPic->lModelWordFix, rtLT);
+			GetPosition(pPic->lFix, pPic->lModelWordFix, rtRB);
+
+			int nWidth = abs(rtRB.x - rtLT.x);
+			int nHeight = abs(rtRB.y - rtLT.y);
+			rt.x = rtLT.x + nWidth / 2 - rt.width / 2;
+			rt.y = rtLT.y + nHeight / 2 - rt.height / 2;
+
+			end = clock();
+			TRACE("计算矩形位置时间: %dms\n", (int)(end - start));
+			return true;
+		}
+		else
+		{
+			clock_t start, end;
+			start = clock();
+			VEC_NEWRTBY2FIX vecNewRt;
+#if 1		//根据距离顶点最远的点计算矩形位置，顶点默认防止队列第一个
+			RECTLIST::iterator itFix = pPic->lFix.begin();
+			RECTLIST::iterator itModelFix = pPic->lModelWordFix.begin();
+			if (itModelFix != pPic->lModelWordFix.end())
+			{
+				itFix++;
+				itModelFix++;
+				for (int i = 1; itFix != pPic->lFix.end(); itFix++, itModelFix++, i++)
+				{
+					RECTLIST lTmpFix, lTmpModelFix;
+					lTmpFix.push_back(pPic->lFix.front());
+					lTmpModelFix.push_back(pPic->lModelWordFix.front());
+
+					lTmpFix.push_back(*itFix);
+					lTmpModelFix.push_back(*itModelFix);
+
+					ST_NEWRTBY2FIX stNewRt;
+					stNewRt.nFirstFix = 0;
+					stNewRt.nSecondFix = i;
+					stNewRt.rt = rt;
+					GetPosition(lTmpFix, lTmpModelFix, stNewRt.rt);
+					vecNewRt.push_back(stNewRt);
+				}
+			}
+#else
+			VEC_FIXRECTINFO lFixRtInfo;
+			RECTLIST::iterator itFix = pPic->lFix.begin();
+			RECTLIST::iterator itModelFix = pPic->lModelWordFix.begin();
+			for (; itFix != pPic->lFix.end(); itFix++, itModelFix++)
+			{
+				GetNewRt((*itFix), (*itModelFix), lFixRtInfo, vecNewRt, rt);
+			}
+#endif
+			int nRidus = rt.width < rt.height ? rt.width * 0.5 : rt.height * 0.5;
+			nRidus = nRidus > 3 ? 3 : nRidus;
+			VEC_POINTDISTWEIGHT vecPointDistWeight;
+			for (auto newRt : vecNewRt)
+			{
+				GetPointDistWeight(nRidus, newRt.rt.tl(), vecPointDistWeight);
+			}
+			VEC_POINTDISTWEIGHT::iterator itPoint = vecPointDistWeight.begin();
+			for (; itPoint != vecPointDistWeight.end(); )
+			{
+				if (itPoint->nWeight < 1)
+					itPoint = vecPointDistWeight.erase(itPoint);
+				else
+					itPoint++;
+			}
+
+			int nXCount = 0, nYCount = 0;
+			int nCount = 0;
+			if (vecPointDistWeight.size() > 0)
+			{
+				for (auto newPt : vecPointDistWeight)
+				{
+					nXCount += newPt.pt.x;
+					nYCount += newPt.pt.y;
+				}
+				nCount = vecPointDistWeight.size();
+			}
+			else
+			{
+				for (auto newRt : vecNewRt)
+				{
+					nXCount += newRt.rt.x;
+					nYCount += newRt.rt.y;
+				}
+				nCount = vecNewRt.size();
+			}
+			if (nCount > 0)
+			{
+				rt.x = nXCount / nCount;
+				rt.y = nYCount / nCount;
+			}
+			end = clock();
+			//			TRACE("计算矩形位置时间: %dms\n", (int)(end - start));
+			return true;
+		}
+	}
+	else
+		return GetPosition(pPic->lFix, pModel->vecPaperModel[nPic]->lFix, rt);
+#endif
+	return GetPosition(pPic->lFix, pModel->vecPaperModel[nPic]->lFix, rt);
+}
+
 bool SortByArea(cv::Rect& rt1, cv::Rect& rt2)
 {
 	return rt1.area() > rt2.area() ? true : (rt1.area() < rt2.area() ? false : (rt1.x > rt2.x ? true : false));
