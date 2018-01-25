@@ -56,6 +56,14 @@ std::string calcFileMd5(std::string strPath)
 		Poco::DigestOutputStream dos(md5);
 
 		std::string strgb = CMyCodeConvert::Utf8ToGb2312(strPath);
+		Poco::File fExit(strPath);
+		if (!fExit.exists())
+		{
+			std::string strLog = "calc Md5: no file." + strgb;
+			g_Log.LogOutError(strLog);
+			std::cout << strLog << std::endl;
+			return strResult;
+		}
 
 		std::ifstream istr(strgb, std::ios::binary);
 		if (!istr)

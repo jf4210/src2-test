@@ -833,6 +833,8 @@ BOOL CScanTool3Dlg::OnInitDialog()
 	m_pModifyZkzhDlg->ShowWindow(SW_HIDE);
 
 	InitThreads();
+	
+	ChkNewGuardExe();
 
 	try
 	{
@@ -1301,5 +1303,34 @@ void CScanTool3Dlg::UpLoadDumpFile()
 		return;
 	}
 #endif
+}
+
+void CScanTool3Dlg::ChkNewGuardExe()
+{
+	USES_CONVERSION;
+	CString strGuardPath = g_strCurrentPath + _T("EasyTntGuardProcess.exe");
+	try
+	{
+		Poco::File fGuardExe(CMyCodeConvert::Gb2312ToUtf8(T2A(strGuardPath)));
+		if (!fGuardExe.exists())
+			return;
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strErr = "检测守护进程路径异常. " + exc.displayText() + "\n";
+		TRACE(strErr.c_str());
+		return;
+	}
+
+	TRACE("检查服务器上是否有新的更新程序...\n");
+	char *pMd5 = MD5File(T2A(strGuardPath));
+	std::string strMd5 = pMd5;
+	pTCP_TASK pTcpTask = new TCP_TASK;
+	pTcpTask->usCmd = USER_CHK_NEW_GUARDEXE;
+	pTcpTask->nPkgLen = strMd5.length();
+	memcpy(pTcpTask->szSendBuf, (char*)strMd5.c_str(), strMd5.length());
+	g_fmTcpTaskLock.lock();
+	g_lTcpTask.push_back(pTcpTask);
+	g_fmTcpTaskLock.unlock();
 }
 

@@ -698,11 +698,7 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 		int nStudentNum = objData->get("scanNum").convert<int>();
 		std::string strUploader = objData->get("uploader").convert<std::string>();
 		std::string strEzs	= objData->get("ezs").convert<std::string>();
-
-#ifdef XINJIANG_TMP_JINJI
-		nStudentNum = pPapers->lPaper.size();
-#endif
-
+		
 		if (pTask->nType <= 3)
 		{
 			bool bFindDeff = false;
@@ -735,10 +731,6 @@ bool CDecompressThread::GetFileData(std::string strFilePath, pPAPERS_DETAIL pPap
 					if (jsnPaperObj->has("issueFlag"))
 					{
 						pPaper->nIssueFlag = jsnPaperObj->get("issueFlag").convert<int>();
-					#ifdef XINJIANG_TMP_JINJI
-						if (pPaper->nIssueFlag == 2)
-							pPaper->nIssueFlag = 1;
-					#endif
 					}
 					if (jsnPaperObj->has("standardAnswer"))
 					{

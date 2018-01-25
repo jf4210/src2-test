@@ -7,8 +7,12 @@
 using namespace cv;
 CRecognizeThread::CRecognizeThread()
 {
+	m_pStudentMgr = NULL;
 	m_nContract = 100;
 	m_nBright = 0;
+#ifdef USE_TESSERACT
+	m_pTess = NULL;
+#endif
 }
 
 CRecognizeThread::~CRecognizeThread()
@@ -25,12 +29,10 @@ void CRecognizeThread::run()
 	TRACE("RecognizeThread start...\n");
 	eExit.reset();
 
-	InitCharacterRecog();
-
 	USES_CONVERSION;
-	m_pStudentMgr = new CStudentMgr();
-	std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
-	bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
+// 	m_pStudentMgr = new CStudentMgr();
+// 	std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+// 	bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
 
 	while (!g_nExitFlag)
 	{
@@ -4663,6 +4665,11 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo
 		return true;
 	}
 
+#ifdef USE_TESSERACT
+	if (NULL == m_pTess)
+		InitCharacterRecog();
+#endif
+
 	CHARACTER_ANCHOR_AREA_LIST::iterator itBigRecogCharRt = pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.begin();
 	for (int i = 0; itBigRecogCharRt != pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.end(); i++, itBigRecogCharRt++)
 	{
@@ -4722,7 +4729,8 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo
 			GaussianBlur(matCompRoi, matCompRoi, cv::Size(pstBigRecogCharRt->nGaussKernel, pstBigRecogCharRt->nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
 			SharpenImage(matCompRoi, matCompRoi, pstBigRecogCharRt->nSharpKernel);
 
-			double dThread = threshold(matCompRoi, matCompRoi, pstBigRecogCharRt->nThresholdValue, 255, THRESH_OTSU | THRESH_BINARY);
+			//double dThread = threshold(matCompRoi, matCompRoi, pstBigRecogCharRt->nThresholdValue, 255, THRESH_OTSU | THRESH_BINARY);
+			cv::adaptiveThreshold(matCompRoi, matCompRoi, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 19, 20);	//blockSize, constValue
 
 			CCoordinationConvert convertObj(matCompPic);	//坐标转换对象
 			cv::Rect rtShowRect = convertObj.GetShowFakePosRect(pstBigRecogCharRt->rt, pModelInfo->pModel->vecPaperModel[nPic]->nPicSaveRotation);
@@ -4754,6 +4762,7 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo
 
 				convertObj.SetPicRect(matCompPic.rows, matCompPic.cols);	//改变参照图像的大小，后面计算从假坐标到真坐标时，基准图像的大小已经变化
 
+				std::string strDelWord;
 				//重复字临时登记列表，后面删除所有重复的字
 				std::vector<std::string> vecRepeatWord;
 				do
@@ -4798,7 +4807,13 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo
 						pstRecogCharacterRt->vecCharacterRt.push_back(pstCharRt);
 						nIndex++;
 					}
+					else
+					{
+						std::string strTmp = Poco::format("%s(%f), ", CMyCodeConvert::Utf8ToGb2312(word), (double)conf);
+						strDelWord.append(strTmp);
+					}
 				} while (ri->Next(level));
+				TRACE("不符合要求的文字: %s\n", strDelWord.c_str());
 
 				//要做字的重复检查，去除重复的字，即统一识别区中，不能存在重复的字，否则可能影响取字
 				for (int i = 0; i < vecRepeatWord.size(); i++)

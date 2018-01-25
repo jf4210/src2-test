@@ -858,13 +858,33 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			std::string strClientGuardExeMd5 = szData;
 			if (_strNewGuardExeMd5_.empty())
 			{
+				std::cout << "服务器上新守护进程不存在" << std::endl;
 				pUser->SendResult(USER_RESPONSE_CHK_NEW_GUARDEXE, RESULT_GET_NEW_GUARDEXE_NOFILE);
-				return false;
 			}
-
-
-
-
+			else if (_strNewGuardExeMd5_ == strClientGuardExeMd5)
+			{
+				std::cout << "客户端上的守护进程和服务器一致，不需要下载" << std::endl;
+				pUser->SendResult(USER_RESPONSE_CHK_NEW_GUARDEXE, RESULT_GET_NEW_GUARDEXE_NONEED);
+			}
+			else
+			{
+				std::string strGuardExePath = SysSet.m_strNewGuardProcessPath + "EasyTntGuardProcess.exe";
+				std::string strFileData;
+				std::ifstream fin(strGuardExePath, std::ifstream::binary);
+				if (!fin)
+				{
+					pUser->SendResult(USER_RESPONSE_CHK_NEW_GUARDEXE, RESULT_ERROR_FILEIO);
+					g_Log.LogOut("读取新守护进程文件时打开文件失败: " + strGuardExePath);
+					return false;
+				}
+				std::stringstream buffer;
+				buffer << fin.rdbuf();
+				strFileData = buffer.str();
+				fin.close();
+				pUser->SendResponesInfo(USER_RESPONSE_CHK_NEW_GUARDEXE, RESULT_GET_NEW_GUARDEXE_SUCCESS, (char*)strFileData.c_str(), strFileData.length());
+				g_Log.LogOut("新守护进程文件发送完成");
+				std::cout << "新守护进程文件发送完成" << std::endl;
+			}
 		}
 		break;
 	case KEEPALIVE_PKG:

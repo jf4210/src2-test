@@ -9,6 +9,9 @@ using namespace cv;
 CRecognizeThread::CRecognizeThread()
 {
 	m_pStudentMgr = NULL;
+#ifdef USE_TESSERACT
+	m_pTess = NULL;
+#endif
 }
 
 CRecognizeThread::~CRecognizeThread()
@@ -24,9 +27,7 @@ void CRecognizeThread::run()
 	g_pLogger->information("RecognizeThread start...");
 	TRACE("RecognizeThread start...\n");
 	eExit.reset();
-
-	InitCharacterRecog();
-
+	
 	if (_nUseOcrRecogSn_)
 	{
 		USES_CONVERSION;
@@ -49,7 +50,7 @@ void CRecognizeThread::run()
 		}
 		g_fmScanPaperListLock.unlock();
 
-		if(pScanPaperTask) HandleScanPicTask(pScanPaperTask);	//原始扫描的试卷信息放入对应的考试试卷列表中，右试卷列表去释放
+		if(pScanPaperTask) HandleScanPicTask(pScanPaperTask);	//原始扫描的试卷信息放入对应的考试试卷列表中，由试卷列表去释放
 		//SAFE_RELEASE(pScanPaperTask);
 		//===========================
 
@@ -963,6 +964,11 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 		return true;
 	}
 
+#ifdef USE_TESSERACT
+	if(NULL == m_pTess)
+		InitCharacterRecog();
+#endif
+
 	CHARACTER_ANCHOR_AREA_LIST::iterator itBigRecogCharRt = pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.begin();
 	for (int i = 0; itBigRecogCharRt != pModelInfo->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.end(); i++, itBigRecogCharRt++)
 	{
@@ -1022,8 +1028,9 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat & matCompPic, pST_PicInf
 			GaussianBlur(matCompRoi, matCompRoi, cv::Size(pstBigRecogCharRt->nGaussKernel, pstBigRecogCharRt->nGaussKernel), 0, 0);	//cv::Size(_nGauseKernel_, _nGauseKernel_)
 			SharpenImage(matCompRoi, matCompRoi, pstBigRecogCharRt->nSharpKernel);
 
-			double dThread = threshold(matCompRoi, matCompRoi, pstBigRecogCharRt->nThresholdValue, 255, THRESH_OTSU | THRESH_BINARY);
-		
+			//double dThread = threshold(matCompRoi, matCompRoi, pstBigRecogCharRt->nThresholdValue, 255, THRESH_OTSU | THRESH_BINARY);
+			cv::adaptiveThreshold(matCompRoi, matCompRoi, 255, CV_ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 19, 20);	//blockSize, constValue
+
 			CCoordinationConvert convertObj(matCompPic);	//坐标转换对象
 			cv::Rect rtShowRect = convertObj.GetShowFakePosRect(pstBigRecogCharRt->rt, pModelInfo->pModel->vecPaperModel[nPic]->nPicSaveRotation);
 		#ifdef USE_TESSERACT

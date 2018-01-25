@@ -773,3 +773,4 @@ std::string GetQR(cv::Mat img, std::string& strTypeName);
 
 
 BOOL CheckProcessExist(CString &str, int& nProcessID);
+BOOL KillProcessFromName(CString strProcessName);

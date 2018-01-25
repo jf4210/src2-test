@@ -1077,6 +1077,93 @@ void CTcpClient::HandleCmd()
 		}
 		g_eGetModelPic.set();
 	}
+	else if (pstHead->usCmd == USER_RESPONSE_CHK_NEW_GUARDEXE)
+	{
+		switch (pstHead->usResult)
+		{
+			case RESULT_GET_NEW_GUARDEXE_SUCCESS:
+			{
+				USES_CONVERSION;
+				CString strProcessName = _T("");
+				strProcessName.Format(_T("EasyTntGuardProcess.exe")); 
+				int nProcessID = 0;
+				if (CheckProcessExist(strProcessName, nProcessID))
+				{
+					TRACE("检测到守护进程正在运行，将它关闭\n");
+					if (!KillProcessFromName(strProcessName))
+					{
+						TRACE("守护进程关闭失败。\n");
+						return;
+					}
+					int nTimes = 0;
+					while (CheckProcessExist(strProcessName, nProcessID) && nTimes <= 20)
+					{
+						TRACE("守护进程正在关闭...\n");
+						Sleep(50);
+						nTimes++;
+					}
+					TRACE("守护进程关闭完成。\n");
+				}
+
+				std::string strProcessPath = T2A(g_strCurrentPath + strProcessName);
+				ofstream out(strProcessPath, std::ios::binary);
+				if (!out)
+				{
+					TRACE("守护进程文件打开失败。\n");
+					return;
+				}
+
+				std::stringstream buffer;
+				buffer.write(m_pRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+				int n = buffer.str().length();
+				out << buffer.str();
+				out.close();
+				buffer.str("");
+
+				STARTUPINFO si;
+				PROCESS_INFORMATION pi;
+				CString strComm;
+				char szWrkDir[MAX_PATH];
+				strComm.Format(_T("%sEasyTntGuardProcess.exe"), g_strCurrentPath);
+				memset(&si, 0, sizeof(si));
+				si.cb = sizeof(si);
+				ZeroMemory(&pi, sizeof(pi));
+
+				if (!CreateProcessW(NULL, (LPTSTR)(LPCTSTR)strComm, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+				{
+					int nErrorCode = GetLastError();
+					USES_CONVERSION;
+					std::string strLog = Poco::format("CreateNewProcess %s failed. ErrorCode = %d", T2A(strComm), nErrorCode);
+					g_pLogger->information(strLog);
+					TRACE(strLog.c_str());
+					return ;
+				}
+				TRACE("重新启动守护进程完成\n");
+			}
+			break;
+			case RESULT_GET_NEW_GUARDEXE_NOFILE:
+			{
+				TRACE("服务器上无守护进程，不需要更新\n");
+				std::string strLog = "服务器上无守护进程，不需要更新";
+				g_pLogger->information(strLog);
+			}
+			break;
+			case RESULT_GET_NEW_GUARDEXE_NONEED:
+			{
+				TRACE("当前机器的守护进程与服务器上一致，不需要更新\n");
+				std::string strLog = "当前机器的守护进程与服务器上一致，不需要更新";
+				g_pLogger->information(strLog);
+			}
+			break;
+			case RESULT_ERROR_FILEIO:
+			{
+				TRACE("服务器读取数据失败\n");
+				std::string strLog = "服务器读取数据失败";
+				g_pLogger->information(strLog);
+			}
+			break;
+		}
+	}
 }
 
 void CTcpClient::HandleTask(pTCP_TASK pTask)
