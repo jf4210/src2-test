@@ -12,7 +12,7 @@
 extern CLog g_Log;
 extern int	g_nExitFlag;
 
-#define SOFT_VERSION "VerControlServer V1.0"
+#define SOFT_VERSION "VerControlServer V2.0"
 
 #define SAFE_RELEASE(pObj)	if(pObj){delete pObj; pObj = NULL;}
 

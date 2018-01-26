@@ -14,8 +14,6 @@
 //****************************************************************
 //****************************************************************
 
-#define TMP_RECOG_CHARACT	//识别文字时的临时设置，方向左旋90，后面记得改正	*************************************
-
 //#define PIC_RECTIFY_TEST	//图像旋转纠正测试
 #define WarpAffine_TEST		//仿射变换测试
 #define PaintOmrSnRect		//是否打印识别出来的OMR矩形
@@ -47,7 +45,7 @@
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION	_T("1.80119-1-Test")
+#define SOFT_VERSION	_T("1.80126-1")
 #define SYS_BASE_NAME	_T("YKLX-DMT")
 //#define WH_CCBKS		//武汉楚才杯专用，解析二维码需要json解析
 

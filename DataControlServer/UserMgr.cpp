@@ -877,6 +877,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 					g_Log.LogOut("读取新守护进程文件时打开文件失败: " + strGuardExePath);
 					return false;
 				}
+				std::cout << "正在发送新守护进程文件..." << std::endl;
 				std::stringstream buffer;
 				buffer << fin.rdbuf();
 				strFileData = buffer.str();
