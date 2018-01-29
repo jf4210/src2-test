@@ -460,6 +460,9 @@ void CTcpClient::HandleCmd()
 		{
 			case RESULT_DOWNMODEL_RECV:
 			{
+				std::string strLog = "收到服务器发送的模板数据，开始写文件: " + _pCurrSub_->strModelName + "\n";
+				g_pLogger->information(strLog);
+
 				//覆盖本地文件
 				std::string strModelPath = T2A(g_strCurrentPath);
 				strModelPath.append("Model\\");
@@ -491,6 +494,9 @@ void CTcpClient::HandleCmd()
 				out << buffer.str();
 				out.close();
 				g_nDownLoadModelStatus = 2;
+
+				strLog.append("模板文件写入完成\n");
+				g_pLogger->information(strLog);
 			}
 			break;
 			case RESULT_ERROR_FILEIO:
@@ -1237,6 +1243,7 @@ void CTcpClient::HandleTask(pTCP_TASK pTask)
 // 		m_ss.setBlocking(false);
 // 		m_ss.setNoDelay(true);
 	}
+	TRACE("命令发送完成: %d\n", pTask->usCmd);
 }
 
 void CTcpClient::SetMainWnd(void* p)

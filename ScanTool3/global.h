@@ -32,7 +32,7 @@
 	
 	#define TEST_GRAY_WHITE		//空白处灰度测试
 //	#define TEST_FAST_SCAN		//快速扫描模式，在扫描线程中不写文件
-//	#define TEST_PAGINATION		//页码测试，多页试卷的情况，多页A3、A4
+	#define TEST_PAGINATION		//页码测试，多页试卷的情况，多页A3、A4
 
 //	#define	TEST_EXCEPTION_DLG	//新的异常处理窗口测试
 	#define TEST_ModelMgr		//使用模板保存测试类保存模板
