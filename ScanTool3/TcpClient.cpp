@@ -62,7 +62,7 @@ void CTcpClient::run()
 		}
 		if (pTask == NULL)
 		{
-			Sleep(300);
+			Sleep(100);
 			continue;
 		}
 
@@ -131,6 +131,69 @@ bool CTcpClient::receiveData()
 	}
 	try
 	{
+#if 1
+		int nLen;
+		if (_nRecvLen < nBaseLen)
+		{
+			_nWantLen = nBaseLen - _nRecvLen;
+			nLen = m_ss.receiveBytes(m_pRecvBuff + _nRecvLen, _nWantLen);
+			if (nLen > 0)
+			{
+				_nRecvLen += nLen;
+				if (_nRecvLen == nBaseLen)
+				{
+					ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_pRecvBuff;
+					if (pstHead->uPackSize == 0)
+					{
+						bGetCmd = true;
+					}
+					else
+					{
+						if (pstHead->uPackSize > 1024)	//1024
+						{
+							char* pOld = m_pRecvBuff;
+							m_pRecvBuff = new char[pstHead->uPackSize + HEAD_SIZE + 1];
+							m_pRecvBuff[pstHead->uPackSize + HEAD_SIZE] = '\0';
+							_nRecvBuffSize = pstHead->uPackSize + HEAD_SIZE + 1;
+							memcpy(m_pRecvBuff, pOld, _nRecvLen);
+							SAFE_RELEASE_ARRY(pOld);
+						}
+					}
+				}
+			}
+			else if (nLen == 0)
+			{
+				TRACE("the peer has closed.\n");
+				return false;
+			}
+		}
+		else
+		{
+			ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_pRecvBuff;
+			nBaseLen += pstHead->uPackSize;
+			_nWantLen = nBaseLen - _nRecvLen;
+			while (_nWantLen > 0)
+			{
+				nLen = m_ss.receiveBytes(m_pRecvBuff + _nRecvLen, _nWantLen);
+				if (nLen > 0)
+				{
+					_nRecvLen += nLen;
+					_nWantLen -= nLen;
+					if (_nRecvLen == nBaseLen)
+					{
+						//完整命令接收完成
+						bGetCmd = true;
+						break;
+					}
+				}
+				else if (nLen == 0)
+				{
+					TRACE("the peer has closed.\n");
+					return false;
+				}
+			}
+		}
+#else
 		int nLen;
 		if (_nRecvLen < nBaseLen)
 		{
@@ -180,6 +243,12 @@ bool CTcpClient::receiveData()
 					//完整命令接收完成
 					bGetCmd = true;
 				}
+				else
+				{
+					char szTmp[200] = { 0 };
+					sprintf_s(szTmp, "接收数据未完成(%d/%d)\n", _nRecvLen, _nWantLen);
+					OutputDebugStringA(szTmp);
+				}
 			}
 			else if (nLen == 0)
 			{
@@ -187,6 +256,7 @@ bool CTcpClient::receiveData()
 				return false;
 			}
 		}
+#endif
 	}
 	catch (Poco::Exception& exc)
 	{

@@ -207,9 +207,6 @@ void CNetUser::UnLockRecv(void)
 BOOL CNetUser::NotifySendData(void)
 {
 	LockSend();
-// 	char szTmp[100] = { 0 };
-// 	sprintf_s(szTmp, "NotifySendData, m_nSendCount(%d)\n", m_pNetSendBuffer->GetDataSize());
-// 	std::cout << szTmp << std::endl;
 
 	if (m_nSendCount == 0)
 	{

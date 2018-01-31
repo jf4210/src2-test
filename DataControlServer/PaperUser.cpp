@@ -553,6 +553,8 @@ void CPaperUser::SetAnswerInfo(ST_FILE_INFO info)
 
 bool CPaperUser::CheckAnswerFile(void)
 {
+	Poco::Timestamp tmStamp;
+	tmStamp.update();
 	try
 	{
 		Poco::MD5Engine md5;
@@ -581,6 +583,10 @@ bool CPaperUser::CheckAnswerFile(void)
 			std::cout << strLog << std::endl;
 			return false;
 		}
+		int nDiffTime = tmStamp.elapsed();
+		std::stringstream ss;
+		ss << "calc MD5(" << m_szFilePath << ") success. time = " << nDiffTime / 1000.0 << "ms\n";
+		g_Log.LogOut(ss.str());
 	}
 	catch (...)
 	{

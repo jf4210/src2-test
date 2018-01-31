@@ -713,7 +713,7 @@ bool CScanMgrDlg::DownLoadModel()
 	std::string strLog = "请求下载模板: ";
 	strLog.append(stModelInfo.szModelName);
 	g_pLogger->information(strLog);
-	TRACE("[cmd:%d]: %s\n", USER_NEED_DOWN_MODEL, strLog.c_str());
+	TRACE("%s\n", strLog.c_str());
 
 	g_eDownLoadModel.reset();
 	tmStampDLG_DownloadModle.update();			//记录在下载模板等待界面的等待时间，超过一定时间时可退出
@@ -736,7 +736,7 @@ int CScanMgrDlg::GetBmkInfo()
 	if (_pCurrExam_->nModel != 0) return -3;		//只针对网阅考试获取报名库
 
 #if 1		//NewBmkTest
-	TRACE("请求报名库(%d)...[cmd:%d]\n", _pCurrExam_->nExamID, USER_GET_EXAM_BMK);
+	TRACE("请求报名库(%d)...\n", _pCurrExam_->nExamID);
 	EXAMBMK_MAP::iterator itFindExam = g_mapBmkMgr.find(_pCurrExam_->nExamID);
 	if (itFindExam != g_mapBmkMgr.end())		//如果已经下载了当前考试的报名库，就提取报名库，如何直接下载模板
 	{

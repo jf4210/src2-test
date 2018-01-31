@@ -20,6 +20,7 @@
 using namespace std;
 using namespace cv;
 int					g_nManulUploadFile = 0;		//手动上传文件，通过qq这类的
+int					g_nReUploadWaitTime = 30;	//上传文件完成后等待服务器响应时间，超过此时间则重上传
 bool				g_bCmdConnect = false;		//命令通道连接
 bool				g_bFileConnect = false;		//文件通道连接
 

@@ -33,8 +33,10 @@
 	#define TEST_GRAY_WHITE		//空白处灰度测试
 //	#define TEST_FAST_SCAN		//快速扫描模式，在扫描线程中不写文件
 	#define TEST_PAGINATION		//页码测试，多页试卷的情况，多页A3、A4
-
-//	#define	TEST_EXCEPTION_DLG	//新的异常处理窗口测试
+	
+	#ifdef TEST_PAGINATION
+		#define	TEST_EXCEPTION_DLG	//新的异常处理窗口测试
+	#endif
 	#define TEST_ModelMgr		//使用模板保存测试类保存模板
 #else	//release版本
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
@@ -196,6 +198,7 @@ extern int		g_RecogGrayMax_OMR;		//OMR计算灰度的最大考试范围
 
 
 extern int				g_nManulUploadFile;		//手动上传文件，通过qq这类的
+extern int				g_nReUploadWaitTime;	//上传文件完成后等待服务器响应时间，超过此时间则重上传
 
 extern bool				g_bCmdConnect;		//命令通道连接
 extern bool				g_bFileConnect;		//文件通道连接

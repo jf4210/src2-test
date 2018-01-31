@@ -87,6 +87,7 @@ bool InitConfig()
 	Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(strUtf8Path));
 	_nReocgThreads_		= pConf->getInt("Recog.threads", 2);
 	g_nManulUploadFile	= pConf->getInt("UploadFile.manul", 0);
+	g_nReUploadWaitTime = pConf->getInt("UploadFile.ReUploadWT", 30);
 	g_bShowScanSrcUI	= pConf->getBool("Scan.bShowUI", false);
 	g_bModifySN			= pConf->getBool("Scan.bModifySN", false);
 	g_nOperatingMode	= pConf->getInt("Scan.OperatingMode", 2);
