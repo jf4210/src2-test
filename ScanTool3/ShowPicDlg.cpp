@@ -487,11 +487,11 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 	{
 		clock_t t1, t2, t3;
 		t1 = clock();
-#ifdef TEST_PAGINATION
+	#ifdef TEST_PAGINATION
 		Mat matSrc = (*itPic)->pSrcScanPic->mtPic;
-#else
+	#else
 		Mat matSrc = imread((*itPic)->strPicPath);
-		#endif
+	#endif
 		t2 = clock();
 
 #ifdef PIC_RECTIFY_TEST

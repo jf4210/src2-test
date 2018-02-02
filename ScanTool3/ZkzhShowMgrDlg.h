@@ -23,6 +23,7 @@ public:
 
 	void	ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper = NULL);
 	void	SetDlgInfo(CShowPicDlg* pShowDlg, CVagueSearchDlg* pSearchDlg);
+	bool	ReleaseData();
 private:
 	std::vector<CBmpButton*> m_vecBtn;
 
@@ -36,7 +37,6 @@ private:
 	void	InitUI();
 	void	InitCtrlPosition();
 	void	InitData();
-	void	ReleaseData();
 	BOOL	PreTranslateMessage(MSG* pMsg);
 	virtual LRESULT DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam);
 

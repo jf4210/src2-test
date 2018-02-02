@@ -205,7 +205,7 @@ void CZkzhExceptionDlg::InitData()
 	}
 }
 
-void CZkzhExceptionDlg::ReleaseData()
+bool CZkzhExceptionDlg::ReleaseData()
 {
 	if (!g_nExitFlag)
 	{
@@ -221,7 +221,7 @@ void CZkzhExceptionDlg::ReleaseData()
 					dlg.setShowInfo(2, 2, "存在考号为空的考生，若不修改，将影响参加后面的评卷，忽略？");
 					dlg.DoModal();
 					if (dlg.m_nResult != IDYES)
-						return ;
+						return false;
 					break;
 				}
 			}
@@ -269,6 +269,8 @@ void CZkzhExceptionDlg::ReleaseData()
 	}
 
 	SetZkzhStatus();
+	m_lcZkzh.DeleteAllItems();
+	return true;
 }
 
 BOOL CZkzhExceptionDlg::PreTranslateMessage(MSG* pMsg)
@@ -628,7 +630,8 @@ LRESULT CZkzhExceptionDlg::MsgVagueSearchResult(WPARAM wParam, LPARAM lParam)
 
 void CZkzhExceptionDlg::OnDestroy()
 {
-	CDialog::OnDestroy();
+	if (!ReleaseData())
+		return;
 
-	ReleaseData();
+	CDialog::OnDestroy();
 }

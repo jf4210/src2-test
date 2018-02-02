@@ -448,11 +448,18 @@ cv::Mat COmrRecog::GetRotMat(RECTLIST lFixRealPic, RECTLIST lFixModelPic)
 			srcTri[i] = vecFixNewPt[i];
 			dstTri[i] = vecFixPt[i];
 		}
-		rot_mat = cv::getAffineTransform(srcTri, dstTri);
+		try
+		{
+			rot_mat = cv::getAffineTransform(srcTri, dstTri);
 
-		//反向计算模板上点对应的实际图像的点
-		cv::Mat rot_mat_inv = rot_mat.inv();	//逆矩阵
-		matResult = rot_mat_inv;
+			//反向计算模板上点对应的实际图像的点
+			cv::Mat rot_mat_inv = rot_mat.inv();	//逆矩阵
+			matResult = rot_mat_inv;
+		}
+		catch (cv::Exception& exc)
+		{
+			TRACE("计算仿射变换的逆矩阵异常: %s\n", exc.what());
+		}
 	}
 	else if (lFixRealPic.size() == 4)	//透视逆变换
 	{
@@ -483,10 +490,17 @@ cv::Mat COmrRecog::GetRotMat(RECTLIST lFixRealPic, RECTLIST lFixModelPic)
 			srcTri[i] = vecFixNewPt[i];
 			dstTri[i] = vecFixPt[i];
 		}
-		rot_mat = cv::getPerspectiveTransform(srcTri, dstTri);
+		try
+		{
+			rot_mat = cv::getPerspectiveTransform(srcTri, dstTri);
 
-		cv::Mat rot_mat_inv = rot_mat.inv();	//逆矩阵
-		matResult = rot_mat_inv;
+			cv::Mat rot_mat_inv = rot_mat.inv();	//逆矩阵
+			matResult = rot_mat_inv;
+		}
+		catch (cv::Exception& exc)
+		{
+			TRACE("计算透视变换的逆矩阵异常: %s\n", exc.what());
+		}
 	}
 	return matResult;
 }
@@ -507,11 +521,14 @@ cv::Rect COmrRecog::GetRealRtFromModel(cv::Rect rtModel, RECTLIST lFixRealPic, R
 		cv::Point2f pt2 = rtModel.br();
 		cv::Point2f p1 = cv::Point2f(0, 0);
 		cv::Point2f p2 = cv::Point2f(0, 0);
-		p1.x = rot_mat_inv.ptr<double>(0)[0] * pt1.x + rot_mat_inv.ptr<double>(0)[1] * pt1.y + rot_mat_inv.ptr<double>(0)[2];
-		p1.y = rot_mat_inv.ptr<double>(1)[0] * pt1.x + rot_mat_inv.ptr<double>(1)[1] * pt1.y + rot_mat_inv.ptr<double>(1)[2];
+		if (!rot_mat_inv.empty())
+		{
+			p1.x = rot_mat_inv.ptr<double>(0)[0] * pt1.x + rot_mat_inv.ptr<double>(0)[1] * pt1.y + rot_mat_inv.ptr<double>(0)[2];
+			p1.y = rot_mat_inv.ptr<double>(1)[0] * pt1.x + rot_mat_inv.ptr<double>(1)[1] * pt1.y + rot_mat_inv.ptr<double>(1)[2];
 
-		p2.x = rot_mat_inv.ptr<double>(0)[0] * pt2.x + rot_mat_inv.ptr<double>(0)[1] * pt2.y + rot_mat_inv.ptr<double>(0)[2];
-		p2.y = rot_mat_inv.ptr<double>(1)[0] * pt2.x + rot_mat_inv.ptr<double>(1)[1] * pt2.y + rot_mat_inv.ptr<double>(1)[2];
+			p2.x = rot_mat_inv.ptr<double>(0)[0] * pt2.x + rot_mat_inv.ptr<double>(0)[1] * pt2.y + rot_mat_inv.ptr<double>(0)[2];
+			p2.y = rot_mat_inv.ptr<double>(1)[0] * pt2.x + rot_mat_inv.ptr<double>(1)[1] * pt2.y + rot_mat_inv.ptr<double>(1)[2];
+		}
 		rtResult = cv::Rect(p1, p2);
 	}
 

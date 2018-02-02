@@ -174,18 +174,12 @@ void CZkzhShowMgrDlg::InitData()
 
 }
 
-void CZkzhShowMgrDlg::ReleaseData()
+bool CZkzhShowMgrDlg::ReleaseData()
 {
-	for (int i = 0; i < m_vecBtn.size(); i++)
-	{
-		CButton* pBtn = m_vecBtn[i];
-		SAFE_RELEASE(pBtn);
-		m_vecBtn[i] = NULL;
-	}
-	m_vecBtn.clear();
-
 	if (m_pZkzhExceptionDlg)
 	{
+		if (!m_pZkzhExceptionDlg->ReleaseData())
+			return false;
 		m_pZkzhExceptionDlg->DestroyWindow();
 		SAFE_RELEASE(m_pZkzhExceptionDlg);
 	}
@@ -194,6 +188,15 @@ void CZkzhShowMgrDlg::ReleaseData()
 		m_pMultiPageExceptionDlg->DestroyWindow();
 		SAFE_RELEASE(m_pMultiPageExceptionDlg);
 	}
+	for (int i = 0; i < m_vecBtn.size(); i++)
+	{
+		CButton* pBtn = m_vecBtn[i];
+		SAFE_RELEASE(pBtn);
+		m_vecBtn[i] = NULL;
+	}
+	m_vecBtn.clear();
+
+	return true;
 }
 
 BOOL CZkzhShowMgrDlg::PreTranslateMessage(MSG* pMsg)
@@ -261,7 +264,8 @@ BOOL CZkzhShowMgrDlg::OnEraseBkgnd(CDC* pDC)
 
 void CZkzhShowMgrDlg::OnDestroy()
 {
-	CDialog::OnDestroy();
+	if (!ReleaseData())
+		return;
 
-	ReleaseData();
+	CDialog::OnDestroy();
 }

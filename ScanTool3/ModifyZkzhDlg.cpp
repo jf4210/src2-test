@@ -573,10 +573,12 @@ void CModifyZkzhDlg::ShowPaperByItem(int nItem)
 {
 	if (nItem < 0)
 		return;
-	if (nItem >= m_lcZkzh.GetItemCount())
+	if (m_lcZkzh.GetItemCount() > 0 && nItem >= m_lcZkzh.GetItemCount())
 		return;
 
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(nItem);
+	if (pPaper == NULL)
+		return;
 #if 1
 	m_pCurrentShowPaper = pPaper;
 	m_lcZkzh.GetItemColors(nItem, 0, crOldText, crOldBackground);
@@ -788,6 +790,8 @@ LRESULT CModifyZkzhDlg::OnLBtnDownEdit(WPARAM nItem, LPARAM nSubItem)
 		USES_CONVERSION;
 		CString strText = m_lcZkzh.GetItemText(nItem, nSubItem);
 		pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(nItem);
+		if (pPaper == NULL)
+			return 0;
 // 		m_strCurZkzh = strText;
 // 		GetDlgItem(IDC_STATIC_Zkzh_S3)->SetWindowText(A2T(std::string(pPaper->strStudentInfo + ":").c_str()));
 
@@ -888,6 +892,8 @@ bool CModifyZkzhDlg::ReleaseData()
 #ifdef TEST_EXCEPTION_DLG
 	if (m_pZkzhShowMgrDlg)
 	{
+		if (!m_pZkzhShowMgrDlg->ReleaseData())
+			return false;
 		m_pZkzhShowMgrDlg->DestroyWindow();
 		SAFE_RELEASE(m_pZkzhShowMgrDlg);
 	}

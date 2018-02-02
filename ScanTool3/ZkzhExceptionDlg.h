@@ -31,11 +31,11 @@ public:
 
 	void	SetDlgInfo(CShowPicDlg* pShowDlg, CVagueSearchDlg* pSearchDlg);
 	void	ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper = NULL);
+	bool	ReleaseData();
 private:
 	void	InitUI();
 	void	InitCtrlPosition();
 	void	InitData();
-	void	ReleaseData();
 	BOOL	PreTranslateMessage(MSG* pMsg);
 	std::string GetDetailInfo(pST_PaperInfo pPaper);
 
