@@ -2093,8 +2093,16 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 	}
 	else
 	{
-		sprintf_s(szPicName, "model%d.jpg", nStudentId);
-		sprintf_s(szPicPath, "%s\\model%d.jpg", m_strCurrPicSavePath.c_str(), nStudentId);
+		if (_pCurrExam_ && _pCurrSub_)
+		{
+			sprintf_s(szPicName, "model_%d_%d_%d.jpg", _pCurrExam_->nExamID, _pCurrSub_->nSubjID, nStudentId);
+			sprintf_s(szPicPath, "%s\\model_%d_%d_%d.jpg", m_strCurrPicSavePath.c_str(), _pCurrExam_->nExamID, _pCurrSub_->nSubjID, nStudentId);
+		}
+		else
+		{
+			sprintf_s(szPicName, "model%d.jpg", nStudentId);
+			sprintf_s(szPicPath, "%s\\model%d.jpg", m_strCurrPicSavePath.c_str(), nStudentId);
+		}
 	}
 
 	_nScanCount_++;

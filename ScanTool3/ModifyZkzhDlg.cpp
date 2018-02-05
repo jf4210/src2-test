@@ -573,7 +573,7 @@ void CModifyZkzhDlg::ShowPaperByItem(int nItem)
 {
 	if (nItem < 0)
 		return;
-	if (m_lcZkzh.GetItemCount() > 0 && nItem >= m_lcZkzh.GetItemCount())
+	if (m_lcZkzh.GetItemCount() <= 0 || nItem >= m_lcZkzh.GetItemCount())
 		return;
 
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(nItem);

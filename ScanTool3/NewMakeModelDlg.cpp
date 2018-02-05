@@ -11,6 +11,7 @@
 #include "Net_Cmd_Protocol.h"
 #include "GetModelDlg.h"
 #include "ModelMgr.h"
+#include "ExamInfoDlg.h"
 // CMakeModelDlg 对话框
 
 IMPLEMENT_DYNAMIC(CNewMakeModelDlg, CDialog)
@@ -674,6 +675,15 @@ void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 		return;
 	}
 
+	CExamInfoDlg dlg(m_pModel);
+	if (dlg.DoModal() != IDOK)
+	{
+		CNewMessageBox dlg;
+		dlg.setShowInfo(2, 1, "上传图片失败！");
+		dlg.DoModal();
+		return;
+	}
+
 	std::stringstream ssLog;
 	bool bFailFlag = false;
 	for (int i = 0; i < m_vecModelPicPath.size(); i++)
@@ -713,15 +723,19 @@ void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 			continue;
 		}
 
-		ssLog << "添加["<< m_pModel->nExamID << "_" << m_pModel->nSubjectID <<"]模板上传图片: " << strPicName << "(" << strPicPath << ")\n";
+		int nExamID, nSubjectID;
+		nExamID = dlg.m_nExamID;
+		nSubjectID = dlg.m_SubjectID;
+
+		ssLog << "添加["<< nExamID << "_" << nSubjectID <<"]模板上传图片: " << strPicName << "(" << strPicPath << ")\n";
 
 		strMd5 = calcFileMd5(strPath);
 		
 		ST_MODELPIC stModelPic;
 		ZeroMemory(&stModelPic, sizeof(ST_MODELPIC));
 		stModelPic.nIndex = i + 1;
-		stModelPic.nExamID = m_pModel->nExamID;
-		stModelPic.nSubjectID = m_pModel->nSubjectID;
+		stModelPic.nExamID = nExamID;
+		stModelPic.nSubjectID = nSubjectID;
 		strncpy(stModelPic.szPicName, strPicName.c_str(), strPicName.length());
 		strncpy(stModelPic.szPicPath, strPicPath.c_str(), strPicPath.length());
 		strncpy(stModelPic.szMD5, strMd5.c_str(), strMd5.length());
