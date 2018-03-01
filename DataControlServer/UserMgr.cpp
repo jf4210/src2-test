@@ -223,6 +223,24 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			std::cout << "获取考试列表: " << pUser->m_Name <<std::endl;
 
 			#ifdef TEST_MODE
+			#if 1
+			std::string strExamListPath = SysSet.m_strCurrentDir + "\\ServerTestData\\ServerTestData-examlist.txt";
+			std::string strJsnData;
+			std::ifstream in(strExamListPath);
+
+			if (!in) return false;
+
+			std::string strJsnLine;
+			while (!in.eof())
+			{
+				getline(in, strJsnLine);
+				strJsnData.append(strJsnLine);
+			}
+			in.close();
+			
+			pUser->SendResponesInfo(USER_RESPONSE_EXAMINFO, RESULT_EXAMINFO_SUCCESS, (char*)strJsnData.c_str(), strJsnData.length());
+			return 1;
+			#else
 			Poco::JSON::Object jsnSubject1;
 			jsnSubject1.set("id", 200);
 			jsnSubject1.set("name", CMyCodeConvert::Gb2312ToUtf8("语文"));
@@ -265,6 +283,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			jsnResult.stringify(jsnString, 0);
 			pUser->SendResponesInfo(USER_RESPONSE_EXAMINFO, RESULT_EXAMINFO_SUCCESS, (char*)jsnString.str().c_str(), jsnString.str().length());
 			return 1;
+			#endif
 			#endif
 
 //		#ifdef TO_WHTY
@@ -634,44 +653,88 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			g_Log.LogOut(strLog);
 
 //			#ifdef _DEBUG	//测试数据，后期要删
-			#if 0
-			Poco::JSON::Object objBmkTestResult;
-			Poco::JSON::Object objStatus;
-			objStatus.set("success", true);
-
-			Poco::JSON::Array arryStudent;
-			for (int i = 0; i < 100; i++)
+			#ifdef TEST_MODE
+			std::string strSendData;
+			std::string strBmkFileName;
+			if (stGetBmkInfo.nExamID == 1354 || stGetBmkInfo.nExamID == 1257 || stGetBmkInfo.nExamID == 1241)
 			{
-				Poco::JSON::Object objStudent;
-				std::string strZkzh = Poco::format("%d", 100 + i);
-				objStudent.set("zkzh", strZkzh);
-				std::string strName = Poco::format("测试%d", i);
-				objStudent.set("name", CMyCodeConvert::Gb2312ToUtf8(strName));
-				objStudent.set("classRoom", CMyCodeConvert::Gb2312ToUtf8("一班"));
-				objStudent.set("school", CMyCodeConvert::Gb2312ToUtf8("一中"));
+				strBmkFileName = Poco::format("ServerTestData-bmk-%d.txt", stGetBmkInfo.nExamID);
+				std::string strExamListPath = SysSet.m_strCurrentDir + "\\ServerTestData\\" + strBmkFileName;
+				std::string strJsnData;
+				std::ifstream in(strExamListPath);
 
-				Poco::JSON::Array arryScanStatus;
-				for (int j = 0; j < 4; j++)
+				if (!in) return false;
+
+				std::string strJsnLine;
+				while (!in.eof())
 				{
-					Poco::JSON::Object objSubStatus;
-					objSubStatus.set("subjectID", 590 + j);
-					objSubStatus.set("scaned", (j + i) % 2);
-					arryScanStatus.add(objSubStatus);
+					getline(in, strJsnLine);
+					strJsnData.append(strJsnLine);
 				}
-				objStudent.set("scanStatus", arryScanStatus);
-				arryStudent.add(objStudent);
+				in.close();
+
+				Poco::JSON::Parser parser;
+				Poco::Dynamic::Var result;
+				try
+				{
+					result = parser.parse(strJsnData);
+					Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
+					//++添加考试ID和科目ID到结果信息中
+					Poco::JSON::Object objExam;
+					objExam.set("examId", stGetBmkInfo.nExamID);
+					objExam.set("subjectId", stGetBmkInfo.nSubjectID);
+					object->set("examInfo", objExam);
+					std::stringstream jsnSnString;
+					object->stringify(jsnSnString, 0);
+					//--
+					strSendData = jsnSnString.str();
+				}
+				catch (Poco::Exception& exc)
+				{
+					std::cout << "获取考试[" << stGetBmkInfo.nExamID << "]报名库数据异常\n";
+					return false;
+				}
 			}
+			else
+			{
+				Poco::JSON::Object objBmkTestResult;
+				Poco::JSON::Object objStatus;
+				objStatus.set("success", true);
 
-			Poco::JSON::Object objExam;
-			objExam.set("examId", 402);
-			objExam.set("subjectId", 590);
-			objBmkTestResult.set("status", objStatus);
-			objBmkTestResult.set("students", arryStudent);
-			objBmkTestResult.set("examInfo", objExam); 
-			std::stringstream jsnSnString;
-			objBmkTestResult.stringify(jsnSnString, 0);
+				Poco::JSON::Array arryStudent;
+				for (int i = 0; i < 100; i++)
+				{
+					Poco::JSON::Object objStudent;
+					std::string strZkzh = Poco::format("%d", 100 + i);
+					objStudent.set("zkzh", strZkzh);
+					std::string strName = Poco::format("测试%d", i);
+					objStudent.set("name", CMyCodeConvert::Gb2312ToUtf8(strName));
+					objStudent.set("classRoom", CMyCodeConvert::Gb2312ToUtf8("一班"));
+					objStudent.set("school", CMyCodeConvert::Gb2312ToUtf8("一中"));
 
-			std::string strSendData = jsnSnString.str();
+					Poco::JSON::Array arryScanStatus;
+					for (int j = 0; j < 4; j++)
+					{
+						Poco::JSON::Object objSubStatus;
+						objSubStatus.set("subjectID", 590 + j);
+						objSubStatus.set("scaned", (j + i) % 2);
+						arryScanStatus.add(objSubStatus);
+					}
+					objStudent.set("scanStatus", arryScanStatus);
+					arryStudent.add(objStudent);
+				}
+
+				Poco::JSON::Object objExam;
+				objExam.set("examId", 402);
+				objExam.set("subjectId", 590);
+				objBmkTestResult.set("status", objStatus);
+				objBmkTestResult.set("students", arryStudent);
+				objBmkTestResult.set("examInfo", objExam);
+				std::stringstream jsnSnString;
+				objBmkTestResult.stringify(jsnSnString, 0);
+
+				strSendData = jsnSnString.str();
+			}
 			pUser->SendResponesInfo(USER_RESPONSE_GET_EXAM_BMK, RESULT_GET_BMK_SUCCESS, (char*)strSendData.c_str(), strSendData.length());
 			break;
 			#endif
