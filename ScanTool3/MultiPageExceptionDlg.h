@@ -66,4 +66,6 @@ public:
 	afx_msg void OnNMHoverListPics(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnBnClickedBtnApply();
+	afx_msg void OnNMRClickListPaper(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnMultipageDelExceptionpaper();
 };

@@ -43,6 +43,8 @@ BEGIN_MESSAGE_MAP(CMultiPageExceptionDlg, CDialog)
 	ON_NOTIFY(NM_HOVER, IDC_LIST_Pics, &CMultiPageExceptionDlg::OnNMHoverListPics)
 	ON_WM_SIZE()
 	ON_BN_CLICKED(IDC_BTN_Apply, &CMultiPageExceptionDlg::OnBnClickedBtnApply)
+	ON_NOTIFY(NM_RCLICK, IDC_LIST_Paper, &CMultiPageExceptionDlg::OnNMRClickListPaper)
+	ON_COMMAND(ID_MultiPage_Del_ExceptionPaper, &CMultiPageExceptionDlg::OnMultipageDelExceptionpaper)
 END_MESSAGE_MAP()
 
 // CMultiPageExceptionDlg 消息处理程序
@@ -339,7 +341,7 @@ void CMultiPageExceptionDlg::InitData()
 	USES_CONVERSION;
 	for (auto pPaper : m_pPapers->lPaper)
 	{
-		if (pPaper->nPaginationStatus != 2)
+		if (pPaper->nPaginationStatus != 2 && !pPaper->bReScan)
 		{
 			//添加进试卷列表控件
 			int nCount = m_lcIssuePaper.GetItemCount();
@@ -439,4 +441,55 @@ void CMultiPageExceptionDlg::OnBnClickedBtnApply()
 {
 	pST_PicInfo pPic = (pST_PicInfo)m_lcIssuePics.GetItemData(m_nCurrentPicID);
 	SetPicInfo(pPic);
+}
+
+
+void CMultiPageExceptionDlg::OnNMRClickListPaper(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	*pResult = 0;
+
+	if (m_lcIssuePaper.GetSelectedCount() <= 0) return;
+
+	m_lcIssuePaper.SetItemState(m_nCurrentPaperID, 0, LVIS_DROPHILITED);		// 取消高亮显示
+	m_nCurrentPaperID = pNMItemActivate->iItem;
+	m_lcIssuePaper.SetItemState(m_nCurrentPaperID, LVIS_DROPHILITED, LVIS_DROPHILITED);		//高亮显示一行，失去焦点后也一直显示
+	
+	//下面的这段代码, 不单单适应于ListCtrl  
+	CMenu menu, *pPopup;
+	menu.LoadMenu(IDR_MENU_MultiPageException);
+	pPopup = menu.GetSubMenu(0);
+	CPoint myPoint;
+	ClientToScreen(&myPoint);
+	GetCursorPos(&myPoint); //鼠标位置  
+	pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, myPoint.x, myPoint.y, this);//GetParent()
+}
+
+
+void CMultiPageExceptionDlg::OnMultipageDelExceptionpaper()
+{
+	CNewMessageBox	dlg;
+	dlg.setShowInfo(2, 2, "是否确定删除此考生试卷？");
+	dlg.DoModal();
+	if (dlg.m_nResult != IDYES)
+		return ;
+
+	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcIssuePaper.GetItemData(m_nCurrentPaperID);
+	//pPaper->nPagination_Del_Paper = 1;
+	pPaper->bReScan = true;
+
+	PAPER_LIST::iterator itPaper = m_pPapers->lPaper.begin();
+	for (; itPaper != m_pPapers->lPaper.end();)
+	{
+		pST_PaperInfo pItemPaper = *itPaper;
+		if (pPaper == pItemPaper)
+		{
+			itPaper = m_pPapers->lPaper.erase(itPaper);
+			m_pPapers->lIssue.push_back(pPaper);
+			break;
+		}
+		itPaper++;
+	}
+
+	ReInitData(m_pModel, m_pPapers);
 }

@@ -41,6 +41,7 @@ BEGIN_MESSAGE_MAP(CZkzhExceptionDlg, CDialog)
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
 	ON_WM_DESTROY()
+	ON_NOTIFY(NM_CLICK, IDC_LIST_ZkzhExcDlg, &CZkzhExceptionDlg::OnNMClickListZkzhexcdlg)
 END_MESSAGE_MAP()
 
 
@@ -634,4 +635,58 @@ void CZkzhExceptionDlg::OnDestroy()
 		return;
 
 	CDialog::OnDestroy();
+}
+
+
+void CZkzhExceptionDlg::OnNMClickListZkzhexcdlg(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	if (pNMItemActivate->iItem < 0)
+		return;
+
+	if (pNMItemActivate->iSubItem != 2)
+		return;
+
+	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(pNMItemActivate->iItem);
+	if (m_lcZkzh.GetCheckbox(pNMItemActivate->iItem, 2))
+		pPaper->bReScan = true;			//设置此试卷需要重新扫描
+	else
+		pPaper->bReScan = false;
+
+	if (m_pPapers)
+	{
+		if (!pPaper->bReScan)
+		{
+			//如果此试卷已经被修改正常，从问题列表删除
+			PAPER_LIST::iterator itIssue = m_pPapers->lIssue.begin();
+			for (; itIssue != m_pPapers->lIssue.end();)
+			{
+				pST_PaperInfo pItemPaper = *itIssue;
+				if (pItemPaper == pPaper && !pItemPaper->bReScan)		//不用重扫，则认为属于正常试卷，放入正常列表中，如果原来在问题列表，则移动到正常列表
+				{
+					itIssue = m_pPapers->lIssue.erase(itIssue);
+					m_pPapers->lPaper.push_back(pItemPaper);
+					break;
+				}
+				itIssue++;
+			}
+		}
+		else
+		{
+			//需要重扫的试卷放入问题试卷列表
+			PAPER_LIST::iterator itPaper = m_pPapers->lPaper.begin();
+			for (; itPaper != m_pPapers->lPaper.end();)
+			{
+				pST_PaperInfo pItemPaper = *itPaper;
+				if (pItemPaper == pPaper && pItemPaper->bReScan)
+				{
+					itPaper = m_pPapers->lPaper.erase(itPaper);
+					m_pPapers->lIssue.push_back(pItemPaper);
+					break;
+				}
+				itPaper++;
+			}
+		}		
+	}
+	*pResult = 0;
 }

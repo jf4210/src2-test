@@ -67,4 +67,5 @@ public:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnDestroy();
+	afx_msg void OnNMClickListZkzhexcdlg(NMHDR *pNMHDR, LRESULT *pResult);
 };

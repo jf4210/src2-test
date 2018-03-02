@@ -336,6 +336,7 @@ typedef struct _PaperInfo_
 									0-没有识别到页码，不能参与识别，设置问题卷，人工确认后再识别；1-识别完页码，可以识别，不能确定具体属于哪个学生(默认)；2-整袋识别完，可以确定属于哪个考生的哪张试卷
 									3-图片数量与模板不一致，4-存在重复的页码
 									*/
+	//int			nPagination_Del_Paper;	//多页模式下，1-此试卷被主动删除,0-未被删除；删除的试卷放入问题试卷列表中不显示
 	int			nQKFlag;			//缺考标识
 	int			nWJFlag;			//违纪标识
 	int			nZkzhInBmkStatus;	//准考证号是否在报名库中存在，在报名库列表不存在时，此项无效, 0--报名库中不存在，1--报名库中存在，-1--扫描时重号了
@@ -368,6 +369,7 @@ typedef struct _PaperInfo_
 		nPicsExchange = 0;
 		//nScanTmpIndex = 0;
 		nPaginationStatus = 1;
+		//nPagination_Del_Paper = 0;
 		nIndex = 0;
 		nQKFlag = 0;
 		nWJFlag = 0;
