@@ -4803,6 +4803,7 @@ void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
 	for (; itPaperValid != pPapers->lPaper.end(); itPaperValid++)
 	{
 		pST_PaperInfo pCurrentPaper = *itPaperValid;
+		if(pCurrentPaper->nPaginationStatus == 0) continue;		//没有识别到页码的不检查试卷合法性，在人工设置完页码后再做处理
 		if (pCurrentPaper->lPic.size() != pModel->vecPaperModel.size())
 			pCurrentPaper->nPaginationStatus = 3;
 		else

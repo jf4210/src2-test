@@ -528,6 +528,9 @@
     <ClInclude Include="CoordinationConvert.h">
       <Filter>真假坐标转换</Filter>
     </ClInclude>
+    <ClInclude Include="PaperRecog.h">
+      <Filter>线程\识别</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -805,6 +808,9 @@
     </ClCompile>
     <ClCompile Include="CoordinationConvert.cpp">
       <Filter>真假坐标转换</Filter>
+    </ClCompile>
+    <ClCompile Include="PaperRecog.cpp">
+      <Filter>线程\识别</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

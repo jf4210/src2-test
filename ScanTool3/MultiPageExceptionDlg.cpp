@@ -236,6 +236,17 @@ void CMultiPageExceptionDlg::ShowPicDetail(pST_PicInfo pPic, bool bShowPic /*= f
 void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
 {
 	UpdateData(TRUE);
+	
+	//如果是未识别到页码的，先根据填写的页码标识进行重识别
+	if ((static_cast<pST_PaperInfo>(pPic->pPaper))->nPaginationStatus == 0)
+	{
+		pRECOGTASK pTask = new RECOGTASK;
+		pTask->pPaper = static_cast<pST_PaperInfo>(pPic->pPaper);
+		g_lRecogTask.push_back(pTask);
+
+
+
+	}
 
 	USES_CONVERSION;
 	std::string strCurrZkzh = T2A(m_strPicZKZH);

@@ -183,6 +183,10 @@ bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPag
 	//检查页码修改
 	if (pPic->nPicModelIndex != nNewPage - 1)
 	{
+		//************************************************************************
+		//************	修改页码后，需要根据新页码来重新识别	******************
+		//************************************************************************
+
 		if (!ModifyPicPagination(pPic, nNewPage))
 			return false;
 	}

@@ -11,7 +11,7 @@ class COmrRecog
 {
 public:
 	COmrRecog();
-	~COmrRecog();
+	virtual ~COmrRecog();
 
 	//给定一个矩形，按给定方向旋转后的矩形
 	//1:正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
