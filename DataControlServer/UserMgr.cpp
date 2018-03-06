@@ -368,7 +368,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			if (itFind == _mapModel_.end())
 			{
 				bNeedSend = true;
-				ssLog << "模板信息映射表中未找到" << szIndex << "的信息，可以发送此模板的信息\n";
+				ssLog << "模板信息映射表中未找到" << szIndex << "的信息，可以发送此模板的信息[Ezs = " << stModelInfo.szEzs << "]\n";
 				//g_Log.LogOut(strLog);
 
 				pST_MODELINFO pStModelInfo = new ST_MODELINFO;
@@ -388,7 +388,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 				_mapModel_.insert(MAP_MODEL::value_type(szIndex, pModelInfo));
 				_mapModelLock_.unlock();
 
-				ssLog << "添加新的模板信息，等待接收模板文件\n" << stModelInfo.szModelName;
+				ssLog << "添加新的模板信息，等待接收模板文件: " << stModelInfo.szModelName << "\n";
 			}
 			else
 			{
@@ -420,7 +420,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 					pModelInfo->strElectOmr = stModelInfo.szElectOmr;
 					pModelInfo->strMd5 = stModelInfo.szMD5;
 
-					ssLog << "模板信息映射表中" << szIndex << "的文件MD5与需要上传的文件MD5信息不一致，可以发送此模板的信息";
+					ssLog << "模板信息映射表中" << szIndex << "的文件MD5与需要上传的文件MD5信息不一致，可以发送此模板的信息[Ezs = " << pModelInfo->strEzs <<"]";
 				}
 				else
 					std::cout << "文件未修改，不需要重传" << std::endl;

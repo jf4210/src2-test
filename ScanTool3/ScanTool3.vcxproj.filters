@@ -205,6 +205,9 @@
     <Filter Include="真假坐标转换">
       <UniqueIdentifier>{b8e5a26d-9fb4-4179-b6fb-d9d58add9ebb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="线程\识别\识别类">
+      <UniqueIdentifier>{87ffc0f9-8b6b-475d-9089-aef15fb57806}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -528,8 +531,23 @@
     <ClInclude Include="CoordinationConvert.h">
       <Filter>真假坐标转换</Filter>
     </ClInclude>
-    <ClInclude Include="PaperRecog.h">
-      <Filter>线程\识别</Filter>
+    <ClInclude Include="BaseRecog.h">
+      <Filter>线程\识别\识别类</Filter>
+    </ClInclude>
+    <ClInclude Include="PrintPointRecog.h">
+      <Filter>线程\识别\识别类</Filter>
+    </ClInclude>
+    <ClInclude Include="WritePointRecog.h">
+      <Filter>线程\识别\识别类</Filter>
+    </ClInclude>
+    <ClInclude Include="SNPoint.h">
+      <Filter>线程\识别\识别类</Filter>
+    </ClInclude>
+    <ClInclude Include="PaperRecogMgr.h">
+      <Filter>线程\识别\识别类</Filter>
+    </ClInclude>
+    <ClInclude Include="OmrPoint.h">
+      <Filter>线程\识别\识别类</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -809,8 +827,23 @@
     <ClCompile Include="CoordinationConvert.cpp">
       <Filter>真假坐标转换</Filter>
     </ClCompile>
-    <ClCompile Include="PaperRecog.cpp">
-      <Filter>线程\识别</Filter>
+    <ClCompile Include="BaseRecog.cpp">
+      <Filter>线程\识别\识别类</Filter>
+    </ClCompile>
+    <ClCompile Include="PrintPointRecog.cpp">
+      <Filter>线程\识别\识别类</Filter>
+    </ClCompile>
+    <ClCompile Include="WritePointRecog.cpp">
+      <Filter>线程\识别\识别类</Filter>
+    </ClCompile>
+    <ClCompile Include="SNPoint.cpp">
+      <Filter>线程\识别\识别类</Filter>
+    </ClCompile>
+    <ClCompile Include="PaperRecogMgr.cpp">
+      <Filter>线程\识别\识别类</Filter>
+    </ClCompile>
+    <ClCompile Include="OmrPoint.cpp">
+      <Filter>线程\识别\识别类</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

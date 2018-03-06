@@ -133,14 +133,17 @@
     <ClInclude Include="..\..\include\twain\TwainString.h" />
     <ClInclude Include="AdanceSetMgrDlg.h" />
     <ClInclude Include="AnswerShowDlg.h" />
+    <ClInclude Include="BaseRecog.h" />
     <ClInclude Include="CoordinationConvert.h" />
     <ClInclude Include="GetModelDlg.h" />
     <ClInclude Include="KeepAliveTimer.h" />
     <ClInclude Include="MultiPageExceptionDlg.h" />
     <ClInclude Include="MultiPageMgr.h" />
+    <ClInclude Include="OmrPoint.h" />
     <ClInclude Include="PaperInputDlg.h" />
-    <ClInclude Include="PaperRecog.h" />
+    <ClInclude Include="PaperRecogMgr.h" />
     <ClInclude Include="PapersMgr.h" />
+    <ClInclude Include="PrintPointRecog.h" />
     <ClInclude Include="ScanParamSetDlg.h" />
     <ClInclude Include="BaseTabDlg.h" />
     <ClInclude Include="BmpButton.h" />
@@ -197,6 +200,7 @@
     <ClInclude Include="ShowPicDlg.h" />
     <ClInclude Include="SingleExamDlg.h" />
     <ClInclude Include="SNInfoSetDlg.h" />
+    <ClInclude Include="SNPoint.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StudentDef.h" />
     <ClInclude Include="StudentMgr.h" />
@@ -208,6 +212,7 @@
     <ClInclude Include="TipBaseDlg.h" />
     <ClInclude Include="VagueSearchDlg.h" />
     <ClInclude Include="WaitDownloadDlg.h" />
+    <ClInclude Include="WritePointRecog.h" />
     <ClInclude Include="XListCtrl\AdvComboBox.h" />
     <ClInclude Include="XListCtrl\AdvComboEdit.h" />
     <ClInclude Include="XListCtrl\DropListBox.h" />
@@ -257,13 +262,16 @@
     </ClCompile>
     <ClCompile Include="AdanceSetMgrDlg.cpp" />
     <ClCompile Include="AnswerShowDlg.cpp" />
+    <ClCompile Include="BaseRecog.cpp" />
     <ClCompile Include="CoordinationConvert.cpp" />
     <ClCompile Include="GetModelDlg.cpp" />
     <ClCompile Include="MultiPageExceptionDlg.cpp" />
     <ClCompile Include="MultiPageMgr.cpp" />
+    <ClCompile Include="OmrPoint.cpp" />
     <ClCompile Include="PaperInputDlg.cpp" />
-    <ClCompile Include="PaperRecog.cpp" />
+    <ClCompile Include="PaperRecogMgr.cpp" />
     <ClCompile Include="PapersMgr.cpp" />
+    <ClCompile Include="PrintPointRecog.cpp" />
     <ClCompile Include="ScanParamSetDlg.cpp" />
     <ClCompile Include="BmpButton.cpp" />
     <ClCompile Include="ComboBoxExt.cpp" />
@@ -319,6 +327,7 @@
     <ClCompile Include="ShowPicDlg.cpp" />
     <ClCompile Include="SingleExamDlg.cpp" />
     <ClCompile Include="SNInfoSetDlg.cpp" />
+    <ClCompile Include="SNPoint.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -330,6 +339,7 @@
     <ClCompile Include="TipBaseDlg.cpp" />
     <ClCompile Include="VagueSearchDlg.cpp" />
     <ClCompile Include="WaitDownloadDlg.cpp" />
+    <ClCompile Include="WritePointRecog.cpp" />
     <ClCompile Include="XListCtrl\AdvComboBox.cpp" />
     <ClCompile Include="XListCtrl\AdvComboEdit.cpp" />
     <ClCompile Include="XListCtrl\DropListBox.cpp" />
