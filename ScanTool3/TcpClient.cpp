@@ -1292,6 +1292,8 @@ void CTcpClient::HandleTask(pTCP_TASK pTask)
 // 			g_bCmdConnect = _bConnect;
 // 		}
 // 	}
+
+	TRACE("×¼±¸·¢ËÍÃüÁî: %d\n", pTask->usCmd);
 	try
 	{
 		if (bSendNewBuff)

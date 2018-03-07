@@ -104,17 +104,25 @@ bool CSNPoint::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMOD
 	bool bRecogAll = true;
 	bool bResult = true;
 	std::vector<int> vecSN;
+	std::stringstream ssLog;
 
 	clock_t start, end;
 	start = clock();
-	strLog = Poco::format("图片%s\n", pPic->strPicName);
+	ssLog << "开始识别准考证(omr)[" << pPic->strPicName << "]:\n";
 
 	if (pModel->vecPaperModel[nPic]->lSNInfo.size() == 0)
 	{
-		strLog = Poco::format("图片%s没有考号需要识别", pPic->strPicName);
-		g_pLogger->information(strLog);
+		ssLog << "\t没有考号需要识别.\n";
+		strLog.append(ssLog.str());
 		return true;
 	}
+
+	for (auto itSn : (static_cast<pST_PaperInfo>(pPic->pPaper))->lSnResult)
+	{
+		pSN_ITEM pSNItem = itSn;
+		SAFE_RELEASE(pSNItem);
+	}
+	(static_cast<pST_PaperInfo>(pPic->pPaper))->lSnResult.clear();
 
 	SNLIST::iterator itSN = pModel->vecPaperModel[nPic]->lSNInfo.begin();
 	for (; itSN != pModel->vecPaperModel[nPic]->lSNInfo.end(); itSN++)
@@ -216,53 +224,23 @@ bool CSNPoint::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMOD
 
 		int nFlag = -1;
 		float fThreld = 0.0;
-#if 1
+
 		vecItemVal.clear();
 		if (vecItemsDesc[0]->fRealValuePercent > fCompThread)
 		{
 			vecItemVal.push_back(vecItemsDesc[0]->nSnVal);
 		}
-#else
-		for (int i = 0; i < vecSnItemDiff.size(); i++)
-		{
-			//根据所有选项灰度值排序，相邻灰度值差值超过阀值，同时其中第一个最大的灰度值超过1.0，就认为这个区间为选中的阀值区间
-			//(大于1.0是防止最小的灰度值很小的时候影响阀值判断)
-			float fDiff = (fCompThread - vecSnItemDiff[i].fFirst) * 0.1;
-			if ((vecSnItemDiff[i].fDiff >= fDiffThread && vecSnItemDiff[i].fFirst > fCompThread) ||
-				(vecSnItemDiff[i].fDiff >= fDiffThread + fDiff && vecSnItemDiff[i].fFirst > (fCompThread - 0.1) && fDiff > 0))
-			{
-				nFlag = i;
-				fThreld = vecSnItemDiff[i].fFirst;
-				if (vecSnItemDiff[i].fDiff > fDiffExit)	//灰度值变化较大，直接退出
-					break;
-			}
-		}
 
-		if (nFlag >= 0)
-		{
-			vecItemVal.clear();
-			RECTLIST::iterator itItem = pSn->lSN.begin();
-			for (; itItem != pSn->lSN.end(); itItem++)
-			{
-				if (itItem->fRealValuePercent >= fThreld)
-				{
-					vecItemVal.push_back(itItem->nSnVal);
-				}
-			}
-		}
-#endif
 		if (vecItemVal.size() != 1)
 		{
-			char szTmpLog[300] = { 0 };
-			sprintf_s(szTmpLog, "第%d位SN[", pSn->nItem);
+			ssLog << "\t第" << pSn->nItem << "位SN[";
 			for (int i = 0; i < vecSnItemDiff.size(); i++)
 			{
 				char szTmp[15] = { 0 };
 				sprintf_s(szTmp, "%s:%.5f ", vecSnItemDiff[i].szVal, vecSnItemDiff[i].fDiff);
-				strcat_s(szTmpLog, szTmp);
+				ssLog << szTmp;
 			}
-			strcat_s(szTmpLog, "]\n");
-			strLog.append(szTmpLog);
+			ssLog << "]\n";
 		}
 #endif
 
@@ -321,8 +299,8 @@ bool CSNPoint::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMOD
 						strcat(szVal, szTmp);
 					}
 					char szLog[MAX_PATH] = { 0 };
-					sprintf_s(szLog, "识别准考证号第%d位失败,识别出结果%d位(%s), 图片名: %s\n", pSnItem->nItem, vecItemVal.size(), szVal, pPic->strPicName.c_str());
-					strLog.append(szLog);
+					sprintf_s(szLog, "\t识别准考证号第%d位失败,识别出结果%d位(%s), 图片名: %s\n", pSnItem->nItem, vecItemVal.size(), szVal, pPic->strPicName.c_str());
+					ssLog << szLog;
 					TRACE(szLog);
 
 					vecSN.push_back(-1);
@@ -340,9 +318,9 @@ bool CSNPoint::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMOD
 		}
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别准考证号完成(%s), 图片名: %s\n", (static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.c_str(), pPic->strPicName.c_str());
-		strLog.append(szLog);
+		ssLog << "\t识别准考证号完成(" << (static_cast<pST_PaperInfo>(pPic->pPaper))->strSN << "), 图片[" << pPic->strPicName << "]\n";
 		TRACE(szLog);
-		(static_cast<CDialog*>((static_cast<pST_PaperInfo>(pPic->pPaper))->pSrcDlg))->PostMessage(MSG_ZKZH_RECOG, (WPARAM)pPic->pPaper, (LPARAM)(static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers);
+		//(static_cast<CDialog*>((static_cast<pST_PaperInfo>(pPic->pPaper))->pSrcDlg))->PostMessage(MSG_ZKZH_RECOG, (WPARAM)pPic->pPaper, (LPARAM)(static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers);
 	}
 	else
 	{
@@ -360,29 +338,28 @@ bool CSNPoint::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMOD
 			if (!bAllEmpty)			//只要识别到一部分，就将此识别到的结果放入模糊搜索字段中
 				(static_cast<pST_PaperInfo>(pPic->pPaper))->strRecogSN4Search.append(szTmp);
 		}
-		(static_cast<CDialog*>((static_cast<pST_PaperInfo>(pPic->pPaper))->pSrcDlg))->PostMessage(MSG_ZKZH_RECOG, (WPARAM)pPic->pPaper, (LPARAM)(static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers);
+		//(static_cast<CDialog*>((static_cast<pST_PaperInfo>(pPic->pPaper))->pSrcDlg))->PostMessage(MSG_ZKZH_RECOG, (WPARAM)pPic->pPaper, (LPARAM)(static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers);
 	}
-	if (!bRecogAll)
-	{
-		(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmSnStatistics.lock();
-		(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nSnNull++;
-		(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmSnStatistics.unlock();
-	}
+// 	if (!bRecogAll)
+// 	{
+// 		(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmSnStatistics.lock();
+// 		(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nSnNull++;
+// 		(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmSnStatistics.unlock();
+// 	}
 	if (!bResult)
 	{
-		(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmSnStatistics.lock();
-		(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nSnNull++;
-		(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmSnStatistics.unlock();
+// 		(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmSnStatistics.lock();
+// 		(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nSnNull++;
+// 		(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmSnStatistics.unlock();
 
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别准考证号失败, 图片名: %s\n", pPic->strPicName.c_str());
-		strLog.append(szLog);
+		ssLog << "识别准考证号失败, 图片名: " << pPic->strPicName << "\n";
 		TRACE(szLog);
 	}
 	end = clock();
-	std::string strTime = Poco::format("识别考号时间: %dms\n", (int)(end - start));
-	strLog.append(strTime);
-	//g_pLogger->information(strLog);
+	ssLog << "\t识别考号时间: " << end - start << "ms\n";
+	strLog.append(ssLog.str());
 	return bResult;
 }
 

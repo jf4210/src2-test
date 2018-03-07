@@ -7,6 +7,12 @@ public:
 	CPaperRecogMgr(int nRecogModel);
 	~CPaperRecogMgr();
 
+	bool RecogPaper(pST_PaperInfo pPaper, pMODEL pModel);
+	bool RecogPic(int nPic, pST_PicInfo pPic, pMODEL pModel);
+
+	//图像识别步骤
+	//==============================================================================================================
+	bool InitPic(pST_PicInfo pPic, cv::Mat& matCompSrcPic);
 	bool RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel);	//识别文字
 	bool RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel);		//识别水平同步头
 // 	bool RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel);		//识别水平同步头
@@ -20,6 +26,8 @@ public:
 	bool RecogSN(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel);			//识别准考证号
 	bool RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel);			//识别OMR信息
 	bool RecogElectOmr(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel);		//识别选做题OMR信息
+	//==============================================================================================================
+
 
 	std::string GetLog();
 	void SetTesseractObj(tesseract::TessBaseAPI* pTess);

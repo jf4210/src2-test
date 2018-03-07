@@ -5,6 +5,12 @@
 bool CQKPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel, int nRecogMode, std::string& strLog)
 {
 	TRACE("识别缺考\n");
+	std::stringstream ssLog;
+
+	clock_t start, end;
+	start = clock();
+	ssLog << "开始识别缺考[" << pPic->strPicName << "]:\n";
+
 	bool bResult = true;
 	RECTLIST::iterator itCP = pModel->vecPaperModel[nPic]->lQK_CP.begin();
 	for (; itCP != pModel->vecPaperModel[nPic]->lQK_CP.end(); itCP++)
@@ -28,8 +34,7 @@ bool CQKPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, 
 		{
 			char szLog[MAX_PATH] = { 0 };
 			sprintf_s(szLog, "校验失败, 异常结束, 问题点: (%d,%d,%d,%d)\n", rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
-			//g_pLogger->information(szLog);
-			strLog.append(szLog);
+			ssLog << "\t" << szLog;
 			TRACE(szLog);
 		}
 
@@ -45,16 +50,24 @@ bool CQKPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, 
 	{
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别缺考失败, 图片名: %s\n", pPic->strPicName.c_str());
-		//g_pLogger->information(szLog);
-		strLog.append(szLog);
+		ssLog << "\t" << szLog;
 		TRACE(szLog);
 	}
+	end = clock();
+	ssLog << "\t识别定点时间: " << end - start << "ms\n";
+	strLog.append(ssLog.str());
 	return bResult;
 }
 
 bool CWJPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel, int nRecogMode, std::string& strLog)
 {
 	TRACE("识别违纪\n");
+	std::stringstream ssLog;
+
+	clock_t start, end;
+	start = clock();
+	ssLog << "开始识别违纪[" << pPic->strPicName << "]:\n";
+
 	bool bResult = true;
 	RECTLIST::iterator itCP = pModel->vecPaperModel[nPic]->lWJ_CP.begin();
 	for (; itCP != pModel->vecPaperModel[nPic]->lWJ_CP.end(); itCP++)
@@ -78,8 +91,7 @@ bool CWJPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, 
 		{
 			char szLog[MAX_PATH] = { 0 };
 			sprintf_s(szLog, "校验失败, 异常结束, 问题点: (%d,%d,%d,%d)\n", rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
-			//g_pLogger->information(szLog);
-			strLog.append(szLog);
+			ssLog << "\t" << szLog;
 			TRACE(szLog);
 		}
 
@@ -95,9 +107,11 @@ bool CWJPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, 
 	{
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别违纪失败, 图片名: %s\n", pPic->strPicName.c_str());
-		//g_pLogger->information(szLog);
-		strLog.append(szLog);
+		ssLog << "\t" << szLog;
 		TRACE(szLog);
 	}
+	end = clock();
+	ssLog << "\t识别定点时间: " << end - start << "ms\n";
+	strLog.append(ssLog.str());
 	return bResult;
 }

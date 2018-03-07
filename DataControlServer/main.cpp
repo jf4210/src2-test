@@ -578,7 +578,7 @@ public:
 				pTask = new SCAN_REQ_TASK;
 				pTask->strUri = SysSet.m_strBackUri + "/api/commons/keepalive";
 				pTask->strMsg = "sessionAlive";
-				pTask->strEzs = it->first;
+				pTask->strEzs = it->first;//it->first;
 
 				g_fmScanReq.lock();
 				g_lScanReq.push_back(pTask);

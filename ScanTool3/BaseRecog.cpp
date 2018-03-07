@@ -34,8 +34,6 @@ bool CBaseRecog::Recog(RECTINFO& rc, cv::Mat& matCompPic, std::string& strLog)
 		if (matCompRoi2.channels() == 3)
 			cv::cvtColor(matCompRoi2, matCompRoi2, CV_BGR2GRAY);
 
-		Mat imag_src, img_comp;
-		cv::cvtColor(matCompRoi2, matCompRoi2, CV_BGR2GRAY);
 		cv::GaussianBlur(matCompRoi2, matCompRoi2, cv::Size(rc.nGaussKernel, rc.nGaussKernel), 0, 0);	//_nGauseKernel_
 		SharpenImage(matCompRoi2, matCompRoi2, rc.nSharpKernel);
 
@@ -421,7 +419,6 @@ bool CBaseRecog::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMOD
 		Mat matCompRoi2 = matCompRoi.clone();
 		if (matCompRoi2.channels() == 3)
 			cv::cvtColor(matCompRoi2, matCompRoi2, CV_BGR2GRAY);
-		cv::cvtColor(matCompRoi2, matCompRoi2, CV_BGR2GRAY);
 
 		// 		GaussianBlur(matCompRoi, matCompRoi, cv::Size(_nGauseKernel_, _nGauseKernel_), 0, 0);
 		// 		sharpenImage1(matCompRoi, matCompRoi);
@@ -717,6 +714,22 @@ bool CBaseRecog::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMOD
 	}
 
 	return bResult;
+}
+
+void CBaseRecog::SharpenImage(const cv::Mat &image, cv::Mat &result, int nSharpKernel)
+{
+	//创建并初始化滤波模板
+	cv::Mat kernel(3, 3, CV_32F, cv::Scalar(0));
+	kernel.at<float>(1, 1) = nSharpKernel;		//_nSharpKernel_
+	kernel.at<float>(0, 1) = -1.0;
+	kernel.at<float>(1, 0) = -1.0;
+	kernel.at<float>(1, 2) = -1.0;
+	kernel.at<float>(2, 1) = -1.0;
+
+	result.create(image.size(), image.type());
+
+	//对图像进行滤波
+	cv::filter2D(image, result, image.depth(), kernel);
 }
 
 //----------------------------------------------------------------------

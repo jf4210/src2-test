@@ -7,7 +7,7 @@
 #include "afxdialogex.h"
 #include "MultiPageMgr.h"
 #include "NewMessageBox.h"
-
+#include "PaperRecogMgr.h"
 // CMultiPageExceptionDlg ¶Ô»°¿ò
 
 IMPLEMENT_DYNAMIC(CMultiPageExceptionDlg, CDialog)
@@ -244,7 +244,8 @@ void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
 		pTask->pPaper = static_cast<pST_PaperInfo>(pPic->pPaper);
 		g_lRecogTask.push_back(pTask);
 
-
+		CPaperRecogMgr paperRecogMgrObj(g_nOperatingMode);
+		paperRecogMgrObj.RecogPic(m_nPicPagination, pPic, _pModel_);
 
 	}
 

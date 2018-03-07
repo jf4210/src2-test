@@ -11,9 +11,12 @@ bool COmrPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	int nNullCount_2 = 0;	//第二种方法识别出的空值
 	int nNullCount_3 = 0;	//第三种方法识别出的空值
 
+	std::stringstream ssLog;
 	clock_t start, end;
 	start = clock();
-	strLog = Poco::format("图片%s\n", pPic->strPicName);
+	ssLog << "开始识别客观题omr[" << pPic->strPicName << "]:\n";
+
+	pPic->lOmrResult.clear();
 
 	bool bRecogAll = true;
 	bool bResult = true;
@@ -442,7 +445,7 @@ bool COmrPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	{
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别OMR失败, 图片名: %s\n", pPic->strPicName.c_str());
-		strLog.append(szLog);
+		ssLog << "\t识别OMR失败, 图片名: " << pPic->strPicName << "\n";
 		TRACE(szLog);
 	}
 
@@ -460,13 +463,11 @@ bool COmrPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		sprintf_s(szStatistics, "图片(%s)选项总数[%d],空值%d(%.2f%%)[No.1=%d(%.2f%%),No.2=%d(%.2f%%), No.3=%d(%.2f%%)],怀疑%d(%.2f%%),无怀疑%d(%.2f%%)", pPic->strPicName.c_str(), nCount, nNullCount, (float)nNullCount / nCount * 100, \
 				  nNullCount_1, (float)nNullCount_1 / nCount * 100, nNullCount_2, (float)nNullCount_2 / nCount * 100, nNullCount_3, (float)nNullCount_3 / nCount * 100, \
 				  nDoubtCount, (float)nDoubtCount / nCount * 100, nEqualCount, (float)nEqualCount / nCount * 100);
-
-		strLog.append(szStatistics);
+		ssLog << "\t" << szStatistics;
 	}
 	end = clock();
-	std::string strTime = Poco::format("识别Omr时间: %dms\n", (int)(end - start));
-	strLog.append(strTime);
-	//g_pLogger->information(strLog);
+	ssLog << "\t识别Omr时间: " << end - start << "ms\n";
+	strLog.append(ssLog.str());
 	return bResult;
 }
 
@@ -688,6 +689,7 @@ bool CElectOmrPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 {
 	bool bResult = true;
 
+	pPic->lElectOmrResult.clear();
 	std::vector<int> vecOmr;
 	ELECTOMR_LIST::iterator itElectOmr = pModel->vecPaperModel[nPic]->lElectOmr.begin();
 	for (; itElectOmr != pModel->vecPaperModel[nPic]->lElectOmr.end(); itElectOmr++)

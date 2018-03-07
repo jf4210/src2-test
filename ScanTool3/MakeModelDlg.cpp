@@ -6680,10 +6680,12 @@ LRESULT CMakeModelDlg::HTrackerChange(WPARAM wParam, LPARAM lParam)
 
 	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
 		return true;
-	m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.x = m_ptHTracker1.x;
-	m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.y = m_ptHTracker1.y;
-	m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.width = m_ptHTracker2.x - m_ptHTracker1.x;
-	m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.height = m_ptHTracker2.y - m_ptHTracker1.y;
+// 	m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.x = m_ptHTracker1.x;
+// 	m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.y = m_ptHTracker1.y;
+// 	m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.width = m_ptHTracker2.x - m_ptHTracker1.x;
+// 	m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker.height = m_ptHTracker2.y - m_ptHTracker1.y;
+
+	m_vecPaperModelInfo[m_nCurrTabSel]->rtHTracker = cv::Rect(m_ptHTracker1, m_ptHTracker2);
 	m_vecPaperModelInfo[m_nCurrTabSel]->bFirstH = false;
 	return true;
 }
@@ -6696,10 +6698,12 @@ LRESULT CMakeModelDlg::VTrackerChange(WPARAM wParam, LPARAM lParam)
 
 	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
 		return true;
-	m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.x = m_ptVTracker1.x;
-	m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.y = m_ptVTracker1.y;
-	m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.width = m_ptVTracker2.x - m_ptVTracker1.x;
-	m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.height = m_ptVTracker2.y - m_ptVTracker1.y;
+// 	m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.x = m_ptVTracker1.x;
+// 	m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.y = m_ptVTracker1.y;
+// 	m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.width = m_ptVTracker2.x - m_ptVTracker1.x;
+// 	m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker.height = m_ptVTracker2.y - m_ptVTracker1.y;
+
+	m_vecPaperModelInfo[m_nCurrTabSel]->rtVTracker = cv::Rect(m_ptVTracker1, m_ptVTracker2);
 	m_vecPaperModelInfo[m_nCurrTabSel]->bFirstV = false;
 	return true;
 }
@@ -6716,10 +6720,13 @@ LRESULT CMakeModelDlg::SNTrackerChange(WPARAM wParam, LPARAM lParam)
 // 	m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.y = m_ptSNTracker1.y;
 // 	m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.width = m_ptSNTracker2.x - m_ptSNTracker1.x;
 // 	m_vecPaperModelInfo[m_nCurrTabSel]->rtSNTracker.height = m_ptSNTracker2.y - m_ptSNTracker1.y;
-	m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt.x = m_ptSNTracker1.x;
-	m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt.y = m_ptSNTracker1.y;
-	m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt.width = m_ptSNTracker2.x - m_ptSNTracker1.x;
-	m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt.height = m_ptSNTracker2.y - m_ptSNTracker1.y;
+
+// 	m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt.x = m_ptSNTracker1.x;
+// 	m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt.y = m_ptSNTracker1.y;
+// 	m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt.width = m_ptSNTracker2.x - m_ptSNTracker1.x;
+// 	m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt.height = m_ptSNTracker2.y - m_ptSNTracker1.y;
+
+	m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt = cv::Rect(m_ptSNTracker1, m_ptSNTracker2);
 	
 	m_pSNInfoDlg->ShowUI(GetSnShowFakePosFlag(m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.nRecogFlag));
 	return true;

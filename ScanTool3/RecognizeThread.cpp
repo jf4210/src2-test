@@ -4,6 +4,7 @@
 #include "OmrRecog.h"
 #include "ScanMgrDlg.h"
 #include "CoordinationConvert.h"
+#include "PaperRecogMgr.h"
 
 using namespace cv;
 CRecognizeThread::CRecognizeThread()
@@ -95,6 +96,87 @@ void CRecognizeThread::run()
 #endif
 	SAFE_RELEASE(m_pStudentMgr);
 	TRACE("RecognizeThread exit 0\n");
+}
+
+bool CRecognizeThread::RecogPaper(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel)
+{
+	clock_t start_pic, end_pic;
+	start_pic = clock();
+
+	bool bResult = false;
+	CPaperRecogMgr paperRecogMgrObj(g_nOperatingMode);
+	if (g_nOperatingMode == 1)
+	{
+		if (pModel->nUseWordAnchorPoint)
+			bResult = paperRecogMgrObj.RecogCharacter(nPic, matCompPic, pPic, pModel);
+		else
+			bResult = paperRecogMgrObj.RecogFixCP(nPic, matCompPic, pPic, pModel);
+
+	#ifdef WarpAffine_TEST
+		cv::Mat	inverseMat(2, 3, CV_32FC1);
+		bResult = GetFixPicTransfer(nPic, matCompPic, pPic, pModel, inverseMat);
+	#endif
+		bResult = paperRecogMgrObj.RecogABModel(nPic, matCompPic, pPic, pModel);
+		bResult = paperRecogMgrObj.RecogCourse(nPic, matCompPic, pPic, pModel);
+		bResult = paperRecogMgrObj.RecogQKCP(nPic, matCompPic, pPic, pModel);
+		bResult = paperRecogMgrObj.RecogWJCP(nPic, matCompPic, pPic, pModel);
+		bResult = paperRecogMgrObj.RecogGrayCP(nPic, matCompPic, pPic, pModel);
+		bResult = paperRecogMgrObj.RecogWhiteCP(nPic, matCompPic, pPic, pModel);
+		bResult = paperRecogMgrObj.RecogSN(nPic, matCompPic, pPic, pModel);
+		{
+			(static_cast<CDialog*>((static_cast<pST_PaperInfo>(pPic->pPaper))->pSrcDlg))->PostMessage(MSG_ZKZH_RECOG, (WPARAM)pPic->pPaper, (LPARAM)(static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers);
+			if ((static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.empty())
+			{
+				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmSnStatistics.lock();
+				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nSnNull++;
+				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmSnStatistics.unlock();
+			}
+		}
+		bResult = paperRecogMgrObj.RecogOMR(nPic, matCompPic, pPic, pModel);
+		bResult = paperRecogMgrObj.RecogElectOmr(nPic, matCompPic, pPic, pModel);
+	}
+	else
+	{
+		if (pModel->nUseWordAnchorPoint)
+			bResult = paperRecogMgrObj.RecogCharacter(nPic, matCompPic, pPic, pModel);
+		else
+			bResult = paperRecogMgrObj.RecogFixCP(nPic, matCompPic, pPic, pModel);
+
+	#ifdef WarpAffine_TEST
+		cv::Mat	inverseMat(2, 3, CV_32FC1);
+		if (bResult) bResult = GetFixPicTransfer(nPic, matCompPic, pPic, pModel, inverseMat);
+	#endif
+		if (bResult) bResult = paperRecogMgrObj.RecogABModel(nPic, matCompPic, pPic, pModel);
+		if (bResult) bResult = paperRecogMgrObj.RecogCourse(nPic, matCompPic, pPic, pModel);
+		if (bResult) bResult = paperRecogMgrObj.RecogQKCP(nPic, matCompPic, pPic, pModel);
+		if (bResult) bResult = paperRecogMgrObj.RecogWJCP(nPic, matCompPic, pPic, pModel);
+		if (bResult) bResult = paperRecogMgrObj.RecogGrayCP(nPic, matCompPic, pPic, pModel);
+		if (bResult) bResult = paperRecogMgrObj.RecogWhiteCP(nPic, matCompPic, pPic, pModel);
+		if (bResult) bResult = paperRecogMgrObj.RecogSN(nPic, matCompPic, pPic, pModel);
+		if (bResult)
+		{
+			(static_cast<CDialog*>((static_cast<pST_PaperInfo>(pPic->pPaper))->pSrcDlg))->PostMessage(MSG_ZKZH_RECOG, (WPARAM)pPic->pPaper, (LPARAM)(static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers);
+			if ((static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.empty())
+			{
+				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmSnStatistics.lock();
+				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nSnNull++;
+				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmSnStatistics.unlock();
+			}
+		}
+		if (bResult) bResult = paperRecogMgrObj.RecogOMR(nPic, matCompPic, pPic, pModel);
+		if (bResult) bResult = paperRecogMgrObj.RecogElectOmr(nPic, matCompPic, pPic, pModel);
+	}
+	pPic->nRecoged = 2;
+
+	end_pic = clock();
+	TRACE("试卷 %s, 识别总时间: %d\n", pPic->strPicName.c_str(), end_pic - start_pic);
+	char szLog[MAX_PATH] = { 0 };
+	sprintf_s(szLog, "试卷 %s, 识别总时间: %d\n", pPic->strPicName.c_str(), end_pic - start_pic);
+	std::string strLog = paperRecogMgrObj.GetLog();
+	strLog.append("------------------------------------------\n");
+	strLog.append(szLog);
+	g_pLogger->information(strLog);
+	return bResult;
 }
 
 bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
@@ -549,6 +631,18 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 
 		clock_t end1_pic = clock();
 
+	#ifdef TEST_New_RecogClass
+		if (!RecogPaper(nPic, matCompPic, *itPic, pModelInfo->pModel))
+		{
+			if (g_nOperatingMode != 1)
+			{
+				HandleWithErrPaper(pPaper);
+				break;									//找到这张试卷有问题点，不进行下一张试卷的检测
+			}
+		}
+		continue;
+	#endif
+
 		bool bFind = false;
 		
 		if (g_nOperatingMode == 1)
@@ -558,12 +652,6 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 				bResult = RecogCharacter(nPic, matCompPic, *itPic, pModelInfo);
 			else
 				bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo);
-
-// 			bool bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo);
-// 
-// 		#ifdef USE_TESSERACT
-// 			bResult = RecogCharacter(nPic, matCompPic, *itPic, pModelInfo);
-// 		#endif
 
 		#ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
@@ -630,6 +718,9 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		sprintf_s(szLog, "试卷 %s 打开时间: %d, 识别总时间: %d\n", strPicFileName.c_str(), end1_pic - start_pic, end_pic - start_pic);
 		g_pLogger->information(szLog);
 	}
+#ifdef TEST_New_RecogClass
+	return;
+#endif
 
 #ifdef PrintRecogLog	//test log
 	std::string strPaperLog = "试卷(";

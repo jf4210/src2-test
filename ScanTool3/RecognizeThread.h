@@ -17,6 +17,8 @@ public:
 
 	virtual void run();
 
+	bool RecogPaper(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel);		//使用识别类来进行识别
+
 	bool HandleScanPicTask(pST_SCAN_PAPER pScanPicTask);
 	bool HandleTask(pRECOGTASK pTask);
 

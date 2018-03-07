@@ -7,24 +7,35 @@ using namespace cv;
 bool CCharacterPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel, int nRecogMode, std::string& strLog)
 {
 	bool bResult = true;
+	std::stringstream ssLog;
 
 	clock_t start, end;
 	start = clock();
-	strLog = Poco::format("图片%s\n", pPic->strPicName);
+	ssLog << "开始文字点[" << pPic->strPicName << "]:\n";
 	if (pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() == 0)
 	{
-		strLog = Poco::format("图片%s没有文字定位点需要识别", pPic->strPicName);
-		//g_pLogger->information(strLog);
+		ssLog << "\t没有文字定位点需要识别.\n";
+		strLog.append(ssLog.str());
 		return true;
 	}
 
 #ifdef USE_TESSERACT
 	if (NULL == m_pTess && !InitCharacterRecog())
 	{
-		strLog.append("tesseract对象为实例化\n");
+		ssLog << "\ttesseract对象未实例化.\n";
+		strLog.append(ssLog.str());
 		return false;
 	}
 #endif
+
+	pPic->lFix.clear();
+	CHARACTER_ANCHOR_AREA_LIST::iterator itCharAnchorArea = pPic->lCharacterAnchorArea.begin();
+	for (; itCharAnchorArea != pPic->lCharacterAnchorArea.end();)
+	{
+		pST_CHARACTER_ANCHOR_AREA pCharAnchorArea = *itCharAnchorArea;
+		itCharAnchorArea = pPic->lCharacterAnchorArea.erase(itCharAnchorArea);
+		SAFE_RELEASE(pCharAnchorArea);
+	}
 
 	CHARACTER_ANCHOR_AREA_LIST::iterator itBigRecogCharRt = pModel->vecPaperModel[nPic]->lCharacterAnchorArea.begin();
 	for (int i = 0; itBigRecogCharRt != pModel->vecPaperModel[nPic]->lCharacterAnchorArea.end(); i++, itBigRecogCharRt++)
@@ -278,7 +289,7 @@ bool CCharacterPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo
 		catch (...)
 		{
 			std::string strLog2 = Poco::format("识别文字定位区域(%d)异常\n", i);
-			strLog.append(strLog2);
+			ssLog << "\t识别文字定位区域(" << i << ")异常\n";
 			TRACE(strLog2.c_str());
 
 			// 			pPic->bFindIssue = true;
@@ -295,7 +306,7 @@ bool CCharacterPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo
 	{
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别文字定位区域失败, 图片名: %s\n", pPic->strPicName.c_str());
-		strLog.append(szLog);
+		ssLog << "识别文字定位区域失败[" << pPic->strPicName << "]\n";
 		TRACE(szLog);
 	}
 	end = clock();
@@ -307,20 +318,18 @@ bool CCharacterPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo
 			strRecogCharacter.append(item2->strVal);
 		strRecogCharacter.append("\t");
 	}
-	std::string strTime = Poco::format("识别文字定位区域时间: %dms, 识别文字: %s\n", (int)(end - start), strRecogCharacter);
-	strLog.append(strTime);
+	ssLog << "识别文字定位区域时间: " << end - start << "ms, 识别文字: " << strRecogCharacter << "\n";
 
 #if 1	 //重置定点，在识别出来的文字中选2个作为定点
 	if (!GetPicFix(nPic, pPic, pModel))
 	{
-		std::string strGetAnchorPoint = "\n获取图片的文字定位点失败\n";
-		strLog.append(strGetAnchorPoint);
+		ssLog << "\t获取图片的文字定位点失败\n";
 	}
 	cv::Mat matTmp = matCompPic.clone();
 	for (auto item : pPic->lFix)
 		cv::rectangle(matTmp, item.rt, CV_RGB(255, 0, 0), 2);
 #endif
-	//g_pLogger->information(strLog);
+	strLog.append(ssLog.str());
 	return bResult;
 }
 
@@ -610,11 +619,13 @@ bool CCharacterPoint::GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)
 bool CFixPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel, int nRecogMode, std::string& strLog)
 {
 	bool bResult = true;
+	std::stringstream ssLog;
 
 	clock_t start, end;
 	start = clock();
-	strLog = Poco::format("图片%s：识别定点\n", pPic->strPicName);
+	ssLog << "开始识别定点[" << pPic->strPicName << "]:\n";
 
+	pPic->lFix.clear();
 	RECTLIST::iterator itCP = pModel->vecPaperModel[nPic]->lSelFixRoi.begin();
 	for (int i = 0; itCP != pModel->vecPaperModel[nPic]->lSelFixRoi.end(); i++, itCP++)
 	{
@@ -736,7 +747,7 @@ bool CFixPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		catch (cv::Exception& exc)
 		{
 			std::string strLog2 = Poco::format("识别定点(%d)异常: %s\n", i, exc.msg.c_str());
-			strLog.append(strLog2);
+			ssLog << "\t" << strLog2;
 			TRACE(strLog2.c_str());
 
 			pPic->bFindIssue = true;
@@ -754,7 +765,10 @@ bool CFixPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 			bFindRect = true;
 		else
 		{
-			std::sort(RectCompList.begin(), RectCompList.end(), SortByArea);
+			std::sort(RectCompList.begin(), RectCompList.end(), [](cv::Rect& rt1, cv::Rect& rt2)
+			{
+				return rt1.area() > rt2.area() ? true : (rt1.area() < rt2.area() ? false : (rt1.x > rt2.x ? true : false));
+			});
 			Rect& rtFix = RectCompList[0];
 
 			RECTINFO rcFix;
@@ -817,7 +831,7 @@ bool CFixPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		if (bFindRect)
 		{
 			std::string strLog3 = Poco::format("识别定点(%d)失败 -- %s\n", i, strLog2);
-			strLog.append(strLog3);
+			ssLog << "\t" << strLog3;
 			bResult = false;						//找到问题点
 			pPic->bFindIssue = true;
 			pPic->lIssueRect.push_back(rc);
@@ -829,13 +843,12 @@ bool CFixPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	{
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别定点失败, 图片名: %s\n", pPic->strPicName.c_str());
-		strLog.append(szLog);
+		ssLog << "\t" << szLog;
 		TRACE(szLog);
 	}
 	end = clock();
-	std::string strTime = Poco::format("识别定点时间: %dms\n", (int)(end - start));
-	strLog.append(strTime);
-	//g_pLogger->information(strLog);
+	ssLog << "\t识别定点时间: " << end - start << "ms\n";
+	strLog.append(ssLog.str());
 	return bResult;
 }
 
@@ -875,9 +888,10 @@ bool CABPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, 
 bool CCoursePoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel, int nRecogMode, std::string& strLog)
 {
 	TRACE("识别科目\n");
+	std::stringstream ssLog;
 	clock_t start, end;
 	start = clock();
-	strLog = Poco::format("图片%s\n", pPic->strPicName);
+	ssLog << "开始识别科目[" << pPic->strPicName << "]:\n";
 
 	bool bResult = true;
 	RECTLIST::iterator itCP = pModel->vecPaperModel[nPic]->lCourse.begin();
@@ -899,7 +913,7 @@ bool CCoursePoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 			{
 				char szLog[MAX_PATH] = { 0 };
 				sprintf_s(szLog, "校验失败, 灰度百分比: %f, 问题点: (%d,%d,%d,%d)\n", rc.fRealValuePercent * 100, rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
-				strLog.append(szLog);
+				ssLog << "\t" << szLog;
 				TRACE(szLog);
 			}
 		}
@@ -907,7 +921,7 @@ bool CCoursePoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		{
 			char szLog[MAX_PATH] = { 0 };
 			sprintf_s(szLog, "校验失败, 异常结束, 问题点: (%d,%d,%d,%d)\n", rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
-			strLog.append(szLog);
+			ssLog << "\t" << szLog;
 			TRACE(szLog);
 		}
 
@@ -925,12 +939,12 @@ bool CCoursePoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pP
 		pPic->bRecogCourse = false;
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别科目失败, 图片名: %s\n", pPic->strPicName.c_str());
-		strLog.append(szLog);
+		ssLog << "\t" << szLog;
 		TRACE(szLog);
 	}
 	end = clock();
-	std::string strTime = Poco::format("识别科目校验点时间: %dms\n", (int)(end - start));
-	strLog.append(strTime);
+	ssLog << "\t识别科目校验点时间: " << end - start << "ms\n";
+	strLog.append(ssLog.str());
 	return bResult;
 }
 
@@ -939,9 +953,10 @@ bool CGrayPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 {
 	TRACE("识别灰度点\n");
 
+	std::stringstream ssLog;
 	clock_t start, end;
 	start = clock();
-	strLog = Poco::format("图片%s\n", pPic->strPicName);
+	ssLog << "开始识别灰度点[" << pPic->strPicName << "]:\n";
 
 	bool bResult = true;
 	RECTLIST::iterator itCP = pModel->vecPaperModel[nPic]->lGray.begin();
@@ -963,7 +978,7 @@ bool CGrayPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 			{
 				char szLog[MAX_PATH] = { 0 };
 				sprintf_s(szLog, "校验失败, 灰度百分比: %f, 问题点: (%d,%d,%d,%d)\n", rc.fRealValuePercent * 100, rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
-				strLog.append(szLog);
+				ssLog << "\t" << szLog;
 				TRACE(szLog);
 			}
 		}
@@ -971,7 +986,7 @@ bool CGrayPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 		{
 			char szLog[MAX_PATH] = { 0 };
 			sprintf_s(szLog, "校验失败, 异常结束, 问题点: (%d,%d,%d,%d)\n", rc.rt.x, rc.rt.y, rc.rt.width, rc.rt.height);
-			strLog.append(szLog);
+			ssLog << "\t" << szLog;
 			TRACE(szLog);
 		}
 
@@ -987,13 +1002,12 @@ bool CGrayPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic
 	{
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别灰度校验点失败, 图片名: %s\n", pPic->strPicName.c_str());
-		strLog.append(szLog);
+		ssLog << "\t" << szLog;
 		TRACE(szLog);
 	}
 	end = clock();
-	std::string strTime = Poco::format("识别灰度校验点时间: %dms\n", (int)(end - start));
-	strLog.append(strTime);
-	//g_pLogger->information(strLog);
+	ssLog << "\t识别灰度校验点时间: " << end - start << "ms\n";
+	strLog.append(ssLog.str());
 	return bResult;
 }
 
