@@ -15,21 +15,23 @@ CPaperRecogMgr::~CPaperRecogMgr()
 	SAFE_RELEASE(pWritePointRecogObj);
 }
 
-bool CPaperRecogMgr::RecogPaper(pST_PaperInfo pPaper, pMODEL pModel)
+bool CPaperRecogMgr::RecogPaper(pST_PaperInfo pPaper, pMODEL pModel, bool bMustRecog /*= false*/)
 {
 	bool bResult = false;
+	ClearPaperRecogData(pPaper);
+
 	PIC_LIST::iterator itPic = pPaper->lPic.begin();
 	for (int i = 0; itPic != pPaper->lPic.end(); itPic++, i++)
 	{
 		clock_t start_pic, end_pic;
 		start_pic = clock();
 
-		if ((*itPic)->nRecoged)		//已经识别过，不再识别
+		if (!bMustRecog && (*itPic)->nRecoged)		//已经识别过，不再识别
 			continue;
 
 	#ifdef TEST_PAGINATION
 		int nPic = (*itPic)->nPicModelIndex;
-		if (pModel->nUsePagination && pPaper->nPaginationStatus == 0)
+		if (!bMustRecog && pModel->nUsePagination && pPaper->nPaginationStatus == 0)
 		{
 			pPaper->bIssuePaper = true;
 			(*itPic)->nRecoged = 2;			//先临时设置识别完成标识，后面在人工确认完成后需要重新识别
@@ -38,6 +40,7 @@ bool CPaperRecogMgr::RecogPaper(pST_PaperInfo pPaper, pMODEL pModel)
 	#else
 		int nPic = i;
 	#endif
+		
 		RecogPic(nPic, *itPic, pModel);
 	}
 
@@ -95,6 +98,8 @@ bool CPaperRecogMgr::RecogPic(int nPic, pST_PicInfo pPic, pMODEL pModel)
 #endif
 
 	clock_t end1_pic = clock();
+
+	ClearPicRecogData(pPic);
 
 	CPaperRecogMgr paperRecogMgrObj(g_nOperatingMode);
 	if (g_nOperatingMode == 1)
@@ -298,4 +303,41 @@ std::string CPaperRecogMgr::GetLog()
 void CPaperRecogMgr::SetTesseractObj(tesseract::TessBaseAPI* pTess)
 {
 	m_pTess = pTess;
+}
+
+void CPaperRecogMgr::ClearPicRecogData(pST_PicInfo pPic)
+{
+	pPic->lFix.clear();
+	pPic->lNormalRect.clear();
+	pPic->lIssueRect.clear();
+	pPic->lOmrResult.clear();
+	pPic->lElectOmrResult.clear();
+	pPic->lCalcRect.clear();
+	pPic->lModelWordFix.clear();
+	CHARACTER_ANCHOR_AREA_LIST::iterator itCharAnchorArea = pPic->lCharacterAnchorArea.begin();
+	for (; itCharAnchorArea != pPic->lCharacterAnchorArea.end();)
+	{
+		pST_CHARACTER_ANCHOR_AREA pCharAnchorArea = *itCharAnchorArea;
+		itCharAnchorArea = pPic->lCharacterAnchorArea.erase(itCharAnchorArea);
+		SAFE_RELEASE(pCharAnchorArea);
+	}
+	pPic->lCharacterAnchorArea.clear();
+
+// 	(static_cast<pST_PaperInfo>(pPic->pPaper))->strSN = "";
+// 	(static_cast<pST_PaperInfo>(pPic->pPaper))->strRecogSN4Search = "";
+}
+
+void CPaperRecogMgr::ClearPaperRecogData(pST_PaperInfo pPaper)
+{
+	pPaper->strSN = "";
+	pPaper->strRecogSN4Search = "";
+
+	for (auto itSn : pPaper->lSnResult)
+	{
+		pSN_ITEM pSNItem = itSn;
+		SAFE_RELEASE(pSNItem);
+	}
+	pPaper->lSnResult.clear();
+	pPaper->lOmrResult.clear();
+	pPaper->lElectOmrResult.clear();
 }

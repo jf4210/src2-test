@@ -240,13 +240,47 @@ void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
 	//如果是未识别到页码的，先根据填写的页码标识进行重识别
 	if ((static_cast<pST_PaperInfo>(pPic->pPaper))->nPaginationStatus == 0)
 	{
-		pRECOGTASK pTask = new RECOGTASK;
-		pTask->pPaper = static_cast<pST_PaperInfo>(pPic->pPaper);
-		g_lRecogTask.push_back(pTask);
+		if (m_nPicPagination >= 1 && m_nPicPagination <= _pModel_->vecPaperModel.size())
+		{
+			//修改当前试卷页所属的扫描试卷的正反面页码
+			pPic->nPicOldModelIndex = pPic->nPicModelIndex;
+			pPic->nPicModelIndex = m_nPicPagination - 1;
 
-		CPaperRecogMgr paperRecogMgrObj(g_nOperatingMode);
-		paperRecogMgrObj.RecogPic(m_nPicPagination, pPic, _pModel_);
+			pST_PaperInfo pCurrentPaper = static_cast<pST_PaperInfo>(pPic->pPaper);
+			pCurrentPaper->bModifyPagination = true;
+			if (static_cast<pST_SCAN_PAPER>(pPic->pSrcScanPic->pParentScanPaper)->bDoubleScan)
+			{
+				//双面扫描时，修改这页试卷页码后，修改对应的另一页的试卷页码，如果不修改，后面可能出现不知道属于那张试卷的情况
+				for (auto pScanPic : pCurrentPaper->lPic)
+				{
+					if (pScanPic != pPic && pScanPic->pSrcScanPic->pParentScanPaper == pPic->pSrcScanPic->pParentScanPaper)
+					{
+						pScanPic->nPicOldModelIndex = pScanPic->nPicModelIndex;
+						if (pPic->nPicModelIndex % 2 == 0)
+							pScanPic->nPicModelIndex = pPic->nPicModelIndex + 1;
+						else
+							pScanPic->nPicModelIndex = pPic->nPicModelIndex - 1;
 
+						break;
+					}
+				}
+			}
+			CPaperRecogMgr paperRecogMgrObj(g_nOperatingMode);
+			paperRecogMgrObj.RecogPaper(pCurrentPaper, m_pModel, true);
+			
+			std::string strZkzh = pCurrentPaper->strSN;
+			pCurrentPaper->strSN = "";	//临时置空，
+			CMultiPageMgr multiPageObj(_pModel_);
+			multiPageObj.ModifyPic(pPic, m_pPapers, m_nPicPagination, strZkzh);
+			ReInitData(m_pModel, m_pPapers);
+		}
+		else
+		{
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(2, 1, "设置失败，可能参数非法！");
+			dlg.DoModal();
+		}
+		return;
 	}
 
 	USES_CONVERSION;
@@ -451,8 +485,12 @@ void CMultiPageExceptionDlg::OnSize(UINT nType, int cx, int cy)
 
 void CMultiPageExceptionDlg::OnBnClickedBtnApply()
 {
+	GetDlgItem(IDC_BTN_Apply)->EnableWindow(FALSE);
+
 	pST_PicInfo pPic = (pST_PicInfo)m_lcIssuePics.GetItemData(m_nCurrentPicID);
 	SetPicInfo(pPic);
+
+	GetDlgItem(IDC_BTN_Apply)->EnableWindow(TRUE);
 }
 
 

@@ -202,7 +202,7 @@ bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPag
 	{
 		//准考证号有修改，需要检查试卷袋是否存在此新准考证号，存在则合并，
 		pST_SCAN_PAPER pScanPaperTask = static_cast<pST_SCAN_PAPER>(pPic->pSrcScanPic->pParentScanPaper);
-		//如果图片只有2张，又是双面扫描，或者，单面扫描，试卷只有1张，则当不存在此新准考证号时，不需要重新构建试卷，将当前试卷整张合并到新试卷
+		//如果图片只有2张，又是双面扫描，或者，单面扫描，试卷只有1张，则当存在此新准考证号时，不需要重新构建试卷，将当前试卷整张合并到新试卷
 		if (pScanPaperTask->bDoubleScan && pCurrentPaper->lPic.size() <= 2 || \
 			!pScanPaperTask->bDoubleScan && pCurrentPaper->lPic.size() <= 1)
 		{
@@ -229,7 +229,14 @@ bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPag
 				SAFE_RELEASE(pCurrentPaper);
 				ChkPaperValid(pDstPaper, _pModel);
 			}
-			//如果没发现相同的准考证号，则不需要重新添加到试卷袋
+			else
+			{
+				//如果没发现相同的准考证号，则不需要重新添加到试卷袋，修改当前试卷的准考证号
+				pCurrentPaper->strSN = strZKZH;
+				for (auto picItem : pCurrentPaper->lPic)
+					picItem->strPicZKZH = strZKZH;
+				ChkPaperValid(pCurrentPaper, _pModel);
+			}
 		}
 		else	//图片超过2张，则当前试卷不需要从试卷袋移除
 		{
@@ -424,6 +431,7 @@ void CMultiPageMgr::ChkPaperValid(pST_PaperInfo pPaper, pMODEL pModel)
 	else
 	{
 		//图片的页码是否存在重复的
+		bool bFind = false;
 		int nLastPicIndex = -1;
 		PIC_LIST::iterator itPic = pPaper->lPic.begin();		//图片在插入的时候已经初步排序
 		for (; itPic != pPaper->lPic.end(); itPic++)
@@ -431,11 +439,14 @@ void CMultiPageMgr::ChkPaperValid(pST_PaperInfo pPaper, pMODEL pModel)
 			pST_PicInfo pPic = *itPic;
 			if (nLastPicIndex == pPic->nPicModelIndex)
 			{
+				bFind = true;
 				pPaper->nPaginationStatus = 4;
 				break;
 			}
 			nLastPicIndex = pPic->nPicModelIndex;
 		}
+		if (!bFind)
+			pPaper->nPaginationStatus = 2;
 	}
 }
 

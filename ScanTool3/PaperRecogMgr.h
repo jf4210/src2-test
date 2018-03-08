@@ -6,8 +6,10 @@ class CPaperRecogMgr
 public:
 	CPaperRecogMgr(int nRecogModel);
 	~CPaperRecogMgr();
-
-	bool RecogPaper(pST_PaperInfo pPaper, pMODEL pModel);
+	
+	//识别整份试卷，包含所有试卷页的识别
+	//bool bMustRecog: 强制识别
+	bool RecogPaper(pST_PaperInfo pPaper, pMODEL pModel, bool bMustRecog = false);
 	bool RecogPic(int nPic, pST_PicInfo pPic, pMODEL pModel);
 
 	//图像识别步骤
@@ -31,6 +33,9 @@ public:
 
 	std::string GetLog();
 	void SetTesseractObj(tesseract::TessBaseAPI* pTess);
+protected:
+	void ClearPicRecogData(pST_PicInfo pPic);
+	void ClearPaperRecogData(pST_PaperInfo pPaper);
 private:
 	CPrintPointRecog* pPrintPointRecogObj;	//印刷点识别对象
 	CWritePointRecog* pWritePointRecogObj;	//填涂点识别对象
