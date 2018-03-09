@@ -98,6 +98,7 @@ void CMultiPageMgr::MergePic(pST_PaperInfo pSrcPaper, pST_PicInfo pSrcPic, pST_P
 		{
 			itPic = pSrcPaper->lPic.erase(itPic);
 			pPic->pPaper = pDstPaper;
+			pPic->strPicZKZH = pDstPaper->strSN;
 			bool bInsert = false;
 			PIC_LIST::iterator itNewPic = pDstPaper->lPic.begin();
 			for (; itNewPic != pDstPaper->lPic.end(); itNewPic++)

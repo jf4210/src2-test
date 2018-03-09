@@ -285,6 +285,60 @@ void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
 
 	USES_CONVERSION;
 	std::string strCurrZkzh = T2A(m_strPicZKZH);
+
+	if (pPic->nPicModelIndex != m_nPicPagination - 1)
+	{
+		//************************************************************************
+		//************	修改页码后，需要根据新页码来重新识别	******************
+		//************************************************************************
+
+		if (m_nPicPagination >= 1 && m_nPicPagination <= _pModel_->vecPaperModel.size())
+		{
+			//修改当前试卷页所属的扫描试卷的正反面页码
+			pPic->nPicOldModelIndex = pPic->nPicModelIndex;
+			pPic->nPicModelIndex = m_nPicPagination - 1;
+
+			pST_PicInfo pFirstPic = pPic;
+			pST_PicInfo pSecondPic = NULL;
+
+			pST_PaperInfo pCurrentPaper = static_cast<pST_PaperInfo>(pPic->pPaper);
+			pCurrentPaper->bModifyPagination = true;
+			if (static_cast<pST_SCAN_PAPER>(pPic->pSrcScanPic->pParentScanPaper)->bDoubleScan)
+			{
+				//双面扫描时，修改这页试卷页码后，修改对应的另一页的试卷页码，如果不修改，后面可能出现不知道属于那张试卷的情况
+				for (auto pScanPic : pCurrentPaper->lPic)
+				{
+					if (pScanPic != pPic && pScanPic->pSrcScanPic->pParentScanPaper == pPic->pSrcScanPic->pParentScanPaper)
+					{
+						pScanPic->nPicOldModelIndex = pScanPic->nPicModelIndex;
+						if (pPic->nPicModelIndex % 2 == 0)
+							pScanPic->nPicModelIndex = pPic->nPicModelIndex + 1;
+						else
+							pScanPic->nPicModelIndex = pPic->nPicModelIndex - 1;
+						pSecondPic = pScanPic;
+						break;
+					}
+				}
+			}
+			CPaperRecogMgr paperRecogMgrObj(g_nOperatingMode);
+			paperRecogMgrObj.RecogPic(pFirstPic->nPicModelIndex, pFirstPic, m_pModel);
+			paperRecogMgrObj.RecogPic(pSecondPic->nPicModelIndex, pSecondPic, m_pModel);
+
+			std::string strZkzh = pFirstPic->strPicZKZH;
+			CMultiPageMgr multiPageObj(_pModel_);
+			multiPageObj.ModifyPic(pPic, m_pPapers, m_nPicPagination, strZkzh);
+			ReInitData(m_pModel, m_pPapers);
+		}
+		else
+		{
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(2, 1, "设置失败，可能参数非法！");
+			dlg.DoModal();
+		}
+
+
+	}
+
 	CMultiPageMgr multiPageObj(_pModel_);
 	if(multiPageObj.ModifyPic(pPic, m_pPapers, m_nPicPagination, strCurrZkzh))
 		ReInitData(m_pModel, m_pPapers);
@@ -387,7 +441,7 @@ void CMultiPageExceptionDlg::InitData()
 	USES_CONVERSION;
 	for (auto pPaper : m_pPapers->lPaper)
 	{
-		if (pPaper->nPaginationStatus != 2 && !pPaper->bReScan)
+		if ((pPaper->nPaginationStatus != 2 && !pPaper->bReScan) || (pPaper->nPaginationStatus == 2 && pPaper->bModifyPagination))
 		{
 			//添加进试卷列表控件
 			int nCount = m_lcIssuePaper.GetItemCount();
@@ -402,6 +456,7 @@ void CMultiPageExceptionDlg::InitData()
 			{
 				case 0: strDetailInfo = "页码未识别，请设置页码"; break;
 				case 1: strDetailInfo = "考号未识别，请设置考号"; break;
+				case 2: strDetailInfo = "正常试卷，有过修改"; break;
 				case 3: strDetailInfo = "图片数与模板不一致"; break;
 				case 4: strDetailInfo = "页码有重复"; break;
 				default: strDetailInfo = "未知错误";
