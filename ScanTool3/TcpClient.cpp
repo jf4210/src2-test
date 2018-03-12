@@ -107,7 +107,7 @@ bool CTcpClient::connectServer()
 	catch (Poco::Exception& exc)
 	{
 		std::string strLog = "连接服务器失败 ==> " + exc.displayText();
-//		TRACE(strLog.c_str());
+		TRACE(strLog.c_str());
 //		g_pLogger->information(strLog);
 		_bConnect = false;
 		g_bCmdConnect = _bConnect;
@@ -1267,39 +1267,40 @@ void CTcpClient::HandleTask(pTCP_TASK pTask)
 		memcpy(szSendBuf, (char*)&stHead, HEAD_SIZE);
 		memcpy(szSendBuf + HEAD_SIZE, pTask->szSendBuf, pTask->nPkgLen);
 	}
-
-// 	int nWantSend = HEAD_SIZE + pTask->nPkgLen;
-// 	int nSended = 0;
-// 	while (nWantSend > 0)
-// 	{
-// 		int nSendLen = -1;
-// 		try
-// 		{
-// 			if (bSendNewBuff)
-// 				nSendLen = m_ss.sendBytes(pSendBuff + nSended, 1500);
-// 			else
-// 				nSendLen = m_ss.sendBytes(szSendBuf + nSended, nWantSend);
-// 
-// 			nWantSend -= nSendLen;
-// 			nSended += nSendLen;
-// 		}
-// 		catch (Poco::Exception& exc)
-// 		{
-// 			std::string strLog = "发送数据异常 ==> " + exc.displayText();
-// 			TRACE(strLog.c_str());
-// 			g_pLogger->information(strLog);
-// 			_bConnect = false;
-// 			g_bCmdConnect = _bConnect;
-// 		}
-// 	}
-
+	
 	TRACE("准备发送命令: %d\n", pTask->usCmd);
 	try
 	{
-		if (bSendNewBuff)
-			m_ss.sendBytes(pSendBuff, HEAD_SIZE + pTask->nPkgLen);
-		else
-			m_ss.sendBytes(szSendBuf, HEAD_SIZE + pTask->nPkgLen);
+		int nWantSend = HEAD_SIZE + pTask->nPkgLen;
+		int nSended = 0;
+		while (nWantSend > 0)
+		{
+			int nSendLen = -1;
+
+			if (bSendNewBuff)
+				nSendLen = m_ss.sendBytes(pSendBuff + nSended, nWantSend);
+			else
+				nSendLen = m_ss.sendBytes(szSendBuf + nSended, nWantSend);
+
+			if (nSendLen > 0)
+			{
+				nWantSend -= nSendLen;
+				nSended += nSendLen;
+			}
+			else if (nSendLen == 0)
+			{
+				TRACE("SendData: The peer has closed.\n");
+				_bConnect = false;
+				g_bCmdConnect = _bConnect;
+				break;
+			}
+		}
+
+
+// 		if (bSendNewBuff)
+// 			m_ss.sendBytes(pSendBuff, HEAD_SIZE + pTask->nPkgLen);
+// 		else
+// 			m_ss.sendBytes(szSendBuf, HEAD_SIZE + pTask->nPkgLen);
 	}
 	catch (Poco::Exception& exc)
 	{

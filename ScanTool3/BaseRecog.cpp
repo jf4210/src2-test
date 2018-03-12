@@ -716,6 +716,69 @@ bool CBaseRecog::RecogVal2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMOD
 	return bResult;
 }
 
+int CBaseRecog::calcDensityDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecItemDiff)
+{
+	//下面将所有选项识别密度值降序排列并相邻比较
+	RECTLIST::iterator itItem = rectList.begin();
+	for (; itItem != rectList.end(); itItem++)
+	{
+		vecItemsDesc.push_back(&(*itItem));
+	}
+	std::sort(vecItemsDesc.begin(), vecItemsDesc.end(), [](pRECTINFO item1, pRECTINFO item2)
+	{
+		return item1->fRealValuePercent > item2->fRealValuePercent ? true : false;
+	});
+
+	for (int i = 0; i < vecItemsDesc.size(); i++)
+	{
+		int j = i + 1;
+		if (j < vecItemsDesc.size())
+		{
+			ST_ITEM_DIFF stDiff;
+			if(vecItemsDesc[i]->eCPType == OMR)
+				sprintf_s(stDiff.szVal, "%c%c", (char)(vecItemsDesc[i]->nAnswer + 65), (char)(vecItemsDesc[j]->nAnswer + 65));
+			else
+				sprintf_s(stDiff.szVal, "%d_%d", vecItemsDesc[i]->nSnVal, vecItemsDesc[j]->nSnVal);
+			stDiff.fDiff = vecItemsDesc[i]->fRealValuePercent - vecItemsDesc[j]->fRealValuePercent;
+			stDiff.fFirst = vecItemsDesc[i]->fRealValuePercent;
+			stDiff.fSecond = vecItemsDesc[j]->fRealValuePercent;
+			vecItemDiff.push_back(stDiff);
+		}
+	}
+	return 1;
+}
+
+int CBaseRecog::calcGrayDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>& vecItemsAsc, std::vector<ST_ITEM_DIFF>& vecItemGrayDiff)
+{
+	RECTLIST::iterator itItem = rectList.begin();
+	for (; itItem != rectList.end(); itItem++)
+	{
+		vecItemsAsc.push_back(&(*itItem));
+	}
+	std::sort(vecItemsAsc.begin(), vecItemsAsc.end(), [](pRECTINFO item1, pRECTINFO item2)
+	{
+		return item1->fRealMeanGray < item2->fRealMeanGray ? true : false;
+	});
+
+	for (int i = 0; i < vecItemsAsc.size(); i++)
+	{
+		int j = i + 1;
+		if (j < vecItemsAsc.size())
+		{
+			ST_ITEM_DIFF stDiff;
+			if (vecItemsAsc[i]->eCPType == OMR)
+				sprintf_s(stDiff.szVal, "%c%c", (char)(vecItemsAsc[i]->nAnswer + 65), (char)(vecItemsAsc[j]->nAnswer + 65));
+			else
+				sprintf_s(stDiff.szVal, "%d_%d", vecItemsAsc[i]->nSnVal, vecItemsAsc[j]->nSnVal);
+			stDiff.fDiff = abs(vecItemsAsc[i]->fRealMeanGray - vecItemsAsc[j]->fRealMeanGray);
+			stDiff.fFirst = vecItemsAsc[i]->fRealMeanGray;
+			stDiff.fSecond = vecItemsAsc[j]->fRealMeanGray;
+			vecItemGrayDiff.push_back(stDiff);
+		}
+	}
+	return 1;
+}
+
 void CBaseRecog::SharpenImage(const cv::Mat &image, cv::Mat &result, int nSharpKernel)
 {
 	//创建并初始化滤波模板

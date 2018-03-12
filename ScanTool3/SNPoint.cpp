@@ -62,7 +62,7 @@ bool CSNPoint::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMO
 				if (strResult != "")
 				{
 					strTmpLog = "识别准考证号完成(" + strResult + "), 图片名: " + pPic->strPicName;
-					(static_cast<CDialog*>((static_cast<pST_PaperInfo>(pPic->pPaper))->pSrcDlg))->PostMessage(MSG_ZKZH_RECOG, (WPARAM)pPic->pPaper, (LPARAM)(static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers);
+					//(static_cast<CDialog*>((static_cast<pST_PaperInfo>(pPic->pPaper))->pSrcDlg))->PostMessage(MSG_ZKZH_RECOG, (WPARAM)pPic->pPaper, (LPARAM)(static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers);
 				}
 				else
 				{
@@ -70,6 +70,7 @@ bool CSNPoint::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMO
 					//					bResult = false;
 				}
 				(static_cast<pST_PaperInfo>(pPic->pPaper))->strSN = strResult;
+				pPic->strPicZKZH = strResult;
 				strLog.append(strTmpLog);
 			}
 			catch (cv::Exception& exc)
@@ -86,6 +87,17 @@ bool CSNPoint::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMO
 			}
 		}
 	}
+
+	pST_PaperInfo pCurrentPaper = static_cast<pST_PaperInfo>(pPic->pPaper);
+	for (auto pTmpPic : pCurrentPaper->lPic)	//修改当前试卷页所属的扫描试卷的另一页的准考证号和当前页一样
+	{
+		if (pTmpPic != pPic && pTmpPic->pSrcScanPic->pParentScanPaper == pPic->pSrcScanPic->pParentScanPaper)
+		{
+			pTmpPic->strPicZKZH = pPic->strPicZKZH;
+			break;
+		}
+	}
+
 	// 	if ((static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.empty())
 	// 	{
 	// 		(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmSnStatistics.lock();
@@ -204,7 +216,8 @@ bool CSNPoint::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMOD
 #if 1	//根据选项差值判断选中
 		std::vector<pRECTINFO> vecItemsDesc;
 		std::vector<ST_ITEM_DIFF> vecSnItemDiff;
-		calcSnDensityDiffVal(pSn, vecItemsDesc, vecSnItemDiff);
+		//calcSnDensityDiffVal(pSn, vecItemsDesc, vecSnItemDiff);
+		calcDensityDiffVal(pSn->lSN, vecItemsDesc, vecSnItemDiff);
 
 		float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
 		float fDiffThread = 0.0;		//选项可能填涂的可能灰度梯度阀值
@@ -315,7 +328,18 @@ bool CSNPoint::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMOD
 			char szTmp[5] = { 0 };
 			itoa(vecSN[i], szTmp, 10);
 			(static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.append(szTmp);
+			pPic->strPicZKZH.append(szTmp);
 		}
+		pST_PaperInfo pCurrentPaper = static_cast<pST_PaperInfo>(pPic->pPaper);
+		for (auto pTmpPic : pCurrentPaper->lPic)	//修改当前试卷页所属的扫描试卷的另一页的准考证号和当前页一样
+		{
+			if (pTmpPic != pPic && pTmpPic->pSrcScanPic->pParentScanPaper == pPic->pSrcScanPic->pParentScanPaper)
+			{
+				pTmpPic->strPicZKZH = pPic->strPicZKZH;
+				break;
+			}
+		}
+
 		char szLog[MAX_PATH] = { 0 };
 		sprintf_s(szLog, "识别准考证号完成(%s), 图片名: %s\n", (static_cast<pST_PaperInfo>(pPic->pPaper))->strSN.c_str(), pPic->strPicName.c_str());
 		ssLog << "\t识别准考证号完成(" << (static_cast<pST_PaperInfo>(pPic->pPaper))->strSN << "), 图片[" << pPic->strPicName << "]\n";
@@ -363,62 +387,6 @@ bool CSNPoint::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMOD
 	return bResult;
 }
 
-int CSNPoint::calcSnDensityDiffVal(pSN_ITEM pSn, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemDiff)
-{
-	RECTLIST::iterator itItem = pSn->lSN.begin();
-	for (; itItem != pSn->lSN.end(); itItem++)
-	{
-		vecItemsDesc.push_back(&(*itItem));
-	}
-	std::sort(vecItemsDesc.begin(), vecItemsDesc.end(), [](pRECTINFO item1, pRECTINFO item2)
-	{
-		return item1->fRealValuePercent > item2->fRealValuePercent ? true : false;
-	});
-
-	for (int i = 0; i < vecItemsDesc.size(); i++)
-	{
-		int j = i + 1;
-		if (j < vecItemsDesc.size())
-		{
-			ST_ITEM_DIFF stDiff;
-			sprintf_s(stDiff.szVal, "%d_%d", vecItemsDesc[i]->nSnVal, vecItemsDesc[j]->nSnVal);
-			stDiff.fDiff = vecItemsDesc[i]->fRealValuePercent - vecItemsDesc[j]->fRealValuePercent;
-			stDiff.fFirst = vecItemsDesc[i]->fRealValuePercent;
-			stDiff.fSecond = vecItemsDesc[j]->fRealValuePercent;
-			vecOmrItemDiff.push_back(stDiff);
-		}
-	}
-	return 1;
-}
-
-int CSNPoint::calcOmrGrayDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemGrayDiff)
-{
-	RECTLIST::iterator itItem = rectList.begin();
-	for (; itItem != rectList.end(); itItem++)
-	{
-		vecItemsDesc.push_back(&(*itItem));
-	}
-	std::sort(vecItemsDesc.begin(), vecItemsDesc.end(), [](pRECTINFO item1, pRECTINFO item2)
-	{
-		return item1->fRealMeanGray < item2->fRealMeanGray ? true : false;
-	});
-
-	for (int i = 0; i < vecItemsDesc.size(); i++)
-	{
-		int j = i + 1;
-		if (j < vecItemsDesc.size())
-		{
-			ST_ITEM_DIFF stDiff;
-			sprintf_s(stDiff.szVal, "%c%c", (char)(vecItemsDesc[i]->nAnswer + 65), (char)(vecItemsDesc[j]->nAnswer + 65));
-			stDiff.fDiff = abs(vecItemsDesc[i]->fRealMeanGray - vecItemsDesc[j]->fRealMeanGray);
-			stDiff.fFirst = vecItemsDesc[i]->fRealMeanGray;
-			stDiff.fSecond = vecItemsDesc[j]->fRealMeanGray;
-			vecOmrItemGrayDiff.push_back(stDiff);
-		}
-	}
-	return 1;
-}
-
 bool CSNPoint::RecogVal_Sn2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel, pSN_ITEM pSn, std::vector<int>& vecItemVal)
 {
 	std::string strResult;
@@ -445,9 +413,10 @@ bool CSNPoint::RecogVal_Sn3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMO
 	}
 
 	std::string strRecogAnswer;
-	std::vector<pRECTINFO> vecItemsGrayDesc;
+	std::vector<pRECTINFO> vecItemsGrayAsc;
 	std::vector<ST_ITEM_DIFF> vecOmrItemGrayDiff;
-	calcOmrGrayDiffVal(pSn->lSN, vecItemsGrayDesc, vecOmrItemGrayDiff);
+	//calcSnGrayDiffVal(pSn->lSN, vecItemsGrayAsc, vecOmrItemGrayDiff);
+	calcGrayDiffVal(pSn->lSN, vecItemsGrayAsc, vecOmrItemGrayDiff);
 
 	float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
 	float fDiffThread = 0.0;		//选项可能填涂的可能灰度梯度阀值
@@ -458,18 +427,18 @@ bool CSNPoint::RecogVal_Sn3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMO
 	fDiffExit = _dDiffExit_3_;
 #if 1
 	float fMeanGrayDiff = 0.0;
-	for (int i = 0; i < vecItemsGrayDesc.size(); i++)
+	for (int i = 0; i < vecItemsGrayAsc.size(); i++)
 	{
-		fMeanGrayDiff += (vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray);
+		fMeanGrayDiff += (vecItemsGrayAsc[i]->fRealMeanGray - vecItemsGrayAsc[i]->fStandardMeanGray);
 	}
-	fMeanGrayDiff = fMeanGrayDiff / vecItemsGrayDesc.size();
+	fMeanGrayDiff = fMeanGrayDiff / vecItemsGrayAsc.size();
 
 	int nFlag = -1;
 	float fThreld = 0.0;
 	float fGrayDiffLast = 0.0;		//对上一次判断选中的选项对下一个选项选中判断的增益
 	for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
 	{
-		float fGrayThresholdGray = vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray - fMeanGrayDiff;
+		float fGrayThresholdGray = vecItemsGrayAsc[i]->fRealMeanGray - vecItemsGrayAsc[i]->fStandardMeanGray - fMeanGrayDiff;
 		if ((vecOmrItemGrayDiff[i].fDiff >= fDiffThread + fGrayThresholdGray + fGrayDiffLast))
 		{
 			nFlag = i;
@@ -483,9 +452,9 @@ bool CSNPoint::RecogVal_Sn3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMO
 	{
 		if (nFlag == vecOmrItemGrayDiff.size() - 1)
 		{
-			if (vecItemsGrayDesc[vecOmrItemGrayDiff.size()]->fRealMeanGray <= fCompThread)
+			if (vecItemsGrayAsc[vecOmrItemGrayDiff.size()]->fRealMeanGray <= fCompThread)
 			{
-				fThreld = vecItemsGrayDesc[vecOmrItemGrayDiff.size()]->fRealMeanGray;
+				fThreld = vecItemsGrayAsc[vecOmrItemGrayDiff.size()]->fRealMeanGray;
 			}
 		}
 		RECTLIST::iterator itItem = pSn->lSN.begin();
@@ -497,9 +466,9 @@ bool CSNPoint::RecogVal_Sn3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMO
 			}
 		}
 	}
-	else if (vecItemsGrayDesc[vecOmrItemGrayDiff.size()]->fRealMeanGray <= fCompThread)		//++判断全都选中的情况
+	else if (vecItemsGrayAsc[vecOmrItemGrayDiff.size()]->fRealMeanGray <= fCompThread)		//++判断全都选中的情况
 	{
-		fThreld = vecItemsGrayDesc[vecOmrItemGrayDiff.size()]->fRealMeanGray;
+		fThreld = vecItemsGrayAsc[vecOmrItemGrayDiff.size()]->fRealMeanGray;
 		RECTLIST::iterator itItem = pSn->lSN.begin();
 		for (; itItem != pSn->lSN.end(); itItem++)
 		{

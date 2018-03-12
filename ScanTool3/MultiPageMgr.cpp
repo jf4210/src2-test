@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "MultiPageMgr.h"
+#include "PaperRecogMgr.h"
 
 
 CMultiPageMgr::CMultiPageMgr(pMODEL pModel)
@@ -132,6 +133,9 @@ bool CMultiPageMgr::ModifyPicPagination(pST_PicInfo pPic, int nNewPage)
 {
 	if (!ChkModifyPagination(pPic, nNewPage)) return false;
 
+	pST_PicInfo pFirstPic = pPic;		//一张试卷的正反两面的图片指针
+	pST_PicInfo pSecondPic = NULL;
+
 	pPic->nPicOldModelIndex = pPic->nPicModelIndex;
 	pPic->nPicModelIndex = nNewPage - 1;
 	pST_PaperInfo pCurrentPaper = static_cast<pST_PaperInfo>(pPic->pPaper);
@@ -148,10 +152,34 @@ bool CMultiPageMgr::ModifyPicPagination(pST_PicInfo pPic, int nNewPage)
 					pScanPic->nPicModelIndex = pPic->nPicModelIndex + 1;
 				else
 					pScanPic->nPicModelIndex = pPic->nPicModelIndex - 1;
+				pSecondPic = pScanPic;
 				break;
 			}
 		}
 	}
+	//************************************************************************
+	//************	修改页码后，需要根据新页码来重新识别	******************
+	//************************************************************************
+#if 1
+	CPaperRecogMgr paperRecogMgrObj(g_nOperatingMode);
+	if (pCurrentPaper->lSrcScanPaper.size() == 1)	//当前考生试卷只有1张
+	{
+		paperRecogMgrObj.RecogPaper(pCurrentPaper, _pModel, true);
+	}
+	else
+	{
+		//当前考生试卷不止一张，即多页试卷，只需要重识别当前扫描页的试卷
+		paperRecogMgrObj.RecogPic(pFirstPic->nPicModelIndex, pFirstPic, _pModel);
+		paperRecogMgrObj.RecogPic(pSecondPic->nPicModelIndex, pSecondPic, _pModel);
+	}
+	
+	pCurrentPaper->lPic.sort([](pST_PicInfo pPic1, pST_PicInfo pPic2)
+	{return pPic1->nPicModelIndex < pPic2->nPicModelIndex; });
+
+	ChkPaperValid(pCurrentPaper, _pModel);
+#else
+	//下面的修改omr所属页面也没有意义，在调用修改页码之前，必须先根据新页码来重识别
+
 	//修改Omr和选做题的页码信息
 	for (auto pScanPic : pCurrentPaper->lPic)
 	{
@@ -169,35 +197,26 @@ bool CMultiPageMgr::ModifyPicPagination(pST_PicInfo pPic, int nNewPage)
 			}
 		}
 	}
+#endif
 	return true;
 }
 
-bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPage, std::string strZKZH)
+bool CMultiPageMgr::ModifyPicZkzh(pST_PicInfo pPic, pPAPERSINFO pPapers, std::string strZKZH)
 {
 	bool bResult = true;
-	if (nNewPage < 1 || strZKZH.empty() || !pPic || !pPapers)
+	if (strZKZH.empty() || !pPic || !pPapers)
 		return false;
 
 	clock_t sT, eT;
 	sT = clock();
 	std::stringstream ssLog;
-	//检查页码修改
-	if (pPic->nPicModelIndex != nNewPage - 1)
-	{
-		//************************************************************************
-		//************	修改页码后，需要根据新页码来重新识别	******************
-		//************************************************************************
-
-		if (!ModifyPicPagination(pPic, nNewPage))
-			return false;
-	}
 
 	//检查准考证号修改
 	pST_PaperInfo pCurrentPaper = static_cast<pST_PaperInfo>(pPic->pPaper);
 	if (pCurrentPaper->strSN == strZKZH)	//准考证号没有修改，不需要进行试卷合并
 	{
 		pCurrentPaper->lPic.sort([](pST_PicInfo pPic1, pST_PicInfo pPic2)
-		{return pPic1->nPicModelIndex < pPic2->nPicModelIndex;});
+		{return pPic1->nPicModelIndex < pPic2->nPicModelIndex; });
 	}
 	else
 	{
@@ -224,7 +243,7 @@ bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPag
 					itCurrentPaper = itNewPaper;
 				itNewPaper++;
 			}
-			if (bFindZKZH) 
+			if (bFindZKZH)
 			{
 				pPapers->lPaper.erase(itCurrentPaper);
 				SAFE_RELEASE(pCurrentPaper);
@@ -272,7 +291,7 @@ bool CMultiPageMgr::ModifyPic(pST_PicInfo pPic, pPAPERSINFO pPapers, int nNewPag
 bool CMultiPageMgr::ChkModifyPagination(pST_PicInfo pPic, int nNewPage)
 {
 	bool bResult = true;
-	if (nNewPage > _pModel->vecPaperModel.size())
+	if (nNewPage > _pModel->vecPaperModel.size() || nNewPage < 1)
 		bResult = false;
 	return bResult;
 }

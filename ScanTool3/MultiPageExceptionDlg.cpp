@@ -8,6 +8,7 @@
 #include "MultiPageMgr.h"
 #include "NewMessageBox.h"
 #include "PaperRecogMgr.h"
+#include "ZkzhShowMgrDlg.h"
 // CMultiPageExceptionDlg 对话框
 
 IMPLEMENT_DYNAMIC(CMultiPageExceptionDlg, CDialog)
@@ -237,6 +238,71 @@ void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
 {
 	UpdateData(TRUE);
 	
+#if 1
+	//如果是未识别到页码的，先根据填写的页码标识进行重识别
+	//			或者
+	//************************************************************************
+	//************	修改页码后，需要根据新页码来重新识别	******************
+	//************************************************************************
+	if ((static_cast<pST_PaperInfo>(pPic->pPaper))->nPaginationStatus == 0 || pPic->nPicModelIndex != m_nPicPagination - 1)
+	{
+		if (m_nPicPagination >= 1 && m_nPicPagination <= _pModel_->vecPaperModel.size())
+		{
+			CMultiPageMgr multiPageObj(_pModel_);
+			multiPageObj.ModifyPicPagination(pPic, m_nPicPagination);
+
+			std::string strZkzh;
+			pST_PaperInfo pCurrentPaper = static_cast<pST_PaperInfo>(pPic->pPaper);
+			if (pCurrentPaper->nPaginationStatus == 0)
+			{
+				strZkzh = pCurrentPaper->strSN;
+				pCurrentPaper->strSN = "";	//临时置空，
+			}
+			else
+			{
+				//有2张以上扫描的试卷，则当前考生显示的准考证号为另一张美没有修改的试卷的准考证号
+				for (auto pTmpPic : pCurrentPaper->lPic)
+				{
+					if (pTmpPic->pSrcScanPic->pParentScanPaper != pPic->pSrcScanPic->pParentScanPaper)
+					{
+						pCurrentPaper->strSN = pTmpPic->strPicZKZH;
+						break;
+					}
+				}
+				strZkzh = pPic->strPicZKZH;
+			}
+			multiPageObj.ModifyPicZkzh(pPic, m_pPapers, strZkzh);
+
+			CZkzhShowMgrDlg* pDlg = (CZkzhShowMgrDlg*)GetParent();
+			pDlg->ReInitDataFromChildDlg(m_pModel, m_pPapers);
+		}
+		else
+		{
+			CNewMessageBox	dlg;
+			dlg.setShowInfo(2, 1, "设置失败，可能参数非法！");
+			dlg.DoModal();
+		}
+		return;
+	}
+
+	//如果又修改准考证号，又修改页码，则准考证号的修改无效，因为必须先根据页码来重新识别数据
+
+	USES_CONVERSION;
+	std::string strCurrZkzh = T2A(m_strPicZKZH);
+
+	CMultiPageMgr multiPageObj(_pModel_);
+	if (multiPageObj.ModifyPicZkzh(pPic, m_pPapers, strCurrZkzh))
+	{
+		CZkzhShowMgrDlg* pDlg = (CZkzhShowMgrDlg*)GetParent();
+		pDlg->ReInitDataFromChildDlg(m_pModel, m_pPapers);
+	}
+	else
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "设置失败，可能参数非法！");
+		dlg.DoModal();
+	}
+#else
 	//如果是未识别到页码的，先根据填写的页码标识进行重识别
 	if ((static_cast<pST_PaperInfo>(pPic->pPaper))->nPaginationStatus == 0)
 	{
@@ -272,7 +338,9 @@ void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
 			pCurrentPaper->strSN = "";	//临时置空，
 			CMultiPageMgr multiPageObj(_pModel_);
 			multiPageObj.ModifyPic(pPic, m_pPapers, m_nPicPagination, strZkzh);
-			ReInitData(m_pModel, m_pPapers);
+			//ReInitData(m_pModel, m_pPapers);
+			CZkzhShowMgrDlg* pDlg = (CZkzhShowMgrDlg*)GetParent();
+			pDlg->ReInitDataFromChildDlg(m_pModel, m_pPapers);
 		}
 		else
 		{
@@ -327,7 +395,9 @@ void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
 			std::string strZkzh = pFirstPic->strPicZKZH;
 			CMultiPageMgr multiPageObj(_pModel_);
 			multiPageObj.ModifyPic(pPic, m_pPapers, m_nPicPagination, strZkzh);
-			ReInitData(m_pModel, m_pPapers);
+			//ReInitData(m_pModel, m_pPapers);
+			CZkzhShowMgrDlg* pDlg = (CZkzhShowMgrDlg*)GetParent();
+			pDlg->ReInitDataFromChildDlg(m_pModel, m_pPapers);
 		}
 		else
 		{
@@ -335,19 +405,22 @@ void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
 			dlg.setShowInfo(2, 1, "设置失败，可能参数非法！");
 			dlg.DoModal();
 		}
-
-
 	}
 
 	CMultiPageMgr multiPageObj(_pModel_);
-	if(multiPageObj.ModifyPic(pPic, m_pPapers, m_nPicPagination, strCurrZkzh))
-		ReInitData(m_pModel, m_pPapers);
+	if (multiPageObj.ModifyPic(pPic, m_pPapers, m_nPicPagination, strCurrZkzh))
+	{
+		//ReInitData(m_pModel, m_pPapers);
+		CZkzhShowMgrDlg* pDlg = (CZkzhShowMgrDlg*)GetParent();
+		pDlg->ReInitDataFromChildDlg(m_pModel, m_pPapers);
+	}
 	else
 	{
 		CNewMessageBox	dlg;
 		dlg.setShowInfo(2, 1, "设置失败，可能参数非法！");
 		dlg.DoModal();
 	}
+#endif
 }
 
 void CMultiPageExceptionDlg::ShowPaperByItem(int nItem)

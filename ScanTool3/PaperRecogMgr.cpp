@@ -53,7 +53,8 @@ bool CPaperRecogMgr::RecogPic(int nPic, pST_PicInfo pPic, pMODEL pModel)
 	start_pic = clock();
 	
 	bool bResult = true;
-	
+	if (!pPic) return bResult;
+
 	pPic->nRecoged = 1;
 	if (nPic >= pModel->vecPaperModel.size())
 	{
@@ -101,7 +102,7 @@ bool CPaperRecogMgr::RecogPic(int nPic, pST_PicInfo pPic, pMODEL pModel)
 
 	ClearPicRecogData(pPic);
 
-	CPaperRecogMgr paperRecogMgrObj(g_nOperatingMode);
+	CPaperRecogMgr paperRecogMgrObj(_nRecogModel);
 	if (g_nOperatingMode == 1)
 	{
 		if (pModel->nUseWordAnchorPoint)
@@ -307,6 +308,8 @@ void CPaperRecogMgr::SetTesseractObj(tesseract::TessBaseAPI* pTess)
 
 void CPaperRecogMgr::ClearPicRecogData(pST_PicInfo pPic)
 {
+	pPic->strPicZKZH = "";
+
 	pPic->lFix.clear();
 	pPic->lNormalRect.clear();
 	pPic->lIssueRect.clear();

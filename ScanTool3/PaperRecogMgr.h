@@ -39,7 +39,7 @@ protected:
 private:
 	CPrintPointRecog* pPrintPointRecogObj;	//印刷点识别对象
 	CWritePointRecog* pWritePointRecogObj;	//填涂点识别对象
-	int		_nRecogModel;
+	int		_nRecogModel;					//识别模式，1--简易模式(遇到问题点不停止扫描)，2-严格模式(遇到问题点时立刻停止扫描)
 	std::string _strLog;
 #ifdef USE_TESSERACT
 	tesseract::TessBaseAPI* m_pTess;

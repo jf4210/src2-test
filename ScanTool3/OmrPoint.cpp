@@ -102,7 +102,8 @@ bool COmrPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		std::string strRecogAnswer1;
 		std::vector<pRECTINFO> vecItemsDesc;
 		std::vector<ST_ITEM_DIFF> vecOmrItemDiff;
-		calcOmrDensityDiffVal(omrResult.lSelAnswer, vecItemsDesc, vecOmrItemDiff);
+		//calcOmrDensityDiffVal(omrResult.lSelAnswer, vecItemsDesc, vecOmrItemDiff);
+		calcDensityDiffVal(omrResult.lSelAnswer, vecItemsDesc, vecOmrItemDiff);
 
 		float fCompThread = 0.0;		//密度间隔达到要求时，第一个选项的密度必须达到的要求
 		float fDiffThread = 0.0;		//选项可能填涂的可能密度梯度阀值
@@ -240,7 +241,8 @@ bool COmrPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		std::string strRecogAnswer1;
 		std::vector<pRECTINFO> vecItemsDesc;
 		std::vector<ST_ITEM_DIFF> vecOmrItemDiff;
-		calcOmrDensityDiffVal(omrResult.lSelAnswer, vecItemsDesc, vecOmrItemDiff);
+		//calcOmrDensityDiffVal(omrResult.lSelAnswer, vecItemsDesc, vecOmrItemDiff);
+		calcDensityDiffVal(omrResult.lSelAnswer, vecItemsDesc, vecOmrItemDiff);
 
 		float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
 		float fDiffThread = 0.0;		//选项可能填涂的可能灰度梯度阀值
@@ -489,9 +491,10 @@ bool COmrPoint::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, p
 	}
 
 	std::string strRecogAnswer;
-	std::vector<pRECTINFO> vecItemsGrayDesc;
+	std::vector<pRECTINFO> vecItemsGrayAsc;
 	std::vector<ST_ITEM_DIFF> vecOmrItemGrayDiff;
-	calcOmrGrayDiffVal(omrResult.lSelAnswer, vecItemsGrayDesc, vecOmrItemGrayDiff);
+	//calcOmrGrayDiffVal(omrResult.lSelAnswer, vecItemsGrayDesc, vecOmrItemGrayDiff);
+	calcGrayDiffVal(omrResult.lSelAnswer, vecItemsGrayAsc, vecOmrItemGrayDiff);
 
 	float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
 	float fDiffThreshold = 0.0;		//选项可能填涂的可能灰度梯度阀值
@@ -504,18 +507,18 @@ bool COmrPoint::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, p
 
 #if 1		//灰度差值满足后，加上单项Omr的灰度需要比标准的小
 	float fMeanGrayDiff = 0.0;
-	for (int i = 0; i < vecItemsGrayDesc.size(); i++)
+	for (int i = 0; i < vecItemsGrayAsc.size(); i++)
 	{
-		fMeanGrayDiff += (vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray);
+		fMeanGrayDiff += (vecItemsGrayAsc[i]->fRealMeanGray - vecItemsGrayAsc[i]->fStandardMeanGray);
 	}
-	fMeanGrayDiff = fMeanGrayDiff / vecItemsGrayDesc.size();
+	fMeanGrayDiff = fMeanGrayDiff / vecItemsGrayAsc.size();
 
 	int nFlag = -1;
 	float fThreld = 0.0;
 	float fGrayDiffLast = 0.0;		//对上一次判断选中的选项对下一个选项选中判断的增益
 	for (int i = 0; i < vecOmrItemGrayDiff.size(); i++)
 	{
-		float fGrayThresholdGray = vecItemsGrayDesc[i]->fRealMeanGray - vecItemsGrayDesc[i]->fStandardMeanGray - fMeanGrayDiff;
+		float fGrayThresholdGray = vecItemsGrayAsc[i]->fRealMeanGray - vecItemsGrayAsc[i]->fStandardMeanGray - fMeanGrayDiff;
 		if (vecOmrItemGrayDiff[i].fDiff >= fDiffThreshold + fGrayThresholdGray + fGrayDiffLast)		//vecOmrItemGrayDiff[i].fDiff >= fDiffThreshold + fGrayThresholdGray
 		{
 			nFlag = i;
@@ -530,9 +533,9 @@ bool COmrPoint::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, p
 		//++判断全都选中的情况
 		if (nFlag == vecOmrItemGrayDiff.size() - 1)
 		{
-			if (vecItemsGrayDesc[vecOmrItemGrayDiff.size()]->fRealMeanGray <= fCompThread)
+			if (vecItemsGrayAsc[vecOmrItemGrayDiff.size()]->fRealMeanGray <= fCompThread)
 			{
-				fThreld = vecItemsGrayDesc[vecOmrItemGrayDiff.size()]->fRealMeanGray;
+				fThreld = vecItemsGrayAsc[vecOmrItemGrayDiff.size()]->fRealMeanGray;
 			}
 		}
 		//--
@@ -547,9 +550,9 @@ bool COmrPoint::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, p
 			}
 		}
 	}
-	else if (vecItemsGrayDesc[vecOmrItemGrayDiff.size()]->fRealMeanGray <= fCompThread)		//++判断全都选中的情况
+	else if (vecItemsGrayAsc[vecOmrItemGrayDiff.size()]->fRealMeanGray <= fCompThread)		//++判断全都选中的情况
 	{
-		fThreld = vecItemsGrayDesc[vecOmrItemGrayDiff.size()]->fRealMeanGray;
+		fThreld = vecItemsGrayAsc[vecOmrItemGrayDiff.size()]->fRealMeanGray;
 		RECTLIST::iterator itItem = omrResult.lSelAnswer.begin();
 		for (; itItem != omrResult.lSelAnswer.end(); itItem++)
 		{
@@ -608,81 +611,6 @@ bool COmrPoint::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, p
 #endif
 	omrResult.strRecogVal3 = strRecogAnswer;
 	return true;
-}
-
-int COmrPoint::calcOmrDensityDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemDiff)
-{
-#if 1	//下面将所有选项识别灰度值降序排列并相邻比较
-	RECTLIST::iterator itItem = rectList.begin();
-	for (; itItem != rectList.end(); itItem++)
-	{
-		vecItemsDesc.push_back(&(*itItem));
-	}
-	std::sort(vecItemsDesc.begin(), vecItemsDesc.end(), [](pRECTINFO item1, pRECTINFO item2)
-	{
-		return item1->fRealValuePercent > item2->fRealValuePercent ? true : false;
-	});
-
-	for (int i = 0; i < vecItemsDesc.size(); i++)
-	{
-		int j = i + 1;
-		if (j < vecItemsDesc.size())
-		{
-			ST_ITEM_DIFF stDiff;
-			sprintf_s(stDiff.szVal, "%c%c", (char)(vecItemsDesc[i]->nAnswer + 65), (char)(vecItemsDesc[j]->nAnswer + 65));
-			stDiff.fDiff = vecItemsDesc[i]->fRealValuePercent - vecItemsDesc[j]->fRealValuePercent;
-			stDiff.fFirst = vecItemsDesc[i]->fRealValuePercent;
-			stDiff.fSecond = vecItemsDesc[j]->fRealValuePercent;
-			vecOmrItemDiff.push_back(stDiff);
-		}
-	}
-#else	//下面是整题所有选项的两两识别灰度值的比较并按降序排列
-	RECTLIST::iterator itFirst = rectList.begin();
-	for (; itFirst != rectList.end(); itFirst++)
-	{
-		RECTLIST::iterator itSecond = itFirst;
-		itSecond++;
-		for (; itSecond != rectList.end(); itSecond++)
-		{
-			ST_ITEM_DIFF stDiff;
-			sprintf_s(stDiff.szVal, "%c%c", (char)(itFirst->nAnswer + 65), (char)(itSecond->nAnswer + 65));
-			stDiff.fDiff = itFirst->fRealValuePercent - itSecond->fRealValuePercent;
-			stDiff.fFirst = vecItemsDesc[i]->fRealValuePercent;
-			stDiff.fSecond = vecItemsDesc[j]->fRealValuePercent;
-			vecOmrItemDiff.push_back(stDiff);
-		}
-	}
-	std::sort(vecOmrItemDiff.begin(), vecOmrItemDiff.end(), SortByItemDiff);
-#endif
-	return 1;
-}
-
-int COmrPoint::calcOmrGrayDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemGrayDiff)
-{
-	RECTLIST::iterator itItem = rectList.begin();
-	for (; itItem != rectList.end(); itItem++)
-	{
-		vecItemsDesc.push_back(&(*itItem));
-	}
-	std::sort(vecItemsDesc.begin(), vecItemsDesc.end(), [](pRECTINFO item1, pRECTINFO item2)
-	{
-		return item1->fRealMeanGray < item2->fRealMeanGray ? true : false;
-	});
-
-	for (int i = 0; i < vecItemsDesc.size(); i++)
-	{
-		int j = i + 1;
-		if (j < vecItemsDesc.size())
-		{
-			ST_ITEM_DIFF stDiff;
-			sprintf_s(stDiff.szVal, "%c%c", (char)(vecItemsDesc[i]->nAnswer + 65), (char)(vecItemsDesc[j]->nAnswer + 65));
-			stDiff.fDiff = abs(vecItemsDesc[i]->fRealMeanGray - vecItemsDesc[j]->fRealMeanGray);
-			stDiff.fFirst = vecItemsDesc[i]->fRealMeanGray;
-			stDiff.fSecond = vecItemsDesc[j]->fRealMeanGray;
-			vecOmrItemGrayDiff.push_back(stDiff);
-		}
-	}
-	return 1;
 }
 
 bool CElectOmrPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel, int nRecogMode, std::string& strLog)

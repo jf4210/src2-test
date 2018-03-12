@@ -22,6 +22,9 @@ public:
 	CMultiPageExceptionDlg*	m_pMultiPageExceptionDlg;
 
 	void	ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper = NULL);
+	//子页面调用主页面进行重新初始化数据
+	//子页面中修改试卷袋信息，可能导致其他窗口中的列表保存的试卷指针信息改变，必须通过主tab来重新初始化所有子页面
+	void	ReInitDataFromChildDlg(pMODEL pModel, pPAPERSINFO pPapersInfo);
 	void	SetDlgInfo(CShowPicDlg* pShowDlg, CVagueSearchDlg* pSearchDlg);
 	bool	ReleaseData();
 private:

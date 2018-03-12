@@ -163,6 +163,12 @@ void CZkzhShowMgrDlg::ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStuden
 	if (m_pMultiPageExceptionDlg) m_pMultiPageExceptionDlg->ReInitData(m_pModel, m_pPapers);
 }
 
+void CZkzhShowMgrDlg::ReInitDataFromChildDlg(pMODEL pModel, pPAPERSINFO pPapersInfo)
+{
+	m_pZkzhExceptionDlg->ReInitData(m_pModel, m_pPapers, m_pStudentMgr, m_pDefShowPaper);
+	if (m_pMultiPageExceptionDlg) m_pMultiPageExceptionDlg->ReInitData(m_pModel, m_pPapers);
+}
+
 void CZkzhShowMgrDlg::SetDlgInfo(CShowPicDlg* pShowDlg, CVagueSearchDlg* pSearchDlg)
 {
 	m_pZkzhExceptionDlg->SetDlgInfo(pShowDlg, pSearchDlg);
