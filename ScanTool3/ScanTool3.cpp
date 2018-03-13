@@ -93,6 +93,7 @@ bool InitConfig()
 	g_nOperatingMode	= pConf->getInt("Scan.OperatingMode", 2);
 	g_nZkzhNull2Issue	= pConf->getInt("Scan.khNull2Issue", 0);
 	_nScanAnswerModel_	= pConf->getInt("Scan.scanAnswer", 0);
+	g_nHighSevereMode	= pConf->getInt("Scan.highSevereMode", 0);
 
 	g_strFileIP = pConf->getString("Server.fileIP");
 	g_nFilePort = pConf->getInt("Server.filePort", 19980);

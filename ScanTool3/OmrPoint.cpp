@@ -102,7 +102,6 @@ bool COmrPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		std::string strRecogAnswer1;
 		std::vector<pRECTINFO> vecItemsDesc;
 		std::vector<ST_ITEM_DIFF> vecOmrItemDiff;
-		//calcOmrDensityDiffVal(omrResult.lSelAnswer, vecItemsDesc, vecOmrItemDiff);
 		calcDensityDiffVal(omrResult.lSelAnswer, vecItemsDesc, vecOmrItemDiff);
 
 		float fCompThread = 0.0;		//密度间隔达到要求时，第一个选项的密度必须达到的要求
@@ -493,7 +492,6 @@ bool COmrPoint::RecogVal_Omr3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, p
 	std::string strRecogAnswer;
 	std::vector<pRECTINFO> vecItemsGrayAsc;
 	std::vector<ST_ITEM_DIFF> vecOmrItemGrayDiff;
-	//calcOmrGrayDiffVal(omrResult.lSelAnswer, vecItemsGrayDesc, vecOmrItemGrayDiff);
 	calcGrayDiffVal(omrResult.lSelAnswer, vecItemsGrayAsc, vecOmrItemGrayDiff);
 
 	float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求

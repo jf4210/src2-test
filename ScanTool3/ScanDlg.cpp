@@ -9,6 +9,7 @@
 #include "ScanMgrDlg.h"
 #include "NewMessageBox.h"
 #include "PaperInputDlg.h"
+#include "SetScanNumDlg.h"
 // CScanDlg 对话框
 
 IMPLEMENT_DYNAMIC(CScanDlg, CDialog)
@@ -323,6 +324,14 @@ void CScanDlg::OnBnClickedBtnScan()
 		dlg.setShowInfo(2, 1, "当前考试无模板信息");
 		dlg.DoModal();
 		return;
+	}
+
+	if (g_nHighSevereMode)
+	{
+		//高厉害考试模式
+		CSetScanNumDlg dlg(g_nDefStudentsInKC);
+		if (dlg.DoModal() != IDOK)
+			return;
 	}
 
 	if (_nScanAnswerModel_ == 1)

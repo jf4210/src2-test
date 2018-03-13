@@ -216,7 +216,6 @@ bool CSNPoint::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMOD
 #if 1	//根据选项差值判断选中
 		std::vector<pRECTINFO> vecItemsDesc;
 		std::vector<ST_ITEM_DIFF> vecSnItemDiff;
-		//calcSnDensityDiffVal(pSn, vecItemsDesc, vecSnItemDiff);
 		calcDensityDiffVal(pSn->lSN, vecItemsDesc, vecSnItemDiff);
 
 		float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求
@@ -289,7 +288,7 @@ bool CSNPoint::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMOD
 			else
 			{
 				std::vector<int> vecItemVal3;
-				RecogVal_Sn3(nPic, matCompPic, pPic, pModel, pSn, vecItemVal3);
+				RecogVal_Sn3(pSn, vecItemVal3);
 				if (vecItemVal3.size())
 				{
 					pSn->nRecogVal = vecItemVal3[0];
@@ -400,7 +399,7 @@ bool CSNPoint::RecogVal_Sn2(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMO
 	return true;
 }
 
-bool CSNPoint::RecogVal_Sn3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel, pSN_ITEM pSn, std::vector<int>& vecItemVal)
+bool CSNPoint::RecogVal_Sn3(pSN_ITEM pSn, std::vector<int>& vecItemVal)
 {
 	std::vector<int> vecVal_AnswerSuer;
 	RECTLIST::iterator itItem = pSn->lSN.begin();
@@ -415,7 +414,6 @@ bool CSNPoint::RecogVal_Sn3(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMO
 	std::string strRecogAnswer;
 	std::vector<pRECTINFO> vecItemsGrayAsc;
 	std::vector<ST_ITEM_DIFF> vecOmrItemGrayDiff;
-	//calcSnGrayDiffVal(pSn->lSN, vecItemsGrayAsc, vecOmrItemGrayDiff);
 	calcGrayDiffVal(pSn->lSN, vecItemsGrayAsc, vecOmrItemGrayDiff);
 
 	float fCompThread = 0.0;		//灰度间隔达到要求时，第一个选项的灰度必须达到的要求

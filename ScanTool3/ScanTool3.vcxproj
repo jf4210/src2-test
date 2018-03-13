@@ -197,6 +197,7 @@
     <ClInclude Include="ScanTool3.h" />
     <ClInclude Include="ScanTool3Dlg.h" />
     <ClInclude Include="SendFileThread.h" />
+    <ClInclude Include="SetScanNumDlg.h" />
     <ClInclude Include="ShowPicDlg.h" />
     <ClInclude Include="SingleExamDlg.h" />
     <ClInclude Include="SNInfoSetDlg.h" />
@@ -324,6 +325,7 @@
     <ClCompile Include="ScanTool3.cpp" />
     <ClCompile Include="ScanTool3Dlg.cpp" />
     <ClCompile Include="SendFileThread.cpp" />
+    <ClCompile Include="SetScanNumDlg.cpp" />
     <ClCompile Include="ShowPicDlg.cpp" />
     <ClCompile Include="SingleExamDlg.cpp" />
     <ClCompile Include="SNInfoSetDlg.cpp" />
