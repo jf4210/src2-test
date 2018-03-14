@@ -1150,14 +1150,8 @@ void CPaperInputDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 			bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
 		}
 
-	#ifdef TEST_MODIFY_ZKZH_CHIld
 		CScanTool3Dlg* pDlg = (CScanTool3Dlg*)AfxGetMainWnd();
 		pDlg->SwitchModifyZkzkDlg(m_pModel, m_pCurrentPapers, m_pStudentMgr);
-	#else
-		CModifyZkzhDlg zkzhDlg(_pModel_, m_pCurrentPapers, m_pStudentMgr);
-		zkzhDlg.DoModal();
-		ShowPapers(m_pCurrentPapers);
-	#endif
 	}
 }
 
@@ -2025,14 +2019,8 @@ void CPaperInputDlg::OnTimer(UINT_PTR nIDEvent)
 					bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
 				}
 
-			#ifdef TEST_MODIFY_ZKZH_CHIld
 				CScanTool3Dlg* pDlg = (CScanTool3Dlg*)AfxGetMainWnd();
 				pDlg->SwitchModifyZkzkDlg(m_pModel, m_pCurrentPapers, m_pStudentMgr);
-			#else
-				CModifyZkzhDlg zkzhDlg(_pModel_, m_pCurrentPapers, m_pStudentMgr);
-				zkzhDlg.DoModal();
-				ShowPapers(m_pCurrentPapers);
-			#endif
 			}
 			else
 				KillTimer(TIMER_CheckRecogComplete);

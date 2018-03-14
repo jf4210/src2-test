@@ -166,10 +166,6 @@ void CModifyZkzhDlg::InitUI()
 	GetDlgItem(IDC_STATIC_Zkzh_S1)->ShowWindow(SW_HIDE);
 #endif
 
-#ifndef TEST_MODIFY_ZKZH_CHIld
-	MoveWindow(0, 0, 1024, 650);
-	CenterWindow();
-#endif
 	InitCtrlPosition();
 }
 
@@ -179,19 +175,13 @@ void CModifyZkzhDlg::InitCtrlPosition()
 	GetClientRect(&rcClient);
 	int cx = rcClient.right;
 	int cy = rcClient.bottom;
-#ifdef TEST_MODIFY_ZKZH_CHIld
+
 	int nTopGap = 30;	//上边的间隔，留给控制栏
 	const int nLeftGap = 20;		//左边的空白间隔
 	const int nBottomGap = 20;	//下边的空白间隔
 	const int nRightGap = 20;	//右边的空白间隔
 	const int nGap = 2;			//普通控件的间隔
-#else
-	int nTopGap = 5;	//上边的间隔，留给控制栏
-	const int nLeftGap = 5;		//左边的空白间隔
-	const int nBottomGap = 2;	//下边的空白间隔
-	const int nRightGap = 2;	//右边的空白间隔
-	const int nGap = 2;			//普通控件的间隔
-#endif
+
 	int nGroupH = 70;			//group控件高度
 	int nListCtrlWidth = 350;	//图片列表控件宽度
 	int nStaticTip = 15;		//列表提示static控件高度
@@ -672,12 +662,7 @@ BOOL CModifyZkzhDlg::PreTranslateMessage(MSG* pMsg)
 		}
 		if (pMsg->wParam == VK_ESCAPE)
 		{
-#ifndef TEST_MODIFY_ZKZH_CHIld
-			if (!ReleaseData())
-				return TRUE;
-#else
 			return TRUE;
-#endif
 		}
 	}
 	return CDialog::PreTranslateMessage(pMsg);
@@ -1095,15 +1080,11 @@ HBRUSH CModifyZkzhDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 void CModifyZkzhDlg::OnBnClickedBtnBack()
 {
-#ifdef TEST_MODIFY_ZKZH_CHIld
 	if (!ReleaseData())
 		return;
 	ShowWindow(SW_HIDE);
 	CScanTool3Dlg* pDlg = (CScanTool3Dlg*)GetParent();
 	pDlg->SwitchDlg(2);
-#else
-	OnClose();
-#endif
 }
 
 

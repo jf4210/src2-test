@@ -326,12 +326,14 @@ void CScanDlg::OnBnClickedBtnScan()
 		return;
 	}
 
+	int nMustScanNum = 0;		//必须扫描的试卷数量，在高厉害模式时生效，保存试卷时，检查扫描的数量是否与此数量一致，不一致不能提交，只能重扫
 	if (g_nHighSevereMode)
 	{
 		//高厉害考试模式
 		CSetScanNumDlg dlg(g_nDefStudentsInKC);
 		if (dlg.DoModal() != IDOK)
 			return;
+		nMustScanNum = dlg.m_nScanNum;
 	}
 
 	if (_nScanAnswerModel_ == 1)
@@ -431,6 +433,8 @@ void CScanDlg::OnBnClickedBtnScan()
 	{
 		SAFE_RELEASE(_pCurrPapersInfo_);
 		_pCurrPapersInfo_ = new PAPERSINFO();
+
+		if (g_nHighSevereMode)	_pCurrPapersInfo_->nMustScanNum = nMustScanNum;
 		
 		_nScanStatus_ = 1;
 		pST_SCANCTRL pScanCtrl = new ST_SCANCTRL();

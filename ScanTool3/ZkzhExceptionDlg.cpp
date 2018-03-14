@@ -61,16 +61,20 @@ void CZkzhExceptionDlg::InitUI()
 	m_lcZkzh.SetExtendedStyle(m_lcZkzh.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcZkzh.InsertColumn(0, _T("考生"), LVCFMT_CENTER, 50);
 	m_lcZkzh.InsertColumn(1, _T("准考证号(可编辑)"), LVCFMT_CENTER, 110);
-	m_lcZkzh.InsertColumn(2, _T("删除重扫"), LVCFMT_CENTER, 80);	//重扫标识
-	m_lcZkzh.InsertColumn(3, _T("备注"), LVCFMT_LEFT, 150);
-
+	if(g_nHighSevereMode)
+		m_lcZkzh.InsertColumn(2, _T("备注"), LVCFMT_LEFT, 150);
+	else
+	{
+		m_lcZkzh.InsertColumn(2, _T("删除重扫"), LVCFMT_CENTER, 80);	//重扫标识
+		m_lcZkzh.InsertColumn(3, _T("备注"), LVCFMT_LEFT, 150);
+	}
 	HDITEM hditem;
 	for (int i = 0; i < m_lcZkzh.m_HeaderCtrl.GetItemCount(); i++)
 	{
 		hditem.mask = HDI_IMAGE | HDI_FORMAT;
 		m_lcZkzh.m_HeaderCtrl.GetItem(i, &hditem);
 		hditem.fmt |= HDF_IMAGE;
-		if (i == 2)
+		if (i == 2 && g_nHighSevereMode == 0)
 			hditem.iImage = XHEADERCTRL_UNCHECKED_IMAGE;
 		m_lcZkzh.m_HeaderCtrl.SetItem(i, &hditem);
 	}
@@ -133,30 +137,39 @@ void CZkzhExceptionDlg::InitData()
 			m_lcZkzh.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));	//pPaper->strStudentInfo.c_str()
 			m_lcZkzh.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
 
-			int nReScan = 0;
-			if (pPaper->bReScan) nReScan = 1;
-			m_lcZkzh.SetItemText(nCount, 2, _T(""));	//重扫
-			m_lcZkzh.SetCheckbox(nCount, 2, nReScan);
 			m_lcZkzh.SetItemData(nCount, (DWORD_PTR)pPaper);
 			m_lcZkzh.SetEdit(nCount, 1);
 
 			//显示备注信息，为何出现在此列表
 			std::string strDetailInfo = GetDetailInfo(pPaper);
-			m_lcZkzh.SetItemText(nCount, 3, (LPCTSTR)A2T(strDetailInfo.c_str()));
+
+			m_lcZkzh.SetItemToolTipText(nCount, 0, _T("双击显示此考生试卷"));
+			m_lcZkzh.SetItemToolTipText(nCount, 1, _T("点击修改准考证号"));
+			if (g_nHighSevereMode)
+			{
+				m_lcZkzh.SetItemText(nCount, 2, (LPCTSTR)A2T(strDetailInfo.c_str()));
+				m_lcZkzh.SetItemToolTipText(nCount, 2, _T("勾选此项，这份试卷将需要重新扫描"));
+			}
+			else
+			{
+				int nReScan = 0;
+				if (pPaper->bReScan) nReScan = 1;
+				m_lcZkzh.SetItemText(nCount, 2, _T(""));	//重扫
+				m_lcZkzh.SetCheckbox(nCount, 2, nReScan);
+				m_lcZkzh.SetItemText(nCount, 3, (LPCTSTR)A2T(strDetailInfo.c_str()));
+				m_lcZkzh.SetItemToolTipText(nCount, 3, _T("双击显示此考生试卷"));
+			}
 
 			if (pPaper == m_pDefShowPaper)
 			{
 				bFindFirstShow = true;
 				m_nCurrentSelItem = nCount;
 			}
-
-			CString strTips = _T("双击显示此考生试卷");
-			m_lcZkzh.SetItemToolTipText(nCount, 0, (LPCTSTR)strTips);
-			m_lcZkzh.SetItemToolTipText(nCount, 3, (LPCTSTR)strTips);
-			strTips = _T("点击修改准考证号");
-			m_lcZkzh.SetItemToolTipText(nCount, 1, (LPCTSTR)strTips);
-			strTips = _T("勾选此项，这份试卷将需要重新扫描");
-			m_lcZkzh.SetItemToolTipText(nCount, 2, (LPCTSTR)strTips);
+// 			CString strTips = _T("双击显示此考生试卷");
+// 			m_lcZkzh.SetItemToolTipText(nCount, 0, (LPCTSTR)strTips);
+// 			strTips = _T("点击修改准考证号");
+// 			m_lcZkzh.SetItemToolTipText(nCount, 1, (LPCTSTR)strTips);
+// 			strTips = _T("勾选此项，这份试卷将需要重新扫描");
 		}
 	}
 	for (auto pPaper : m_pPapers->lIssue)
@@ -169,30 +182,34 @@ void CZkzhExceptionDlg::InitData()
 		m_lcZkzh.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));	//pPaper->strStudentInfo.c_str()
 		m_lcZkzh.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
 
-		int nReScan = 0;
-		if (pPaper->bReScan) nReScan = 1;
-		m_lcZkzh.SetItemText(nCount, 2, _T(""));	//重扫
-		m_lcZkzh.SetCheckbox(nCount, 2, nReScan);
 		m_lcZkzh.SetItemData(nCount, (DWORD_PTR)pPaper);
 		m_lcZkzh.SetEdit(nCount, 1);
 
 		//显示备注信息，为何出现在此列表
 		std::string strDetailInfo = GetDetailInfo(pPaper);
-		m_lcZkzh.SetItemText(nCount, 3, (LPCTSTR)A2T(strDetailInfo.c_str()));
+		
+		m_lcZkzh.SetItemToolTipText(nCount, 0, _T("双击显示此考生试卷"));
+		m_lcZkzh.SetItemToolTipText(nCount, 1, _T("点击修改准考证号"));
+		if (g_nHighSevereMode)
+		{
+			m_lcZkzh.SetItemText(nCount, 2, (LPCTSTR)A2T(strDetailInfo.c_str()));
+			m_lcZkzh.SetItemToolTipText(nCount, 2, _T("勾选此项，这份试卷将需要重新扫描"));
+		}
+		else
+		{
+			int nReScan = 0;
+			if (pPaper->bReScan) nReScan = 1;
+			m_lcZkzh.SetItemText(nCount, 2, _T(""));	//重扫
+			m_lcZkzh.SetCheckbox(nCount, 2, nReScan);
+			m_lcZkzh.SetItemText(nCount, 3, (LPCTSTR)A2T(strDetailInfo.c_str()));
+			m_lcZkzh.SetItemToolTipText(nCount, 3, _T("双击显示此考生试卷"));
+		}
 
 		if (pPaper == m_pDefShowPaper)
 		{
 			bFindFirstShow = true;
 			m_nCurrentSelItem = nCount;
 		}
-
-		CString strTips = _T("双击显示此考生试卷");
-		m_lcZkzh.SetItemToolTipText(nCount, 0, (LPCTSTR)strTips);
-		m_lcZkzh.SetItemToolTipText(nCount, 3, (LPCTSTR)strTips);
-		strTips = _T("点击修改准考证号");
-		m_lcZkzh.SetItemToolTipText(nCount, 1, (LPCTSTR)strTips);
-		strTips = _T("勾选此项，这份试卷将需要重新扫描");
-		m_lcZkzh.SetItemToolTipText(nCount, 2, (LPCTSTR)strTips);
 	}
 	int nCount = m_lcZkzh.GetItemCount();
 	if (nCount > 0)
@@ -227,14 +244,16 @@ bool CZkzhExceptionDlg::ReleaseData()
 				}
 			}
 		}
-
-		for (int i = 0; i < nCount; i++)
+		if (g_nHighSevereMode == 0)		//高厉害模式时，没有删除试卷的功能，CListCtrl不显示CheckBox选项框
 		{
-			pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
-			if (m_lcZkzh.GetCheckbox(i, 2))
-				pPaper->bReScan = true;			//设置此试卷需要重新扫描
-			else
-				pPaper->bReScan = false;
+			for (int i = 0; i < nCount; i++)
+			{
+				pST_PaperInfo pPaper = (pST_PaperInfo)m_lcZkzh.GetItemData(i);
+				if (m_lcZkzh.GetCheckbox(i, 2))
+					pPaper->bReScan = true;			//设置此试卷需要重新扫描
+				else
+					pPaper->bReScan = false;
+			}
 		}
 
 		//如果此试卷已经被修改正常，从问题列表删除
@@ -641,7 +660,11 @@ void CZkzhExceptionDlg::OnDestroy()
 void CZkzhExceptionDlg::OnNMClickListZkzhexcdlg(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	*pResult = 0;
 	if (pNMItemActivate->iItem < 0)
+		return;
+
+	if (g_nHighSevereMode)		//高厉害模式时，没有删除试卷的功能，CListCtrl不显示CheckBox选项框
 		return;
 
 	if (pNMItemActivate->iSubItem != 2)
@@ -688,5 +711,4 @@ void CZkzhExceptionDlg::OnNMClickListZkzhexcdlg(NMHDR *pNMHDR, LRESULT *pResult)
 			}
 		}		
 	}
-	*pResult = 0;
 }

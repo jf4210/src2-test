@@ -10,6 +10,7 @@
 #include "NewMessageBox.h"
 #include "ScanTool3Dlg.h"
 #include "PapersMgr.h"
+#include "SetScanNumDlg.h"
 // CScanProcessDlg 对话框
 
 IMPLEMENT_DYNAMIC(CScanProcessDlg, CDialog)
@@ -135,13 +136,6 @@ void CScanProcessDlg::InitUI()
 	m_pShowPicDlg->Create(CShowPicDlg::IDD, this);
 	m_pShowPicDlg->ShowWindow(SW_HIDE);
 	m_pShowPicDlg->setShowModel(2);
-
-#ifdef TEST_MODIFY_ZKZH_CHIld
-// 	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
-// 	m_pModifyZkzhDlg = new CModifyZkzhDlg(_pModel_, _pCurrPapersInfo_, m_pStudentMgr);
-// 	m_pModifyZkzhDlg->Create(CModifyZkzhDlg::IDD, this);
-// 	m_pModifyZkzhDlg->ShowWindow(SW_HIDE);
-#endif
 
 	InitCtrlPosition();
 }
@@ -1042,6 +1036,15 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 		return;
 	}
 
+	int nMustScanNum = 0;		//必须扫描的试卷数量，在高厉害模式时生效，保存试卷时，检查扫描的数量是否与此数量一致，不一致不能提交，只能重扫
+	if (g_nHighSevereMode)
+	{
+		//高厉害考试模式
+		CSetScanNumDlg dlg(g_nDefStudentsInKC);
+		if (dlg.DoModal() != IDOK)
+			return;
+		nMustScanNum = dlg.m_nScanNum;
+	}
 	if (_nScanAnswerModel_ == 1)
 	{
 		CNewMessageBox	dlg;
@@ -1170,6 +1173,8 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 	UpdateChildInfo();
 	return;
 #endif
+	
+	if (g_nHighSevereMode)	_pCurrPapersInfo_->nMustScanNum = nMustScanNum;
 
 	CScanMgrDlg* pDlg = (CScanMgrDlg*)GetParent();
 	pTW_IDENTITY pID = NULL;
@@ -1499,15 +1504,10 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 			std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
 			bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
 		}
-	#ifdef TEST_MODIFY_ZKZH_CHIld
+
 		CScanTool3Dlg* pDlg = (CScanTool3Dlg*)AfxGetMainWnd();
 		pDlg->SwitchModifyZkzkDlg(_pModel_, _pCurrPapersInfo_, m_pStudentMgr, pItemPaper);
 //		ShowPapers(_pCurrPapersInfo_);
-	#else
-		CModifyZkzhDlg zkzhDlg(_pModel_, _pCurrPapersInfo_, m_pStudentMgr, pItemPaper);
-		zkzhDlg.DoModal();
-		ShowPapers(_pCurrPapersInfo_);
-	#endif
 	}
 }
 
@@ -1598,14 +1598,8 @@ void CScanProcessDlg::OnTimer(UINT_PTR nIDEvent)
 					std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
 					bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));
 				}
-			#ifdef TEST_MODIFY_ZKZH_CHIld
 				CScanTool3Dlg* pDlg = (CScanTool3Dlg*)AfxGetMainWnd();
 				pDlg->SwitchModifyZkzkDlg(_pModel_, _pCurrPapersInfo_, m_pStudentMgr);
-			#else
-				CModifyZkzhDlg zkzhDlg(_pModel_, _pCurrPapersInfo_, m_pStudentMgr);
-				zkzhDlg.DoModal();
-				ShowPapers(_pCurrPapersInfo_);
-			#endif
 			}
 			else
 				KillTimer(TIMER_CheckRecogComplete);

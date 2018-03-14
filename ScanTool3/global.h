@@ -64,7 +64,6 @@
 #endif
 
 #define Test_RecogOmr3			//第3种OMR识别方法测试
-#define TEST_MODIFY_ZKZH_CHIld	//将修改准考证号窗口嵌入当做子窗口，不做弹出窗口
 
 //+++++++++	选择版本 ++++++++++++++++++
 //#define TO_WHTY							//给武汉天喻信息使用，无识别，只扫描上传
@@ -434,6 +433,8 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	int		nPaperCount;				//试卷袋中试卷总数量(学生数)
 	int		nRecogErrCount;				//识别错误试卷数量
 
+	int		nMustScanNum;				//必须扫描的试卷数量，在高厉害模式时生效，保存试卷时，检查扫描的数量是否与此数量一致，不一致不能提交，只能重扫
+
 	//++统计信息
 	int		nOmrDoubt;				//OMR怀疑的数量
 	int		nOmrNull;				//OMR识别为空的数量
@@ -464,6 +465,7 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 		nOmrDoubt = 0;
 		nOmrNull = 0;
 		nSnNull = 0;
+		nMustScanNum = 0;
 	}
 	~_PapersInfo_()
 	{

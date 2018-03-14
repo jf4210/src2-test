@@ -78,21 +78,37 @@ void CZkzhShowMgrDlg::InitUI()
 
 	if (m_pModel && m_pModel->nUsePagination)
 	{
-		char szBtnName[20] = { 0 };
-		sprintf_s(szBtnName, "页码异常");
-
-		CBmpButton* pNewButton = new CBmpButton();// 也可以定义为类的成员变量。
-		pNewButton->SetStateBitmap(IDB_RecordDlg_Btn_Over, IDB_RecordDlg_Btn, IDB_RecordDlg_Btn_Hover, 0, IDB_RecordDlg_Btn);
-		CRect rcButton(10, 10, 60, 30); // 按钮在对话框中的位置。
-		pNewButton->Create(A2T(szBtnName), 0, rcButton, this, 202);	//设置索引从201开始
-		pNewButton->ShowWindow(SW_SHOW);
-		m_vecBtn.push_back(pNewButton);
-
-		if (!m_pMultiPageExceptionDlg)
+		//先检查试卷袋中是否存在多页模式的问题卷，不存在则不显示此页面
+		bool bNeedShowPage = false;
+		if (m_pPapers)
 		{
-			m_pMultiPageExceptionDlg = new CMultiPageExceptionDlg();
-			m_pMultiPageExceptionDlg->Create(IDD_MULTIPAGEEXCEPTIONDLG, this);
-			m_pMultiPageExceptionDlg->ShowWindow(SW_HIDE);
+			for (auto paper : m_pPapers->lPaper)
+			{
+				if (paper->nPaginationStatus != 2)
+				{
+					bNeedShowPage = true;
+					break;
+				}
+			}
+		}
+		if (bNeedShowPage)
+		{
+			char szBtnName[20] = { 0 };
+			sprintf_s(szBtnName, "页码异常");
+
+			CBmpButton* pNewButton = new CBmpButton();// 也可以定义为类的成员变量。
+			pNewButton->SetStateBitmap(IDB_RecordDlg_Btn_Over, IDB_RecordDlg_Btn, IDB_RecordDlg_Btn_Hover, 0, IDB_RecordDlg_Btn);
+			CRect rcButton(10, 10, 60, 30); // 按钮在对话框中的位置。
+			pNewButton->Create(A2T(szBtnName), 0, rcButton, this, 202);	//设置索引从201开始
+			pNewButton->ShowWindow(SW_SHOW);
+			m_vecBtn.push_back(pNewButton);
+
+			if (!m_pMultiPageExceptionDlg)
+			{
+				m_pMultiPageExceptionDlg = new CMultiPageExceptionDlg();
+				m_pMultiPageExceptionDlg->Create(IDD_MULTIPAGEEXCEPTIONDLG, this);
+				m_pMultiPageExceptionDlg->ShowWindow(SW_HIDE);
+			}
 		}
 	}
 	if (m_vecBtn.size() <= 1)
