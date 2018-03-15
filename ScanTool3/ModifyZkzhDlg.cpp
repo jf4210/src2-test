@@ -908,53 +908,8 @@ bool CModifyZkzhDlg::VagueSearch(int nItem)
 // 	if (pPaper->strRecogSN4Search.empty())
 // 		return bResult;
 
-#if 1
 	bResult = m_pVagueSearchDlg->vagueSearch(pPaper);
-#else
-	//将模糊查找字段变成合法的sql字段
-	std::string strVagueKey = pPaper->strRecogSN4Search;
-	char szVagueKey[50] = { 0 };
-	char * p = szVagueKey;
-	bool bLastIsSharp = false;	//标识上一个字符是否是#，用于处理连续的#字符，将多个#变成一个
-	for (auto p0 : pPaper->strRecogSN4Search)
-	{
-		if (p0 == '#')
-		{
-			if (bLastIsSharp)
-				continue;
-			*p = '%';
-			bLastIsSharp = true;
-		}
-		else
-		{
-			*p = p0;
-			bLastIsSharp = false;
-		}
-		++p;
-	}
-	TRACE("进行模糊查找的字符串: %s\n", szVagueKey);
-	m_lcBmk.DeleteAllItems();
-	STUDENT_LIST lResult;
-	std::string strTable = Poco::format("T%d_%d", m_pModel->nExamID, m_pModel->nSubjectID);
-	if (m_pStudentMgr && m_pStudentMgr->SearchStudent(strTable, szVagueKey, m_nSearchType, lResult))
-	{
-		USES_CONVERSION;
-		for (auto obj : lResult)
-		{
-			int nCount = m_lcBmk.GetItemCount();
-			char szCount[10] = { 0 };
-			sprintf_s(szCount, "%d", nCount + 1);
-			m_lcBmk.InsertItem(nCount, NULL);
 
-			m_lcBmk.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
-			m_lcBmk.SetItemText(nCount, 1, (LPCTSTR)A2T(obj.strName.c_str()));
-			m_lcBmk.SetItemText(nCount, 2, (LPCTSTR)A2T(obj.strZkzh.c_str()));
-			m_lcBmk.SetItemText(nCount, 3, (LPCTSTR)A2T(obj.strClassroom.c_str()));
-			m_lcBmk.SetItemText(nCount, 4, (LPCTSTR)A2T(obj.strSchool.c_str()));
-		}
-		bResult = true;
-	}
-#endif
 	return bResult;
 }
 

@@ -71,7 +71,10 @@ void CVagueSearchDlg::InitUI()
 	m_lcBmk.InsertColumn(0, _T("顺序"), LVCFMT_CENTER, 40);
 	m_lcBmk.InsertColumn(1, _T("姓名"), LVCFMT_CENTER, 80);
 	m_lcBmk.InsertColumn(2, _T("考号"), LVCFMT_CENTER, 120);
-	m_lcBmk.InsertColumn(3, _T("班级"), LVCFMT_CENTER, 80);
+	if(g_nHighSevereMode)
+		m_lcBmk.InsertColumn(3, _T("考场"), LVCFMT_CENTER, 80);
+	else
+		m_lcBmk.InsertColumn(3, _T("班级"), LVCFMT_CENTER, 80);
 	m_lcBmk.InsertColumn(4, _T("学校"), LVCFMT_CENTER, 150);
 
 	switch (m_nSearchType)

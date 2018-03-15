@@ -168,7 +168,7 @@ bool CStudentMgr::InsertMemData(STUDENT_LIST& lData, std::string strTable)
 	}
 	catch (Poco::Exception& e)
 	{
-		std::string strErr = "报名库InsertMemData失败(" + e.displayText() + ")";
+		std::string strErr = "报名库InsertMemData失败[" + strTable + "](" + e.displayText() + ")";
 		g_pLogger->information(strErr);
 		TRACE("%s\n", strErr.c_str());
 		bResult = false;
