@@ -233,3 +233,34 @@ bool CStudentMgr::UpdateStudentStatus(std::string strTable, std::string strZkzh,
 	}
 	return bResult;
 }
+
+bool CStudentMgr::GetKCFromZkzh(std::string strTable, std::string strZkzh, std::string& strKC)
+{
+	bool bResult = false;
+	if (_session && !_session->isConnected())
+		return false;
+
+	try
+	{
+		Poco::Stopwatch sw;
+		sw.start();
+		//		std::string strTable = "student";
+		std::string strSql;
+		strSql = Poco::format("select classRoom from %s where zkzh like '%%%s%%';", strTable, CMyCodeConvert::Gb2312ToUtf8(strZkzh));
+		Poco::Data::Statement stmt((*_session << strSql, into(strKC)));
+		stmt.execute();
+		sw.stop();
+		bResult = true;
+		if (strKC.empty())
+			bResult = false;
+		std::string strLog = Poco::format("根据准考证号查询考场完成[%.3fms]", (double)sw.elapsed() / 1000);
+		//g_pLogger->information(strLog);
+	}
+	catch (Poco::Exception& e)
+	{
+		std::string strErr = "根据准考证号查询考场完成(" + e.displayText() + ")";
+		//g_pLogger->information(strErr);
+		bResult = false;
+	}
+	return bResult;
+}

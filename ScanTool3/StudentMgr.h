@@ -14,6 +14,7 @@ public:
 	bool InsertMemData(STUDENT_LIST& lData, std::string strTable);
 	bool SearchStudent(std::string strTable, std::string strKey, int nType, STUDENT_LIST& lResult);
 	bool UpdateStudentStatus(std::string strTable, std::string strZkzh, int nStatus);
+	bool GetKCFromZkzh(std::string strTable, std::string strZkzh, std::string& strKC);	//获取考场代码
 private:
 	std::string strData;
 	std::string _strDbPath;

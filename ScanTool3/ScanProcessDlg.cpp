@@ -985,6 +985,21 @@ LRESULT CScanProcessDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 					if(!bFind) m_vecCHzkzh.push_back(pPaper->strSN);	//重号的考号放入容器中，需要去重
 				}
 
+				if (g_nHighSevereMode)
+				{
+					//记录试卷袋里面含有的所有考场号
+					if (!m_pStudentMgr)
+					{
+						USES_CONVERSION;
+						m_pStudentMgr = new CStudentMgr();
+						std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
+						bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));						
+					}
+					std::string strKC;
+					std::string strTable = Poco::format("T%d_%d", _pModel_->nExamID, _pModel_->nSubjectID);
+					if (m_pStudentMgr->GetKCFromZkzh(strTable, pPaper->strSN, strKC))
+						m_vecKC.push_back(strKC);
+				}
 // 				if (_bGetBmk_ && pPaper->nZkzhInBmkStatus != 1)
 // 					m_lcPicture.SetItemColors(i, 1, RGB(0, 255, 0), RGB(255, 255, 255));
 			}

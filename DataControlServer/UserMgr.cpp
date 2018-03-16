@@ -101,12 +101,15 @@ int CUserMgr::HandleHeader(CMission* pMission)
 
 				switch (SysSet.m_nUseThirdPlatform)
 				{
+					case 3:		//成都佳发，用的天喻系统，登录方法改变
 					case 1:		//武汉天喻
 						{
 							std::string strAppKey = "SP0000000TEST";
 							std::string strAppValue = "63d4311d46714a39-a54cf2b0537a79b6TEST";
 							std::string strMsgFormat = "json";
 							std::string strMethod = "login111";
+							if (SysSet.m_nUseThirdPlatform == 3)
+								strMethod = "loginjf";
 							std::string strPwd = LoginInfo.szPWD;
 							std::string strUser = LoginInfo.szUserNo;
 							std::string strSha1Src = Poco::format("%sappKey%smessageFormat%smethod%spassword%susername%sv1.0%s", strAppValue, strAppKey, strMsgFormat, strMethod, strPwd, strUser, strAppValue);
@@ -709,7 +712,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 					objStudent.set("zkzh", strZkzh);
 					std::string strName = Poco::format("测试%d", i);
 					objStudent.set("name", CMyCodeConvert::Gb2312ToUtf8(strName));
-					objStudent.set("classRoom", CMyCodeConvert::Gb2312ToUtf8("一班"));
+					objStudent.set("classRoom", CMyCodeConvert::Gb2312ToUtf8("10001"));
 					objStudent.set("school", CMyCodeConvert::Gb2312ToUtf8("一中"));
 
 					Poco::JSON::Array arryScanStatus;

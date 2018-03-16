@@ -428,6 +428,60 @@ bool CScanResquestHandler::ParseResult(std::string& strInput, pSCAN_REQ_TASK pTa
 		{
 			ret = RESULT_EXAMINFO_SUCCESS;
 			strSendData = strInput;
+
+			//=========================		针对模板上传到服务器了，但是后台设置模板失败的情况
+// 			if (SysSet.m_nServerMode == 0)
+// 			{
+// 				Poco::JSON::Object::Ptr statusObj = object->getObject("status");
+// 				bool bSuccess = statusObj->get("success").convert<bool>();
+// 				if (bSuccess)
+// 				{
+// 					bool bModifyData = false;
+// 					Poco::JSON::Array::Ptr arryObj = object->getArray("exams");
+// 					for (int i = 0; i < arryObj->size(); i++)
+// 					{
+// 						Poco::JSON::Object::Ptr objExamInfo = arryObj->getObject(i);
+// 
+// 						int nExamID = objExamInfo->get("id").convert<int>();
+// 						std::string strExamName = CMyCodeConvert::Utf8ToGb2312(objExamInfo->get("name").convert<std::string>());
+// 						Poco::JSON::Array::Ptr arrySubjects = objExamInfo->getArray("examSubjects");
+// 						for (int j = 0; j < arrySubjects->size(); j++)
+// 						{
+// 							Poco::JSON::Object::Ptr objSubject = arrySubjects->getObject(j);
+// 
+// 							int nSubjID = objSubject->get("id").convert<int>();
+// 							std::string strSubjName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("name").convert<std::string>());
+// 
+// 							if (!objSubject->isNull("scanTemplateName"))
+// 							{
+// 								std::string strModelName = CMyCodeConvert::Utf8ToGb2312(objSubject->get("scanTemplateName").convert<std::string>());
+// 								if (strModelName.empty())
+// 								{
+// 									char szIndex[50] = { 0 };
+// 									sprintf(szIndex, "%d_%d", nExamID, nSubjID);
+// 
+// 									MAP_MODEL::iterator itFind = _mapModel_.find(szIndex);
+// 									if (itFind != _mapModel_.end())		//服务器上存在此模板文件
+// 									{
+// 										//char szModelName[150] = { 0 };
+// 										//sprintf_s(szModelName, "%s_%s_N_%d_%d.mod", strExamName.c_str(), strSubjName.c_str(), nExamID, nSubjID);
+// 										strModelName = itFind->second->strName;
+// 										objSubject->set("scanTemplateName", CMyCodeConvert::Gb2312ToUtf8(strModelName));
+// 										objSubject->set("isMyServerSet", true);
+// 										if(!bModifyData) bModifyData = true;
+// 									}
+// 								}
+// 							}
+// 						}
+// 					}
+// 					if (bModifyData)
+// 					{
+// 						std::stringstream jsnSnString;
+// 						object->stringify(jsnSnString, 0);
+// 						strSendData = jsnSnString.str();
+// 					}
+// 				}
+// 			}
 		}
 		else if (pTask->strMsg == "setScanModel")
 		{
