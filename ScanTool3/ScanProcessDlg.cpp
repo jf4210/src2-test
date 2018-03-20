@@ -11,6 +11,7 @@
 #include "ScanTool3Dlg.h"
 #include "PapersMgr.h"
 #include "SetScanNumDlg.h"
+#include "MissingPaperDlg.h"
 // CScanProcessDlg 对话框
 
 IMPLEMENT_DYNAMIC(CScanProcessDlg, CDialog)
@@ -998,7 +999,7 @@ LRESULT CScanProcessDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 					std::string strKC;
 					std::string strTable = Poco::format("T%d_%d", _pModel_->nExamID, _pModel_->nSubjectID);
 					if (m_pStudentMgr->GetKCFromZkzh(strTable, pPaper->strSN, strKC))
-						m_vecKC.push_back(strKC);
+						m_setKC.insert(strKC);						
 				}
 // 				if (_bGetBmk_ && pPaper->nZkzhInBmkStatus != 1)
 // 					m_lcPicture.SetItemColors(i, 1, RGB(0, 255, 0), RGB(255, 255, 255));
@@ -1073,6 +1074,7 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 		dlg.DoModal();
 	}
 
+	m_setKC.clear();
 	m_vecCHzkzh.clear();
 	InitTmpSubjectBmk();
 
@@ -1235,6 +1237,18 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 #if 1
 	USES_CONVERSION;
 	EnableBtn(FALSE);
+
+	if (g_nHighSevereMode)
+	{
+		//扫描考生与考场数据是否一致
+
+		CMissingPaperDlg dlg(_pCurrPapersInfo_, _pModel_, m_pStudentMgr);
+		if (dlg.DoModal() != IDOK)
+		{
+			EnableBtn(TRUE);
+			return;
+		}
+	}
 
 	CPapersMgr papersMgr;
 	char szPapersSavePath[MAX_PATH] = { 0 };
@@ -1696,9 +1710,9 @@ void CScanProcessDlg::ShowSinglePic(cv::Mat& matPic)
 
 void CScanProcessDlg::InitTmpSubjectBmk()
 {
+	m_lBmkStudent.clear();
 	if (_bGetBmk_)
 	{
-		m_lBmkStudent.clear();
 		m_lBmkStudent = g_lBmkStudent;
 	}
 }

@@ -65,7 +65,8 @@ private:
 	int				m_nCurrentScanCount;	//当前扫描需要扫描试卷数量
 	std::string		m_strCurrPicSavePath;		//gb2312
 	std::vector<std::string> m_vecCHzkzh;	//重号的准考证号，在同一袋试卷时进行检查当前试卷袋中所有重号的试卷（防止出现第1份试卷正常后面出现重号的，在前面重号的试卷无法检测的问题）
-	std::vector<std::string> m_vecKC;		//记录当前试卷袋的所有试卷的考场列表，可能是多个考场的试卷一起扫描
+	//std::vector<std::string> m_vecKC;		//记录当前试卷袋的所有试卷的考场列表，可能是多个考场的试卷一起扫描
+	std::set<std::string> m_setKC;			//记录当前试卷袋的所有试卷的考场列表，可能是多个考场的试卷一起扫描
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL OnInitDialog();

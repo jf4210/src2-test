@@ -137,6 +137,7 @@
     <ClInclude Include="CoordinationConvert.h" />
     <ClInclude Include="GetModelDlg.h" />
     <ClInclude Include="KeepAliveTimer.h" />
+    <ClInclude Include="MissingPaperDlg.h" />
     <ClInclude Include="MultiPageExceptionDlg.h" />
     <ClInclude Include="MultiPageMgr.h" />
     <ClInclude Include="OmrPoint.h" />
@@ -266,6 +267,7 @@
     <ClCompile Include="BaseRecog.cpp" />
     <ClCompile Include="CoordinationConvert.cpp" />
     <ClCompile Include="GetModelDlg.cpp" />
+    <ClCompile Include="MissingPaperDlg.cpp" />
     <ClCompile Include="MultiPageExceptionDlg.cpp" />
     <ClCompile Include="MultiPageMgr.cpp" />
     <ClCompile Include="OmrPoint.cpp" />

@@ -456,7 +456,7 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	std::string	 strPapersDesc;			//试卷袋详细描述
 
 	PAPER_LIST	lPaper;					//此试卷袋中试卷列表
-	PAPER_LIST	lIssue;					//此试卷袋中识别有问题的试卷列表
+	PAPER_LIST	lIssue;					//此试卷袋中识别有问题的试卷列表，此列表中试卷将不上传
 	_PapersInfo_()
 	{
 		nPapersType = 0;
