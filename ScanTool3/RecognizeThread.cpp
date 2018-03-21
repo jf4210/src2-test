@@ -366,7 +366,10 @@ bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 #endif
 
 	//识别页面
-	RecogPagination(pScanPaperTask, _pModel_);
+	if (_pModel_->nUsePagination)
+	{
+		RecogPagination(pScanPaperTask, _pModel_);
+	}
 
 	//++添加试卷
 	pST_PaperInfo pCurrentPaper = NULL;

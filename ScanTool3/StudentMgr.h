@@ -16,6 +16,7 @@ public:
 	bool UpdateStudentStatus(std::string strTable, std::string strZkzh, int nStatus);
 	bool GetKCFromZkzh(std::string strTable, std::string strZkzh, std::string& strKC);	//获取考场代码
 	bool GetKCStudent(std::string strTable, std::string strKey, STUDENT_LIST& lResult);	//获取考场的学生
+	bool GetKDFromKC(std::string strTable, std::string strKC, std::string& strKD);	//获取考点信息
 private:
 	std::string strData;
 	std::string _strDbPath;

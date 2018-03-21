@@ -26,6 +26,7 @@ void CMissingPaperDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CTipBaseDlg::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_MissingPaper, m_lcMissingZkzh);
+	DDX_Control(pDX, IDC_LIST_KC, m_lcKC);
 	DDX_Control(pDX, IDC_BTN_CLOSE, m_bmpBtnClose);
 	DDX_Text(pDX, IDC_STATIC_KD, m_strKD);
 	DDX_Text(pDX, IDC_STATIC_KC, m_strKC);
@@ -58,9 +59,14 @@ BOOL CMissingPaperDlg::OnInitDialog()
 void CMissingPaperDlg::InitUI()
 {
 	m_lcMissingZkzh.SetExtendedStyle(m_lcMissingZkzh.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
-	m_lcMissingZkzh.InsertColumn(0, _T("序号"), LVCFMT_CENTER, 36);
+	m_lcMissingZkzh.InsertColumn(0, _T("No."), LVCFMT_CENTER, 30);
 	m_lcMissingZkzh.InsertColumn(1, _T("准考证号"), LVCFMT_CENTER, 100);
-	m_lcMissingZkzh.InsertColumn(2, _T("姓名"), LVCFMT_CENTER, 110);
+	m_lcMissingZkzh.InsertColumn(2, _T("姓名"), LVCFMT_CENTER, 60);
+	m_lcMissingZkzh.InsertColumn(3, _T("考场"), LVCFMT_CENTER, 80);
+
+	m_lcKC.SetExtendedStyle(m_lcKC.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
+	m_lcKC.InsertColumn(0, _T("考场"), LVCFMT_CENTER, 80);
+	m_lcKC.InsertColumn(1, _T("考点"), LVCFMT_CENTER, 120);
 
 	m_bmpBtnClose.SetStateBitmap(IDB_Btn_MakeModel_CloseNormal, 0, IDB_Btn_MakeModel_CloseDown);
 
@@ -74,15 +80,15 @@ void CMissingPaperDlg::InitCtrlPosition()
 	int cx = rcClient.right;
 	int cy = rcClient.bottom;
 
-	int nTopGap = 5;	//上边的间隔，留给控制栏
-	const int nLeftGap = 2;		//左边的空白间隔
-	const int nBottomGap = 2;	//下边的空白间隔
-	const int nRightGap = 2;	//右边的空白间隔
+	int nTopGap = 25;	//上边的间隔，留给控制栏
+	const int nLeftGap = 10;	//左边的空白间隔
+	const int nBottomGap = 40;	//下边的空白间隔
+	const int nRightGap = 10;	//右边的空白间隔
 	const int nGap = 2;			//普通控件的间隔
 
 	int nStaticTip = 15;		//列表提示static控件高度
 	int nRealW = cx - nLeftGap - nRightGap;
-	int nListW = nRealW * 0.4;
+	int nListW = nRealW * 0.5;
 	int nBtnH = 30;				//按钮高度
 
 	int nCurrentTop = nTopGap;
@@ -102,8 +108,8 @@ void CMissingPaperDlg::InitCtrlPosition()
 
 	nCurrentTop = nTmpTop;
 	nCurrentLeft = nLeftGap + nListW + nGap * 5;
-	int nStaticW = 20;
-	int nStaticH = 35;
+	int nStaticW = 45;
+	int nStaticH = 50;
 	if (GetDlgItem(IDC_STATIC_2)->GetSafeHwnd())
 	{
 		GetDlgItem(IDC_STATIC_2)->MoveWindow(nCurrentLeft, nCurrentTop, nStaticW, nStaticH);
@@ -121,7 +127,7 @@ void CMissingPaperDlg::InitCtrlPosition()
 	}
 
 	nCurrentTop = nTmpTop;
-	nCurrentLeft += nGap;
+	nCurrentLeft += (nStaticW + nGap);
 	nStaticW = cx - nCurrentLeft - nRightGap;
 	if (GetDlgItem(IDC_STATIC_KD)->GetSafeHwnd())
 	{
@@ -138,35 +144,61 @@ void CMissingPaperDlg::InitCtrlPosition()
 		GetDlgItem(IDC_STATIC_ZW)->MoveWindow(nCurrentLeft, nCurrentTop, nStaticW, nStaticH);
 		nCurrentTop += (nStaticH + nGap);
 	}
+
+	nCurrentTop += nGap * 3;
+	nCurrentLeft = nLeftGap + nListW + nGap * 5;
+	nStaticW = cx - nCurrentLeft - nRightGap;
+	nStaticH = 35;
+	if (GetDlgItem(IDC_STATIC_5)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_5)->MoveWindow(nCurrentLeft, nCurrentTop, nStaticW, nStaticH);
+		nCurrentTop += (nStaticH + nGap);
+	}
+	if (m_lcKC.GetSafeHwnd())
+	{
+		int nH = cy - nCurrentTop - nBottomGap;
+		m_lcKC.MoveWindow(nCurrentLeft, nCurrentTop, nStaticW, nH);
+	}
 }
 
 void CMissingPaperDlg::InitData()
 {
 	if (!m_pPapers || !m_pModel || !m_pStudentMgr) return;
 
+	USES_CONVERSION;
+	std::string strKC;	//utf8
+	std::string strTable = Poco::format("T%d_%d", _pModel_->nExamID, _pModel_->nSubjectID);
 	std::set<std::string> setKC;	//考场集合，此集合保证数据无重复
 	for (auto pPaperItem : m_pPapers->lPaper)
 	{
-		if (!pPaperItem->strSN.empty())
-			setKC.insert(pPaperItem->strSN);
+		if (m_pStudentMgr->GetKCFromZkzh(strTable, pPaperItem->strSN, strKC))
+			setKC.insert(strKC);	//utf8
 	}
 
-	STUDENT_LIST lAllStudent;
 	for (auto itKcCode : setKC)
 	{
 		STUDENT_LIST lResult;
 		std::string strTable = Poco::format("T%d_%d", m_pModel->nExamID, m_pModel->nSubjectID);
-		if (m_pStudentMgr && m_pStudentMgr->GetKCStudent(strTable, itKcCode, lResult))
+		if (m_pStudentMgr && m_pStudentMgr->GetKCStudent(strTable, CMyCodeConvert::Utf8ToGb2312(itKcCode), lResult))
 		{
 			for (auto itStudent : lResult)
-				lAllStudent.push_back(itStudent);
+				m_lAllStudent.push_back(itStudent);
+		}
+
+		int nCount = m_lcKC.GetItemCount();
+		m_lcKC.InsertItem(nCount, NULL);
+
+		m_lcKC.SetItemText(nCount, 0, (LPCTSTR)A2T(CMyCodeConvert::Utf8ToGb2312(itKcCode).c_str()));	//pPaper->strStudentInfo.c_str()
+		std::string strKD;
+		if (m_pStudentMgr->GetKDFromKC(strTable, CMyCodeConvert::Utf8ToGb2312(itKcCode), strKD))
+		{
+			m_lcKC.SetItemText(nCount, 1, (LPCTSTR)A2T(CMyCodeConvert::Utf8ToGb2312(strKD).c_str()));
 		}
 	}
 
-	USES_CONVERSION;
 	m_lcMissingZkzh.DeleteAllItems();
-	STUDENT_LIST::iterator itStudent = lAllStudent.begin();
-	for (; itStudent != lAllStudent.end(); itStudent++)
+	STUDENT_LIST::iterator itStudent = m_lAllStudent.begin();
+	for (; itStudent != m_lAllStudent.end(); itStudent++)
 	{
 		bool bFind = false;
 		for (auto paperScaned : m_pPapers->lPaper)
@@ -188,8 +220,9 @@ void CMissingPaperDlg::InitData()
 			m_lcMissingZkzh.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));	//pPaper->strStudentInfo.c_str()
 			m_lcMissingZkzh.SetItemText(nCount, 1, (LPCTSTR)A2T(itStudent->strZkzh.c_str()));
 			m_lcMissingZkzh.SetItemText(nCount, 2, (LPCTSTR)A2T(itStudent->strName.c_str()));
+			m_lcMissingZkzh.SetItemText(nCount, 3, (LPCTSTR)A2T(itStudent->strClassroom.c_str()));
 
-			m_lcMissingZkzh.SetItemData(nCount, (DWORD_PTR)(&itStudent));
+			m_lcMissingZkzh.SetItemData(nCount, (DWORD_PTR)&(*itStudent));
 		}
 	}
 
@@ -228,6 +261,17 @@ BOOL CMissingPaperDlg::PreTranslateMessage(MSG* pMsg)
 
 void CMissingPaperDlg::SetFontSize()
 {
+	CFont fontStatus0;
+	fontStatus0.CreateFont(18, 0, 0, 0,
+						   FW_BOLD, FALSE, FALSE, 0,
+						   DEFAULT_CHARSET,
+						   OUT_DEFAULT_PRECIS,
+						   CLIP_DEFAULT_PRECIS,
+						   DEFAULT_QUALITY,
+						   DEFAULT_PITCH | FF_SWISS,
+						   _T("宋体"));
+	GetDlgItem(IDC_STATIC_1)->SetFont(&fontStatus0);
+
 	CFont fontStatus;
 	fontStatus.CreateFont(20, 0, 0, 0,
 						  FW_BOLD, FALSE, FALSE, 0,
@@ -242,7 +286,7 @@ void CMissingPaperDlg::SetFontSize()
 	GetDlgItem(IDC_STATIC_4)->SetFont(&fontStatus);
 
 	CFont fontStatus2;
-	fontStatus2.CreateFont(25, 0, 0, 0,
+	fontStatus2.CreateFont(30, 0, 0, 0,
 						  FW_BOLD, FALSE, FALSE, 0,
 						  DEFAULT_CHARSET,
 						  OUT_DEFAULT_PRECIS,
@@ -265,6 +309,12 @@ HBRUSH CMissingPaperDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	HBRUSH hbr = CTipBaseDlg::OnCtlColor(pDC, pWnd, nCtlColor);
 
 	UINT CurID = pWnd->GetDlgCtrlID();
+	if (CurID == IDC_STATIC_1)
+	{
+		pDC->SetTextColor(RGB(50, 50, 50));
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
 	if (CurID == IDC_STATIC_2 || CurID == IDC_STATIC_3 || CurID == IDC_STATIC_4)
 	{
 		pDC->SetTextColor(RGB(100, 100, 100));

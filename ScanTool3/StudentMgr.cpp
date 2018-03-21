@@ -254,6 +254,7 @@ bool CStudentMgr::GetKCFromZkzh(std::string strTable, std::string strZkzh, std::
 		if (strKC.empty())
 			bResult = false;
 		std::string strLog = Poco::format("根据准考证号查询考场完成[%.3fms]", (double)sw.elapsed() / 1000);
+		TRACE(strLog.c_str());
 		//g_pLogger->information(strLog);
 	}
 	catch (Poco::Exception& e)
@@ -277,7 +278,7 @@ bool CStudentMgr::GetKCStudent(std::string strTable, std::string strKey, STUDENT
 		sw.start();
 		//		std::string strTable = "student";
 		std::string strSql;
-		strSql = Poco::format("select * from %s where classRoom = %s;", strTable, CMyCodeConvert::Gb2312ToUtf8(strKey));
+		strSql = Poco::format("select * from %s where classRoom = '%s';", strTable, CMyCodeConvert::Gb2312ToUtf8(strKey));
 		Poco::Data::Statement stmt((*_session << strSql, into(lResult)));
 		//		Poco::Data::Statement stmt((*_mem << strSql, into(lResult)));
 		stmt.execute();
@@ -289,6 +290,36 @@ bool CStudentMgr::GetKCStudent(std::string strTable, std::string strKey, STUDENT
 	catch (Poco::Exception& e)
 	{
 		std::string strErr = "查询考场的考生数据失败(" + e.displayText() + ")";
+		//g_pLogger->information(strErr);
+		bResult = false;
+	}
+	return bResult;
+}
+
+bool CStudentMgr::GetKDFromKC(std::string strTable, std::string strKC, std::string& strKD)
+{
+	bool bResult = false;
+	if (_session && !_session->isConnected())
+		return false;
+
+	try
+	{
+		Poco::Stopwatch sw;
+		sw.start();
+		//		std::string strTable = "student";
+		std::string strSql;
+		strSql = Poco::format("select distinct school from %s where classRoom = '%s';", strTable, CMyCodeConvert::Gb2312ToUtf8(strKC));
+		Poco::Data::Statement stmt((*_session << strSql, into(strKD)));
+		//		Poco::Data::Statement stmt((*_mem << strSql, into(lResult)));
+		stmt.execute();
+		sw.stop();
+		bResult = true;
+		std::string strLog = Poco::format("查询考点数据完成[%.3fms]", (double)sw.elapsed() / 1000);
+		//g_pLogger->information(strLog);
+	}
+	catch (Poco::Exception& e)
+	{
+		std::string strErr = "查询考点数据失败(" + e.displayText() + ")";
 		//g_pLogger->information(strErr);
 		bResult = false;
 	}

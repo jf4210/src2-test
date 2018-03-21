@@ -3,7 +3,7 @@
 
 //ÌîÍ¿µãÊ¶±ğ
 class CWritePointRecog :
-	public CBaseRecog
+	virtual public CBaseRecog
 {
 public:
 	CWritePointRecog() {};

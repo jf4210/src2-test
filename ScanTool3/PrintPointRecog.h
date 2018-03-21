@@ -3,7 +3,7 @@
 
 //Ó¡Ë¢µãÊ¶±ð
 class CPrintPointRecog :
-	public CBaseRecog
+	virtual public CBaseRecog
 {
 public:
 	CPrintPointRecog() {};

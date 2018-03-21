@@ -21,6 +21,7 @@ public:
 
 
 	CXListCtrl		m_lcMissingZkzh;				//缺失的准考证号列表
+	CXListCtrl		m_lcKC;							//扫描试卷所属的考场列表
 
 	CBmpButton		m_bmpBtnClose;
 
@@ -35,6 +36,8 @@ private:
 	pMODEL			m_pModel;
 	int				m_nCurrentSelItem;
 	COLORREF		crOldText, crOldBackground;
+
+	STUDENT_LIST	m_lAllStudent;
 
 	CFont	fontStatus;
 	void	SetFontSize();

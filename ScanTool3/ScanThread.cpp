@@ -2233,15 +2233,6 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 			m_pScanPaper->pPapersInfo = _pCurrPapersInfo_;
 			m_pScanPaper->vecScanPic.push_back(pScanPic);
 			pScanPic->pParentScanPaper = m_pScanPaper;
-// 			if (m_nDoubleScan && m_nModelPicNums % 2 != 0)	//双面扫描，且模板数不为奇数，因为模板数为奇数会舍弃图像
-// 			{
-// 				if ((nOrder - 1) % 2 == 0)	//扫描一张试卷后，获取到的第一面
-// 					m_pScanPaper->pScanPic1 = pScanPic;
-// 				else
-// 					m_pScanPaper->pScanPic2 = pScanPic;
-// 			}
-// 			else
-// 				m_pScanPaper->pScanPic1 = pScanPic;
 
 			if (m_nDoubleScan && (nOrder - 1) % 2 != 0 || !m_nDoubleScan)	//双面扫描且获取到第2面图像时，或者单面扫描时，将此试卷的图像信息放入扫描图像列表
 			{
@@ -2300,6 +2291,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 				pPic->strPicName = szPicName;
 				pPic->strPicPath = szPicPath;
 				pPic->nPicModelIndex = nOrder - 1;
+
 				if (nOrder == 1)	//第一页的时候创建新的试卷信息
 				{
 					CScanMgrDlg* pDlg = (CScanMgrDlg*)m_pDlg;

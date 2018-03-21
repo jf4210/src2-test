@@ -91,7 +91,7 @@ bool CSNPoint::RecogSn_code(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMO
 	pST_PaperInfo pCurrentPaper = static_cast<pST_PaperInfo>(pPic->pPaper);
 	for (auto pTmpPic : pCurrentPaper->lPic)	//修改当前试卷页所属的扫描试卷的另一页的准考证号和当前页一样
 	{
-		if (pTmpPic != pPic && pTmpPic->pSrcScanPic->pParentScanPaper == pPic->pSrcScanPic->pParentScanPaper)
+		if (pTmpPic != pPic && pTmpPic->pSrcScanPic != NULL && pPic->pSrcScanPic != NULL && pTmpPic->pSrcScanPic->pParentScanPaper == pPic->pSrcScanPic->pParentScanPaper)
 		{
 			pTmpPic->strPicZKZH = pPic->strPicZKZH;
 			break;
@@ -332,7 +332,7 @@ bool CSNPoint::RecogSn_omr(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMOD
 		pST_PaperInfo pCurrentPaper = static_cast<pST_PaperInfo>(pPic->pPaper);
 		for (auto pTmpPic : pCurrentPaper->lPic)	//修改当前试卷页所属的扫描试卷的另一页的准考证号和当前页一样
 		{
-			if (pTmpPic != pPic && pTmpPic->pSrcScanPic->pParentScanPaper == pPic->pSrcScanPic->pParentScanPaper)
+			if (pTmpPic != pPic && pTmpPic->pSrcScanPic != NULL && pPic->pSrcScanPic != NULL && pTmpPic->pSrcScanPic->pParentScanPaper == pPic->pSrcScanPic->pParentScanPaper)
 			{
 				pTmpPic->strPicZKZH = pPic->strPicZKZH;
 				break;
