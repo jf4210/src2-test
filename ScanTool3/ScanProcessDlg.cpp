@@ -995,11 +995,7 @@ LRESULT CScanProcessDlg::MsgZkzhRecog(WPARAM wParam, LPARAM lParam)
 						m_pStudentMgr = new CStudentMgr();
 						std::string strDbPath = T2A(g_strCurrentPath + _T("bmk.db"));
 						bool bResult = m_pStudentMgr->InitDB(CMyCodeConvert::Gb2312ToUtf8(strDbPath));						
-					}
-					std::string strKC;
-					std::string strTable = Poco::format("T%d_%d", _pModel_->nExamID, _pModel_->nSubjectID);
-					if (m_pStudentMgr->GetKCFromZkzh(strTable, pPaper->strSN, strKC))
-						m_setKC.insert(strKC);						
+					}			
 				}
 // 				if (_bGetBmk_ && pPaper->nZkzhInBmkStatus != 1)
 // 					m_lcPicture.SetItemColors(i, 1, RGB(0, 255, 0), RGB(255, 255, 255));
@@ -1074,7 +1070,6 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 		dlg.DoModal();
 	}
 
-	m_setKC.clear();
 	m_vecCHzkzh.clear();
 	InitTmpSubjectBmk();
 
@@ -1241,9 +1236,7 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	if (g_nHighSevereMode)
 	{
 		//扫描考生与考场数据是否一致
-
-		CMissingPaperDlg dlg(_pCurrPapersInfo_, _pModel_, m_pStudentMgr);
-		if (dlg.DoModal() != IDOK)
+		if (!IsValidPspers())
 		{
 			EnableBtn(TRUE);
 			return;
@@ -1678,6 +1671,48 @@ void CScanProcessDlg::CheckZkzhInBmk(pST_PaperInfo pPaper)
 	}
 	else 
 		pPaper->nZkzhInBmkStatus = 0;
+}
+
+bool CScanProcessDlg::IsValidPspers()
+{
+	//扫描考生与考场数据是否一致
+	std::string strKC;	//utf8
+	std::string strTable = Poco::format("T%d_%d", _pModel_->nExamID, _pModel_->nSubjectID);
+	std::set<std::string> setKC;	//考场集合，此集合保证数据无重复
+	for (auto pPaperItem : _pCurrPapersInfo_->lPaper)
+	{
+		if (m_pStudentMgr->GetKCFromZkzh(strTable, pPaperItem->strSN, strKC))
+			setKC.insert(strKC);	//utf8
+	}
+
+	STUDENT_LIST lAllStudent;
+	std::set<std::string> setBmkZkzh;	//当前扫描试卷袋对应的考场在报名库中的准考证号集合
+	std::set<std::string> setScanZkzh;	//当前扫描试卷袋所有的准考证号集合
+	for (auto sKc : setKC)
+	{
+		STUDENT_LIST lResult;
+		if (m_pStudentMgr && m_pStudentMgr->GetKCStudent(strTable, CMyCodeConvert::Utf8ToGb2312(sKc), lResult))
+		{
+			for (auto itStudent : lResult)
+			{
+				lAllStudent.push_back(itStudent);
+				setBmkZkzh.insert(itStudent.strZkzh);
+			}
+		}
+	}
+	for (auto itemPaper : _pCurrPapersInfo_->lPaper)
+		if (!itemPaper->strSN.empty())
+			setScanZkzh.insert(itemPaper->strSN);
+
+	if (setScanZkzh.size() != setBmkZkzh.size())
+	{
+		CMissingPaperDlg dlg(_pCurrPapersInfo_, _pModel_, m_pStudentMgr);
+		if (dlg.DoModal() != IDOK)
+		{
+			return false;
+		}
+	}
+	return true;
 }
 
 void CScanProcessDlg::TestData(bool bReset)

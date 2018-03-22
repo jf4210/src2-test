@@ -5,6 +5,7 @@
 #include "ScanTool3.h"
 #include "MissingPaperDlg.h"
 #include "afxdialogex.h"
+#include "NewMessageBox.h"
 
 
 // CMissingPaperDlg 对话框
@@ -28,6 +29,7 @@ void CMissingPaperDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_MissingPaper, m_lcMissingZkzh);
 	DDX_Control(pDX, IDC_LIST_KC, m_lcKC);
 	DDX_Control(pDX, IDC_BTN_CLOSE, m_bmpBtnClose);
+	DDX_Control(pDX, IDC_BTN_Submit, m_bmpBtnSubmit);
 	DDX_Text(pDX, IDC_STATIC_KD, m_strKD);
 	DDX_Text(pDX, IDC_STATIC_KC, m_strKC);
 	DDX_Text(pDX, IDC_STATIC_ZW, m_strZW);
@@ -39,6 +41,7 @@ BEGIN_MESSAGE_MAP(CMissingPaperDlg, CTipBaseDlg)
 	ON_WM_CTLCOLOR()
 	ON_NOTIFY(NM_HOVER, IDC_LIST_MissingPaper, &CMissingPaperDlg::OnNMHoverListMissingpaper)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_MissingPaper, &CMissingPaperDlg::OnNMDblclkListMissingpaper)
+	ON_BN_CLICKED(IDC_BTN_Submit, &CMissingPaperDlg::OnBnClickedBtnSubmit)
 END_MESSAGE_MAP()
 
 
@@ -59,16 +62,17 @@ BOOL CMissingPaperDlg::OnInitDialog()
 void CMissingPaperDlg::InitUI()
 {
 	m_lcMissingZkzh.SetExtendedStyle(m_lcMissingZkzh.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
-	m_lcMissingZkzh.InsertColumn(0, _T("No."), LVCFMT_CENTER, 30);
-	m_lcMissingZkzh.InsertColumn(1, _T("准考证号"), LVCFMT_CENTER, 100);
-	m_lcMissingZkzh.InsertColumn(2, _T("姓名"), LVCFMT_CENTER, 60);
-	m_lcMissingZkzh.InsertColumn(3, _T("考场"), LVCFMT_CENTER, 80);
+	m_lcMissingZkzh.InsertColumn(0, _T("No."), LVCFMT_CENTER, 36);
+	m_lcMissingZkzh.InsertColumn(1, _T("准考证号"), LVCFMT_CENTER, 110);
+	m_lcMissingZkzh.InsertColumn(2, _T("姓名"), LVCFMT_CENTER, 70);
+	m_lcMissingZkzh.InsertColumn(3, _T("考场"), LVCFMT_CENTER, 100);
 
 	m_lcKC.SetExtendedStyle(m_lcKC.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
-	m_lcKC.InsertColumn(0, _T("考场"), LVCFMT_CENTER, 80);
-	m_lcKC.InsertColumn(1, _T("考点"), LVCFMT_CENTER, 120);
+	m_lcKC.InsertColumn(0, _T("考场"), LVCFMT_CENTER, 100);
+	m_lcKC.InsertColumn(1, _T("考点"), LVCFMT_CENTER, 200);
 
 	m_bmpBtnClose.SetStateBitmap(IDB_Btn_MakeModel_CloseNormal, 0, IDB_Btn_MakeModel_CloseDown);
+	m_bmpBtnSubmit.SetStateBitmap(IDB_RecordDlg_Btn, 0, IDB_RecordDlg_Btn_Hover);
 
 	InitCtrlPosition();
 }
@@ -80,20 +84,25 @@ void CMissingPaperDlg::InitCtrlPosition()
 	int cx = rcClient.right;
 	int cy = rcClient.bottom;
 
-	int nTopGap = 25;	//上边的间隔，留给控制栏
-	const int nLeftGap = 10;	//左边的空白间隔
-	const int nBottomGap = 40;	//下边的空白间隔
-	const int nRightGap = 10;	//右边的空白间隔
+	int nTopGap = 40;	//上边的间隔，留给控制栏
+	const int nLeftGap = 20;	//左边的空白间隔
+	const int nBottomGap = 80;	//下边的空白间隔
+	const int nRightGap = 20;	//右边的空白间隔
 	const int nGap = 2;			//普通控件的间隔
 
 	int nStaticTip = 15;		//列表提示static控件高度
 	int nRealW = cx - nLeftGap - nRightGap;
 	int nListW = nRealW * 0.5;
-	int nBtnH = 30;				//按钮高度
 
 	int nCurrentTop = nTopGap;
 	int nCurrentLeft = nLeftGap;
 	int nTmpTop = nCurrentTop;
+
+
+	if (GetDlgItem(IDC_STATIC_6)->GetSafeHwnd())	//标题
+	{
+		GetDlgItem(IDC_STATIC_6)->MoveWindow(nLeftGap, nGap, nRealW, nTopGap - nGap * 2);
+	}
 
 	if (GetDlgItem(IDC_STATIC_1)->GetSafeHwnd())
 	{
@@ -145,7 +154,10 @@ void CMissingPaperDlg::InitCtrlPosition()
 		nCurrentTop += (nStaticH + nGap);
 	}
 
-	nCurrentTop += nGap * 3;
+	int nKCListH = 140;
+	nTmpTop = nCurrentTop;
+	nKCListH = (cy - nBottomGap - nTmpTop) > nKCListH ? nKCListH : (cy - nBottomGap - nTmpTop);
+	nCurrentTop = cy - nBottomGap - nKCListH;
 	nCurrentLeft = nLeftGap + nListW + nGap * 5;
 	nStaticW = cx - nCurrentLeft - nRightGap;
 	nStaticH = 35;
@@ -159,6 +171,17 @@ void CMissingPaperDlg::InitCtrlPosition()
 		int nH = cy - nCurrentTop - nBottomGap;
 		m_lcKC.MoveWindow(nCurrentLeft, nCurrentTop, nStaticW, nH);
 	}
+
+	int nBtnW = 150;
+	int nBtnH = nBottomGap / 2;
+	nCurrentLeft = (cx - nBtnW) / 2;
+	nCurrentTop = cy - nBtnH - nBottomGap / 4;
+	if (m_bmpBtnSubmit.GetSafeHwnd())
+	{
+		m_bmpBtnSubmit.MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
+	}
+
+	Invalidate();
 }
 
 void CMissingPaperDlg::InitData()
@@ -261,8 +284,7 @@ BOOL CMissingPaperDlg::PreTranslateMessage(MSG* pMsg)
 
 void CMissingPaperDlg::SetFontSize()
 {
-	CFont fontStatus0;
-	fontStatus0.CreateFont(18, 0, 0, 0,
+	fontStatus1.CreateFont(15, 0, 0, 0,
 						   FW_BOLD, FALSE, FALSE, 0,
 						   DEFAULT_CHARSET,
 						   OUT_DEFAULT_PRECIS,
@@ -270,10 +292,10 @@ void CMissingPaperDlg::SetFontSize()
 						   DEFAULT_QUALITY,
 						   DEFAULT_PITCH | FF_SWISS,
 						   _T("宋体"));
-	GetDlgItem(IDC_STATIC_1)->SetFont(&fontStatus0);
+	GetDlgItem(IDC_STATIC_1)->SetFont(&fontStatus1);
+	GetDlgItem(IDC_STATIC_5)->SetFont(&fontStatus1);
 
-	CFont fontStatus;
-	fontStatus.CreateFont(20, 0, 0, 0,
+	fontStatus2.CreateFont(18, 0, 0, 0,
 						  FW_BOLD, FALSE, FALSE, 0,
 						  DEFAULT_CHARSET,
 						  OUT_DEFAULT_PRECIS,
@@ -281,12 +303,11 @@ void CMissingPaperDlg::SetFontSize()
 						  DEFAULT_QUALITY,
 						  DEFAULT_PITCH | FF_SWISS,
 						  _T("宋体"));
-	GetDlgItem(IDC_STATIC_2)->SetFont(&fontStatus);
-	GetDlgItem(IDC_STATIC_3)->SetFont(&fontStatus);
-	GetDlgItem(IDC_STATIC_4)->SetFont(&fontStatus);
+	GetDlgItem(IDC_STATIC_2)->SetFont(&fontStatus2);
+	GetDlgItem(IDC_STATIC_3)->SetFont(&fontStatus2);
+	GetDlgItem(IDC_STATIC_4)->SetFont(&fontStatus2);
 
-	CFont fontStatus2;
-	fontStatus2.CreateFont(30, 0, 0, 0,
+	fontStatus3.CreateFont(25, 0, 0, 0,
 						  FW_BOLD, FALSE, FALSE, 0,
 						  DEFAULT_CHARSET,
 						  OUT_DEFAULT_PRECIS,
@@ -294,9 +315,29 @@ void CMissingPaperDlg::SetFontSize()
 						  DEFAULT_QUALITY,
 						  DEFAULT_PITCH | FF_SWISS,
 						  _T("宋体"));
-	GetDlgItem(IDC_STATIC_KD)->SetFont(&fontStatus2);
-	GetDlgItem(IDC_STATIC_KC)->SetFont(&fontStatus2);
-	GetDlgItem(IDC_STATIC_ZW)->SetFont(&fontStatus2);
+	GetDlgItem(IDC_STATIC_KD)->SetFont(&fontStatus3);
+	GetDlgItem(IDC_STATIC_KC)->SetFont(&fontStatus3);
+	GetDlgItem(IDC_STATIC_ZW)->SetFont(&fontStatus3);
+
+	fontStatus4.CreateFont(30, 0, 0, 0,
+						   FW_BOLD, FALSE, FALSE, 0,
+						   DEFAULT_CHARSET,
+						   OUT_DEFAULT_PRECIS,
+						   CLIP_DEFAULT_PRECIS,
+						   DEFAULT_QUALITY,
+						   DEFAULT_PITCH | FF_SWISS,
+						   _T("宋体"));
+	GetDlgItem(IDC_STATIC_6)->SetFont(&fontStatus4);
+	
+	fontStatus5.CreateFont(20, 0, 0, 0,
+						   FW_BOLD, FALSE, FALSE, 0,
+						   DEFAULT_CHARSET,
+						   OUT_DEFAULT_PRECIS,
+						   CLIP_DEFAULT_PRECIS,
+						   DEFAULT_QUALITY,
+						   DEFAULT_PITCH | FF_SWISS,
+						   _T("幼圆"));
+	m_bmpBtnSubmit.SetBtnFont(fontStatus5);
 }
 
 void CMissingPaperDlg::OnBnClickedBtnClose()
@@ -309,9 +350,15 @@ HBRUSH CMissingPaperDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	HBRUSH hbr = CTipBaseDlg::OnCtlColor(pDC, pWnd, nCtlColor);
 
 	UINT CurID = pWnd->GetDlgCtrlID();
+	if (CurID == IDC_STATIC_6)
+	{
+		pDC->SetTextColor(RGB(20, 20, 20));
+		pDC->SetBkMode(TRANSPARENT);
+		return (HBRUSH)GetStockObject(NULL_BRUSH);
+	}
 	if (CurID == IDC_STATIC_1)
 	{
-		pDC->SetTextColor(RGB(50, 50, 50));
+		pDC->SetTextColor(RGB(60, 60, 60));
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}
@@ -330,7 +377,6 @@ HBRUSH CMissingPaperDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 	return hbr;
 }
-
 
 void CMissingPaperDlg::OnNMHoverListMissingpaper(NMHDR *pNMHDR, LRESULT *pResult)
 {
@@ -355,4 +401,16 @@ void CMissingPaperDlg::OnNMDblclkListMissingpaper(NMHDR *pNMHDR, LRESULT *pResul
 	showStudentInfo(m_nCurrentSelItem);
 
 	*pResult = 0;
+}
+
+void CMissingPaperDlg::OnBnClickedBtnSubmit()
+{
+	std::string strMsg = Poco::format("此试卷袋含%d个考场，扫描数与考场数据不一样,是否强制上传?", m_lcKC.GetItemCount());
+	CNewMessageBox	dlg;
+	dlg.setShowInfo(2, 2, strMsg);
+	dlg.DoModal();
+	if (dlg.m_nResult != IDYES)
+		return;
+
+	OnOK();
 }

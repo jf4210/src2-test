@@ -24,6 +24,7 @@ public:
 	CXListCtrl		m_lcKC;							//扫描试卷所属的考场列表
 
 	CBmpButton		m_bmpBtnClose;
+	CBmpButton		m_bmpBtnSubmit;
 
 	CString		m_strKD;	//考点
 	CString		m_strKC;	//考场
@@ -39,7 +40,12 @@ private:
 
 	STUDENT_LIST	m_lAllStudent;
 
-	CFont	fontStatus;
+	CFont	fontStatus1;
+	CFont	fontStatus2;
+	CFont	fontStatus3;
+	CFont	fontStatus4;
+	CFont	fontStatus5;
+	CFont	fontStatus6;
 	void	SetFontSize();
 
 	void	InitUI();
@@ -57,4 +63,5 @@ public:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnNMHoverListMissingpaper(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMDblclkListMissingpaper(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedBtnSubmit();
 };
