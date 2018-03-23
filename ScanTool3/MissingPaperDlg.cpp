@@ -6,7 +6,7 @@
 #include "MissingPaperDlg.h"
 #include "afxdialogex.h"
 #include "NewMessageBox.h"
-
+#include "ChkIdentityDlg.h"
 
 // CMissingPaperDlg 对话框
 
@@ -27,6 +27,7 @@ void CMissingPaperDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CTipBaseDlg::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_MissingPaper, m_lcMissingZkzh);
+	DDX_Control(pDX, IDC_LIST_MissingPaper_Scaned, m_lcMissingZkzh_Scaned);
 	DDX_Control(pDX, IDC_LIST_KC, m_lcKC);
 	DDX_Control(pDX, IDC_BTN_CLOSE, m_bmpBtnClose);
 	DDX_Control(pDX, IDC_BTN_Submit, m_bmpBtnSubmit);
@@ -67,9 +68,16 @@ void CMissingPaperDlg::InitUI()
 	m_lcMissingZkzh.InsertColumn(2, _T("姓名"), LVCFMT_CENTER, 70);
 	m_lcMissingZkzh.InsertColumn(3, _T("考场"), LVCFMT_CENTER, 100);
 
+	m_lcMissingZkzh_Scaned.SetExtendedStyle(m_lcMissingZkzh_Scaned.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
+	m_lcMissingZkzh_Scaned.InsertColumn(0, _T("No."), LVCFMT_CENTER, 36);
+	m_lcMissingZkzh_Scaned.InsertColumn(1, _T("准考证号"), LVCFMT_CENTER, 110);
+	m_lcMissingZkzh_Scaned.InsertColumn(2, _T("姓名"), LVCFMT_CENTER, 70);
+	m_lcMissingZkzh_Scaned.InsertColumn(3, _T("考场"), LVCFMT_CENTER, 100);
+
 	m_lcKC.SetExtendedStyle(m_lcKC.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_SHOWSELALWAYS);
 	m_lcKC.InsertColumn(0, _T("考场"), LVCFMT_CENTER, 100);
-	m_lcKC.InsertColumn(1, _T("考点"), LVCFMT_CENTER, 200);
+	m_lcKC.InsertColumn(1, _T("人数"), LVCFMT_CENTER, 36);
+	m_lcKC.InsertColumn(2, _T("考点"), LVCFMT_CENTER, 195);
 
 	m_bmpBtnClose.SetStateBitmap(IDB_Btn_MakeModel_CloseNormal, 0, IDB_Btn_MakeModel_CloseDown);
 	m_bmpBtnSubmit.SetStateBitmap(IDB_RecordDlg_Btn, 0, IDB_RecordDlg_Btn_Hover);
@@ -84,7 +92,7 @@ void CMissingPaperDlg::InitCtrlPosition()
 	int cx = rcClient.right;
 	int cy = rcClient.bottom;
 
-	int nTopGap = 40;	//上边的间隔，留给控制栏
+	int nTopGap = 60;	//上边的间隔，留给控制栏
 	const int nLeftGap = 20;	//左边的空白间隔
 	const int nBottomGap = 80;	//下边的空白间隔
 	const int nRightGap = 20;	//右边的空白间隔
@@ -101,7 +109,7 @@ void CMissingPaperDlg::InitCtrlPosition()
 
 	if (GetDlgItem(IDC_STATIC_6)->GetSafeHwnd())	//标题
 	{
-		GetDlgItem(IDC_STATIC_6)->MoveWindow(nLeftGap, nGap, nRealW, nTopGap - nGap * 2);
+		GetDlgItem(IDC_STATIC_6)->MoveWindow(nLeftGap, nGap * 5, nRealW, nTopGap - nGap * 8);
 	}
 
 	if (GetDlgItem(IDC_STATIC_1)->GetSafeHwnd())
@@ -111,8 +119,20 @@ void CMissingPaperDlg::InitCtrlPosition()
 	}
 	if (m_lcMissingZkzh.GetSafeHwnd())
 	{
-		int nListH = cy - nCurrentTop - nBottomGap;
+		int nListH = (cy - nCurrentTop - nBottomGap) * 0.5;
 		m_lcMissingZkzh.MoveWindow(nCurrentLeft, nCurrentTop, nListW, nListH);
+		nCurrentTop += (nListH + nGap * 2);
+	}
+	if (GetDlgItem(IDC_STATIC_7)->GetSafeHwnd())
+	{
+		GetDlgItem(IDC_STATIC_7)->MoveWindow(nCurrentLeft, nCurrentTop, nListW, nStaticTip);
+		nCurrentTop += (nStaticTip + nGap);
+	}
+	if (m_lcMissingZkzh_Scaned.GetSafeHwnd())
+	{
+		int nListH = cy - nCurrentTop - nBottomGap;
+		m_lcMissingZkzh_Scaned.MoveWindow(nCurrentLeft, nCurrentTop, nListW, nListH);
+		nCurrentTop += (nListH + nGap);
 	}
 
 	nCurrentTop = nTmpTop;
@@ -180,8 +200,6 @@ void CMissingPaperDlg::InitCtrlPosition()
 	{
 		m_bmpBtnSubmit.MoveWindow(nCurrentLeft, nCurrentTop, nBtnW, nBtnH);
 	}
-
-	Invalidate();
 }
 
 void CMissingPaperDlg::InitData()
@@ -215,7 +233,10 @@ void CMissingPaperDlg::InitData()
 		std::string strKD;
 		if (m_pStudentMgr->GetKDFromKC(strTable, CMyCodeConvert::Utf8ToGb2312(itKcCode), strKD))
 		{
-			m_lcKC.SetItemText(nCount, 1, (LPCTSTR)A2T(CMyCodeConvert::Utf8ToGb2312(strKD).c_str()));
+			char szCount[10] = { 0 };
+			sprintf_s(szCount, "%d", lResult.size());
+			m_lcKC.SetItemText(nCount, 1, (LPCTSTR)A2T(szCount));
+			m_lcKC.SetItemText(nCount, 2, (LPCTSTR)A2T(CMyCodeConvert::Utf8ToGb2312(strKD).c_str()));
 		}
 	}
 
@@ -235,19 +256,42 @@ void CMissingPaperDlg::InitData()
 		if (!bFind)
 		{
 			//添加进试卷列表控件
-			int nCount = m_lcMissingZkzh.GetItemCount();
-			char szCount[10] = { 0 };
-			sprintf_s(szCount, "%d", nCount + 1);
-			m_lcMissingZkzh.InsertItem(nCount, NULL);
+			if (itStudent->nScaned == 0)
+			{
+				int nCount = m_lcMissingZkzh.GetItemCount();
+				char szCount[10] = { 0 };
+				sprintf_s(szCount, "%d", nCount + 1);
+				m_lcMissingZkzh.InsertItem(nCount, NULL);
 
-			m_lcMissingZkzh.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));	//pPaper->strStudentInfo.c_str()
-			m_lcMissingZkzh.SetItemText(nCount, 1, (LPCTSTR)A2T(itStudent->strZkzh.c_str()));
-			m_lcMissingZkzh.SetItemText(nCount, 2, (LPCTSTR)A2T(itStudent->strName.c_str()));
-			m_lcMissingZkzh.SetItemText(nCount, 3, (LPCTSTR)A2T(itStudent->strClassroom.c_str()));
+				m_lcMissingZkzh.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));	//pPaper->strStudentInfo.c_str()
+				m_lcMissingZkzh.SetItemText(nCount, 1, (LPCTSTR)A2T(itStudent->strZkzh.c_str()));
+				m_lcMissingZkzh.SetItemText(nCount, 2, (LPCTSTR)A2T(itStudent->strName.c_str()));
+				m_lcMissingZkzh.SetItemText(nCount, 3, (LPCTSTR)A2T(itStudent->strClassroom.c_str()));
 
-			m_lcMissingZkzh.SetItemData(nCount, (DWORD_PTR)&(*itStudent));
+				m_lcMissingZkzh.SetItemData(nCount, (DWORD_PTR)&(*itStudent));
+			}
+			else
+			{
+				int nCount = m_lcMissingZkzh_Scaned.GetItemCount();
+				char szCount[10] = { 0 };
+				sprintf_s(szCount, "%d", nCount + 1);
+				m_lcMissingZkzh_Scaned.InsertItem(nCount, NULL);
+
+				m_lcMissingZkzh_Scaned.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));	//pPaper->strStudentInfo.c_str()
+				m_lcMissingZkzh_Scaned.SetItemText(nCount, 1, (LPCTSTR)A2T(itStudent->strZkzh.c_str()));
+				m_lcMissingZkzh_Scaned.SetItemText(nCount, 2, (LPCTSTR)A2T(itStudent->strName.c_str()));
+				m_lcMissingZkzh_Scaned.SetItemText(nCount, 3, (LPCTSTR)A2T(itStudent->strClassroom.c_str()));
+
+				m_lcMissingZkzh_Scaned.SetItemData(nCount, (DWORD_PTR)&(*itStudent));
+			}
 		}
 	}
+
+	CString strShow = _T("");
+	strShow.Format(_T("缺失准考证号列表--未扫(%d人):"), m_lcMissingZkzh.GetItemCount());
+	GetDlgItem(IDC_STATIC_1)->SetWindowTextW(strShow);
+	strShow.Format(_T("缺失准考证号列表--已扫(%d人):"), m_lcMissingZkzh_Scaned.GetItemCount());
+	GetDlgItem(IDC_STATIC_7)->SetWindowTextW(strShow);
 
 	int nCount = m_lcMissingZkzh.GetItemCount();
 	if (nCount > 0)
@@ -294,6 +338,7 @@ void CMissingPaperDlg::SetFontSize()
 						   _T("宋体"));
 	GetDlgItem(IDC_STATIC_1)->SetFont(&fontStatus1);
 	GetDlgItem(IDC_STATIC_5)->SetFont(&fontStatus1);
+	GetDlgItem(IDC_STATIC_7)->SetFont(&fontStatus1);
 
 	fontStatus2.CreateFont(18, 0, 0, 0,
 						  FW_BOLD, FALSE, FALSE, 0,
@@ -356,7 +401,7 @@ HBRUSH CMissingPaperDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		pDC->SetBkMode(TRANSPARENT);
 		return (HBRUSH)GetStockObject(NULL_BRUSH);
 	}
-	if (CurID == IDC_STATIC_1)
+	if (CurID == IDC_STATIC_1 || CurID == IDC_STATIC_7)
 	{
 		pDC->SetTextColor(RGB(60, 60, 60));
 		pDC->SetBkMode(TRANSPARENT);
@@ -410,6 +455,10 @@ void CMissingPaperDlg::OnBnClickedBtnSubmit()
 	dlg.setShowInfo(2, 2, strMsg);
 	dlg.DoModal();
 	if (dlg.m_nResult != IDYES)
+		return;
+
+	CChkIdentityDlg dlg2;
+	if (dlg2.DoModal() != IDOK)
 		return;
 
 	OnOK();

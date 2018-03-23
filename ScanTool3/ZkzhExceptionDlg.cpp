@@ -236,6 +236,12 @@ bool CZkzhExceptionDlg::ReleaseData()
 				if (pPaper->strSN.empty())
 				{
 					CNewMessageBox	dlg;
+					if (g_nHighSevereMode)
+					{
+						dlg.setShowInfo(2, 1, "检测到存在准考证号为空的考生，请设置考生的准考证号!");
+						dlg.DoModal();
+						return false;
+					}
 					dlg.setShowInfo(2, 2, "存在考号为空的考生，若不修改，将影响参加后面的评卷，忽略？");
 					dlg.DoModal();
 					if (dlg.m_nResult != IDYES)

@@ -214,6 +214,9 @@
     <Filter Include="扫描界面窗口\扫描过程窗口\考场试卷缺失窗口">
       <UniqueIdentifier>{d8016b59-a4d8-4457-9bdc-68a50d175cfd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="扫描界面窗口\扫描过程窗口\考场试卷缺失窗口\密码验证窗口">
+      <UniqueIdentifier>{8c3eaa68-92db-4880-81c7-2dd1c319b8d2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -561,6 +564,9 @@
     <ClInclude Include="MissingPaperDlg.h">
       <Filter>扫描界面窗口\扫描过程窗口\考场试卷缺失窗口</Filter>
     </ClInclude>
+    <ClInclude Include="ChkIdentityDlg.h">
+      <Filter>扫描界面窗口\扫描过程窗口\考场试卷缺失窗口\密码验证窗口</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -862,6 +868,9 @@
     </ClCompile>
     <ClCompile Include="MissingPaperDlg.cpp">
       <Filter>扫描界面窗口\扫描过程窗口\考场试卷缺失窗口</Filter>
+    </ClCompile>
+    <ClCompile Include="ChkIdentityDlg.cpp">
+      <Filter>扫描界面窗口\扫描过程窗口\考场试卷缺失窗口\密码验证窗口</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

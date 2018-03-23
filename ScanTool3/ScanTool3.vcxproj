@@ -134,6 +134,7 @@
     <ClInclude Include="AdanceSetMgrDlg.h" />
     <ClInclude Include="AnswerShowDlg.h" />
     <ClInclude Include="BaseRecog.h" />
+    <ClInclude Include="ChkIdentityDlg.h" />
     <ClInclude Include="CoordinationConvert.h" />
     <ClInclude Include="GetModelDlg.h" />
     <ClInclude Include="KeepAliveTimer.h" />
@@ -265,6 +266,7 @@
     <ClCompile Include="AdanceSetMgrDlg.cpp" />
     <ClCompile Include="AnswerShowDlg.cpp" />
     <ClCompile Include="BaseRecog.cpp" />
+    <ClCompile Include="ChkIdentityDlg.cpp" />
     <ClCompile Include="CoordinationConvert.cpp" />
     <ClCompile Include="GetModelDlg.cpp" />
     <ClCompile Include="MissingPaperDlg.cpp" />

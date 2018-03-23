@@ -30,6 +30,8 @@ using namespace cv;
 */
 int					g_nHighSevereMode = 0;
 int					g_nDefStudentsInKC = 30;	//默认考场中考生数量
+std::string			g_strIdentityChkUser = "admin";		//身份检测的用户名
+std::string			g_strIdentityChkPwd = "Yklx";		//身份检测的密码
 //================================================================================
 
 int					g_nManulUploadFile = 0;		//手动上传文件，通过qq这类的

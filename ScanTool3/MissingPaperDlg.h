@@ -22,6 +22,7 @@ public:
 
 	CXListCtrl		m_lcMissingZkzh;				//缺失的准考证号列表
 	CXListCtrl		m_lcKC;							//扫描试卷所属的考场列表
+	CXListCtrl		m_lcMissingZkzh_Scaned;			//缺失的准考证号列表(已扫)
 
 	CBmpButton		m_bmpBtnClose;
 	CBmpButton		m_bmpBtnSubmit;

@@ -135,6 +135,8 @@ extern std::string _strLitteTitle_;
 */
 extern int				g_nHighSevereMode;
 extern int				g_nDefStudentsInKC;	//默认考场中考生数量
+extern std::string		g_strIdentityChkUser;		//身份检测的用户名
+extern std::string		g_strIdentityChkPwd;		//身份检测的密码
 //================================================================================
 
 extern int				_nUseOcrRecogSn_;		//使用OCR识别准考证号
