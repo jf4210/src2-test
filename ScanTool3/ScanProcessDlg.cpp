@@ -1049,7 +1049,7 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 	}
 
 	int nMustScanNum = 0;		//必须扫描的试卷数量，在高厉害模式时生效，保存试卷时，检查扫描的数量是否与此数量一致，不一致不能提交，只能重扫
-	if (g_nHighSevereMode)
+	if (g_nHighSevereMode && _pCurrExam_->nModel == 0)		//手阅模式不显示扫描数量对话框
 	{
 		//高厉害考试模式
 		CSetScanNumDlg dlg(g_nDefStudentsInKC);
@@ -1233,7 +1233,7 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	USES_CONVERSION;
 	EnableBtn(FALSE);
 
-	if (g_nHighSevereMode)
+	if (g_nHighSevereMode && _pCurrExam_->nModel == 0)	//排除手阅模式，只针对网阅模式
 	{
 		//扫描考生与考场数据是否一致
 		if (!IsValidPspers())

@@ -584,6 +584,7 @@ LRESULT CZkzhExceptionDlg::OnEditEnd(WPARAM nItem, LPARAM nSubItem)
 			m_lcZkzh.SetItemText(nItem, nSubItem, strText, RGB(255, 0, 0), crBackground);
 			pPaper->bModifyZKZH = true;
 
+			m_lcZkzh.SetModified(nItem, nSubItem, TRUE);
 #if 0	//test
 			if (m_pStudentMgr && m_pStudentMgr->UpdateStudentStatus("student", pPaper->strSN, 1))
 			{
@@ -651,6 +652,8 @@ LRESULT CZkzhExceptionDlg::MsgVagueSearchResult(WPARAM wParam, LPARAM lParam)
 	COLORREF crText, crBackground;
 	m_lcZkzh.GetItemColors(m_nCurrentSelItem, 1, crText, crBackground);
 	m_lcZkzh.SetItemText(m_nCurrentSelItem, 1, strZkzh, RGB(255, 0, 0), crBackground);
+
+	m_lcZkzh.SetModified(m_nCurrentSelItem, 1, TRUE);
 	return 1;
 }
 

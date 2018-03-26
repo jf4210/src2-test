@@ -5,7 +5,7 @@
 #include "ScanTool3.h"
 #include "AdanceSetMgrDlg.h"
 #include "afxdialogex.h"
-
+#include "global.h"
 
 // CAdanceSetMgrDlg 对话框
 
@@ -78,6 +78,20 @@ void CAdanceSetMgrDlg::InitUI()
 	pRecogParamSetDlg->MoveWindow(&rtTab);
 	pRecogParamSetDlg->InitData(_stSensitiveParam);
 	m_vecTabDlg.push_back(pRecogParamSetDlg);
+
+	if (g_nHighSevereMode)
+	{
+		ZeroMemory(szTabHeadName, 20);
+		strcpy_s(szTabHeadName, "系统参数");
+		m_tabParamMgr.InsertItem(2, A2T(szTabHeadName));
+
+		CSystemSetDlg* pSystemSetDlg = new CSystemSetDlg(this);
+		pSystemSetDlg->Create(IDD_SYSTEMSETDLG, &m_tabParamMgr);
+		pSystemSetDlg->ShowWindow(SW_HIDE);
+		pSystemSetDlg->MoveWindow(&rtTab);
+		pSystemSetDlg->InitData(_stSensitiveParam);
+		m_vecTabDlg.push_back(pSystemSetDlg);
+	}
 
 	m_tabParamMgr.SetCurSel(0);
 	if (m_vecTabDlg.size())

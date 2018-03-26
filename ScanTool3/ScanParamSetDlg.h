@@ -35,7 +35,7 @@ public:
 	int			m_nUsePagination;	//使用页码，针对多页试卷情况
 
 	void	InitData(AdvanceParam& stParam);
-	BOOL SaveParamData(AdvanceParam& stParam);
+	BOOL	SaveParamData(AdvanceParam& stParam);
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持

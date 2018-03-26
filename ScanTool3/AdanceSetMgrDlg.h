@@ -3,6 +3,7 @@
 #include "TipBaseDlg.h"
 #include "ScanParamSetDlg.h"
 #include "RecogParamSetDlg.h"
+#include "SystemSetDlg.h"
 
 class AdvanceParam
 {
@@ -24,6 +25,8 @@ public:
 		nDefPersentQkWj = 70;
 		nDefPersentZkzh = 100;
 		nDefPersentOmr = 100;
+
+		nChkLostCorner = 0;
 	}
 public:
 	int nCurrentZkzhSensitivity;
@@ -65,6 +68,8 @@ public:
 
 	int			nUseWordAnchorPoint;//使用文字作为定点
 	int			nUsePagination;		//使用页码，针对多页试卷的情况
+
+	int	nChkLostCorner;		//缺角检测
 };
 
 class CAdanceSetMgrDlg : public CTipBaseDlg

@@ -3810,6 +3810,7 @@ bool CMakeModelDlg::SaveModelFile(pMODEL pModel)
 	jsnModel.set("nUseWordAnchorPoint", pModel->nUseWordAnchorPoint);		//是否使用文字定点来定位识别
 	jsnModel.set("nCharacterAnchorPoint", pModel->nCharacterAnchorPoint);	//用来计算矩形位置的文字定点个数
 	jsnModel.set("nUsePagination", pModel->nUsePagination);					//是否使用页码标识
+	jsnModel.set("nChkLostCorner", pModel->nChkLostCorner);					//是否需要进行缺角检测
 	
 	jsnModel.set("nExamId", pModel->nExamID);
 	jsnModel.set("nSubjectId", pModel->nSubjectID);
@@ -8604,6 +8605,8 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	stAdvanceParam.nCharacterConfidence		= m_nCharacterConfidence;
 	stAdvanceParam.nDefCharacterConfidence	= 60;
 
+	if (m_pModel) stAdvanceParam.nChkLostCorner = m_pModel->nChkLostCorner;
+
 	CAdanceSetMgrDlg dlg(m_pModel, stAdvanceParam);
 	if (dlg.DoModal() != IDOK)
 		return;
@@ -8666,6 +8669,7 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	}
 	m_pModel->nCharacterAnchorPoint = dlg._stSensitiveParam.nCharacterAnchorPoint;
 	m_nCharacterConfidence			= dlg._stSensitiveParam.nCharacterConfidence;
+	m_pModel->nChkLostCorner		= dlg._stSensitiveParam.nChkLostCorner;
 
 	switch (m_eCurCPType)
 	{

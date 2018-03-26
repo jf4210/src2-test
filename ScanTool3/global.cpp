@@ -380,6 +380,8 @@ pMODEL LoadModelFile(CString strModelPath)
 			pModel->nCharacterAnchorPoint = objData->get("nCharacterAnchorPoint").convert<int>();
 		if (objData->has("nUsePagination"))
 			pModel->nUsePagination = objData->get("nUsePagination").convert<int>();
+		if (objData->has("nChkLostCorner"))
+			pModel->nChkLostCorner = objData->get("nChkLostCorner").convert<int>();
 
 // 		if (objData->has("gaussKernel"))
 // 			pModel->nGaussKernel = objData->get("gaussKernel").convert<int>();

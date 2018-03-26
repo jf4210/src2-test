@@ -86,6 +86,17 @@ bool CPapersMgr::SavePapers(pPAPERSINFO pPapers)
 			dlg.DoModal();
 			return bResult;
 		}
+		if (g_nHighSevereMode)
+		{
+			if (pPapers->nMustScanNum != pPapers->lPaper.size())
+			{
+				CNewMessageBox	dlg;
+				std::string strTips = Poco::format("数据不一致:有效扫描数(%d)份,要求扫描数(%d),请重扫!", (int)pPapers->lPaper.size(), pPapers->nMustScanNum);
+				dlg.setShowInfo(2, 1, strTips);
+				dlg.DoModal();
+				return bResult;
+			}
+		}
 	}
 
 	std::string strUser;

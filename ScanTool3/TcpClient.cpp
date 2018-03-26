@@ -97,6 +97,10 @@ bool CTcpClient::connectServer()
 		m_ss.connect(sa);					//重新连接服务器
 		m_ss.setBlocking(false);
 		m_ss.setNoDelay(true);
+
+		int flag = 1;
+		m_ss.setOption(IPPROTO_TCP, TCP_NODELAY, flag);
+
 		_bConnect = true;
 		g_bCmdConnect = _bConnect;
 		TRACE("连接服务器成功\n"); 
