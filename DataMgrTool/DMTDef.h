@@ -22,6 +22,8 @@
 #ifdef _DEBUG
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
 	#define PrintAllOmrVal		//打印所有OMR选项值
+#else
+	//#define PUBLIC_TOOL		//外发工具，给客户等，功能进行限制
 #endif
 #ifndef WarpAffine_TEST
 //	#define TriangleSide_TEST		//三边定位算法

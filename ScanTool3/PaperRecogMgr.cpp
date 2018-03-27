@@ -4,7 +4,10 @@
 #include "OmrPoint.h"
 
 
-CPaperRecogMgr::CPaperRecogMgr(int nRecogModel): _nRecogModel(nRecogModel), m_pTess(NULL), pPrintPointRecogObj(NULL), pWritePointRecogObj(NULL)
+CPaperRecogMgr::CPaperRecogMgr(int nRecogModel): _nRecogModel(nRecogModel), pPrintPointRecogObj(NULL), pWritePointRecogObj(NULL)
+#ifdef USE_TESSERACT
+,m_pTess(NULL)
+#endif
 {
 }
 
@@ -200,7 +203,9 @@ bool CPaperRecogMgr::InitPic(pST_PicInfo pPic, cv::Mat& matCompSrcPic)
 bool CPaperRecogMgr::RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel)
 {
 	SAFE_RELEASE(pPrintPointRecogObj);
+#ifdef USE_TESSERACT
 	pPrintPointRecogObj = new CCharacterPoint(m_pTess);
+#endif
 	if (!pPrintPointRecogObj) return false;
 
 	return pPrintPointRecogObj->RecogPrintPoint(nPic, matCompPic, pPic, pModel, _nRecogModel, _strLog);
@@ -300,12 +305,12 @@ std::string CPaperRecogMgr::GetLog()
 {
 	return _strLog;
 }
-
+#ifdef USE_TESSERACT
 void CPaperRecogMgr::SetTesseractObj(tesseract::TessBaseAPI* pTess)
 {
 	m_pTess = pTess;
 }
-
+#endif
 void CPaperRecogMgr::ClearPicRecogData(pST_PicInfo pPic)
 {
 	pPic->strPicZKZH = "";

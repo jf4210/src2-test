@@ -269,8 +269,12 @@ BOOL CDataMgrToolDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	USES_CONVERSION;
-	CString strTitle = _T("");
+	CString strTitle = _T(""); 
+#ifdef PUBLIC_TOOL
+	strTitle.Format(_T("%s %s \t限制版"), SYS_BASE_NAME, SOFT_VERSION);
+#else
 	strTitle.Format(_T("%s %s"), SYS_BASE_NAME, SOFT_VERSION);
+#endif
 	SetWindowText(strTitle);
 	
 	InitConfig();
@@ -724,6 +728,9 @@ void CDataMgrToolDlg::OnBnClickedMfcbuttonDecompress()
 
 void CDataMgrToolDlg::OnBnClickedMfcbuttonDecrypt()
 {
+#ifdef PUBLIC_TOOL
+	return;
+#endif
 	UpdateData(TRUE);
 	USES_CONVERSION;
 
@@ -757,6 +764,9 @@ void CDataMgrToolDlg::OnBnClickedMfcbuttonDecrypt()
 
 void CDataMgrToolDlg::OnBnClickedMfcbuttonRepkg()
 {
+#ifdef PUBLIC_TOOL
+	return;
+#endif
 	UpdateData(TRUE);
 	USES_CONVERSION;
 
@@ -804,6 +814,9 @@ void CDataMgrToolDlg::OnBnClickedBtnClear()
 
 void CDataMgrToolDlg::OnBnClickedBtnRecogpkg()
 {
+#ifdef PUBLIC_TOOL
+	return;
+#endif
 	UpdateData(TRUE);
 	USES_CONVERSION;
 
@@ -839,6 +852,9 @@ void CDataMgrToolDlg::OnBnClickedBtnRecogpkg()
 
 void CDataMgrToolDlg::OnBnClickedBtnRerecogpkg()
 {
+#ifdef PUBLIC_TOOL
+	return;
+#endif
 	UpdateData(TRUE);
 	USES_CONVERSION;
 
@@ -1385,6 +1401,9 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpic()
 
 void CDataMgrToolDlg::OnBnClickedBtnWatchpapers()
 {
+#ifdef PUBLIC_TOOL
+	return;
+#endif
 	UpdateData(TRUE);
 	USES_CONVERSION;
 	std::string strPkgPath = CMyCodeConvert::Gb2312ToUtf8(T2A(m_strPkgPath_showPapersDlg));
@@ -1463,6 +1482,9 @@ void CDataMgrToolDlg::OnBnClickedBtnWatchpapers()
 
 void CDataMgrToolDlg::OnBnClickedBtnWatchpaper()
 {
+#ifdef PUBLIC_TOOL
+	return;
+#endif
 	UpdateData(TRUE);
 	USES_CONVERSION;
 

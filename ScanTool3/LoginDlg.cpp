@@ -585,7 +585,10 @@ int CLoginDlg::GetExamInfo()
 	#endif
 	}
 	else
+	{
+		stExamInfo.nUserId = m_nUserId;
 		strcpy(stExamInfo.szEzs, T2A(m_strEzs));
+	}
 
 	pTCP_TASK pTcpTask = new TCP_TASK;
 	pTcpTask->usCmd = USER_GETEXAMINFO;

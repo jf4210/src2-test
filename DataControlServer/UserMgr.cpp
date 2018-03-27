@@ -223,6 +223,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 		{
 			ST_EXAM_INFO stExamInfo = *(pStExamInfo)(pMission->m_pMissionData + HEAD_SIZE);
 			std::string strEzs = stExamInfo.szEzs;
+			int	nUserID = stExamInfo.nUserId;
 			std::cout << "获取考试列表: " << pUser->m_Name <<std::endl;
 
 			#ifdef TEST_MODE
@@ -338,7 +339,8 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			else
 			{
 				pTask = new SCAN_REQ_TASK;
-				pTask->strUri = SysSet.m_strBackUri + "/examinfo";
+				std::string strUserID = Poco::format("%d", nUserID);
+				pTask->strUri = SysSet.m_strBackUri + "/examinfo/" + strUserID;
 				pTask->pUser  = pUser;
 				pTask->strEzs = SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
 				pTask->strMsg = "ezs";

@@ -32,7 +32,9 @@ public:
 
 
 	std::string GetLog();
+#ifdef USE_TESSERACT
 	void SetTesseractObj(tesseract::TessBaseAPI* pTess);
+#endif
 protected:
 	void ClearPicRecogData(pST_PicInfo pPic);
 	void ClearPaperRecogData(pST_PaperInfo pPaper);

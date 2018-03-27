@@ -339,8 +339,11 @@ bool CCharacterPoint::InitCharacterRecog()
 #ifdef USE_TESSERACT
 // 	m_pTess = new tesseract::TessBaseAPI();
 // 	m_pTess->Init(NULL, "chi_sim", tesseract::OEM_DEFAULT);
-#endif
+
 	return !m_pTess ? true : false;
+#else
+	return false;
+#endif
 }
 
 bool CCharacterPoint::GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel)

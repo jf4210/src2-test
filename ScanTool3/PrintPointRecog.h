@@ -17,7 +17,11 @@ class CCharacterPoint :
 	public CPrintPointRecog
 {
 public:
+#ifdef USE_TESSERACT
 	CCharacterPoint(tesseract::TessBaseAPI* pTess):m_pTess(pTess) {};
+#else
+	CCharacterPoint() {};
+#endif
 	~CCharacterPoint() {};
 
 	bool RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel, int nRecogMode, std::string& strLog);

@@ -312,7 +312,10 @@ void CShowPicDlg::ReInitUI(pST_PaperInfo pPaper)
 		for (int i = 0; itPic2 != pPaper->lPic.end(); itPic2++, i++)
 		{
 			char szTabHeadName[20] = { 0 };
-			sprintf_s(szTabHeadName, "µÚ%dÒ³", (*itPic2)->nPicModelIndex + 1);
+			if(pPaper->pModel && pPaper->pModel->nUsePagination)
+				sprintf_s(szTabHeadName, "µÚ%dÒ³", (*itPic2)->nPicModelIndex + 1);
+			else
+				sprintf_s(szTabHeadName, "µÚ%dÒ³", i + 1);
 
 			if (i > nOldVecBtn - 1)
 			{
