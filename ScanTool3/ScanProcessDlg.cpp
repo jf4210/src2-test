@@ -1560,7 +1560,20 @@ void CScanProcessDlg::OnTimer(UINT_PTR nIDEvent)
 				bRecogComplete = false;
 				break;
 			}
-			if (p->strSN.empty() || (p->nZkzhInBmkStatus != 1 && _bGetBmk_) || !p->bRecogCourse)	//报名库列表存在时，检查准考证号是否在报名库中报名库
+			if ((p->nZkzhInBmkStatus != 1 && _bGetBmk_))
+			{
+				//存在这种情况，扫描一张试卷完成后，识别线程先识别完成结果，列表后添加试卷数据，导致在检测报名库时没有找到对应的试卷，就会出现默认报名库状态为0的情况
+				//所以在全部扫描完成后再次进行确认报名库状态为0的试卷是否在报名库中
+				if (p->nZkzhInBmkStatus == 0)
+				{
+					CheckZkzhInBmk(p);
+					if (p->nZkzhInBmkStatus != 1)
+						bNeedShowZkzhDlg = true;
+				}
+				else
+					bNeedShowZkzhDlg = true;
+			}
+			if (p->strSN.empty() || !p->bRecogCourse)	//报名库列表存在时，检查准考证号是否在报名库中报名库
 				bNeedShowZkzhDlg = true;
 		}
 

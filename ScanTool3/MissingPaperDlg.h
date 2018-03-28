@@ -23,6 +23,7 @@ public:
 	CXListCtrl		m_lcMissingZkzh;				//缺失的准考证号列表
 	CXListCtrl		m_lcKC;							//扫描试卷所属的考场列表
 	CXListCtrl		m_lcMissingZkzh_Scaned;			//缺失的准考证号列表(已扫)
+	CXListCtrl		m_lcScaned;						//当前已扫试卷
 
 	CBmpButton		m_bmpBtnClose;
 	CBmpButton		m_bmpBtnSubmit;
@@ -30,7 +31,7 @@ public:
 	CString		m_strKD;	//考点
 	CString		m_strKC;	//考场
 	CString		m_strZW;	//座位
-
+	CString		m_strKcScaned;	//考场扫描的试卷
 
 private:
 	CStudentMgr*	m_pStudentMgr;
@@ -65,4 +66,5 @@ public:
 	afx_msg void OnNMHoverListMissingpaper(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMDblclkListMissingpaper(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedBtnSubmit();
+	afx_msg void OnNMDblclkListKc(NMHDR *pNMHDR, LRESULT *pResult);
 };
