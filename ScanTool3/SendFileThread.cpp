@@ -147,9 +147,6 @@ void CSendFileThread::HandleTask(pSENDTASK pTask)
 	MAP_FILESENDER::iterator itSender = _mapSender_.find(strKey);
 	if (itSender == _mapSender_.end())
 	{
-// 		std::string strPkg = T2A(PAPERS_EXT_NAME);
-// 		std::string strTyPkg = T2A(PAPERS_EXT_NAME_4TY);
-//		std::string strMod = ".mod";
 		if (strKey == strPkg)	//strKey == strPkg || strKey == strMod
 		{
 			_strIp = g_strFileIP;

@@ -589,11 +589,6 @@ void CExamBmkRecordDlg::OnBnClickedBtnExambmkExportscan()
 						if (!bInsertStudent)
 						{
 							bInsertStudent = true;
-// 							char szCount[10] = { 0 };
-// 							sprintf_s(szCount, "%d", nStudentCounts + 1);
-// 
-// 							strData.append(szCount);
-// 							strData.append("\t\t");
 							strData.append(objExamStudent.strZkzh);
 							strData.append("\t\t");
 							strData.append(objExamStudent.strName);
@@ -625,17 +620,25 @@ void CExamBmkRecordDlg::OnBnClickedBtnExambmkExportscan()
 										if (!bInsertStudent)
 										{
 											bInsertStudent = true;
-// 											char szCount[10] = { 0 };
-// 											sprintf_s(szCount, "%d", nStudentCounts + 1);
-// 
-// 											strData.append(szCount);
-// 											strData.append("\t\t");
 											strData.append(objExamStudent.strZkzh);
 											strData.append("\t\t");
 											strData.append(objExamStudent.strName);
 											strData.append("\t\t");
 										}
 										strData.append(strScanStatus);
+										strData.append("\t\t");
+									}
+									else
+									{
+										if (!bInsertStudent)
+										{
+											bInsertStudent = true;
+											strData.append(objExamStudent.strZkzh);
+											strData.append("\t\t");
+											strData.append(objExamStudent.strName);
+											strData.append("\t\t");
+										}
+										strData.append(" ");
 										strData.append("\t\t");
 									}
 								}
@@ -648,17 +651,25 @@ void CExamBmkRecordDlg::OnBnClickedBtnExambmkExportscan()
 										if (!bInsertStudent)
 										{
 											bInsertStudent = true;
-// 											char szCount[10] = { 0 };
-// 											sprintf_s(szCount, "%d", nStudentCounts + 1);
-// 
-// 											strData.append(szCount);
-// 											strData.append("\t\t");
 											strData.append(objExamStudent.strZkzh);
 											strData.append("\t\t");
 											strData.append(objExamStudent.strName);
 											strData.append("\t\t");
 										}
 										strData.append(strScanStatus);
+										strData.append("\t\t");
+									}
+									else
+									{
+										if (!bInsertStudent)
+										{
+											bInsertStudent = true;
+											strData.append(objExamStudent.strZkzh);
+											strData.append("\t\t");
+											strData.append(objExamStudent.strName);
+											strData.append("\t\t");
+										}
+										strData.append(" ");
 										strData.append("\t\t");
 									}
 								}

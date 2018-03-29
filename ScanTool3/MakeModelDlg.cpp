@@ -3015,6 +3015,33 @@ bool CMakeModelDlg::checkValidity()
 			break;
 	}
 
+	//选做题漏点检查
+	if (m_pModel->nHasElectOmr)
+	{
+		for (int i = 0; i < m_vecPaperModelInfo.size(); i++)
+		{
+			int nOmrQuestions = m_vecPaperModelInfo[i]->vecElectOmr.size();
+			for (int j = 0; j < nOmrQuestions; j++)
+			{
+				int nAllItems = m_vecPaperModelInfo[i]->vecElectOmr[j].sElectOmrGroupInfo.nAllCount;
+				int nRealItem = m_vecPaperModelInfo[i]->vecElectOmr[j].lItemInfo.size();
+				if (nRealItem < nAllItems)
+				{
+					char szTmp[100] = { 0 };
+					sprintf_s(szTmp, "第 %d 页第 %d 组选做题的选项数(%d)少于要求的%d个，请检查!", i + 1, m_vecPaperModelInfo[i]->vecElectOmr[j].sElectOmrGroupInfo.nGroupID, nRealItem, nAllItems);
+					CNewMessageBox dlg;
+					dlg.setShowInfo(2, 1, szTmp);
+					dlg.DoModal();
+					bResult = false;
+				}
+				if (!bResult)
+					break;
+			}
+			if (!bResult)
+				break;
+		}
+	}
+
 	return bResult;
 }
 
@@ -6764,17 +6791,70 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 	}
 	//--
 
+
+	//矩形拟合
+	int nFitInterval = 5;
+	std::vector<cv::Rect>::iterator itFirst = rcList.begin();
+	for (; itFirst != rcList.end(); itFirst++)
+	{
+		std::vector<cv::Rect>::iterator itNext = itFirst + 1;
+		for (;itNext != rcList.end();)
+		{
+			cv::Point pt1 = itFirst->tl();
+			cv::Point pt2 = itFirst->br();
+
+			cv::Point pt5 = itNext->tl();
+			cv::Point pt6 = itNext->br();
+
+			bool bFit = false;
+			if (abs(pt2.x - pt5.x) < nFitInterval && abs(pt1.y - pt5.y) < 9)
+			{
+				*itFirst = cv::Rect(pt1, pt6);
+				bFit = true;
+			}
+			else if (abs(pt1.x - pt6.x) < nFitInterval && abs(pt1.y - pt5.y) < 9)
+			{
+				*itFirst = cv::Rect(pt2, pt5);
+				bFit = true;
+			}
+			else if (abs(pt2.y - pt5.y) < nFitInterval && abs(pt1.x - pt5.x) < 9)
+			{
+				*itFirst = cv::Rect(pt1, pt6);
+				bFit = true;
+			}
+			else if (abs(pt1.y - pt6.y) < nFitInterval && abs(pt1.x - pt5.x) < 9)
+			{
+				*itFirst = cv::Rect(pt2, pt5);
+				bFit = true;
+			}
+			if (bFit)
+			{
+				itNext = rcList.erase(itNext);
+			}
+			else
+				itNext++;
+		}
+	}
+
 	std::vector<Rect> rcList_X = rcList;
 	std::vector<Rect> rcList_XY = rcList;
-	std::sort(rcList_X.begin(), rcList_X.end(), SortByPositionX2);
-
+	std::sort(rcList_X.begin(), rcList_X.end(), [](cv::Rect& rt1, cv::Rect& rt2)
+	{
+		bool bResult = true;
+		bResult = rt1.x < rt2.x ? true : false;
+		if (!bResult)
+		{
+			if (rt1.x == rt2.x)
+				bResult = rt1.y < rt2.y ? true : false;
+		}
+		return bResult;
+	});
 
 	int nW = rcList_X[0].width;				//矩形框平均宽度
 	int nH = rcList_X[0].height;			//矩形框平均高度
 	int nWInterval = 0;						//矩形间的X轴平均间隔
 	int nHInterval = 0;						//矩形间的Y轴平均间隔
 
-#if 1
 	int nX, nY;
 	switch (m_pSNInfoDlg->m_nCurrentSNVal)
 	{
@@ -6795,12 +6875,25 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 			nX = rcList_X[0].height * 0.3 + 0.5;	//判断属于同一行的Y轴偏差
 			break;
 	}
-#else
-	int nX = rcList_X[0].width * 0.2 + 0.5;		//判断属于同一列的X轴偏差
-	int nY = rcList_X[0].height * 0.3 + 0.5;	//判断属于同一行的Y轴偏差
-#endif
 
-	std::sort(rcList_XY.begin(), rcList_XY.end(), SortByPositionXYInterval);
+	int nInterval = 9;	//默认属于同一行或者同一列的间隔值
+	//以值方式传递局部变量
+	std::sort(rcList_XY.begin(), rcList_XY.end(), [nInterval](cv::Rect& rt1, cv::Rect& rt2)mutable
+	{
+		bool bResult = true;
+
+		if (abs(rt1.y - rt2.y) > nInterval)
+		{
+			return rt1.y < rt2.y ? true : false;
+		}
+		else
+		{
+			bResult = rt1.x < rt2.x ? true : false;
+			if (!bResult)
+				bResult = rt1.x == rt2.x ? rt1.y < rt2.y : false;
+		}
+		return bResult;
+	});
 
 	for (int i = 1; i < rcList_XY.size(); i++)
 	{
@@ -6849,7 +6942,7 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 		{
 			dy = rcList_XY[i].y - rcList_XY[i - 1].y;
 
-			if (dy > 9)
+			if (dy > nInterval)
 			{
 				y++;
 				x = 0;
@@ -7461,7 +7554,6 @@ void CMakeModelDlg::GetElectOmrInfo(std::vector<cv::Rect>& rcList)
 		}
 		if (bError)
 		{
-//			AfxMessageBox(_T("此组选做题实际选项总数超出范围"));
 			CNewMessageBox dlg;
 			dlg.setShowInfo(2, 1, "此组选做题实际选项总数超出范围");
 			dlg.DoModal();

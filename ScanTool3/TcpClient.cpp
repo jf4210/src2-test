@@ -602,16 +602,32 @@ void CTcpClient::HandleCmd()
 				strModelPath.append("Model\\");
 				strModelPath.append(pstModelInfo->szModelName);
 
-				pSENDTASK pTask = new SENDTASK;
-				pTask->strFileName = pstModelInfo->szModelName;
-				pTask->strPath = strModelPath;
-				g_fmSendLock.lock();
-				g_lSendTask.push_back(pTask);
-				g_fmSendLock.unlock();
+				bool bNeedSend = true;
+				for (auto task : g_lSendTask)
+				{
+					if (task->strFileName == std::string(pstModelInfo->szModelName) && task->strFileMd5 == std::string(pstModelInfo->szMD5) && task->nSendState < 2)
+					{
+						bNeedSend = false;
+						std::string strTmpLog = Poco::format("待发送的文件(%s)已经在发送列表且MD5(%s)相同，发送状态%d，不需要重新添加", task->strFileName, task->strFileMd5, task->nSendState);
+						g_pLogger->information(strTmpLog);
+						TRACE(strTmpLog.c_str());
+						break;
+					}
+				}
+				if(bNeedSend)
+				{
+					pSENDTASK pTask = new SENDTASK;
+					pTask->strFileName = pstModelInfo->szModelName;
+					pTask->strPath = strModelPath;
+					pTask->strFileMd5 = pstModelInfo->szMD5;
+					g_fmSendLock.lock();
+					g_lSendTask.push_back(pTask);
+					g_fmSendLock.unlock();
 
-				std::string strLog = "需要重新发送模板文件: " + strModelPath;
-				TRACE(strLog.c_str());
-				g_pLogger->information(strLog);
+					std::string strLog = "需要重新发送模板文件: " + strModelPath;
+					TRACE(strLog.c_str());
+					g_pLogger->information(strLog);
+				}				
 			}
 			break;
 			case RESULT_SETMODELINFO_NO:
@@ -1014,13 +1030,28 @@ void CTcpClient::HandleCmd()
 			#if 1
 				char szModelPicName[100] = { 0 };
 				sprintf_s(szModelPicName, "%d_%d_%d_#_%s", pstModelPic->nExamID, pstModelPic->nSubjectID, pstModelPic->nIndex, pstModelPic->szPicName);
-//				std::string strModelPicName = Poco::format("%d_%d_%s", pstModelPic->nExamID, pstModelPic->nSubjectID, pstModelPic->szPicName);
-				pSENDTASK pTask = new SENDTASK;
-				pTask->strFileName = szModelPicName;	//pstModelPic->szPicName;
-				pTask->strPath = pstModelPic->szPicPath;
-				g_fmSendLock.lock();
-				g_lSendTask.push_back(pTask);
-				g_fmSendLock.unlock();
+				
+				bool bNeedSend = true;
+				for (auto task : g_lSendTask)
+				{
+					if (task->strFileName == std::string(szModelPicName) && task->strFileMd5 == std::string(pstModelPic->szMD5) && task->nSendState < 2)
+					{
+						bNeedSend = false;
+						std::string strTmpLog = Poco::format("待发送的文件(%s)已经在发送列表且MD5(%s)相同，发送状态%d，不需要重新添加", task->strFileName, task->strFileMd5, task->nSendState);
+						g_pLogger->information(strTmpLog);
+						TRACE(strTmpLog.c_str());
+						break;
+					}
+				}
+				if(bNeedSend)
+				{
+					pSENDTASK pTask = new SENDTASK;
+					pTask->strFileName = szModelPicName;	//pstModelPic->szPicName;
+					pTask->strPath = pstModelPic->szPicPath;
+					g_fmSendLock.lock();
+					g_lSendTask.push_back(pTask);
+					g_fmSendLock.unlock();
+				}				
 			#else
 				std::string strFileData;
 

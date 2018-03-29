@@ -27,6 +27,7 @@ public:
 		nDefPersentOmr = 100;
 
 		nChkLostCorner = 0;
+		nUseRectFit = 0;
 	}
 public:
 	int nCurrentZkzhSensitivity;
@@ -70,6 +71,7 @@ public:
 	int			nUsePagination;		//使用页码，针对多页试卷的情况
 
 	int	nChkLostCorner;		//缺角检测
+	int nUseRectFit;		//使用矩形拟合
 };
 
 class CAdanceSetMgrDlg : public CTipBaseDlg

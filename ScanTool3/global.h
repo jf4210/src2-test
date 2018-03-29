@@ -543,6 +543,7 @@ typedef struct _SendTask_
 	float	fSendPercent;
 	std::string strFileName;
 	std::string strPath;
+	std::string strFileMd5;
 	_SendTask_()
 	{
 		nSendState = 0;
