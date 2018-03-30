@@ -362,6 +362,12 @@ void CScanProcessDlg::ScanCompleted()
 	}
 }
 
+void CScanProcessDlg::MsgCompressDone(CString strShowInfo, bool bWarn)
+{
+	SetStatusShow(2, strShowInfo, bWarn);
+	EnableBtn(TRUE);
+}
+
 void CScanProcessDlg::EnableBtn(BOOL bEnable)
 {
 	if (GetDlgItem(IDC_BTN_Save)->GetSafeHwnd())
@@ -1222,9 +1228,9 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 void CScanProcessDlg::OnBnClickedBtnSave()
 {
 #ifdef TEST_TIP_SHOW
-//	CString str = _T("保存478bsdffsfsdfsdfsfsfdsfsdfsf73500c2940239e3622d7e2fc59e6_63-129_20170622151957_1.pkg成功");
+	//	CString str = _T("保存478bsdffsfsdfsdfsfsfdsfsdfsf73500c2940239e3622d7e2fc59e6_63-129_20170622151957_1.pkg成功");
 	CString str = _T("保存f91f021afcbc479ba4a77cb4d3f70a52_402-590_20170531111240_10.pkg成功");
-//	CString str = _T("保存一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十成功");
+	//	CString str = _T("保存一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十成功");
 	SetStatusShow(2, str, 1);
 	return;
 #endif
@@ -1255,7 +1261,12 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 		return;
 	}
 
-	std::string strZipName = papersMgr.AddPapersCompress(_pCurrPapersInfo_);
+	std::string strZipName;
+	if (!papersMgr.AddPapersCompress(_pCurrPapersInfo_, strZipName))
+	{
+		EnableBtn(TRUE);
+		return;
+	}
 
 	//记录当前总共扫描多少人
 	_nScanPaperCount_ += _pCurrPapersInfo_->nPaperCount;
@@ -1445,7 +1456,9 @@ void CScanProcessDlg::OnBnClickedBtnSave()
 	TRACE("------------------- 5\n");
 	_pCurrPapersInfo_ = NULL;
 	ResetPicList();
-	EnableBtn(TRUE);
+	//在压缩完成时才能进行下一袋试卷扫描
+
+//	EnableBtn(TRUE);
 }
 
 void CScanProcessDlg::OnDestroy()

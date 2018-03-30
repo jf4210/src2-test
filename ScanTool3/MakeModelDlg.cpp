@@ -34,7 +34,7 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_nWhiteVal(225), m_nHeadVal(150), m_nPaginationVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nWJ_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200), m_nCharacterThreshold(150), m_nThreshold_DefSn(150), m_nThreshold_DefOmr(150), m_nCharacterConfidence(60)
 	, m_fHeadThresholdPercent(0.75), m_fPaginationThresholdPercent(0.75), m_fABModelThresholdPercent(0.75), m_fCourseThresholdPercent(0.75), m_fQK_CPThresholdPercent_Fix(1.5), m_fWJ_CPThresholdPercent_Fix(1.5), m_fQK_CPThresholdPercent_Head(1.2), m_fWJ_CPThresholdPercent_Head(1.2), m_fFixThresholdPercent(0.80)
 	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75), m_fOMRThresholdPercent_Fix(1.5), m_fSNThresholdPercent_Fix(1.5), m_fOMRThresholdPercent_Head(1.2), m_fSNThresholdPercent_Head(1.2)
-	, m_pCurRectInfo(NULL)
+	, m_pCurRectInfo(NULL), m_bUseRectFit(true), m_nRectFitInterval(5)
 	, m_bFistHTracker(true), m_bFistVTracker(true), m_bFistSNTracker(true)
 	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL), m_pSNInfoDlg(NULL), m_pElectOmrDlg(NULL)
 	, m_bShiftKeyDown(false)/*, m_pScanThread(NULL)*/
@@ -1874,7 +1874,10 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 	CvSeq* contour = 0;
 
 	//提取轮廓  
-	cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+	if(m_eCurCPType == SN)
+		cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
+	else
+		cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);	//CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE
 
 	Rect rtMax;		//记录最大矩形，识别同步头时用来排除非同步头框
 	bool bResult = false;
@@ -1888,7 +1891,7 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 		if (rm.width < 10 || rm.height < 7 || rm.width > 90 || rm.height > 90 || rm.area() < 40 || rm.area() > 8100)
 		{//10,7
 			TRACE("过滤矩形:(%d,%d,%d,%d), 面积: %d\n", rm.x, rm.y, rm.width, rm.height, rm.area());
-			g_pLogger->information("过滤矩形:(%d,%d,%d,%d), 面积: %d", rm.x, rm.y, rm.width, rm.height, rm.area());
+			//g_pLogger->information("过滤矩形:(%d,%d,%d,%d), 面积: %d", rm.x, rm.y, rm.width, rm.height, rm.area());
 			continue;
 		}
 
@@ -6791,48 +6794,69 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 	}
 	//--
 
+	int nInterval = 9;	//默认属于同一行或者同一列的间隔值
 
 	//矩形拟合
-	int nFitInterval = 5;
-	std::vector<cv::Rect>::iterator itFirst = rcList.begin();
-	for (; itFirst != rcList.end(); itFirst++)
+	if (m_bUseRectFit)
 	{
-		std::vector<cv::Rect>::iterator itNext = itFirst + 1;
-		for (;itNext != rcList.end();)
+		m_nRectFitInterval = m_nRectFitInterval > nInterval ? nInterval : m_nRectFitInterval;
+		int nFitInterval = m_nRectFitInterval;
+		std::vector<cv::Rect>::iterator itFirst = rcList.begin();
+		for (; itFirst != rcList.end(); itFirst++)
 		{
-			cv::Point pt1 = itFirst->tl();
-			cv::Point pt2 = itFirst->br();
+			std::vector<cv::Rect>::iterator itNext = itFirst + 1;
+			for (; itNext != rcList.end();)
+			{
+				cv::Point pt1 = itFirst->tl();
+				cv::Point pt2 = itFirst->br();
 
-			cv::Point pt5 = itNext->tl();
-			cv::Point pt6 = itNext->br();
+				cv::Point pt5 = itNext->tl();
+				cv::Point pt6 = itNext->br();
 
-			bool bFit = false;
-			if (abs(pt2.x - pt5.x) < nFitInterval && abs(pt1.y - pt5.y) < 9)
-			{
-				*itFirst = cv::Rect(pt1, pt6);
-				bFit = true;
+				bool bFit = false;
+				if (abs(pt1.y - pt5.y) < nInterval || abs(pt1.x - pt5.x) < nInterval)
+				{
+					if (abs(pt2.x - pt5.x) < nFitInterval && abs(pt1.y - pt5.y) < nInterval)
+					{
+						*itFirst = cv::Rect(pt1, pt6);
+						bFit = true;
+					}
+					else if (abs(pt1.x - pt6.x) < nFitInterval && abs(pt1.y - pt5.y) < nInterval)
+					{
+						*itFirst = cv::Rect(pt2, pt5);
+						bFit = true;
+					}
+					else if (abs(pt2.y - pt5.y) < nFitInterval && abs(pt1.x - pt5.x) < nInterval)
+					{
+						*itFirst = cv::Rect(pt1, pt6);
+						bFit = true;
+					}
+					else if (abs(pt1.y - pt6.y) < nFitInterval && abs(pt1.x - pt5.x) < nInterval)
+					{
+						*itFirst = cv::Rect(pt2, pt5);
+						bFit = true;
+					}
+				}
+				//矩形包含
+				if (!bFit)
+				{
+					if (itFirst->contains(pt5) || itFirst->contains(pt6) || itNext->contains(pt1) || itNext->contains(pt2))
+					{
+						int nMinX = pt1.x < pt5.x ? pt1.x : pt5.x;
+						int nMinY = pt1.y < pt5.y ? pt1.y : pt5.y;
+						int nMaxX = pt2.x > pt6.x ? pt2.x : pt6.x;
+						int nMaxY = pt2.y > pt6.y ? pt2.y : pt6.y;
+						*itFirst = cv::Rect(cv::Point(nMinX, nMinY), cv::Point(nMaxX, nMaxY));
+						bFit = true;
+					}
+				}
+				if (bFit)
+				{
+					itNext = rcList.erase(itNext);
+				}
+				else
+					itNext++;
 			}
-			else if (abs(pt1.x - pt6.x) < nFitInterval && abs(pt1.y - pt5.y) < 9)
-			{
-				*itFirst = cv::Rect(pt2, pt5);
-				bFit = true;
-			}
-			else if (abs(pt2.y - pt5.y) < nFitInterval && abs(pt1.x - pt5.x) < 9)
-			{
-				*itFirst = cv::Rect(pt1, pt6);
-				bFit = true;
-			}
-			else if (abs(pt1.y - pt6.y) < nFitInterval && abs(pt1.x - pt5.x) < 9)
-			{
-				*itFirst = cv::Rect(pt2, pt5);
-				bFit = true;
-			}
-			if (bFit)
-			{
-				itNext = rcList.erase(itNext);
-			}
-			else
-				itNext++;
 		}
 	}
 
@@ -6876,7 +6900,6 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 			break;
 	}
 
-	int nInterval = 9;	//默认属于同一行或者同一列的间隔值
 	//以值方式传递局部变量
 	std::sort(rcList_XY.begin(), rcList_XY.end(), [nInterval](cv::Rect& rt1, cv::Rect& rt2)mutable
 	{
@@ -7116,9 +7139,72 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 	}
 	//--
 
+	int nInterval = 9;	//默认属于同一行或者同一列的间隔值
+
+	//矩形拟合
+	if (m_bUseRectFit)
+	{
+		m_nRectFitInterval = m_nRectFitInterval > nInterval ? nInterval : m_nRectFitInterval;
+		int nFitInterval = m_nRectFitInterval;
+		std::vector<cv::Rect>::iterator itFirst = rcList.begin();
+		for (; itFirst != rcList.end(); itFirst++)
+		{
+			std::vector<cv::Rect>::iterator itNext = itFirst + 1;
+			for (; itNext != rcList.end();)
+			{
+				cv::Point pt1 = itFirst->tl();
+				cv::Point pt2 = itFirst->br();
+
+				cv::Point pt5 = itNext->tl();
+				cv::Point pt6 = itNext->br();
+
+				bool bFit = false;
+				if (abs(pt1.y - pt5.y) < nInterval || abs(pt1.x - pt5.x) < nInterval)
+				{
+					if (abs(pt2.x - pt5.x) < nFitInterval && abs(pt1.y - pt5.y) < nInterval)
+					{
+						*itFirst = cv::Rect(pt1, pt6);
+						bFit = true;
+					}
+					else if (abs(pt1.x - pt6.x) < nFitInterval && abs(pt1.y - pt5.y) < nInterval)
+					{
+						*itFirst = cv::Rect(pt2, pt5);
+						bFit = true;
+					}
+					else if (abs(pt2.y - pt5.y) < nFitInterval && abs(pt1.x - pt5.x) < nInterval)
+					{
+						*itFirst = cv::Rect(pt1, pt6);
+						bFit = true;
+					}
+					else if (abs(pt1.y - pt6.y) < nFitInterval && abs(pt1.x - pt5.x) < nInterval)
+					{
+						*itFirst = cv::Rect(pt2, pt5);
+						bFit = true;
+					}
+				}
+				if (bFit)
+				{
+					itNext = rcList.erase(itNext);
+				}
+				else
+					itNext++;
+			}
+		}
+	}
+
 	std::vector<Rect> rcList_X = rcList;
 	std::vector<Rect> rcList_XY = rcList;
-	std::sort(rcList_X.begin(), rcList_X.end(), SortByPositionX2);
+	std::sort(rcList_X.begin(), rcList_X.end(), [](cv::Rect& rt1, cv::Rect& rt2)
+	{
+		bool bResult = true;
+		bResult = rt1.x < rt2.x ? true : false;
+		if (!bResult)
+		{
+			if (rt1.x == rt2.x)
+				bResult = rt1.y < rt2.y ? true : false;
+		}
+		return bResult;
+	});
 //	std::sort(rcList.begin(), rcList.end(), SortByPositionY2);
 
 // 	for (int i = 0; i < rcList.size(); i++)
@@ -7143,7 +7229,22 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 
 
 //	TRACE("-----------------\n");
-	std::sort(rcList_XY.begin(), rcList_XY.end(), SortByPositionXYInterval);
+	std::sort(rcList_XY.begin(), rcList_XY.end(), [nInterval](cv::Rect& rt1, cv::Rect& rt2)mutable
+	{
+		bool bResult = true;
+
+		if (abs(rt1.y - rt2.y) > nInterval)
+		{
+			return rt1.y < rt2.y ? true : false;
+		}
+		else
+		{
+			bResult = rt1.x < rt2.x ? true : false;
+			if (!bResult)
+				bResult = rt1.x == rt2.x ? rt1.y < rt2.y : false;
+		}
+		return bResult;
+	});
 // 	for (int i = 0; i < rcList_XY.size(); i++)
 // 	{
 // 		TRACE("omr2 rt%d: (%d,%d,%d,%d)\n", i + 1, rcList_XY[i].x, rcList_XY[i].y, rcList_XY[i].width, rcList_XY[i].height);
@@ -8698,6 +8799,8 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	stAdvanceParam.nDefCharacterConfidence	= 60;
 
 	if (m_pModel) stAdvanceParam.nChkLostCorner = m_pModel->nChkLostCorner;
+	stAdvanceParam.nUseRectFit = m_bUseRectFit;
+	stAdvanceParam.nRectFitInterval = m_nRectFitInterval;
 
 	CAdanceSetMgrDlg dlg(m_pModel, stAdvanceParam);
 	if (dlg.DoModal() != IDOK)
@@ -8762,6 +8865,8 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	m_pModel->nCharacterAnchorPoint = dlg._stSensitiveParam.nCharacterAnchorPoint;
 	m_nCharacterConfidence			= dlg._stSensitiveParam.nCharacterConfidence;
 	m_pModel->nChkLostCorner		= dlg._stSensitiveParam.nChkLostCorner;
+	m_bUseRectFit					= dlg._stSensitiveParam.nUseRectFit;
+	m_nRectFitInterval				= dlg._stSensitiveParam.nRectFitInterval;
 
 	switch (m_eCurCPType)
 	{

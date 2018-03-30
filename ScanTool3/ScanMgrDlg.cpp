@@ -517,7 +517,7 @@ LRESULT CScanMgrDlg::MsgCompressResult(WPARAM wParam, LPARAM lParam)
 	if (_eCurrDlgType_ == Dlg_PapersInput)
 		m_pPapersInputDlg->SetStatusShowInfo(str, bWarn);
 	else
-		m_pScanProcessDlg->SetStatusShow(2, str, bWarn);
+		m_pScanProcessDlg->MsgCompressDone(str, bWarn);
 	return TRUE;
 }
 

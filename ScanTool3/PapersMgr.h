@@ -8,7 +8,7 @@ public:
 	~CPapersMgr();
 
 	bool	SavePapers(pPAPERSINFO pPapers);
-	std::string AddPapersCompress(pPAPERSINFO pPapers);
+	bool AddPapersCompress(pPAPERSINFO pPapers, std::string& strResult);
 	void	setCurrSavePath(std::string strPath);
 	void	setExamInfo(pEXAMINFO pCurrExam, pMODEL pModel);
 

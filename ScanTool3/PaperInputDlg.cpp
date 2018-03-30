@@ -1228,7 +1228,8 @@ void CPaperInputDlg::OnBnClickedBtnSave()
 	g_fmPapers.unlock();
 	//---------------------------------
 
-	std::string strZipName = papersMgr.AddPapersCompress(pPapers);
+	std::string strZipName;
+	papersMgr.AddPapersCompress(pPapers, strZipName);
 
 	CString strInfo;
 	bool bWarn = false;

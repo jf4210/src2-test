@@ -26,6 +26,7 @@ public:
 	void	InitShow();
 	void	UpdateChildInfo(bool bScanDone = false);
 	void	ScanCompleted();
+	void	MsgCompressDone(CString strShowInfo, bool bWarn);
 	void	SetStatusShow(int nType, CString strShowInfo, bool bWarn = false);	//1--扫描状态信息，2--保存试卷袋信息
 	void	UpdateExamBmk();		//将当前试卷袋的扫描信息更新到考试的总报名库中
 	void	ReShowCurrPapers();

@@ -150,7 +150,7 @@ bool CPapersMgr::SavePapers(pPAPERSINFO pPapers)
 	return bResult;
 }
 
-std::string CPapersMgr::AddPapersCompress(pPAPERSINFO pPapers)
+bool CPapersMgr::AddPapersCompress(pPAPERSINFO pPapers, std::string& strResult)
 {
 	std::string strUser;
 	std::string strEzs;
@@ -227,6 +227,11 @@ std::string CPapersMgr::AddPapersCompress(pPAPERSINFO pPapers)
 		//*************************************************
 		//这里保存有问题，会发生错乱
 		//*************************************************
+
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "临时文件夹重命名失败，请重试！");
+		dlg.DoModal();
+		return false;
 	}
 
 	TRACE("------------------- 3\n");
@@ -241,7 +246,8 @@ std::string CPapersMgr::AddPapersCompress(pPAPERSINFO pPapers)
 	g_lCompressTask.push_back(pTask);
 	g_fmCompressLock.unlock();
 
-	return szZipName;
+	strResult = szZipName;
+	return true;
 }
 
 void CPapersMgr::setCurrSavePath(std::string strPath)

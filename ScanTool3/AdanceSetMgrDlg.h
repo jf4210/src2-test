@@ -28,6 +28,7 @@ public:
 
 		nChkLostCorner = 0;
 		nUseRectFit = 0;
+		nRectFitInterval = 5;
 	}
 public:
 	int nCurrentZkzhSensitivity;
@@ -72,6 +73,7 @@ public:
 
 	int	nChkLostCorner;		//缺角检测
 	int nUseRectFit;		//使用矩形拟合
+	int nRectFitInterval;	//矩形拟合的间隔阈值
 };
 
 class CAdanceSetMgrDlg : public CTipBaseDlg
