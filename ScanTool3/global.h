@@ -41,7 +41,8 @@
 	#endif
 	#define TEST_ModelMgr		//使用模板保存测试类保存模板
 
-	#define TEST_New_RecogClass	//使用新识别类测试
+	//#define TEST_New_RecogClass	//使用新识别类测试
+	#define TEST_LostCorner		//缺角或折角检测
 #else	//release版本
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
 	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”

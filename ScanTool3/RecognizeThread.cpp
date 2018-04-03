@@ -656,6 +656,10 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			else
 				bResult = RecogFixCP(nPic, matCompPic, *itPic, pModelInfo);
 
+		#ifdef TEST_LostCorner
+			RecogLostCorner(nPic, matCompPic, *itPic, pModelInfo);
+		#endif
+
 		#ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
 			//bResult = PicTransfer(nPic, matCompPic, (*itPic)->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, inverseMat);
@@ -3312,25 +3316,28 @@ bool CRecognizeThread::RecogLostCorner(int nPic, cv::Mat& matCompPic, pST_PicInf
 	std::string strLog;
 	strLog = Poco::format("图片%s\n", pPic->strPicName);
 
-	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.begin();
-	for (int i = 0; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.end(); i++, itCP++)
+	//检测试卷的4个角
+ 	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.begin();
+// 	for (int i = 0; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.end(); i++, itCP++)
+	int nRtW = 100;
+	int nRtH = 100;
+	for(int i = 0; i < 4; i++)
 	{
 		RECTINFO rc = *itCP;
 
 		std::vector<Rect>RectCompList;
 		try
 		{
-#if 1
 			float fModelW = pModelInfo->pModel->vecPaperModel[nPic]->nPicW;
 			float fModelH = pModelInfo->pModel->vecPaperModel[nPic]->nPicH;
 			int nRealW = matCompPic.cols;
 			int nRealH = matCompPic.rows;
 
 			cv::Rect rtTmp;
-			rtTmp.x = rc.rt.x * nRealW / fModelW;
-			rtTmp.y = rc.rt.y * nRealH / fModelH;
-			rtTmp.width = rc.rt.width * nRealW / fModelW;
-			rtTmp.height = rc.rt.height * nRealH / fModelH;
+			rtTmp.width = nRtW * nRealW / fModelW;
+			rtTmp.height = nRtH * nRealH / fModelH;
+			rtTmp.x = i % 2 == 0 ? 0 : (nRealW - rtTmp.width);
+			rtTmp.y = i % 2 == 0 ? 0 : (nRealH - rtTmp.height);
 
 			if (rtTmp.x < 0) rtTmp.x = 0;
 			if (rtTmp.y < 0) rtTmp.y = 0;
@@ -3344,20 +3351,6 @@ bool CRecognizeThread::RecogLostCorner(int nPic, cv::Mat& matCompPic, pST_PicInf
 			}
 			cv::Mat matCompRoi;
 			matCompRoi = matCompPic(rtTmp);
-#else
-			if (rc.rt.x < 0) rc.rt.x = 0;
-			if (rc.rt.y < 0) rc.rt.y = 0;
-			if (rc.rt.br().x > matCompPic.cols)
-			{
-				rc.rt.width = matCompPic.cols - rc.rt.x;
-			}
-			if (rc.rt.br().y > matCompPic.rows)
-			{
-				rc.rt.height = matCompPic.rows - rc.rt.y;
-			}
-			cv::Mat matCompRoi;
-			matCompRoi = matCompPic(rc.rt);
-#endif
 
 			cvtColor(matCompRoi, matCompRoi, CV_BGR2GRAY);
 
@@ -3451,56 +3444,41 @@ bool CRecognizeThread::RecogLostCorner(int nPic, cv::Mat& matCompPic, pST_PicInf
 
 		std::string strLog2;	//临时日志，记录矩形具体识别结果
 		bool bFindRect = false;
-		if (RectCompList.size() == 0)
-			bFindRect = true;
-		else
+		if (RectCompList.size() > 0)
 		{
-			std::sort(RectCompList.begin(), RectCompList.end(), SortByArea);
+			std::sort(RectCompList.begin(), RectCompList.end(), [](cv::Rect& rt1, cv::Rect& rt2)
+			{
+				return rt1.area() > rt2.area() ? true : (rt1.area() < rt2.area() ? false : (rt1.x > rt2.x ? true : false));
+			});
 			Rect& rtFix = RectCompList[0];
 
-			RECTINFO rcFix;
-			RECTLIST::iterator itFix = pModelInfo->pModel->vecPaperModel[nPic]->lFix.begin();
-			for (int j = 0; itFix != pModelInfo->pModel->vecPaperModel[nPic]->lFix.end(); j++, itFix++)
-			{
-				if (j == i)
-				{
-					rcFix = *itFix;
-					break;
-				}
-			}
-
-			bool bOnlyOne = false;		//只有一个矩形，需要判断面积和灰度，但是比例可以降低
 			bool bFind = false;
 
 			//通过灰度值来判断
 			for (int k = 0; k < RectCompList.size(); k++)
 			{
-				RECTINFO rcTmp = rcFix;
+				RECTINFO rcTmp = rc;
 				rcTmp.rt = RectCompList[k];
 
 				//根据定点左上点与右下点位置判断是否在试卷的边线上，如果在，则可能是折角或者边上有损坏
 				cv::Point pt1 = RectCompList[k].tl();
 				cv::Point pt2 = RectCompList[k].br();
-				int nDiff = 4;	//与图像边界的距离间隔在这个值之内，认为属于边界线上
+				int nDiff = 10;	//与图像边界的距离间隔在这个值之内，认为属于边界线上
 				if (pt1.x < nDiff || pt1.y < nDiff || matCompPic.cols - pt2.x < nDiff || matCompPic.rows - pt2.y < nDiff)
 				{
 					TRACE("矩形(%d,%d,%d,%d)位置距离边线太近，可能是折角或损坏\n", RectCompList[k].x, RectCompList[k].y, RectCompList[k].width, RectCompList[k].height);
-					continue;
-				}
 
-				Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
-				float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
-				float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
-				float fWper = (float)rcTmp.rt.width / rcFix.rt.width;			//查找的矩形的宽度与模板对应定点的宽度之比
-				float fHper = (float)rcTmp.rt.height / rcFix.rt.height;			//查找的矩形的宽度与模板对应定点的高度之比
-				std::string strTmpLog = Poco::format("第%d个矩形:area=%f, Density=%f\t", k, (double)fArea, (double)fDensity);
-				strLog2.append(strTmpLog);
-				if ((bOnlyOne && fArea > 0.4 && fArea < 2.5 && fDensity > rcTmp.fStandardValuePercent * 0.9 && fWper < 2.0 && fWper > 0.4 && fHper < 2.0 && fHper > 0.4) || \
-					(fArea > 0.5 && fArea < 2.0 && fDensity > rcTmp.fStandardValuePercent && fWper < 2.0 && fWper > 0.4 && fHper < 2.0 && fHper > 0.4))	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
-				{
-					bFind = true;
-					rtFix = RectCompList[k];
-					break;
+					Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
+					float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
+					float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
+					std::string strTmpLog = Poco::format("第%d个矩形:area=%f, Density=%f\t", k, (double)fArea, (double)fDensity);
+					strLog2.append(strTmpLog);
+					if (fArea > 0.5 && fArea < 2.0 && fDensity > rcTmp.fStandardValuePercent)	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
+					{
+						bFind = true;
+						rtFix = RectCompList[k];
+						break;
+					}
 				}
 			}
 
@@ -3508,13 +3486,9 @@ bool CRecognizeThread::RecogLostCorner(int nPic, cv::Mat& matCompPic, pST_PicInf
 				bFindRect = true;
 			else
 			{
-				// 			rtFix.x = rtFix.x + rc.rt.x;
-				// 			rtFix.y = rtFix.y + rc.rt.y;
-
 				RECTINFO rcFixInfo = rc;
 				rcFixInfo.nTH = i;			//这是属于模板上定点列表的第几个
 				rcFixInfo.rt = rtFix;
-				pPic->lFix.push_back(rcFixInfo);
 				TRACE("定点矩形: (%d,%d,%d,%d)\n", rtFix.x, rtFix.y, rtFix.width, rtFix.height);
 			}
 		}
