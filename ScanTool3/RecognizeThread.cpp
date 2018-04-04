@@ -3482,7 +3482,7 @@ bool CRecognizeThread::RecogLostCorner(int nPic, cv::Mat& matCompPic, pST_PicInf
 				}
 			}
 
-			if (!bFind)
+			if (!bFind)//test tag
 				bFindRect = true;
 			else
 			{
