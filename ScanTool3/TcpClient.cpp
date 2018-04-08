@@ -888,8 +888,11 @@ void CTcpClient::HandleCmd()
 							std::string strErrInfo;
 							strErrInfo.append("获取报名库失败: 无当前科目信息");
 							g_pLogger->information(strErrInfo);
-							CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
-							pDlg->PostMessage(MSG_CMD_GET_BMK_OK, 1, 1);
+							if (itFindExam != g_mapBmkMgr.end())	//上面已经通知了一次，这里不需要再次通知，在上面那次如果没有找到对应的考试报名库就会进行一次通知
+							{
+								CScanTool3Dlg* pDlg = (CScanTool3Dlg*)_pMainDlg;
+								pDlg->PostMessage(MSG_CMD_GET_BMK_OK, 1, 1);
+							}
 						}
 					}
 				}
