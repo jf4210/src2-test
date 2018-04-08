@@ -311,6 +311,7 @@ typedef struct _PicInfo_				//图片信息
 	OMRRESULTLIST		lOmrResult;			//OMRRESULTLIST
 	ELECTOMR_LIST		lElectOmrResult;	//识别的选做题OMR结果
 
+	RECTLIST		lLostCorner;	//检测到的折角或缺角区域列表
 	RECTLIST		lCalcRect;		//通过定点计算出的点位置
 	RECTLIST		lModelWordFix;		//模板文字定点列表，在使用文字定位时有用
 	CHARACTER_ANCHOR_AREA_LIST lCharacterAnchorArea;	//文字定位区域

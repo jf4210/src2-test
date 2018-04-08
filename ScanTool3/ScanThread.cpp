@@ -561,6 +561,13 @@ int CScanThread::GetImgMemory()
 					}
 					catch (cv::Exception& exc)
 					{
+						std::string strTmpLog = "***保存扫描图像数据到文件发生异常2: " + exc.msg;
+						g_pLogger->information(strTmpLog);
+					}
+					catch (...)
+					{
+						std::string strTmpLog = "***保存扫描图像数据到文件发生未知异常3";
+						g_pLogger->information(strTmpLog);
 					}
 					ss.str("");
 				
@@ -754,8 +761,15 @@ int CScanThread::GetImgNative()
 
 				SaveFile(pIpl2);
 			}
+			catch (cv::Exception& exc)
+			{
+				std::string strTmpLog = "***保存扫描图像数据到文件发生异常0: " + exc.msg;
+				g_pLogger->information(strTmpLog);
+			}
 			catch (...)
 			{
+				std::string strTmpLog = "***保存扫描图像数据到文件发生未知异常1";
+				g_pLogger->information(strTmpLog);
 			}
 			#else
 			int w = m_ImageInfo.ImageWidth;

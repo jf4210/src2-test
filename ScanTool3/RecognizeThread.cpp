@@ -3336,8 +3336,8 @@ bool CRecognizeThread::RecogLostCorner(int nPic, cv::Mat& matCompPic, pST_PicInf
 			cv::Rect rtTmp;
 			rtTmp.width = nRtW * nRealW / fModelW;
 			rtTmp.height = nRtH * nRealH / fModelH;
-			rtTmp.x = i % 2 == 0 ? 0 : (nRealW - rtTmp.width);
-			rtTmp.y = i % 2 == 0 ? 0 : (nRealH - rtTmp.height);
+			rtTmp.x = i % 2 == 0 ? 0 : (nRealW - rtTmp.width - 1);
+			rtTmp.y = i / 2 == 0 ? 0 : (nRealH - rtTmp.height - 1);
 
 			if (rtTmp.x < 0) rtTmp.x = 0;
 			if (rtTmp.y < 0) rtTmp.y = 0;
@@ -3442,6 +3442,7 @@ bool CRecognizeThread::RecogLostCorner(int nPic, cv::Mat& matCompPic, pST_PicInf
 			}
 		}
 
+		Rect rtLostCorner;		//缺角矩形区域
 		std::string strLog2;	//临时日志，记录矩形具体识别结果
 		bool bFindRect = false;
 		if (RectCompList.size() > 0)
@@ -3450,7 +3451,7 @@ bool CRecognizeThread::RecogLostCorner(int nPic, cv::Mat& matCompPic, pST_PicInf
 			{
 				return rt1.area() > rt2.area() ? true : (rt1.area() < rt2.area() ? false : (rt1.x > rt2.x ? true : false));
 			});
-			Rect& rtFix = RectCompList[0];
+			rtLostCorner = RectCompList[0];
 
 			bool bFind = false;
 
@@ -3459,6 +3460,8 @@ bool CRecognizeThread::RecogLostCorner(int nPic, cv::Mat& matCompPic, pST_PicInf
 			{
 				RECTINFO rcTmp = rc;
 				rcTmp.rt = RectCompList[k];
+				rcTmp.nThresholdValue = 100;
+				rcTmp.fStandardArea = rcTmp.rt.area();
 
 				//根据定点左上点与右下点位置判断是否在试卷的边线上，如果在，则可能是折角或者边上有损坏
 				cv::Point pt1 = RectCompList[k].tl();
@@ -3469,36 +3472,26 @@ bool CRecognizeThread::RecogLostCorner(int nPic, cv::Mat& matCompPic, pST_PicInf
 					TRACE("矩形(%d,%d,%d,%d)位置距离边线太近，可能是折角或损坏\n", RectCompList[k].x, RectCompList[k].y, RectCompList[k].width, RectCompList[k].height);
 
 					Recog(nPic, rcTmp, matCompPic, pPic, pModelInfo);
-					float fArea = rcTmp.fRealArea / rcTmp.fStandardArea;
-					float fDensity = rcTmp.fRealDensity / rcTmp.fStandardDensity;
-					std::string strTmpLog = Poco::format("第%d个矩形:area=%f, Density=%f\t", k, (double)fArea, (double)fDensity);
-					strLog2.append(strTmpLog);
-					if (fArea > 0.5 && fArea < 2.0 && fDensity > rcTmp.fStandardValuePercent)	//fArea > 0.7 && fArea < 1.5 && fDensity > 0.6
+ 					float fDensity = rcTmp.fRealValue / (nRtW * nRtH);
+					if (fDensity >= 0.25 && rcTmp.fRealDensity > 0.4)	//要求满足要求的黑色区域达到框选角落的1/4以上
 					{
 						bFind = true;
-						rtFix = RectCompList[k];
+						rtLostCorner = RectCompList[k];
 						break;
 					}
 				}
 			}
 
-			if (!bFind)//test tag
+			if (!bFind)
 				bFindRect = true;
-			else
-			{
-				RECTINFO rcFixInfo = rc;
-				rcFixInfo.nTH = i;			//这是属于模板上定点列表的第几个
-				rcFixInfo.rt = rtFix;
-				TRACE("定点矩形: (%d,%d,%d,%d)\n", rtFix.x, rtFix.y, rtFix.width, rtFix.height);
-			}
 		}
 		if (bFindRect)
 		{
-			std::string strLog3 = Poco::format("识别定点(%d)失败 -- %s\n", i, strLog2);
+			std::string strLog3 = Poco::format("检测缺角折角(%d)完成 -- %s\n", i, strLog2);
 			strLog.append(strLog3);
 			bResult = false;						//找到问题点
-			pPic->bFindIssue = true;
-			pPic->lIssueRect.push_back(rc);
+			//pPic->bFindIssue = true;
+			pPic->lLostCorner.push_back(rc);	//********************		修改	***************************
 			if (g_nOperatingMode == 2)
 				break;
 		}
@@ -3511,7 +3504,7 @@ bool CRecognizeThread::RecogLostCorner(int nPic, cv::Mat& matCompPic, pST_PicInf
 		TRACE(szLog);
 	}
 	end = clock();
-	std::string strTime = Poco::format("识别定点时间: %dms\n", (int)(end - start));
+	std::string strTime = Poco::format("检测缺角折角时间: %dms\n", (int)(end - start));
 	strLog.append(strTime);
 	g_pLogger->information(strLog);
 	return bResult;
