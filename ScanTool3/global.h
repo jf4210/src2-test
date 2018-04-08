@@ -142,7 +142,7 @@ extern std::string		g_strIdentityChkPwd;		//身份检测的密码
 
 extern int				_nUseOcrRecogSn_;		//使用OCR识别准考证号
 
-													//++登录信息
+//++登录信息
 extern bool	_bHandModel_;			//是否是手阅模式，手阅模式是天喻用
 extern bool	_bLogin_;				//是否已经登录
 extern std::string _strUserName_;	//登录用户名
@@ -156,7 +156,7 @@ extern std::string _strSchoolID_;	//手阅模式，天喻专用
 extern int _nPicNum4Ty_;			//手阅模式，模板图片数量
 //--
 extern bool		_bGetBmk_;			//是否获得当前科目报名库
-extern int					_nReocgThreads_;		//识别线程数量
+extern int		_nReocgThreads_;	//识别线程数量
 
 //++事件定义
 extern Poco::Event			g_eGetExamList;		//获取考试列表事件
