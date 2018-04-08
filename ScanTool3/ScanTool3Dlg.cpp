@@ -870,7 +870,7 @@ BOOL CScanTool3Dlg::OnInitDialog()
 
 	//_timerKeepAlive = new Poco::Util::Timer();
 	_pTmKeepAliveObj = new TimerKeepAliveObj();
-	_timerKeepAlive.schedule(_pTmKeepAliveObj, 60 * 1000, 120 * 1000);		//2分钟一次心跳
+	_timerKeepAlive.schedule(_pTmKeepAliveObj, 30 * 1000, 60 * 1000);		//1分钟一次心跳
 
 	UpLoadDumpFile();
 

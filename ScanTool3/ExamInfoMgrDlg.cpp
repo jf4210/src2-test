@@ -744,7 +744,7 @@ void CExamInfoMgrDlg::OnBnClickedBtnReflesh()
 
 	try
 	{
-		g_eGetExamList.wait(10000);
+		g_eGetExamList.wait(15000);
 	}
 	catch (Poco::TimeoutException &e)
 	{

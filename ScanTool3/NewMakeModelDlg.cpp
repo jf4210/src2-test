@@ -654,6 +654,7 @@ void CNewMakeModelDlg::OnBnClickedBtnSavemodel()
 void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 {
 	USES_CONVERSION;
+	m_comboSubject.EnableWindow(FALSE);
 	if (m_pModel)
 	{
 		if (m_pModel->vecPaperModel.size() > 0)
@@ -669,6 +670,7 @@ void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 	}
 	if (m_vecModelPicPath.size() == 0)
 	{
+		m_comboSubject.EnableWindow(TRUE);
 		CNewMessageBox dlg;
 		dlg.setShowInfo(2, 1, "无模板图片信息！");
 		dlg.DoModal();
@@ -678,6 +680,7 @@ void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 	CExamInfoDlg dlg(m_pModel);
 	if (dlg.DoModal() != IDOK)
 	{
+		m_comboSubject.EnableWindow(TRUE);
 		CNewMessageBox dlg;
 		dlg.setShowInfo(2, 1, "上传图片失败！");
 		dlg.DoModal();
@@ -755,6 +758,7 @@ void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 		dlg.setShowInfo(3, 1, "添加上传任务完成！");
 		dlg.DoModal();
 	}
+	m_comboSubject.EnableWindow(TRUE);
 	g_pLogger->information(ssLog.str());
 }
 
