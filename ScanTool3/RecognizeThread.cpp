@@ -3319,8 +3319,8 @@ bool CRecognizeThread::RecogLostCorner(int nPic, cv::Mat& matCompPic, pST_PicInf
 	//检测试卷的4个角
  	RECTLIST::iterator itCP = pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.begin();
 // 	for (int i = 0; itCP != pModelInfo->pModel->vecPaperModel[nPic]->lSelFixRoi.end(); i++, itCP++)
-	int nRtW = 100;
-	int nRtH = 100;
+	int nRtW = 150;
+	int nRtH = 150;
 	for(int i = 0; i < 4; i++)
 	{
 		RECTINFO rc = *itCP;
@@ -3442,7 +3442,7 @@ bool CRecognizeThread::RecogLostCorner(int nPic, cv::Mat& matCompPic, pST_PicInf
 			}
 		}
 
-		Rect rtLostCorner;		//缺角矩形区域
+		RECTINFO rcLostCorner;		//缺角矩形区域
 		std::string strLog2;	//临时日志，记录矩形具体识别结果
 		bool bFindRect = false;
 		if (RectCompList.size() > 0)
@@ -3451,7 +3451,7 @@ bool CRecognizeThread::RecogLostCorner(int nPic, cv::Mat& matCompPic, pST_PicInf
 			{
 				return rt1.area() > rt2.area() ? true : (rt1.area() < rt2.area() ? false : (rt1.x > rt2.x ? true : false));
 			});
-			rtLostCorner = RectCompList[0];
+			rcLostCorner.rt = RectCompList[0];
 
 			bool bFind = false;
 
@@ -3476,22 +3476,21 @@ bool CRecognizeThread::RecogLostCorner(int nPic, cv::Mat& matCompPic, pST_PicInf
 					if (fDensity >= 0.25 && rcTmp.fRealDensity > 0.4)	//要求满足要求的黑色区域达到框选角落的1/4以上
 					{
 						bFind = true;
-						rtLostCorner = RectCompList[k];
+						rcLostCorner.rt = RectCompList[k];
+						rcLostCorner.nTH = i;					//标识属于第几个角落
 						break;
 					}
 				}
 			}
 
-			if (!bFind)
-				bFindRect = true;
+			bFindRect = bFind;
 		}
 		if (bFindRect)
 		{
 			std::string strLog3 = Poco::format("检测缺角折角(%d)完成 -- %s\n", i, strLog2);
 			strLog.append(strLog3);
 			bResult = false;						//找到问题点
-			//pPic->bFindIssue = true;
-			pPic->lLostCorner.push_back(rc);	//********************		修改	***************************
+			pPic->lLostCorner.push_back(rcLostCorner);
 			if (g_nOperatingMode == 2)
 				break;
 		}
@@ -3499,7 +3498,7 @@ bool CRecognizeThread::RecogLostCorner(int nPic, cv::Mat& matCompPic, pST_PicInf
 	if (!bResult)
 	{
 		char szLog[MAX_PATH] = { 0 };
-		sprintf_s(szLog, "识别定点失败, 图片名: %s\n", pPic->strPicName.c_str());
+		sprintf_s(szLog, "可能存在缺角折角, 图片名: %s\n", pPic->strPicName.c_str());
 		strLog.append(szLog);
 		TRACE(szLog);
 	}

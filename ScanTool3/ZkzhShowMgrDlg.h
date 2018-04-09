@@ -1,6 +1,7 @@
 #pragma once
 #include"ZkzhExceptionDlg.h"
 #include "MultiPageExceptionDlg.h"
+#include "LostCornerDlg.h"
 
 
 // CZkzhShowMgrDlg 对话框
@@ -20,6 +21,7 @@ public:
 
 	CZkzhExceptionDlg*	m_pZkzhExceptionDlg;
 	CMultiPageExceptionDlg*	m_pMultiPageExceptionDlg;
+	CLostCornerDlg*		m_pLostCornerDlg;
 
 	void	ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper = NULL);
 	//子页面调用主页面进行重新初始化数据

@@ -504,6 +504,11 @@ void CMultiPageExceptionDlg::ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo)
 	UpdateData(FALSE);
 }
 
+bool CMultiPageExceptionDlg::ReleaseData()
+{
+	return true;
+}
+
 void CMultiPageExceptionDlg::InitData()
 {
 	if (!m_pPapers) return;

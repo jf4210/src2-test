@@ -1307,6 +1307,10 @@ void CTcpClient::HandleTask(pTCP_TASK pTask)
 	}
 	
 	TRACE("准备发送命令: %d\n", pTask->usCmd);
+	USES_CONVERSION;
+	CString strTmp = _T("");
+	strTmp.Format(_T("准备发送命令: %d\n"), pTask->usCmd);
+	OutputDebugStringA(T2A(strTmp));
 	try
 	{
 		int nWantSend = HEAD_SIZE + pTask->nPkgLen;
@@ -1334,7 +1338,6 @@ void CTcpClient::HandleTask(pTCP_TASK pTask)
 			}
 		}
 
-
 // 		if (bSendNewBuff)
 // 			m_ss.sendBytes(pSendBuff, HEAD_SIZE + pTask->nPkgLen);
 // 		else
@@ -1355,6 +1358,8 @@ void CTcpClient::HandleTask(pTCP_TASK pTask)
 // 		m_ss.setNoDelay(true);
 	}
 	TRACE("命令发送完成: %d\n", pTask->usCmd);
+	strTmp.Format(_T("命令发送完成: %d\n"), pTask->usCmd);
+	OutputDebugStringA(T2A(strTmp));
 }
 
 void CTcpClient::SetMainWnd(void* p)

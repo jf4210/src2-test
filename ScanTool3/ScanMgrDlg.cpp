@@ -295,7 +295,6 @@ bool CScanMgrDlg::chkChangeExamLegal()
 		}
 		if (!bRecogComplete)
 		{
-//			AfxMessageBox(_T("请稍后，图像正在识别！"));
 			CNewMessageBox	dlg;
 			dlg.setShowInfo(2, 1, "请稍后，图像正在识别！");
 			dlg.DoModal();
@@ -310,8 +309,6 @@ bool CScanMgrDlg::chkChangeExamLegal()
 		dlg.DoModal();
 		if (dlg.m_nResult != IDYES)
 			return false;
-// 		if (MessageBox(_T("当前试卷袋信息未保存，是否切换？"), _T("警告"), MB_YESNO) != IDYES)
-// 			return false;
 	}
 
 	return true;
@@ -367,7 +364,6 @@ void CScanMgrDlg::ShowChildDlg(int n, int nOprater /*= 0*/)
 		int nResult = GetBmkInfo();
 		if (nResult == 0)
 		{
-//			AfxMessageBox(_T("考试信息为空"));
 			CNewMessageBox	dlg;
 			dlg.setShowInfo(2, 1, "考试信息为空");
 			dlg.DoModal();
@@ -707,6 +703,8 @@ bool CScanMgrDlg::DownLoadModel()
 	g_pLogger->information(strLog);
 	TRACE("%s\n", strLog.c_str());
 
+	OutputDebugStringA(strLog.c_str());
+
 	g_eDownLoadModel.reset();
 	tmStampDLG_DownloadModle.update();			//记录在下载模板等待界面的等待时间，超过一定时间时可退出
 
@@ -729,6 +727,10 @@ int CScanMgrDlg::GetBmkInfo()
 
 #if 1		//NewBmkTest
 	TRACE("请求报名库(%d)...\n", _pCurrExam_->nExamID);
+	USES_CONVERSION;
+	CString strTmp = _T("");
+	strTmp.Format(_T("请求报名库(%d)...\n"), _pCurrExam_->nExamID);
+	OutputDebugStringA(T2A(strTmp));
 	EXAMBMK_MAP::iterator itFindExam = g_mapBmkMgr.find(_pCurrExam_->nExamID);
 	if (itFindExam != g_mapBmkMgr.end())		//如果已经下载了当前考试的报名库，就提取报名库，如何直接下载模板
 	{
@@ -737,6 +739,9 @@ int CScanMgrDlg::GetBmkInfo()
 			nResult = 2;
 		else
 			nResult = -2;	//获取科目学生列表失败
+
+		strTmp.Format(_T("本地存在考试报名库(%d), 不重新请求\n"), _pCurrExam_->nExamID);
+		OutputDebugStringA(T2A(strTmp));
 		return nResult;
 	}
 

@@ -15,7 +15,7 @@ CZkzhShowMgrDlg::CZkzhShowMgrDlg(pMODEL pModel, pPAPERSINFO pPapersInfo, CStuden
 	: CDialog(IDD_ZKZHSHOWMGRDLG, pParent)
 	, m_pModel(pModel), m_pPapers(pPapersInfo), m_pDefShowPaper(pShowPaper)
 	, m_pVagueSearchDlg(NULL), m_pShowPicDlg(NULL), m_pStudentMgr(pStuMgr)
-	, m_pMultiPageExceptionDlg(NULL), m_pZkzhExceptionDlg(NULL)
+	, m_pMultiPageExceptionDlg(NULL), m_pZkzhExceptionDlg(NULL), m_pLostCornerDlg(NULL)
 {
 
 }
@@ -111,6 +111,36 @@ void CZkzhShowMgrDlg::InitUI()
 			}
 		}
 	}
+	bool bShowLostCornerDlg = true;
+// 	for (auto pPaper : m_pPapers->lPaper)
+// 	{
+// 		for (auto pPic : pPaper->lPic)
+// 			if (pPic->lLostCorner.size())
+// 			{
+// 				bShowLostCornerDlg = true;
+// 				break;
+// 			}
+// 		if(bShowLostCornerDlg) break;
+// 	}
+	if (bShowLostCornerDlg)
+	{
+		char szBtnName[20] = { 0 };
+		sprintf_s(szBtnName, "折角检测");
+
+		CBmpButton* pNewButton = new CBmpButton();// 也可以定义为类的成员变量。
+		pNewButton->SetStateBitmap(IDB_RecordDlg_Btn_Over, IDB_RecordDlg_Btn, IDB_RecordDlg_Btn_Hover, 0, IDB_RecordDlg_Btn);
+		CRect rcButton(10, 10, 60, 30); // 按钮在对话框中的位置。
+		pNewButton->Create(A2T(szBtnName), 0, rcButton, this, 203);	//设置索引从201开始
+		pNewButton->ShowWindow(SW_SHOW);
+		m_vecBtn.push_back(pNewButton);
+
+		if (!m_pLostCornerDlg)
+		{
+			m_pLostCornerDlg = new CLostCornerDlg();
+			m_pLostCornerDlg->Create(IDD_LOSTCORNERDLG, this);
+			m_pLostCornerDlg->ShowWindow(SW_HIDE);
+		}
+	}
 	if (m_vecBtn.size() <= 1)
 	{
 		for (auto btn : m_vecBtn)
@@ -164,6 +194,10 @@ void CZkzhShowMgrDlg::InitCtrlPosition()
 	{
 		m_pMultiPageExceptionDlg->MoveWindow(nCurrentLeft, nCurrentTop, nDlgW, nDlgH);
 	}
+	if (m_pLostCornerDlg && m_pLostCornerDlg->GetSafeHwnd())
+	{
+		m_pLostCornerDlg->MoveWindow(nCurrentLeft, nCurrentTop, nDlgW, nDlgH);
+	}
 	Invalidate();
 }
 
@@ -177,18 +211,21 @@ void CZkzhShowMgrDlg::ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStuden
 	InitUI();
 	m_pZkzhExceptionDlg->ReInitData(m_pModel, m_pPapers, m_pStudentMgr, m_pDefShowPaper);
 	if (m_pMultiPageExceptionDlg) m_pMultiPageExceptionDlg->ReInitData(m_pModel, m_pPapers);
+	if (m_pLostCornerDlg) m_pLostCornerDlg->ReInitData(m_pModel, m_pPapers);
 }
 
 void CZkzhShowMgrDlg::ReInitDataFromChildDlg(pMODEL pModel, pPAPERSINFO pPapersInfo)
 {
 	m_pZkzhExceptionDlg->ReInitData(m_pModel, m_pPapers, m_pStudentMgr, m_pDefShowPaper);
 	if (m_pMultiPageExceptionDlg) m_pMultiPageExceptionDlg->ReInitData(m_pModel, m_pPapers);
+	if (m_pLostCornerDlg) m_pLostCornerDlg->ReInitData(m_pModel, m_pPapers);
 }
 
 void CZkzhShowMgrDlg::SetDlgInfo(CShowPicDlg* pShowDlg, CVagueSearchDlg* pSearchDlg)
 {
 	m_pZkzhExceptionDlg->SetDlgInfo(pShowDlg, pSearchDlg);
-	if(m_pMultiPageExceptionDlg) m_pMultiPageExceptionDlg->SetDlgInfo(pShowDlg, pSearchDlg);
+	if (m_pMultiPageExceptionDlg) m_pMultiPageExceptionDlg->SetDlgInfo(pShowDlg, pSearchDlg);
+	if (m_pLostCornerDlg) m_pLostCornerDlg->SetDlgInfo(pShowDlg, pSearchDlg);
 }
 
 void CZkzhShowMgrDlg::InitData()
@@ -209,6 +246,11 @@ bool CZkzhShowMgrDlg::ReleaseData()
 	{
 		m_pMultiPageExceptionDlg->DestroyWindow();
 		SAFE_RELEASE(m_pMultiPageExceptionDlg);
+	}
+	if (m_pLostCornerDlg)
+	{
+		m_pLostCornerDlg->DestroyWindow();
+		SAFE_RELEASE(m_pLostCornerDlg);
 	}
 	for (int i = 0; i < m_vecBtn.size(); i++)
 	{
@@ -243,23 +285,45 @@ LRESULT CZkzhShowMgrDlg::DefWindowProc(UINT message, WPARAM wParam, LPARAM lPara
 	{
 		USES_CONVERSION;
 		WORD wID = LOWORD(wParam);
-		if (wID == 201)
+		if (wID == 201)		//一定存在
 		{
 			m_vecBtn[0]->CheckBtn(TRUE);
-			m_vecBtn[1]->CheckBtn(FALSE);
+			if (m_vecBtn.size() > 1) m_vecBtn[1]->CheckBtn(FALSE);
+			if (m_vecBtn.size() > 2) m_vecBtn[2]->CheckBtn(FALSE);
 			m_pZkzhExceptionDlg->ShowWindow(SW_SHOW);
 			m_pZkzhExceptionDlg->ReInitData(m_pModel, m_pPapers, m_pStudentMgr, m_pDefShowPaper);
 			if (m_pMultiPageExceptionDlg) m_pMultiPageExceptionDlg->ShowWindow(SW_HIDE);
+			if (m_pLostCornerDlg)	m_pLostCornerDlg->ShowWindow(SW_HIDE);
 		}
-		else if(wID == 202)
+		else if(wID == 202)		//可能存在
 		{
 			m_vecBtn[0]->CheckBtn(FALSE);
 			m_vecBtn[1]->CheckBtn(TRUE);
+			if (m_vecBtn.size() > 2) m_vecBtn[2]->CheckBtn(FALSE);
 			m_pZkzhExceptionDlg->ShowWindow(SW_HIDE);
 			if (m_pMultiPageExceptionDlg)
 			{
 				m_pMultiPageExceptionDlg->ShowWindow(SW_SHOW);
 				m_pMultiPageExceptionDlg->ReInitData(m_pModel, m_pPapers);
+			}
+			if (m_pLostCornerDlg)	m_pLostCornerDlg->ShowWindow(SW_HIDE);
+		}
+		else if (wID == 203)	//可能存在
+		{
+			m_vecBtn[0]->CheckBtn(FALSE);
+			if (m_pMultiPageExceptionDlg)
+			{
+				m_vecBtn[1]->CheckBtn(FALSE);
+				m_vecBtn[2]->CheckBtn(TRUE);
+			}
+			else
+				m_vecBtn[1]->CheckBtn(TRUE);
+			m_pZkzhExceptionDlg->ShowWindow(SW_HIDE);
+			if (m_pMultiPageExceptionDlg)	m_pMultiPageExceptionDlg->ShowWindow(SW_HIDE);
+			if (m_pLostCornerDlg)
+			{
+				m_pLostCornerDlg->ShowWindow(SW_SHOW);
+				m_pLostCornerDlg->ReInitData(m_pModel, m_pPapers);
 			}
 		}
 	}

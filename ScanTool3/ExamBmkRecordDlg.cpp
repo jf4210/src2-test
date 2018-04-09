@@ -571,7 +571,7 @@ void CExamBmkRecordDlg::OnBnClickedBtnExambmkExportscan()
 					bool bInsertStudent = false;	//当前考生是否已经插入考生姓名、准考证等信息
 					for (auto tmpSubject : _pCurrExam_->lSubjects)	//考试的科目列表，考试的科目数 >= 考生的科目数
 					{
-						std::string strScanStatus;
+						std::string strScanStatus = " ";
 						bool bFindSub = false;	//是否在考生科目列表中找到当前科目，没有就添加空字段
 						for (auto examSubject : objExamStudent.lSubjectScanStatus)	//考生的科目列表
 						{
@@ -675,6 +675,11 @@ void CExamBmkRecordDlg::OnBnClickedBtnExambmkExportscan()
 								}
 								break;
 							}
+						}
+						if (!bFindSub)
+						{
+							strData.append(" ");
+							strData.append("\t\t");
 						}
 					}
 					strData.append("\r\n");

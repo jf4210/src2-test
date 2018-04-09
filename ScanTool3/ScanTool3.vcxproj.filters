@@ -226,6 +226,9 @@
     <Filter Include="模板界面\旧模板制作界面\高级参数设置\系统参数">
       <UniqueIdentifier>{beb75e6a-e899-4c63-8771-2528e2cd5f52}</UniqueIdentifier>
     </Filter>
+    <Filter Include="扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\折角缺角处理">
+      <UniqueIdentifier>{db174657-d22e-4448-913f-0487ad771513}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -579,6 +582,9 @@
     <ClInclude Include="SystemSetDlg.h">
       <Filter>模板界面\旧模板制作界面\高级参数设置\系统参数</Filter>
     </ClInclude>
+    <ClInclude Include="LostCornerDlg.h">
+      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\折角缺角处理</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -886,6 +892,9 @@
     </ClCompile>
     <ClCompile Include="SystemSetDlg.cpp">
       <Filter>模板界面\旧模板制作界面\高级参数设置\系统参数</Filter>
+    </ClCompile>
+    <ClCompile Include="LostCornerDlg.cpp">
+      <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\折角缺角处理</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

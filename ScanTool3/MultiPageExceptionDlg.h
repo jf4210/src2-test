@@ -40,7 +40,8 @@ public:
 	int				m_nPicPagination;		//Í¼Æ¬µÄÒ³Âë
 public:
 	void	SetDlgInfo(CShowPicDlg* pShowDlg, CVagueSearchDlg* pSearchDlg);
-	void	ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo);
+	void	ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo);	
+	bool	ReleaseData();
 private:
 	void	InitData();
 	void	InitUI();

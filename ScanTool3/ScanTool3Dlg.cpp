@@ -653,6 +653,16 @@ BOOL CScanTool3Dlg::StartGuardProcess()
 
 LRESULT CScanTool3Dlg::MsgCmdDlModel(WPARAM wParam, LPARAM lParam)
 {
+	if (_eCurrDlgType_ != DLG_DownloadModle)
+	{
+		TRACE("模板下载-->通知消息，当前窗口%d不属于合法窗口，忽略消息\n", _eCurrDlgType_);
+		USES_CONVERSION;
+		CString strTmp = _T("");
+		strTmp.Format(_T("模板下载-->通知消息，当前窗口%d不属于合法窗口，忽略消息\n"), _eCurrDlgType_);
+		OutputDebugStringA(T2A(strTmp));
+		return 0;
+	}
+
 	g_pLogger->information("获取模板完成");
 	HandleModel();
 	return 1;
@@ -662,6 +672,16 @@ LRESULT CScanTool3Dlg::MsgCmdGetBmk(WPARAM wParam, LPARAM lParam)
 {
 	int nType = wParam;		//0--获取科目报名库完成，1--获取考试报名库完成
 	int nGetBmkResult = lParam;
+	if (_eCurrDlgType_ != DLG_DownloadModle && _eCurrDlgType_ != Dlg_ScanRecordMgr)
+	{
+		TRACE("报名库下载-->通知消息，当前窗口%d不属于合法窗口，忽略消息\n", _eCurrDlgType_);
+		USES_CONVERSION;
+		CString strTmp = _T("");
+		strTmp.Format(_T("报名库下载-->通知消息，当前窗口%d不属于合法窗口，忽略消息\n"), _eCurrDlgType_);
+		OutputDebugStringA(T2A(strTmp));
+		return 0;
+	}
+
 #ifdef NewBmkTest
 	if (nType == 0)
 	{
