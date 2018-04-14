@@ -341,6 +341,7 @@ void CScanTool3Dlg::InitThreads()
 	m_TcpCmdThread = new Poco::Thread;
 	m_pTcpCmdObj = new CTcpClient(g_strCmdIP, g_nCmdPort);
 	m_pTcpCmdObj->SetMainWnd(this);
+	m_TcpCmdThread->setPriority(Poco::Thread::PRIO_HIGH);
 	m_TcpCmdThread->start(*m_pTcpCmdObj);
 
 	m_pCompressThread = new Poco::Thread;

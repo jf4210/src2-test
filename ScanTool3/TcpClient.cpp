@@ -103,6 +103,9 @@ bool CTcpClient::connectServer()
 
 		_bConnect = true;
 		g_bCmdConnect = _bConnect;
+		_nRecvLen = 0;
+		_nWantLen = 0;
+		if (m_pRecvBuff) m_pRecvBuff[0] = '\0';
 		TRACE("连接服务器成功\n"); 
 		std::string strLog = "连接服务器成功\n";
 		TRACE(strLog.c_str());
@@ -133,10 +136,16 @@ bool CTcpClient::receiveData()
 		m_pRecvBuff = new char[1024 + HEAD_SIZE];
 		_nRecvBuffSize = 1024 + HEAD_SIZE;
 	}
+
+	clock_t start, end;
+	start = clock();
+	std::string strTmpLog = "receiveData ==>";
+	OutputDebugStringA(strTmpLog.c_str());
+
 	try
 	{
 #if 1
-		int nLen;
+		int nLen = -1;
 		if (_nRecvLen < nBaseLen)
 		{
 			_nWantLen = nBaseLen - _nRecvLen;
@@ -153,7 +162,7 @@ bool CTcpClient::receiveData()
 					}
 					else
 					{
-						if (pstHead->uPackSize > 1024)	//1024
+						if (pstHead->uPackSize >= 1024)	//1024
 						{
 							char* pOld = m_pRecvBuff;
 							m_pRecvBuff = new char[pstHead->uPackSize + HEAD_SIZE + 1];
@@ -176,6 +185,7 @@ bool CTcpClient::receiveData()
 			ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_pRecvBuff;
 			nBaseLen += pstHead->uPackSize;
 			_nWantLen = nBaseLen - _nRecvLen;
+			int nCount = 0;
 			while (_nWantLen > 0)
 			{
 				nLen = m_ss.receiveBytes(m_pRecvBuff + _nRecvLen, _nWantLen);
@@ -183,6 +193,10 @@ bool CTcpClient::receiveData()
 				{
 					_nRecvLen += nLen;
 					_nWantLen -= nLen;
+
+					strTmpLog = Poco::format("recv data len = %d(%d/%d), nCount = %d", nLen, _nRecvLen, _nWantLen, nCount);
+					OutputDebugStringA(strTmpLog.c_str());
+
 					if (_nRecvLen == nBaseLen)
 					{
 						//完整命令接收完成
@@ -195,8 +209,17 @@ bool CTcpClient::receiveData()
 					TRACE("the peer has closed.\n");
 					return false;
 				}
+				else
+				{
+					nCount++;
+					Poco::Thread::sleep(10);
+				}
 			}
 		}
+
+		end = clock();
+		strTmpLog = Poco::format("receive <==, recvLen = %d, time = %dms, bGetCmd(%d)", _nRecvLen, (int)(end - start), (int)bGetCmd);
+		if(_nRecvLen > 0) OutputDebugStringA(strTmpLog.c_str());
 #else
 		int nLen;
 		if (_nRecvLen < nBaseLen)
@@ -215,7 +238,7 @@ bool CTcpClient::receiveData()
 					}
 					else
 					{
-						if (pstHead->uPackSize > 1024)	//1024
+						if (pstHead->uPackSize >= 1024)	//1024
 						{
 							char* pOld = m_pRecvBuff;
 							m_pRecvBuff = new char[pstHead->uPackSize + HEAD_SIZE + 1];
@@ -289,6 +312,11 @@ bool CTcpClient::receiveData()
 
 void CTcpClient::HandleCmd()
 {
+	clock_t start, end;
+	start = clock();
+	std::string strTmpLog = "HandleCmd ==>";
+	OutputDebugStringA(strTmpLog.c_str());
+
 	ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_pRecvBuff;	//m_pRecvBuff
 	if (pstHead->usCmd == USER_RESPONSE_LOGIN)
 	{
@@ -1278,6 +1306,9 @@ void CTcpClient::HandleCmd()
 			break;
 		}
 	}
+	end = clock();
+	strTmpLog = Poco::format("HandleCmd <==, cmd = %d, time = %dms", (int)pstHead->usCmd, (int)(end - start));
+	OutputDebugStringA(strTmpLog.c_str());
 }
 
 void CTcpClient::HandleTask(pTCP_TASK pTask)

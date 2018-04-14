@@ -39,6 +39,11 @@
 #endif
 
 
+#ifdef _DEBUG
+#pragma comment(lib,"../../lib/debug/NetCtrl.lib")
+#else
+#pragma comment(lib,"../../lib/release/NetCtrl.lib")
+#endif
 
 
 
