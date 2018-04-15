@@ -86,6 +86,29 @@ bool CPapersMgr::SavePapers(pPAPERSINFO pPapers)
 			dlg.DoModal();
 			return bResult;
 		}
+		//多页模式下，检查试卷是否完整，不完整的不允许提交
+		if (_pModel && _pModel->nUsePagination)
+		{
+			bool bFindErr = false;
+			std::string strStudent;
+			for (auto pPaper : pPapers->lPaper)
+			{
+				if (pPaper->lPic.size() != _pModel->vecPaperModel.size())
+				{
+					strStudent = pPaper->strStudentInfo;
+					bFindErr = true;
+					break;
+				}
+			}
+			if (bFindErr)
+			{
+				CNewMessageBox	dlg;
+				std::string strTips = Poco::format("考生(%s)试卷数与模板不一致,请重扫!", strStudent);
+				dlg.setShowInfo(2, 1, strTips);
+				dlg.DoModal();
+				return bResult;
+			}
+		}
 		if (g_nHighSevereMode)
 		{
 			if (pPapers->nMustScanNum != pPapers->lPaper.size())

@@ -140,7 +140,7 @@ bool CTcpClient::receiveData()
 	clock_t start, end;
 	start = clock();
 	std::string strTmpLog = "receiveData ==>";
-	OutputDebugStringA(strTmpLog.c_str());
+	//OutputDebugStringA(strTmpLog.c_str());
 
 	try
 	{
@@ -195,7 +195,7 @@ bool CTcpClient::receiveData()
 					_nWantLen -= nLen;
 
 					strTmpLog = Poco::format("recv data len = %d(%d/%d), nCount = %d", nLen, _nRecvLen, _nWantLen, nCount);
-					OutputDebugStringA(strTmpLog.c_str());
+					//OutputDebugStringA(strTmpLog.c_str());
 
 					if (_nRecvLen == nBaseLen)
 					{

@@ -273,6 +273,8 @@ void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
 			}
 			multiPageObj.ModifyPicZkzh(pPic, m_pPapers, strZkzh);
 
+			multiPageObj.ReNamePaper(static_cast<pST_PaperInfo>(pPic->pPaper));
+
 			CZkzhShowMgrDlg* pDlg = (CZkzhShowMgrDlg*)GetParent();
 			pDlg->ReInitDataFromChildDlg(m_pModel, m_pPapers);
 		}
@@ -293,6 +295,7 @@ void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
 	CMultiPageMgr multiPageObj(_pModel_);
 	if (multiPageObj.ModifyPicZkzh(pPic, m_pPapers, strCurrZkzh))
 	{
+		multiPageObj.ReNamePaper(static_cast<pST_PaperInfo>(pPic->pPaper));
 		CZkzhShowMgrDlg* pDlg = (CZkzhShowMgrDlg*)GetParent();
 		pDlg->ReInitDataFromChildDlg(m_pModel, m_pPapers);
 	}

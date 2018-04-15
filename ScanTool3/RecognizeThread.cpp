@@ -392,6 +392,11 @@ bool CRecognizeThread::HandleScanPicTask(pST_SCAN_PAPER pScanPaperTask)
 			pPic->nPicModelIndex = i;
 			pPic->nPicOldModelIndex = pPic->nPicModelIndex;
 		}
+		std::stringstream ssTmp;
+		ssTmp << "HandleScanPicTask: i = " << i << ", pPic->strPicName = " << pPic->strPicName << "\npScanPic->nOrder = " << pScanPic->nOrder
+			<< ",pScanPaperTask->vecScanPic.size = " << pScanPaperTask->vecScanPic.size() << ",pScanPic->nStudentID = " << pScanPic->nStudentID;
+		OutputDebugStringA(ssTmp.str().c_str());
+
 		if (pScanPic->nOrder == 1)	//(pScanPic->nOrder + 1) % 2 == 0	第1、3、5...页的时候创建新的试卷信息，如果是多页模式时，每一张试卷创建一个考生信息，最后根据准考证号合并考生
 		{
 			char szStudentName[30] = { 0 };

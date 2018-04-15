@@ -507,3 +507,34 @@ void CMultiPageMgr::ReNamePicInPapers(pPAPERSINFO pPapers)
 	_strLog.append(strLog);
 }
 
+void CMultiPageMgr::ReNamePaper(pST_PaperInfo pPaper)
+{
+	std::string strLog;
+	PIC_LIST::iterator itPic = pPaper->lPic.begin();
+	for (; itPic != pPaper->lPic.end(); itPic++)
+	{
+		pST_PicInfo pPic = *itPic;
+		std::string strNewPicName = Poco::format("%s_%d.jpg", pPaper->strStudentInfo, pPic->nPicModelIndex + 1);
+		int nPos = pPic->strPicPath.rfind('\\') + 1;
+		std::string strBasePath = pPic->strPicPath.substr(0, nPos);
+		std::string strNewPath = strBasePath + strNewPicName;
+		if (strNewPicName != pPic->strPicName)
+		{
+			try
+			{
+				Poco::File fNewPic(CMyCodeConvert::Gb2312ToUtf8(pPic->strPicPath));
+				fNewPic.renameTo(CMyCodeConvert::Gb2312ToUtf8(strNewPath));
+				pPic->strPicPath = strNewPath;
+				pPic->strPicName = strNewPicName;
+			}
+			catch (Poco::Exception& exc)
+			{
+				std::string strTmpLog;
+				strTmpLog = Poco::format("原始图片(%s)重命名为(%s)失败, 原因: %s\n", pPic->strPicName, strNewPicName, std::string(exc.what()));
+				strLog.append(strTmpLog);
+			}
+		}
+	}
+	_strLog.append(strLog);
+}
+

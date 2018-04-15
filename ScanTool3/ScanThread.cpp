@@ -2097,13 +2097,27 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 
 	int nStudentId = _nScanCount_ / m_nModelPicNums + 1;
 	int nOrder = _nScanCount_ % m_nModelPicNums + 1;
+	if (_pModel_ && _pModel_->nUsePagination)
+	{
+		m_nModelPicNums = 2;
+		nStudentId = _nScanCount_ / m_nModelPicNums + 1;
+		nOrder = _nScanCount_ % m_nModelPicNums + 1;
+	}
 
 	char szPicName[50] = { 0 };
 	char szPicPath[MAX_PATH] = { 0 };
 	if (m_nNotifyDlgType != 2)
 	{
-		sprintf_s(szPicName, "S%d_%d.jpg", nStudentId, nOrder);
-		sprintf_s(szPicPath, "%s\\S%d_%d.jpg", m_strCurrPicSavePath.c_str(), nStudentId, nOrder);
+		if (_pModel_ && _pModel_->nUsePagination)
+		{
+			sprintf_s(szPicName, "P%d_%d.jpg", nStudentId, nOrder);
+			sprintf_s(szPicPath, "%s\\P%d_%d.jpg", m_strCurrPicSavePath.c_str(), nStudentId, nOrder);
+		}
+		else
+		{
+			sprintf_s(szPicName, "S%d_%d.jpg", nStudentId, nOrder);
+			sprintf_s(szPicPath, "%s\\S%d_%d.jpg", m_strCurrPicSavePath.c_str(), nStudentId, nOrder);
+		}
 	}
 	else
 	{
