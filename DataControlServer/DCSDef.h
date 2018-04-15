@@ -29,7 +29,7 @@
 #define THREAD_INIT_START	//启动时在线程中初始化
 
 #ifndef TO_WHTY
-	#define SOFT_VERSION "DataControlServer V2.80327-1"
+	#define SOFT_VERSION "DataControlServer V2.80414-1"
 	#define SOFT_VERSION4TY "DataControlServer for TY V2.8-0327"
 #else
 	#define SOFT_VERSION "DataControlServer for TY V2.1-0309"
