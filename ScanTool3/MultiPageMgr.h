@@ -19,6 +19,8 @@ public:
 	bool ModifyPicPagination(pST_PicInfo pPic, int nNewPage);
 	//检查试卷袋每个考生的图片，并重命名图片
 	void ReNamePicInPapers(pPAPERSINFO pPapers);
+	//检查试卷的命名，可能出现多页试卷命名不统一的现象
+	void ReNamePaper(pST_PaperInfo pPaper);
 
 private:
 	void ChkPaperValid(pST_PaperInfo pPaper, pMODEL pModel);

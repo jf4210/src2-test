@@ -560,6 +560,19 @@ void CTcpClient::HandleCmd()
 		USES_CONVERSION;
 		switch (pstHead->usResult)
 		{
+			case RESULT_SUCCESS:
+			{
+				char* pBuff = new char[pstHead->uPackSize + 1];
+				pBuff[pstHead->uPackSize] = '\0';
+				strncpy(pBuff, m_pRecvBuff + HEAD_SIZE, pstHead->uPackSize);
+				std::string strResult = CMyCodeConvert::Utf8ToGb2312(pBuff);
+
+				OutputDebugStringA(strResult.c_str());
+
+				SAFE_RELEASE_ARRY(pBuff);
+				return;
+			}
+			break;
 			case RESULT_DOWNMODEL_RECV:
 			{
 				std::string strLog = "收到服务器发送的模板数据，开始写文件: " + _pCurrSub_->strModelName + "\n";
@@ -772,6 +785,13 @@ void CTcpClient::HandleCmd()
 		std::string strResult = CMyCodeConvert::Utf8ToGb2312(pBuff);
 		switch (pstHead->usResult)
 		{
+			case RESULT_SUCCESS:
+			{
+				OutputDebugStringA(strResult.c_str());
+				SAFE_RELEASE_ARRY(pBuff);
+				return;
+			}
+			break;
 			case RESULT_GET_BMK_SUCCESS:
 			{
 				Poco::JSON::Parser parser;

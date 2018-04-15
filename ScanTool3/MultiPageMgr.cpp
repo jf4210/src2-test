@@ -507,3 +507,8 @@ void CMultiPageMgr::ReNamePicInPapers(pPAPERSINFO pPapers)
 	_strLog.append(strLog);
 }
 
+void CMultiPageMgr::ReNamePaper(pST_PaperInfo pPaper)
+{
+
+}
+
