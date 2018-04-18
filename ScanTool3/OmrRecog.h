@@ -64,7 +64,7 @@ protected:
 
 
 	int			GetRectsInArea(cv::Mat& matSrc, RECTINFO rc, int nMinW, int nMaxW, int nMinH, int nMaxH, int nFindContoursModel = CV_RETR_EXTERNAL);	//获取给定区域内的矩形数量
-	
+	std::string GetQR(cv::Mat img, std::string& strTypeName);	//获取准考证号，根据准考证号来判断正反、方向
 private:
 	//*********************************
 	//*********	测试结论 **************
@@ -89,7 +89,7 @@ public:
 	std::string GetLog();
 	void AdjustScanPaperToModel(pST_SCAN_PAPER pScanPaperTask);	//将扫描的图片调整到和模板一致(正反、方向)
 	void SaveScanPaperPic(pST_SCAN_PAPER pScanPaperTask);
-	bool RecogPanination(pST_SCAN_PAPER pScanPaperTask);
+	bool RecogPagination(pST_SCAN_PAPER pScanPaperTask);
 
 private:
 	std::string _strLog;

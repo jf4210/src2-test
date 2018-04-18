@@ -466,7 +466,10 @@ void CMultiPageMgr::ChkPaperValid(pST_PaperInfo pPaper, pMODEL pModel)
 			nLastPicIndex = pPic->nPicModelIndex;
 		}
 		if (!bFind)
+		{
 			pPaper->nPaginationStatus = 2;
+			pPaper->bRecogComplete = true;
+		}
 	}
 }
 

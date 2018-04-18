@@ -495,7 +495,7 @@ bool CRecognizeThread::HandleTask(pRECOGTASK pTask)
 		TRACE("----->设置试卷(%s)识别完成\n", pTask->pPaper->strStudentInfo.c_str());
 		pTask->pPaper->bRecogComplete = true;
 	}
-	if(g_lScanPaperTask.size() == 0 && g_lRecogTask.size() == 0)	//整袋都识别完成后，合并扫描试卷
+	if(g_lScanPaperTask.size() == 0 && g_lRecogTask.size() == 0 && _nScanStatus_ != 1)	//整袋都识别完成后，合并扫描试卷
 		MergeScanPaper(static_cast<pPAPERSINFO>(pTask->pPaper->pPapers), pModelInfo->pModel);
 
 	return true;
@@ -4975,6 +4975,7 @@ void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
 	}
 	if (!bRecogComplete) return ;
 
+	TRACE("开始进行试卷合并。。。\n");
 	//多页模式时，每个考生的试卷可能是乱的，需要把每张试卷的合并到对应考生
 	pPAPERSINFO pNewPapers = new PAPERSINFO();
 	pNewPapers->strPapersName = pPapers->strPapersName;
@@ -5217,7 +5218,7 @@ bool CRecognizeThread::RecogPagination(pST_SCAN_PAPER pScanPaperTask, pMODEL pMo
 			sT1 = clock();
 
 			RECTLIST lFixResult;
-			RecogFixCP2(i, pScanPic->mtPic, NULL, pModel, lFixResult);
+			RecogFixCP2(j, pScanPic->mtPic, NULL, pModel, lFixResult);
 			sT2 = clock();
 		#if 1
 			if (lFixResult.size() == 0)

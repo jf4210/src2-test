@@ -24,7 +24,7 @@
 	#define PrintAllOmrVal		//打印所有OMR选项值
 	#define PrintWordRecogPoint		//打印通过文字定位时计算出来的矩形坐标点位置
 //	#define Test_ShowOriPosition	//测试打印模板坐标对应的原图坐标位置
-	#define Test_Data			//测试数据，测试模式
+//	#define Test_Data			//测试数据，测试模式
 //	#define TEST_TIP_SHOW		//提示信息显示测试
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
 	#define TEST_PAPERS_INPUT	//试卷袋导入功能测试
@@ -33,7 +33,7 @@
 	#define TEST_GRAY_WHITE		//空白处灰度测试
 //	#define TEST_FAST_SCAN		//快速扫描模式，在扫描线程中不写文件
 	#define TEST_PAGINATION		//页码测试，多页试卷的情况，多页A3、A4
-	
+
 	#ifdef TEST_PAGINATION
 		#define	TEST_EXCEPTION_DLG	//新的异常处理窗口测试
 	#else
@@ -50,7 +50,7 @@
 	#define TEST_MODEL_ROTATION	//模板旋转测试
 //	#define USE_TESSERACT		//使用Tesseract进行数字汉字识别
 
-// 	#define TEST_PAPERS_INPUT	//试卷袋导入功能测试
+ 	#define TEST_PAPERS_INPUT	//试卷袋导入功能测试
  	#define TEST_PAGINATION		//页码测试，多页试卷的情况，多页A3、A4
 	#ifdef TEST_PAGINATION
 		#define	TEST_EXCEPTION_DLG	//新的异常处理窗口测试
@@ -98,9 +98,9 @@
 
 #ifndef TO_WHTY
 	#ifdef PUBLISH_VERSION
-		#define SOFT_VERSION	_T("v2.8")
+		#define SOFT_VERSION	_T("v2.9")
 	#else
-		#define SOFT_VERSION	_T("v2.8")		//-Pri
+		#define SOFT_VERSION	_T("v2.9")		//-Pri
 	#endif
 #else
 	#define SOFT_VERSION	_T("v2.1")

@@ -270,6 +270,8 @@ void CMultiPageExceptionDlg::SetPicInfo(pST_PicInfo pPic)
 					}
 				}
 				strZkzh = pPic->strPicZKZH;
+				if(pCurrentPaper->lSrcScanPaper.size() == 1)
+					pCurrentPaper->strSN = "";	//¡Ÿ ±÷√ø’£¨
 			}
 			multiPageObj.ModifyPicZkzh(pPic, m_pPapers, strZkzh);
 

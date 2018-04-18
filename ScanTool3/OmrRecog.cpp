@@ -442,7 +442,8 @@ cv::Mat COmrRecog::GetRotMat(RECTLIST lFixRealPic, RECTLIST lFixModelPic)
 		}
 		cv::Point2f srcTri[3];
 		cv::Point2f dstTri[3];
-		cv::Mat rot_mat(2, 3, CV_32FC1);
+		//cv::Mat rot_mat(2, 3, CV_32FC1);
+		cv::Mat rot_mat;
 		for (int i = 0; i < vecFixPt.size(); i++)
 		{
 			srcTri[i] = vecFixNewPt[i];
@@ -450,11 +451,13 @@ cv::Mat COmrRecog::GetRotMat(RECTLIST lFixRealPic, RECTLIST lFixModelPic)
 		}
 		try
 		{
-			rot_mat = cv::getAffineTransform(srcTri, dstTri);
-
-			//反向计算模板上点对应的实际图像的点
-			cv::Mat rot_mat_inv = rot_mat.inv();	//逆矩阵
-			matResult = rot_mat_inv;
+			rot_mat = cv::getAffineTransform(dstTri, srcTri);
+			matResult = rot_mat;
+// 			rot_mat = cv::getAffineTransform(srcTri, dstTri);
+// 
+// 			//反向计算模板上点对应的实际图像的点
+// 			cv::Mat rot_mat_inv = rot_mat.inv();	//逆矩阵
+// 			matResult = rot_mat_inv;
 		}
 		catch (cv::Exception& exc)
 		{
@@ -2425,6 +2428,30 @@ int COmrRecog::GetRectsInArea(cv::Mat& matSrc, RECTINFO rc, int nMinW, int nMaxW
 	return RectCompList.size();
 }
 
+std::string COmrRecog::GetQR(cv::Mat img, std::string& strTypeName)
+{
+	std::string result;
+	result = GetQRInBinImg(img, strTypeName);
+	if (!result.empty())
+		return result;
+
+	cv::Mat binImg;
+	//在otsu二值结果的基础上，不断增加阈值，用于识别模糊图像
+	int thre = threshold(img, binImg, 0, 255, cv::THRESH_OTSU);
+	while (result.empty() && thre < 210)	//超过210，则认为识别不了，减少识别次数，降低每次识别的时间
+	{
+		clock_t sTime, eTime;
+		sTime = clock();
+		threshold(img, binImg, thre, 255, cv::THRESH_BINARY);
+		result = GetQRInBinImg(binImg, strTypeName);
+		thre += 20;//阈值步长设为20，步长越大，识别率越低，速度越快
+		eTime = clock();
+		TRACE("判断图像正反、方向-->GetQR：%d, time = %dms\n", thre - 20, eTime - sTime);
+		break;		//最多判断2次
+	}
+	return result;
+}
+
 bool COmrRecog::IsFirstPic(int nPic, cv::Mat& matCompPic, pMODEL pModel)
 {
 	bool bResult = false;
@@ -2457,7 +2484,9 @@ bool COmrRecog::IsFirstPic(int nPic, cv::Mat& matCompPic, pMODEL pModel)
 
 		if (!bResult)
 		{
-			_strLog.append("通过条形码或二维码判断试卷是否为第一面失败\n");
+			eTime = clock();
+			std::string strTime = Poco::format("%dms\n", (int)(eTime - sTime));
+			_strLog.append("通过条形码或二维码判断试卷是否为第一面失败," + strTime);
 
 			//使用条码时，需要找一种方法判断属于条码，如直线
 		}
@@ -2607,13 +2636,28 @@ void CAdjustPaperPic::AdjustScanPaperToModel(pST_SCAN_PAPER pScanPaperTask)
 			}
 
 			mT1 = clock();
-			bool bResult = IsFirstPic(i, pScanPic->mtPic, _pModel_);
-			ssLog << GetRecogLog();
+			bool bResult = false;
+			int k = 0;
+			if (pScanPaperTask->bDoubleScan)
+			{
+				while (k < _pModel_->vecPaperModel.size())
+				{
+					bResult = IsFirstPic(k, pScanPic->mtPic, _pModel_);
+					ssLog << "根据模板的第" << k + 1 << "页判断正反面: \n" << GetRecogLog();
+					if (bResult) break;
+					k += 2;
+				}
+			}
+			else
+			{
+				ssLog << "单面扫描模式，不需要判断正反\n";
+				bResult = true;
+			}
 			mT2 = clock();
 
 			if (bResult)
 			{
-				int nFrontPage = floor(i / 2) * 2;
+				int nFrontPage = floor(k / 2) * 2; // floor(i / 2) * 2;
 				if (i % 2 == 0)
 				{
 					//第1页为正面，第2页可以不需要判断
@@ -2623,7 +2667,7 @@ void CAdjustPaperPic::AdjustScanPaperToModel(pST_SCAN_PAPER pScanPaperTask)
 
 					clock_t sT, eT1, eT2;
 					sT = clock();
-					int nResult1 = GetRightPicOrientation(pScanPic->mtPic, i, pScanPaperTask->bDoubleScan);
+					int nResult1 = GetRightPicOrientation(pScanPic->mtPic, k, pScanPaperTask->bDoubleScan);
 					eT1 = clock();
 					ssLog << "新图像" << pScanPic->strPicName << "方向调整: " << nResult1 << "(1:不需要旋转，2：右转90, 3：左转90, 4：右转180). " << (int)(eT1 - sT) << "ms\n";
 
@@ -2684,7 +2728,7 @@ void CAdjustPaperPic::AdjustScanPaperToModel(pST_SCAN_PAPER pScanPaperTask)
 						//}
 
 						sT = clock();
-						int nResult2 = GetRightPicOrientation(pPreviousPic->mtPic, i, bDoubleScan);
+						int nResult2 = GetRightPicOrientation(pPreviousPic->mtPic, nFrontPage + 1, bDoubleScan);
 						eT1 = clock();
 						ssLog << "新图像" << pPic2->strPicName << "方向调整: " << nResult2 << "(1:不需要旋转，2：右转90, 3：左转90, 4：右转180). " << (int)(eT1 - sT) << "ms\n";
 
@@ -2742,7 +2786,7 @@ void CAdjustPaperPic::SaveScanPaperPic(pST_SCAN_PAPER pScanPaperTask)
 	_strLog.append(ssLog.str());
 }
 
-bool CAdjustPaperPic::RecogPanination(pST_SCAN_PAPER pScanPaperTask)
+bool CAdjustPaperPic::RecogPagination(pST_SCAN_PAPER pScanPaperTask)
 {
 	bool bResult = false;
 

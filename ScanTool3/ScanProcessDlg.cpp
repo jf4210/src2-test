@@ -1503,7 +1503,7 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 		bool bRecogComplete = true;
 		for (auto p : _pCurrPapersInfo_->lPaper)
 		{
-			if (!p->bRecogComplete)
+			if (!p->bRecogComplete && !p->bModifyPagination)
 			{
 				bRecogComplete = false;
 				break;
@@ -1530,7 +1530,7 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	//***	注意：如果不在报名库中的同时报名库不空的也要允许修改	********	2017.6.4
 	if ((/*g_nOperatingMode == 1 ||*/ g_bModifySN) && _pModel_ && pItemPaper && \
 		(pItemPaper->strSN.empty() || pItemPaper->bModifyZKZH || pItemPaper->bReScan || (_bGetBmk_ && pItemPaper->nZkzhInBmkStatus != 1) || pItemPaper->nPicsExchange != 0 || \
-		 !pItemPaper->bRecogCourse))
+		 !pItemPaper->bRecogCourse || pItemPaper->bModifyPagination))
 	{
 		if (!m_pStudentMgr)
 		{
@@ -1594,6 +1594,8 @@ void CScanProcessDlg::OnTimer(UINT_PTR nIDEvent)
 		{
 			USES_CONVERSION;
 			//++重新刷新一遍列表
+			if (_pModel_->nUsePagination)
+				ReShowCurrPapers();
 			int nCount = m_lcPicture.GetItemCount();
 			for (int i = 0; i < nCount; i++)
 			{
