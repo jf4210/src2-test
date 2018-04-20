@@ -27,8 +27,10 @@ public:
 		nDefPersentOmr = 100;
 
 		nChkLostCorner = 0;
-		nUseRectFit = 0;
-		nRectFitInterval = 5;
+		nUseRectFit_SN = 0;
+		nUseRectFit_Omr = 0;
+		nRectFitInterval_SN = 5;
+		nRectFitInterval_Omr = 2;
 	}
 public:
 	int nCurrentZkzhSensitivity;
@@ -72,8 +74,10 @@ public:
 	int			nUsePagination;		//使用页码，针对多页试卷的情况
 
 	int	nChkLostCorner;		//缺角检测
-	int nUseRectFit;		//使用矩形拟合
-	int nRectFitInterval;	//矩形拟合的间隔阈值
+	int nUseRectFit_SN;		//准考证号使用矩形拟合
+	int nUseRectFit_Omr;	//选择题使用矩形拟合
+	int nRectFitInterval_SN;	//矩形拟合的间隔阈值
+	int nRectFitInterval_Omr;	//矩形拟合的间隔阈值
 };
 
 class CAdanceSetMgrDlg : public CTipBaseDlg

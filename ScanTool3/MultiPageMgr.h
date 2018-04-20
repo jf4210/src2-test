@@ -11,7 +11,9 @@ public:
 	void MergePaper(pST_PaperInfo pSrcPaper, pST_PaperInfo pDstPaper);
 	//合并图片到新试卷，试卷的准考证号不能为空，原试卷的部分图片合并到新试卷
 	void MergePic(pST_PaperInfo pSrcPaper, pST_PicInfo pSrcPic, pST_PaperInfo pDstPaper);
-	
+	//检查并合并试卷袋里面的所有同考号的试卷
+	bool MergePapers(pPAPERSINFO pPapers);
+
 	//修改图片的准考证号，再进行图片合并
 	bool ModifyPicZkzh(pST_PicInfo pPic, pPAPERSINFO pPapers, std::string strZKZH);
 	//修改页码, 页码从1开始，注意不能设置已经存在的页码

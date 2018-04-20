@@ -505,12 +505,36 @@ void CMultiPageExceptionDlg::ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo)
 	m_nCurrentPaperID = 0;
 	m_nCurrentPicID = 0;
 
+	CMultiPageMgr multiPageObj(_pModel_);
+	if(multiPageObj.MergePapers(pPapersInfo))
+	{
+		CZkzhShowMgrDlg* pDlg = (CZkzhShowMgrDlg*)GetParent();		//试卷袋如果有试卷合并，必须通知其他窗口进行数据修改
+		pDlg->ReInitDataFromChildDlg(m_pModel, m_pPapers);
+	}	
+
 	InitData();
 	UpdateData(FALSE);
 }
 
 bool CMultiPageExceptionDlg::ReleaseData()
 {
+	if (m_lcIssuePaper.GetItemCount())
+	{
+		for (int i = 0; i < m_lcIssuePaper.GetItemCount(); i++)
+		{
+			pST_PaperInfo pPaper = (pST_PaperInfo)m_lcIssuePaper.GetItemData(i);
+			if (pPaper->nPaginationStatus != 2 && !pPaper->bReScan)
+			{
+				CNewMessageBox	dlg;
+				dlg.setShowInfo(2, 2, "存在页码异常的试卷，是否忽略？");
+				dlg.DoModal();
+				if (dlg.m_nResult != IDYES)
+					return false;
+				else
+					break;
+			}
+		}
+	}
 	return true;
 }
 

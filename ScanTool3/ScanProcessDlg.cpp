@@ -919,7 +919,9 @@ void CScanProcessDlg::ShowPapers(pPAPERSINFO pPapers)
 		sprintf_s(szCount, "%d", pPaper->nIndex);	//nCount + 1
 		m_lcPicture.InsertItem(nCount, NULL);
 		m_lcPicture.SetItemText(nCount, 0, (LPCTSTR)A2T(szCount));
-		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str()));
+		m_lcPicture.SetItemText(nCount, 1, (LPCTSTR)A2T(pPaper->strSN.c_str())); 
+		if (pPaper->bModifyPagination)
+			m_lcPicture.SetItemColors(nCount, 1, RGB(255, 255, 0), RGB(255, 255, 255));
 		if (pPaper->bModifyZKZH)
 			m_lcPicture.SetItemColors(nCount, 1, RGB(0, 0, 255), RGB(255, 255, 255));
 		if (pPaper->nZkzhInBmkStatus != 1 && _bGetBmk_)	//不在报名库中、重号

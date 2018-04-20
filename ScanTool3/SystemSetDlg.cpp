@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CSystemSetDlg, CDialog)
 
 CSystemSetDlg::CSystemSetDlg(CWnd* pParent /*=NULL*/)
 	: CBaseTabDlg(IDD_SYSTEMSETDLG, pParent)
-	, m_nChkLostCorner(0), m_nRectFitInterval(4), m_nUseRectFit(0)
+	, m_nChkLostCorner(0), m_nRectFitInterval_SN(4), m_nUseRectFit_SN(0), m_nUseRectFit_Omr(0), m_nRectFitInterval_Omr(2)
 {
 
 }
@@ -26,8 +26,10 @@ void CSystemSetDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CBaseTabDlg::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_CHK_LostCorner, m_chkLostCorner);
-	DDX_Control(pDX, IDC_Chk_UseRectFit, m_chkUseRectFit);
-	DDX_Text(pDX, IDC_EDIT_RectFit, m_nRectFitInterval);
+	DDX_Control(pDX, IDC_Chk_UseRectFit_SN, m_chkUseRectFit_SN);
+	DDX_Text(pDX, IDC_EDIT_RectFit_SN, m_nRectFitInterval_SN);
+	DDX_Control(pDX, IDC_Chk_UseRectFit_Omr, m_chkUseRectFit_Omr);
+	DDX_Text(pDX, IDC_EDIT_RectFit_Omr, m_nRectFitInterval_Omr);
 }
 
 
@@ -35,7 +37,10 @@ BEGIN_MESSAGE_MAP(CSystemSetDlg, CBaseTabDlg)
 	ON_WM_ERASEBKGND()
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_CHK_LostCorner, &CSystemSetDlg::OnBnClickedChkLostcorner)
-	ON_BN_CLICKED(IDC_Chk_UseRectFit, &CSystemSetDlg::OnBnClickedChkUserectfit)
+	ON_BN_CLICKED(IDC_Chk_UseRectFit_SN, &CSystemSetDlg::OnBnClickedChkUserectfit)
+	ON_BN_CLICKED(IDC_Chk_UseRectFit_Omr, &CSystemSetDlg::OnBnClickedChkUserectfitOmr)
+	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_RectFit_ZKZH, &CSystemSetDlg::OnDeltaposSpinRectfitZkzh)
+	ON_NOTIFY(UDN_DELTAPOS, IDC_SPIN_RectFit_Omr, &CSystemSetDlg::OnDeltaposSpinRectfitOmr)
 END_MESSAGE_MAP()
 
 
@@ -87,7 +92,7 @@ HBRUSH CSystemSetDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	HBRUSH hbr = CBaseTabDlg::OnCtlColor(pDC, pWnd, nCtlColor);
 	
 	UINT CurID = pWnd->GetDlgCtrlID();
-	if (CurID == IDC_CHK_LostCorner || CurID == IDC_Chk_UseRectFit)
+	if (CurID == IDC_CHK_LostCorner || CurID == IDC_Chk_UseRectFit_SN || CurID == IDC_Chk_UseRectFit_Omr)
 	{
 		HBRUSH hMYbr = ::CreateSolidBrush(RGB(255, 255, 255));	//62, 147, 254
 
@@ -107,10 +112,14 @@ void CSystemSetDlg::InitData(AdvanceParam& stParam)
 {
 	m_nChkLostCorner = stParam.nChkLostCorner;
 	m_chkLostCorner.SetCheck(m_nChkLostCorner);
-	m_nUseRectFit = stParam.nUseRectFit;
-	m_chkUseRectFit.SetCheck(m_nUseRectFit);
-	m_nRectFitInterval = stParam.nRectFitInterval;
-	GetDlgItem(IDC_EDIT_RectFit)->EnableWindow(m_nUseRectFit);
+	m_nUseRectFit_SN = stParam.nUseRectFit_SN;
+	m_chkUseRectFit_SN.SetCheck(m_nUseRectFit_SN);
+	m_nUseRectFit_Omr = stParam.nUseRectFit_Omr;
+	m_chkUseRectFit_Omr.SetCheck(m_nUseRectFit_Omr);
+	m_nRectFitInterval_SN = stParam.nRectFitInterval_SN;
+	m_nRectFitInterval_Omr = stParam.nRectFitInterval_Omr;
+	GetDlgItem(IDC_EDIT_RectFit_SN)->EnableWindow(m_nUseRectFit_SN);
+	GetDlgItem(IDC_EDIT_RectFit_Omr)->EnableWindow(m_nUseRectFit_Omr);
 
 	UpdateData(FALSE);
 }
@@ -119,8 +128,10 @@ BOOL CSystemSetDlg::SaveParamData(AdvanceParam& stParam)
 {
 	UpdateData(TRUE);
 	stParam.nChkLostCorner = m_nChkLostCorner;
-	stParam.nUseRectFit = m_nUseRectFit;
-	stParam.nRectFitInterval = m_nRectFitInterval;
+	stParam.nUseRectFit_SN = m_nUseRectFit_SN;
+	stParam.nRectFitInterval_SN = m_nRectFitInterval_SN;
+	stParam.nUseRectFit_Omr = m_nUseRectFit_Omr;
+	stParam.nRectFitInterval_Omr = m_nRectFitInterval_Omr;
 	return TRUE;
 }
 
@@ -132,6 +143,57 @@ void CSystemSetDlg::OnBnClickedChkLostcorner()
 
 void CSystemSetDlg::OnBnClickedChkUserectfit()
 {
-	m_nUseRectFit = m_chkUseRectFit.GetCheck();
-	GetDlgItem(IDC_EDIT_RectFit)->EnableWindow(m_nUseRectFit);
+	m_nUseRectFit_SN = m_chkUseRectFit_SN.GetCheck();
+	GetDlgItem(IDC_EDIT_RectFit_SN)->EnableWindow(m_nUseRectFit_SN);
+}
+
+
+void CSystemSetDlg::OnBnClickedChkUserectfitOmr()
+{
+	m_nUseRectFit_Omr = m_chkUseRectFit_Omr.GetCheck();
+	GetDlgItem(IDC_EDIT_RectFit_Omr)->EnableWindow(m_nUseRectFit_Omr);
+}
+
+
+void CSystemSetDlg::OnDeltaposSpinRectfitZkzh(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMUPDOWN pNMUpDown = reinterpret_cast<LPNMUPDOWN>(pNMHDR);
+	*pResult = 0;
+
+	UpdateData(true);
+	if (pNMUpDown->iDelta == 1) // 如果此值为-1 , 说明点击了Spin的往下的箭头  
+	{
+		m_nRectFitInterval_SN--;
+		if (m_nRectFitInterval_SN < 1)
+			m_nRectFitInterval_SN = 1;
+	}
+	else if (pNMUpDown->iDelta == -1) // 如果此值为1, 说明点击了Spin的往上的箭头  
+	{
+		m_nRectFitInterval_SN++;
+		if (m_nRectFitInterval_SN > 10)
+			m_nRectFitInterval_SN = 10;
+	}
+	UpdateData(false);
+}
+
+
+void CSystemSetDlg::OnDeltaposSpinRectfitOmr(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMUPDOWN pNMUpDown = reinterpret_cast<LPNMUPDOWN>(pNMHDR);
+	*pResult = 0;
+
+	UpdateData(true);
+	if (pNMUpDown->iDelta == 1) // 如果此值为-1 , 说明点击了Spin的往下的箭头  
+	{
+		m_nRectFitInterval_Omr--;
+		if (m_nRectFitInterval_Omr < 1)
+			m_nRectFitInterval_Omr = 1;
+	}
+	else if (pNMUpDown->iDelta == -1) // 如果此值为1, 说明点击了Spin的往上的箭头  
+	{
+		m_nRectFitInterval_Omr++;
+		if (m_nRectFitInterval_Omr > 10)
+			m_nRectFitInterval_Omr = 10;
+	}
+	UpdateData(false);
 }

@@ -50,7 +50,7 @@
 	#define TEST_MODEL_ROTATION	//模板旋转测试
 //	#define USE_TESSERACT		//使用Tesseract进行数字汉字识别
 
- 	#define TEST_PAPERS_INPUT	//试卷袋导入功能测试
+ //	#define TEST_PAPERS_INPUT	//试卷袋导入功能测试
  	#define TEST_PAGINATION		//页码测试，多页试卷的情况，多页A3、A4
 	#ifdef TEST_PAGINATION
 		#define	TEST_EXCEPTION_DLG	//新的异常处理窗口测试

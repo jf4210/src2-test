@@ -84,7 +84,7 @@ void CZkzhShowMgrDlg::InitUI()
 		{
 			for (auto paper : m_pPapers->lPaper)
 			{
-				if (paper->nPaginationStatus != 2)
+				if (paper->nPaginationStatus != 2 || paper->bModifyPagination)
 				{
 					bNeedShowPage = true;
 					break;
@@ -111,17 +111,20 @@ void CZkzhShowMgrDlg::InitUI()
 			}
 		}
 	}
-	bool bShowLostCornerDlg = true;
-// 	for (auto pPaper : m_pPapers->lPaper)
-// 	{
-// 		for (auto pPic : pPaper->lPic)
-// 			if (pPic->lLostCorner.size())
-// 			{
-// 				bShowLostCornerDlg = true;
-// 				break;
-// 			}
-// 		if(bShowLostCornerDlg) break;
-// 	}
+	bool bShowLostCornerDlg = false;
+	if (m_pPapers)
+	{
+		for (auto pPaper : m_pPapers->lPaper)
+		{
+			for (auto pPic : pPaper->lPic)
+				if (pPic->lLostCorner.size())
+				{
+					bShowLostCornerDlg = true;
+					break;
+				}
+			if (bShowLostCornerDlg) break;
+		}
+	}
 	if (bShowLostCornerDlg)
 	{
 		char szBtnName[20] = { 0 };
@@ -235,6 +238,10 @@ void CZkzhShowMgrDlg::InitData()
 
 bool CZkzhShowMgrDlg::ReleaseData()
 {
+	//先检测页码里面是否存在异常试卷，存在则先确定是否忽略，要不然的话，先判断zkzh异常则可能出现准考证号异常界面已经释放，但是页码不释放的情况
+	if (m_pMultiPageExceptionDlg && !m_pMultiPageExceptionDlg->ReleaseData())
+		return false;
+
 	if (m_pZkzhExceptionDlg)
 	{
 		if (!m_pZkzhExceptionDlg->ReleaseData())
@@ -243,7 +250,7 @@ bool CZkzhShowMgrDlg::ReleaseData()
 		SAFE_RELEASE(m_pZkzhExceptionDlg);
 	}
 	if (m_pMultiPageExceptionDlg)
-	{
+	{		
 		m_pMultiPageExceptionDlg->DestroyWindow();
 		SAFE_RELEASE(m_pMultiPageExceptionDlg);
 	}

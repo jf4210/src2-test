@@ -167,8 +167,10 @@ public:
 	int m_nThreshold_DefSn;			//默认ZKZH二值化识别阀值
 	int m_nThreshold_DefOmr;		//默认OMR二值化识别阀值
 	
-	bool m_bUseRectFit;		//是否使用矩形拟合，对相邻矩形在一定范围内，则合为一个大矩形
-	int m_nRectFitInterval;	//矩形拟合的间隔阈值
+	bool m_bUseRectFit_SN;		//是否使用矩形拟合，对相邻矩形在一定范围内，则合为一个大矩形
+	int m_nRectFitInterval_SN;	//矩形拟合的间隔阈值
+	bool m_bUseRectFit_Omr;		//是否使用矩形拟合，对相邻矩形在一定范围内，则合为一个大矩形
+	int m_nRectFitInterval_Omr;	//矩形拟合的间隔阈值
 
 	CString m_strModelPicPath;	
 	HZIP hz;					//压缩

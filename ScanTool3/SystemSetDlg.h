@@ -22,11 +22,14 @@ public:
 #endif
 
 	int		m_nChkLostCorner;
-	int		m_nUseRectFit;
+	int		m_nUseRectFit_SN;
+	int		m_nUseRectFit_Omr;
 
 	CButton		m_chkLostCorner;	//缺角检测
-	CButton		m_chkUseRectFit;	//使用矩形拟合
-	int		m_nRectFitInterval;
+	CButton		m_chkUseRectFit_SN;	//使用矩形拟合
+	CButton		m_chkUseRectFit_Omr;
+	int		m_nRectFitInterval_SN;
+	int		m_nRectFitInterval_Omr;
 
 
 	void	InitData(AdvanceParam& stParam);
@@ -45,4 +48,7 @@ public:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnBnClickedChkLostcorner();
 	afx_msg void OnBnClickedChkUserectfit();
+	afx_msg void OnBnClickedChkUserectfitOmr();
+	afx_msg void OnDeltaposSpinRectfitZkzh(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnDeltaposSpinRectfitOmr(NMHDR *pNMHDR, LRESULT *pResult);
 };

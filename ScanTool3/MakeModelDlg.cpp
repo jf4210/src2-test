@@ -34,7 +34,7 @@ CMakeModelDlg::CMakeModelDlg(pMODEL pModel /*= NULL*/, CWnd* pParent /*=NULL*/)
 	, m_nWhiteVal(225), m_nHeadVal(150), m_nPaginationVal(150), m_nABModelVal(150), m_nCourseVal(150), m_nQK_CPVal(150), m_nWJ_CPVal(150), m_nGrayVal(150), m_nFixVal(150), m_nOMR(230), m_nSN(200), m_nCharacterThreshold(150), m_nThreshold_DefSn(150), m_nThreshold_DefOmr(150), m_nCharacterConfidence(60)
 	, m_fHeadThresholdPercent(0.75), m_fPaginationThresholdPercent(0.75), m_fABModelThresholdPercent(0.75), m_fCourseThresholdPercent(0.75), m_fQK_CPThresholdPercent_Fix(1.5), m_fWJ_CPThresholdPercent_Fix(1.5), m_fQK_CPThresholdPercent_Head(1.2), m_fWJ_CPThresholdPercent_Head(1.2), m_fFixThresholdPercent(0.80)
 	, m_fGrayThresholdPercent(0.75), m_fWhiteThresholdPercent(0.75), m_fOMRThresholdPercent_Fix(1.5), m_fSNThresholdPercent_Fix(1.5), m_fOMRThresholdPercent_Head(1.2), m_fSNThresholdPercent_Head(1.2)
-	, m_pCurRectInfo(NULL), m_bUseRectFit(true), m_nRectFitInterval(5)
+	, m_pCurRectInfo(NULL), m_bUseRectFit_SN(true), m_nRectFitInterval_SN(5), m_bUseRectFit_Omr(true), m_nRectFitInterval_Omr(2)
 	, m_bFistHTracker(true), m_bFistVTracker(true), m_bFistSNTracker(true)
 	, m_pRecogInfoDlg(NULL), m_pOmrInfoDlg(NULL), m_pSNInfoDlg(NULL), m_pElectOmrDlg(NULL)
 	, m_bShiftKeyDown(false)/*, m_pScanThread(NULL)*/
@@ -1874,7 +1874,7 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 	CvSeq* contour = 0;
 
 	//提取轮廓  
-	if(m_eCurCPType == SN)
+	if(m_eCurCPType == SN && m_bUseRectFit_SN)
 		cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
 	else
 		cvFindContours(&ipl_img, storage, &contour, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);	//CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE
@@ -6797,13 +6797,14 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 	int nInterval = 9;	//默认属于同一行或者同一列的间隔值
 
 	//矩形拟合
-	if (m_bUseRectFit)
+	if (m_bUseRectFit_SN)
 	{
-		m_nRectFitInterval = m_nRectFitInterval > nInterval ? nInterval : m_nRectFitInterval;
-		int nFitInterval = m_nRectFitInterval;
+		m_nRectFitInterval_SN = m_nRectFitInterval_SN > nInterval ? nInterval : m_nRectFitInterval_SN;
+		int nFitInterval = m_nRectFitInterval_SN;
 		std::vector<cv::Rect>::iterator itFirst = rcList.begin();
-		for (; itFirst != rcList.end(); itFirst++)
+		for (; itFirst != rcList.end(); )
 		{
+			bool bFind = false;
 			std::vector<cv::Rect>::iterator itNext = itFirst + 1;
 			for (; itNext != rcList.end();)
 			{
@@ -6846,17 +6847,21 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 						int nMinY = pt1.y < pt5.y ? pt1.y : pt5.y;
 						int nMaxX = pt2.x > pt6.x ? pt2.x : pt6.x;
 						int nMaxY = pt2.y > pt6.y ? pt2.y : pt6.y;
-						*itFirst = cv::Rect(cv::Point(nMinX, nMinY), cv::Point(nMaxX, nMaxY));
+						*itNext = cv::Rect(cv::Point(nMinX, nMinY), cv::Point(nMaxX, nMaxY));
 						bFit = true;
 					}
 				}
 				if (bFit)
 				{
-					itNext = rcList.erase(itNext);
+					bFind = true;
+					itFirst = rcList.erase(itFirst);
+					itNext = itFirst + 1;
 				}
 				else
 					itNext++;
 			}
+			if (!bFind)
+				itFirst++;
 		}
 	}
 
@@ -7142,10 +7147,76 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 	int nInterval = 9;	//默认属于同一行或者同一列的间隔值
 
 	//矩形拟合
-	if (m_bUseRectFit)
+	if (m_bUseRectFit_Omr)
 	{
-		m_nRectFitInterval = m_nRectFitInterval > nInterval ? nInterval : m_nRectFitInterval;
-		int nFitInterval = m_nRectFitInterval;
+	#if 0
+		m_nRectFitInterval_Omr = m_nRectFitInterval_Omr > nInterval ? nInterval : m_nRectFitInterval_Omr;
+		int nFitInterval = m_nRectFitInterval_Omr;
+		std::vector<cv::Rect>::iterator itFirst = rcList.begin();
+		for (; itFirst != rcList.end(); )
+		{
+			bool bFind = false;
+			std::vector<cv::Rect>::iterator itNext = itFirst + 1;
+			for (; itNext != rcList.end();)
+			{
+				cv::Point pt1 = itFirst->tl();
+				cv::Point pt2 = itFirst->br();
+
+				cv::Point pt5 = itNext->tl();
+				cv::Point pt6 = itNext->br();
+
+				bool bFit = false;
+				if (abs(pt1.y - pt5.y) < nInterval || abs(pt1.x - pt5.x) < nInterval)
+				{
+					if (abs(pt2.x - pt5.x) < nFitInterval && abs(pt1.y - pt5.y) < nInterval)
+					{
+						*itFirst = cv::Rect(pt1, pt6);
+						bFit = true;
+					}
+					else if (abs(pt1.x - pt6.x) < nFitInterval && abs(pt1.y - pt5.y) < nInterval)
+					{
+						*itFirst = cv::Rect(pt2, pt5);
+						bFit = true;
+					}
+					else if (abs(pt2.y - pt5.y) < nFitInterval && abs(pt1.x - pt5.x) < nInterval)
+					{
+						*itFirst = cv::Rect(pt1, pt6);
+						bFit = true;
+					}
+					else if (abs(pt1.y - pt6.y) < nFitInterval && abs(pt1.x - pt5.x) < nInterval)
+					{
+						*itFirst = cv::Rect(pt2, pt5);
+						bFit = true;
+					}
+				}
+				//矩形包含
+				if (!bFit)
+				{
+					if (itFirst->contains(pt5) || itFirst->contains(pt6) || itNext->contains(pt1) || itNext->contains(pt2))
+					{
+						int nMinX = pt1.x < pt5.x ? pt1.x : pt5.x;
+						int nMinY = pt1.y < pt5.y ? pt1.y : pt5.y;
+						int nMaxX = pt2.x > pt6.x ? pt2.x : pt6.x;
+						int nMaxY = pt2.y > pt6.y ? pt2.y : pt6.y;
+						*itNext = cv::Rect(cv::Point(nMinX, nMinY), cv::Point(nMaxX, nMaxY));
+						bFit = true;
+					}
+				}
+				if (bFit)
+				{
+					bFind = true;
+					itFirst = rcList.erase(itFirst);
+					itNext = itFirst + 1;
+				}
+				else
+					itNext++;
+			}
+			if (!bFind)
+				itFirst++;
+		}
+	#else
+		m_nRectFitInterval_Omr = m_nRectFitInterval_Omr > nInterval ? nInterval : m_nRectFitInterval_Omr;
+		int nFitInterval = m_nRectFitInterval_Omr;
 		std::vector<cv::Rect>::iterator itFirst = rcList.begin();
 		for (; itFirst != rcList.end(); itFirst++)
 		{
@@ -7190,6 +7261,7 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 					itNext++;
 			}
 		}
+	#endif
 	}
 
 	std::vector<Rect> rcList_X = rcList;
@@ -8799,8 +8871,10 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	stAdvanceParam.nDefCharacterConfidence	= 60;
 
 	if (m_pModel) stAdvanceParam.nChkLostCorner = m_pModel->nChkLostCorner;
-	stAdvanceParam.nUseRectFit = m_bUseRectFit;
-	stAdvanceParam.nRectFitInterval = m_nRectFitInterval;
+	stAdvanceParam.nUseRectFit_SN = m_bUseRectFit_SN;
+	stAdvanceParam.nRectFitInterval_SN = m_nRectFitInterval_SN;
+	stAdvanceParam.nUseRectFit_Omr = m_bUseRectFit_Omr;
+	stAdvanceParam.nRectFitInterval_Omr = m_nRectFitInterval_Omr;
 
 	CAdanceSetMgrDlg dlg(m_pModel, stAdvanceParam);
 	if (dlg.DoModal() != IDOK)
@@ -8865,8 +8939,10 @@ void CMakeModelDlg::OnBnClickedBtnAdvancedsetting()
 	m_pModel->nCharacterAnchorPoint = dlg._stSensitiveParam.nCharacterAnchorPoint;
 	m_nCharacterConfidence			= dlg._stSensitiveParam.nCharacterConfidence;
 	m_pModel->nChkLostCorner		= dlg._stSensitiveParam.nChkLostCorner;
-	m_bUseRectFit					= dlg._stSensitiveParam.nUseRectFit;
-	m_nRectFitInterval				= dlg._stSensitiveParam.nRectFitInterval;
+	m_bUseRectFit_SN				= dlg._stSensitiveParam.nUseRectFit_SN;
+	m_nRectFitInterval_SN			= dlg._stSensitiveParam.nRectFitInterval_SN;
+	m_bUseRectFit_Omr				= dlg._stSensitiveParam.nUseRectFit_Omr;
+	m_nRectFitInterval_Omr			= dlg._stSensitiveParam.nRectFitInterval_Omr;
 
 	switch (m_eCurCPType)
 	{

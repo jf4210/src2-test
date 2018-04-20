@@ -653,6 +653,15 @@ LRESULT CZkzhExceptionDlg::MsgVagueSearchResult(WPARAM wParam, LPARAM lParam)
 	m_lcZkzh.GetItemColors(m_nCurrentSelItem, 1, crText, crBackground);
 	m_lcZkzh.SetItemText(m_nCurrentSelItem, 1, strZkzh, RGB(255, 0, 0), crBackground);
 
+	CheckZkzhInBmk(m_pCurrentShowPaper);
+
+	//显示备注信息，为何出现在此列表
+	std::string strDetailInfo = GetDetailInfo(m_pCurrentShowPaper);
+	if (g_nHighSevereMode)
+		m_lcZkzh.SetItemText(m_nCurrentSelItem, 2, (LPCTSTR)A2T(strDetailInfo.c_str()));
+	else
+		m_lcZkzh.SetItemText(m_nCurrentSelItem, 3, (LPCTSTR)A2T(strDetailInfo.c_str()));
+
 	m_lcZkzh.SetModified(m_nCurrentSelItem, 1, TRUE);
 	return 1;
 }

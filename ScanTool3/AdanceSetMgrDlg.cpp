@@ -79,8 +79,8 @@ void CAdanceSetMgrDlg::InitUI()
 	pRecogParamSetDlg->InitData(_stSensitiveParam);
 	m_vecTabDlg.push_back(pRecogParamSetDlg);
 
-	if (g_nHighSevereMode)
-	{
+// 	if (g_nHighSevereMode)
+// 	{
 		ZeroMemory(szTabHeadName, 20);
 		strcpy_s(szTabHeadName, "系统参数");
 		m_tabParamMgr.InsertItem(2, A2T(szTabHeadName));
@@ -91,7 +91,7 @@ void CAdanceSetMgrDlg::InitUI()
 		pSystemSetDlg->MoveWindow(&rtTab);
 		pSystemSetDlg->InitData(_stSensitiveParam);
 		m_vecTabDlg.push_back(pSystemSetDlg);
-	}
+//	}
 
 	m_tabParamMgr.SetCurSel(0);
 	if (m_vecTabDlg.size())

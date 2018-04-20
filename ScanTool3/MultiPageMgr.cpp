@@ -129,6 +129,43 @@ void CMultiPageMgr::MergePic(pST_PaperInfo pSrcPaper, pST_PicInfo pSrcPic, pST_P
 		pDstPaper->lElectOmrResult.push_back(electOmr);
 }
 
+bool CMultiPageMgr::MergePapers(pPAPERSINFO pPapers)
+{
+	bool bMergedPaper = false;
+	pST_PaperInfo pSrcPaper = NULL;
+	PAPER_LIST::iterator itCurrentPaper = pPapers->lPaper.begin();
+	for (; itCurrentPaper != pPapers->lPaper.end(); )
+	{
+		pSrcPaper = *itCurrentPaper;
+		if (!pSrcPaper->strSN.empty())
+		{
+			bool bFindZKZH = false;
+			pST_PaperInfo pNewPaper = NULL;
+			PAPER_LIST::iterator itNewPaper = pPapers->lPaper.begin();
+			for (; itNewPaper != pPapers->lPaper.end(); )
+			{
+				pNewPaper = *itNewPaper;
+				if (pNewPaper->strSN == pSrcPaper->strSN && pSrcPaper != pNewPaper)
+				{
+					bFindZKZH = true;
+					bMergedPaper = true;
+					MergePaper(pNewPaper, pSrcPaper);
+
+					itNewPaper = pPapers->lPaper.erase(itNewPaper);
+					SAFE_RELEASE(pNewPaper);
+				}
+				else
+					itNewPaper++;
+			}
+			if(bFindZKZH)
+				ChkPaperValid(pSrcPaper, _pModel);
+		}
+		itCurrentPaper++;
+	}	
+	if(bMergedPaper) ReNamePicInPapers(pPapers);
+	return bMergedPaper;
+}
+
 bool CMultiPageMgr::ModifyPicPagination(pST_PicInfo pPic, int nNewPage)
 {
 	if (!ChkModifyPagination(pPic, nNewPage)) return false;

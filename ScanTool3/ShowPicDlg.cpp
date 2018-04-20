@@ -607,6 +607,16 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 				rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
 			}
 		}
+		if (pPaper->pModel && pPaper->pModel->nUsePagination)
+		{
+			RECTLIST::iterator itPage = pPaper->pModel->vecPaperModel[nPic]->lPagination.begin();													//显示识别正常的点
+			for (int j = 0; itPage != pPaper->pModel->vecPaperModel[nPic]->lPagination.end(); itPage++, j++)
+			{
+				cv::Rect rt = (*itPage).rt;
+				rectangle(tmp, rt, CV_RGB(50, 205, 55), 2);
+				rectangle(tmp2, rt, CV_RGB(205, 233, 10), -1);
+			}
+		}
 	#if 1
 		if (pPaper->pModel && pPaper->pModel->vecPaperModel[nPic]->lCharacterAnchorArea.size() > 0)
 		{
