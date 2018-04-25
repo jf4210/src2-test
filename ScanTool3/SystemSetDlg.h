@@ -30,6 +30,8 @@ public:
 	CButton		m_chkUseRectFit_Omr;
 	int		m_nRectFitInterval_SN;
 	int		m_nRectFitInterval_Omr;
+	CSpinButtonCtrl m_Spin_ZkzhFit;
+	CSpinButtonCtrl m_Spin_OmrFit;
 
 
 	void	InitData(AdvanceParam& stParam);

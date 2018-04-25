@@ -30,6 +30,8 @@ void CSystemSetDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_RectFit_SN, m_nRectFitInterval_SN);
 	DDX_Control(pDX, IDC_Chk_UseRectFit_Omr, m_chkUseRectFit_Omr);
 	DDX_Text(pDX, IDC_EDIT_RectFit_Omr, m_nRectFitInterval_Omr);
+	DDX_Control(pDX, IDC_SPIN_RectFit_ZKZH, m_Spin_ZkzhFit);
+	DDX_Control(pDX, IDC_SPIN_RectFit_Omr, m_Spin_OmrFit);
 }
 
 
@@ -73,7 +75,10 @@ BOOL CSystemSetDlg::PreTranslateMessage(MSG* pMsg)
 
 void CSystemSetDlg::InitUI()
 {
-
+	m_Spin_ZkzhFit.SetBuddy(GetDlgItem(IDC_EDIT_RectFit_SN));
+	m_Spin_ZkzhFit.SetRange(1, 10);
+	m_Spin_OmrFit.SetBuddy(GetDlgItem(IDC_EDIT_RectFit_Omr));
+	m_Spin_OmrFit.SetRange(1, 10);
 }
 
 BOOL CSystemSetDlg::OnEraseBkgnd(CDC* pDC)
@@ -161,13 +166,13 @@ void CSystemSetDlg::OnDeltaposSpinRectfitZkzh(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 0;
 
 	UpdateData(true);
-	if (pNMUpDown->iDelta == 1) // 如果此值为-1 , 说明点击了Spin的往下的箭头  
+	if (pNMUpDown->iDelta == -1) // 如果此值为-1 , 说明点击了Spin的往下的箭头  
 	{
 		m_nRectFitInterval_SN--;
 		if (m_nRectFitInterval_SN < 1)
 			m_nRectFitInterval_SN = 1;
 	}
-	else if (pNMUpDown->iDelta == -1) // 如果此值为1, 说明点击了Spin的往上的箭头  
+	else if (pNMUpDown->iDelta == 1) // 如果此值为1, 说明点击了Spin的往上的箭头  
 	{
 		m_nRectFitInterval_SN++;
 		if (m_nRectFitInterval_SN > 10)
@@ -183,13 +188,13 @@ void CSystemSetDlg::OnDeltaposSpinRectfitOmr(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 0;
 
 	UpdateData(true);
-	if (pNMUpDown->iDelta == 1) // 如果此值为-1 , 说明点击了Spin的往下的箭头  
+	if (pNMUpDown->iDelta == -1) // 如果此值为-1 , 说明点击了Spin的往下的箭头  
 	{
 		m_nRectFitInterval_Omr--;
 		if (m_nRectFitInterval_Omr < 1)
 			m_nRectFitInterval_Omr = 1;
 	}
-	else if (pNMUpDown->iDelta == -1) // 如果此值为1, 说明点击了Spin的往上的箭头  
+	else if (pNMUpDown->iDelta == 1) // 如果此值为1, 说明点击了Spin的往上的箭头  
 	{
 		m_nRectFitInterval_Omr++;
 		if (m_nRectFitInterval_Omr > 10)

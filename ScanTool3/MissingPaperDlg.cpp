@@ -352,6 +352,18 @@ void CMissingPaperDlg::showStudentInfo(int nItem)
 	m_strKC = A2T(pStudent->strClassroom.c_str());
 	m_strZW = "无";
 	UpdateData(FALSE);
+
+	//解决Static控件背景透明时文本覆盖重影
+	CRect rtKD, rtKC, rtZW;
+	GetDlgItem(IDC_STATIC_KD)->GetWindowRect(&rtKD); 
+	GetDlgItem(IDC_STATIC_KC)->GetWindowRect(&rtKC);
+	GetDlgItem(IDC_STATIC_ZW)->GetWindowRect(&rtZW);
+	ScreenToClient(&rtKD);
+	ScreenToClient(&rtKC);
+	ScreenToClient(&rtZW);
+	InvalidateRect(&rtKD);
+	InvalidateRect(&rtKC);
+	InvalidateRect(&rtZW);
 }
 
 BOOL CMissingPaperDlg::PreTranslateMessage(MSG* pMsg)

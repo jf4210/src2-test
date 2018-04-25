@@ -32,17 +32,19 @@ bool CPaperRecogMgr::RecogPaper(pST_PaperInfo pPaper, pMODEL pModel, bool bMustR
 		if (!bMustRecog && (*itPic)->nRecoged)		//已经识别过，不再识别
 			continue;
 
-	#ifdef TEST_PAGINATION
-		int nPic = (*itPic)->nPicModelIndex;
-		if (!bMustRecog && pModel->nUsePagination && pPaper->nPaginationStatus == 0)
+		int nPic = 0;
+		if (pModel->nUsePagination)
 		{
-			pPaper->bIssuePaper = true;
-			(*itPic)->nRecoged = 2;			//先临时设置识别完成标识，后面在人工确认完成后需要重新识别
-			continue;
+			nPic = (*itPic)->nPicModelIndex;
+			if (!bMustRecog && pModel->nUsePagination && pPaper->nPaginationStatus == 0)
+			{
+				pPaper->bIssuePaper = true;
+				(*itPic)->nRecoged = 2;			//先临时设置识别完成标识，后面在人工确认完成后需要重新识别
+				continue;
+			}
 		}
-	#else
-		int nPic = i;
-	#endif
+		else
+			nPic = i;
 		
 		RecogPic(nPic, *itPic, pModel);
 	}

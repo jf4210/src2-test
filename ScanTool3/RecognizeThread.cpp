@@ -562,17 +562,19 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 		if ((*itPic)->nRecoged)		//已经识别过，不再识别
 			continue;
 
-	#ifdef TEST_PAGINATION
-		int nPic = (*itPic)->nPicModelIndex;
-		if (pModelInfo->pModel->nUsePagination && pPaper->nPaginationStatus == 0)
+		int nPic = 0;
+		if (pModelInfo->pModel->nUsePagination)
 		{
-			pPaper->bIssuePaper = true;
-			(*itPic)->nRecoged = 2;			//先临时设置识别完成标识，后面在人工确认完成后需要重新识别
-			continue;
-		}
-	#else
-		int nPic = i;
-	#endif
+			nPic = (*itPic)->nPicModelIndex;
+			if (pModelInfo->pModel->nUsePagination && pPaper->nPaginationStatus == 0)
+			{
+				pPaper->bIssuePaper = true;
+				(*itPic)->nRecoged = 2;			//先临时设置识别完成标识，后面在人工确认完成后需要重新识别
+				continue;
+			}
+			}
+		else
+			nPic = i;
 
 		(*itPic)->nRecoged = 1;
 		if (nPic >= pModelInfo->pModel->vecPaperModel.size())
@@ -4976,6 +4978,8 @@ void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
 	if (!bRecogComplete) return ;
 
 	TRACE("开始进行试卷合并。。。\n");
+	pPapers->nPaperScanMergerStatus = 1;
+
 	//多页模式时，每个考生的试卷可能是乱的，需要把每张试卷的合并到对应考生
 	pPAPERSINFO pNewPapers = new PAPERSINFO();
 	pNewPapers->strPapersName = pPapers->strPapersName;
@@ -5163,6 +5167,8 @@ void CRecognizeThread::MergeScanPaper(pPAPERSINFO pPapers, pMODEL pModel)
 			}
 		}
 	}
+	pPapers->nPaperScanMergerStatus = 2;
+
 	if(!strLog.empty())
 		g_pLogger->information(strLog);
 }

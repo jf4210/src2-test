@@ -872,10 +872,9 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 				m_lPapersCtrl.SetItemText(nPapersCount, 1, (LPCTSTR)A2T(szPapersCount));
 				m_lPapersCtrl.SetItemData(nPapersCount, (DWORD_PTR)pPapers);
 
-			#ifdef TEST_PAGINATION
-				//判断并调整正反面
-				if (m_pModel)
+				if (m_pModel && m_pModel->nUsePagination)
 				{
+					//判断并调整正反面
 					PAPER_LIST::iterator itPaper = pPapers->lPaper.begin();
 					for (; itPaper != pPapers->lPaper.end(); itPaper++)
 					{
@@ -883,7 +882,7 @@ void CPaperInputDlg::OnBnClickedBtnStart()
 						ChkAdjustFirstPic(pPaper);
 					}
 				}
-			#endif
+
 				if (_pCurrExam_->nModel == 0)
 				{
 					//添加到识别任务列表

@@ -254,14 +254,26 @@ void CScanReminderDlg::SetShowTips(CString str, bool bWarn /*= false*/)
 		m_staticShowTips.SetTextColor(RGB(115, 172, 254));
 	}
 	UpdateData(FALSE);
-	Invalidate();
+//	Invalidate();
+
+	//解决Static控件背景透明时文本覆盖重影
+	CRect rtStatic;
+	GetDlgItem(IDC_STATIC_Tip)->GetWindowRect(&rtStatic);
+	ScreenToClient(&rtStatic);
+	InvalidateRect(&rtStatic);
 }
 
 void CScanReminderDlg::UpdataScanCount(int nCount)
 {
 	m_strScanCount.Format(_T("%d"), nCount);
 	UpdateData(FALSE);
-	Invalidate();
+//	Invalidate();
+
+//解决Static控件背景透明时文本覆盖重影
+	CRect rtStatic;
+	GetDlgItem(IDC_STATIC_ScanCount)->GetWindowRect(&rtStatic);
+	ScreenToClient(&rtStatic);
+	InvalidateRect(&rtStatic);
 }
 
 void CScanReminderDlg::SetShowScanCount(bool bShow)

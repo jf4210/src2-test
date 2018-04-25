@@ -2243,7 +2243,7 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 
 		bool bNoDisposes = false;	//不需要在此线程处理，图像已经放到图像队列中去处理了
 #ifdef TEST_PAGINATION
-		if (_pModel_ && _pModel_->nUsePagination && m_nNotifyDlgType == 1 && _nScanAnswerModel_ != 2)
+		if (_pModel_ /*&& _pModel_->nUsePagination*/ && m_nNotifyDlgType == 1 && _nScanAnswerModel_ != 2)
 		{
 			bNoDisposes = true;
 			pST_SCAN_PIC pScanPic = new ST_SCAN_PIC();

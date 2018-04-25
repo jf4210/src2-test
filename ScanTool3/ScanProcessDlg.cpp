@@ -1519,6 +1519,13 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 			return;
 		}
 	}	
+	if (_pModel_->nUsePagination && _pCurrPapersInfo_->nPaperScanMergerStatus != 2)
+	{
+		CNewMessageBox	dlg;
+		dlg.setShowInfo(2, 1, "请试卷合并完成。。。");
+		dlg.DoModal();
+		return;
+	}
 
 	pST_PaperInfo pPaper = (pST_PaperInfo)m_lcPicture.GetItemData(pNMItemActivate->iItem);
 	m_pReminderDlg->ShowWindow(SW_HIDE);
@@ -1596,7 +1603,9 @@ void CScanProcessDlg::OnTimer(UINT_PTR nIDEvent)
 		{
 			USES_CONVERSION;
 			//++重新刷新一遍列表
-			if (_pModel_->nUsePagination)
+			if (_pModel_->nUsePagination && _pCurrPapersInfo_->nPaperScanMergerStatus != 2)
+				return;
+			if (_pModel_->nUsePagination)	//必须等所有试卷都进行合并后才进行重刷显示列表
 				ReShowCurrPapers();
 			int nCount = m_lcPicture.GetItemCount();
 			for (int i = 0; i < nCount; i++)

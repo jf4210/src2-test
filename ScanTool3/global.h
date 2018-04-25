@@ -444,6 +444,9 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 
 	int		nMustScanNum;				//必须扫描的试卷数量，在高厉害模式时生效，保存试卷时，检查扫描的数量是否与此数量一致，不一致不能提交，只能重扫
 
+	int		nPaperScanMergerStatus;		/*试卷整袋扫描完成后，进行多页试卷合并时的状态，针对多页模式有效
+										0：未合并，1：正在合并，2：合并完成*/
+
 	//++统计信息
 	int		nOmrDoubt;				//OMR怀疑的数量
 	int		nOmrNull;				//OMR识别为空的数量
@@ -475,6 +478,7 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 		nOmrNull = 0;
 		nSnNull = 0;
 		nMustScanNum = 0;
+		nPaperScanMergerStatus = 0;
 	}
 	~_PapersInfo_()
 	{
