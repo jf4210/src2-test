@@ -362,9 +362,7 @@ typedef struct _PaperInfo_
 	int			nQKFlag;			//缺考标识
 	int			nWJFlag;			//违纪标识
 	int			nZkzhInBmkStatus;	//准考证号是否在报名库中存在，在报名库列表不存在时，此项无效, 0--报名库中不存在，1--报名库中存在，-1--扫描时重号了
-	//++从Pkg恢复Papers时的参数
-	int			nChkFlag;			//此图片是否合法校验；在试卷袋里面的试卷图片，如果图片序号名称在Param.dat中不存在，则认为此试卷图片是错误图片，不進行圖片识别
-	//--
+	
 	//int			nScanTmpIndex;		//从扫描获取到一张试卷的信息后直接构建的临时试卷，在整袋试卷识别完后再合并到具体的考生
 	int			nIndex;				//在试卷袋中的索引，即S1为1，S2为2，S3为3...
 	pMODEL		pModel;				//识别此学生试卷所用的模板
@@ -395,7 +393,6 @@ typedef struct _PaperInfo_
 		nIndex = 0;
 		nQKFlag = 0;
 		nWJFlag = 0;
-		nChkFlag = 0;
 		pModel = NULL;
 		pPapers = NULL;
 		pSrcDlg = NULL;

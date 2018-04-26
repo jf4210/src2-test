@@ -1952,6 +1952,8 @@ bool CMakeModelDlg::Recognise(cv::Rect rtOri)
 			RecogGrayValue(matSrcModel, rc);
 
 			m_vecPaperModelInfo[m_nCurrTabSel]->vecPagination.push_back(rc);
+			if (m_nCurrTabSel == m_vecPaperModelInfo.size() - 1)		//最后一页设置了页码，则不能设置最后一页为空白页
+				m_pModel->nLastPageBlank = 0;
 		}
 		else if (m_eCurCPType == ABMODEL)
 		{
@@ -2959,6 +2961,17 @@ bool CMakeModelDlg::checkValidity()
 		{
 			if (m_vecPaperModelInfo[i]->vecPagination.size() <= 0)
 			{
+				if (i == m_vecPaperModelInfo.size() - 1)
+				{
+					CNewMessageBox dlg;
+					dlg.setShowInfo(2, 2, "最后一页未设置页码，是否是空白页?");
+					dlg.DoModal();
+					if (dlg.m_nResult == IDYES)
+					{
+						m_pModel->nLastPageBlank = 1;
+						break;
+					}
+				}
 				char szTmp[50] = { 0 };
 				sprintf_s(szTmp, "第 %d 页未设置\"页码标识\"", i + 1);
 				CNewMessageBox dlg;
@@ -6863,6 +6876,30 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 			if (!bFind)
 				itFirst++;
 		}
+
+		//++第二次计算平均的矩形大小，过滤较大点
+		int nMeanW1 = 0;
+		int nMeanH1 = 0;
+		for (int i = 0; i < rcList.size(); i++)
+		{
+			nMeanW1 += rcList[i].width;
+			nMeanH1 += rcList[i].height;
+		}
+		nMeanW1 = (float)nMeanW1 / rcList.size() + 0.5;
+		nMeanH1 = (float)nMeanH1 / rcList.size() + 0.5;
+		std::vector<cv::Rect>::iterator itTmp = rcList.begin();
+		for (; itTmp != rcList.end();)
+		{
+			if (itTmp->width > nMeanW1 * 1.3 || itTmp->height > nMeanH1 * 1.3 || \
+				itTmp->width < nMeanW1 * 0.75 || itTmp->height < nMeanH1 * 0.75)
+			{
+				TRACE("erase rect: (%d, %d, %d, %d)\n", itTmp->x, itTmp->y, itTmp->width, itTmp->height);
+				itTmp = rcList.erase(itTmp);
+			}
+			else
+				itTmp++;
+		}
+		//--
 	}
 
 	std::vector<Rect> rcList_X = rcList;
