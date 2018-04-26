@@ -470,20 +470,37 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 	std::vector<int> vecTime;
 
 #ifdef TEST_PAGINATION
-	PIC_LIST::iterator itPic1 = pPaper->lPic.begin();
-	for (int i = 0; itPic1 != pPaper->lPic.end(); itPic1++, i++)
-	{
-		vecPic.push_back(*itPic1);
-	}
-	#pragma omp parallel for
-	for (int i = 0; i < vecPic.size(); i++)
-	{
-		cv::Mat matPic = imread(vecPic[i]->strPicPath);
-		vecPic[i]->pSrcScanPic->mtPic = matPic;
-	}
-	eT1 = clock();
-	vecTime.push_back(eT1 - sT);
+// 	PIC_LIST::iterator itPic1 = pPaper->lPic.begin();
+// 	for (int i = 0; itPic1 != pPaper->lPic.end(); itPic1++, i++)
+// 	{
+// 		vecPic.push_back(*itPic1);
+// 	}
+// 	#pragma omp parallel for
+// 	for (int i = 0; i < vecPic.size(); i++)
+// 	{
+// 		cv::Mat matPic = imread(vecPic[i]->strPicPath);
+// 		vecPic[i]->pSrcScanPic->mtPic = matPic;
+// 	}
+// 	eT1 = clock();
+// 	vecTime.push_back(eT1 - sT);
 #endif
+
+	if (pPaper->pModel && pPaper->pModel->nUsePagination)
+	{
+		PIC_LIST::iterator itPic1 = pPaper->lPic.begin();
+		for (int i = 0; itPic1 != pPaper->lPic.end(); itPic1++, i++)
+		{
+			vecPic.push_back(*itPic1);
+		}
+		#pragma omp parallel for
+		for (int i = 0; i < vecPic.size(); i++)
+		{
+			cv::Mat matPic = imread(vecPic[i]->strPicPath);
+			vecPic[i]->pSrcScanPic->mtPic = matPic;
+		}
+		eT1 = clock();
+		vecTime.push_back(eT1 - sT);
+	}
 
 	PIC_LIST::iterator itPic = pPaper->lPic.begin();
 	for (int i = 0; itPic != pPaper->lPic.end(); itPic++, i++)
@@ -491,10 +508,15 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 		clock_t t1, t2, t3;
 		t1 = clock();
 	#ifdef TEST_PAGINATION
-		Mat matSrc = (*itPic)->pSrcScanPic->mtPic;
+		//Mat matSrc = (*itPic)->pSrcScanPic->mtPic;
 	#else
-		Mat matSrc = imread((*itPic)->strPicPath);
+		//Mat matSrc = imread((*itPic)->strPicPath);
 	#endif
+		Mat matSrc;
+		if (pPaper->pModel && pPaper->pModel->nUsePagination)
+			matSrc = (*itPic)->pSrcScanPic->mtPic;
+		else
+			matSrc = imread((*itPic)->strPicPath);
 		t2 = clock();
 
 #ifdef PIC_RECTIFY_TEST
@@ -515,10 +537,15 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 #endif
 
 	#ifdef TEST_PAGINATION
-		int nPic = (*itPic)->nPicModelIndex;
+		//int nPic = (*itPic)->nPicModelIndex;
 	#else
-		int nPic = i;
+		//int nPic = i;
 	#endif
+		int nPic;
+		if (pPaper->pModel && pPaper->pModel->nUsePagination)
+			nPic = (*itPic)->nPicModelIndex;
+		else
+			nPic = i;
 		if ((*itPic)->nRecogRotation != 0)
 		{
 			switch ((*itPic)->nRecogRotation)
@@ -780,11 +807,16 @@ void CShowPicDlg::PaintRecognisedRect(pST_PaperInfo pPaper)
 	}
 
 #ifdef TEST_PAGINATION
-	for (int i = 0; i < vecPic.size(); i++)
-	{
-		vecPic[i]->pSrcScanPic->mtPic.release();
-	}
+// 	for (int i = 0; i < vecPic.size(); i++)
+// 	{
+// 		vecPic[i]->pSrcScanPic->mtPic.release();
+// 	}
 #endif
+	if (pPaper->pModel && pPaper->pModel->nUsePagination)
+	{
+		for (int i = 0; i < vecPic.size(); i++)
+			vecPic[i]->pSrcScanPic->mtPic.release();
+	}
 	eT = clock();
 	std::string strTmp;
 	for (int i = 0; i < vecTime.size(); i++)
