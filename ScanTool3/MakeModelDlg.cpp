@@ -5241,8 +5241,6 @@ CPType CMakeModelDlg::GetComboSelCpType()
 		eType = ELECT_OMR;
 	else if (strCheckPoint == "文字定位区")
 		eType = CHARACTER_AREA;
-	else if (strCheckPoint == "空白校验区")
-		eType = WHITE_GRAY_AREA;
 	else if (strCheckPoint == "页码")
 		eType = PAGINATION;
 	return eType;
