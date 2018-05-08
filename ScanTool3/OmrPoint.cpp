@@ -747,7 +747,7 @@ bool CElectOmrPoint::RecogPrintPoint(int nPic, cv::Mat& matCompPic, pST_PicInfo 
 
 int CElectOmrPoint::calcOmrDensityDiffVal(RECTLIST& rectList, std::vector<pRECTINFO>& vecItemsDesc, std::vector<ST_ITEM_DIFF>& vecOmrItemDiff)
 {
-#if 1	//下面将所有选项识别灰度值降序排列并相邻比较
+	//下面将所有选项识别灰度值降序排列并相邻比较
 	RECTLIST::iterator itItem = rectList.begin();
 	for (; itItem != rectList.end(); itItem++)
 	{
@@ -771,23 +771,6 @@ int CElectOmrPoint::calcOmrDensityDiffVal(RECTLIST& rectList, std::vector<pRECTI
 			vecOmrItemDiff.push_back(stDiff);
 		}
 	}
-#else	//下面是整题所有选项的两两识别灰度值的比较并按降序排列
-	RECTLIST::iterator itFirst = rectList.begin();
-	for (; itFirst != rectList.end(); itFirst++)
-	{
-		RECTLIST::iterator itSecond = itFirst;
-		itSecond++;
-		for (; itSecond != rectList.end(); itSecond++)
-		{
-			ST_ITEM_DIFF stDiff;
-			sprintf_s(stDiff.szVal, "%c%c", (char)(itFirst->nAnswer + 65), (char)(itSecond->nAnswer + 65));
-			stDiff.fDiff = itFirst->fRealValuePercent - itSecond->fRealValuePercent;
-			stDiff.fFirst = vecItemsDesc[i]->fRealValuePercent;
-			stDiff.fSecond = vecItemsDesc[j]->fRealValuePercent;
-			vecOmrItemDiff.push_back(stDiff);
-		}
-	}
-	std::sort(vecOmrItemDiff.begin(), vecOmrItemDiff.end(), SortByItemDiff);
-#endif
+
 	return 1;
 }

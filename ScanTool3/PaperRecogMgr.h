@@ -16,7 +16,7 @@ public:
 	//==============================================================================================================
 	bool InitPic(pST_PicInfo pPic, cv::Mat& matCompSrcPic);
 	bool RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel);	//识别文字
-	bool RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel);		//识别水平同步头
+	bool RecogFixCP(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel);		//识别定点
 // 	bool RecogHHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel);		//识别水平同步头
 // 	bool RecogVHead(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel);		//识别垂直同步头
 	bool RecogABModel(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic, pMODEL pModel);		//识别卷型

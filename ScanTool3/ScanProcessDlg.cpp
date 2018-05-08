@@ -1522,7 +1522,7 @@ void CScanProcessDlg::OnNMDblclkListPaper(NMHDR *pNMHDR, LRESULT *pResult)
 	if (_pModel_->nUsePagination && _pCurrPapersInfo_->nPaperScanMergerStatus != 2)
 	{
 		CNewMessageBox	dlg;
-		dlg.setShowInfo(2, 1, "请试卷合并完成。。。");
+		dlg.setShowInfo(2, 1, "请等待试卷合并完成。。。");
 		dlg.DoModal();
 		return;
 	}
