@@ -524,7 +524,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			ST_DOWN_MODEL stModelInfo = *(pST_DOWN_MODEL)(pMission->m_pMissionData + HEAD_SIZE);
 
 			std::string strCmdResponse = Poco::format("Get Cmd %d OK", (int)USER_DOWN_MODEL);
-			pUser->SendResponesInfo(USER_RESPONSE_DOWNMODEL, RESULT_SUCCESS, (char*)strCmdResponse.c_str(), strCmdResponse.length());
+			//pUser->SendResponesInfo(USER_RESPONSE_DOWNMODEL, RESULT_SUCCESS, (char*)strCmdResponse.c_str(), strCmdResponse.length());
 
 			bool bNeedDown = true;
 			char szIndex[50] = { 0 };
@@ -657,7 +657,7 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			ST_GET_BMK_INFO stGetBmkInfo = *(pStGetBmkInfo)(pMission->m_pMissionData + HEAD_SIZE);
 
 			std::string strCmdResponse = Poco::format("Get Cmd %d OK", (int)USER_GET_EXAM_BMK);
-			pUser->SendResponesInfo(USER_RESPONSE_GET_EXAM_BMK, RESULT_SUCCESS, (char*)strCmdResponse.c_str(), strCmdResponse.length());
+			//pUser->SendResponesInfo(USER_RESPONSE_GET_EXAM_BMK, RESULT_SUCCESS, (char*)strCmdResponse.c_str(), strCmdResponse.length());
 
 			std::cout << "请求考试的报名库命令: " << stGetBmkInfo.nExamID << std::endl;
 			std::string strLog = Poco::format("请求考试的报名库命令: %d", stGetBmkInfo.nExamID);
