@@ -1343,8 +1343,9 @@ void CTcpClient::HandleTask(pTCP_TASK pTask)
 	if (pTask->pszSendBuf != NULL)
 	{
 		bSendNewBuff = true;
-		pSendBuff = new char[pTask->nPkgLen + 1];
+		pSendBuff = new char[HEAD_SIZE + pTask->nPkgLen + 1];
 		ZeroMemory(pSendBuff, pTask->nPkgLen + 1);
+		pSendBuff[HEAD_SIZE + pTask->nPkgLen] = '\0';
 		memcpy(pSendBuff, (char*)&stHead, HEAD_SIZE);
 		memcpy(pSendBuff + HEAD_SIZE, pTask->szSendBuf, pTask->nPkgLen);
 
