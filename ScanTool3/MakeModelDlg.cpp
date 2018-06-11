@@ -679,7 +679,7 @@ void CMakeModelDlg::InitConf()
 		if (m_pModel->nABModel&&m_pModel->nHasHead)
 		{
 			m_comboCheckPointType.ResetContent();
-			m_comboCheckPointType.AddString(_T(""));
+			m_comboCheckPointType.AddString(_T("全部"));
 //			m_comboCheckPointType.AddString(_T("定点"));
 			m_comboCheckPointType.AddString(_T("水平同步头"));
 			m_comboCheckPointType.AddString(_T("垂直同步头"));
@@ -696,7 +696,7 @@ void CMakeModelDlg::InitConf()
 		else if (m_pModel->nABModel&&!m_pModel->nHasHead)
 		{
 			m_comboCheckPointType.ResetContent();
-			m_comboCheckPointType.AddString(_T(""));
+			m_comboCheckPointType.AddString(_T("全部"));
 //			m_comboCheckPointType.AddString(_T("定点"));
 			m_comboCheckPointType.AddString(_T("卷形校验点"));
 			m_comboCheckPointType.AddString(_T("科目校验点"));
@@ -711,7 +711,7 @@ void CMakeModelDlg::InitConf()
 		else if (!m_pModel->nABModel&&m_pModel->nHasHead)
 		{
 			m_comboCheckPointType.ResetContent();
-			m_comboCheckPointType.AddString(_T(""));
+			m_comboCheckPointType.AddString(_T("全部"));
 //			m_comboCheckPointType.AddString(_T("定点"));
 			m_comboCheckPointType.AddString(_T("水平同步头"));
 			m_comboCheckPointType.AddString(_T("垂直同步头"));
@@ -729,7 +729,7 @@ void CMakeModelDlg::InitConf()
 			if (m_pModel->nUseWordAnchorPoint)
 			{
 				m_comboCheckPointType.ResetContent();
-				m_comboCheckPointType.AddString(_T(""));
+				m_comboCheckPointType.AddString(_T("全部"));
 				m_comboCheckPointType.AddString(_T("文字定位区"));
 				if (m_pModel->nUsePagination)
 					m_comboCheckPointType.AddString(_T("页码"));
@@ -745,7 +745,7 @@ void CMakeModelDlg::InitConf()
 			else
 			{
 				m_comboCheckPointType.ResetContent();
-				m_comboCheckPointType.AddString(_T(""));
+				m_comboCheckPointType.AddString(_T("全部"));
 				m_comboCheckPointType.AddString(_T("定点"));
 				if (m_pModel->nUsePagination)
 					m_comboCheckPointType.AddString(_T("页码"));
@@ -5213,7 +5213,7 @@ CPType CMakeModelDlg::GetComboSelCpType()
 	CPType eType = UNKNOWN;
 	CString strCheckPoint = _T("");
 	m_comboCheckPointType.GetLBText(m_ncomboCurrentSel, strCheckPoint);
-	if (strCheckPoint == "")
+	if (strCheckPoint == "全部")
 		eType = UNKNOWN;
 	else if (strCheckPoint == "定点")
 		eType = Fix_CP;

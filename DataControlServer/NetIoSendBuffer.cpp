@@ -59,7 +59,7 @@ int CNetIoSendBuffer::AddData(const char* pData, int nDataLen)
 	{
 		memcpy(m_buf+m_nWritePos,pData,nDataLen);
 	}
-	
+
 	m_nWritePos=(m_nWritePos+nDataLen)%m_dwBufTotalLength;
 
 	m_nDataSize+=nDataLen;

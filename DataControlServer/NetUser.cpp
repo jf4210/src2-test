@@ -227,6 +227,8 @@ BOOL CNetUser::NotifySendData(void)
 			if (ret == -1)
 			{//Í¶µÝÊ§°Ü
 				UnLockSend();
+
+				std::cout << "NotifySendData, Í¶µÝÊ§°Ü\n" << std::endl;
 				return FALSE;
 			}
 		}
