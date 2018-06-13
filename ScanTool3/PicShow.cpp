@@ -48,6 +48,7 @@ BEGIN_MESSAGE_MAP(CPicShow, CDialog)
 	ON_MESSAGE(WM_CV_HTrackerChange, &CPicShow::HTrackerChange)
 	ON_MESSAGE(WM_CV_VTrackerChange, &CPicShow::VTrackerChange)
 	ON_MESSAGE(WM_CV_SNTrackerChange, &CPicShow::SNTrackerChange)
+	ON_MESSAGE(WM_CV_ZGTTrackerChange, &CPicShow::ZgtTrackerChange)
 	ON_MESSAGE(WM_CV_MBtnDown, &CPicShow::MBtnDown)
 	ON_MESSAGE(WM_CV_MBtnUp, &CPicShow::MBtnUp)
 	ON_MESSAGE(WM_CV_ShiftDown, &CPicShow::ShiftKeyDown)
@@ -617,9 +618,9 @@ void CPicShow::ReInit()
 	Invalidate();
 }
 
-void CPicShow::SetShowTracker(bool bShowH, bool bShowV, bool bShowSN)
+void CPicShow::SetShowTracker(bool bShowH, bool bShowV, bool bShowSN, bool bShowZgt)
 {
-	m_picShow.SetShowRectTracker(bShowH, bShowV, bShowSN);
+	m_picShow.SetShowRectTracker(bShowH, bShowV, bShowSN, bShowZgt);
 }
 
 LRESULT CPicShow::HTrackerChange(WPARAM wParam, LPARAM lParam)
@@ -637,6 +638,12 @@ LRESULT CPicShow::VTrackerChange(WPARAM wParam, LPARAM lParam)
 LRESULT CPicShow::SNTrackerChange(WPARAM wParam, LPARAM lParam)
 {
 	::SendMessageA(this->GetParent()->GetParent()->m_hWnd, WM_CV_SNTrackerChange, wParam, lParam);
+	return TRUE;
+}
+
+LRESULT CPicShow::ZgtTrackerChange(WPARAM wParam, LPARAM lParam)
+{
+	::SendMessageA(this->GetParent()->GetParent()->m_hWnd, WM_CV_ZGTTrackerChange, wParam, lParam);
 	return TRUE;
 }
 

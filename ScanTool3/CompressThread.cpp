@@ -65,7 +65,7 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 		if (!bResult)
 		{
 			bWarn = true;
-			strInfo.Format(_T("±£´æ%sÊ§°Ü"), A2T(pTask->strCompressFileName.c_str()));
+			strInfo.Format(_T("±£´æÊ§°Ü\n%s"), A2T(pTask->strCompressFileName.c_str()));
 		}
 		else
 		{

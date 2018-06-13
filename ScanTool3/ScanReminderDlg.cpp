@@ -251,7 +251,7 @@ void CScanReminderDlg::SetShowTips(CString str, bool bWarn /*= false*/)
 	}
 	else
 	{
-		m_staticShowTips.SetTextColor(RGB(115, 172, 254));
+		m_staticShowTips.SetTextColor(RGB(61, 130, 56));		//RGB(115, 172, 254)
 	}
 	UpdateData(FALSE);
 //	Invalidate();

@@ -1231,10 +1231,10 @@ protected:
 		else
 			g_Log.LogOut("StartCmdChannel fail.");
 
-		TimerObj tmObj;
-		Poco::Util::Timer* timer_ = new Poco::Util::Timer();
-		if (SysSet.m_nHeartPacketTime > 0)	//心跳间隔==0时，不进行session的心跳维持和检测
-			timer_->schedule(&tmObj, 60 * 1000, SysSet.m_nHeartPacketTime * 1000);	//60 * 1000, 5 * 60 * 1000
+// 		TimerObj tmObj;
+// 		Poco::Util::Timer* timer_ = new Poco::Util::Timer();
+// 		if (SysSet.m_nHeartPacketTime > 0)	//心跳间隔==0时，不进行session的心跳维持和检测
+// 			timer_->schedule(&tmObj, 60 * 1000, SysSet.m_nHeartPacketTime * 1000);	//60 * 1000, 5 * 60 * 1000
 
 #if 0	//test
 		char szIndex[50] = { 0 };
@@ -1269,7 +1269,7 @@ protected:
 		examServerMgr.StopFileChannel();
 		examServerMgr.StopCmdChannel();
 
-		timer_->cancel(false);
+//		timer_->cancel(false);
 
 		//释放模板映射信息
 		_mapModelLock_.lock();

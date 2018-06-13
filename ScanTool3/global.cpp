@@ -158,13 +158,6 @@ bool SortByTH(RECTINFO& rc1, RECTINFO& rc2)
 	return bResult;
 }
 
-bool SortByOmrTH(OMR_QUESTION& omr1, OMR_QUESTION& omr2)
-{
-	bool bResult = omr1.nTH < omr2.nTH ? true : false;
-
-	return bResult;
-}
-
 bool SortStringByDown(std::string& str1, std::string& str2)
 {
 	return str1 > str2 ? true : false;

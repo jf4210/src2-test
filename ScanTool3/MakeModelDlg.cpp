@@ -20,6 +20,7 @@
 #include "NewMessageBox.h"
 #include "RecogCharacterDlg.h"
 #include "ModelMgr.h"
+#include "ZgtSettingDlg.h"
 using namespace std;
 using namespace cv;
 // CMakeModelDlg 对话框
@@ -107,6 +108,7 @@ BEGIN_MESSAGE_MAP(CMakeModelDlg, CDialog)
 	ON_COMMAND(ID_TrackerRecognize, &CMakeModelDlg::RecognizeRectTracker)
 	ON_COMMAND(ID_AddRecog, &CMakeModelDlg::AddRecogRectToList)
 	ON_COMMAND(ID_RecogSN, &CMakeModelDlg::AddRecogSN)
+	ON_COMMAND(ID_ZGT_DelRegion, &CMakeModelDlg::DelZgtRegion)
 	ON_COMMAND(ID_LeftRotate, &CMakeModelDlg::LeftRotate)
 	ON_COMMAND(ID_RightRotate, &CMakeModelDlg::RightRotate)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_CheckPoint, &CMakeModelDlg::OnNMDblclkListCheckpoint)
@@ -115,6 +117,7 @@ BEGIN_MESSAGE_MAP(CMakeModelDlg, CDialog)
 	ON_MESSAGE(WM_CV_HTrackerChange, &CMakeModelDlg::HTrackerChange)
 	ON_MESSAGE(WM_CV_VTrackerChange, &CMakeModelDlg::VTrackerChange)
 	ON_MESSAGE(WM_CV_SNTrackerChange, &CMakeModelDlg::SNTrackerChange)
+	ON_MESSAGE(WM_CV_ZGTTrackerChange, &CMakeModelDlg::ZgtTrackerChange)
 //	ON_BN_CLICKED(IDC_BTN_uploadModel, &CMakeModelDlg::OnBnClickedBtnuploadmodel)
 	ON_BN_CLICKED(IDC_BTN_ScanModel, &CMakeModelDlg::OnBnClickedBtnScanmodel)
 	ON_MESSAGE(WM_CV_ShiftDown, &CMakeModelDlg::ShiftKeyDown)
@@ -741,6 +744,9 @@ void CMakeModelDlg::InitConf()
 				m_comboCheckPointType.AddString(_T("考号设置"));
 				m_comboCheckPointType.AddString(_T("选择/判断题"));
 				m_comboCheckPointType.AddString(_T("选做题"));
+			#ifdef TEST_ZGT
+				m_comboCheckPointType.AddString(_T("主观题"));
+			#endif
 			}
 			else
 			{
@@ -759,6 +765,9 @@ void CMakeModelDlg::InitConf()
 				m_comboCheckPointType.AddString(_T("选做题"));
 			#ifdef TEST_GRAY_WHITE
 				m_comboCheckPointType.AddString(_T("空白校验点"));	//空白校验区
+			#endif
+			#ifdef TEST_ZGT
+				m_comboCheckPointType.AddString(_T("主观题"));
 			#endif
 			}
 		}
@@ -821,6 +830,31 @@ LRESULT CMakeModelDlg::RoiRBtnUp(WPARAM wParam, LPARAM lParam)
 			ClientToScreen(&myPoint);
 			GetCursorPos(&myPoint); //鼠标位置  
 			return pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, myPoint.x, myPoint.y, this);
+		}
+	}
+	else if (m_eCurCPType == ZGT)
+	{
+		for (int i = 0; i < m_pModelPicShow->m_picShow.m_vecRectTracker_ZGT.size(); i++)
+		{
+			cv::Rect rtZgtRegion= cv::Rect(m_pModelPicShow->m_picShow.m_vecRectTracker_ZGT[i].ptTracker1, m_pModelPicShow->m_picShow.m_vecRectTracker_ZGT[i].ptTracker2);
+			if (rtZgtRegion.contains(pt))
+			{
+				CMenu menu, *pPopup;
+				if (!m_pModelPicShow->m_picShow.m_vecRectTracker_ZGT[i].bInserted)		//在没有插入的橡皮筋区域上右键，弹出添加的菜单
+					menu.LoadMenu(IDR_MENU_AddRecog);
+				else
+					menu.LoadMenu(IDR_MENU_Zgt_Del);									//在已经添加的主观题橡皮筋区域上右键，弹出删除主观题区域的菜单
+
+				RECTINFO rcTmp;
+				rcTmp.rt = rtZgtRegion;
+				m_vecTmp.push_back(rcTmp);
+
+				pPopup = menu.GetSubMenu(0);
+				CPoint myPoint;
+				ClientToScreen(&myPoint);
+				GetCursorPos(&myPoint); //鼠标位置  
+				return pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, myPoint.x, myPoint.y, this);
+			}
 		}
 	}
 	else
@@ -3895,6 +3929,9 @@ void CMakeModelDlg::ShowRectTracker()
 
 	TRACE("show ShowRectTracker.\n");
 
+	Mat tmp = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
+	Mat tmp2 = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
+
 	Rect rt;
 	if (m_eCurCPType == H_HEAD)
 	{
@@ -3916,9 +3953,18 @@ void CMakeModelDlg::ShowRectTracker()
 		cv::Point pt2 = m_pModelPicShow->m_picShow.m_ptSNTracker2;
 		rt = cv::Rect(pt1, pt2);
 	}
-
-	Mat tmp = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
-	Mat tmp2 = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
+	else if (m_eCurCPType == ZGT)
+	{
+		for (int i = 0; i < m_pModelPicShow->m_picShow.m_vecRectTracker_ZGT.size(); i++)
+		{
+			rt = cv::Rect(m_pModelPicShow->m_picShow.m_vecRectTracker_ZGT[i].ptTracker1, m_pModelPicShow->m_picShow.m_vecRectTracker_ZGT[i].ptTracker2);
+			rectangle(tmp, rt, CV_RGB(255, 20, 50), 2);
+			rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+		}
+		cv::addWeighted(tmp, 0.5, tmp2, 0.5, 0, tmp);
+		m_pModelPicShow->ShowPic(tmp);
+		return;
+	}
 
 	rectangle(tmp, rt, CV_RGB(255, 20, 50), 2);
 	rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
@@ -5243,6 +5289,8 @@ CPType CMakeModelDlg::GetComboSelCpType()
 		eType = CHARACTER_AREA;
 	else if (strCheckPoint == "页码")
 		eType = PAGINATION;
+	else if (strCheckPoint == "主观题")
+		eType = ZGT;
 	return eType;
 }
 
@@ -5318,7 +5366,7 @@ void CMakeModelDlg::UpdataCPList()
 	UpdateCPListByType();
 	if (m_eCurCPType == H_HEAD)
 	{
-		m_pModelPicShow->SetShowTracker(true, false, false);
+		m_pModelPicShow->SetShowTracker(true, false, false, false);
 		if (m_vecPaperModelInfo[m_nCurrTabSel]->bFirstH && m_bNewModelFlag)
 		{
 			m_ptHTracker1 = cv::Point(0, 0);
@@ -5340,7 +5388,7 @@ void CMakeModelDlg::UpdataCPList()
 	}
 	else if (m_eCurCPType == V_HEAD)
 	{
-		m_pModelPicShow->SetShowTracker(false, true, false);
+		m_pModelPicShow->SetShowTracker(false, true, false, false);
 		if (m_vecPaperModelInfo[m_nCurrTabSel]->bFirstV && m_bNewModelFlag)
 		{
 			m_ptVTracker1 = cv::Point(m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols - 90, 0);	//m_vecPaperModelInfo[m_nCurrTabSel]->matSrcImg.cols
@@ -5362,7 +5410,7 @@ void CMakeModelDlg::UpdataCPList()
 	}
 	else if (m_eCurCPType == SN)
 	{
-		m_pModelPicShow->SetShowTracker(false, false, true);
+		m_pModelPicShow->SetShowTracker(false, false, true, false);
 // 		if (m_bFistSNTracker)
 // 		{
 // 			m_ptSNTracker1 = cv::Point(0, 0);
@@ -5384,9 +5432,40 @@ void CMakeModelDlg::UpdataCPList()
 		}
 		m_pModelPicShow->m_picShow.setSNTrackerPosition(GetShowFakePosPoint(m_ptSNTracker1), GetShowFakePosPoint(m_ptSNTracker2));
 	}
+	else if (m_eCurCPType == ZGT)
+	{
+		m_pModelPicShow->SetShowTracker(false, false, false, true);
+
+		//检查所有页面的主观题，显示与当前页的页码一致的所有答题区
+		m_pModelPicShow->m_picShow.m_vecRectTracker_ZGT.clear();
+		for (int i = 0; i < m_vecPaperModelInfo.size(); i++)
+		{
+			for (int j = 0; j < m_vecPaperModelInfo[i]->vecZgt.size(); j++)
+			{
+				for (int k = 0; k < m_vecPaperModelInfo[i]->vecZgt[j].vecRegion.size(); k++)
+				{
+					if (m_vecPaperModelInfo[i]->vecZgt[j].vecRegion[k].nPageId == m_nCurrTabSel)
+					{
+						cv::Point ptTracker1 = m_vecPaperModelInfo[i]->vecZgt[j].vecRegion[k].rt.tl();
+						cv::Point ptTracker2 = m_vecPaperModelInfo[i]->vecZgt[j].vecRegion[k].rt.br();
+
+						ST_ZgtTracker zgtObj;
+						zgtObj.bInserted = true;
+						zgtObj.RectTrackerZgt.m_nStyle = CRectTracker::resizeInside | CRectTracker::solidLine;//设置RectTracker样式	CRectTracker::resizeInside
+						zgtObj.RectTrackerZgt.m_nHandleSize = 5; //控制柄的像素大小
+						zgtObj.ptTracker1 = ptTracker1;
+						zgtObj.ptTracker2 = ptTracker2;
+						zgtObj.RectTrackerZgt.m_rect.SetRect(ptTracker1.x, ptTracker1.y, ptTracker2.x, ptTracker2.y);
+						m_pModelPicShow->m_picShow.m_vecRectTracker_ZGT.emplace_back(std::move(zgtObj));
+					}
+				}
+			}
+		}
+		ShowRectTracker();
+	}
 	else
 	{
-		m_pModelPicShow->SetShowTracker(false, false, false);
+		m_pModelPicShow->SetShowTracker(false, false, false, false);
 	}
 
 	if (m_eCurCPType == Fix_CP || m_eCurCPType == UNKNOWN)			//当当前类型为UNKNOWN时，显示所有的校验点
@@ -5771,6 +5850,11 @@ void CMakeModelDlg::AddRecogSN()
 	}
 }
 
+void CMakeModelDlg::DelZgtRegion()
+{
+	TRACE("DelZgtRegion\n");
+}
+
 void CMakeModelDlg::AddRecogRectToList()
 {
 	if (m_vecPaperModelInfo.size() <= 0 || m_vecPaperModelInfo.size() <= m_nCurrTabSel)
@@ -5870,6 +5954,16 @@ void CMakeModelDlg::AddRecogRectToList()
 
 		m_nStartTH = dlg.m_nStartTH;
 	}
+	int nZgtType = 0;
+	if (m_eCurCPType == ZGT)
+	{
+		CZgtSettingDlg dlg(m_nStartTH, 2);
+		if (dlg.DoModal() != IDOK)
+			return;
+		
+		m_nStartTH = dlg.m_nStartTH;
+		nZgtType = dlg.m_nQuestionType;
+	}
 
 	int nAddTH = 0;
 	for (int i = 0; i < m_vecTmp.size(); i++)
@@ -5953,7 +6047,6 @@ void CMakeModelDlg::AddRecogRectToList()
 			}
 			if (bError)
 			{
-//				AfxMessageBox(_T("此组选做题实际选项总数超出范围"));
 				CNewMessageBox dlg;
 				dlg.setShowInfo(2, 1, "此组选做题实际选项总数超出范围");
 				dlg.DoModal();
@@ -5963,7 +6056,6 @@ void CMakeModelDlg::AddRecogRectToList()
 			{
 				if (!m_pElectOmrDlg->m_pCurrentGroup)
 				{
-//					AfxMessageBox(_T("添加失败，当前选做题信息为空"));
 					CNewMessageBox dlg;
 					dlg.setShowInfo(2, 1, "添加失败，当前选做题信息为空");
 					dlg.DoModal();
@@ -5977,11 +6069,57 @@ void CMakeModelDlg::AddRecogRectToList()
 				m_vecPaperModelInfo[m_nCurrTabSel]->vecElectOmr.push_back(sElectOmr);
 			}
 		}
+		else if (m_eCurCPType == ZGT)
+		{
+			//将此区域设为已插入
+			for (int m = 0; m < m_pModelPicShow->m_picShow.m_vecRectTracker_ZGT.size(); m++)
+			{
+				cv::Rect rtZgtRegion = cv::Rect(m_pModelPicShow->m_picShow.m_vecRectTracker_ZGT[m].ptTracker1, m_pModelPicShow->m_picShow.m_vecRectTracker_ZGT[m].ptTracker2);
+				if (rtZgtRegion == m_vecTmp[i].rt)
+					m_pModelPicShow->m_picShow.m_vecRectTracker_ZGT[m].bInserted = true;
+			}
+			//检查是否已经添加此题号
+			bool bFind = false;
+			for (int j = 0; j < m_vecPaperModelInfo.size(); j++)
+			{
+				for (int k = 0; k < m_vecPaperModelInfo[j]->vecZgt.size(); k++)
+				{
+					if (m_vecPaperModelInfo[j]->vecZgt[k].nTh == m_nStartTH)
+					{
+						//将此答题区添加到该主观题中
+						bFind = true;
+						ST_ZgtRegion stRegion;
+						stRegion.nId = m_vecPaperModelInfo[j]->vecZgt[k].vecRegion.size();
+						stRegion.nPageId = m_nCurrTabSel;
+						stRegion.rt = m_vecTmp[i].rt;
+						m_vecPaperModelInfo[j]->vecZgt[k].vecRegion.emplace_back(std::move(stRegion));
+						break;
+					}
+				}
+				if(bFind) break;
+			}
+			if (!bFind)
+			{
+				ST_ZgtRegion stRegion;
+				stRegion.nId = 0;
+				stRegion.nPageId = m_nCurrTabSel;
+				stRegion.rt = m_vecTmp[i].rt;
+				ST_ZGT stZgt;
+				stZgt.nTh = m_nStartTH;
+				stZgt.nType = nZgtType;
+				stZgt.vecRegion.emplace_back(std::move(stRegion));
+				m_vecPaperModelInfo[m_nCurrTabSel]->vecZgt.emplace_back(std::move(stZgt));
+				nAddTH++;
+			}
+		}
 	}
 	m_nStartTH += nAddTH - 1;
 
 	if (m_eCurCPType == OMR)
-		std::sort(m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.begin(), m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.end(), SortByOmrTH);
+		std::sort(m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.begin(), m_vecPaperModelInfo[m_nCurrTabSel]->vecOmr2.end(), [](OMR_QUESTION& omr1, OMR_QUESTION& omr2)
+					{
+						return omr1.nTH < omr2.nTH ? true : false;
+					});
 
 	m_vecTmp.clear();
 	UpdataCPList();
@@ -6771,6 +6909,27 @@ LRESULT CMakeModelDlg::SNTrackerChange(WPARAM wParam, LPARAM lParam)
 	m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.rt = cv::Rect(m_ptSNTracker1, m_ptSNTracker2);
 	
 	m_pSNInfoDlg->ShowUI(GetSnShowFakePosFlag(m_vecPaperModelInfo[m_nCurrTabSel]->rcSNTracker.nRecogFlag));
+	return true;
+}
+
+LRESULT CMakeModelDlg::ZgtTrackerChange(WPARAM wParam, LPARAM lParam)
+{
+	ST_ZgtTracker zgtTracker = *((ST_ZgtTracker *)wParam);
+	ShowRectTracker();
+
+// 	Mat tmp = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
+// 	Mat tmp2 = m_vecPaperModelInfo[m_nCurrTabSel]->matDstImg.clone();
+// 
+// 	Rect rt = cv::Rect(zgtTracker.ptTracker1, zgtTracker.ptTracker2);
+// 	rectangle(tmp, rt, CV_RGB(255, 20, 50), 2);
+// 	rectangle(tmp2, rt, CV_RGB(255, 233, 10), -1);
+// 
+// 	cv::addWeighted(tmp, 0.5, tmp2, 0.5, 0, tmp);
+// 	m_pModelPicShow->ShowPic(tmp);
+
+	if (m_vecPaperModelInfo.size() <= m_nCurrTabSel)
+		return true;
+
 	return true;
 }
 

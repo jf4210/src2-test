@@ -232,6 +232,7 @@
     <ClInclude Include="XListCtrl\XListCtrl.h" />
     <ClInclude Include="XListCtrl\XListMemDC.h" />
     <ClInclude Include="XListCtrl\XTrace.h" />
+    <ClInclude Include="ZgtSettingDlg.h" />
     <ClInclude Include="ZipObj.h" />
     <ClInclude Include="ZkzhExceptionDlg.h" />
     <ClInclude Include="ZkzhShowMgrDlg.h" />
@@ -363,6 +364,7 @@
     <ClCompile Include="XListCtrl\XListCtrl.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ZgtSettingDlg.cpp" />
     <ClCompile Include="ZipObj.cpp" />
     <ClCompile Include="ZkzhExceptionDlg.cpp" />
     <ClCompile Include="ZkzhShowMgrDlg.cpp" />

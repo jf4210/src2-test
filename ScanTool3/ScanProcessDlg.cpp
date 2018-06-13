@@ -925,7 +925,7 @@ void CScanProcessDlg::ShowPapers(pPAPERSINFO pPapers)
 		if (pPaper->bModifyZKZH)
 			m_lcPicture.SetItemColors(nCount, 1, RGB(0, 0, 255), RGB(255, 255, 255));
 		if (pPaper->nZkzhInBmkStatus != 1 && _bGetBmk_)	//不在报名库中、重号
-			m_lcPicture.SetItemColors(nCount, 1, RGB(0, 255, 0), RGB(255, 255, 255));
+			m_lcPicture.SetItemColors(nCount, 1, RGB(56, 154, 56), RGB(255, 255, 255));
 		if (pPaper->nPicsExchange != 0)	//试卷被调换顺序
 			m_lcPicture.SetItemColors(nCount, 1, RGB(0, 255, 255), RGB(255, 255, 255));
 

@@ -36,7 +36,7 @@ public:
 	float m_fScale;		//当前图像的缩放比
 	
 	void ReInit();
-	void SetShowTracker(bool bShowH, bool bShowV, bool bShowSN);		//显示橡皮筋类
+	void SetShowTracker(bool bShowH, bool bShowV, bool bShowSN, bool bShowZgt);		//显示橡皮筋类
 	void ShowPic(cv::Mat& imgMat, cv::Point pt = cv::Point(0,0), float fShowPer = 1.0, int nDirection = -1);
 	void RotateImg(int nDirection);		//1:针对原始图像需要进行的旋转，正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
 	void SetRotateDir(int nDirection);	//1:针对原始图像需要进行的旋转，正向，不需要旋转，2：右转90, 3：左转90, 4：右转180
@@ -51,6 +51,7 @@ public:
 	LRESULT HTrackerChange(WPARAM wParam, LPARAM lParam);
 	LRESULT VTrackerChange(WPARAM wParam, LPARAM lParam);
 	LRESULT SNTrackerChange(WPARAM wParam, LPARAM lParam);
+	LRESULT ZgtTrackerChange(WPARAM wParam, LPARAM lParam);
 
 	LRESULT ShiftKeyDown(WPARAM wParam, LPARAM lParam);
 	LRESULT ShiftKeyUp(WPARAM wParam, LPARAM lParam);

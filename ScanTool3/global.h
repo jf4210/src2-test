@@ -43,6 +43,7 @@
 
 	//#define TEST_New_RecogClass	//使用新识别类测试
 	#define TEST_LostCorner		//缺角或折角检测
+	#define TEST_ZGT			//主观题切割区域划分测试
 #else	//release版本
 	#define TEST_MULTI_SENDER	//文件发送测试，用多个地址发送测试
 	#define PUBLISH_VERSION			//发布版本,发布版本不开放“试卷导入功能”
@@ -751,7 +752,6 @@ bool	SortByPositionX2(cv::Rect& rt1, cv::Rect& rt2);
 bool	SortByPositionY2(cv::Rect& rt1, cv::Rect& rt2);
 bool	SortByPositionXYInterval(cv::Rect& rt1, cv::Rect& rt2);
 bool	SortByTH(RECTINFO& rc1, RECTINFO& rc2);
-bool	SortByOmrTH(OMR_QUESTION& rc1, OMR_QUESTION& rc2);
 bool	SortStringByDown(std::string& str1, std::string& str2);
 
 bool    GetPicFix(int nPic, pST_PicInfo pPic, pMODEL pModel);	//使用文字定位时，生成文字定位的定点列表，只需要2个
