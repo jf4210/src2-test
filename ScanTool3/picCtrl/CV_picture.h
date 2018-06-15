@@ -45,6 +45,8 @@ typedef struct _tagZgtTracker
 {
 	bool bSel;				//是否是选中状态
 	bool bInserted;			//是否已经添加
+	void* pStRegion;		//主观题答题区的指针
+	void* pStZgt;			//主观题题目信息
 	cv::Point ptTracker1;	//该道主观题的橡皮筋按下的tl实际坐标
 	cv::Point ptTracker2;	//该道主观题的橡皮筋按下的br实际坐标
 	CRectTracker RectTrackerZgt;	//主观题橡皮筋对象
@@ -52,6 +54,8 @@ typedef struct _tagZgtTracker
 	{
 		bInserted = false;
 		bSel = false;
+		pStRegion = NULL;
+		pStZgt = NULL;
 	}
 }ST_ZgtTracker;
 

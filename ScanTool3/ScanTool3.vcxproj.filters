@@ -591,6 +591,9 @@
     <ClInclude Include="ZgtSettingDlg.h">
       <Filter>模板界面\旧模板制作界面\主观题设置</Filter>
     </ClInclude>
+    <ClInclude Include="picCtrl\PicDlg.h">
+      <Filter>控件\图片显示</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -904,6 +907,9 @@
     </ClCompile>
     <ClCompile Include="ZgtSettingDlg.cpp">
       <Filter>模板界面\旧模板制作界面\主观题设置</Filter>
+    </ClCompile>
+    <ClCompile Include="picCtrl\PicDlg.cpp">
+      <Filter>控件\图片显示</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

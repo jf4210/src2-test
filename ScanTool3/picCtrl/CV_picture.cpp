@@ -294,10 +294,16 @@ void CV_picture::ShowImage_roi(cv::Mat &src,int method)
 			int nY1 = (int)((float)(m_ptHTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
 			int nX2 = (int)((float)(m_ptHTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
 			int nY2 = (int)((float)(m_ptHTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
-// 			if (nX1 < m_rect_roi.tl().x) nX1 = m_rect_roi.tl().x;
-// 			if (nX2 > m_rect_roi.br().x) nX2 = m_rect_roi.br().x;
-// 			if (nY1 < m_rect_roi.tl().y) nY1 = m_rect_roi.tl().y;
-// 			if (nY2 > m_rect_roi.br().y) nY2 = m_rect_roi.br().y;
+
+// 			nX1 = nX1 < 0 ? 0 : nX1;
+// 			nX1 = nX1 > m_rect.Width() ? m_rect.Width() : nX1;
+// 			nX2 = nX2 < 0 ? 0 : nX2;
+// 			nX2 = nX2 > m_rect.Width() ? m_rect.Width() : nX2;
+// 			nY1 = nY1 < 0 ? 0 : nY1;
+// 			nY1 = nY1 > m_rect.Height() ? m_rect.Height() : nY1;
+// 			nY2 = nY2 < 0 ? 0 : nY2;
+// 			nY2 = nY2 > m_rect.Height() ? m_rect.Height() : nY2;
+
 			m_RectTrackerH.m_rect.left = nX1;
 			m_RectTrackerH.m_rect.top = nY1;
 			m_RectTrackerH.m_rect.right = nX2;
@@ -309,6 +315,16 @@ void CV_picture::ShowImage_roi(cv::Mat &src,int method)
 			int nY1 = (int)((float)(m_ptVTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
 			int nX2 = (int)((float)(m_ptVTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
 			int nY2 = (int)((float)(m_ptVTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+
+// 			nX1 = nX1 < 0 ? 0 : nX1;
+// 			nX1 = nX1 > m_rect.Width() ? m_rect.Width() : nX1;
+// 			nX2 = nX2 < 0 ? 0 : nX2;
+// 			nX2 = nX2 > m_rect.Width() ? m_rect.Width() : nX2;
+// 			nY1 = nY1 < 0 ? 0 : nY1;
+// 			nY1 = nY1 > m_rect.Height() ? m_rect.Height() : nY1;
+// 			nY2 = nY2 < 0 ? 0 : nY2;
+// 			nY2 = nY2 > m_rect.Height() ? m_rect.Height() : nY2;
+
 			m_RectTrackerV.m_rect.left = nX1;
 			m_RectTrackerV.m_rect.top = nY1;
 			m_RectTrackerV.m_rect.right = nX2;
@@ -320,6 +336,16 @@ void CV_picture::ShowImage_roi(cv::Mat &src,int method)
 			int nY1 = (int)((float)(m_ptSNTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
 			int nX2 = (int)((float)(m_ptSNTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
 			int nY2 = (int)((float)(m_ptSNTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+
+// 			nX1 = nX1 < 0 ? 0 : nX1;
+// 			nX1 = nX1 > m_rect.Width() ? m_rect.Width() : nX1;
+// 			nX2 = nX2 < 0 ? 0 : nX2;
+// 			nX2 = nX2 > m_rect.Width() ? m_rect.Width() : nX2;
+// 			nY1 = nY1 < 0 ? 0 : nY1;
+// 			nY1 = nY1 > m_rect.Height() ? m_rect.Height() : nY1;
+// 			nY2 = nY2 < 0 ? 0 : nY2;
+// 			nY2 = nY2 > m_rect.Height() ? m_rect.Height() : nY2;
+
 			m_RectTrackerSN.m_rect.left = nX1;
 			m_RectTrackerSN.m_rect.top = nY1;
 			m_RectTrackerSN.m_rect.right = nX2;
@@ -333,6 +359,19 @@ void CV_picture::ShowImage_roi(cv::Mat &src,int method)
 				int nY1 = (int)((float)(m_vecRectTracker_ZGT[i].ptTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
 				int nX2 = (int)((float)(m_vecRectTracker_ZGT[i].ptTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
 				int nY2 = (int)((float)(m_vecRectTracker_ZGT[i].ptTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+
+// 				TRACE("ShowImage_roi-->橡皮筋显示区域(%d,%d,%d,%d), roi(%d,%d,%d,%d), 矩形(%d,%d,%d,%d)\n", nX1, nY1, nX2, nY2, m_rect_roi.x, m_rect_roi.y, m_rect_roi.width, m_rect_roi.height, \
+// 					  m_rect.left, m_rect.top, m_rect.right, m_rect.bottom);
+
+// 				nX1 = nX1 < 0 ? 0 : nX1;
+// 				nX1 = nX1 > m_rect.Width() ? m_rect.Width() : nX1;
+// 				nX2 = nX2 < 0 ? 0 : nX2;
+// 				nX2 = nX2 > m_rect.Width() ? m_rect.Width() : nX2;
+// 				nY1 = nY1 < 0 ? 0 : nY1;
+// 				nY1 = nY1 > m_rect.Height() ? m_rect.Height() : nY1;
+// 				nY2 = nY2 < 0 ? 0 : nY2;
+// 				nY2 = nY2 > m_rect.Height() ? m_rect.Height() : nY2;
+
 				m_vecRectTracker_ZGT[i].RectTrackerZgt.m_rect.left = nX1;
 				m_vecRectTracker_ZGT[i].RectTrackerZgt.m_rect.top = nY1;
 				m_vecRectTracker_ZGT[i].RectTrackerZgt.m_rect.right = nX2;
@@ -406,10 +445,16 @@ void CV_picture::ShowImage_Rect_roi(cv::Mat &src, cv::Point pt, int method)
 			int nY1 = (int)((float)(m_ptHTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
 			int nX2 = (int)((float)(m_ptHTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
 			int nY2 = (int)((float)(m_ptHTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
-// 			if (nX1 < m_rect_roi.tl().x) nX1 = m_rect_roi.tl().x;
-// 			if (nX2 > m_rect_roi.br().x) nX2 = m_rect_roi.br().x;
-// 			if (nY1 < m_rect_roi.tl().y) nY1 = m_rect_roi.tl().y;
-// 			if (nY2 > m_rect_roi.br().y) nY2 = m_rect_roi.br().y;
+
+// 			nX1 = nX1 < 0 ? 0 : nX1;
+// 			nX1 = nX1 > m_rect.Width() ? m_rect.Width() : nX1;
+// 			nX2 = nX2 < 0 ? 0 : nX2;
+// 			nX2 = nX2 > m_rect.Width() ? m_rect.Width() : nX2;
+// 			nY1 = nY1 < 0 ? 0 : nY1;
+// 			nY1 = nY1 > m_rect.Height() ? m_rect.Height() : nY1;
+// 			nY2 = nY2 < 0 ? 0 : nY2;
+// 			nY2 = nY2 > m_rect.Height() ? m_rect.Height() : nY2;
+
 			m_RectTrackerH.m_rect.left = nX1;
 			m_RectTrackerH.m_rect.top = nY1;
 			m_RectTrackerH.m_rect.right = nX2;
@@ -421,6 +466,16 @@ void CV_picture::ShowImage_Rect_roi(cv::Mat &src, cv::Point pt, int method)
 			int nY1 = (int)((float)(m_ptVTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
 			int nX2 = (int)((float)(m_ptVTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
 			int nY2 = (int)((float)(m_ptVTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+
+// 			nX1 = nX1 < 0 ? 0 : nX1;
+// 			nX1 = nX1 > m_rect.Width() ? m_rect.Width() : nX1;
+// 			nX2 = nX2 < 0 ? 0 : nX2;
+// 			nX2 = nX2 > m_rect.Width() ? m_rect.Width() : nX2;
+// 			nY1 = nY1 < 0 ? 0 : nY1;
+// 			nY1 = nY1 > m_rect.Height() ? m_rect.Height() : nY1;
+// 			nY2 = nY2 < 0 ? 0 : nY2;
+// 			nY2 = nY2 > m_rect.Height() ? m_rect.Height() : nY2;
+
 			m_RectTrackerV.m_rect.left = nX1;
 			m_RectTrackerV.m_rect.top = nY1;
 			m_RectTrackerV.m_rect.right = nX2;
@@ -432,6 +487,16 @@ void CV_picture::ShowImage_Rect_roi(cv::Mat &src, cv::Point pt, int method)
 			int nY1 = (int)((float)(m_ptSNTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
 			int nX2 = (int)((float)(m_ptSNTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
 			int nY2 = (int)((float)(m_ptSNTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+
+// 			nX1 = nX1 < 0 ? 0 : nX1;
+// 			nX1 = nX1 > m_rect.Width() ? m_rect.Width() : nX1;
+// 			nX2 = nX2 < 0 ? 0 : nX2;
+// 			nX2 = nX2 > m_rect.Width() ? m_rect.Width() : nX2;
+// 			nY1 = nY1 < 0 ? 0 : nY1;
+// 			nY1 = nY1 > m_rect.Height() ? m_rect.Height() : nY1;
+// 			nY2 = nY2 < 0 ? 0 : nY2;
+// 			nY2 = nY2 > m_rect.Height() ? m_rect.Height() : nY2;
+
 			m_RectTrackerSN.m_rect.left = nX1;
 			m_RectTrackerSN.m_rect.top = nY1;
 			m_RectTrackerSN.m_rect.right = nX2;
@@ -445,6 +510,19 @@ void CV_picture::ShowImage_Rect_roi(cv::Mat &src, cv::Point pt, int method)
 				int nY1 = (int)((float)(m_vecRectTracker_ZGT[i].ptTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
 				int nX2 = (int)((float)(m_vecRectTracker_ZGT[i].ptTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
 				int nY2 = (int)((float)(m_vecRectTracker_ZGT[i].ptTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+				
+// 				TRACE("ShowImage_Rect_roi-->橡皮筋显示区域(%d,%d,%d,%d), roi(%d,%d,%d,%d), 矩形(%d,%d,%d,%d)\n", nX1, nY1, nX2, nY2, m_rect_roi.x, m_rect_roi.y, m_rect_roi.width, m_rect_roi.height, \
+// 					  m_rect.left, m_rect.top, m_rect.right, m_rect.bottom);
+
+// 				nX1 = nX1 < 0 ? 0 : nX1;
+// 				nX1 = nX1 > m_rect.Width() ? m_rect.Width() : nX1;
+// 				nX2 = nX2 < 0 ? 0 : nX2;
+// 				nX2 = nX2 > m_rect.Width() ? m_rect.Width() : nX2;
+// 				nY1 = nY1 < 0 ? 0 : nY1;
+// 				nY1 = nY1 > m_rect.Height() ? m_rect.Height() : nY1;
+// 				nY2 = nY2 < 0 ? 0 : nY2;
+// 				nY2 = nY2 > m_rect.Height() ? m_rect.Height() : nY2;
+
 				m_vecRectTracker_ZGT[i].RectTrackerZgt.m_rect.left = nX1;
 				m_vecRectTracker_ZGT[i].RectTrackerZgt.m_rect.top = nY1;
 				m_vecRectTracker_ZGT[i].RectTrackerZgt.m_rect.right = nX2;
@@ -540,10 +618,16 @@ void CV_picture::ShowImage_rect(cv::Mat &src, cv::Point pt, float fScale)
 			int nY1 = (int)((float)(m_ptHTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
 			int nX2 = (int)((float)(m_ptHTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
 			int nY2 = (int)((float)(m_ptHTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
-// 			if (nX1 < m_rect_roi.tl().x) nX1 = m_rect_roi.tl().x;
-// 			if (nX2 > m_rect_roi.br().x) nX2 = m_rect_roi.br().x;
-// 			if (nY1 < m_rect_roi.tl().y) nY1 = m_rect_roi.tl().y;
-// 			if (nY2 > m_rect_roi.br().y) nY2 = m_rect_roi.br().y;
+
+// 			nX1 = nX1 < 0 ? 0 : nX1;
+// 			nX1 = nX1 > m_rect.Width() ? m_rect.Width() : nX1;
+// 			nX2 = nX2 < 0 ? 0 : nX2;
+// 			nX2 = nX2 > m_rect.Width() ? m_rect.Width() : nX2;
+// 			nY1 = nY1 < 0 ? 0 : nY1;
+// 			nY1 = nY1 > m_rect.Height() ? m_rect.Height() : nY1;
+// 			nY2 = nY2 < 0 ? 0 : nY2;
+// 			nY2 = nY2 > m_rect.Height() ? m_rect.Height() : nY2;
+
 			m_RectTrackerH.m_rect.left = nX1;
 			m_RectTrackerH.m_rect.top = nY1;
 			m_RectTrackerH.m_rect.right = nX2;
@@ -556,6 +640,16 @@ void CV_picture::ShowImage_rect(cv::Mat &src, cv::Point pt, float fScale)
 			int nY1 = (int)((float)(m_ptVTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
 			int nX2 = (int)((float)(m_ptVTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
 			int nY2 = (int)((float)(m_ptVTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+
+// 			nX1 = nX1 < 0 ? 0 : nX1;
+// 			nX1 = nX1 > m_rect.Width() ? m_rect.Width() : nX1;
+// 			nX2 = nX2 < 0 ? 0 : nX2;
+// 			nX2 = nX2 > m_rect.Width() ? m_rect.Width() : nX2;
+// 			nY1 = nY1 < 0 ? 0 : nY1;
+// 			nY1 = nY1 > m_rect.Height() ? m_rect.Height() : nY1;
+// 			nY2 = nY2 < 0 ? 0 : nY2;
+// 			nY2 = nY2 > m_rect.Height() ? m_rect.Height() : nY2;
+
 			m_RectTrackerV.m_rect.left = nX1;
 			m_RectTrackerV.m_rect.top = nY1;
 			m_RectTrackerV.m_rect.right = nX2;
@@ -568,6 +662,16 @@ void CV_picture::ShowImage_rect(cv::Mat &src, cv::Point pt, float fScale)
 			int nY1 = (int)((float)(m_ptSNTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
 			int nX2 = (int)((float)(m_ptSNTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
 			int nY2 = (int)((float)(m_ptSNTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+
+// 			nX1 = nX1 < 0 ? 0 : nX1;
+// 			nX1 = nX1 > m_rect.Width() ? m_rect.Width() : nX1;
+// 			nX2 = nX2 < 0 ? 0 : nX2;
+// 			nX2 = nX2 > m_rect.Width() ? m_rect.Width() : nX2;
+// 			nY1 = nY1 < 0 ? 0 : nY1;
+// 			nY1 = nY1 > m_rect.Height() ? m_rect.Height() : nY1;
+// 			nY2 = nY2 < 0 ? 0 : nY2;
+// 			nY2 = nY2 > m_rect.Height() ? m_rect.Height() : nY2;
+
 			m_RectTrackerSN.m_rect.left = nX1;
 			m_RectTrackerSN.m_rect.top = nY1;
 			m_RectTrackerSN.m_rect.right = nX2;
@@ -581,6 +685,16 @@ void CV_picture::ShowImage_rect(cv::Mat &src, cv::Point pt, float fScale)
 				int nY1 = (int)((float)(m_vecRectTracker_ZGT[i].ptTracker1.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
 				int nX2 = (int)((float)(m_vecRectTracker_ZGT[i].ptTracker2.x - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width());
 				int nY2 = (int)((float)(m_vecRectTracker_ZGT[i].ptTracker2.y - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height());
+				
+// 				nX1 = nX1 < 0 ? 0 : nX1;
+// 				nX1 = nX1 > m_rect.Width() ? m_rect.Width() : nX1;
+// 				nX2 = nX2 < 0 ? 0 : nX2;
+// 				nX2 = nX2 > m_rect.Width() ? m_rect.Width() : nX2;
+// 				nY1 = nY1 < 0 ? 0 : nY1;
+// 				nY1 = nY1 > m_rect.Height() ? m_rect.Height() : nY1;
+// 				nY2 = nY2 < 0 ? 0 : nY2;
+// 				nY2 = nY2 > m_rect.Height() ? m_rect.Height() : nY2;
+
 				m_vecRectTracker_ZGT[i].RectTrackerZgt.m_rect.left = nX1;
 				m_vecRectTracker_ZGT[i].RectTrackerZgt.m_rect.top = nY1;
 				m_vecRectTracker_ZGT[i].RectTrackerZgt.m_rect.right = nX2;
@@ -1004,10 +1118,23 @@ void CV_picture::OnLButtonDown(UINT nFlags, CPoint point)
 			m_RectTrackerH.Track(this, point, TRUE);
 			m_RectTrackerH.m_rect.NormalizeRect();   //正规化矩形
 
-			int nX = (float)m_RectTrackerH.m_rect.left / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x;
-			int nY = (float)m_RectTrackerH.m_rect.top / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y;
-			int nX2 = (float)m_RectTrackerH.m_rect.right / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x;
-			int nY2 = (float)m_RectTrackerH.m_rect.bottom / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y;
+			int nMinW = (0 - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width();
+			int nMinH = (0 - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height();
+			if (m_RectTrackerH.m_rect.left < nMinW) m_RectTrackerH.m_rect.left = nMinW;
+			if (m_RectTrackerH.m_rect.top < nMinH) m_RectTrackerH.m_rect.top = nMinH;
+			int nMaxW = (m_dst_img.cols - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width();
+			int nMaxH = (m_dst_img.rows - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height();
+			if (m_RectTrackerH.m_rect.right > nMaxW) m_RectTrackerH.m_rect.right = nMaxW;
+			if (m_RectTrackerH.m_rect.bottom > nMaxH) m_RectTrackerH.m_rect.bottom = nMaxH;
+
+			int nX = (float)m_RectTrackerH.m_rect.left / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x + 1;
+			int nY = (float)m_RectTrackerH.m_rect.top / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y + 1;
+			int nX2 = (float)m_RectTrackerH.m_rect.right / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x + 1;
+			int nY2 = (float)m_RectTrackerH.m_rect.bottom / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y + 1;
+			if (m_RectTrackerH.m_rect.left <= 0) nX -= 1;		//当<=0时，会出现点击往右移动的现象
+			if (m_RectTrackerH.m_rect.top <= 0) nY -= 1;
+			if (m_RectTrackerH.m_rect.right <= 0) nX2 -= 1;
+			if (m_RectTrackerH.m_rect.bottom <= 0) nY2 -= 1;
 
 			m_ptHTracker1.x = nX;
 			m_ptHTracker1.y = nY;
@@ -1031,10 +1158,23 @@ void CV_picture::OnLButtonDown(UINT nFlags, CPoint point)
 			m_RectTrackerV.Track(this, point, TRUE);
 			m_RectTrackerV.m_rect.NormalizeRect();   //正规化矩形
 
-			int nX = (float)m_RectTrackerV.m_rect.left / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x;
-			int nY = (float)m_RectTrackerV.m_rect.top / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y;
-			int nX2 = (float)m_RectTrackerV.m_rect.right / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x;
-			int nY2 = (float)m_RectTrackerV.m_rect.bottom / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y;
+			int nMinW = (0 - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width();
+			int nMinH = (0 - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height();
+			if (m_RectTrackerV.m_rect.left < nMinW) m_RectTrackerV.m_rect.left = nMinW;
+			if (m_RectTrackerV.m_rect.top < nMinH) m_RectTrackerV.m_rect.top = nMinH;
+			int nMaxW = (m_dst_img.cols - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width();
+			int nMaxH = (m_dst_img.rows - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height();
+			if (m_RectTrackerV.m_rect.right > nMaxW) m_RectTrackerV.m_rect.right = nMaxW;
+			if (m_RectTrackerV.m_rect.bottom > nMaxH) m_RectTrackerV.m_rect.bottom = nMaxH;
+
+			int nX = (float)m_RectTrackerV.m_rect.left / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x + 1;
+			int nY = (float)m_RectTrackerV.m_rect.top / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y + 1;
+			int nX2 = (float)m_RectTrackerV.m_rect.right / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x + 1;
+			int nY2 = (float)m_RectTrackerV.m_rect.bottom / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y + 1;
+			if (m_RectTrackerV.m_rect.left <= 0) nX -= 1;		//当<=0时，会出现点击往右移动的现象
+			if (m_RectTrackerV.m_rect.top <= 0) nY -= 1;
+			if (m_RectTrackerV.m_rect.right <= 0) nX2 -= 1;
+			if (m_RectTrackerV.m_rect.bottom <= 0) nY2 -= 1;
 
 			m_ptVTracker1.x = nX;
 			m_ptVTracker1.y = nY;
@@ -1058,10 +1198,23 @@ void CV_picture::OnLButtonDown(UINT nFlags, CPoint point)
 			m_RectTrackerSN.m_rect.NormalizeRect();   //正规化矩形
 		}
 
-			int nX = (float)m_RectTrackerSN.m_rect.left / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x;
-			int nY = (float)m_RectTrackerSN.m_rect.top / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y;
-			int nX2 = (float)m_RectTrackerSN.m_rect.right / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x;
-			int nY2 = (float)m_RectTrackerSN.m_rect.bottom / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y;
+		int nMinW = (0 - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width();
+		int nMinH = (0 - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height();
+		if (m_RectTrackerSN.m_rect.left < nMinW) m_RectTrackerSN.m_rect.left = nMinW;
+		if (m_RectTrackerSN.m_rect.top < nMinH) m_RectTrackerSN.m_rect.top = nMinH;
+		int nMaxW = (m_dst_img.cols - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width();
+		int nMaxH = (m_dst_img.rows - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height();
+		if (m_RectTrackerSN.m_rect.right > nMaxW) m_RectTrackerSN.m_rect.right = nMaxW;
+		if (m_RectTrackerSN.m_rect.bottom > nMaxH) m_RectTrackerSN.m_rect.bottom = nMaxH;
+
+			int nX = (float)m_RectTrackerSN.m_rect.left / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x + 1;
+			int nY = (float)m_RectTrackerSN.m_rect.top / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y + 1;
+			int nX2 = (float)m_RectTrackerSN.m_rect.right / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x + 1;
+			int nY2 = (float)m_RectTrackerSN.m_rect.bottom / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y + 1;
+			if (m_RectTrackerSN.m_rect.left <= 0) nX -= 1;		//当<=0时，会出现点击往右移动的现象
+			if (m_RectTrackerSN.m_rect.top <= 0) nY -= 1;
+			if (m_RectTrackerSN.m_rect.right <= 0) nX2 -= 1;
+			if (m_RectTrackerSN.m_rect.bottom <= 0) nY2 -= 1;
 
 			m_ptSNTracker1.x = nX;
 			m_ptSNTracker1.y = nY;
@@ -1089,10 +1242,37 @@ void CV_picture::OnLButtonDown(UINT nFlags, CPoint point)
 				zgtTracker.RectTrackerZgt.Track(this, point, TRUE);
 				zgtTracker.RectTrackerZgt.m_rect.NormalizeRect();   //正规化矩形
 
-				int nX = (float)zgtTracker.RectTrackerZgt.m_rect.left / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x;
-				int nY = (float)zgtTracker.RectTrackerZgt.m_rect.top / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y;
-				int nX2 = (float)zgtTracker.RectTrackerZgt.m_rect.right / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x;
-				int nY2 = (float)zgtTracker.RectTrackerZgt.m_rect.bottom / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y;
+				//删除没有添加的橡皮筋
+				std::vector<ST_ZgtTracker>::iterator itTracker = m_vecRectTracker_ZGT.begin();
+				for (; itTracker != m_vecRectTracker_ZGT.end(); )
+				{
+					itTracker->bSel = false;
+					if (!itTracker->bInserted && zgtTracker.bInserted)
+					{
+						itTracker = m_vecRectTracker_ZGT.erase(itTracker);
+					}
+					else
+						itTracker++;
+				}
+				zgtTracker.bSel = true;
+
+				int nMinW = (0 - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width();
+				int nMinH = (0 - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height();
+				if (zgtTracker.RectTrackerZgt.m_rect.left < nMinW) zgtTracker.RectTrackerZgt.m_rect.left = nMinW;
+				if (zgtTracker.RectTrackerZgt.m_rect.top < nMinH) zgtTracker.RectTrackerZgt.m_rect.top = nMinH;
+				int nMaxW = (m_dst_img.cols - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width();
+				int nMaxH = (m_dst_img.rows - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height();
+				if (zgtTracker.RectTrackerZgt.m_rect.right > nMaxW) zgtTracker.RectTrackerZgt.m_rect.right = nMaxW;
+				if (zgtTracker.RectTrackerZgt.m_rect.bottom > nMaxH) zgtTracker.RectTrackerZgt.m_rect.bottom = nMaxH;
+
+				int nX = (float)zgtTracker.RectTrackerZgt.m_rect.left / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x + 1;
+				int nY = (float)zgtTracker.RectTrackerZgt.m_rect.top / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y + 1;
+				int nX2 = (float)zgtTracker.RectTrackerZgt.m_rect.right / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x + 1;
+				int nY2 = (float)zgtTracker.RectTrackerZgt.m_rect.bottom / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y + 1;
+				if (zgtTracker.RectTrackerZgt.m_rect.left <= 0) nX -= 1;		//当<=0时，会出现点击往右移动的现象
+				if (zgtTracker.RectTrackerZgt.m_rect.top <= 0) nY -= 1;
+				if (zgtTracker.RectTrackerZgt.m_rect.right <= 0) nX2 -= 1;
+				if (zgtTracker.RectTrackerZgt.m_rect.bottom <= 0) nY2 -= 1;
 				ptTracker1.x = nX;
 				ptTracker1.y = nY;
 				ptTracker2.x = nX2;
@@ -1111,10 +1291,30 @@ void CV_picture::OnLButtonDown(UINT nFlags, CPoint point)
 				zgtTracker.RectTrackerZgt.TrackRubberBand(this, point, TRUE);
 				zgtTracker.RectTrackerZgt.m_rect.NormalizeRect();   //正规化矩形（关于正规化矩形下面有介绍）
 
-				int nX = (float)zgtTracker.RectTrackerZgt.m_rect.left / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x;
-				int nY = (float)zgtTracker.RectTrackerZgt.m_rect.top / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y;
-				int nX2 = (float)zgtTracker.RectTrackerZgt.m_rect.right / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x;
-				int nY2 = (float)zgtTracker.RectTrackerZgt.m_rect.bottom / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y;
+				//设置其他矩形区为未选中状态
+				for (auto &zgtTracker2 : m_vecRectTracker_ZGT)
+				{
+					zgtTracker2.bSel = false;
+				}
+				zgtTracker.bSel = true;
+
+				int nMinW = (0 - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width();
+				int nMinH = (0 - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height();
+				if (zgtTracker.RectTrackerZgt.m_rect.left < nMinW) zgtTracker.RectTrackerZgt.m_rect.left = nMinW;
+				if (zgtTracker.RectTrackerZgt.m_rect.top < nMinH) zgtTracker.RectTrackerZgt.m_rect.top = nMinH;
+				int nMaxW = (m_dst_img.cols - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width();
+				int nMaxH = (m_dst_img.rows - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height();
+				if (zgtTracker.RectTrackerZgt.m_rect.right > nMaxW) zgtTracker.RectTrackerZgt.m_rect.right = nMaxW;
+				if (zgtTracker.RectTrackerZgt.m_rect.bottom > nMaxH) zgtTracker.RectTrackerZgt.m_rect.bottom = nMaxH;
+
+				int nX = (float)zgtTracker.RectTrackerZgt.m_rect.left / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x + 1;
+				int nY = (float)zgtTracker.RectTrackerZgt.m_rect.top / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y + 1;
+				int nX2 = (float)zgtTracker.RectTrackerZgt.m_rect.right / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x + 1;
+				int nY2 = (float)zgtTracker.RectTrackerZgt.m_rect.bottom / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y + 1;
+				if (zgtTracker.RectTrackerZgt.m_rect.left <= 0) nX -= 1;		//当<=0时，会出现点击往右移动的现象
+				if (zgtTracker.RectTrackerZgt.m_rect.top <= 0) nY -= 1;
+				if (zgtTracker.RectTrackerZgt.m_rect.right <= 0) nX2 -= 1;
+				if (zgtTracker.RectTrackerZgt.m_rect.bottom <= 0) nY2 -= 1;
 				ptTracker1.x = nX;
 				ptTracker1.y = nY;
 				ptTracker2.x = nX2;
@@ -1127,21 +1327,6 @@ void CV_picture::OnLButtonDown(UINT nFlags, CPoint point)
 				break;
 			}
 		}
-// 		if (bFind)
-// 		{
-// 			int nX = (float)pZgtTracker->RectTrackerZgt.m_rect.left / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x;
-// 			int nY = (float)pZgtTracker->RectTrackerZgt.m_rect.top / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y;
-// 			int nX2 = (float)pZgtTracker->RectTrackerZgt.m_rect.right / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x;
-// 			int nY2 = (float)pZgtTracker->RectTrackerZgt.m_rect.bottom / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y;
-// 			ptTracker1.x = nX;
-// 			ptTracker1.y = nY;
-// 			ptTracker2.x = nX2;
-// 			ptTracker2.y = nY2;
-// 			pZgtTracker->ptTracker1 = ptTracker1;
-// 			pZgtTracker->ptTracker2 = ptTracker2;
-// 			pZgtTracker->RectTrackerZgt.m_rect.SetRect(ptTracker1.x, ptTracker1.y, ptTracker2.x, ptTracker2.y);
-// 			TRACE("橡皮筋左键按下pt1 = (%d, %d), pt2 = (%d, %d)\n", ptTracker1.x, ptTracker1.y, ptTracker2.x, ptTracker2.y);
-// 		}
 		if (!bFind)
 		{
 			ST_ZgtTracker zgtObj;
@@ -1149,11 +1334,30 @@ void CV_picture::OnLButtonDown(UINT nFlags, CPoint point)
 			zgtObj.RectTrackerZgt.m_nHandleSize = 5; //控制柄的像素大小
 			zgtObj.RectTrackerZgt.TrackRubberBand(this, point, TRUE);
 			zgtObj.RectTrackerZgt.m_rect.NormalizeRect();   //正规化矩形（关于正规化矩形下面有介绍）
+															//设置其他矩形区为未选中状态
+			for (auto &zgtTracker3 : m_vecRectTracker_ZGT)
+			{
+				zgtTracker3.bSel = false;
+			}
+			zgtObj.bSel = true;
+
+			int nMinW = (0 - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width();
+			int nMinH = (0 - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height();
+			if (zgtObj.RectTrackerZgt.m_rect.left < nMinW) zgtObj.RectTrackerZgt.m_rect.left = nMinW;
+			if (zgtObj.RectTrackerZgt.m_rect.top < nMinH) zgtObj.RectTrackerZgt.m_rect.top = nMinH;
+			int nMaxW = (m_dst_img.cols - m_rect_roi.tl().x) / (float)m_rect_roi.width * m_rect.Width();
+			int nMaxH = (m_dst_img.rows - m_rect_roi.tl().y) / (float)m_rect_roi.height * m_rect.Height();
+			if (zgtObj.RectTrackerZgt.m_rect.right > nMaxW) zgtObj.RectTrackerZgt.m_rect.right = nMaxW;
+			if (zgtObj.RectTrackerZgt.m_rect.bottom > nMaxH) zgtObj.RectTrackerZgt.m_rect.bottom = nMaxH;
 
 			int nX = (float)zgtObj.RectTrackerZgt.m_rect.left / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x;
 			int nY = (float)zgtObj.RectTrackerZgt.m_rect.top / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y;
 			int nX2 = (float)zgtObj.RectTrackerZgt.m_rect.right / (float)m_rect.Width() * m_rect_roi.width + m_rect_roi.tl().x;
 			int nY2 = (float)zgtObj.RectTrackerZgt.m_rect.bottom / (float)m_rect.Height() * m_rect_roi.height + m_rect_roi.tl().y;
+			if (zgtObj.RectTrackerZgt.m_rect.left <= 0) nX -= 1;		//当<=0时，会出现点击往右移动的现象
+			if (zgtObj.RectTrackerZgt.m_rect.top <= 0) nY -= 1;
+			if (zgtObj.RectTrackerZgt.m_rect.right <= 0) nX2 -= 1;
+			if (zgtObj.RectTrackerZgt.m_rect.bottom <= 0) nY2 -= 1;
 			ptTracker1.x = nX;
 			ptTracker1.y = nY;
 			ptTracker2.x = nX2;

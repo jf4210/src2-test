@@ -645,7 +645,7 @@ int CScanMgrDlg::SearchModel()
 		std::string modelPath = T2A(g_strCurrentPath + _T("Model\\"));
 		std::string strModelFilePath = modelPath + strModelName.substr(0, strModelName.rfind('.'));
 		CModelMgr modelObj;
-		modelObj.SeBaseInfo(modelPath, g_strEncPwd);
+		modelObj.SetBaseInfo(modelPath, g_strEncPwd);
 		_pModel_ = modelObj.LoadModelFile(strModelFilePath);
 	#else
 		CString strModelFilePath = g_strCurrentPath + _T("Model\\") + A2T(strModelName.c_str());

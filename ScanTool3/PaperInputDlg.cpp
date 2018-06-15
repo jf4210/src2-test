@@ -1011,7 +1011,7 @@ void CPaperInputDlg::OnCbnSelchangeComboModellist()
 	std::string modelPath = T2A(g_strCurrentPath + _T("Model\\"));
 	std::string strModelFilePath = modelPath + T2A(strModelName);
 	CModelMgr modelObj;
-	modelObj.SeBaseInfo(modelPath, g_strEncPwd);
+	modelObj.SetBaseInfo(modelPath, g_strEncPwd);
 	m_pModel = modelObj.LoadModelFile(strModelFilePath);
 #else
 	m_pModel = LoadModelFile(strModelPath);
