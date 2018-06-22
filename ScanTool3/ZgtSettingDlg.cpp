@@ -13,7 +13,7 @@ IMPLEMENT_DYNAMIC(CZgtSettingDlg, CDialog)
 
 CZgtSettingDlg::CZgtSettingDlg(int nStartTH/* = 0*/, int nQuestionType, CWnd* pParent /*=NULL*/)
 	: CTipBaseDlg(IDD_ZGTSETTINGDLG, pParent)
-	, m_nStartTH(nStartTH + 1), m_nQuestionType(nQuestionType)
+	, m_fStartTH(nStartTH + 1), m_nQuestionType(nQuestionType)
 {
 
 }
@@ -31,7 +31,7 @@ void CZgtSettingDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_RADIO_YWZW, m_btnRadio_YWZW);
 	DDX_Control(pDX, IDC_RADIO_XZT, m_btnRadio_XZT);
 	DDX_Control(pDX, IDC_BTN_CLOSE, m_bmpBtnClose);
-	DDX_Text(pDX, IDC_EDIT_TH, m_nStartTH);
+	DDX_Text(pDX, IDC_EDIT_TH, m_fStartTH);
 }
 
 

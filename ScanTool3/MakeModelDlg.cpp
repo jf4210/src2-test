@@ -4034,8 +4034,8 @@ void CMakeModelDlg::ShowRectTracker()
 
 			if (pStZgt && pStZgtRegion)
 			{
-				char szAnswerVal[10] = { 0 };
-				sprintf_s(szAnswerVal, "%d_%d(%d)", pStZgt->nTh, pStZgtRegion->nId, pStZgtRegion->nPageId);
+				char szAnswerVal[50] = { 0 };
+				sprintf_s(szAnswerVal, "%s_%d(%d)", pStZgt->strTh.c_str(), pStZgtRegion->nId, pStZgtRegion->nPageId);
 				int nX = rt.width / 5 > 60 ? rt.width / 5 : 60;
 				int nY = rt.height / 5 > 60 ? rt.height / 5 : 60;
 				if (m_pModelPicShow->m_pPicDlg->m_picShow.m_vecRectTracker_ZGT[i].bSel)
@@ -4421,8 +4421,8 @@ bool CMakeModelDlg::ShowRectByPoint(cv::Point pt)
 						{
 							rt = GetShowFakePosRect(pStZgtRegion->rt);
 
-							char szAnswerVal[10] = { 0 };
-							sprintf_s(szAnswerVal, "%d_%d(%d)", pStZgt->nTh, pStZgtRegion->nId, pStZgtRegion->nPageId);
+							char szAnswerVal[50] = { 0 };
+							sprintf_s(szAnswerVal, "%s_%d(%d)", pStZgt->strTh.c_str(), pStZgtRegion->nId, pStZgtRegion->nPageId);
 							int nX = rt.width / 5 > 60 ? rt.width / 5 : 60;
 							int nY = rt.height / 5 > 60 ? rt.height / 5 : 60;
 							cv::putText(tmp, szAnswerVal, Point(rt.x + nX, rt.y + nY), CV_FONT_HERSHEY_PLAIN, 5, Scalar(255, 0, 255), 3);
@@ -4833,8 +4833,8 @@ void CMakeModelDlg::ShowRectByItem(int nItem)
 					{
 						cv::Rect rtTmp = GetShowFakePosRect(pStZgtRegion->rt);
 
-						char szAnswerVal[10] = { 0 };
-						sprintf_s(szAnswerVal, "%d_%d(%d)", pStZgt->nTh, pStZgtRegion->nId, pStZgtRegion->nPageId);
+						char szAnswerVal[50] = { 0 };
+						sprintf_s(szAnswerVal, "%s_%d(%d)", pStZgt->strTh.c_str(), pStZgtRegion->nId, pStZgtRegion->nPageId);
 						int nX = rtTmp.width / 5 > 60 ? rtTmp.width / 5 : 60;
 						int nY = rtTmp.height / 5 > 60 ? rtTmp.height / 5 : 60;
 						cv::putText(tmp, szAnswerVal, Point(rtTmp.x + nX, rtTmp.y + nY), CV_FONT_HERSHEY_PLAIN, 5, Scalar(255, 0, 255), 3);
@@ -5448,8 +5448,8 @@ void CMakeModelDlg::ShowRectByCPType(CPType eType)
 						{
 							rt = GetShowFakePosRect(pStZgtRegion->rt);
 
-							char szAnswerVal[10] = { 0 };
-							sprintf_s(szAnswerVal, "%d_%d(%d)", pStZgt->nTh, pStZgtRegion->nId, pStZgtRegion->nPageId);
+							char szAnswerVal[50] = { 0 };
+							sprintf_s(szAnswerVal, "%s_%d(%d)", pStZgt->strTh.c_str(), pStZgtRegion->nId, pStZgtRegion->nPageId);
 							int nX = rt.width / 5 > 60 ? rt.width / 5 : 60;
 							int nY = rt.height / 5 > 60 ? rt.height / 5 : 60;
 							cv::putText(tmp, szAnswerVal, Point(rt.x + nX, rt.y + nY), CV_FONT_HERSHEY_PLAIN, 5, Scalar(255, 0, 255), 3);
@@ -6274,14 +6274,19 @@ void CMakeModelDlg::AddRecogRectToList()
 		m_nStartTH = dlg.m_nStartTH;
 	}
 	int nZgtType = 0;
+	std::string strZgtStartTH;
 	if (m_eCurCPType == ZGT)
 	{
 		CZgtSettingDlg dlg(m_nStartTH, 2);
 		if (dlg.DoModal() != IDOK)
 			return;
 		
-		m_nStartTH = dlg.m_nStartTH;
+		float fZgtStartTH = dlg.m_fStartTH;
+		m_nStartTH = fZgtStartTH;
 		nZgtType = dlg.m_nQuestionType;
+		std::stringstream ss;
+		ss << fZgtStartTH;
+		strZgtStartTH = ss.str();
 	}
 
 	int nAddTH = 0;
@@ -6412,7 +6417,7 @@ void CMakeModelDlg::AddRecogRectToList()
 			{
 				for (int k = 0; k < m_vecPaperModelInfo[j]->vecZgt.size(); k++)
 				{
-					if (m_vecPaperModelInfo[j]->vecZgt[k].nTh == m_nStartTH)
+					if (m_vecPaperModelInfo[j]->vecZgt[k].strTh == strZgtStartTH)
 					{
 						//将此答题区添加到该主观题中
 						bFind = true;
@@ -6434,7 +6439,7 @@ void CMakeModelDlg::AddRecogRectToList()
 				stRegion.nPageId = m_nCurrTabSel;
 				stRegion.rt = GetSrcSaveRect(m_vecTmp[i].rt);
 				ST_ZGT stZgt;
-				stZgt.nTh = m_nStartTH;
+				stZgt.strTh = strZgtStartTH;
 				stZgt.nType = nZgtType;
 				stZgt.vecRegion.emplace_back(std::move(stRegion));
 				m_vecPaperModelInfo[m_nCurrTabSel]->vecZgt.emplace_back(std::move(stZgt));

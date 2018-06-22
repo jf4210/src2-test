@@ -25,7 +25,7 @@ public:
 	CButton			m_btnRadio_YWZW;
 	CButton			m_btnRadio_XZT;
 public:
-	int		m_nStartTH;	//起始题号
+	float	m_fStartTH;	//起始题号
 	int		m_nQuestionType;	//题目类型，1-填空题，2-解答题，3-英语作文，4-语文作文，5-选做题
 private:
 	void	InitShowQuestionType(int nType);
