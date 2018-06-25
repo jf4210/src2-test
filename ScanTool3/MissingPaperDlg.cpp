@@ -245,6 +245,8 @@ void CMissingPaperDlg::InitData()
 {
 	if (!m_pPapers || !m_pModel || !m_pStudentMgr) return;
 
+	std::stringstream ss;
+
 	USES_CONVERSION;
 	std::string strKC;	//utf8
 	std::string strTable = Poco::format("T%d_%d", _pModel_->nExamID, _pModel_->nSubjectID);
@@ -254,6 +256,7 @@ void CMissingPaperDlg::InitData()
 		if (m_pStudentMgr->GetKCFromZkzh(strTable, pPaperItem->strSN, strKC))
 			setKC.insert(strKC);	//utf8
 	}
+	ss << "查询当前试卷袋在报名库中的考场集合数为" << setKC.size() << "个\n";
 
 	m_lAllStudent.clear();
 	for (auto itKcCode : setKC)
@@ -264,7 +267,10 @@ void CMissingPaperDlg::InitData()
 		{
 			for (auto itStudent : lResult)
 				m_lAllStudent.push_back(itStudent);
+			ss << "考场" << CMyCodeConvert::Utf8ToGb2312(itKcCode) << ", 学生" << lResult.size() << "个\n";
 		}
+		else
+			ss << "查询报名库" << strTable << "的考场学生失败，考场:" << CMyCodeConvert::Utf8ToGb2312(itKcCode) << ".\n";
 
 		int nCount = m_lcKC.GetItemCount();
 		m_lcKC.InsertItem(nCount, NULL);
@@ -279,6 +285,7 @@ void CMissingPaperDlg::InitData()
 			m_lcKC.SetItemText(nCount, 2, (LPCTSTR)A2T(CMyCodeConvert::Utf8ToGb2312(strKD).c_str()));
 		}
 	}
+	ss << "查询到的总学生" << m_lAllStudent.size() << "个\n";
 
 	m_lcMissingZkzh.DeleteAllItems();
 	STUDENT_LIST::iterator itStudent = m_lAllStudent.begin();
@@ -326,6 +333,9 @@ void CMissingPaperDlg::InitData()
 			}
 		}
 	}
+	ss << "缺失准考证号列表--未扫" << m_lcMissingZkzh.GetItemCount() << "个\n";
+	ss << "缺失准考证号列表--已扫" << m_lcMissingZkzh_Scaned.GetItemCount() << "个\n";
+	g_pLogger->information(ss.str());
 
 	CString strShow = _T("");
 	strShow.Format(_T("缺失准考证号列表--未扫(%d人):"), m_lcMissingZkzh.GetItemCount());
