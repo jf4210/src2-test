@@ -444,7 +444,7 @@ int CScanThread::GetImgMemory()
 	string            strPath = m_strSavePath;
 
 	stringstream	  ss;
-	int		nState = 0;		//扫描状态	-101:获取图像信息失败，-102:分配内存失败，-103:图像传输错误，-104:判断结束图像传输失败
+	int		nState = 0;		//扫描状态	-101:获取图像信息失败，-102:分配内存失败，-103:图像传输错误，-104:判断结束图像传输失败, -105:图像数据复制时异常
 	
 	// start the transfer
 	while (bPendingXfers)
@@ -555,7 +555,14 @@ int CScanThread::GetImgMemory()
 
 						int n = ss.str().length();
 						TRACE("图片信息: w=%d, h=%d, area = %d, 实际数据长度n=%d,相差= %d\n", w, h, w * h, n, w*h - n);
-						CopyData(pIpl2->imageData, (char*)ss.str().c_str(), ss.str().length(), false, height);
+						if (!CopyData(pIpl2->imageData, (char*)ss.str().c_str(), ss.str().length(), false, height))
+						{
+							std::stringstream ss2;
+							ss2 << "图片信息2: w=" << w << ", h=" << h << ", area = " << w*h << ", 实际数据长度n=" << ss.str().length() << ", 相差 = " << w*h - ss.str().length() << ", channel = " << nChannel << ", depth = " << depth << "\n";
+							g_pLogger->warning(ss2.str());
+							nState = -105;
+							break;
+						}
 
 						SaveFile(pIpl2);
 					}
@@ -661,7 +668,7 @@ int CScanThread::GetImgNative()
 	bool        bPendingXfers = true;
 	TW_UINT16   twrc = TWRC_SUCCESS;
 	string      strPath = m_strSavePath;
-	int			nState = 0;		//扫描状态	-201:内存锁定失败
+	int			nState = 0;		//扫描状态	-200:主动停止扫描仪，-201:内存锁定失败，-202:取消传输数据，-203:传输图像失败，-204:图像数据复制时异常
 	
 	while (bPendingXfers)
 	{
@@ -757,7 +764,14 @@ int CScanThread::GetImgNative()
 				char* p = (char*)pDIB + bmpFIH.bfOffBits;
 				TRACE("图片信息1: w=%d, h=%d, area = %d, 实际数据长度n=%d,相差= %d, channel=%d, depth=%d\n", w, h, w * h, nImageSize, w*h - nImageSize, nChannel, depth);
 				TRACE("图片信息2: w=%d, h=%d, area = %d, 实际数据长度n=%d,相差= %d, channel=%d, depth=%d\n", w, h, w * h, pDIB->biSizeImage, w*h - pDIB->biSizeImage, nChannel, depth);
-				CopyData(pIpl2->imageData, (char*)p, pDIB->biSizeImage, isLowerLeft, height);
+				if (!CopyData(pIpl2->imageData, (char*)p, pDIB->biSizeImage, isLowerLeft, height))
+				{
+					std::stringstream ss;
+					ss << "图片信息2: w=" << w << ", h=" << h <<", area = " << w*h << ", 实际数据长度n=" << pDIB->biSizeImage << ", 相差 = " << w*h - pDIB->biSizeImage << ", channel = " << nChannel << ", depth = " << depth << "\n";
+					g_pLogger->warning(ss.str());
+					nState = -204;
+					break;
+				}
 
 				SaveFile(pIpl2);
 			}
@@ -2440,6 +2454,9 @@ std::string CScanThread::ErrCode2Str(int nErr)
 		case -104:
 			strResult = "内存传输模式--判断结束图像传输失败";
 			break;
+		case -105:
+			strResult = "内存传输模式--图像数据复制时异常";
+			break;
 		case -200:
 			strResult = "本地模式--扫描被中止";
 			break;
@@ -2451,6 +2468,9 @@ std::string CScanThread::ErrCode2Str(int nErr)
 			break;
 		case -203:
 			strResult = "本地模式--传输图像失败";
+			break;
+		case -204:
+			strResult = "本地模式--图像数据复制时异常";
 			break;
 		default:
 			strResult = "未知错误";

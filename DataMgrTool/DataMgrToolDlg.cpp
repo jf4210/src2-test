@@ -111,9 +111,17 @@ int		_nOmrNullStatistics_ = 0;	//识别为空总数
 int		_nSnNullStatistics_ = 0;	//SN识别为空总数
 int		_nAllOmrStatistics_ = 0;		//OMR统计总数
 int		_nAllSnStatistics_ = 0;			//SN统计总数
+
+int		_nOmrDoubtSnCount_ = 0;		//存在omr怀疑的考生数
+int		_nOmrNullSnCount_ = 0;		//存在omr为空的考生数
+int		_nOmrSingleToMulti_ = 0;	//存在单选题识别为多选且无怀疑的考生数
+int		_nOmrIssueSnCount_ = 0;		//属于Omr问题卷的考生数量
+
 int		_nPkgDoubtStatistics_ = 0;		//原始试卷包识别怀疑总数
 int		_nPkgOmrNullStatistics_ = 0;	//原始试卷包识别为空总数
 int		_nPkgSnNullStatistics_ = 0;		//原始试卷包中SN识别为空总数
+std::string _strDetailStatisTics_;		//详细的试卷袋识别统计信息
+
 
 int		_nDecompress_ = 0;	//解压试卷袋数量
 int		_nRecog_ = 0;		//识别试卷数量
@@ -234,6 +242,7 @@ BEGIN_MESSAGE_MAP(CDataMgrToolDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_WatchPapers, &CDataMgrToolDlg::OnBnClickedBtnWatchpapers)
 	ON_BN_CLICKED(IDC_BTN_WatchPaper, &CDataMgrToolDlg::OnBnClickedBtnWatchpaper)
 	ON_BN_CLICKED(IDC_CHK_AutoContract, &CDataMgrToolDlg::OnBnClickedChkAutocontract)
+	ON_BN_CLICKED(IDC_BTN_ExportStatisticsDetail, &CDataMgrToolDlg::OnBnClickedBtnExportstatisticsdetail)
 END_MESSAGE_MAP()
 
 
@@ -976,9 +985,11 @@ LRESULT CDataMgrToolDlg::MsgRecogComplete(WPARAM wParam, LPARAM lParam)
 		int nOmrCount = nModelOmrCount * nPapersCount;
 
 		char szStatisticsInfo[300] = { 0 };
-		sprintf_s(szStatisticsInfo, "新识别信息: omrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), zkzhNull = %.2f%%(%d/%d)\n", (float)pPapers->nOmrDoubt / nOmrCount * 100, pPapers->nOmrDoubt, nOmrCount, \
+		sprintf_s(szStatisticsInfo, "新识别信息: omrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), zkzhNull = %.2f%%(%d/%d)\r\n存在omr怀疑、omr为空、单选识别成多选的试卷(%d + %d + %d = %d)份, 总的Omr问题卷(%d)份\r\n", (float)pPapers->nOmrDoubt / nOmrCount * 100, pPapers->nOmrDoubt, nOmrCount, \
 				  (float)pPapers->nOmrNull / nOmrCount * 100, pPapers->nOmrNull, nOmrCount, \
-				  (float)pPapers->nSnNull / nPapersCount * 100, pPapers->nSnNull, nPapersCount);
+				  (float)pPapers->nSnNull / nPapersCount * 100, pPapers->nSnNull, nPapersCount, \
+				  pPapers->nOmrDoubtSnCounts, pPapers->nOmrNullSnCounts, pPapers->nSingleToMultiSnCounts, \
+				  pPapers->nOmrDoubtSnCounts + pPapers->nOmrNullSnCounts + pPapers->nSingleToMultiSnCounts, pPapers->nOmrIssueSnCounts);
 
 		char szPkgStatisticsInfo[300] = { 0 };
 		sprintf_s(szPkgStatisticsInfo, "原始包信息: omrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), zkzhNull = %.2f%%(%d/%d)\n", (float)pPapers->nPkgOmrDoubt / nOmrCount * 100, pPapers->nPkgOmrDoubt, nOmrCount, \
@@ -986,6 +997,14 @@ LRESULT CDataMgrToolDlg::MsgRecogComplete(WPARAM wParam, LPARAM lParam)
 				  (float)pPapers->nPkgSnNull / nPapersCount * 100, pPapers->nPkgSnNull, nPapersCount);
 
 		strMsg.Format(_T("\r\n==================\r\n%s识别完成\r\n%s\r\n%s\r\n%s\r\n\r\n"), A2T(pPapers->strPapersName.c_str()), A2T(szStatisticsInfo), A2T(ss.str().c_str()), A2T(szPkgStatisticsInfo));
+
+		ss.str("");
+		ss << pPapers->strPapersName << "\tomrDoubt = " << (float)pPapers->nOmrDoubt / nOmrCount * 100 << "%%(" << pPapers->nOmrDoubt << "/" << nOmrCount \
+			<< "), omrNull = " << (float)pPapers->nOmrNull / nOmrCount * 100 << "%%(" << pPapers->nOmrNull << "/" << nOmrCount << "), zkzhNull = " << (float)pPapers->nSnNull / nPapersCount * 100 \
+			<< "%%(" << pPapers->nSnNull << "/" << nPapersCount << "), 存在omr怀疑、omr为空、单选识别成多选的试卷(" << pPapers->nOmrDoubtSnCounts << "+" << pPapers->nOmrNullSnCounts << "+" \
+			<< pPapers->nSingleToMultiSnCounts << "=" << pPapers->nOmrDoubtSnCounts + pPapers->nOmrNullSnCounts + pPapers->nSingleToMultiSnCounts << ")份, 总的Omr问题卷(" \
+			<< pPapers->nOmrIssueSnCounts << ")份\n";
+		_strDetailStatisTics_.append(ss.str());
 	}
 	else
 		strMsg.Format(_T("\r\n****************\r\n%s识别出问题试卷, 问题卷数量=%d\r\n"), A2T(pPapers->strPapersName.c_str()), pPapers->lIssue.size());
@@ -1134,15 +1153,21 @@ void CDataMgrToolDlg::OnBnClickedBtnStatisticsresult()
 	USES_CONVERSION;
 	CString strMsg;
 
-	char szStatisticsInfo[300] = { 0 };
-	sprintf_s(szStatisticsInfo, "\n所有试卷袋识别错误信息统计:\r\nomrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), snNull = %.2f%%(%d/%d), omrError1 = %.2f%%(%d/%d), omrError2 = %.2f%%(%d/%d)\r\n原始试卷袋统计: omrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), snNull = %.2f%%(%d/%d)\n", (float)_nOmrDoubtStatistics_ / _nAllOmrStatistics_ * 100, _nOmrDoubtStatistics_, _nAllOmrStatistics_, \
+	char szStatisticsInfo[500] = { 0 };
+	sprintf_s(szStatisticsInfo, "\n所有试卷袋识别错误信息统计:\r\nomrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), snNull = %.2f%%(%d/%d), omrError1 = %.2f%%(%d/%d), omrError2 = %.2f%%(%d/%d)\r\n存在omr怀疑、omr为空、单选识别成多选的试卷(%d + %d + %d = %d)份,总的Omr问题卷(%d)份\r\n原始试卷袋统计: omrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), snNull = %.2f%%(%d/%d)\n", (float)_nOmrDoubtStatistics_ / _nAllOmrStatistics_ * 100, _nOmrDoubtStatistics_, _nAllOmrStatistics_, \
 			  (float)_nOmrNullStatistics_ / _nAllOmrStatistics_ * 100, _nOmrNullStatistics_, _nAllOmrStatistics_, \
 			  (float)_nSnNullStatistics_ / _nAllSnStatistics_ * 100, _nSnNullStatistics_, _nAllSnStatistics_, \
 			  (float)_nErrorStatistics1_ / _nAllOmrStatistics_ * 100, _nErrorStatistics1_, _nAllOmrStatistics_, \
 			  (float)_nErrorStatistics2_ / _nAllOmrStatistics_ * 100, _nErrorStatistics2_, _nAllOmrStatistics_, \
+			  _nOmrDoubtSnCount_, _nOmrNullSnCount_, _nOmrSingleToMulti_, _nOmrDoubtSnCount_ + _nOmrNullSnCount_ + _nOmrSingleToMulti_, _nOmrIssueSnCount_, \
 			  (float)_nPkgDoubtStatistics_ / _nAllOmrStatistics_ * 100, _nPkgDoubtStatistics_, _nAllOmrStatistics_, \
 			  (float)_nPkgOmrNullStatistics_ / _nAllOmrStatistics_ * 100, _nPkgOmrNullStatistics_, _nAllOmrStatistics_, \
 			  (float)_nPkgSnNullStatistics_ / _nAllSnStatistics_ * 100, _nPkgSnNullStatistics_, _nAllSnStatistics_);
+
+	_strDetailStatisTics_.append("=====================================");
+	_strDetailStatisTics_.append(szStatisticsInfo);
+	_strDetailStatisTics_.append("=====================================");
+
 	strMsg.Format(_T("\r\n***********************\r\n%s\r\n***********************\r\n"), A2T(szStatisticsInfo));
 	showMsg(strMsg);
 	g_Log.LogOut(T2A(strMsg));
@@ -1159,10 +1184,18 @@ void CDataMgrToolDlg::OnBnClickedBtnClearstatistics()
 	_nAllOmrStatistics_ = 0;
 	_nSnNullStatistics_ = 0;
 	_nAllSnStatistics_ = 0;
+
+	_nOmrDoubtSnCount_ = 0;
+	_nOmrNullStatistics_ = 0;
+	_nOmrSingleToMulti_ = 0;
+	_nOmrIssueSnCount_ = 0;
+
 	_nPkgDoubtStatistics_ = 0;
 	_nPkgOmrNullStatistics_ = 0;
 	_nPkgSnNullStatistics_ = 0;
 	_fmErrorStatistics_.unlock();
+
+	_strDetailStatisTics_ = "";
 
 	_fmDecompress_.lock();
 	_nDecompress_ = 0;
@@ -1526,4 +1559,32 @@ void CDataMgrToolDlg::OnBnClickedChkAutocontract()
 		g_nRecogWithContract = 1;
 	else
 		g_nRecogWithContract = 0;
+}
+
+
+void CDataMgrToolDlg::OnBnClickedBtnExportstatisticsdetail()
+{
+	if (_strDetailStatisTics_ == "")
+	{
+		AfxMessageBox(_T("当前无试卷袋的识别统计数据"));
+		return;
+	}
+	TCHAR szFilter[] = { _T("TXT Files (*.txt)|*.txt|Excel Files (*.xls)|*.xls||") };
+	CString fileName;
+	fileName = "*.*";
+
+	CFileDialog dlg(FALSE, _T("*.txt"), _T(""), OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, szFilter, NULL);
+	dlg.m_ofn.lpstrDefExt = _T(".txt");
+
+	if (dlg.DoModal() == IDOK)
+	{
+		fileName = dlg.GetFolderPath() + _T("\\") + dlg.GetFileName();
+		CFile file;
+		file.Open(fileName, CFile::modeCreate | CFile::modeReadWrite);
+		//file.Write(fileName.GetBuffer(fileName.GetLength()),fileName.GetLength());  
+
+		//将编辑框中的内容写到文件中  
+		file.Write(_strDetailStatisTics_.c_str(), _strDetailStatisTics_.length());
+		file.Close();
+	}
 }

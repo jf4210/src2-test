@@ -3082,12 +3082,14 @@ std::string calcStatistics(pPAPERSINFO pPapers)
 	}
 
 	ss.str("");
-	char szStatisticsInfo[300] = { 0 };
-	sprintf_s(szStatisticsInfo, "\n试卷包普通统计: omrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), snNull = %.2f%%(%d/%d),\r\n\t识别错误信息统计: omrError1 = %.2f%%(%d/%d), omrError2 = %.2f%%(%d/%d)\n", (float)pPapers->nPkgOmrDoubt / nOmrCount * 100, pPapers->nPkgOmrDoubt, nOmrCount, \
+	char szStatisticsInfo[500] = { 0 };
+	sprintf_s(szStatisticsInfo, "\n试卷包普通统计: omrDoubt = %.2f%%(%d/%d), omrNull = %.2f%%(%d/%d), snNull = %.2f%%(%d/%d),\r\n\t识别错误信息统计: omrError1 = %.2f%%(%d/%d), omrError2 = %.2f%%(%d/%d)\n存在omr怀疑、omr为空、单选识别成多选的试卷(%d + %d + %d = %d)份, 总的Omr问题卷(%d)份\n", (float)pPapers->nPkgOmrDoubt / nOmrCount * 100, pPapers->nPkgOmrDoubt, nOmrCount, \
 			  (float)pPapers->nPkgOmrNull / nOmrCount * 100, pPapers->nPkgOmrNull, nOmrCount, \
 			  (float)pPapers->nPkgSnNull / nSnCount * 100, pPapers->nPkgSnNull, nSnCount, \
 			  (float)pPapers->nOmrError_1 / nOmrCount * 100, pPapers->nOmrError_1, nOmrCount, \
-			  (float)pPapers->nOmrError_2 / nOmrCount * 100, pPapers->nOmrError_2, nOmrCount);
+			  (float)pPapers->nOmrError_2 / nOmrCount * 100, pPapers->nOmrError_2, nOmrCount, \
+			 pPapers->nOmrDoubtSnCounts, pPapers->nOmrNullSnCounts, pPapers->nSingleToMultiSnCounts, \
+			  pPapers->nOmrDoubtSnCounts + pPapers->nOmrNullSnCounts + pPapers->nSingleToMultiSnCounts, pPapers->nOmrIssueSnCounts);
 
 	ss << "\r\n\t-------------------\r\n\t"<< pPapers->strPapersName << "结果正确率统计完成:\r\n\t" << szStatisticsInfo << "\r\n\t-------------------\r\n\r\n";
 
@@ -3105,6 +3107,11 @@ std::string calcStatistics(pPAPERSINFO pPapers)
 		_nPkgOmrNullStatistics_ += pPapers->nPkgOmrNull;
 	if (pPapers->nPkgSnNull >= 0)
 		_nPkgSnNullStatistics_ += pPapers->nPkgSnNull;
+
+	_nOmrDoubtSnCount_ += pPapers->nOmrDoubtSnCounts;
+	_nOmrNullSnCount_ += pPapers->nOmrNullSnCounts;
+	_nOmrSingleToMulti_ += pPapers->nSingleToMultiSnCounts;
+	_nOmrIssueSnCount_ += pPapers->nOmrIssueSnCounts;
 	_fmErrorStatistics_.unlock();
 
 	std::string strLog;

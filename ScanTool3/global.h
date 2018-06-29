@@ -364,6 +364,17 @@ typedef struct _PaperInfo_
 	int			nWJFlag;			//违纪标识
 	int			nZkzhInBmkStatus;	//准考证号是否在报名库中存在，在报名库列表不存在时，此项无效, 0--报名库中不存在，1--报名库中存在，-1--扫描时重号了
 	
+	//++	统计使用
+	bool	bOmrIssue;				//是否属于omr问题卷，即存在omr怀疑、omr为空、单选题识别成多选
+	bool	bHasOmrDoubt;			//该考生存在omr怀疑
+	bool	bHasOmrNull;			//该考生存在omr为空
+	bool	bHasSingleToMulti;		//该考生存在单选题多选
+
+	int		nOmrDoubt;				//OMR怀疑的数量
+	int		nOmrNull;				//OMR识别为空的数量
+	int		nOmrSingleToMulti;		//单选题多选的题数量
+	//--
+
 	//int			nScanTmpIndex;		//从扫描获取到一张试卷的信息后直接构建的临时试卷，在整袋试卷识别完后再合并到具体的考生
 	int			nIndex;				//在试卷袋中的索引，即S1为1，S2为2，S3为3...
 	pMODEL		pModel;				//识别此学生试卷所用的模板
@@ -397,6 +408,14 @@ typedef struct _PaperInfo_
 		pModel = NULL;
 		pPapers = NULL;
 		pSrcDlg = NULL;
+
+		bHasOmrDoubt = false;
+		bHasOmrNull = false;
+		bHasSingleToMulti = false;
+		bOmrIssue = false;
+		nOmrDoubt = 0;
+		nOmrNull = 0;
+		nOmrSingleToMulti = 0;
 	}
 	~_PaperInfo_()
 	{
@@ -448,7 +467,14 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	//++统计信息
 	int		nOmrDoubt;				//OMR怀疑的数量
 	int		nOmrNull;				//OMR识别为空的数量
+	int		nOmrSingleToMulti;		//Omr的单选题识别为多选的数量
 	int		nSnNull;				//准考证号识别为空的数量
+	
+	int		nOmrDoubtSnCounts;		//存在omr怀疑的考生数
+	int		nOmrNullSnCounts;		//存在omr为空的考生数
+	int		nSingleToMultiSnCounts;	//存在单选题识别为多选且无怀疑的考生数
+	int		nOmrIssueSnCounts;		//是否属于omr问题卷的考生数量，即存在omr怀疑、omr为空、单选题识别成多选
+
 	Poco::FastMutex	fmOmrStatistics;//omr统计锁
 	Poco::FastMutex fmSnStatistics; //zkzh统计锁
 	//--
@@ -477,6 +503,12 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 		nSnNull = 0;
 		nMustScanNum = 0;
 		nPaperScanMergerStatus = 0;
+		
+		nOmrSingleToMulti = 0;
+		nOmrNullSnCounts = 0;
+		nOmrDoubtSnCounts = 0;
+		nSingleToMultiSnCounts = 0;
+		nOmrIssueSnCounts = 0;
 	}
 	~_PapersInfo_()
 	{
@@ -759,7 +791,7 @@ bool	GetFixDist(int nPic, pST_PicInfo pPic, pMODEL pModel);	//
 bool	GetRecogPosition(int nPic, pST_PicInfo pPic, pMODEL pModel, cv::Rect& rt);
 bool	GetPosition(RECTLIST& lFix, RECTLIST& lModelFix, cv::Rect& rt, int nPicW = 0, int nPicH = 0);
 std::string calcFileMd5(std::string strPath);
-void	CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int height);
+bool CopyData(char *dest, const char *src, int dataByteSize, bool isConvert, int height);
 bool	PicRectify(cv::Mat& src, cv::Mat& dst, cv::Mat& rotMat);
 bool	FixWarpAffine(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);		//定点进行仿射变换
 bool	FixwarpPerspective(int nPic, cv::Mat& matCompPic, RECTLIST& lFix, RECTLIST& lModelFix, cv::Mat& inverseMat);	//定点透视变换

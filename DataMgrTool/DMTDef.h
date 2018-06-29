@@ -47,7 +47,7 @@
 
 #define DecompressTest		//解压测试，多线程解压
 
-#define SOFT_VERSION	_T("1.80126-1")
+#define SOFT_VERSION	_T("1.80629-1")
 #define SYS_BASE_NAME	_T("YKLX-DMT")
 //#define WH_CCBKS		//武汉楚才杯专用，解析二维码需要json解析
 
@@ -277,15 +277,20 @@ typedef struct _PaperInfo_
 	pMODEL		pModel;				//识别此学生试卷所用的模板
 	void*		pPapers;			//所属的试卷袋信息
 	void*		pSrcDlg;			//来源，来自哪个窗口，扫描or导入试卷窗口
-	std::string strStudentInfo;		//学生信息	
+	std::string strStudentInfo;		//学生信息
 	std::string strSN;
 	std::string strMd5Key;
 
 
-	//++
+	//++	统计使用
+	bool	bOmrIssue;				//是否属于omr问题卷，即存在omr怀疑、omr为空、单选题识别成多选
+	bool	bHasOmrDoubt;			//该考生存在omr怀疑
+	bool	bHasOmrNull;			//该考生存在omr为空
+	bool	bHasSingleToMulti;		//该考生存在单选题多选
+
 	int		nOmrDoubt;				//OMR怀疑的数量
 	int		nOmrNull;				//OMR识别为空的数量
-	int		nSnNull;				//准考证号识别为空的数量
+	int		nOmrSingleToMulti;		//单选题多选的题数量
 	//--
 
 	SNLIST				lSnResult;
@@ -304,6 +309,13 @@ typedef struct _PaperInfo_
 		pModel = NULL;
 		pPapers = NULL;
 		pSrcDlg = NULL;
+		bHasOmrDoubt = false;
+		bHasOmrNull = false;
+		bHasSingleToMulti = false;
+		bOmrIssue = false;
+		nOmrDoubt = 0;
+		nOmrNull = 0;
+		nOmrSingleToMulti = 0;
 	}
 	~_PaperInfo_()
 	{
@@ -350,11 +362,17 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 	int		nPkgSnNull;				//准考证号识别为空的数量		客户端传递的
 
 	int		nOmrDoubt;				//OMR怀疑的数量					
-	int		nOmrNull;				//OMR识别为空的数量				
+	int		nOmrNull;				//OMR识别为空的数量		
+	int		nOmrSingleToMulti;		//Omr的单选题识别为多选的数量
 	int		nSnNull;				//准考证号识别为空的数量		
 
 	int		nOmrError_1;			//根据学生答案，第1种识别方法识别错误的值		统计时用
 	int		nOmrError_2;			//根据学生答案，第1种识别方法识别错误的值		统计时用
+
+	int		nOmrDoubtSnCounts;		//存在omr怀疑的考生数
+	int		nOmrNullSnCounts;		//存在omr为空的考生数
+	int		nSingleToMultiSnCounts;	//存在单选题识别为多选且无怀疑的考生数
+	int		nOmrIssueSnCounts;		//是否属于omr问题卷的考生数量，即存在omr怀疑、omr为空、单选题识别成多选
 
 	Poco::FastMutex	fmOmrStatistics;//omr统计锁
 	Poco::FastMutex fmSnStatistics; //zkzh统计锁
@@ -396,6 +414,7 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 		nRecogErrCount = 0;
 		nOmrDoubt = 0;
 		nOmrNull = 0;
+		nOmrSingleToMulti = 0;
 		nSnNull = 0;
 		nRecogPics = 0;
 		nRecogMode = 2;
@@ -410,6 +429,10 @@ typedef struct _PapersInfo_				//试卷袋信息结构体
 		nPkgOmrDoubt = -1;
 		nPkgOmrNull = -1;
 		nPkgSnNull = -1;
+		nOmrNullSnCounts = 0;
+		nOmrDoubtSnCounts = 0;
+		nSingleToMultiSnCounts = 0;
+		nOmrIssueSnCounts = 0;
 	}
 	~_PapersInfo_()
 	{
@@ -486,7 +509,7 @@ typedef struct _SendHttpTask_
 	bool	bSendZkzh;		//直接发送识别结果时，是否发送准考证号
 	bool	bSendElectOmr;	//直接发送识别结果时，是否发送选做题
 
-	int			nTaskType;			//任务类型: 1-给img服务器提交图片，2-给后端提交图片数据, 3-提交OMR，4-提交ZKZH，5-提交选做题信息, 6-模板图片提交zimg服务器, 7-试卷袋只提交OMR、SN、选做信息
+	int			nTaskType;			//任务类型: 1-给img服务器提交图片，2-给后端提交图片数据, 3-提交OMR，4-提交ZKZH，5-提交选做题信息, 6-模板图片提交zimg服务器, 7-试卷袋只提交OMR、SN、选做信息, 8-记录识别结果到文件中
 	int			nSendFlag;			//发送标示，1：发送失败1次，2：发送失败2次...
 	Poco::Timestamp sTime;			//创建任务时间，用于发送失败时延时发送
 	pST_PicInfo pPic;
@@ -494,6 +517,8 @@ typedef struct _SendHttpTask_
 	std::string strUri;
 	std::string strResult;			//发送考场信息给后端服务器，当nTaskType = 2时有用
 	std::string strEzs;				//当nTaskType = 2时有用
+
+	void* pRecogResult;			//识别结果信息
 	_SendHttpTask_()
 	{
 		bSendOmr = true;
@@ -503,6 +528,7 @@ typedef struct _SendHttpTask_
 		nSendFlag = 0;
 		pPic = NULL;
 		pPapers = NULL;
+		pRecogResult = NULL;
 	}
 }SEND_HTTP_TASK, *pSEND_HTTP_TASK;
 typedef std::list<pSEND_HTTP_TASK> LIST_SEND_HTTP;
@@ -646,8 +672,15 @@ extern int		_nOmrNullStatistics_;		//识别为空总数
 extern int		_nSnNullStatistics_;	//SN识别为空总数
 extern int		_nAllOmrStatistics_;		//统计总数
 extern int		_nAllSnStatistics_;			//SN统计总数
+
+extern int		_nOmrDoubtSnCount_;		//存在omr怀疑的考生数
+extern int		_nOmrNullSnCount_;		//存在omr为空的考生数
+extern int		_nOmrSingleToMulti_;	//存在单选题识别为多选且无怀疑的考生数
+extern int		_nOmrIssueSnCount_;		//属于Omr问题卷的考生数量
+
 extern int		_nPkgDoubtStatistics_;	//原始试卷包识别怀疑总数
 extern int		_nPkgOmrNullStatistics_;	//原始试卷包识别为空总数
 extern int		_nPkgSnNullStatistics_;		//原始试卷包中SN识别为空总数
+extern std::string _strDetailStatisTics_;	//详细的试卷袋识别统计信息
 std::string calcStatistics(pPAPERSINFO pPapers);
 //--

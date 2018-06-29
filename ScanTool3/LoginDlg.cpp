@@ -9,7 +9,7 @@
 #include "Net_Cmd_Protocol.h"
 #include "MultiPlatform4TYDlg.h"
 #include "NewMessageBox.h"
-
+#include "structured_exception.h"
 // CLoginDlg 对话框
 
 IMPLEMENT_DYNAMIC(CLoginDlg, CDialog)
@@ -81,7 +81,6 @@ END_MESSAGE_MAP()
 
 // CLoginDlg 消息处理程序
 
-
 BOOL CLoginDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
@@ -101,10 +100,11 @@ BOOL CLoginDlg::OnInitDialog()
 	decString(_strCopyright_, _strCopyright_);
 	
 	InitUI();
+	USES_CONVERSION;
+
 //	m_strTitle.Format(_T("%s"), SYS_BASE_NAME);
 
 	InitCtrlPosition();
-	USES_CONVERSION;
 	m_strTitle.Format(_T("%s"), A2T(_strMainTitle_.c_str()));
 	m_strCopyright.Format(_T("%s"), A2T(_strCopyright_.c_str()));
 	m_strVersion = SOFT_VERSION;

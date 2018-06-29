@@ -59,6 +59,7 @@ void CScanResquestHandler::HandleTask(pSCAN_REQ_TASK pTask)
 		session.setHost(uri.getHost());
 		session.setPort(uri.getPort());
 		session.setKeepAlive(true);
+		session.setTimeout(Poco::Timespan(SysSet.m_nHttpTimeOut, 0));
 
 		request.set("User-Agent", "Go-http-client/1.1");
 		request.set("Accept-Encoding", "gzip");	//gzip	//text/html

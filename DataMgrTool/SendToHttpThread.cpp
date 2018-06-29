@@ -2,6 +2,7 @@
 #include "SendToHttpThread.h"
 #include "DataMgrTool.h"
 #include "DataMgrToolDlg.h"
+#include "RecogResultMgr.h"
 
 CSendToHttpThread::CSendToHttpThread(void* pDlg)
 : m_pDlg(pDlg)
@@ -32,7 +33,7 @@ void CSendToHttpThread::run()
 					it = g_lHttpSend.erase(it);
 					break;
 				}
-				else if ((*it)->nSendFlag >= 3)		//此任务连续发送5次，每次间隔5秒，都失败了，将它删除
+				else if ((*it)->nSendFlag >= 3)		//此任务连续发送3次，每次间隔5秒，都失败了，将它删除
 				{
 					pTask = *it;
 					std::string strEraseInfo;
@@ -90,6 +91,11 @@ void CSendToHttpThread::run()
 			{
 //				std::cout << "post Omr、ZKZH、选做题 数据给后端服务器" << std::endl;
 				HandleOmrTask(pTask);
+				continue;
+			}
+			else if (pTask->nTaskType = 8)
+			{
+				RecogResultRecord(pTask);
 				continue;
 			}
 
@@ -498,7 +504,9 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 {
 	std::string strLog = "开始提交OMR、ZKZH、选做题信息(" + pTask->pPapers->strPapersName + ")";
 	g_Log.LogOut(strLog);
-
+#if 1
+	CRecogResultMgr resultObj(pTask->pPapers);
+#else
 	bool bHasElectOmr = false;
 	Poco::JSON::Array snArry;
 	Poco::JSON::Array omrArry;
@@ -640,7 +648,7 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 	omrArry.stringify(jsnOmrString, 0);
 	if (bHasElectOmr)
 		electOmrArry.stringify(jsnElectOmrString, 0);
-
+#endif
 	if (pTask->bSendZkzh)
 	{
 		pTask->pPapers->fmTask.lock();
@@ -649,7 +657,7 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 
 		pSEND_HTTP_TASK pSnTask = new SEND_HTTP_TASK;
 		pSnTask->nTaskType = 4;
-		pSnTask->strResult = jsnSnString.str();
+		pSnTask->strResult = resultObj.GetSnResult();		//jsnSnString.str();
 		pSnTask->pPapers = pTask->pPapers;
 		pSnTask->strEzs = pTask->pPapers->strEzs;
 		pSnTask->strUri = g_strUploadUri + "/zkzh";
@@ -666,7 +674,7 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 
 		pSEND_HTTP_TASK pOmrTask = new SEND_HTTP_TASK;
 		pOmrTask->nTaskType = 3;
-		pOmrTask->strResult = jsnOmrString.str();
+		pOmrTask->strResult = resultObj.GetOmrResult();		//jsnOmrString.str();
 		pOmrTask->pPapers = pTask->pPapers;
 		pOmrTask->strEzs = pTask->pPapers->strEzs;
 		pOmrTask->strUri = g_strUploadUri + "/omr";
@@ -678,7 +686,7 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 
 	if (pTask->bSendElectOmr)
 	{
-		if (bHasElectOmr)
+		if (resultObj._bHasElectOmr)		//bHasElectOmr
 		{
 			pTask->pPapers->fmTask.lock();
 			pTask->pPapers->nTaskCounts++;			//electOmr
@@ -686,7 +694,7 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 
 			pSEND_HTTP_TASK pElectOmrTask = new SEND_HTTP_TASK;
 			pElectOmrTask->nTaskType = 5;
-			pElectOmrTask->strResult = jsnElectOmrString.str();
+			pElectOmrTask->strResult = resultObj.GetElectOmrResult();		//jsnElectOmrString.str();
 			pElectOmrTask->pPapers = pTask->pPapers;
 			pElectOmrTask->strEzs = pTask->pPapers->strEzs;
 			pElectOmrTask->strUri = g_strUploadUri + "/choosetitleinfo";
@@ -696,14 +704,45 @@ void CSendToHttpThread::HandleOmrTask(pSEND_HTTP_TASK pTask)
 		}
 	}
 
-	strLog = "ZKZH信息如下: " + jsnSnString.str();
+	strLog = "ZKZH信息如下: " + resultObj.GetSnResult();	// jsnSnString.str();
 	g_Log.LogOut(strLog);
-	strLog = "OMR信息如下: " + jsnOmrString.str();
+	strLog = "OMR信息如下: " + resultObj.GetOmrResult();	// jsnOmrString.str();
 	g_Log.LogOut(strLog);
-	if (bHasElectOmr)
+	if (resultObj._bHasElectOmr)	/*bHasElectOmr*/
 	{
-		strLog = "选做题信息如下: " + jsnElectOmrString.str();
+		strLog = "选做题信息如下: " + resultObj.GetElectOmrResult();	 //jsnElectOmrString.str();
 		g_Log.LogOut(strLog);
 	}
+}
+
+void CSendToHttpThread::RecogResultRecord(pSEND_HTTP_TASK pTask)
+{
+	CRecogResultMgr* pRecogResult = static_cast<CRecogResultMgr*>(pTask->pRecogResult);
+
+	//将识别结果记录到文件
+	USES_CONVERSION;
+	std::string strCurrPath = T2A(g_strCurrentPath);
+	std::string strRecordPath = Poco::format("%sRecogResult\\%d_%d\\", strCurrPath, pRecogResult->nExamId, pRecogResult->nSubjuctId);
+	try
+	{
+		Poco::File fileRecordDir(CMyCodeConvert::Gb2312ToUtf8(strRecordPath));
+		if (!fileRecordDir.exists())
+			fileRecordDir.createDirectories();
+	}
+	catch (Poco::Exception& exc)
+	{
+		std::string strErrInfo = "创建文件夹: " + strRecordPath + "失败, Detail: ";
+		strErrInfo.append(exc.message());
+		g_Log.LogOutError(strErrInfo);
+	}
+
+	std::string strFileName = strRecordPath + pRecogResult->strPkgName + "_#_omr.txt";
+	std::string strOmrResult = pRecogResult->GetOmrResult();
+	CFile file;
+	file.Open(A2T(strFileName.c_str()), CFile::modeCreate | CFile::modeReadWrite);
+	file.Write(strOmrResult.c_str(), strOmrResult.length());
+	file.Close();
+
+	SAFE_RELEASE(pRecogResult);
 }
 

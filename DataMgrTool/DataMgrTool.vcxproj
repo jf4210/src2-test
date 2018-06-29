@@ -66,12 +66,13 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\..\bin\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>..\..\lib\x86</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_world310d.lib;libzbar-0.lib;libeay32.lib;ssleay32.lib</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world310d.lib;libzbar-0.lib;libeay32.lib;ssleay32.lib;uafxcwd.lib;LIBCMTD.lib;</AdditionalDependencies>
       <HeapReserveSize>30000000</HeapReserveSize>
       <HeapCommitSize>30000000</HeapCommitSize>
       <StackReserveSize>30000000</StackReserveSize>
       <StackCommitSize>30000000</StackCommitSize>
       <LargeAddressAware>true</LargeAddressAware>
+      <IgnoreSpecificDefaultLibraries>LIBCMTD.lib;uafxcwd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -104,11 +105,12 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>..\..\lib\x86</AdditionalLibraryDirectories>
       <OutputFile>..\..\bin\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>opencv_world310.lib;libzbar-0.lib;libeay32.lib;ssleay32.lib</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world310.lib;libzbar-0.lib;libeay32.lib;ssleay32.lib;uafxcw.lib;LIBCMT.lib;</AdditionalDependencies>
       <HeapReserveSize>30000000</HeapReserveSize>
       <HeapCommitSize>30000000</HeapCommitSize>
       <StackReserveSize>30000000</StackReserveSize>
       <StackCommitSize>30000000</StackCommitSize>
+      <IgnoreSpecificDefaultLibraries>LIBCMT.lib;uafxcw.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -153,6 +155,7 @@
     <ClInclude Include="PicShow.h" />
     <ClInclude Include="RecognizeThread.h" />
     <ClInclude Include="RecogParamDlg.h" />
+    <ClInclude Include="RecogResultMgr.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SearchThread.h" />
     <ClInclude Include="SendToHttpThread.h" />
@@ -179,7 +182,10 @@
     <ClInclude Include="XListCtrl\XTrace.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\common\ModelMgr.cpp" />
+    <ClCompile Include="..\..\common\ModelMgr.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="AnswerShowDlg.cpp" />
     <ClCompile Include="BmpButton.cpp" />
     <ClCompile Include="CompressThread.cpp" />
@@ -235,6 +241,7 @@
     <ClCompile Include="PicShow.cpp" />
     <ClCompile Include="RecognizeThread.cpp" />
     <ClCompile Include="RecogParamDlg.cpp" />
+    <ClCompile Include="RecogResultMgr.cpp" />
     <ClCompile Include="SearchThread.cpp" />
     <ClCompile Include="SendToHttpThread.cpp" />
     <ClCompile Include="ShowPapersDlg.cpp" />

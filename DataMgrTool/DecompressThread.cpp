@@ -375,7 +375,7 @@ void CDecompressThread::HandleTask(pDECOMPRESSTASK pTask)
 		std::string strModelPath = CMyCodeConvert::Utf8ToGb2312(strOutDir);
 		std::string modelPath = T2A(g_strCurrentPath + _T("Model\\"));
 		CModelMgr modelObj;
-		modelObj.SeBaseInfo(strModelPath, _strEncryptPwd_);
+		modelObj.SetBaseInfo(strModelPath, _strEncryptPwd_);
 		_pModel_ = modelObj.LoadModelFile(strModelPath);
 
 		//_pModel_ = LoadModelFile(A2T(strModelPath.c_str()));
