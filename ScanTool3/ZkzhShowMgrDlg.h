@@ -11,7 +11,7 @@ class CZkzhShowMgrDlg : public CDialog
 	DECLARE_DYNAMIC(CZkzhShowMgrDlg)
 
 public:
-	CZkzhShowMgrDlg(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper, CWnd* pParent = NULL);   // 标准构造函数
+	CZkzhShowMgrDlg(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper, CShowPicDlg* pShowDlg, CVagueSearchDlg* pVagueSearchDlg, CWnd* pParent = NULL);   // 标准构造函数
 	virtual ~CZkzhShowMgrDlg();
 
 // 对话框数据

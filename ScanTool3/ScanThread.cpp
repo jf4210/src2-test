@@ -2255,6 +2255,20 @@ void* CScanThread::SaveFile(IplImage *pIpl)
 	{
 		cv::Mat matSrc = cv::cvarrToMat(pIpl);
 
+		if (matSrc.channels() == 3)
+		{
+			//彩色图像需要进行RGB颜色变化，bmp是按照BGRBGR排列的，而IJG是按照RGBRGBRGB这样的格式排列的
+			for (int row = 0; row < matSrc.rows; row++)
+			{
+				for (int col = 0; col < matSrc.cols; col++)
+				{
+					float tmp = matSrc.at<cv::Vec3b>(row, col)[0];
+					matSrc.at<cv::Vec3b>(row, col)[0] = matSrc.at<cv::Vec3b>(row, col)[2];
+					matSrc.at<cv::Vec3b>(row, col)[2] = tmp;
+				}
+			}
+		}
+
 		bool bNoDisposes = false;	//不需要在此线程处理，图像已经放到图像队列中去处理了
 #ifdef TEST_PAGINATION
 		if (_pModel_ /*&& _pModel_->nUsePagination*/ && m_nNotifyDlgType == 1 && _nScanAnswerModel_ != 2)

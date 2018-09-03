@@ -355,6 +355,8 @@ int CLoginDlg::RecvData(CString& strResultInfo)
 					{
 						ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_pRecvBuff;
 						nBaseLen += pstHead->uPackSize;
+						if (pstHead->usVerifyCode != VERIFYCODE)
+							return 0;
 						if (pstHead->uPackSize == 0)
 							break;
 						else
