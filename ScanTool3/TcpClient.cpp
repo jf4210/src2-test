@@ -41,15 +41,15 @@ void CTcpClient::run()
 			connectServer();
 		}
 		
-		if (!_bConnect)
-		{
-			Poco::Thread::sleep(3000);
-			continue;
-		}
-
 		if (!receiveData())
 		{
 			connectServer();
+		}
+
+		if (!_bConnect)
+		{
+			Poco::Thread::sleep(1000);
+			continue;
 		}
 
 		pTCP_TASK pTask = NULL;
@@ -66,10 +66,16 @@ void CTcpClient::run()
 			continue;
 		}
 
-		HandleTask(pTask);
-
-
-		SAFE_RELEASE(pTask);
+		if (HandleTask(pTask))
+		{
+			SAFE_RELEASE(pTask);
+		}
+		else
+		{
+			g_fmTcpTaskLock.lock();
+			g_lTcpTask.push_back(pTask);
+			g_fmTcpTaskLock.unlock();
+		}		
 	}
 
 	try
@@ -1331,8 +1337,9 @@ void CTcpClient::HandleCmd()
 	OutputDebugStringA(strTmpLog.c_str());
 }
 
-void CTcpClient::HandleTask(pTCP_TASK pTask)
+bool CTcpClient::HandleTask(pTCP_TASK pTask)
 {
+	bool bResult = true;
 	ST_CMD_HEADER stHead;
 	stHead.usCmd = pTask->usCmd;
 	stHead.uPackSize = pTask->nPkgLen;
@@ -1386,6 +1393,7 @@ void CTcpClient::HandleTask(pTCP_TASK pTask)
 				TRACE("SendData: The peer has closed.\n");
 				_bConnect = false;
 				g_bCmdConnect = _bConnect;
+				bResult = false;
 				break;
 			}
 		}
@@ -1397,6 +1405,7 @@ void CTcpClient::HandleTask(pTCP_TASK pTask)
 	}
 	catch (Poco::Exception& exc)
 	{
+		bResult = false;
 		std::string strLog = "发送数据异常 ==> " + exc.displayText();
 		TRACE(strLog.c_str());
 		g_pLogger->information(strLog);
@@ -1412,6 +1421,7 @@ void CTcpClient::HandleTask(pTCP_TASK pTask)
 	TRACE("命令发送完成: %d\n", pTask->usCmd);
 	strTmp.Format(_T("命令发送完成: %d\n"), pTask->usCmd);
 	OutputDebugStringA(T2A(strTmp));
+	return bResult;
 }
 
 void CTcpClient::SetMainWnd(void* p)

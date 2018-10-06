@@ -11,10 +11,10 @@
 
 IMPLEMENT_DYNAMIC(CZkzhShowMgrDlg, CDialog)
 
-CZkzhShowMgrDlg::CZkzhShowMgrDlg(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper, CWnd* pParent /*=NULL*/)
+CZkzhShowMgrDlg::CZkzhShowMgrDlg(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudentMgr* pStuMgr, pST_PaperInfo pShowPaper, CShowPicDlg* pShowDlg, CVagueSearchDlg* pVagueSearchDlg, CWnd* pParent /*=NULL*/)
 	: CDialog(IDD_ZKZHSHOWMGRDLG, pParent)
 	, m_pModel(pModel), m_pPapers(pPapersInfo), m_pDefShowPaper(pShowPaper)
-	, m_pVagueSearchDlg(NULL), m_pShowPicDlg(NULL), m_pStudentMgr(pStuMgr)
+	, m_pVagueSearchDlg(pVagueSearchDlg), m_pShowPicDlg(pShowDlg), m_pStudentMgr(pStuMgr)
 	, m_pMultiPageExceptionDlg(NULL), m_pZkzhExceptionDlg(NULL), m_pLostCornerDlg(NULL)
 {
 
@@ -212,6 +212,7 @@ void CZkzhShowMgrDlg::ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStuden
 	m_pDefShowPaper = pShowPaper;
 
 	InitUI();
+	SetDlgInfo(m_pShowPicDlg, m_pVagueSearchDlg);
 	m_pZkzhExceptionDlg->ReInitData(m_pModel, m_pPapers, m_pStudentMgr, m_pDefShowPaper);
 	if (m_pMultiPageExceptionDlg) m_pMultiPageExceptionDlg->ReInitData(m_pModel, m_pPapers);
 	if (m_pLostCornerDlg) m_pLostCornerDlg->ReInitData(m_pModel, m_pPapers);
@@ -226,6 +227,8 @@ void CZkzhShowMgrDlg::ReInitDataFromChildDlg(pMODEL pModel, pPAPERSINFO pPapersI
 
 void CZkzhShowMgrDlg::SetDlgInfo(CShowPicDlg* pShowDlg, CVagueSearchDlg* pSearchDlg)
 {
+	m_pShowPicDlg = pShowDlg;
+	m_pVagueSearchDlg = pSearchDlg;
 	m_pZkzhExceptionDlg->SetDlgInfo(pShowDlg, pSearchDlg);
 	if (m_pMultiPageExceptionDlg) m_pMultiPageExceptionDlg->SetDlgInfo(pShowDlg, pSearchDlg);
 	if (m_pLostCornerDlg) m_pLostCornerDlg->SetDlgInfo(pShowDlg, pSearchDlg);

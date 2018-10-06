@@ -260,7 +260,7 @@ bool CStudentMgr::GetKCFromZkzh(std::string strTable, std::string strZkzh, std::
 	catch (Poco::Exception& e)
 	{
 		std::string strErr = "根据准考证号查询考场完成(" + e.displayText() + ")";
-		//g_pLogger->information(strErr);
+		g_pLogger->information(strErr);
 		bResult = false;
 	}
 	return bResult;
@@ -290,7 +290,7 @@ bool CStudentMgr::GetKCStudent(std::string strTable, std::string strKey, STUDENT
 	catch (Poco::Exception& e)
 	{
 		std::string strErr = "查询考场的考生数据失败(" + e.displayText() + ")";
-		//g_pLogger->information(strErr);
+		g_pLogger->information(strErr);
 		bResult = false;
 	}
 	return bResult;

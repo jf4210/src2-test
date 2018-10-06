@@ -101,7 +101,7 @@ void CModifyZkzhDlg::ReInitData(pMODEL pModel, pPAPERSINFO pPapersInfo, CStudent
 #ifdef TEST_EXCEPTION_DLG
 	if (!m_pZkzhShowMgrDlg)
 	{
-		m_pZkzhShowMgrDlg = new CZkzhShowMgrDlg(m_pModel, m_pPapers, m_pStudentMgr, m_pDefShowPaper);
+		m_pZkzhShowMgrDlg = new CZkzhShowMgrDlg(m_pModel, m_pPapers, m_pStudentMgr, m_pDefShowPaper, m_pShowPicDlg, m_pVagueSearchDlg);
 		m_pZkzhShowMgrDlg->Create(IDD_ZKZHSHOWMGRDLG, this);
 		m_pZkzhShowMgrDlg->ShowWindow(SW_SHOW);
 	}
@@ -156,7 +156,7 @@ void CModifyZkzhDlg::InitUI()
 #ifdef TEST_EXCEPTION_DLG
 	if (!m_pZkzhShowMgrDlg)
 	{
-		m_pZkzhShowMgrDlg = new CZkzhShowMgrDlg(m_pModel, m_pPapers, m_pStudentMgr, m_pDefShowPaper);
+		m_pZkzhShowMgrDlg = new CZkzhShowMgrDlg(m_pModel, m_pPapers, m_pStudentMgr, m_pDefShowPaper, m_pShowPicDlg, m_pVagueSearchDlg);
 		m_pZkzhShowMgrDlg->Create(IDD_ZKZHSHOWMGRDLG, this);
 		m_pZkzhShowMgrDlg->ShowWindow(SW_SHOW);
 	}

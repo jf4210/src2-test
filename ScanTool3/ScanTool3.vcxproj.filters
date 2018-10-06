@@ -232,6 +232,9 @@
     <Filter Include="模板界面\旧模板制作界面\主观题设置">
       <UniqueIdentifier>{33eba9f1-1a7e-475d-adaf-6c14e445c9aa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="异常捕获">
+      <UniqueIdentifier>{a4ed738c-1461-44b3-91f4-78dcecca61cd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -594,6 +597,9 @@
     <ClInclude Include="picCtrl\PicDlg.h">
       <Filter>控件\图片显示</Filter>
     </ClInclude>
+    <ClInclude Include="structured_exception.h">
+      <Filter>异常捕获</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -910,6 +916,9 @@
     </ClCompile>
     <ClCompile Include="picCtrl\PicDlg.cpp">
       <Filter>控件\图片显示</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_exception.cpp">
+      <Filter>异常捕获</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

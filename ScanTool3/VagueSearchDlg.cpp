@@ -348,6 +348,8 @@ void CVagueSearchDlg::OnNMDblclkListZkzhsearchresult(NMHDR *pNMHDR, LRESULT *pRe
 	{
 		m_pNotifyDlg->SendMessage(MSG_VAGUESEARCH_ZKZH, (WPARAM)(LPCTSTR)strZkzh);
 	}
+	else
+		g_pLogger->information("准考证号搜索窗口，未设置准考证号通知窗口！");
 #else
 	CModifyZkzhDlg* pDlg = (CModifyZkzhDlg*)GetParent();
 

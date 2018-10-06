@@ -70,6 +70,9 @@
     <Filter Include="真假坐标转换">
       <UniqueIdentifier>{cea532d9-8575-4f21-9c25-b488d6b494b7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="识别结果">
+      <UniqueIdentifier>{9d50b56e-d516-4a55-8020-8b134b18761e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -231,6 +234,9 @@
     <ClInclude Include="CoordinationConvert.h">
       <Filter>真假坐标转换</Filter>
     </ClInclude>
+    <ClInclude Include="RecogResultMgr.h">
+      <Filter>识别结果</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataMgrTool.cpp">
@@ -355,6 +361,9 @@
     </ClCompile>
     <ClCompile Include="CoordinationConvert.cpp">
       <Filter>真假坐标转换</Filter>
+    </ClCompile>
+    <ClCompile Include="RecogResultMgr.cpp">
+      <Filter>识别结果</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

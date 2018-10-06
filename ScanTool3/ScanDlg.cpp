@@ -329,11 +329,26 @@ void CScanDlg::OnBnClickedBtnScan()
 	int nMustScanNum = 0;		//必须扫描的试卷数量，在高厉害模式时生效，保存试卷时，检查扫描的数量是否与此数量一致，不一致不能提交，只能重扫
 	if (g_nHighSevereMode && _pCurrExam_->nModel == 0)	//手阅模式不显示扫描数量对话框
 	{
+		int nDefScanCounts = 0;
+		char* ret;
+		ret = new char[20];
+		ret[0] = '\0';
+		if (ReadRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "defScanCounts", ret) == 0)
+		{
+			nDefScanCounts = atoi(ret);
+		}
+		SAFE_RELEASE_ARRY(ret);
+		g_nDefStudentsInKC = nDefScanCounts > 0 ? nDefScanCounts : 30;
+
 		//高厉害考试模式
 		CSetScanNumDlg dlg(g_nDefStudentsInKC);
 		if (dlg.DoModal() != IDOK)
 			return;
 		nMustScanNum = dlg.m_nScanNum;
+
+		char szRet[20] = { 0 };
+		sprintf_s(szRet, "%d", nMustScanNum);
+		WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "defScanCounts", szRet);
 	}
 
 	if (_nScanAnswerModel_ == 1)

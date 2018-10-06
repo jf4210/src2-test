@@ -16,7 +16,7 @@ public:
 	bool	receiveData();			//接收数据
 
 	void	HandleCmd();
-	void	HandleTask(pTCP_TASK pTask);
+	bool	HandleTask(pTCP_TASK pTask);
 	void	SetMainWnd(void* p);
 private:
 	std::string _strIP;

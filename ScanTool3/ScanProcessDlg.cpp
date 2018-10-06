@@ -1059,11 +1059,26 @@ void CScanProcessDlg::OnBnClickedBtnScanagain()
 	int nMustScanNum = 0;		//必须扫描的试卷数量，在高厉害模式时生效，保存试卷时，检查扫描的数量是否与此数量一致，不一致不能提交，只能重扫
 	if (g_nHighSevereMode && _pCurrExam_->nModel == 0)		//手阅模式不显示扫描数量对话框
 	{
+		int nDefScanCounts = 0;
+		char* ret;
+		ret = new char[20];
+		ret[0] = '\0';
+		if (ReadRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "defScanCounts", ret) == 0)
+		{
+			nDefScanCounts = atoi(ret);
+		}
+		SAFE_RELEASE_ARRY(ret);
+		g_nDefStudentsInKC = nDefScanCounts > 0 ? nDefScanCounts : 30;
+
 		//高厉害考试模式
 		CSetScanNumDlg dlg(g_nDefStudentsInKC);
 		if (dlg.DoModal() != IDOK)
 			return;
 		nMustScanNum = dlg.m_nScanNum;
+
+		char szRet[20] = { 0 };
+		sprintf_s(szRet, "%d", nMustScanNum);
+		WriteRegKey(HKEY_CURRENT_USER, "Software\\EasyTNT\\AppKey", REG_SZ, "defScanCounts", szRet);
 	}
 	if (_nScanAnswerModel_ == 1)
 	{
@@ -1723,6 +1738,11 @@ bool CScanProcessDlg::IsValidPspers()
 		if (m_pStudentMgr->GetKCFromZkzh(strTable, pPaperItem->strSN, strKC))
 			setKC.insert(strKC);	//utf8
 	}
+	if (setKC.size() == 0)
+	{
+		g_pLogger->information("计算当前试卷袋的考场数为0，不做缺失试卷检测");
+		return true;
+	}
 
 	STUDENT_LIST lAllStudent;
 	std::set<std::string> setBmkZkzh;	//当前扫描试卷袋对应的考场在报名库中的准考证号集合
@@ -1745,10 +1765,23 @@ bool CScanProcessDlg::IsValidPspers()
 
 	if (setScanZkzh.size() != setBmkZkzh.size())
 	{
-		CMissingPaperDlg dlg(_pCurrPapersInfo_, _pModel_, m_pStudentMgr);
-		if (dlg.DoModal() != IDOK)
+		std::stringstream ss;
+		ss << "当前试卷袋扫描的准考证号数量= " << setScanZkzh.size() << ", 当前试卷袋对应的报名库中考场数= " << setKC.size() << ", 这些考场对应的考生数= " << setBmkZkzh.size()\
+			<< "。\n";
+		if (setBmkZkzh.size() == 0)
+			ss << "报名库中的对应的考生数为0， 不进入报名库检查界面\n";
+		else
+			ss << "进入缺失考生检查界面";
+
+		g_pLogger->information(ss.str());
+
+		if (setBmkZkzh.size() > 0)
 		{
-			return false;
+			CMissingPaperDlg dlg(_pCurrPapersInfo_, _pModel_, m_pStudentMgr);
+			if (dlg.DoModal() != IDOK)
+			{
+				return false;
+			}
 		}
 	}
 	return true;

@@ -736,6 +736,18 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 	return;
 #endif
 
+	//统计识别信息到试卷袋中
+	pPAPERSINFO pPapers = static_cast<pPAPERSINFO>(pPaper->pPapers);
+	pPapers->fmOmrStatistics.lock();
+	pPapers->nOmrDoubt += pPaper->nOmrDoubt;			//统计试卷袋的Omr怀疑数量
+	pPapers->nOmrNull += pPaper->nOmrNull;				//统计试卷袋的omr为空数量
+	pPapers->nOmrSingleToMulti += pPaper->nOmrSingleToMulti;	//统计试卷袋的单选题识别成多选的数量
+	if (pPaper->bHasOmrDoubt) pPapers->nOmrDoubtSnCounts++;		//统计试卷袋的存在omr怀疑的试卷数量
+	if (pPaper->bHasOmrNull) pPapers->nOmrNullSnCounts++;		//统计试卷袋的存在omr为空的试卷数量
+	if (pPaper->bHasSingleToMulti) pPapers->nSingleToMultiSnCounts++;	//统计试卷袋的存在omr单选识别成多选的试卷数量
+	if (pPaper->bOmrIssue)	pPapers->nOmrIssueSnCounts++;		//统计属于Omr问题卷的考生数量
+	pPapers->fmOmrStatistics.unlock();
+
 #ifdef PrintRecogLog	//test log
 	std::string strPaperLog = "试卷(";
 	strPaperLog.append(pPaper->strStudentInfo);
@@ -2678,6 +2690,7 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 	int nNullCount = 0;
 	int nDoubtCount = 0;
 	int nEqualCount = 0;
+	int nSingleToMultiCount = 0;	//单选识别为多选且无怀疑的数量
 	int nNullCount_1 = 0;	//第一种方法识别出的空值
 	int nNullCount_2 = 0;	//第二种方法识别出的空值
 	int nNullCount_3 = 0;	//第三种方法识别出的空值
@@ -3002,9 +3015,9 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 				nDoubt = 2;
 				nNullCount++;
 
-				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
-				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrNull++;
-				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
+// 				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
+// 				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrNull++;
+// 				(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
 			}
 			else
 			{
@@ -3032,9 +3045,9 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 						nDoubt = 1;
 						nDoubtCount++;
 
-						(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
-						(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrDoubt++;
-						(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
+// 						(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
+// 						(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrDoubt++;
+// 						(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
 					}
 					else if (strRecogAnswer3 == "" && strRecogAnswer2 != "")
 					{
@@ -3048,9 +3061,9 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 						nDoubt = 1;
 						nDoubtCount++;
 
-						(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
-						(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrDoubt++;
-						(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
+// 						(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
+// 						(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrDoubt++;
+// 						(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
 					}
 				}
 			}
@@ -3074,9 +3087,9 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 					nDoubt = 1;
 					nDoubtCount++;
 
-					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
-					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrDoubt++;
-					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
+// 					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.lock();
+// 					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->nOmrDoubt++;
+// 					(static_cast<pPAPERSINFO>((static_cast<pST_PaperInfo>(pPic->pPaper))->pPapers))->fmOmrStatistics.unlock();
 				}
 			}
 		}
@@ -3124,6 +3137,9 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 		omrResult.strRecogVal3 = strRecogAnswer3;
 		(static_cast<pST_PaperInfo>(pPic->pPaper))->lOmrResult.push_back(omrResult);
 		pPic->lOmrResult.push_back(omrResult);
+
+		if (nDoubt == 0 && omrResult.nSingle == 0 && omrResult.strRecogVal.size() > 1)
+			nSingleToMultiCount++;
 	}
 	if (!bResult)
 	{
@@ -3140,6 +3156,24 @@ bool CRecognizeThread::RecogOMR(int nPic, cv::Mat& matCompPic, pST_PicInfo pPic,
 // 		<< "(" << (double)nNullCount_2 / nCount * 100 << "%)],怀疑" << nDoubtCount << "(" << (double)nDoubtCount / nCount * 100 << "%),无怀疑" << nEqualCount << "(" << (double)nEqualCount / nCount * 100
 // 		<< "%)";
 // 	std::string strTmp = ss.str();
+
+	pST_PaperInfo pPaper = static_cast<pST_PaperInfo>(pPic->pPaper);
+	if (nDoubtCount > 0 && !pPaper->bHasOmrDoubt)
+	{
+		pPaper->bHasOmrDoubt = true;
+		pPaper->nOmrDoubt += nDoubtCount;
+	}
+	if (nNullCount > 0 && !pPaper->bHasOmrNull)
+	{
+		pPaper->bHasOmrNull = true;
+		pPaper->nOmrNull += nNullCount;
+	}
+	if (nSingleToMultiCount > 0 && !pPaper->bHasSingleToMulti)
+	{
+		pPaper->bHasSingleToMulti = true;
+		pPaper->nOmrSingleToMulti += nSingleToMultiCount;
+	}
+	if (pPaper->bHasOmrDoubt || pPaper->bHasOmrNull || pPaper->bHasSingleToMulti)	pPaper->bOmrIssue = true;
 
 	if (bResult && nCount)
 	{

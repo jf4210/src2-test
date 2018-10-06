@@ -424,7 +424,12 @@ bool CZkzhExceptionDlg::VagueSearch(int nItem)
 	if (nItem >= m_lcZkzh.GetItemCount())
 		return bResult;
 	if (!m_pVagueSearchDlg)
+	{
+		g_pLogger->information("VagueSearch-->设置搜索窗口的指针为空!");
 		return bResult;
+	}
+	std::string strLog = Poco::format("VagueSearch-->搜索准考证号: %d", nItem);
+	g_pLogger->information(strLog);
 
 	m_pVagueSearchDlg->setNotifyDlg(this);
 
@@ -648,6 +653,8 @@ LRESULT CZkzhExceptionDlg::MsgVagueSearchResult(WPARAM wParam, LPARAM lParam)
 	USES_CONVERSION;
 	m_pCurrentShowPaper->strSN = T2A(strZkzh);
 	m_pCurrentShowPaper->bModifyZKZH = true;
+
+	g_pLogger->information("MsgVagueSearchResult-->设置准考证号" + m_pCurrentShowPaper->strSN);
 
 	COLORREF crText, crBackground;
 	m_lcZkzh.GetItemColors(m_nCurrentSelItem, 1, crText, crBackground);

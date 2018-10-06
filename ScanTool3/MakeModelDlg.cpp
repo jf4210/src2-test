@@ -7426,6 +7426,7 @@ void CMakeModelDlg::GetSNArry(std::vector<cv::Rect>& rcList)
 				itTmp++;
 		}
 		//--
+		if (rcList.size() == 0) return;
 	}
 
 	std::vector<Rect> rcList_X = rcList;
@@ -7825,6 +7826,7 @@ void CMakeModelDlg::GetOmrArry(std::vector<cv::Rect>& rcList)
 			}
 		}
 	#endif
+		if (rcList.size() == 0) return;
 	}
 
 	std::vector<Rect> rcList_X = rcList;

@@ -123,4 +123,5 @@ public:
 	afx_msg void OnBnClickedBtnWatchpapers();
 	afx_msg void OnBnClickedBtnWatchpaper();
 	afx_msg void OnBnClickedChkAutocontract();
+	afx_msg void OnBnClickedBtnExportstatisticsdetail();
 };

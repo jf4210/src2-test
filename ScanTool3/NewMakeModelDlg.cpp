@@ -707,7 +707,7 @@ void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 				CNewMessageBox dlg;
 				dlg.setShowInfo(2, 1, "图像路径不存在！");
 				dlg.DoModal();
-				continue;
+				break;
 			}
 			
 			std::string strTmpSendDir = T2A(g_strCurrentPath);
@@ -722,8 +722,12 @@ void CNewMakeModelDlg::OnBnClickedBtnUploadpic()
 		}
 		catch (Poco::Exception &e)
 		{
+			bFailFlag = true;
 			ssLog << "上传模板图片(" << strPicPath << ")异常: " << e.displayText() << "\n";
-			continue;
+			CNewMessageBox dlg;
+			dlg.setShowInfo(2, 1, "图像移动异常, 请重试！");
+			dlg.DoModal();
+			break;
 		}
 
 		int nExamID, nSubjectID;

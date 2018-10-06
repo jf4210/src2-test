@@ -907,7 +907,7 @@ LRESULT CScanMgrDlg::ScanErr(WPARAM wParam, LPARAM lParam)
 		int nScanCount = _nScanCount_ / nModelPics;	//计算扫描试卷数量
 		if (nScanCount > 0)
 		{
-			std::string strMsg = Poco::format("当前已经扫描%d份试卷，是否保留?", nScanCount);
+			std::string strMsg = Poco::format("扫描发生错误，当前已经扫描%d份试卷，是否保留?", nScanCount);
 			CNewMessageBox	dlg;
 			dlg.setShowInfo(1, 2, strMsg);
 			dlg.DoModal();

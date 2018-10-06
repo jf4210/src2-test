@@ -11,7 +11,7 @@ using namespace std;
 IMPLEMENT_DYNAMIC(CV_picture, CStatic)
 
 CV_picture::CV_picture()
-: m_nShowType(0), m_nX(0), m_nY(0), m_bShowRectTracker_H(FALSE), m_bShowRectTracker_V(FALSE), m_bShowRectTracker_SN(FALSE)
+: m_nShowType(0), m_nX(0), m_nY(0), m_bShowRectTracker_H(FALSE), m_bShowRectTracker_V(FALSE), m_bShowRectTracker_SN(FALSE), m_bShowRectTracker_Zgt(FALSE)
 {
 }
 //由于关联自定义类时，无法带参数初始化该对象，因而独立一个初始化函数出来
