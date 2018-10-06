@@ -39,6 +39,25 @@
 #define WM_CV_SNTrackerChange	(WM_USER + 0x010)	//橡皮筋类改变事件
 #define WM_CV_ShiftDown			(WM_USER + 0x011)	//shift按下事件
 #define WM_CV_ShiftUp			(WM_USER + 0x012)	//shift抬起事件
+#define WM_CV_ZGTTrackerChange	(WM_USER + 0x013)	//主观题的橡皮筋改变事件
+
+typedef struct _tagZgtTracker
+{
+	bool bSel;				//是否是选中状态
+	bool bInserted;			//是否已经添加
+	void* pStRegion;		//主观题答题区的指针
+	void* pStZgt;			//主观题题目信息
+	cv::Point ptTracker1;	//该道主观题的橡皮筋按下的tl实际坐标
+	cv::Point ptTracker2;	//该道主观题的橡皮筋按下的br实际坐标
+	CRectTracker RectTrackerZgt;	//主观题橡皮筋对象
+	_tagZgtTracker()
+	{
+		bInserted = false;
+		bSel = false;
+		pStRegion = NULL;
+		pStZgt = NULL;
+	}
+}ST_ZgtTracker;
 
 class CV_picture : public CStatic
 {
@@ -71,10 +90,20 @@ public:
 	bool	m_bShowRectTracker_H;
 	bool	m_bShowRectTracker_V;
 	bool	m_bShowRectTracker_SN;
+	bool	m_bShowRectTracker_Zgt;
 	CRectTracker m_RectTrackerH;
 	CRectTracker m_RectTrackerV;
 	CRectTracker m_RectTrackerSN;
-	void SetShowRectTracker(bool bShowH, bool bShowV, bool bShowSN);
+
+// 	typedef struct _tagZgtTracker
+// 	{
+// 		cv::Point ptTracker1;	//该道主观题的橡皮筋按下的tl实际坐标
+// 		cv::Point ptTracker2;	//该道主观题的橡皮筋按下的br实际坐标
+// 		CRectTracker RectTrackerZgt;	//主观题橡皮筋对象
+// 	}ST_ZgtTracker;
+
+	std::vector<ST_ZgtTracker> m_vecRectTracker_ZGT;		//主观题的橡皮筋区域
+	void SetShowRectTracker(bool bShowH, bool bShowV, bool bShowSN, bool bShowZgt);
 protected:
 	int m_iDragFlag;
 	BOOL m_bLButtonDown;

@@ -65,11 +65,11 @@ void CCompressThread::HandleTask(pCOMPRESSTASK pTask)
 		if (!bResult)
 		{
 			bWarn = true;
-			strInfo.Format(_T("保存%s失败"), A2T(pTask->strCompressFileName.c_str()));
+			strInfo.Format(_T("保存失败\n%s"), A2T(pTask->strCompressFileName.c_str()));
 		}
 		else
 		{
-			strInfo.Format(_T("保存%s成功"), A2T(pTask->strCompressFileName.c_str()));
+			strInfo.Format(_T("保存成功\n%s"), A2T(pTask->strCompressFileName.c_str()));			//保存%s成功
 		}
 		((CScanMgrDlg*)m_pDlg)->SendMessage(MSG_Compress_Done, (WPARAM)bWarn, (LPARAM)(LPCTSTR)strInfo);
 

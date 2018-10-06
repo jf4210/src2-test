@@ -58,6 +58,7 @@ typedef struct _PaperModelInfo_
 	std::vector<OMR_QUESTION> vecOmr2;
 	std::vector<ELECTOMR_QUESTION> vecElectOmr;		//选做题信息
 	std::vector<pST_CHARACTER_ANCHOR_AREA> vecCharacterLocation;	//文字定位区域
+	std::vector<ST_ZGT>		vecZgt;					//主观题列表
 	_PaperModelInfo_()
 	{
 		bFirstH = true;
@@ -280,6 +281,7 @@ private:
 	LRESULT HTrackerChange(WPARAM wParam, LPARAM lParam);
 	LRESULT VTrackerChange(WPARAM wParam, LPARAM lParam);
 	LRESULT SNTrackerChange(WPARAM wParam, LPARAM lParam);
+	LRESULT ZgtTrackerChange(WPARAM wParam, LPARAM lParam);
 
 	LRESULT ShiftKeyDown(WPARAM wParam, LPARAM lParam);
 	LRESULT ShiftKeyUp(WPARAM wParam, LPARAM lParam);
@@ -319,6 +321,7 @@ private:
 	void RecognizeRectTracker();				//识别橡皮筋区域
 	void AddRecogRectToList();					//添加识别出来的区域到对应的列表中，针对有同步头的情况
 	void AddRecogSN();							//添加考号识别区域
+	void DelZgtRegion();						//删除主观题答题区域
 
 	void RecogFixWithHead(int i);				//在同步头模式，识别定点信息
 

@@ -366,7 +366,7 @@ pMODEL CNewMakeModelDlg::LoadSubjectModel(pEXAM_SUBJECT pSubModel)
 	std::string modelPath = T2A(g_strCurrentPath + _T("Model\\"));
 	std::string strModelFilePath = modelPath + strBaseModelName;
 	CModelMgr modelObj;
-	modelObj.SeBaseInfo(modelPath, g_strEncPwd);
+	modelObj.SetBaseInfo(modelPath, g_strEncPwd);
 	pMODEL pModel = modelObj.LoadModelFile(strModelFilePath);
 #else
 	CString strModelFilePath = g_strCurrentPath + _T("Model\\") + A2T(strBaseModelName.c_str());

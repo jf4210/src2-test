@@ -314,7 +314,7 @@ void CTcpClient::HandleCmd()
 {
 	clock_t start, end;
 	start = clock();
-	std::string strTmpLog = "HandleCmd ==>";
+	std::string strTmpLog = "HandleCmd ==>\n";
 	OutputDebugStringA(strTmpLog.c_str());
 
 	ST_CMD_HEADER* pstHead = (ST_CMD_HEADER*)m_pRecvBuff;	//m_pRecvBuff
@@ -1327,7 +1327,7 @@ void CTcpClient::HandleCmd()
 		}
 	}
 	end = clock();
-	strTmpLog = Poco::format("HandleCmd <==, cmd = %d, time = %dms", (int)pstHead->usCmd, (int)(end - start));
+	strTmpLog = Poco::format("HandleCmd <==, cmd = %d, time = %dms\n", (int)pstHead->usCmd, (int)(end - start));
 	OutputDebugStringA(strTmpLog.c_str());
 }
 

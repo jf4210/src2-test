@@ -146,6 +146,7 @@
     <ClInclude Include="PaperInputDlg.h" />
     <ClInclude Include="PaperRecogMgr.h" />
     <ClInclude Include="PapersMgr.h" />
+    <ClInclude Include="picCtrl\PicDlg.h" />
     <ClInclude Include="PrintPointRecog.h" />
     <ClInclude Include="ScanParamSetDlg.h" />
     <ClInclude Include="BaseTabDlg.h" />
@@ -232,13 +233,17 @@
     <ClInclude Include="XListCtrl\XListCtrl.h" />
     <ClInclude Include="XListCtrl\XListMemDC.h" />
     <ClInclude Include="XListCtrl\XTrace.h" />
+    <ClInclude Include="ZgtSettingDlg.h" />
     <ClInclude Include="ZipObj.h" />
     <ClInclude Include="ZkzhExceptionDlg.h" />
     <ClInclude Include="ZkzhShowMgrDlg.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\common\md5.cpp" />
-    <ClCompile Include="..\..\common\ModelMgr.cpp" />
+    <ClCompile Include="..\..\common\ModelMgr.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\..\common\unzip.cpp" />
     <ClCompile Include="..\..\common\zip.cpp" />
     <ClCompile Include="..\..\include\twain\CommonTWAIN.cpp">
@@ -279,6 +284,10 @@
     <ClCompile Include="PaperInputDlg.cpp" />
     <ClCompile Include="PaperRecogMgr.cpp" />
     <ClCompile Include="PapersMgr.cpp" />
+    <ClCompile Include="picCtrl\PicDlg.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="PrintPointRecog.cpp" />
     <ClCompile Include="ScanParamSetDlg.cpp" />
     <ClCompile Include="BmpButton.cpp" />
@@ -363,6 +372,7 @@
     <ClCompile Include="XListCtrl\XListCtrl.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ZgtSettingDlg.cpp" />
     <ClCompile Include="ZipObj.cpp" />
     <ClCompile Include="ZkzhExceptionDlg.cpp" />
     <ClCompile Include="ZkzhShowMgrDlg.cpp" />

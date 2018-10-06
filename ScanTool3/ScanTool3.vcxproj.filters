@@ -229,6 +229,9 @@
     <Filter Include="扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\折角缺角处理">
       <UniqueIdentifier>{db174657-d22e-4448-913f-0487ad771513}</UniqueIdentifier>
     </Filter>
+    <Filter Include="模板界面\旧模板制作界面\主观题设置">
+      <UniqueIdentifier>{33eba9f1-1a7e-475d-adaf-6c14e445c9aa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -585,6 +588,12 @@
     <ClInclude Include="LostCornerDlg.h">
       <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\折角缺角处理</Filter>
     </ClInclude>
+    <ClInclude Include="ZgtSettingDlg.h">
+      <Filter>模板界面\旧模板制作界面\主观题设置</Filter>
+    </ClInclude>
+    <ClInclude Include="picCtrl\PicDlg.h">
+      <Filter>控件\图片显示</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -895,6 +904,12 @@
     </ClCompile>
     <ClCompile Include="LostCornerDlg.cpp">
       <Filter>扫描界面窗口\扫描过程窗口\异常处理窗口\异常试卷管理窗口\折角缺角处理</Filter>
+    </ClCompile>
+    <ClCompile Include="ZgtSettingDlg.cpp">
+      <Filter>模板界面\旧模板制作界面\主观题设置</Filter>
+    </ClCompile>
+    <ClCompile Include="picCtrl\PicDlg.cpp">
+      <Filter>控件\图片显示</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
