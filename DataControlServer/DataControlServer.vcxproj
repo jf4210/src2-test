@@ -116,6 +116,7 @@
     <ClInclude Include="MissionFactory.h" />
     <ClInclude Include="MissionHandleMgr.h" />
     <ClInclude Include="MissionMgr.h" />
+    <ClInclude Include="ModifyPic.h" />
     <ClInclude Include="MyCodeConvert.h" />
     <ClInclude Include="NetCmdMgr.h" />
     <ClInclude Include="NetIoBuffer.h" />
@@ -150,6 +151,7 @@
     <ClCompile Include="MissionFactory.cpp" />
     <ClCompile Include="MissionHandleMgr.cpp" />
     <ClCompile Include="MissionMgr.cpp" />
+    <ClCompile Include="ModifyPic.cpp" />
     <ClCompile Include="MyCodeConvert.cpp" />
     <ClCompile Include="NetCmdMgr.cpp" />
     <ClCompile Include="NetIoBuffer.cpp" />

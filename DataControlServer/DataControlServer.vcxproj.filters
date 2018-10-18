@@ -153,6 +153,9 @@
     <ClInclude Include="miniunz\zip.h">
       <Filter>解压\miniz</Filter>
     </ClInclude>
+    <ClInclude Include="ModifyPic.h">
+      <Filter>上传HTTP服务</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ExamServerMgr.cpp">
@@ -247,6 +250,9 @@
     </ClCompile>
     <ClCompile Include="miniunz\zip.c">
       <Filter>解压\miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="ModifyPic.cpp">
+      <Filter>上传HTTP服务</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -36,6 +36,8 @@ public:
 	int	m_nUpLoadZKZH;		//上传ZKZH
 	int	m_nUpLoadElectOmr;	//上传选做题
 
+	int	m_nModifyPicOnFail;	//在上传图片失败时，修改图像内容再提交(在图片上修改3个点的像素值)
+
 	//心跳监测间隔，单位秒
 	int m_nHeartPacketTime;			//维持session存活的时间
 	string m_strCurrentDir;			//utf8

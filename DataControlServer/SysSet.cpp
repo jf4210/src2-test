@@ -50,6 +50,8 @@ bool CSysSet::Load(std::string& strConfPath)
 	m_str3PlatformUrl	= pConf->getString("ThirdPlatform.url", "");
 	m_strLoginYklxPwd	= pConf->getString("ThirdPlatform.loginYklxPwd", "12345678");
 
+	m_nModifyPicOnFail = pConf->getInt("UpHttp.modifyPicUploadFail", 0);
+
 	if (m_str3PlatformUrl.empty())	//若第3方平台的url为空，则不使用第3方登录平台登录
 		m_nUseThirdPlatform = 0;
 

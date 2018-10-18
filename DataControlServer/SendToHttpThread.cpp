@@ -1,5 +1,5 @@
 #include "SendToHttpThread.h"
-
+#include "ModifyPic.h"
 
 CSendToHttpThread::CSendToHttpThread()
 {
@@ -513,6 +513,14 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 				strErrInfo.append("Error when upload file: " + pTask->pPic->strFileName + "\tDetail: " + jsnString.str());
 				g_Log.LogOutError(strErrInfo);
 				std::cout << strErrInfo << std::endl;
+
+				if (SysSet.m_nModifyPicOnFail)
+				{
+					//++修改图片再次提交
+					CModifyPic obj;
+					obj.ModifyPic(pTask->pPic->strFilePath, pTask->pPapers->strPapersName);
+					//--
+				}				
 			}
 		}
 		else if (pTask->nTaskType == 2)
