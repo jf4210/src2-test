@@ -340,7 +340,10 @@ int CUserMgr::HandleHeader(CMission* pMission)
 			{
 				pTask = new SCAN_REQ_TASK;
 				std::string strUserID = Poco::format("%d", nUserID);
-				pTask->strUri = SysSet.m_strBackUri + "/examinfo/" + strUserID;
+				if (SysSet.m_nQuYuVersion)
+					pTask->strUri = SysSet.m_strBackUri + "/examinfo";
+				else
+					pTask->strUri = SysSet.m_strBackUri + "/examinfo/" + strUserID;
 				pTask->pUser  = pUser;
 				pTask->strEzs = SysSet.m_strSessionName + strEzs;		//"ezs=" + strEzs;
 				pTask->strMsg = "ezs";
