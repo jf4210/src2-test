@@ -37,6 +37,7 @@ public:
 	int	m_nUpLoadElectOmr;	//上传选做题
 
 	int	m_nModifyPicOnFail;	//在上传图片失败时，修改图像内容再提交(在图片上修改3个点的像素值)
+	int m_nQuYuVersion;		//区域版本，获取考试列表时不设置用户ID
 
 	//心跳监测间隔，单位秒
 	int m_nHeartPacketTime;			//维持session存活的时间

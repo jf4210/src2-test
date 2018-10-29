@@ -569,7 +569,7 @@ void CDataMgrToolDlg::InitConfig()
 	strFile = strFile.Left(strFile.ReverseFind('\\') + 1);
 	g_strCurrentPath = strFile;
 
-	std::string strLogPath = CMyCodeConvert::Gb2312ToUtf8g_strCurrentPath + "DMT.Log";
+	std::string strLogPath = CMyCodeConvert::Gb2312ToUtf8(T2A(g_strCurrentPath)) + "DMT.Log";
 	g_Log.SetFileName(strLogPath);
 
 #ifdef DATE_LIMIT

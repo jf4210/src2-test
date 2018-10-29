@@ -33,6 +33,7 @@ bool CSysSet::Load(std::string& strConfPath)
 	m_nUpLoadElectOmr	= pConf->getInt("Sys.bUpElectOmr", 1);
 	m_nVerServerPort	= pConf->getInt("VerServerInfo.port", 19991);
 	m_nServerMode		= pConf->getInt("Sys.serverMode", 0);
+	m_nQuYuVersion		= pConf->getInt("Sys.QuYuVersion", 0);
 
 	m_nHandleCmdThreads = pConf->getInt("Cmd.sendThreads", 2);
 	m_nSendHttpThreads	= pConf->getInt("UpHttp.sendThreads", 2);
