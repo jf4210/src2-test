@@ -31,7 +31,7 @@ typedef struct ST_UPLOAD_ANS
 typedef struct ST_UpLoadAddr
 {
 	int		nPort;
-	string strIP;
+	std::string strIP;
 }stUpLoadAddr, *pstUpLoadAddr;
 
 class CSendFileThread;
