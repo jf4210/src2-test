@@ -143,7 +143,7 @@ RESTART:
 						}
 						//切换ip地址
 						std::list<pstUpLoadAddr>::iterator itFirstAddr = m_UpLoadAddrList.begin();
-						std::string strLog = Poco::format("切换文件连接地址%s:%d==>%s:%d(%s)", string(T2A(m_strAddr)), (int)m_usPort, (*itFirstAddr)->strIP, (*itFirstAddr)->nPort, m_strSendExtType);
+						std::string strLog = Poco::format("切换文件连接地址%s:%d==>%s:%d(%s)", std::string(T2A(m_strAddr)), (int)m_usPort, (*itFirstAddr)->strIP, (*itFirstAddr)->nPort, m_strSendExtType);
 						g_pLogger->information(strLog);
 						TRACE("%s\n", strLog.c_str());
 
