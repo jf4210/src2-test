@@ -87,7 +87,7 @@ bool CPapersMgr::SavePapers(pPAPERSINFO pPapers)
 			return bResult;
 		}
 		//多页模式下，检查试卷是否完整，不完整的不允许提交
-		if (_pModel && _pModel->nUsePagination)
+		if (_pModel)
 		{
 			bool bFindErr = false;
 			std::string strStudent;
@@ -104,6 +104,40 @@ bool CPapersMgr::SavePapers(pPAPERSINFO pPapers)
 			{
 				CNewMessageBox	dlg;
 				std::string strTips = Poco::format("考生(%s)试卷数与模板不一致,请重扫!", strStudent);
+				dlg.setShowInfo(2, 1, strTips);
+				dlg.DoModal();
+				return bResult;
+			}
+		}
+		//检测图片是否存在
+		{
+			bool bFindErr;
+			std::string strStudent;
+			for (auto pPaper : pPapers->lPaper)
+			{
+				for (auto pPic : pPaper->lPic)
+				{
+					std::string strPicPath = pPic->strPicPath;
+					try
+					{
+						Poco::File picFile(CMyCodeConvert::Gb2312ToUtf8(strPicPath));
+						if (!picFile.exists())
+						{
+							bFindErr = true;
+							strStudent = pPaper->strStudentInfo;
+							break;
+						}
+					}
+					catch (Poco::Exception& exc)
+					{
+					}
+				}
+				if(bFindErr) break;
+			}
+			if (bFindErr)
+			{
+				CNewMessageBox	dlg;
+				std::string strTips = Poco::format("考生(%s)图片有缺失,可能写文件时失败,请重扫!", strStudent);
 				dlg.setShowInfo(2, 1, strTips);
 				dlg.DoModal();
 				return bResult;

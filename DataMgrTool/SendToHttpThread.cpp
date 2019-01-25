@@ -93,7 +93,7 @@ void CSendToHttpThread::run()
 				HandleOmrTask(pTask);
 				continue;
 			}
-			else if (pTask->nTaskType = 8)
+			else if (pTask->nTaskType == 8)
 			{
 				RecogResultRecord(pTask);
 				continue;

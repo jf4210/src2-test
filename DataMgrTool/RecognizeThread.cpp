@@ -258,7 +258,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 			sTimeTmp = clock();
 		#ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
-			bResult = PicTransfer(nPic, matCompPic, (*itPic)->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, inverseMat);
+			bResult = GetFixPicTransfer(nPic, matCompPic, *itPic, pModelInfo->pModel, inverseMat);
 			eTimeTmp = clock();
 			nTime[2] = eTimeTmp - sTimeTmp;
 			sTimeTmp = clock();
@@ -320,7 +320,7 @@ void CRecognizeThread::PaperRecognise(pST_PaperInfo pPaper, pMODELINFO pModelInf
 
 		#ifdef WarpAffine_TEST
 			cv::Mat	inverseMat(2, 3, CV_32FC1);
-			if (bResult) bResult = PicTransfer(nPic, matCompPic, (*itPic)->lFix, pModelInfo->pModel->vecPaperModel[nPic]->lFix, inverseMat);
+			if (bResult) bResult = GetFixPicTransfer(nPic, matCompPic, *itPic, pModelInfo->pModel, inverseMat);
 		#endif
 			if (bResult) bResult = RecogHHead(nPic, matCompPic, *itPic, pModelInfo);
 			if (bResult) bResult = RecogVHead(nPic, matCompPic, *itPic, pModelInfo);
@@ -4850,7 +4850,7 @@ bool CRecognizeThread::RecogCharacter(int nPic, cv::Mat& matCompPic, pST_PicInfo
 						pstRecogCharacterRt->vecCharacterRt.push_back(pstCharRt);
 						nIndex++;
 					}
-					else
+					else if(word)
 					{
 						std::string strTmp = Poco::format("%s(%f), ", CMyCodeConvert::Utf8ToGb2312(word), (double)conf);
 						strDelWord.append(strTmp);

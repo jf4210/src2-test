@@ -29,6 +29,7 @@ using namespace cv;
 3、异常处理界面，不能手动输入准考证号，只能从数据库查询
 */
 int					g_nHighSevereMode = 0;
+int					g_nShowPicOnScan = 0;		//边扫描边显示图片
 int					g_nDefStudentsInKC = 30;	//默认考场中考生数量
 std::string			g_strIdentityChkUser = "admin";		//身份检测的用户名
 std::string			g_strIdentityChkPwd = "Yklx";		//身份检测的密码

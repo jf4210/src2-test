@@ -255,18 +255,26 @@ void CScanProcessDlg::AddPaper(int nID, pST_PaperInfo pPaper)
 
 	if (_pCurrExam_->nModel == 0)	//网阅模式
 	{
-		m_pReminderDlg->ShowWindow(SW_SHOW);
-		m_pShowPicDlg->ShowWindow(SW_HIDE);
+		if (g_nShowPicOnScan != 0)
+		{
+			m_pReminderDlg->ShowWindow(SW_HIDE);
+			m_pShowPicDlg->ShowWindow(SW_SHOW);
+		}
+		else
+		{
+			m_pReminderDlg->ShowWindow(SW_SHOW);
+			m_pShowPicDlg->ShowWindow(SW_HIDE);
+		}
 	}
 	else //手阅模式
 	{
-	#ifdef TEST_FAST_SCAN
+#ifdef TEST_FAST_SCAN
 		m_pReminderDlg->ShowWindow(SW_SHOW);
 		m_pShowPicDlg->ShowWindow(SW_HIDE);
-	#else
+#else
 		m_pReminderDlg->ShowWindow(SW_HIDE);
 		m_pShowPicDlg->ShowWindow(SW_SHOW);
-	#endif
+#endif
 		m_lcPicture.EnsureVisible(nCount, FALSE);
 	}
 }

@@ -54,8 +54,8 @@ BOOL CRecogParamDlg::OnInitDialog()
 	m_strEzsAddr = A2T(g_strUploadUri.c_str());
 
 	((CButton*)GetDlgItem(IDC_CHK_SN))->SetCheck(m_nChkSN);
-	((CButton*)GetDlgItem(IDC_CHK_OMR))->SetCheck(m_nChkSN);
-	((CButton*)GetDlgItem(IDC_CHK_ElecOmr))->SetCheck(m_nChkSN);
+	((CButton*)GetDlgItem(IDC_CHK_OMR))->SetCheck(m_nChkOmr);
+	((CButton*)GetDlgItem(IDC_CHK_ElecOmr))->SetCheck(m_nChkElectOmr);
 
 	if (m_nHandleResult == 0)
 	{
