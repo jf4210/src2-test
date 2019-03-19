@@ -117,6 +117,9 @@ bool InitConfig()
 		_strMainTitle_ = pTitleConf->getString("Title.mainTitle", "慧学扫描客户端");
 		_strLitteTitle_ = pTitleConf->getString("Title.littleTitle", "Tianyu big data scan tool");
 		_strCopyright_ = pTitleConf->getString("Title.copyRight", "武汉天喻教育科技有限公司 2017~2018 版权所有");
+		_strMainTitle_ = CMyCodeConvert::Utf8ToGb2312(_strMainTitle_);
+		_strLitteTitle_ = CMyCodeConvert::Utf8ToGb2312(_strLitteTitle_);
+		_strCopyright_ = CMyCodeConvert::Utf8ToGb2312(_strCopyright_);
 	}
 	catch (Poco::Exception exc)
 	{
