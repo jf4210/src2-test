@@ -370,7 +370,7 @@ void CSendToHttpThread::run()
 			{
 				strErrorInfo.append("\tPapersName: " + pTask->pPapers->strPapersName);
 				strErrorInfo.append("\tPath: " + pTask->pPapers->strPapersPath);
-			}			
+			}
 
 			std::cout << "\n";
 			std::cout << strErrorInfo << std::endl;
@@ -520,7 +520,7 @@ bool CSendToHttpThread::ParseResult(std::string& strInput, pSEND_HTTP_TASK pTask
 					CModifyPic obj;
 					obj.ModifyPic(pTask->pPic->strFilePath, pTask->pPapers->strPapersName);
 					//--
-				}				
+				}
 			}
 		}
 		else if (pTask->nTaskType == 2)

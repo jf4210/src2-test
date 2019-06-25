@@ -13,23 +13,23 @@ bool CModifyPic::ModifyPic(std::string strPicPath, std::string strPapersName)
 		int y = 5;
 		if (matSrc.channels() == 3)
 		{
-			matSrc.at<cv::Vec3b>(x1, y)[0] = 255;
-			matSrc.at<cv::Vec3b>(x1, y)[1] = 255;
-			matSrc.at<cv::Vec3b>(x1, y)[2] = 255;
+			matSrc.at<cv::Vec3b>(y, x1)[0] = 255;
+			matSrc.at<cv::Vec3b>(y, x1)[1] = 255;
+			matSrc.at<cv::Vec3b>(y, x1)[2] = 255;
 
-			matSrc.at<cv::Vec3b>(x2, y)[0] = 255;
-			matSrc.at<cv::Vec3b>(x2, y)[1] = 255;
-			matSrc.at<cv::Vec3b>(x2, y)[2] = 255;
+			matSrc.at<cv::Vec3b>(y, x2)[0] = 255;
+			matSrc.at<cv::Vec3b>(y, x2)[1] = 255;
+			matSrc.at<cv::Vec3b>(y, x2)[2] = 255;
 
-			matSrc.at<cv::Vec3b>(x3, y)[0] = 255;
-			matSrc.at<cv::Vec3b>(x3, y)[1] = 255;
-			matSrc.at<cv::Vec3b>(x3, y)[2] = 255;
+			matSrc.at<cv::Vec3b>(y, x3)[0] = 255;
+			matSrc.at<cv::Vec3b>(y, x3)[1] = 255;
+			matSrc.at<cv::Vec3b>(y, x3)[2] = 255;
 		}
 		else if (matSrc.channels() == 1)
 		{
-			matSrc.at<uchar>(x1, y) = 255;
-			matSrc.at<uchar>(x2, y) = 255;
-			matSrc.at<uchar>(x3, y) = 255;
+			matSrc.at<uchar>(y, x1) = 255;
+			matSrc.at<uchar>(y, x2) = 255;
+			matSrc.at<uchar>(y, x3) = 255;
 		}
 		imwrite(strPicPath, matSrc);
 		std::string strTmpLog = "[" + strPapersName + "]修改图片" + strPicPath + "的像素点成功\n";
